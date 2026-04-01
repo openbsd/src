@@ -1,5 +1,5 @@
 /* zconf.h -- configuration of the zlib compression library
- * Copyright (C) 1995-2024 Jean-loup Gailly, Mark Adler
+ * Copyright (C) 1995-2026 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -7,6 +7,8 @@
 
 #ifndef ZCONF_H
 #define ZCONF_H
+
+#include <stddef.h>         /* Compress::Raw::Zlib change -- Needed for NULL */
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
@@ -33,7 +35,10 @@
 #  ifndef Z_SOLO
 #    define compress              z_compress
 #    define compress2             z_compress2
+#    define compress_z            z_compress_z
+#    define compress2_z           z_compress2_z
 #    define compressBound         z_compressBound
+#    define compressBound_z       z_compressBound_z
 #  endif
 #  define crc32                 Perl_crz_crc32
 #  define crc32_combine         Perl_crz_crc32_combine
@@ -44,6 +49,7 @@
 #  define crc32_z               Perl_crz_crc32_z
 #  define deflate               Perl_crz_deflate
 #  define deflateBound          Perl_crz_deflateBound
+#  define deflateBound_z        Perl_crz_deflateBound_z
 #  define deflateCopy           Perl_crz_deflateCopy
 #  define deflateEnd            Perl_crz_deflateEnd
 #  define deflateGetDictionary  Perl_crz_deflateGetDictionary
@@ -59,6 +65,7 @@
 #  define deflateSetDictionary  Perl_crz_deflateSetDictionary
 #  define deflateSetHeader      Perl_crz_deflateSetHeader
 #  define deflateTune           Perl_crz_deflateTune
+#  define deflateUsed           Perl_crz_deflateUsed
 #  define deflate_copyright     Perl_crz_deflate_copyright
 #  define get_crc_table         Perl_crz_get_crc_table
 #  ifndef Z_SOLO
@@ -128,11 +135,15 @@
 #  define inflate_copyright     Perl_crz_inflate_copyright
 #  define inflate_fast          Perl_crz_inflate_fast
 #  define inflate_table         Perl_crz_inflate_table
+#  define inflate_fixed         Perl_crz_inflate_fixed
 #  ifndef Z_SOLO
 #    define uncompress            z_uncompress
 #    define uncompress2           z_uncompress2
+#    define uncompress_z          z_uncompress_z
+#    define uncompress2_z         z_uncompress2_z
 #  endif
 #  define zError                Perl_crz_zError
+#  define z_errmsg              Perl_crz_errmsg
 #  ifndef Z_SOLO
 #    define zcalloc               z_zcalloc
 #    define zcfree                z_zcfree
@@ -149,8 +160,8 @@
 #  ifndef Z_SOLO
 #    define gzFile                z_gzFile
 #  endif
-#  define gz_header             Perl_crz_gz_header
-#  define gz_headerp            Perl_crz_gz_headerp
+#  define gz_header             Perl_crz_gPerl_crz_header
+#  define gz_headerp            Perl_crz_gPerl_crz_headerp
 #  define in_func               Perl_crz_in_func
 #  define intf                  Perl_crz_intf
 #  define out_func              Perl_crz_out_func
@@ -234,10 +245,12 @@
 #  endif
 #endif
 
-#if defined(ZLIB_CONST) && !defined(z_const)
-#  define z_const const
-#else
-#  define z_const
+#ifndef z_const
+#  ifdef ZLIB_CONST
+#    define z_const const
+#  else
+#    define z_const
+#  endif
 #endif
 
 #ifdef Z_SOLO
@@ -408,12 +421,12 @@ typedef uLong FAR uLongf;
 
 #ifdef STDC
    typedef void const *voidpc;
-   typedef Bytef      *voidpf;
-   typedef Bytef      *voidp;
+   typedef void FAR   *voidpf;
+   typedef void       *voidp;
 #else
    typedef Byte const *voidpc;
-   typedef Bytef      *voidpf;
-   typedef Bytef      *voidp;
+   typedef Byte FAR   *voidpf;
+   typedef Byte       *voidp;
 #endif
 
 #if !defined(Z_U4) && !defined(Z_SOLO) && defined(STDC)
@@ -433,11 +446,11 @@ typedef uLong FAR uLongf;
    typedef unsigned long z_crc_t;
 #endif
 
-#ifdef HAVE_UNISTD_H    /* may be set to #if 1 by ./configure */
+#if HAVE_UNISTD_H-0     /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_UNISTD_H
 #endif
 
-#ifdef HAVE_STDARG_H    /* may be set to #if 1 by ./configure */
+#if HAVE_STDARG_H-0     /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_STDARG_H
 #endif
 
@@ -470,12 +483,8 @@ typedef uLong FAR uLongf;
 #endif
 
 #ifndef Z_HAVE_UNISTD_H
-#  ifdef __WATCOMC__
-#    define Z_HAVE_UNISTD_H
-#  endif
-#endif
-#ifndef Z_HAVE_UNISTD_H
-#  if defined(_LARGEFILE64_SOURCE) && !defined(_WIN32)
+#  if defined(__WATCOMC__) || defined(__GO32__) || \
+      (defined(_LARGEFILE64_SOURCE) && !defined(_WIN32))
 #    define Z_HAVE_UNISTD_H
 #  endif
 #endif
@@ -510,17 +519,19 @@ typedef uLong FAR uLongf;
 #endif
 
 #ifndef z_off_t
-#  define z_off_t long
+#  define z_off_t long long
 #endif
 
 #if !defined(_WIN32) && defined(Z_LARGE64)
 #  define z_off64_t off64_t
+#elif defined(__MINGW32__)
+#  define z_off64_t long long
+#elif defined(_WIN32) && !defined(__GNUC__)
+#  define z_off64_t __int64
+#elif defined(__GO32__)
+#  define z_off64_t offset_t
 #else
-#  if defined(_WIN32) && !defined(__GNUC__)
-#    define z_off64_t __int64
-#  else
-#    define z_off64_t z_off_t
-#  endif
+#  define z_off64_t z_off_t
 #endif
 
 /* MVS linker does not support external names larger than 8 bytes */

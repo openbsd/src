@@ -2,35 +2,37 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.42.2
+perl5385delta - what is new for perl v5.38.5
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.42.1 release and the 5.42.2
+This document describes differences between the 5.38.4 release and the 5.38.5
 release.
 
-If you are upgrading from an earlier release such as 5.42.0, first read
-L<perl5421delta>, which describes differences between 5.42.0 and 5.42.1.
+If you are upgrading from an earlier release such as 5.38.3, first read
+L<perl5384delta>, which describes differences between 5.38.3 and 5.38.4.
 
 =head1 Security
 
-=head2 [CVE-2026-4176] Vulnerability in Compress::Raw::Zlib
+=head2 [CVE-2025-40909] Perl threads have a working directory race condition where file operations may target unintended paths
 
-L<Compress::Raw::Zlib> is included in Perl as a dual-life core module, and was
-vulnerable to [L<CVE-2026-3381|https://www.cve.org/CVERecord?id=CVE-2026-3381>]
-due to a vendored version of zlib which had several vulnerabilities, including
-[L<CVE-2026-27171|https://www.cve.org/CVERecord?id=CVE-2026-27171>].
+Perl thread cloning had a working directory race condition where file
+operations may target unintended paths.  Perl 5.38 will no longer chdir to each
+handle.
 
-This problem was assigned
-[L<CVE-2026-4176|https://www.cve.org/CVERecord?id=CVE-2026-4176>] by the
-L<CPAN Security Group|https://security.metacpan.org/>.
+This problem was discovered by Vincent Lefèvre via
+[L<GH #23010|https://github.com/Perl/perl5/issues/23010>] and assigned
+[L<CVE-2025-40909|https://lists.security.metacpan.org/cve-announce/msg/30017499/>]
+by the L<CPAN Security Group|https://security.metacpan.org/>.
 
+Fixes were provided via [L<GH #23019|https://github.com/Perl/perl5/pull/23019>]
+and [L<GH #23361|https://github.com/Perl/perl5/pull/23361>].
 
 =head1 Incompatible Changes
 
-There are no changes intentionally incompatible with 5.42.1.  If any exist,
-they are bugs, and we request that you submit a report.  See L</Reporting Bugs>
-below.
+There are no changes intentionally incompatible with 5.38.4.  If any exist,
+they are bugs, and we request that you submit a report.  See L</Reporting
+Bugs> below.
 
 =head1 Modules and Pragmata
 
@@ -40,11 +42,7 @@ below.
 
 =item *
 
-L<Compress::Raw::Zlib> has been upgraded from version 2.213 to 2.222.
-
-=item *
-
-L<Module::CoreList> has been upgraded from version 5.20260308 to 5.20260329_42.
+L<Module::CoreList> has been upgraded from version 5.20250413_38 to 5.20250803_38.
 
 =back
 
@@ -63,19 +61,19 @@ release.
 
 =head1 Acknowledgements
 
-Perl 5.42.2 represents approximately 3 weeks of development since Perl 5.42.1
-and contains approximately 2,900 lines of changes across 57 files from 6
+Perl 5.38.5 represents approximately 4 months of development since Perl 5.38.4
+and contains approximately 3,300 lines of changes across 46 files from 8
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 1,900 lines of changes to 23 .pm, .t, .c and .h files.
+approximately 1,100 lines of changes to 7 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its fourth decade thanks to a vibrant community
 of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.42.2:
+the improvements that became Perl 5.38.5:
 
-Eric Herman, James E Keenan, Olaf Alders, Paul Marquess, Richard Leach, Steve
-Hay.
+James E Keenan, Karen Etheridge, Leon Timmermans, Lukas Mai, Philippe Bruhat
+(BooK), Richard Leach, Steve Hay, Thibault Duponchelle.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history.  In particular, it does not include the names of
@@ -83,7 +81,7 @@ the (very much appreciated) contributors who reported issues to the Perl bug
 tracker.
 
 Many of the changes included in this version originated in the CPAN modules
-included in Perl's core. We're grateful to the entire CPAN community for
+included in Perl's core.  We're grateful to the entire CPAN community for
 helping Perl to flourish.
 
 For a more complete list of all of Perl's historical contributors, please see
@@ -93,15 +91,16 @@ the F<AUTHORS> file in the Perl source distribution.
 
 If you find what you think is a bug, you might check the perl bug database at
 L<https://github.com/Perl/perl5/issues>.  There may also be information at
-L<https://www.perl.org/>, the Perl Home Page.
+L<http://www.perl.org/>, the Perl Home Page.
 
 If you believe you have an unreported bug, please open an issue at
 L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a
 tiny but sufficient test case.
 
 If the bug you are reporting has security implications which make it
-inappropriate to send to a public issue tracker, then see L<perlsec/SECURITY
-VULNERABILITY CONTACT INFORMATION> for details of how to report the issue.
+inappropriate to send to a public issue tracker, then see
+L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION> for details of how to
+report the issue.
 
 =head1 Give Thanks
 

@@ -1866,49 +1866,17 @@ Identical to the string form of C<$!>, see L<perlvar/$ERRNO>.
 =item C<strftime>
 
 Convert date and time information to string based on the current
-underlying locale of the program (except for any daylight savings time).
-Returns the string.
+underlying locale of the program.
+Returns the string in a mortalized SV; set to an empty string on error.
 
-Synopsis:
-
-	strftime(fmt, sec, min, hour, mday, mon, year,
-		 wday = -1, yday = -1, isdst = 0)
-
-The month (C<mon>) begins at zero,
-I<e.g.>, January is 0, not 1.  The
-year (C<year>) is given in years since 1900, I<e.g.>, the year 1995 is 95; the
-year 2001 is 101.  Consult your system's C<strftime()> manpage for details
-about these and the other arguments.
+ my $sv = strftime(fmt, sec, min, hour, mday, mon, year,
+                   wday = -1, yday = -1, isdst = -1)
 
 The C<wday> and C<yday> parameters are both ignored.  Their values are
 always determinable from the other parameters.
 
-C<isdst> should be C<1> or C<0>, depending on whether or not daylight
-savings time is in effect for the given time or not.
-
-If you want your code to be portable, your format (C<fmt>) argument
-should use only the conversion specifiers defined by the ANSI C
-standard (C99, to play safe).  These are C<aAbBcdHIjmMpSUwWxXyYZ%>.
-But even then, the B<results> of some of the conversion specifiers are
-non-portable.  For example, the specifiers C<aAbBcpZ> change according
-to the locale settings of the user, and both how to set locales (the
-locale names) and what output to expect are non-standard.
-The specifier C<c> changes according to the timezone settings of the
-user and the timezone computation rules of the operating system.
-The C<Z> specifier is notoriously unportable since the names of
-timezones are non-standard. Sticking to the numeric specifiers is the
-safest route.
-
-The arguments, except for C<isdst>, are made consistent as though by
-calling C<mktime()> before calling your system's C<strftime()> function.
-To get correct results, you must set C<isdst> to be the proper value.
-When omitted, the function assumes daylight savings is not in effect.
-
-The string for Tuesday, December 12, 1995 in the C<C> locale.
-
-	$str = POSIX::strftime( "%A, %B %d, %Y",
-				 0, 0, 0, 12, 11, 95, 2 );
-	print "$str\n";
+More details on the behavior and the specification of the other
+parameters are described in L<perlapi/sv_strftime_ints>.
 
 =item C<strlen>
 

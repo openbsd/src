@@ -17502,6 +17502,8 @@ $rm_try
     esac
 esac
 
+case "$perl_lc_all_separator$perl_lc_all_category_positions_init" in
+  "")
 : Check the syntax of LC_ALL when categories are set to different locales
 echo " "
 $echo "Checking the syntax of LC_ALL when categories are set to different locales..." >&4
@@ -17878,6 +17880,23 @@ $rm -f try try.*
           # and run without having to have a bunch more #ifdef's
           d_perl_lc_all_uses_name_value_pairs="$define"
 ;;
+esac
+;;
+
+  *)    # Has an lc_all definition passed-in
+     case "$perl_lc_all_separator" in
+	\"*\") ;;     # Good, enclosed in "..."
+        *) echo "Adding enclosing double quotes to perl_lc_all_separator" >&4
+           case "$perl_lc_all_separator" in
+	      \"*) perl_lc_all_separator="$perl_lc_all_separator\"" ;;
+	      *\") perl_lc_all_separator="\"$perl_lc_all_separator" ;;
+	      *)     perl_lc_all_separator="\"$perl_lc_all_separator\"" ;;
+            esac
+     esac
+     d_perl_lc_all_separator="$define"
+     d_perl_lc_all_category_positions_init="$define"
+     d_perl_lc_all_uses_name_value_pairs="$undef"
+     ;;
 esac
 
 : see if pipe2 exists

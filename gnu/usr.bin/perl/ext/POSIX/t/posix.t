@@ -273,7 +273,12 @@ print POSIX::strftime("ok $test # %H:%M, on %m/%d/%y\n", localtime());
 # input fields to strftime().
 sub try_strftime {
     my $expect = shift;
-    my $got = POSIX::strftime("%a %b %d %H:%M:%S %Y %j", @_);
+    my @input = @_;
+
+    # Add zeros to missing parameters.  The final 0 is for isdst, and the zero
+    # forces use of mini_mktime (unless the code changes).
+    push @input, 0 while @input < 9;
+    my $got = POSIX::strftime("%a %b %d %H:%M:%S %Y %j", @input);
     is($got, $expect, "validating mini_mktime() and strftime(): $expect");
 }
 

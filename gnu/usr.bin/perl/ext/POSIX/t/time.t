@@ -16,14 +16,16 @@ use Test::More tests => 31;
 # Those with a working tzset() should be able to use the TZ below.
 $ENV{TZ} = "EST5EDT";
 
+# It looks like POSIX.xs claims that only VMS and Mac OS traditional
+# don't have tzset().  MingW doesn't work.  Cygwin works in some places, but
+# not others.  The other Win32's below are guesses.
+my $has_tzset = $^O ne "VMS" && $^O ne "cygwin"
+             && ($^O ne "MSWin32" || (   $^O eq "MSWin32"
+                                      && $Config{make} eq 'nmake'))
+             && $^O ne "interix";
+
 SKIP: {
-    # It looks like POSIX.xs claims that only VMS and Mac OS traditional
-    # don't have tzset().  Win32 works to call the function, but it doesn't
-    # actually do anything.  Cygwin works in some places, but not others.  The
-    # other Win32's below are guesses.
-    skip "No tzset()", 1
-       if $^O eq "VMS" || $^O eq "cygwin" ||
-          $^O eq "MSWin32" || $^O eq "interix";
+    skip "No tzset()", 1 unless $has_tzset;
     tzset();
     SKIP: {
         my @tzname = tzname();
@@ -42,9 +44,7 @@ SKIP: {
 $ENV{TZ} = "UTC0UTC";
 
 SKIP: {
-    skip "No tzset()", 2
-       if $^O eq "VMS" || $^O eq "cygwin" ||
-          $^O eq "MSWin32" || $^O eq "interix";
+    skip "No tzset()", 2 unless $has_tzset;
     tzset();
     my @tzname = tzname();
     like($tzname[0], qr/(GMT|UTC)/i, "tzset() to GMT/UTC");

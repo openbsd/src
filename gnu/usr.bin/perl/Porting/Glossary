@@ -4708,12 +4708,27 @@ perl_lc_all_category_positions_init (disparate_lc_all.U):
 	setlocale(LC_ALL, NULL) when not all categories are the same, on
 	systems that use a positional notation.  After element [0] is
 	$lc_all_separator_init, then the category given by element [1], and so on.
+	For example, at the time this was written, the value in config.sh for
+	FreeBSD boxes is:
+            perl_lc_all_category_positions_init='{ 1, 2, 3, 4, 5, 6 }'
+	And the result of running this program
+            LC_ALL=C ./perl -Ilib -MPOSIX                               \
+                            -le 'setlocale(LC_MONETARY, "fr_FR.UTF-8"); \
+                                 print setlocale(LC_ALL)'
+	is
+            C/C/fr_FR.UTF-8/C/C/C
+	This shows that the LC_MONETARY category on FreeBSD occupies the third
+	position in the string returned by querying LC_ALL.  (See
+	perl_lc_all_separator for the source of the forward slash.)
 
 perl_lc_all_separator (disparate_lc_all.U):
-	This symbol, when defined, gives the substring used to separate
-	categories in the aggregated string returned by setlocale(LC_ALL, NULL)
-	when not all categories are in the same locale.  This is for systems
-	that use a positional notation as opposed to 'name=value' pairs.
+	This symbol, when defined, gives the substring, enclosed in double
+	quotes, used to separate categories in the aggregated string returned
+	by setlocale(LC_ALL, NULL) when not all categories are in the same
+	locale.  This is for systems that use a positional notation as opposed
+	to 'name=value' pairs.  For example, at the time this was written, the
+	value in config.sh for FreeBSD boxes is:
+            perl_lc_all_separator='"/"'
 
 PERL_PATCHLEVEL (Oldsyms.U):
 	This symbol reflects the patchlevel, if available. Will usually

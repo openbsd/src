@@ -44,8 +44,13 @@ if (fresh_perl_like(<<~'EOT',
                     EOT
                 "",
                 { }, "source encoding can be turned off");
+    fresh_perl_like(<<~'EOT',
+                 use v5.41.0; my $var = "¶";
+                 EOT
+                qr/Use of non-ASCII character 0x[[:xdigit:]]{2} illegal/,
+                { }, ">= 'use statement affects rest of current line'");
 }
-else { # Above test depends on the previous one; if that failed, use this
+else { # Above tests depend on the previous one; if that failed, use this
        # alternate one
     fresh_perl_is(<<~'EOT',
                     use source::encoding 'ascii';

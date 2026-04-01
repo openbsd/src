@@ -17,6 +17,121 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.43.9 - Mary Ann Evans (under pen name George Eliot), "Middlemarch", 1872
+
+L<Announced on 2026-03-20 by Eric Herman|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270813.html>
+
+  "the growing good of the world is partly dependent on unhistoric acts;
+  and that things are not so ill with you and me as they might have been,
+  is half owing to the number who lived faithfully a hidden life"
+
+=head2 v5.43.8 - Raymond Chandler, "The Big Sleep"
+
+L<Announced on 2026-02-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2026/02/msg270752.html>
+
+  "Would you have a Ben Hur, 1860, Third Edition, the one with the
+  duplicated line on page 116?"
+
+=head2 v5.43.7 - Vajra Chandrasekera, "The Saint of Bright Doors"
+
+L<Announced on 2026-01-19 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2026/01/msg270646.html>
+
+"When this door translates", Pipra says, pointing at it. "This side will be
+either the front or the back of the bright door. If it's the back, the door
+will vanish - we want to know what that looks like. Does it pop out of
+existence? Does it make a noise? Is there a puff of air? A farting sound?
+
+=head2 v5.43.6 - Christopher Hitchens, "Mortality"
+
+L<Announced on 2025-12-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/12/msg270596.html>
+
+For me, to remember friendship is to recall those conversations that it
+seemed a sin to break off: the ones that made the sacrifice of the
+following day a trivial one.
+
+=head2 v5.43.5 - Jean Giono
+
+L<Announced on 2025-11-20 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2025/11/msg270513.html>
+
+He who despises himself will never be happy.
+
+=head2 v5.43.4 - Helen Keller 1903, quoting John Richard Green 1870
+
+L<Announced on 2025-10-23 by Eric Herman|https://www.nntp.perl.org/group/perl.perl5.porters/2025/10/msg270412.html>
+
+Green, the historian, tells us that the world is moved along, not only
+by the mighty shoves of its heroes, but also by the aggregate of the
+tiny pushes of each honest worker; and that thought alone suffices to
+guide me in this dark world and wide.
+
+=head2 v5.43.3 - Doc Brown, "Back to the Future"
+
+L<Announced on 2025-09-23 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2025/09/msg270333.html>
+
+  Where we're going, we don't need roads.
+
+=head2 v5.43.2 - David Weber, "On Basilisk Station"
+
+L<Announced on 2025-08-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2025/08/msg270238.html>
+
+  "The bigger the lie, apparently, the more likely the uninformed were to
+  accept it, simply because they couldn't believe any government would tell
+  such an absurd story unless it were true."
+
+=head2 v5.43.1 - Ed Conway, "Material World"
+
+L<Announced on 2025-07-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2025/07/msg270117.html>
+
+  The water from the brine is evaporated in enormous hot vessels,
+  which leave the salt about the same consistency as wet sand.
+  After a run through another oven, what emerges are glistening
+  pure crystals of salt. I run my hands through the grains as
+  they emerge, surprised for a moment by how hot they are to touch.
+    'This is ultra fine,' says Joe. 'It goes into Wotsits.'
+
+=head2 v5.42.2-RC1 - Edgar Allan Poe, "The Murders in the Rue Morgue" (in "Tales of Mystery and Imagination")
+
+L<Announced on 2026-03-22 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270828.html>
+
+Whist has long been noted for its influence upon what is termed the
+calculating power; and men of the highest order of intellect have been
+known to take an apparently unaccountable delight in it, while eschewing
+chess as frivolous.  Beyond doubt there is nothing of a similar nature
+so greatly tasking the faculty of analysis.  The best chess player in
+Christendom may be little more than the best player of chess; but
+proficiency in whist implies capacity for success in all those more
+important undertakings where mind struggles with mind.
+
+=head2 v5.42.1 - Andrew Benedict, "The Wall-to-Wall Grave" (in "Alfred Hitchcock presents: Stories my mother never told me, Part One")
+
+L<Announced on 2026-03-08 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270767.html>
+
+  'There are worse crimes than murder,' said the small man in the grey
+suit.  'And there are worse punishments than the electric chair.'
+[...]
+  'Civilization?' the little man questioned, as the bartender drew my
+beer.  'What is it, anyway? It's a carefully cultivated myth.  We are
+just savages living in upholstered caves.  Give any man sufficient
+provocation and the barbarian will emerge.'
+
+=head2 v5.42.1-RC1 - "Saki" (H. H. Munro), "Sredni Vashtar" (in "Alfred Hitchcock presents: 'Stories they wouldn't let me do on TV'")
+
+L<Announced on 2026-02-22 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/02/msg270754.html>
+
+In the shed that evening there was an innovation in the worship of the
+hutch-god.  Conradin had been wont to chant his praises, tonight he
+asked a boon.
+"Do one thing for me, Sredni Vashtar."
+The thing was not specified.  As Sredni Vashtar was a god he must be
+supposed to know.  And choking back a sob as he looked at the other
+empty corner Conradin went back to the world he so hated.
+
+=head2 v5.42.0 - Douglas Adams, "The Hitchhiker's Guide to the Galaxy"
+
+L<Announced on 2025-07-03 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/group/perl.perl5.porters/2025/07/msg270067.html>
+
+  "Forty-two," said Deep Thought, with infinite majesty and calm.
+
 =head2 v5.42.0-RC3 - Bernard de Chartres
 
 L<Announced on 2025-07-01 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2025/07/msg270063.html>
@@ -151,6 +266,49 @@ L<Announced on 2024-07-02 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/gr
   We find that in research a certain amount of intelligent ignorance
   is essential to progress; for, if you know too much, you won't try
   the thing.
+
+=head2 v5.40.4-RC1 - Edgar Allan Poe, "The Fall of the House of Usher" (in "Tales of Mystery and Imagination")
+
+L<Announced on 2026-03-22 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270827.html>
+
+To an anomalous species of terror I found him a bounden slave.  "I shall
+perish", said he, "I must perish in this deplorable folly.  Thus, thus,
+and not otherwise, shall I be lost.  I dread the events of the future,
+not in themselves, but in their results.  I shudder at the thought of
+any, even the most trivial, incident, which may operate upon this
+intolerable agitation of soul.  I have, indeed, no abhorrence of danger,
+except in its absolute effect--in terror.  In this unnerved, in this
+pitiable, condition I feel that the period will sooner or later arrive
+when I must abandon life and reason together, in some struggle with the
+grim phantasm, FEAR."
+
+=head2 v5.40.3 - J. M. Roberts, "The Penguin History of Europe"
+
+L<Announced on 2025-08-03 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/08/msg270153.html>
+
+The Portuguese were already fairly familiar with oceanic waters when
+Prince Henry began to mount a series of exploratory voyages in another
+direction. [...] Henry died in 1460, but by then his countrymen were
+ready to go on south.  In 1473 they crossed the Equator and in 1487
+reached the Cape of Good Hope.  Ahead lay the Indian Ocean; Arabs had
+long traded across it and pilots were available.  Beyond it lay even
+richer sources of spices.  In 1498 Vasco da Gama picked up an Omani
+pilot on the east African coast and set off for Asia.  In May he dropped
+anchor off Calicut, on the west coast of India.  For the first time,
+Asia was in direct sea-communication with Europe.
+
+=head2 v5.40.3-RC1 - J. M. Roberts, "The Penguin History of Europe"
+
+L<Announced on 2025-07-21 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/07/msg270122.html>
+
+In 1522, thirty years after Columbus' landfall in the Bahamas, another
+ship sailing west in the service of Spain completed the first voyage
+round the world.  It had set out under the command of a Portuguese,
+Magellan, who had got as far as the Philippines, where he was killed.
+By then he had discovered and sailed through the straits named after him
+and with this voyage and its demonstration that the great oceans were
+all interconnected, the prologue to the European age can be considered
+over.
 
 =head2 v5.40.2 - E. H. Gombrich, trans. Caroline Mustill, "A Little History of the World"
 
@@ -327,6 +485,35 @@ counterparts across the Atlantic were busy blowing each other to pieces
 in a Civil War, they embarked on the construction of the Metropolitan
 Line knowing only one thing for certain - there was no way they were
 going to be able to run steam trains through it.
+
+=head2 v5.38.5 - J. M. Roberts, "The Penguin History of Europe"
+
+L<Announced on 2025-08-03 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/08/msg270152.html>
+
+In 1495 the first map showing [Columbus's] discoveries appeared, with
+Cuba properly marked as an island and not (as Columbus had made his crew
+swear it was) part of the Asian mainland. [...] A further important step
+followed in 1502, when an Italian in a Portuguese vessel visiting the
+coast of what is now Brazil struck southward to sail as far as the
+river Plate.  Amerigo Vespucci's second voyage demonstrated conclusively
+that a whole continent lay to the south of the first great discoveries.
+Five years later a German geographer named the new continent in his
+honour - America - and the name was later applied to the northern
+continent, too.  Not until 1726, though, was it to be demonstrated for
+certain that it was not joined to Asia in the region of the Bering
+Straits.
+
+=head2 v5.38.5-RC1 - J. M. Roberts, "The Penguin History of Europe"
+
+L<Announced on 2025-07-21 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/07/msg270121.html>
+
+Columbus set sail in 1492 and after 69 days his three little ships made
+a landfall in the Bahamas.  A fortnight later he came to Cuba, which he
+named Hispaniola, before returning to Spain.  The following year he came
+back to explore the islands known ever since as the West Indies (whose
+name commemorates Columbus' tenacious belief that he had reached Asia).
+His confident leap in the dark had changed world history.  Without
+knowing it he had discovered a new world.
 
 =head2 v5.38.4 - E. H. Gombrich, trans. Caroline Mustill, "A Little History of the World"
 

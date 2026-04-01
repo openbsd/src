@@ -66,746 +66,782 @@ the strings?).
 
 =head1 THE RECORDS
 
- Pump-  Release         Date            Notes
- kin                                    (by no means
- Holder                                  comprehensive,
-                                         see Changes*
-                                         for details)
+ Pumpkin   Release        Date            Notes
+ Holder                                   (by no means
+                                           comprehensive,
+                                           see Changes*
+                                           for details)
  ======================================================================
 
- Larry   0              Classified.     Don't ask.
-
- Larry   1.000          1987-Dec-18
-
-          1.001..10     1988-Jan-30
-          1.011..14     1988-Feb-02
- Schwern  1.0.15        2002-Dec-18     Modernization
- Richard  1.0_16        2003-Dec-18
-
- Larry   2.000          1988-Jun-05
-
-          2.001         1988-Jun-28
-
- Larry   3.000          1989-Oct-18
-
-          3.001         1989-Oct-26
-          3.002..4      1989-Nov-11
-          3.005         1989-Nov-18
-          3.006..8      1989-Dec-22
-          3.009..13     1990-Mar-02
-          3.014         1990-Mar-13
-          3.015         1990-Mar-14
-          3.016..18     1990-Mar-28
-          3.019..27     1990-Aug-10     User subs.
-          3.028         1990-Aug-14
-          3.029..36     1990-Oct-17
-          3.037         1990-Oct-20
-          3.040         1990-Nov-10
-          3.041         1990-Nov-13
-          3.042..43     1991-Jan-??
-          3.044         1991-Jan-12
-
- Larry   4.000          1991-Mar-21
-
-          4.001..3      1991-Apr-12
-          4.004..9      1991-Jun-07
-          4.010         1991-Jun-10
-          4.011..18     1991-Nov-05
-          4.019         1991-Nov-11     Stable.
-          4.020..33     1992-Jun-08
-          4.034         1992-Jun-11
-          4.035         1992-Jun-23
- Larry    4.036         1993-Feb-05     Very stable.
-
-          5.000alpha1   1993-Jul-31
-          5.000alpha2   1993-Aug-16
-          5.000alpha3   1993-Oct-10
-          5.000alpha4   1993-???-??
-          5.000alpha5   1993-???-??
-          5.000alpha6   1994-Mar-18
-          5.000alpha7   1994-Mar-25
- Andy     5.000alpha8   1994-Apr-04
- Larry    5.000alpha9   1994-May-05     ext appears.
-          5.000alpha10  1994-Jun-11
-          5.000alpha11  1994-Jul-01
- Andy     5.000a11a     1994-Jul-07     To fit 14.
-          5.000a11b     1994-Jul-14
-          5.000a11c     1994-Jul-19
-          5.000a11d     1994-Jul-22
- Larry    5.000alpha12  1994-Aug-04
- Andy     5.000a12a     1994-Aug-08
-          5.000a12b     1994-Aug-15
-          5.000a12c     1994-Aug-22
-          5.000a12d     1994-Aug-22
-          5.000a12e     1994-Aug-22
-          5.000a12f     1994-Aug-24
-          5.000a12g     1994-Aug-24
-          5.000a12h     1994-Aug-24
- Larry    5.000beta1    1994-Aug-30
- Andy     5.000b1a      1994-Sep-06
- Larry    5.000beta2    1994-Sep-14     Core slushified.
- Andy     5.000b2a      1994-Sep-14
-          5.000b2b      1994-Sep-17
-          5.000b2c      1994-Sep-17
- Larry    5.000beta3    1994-Sep-??
- Andy     5.000b3a      1994-Sep-18
-          5.000b3b      1994-Sep-22
-          5.000b3c      1994-Sep-23
-          5.000b3d      1994-Sep-27
-          5.000b3e      1994-Sep-28
-          5.000b3f      1994-Sep-30
-          5.000b3g      1994-Oct-04
- Andy     5.000b3h      1994-Oct-07
- Larry?   5.000gamma    1994-Oct-13?
-
- Larry   5.000          1994-Oct-17
-
- Andy     5.000a        1994-Dec-19
-          5.000b        1995-Jan-18
-          5.000c        1995-Jan-18
-          5.000d        1995-Jan-18
-          5.000e        1995-Jan-18
-          5.000f        1995-Jan-18
-          5.000g        1995-Jan-18
-          5.000h        1995-Jan-18
-          5.000i        1995-Jan-26
-          5.000j        1995-Feb-07
-          5.000k        1995-Feb-11
-          5.000l        1995-Feb-21
-          5.000m        1995-Feb-28
-          5.000n        1995-Mar-07
-          5.000o        1995-Mar-13?
-
- Larry   5.001          1995-Mar-13
-
- Andy     5.001a        1995-Mar-15
-          5.001b        1995-Mar-31
-          5.001c        1995-Apr-07
-          5.001d        1995-Apr-14
-          5.001e        1995-Apr-18     Stable.
-          5.001f        1995-May-31
-          5.001g        1995-May-25
-          5.001h        1995-May-25
-          5.001i        1995-May-30
-          5.001j        1995-Jun-05
-          5.001k        1995-Jun-06
-          5.001l        1995-Jun-06     Stable.
-          5.001m        1995-Jul-02     Very stable.
-          5.001n        1995-Oct-31     Very unstable.
-          5.002beta1    1995-Nov-21
-          5.002b1a      1995-Dec-04
-          5.002b1b      1995-Dec-04
-          5.002b1c      1995-Dec-04
-          5.002b1d      1995-Dec-04
-          5.002b1e      1995-Dec-08
-          5.002b1f      1995-Dec-08
- Tom      5.002b1g      1995-Dec-21     Doc release.
- Andy     5.002b1h      1996-Jan-05
-          5.002b2       1996-Jan-14
- Larry    5.002b3       1996-Feb-02
- Andy     5.002gamma    1996-Feb-11
- Larry    5.002delta    1996-Feb-27
-
- Larry   5.002          1996-Feb-29     Prototypes.
-
- Charles  5.002_01      1996-Mar-25
-
-         5.003          1996-Jun-25     Security release.
-
-          5.003_01      1996-Jul-31
- Nick     5.003_02      1996-Aug-10
- Andy     5.003_03      1996-Aug-28
-          5.003_04      1996-Sep-02
-          5.003_05      1996-Sep-12
-          5.003_06      1996-Oct-07
-          5.003_07      1996-Oct-10
- Chip     5.003_08      1996-Nov-19
-          5.003_09      1996-Nov-26
-          5.003_10      1996-Nov-29
-          5.003_11      1996-Dec-06
-          5.003_12      1996-Dec-19
-          5.003_13      1996-Dec-20
-          5.003_14      1996-Dec-23
-          5.003_15      1996-Dec-23
-          5.003_16      1996-Dec-24
-          5.003_17      1996-Dec-27
-          5.003_18      1996-Dec-31
-          5.003_19      1997-Jan-04
-          5.003_20      1997-Jan-07
-          5.003_21      1997-Jan-15
-          5.003_22      1997-Jan-16
-          5.003_23      1997-Jan-25
-          5.003_24      1997-Jan-29
-          5.003_25      1997-Feb-04
-          5.003_26      1997-Feb-10
-          5.003_27      1997-Feb-18
-          5.003_28      1997-Feb-21
-          5.003_90      1997-Feb-25     Ramping up to the 5.004 release.
-          5.003_91      1997-Mar-01
-          5.003_92      1997-Mar-06
-          5.003_93      1997-Mar-10
-          5.003_94      1997-Mar-22
-          5.003_95      1997-Mar-25
-          5.003_96      1997-Apr-01
-          5.003_97      1997-Apr-03     Fairly widely used.
-          5.003_97a     1997-Apr-05
-          5.003_97b     1997-Apr-08
-          5.003_97c     1997-Apr-10
-          5.003_97d     1997-Apr-13
-          5.003_97e     1997-Apr-15
-          5.003_97f     1997-Apr-17
-          5.003_97g     1997-Apr-18
-          5.003_97h     1997-Apr-24
-          5.003_97i     1997-Apr-25
-          5.003_97j     1997-Apr-28
-          5.003_98      1997-Apr-30
-          5.003_99      1997-May-01
-          5.003_99a     1997-May-09
-          p54rc1        1997-May-12     Release Candidates.
-          p54rc2        1997-May-14
-
- Chip    5.004          1997-May-15     A major maintenance release.
-
- Tim      5.004_01-t1   1997-???-??     The 5.004 maintenance track.
-          5.004_01-t2   1997-Jun-11     aka perl5.004m1t2
-          5.004_01      1997-Jun-13
-          5.004_01_01   1997-Jul-29     aka perl5.004m2t1
-          5.004_01_02   1997-Aug-01     aka perl5.004m2t2
-          5.004_01_03   1997-Aug-05     aka perl5.004m2t3
-          5.004_02      1997-Aug-07
-          5.004_02_01   1997-Aug-12     aka perl5.004m3t1
-          5.004_03-t2   1997-Aug-13     aka perl5.004m3t2
-          5.004_03      1997-Sep-05
-          5.004_04-t1   1997-Sep-19     aka perl5.004m4t1
-          5.004_04-t2   1997-Sep-23     aka perl5.004m4t2
-          5.004_04-t3   1997-Oct-10     aka perl5.004m4t3
-          5.004_04-t4   1997-Oct-14     aka perl5.004m4t4
-          5.004_04      1997-Oct-15
-          5.004_04-m1   1998-Mar-04     (5.004m5t1) Maint. trials for
-                                        5.004_05.
-          5.004_04-m2   1998-May-01
-          5.004_04-m3   1998-May-15
-          5.004_04-m4   1998-May-19
-          5.004_05-MT5  1998-Jul-21
-          5.004_05-MT6  1998-Oct-09
-          5.004_05-MT7  1998-Nov-22
-          5.004_05-MT8  1998-Dec-03
- Chip     5.004_05-MT9  1999-Apr-26
-          5.004_05      1999-Apr-29
-
- Malcolm  5.004_50      1997-Sep-09     The 5.005 development track.
-          5.004_51      1997-Oct-02
-          5.004_52      1997-Oct-15
-          5.004_53      1997-Oct-16
-          5.004_54      1997-Nov-14
-          5.004_55      1997-Nov-25
-          5.004_56      1997-Dec-18
-          5.004_57      1998-Feb-03
-          5.004_58      1998-Feb-06
-          5.004_59      1998-Feb-13
-          5.004_60      1998-Feb-20
-          5.004_61      1998-Feb-27
-          5.004_62      1998-Mar-06
-          5.004_63      1998-Mar-17
-          5.004_64      1998-Apr-03
-          5.004_65      1998-May-15
-          5.004_66      1998-May-29
- Sarathy  5.004_67      1998-Jun-15
-          5.004_68      1998-Jun-23
-          5.004_69      1998-Jun-29
-          5.004_70      1998-Jul-06
-          5.004_71      1998-Jul-09
-          5.004_72      1998-Jul-12
-          5.004_73      1998-Jul-13
-          5.004_74      1998-Jul-14     5.005 beta candidate.
-          5.004_75      1998-Jul-15     5.005 beta1.
-          5.004_76      1998-Jul-21     5.005 beta2.
-
- Sarathy  5.005         1998-Jul-22     Oneperl.
-
- Sarathy  5.005_01      1998-Jul-27     The 5.005 maintenance track.
-          5.005_02-T1   1998-Aug-02
-          5.005_02-T2   1998-Aug-05
-          5.005_02      1998-Aug-08
- Graham   5.005_03-MT1  1998-Nov-30
-          5.005_03-MT2  1999-Jan-04
-          5.005_03-MT3  1999-Jan-17
-          5.005_03-MT4  1999-Jan-26
-          5.005_03-MT5  1999-Jan-28
-          5.005_03-MT6  1999-Mar-05
-          5.005_03      1999-Mar-28
- Leon     5.005_04-RC1  2004-Feb-05
-          5.005_04-RC2  2004-Feb-18
-          5.005_04      2004-Feb-23
-          5.005_05-RC1  2009-Feb-16
-
- Sarathy  5.005_50      1998-Jul-26     The 5.6 development track.
-          5.005_51      1998-Aug-10
-          5.005_52      1998-Sep-25
-          5.005_53      1998-Oct-31
-          5.005_54      1998-Nov-30
-          5.005_55      1999-Feb-16
-          5.005_56      1999-Mar-01
-          5.005_57      1999-May-25
-          5.005_58      1999-Jul-27
-          5.005_59      1999-Aug-02
-          5.005_60      1999-Aug-02
-          5.005_61      1999-Aug-20
-          5.005_62      1999-Oct-15
-          5.005_63      1999-Dec-09
-          5.5.640       2000-Feb-02
-          5.5.650       2000-Feb-08     beta1
-          5.5.660       2000-Feb-22     beta2
-          5.5.670       2000-Feb-29     beta3
-          5.6.0-RC1     2000-Mar-09     Release candidate 1.
-          5.6.0-RC2     2000-Mar-14     Release candidate 2.
-          5.6.0-RC3     2000-Mar-21     Release candidate 3.
-
- Sarathy  5.6.0         2000-Mar-22
-
- Sarathy  5.6.1-TRIAL1  2000-Dec-18     The 5.6 maintenance track.
-          5.6.1-TRIAL2  2001-Jan-31
-          5.6.1-TRIAL3  2001-Mar-19
-          5.6.1-foolish 2001-Apr-01     The "fools-gold" release.
-          5.6.1         2001-Apr-08
- Rafael   5.6.2-RC1     2003-Nov-08
-          5.6.2         2003-Nov-15     Fix new build issues
-
- Jarkko   5.7.0         2000-Sep-02     The 5.7 track: Development.
-          5.7.1         2001-Apr-09
-          5.7.2         2001-Jul-13     Virtual release candidate 0.
-          5.7.3         2002-Mar-05
-          5.8.0-RC1     2002-Jun-01
-          5.8.0-RC2     2002-Jun-21
-          5.8.0-RC3     2002-Jul-13
-
- Jarkko   5.8.0         2002-Jul-18
-
- Jarkko   5.8.1-RC1     2003-Jul-10     The 5.8 maintenance track
-          5.8.1-RC2     2003-Jul-11
-          5.8.1-RC3     2003-Jul-30
-          5.8.1-RC4     2003-Aug-01
-          5.8.1-RC5     2003-Sep-22
-          5.8.1         2003-Sep-25
- Nicholas 5.8.2-RC1     2003-Oct-27
-          5.8.2-RC2     2003-Nov-03
-          5.8.2         2003-Nov-05
-          5.8.3-RC1     2004-Jan-07
-          5.8.3         2004-Jan-14
-          5.8.4-RC1     2004-Apr-05
-          5.8.4-RC2     2004-Apr-15
-          5.8.4         2004-Apr-21
-          5.8.5-RC1     2004-Jul-06
-          5.8.5-RC2     2004-Jul-08
-          5.8.5         2004-Jul-19
-          5.8.6-RC1     2004-Nov-11
-          5.8.6         2004-Nov-27
-          5.8.7-RC1     2005-May-18
-          5.8.7         2005-May-30
-          5.8.8-RC1     2006-Jan-20
-          5.8.8         2006-Jan-31
-          5.8.9-RC1     2008-Nov-10
-          5.8.9-RC2     2008-Dec-06
-          5.8.9         2008-Dec-14
-
- Hugo     5.9.0         2003-Oct-27     The 5.9 development track
- Rafael   5.9.1         2004-Mar-16
-          5.9.2         2005-Apr-01
-          5.9.3         2006-Jan-28
-          5.9.4         2006-Aug-15
-          5.9.5         2007-Jul-07
-          5.10.0-RC1    2007-Nov-17
-          5.10.0-RC2    2007-Nov-25
-
- Rafael   5.10.0        2007-Dec-18
-
- David M  5.10.1-RC1    2009-Aug-06     The 5.10 maintenance track
-          5.10.1-RC2    2009-Aug-18
-          5.10.1        2009-Aug-22
-
- Jesse    5.11.0        2009-Oct-02     The 5.11 development track
-          5.11.1        2009-Oct-20
- Leon     5.11.2        2009-Nov-20
- Jesse    5.11.3        2009-Dec-20
- Ricardo  5.11.4        2010-Jan-20
- Steve    5.11.5        2010-Feb-20
- Jesse    5.12.0-RC0    2010-Mar-21
-          5.12.0-RC1    2010-Mar-29
-          5.12.0-RC2    2010-Apr-01
-          5.12.0-RC3    2010-Apr-02
-          5.12.0-RC4    2010-Apr-06
-          5.12.0-RC5    2010-Apr-09
-
- Jesse    5.12.0        2010-Apr-12
-
- Jesse    5.12.1-RC2    2010-May-13     The 5.12 maintenance track
-          5.12.1-RC1    2010-May-09
-          5.12.1        2010-May-16
-          5.12.2-RC2    2010-Aug-31
-          5.12.2        2010-Sep-06
- Ricardo  5.12.3-RC1    2011-Jan-09
- Ricardo  5.12.3-RC2    2011-Jan-14
- Ricardo  5.12.3-RC3    2011-Jan-17
- Ricardo  5.12.3        2011-Jan-21
- Leon     5.12.4-RC1    2011-Jun-08
- Leon     5.12.4        2011-Jun-20
- Dominic  5.12.5        2012-Nov-10
-
- Leon     5.13.0        2010-Apr-20     The 5.13 development track
- Ricardo  5.13.1        2010-May-20
- Matt     5.13.2        2010-Jun-22
- David G  5.13.3        2010-Jul-20
- Florian  5.13.4        2010-Aug-20
- Steve    5.13.5        2010-Sep-19
- Miyagawa 5.13.6        2010-Oct-20
- BinGOs   5.13.7        2010-Nov-20
- Zefram   5.13.8        2010-Dec-20
- Jesse    5.13.9        2011-Jan-20
- Ævar     5.13.10       2011-Feb-20
- Florian  5.13.11       2011-Mar-20
- Jesse    5.14.0RC1     2011-Apr-20
- Jesse    5.14.0RC2     2011-May-04
- Jesse    5.14.0RC3     2011-May-11
-
- Jesse    5.14.0        2011-May-14     The 5.14 maintenance track
- Jesse    5.14.1        2011-Jun-16
- Florian  5.14.2-RC1    2011-Sep-19
-          5.14.2        2011-Sep-26
- Dominic  5.14.3        2012-Oct-12
- David M  5.14.4-RC1    2013-Mar-05
- David M  5.14.4-RC2    2013-Mar-07
- David M  5.14.4        2013-Mar-10
-
- David G  5.15.0        2011-Jun-20     The 5.15 development track
- Zefram   5.15.1        2011-Jul-20
- Ricardo  5.15.2        2011-Aug-20
- Stevan   5.15.3        2011-Sep-20
- Florian  5.15.4        2011-Oct-20
- Steve    5.15.5        2011-Nov-20
- Dave R   5.15.6        2011-Dec-20
- BinGOs   5.15.7        2012-Jan-20
- Max M    5.15.8        2012-Feb-20
- Abigail  5.15.9        2012-Mar-20
- Ricardo  5.16.0-RC0    2012-May-10
- Ricardo  5.16.0-RC1    2012-May-14
- Ricardo  5.16.0-RC2    2012-May-15
-
- Ricardo  5.16.0        2012-May-20     The 5.16 maintenance track
- Ricardo  5.16.1        2012-Aug-08
- Ricardo  5.16.2        2012-Nov-01
- Ricardo  5.16.3-RC1    2013-Mar-06
- Ricardo  5.16.3        2013-Mar-11
-
- Zefram   5.17.0        2012-May-26     The 5.17 development track
- Jesse L  5.17.1        2012-Jun-20
- TonyC    5.17.2        2012-Jul-20
- Steve    5.17.3        2012-Aug-20
- Florian  5.17.4        2012-Sep-20
- Florian  5.17.5        2012-Oct-20
- Ricardo  5.17.6        2012-Nov-20
- Dave R   5.17.7        2012-Dec-18
- Aaron    5.17.8        2013-Jan-20
- BinGOs   5.17.9        2013-Feb-20
- Max M    5.17.10       2013-Mar-21
- Ricardo  5.17.11       2013-Apr-20
-
- Ricardo  5.18.0-RC1    2013-May-11     The 5.18 maintenance track
- Ricardo  5.18.0-RC2    2013-May-12
- Ricardo  5.18.0-RC3    2013-May-13
- Ricardo  5.18.0-RC4    2013-May-15
- Ricardo  5.18.0        2013-May-18
- Ricardo  5.18.1-RC1    2013-Aug-01
- Ricardo  5.18.1-RC2    2013-Aug-03
- Ricardo  5.18.1-RC3    2013-Aug-08
- Ricardo  5.18.1        2013-Aug-12
- Ricardo  5.18.2        2014-Jan-06
- Ricardo  5.18.3-RC1    2014-Sep-17
- Ricardo  5.18.3-RC2    2014-Sep-27
- Ricardo  5.18.3        2014-Oct-01
- Ricardo  5.18.4        2014-Oct-01
-
- Ricardo   5.19.0       2013-May-20     The 5.19 development track
- David G   5.19.1       2013-Jun-21
- Aristotle 5.19.2       2013-Jul-22
- Steve     5.19.3       2013-Aug-20
- Steve     5.19.4       2013-Sep-20
- Steve     5.19.5       2013-Oct-20
- BinGOs    5.19.6       2013-Nov-20
- Abigail   5.19.7       2013-Dec-20
- Ricardo   5.19.8       2014-Jan-20
- TonyC     5.19.9       2014-Feb-20
- Aaron     5.19.10      2014-Mar-20
- Steve     5.19.11      2014-Apr-20
-
- Ricardo   5.20.0-RC1   2014-May-16     The 5.20 maintenance track
- Ricardo   5.20.0       2014-May-27
- Steve     5.20.1-RC1   2014-Aug-25
- Steve     5.20.1-RC2   2014-Sep-07
- Steve     5.20.1       2014-Sep-14
- Steve     5.20.2-RC1   2015-Jan-31
- Steve     5.20.2       2015-Feb-14
- Steve     5.20.3-RC1   2015-Aug-22
- Steve     5.20.3-RC2   2015-Aug-29
- Steve     5.20.3       2015-Sep-12
-
- Ricardo   5.21.0       2014-May-27     The 5.21 development track
- Matthew H 5.21.1       2014-Jun-20
- Abigail   5.21.2       2014-Jul-20
- Peter     5.21.3       2014-Aug-20
- Steve     5.21.4       2014-Sep-20
- Abigail   5.21.5       2014-Oct-20
- BinGOs    5.21.6       2014-Nov-20
- Max M     5.21.7       2014-Dec-20
- Matthew H 5.21.8       2015-Jan-20
- Sawyer X  5.21.9       2015-Feb-20
- Steve     5.21.10      2015-Mar-20
- Steve     5.21.11      2015-Apr-20
-
- Ricardo   5.22.0-RC1   2015-May-19     The 5.22 maintenance track
- Ricardo   5.22.0-RC2   2015-May-21
- Ricardo   5.22.0       2015-Jun-01
- Steve     5.22.1-RC1   2015-Oct-31
- Steve     5.22.1-RC2   2015-Nov-15
- Steve     5.22.1-RC3   2015-Dec-02
- Steve     5.22.1-RC4   2015-Dec-08
- Steve     5.22.1       2015-Dec-13
- Steve     5.22.2-RC1   2016-Apr-10
- Steve     5.22.2       2016-Apr-29
- Steve     5.22.3-RC1   2016-Jul-17
- Steve     5.22.3-RC2   2016-Jul-25
- Steve     5.22.3-RC3   2016-Aug-11
- Steve     5.22.3-RC4   2016-Oct-12
- Steve     5.22.3-RC5   2017-Jan-02
- Steve     5.22.3       2017-Jan-14
- Steve     5.22.4-RC1   2017-Jul-01
- Steve     5.22.4       2017-Jul-15
-
- Ricardo   5.23.0       2015-Jun-20     The 5.23 development track
- Matthew H 5.23.1       2015-Jul-20
- Matthew H 5.23.2       2015-Aug-20
- Peter     5.23.3       2015-Sep-20
- Steve     5.23.4       2015-Oct-20
- Abigail   5.23.5       2015-Nov-20
- David G   5.23.6       2015-Dec-21
- Stevan    5.23.7       2016-Jan-20
- Sawyer X  5.23.8       2016-Feb-20
- Abigail   5.23.9       2016-Mar-20
-
- Ricardo   5.24.0-RC1   2016-Apr-13     The 5.24 maintenance track
- Ricardo   5.24.0-RC2   2016-Apr-23
- Ricardo   5.24.0-RC3   2016-Apr-26
- Ricardo   5.24.0-RC4   2016-May-02
- Ricardo   5.24.0-RC5   2016-May-04
- Ricardo   5.24.0       2016-May-09
- Steve     5.24.1-RC1   2016-Jul-17
- Steve     5.24.1-RC2   2016-Jul-25
- Steve     5.24.1-RC3   2016-Aug-11
- Steve     5.24.1-RC4   2016-Oct-12
- Steve     5.24.1-RC5   2017-Jan-02
- Steve     5.24.1       2017-Jan-14
- Steve     5.24.2-RC1   2017-Jul-01
- Steve     5.24.2       2017-Jul-15
- Steve     5.24.3-RC1   2017-Sep-10
- Steve     5.24.3       2017-Sep-22
- Steve     5.24.4-RC1   2018-Mar-24
- Steve     5.24.4       2018-Apr-14
-
- Ricardo   5.25.0       2016-May-09     The 5.25 development track
- Sawyer X  5.25.1       2016-May-20
- Matthew H 5.25.2       2016-Jun-20
- Steve     5.25.3       2016-Jul-20
- BinGOs    5.25.4       2016-Aug-20
- Stevan    5.25.5       2016-Sep-20
- Aaron     5.25.6       2016-Oct-20
- Chad      5.25.7       2016-Nov-20
- Sawyer X  5.25.8       2016-Dec-20
- Abigail   5.25.9       2017-Jan-20
- Renee     5.25.10      2017-Feb-20
- Sawyer X  5.25.11      2017-Mar-20
- Sawyer X  5.25.12      2017-Apr-20
-
- Sawyer X  5.26.0-RC1   2017-May-11     The 5.26 maintenance track
- Sawyer X  5.26.0-RC2   2017-May-23
- Sawyer X  5.26.0       2017-May-30
- Steve     5.26.1-RC1   2017-Sep-10
- Steve     5.26.1       2017-Sep-22
- Steve     5.26.2-RC1   2018-Mar-24
- Steve     5.26.2       2018-Apr-14
- Steve     5.26.3-RC1   2018-Nov-08
- Steve     5.26.3       2018-Nov-29
-
- Sawyer X  5.27.0       2017-May-31     The 5.27 development track
- Eric      5.27.1       2017-Jun-20
- Aaron     5.27.2       2017-Jul-20
- Matthew H 5.27.3       2017-Aug-21
- John      5.27.4       2017-Sep-20
- Steve     5.27.5       2017-Oct-20
- Ether     5.27.6       2017-Nov-20
- BinGOs    5.27.7       2017-Dec-20
- Abigail   5.27.8       2018-Jan-20
- Renee     5.27.9       2018-Feb-20
- Todd      5.27.10      2018-Mar-20
- Sawyer X  5.27.11      2018-Apr-20
-
- Sawyer X  5.28.0-RC1   2018-May-21     The 5.28 maintenance track
- Sawyer X  5.28.0-RC2   2018-Jun-06
- Sawyer X  5.28.0-RC3   2018-Jun-18
- Sawyer X  5.28.0-RC4   2018-Jun-19
- Sawyer X  5.28.0       2018-Jun-22
- Steve     5.28.1-RC1   2018-Nov-08
- Steve     5.28.1       2018-Nov-29
- Steve     5.28.2-RC1   2019-Apr-05
- Steve     5.28.2       2019-Apr-19
- Steve     5.28.3-RC1   2020-May-18
- Steve     5.28.3       2020-Jun-01
-
- Sawyer X  5.29.0       2018-Jun-26     The 5.29 development track
- Steve     5.29.1       2018-Jul-20
- BinGOs    5.29.2       2018-Aug-20
- John      5.29.3       2018-Sep-20
- Aaron     5.29.4       2018-Oct-20
- Ether     5.29.5       2018-Nov-20
- Abigail   5.29.6       2018-Dec-18
- Abigail   5.29.7       2019-Jan-20
- Nicolas R 5.29.8       2019-Feb-20
- Zak Elep  5.29.9       2019-Mar-20
- Sawyer X  5.29.10      2019-Apr-20
-
- Sawyer X  5.30.0-RC1   2019-May-11     The 5.30 maintenance track
- Sawyer X  5.30.0-RC2   2019-May-17
- Sawyer X  5.30.0       2019-May-22
- Steve     5.30.1-RC1   2019-Oct-27
- Steve     5.30.1       2019-Nov-10
- Steve     5.30.2-RC1   2020-Feb-29
- Steve     5.30.2       2020-Mar-14
- Steve     5.30.3-RC1   2020-May-18
- Steve     5.30.3       2020-Jun-01
-
- Sawyer X  5.31.0       2019-May-24     The 5.31 development track
- Ether     5.31.1       2019-Jun-20
- Steve     5.31.2       2019-Jul-20
- Tom H     5.31.3       2019-Aug-20
- Max M     5.31.4       2019-Sep-20
- Steve     5.31.5       2019-Oct-20
- BinGOs    5.31.6       2019-Nov-20
- Nicolas R 5.31.7       2019-Dec-20
- Matthew H 5.31.8       2020-Jan-20
- Renee     5.31.9       2020-Feb-20
- Sawyer X  5.31.10      2020-Mar-20
- Sawyer X  5.31.11      2020-Apr-28
-
- Sawyer X  5.32.0-RC0   2020-May-30     The 5.32 maintenance track
- Sawyer X  5.32.0-RC1   2020-Jun-07
- Sawyer X  5.32.0       2020-Jun-20
- Steve     5.32.1-RC1   2021-Jan-09
- Steve     5.32.1       2021-Jan-23
-
- Sawyer X  5.33.0       2020-Jul-17     The 5.33 development track
- Ether     5.33.1       2020-Aug-20
- Sawyer X  5.33.2       2020-Sep-20
- Steve     5.33.3       2020-Oct-20
- Tom H     5.33.4       2020-Nov-20
- Max M     5.33.5       2020-Dec-20
- Richard L 5.33.6       2021-Jan-20
- Renee     5.33.7       2021-Feb-20
- Nicolas R 5.33.8       2021-Mar-20
- Todd R    5.33.9       2021-Apr-20
-
- Sawyer X  5.34.0-RC1   2021-May-04     The 5.34 maintenance track
- Sawyer X  5.34.0-RC2   2021-May-15
- Sawyer X  5.34.0       2021-May-20
- Steve     5.34.1-RC1   2022-Feb-27
- Steve     5.34.1-RC2   2022-Mar-06
- Steve     5.34.1       2022-Mar-13
- Paul E    5.34.2       2023-Nov-25
- Paul E    5.34.3       2023-Nov-29
-
- Ricardo   5.35.0       2021-May-20     The 5.35 development track
- Max       5.35.1       2021-Jun-20
- Neil B    5.35.2       2021-Jul-23
- Ether     5.35.3       2021-Aug-20
- Matthew H 5.35.4       2021-Sep-20
- Leon T    5.35.5       2021-Oct-21
- Richard L 5.35.6       2021-Nov-20
- Neil B    5.35.7       2021-Dec-20
- Nicolas R 5.35.8       2022-Jan-20
- Renee     5.35.9       2022-Feb-20
- Sawyer X  5.35.10      2022-Mar-20
- Steve     5.35.11      2022-Apr-20
-
- Ricardo   5.36.0-RC1   2022-May-20     The 5.36 maintenance track
- Ricardo   5.36.0-RC2   2022-May-20
- Ricardo   5.36.0-RC3   2022-May-22
- Ricardo   5.36.0       2022-May-27
- Steve     5.36.1-RC1   2023-Apr-10
- Steve     5.36.1-RC2   2023-Apr-11
- Steve     5.36.1-RC3   2023-Apr-16
- Steve     5.36.1       2023-Apr-23
- Paul E    5.36.2       2023-Nov-25
- Paul E    5.36.3       2023-Nov-29
-
- Ricardo   5.37.0       2022-May-27     The 5.37 development track
- Matthew H 5.37.1       2022-Jun-20
- Nicolas R 5.37.2       2022-Jul-20
- Neil B    5.37.3       2022-Aug-20
- Ether     5.37.4       2022-Sep-20
- Todd R    5.37.5       2022-Oct-20
- Max M     5.37.6       2022-Nov-20
- Richard L 5.37.7       2022-Dec-20
- Renee     5.37.8       2023-Jan-20
- Ether     5.37.9       2023-Feb-20
- Yves      5.37.10      2023-Mar-20
- Steve     5.37.11      2023-Apr-20
-
- Ricardo   5.38.0-RC1   2023-Jun-15     The 5.38 maintenance track
- Ricardo   5.38.0-RC2   2023-Jun-23
- Ricardo   5.38.0       2023-Jul-02
- Paul E    5.38.1       2023-Nov-25
- Paul E    5.38.2       2023-Nov-29
- Steve     5.38.3-RC1   2025-Jan-05
- Steve     5.38.3       2025-Jan-18
- Steve     5.38.4-RC1   2025-Mar-30
- Steve     5.38.4       2025-Apr-13
-
- Ricardo   5.39.0       2023-Jun-30     The 5.39 development track
- Steve     5.39.1       2023-Jul-20
- Paul E    5.39.2       2023-Aug-20
- Matthew H 5.39.3       2023-Sep-20
- Graham K  5.39.4       2023-Oct-25
- Ether     5.39.5       2023-Nov-20
- Philippe  5.39.6       2023-Dec-30
- Max       5.39.7       2024-Jan-20
- Renee     5.39.8       2024-Feb-23
- Paul E    5.39.9       2024-Mar-20
- Paul E    5.39.10      2024-Apr-29
-
- Graham K  5.40.0-RC1   2024-May-24     The 5.40 maintenance track
- Graham K  5.40.0-RC2   2024-Jun-04
- Graham K  5.40.0       2024-Jun-09
- Steve     5.40.1-RC1   2025-Jan-05
- Steve     5.40.1       2025-Jan-18
- Steve     5.40.2-RC1   2025-Mar-30
- Steve     5.40.2       2025-Apr-13
-
- Graham K  5.41.0       2024-Jun-10     The 5.41 development track
- Philippe  5.41.1       2024-Jul-02
- Ether     5.41.2       2024-Jul-20
- Philippe  5.41.3       2024-Aug-29
- Thibault  5.41.4       2024-Sep-20
- Richard L 5.41.5       2024-Oct-20
- Thibault  5.41.6       2024-Nov-20
- Max       5.41.7       2024-Dec-20
- Steve     5.41.8       2025-Jan-20
- Richard L 5.41.9       2025-Feb-24
- Lukas     5.41.10      2025-Mar-21
- Ether     5.41.11      2025-Apr-20
- Ether     5.41.12      2025-Apr-21
- Philippe  5.41.13      2025-May-28
-
- Thibault  5.42.0-RC1   2025-Jun-24     The 5.42 maintenance track
- Thibault  5.42.0-RC2   2025-Jun-27
- Thibault  5.42.0-RC3   2025-Jul-01
- Philippe  5.42.0       2025-Jul-03
+ Larry     0              Classified.     Don't ask.
+
+ Larry     1.000          1987-Dec-18
+
+            1.001..10     1988-Jan-30
+            1.011..14     1988-Feb-02
+ Schwern    1.0.15        2002-Dec-18     Modernization
+ Richard    1.0_16        2003-Dec-18
+
+ Larry     2.000          1988-Jun-05
+
+            2.001         1988-Jun-28
+
+ Larry     3.000          1989-Oct-18
+
+            3.001         1989-Oct-26
+            3.002..4      1989-Nov-11
+            3.005         1989-Nov-18
+            3.006..8      1989-Dec-22
+            3.009..13     1990-Mar-02
+            3.014         1990-Mar-13
+            3.015         1990-Mar-14
+            3.016..18     1990-Mar-28
+            3.019..27     1990-Aug-10     User subs.
+            3.028         1990-Aug-14
+            3.029..36     1990-Oct-17
+            3.037         1990-Oct-20
+            3.040         1990-Nov-10
+            3.041         1990-Nov-13
+            3.042..43     1991-Jan-??
+            3.044         1991-Jan-12
+
+ Larry     4.000          1991-Mar-21
+
+            4.001..3      1991-Apr-12
+            4.004..9      1991-Jun-07
+            4.010         1991-Jun-10
+            4.011..18     1991-Nov-05
+            4.019         1991-Nov-11     Stable.
+            4.020..33     1992-Jun-08
+            4.034         1992-Jun-11
+            4.035         1992-Jun-23
+ Larry      4.036         1993-Feb-05     Very stable.
+
+            5.000alpha1   1993-Jul-31
+            5.000alpha2   1993-Aug-16
+            5.000alpha3   1993-Oct-10
+            5.000alpha4   1993-???-??
+            5.000alpha5   1993-???-??
+            5.000alpha6   1994-Mar-18
+            5.000alpha7   1994-Mar-25
+ Andy       5.000alpha8   1994-Apr-04
+ Larry      5.000alpha9   1994-May-05     ext appears.
+            5.000alpha10  1994-Jun-11
+            5.000alpha11  1994-Jul-01
+ Andy       5.000a11a     1994-Jul-07     To fit 14.
+            5.000a11b     1994-Jul-14
+            5.000a11c     1994-Jul-19
+            5.000a11d     1994-Jul-22
+ Larry      5.000alpha12  1994-Aug-04
+ Andy       5.000a12a     1994-Aug-08
+            5.000a12b     1994-Aug-15
+            5.000a12c     1994-Aug-22
+            5.000a12d     1994-Aug-22
+            5.000a12e     1994-Aug-22
+            5.000a12f     1994-Aug-24
+            5.000a12g     1994-Aug-24
+            5.000a12h     1994-Aug-24
+ Larry      5.000beta1    1994-Aug-30
+ Andy       5.000b1a      1994-Sep-06
+ Larry      5.000beta2    1994-Sep-14     Core slushified.
+ Andy       5.000b2a      1994-Sep-14
+            5.000b2b      1994-Sep-17
+            5.000b2c      1994-Sep-17
+ Larry      5.000beta3    1994-Sep-??
+ Andy       5.000b3a      1994-Sep-18
+            5.000b3b      1994-Sep-22
+            5.000b3c      1994-Sep-23
+            5.000b3d      1994-Sep-27
+            5.000b3e      1994-Sep-28
+            5.000b3f      1994-Sep-30
+            5.000b3g      1994-Oct-04
+ Andy       5.000b3h      1994-Oct-07
+ Larry?     5.000gamma    1994-Oct-13?
+
+ Larry     5.000          1994-Oct-17
+
+ Andy       5.000a        1994-Dec-19
+            5.000b        1995-Jan-18
+            5.000c        1995-Jan-18
+            5.000d        1995-Jan-18
+            5.000e        1995-Jan-18
+            5.000f        1995-Jan-18
+            5.000g        1995-Jan-18
+            5.000h        1995-Jan-18
+            5.000i        1995-Jan-26
+            5.000j        1995-Feb-07
+            5.000k        1995-Feb-11
+            5.000l        1995-Feb-21
+            5.000m        1995-Feb-28
+            5.000n        1995-Mar-07
+            5.000o        1995-Mar-13?
+
+ Larry     5.001          1995-Mar-13
+
+ Andy       5.001a        1995-Mar-15
+            5.001b        1995-Mar-31
+            5.001c        1995-Apr-07
+            5.001d        1995-Apr-14
+            5.001e        1995-Apr-18     Stable.
+            5.001f        1995-May-31
+            5.001g        1995-May-25
+            5.001h        1995-May-25
+            5.001i        1995-May-30
+            5.001j        1995-Jun-05
+            5.001k        1995-Jun-06
+            5.001l        1995-Jun-06     Stable.
+            5.001m        1995-Jul-02     Very stable.
+            5.001n        1995-Oct-31     Very unstable.
+            5.002beta1    1995-Nov-21
+            5.002b1a      1995-Dec-04
+            5.002b1b      1995-Dec-04
+            5.002b1c      1995-Dec-04
+            5.002b1d      1995-Dec-04
+            5.002b1e      1995-Dec-08
+            5.002b1f      1995-Dec-08
+ Tom        5.002b1g      1995-Dec-21     Doc release.
+ Andy       5.002b1h      1996-Jan-05
+            5.002b2       1996-Jan-14
+ Larry      5.002b3       1996-Feb-02
+ Andy       5.002gamma    1996-Feb-11
+ Larry      5.002delta    1996-Feb-27
+
+ Larry     5.002          1996-Feb-29     Prototypes.
+
+ Charles    5.002_01      1996-Mar-25
+
+ Charles   5.003          1996-Jun-25     Security release.
+
+ Charles    5.003_01      1996-Jul-31
+ Nick       5.003_02      1996-Aug-10
+ Andy       5.003_03      1996-Aug-28
+            5.003_04      1996-Sep-02
+            5.003_05      1996-Sep-12
+            5.003_06      1996-Oct-07
+            5.003_07      1996-Oct-10
+ Chip       5.003_08      1996-Nov-19
+            5.003_09      1996-Nov-26
+            5.003_10      1996-Nov-29
+            5.003_11      1996-Dec-06
+            5.003_12      1996-Dec-19
+            5.003_13      1996-Dec-20
+            5.003_14      1996-Dec-23
+            5.003_15      1996-Dec-23
+            5.003_16      1996-Dec-24
+            5.003_17      1996-Dec-27
+            5.003_18      1996-Dec-31
+            5.003_19      1997-Jan-04
+            5.003_20      1997-Jan-07
+            5.003_21      1997-Jan-15
+            5.003_22      1997-Jan-16
+            5.003_23      1997-Jan-25
+            5.003_24      1997-Jan-29
+            5.003_25      1997-Feb-04
+            5.003_26      1997-Feb-10
+            5.003_27      1997-Feb-18
+            5.003_28      1997-Feb-21
+            5.003_90      1997-Feb-25     Ramping up to the 5.004 release.
+            5.003_91      1997-Mar-01
+            5.003_92      1997-Mar-06
+            5.003_93      1997-Mar-10
+            5.003_94      1997-Mar-22
+            5.003_95      1997-Mar-25
+            5.003_96      1997-Apr-01
+            5.003_97      1997-Apr-03     Fairly widely used.
+            5.003_97a     1997-Apr-05
+            5.003_97b     1997-Apr-08
+            5.003_97c     1997-Apr-10
+            5.003_97d     1997-Apr-13
+            5.003_97e     1997-Apr-15
+            5.003_97f     1997-Apr-17
+            5.003_97g     1997-Apr-18
+            5.003_97h     1997-Apr-24
+            5.003_97i     1997-Apr-25
+            5.003_97j     1997-Apr-28
+            5.003_98      1997-Apr-30
+            5.003_99      1997-May-01
+            5.003_99a     1997-May-09
+            p54rc1        1997-May-12     Release Candidates.
+            p54rc2        1997-May-14
+
+ Chip      5.004          1997-May-15     A major maintenance release.
+
+ Tim        5.004_01-t1   1997-???-??     The 5.004 maintenance track.
+            5.004_01-t2   1997-Jun-11     aka perl5.004m1t2
+            5.004_01      1997-Jun-13
+            5.004_01_01   1997-Jul-29     aka perl5.004m2t1
+            5.004_01_02   1997-Aug-01     aka perl5.004m2t2
+            5.004_01_03   1997-Aug-05     aka perl5.004m2t3
+            5.004_02      1997-Aug-07
+            5.004_02_01   1997-Aug-12     aka perl5.004m3t1
+            5.004_03-t2   1997-Aug-13     aka perl5.004m3t2
+            5.004_03      1997-Sep-05
+            5.004_04-t1   1997-Sep-19     aka perl5.004m4t1
+            5.004_04-t2   1997-Sep-23     aka perl5.004m4t2
+            5.004_04-t3   1997-Oct-10     aka perl5.004m4t3
+            5.004_04-t4   1997-Oct-14     aka perl5.004m4t4
+            5.004_04      1997-Oct-15
+            5.004_04-m1   1998-Mar-04     (5.004m5t1) Maint. trials for
+                                          5.004_05.
+            5.004_04-m2   1998-May-01
+            5.004_04-m3   1998-May-15
+            5.004_04-m4   1998-May-19
+            5.004_05-MT5  1998-Jul-21
+            5.004_05-MT6  1998-Oct-09
+            5.004_05-MT7  1998-Nov-22
+            5.004_05-MT8  1998-Dec-03
+ Chip       5.004_05-MT9  1999-Apr-26
+            5.004_05      1999-Apr-29
+
+ Malcolm    5.004_50      1997-Sep-09     The 5.005 development track.
+            5.004_51      1997-Oct-02
+            5.004_52      1997-Oct-15
+            5.004_53      1997-Oct-16
+            5.004_54      1997-Nov-14
+            5.004_55      1997-Nov-25
+            5.004_56      1997-Dec-18
+            5.004_57      1998-Feb-03
+            5.004_58      1998-Feb-06
+            5.004_59      1998-Feb-13
+            5.004_60      1998-Feb-20
+            5.004_61      1998-Feb-27
+            5.004_62      1998-Mar-06
+            5.004_63      1998-Mar-17
+            5.004_64      1998-Apr-03
+            5.004_65      1998-May-15
+            5.004_66      1998-May-29
+ Sarathy    5.004_67      1998-Jun-15
+            5.004_68      1998-Jun-23
+            5.004_69      1998-Jun-29
+            5.004_70      1998-Jul-06
+            5.004_71      1998-Jul-09
+            5.004_72      1998-Jul-12
+            5.004_73      1998-Jul-13
+            5.004_74      1998-Jul-14     5.005 beta candidate.
+            5.004_75      1998-Jul-15     5.005 beta1.
+            5.004_76      1998-Jul-21     5.005 beta2.
+
+ Sarathy   5.005          1998-Jul-22     Oneperl.
+
+ Sarathy    5.005_01      1998-Jul-27     The 5.005 maintenance track.
+            5.005_02-T1   1998-Aug-02
+            5.005_02-T2   1998-Aug-05
+            5.005_02      1998-Aug-08
+ Graham     5.005_03-MT1  1998-Nov-30
+            5.005_03-MT2  1999-Jan-04
+            5.005_03-MT3  1999-Jan-17
+            5.005_03-MT4  1999-Jan-26
+            5.005_03-MT5  1999-Jan-28
+            5.005_03-MT6  1999-Mar-05
+            5.005_03      1999-Mar-28
+ Leon       5.005_04-RC1  2004-Feb-05
+            5.005_04-RC2  2004-Feb-18
+            5.005_04      2004-Feb-23
+            5.005_05-RC1  2009-Feb-16
+
+ Sarathy    5.005_50      1998-Jul-26     The 5.6 development track.
+            5.005_51      1998-Aug-10
+            5.005_52      1998-Sep-25
+            5.005_53      1998-Oct-31
+            5.005_54      1998-Nov-30
+            5.005_55      1999-Feb-16
+            5.005_56      1999-Mar-01
+            5.005_57      1999-May-25
+            5.005_58      1999-Jul-27
+            5.005_59      1999-Aug-02
+            5.005_60      1999-Aug-02
+            5.005_61      1999-Aug-20
+            5.005_62      1999-Oct-15
+            5.005_63      1999-Dec-09
+            5.5.640       2000-Feb-02
+            5.5.650       2000-Feb-08     beta1
+            5.5.660       2000-Feb-22     beta2
+            5.5.670       2000-Feb-29     beta3
+            5.6.0-RC1     2000-Mar-09     Release candidate 1.
+            5.6.0-RC2     2000-Mar-14     Release candidate 2.
+            5.6.0-RC3     2000-Mar-21     Release candidate 3.
+
+ Sarathy   5.6.0          2000-Mar-22
+
+ Sarathy    5.6.1-TRIAL1  2000-Dec-18     The 5.6 maintenance track.
+            5.6.1-TRIAL2  2001-Jan-31
+            5.6.1-TRIAL3  2001-Mar-19
+            5.6.1-foolish 2001-Apr-01     The "fools-gold" release.
+            5.6.1         2001-Apr-08
+ Rafael     5.6.2-RC1     2003-Nov-08
+            5.6.2         2003-Nov-15     Fix new build issues
+
+ Jarkko     5.7.0         2000-Sep-02     The 5.7 track: Development.
+            5.7.1         2001-Apr-09
+            5.7.2         2001-Jul-13     Virtual release candidate 0.
+            5.7.3         2002-Mar-05
+            5.8.0-RC1     2002-Jun-01
+            5.8.0-RC2     2002-Jun-21
+            5.8.0-RC3     2002-Jul-13
+
+ Jarkko    5.8.0          2002-Jul-18
+
+ Jarkko     5.8.1-RC1     2003-Jul-10     The 5.8 maintenance track
+            5.8.1-RC2     2003-Jul-11
+            5.8.1-RC3     2003-Jul-30
+            5.8.1-RC4     2003-Aug-01
+            5.8.1-RC5     2003-Sep-22
+            5.8.1         2003-Sep-25
+ Nicholas   5.8.2-RC1     2003-Oct-27
+            5.8.2-RC2     2003-Nov-03
+            5.8.2         2003-Nov-05
+            5.8.3-RC1     2004-Jan-07
+            5.8.3         2004-Jan-14
+            5.8.4-RC1     2004-Apr-05
+            5.8.4-RC2     2004-Apr-15
+            5.8.4         2004-Apr-21
+            5.8.5-RC1     2004-Jul-06
+            5.8.5-RC2     2004-Jul-08
+            5.8.5         2004-Jul-19
+            5.8.6-RC1     2004-Nov-11
+            5.8.6         2004-Nov-27
+            5.8.7-RC1     2005-May-18
+            5.8.7         2005-May-30
+            5.8.8-RC1     2006-Jan-20
+            5.8.8         2006-Jan-31
+            5.8.9-RC1     2008-Nov-10
+            5.8.9-RC2     2008-Dec-06
+            5.8.9         2008-Dec-14
+
+ Hugo       5.9.0         2003-Oct-27     The 5.9 development track
+ Rafael     5.9.1         2004-Mar-16
+            5.9.2         2005-Apr-01
+            5.9.3         2006-Jan-28
+            5.9.4         2006-Aug-15
+            5.9.5         2007-Jul-07
+            5.10.0-RC1    2007-Nov-17
+            5.10.0-RC2    2007-Nov-25
+
+ Rafael    5.10.0         2007-Dec-18
+
+ David M    5.10.1-RC1    2009-Aug-06     The 5.10 maintenance track
+            5.10.1-RC2    2009-Aug-18
+            5.10.1        2009-Aug-22
+
+ Jesse      5.11.0        2009-Oct-02     The 5.11 development track
+            5.11.1        2009-Oct-20
+ Leon       5.11.2        2009-Nov-20
+ Jesse      5.11.3        2009-Dec-20
+ Ricardo    5.11.4        2010-Jan-20
+ Steve      5.11.5        2010-Feb-20
+ Jesse      5.12.0-RC0    2010-Mar-21
+            5.12.0-RC1    2010-Mar-29
+            5.12.0-RC2    2010-Apr-01
+            5.12.0-RC3    2010-Apr-02
+            5.12.0-RC4    2010-Apr-06
+            5.12.0-RC5    2010-Apr-09
+
+ Jesse     5.12.0         2010-Apr-12
+
+ Jesse      5.12.1-RC1    2010-May-09     The 5.12 maintenance track
+            5.12.1-RC2    2010-May-13
+            5.12.1        2010-May-16
+            5.12.2-RC1    2010-Aug-31
+            5.12.2        2010-Sep-06
+ Ricardo    5.12.3-RC1    2011-Jan-09
+            5.12.3-RC2    2011-Jan-14
+            5.12.3-RC3    2011-Jan-17
+            5.12.3        2011-Jan-21
+ Leon       5.12.4-RC1    2011-Jun-08
+            5.12.4        2011-Jun-20
+ Dominic    5.12.5        2012-Nov-10
+
+ Leon       5.13.0        2010-Apr-20     The 5.13 development track
+ Ricardo    5.13.1        2010-May-20
+ Matt       5.13.2        2010-Jun-22
+ David G    5.13.3        2010-Jul-20
+ Florian    5.13.4        2010-Aug-20
+ Steve      5.13.5        2010-Sep-19
+ Miyagawa   5.13.6        2010-Oct-20
+ BinGOs     5.13.7        2010-Nov-20
+ Zefram     5.13.8        2010-Dec-20
+ Jesse      5.13.9        2011-Jan-20
+ Ævar       5.13.10       2011-Feb-20
+ Florian    5.13.11       2011-Mar-20
+ Jesse      5.14.0-RC1    2011-Apr-20
+            5.14.0-RC2    2011-May-04
+            5.14.0-RC3    2011-May-11
+
+ Jesse     5.14.0         2011-May-14
+
+ Jesse      5.14.1        2011-Jun-16     The 5.14 maintenance track
+ Florian    5.14.2-RC1    2011-Sep-19
+            5.14.2        2011-Sep-26
+ Dominic    5.14.3        2012-Oct-12
+ David M    5.14.4-RC1    2013-Mar-05
+            5.14.4-RC2    2013-Mar-07
+            5.14.4        2013-Mar-10
+
+ David G    5.15.0        2011-Jun-20     The 5.15 development track
+ Zefram     5.15.1        2011-Jul-20
+ Ricardo    5.15.2        2011-Aug-20
+ Stevan     5.15.3        2011-Sep-20
+ Florian    5.15.4        2011-Oct-20
+ Steve      5.15.5        2011-Nov-20
+ Dave R     5.15.6        2011-Dec-20
+ BinGOs     5.15.7        2012-Jan-20
+ Max M      5.15.8        2012-Feb-20
+ Abigail    5.15.9        2012-Mar-20
+ Ricardo    5.16.0-RC0    2012-May-10
+            5.16.0-RC1    2012-May-14
+            5.16.0-RC2    2012-May-15
+
+ Ricardo   5.16.0         2012-May-20
+
+ Ricardo    5.16.1        2012-Aug-08     The 5.16 maintenance track
+            5.16.2        2012-Nov-01
+            5.16.3-RC1    2013-Mar-06
+            5.16.3        2013-Mar-11
+
+ Zefram     5.17.0        2012-May-26     The 5.17 development track
+ Jesse L    5.17.1        2012-Jun-20
+ TonyC      5.17.2        2012-Jul-20
+ Steve      5.17.3        2012-Aug-20
+ Florian    5.17.4        2012-Sep-20
+            5.17.5        2012-Oct-20
+ Ricardo    5.17.6        2012-Nov-20
+ Dave R     5.17.7        2012-Dec-18
+ Aaron      5.17.8        2013-Jan-20
+ BinGOs     5.17.9        2013-Feb-20
+ Max M      5.17.10       2013-Mar-21
+ Ricardo    5.17.11       2013-Apr-20
+            5.18.0-RC1    2013-May-11
+            5.18.0-RC2    2013-May-12
+            5.18.0-RC3    2013-May-13
+            5.18.0-RC4    2013-May-15
+
+ Ricardo   5.18.0         2013-May-18
+
+ Ricardo    5.18.1-RC1    2013-Aug-01     The 5.18 maintenance track
+            5.18.1-RC2    2013-Aug-03
+            5.18.1-RC3    2013-Aug-08
+            5.18.1        2013-Aug-12
+            5.18.2        2014-Jan-06
+            5.18.3-RC1    2014-Sep-17
+            5.18.3-RC2    2014-Sep-27
+            5.18.3        2014-Oct-01
+            5.18.4        2014-Oct-01
+
+ Ricardo    5.19.0       2013-May-20     The 5.19 development track
+ David G    5.19.1       2013-Jun-21
+ Aristotle  5.19.2       2013-Jul-22
+ Steve      5.19.3       2013-Aug-20
+            5.19.4       2013-Sep-20
+            5.19.5       2013-Oct-20
+ BinGOs     5.19.6       2013-Nov-20
+ Abigail    5.19.7       2013-Dec-20
+ Ricardo    5.19.8       2014-Jan-20
+ TonyC      5.19.9       2014-Feb-20
+ Aaron      5.19.10      2014-Mar-20
+ Steve      5.19.11      2014-Apr-20
+ Ricardo    5.20.0-RC1   2014-May-16
+
+ Ricardo   5.20.0        2014-May-27
+
+ Steve      5.20.1-RC1   2014-Aug-25     The 5.20 maintenance track
+            5.20.1-RC2   2014-Sep-07
+            5.20.1       2014-Sep-14
+            5.20.2-RC1   2015-Jan-31
+            5.20.2       2015-Feb-14
+            5.20.3-RC1   2015-Aug-22
+            5.20.3-RC2   2015-Aug-29
+            5.20.3       2015-Sep-12
+
+ Ricardo    5.21.0       2014-May-27     The 5.21 development track
+ Matthew H  5.21.1       2014-Jun-20
+ Abigail    5.21.2       2014-Jul-20
+ Peter      5.21.3       2014-Aug-20
+ Steve      5.21.4       2014-Sep-20
+ Abigail    5.21.5       2014-Oct-20
+ BinGOs     5.21.6       2014-Nov-20
+ Max M      5.21.7       2014-Dec-20
+ Matthew H  5.21.8       2015-Jan-20
+ Sawyer X   5.21.9       2015-Feb-20
+ Steve      5.21.10      2015-Mar-20
+            5.21.11      2015-Apr-20
+ Ricardo    5.22.0-RC1   2015-May-19
+            5.22.0-RC2   2015-May-21
+
+ Ricardo   5.22.0        2015-Jun-01
+
+ Steve      5.22.1-RC1   2015-Oct-31     The 5.22 maintenance track
+            5.22.1-RC2   2015-Nov-15
+            5.22.1-RC3   2015-Dec-02
+            5.22.1-RC4   2015-Dec-08
+            5.22.1       2015-Dec-13
+            5.22.2-RC1   2016-Apr-10
+            5.22.2       2016-Apr-29
+            5.22.3-RC1   2016-Jul-17
+            5.22.3-RC2   2016-Jul-25
+            5.22.3-RC3   2016-Aug-11
+            5.22.3-RC4   2016-Oct-12
+            5.22.3-RC5   2017-Jan-02
+            5.22.3       2017-Jan-14
+            5.22.4-RC1   2017-Jul-01
+            5.22.4       2017-Jul-15
+
+ Ricardo    5.23.0       2015-Jun-20     The 5.23 development track
+ Matthew H  5.23.1       2015-Jul-20
+            5.23.2       2015-Aug-20
+ Peter      5.23.3       2015-Sep-20
+ Steve      5.23.4       2015-Oct-20
+ Abigail    5.23.5       2015-Nov-20
+ David G    5.23.6       2015-Dec-21
+ Stevan     5.23.7       2016-Jan-20
+ Sawyer X   5.23.8       2016-Feb-20
+ Abigail    5.23.9       2016-Mar-20
+ Ricardo    5.24.0-RC1   2016-Apr-13
+            5.24.0-RC2   2016-Apr-23
+            5.24.0-RC3   2016-Apr-26
+            5.24.0-RC4   2016-May-02
+            5.24.0-RC5   2016-May-04
+
+ Ricardo   5.24.0        2016-May-09
+
+ Steve      5.24.1-RC1   2016-Jul-17     The 5.24 maintenance track
+            5.24.1-RC2   2016-Jul-25
+            5.24.1-RC3   2016-Aug-11
+            5.24.1-RC4   2016-Oct-12
+            5.24.1-RC5   2017-Jan-02
+            5.24.1       2017-Jan-14
+            5.24.2-RC1   2017-Jul-01
+            5.24.2       2017-Jul-15
+            5.24.3-RC1   2017-Sep-10
+            5.24.3       2017-Sep-22
+            5.24.4-RC1   2018-Mar-24
+            5.24.4       2018-Apr-14
+
+ Ricardo    5.25.0       2016-May-09     The 5.25 development track
+ Sawyer X   5.25.1       2016-May-20
+ Matthew H  5.25.2       2016-Jun-20
+ Steve      5.25.3       2016-Jul-20
+ BinGOs     5.25.4       2016-Aug-20
+ Stevan     5.25.5       2016-Sep-20
+ Aaron      5.25.6       2016-Oct-20
+ Chad       5.25.7       2016-Nov-20
+ Sawyer X   5.25.8       2016-Dec-20
+ Abigail    5.25.9       2017-Jan-20
+ Renee      5.25.10      2017-Feb-20
+ Sawyer X   5.25.11      2017-Mar-20
+            5.25.12      2017-Apr-20
+            5.26.0-RC1   2017-May-11
+            5.26.0-RC2   2017-May-23
+
+ Sawyer X  5.26.0        2017-May-30
+
+ Steve      5.26.1-RC1   2017-Sep-10     The 5.26 maintenance track
+            5.26.1       2017-Sep-22
+            5.26.2-RC1   2018-Mar-24
+            5.26.2       2018-Apr-14
+            5.26.3-RC1   2018-Nov-08
+            5.26.3       2018-Nov-29
+
+ Sawyer X   5.27.0       2017-May-31     The 5.27 development track
+ Eric       5.27.1       2017-Jun-20
+ Aaron      5.27.2       2017-Jul-20
+ Matthew H  5.27.3       2017-Aug-21
+ John       5.27.4       2017-Sep-20
+ Steve      5.27.5       2017-Oct-20
+ Ether      5.27.6       2017-Nov-20
+ BinGOs     5.27.7       2017-Dec-20
+ Abigail    5.27.8       2018-Jan-20
+ Renee      5.27.9       2018-Feb-20
+ Todd       5.27.10      2018-Mar-20
+ Sawyer X   5.27.11      2018-Apr-20
+            5.28.0-RC1   2018-May-21
+            5.28.0-RC2   2018-Jun-06
+            5.28.0-RC3   2018-Jun-18
+            5.28.0-RC4   2018-Jun-19
+
+ Sawyer X  5.28.0        2018-Jun-22
+
+ Steve      5.28.1-RC1   2018-Nov-08     The 5.28 maintenance track
+            5.28.1       2018-Nov-29
+            5.28.2-RC1   2019-Apr-05
+            5.28.2       2019-Apr-19
+            5.28.3-RC1   2020-May-18
+            5.28.3       2020-Jun-01
+
+ Sawyer X   5.29.0       2018-Jun-26     The 5.29 development track
+ Steve      5.29.1       2018-Jul-20
+ BinGOs     5.29.2       2018-Aug-20
+ John       5.29.3       2018-Sep-20
+ Aaron      5.29.4       2018-Oct-20
+ Ether      5.29.5       2018-Nov-20
+ Abigail    5.29.6       2018-Dec-18
+            5.29.7       2019-Jan-20
+ Nicolas R  5.29.8       2019-Feb-20
+ Zak Elep   5.29.9       2019-Mar-20
+ Sawyer X   5.29.10      2019-Apr-20
+            5.30.0-RC1   2019-May-11
+            5.30.0-RC2   2019-May-17
+
+ Sawyer X  5.30.0        2019-May-22
+
+ Steve      5.30.1-RC1   2019-Oct-27     The 5.30 maintenance track
+            5.30.1       2019-Nov-10
+            5.30.2-RC1   2020-Feb-29
+            5.30.2       2020-Mar-14
+            5.30.3-RC1   2020-May-18
+            5.30.3       2020-Jun-01
+
+ Sawyer X   5.31.0       2019-May-24     The 5.31 development track
+ Ether      5.31.1       2019-Jun-20
+ Steve      5.31.2       2019-Jul-20
+ Tom H      5.31.3       2019-Aug-20
+ Max M      5.31.4       2019-Sep-20
+ Steve      5.31.5       2019-Oct-20
+ BinGOs     5.31.6       2019-Nov-20
+ Nicolas R  5.31.7       2019-Dec-20
+ Matthew H  5.31.8       2020-Jan-20
+ Renee      5.31.9       2020-Feb-20
+ Sawyer X   5.31.10      2020-Mar-20
+            5.31.11      2020-Apr-28
+            5.32.0-RC0   2020-May-30
+            5.32.0-RC1   2020-Jun-07
+
+ Sawyer X  5.32.0        2020-Jun-20
+
+ Steve      5.32.1-RC1   2021-Jan-09     The 5.32 maintenance track
+            5.32.1       2021-Jan-23
+
+ Sawyer X   5.33.0       2020-Jul-17     The 5.33 development track
+ Ether      5.33.1       2020-Aug-20
+ Sawyer X   5.33.2       2020-Sep-20
+ Steve      5.33.3       2020-Oct-20
+ Tom H      5.33.4       2020-Nov-20
+ Max M      5.33.5       2020-Dec-20
+ Richard L  5.33.6       2021-Jan-20
+ Renee      5.33.7       2021-Feb-20
+ Nicolas R  5.33.8       2021-Mar-20
+ Todd R     5.33.9       2021-Apr-20
+ Sawyer X   5.34.0-RC1   2021-May-04
+            5.34.0-RC2   2021-May-15
+
+ Sawyer X  5.34.0        2021-May-20
+
+ Steve      5.34.1-RC1   2022-Feb-27     The 5.34 maintenance track
+            5.34.1-RC2   2022-Mar-06
+            5.34.1       2022-Mar-13
+ Paul E     5.34.2       2023-Nov-25
+            5.34.3       2023-Nov-29
+
+ Ricardo    5.35.0       2021-May-20     The 5.35 development track
+ Max        5.35.1       2021-Jun-20
+ Neil B     5.35.2       2021-Jul-23
+ Ether      5.35.3       2021-Aug-20
+ Matthew H  5.35.4       2021-Sep-20
+ Leon T     5.35.5       2021-Oct-21
+ Richard L  5.35.6       2021-Nov-20
+ Neil B     5.35.7       2021-Dec-20
+ Nicolas R  5.35.8       2022-Jan-20
+ Renee      5.35.9       2022-Feb-20
+ Sawyer X   5.35.10      2022-Mar-20
+ Steve      5.35.11      2022-Apr-20
+ Ricardo    5.36.0-RC1   2022-May-20
+            5.36.0-RC2   2022-May-20
+            5.36.0-RC3   2022-May-22
+
+ Ricardo   5.36.0        2022-May-27
+
+ Steve      5.36.1-RC1   2023-Apr-10     The 5.36 maintenance track
+            5.36.1-RC2   2023-Apr-11
+            5.36.1-RC3   2023-Apr-16
+            5.36.1       2023-Apr-23
+ Paul E     5.36.2       2023-Nov-25
+            5.36.3       2023-Nov-29
+
+ Ricardo    5.37.0       2022-May-27     The 5.37 development track
+ Matthew H  5.37.1       2022-Jun-20
+ Nicolas R  5.37.2       2022-Jul-20
+ Neil B     5.37.3       2022-Aug-20
+ Ether      5.37.4       2022-Sep-20
+ Todd R     5.37.5       2022-Oct-20
+ Max M      5.37.6       2022-Nov-20
+ Richard L  5.37.7       2022-Dec-20
+ Renee      5.37.8       2023-Jan-20
+ Ether      5.37.9       2023-Feb-20
+ Yves       5.37.10      2023-Mar-20
+ Steve      5.37.11      2023-Apr-20
+ Ricardo    5.38.0-RC1   2023-Jun-15
+            5.38.0-RC2   2023-Jun-23
+
+ Ricardo   5.38.0        2023-Jul-02
+
+ Paul E     5.38.1       2023-Nov-25     The 5.38 maintenance track
+            5.38.2       2023-Nov-29
+ Steve      5.38.3-RC1   2025-Jan-05
+            5.38.3       2025-Jan-18
+            5.38.4-RC1   2025-Mar-30
+            5.38.4       2025-Apr-13
+            5.38.5-RC1   2025-Jul-21
+            5.38.5       2025-Aug-03
+
+ Ricardo    5.39.0       2023-Jun-30     The 5.39 development track
+ Steve      5.39.1       2023-Jul-20
+ Paul E     5.39.2       2023-Aug-20
+ Matthew H  5.39.3       2023-Sep-20
+ Graham K   5.39.4       2023-Oct-25
+ Ether      5.39.5       2023-Nov-20
+ Philippe   5.39.6       2023-Dec-30
+ Max        5.39.7       2024-Jan-20
+ Renee      5.39.8       2024-Feb-23
+ Paul E     5.39.9       2024-Mar-20
+            5.39.10      2024-Apr-29
+ Graham K   5.40.0-RC1   2024-May-24
+            5.40.0-RC2   2024-Jun-04
+
+ Graham K  5.40.0        2024-Jun-09
+
+ Steve      5.40.1-RC1   2025-Jan-05     The 5.40 maintenance track
+            5.40.1       2025-Jan-18
+            5.40.2-RC1   2025-Mar-30
+            5.40.2       2025-Apr-13
+            5.40.3-RC1   2025-Jul-21
+            5.40.3       2025-Aug-03
+            5.40.4-RC1   2026-Mar-22
+            5.40.4       2026-Mar-29
+
+ Graham K   5.41.0       2024-Jun-10     The 5.41 development track
+ Philippe   5.41.1       2024-Jul-02
+ Ether      5.41.2       2024-Jul-20
+ Philippe   5.41.3       2024-Aug-29
+ Thibault   5.41.4       2024-Sep-20
+ Richard L  5.41.5       2024-Oct-20
+ Thibault   5.41.6       2024-Nov-20
+ Max        5.41.7       2024-Dec-20
+ Steve      5.41.8       2025-Jan-20
+ Richard L  5.41.9       2025-Feb-24
+ Lukas      5.41.10      2025-Mar-21
+ Ether      5.41.11      2025-Apr-20
+            5.41.12      2025-Apr-21
+ Philippe   5.41.13      2025-May-28
+ Thibault   5.42.0-RC1   2025-Jun-24
+            5.42.0-RC2   2025-Jun-27
+            5.42.0-RC3   2025-Jul-01
+
+ Philippe  5.42.0        2025-Jul-03
+
+ Steve      5.42.1-RC1   2026-Feb-22     The 5.42 maintenance track
+            5.42.1       2026-Mar-08
+            5.42.2-RC1   2026-Mar-22
+            5.42.2       2026-Mar-29
+
+ Philippe   5.43.0       2025-Jul-03     The 5.43 development track
+ Richard L  5.43.1       2025-Jul-20
+ Ether      5.43.2       2025-Aug-20
+ Thibault   5.43.3       2025-Sep-23
+ Eric       5.43.4       2025-Oct-22
+ Thibault   5.43.5       2025-Nov-20
+ Steve      5.43.6       2025-Dec-20
+ Max        5.43.7       2026-Jan-19
+ Richard L  5.43.8       2026-Feb-20
+ Eric       5.43.9       2026-Mar-20
 
 =head2 SELECTED RELEASE SIZES
 
@@ -1244,6 +1280,8 @@ the Perl source distribution for somewhat more selected releases.
  win32       1313     65      1326     65      1331     65
  x2p            -      -         -      -         -      -
 
+ ======================================================================
+
                   5.32.0           5.34.0           5.36.0
 
  Configure    588      1       592      1       603      1
@@ -1262,20 +1300,22 @@ the Perl source distribution for somewhat more selected releases.
  vos           12      7        12      7         8      7
  win32       1011     47      1001     46       966     45
 
-                  5.38.0
+ ======================================================================
 
- Configure    604      1
- Cross        122     15
- h2pl          13     15
- hints        358     83
- os2          538     70
- plan9        322     20
- Porting     1640     80
- qnx            1      4
- utils        606     52
- vms          544     12
- vos            8      7
- win32        982     45
+                  5.38.0           5.40.0           5.42.0
+
+ Configure    604      1       613      1       613      1
+ Cross        122     15       126     15       126     15
+ h2pl          13     15        24     15        24     15
+ hints        358     83       362     84       362     84
+ os2          538     70       580     70       580     70
+ plan9        322     20       330     20       330     20
+ Porting     1640     80      1660     80      1670     78
+ qnx            1      4         5      4         5      4
+ utils        606     52       773     52       773     52
+ vms          544     12       548     12       547     12
+ vos            8      7        12      7        12      7
+ win32        982     45      1016     47      1025     47
 
 =head2 SELECTED PATCH SIZES
 

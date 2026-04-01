@@ -6373,9 +6373,13 @@ pod/perl5381delta.pod			Perl changes in version 5.38.1
 pod/perl5382delta.pod			Perl changes in version 5.38.2
 pod/perl5383delta.pod			Perl changes in version 5.38.3
 pod/perl5384delta.pod			Perl changes in version 5.38.4
+pod/perl5385delta.pod			Perl changes in version 5.38.5
 pod/perl5400delta.pod			Perl changes in version 5.40.0
 pod/perl5401delta.pod			Perl changes in version 5.40.1
 pod/perl5402delta.pod			Perl changes in version 5.40.2
+pod/perl5403delta.pod			Perl changes in version 5.40.3
+pod/perl5420delta.pod			Perl changes in version 5.42.0
+pod/perl5421delta.pod			Perl changes in version 5.42.1
 pod/perl561delta.pod			Perl changes in version 5.6.1
 pod/perl56delta.pod			Perl changes in version 5.6
 pod/perl581delta.pod			Perl changes in version 5.8.1
@@ -6624,6 +6628,7 @@ t/class/construct.t			See if class constructors work
 t/class/destruct.t			See if class destruction works
 t/class/field.t				See if class field declarations work
 t/class/gh22169.t			Test defining a class that previously failed to define
+t/class/gh23511.t			Test defining a reader after a strict 'vars' violation
 t/class/inherit.t			See if class inheritance works
 t/class/method.t			See if class method declarations work
 t/class/phasers.t			See if class phaser blocks work

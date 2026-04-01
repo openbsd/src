@@ -10,7 +10,7 @@ use warnings ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, %EXPORT_TAGS, @EXPORT_OK, $AUTOLOAD, %DEFLATE_CONSTANTS, @DEFLATE_CONSTANTS);
 
-$VERSION = '2.213';
+$VERSION = '2.222';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -626,7 +626,7 @@ Compress::Raw::Zlib - Low-Level Interface to zlib or zlib-ng compression library
     $d->msg() ;
     $d->get_Strategy();
     $d->get_Level();
-    $d->get_BufSize();
+    $d->get_Bufsize();
 
     ($i, $status) = new Compress::Raw::Zlib::Inflate( [OPT] ) ;
     $status = $i->inflate($input, $output [, $eof]) ;
@@ -638,7 +638,7 @@ Compress::Raw::Zlib - Low-Level Interface to zlib or zlib-ng compression library
     $i->total_in() ;
     $i->total_out() ;
     $i->msg() ;
-    $d->get_BufSize();
+    $d->get_Bufsize();
 
     $crc = adler32($buffer [,$crc]) ;
     $crc = crc32($buffer [,$crc]) ;
@@ -923,7 +923,7 @@ C<Z_DEFAULT_STRATEGY>, C<Z_FILTERED> and C<Z_HUFFMAN_ONLY>.
 
 Returns the compression level being used.
 
-=head2 B<$d-E<gt>get_BufSize()>
+=head2 B<$d-E<gt>get_Bufsize()>
 
 Returns the buffer size used to carry out the compression.
 
@@ -1215,7 +1215,7 @@ Returns the total number of bytes compressed bytes input to inflate.
 
 Returns the total number of uncompressed bytes output from inflate.
 
-=head2 B<$d-E<gt>get_BufSize()>
+=head2 B<$d-E<gt>get_Bufsize()>
 
 Returns the buffer size used to carry out the decompression.
 
@@ -1318,7 +1318,7 @@ Refer to the I<zlib> documentation for more details.
 Returns the version of the I<zlib> library if this module has been built with the I<zlib> library.
 If this module has been built with I<zlib-ng> in native mode, this function will return a empty string.
 If this module has been built with I<zlib-ng> in compat mode, this function will return the Izlib> API
-verion that I<zlib-ng> is supporting.
+version that I<zlib-ng> is supporting.
 
 =head2 my $version = Compress::Raw::Zlib::zlibng_version();
 
@@ -1637,7 +1637,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

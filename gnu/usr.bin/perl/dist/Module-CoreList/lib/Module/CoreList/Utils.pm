@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Module::CoreList;
 
-our $VERSION = '5.20250702';
+our $VERSION = '5.20260329_42';
 our %utilities;
 
 sub utilities {
@@ -2149,6 +2149,104 @@ my %delta = (
     },
     5.042000 => {
         delta_from => 5.041013,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043000 => {
+        delta_from => 5.042000,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043001 => {
+        delta_from => 5.043,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.038005 => {
+        delta_from => 5.038004,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.040003 => {
+        delta_from => 5.040002,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043002 => {
+        delta_from => 5.043001,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043003 => {
+        delta_from => 5.043002,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043004 => {
+        delta_from => 5.043003,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043005 => {
+        delta_from => 5.043004,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043006 => {
+        delta_from => 5.043005,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043007 => {
+        delta_from => 5.043006,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043008 => {
+        delta_from => 5.043007,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.042001 => {
+        delta_from => 5.042000,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.043009 => {
+        delta_from => 5.043008,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.042002 => {
+        delta_from => 5.042001,
         changed => {
         },
         removed => {

@@ -11,22 +11,23 @@ release schedules for the next, current and previous stable versions
 of Perl.  Dates with two or more question marks will only be releases if
 deemed necessary by the Steering Council.
 
+=head2 Perl 5.44
+
+  2026-??-??  5.44.0
+
 =head2 Perl 5.42
 
-  2025-??-??  5.42.0
+  2025-07-02  5.42.0  ✓       Philippe Bruhat
+  2026-03-08  5.42.1  ✓       Steve Hay
+  2026-03-29  5.42.2          Steve Hay
 
 =head2 Perl 5.40
 
   2024-06-09  5.40.0  ✓       Graham Knop
   2025-01-18  5.40.1  ✓       Steve Hay
   2025-04-13  5.40.2  ✓       Steve Hay
-
-=head2 Perl 5.38
-
-  2023-07-01  5.38.0  ✓       Ricardo Signes
-  2023-11-29  5.38.2  ✓       Paul Evans
-  2025-01-18  5.38.3  ✓       Steve Hay
-  2025-04-13  5.38.4  ✓       Steve Hay
+  2025-08-03  5.40.3  ✓       Steve Hay
+  2026-03-29  5.40.4          Steve Hay
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -42,25 +43,22 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.41
+=head2 Perl 5.43
 
-  2024-06-10  5.41.0  ✓       Graham K          (tag only)
-  2024-06-20  5.41.1  ✓       Graham K
-  2024-07-20  5.41.2  ✓       Karen Etheridge
-  2024-08-20  5.41.3  ✓       Philippe Bruhat
-  2024-09-20  5.41.4  ✓       Thibault Duponchelle
-  2024-10-20  5.41.5  ✓       Richard Leach
-  2024-11-20  5.41.6  ✓       Thibault Duponchelle
-  2024-12-20  5.41.7  ✓       Max Maischein
-  2025-01-20  5.41.8  ✓       Steve Hay
-  2025-02-20  5.41.9  ✓       Richard Leach     Contentious changes freeze
-  2025-03-20  5.41.10 ✓       Lukas Mai         User-visible changes to
+  2025-07-04  5.43.0  ✓       Philippe Bruhat   (tag only)
+  2025-07-20  5.43.1  ✓       Richard Leach
+  2025-08-20  5.43.2  ✓       Karen Etheridge
+  2025-09-20  5.43.3  ✓       Thibault Duponchelle
+  2025-10-22  5.43.4  ✓       Eric Herman
+  2025-11-20  5.43.5  ✓       Thibault Duponchelle
+  2025-12-20  5.43.6  ✓       Steve Hay
+  2026-01-19  5.43.7  ✓       Max Maischein
+  2026-02-20  5.43.8  ✓       Richard Leach     Contentious changes freeze
+  2026-03-20  5.43.9  ✓       Eric Herman       User-visible changes to
                                                 correctly functioning
                                                 programs freeze
-  2025-04-20  5.41.11 ✓       Karen Etheridge   Full program freeze
-  2025-04-21  5.41.12 ✓       Karen Etheridge
-  2025-05-28  5.41.13 ✓       Philippe Bruhat
-  2025-0?-??  5.42.0          ?                 New perl!
+  2026-04-20  5.43.10         Philippe Bruhat   Full program freeze
+  2026-05-20  5.44.0                            New perl!
 
 =head1 VICTIMS
 
@@ -81,6 +79,7 @@ consent of the Steering Council.)
   Florian Ragwitz <rafl@debian.org>
   Jesse Luehrs <doy@cpan.org>
   Jesse Vincent <jesse@cpan.org>
+  Karen Etheridge <ether@cpan.org>
   Leon Brocard <acme@astray.com>
   Matt Trout <mst@shadowcat.co.uk>
   Matthew Horsfall <wolfsage@gmail.com>
@@ -92,6 +91,7 @@ consent of the Steering Council.)
   Stevan Little <stevan@cpan.org>
   Steve Hay <steve.m.hay@googlemail.com>
   Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+  Thibault Duponchelle <thibault.duponchelle@gmail.com>
   Tony Cook <tony@develop-help.com>
   Yves Orton <demerphq@gmail.com>
   Ævar Arnfjörð Bjarmason <avar@cpan.org>

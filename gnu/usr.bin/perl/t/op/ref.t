@@ -8,7 +8,7 @@ BEGIN {
 
 use strict qw(refs subs);
 
-plan(257);
+plan(265);
 
 # Test this first before we extend the stack with other operations.
 # This caused an asan failure due to a bad write past the end of the stack.
@@ -911,6 +911,47 @@ EOF
     my @exp = ("0") x $n;
     fresh_perl_is($code, "@exp", { stderr => 1 },
                     'rt#130861: heap uaf in pp_rv2sv');
+}
+
+# GH 18669
+# The correct autovivification lvalue ref context should be propagated to
+# both branches of a ?:. So in something like:
+#    @{  $cond ? $h{a} : $h{b} } = ...;
+# the helem ops on *both* sides of the conditional should get the DREFAV
+# flag set, indicating that if the hash element doesn't exist, it should
+# be autovivified as an *array ref*.
+#
+
+{
+    my $x = { arr => undef };
+    eval {
+        push(@{ $x->{ decide } ? $x->{ not_here } : $x->{ new } }, "mana");
+    };
+
+    is($@, "", "GH 18669: push on non-existent hash ref entry: no errors");
+    is(eval {$x->{new}[0] }, 'mana',
+        "GH 18669: push on non-existent hash ref entry: autovivifies"
+    );
+
+    $x = { arr => undef };
+    eval {
+        push(@{ $x->{ decide } ? $x->{ not_here } : $x->{ arr } }, "mana");
+    };
+
+    is($@, "", "GH 18669: push on undef hash ref entry: no errors");
+    is(eval { $x->{arr}[0] }, 'mana',
+        "GH 18669: push on undef hash ref entry: autovivifies"
+    );
+
+    # try both branches
+    for my $cond (0, 1) {
+        my %h;
+        eval { @{ $cond ? $h{p} : $h{q} } = 99; };
+        is($@, "", "GH 18669: array assign on $cond cond: no errors");
+        is($h{$cond ? 'p' : 'q'}[0], 99,
+            "GH 18669: array assign on $cond cond: autovivifies"
+        );
+    }
 }
 
 # Bit of a hack to make test.pl happy. There are 3 more tests after it leaves.

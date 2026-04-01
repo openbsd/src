@@ -1193,7 +1193,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.42.0"
+of 5.42.2"
 
 =head2 make ithreads more robust
 

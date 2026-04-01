@@ -51,6 +51,7 @@ xs_init(pTHX)
 void
 win32_checkTLS(PerlInterpreter *host_perl)
 {
+#ifdef USE_ITHREADS
 /* GCurThdId() is lightweight, but b/c of the ctrl-c/signals sometimes firing
   in other random WinOS threads, that make the TIDs go out of sync.
   This isn't always an error, although high chance of a SEGV in the next
@@ -67,6 +68,13 @@ win32_checkTLS(PerlInterpreter *host_perl)
         }
         host_perl->Isys_intern.cur_tid = tid;
     }
+#else
+    dTHX;
+    if (host_perl != my_perl) {
+        int *nowhere = NULL;
+        abort();
+    }
+#endif
 }
 
 EXTERN_C void
