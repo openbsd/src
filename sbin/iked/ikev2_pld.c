@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.137 2026/04/01 18:43:20 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.138 2026/04/01 18:58:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1797,9 +1797,7 @@ ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
 
 	/* Drop the original request's packets from the retransmit queue */
 	if (msg->msg_response)
-		ikev2_msg_dispose(env, &msg->msg_sa->sa_requests,
-		    ikev2_msg_lookup(env, &msg->msg_sa->sa_requests, msg,
-		    msg->msg_exchange));
+		ikev2_msg_flushqueue(env, &msg->msg_sa->sa_requests);
 
 	/*
 	 * Parse decrypted payload
