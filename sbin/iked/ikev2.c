@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.395 2025/11/04 11:10:43 yasuoka Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.396 2026/04/01 18:36:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4452,6 +4452,9 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	uint32_t			 spi32;
 	int				 pfs = 0, ret = -1;
 
+	if (!sa_stateok(sa, IKEV2_STATE_ESTABLISHED))
+		return -1;
+
 	if (!ikev2_msg_frompeer(msg) ||
 	    (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF)) == 0)
 		return (0);
@@ -4916,6 +4919,9 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	int				 initiator, protoid, rekeying = 1;
 	int				 ret = -1;
 	int				 pfs = 0;
+
+	if (!sa_stateok(sa, IKEV2_STATE_ESTABLISHED))
+		return -1;
 
 	initiator = sa->sa_hdr.sh_initiator ? 1 : 0;
 
