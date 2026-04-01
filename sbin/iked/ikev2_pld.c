@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.136 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.137 2026/04/01 18:43:20 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -99,6 +99,8 @@ int	 ikev2_pld_auth(struct iked *, struct ikev2_payload *,
 	    struct iked_message *, size_t, size_t);
 int	 ikev2_pld_e(struct iked *, struct ikev2_payload *,
 	    struct iked_message *, size_t, size_t);
+int	 ikev2_validate_ef(struct iked_message *, size_t, size_t,
+	    struct ikev2_frag_payload *);
 int	 ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	    struct iked_message *msg, size_t offset, size_t left);
 int	 ikev2_frags_reassemble(struct iked *env,
@@ -1612,6 +1614,22 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 }
 
 int
+ikev2_validate_ef(struct iked_message *msg, size_t offset, size_t left,
+    struct ikev2_frag_payload *frag)
+{
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
+
+	if (left < sizeof(*frag)) {
+		log_debug("%s: malformed payload: too short for header "
+		    "(%zu < %zu)", __func__, left, sizeof(*frag));
+		return (-1);
+	}
+	memcpy(frag, msgbuf + offset, sizeof(*frag));
+
+	return (0);
+}
+
+int
 ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
@@ -1628,8 +1646,9 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	int				 processed = 0;
 	ssize_t				 elen;
 
-	buf = msgbuf + offset;
-	memcpy(&frag, buf, sizeof(frag));
+	if (ikev2_validate_ef(msg, offset, left, &frag) != 0)
+		return (-1);
+
 	frag_num = betoh16(frag.frag_num);
 	frag_total = betoh16(frag.frag_total);
 
