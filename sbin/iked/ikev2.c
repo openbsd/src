@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.396 2026/04/01 18:36:49 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.397 2026/04/01 19:04:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -713,7 +713,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	}
 
 	if (msg->msg_response) {
-		if (msg->msg_msgid > sa->sa_reqid) {
+		if (msg->msg_msgid + 1 != sa->sa_reqid) {
 			ikestat_inc(env, ikes_msg_rcvd_dropped);
 			return;
 		}
