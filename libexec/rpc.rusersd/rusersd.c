@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.24 2023/03/08 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.25 2026/04/01 15:39:05 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -80,15 +80,6 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (unveil("/dev", "r") == -1) {
-		syslog(LOG_ERR, "unveil /dev");
-		exit(1);
-	}
-	if (unveil(NULL, NULL) == -1) {
-		syslog(LOG_ERR, "unveil");
-		exit(1);
-	}
-
 	setgroups(1, &pw->pw_gid);
 	setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid);
 	setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid);
@@ -113,6 +104,15 @@ main(int argc, char *argv[])
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
+	}
+
+	if (unveil("/dev", "r") == -1) {
+		syslog(LOG_ERR, "unveil /dev");
+		exit(1);
+	}
+	if (unveil(NULL, NULL) == -1) {
+		syslog(LOG_ERR, "unveil");
+		exit(1);
 	}
 
 	transp = svcudp_create(sock);
