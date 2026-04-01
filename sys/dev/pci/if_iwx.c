@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.226 2026/03/29 21:17:50 kirill Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.227 2026/04/01 02:29:37 kirill Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6691,7 +6691,7 @@ iwx_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 	struct iwx_add_sta_cmd add_sta_cmd;
 	int err;
 	uint32_t status, aggsize;
-	const uint32_t max_aggsize = (IWX_STA_FLG_MAX_AGG_SIZE_64K >>
+	const uint32_t max_aggsize = (IWX_STA_FLG_MAX_AGG_SIZE_1024K >>
 		    IWX_STA_FLG_MAX_AGG_SIZE_SHIFT);
 	struct ieee80211com *ic = &sc->sc_ic;
 
@@ -12470,7 +12470,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_4 | 0x3 /* 64k */);
 
 	ic->ic_vhtcaps = IEEE80211_VHTCAP_MAX_MPDU_LENGTH_3895 |
-	    (IEEE80211_VHTCAP_MAX_AMPDU_LEN_64K <<
+	    (IEEE80211_VHTCAP_MAX_AMPDU_LEN_1024K <<
 	    IEEE80211_VHTCAP_MAX_AMPDU_LEN_SHIFT) |
 	    (IEEE80211_VHTCAP_CHAN_WIDTH_160 <<
 		IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT) |
