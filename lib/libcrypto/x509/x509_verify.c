@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.74 2026/03/31 13:58:05 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.75 2026/04/01 14:38:26 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -666,13 +666,13 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		return;
 
 	depth = sk_X509_num(current_chain->certs);
+	if (depth > 0)
+		depth--;
 	if (depth >= ctx->max_depth) {
 		(void)x509_verify_cert_error(ctx, cert, depth,
 		    X509_V_ERR_CERT_CHAIN_TOO_LONG, 0);
 		return;
 	}
-	if (depth > 0)
-		depth--;
 
 	count = ctx->chains_count;
 
@@ -978,8 +978,8 @@ x509_verify_ctx_new_from_xsc(X509_STORE_CTX *xsc)
 	    (ctx->intermediates = X509_chain_up_ref(xsc->untrusted)) == NULL)
 		goto err;
 
-	max_depth = X509_VERIFY_MAX_CHAIN_CERTS;
-	if (xsc->param->depth > 0 && xsc->param->depth < X509_VERIFY_MAX_CHAIN_CERTS)
+	max_depth = X509_VERIFY_MAX_CHAIN_CERTS - 1;
+	if (xsc->param->depth > 0 && xsc->param->depth < max_depth)
 		max_depth = xsc->param->depth;
 	if (!x509_verify_ctx_set_max_depth(ctx, max_depth))
 		goto err;
@@ -1008,7 +1008,7 @@ x509_verify_ctx_new(STACK_OF(X509) *roots)
 			goto err;
 	}
 
-	ctx->max_depth = X509_VERIFY_MAX_CHAIN_CERTS;
+	ctx->max_depth = X509_VERIFY_MAX_CHAIN_CERTS - 1;
 	ctx->max_chains = X509_VERIFY_MAX_CHAINS;
 	ctx->max_sigs = X509_VERIFY_MAX_SIGCHECKS;
 
@@ -1035,7 +1035,7 @@ x509_verify_ctx_free(struct x509_verify_ctx *ctx)
 int
 x509_verify_ctx_set_max_depth(struct x509_verify_ctx *ctx, size_t max)
 {
-	if (max < 1 || max > X509_VERIFY_MAX_CHAIN_CERTS)
+	if (max < 1 || max >= X509_VERIFY_MAX_CHAIN_CERTS)
 		return 0;
 	ctx->max_depth = max;
 	return 1;
