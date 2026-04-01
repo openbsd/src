@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.13 2026/03/31 13:39:48 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.14 2026/04/01 14:39:11 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -469,7 +469,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.id = "14b",
 		.want_chains = 0,
 		.want_error = X509_V_ERR_CERT_CHAIN_TOO_LONG,
-		.want_error_depth = 32,
+		.want_error_depth = 31,
 		.want_legacy_error = 0,
 		.want_legacy_error_depth = 0,
 		.failing = 1,
