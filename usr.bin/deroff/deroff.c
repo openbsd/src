@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.18 2023/09/27 21:06:33 millert Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.19 2026/04/01 17:49:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -133,7 +133,7 @@ int	inmacro;
 int	intable;
 int	keepblock;	/* keep blocks of text; normally false when msflag */
 
-char chars[128];  /* SPECIAL, PUNCT, APOS, DIGIT, or LETTER */
+char chars[256];  /* SPECIAL, PUNCT, APOS, DIGIT, or LETTER */
 
 size_t linesz;
 char *line;
