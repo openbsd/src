@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.82 2026/04/01 02:08:38 jsg Exp $
+.\" $OpenBSD: pledge.2,v 1.83 2026/04/01 02:34:37 jsg Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -143,7 +143,6 @@ These are the promises which can read special files:
 .It Cm tty
 .Pa /dev/tty
 (for read and/or write)
-.br
 .It Cm getpw
 .Pa /etc/spwd.db
 (refused with EPERM)
@@ -393,7 +392,7 @@ domain:
 The
 .Xr bind 2
 call can create AF_UNIX sockets at any path even without
-.Cm wpath,
+.Cm wpath ,
 and
 .Xr connect 2
 can connect at any path
