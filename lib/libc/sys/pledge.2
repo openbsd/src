@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.80 2026/03/28 17:12:01 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.81 2026/04/01 02:05:06 jsg Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 28 2026 $
+.Dd $Mdocdate: April 1 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -27,12 +27,12 @@
 .Sh DESCRIPTION
 The
 .Fn pledge
-system call seperates the POSIX featureset into a group of approximately
+system call separates the POSIX feature set into a group of approximately
 3 dozen subsystems.
 By calling
 .Fn pledge
 the program can declare which subsystems it will need in the
-future in a space-seperated string called
+future in a space-separated string called
 .Ar promises .
 Subsystems not listed become unavailable, and most attempts to use operations
 in that subsystem result in the process being killed with an uncatchable
@@ -90,7 +90,7 @@ and
 .Dv FIONCLEX
 operations are allowed by default.
 All other ioctl operations are blocked, except for ones which are enabled
-by specfic
+by specific
 .Va promises :
 .Cm audio ,
 .Cm bpf ,
@@ -405,7 +405,7 @@ or
 Some low-level behaviours required by the DNS resolver described in
 .Xr res_init 3
 are permitted.
-THis includes
+This includes
 .Xr __pledge_open 2
 reading
 .Xr hosts 5 ,
