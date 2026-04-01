@@ -74,6 +74,10 @@ getnfile(const char *filename, char ***defaultEs)
     close(fd);
 
     base = (const char *)mapbase;
+
+    if (h.e_shoff >= s.st_size ||
+	h.e_shoff + (off_t)h.e_shnum * sizeof(Elf_Shdr) > s.st_size)
+	errx(1, "%s: bad section header offset", filename);
     shdrs = (const Elf_Shdr *)(base + h.e_shoff);
 
     /* Find the symbol table and associated string table section. */
@@ -83,8 +87,14 @@ getnfile(const char *filename, char ***defaultEs)
     if (i == h.e_shnum)
 	errx(1, "%s has no symbol table", filename);
     sh_symtab = &shdrs[i];
+    if (sh_symtab->sh_link >= h.e_shnum)
+	errx(1, "%s: bad string table link", filename);
     sh_strtab = &shdrs[sh_symtab->sh_link];
 
+    if (sh_symtab->sh_offset >= s.st_size ||
+	sh_symtab->sh_entsize == 0 ||
+	sh_strtab->sh_offset >= s.st_size)
+	errx(1, "%s: bad symbol table", filename);
     symtab = (const Elf_Sym *)(base + sh_symtab->sh_offset);
     symtabct = sh_symtab->sh_size / sh_symtab->sh_entsize;
     strtab = (const char *)(base + sh_strtab->sh_offset);
