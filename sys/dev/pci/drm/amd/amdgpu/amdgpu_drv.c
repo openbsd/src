@@ -3745,6 +3745,7 @@ amdgpu_enter_ddb(void *v, void *cookie)
 
 	rasops_show_screen(ri, cookie, 0, NULL, NULL);
 	drm_fb_helper_debug_enter(fb_helper->info);
+	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 }
 
 void
