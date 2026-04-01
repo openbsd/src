@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.96 2026/02/11 20:13:04 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.97 2026/04/01 00:51:50 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -839,7 +839,8 @@ open_imagefile(int type, const char *imgfile_path, int flags,
 		for (i = 0; i < VM_MAX_BASE_PER_DISK - 1; i++, nfd++) {
 			if ((ret = virtio_qcow2_get_base(basefd[i],
 			    path, sizeof(path), imgfile_path)) == -1) {
-				log_debug("%s: failed to get base %d", __func__, i);
+				log_debug("%s: failed to get base %d",
+				    __func__, i);
 				return -1;
 			} else if (ret == 0)
 				break;

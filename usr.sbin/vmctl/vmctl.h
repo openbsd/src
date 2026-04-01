@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.43 2025/06/27 05:23:46 jsg Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.44 2026/04/01 00:51:50 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -84,6 +84,13 @@ void	 parse_free(struct parse_result *);
 int	 parse(int, char *[]);
 __dead void
 	 ctl_openconsole(const char *);
+__dead void
+	 fatal(const char *, ...);
+__dead void
+	 fatalx(const char *, ...);
+void	 log_debug(const char *, ...);
+void	 log_warn(const char *, ...);
+void	 log_warnx(const char *, ...);
 
 /* vmctl.c */
 int	 open_imagefile(int, const char *, int,

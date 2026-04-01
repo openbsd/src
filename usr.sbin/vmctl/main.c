@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.87 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.88 2026/04/01 00:51:50 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <limits.h>
 #include <string.h>
@@ -46,6 +47,7 @@ static const char	*socket_name = SOCKET_NAME;
 static int		 ctl_sock = -1;
 static int		 tty_autoconnect = 0;
 int			 stat_rflag;
+int			 verbose = 0;
 
 __dead void	 usage(void);
 __dead void	 ctl_usage(struct ctl_command *);
@@ -107,12 +109,12 @@ ctl_usage(struct ctl_command *ctl)
 int
 main(int argc, char *argv[])
 {
-	int	 ch, verbose = 1;
+	int	 ch;
 
 	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
 		case 'v':
-			verbose = 2;
+			verbose = 1;
 			break;
 		default:
 			usage();
@@ -126,8 +128,6 @@ main(int argc, char *argv[])
 
 	if (argc < 1)
 		usage();
-
-	log_init(verbose, LOG_DAEMON);
 
 	return (parse(argc, argv));
 }
@@ -1006,4 +1006,58 @@ ctl_openconsole(const char *name)
 	execl(VMCTL_CU, VMCTL_CU, "-r", "-l", name, "-s", "115200",
 	    (char *)NULL);
 	err(1, "failed to open the console");
+}
+
+__dead void
+fatal(const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	verr(1, msg, ap);
+	va_end(ap);
+}
+
+__dead void
+fatalx(const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	verrx(1, msg, ap);
+	va_end(ap);
+}
+
+void
+log_debug(const char *msg, ...)
+{
+	va_list ap;
+
+	if (!verbose)
+		return;
+
+	va_start(ap, msg);
+	vwarnx(msg, ap);
+	va_end(ap);
+}
+
+void
+log_warn(const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	vwarn(msg, ap);
+	va_end(ap);
+}
+
+
+void
+log_warnx(const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	vwarnx(msg, ap);
+	va_end(ap);
 }
