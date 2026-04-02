@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.119 2025/09/15 18:51:22 jan Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.120 2026/04/02 18:22:24 kili Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -1253,8 +1253,8 @@ parseDWM(char *s)
 
 	if (tm.tm_mon == 1) {
 		if (((tm.tm_year + 1900) % 4 == 0) &&
-		    ((tm.tm_year + 1900) % 100 != 0) &&
-		    ((tm.tm_year + 1900) % 400 == 0)) {
+		    (((tm.tm_year + 1900) % 100 != 0) ||
+		     ((tm.tm_year + 1900) % 400 == 0))) {
 			nd++;	/* leap year, 29 days in february */
 		}
 	}
