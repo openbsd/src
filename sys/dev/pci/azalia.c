@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.290 2024/08/18 14:42:56 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.291 2026/04/02 07:33:15 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -478,6 +478,10 @@ azalia_configure_pci(azalia_t *az)
 	case PCI_PRODUCT_INTEL_EHL_HDA:
 	case PCI_PRODUCT_INTEL_ADL_N_HDA:
 	case PCI_PRODUCT_INTEL_MTL_HDA:
+	case PCI_PRODUCT_INTEL_LNL_HDA:
+	case PCI_PRODUCT_INTEL_ARL_U_HDA:
+	case PCI_PRODUCT_INTEL_PTL_HDA:
+	case PCI_PRODUCT_INTEL_PTL_H_HDA:
 		reg = azalia_pci_read(az->pc, az->tag,
 		    INTEL_PCIE_NOSNOOP_REG);
 		reg &= INTEL_PCIE_NOSNOOP_MASK;
@@ -503,6 +507,10 @@ const struct pci_matchid azalia_pci_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HDA },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_N_HDA },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MTL_HDA },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HDA },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARL_U_HDA },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PTL_HDA },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PTL_H_HDA },
 };
 
 int
