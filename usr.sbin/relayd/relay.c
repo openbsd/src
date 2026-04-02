@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.262 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.263 2026/04/02 13:38:24 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2156,7 +2156,7 @@ relay_tls_ctx_create(struct relay *rlay)
 	}
 	if ((tls_client_cfg = tls_config_new()) == NULL) {
 		log_warnx("unable to allocate TLS config");
-		return (-1);
+		goto err;
 	}
 
 	if (relay_tls_ctx_create_proto(rlay->rl_proto, tls_cfg) == -1)
