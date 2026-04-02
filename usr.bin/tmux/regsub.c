@@ -1,4 +1,4 @@
-/* $OpenBSD: regsub.c,v 1.6 2023/06/30 21:55:09 nicm Exp $ */
+/* $OpenBSD: regsub.c,v 1.7 2026/04/02 08:45:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,6 +68,8 @@ regsub(const char *pattern, const char *with, const char *text, int flags)
 
 	if (*text == '\0')
 		return (xstrdup(""));
+	if (*pattern == '\0')
+		return (xstrdup(text));
 	if (regcomp(&r, pattern, flags) != 0)
 		return (NULL);
 
