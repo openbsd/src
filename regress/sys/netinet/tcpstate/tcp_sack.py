@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-# transfer peer into ESTABLISHED state and check retransmit of data
+# transfer peer into ESTABLISHED state and send TCP selective ACK
 
 import os
 import threading
@@ -28,10 +28,19 @@ ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
 print("Send SYN packet, receive SYN+ACK.")
-syn=TCP(sport=tport, dport='echo', flags='S', seq=1, window=(2**16)-1)
+syn=TCP(sport=tport, dport='echo', flags='S', seq=1, window=(2**16)-1,
+    options=[('SAckOK', b'')])
 synack=sr1(ip/syn, timeout=5)
 if synack is None:
 	print("ERROR: No SYN+ACK from echo server received.")
+	exit(1)
+
+sackok=False
+for n, v in synack[TCP].options:
+	if n == 'SAckOK':
+		sackok=True
+if not sackok:
+	print("ERROR: No SAckOK in SYN+ACK from echo server.")
 	exit(1)
 
 print("Send ACK packet to finish handshake.")
@@ -39,16 +48,15 @@ ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
 send(ip/ack)
 
-print("Start sniffer to get data retransmit from peer.");
+print("Start sniffer to get data from peer.")
 sniffer = Sniff1(count=3, timeout=10)
 sniffer.filter = \
     "ip and src %s and tcp port %u and dst %s and tcp port %u " \
-    "and tcp[tcpflags] = tcp-ack|tcp-push" % \
+    "and ( tcp[tcpflags] = tcp-ack|tcp-push or tcp[tcpflags] = tcp-ack ) " % \
     (ip.dst, syn.dport, ip.src, syn.sport)
 sniffer.start()
 time.sleep(1)
-
-payload=b"abcdefgh01234567"
+payload=b"abcd"
 paylen=len(payload)
 print("Send data to trigger echo.")
 data=TCP(sport=syn.sport, dport=syn.dport, flags='AP',
@@ -63,23 +71,22 @@ if data_ack.seq != synack.seq+1 or data_ack.ack != 2+paylen:
 	    (synack.seq+1, 2+paylen, data_ack.seq, data_ack.ack))
 	exit(1)
 
-print("Send ACK for echo packet, but with one sequence less.");
+print("Send selective ACK for echo packet, data is in the middle.")
 echo_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
-    seq=2+paylen, ack=data_ack.seq+paylen-1, window=(2**16)-1)
-echo=sr1(ip/echo_ack, timeout=5);
+    seq=2+paylen, ack=data_ack.seq+1, window=(2**16)-1,
+    options=[('SAck', (data_ack.seq+2,data_ack.seq+3))])
+# tcprexmtthresh is 3 so we need some retransmits
+send(ip/echo_ack)
+send(ip/echo_ack)
+send(ip/echo_ack)
+echo=sr1(ip/echo_ack, timeout=5)
 if echo is None:
-	print("ERROR: No truncated echo received from echo server.")
+	print("ERROR: No retransmitted echo received from echo server.")
 	exit(1)
-if echo.getlayer(TCP).flags != 'AP':
-	print("ERROR: expecting PSH, got flag '%s' in echo." % \
-	    (echo.getlayer(TCP).flags))
-	exit(1)
-tcplen = echo.len - echo.ihl*4 - echo.dataofs*4
-if echo.seq != synack.seq+1+paylen-1 or echo.ack != 2+paylen or \
-    tcplen != 1:
-	print("ERROR: expecting seq %d ack %d len %d, " \
-	    "got seq %d ack %d len %d in echo." % \
-	    (synack.seq+1+paylen-1, 2+paylen, 1, echo.seq, echo.ack, tcplen))
+if echo.seq != synack.seq+1+1 or echo.ack != 2+paylen:
+	print("ERROR: expecting seq %d ack %d, " \
+	    "got seq %d ack %d in echo." % \
+	    (synack.seq+1+1, 2+paylen, echo.seq, echo.ack))
 	exit(1)
 
 print("Wait for echo and its retransmit.")
@@ -98,15 +105,21 @@ new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=data_ack.ack, ack=data_ack.seq)
 send(ip/new_rst)
 
-print("Check retransmit of echo.");
-rxmit_echo = sniffer.captured[2]
-if rxmit_echo is None:
-	print("ERROR: No echo retransmitted from echo server.")
+print("Check sack retransmit of echo.")
+sack_echo = sniffer.captured[1]
+if sack_echo is None:
+	print("ERROR: No echo to sack retransmitted from echo server.")
 	exit(1)
-if rxmit_echo.seq != synack.seq+1+paylen-1 or rxmit_echo.ack != 2+paylen:
-	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in rxmit echo." % \
-	    (synack.seq+1+paylen-1, 2+paylen, rxmit_echo.seq, rxmit_echo.ack))
+if sack_echo.getlayer(TCP).flags != 'A':
+	print("ERROR: echo to sack expecting no PSH, got flag '%s' in echo." % \
+	    (echo.getlayer(TCP).flags))
+	exit(1)
+tcplen = sack_echo.len - sack_echo.ihl*4 - sack_echo.dataofs*4
+if sack_echo.seq != synack.seq+1+1 or sack_echo.ack != 2+paylen or \
+    tcplen != 1:
+	print("ERROR: expecting seq %d ack %d len %d, " \
+	    "got seq %d ack %d len %d in rxmit echo to sack." % \
+	    (synack.seq+1+1, 2+paylen, 1, sack_echo.seq, sack_echo.ack, tcplen))
 	exit(1)
 
 exit(0)

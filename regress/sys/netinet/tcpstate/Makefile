@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2025/09/17 22:50:08 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2026/04/02 11:54:06 bluhm Exp $
 
 # Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -100,7 +100,7 @@ stamp-pfctl: addr.py pf.conf
 .if ${.CURDIR} == ${.OBJDIR}
 PYTHON =	python3 -u ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
+PYTHON =	env PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
 REGRESS_TARGETS =
