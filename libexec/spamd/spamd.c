@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.163 2024/05/09 08:35:03 florian Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.164 2026/04/02 17:23:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -761,6 +761,7 @@ closecon(struct con *cp)
 	if (cp->cctx) {
 		tls_close(cp->cctx);
 		tls_free(cp->cctx);
+		cp->cctx = NULL;
 	}
 	close(cp->pfd->fd);
 	cp->pfd->fd = -1;
@@ -1653,7 +1654,8 @@ jail:
 				else
 					handler(&con[i]);
 			}
-			if (pfd[PFD_FIRSTCON + i].revents & POLLOUT) {
+			if (con[i].pfd->fd != -1 &&
+			    (pfd[PFD_FIRSTCON + i].revents & POLLOUT)) {
 				if (con[i].tlsaction ==
 				    SPAMD_TLS_ACT_READ_POLLOUT)
 					handler(&con[i]);
