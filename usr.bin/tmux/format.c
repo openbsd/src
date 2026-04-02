@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.351 2026/04/02 09:28:22 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.352 2026/04/02 09:35:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5325,6 +5325,7 @@ done:
 		if (marker != NULL && strcmp(new, value) != 0) {
 			free(value);
 			xasprintf(&value, "%s%s", new, marker);
+			free(new);
 		} else {
 			free(value);
 			value = new;
@@ -5335,6 +5336,7 @@ done:
 		if (marker != NULL && strcmp(new, value) != 0) {
 			free(value);
 			xasprintf(&value, "%s%s", marker, new);
+			free(new);
 		} else {
 			free(value);
 			value = new;

@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.30 2025/12/04 20:49:57 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.31 2026/04/02 09:35:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1116,7 +1116,7 @@ format_width(const char *expanded)
 /*
  * Trim on the left, taking #[] into account.  Note, we copy the whole set of
  * unescaped #s, but only add their escaped size to width. This is because the
- * format_draw function will actually do the escaping when it runs
+ * format_draw function will actually do the escaping.
  */
 char *
 format_trim_left(const char *expanded, u_int limit)
