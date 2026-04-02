@@ -1,4 +1,4 @@
-/* $OpenBSD: mux.c,v 1.112 2026/03/05 05:40:36 djm Exp $ */
+/* $OpenBSD: mux.c,v 1.113 2026/04/02 07:39:57 djm Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -1169,6 +1169,16 @@ mux_master_process_proxy(struct ssh *ssh, u_int rid,
 	int r;
 
 	debug_f("channel %d: proxy request", c->self);
+
+	if (options.control_master == SSHCTL_MASTER_ASK ||
+	    options.control_master == SSHCTL_MASTER_AUTO_ASK) {
+		if (!ask_permission("Allow multiplex proxy connection?")) {
+			debug2_f("proxy refused by user");
+			reply_error(reply, MUX_S_PERMISSION_DENIED, rid,
+			    "Permission denied");
+			return 0;
+		}
+	}
 
 	c->mux_rcb = channel_proxy_downstream;
 	if ((r = sshbuf_put_u32(reply, MUX_S_PROXY)) != 0 ||
