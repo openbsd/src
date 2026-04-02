@@ -1,4 +1,4 @@
-/* $OpenBSD: sort.c,v 1.3 2026/02/24 08:22:13 nicm Exp $ */
+/* $OpenBSD: sort.c,v 1.4 2026/04/02 08:01:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Dane Jensen <dhcjensen@gmail.com>
@@ -505,6 +505,7 @@ sort_get_panes_session(struct session *s, u_int *n,
 
 	i = 0;
 	RB_FOREACH(wl, winlinks, &s->windows)  {
+		w = wl->window;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (lsz <= i) {
 				lsz += 100;
