@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.629 2026/03/30 07:18:24 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.630 2026/04/02 07:50:55 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1113,8 +1113,15 @@ main(int ac, char **av)
 	if (!host)
 		usage();
 
+	/*
+	 * Validate commandline-specified values that end up in %tokens
+	 * before they are used in config parsing.
+	 */
+	if (options.user != NULL && !ssh_valid_ruser(options.user))
+		fatal("remote username contains invalid characters");
 	if (!ssh_valid_hostname(host))
 		fatal("hostname contains invalid characters");
+
 	options.host_arg = xstrdup(host);
 
 	/* Initialize the command to execute on remote host. */
