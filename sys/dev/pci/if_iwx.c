@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.227 2026/04/01 02:29:37 kirill Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.228 2026/04/02 11:19:45 kirill Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3149,6 +3149,13 @@ iwx_fw_valid_rx_ant(struct iwx_softc *sc)
 	return rx_ant;
 }
 
+int
+iwx_fw_num_ant(uint8_t ant)
+{
+	return !!(ant & IWX_ANT_A) + !!(ant & IWX_ANT_B) +
+	    !!(ant & IWX_ANT_C);
+}
+
 void
 iwx_init_channel_map(struct iwx_softc *sc, uint16_t *channel_profile_v3,
     uint32_t *channel_profile_v4, int nchan_profile)
@@ -3250,6 +3257,13 @@ iwx_setup_ht_rates(struct iwx_softc *sc)
 	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
 	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
 
+	ic->ic_htcaps &= ~(IEEE80211_HTCAP_TXSTBC |
+	    IEEE80211_HTCAP_RXSTBC_MASK);
+	ic->ic_htcaps |= (1 << IEEE80211_HTCAP_RXSTBC_SHIFT);
+
+	if (iwx_fw_num_ant(iwx_fw_valid_tx_ant(sc)) > 1)
+		ic->ic_htcaps |= IEEE80211_HTCAP_TXSTBC;
+
 	if (!iwx_mimo_enabled(sc))
 		return;
 
@@ -3264,7 +3278,28 @@ iwx_setup_vht_rates(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t rx_ant = iwx_fw_valid_rx_ant(sc);
+	uint8_t tx_ant = iwx_fw_valid_tx_ant(sc);
+	int num_rx_ant = iwx_fw_num_ant(rx_ant);
+	int num_tx_ant = iwx_fw_num_ant(tx_ant);
 	int n;
+
+	if (!iwx_mimo_enabled(sc)) {
+		num_rx_ant = 1;
+		num_tx_ant = 1;
+	}
+
+	ic->ic_vhtcaps &= ~(IEEE80211_VHTCAP_RX_ANT_PATTERN |
+	    IEEE80211_VHTCAP_TX_ANT_PATTERN |
+	    IEEE80211_VHTCAP_TX_STBC |
+	    IEEE80211_VHTCAP_RX_STBC_SS_MASK);
+	ic->ic_vhtcaps |= (1 << IEEE80211_VHTCAP_RX_STBC_SS_SHIFT);
+
+	if (num_rx_ant == 1)
+		ic->ic_vhtcaps |= IEEE80211_VHTCAP_RX_ANT_PATTERN;
+	if (num_tx_ant > 1)
+		ic->ic_vhtcaps |= IEEE80211_VHTCAP_TX_STBC;
+	else
+		ic->ic_vhtcaps |= IEEE80211_VHTCAP_TX_ANT_PATTERN;
 
 	ic->ic_vht_rxmcs = (IEEE80211_VHT_MCS_0_9 <<
 	    IEEE80211_VHT_MCS_FOR_SS_SHIFT(1));
@@ -8511,6 +8546,14 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.max_mpdu_len = htole16(3839);
 	else
 		cfg_cmd.max_mpdu_len = IEEE80211_MAX_LEN;
+	if (iwx_fw_num_ant(iwx_fw_valid_tx_ant(sc)) > 1) {
+		if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+		    (ni->ni_vhtcaps & IEEE80211_VHTCAP_RX_STBC_SS_MASK))
+			cfg_cmd.flags |= htole16(IWX_TLC_MNG_CFG_FLAGS_STBC_MSK);
+		else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+		    (ni->ni_htcaps & IEEE80211_HTCAP_RXSTBC_MASK))
+			cfg_cmd.flags |= htole16(IWX_TLC_MNG_CFG_FLAGS_STBC_MSK);
+	}
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		if (ieee80211_node_supports_ht_sgi20(ni)) {
 			cfg_cmd.sgi_ch_width_supp |= (1 <<
@@ -8607,6 +8650,14 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.max_mpdu_len = htole16(3839);
 	else
 		cfg_cmd.max_mpdu_len = IEEE80211_MAX_LEN;
+	if (iwx_fw_num_ant(iwx_fw_valid_tx_ant(sc)) > 1) {
+		if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+		    (ni->ni_vhtcaps & IEEE80211_VHTCAP_RX_STBC_SS_MASK))
+			cfg_cmd.flags |= htole16(IWX_TLC_MNG_CFG_FLAGS_STBC_MSK);
+		else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+		    (ni->ni_htcaps & IEEE80211_HTCAP_RXSTBC_MASK))
+			cfg_cmd.flags |= htole16(IWX_TLC_MNG_CFG_FLAGS_STBC_MSK);
+	}
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		if (ieee80211_node_supports_ht_sgi20(ni)) {
 			cfg_cmd.sgi_ch_width_supp |= (1 <<
@@ -12474,8 +12525,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_VHTCAP_MAX_AMPDU_LEN_SHIFT) |
 	    (IEEE80211_VHTCAP_CHAN_WIDTH_160 <<
 		IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT) |
-	    IEEE80211_VHTCAP_SGI80 | IEEE80211_VHTCAP_SGI160 |
-	    IEEE80211_VHTCAP_RX_ANT_PATTERN | IEEE80211_VHTCAP_TX_ANT_PATTERN;
+	    IEEE80211_VHTCAP_SGI80 | IEEE80211_VHTCAP_SGI160;
 
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
