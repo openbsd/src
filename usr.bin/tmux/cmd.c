@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.181 2026/01/06 10:17:29 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.182 2026/04/02 09:11:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -304,6 +304,8 @@ cmd_unpack_argv(char *buf, size_t len, int argc, char ***argv)
 
 	if (argc == 0)
 		return (0);
+	if (argc < 0 || argc > 1000)
+		return (-1);
 	*argv = xcalloc(argc, sizeof **argv);
 
 	buf[len - 1] = '\0';
