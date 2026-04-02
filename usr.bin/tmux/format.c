@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.350 2026/04/02 08:37:14 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.351 2026/04/02 09:28:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4189,6 +4189,8 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 		/* Skip any separator character. */
 		if (*cp == ';')
 			cp++;
+		if (*cp == '\0')
+			break;
 
 		/* Check single character modifiers with no arguments. */
 		if (strchr("labcdnwETSWPL!<>", cp[0]) != NULL &&
@@ -4749,7 +4751,7 @@ format_replace_expression(struct format_modifier *mexp,
 
 	/* The third argument may be precision. */
 	if (argc >= 3) {
-		prec = strtonum(mexp->argv[2], INT_MIN, INT_MAX, &errstr);
+		prec = strtonum(mexp->argv[2], INT_MIN + 1, INT_MAX, &errstr);
 		if (errstr != NULL) {
 			format_log(es, "expression precision %s: %s", errstr,
 			    mexp->argv[2]);
@@ -4894,8 +4896,8 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			case '=':
 				if (fm->argc < 1)
 					break;
-				limit = strtonum(fm->argv[0], INT_MIN, INT_MAX,
-				    &errstr);
+				limit = strtonum(fm->argv[0], INT_MIN + 1,
+				    INT_MAX, &errstr);
 				if (errstr != NULL)
 					limit = 0;
 				if (fm->argc >= 2 && fm->argv[1] != NULL)
@@ -4904,8 +4906,8 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			case 'p':
 				if (fm->argc < 1)
 					break;
-				width = strtonum(fm->argv[0], INT_MIN, INT_MAX,
-				    &errstr);
+				width = strtonum(fm->argv[0], INT_MIN + 1,
+				    INT_MAX, &errstr);
 				if (errstr != NULL)
 					width = 0;
 				break;
