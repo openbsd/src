@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.95 2026/04/02 13:28:22 tb Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.96 2026/04/02 13:35:36 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1388,11 +1388,12 @@ relay_httperror_byid(u_int id)
 	/* Set up key */
 	error.error_code = (int)id;
 
-	res = bsearch(&error, http_errors,
+	if ((res = bsearch(&error, http_errors,
 	    sizeof(http_errors) / sizeof(http_errors[0]) - 1,
-	    sizeof(http_errors[0]), relay_httperror_cmp);
+	    sizeof(http_errors[0]), relay_httperror_cmp)) != NULL)
+		return (res->error_name);
 
-	return (res->error_name);
+	return (NULL);
 }
 
 static int
