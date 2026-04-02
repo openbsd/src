@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.349 2026/03/27 08:40:26 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.350 2026/04/02 08:37:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5444,7 +5444,7 @@ format_expand1(struct format_expand_state *es, const char *fmt)
 			buf[off++] = *fmt++;
 			continue;
 		}
-		if (*fmt++ == '\0')
+		if (*++fmt == '\0')
 			break;
 
 		ch = (u_char)*fmt++;
