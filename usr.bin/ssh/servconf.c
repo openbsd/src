@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.445 2026/02/17 21:45:07 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.446 2026/04/02 07:38:14 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1946,12 +1946,12 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 				    filename, linenum, keyword);
 		} else if (n == 1) {
 			value3 = value;
-			value = value2 = -1;
+			value2 = -1;
 		} else {
 			fatal("%s line %d: Invalid %s spec.",
 			    filename, linenum, keyword);
 		}
-		if (value3 <= 0 || (value2 != -1 && value <= 0))
+		if (value <= 0 || value3 <= 0)
 			fatal("%s line %d: Invalid %s spec.",
 			    filename, linenum, keyword);
 		if (*activep && options->max_startups == -1) {
