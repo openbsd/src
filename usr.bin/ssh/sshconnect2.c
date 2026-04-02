@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.384 2026/03/03 09:57:25 dtucker Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.385 2026/04/02 07:48:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -79,6 +79,7 @@ extern Options options;
 static char *xxx_host;
 static struct sockaddr *xxx_hostaddr;
 static const struct ssh_conn_info *xxx_conn_info;
+static int key_type_allowed(struct sshkey *, const char *);
 
 static int
 verify_host_key_callback(struct sshkey *hostkey, struct ssh *ssh)
@@ -88,6 +89,10 @@ verify_host_key_callback(struct sshkey *hostkey, struct ssh *ssh)
 	if ((r = sshkey_check_rsa_length(hostkey,
 	    options.required_rsa_size)) != 0)
 		fatal_r(r, "Bad server host key");
+	if (!key_type_allowed(hostkey, options.hostkeyalgorithms)) {
+		fatal("Server host key %s not in HostKeyAlgorithms",
+		    sshkey_ssh_name(hostkey));
+	}
 	if (verify_host_key(xxx_host, xxx_hostaddr, hostkey,
 	    xxx_conn_info) != 0)
 		fatal("Host key verification failed.");
@@ -1590,32 +1595,35 @@ load_identity_file(Identity *id)
 }
 
 static int
-key_type_allowed_by_config(struct sshkey *key)
+key_type_allowed(struct sshkey *key, const char *allowlist)
 {
-	if (match_pattern_list(sshkey_ssh_name(key),
-	    options.pubkey_accepted_algos, 0) == 1)
+	if (match_pattern_list(sshkey_ssh_name(key), allowlist, 0) == 1)
 		return 1;
 
 	/* RSA keys/certs might be allowed by alternate signature types */
 	switch (key->type) {
 	case KEY_RSA:
-		if (match_pattern_list("rsa-sha2-512",
-		    options.pubkey_accepted_algos, 0) == 1)
+		if (match_pattern_list("rsa-sha2-512", allowlist, 0) == 1)
 			return 1;
-		if (match_pattern_list("rsa-sha2-256",
-		    options.pubkey_accepted_algos, 0) == 1)
+		if (match_pattern_list("rsa-sha2-256", allowlist, 0) == 1)
 			return 1;
 		break;
 	case KEY_RSA_CERT:
 		if (match_pattern_list("rsa-sha2-512-cert-v01@openssh.com",
-		    options.pubkey_accepted_algos, 0) == 1)
+		    allowlist, 0) == 1)
 			return 1;
 		if (match_pattern_list("rsa-sha2-256-cert-v01@openssh.com",
-		    options.pubkey_accepted_algos, 0) == 1)
+		    allowlist, 0) == 1)
 			return 1;
 		break;
 	}
 	return 0;
+}
+
+static int
+key_type_allowed_by_config(struct sshkey *key)
+{
+	return key_type_allowed(key, options.pubkey_accepted_algos);
 }
 
 /* obtain a list of keys from the agent */
