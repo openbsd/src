@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.94 2026/03/08 11:06:30 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.95 2026/04/02 13:28:22 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1030,7 +1030,7 @@ relay_lookup_query(struct ctl_relay_event *cre, struct kv *kv)
 	if (match->kv_key == NULL)
 		goto done;
 	match->kv_value = strdup(tmpval);
-	if (match->kv_key == NULL)
+	if (match->kv_value == NULL)
 		goto done;
 	ret = 0;
 
