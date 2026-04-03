@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.230 2026/04/03 02:36:38 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.231 2026/04/03 02:41:03 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1510,11 +1510,10 @@ sbgp_assysnum(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 static int
 cert_parse_extensions(const char *fn, struct cert *cert)
 {
-	X509		*x = cert->x509;
+	X509 *x = cert->x509;
 	const X509_EXTENSION *ext;
 	const ASN1_OBJECT *obj;
-	int		 extsz, i, nid;
-	int		 bc, ski, aki, ku, eku, crldp, aia, sia, cp, ip, as;
+	int extsz, i, nid, bc, ski, aki, ku, eku, crldp, aia, sia, cp, ip, as;
 
 	nid = bc = ski = aki = ku = eku = crldp = aia = sia = cp = ip = as = 0;
 
