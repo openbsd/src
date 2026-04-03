@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.229 2026/04/03 02:33:21 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.230 2026/04/03 02:36:38 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1511,8 +1511,8 @@ static int
 cert_parse_extensions(const char *fn, struct cert *cert)
 {
 	X509		*x = cert->x509;
-	X509_EXTENSION	*ext;
-	ASN1_OBJECT	*obj;
+	const X509_EXTENSION *ext;
+	const ASN1_OBJECT *obj;
 	int		 extsz, i, nid;
 	int		 bc, ski, aki, ku, eku, crldp, aia, sia, cp, ip, as;
 
