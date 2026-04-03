@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.50 2025/06/05 09:29:54 claudio Exp $ */
+/* $OpenBSD: cpu.c,v 1.51 2026/04/03 22:01:46 sf Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -419,7 +419,7 @@ cpu_announce_extensions(struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
-	struct cpu_info *ci;
+	struct cpu_info *ci, *ci_last;
 	u_long i;
 
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
@@ -434,8 +434,10 @@ cpu_boot_secondary_processors(void)
 		/*
 		 * Link the processor into the list, and launch it.
 		 */
-		ci->ci_next = cpu_info_list->ci_next;
-		cpu_info_list->ci_next = ci;
+		ci_last = cpu_info_list;
+		while (ci_last->ci_next != NULL)
+			ci_last = ci_last->ci_next;
+		ci_last->ci_next = ci;
 		atomic_setbits_ulong(&ci->ci_flags, CPUF_RUNNING);
 		atomic_setbits_ulong(&cpus_running, (1UL << i));
 		ncpus++;

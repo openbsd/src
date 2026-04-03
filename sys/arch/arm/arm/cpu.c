@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.60 2024/06/11 15:44:55 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.61 2026/04/03 22:01:46 sf Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -354,10 +354,14 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		ci = &cpu_info_primary;
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
 	} else {
+		struct cpu_info *ci_last;
+
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
 		cpu_info[dev->dv_unit] = ci;
-		ci->ci_next = cpu_info_list->ci_next;
-		cpu_info_list->ci_next = ci;
+		ci_last = cpu_info_list;
+		while (ci_last->ci_next != NULL)
+			ci_last = ci_last->ci_next;
+		ci_last->ci_next = ci;
 		ci->ci_flags |= CPUF_AP;
 		ncpus++;
 	}

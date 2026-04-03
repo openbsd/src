@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.85 2025/06/05 09:29:54 claudio Exp $ */
+/*	$OpenBSD: cpu.c,v 1.86 2026/04/03 22:01:46 sf Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -95,9 +95,13 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 				panic("unable to allocate cpu_info");
 		}
 	} else {
+		struct cpu_info *ci_last;
+
 		ci = &cpu_info_secondaries[cpuno - 1];
-		ci->ci_next = cpu_info_list->ci_next;
-		cpu_info_list->ci_next = ci;
+		ci_last = cpu_info_list;
+		while (ci_last->ci_next != NULL)
+			ci_last = ci_last->ci_next;
+		ci_last->ci_next = ci;
 		ci->ci_flags |= CPUF_PRESENT;
 	}
 #else

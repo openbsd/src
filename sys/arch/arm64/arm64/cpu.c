@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.147 2026/04/03 14:20:23 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.148 2026/04/03 22:01:46 sf Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1521,6 +1521,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	struct cpu_info *ci;
 	void *kstack;
 #ifdef MULTIPROCESSOR
+	struct cpu_info *ci_last;
 	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
 #endif
 	uint32_t opp;
@@ -1534,8 +1535,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	} else {
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
 		cpu_info[dev->dv_unit] = ci;
-		ci->ci_next = cpu_info_list->ci_next;
-		cpu_info_list->ci_next = ci;
+		ci_last = cpu_info_list;
+		while (ci_last->ci_next != NULL)
+			ci_last = ci_last->ci_next;
+		ci_last->ci_next = ci;
 		ci->ci_flags |= CPUF_AP;
 		ncpus++;
 	}
