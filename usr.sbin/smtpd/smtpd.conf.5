@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.281 2026/03/12 07:46:08 jsg Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.282 2026/04/03 10:18:58 jtt Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 12 2026 $
+.Dd $Mdocdate: April 3 2026 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1142,6 +1142,14 @@ For example, with recipient
 .It %{rcpt:uppercase}       Ta expands to Dq USER+TAG@EXAMPLE.ORG
 .It %{rcpt:strip}           Ta expands to Dq User@Example.org
 .It %{rcpt:lowercase|strip} Ta expands to Dq user@example.org
+.El
+.Pp
+Modifiers and partial expansion can be used together.
+In such cases, the modifiers are applied before the partial expansion.
+For example, with sender
+.Dq owner-tech+M123456@openbsd.org :
+.Bl -column %{sender.user[6:]:strip} -offset indent
+.It %{sender.user[6:]:strip} Ta expands to Dq tech
 .El
 .Pp
 For security concerns, expanded values are sanitized and potentially

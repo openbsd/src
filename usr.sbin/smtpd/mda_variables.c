@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.10 2024/04/23 13:34:51 jsg Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.11 2026/04/03 10:18:58 jtt Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -94,7 +94,8 @@ mda_expand_token(char *dest, size_t len, const char *token,
 			return -1;
 
 		/* token:mod_1,mod_2,mod_n -> extract modifiers */
-		mods = strchr(rbracket + 1, ':');
+		if ((mods = strchr(rbracket + 1, ':')) != NULL)
+			*mods++ = '\0';
 	} else {
 		if ((mods = strchr(rtoken, ':')) != NULL)
 			*mods++ = '\0';
