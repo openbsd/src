@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.94 2026/01/23 10:45:53 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.95 2026/04/03 09:14:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -282,6 +282,19 @@ screen_pop_title(struct screen *s)
 		free(title_entry);
 	}
 }
+
+/*
+ * Set the progress bar state and progress. The progress will not be updated
+ * if p is negative.
+ */
+void
+screen_set_progress_bar(struct screen *s, enum progress_bar_state pbs, int p)
+{
+	s->progress_bar.state = pbs;
+	if (p >= 0 && pbs != PROGRESS_BAR_INDETERMINATE)
+		s->progress_bar.progress = p;
+}
+
 
 /* Resize screen with options. */
 void
