@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.225 2026/04/03 02:10:10 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.226 2026/04/03 02:11:43 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -948,7 +948,7 @@ cert_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-certificate_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 {
 	STACK_OF(POLICYINFO)		*policies = NULL;
 	POLICYINFO			*policy;
@@ -1574,7 +1574,7 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		case NID_certificate_policies:
 			if (cp++ > 0)
 				goto dup;
-			if (!certificate_policies(fn, cert, ext))
+			if (!cert_policies(fn, cert, ext))
 				goto out;
 			break;
 		case NID_sbgp_ipAddrBlock:
