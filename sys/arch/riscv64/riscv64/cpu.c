@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2026/03/31 14:41:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2026/04/03 17:44:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -39,7 +39,9 @@
 #include <dev/ofw/fdt.h>
 
 /* CPU Identification */
+#define CPU_VENDOR_ANDES	0x31e
 #define CPU_VENDOR_SIFIVE	0x489
+#define CPU_VENDOR_MIPS		0x029
 #define CPU_VENDOR_THEAD	0x5b7
 #define CPU_VENDOR_SPACEMIT	0x710
 
@@ -79,6 +81,8 @@ const struct vendor {
 	char		*name;
 	struct arch	*archlist;
 } cpu_vendors[] = {
+	{ CPU_VENDOR_ANDES, "Andes", cpu_arch_none },
+	{ CPU_VENDOR_MIPS, "MIPS", cpu_arch_none },
 	{ CPU_VENDOR_SIFIVE, "SiFive", cpu_arch_sifive },
 	{ CPU_VENDOR_SPACEMIT, "SpacemiT", cpu_arch_spacemit },
 	{ CPU_VENDOR_THEAD, "T-Head", cpu_arch_none },
@@ -114,13 +118,12 @@ size_t	thead_dcache_line_size;
 void
 cpu_identify(struct cpu_info *ci)
 {
-	char isa[32];
 	uint64_t marchid, mimpid;
 	uint32_t mvendorid;
 	const char *vendor_name = NULL;
 	const char *arch_name = NULL;
 	struct arch *archlist = cpu_arch_none;
-	int i, len;
+	int i;
 
 	mvendorid = sbi_get_mvendorid();
 	marchid = sbi_get_marchid();
@@ -149,14 +152,19 @@ cpu_identify(struct cpu_info *ci)
 		printf(" %s", arch_name);
 	else
 		printf(" arch %llx", marchid);
-	printf(" imp %llx", mimpid);
+	printf(" imp %llx\n", mimpid);
 
-	len = OF_getprop(ci->ci_node, "riscv,isa", isa, sizeof(isa));
-	if (len != -1) {
-		printf(" %s", isa);
-		strlcpy(cpu_model, isa, sizeof(cpu_model));
+	if (CPU_IS_PRIMARY(ci)) {
+		if (vendor_name && arch_name)
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s %s imp %llx", vendor_name, arch_name, mimpid);
+		else if (vendor_name)
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s arch %llx imp %llx", vendor_name, marchid,
+			     mimpid);
+		else
+			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
 	}
-	printf("\n");
 
 	/* Handle errata. */
 	if (mvendorid == CPU_VENDOR_SIFIVE && marchid == CPU_ARCH_U7)
