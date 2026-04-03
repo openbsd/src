@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.96 2026/03/30 06:23:33 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.97 2026/04/03 07:37:52 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2825,7 +2825,7 @@ test_tlsext_srtp_client(void)
 		errx(1, "Failed to create CBB");
 
 	/* SRTP is for DTLS */
-	if ((ssl_ctx = SSL_CTX_new(DTLSv1_client_method())) == NULL)
+	if ((ssl_ctx = SSL_CTX_new(DTLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
@@ -3065,7 +3065,7 @@ test_tlsext_srtp_server(void)
 		errx(1, "Failed to create CBB");
 
 	/* SRTP is for DTLS */
-	if ((ssl_ctx = SSL_CTX_new(DTLSv1_client_method())) == NULL)
+	if ((ssl_ctx = SSL_CTX_new(DTLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
