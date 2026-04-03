@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.35 2025/12/04 21:16:17 beck Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.36 2026/04/03 07:17:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1056,8 +1056,6 @@ struct ssl_st {
 			 * (i.e. not just sending a HelloRequest) */
 
 	int rstate;	/* where we are when reading */
-
-	int mac_packet;
 
 	int empty_record_count;
 

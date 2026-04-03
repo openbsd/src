@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.47 2024/02/03 15:58:33 beck Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.48 2026/04/03 07:17:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -358,14 +358,11 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 	}
 
 	/* Feed this message into MAC computation. */
-	if (s->mac_packet) {
-		tls1_transcript_record(s, (unsigned char *)s->init_buf->data,
-		    s->init_num + SSL3_HM_HEADER_LENGTH);
+	tls1_transcript_record(s, (unsigned char *)s->init_buf->data,
+	    s->init_num + SSL3_HM_HEADER_LENGTH);
 
-		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
-		    s->init_buf->data,
-		    (size_t)s->init_num + SSL3_HM_HEADER_LENGTH);
-	}
+	ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE, s->init_buf->data,
+	    (size_t)s->init_num + SSL3_HM_HEADER_LENGTH);
 
 	return 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.44 2024/01/30 14:50:50 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.45 2026/04/03 07:17:36 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -353,7 +353,6 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 		s->rstate = SSL_ST_READ_BODY;
 		s->packet = s->s3->rbuf.buf;
 		s->packet_length = SSL3_RT_HEADER_LENGTH;
-		s->mac_packet = 1;
 	}
 
 	/* Stash the current handshake message. */

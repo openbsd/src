@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.69 2025/03/12 14:03:55 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.70 2026/04/03 07:17:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -350,7 +350,6 @@ ssl3_get_record(SSL *s)
 		if (n <= 0)
 			return (n);
 
-		s->mac_packet = 1;
 		s->rstate = SSL_ST_READ_BODY;
 
 		if (s->server && s->first_packet) {
