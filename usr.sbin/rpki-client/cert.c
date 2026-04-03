@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.228 2026/04/03 02:23:33 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.229 2026/04/03 02:33:21 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1530,7 +1530,8 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 	for (i = 0; i < extsz; i++) {
 		ext = X509_get_ext(x, i);
 		assert(ext != NULL);
-		obj = X509_EXTENSION_get_object(ext);
+		/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+		obj = X509_EXTENSION_get_object((X509_EXTENSION *)ext);
 		assert(obj != NULL);
 
 		/* The switch is ordered following RFC 6487, section 4.8. */
