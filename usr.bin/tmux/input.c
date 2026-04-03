@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.255 2026/03/23 08:58:39 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.256 2026/04/03 08:23:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3114,7 +3114,7 @@ input_osc_52_parse(struct input_ctx *ictx, const char *p, u_char **out,
 		return (0);
 	}
 
-	len = (strlen(end) / 4) * 3;
+	len = ((strlen(end) + 3) / 4) * 3;
 	if (len == 0)
 		return (0);
 
