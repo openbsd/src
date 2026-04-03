@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.48 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.49 2026/04/03 09:36:21 op Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1024,10 +1024,6 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			close(cert->cert_ocsp_fd);
 			cert->cert_ocsp_fd = -1;
 		}
-	}
-	if (rlay->rl_tls_client_ca_fd != -1) {
-		close(rlay->rl_tls_client_ca_fd);
-		rlay->rl_tls_client_ca_fd = -1;
 	}
 
 	return (0);
