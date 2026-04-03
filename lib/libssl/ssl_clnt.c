@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.170 2025/12/04 21:03:42 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.171 2026/04/03 12:58:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,6 +229,13 @@ ssl3_connect(SSL *s)
 			    &s->s3->hs.our_min_tls_version,
 			    &s->s3->hs.our_max_tls_version)) {
 				SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
+				ret = -1;
+				goto end;
+			}
+
+			/* Ensure that we cannot negotiate TLSv1.1 or lower. */
+			if (s->s3->hs.our_min_tls_version < TLS1_2_VERSION) {
+				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
 			}

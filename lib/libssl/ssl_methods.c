@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.32 2024/07/23 14:40:54 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.33 2026/04/03 12:58:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -538,17 +538,11 @@ const SSL_METHOD *
 ssl_get_method(uint16_t version)
 {
 	if (version == TLS1_3_VERSION)
-		return (TLS_method());
+		return TLS_method();
 	if (version == TLS1_2_VERSION)
-		return (TLSv1_2_method());
-	if (version == TLS1_1_VERSION)
-		return (TLSv1_1_method());
-	if (version == TLS1_VERSION)
-		return (TLSv1_method());
-	if (version == DTLS1_VERSION)
-		return (DTLSv1_method());
+		return TLSv1_2_method();
 	if (version == DTLS1_2_VERSION)
-		return (DTLSv1_2_method());
+		return DTLSv1_2_method();
 
-	return (NULL);
+	return NULL;
 }
