@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.54 2026/03/31 16:37:48 deraadt Exp $ */
+/* $OpenBSD: cpu.h,v 1.55 2026/04/03 14:20:23 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -163,6 +163,8 @@ struct cpu_info {
 	volatile int		ci_opp_idx;
 	volatile int		ci_opp_max;
 	uint32_t		ci_cpu_supply;
+
+	uint64_t		ci_capacity;
 
 	u_long			ci_prev_sleep;
 	u_long			ci_last_itime;
@@ -342,6 +344,7 @@ intr_restore(u_long daif)
 	restore_daif(daif);
 }
 
+void	cpu_classify(void);
 void	cpu_halt(void);
 int	cpu_suspend_primary(void);
 void	cpu_resume_secondary(struct cpu_info *);

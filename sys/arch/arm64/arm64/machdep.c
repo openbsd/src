@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.97 2026/01/29 11:23:35 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.98 2026/04/03 14:20:23 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -292,6 +292,8 @@ cpu_startup(void)
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
 	curpcb->pcb_tf = &proc0tf;
+
+	sched_blockcpu = CPUTYP_L;
 
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG

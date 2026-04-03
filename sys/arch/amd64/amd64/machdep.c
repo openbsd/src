@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.308 2026/03/31 16:46:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.309 2026/04/03 14:20:23 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -320,6 +320,8 @@ cpu_startup(void)
 	    ptoa((psize_t)uvmexp.free)/1024/1024);
 
 	bufinit();
+
+	sched_blockcpu = CPUTYP_SMT | CPUTYP_L;
 
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG
@@ -1482,8 +1484,6 @@ init_x86_64(paddr_t first_avail)
 	bios_memmap_t *bmp;
 	int x, ist;
 	uint64_t max_dm_size = ((uint64_t)512 * NUM_L4_SLOT_DIRECT) << 30;
-
-	sched_blockcpu = CPUTYP_SMT | CPUTYP_L;
 
 	/*
 	 * locore0 mapped 2 pages for use as GHCB before pmap is initialized.

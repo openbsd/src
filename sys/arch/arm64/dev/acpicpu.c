@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpicpu.c,v 1.2 2026/01/07 17:02:12 kettenis Exp $	*/
+/*	$OpenBSD: acpicpu.c,v 1.3 2026/04/03 14:20:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis
  *
@@ -92,6 +92,8 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_madt *madt = NULL;
 	struct acpi_q *entry;
 	struct aml_value res;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 	caddr_t addr;
 	uint64_t uid = 0;
 	int found = 0;
@@ -186,6 +188,14 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		acpicpu_lowest_perf = sc->sc_lowest_perf;
 	if (acpicpu_highest_perf < sc->sc_highest_perf)
 		acpicpu_highest_perf = sc->sc_highest_perf;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (sc->sc_mpidr == ci->ci_mpidr) {
+			ci->ci_capacity = sc->sc_nominal_perf;
+			cpu_classify();
+			break;
+		}
+	}
 
 	task_set(&acpicpu_setperf_task, acpicpu_do_setperf, NULL);
 	cpu_setperf = acpicpu_setperf;
