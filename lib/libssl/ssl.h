@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.249 2025/10/24 11:36:08 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.250 2026/04/03 13:11:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -369,15 +369,6 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
 /* Allow initial connection to servers that don't support RI */
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L
 
-/* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
- * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
- * the workaround is not needed.
- * Unfortunately some broken SSL/TLS implementations cannot handle it
- * at all, which is why it was previously included in SSL_OP_ALL.
- * Now it's not.
- */
-#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS		0x00000800L
-
 /* DTLS options */
 #define SSL_OP_NO_QUERY_MTU				0x00001000L
 /* Turn on Cookie Exchange (on relevant for servers) */
@@ -439,6 +430,7 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x0
 #define SSL_OP_TLS_D5_BUG				0x0
 #define SSL_OP_TLS_ROLLBACK_BUG				0x0
+#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS		0x0
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */

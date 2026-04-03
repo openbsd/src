@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.71 2026/04/03 07:26:20 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.72 2026/04/03 13:11:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -506,16 +506,8 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		}
 
 		if ((i == (int)n) || (type == SSL3_RT_APPLICATION_DATA &&
-		    (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))) {
-			/*
-			 * Next chunk of data should get another prepended
-			 * empty fragment in ciphersuites with known-IV
-			 * weakness.
-			 */
-			s->s3->empty_fragment_done = 0;
-
+		    (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE)))
 			return tot + i;
-		}
 
 		n -= i;
 		tot += i;
@@ -526,8 +518,6 @@ static int
 do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
 	SSL3_BUFFER_INTERNAL *wb = &(s->s3->wbuf);
-	SSL_SESSION *sess = s->session;
-	int need_empty_fragment = 0;
 	size_t align, out_len;
 	CBB cbb;
 	int ret;
@@ -560,26 +550,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	if (len == 0)
 		return 0;
 
-	/*
-	 * Countermeasure against known-IV weakness in CBC ciphersuites
-	 * (see http://www.openssl.org/~bodo/tls-cbc.txt). Note that this
-	 * is unnecessary for AEAD.
-	 */
-	if (sess != NULL && tls12_record_layer_write_protected(s->rl)) {
-		if (s->s3->need_empty_fragments &&
-		    !s->s3->empty_fragment_done &&
-		    type == SSL3_RT_APPLICATION_DATA)
-			need_empty_fragment = 1;
-	}
-
-	/*
-	 * An extra fragment would be a couple of cipher blocks, which would
-	 * be a multiple of SSL3_ALIGN_PAYLOAD, so if we want to align the real
-	 * payload, then we can just simply pretend we have two headers.
-	 */
 	align = (size_t)wb->buf + SSL3_RT_HEADER_LENGTH;
-	if (need_empty_fragment)
-		align += SSL3_RT_HEADER_LENGTH;
 	align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
 	wb->offset = align;
 
@@ -587,13 +558,6 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		goto err;
 
 	tls12_record_layer_set_version(s->rl, s->version);
-
-	if (need_empty_fragment) {
-		if (!tls12_record_layer_seal_record(s->rl, type,
-		    buf, 0, &cbb))
-			goto err;
-		s->s3->empty_fragment_done = 1;
-	}
 
 	if (!tls12_record_layer_seal_record(s->rl, type, buf, len, &cbb))
 		goto err;

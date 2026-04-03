@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.158 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.159 2026/04/03 13:11:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,25 +388,6 @@ tls1_setup_key_block(SSL *s)
 
 	s->s3->hs.tls12.key_block = key_block;
 	key_block = NULL;
-
-	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
-	    s->method->version <= TLS1_VERSION) {
-		/*
-		 * Enable vulnerability countermeasure for CBC ciphers with
-		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
-		 */
-		s->s3->need_empty_fragments = 1;
-
-		if (s->s3->hs.cipher != NULL) {
-			if (s->s3->hs.cipher->algorithm_enc == SSL_eNULL)
-				s->s3->need_empty_fragments = 0;
-
-#ifndef OPENSSL_NO_RC4
-			if (s->s3->hs.cipher->algorithm_enc == SSL_RC4)
-				s->s3->need_empty_fragments = 0;
-#endif
-		}
-	}
 
 	ret = 1;
 

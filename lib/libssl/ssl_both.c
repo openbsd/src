@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.48 2026/04/03 07:17:36 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.49 2026/04/03 13:11:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -513,7 +513,6 @@ ssl3_setup_read_buffer(SSL *s)
 int
 ssl3_setup_write_buffer(SSL *s)
 {
-	unsigned char *p;
 	size_t len, align, headerlen;
 
 	if (SSL_is_dtls(s))
@@ -526,13 +525,9 @@ ssl3_setup_write_buffer(SSL *s)
 	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
-			len += headerlen + align +
-			    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 
-		if ((p = calloc(1, len)) == NULL)
+		if ((s->s3->wbuf.buf = calloc(1, len)) == NULL)
 			goto err;
-		s->s3->wbuf.buf = p;
 		s->s3->wbuf.len = len;
 	}
 

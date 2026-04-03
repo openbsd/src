@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.36 2026/04/03 07:17:36 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.37 2026/04/03 13:11:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1098,10 +1098,6 @@ typedef struct ssl3_state_st {
 	 * send close alert via the warning alert */
 	int alert_dispatch;
 	unsigned char send_alert[2];
-
-	/* flags for countermeasure against known-IV weakness */
-	int need_empty_fragments;
-	int empty_fragment_done;
 
 	/* Unprocessed Alert/Handshake protocol data. */
 	struct tls_buffer *alert_fragment;
