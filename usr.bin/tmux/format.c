@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.353 2026/04/03 09:14:27 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.354 2026/04/03 10:13:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1307,6 +1307,8 @@ format_cb_mouse_status_range(struct format_tree *ft)
 		return (xstrdup("session"));
 	case STYLE_RANGE_USER:
 		return (xstrdup(sr->string));
+	case STYLE_RANGE_CONTROL:
+		return (xstrdup("control"));
 	}
 	return (NULL);
 }

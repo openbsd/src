@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.31 2026/04/02 09:35:46 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.32 2026/04/03 10:13:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -49,6 +49,7 @@ format_is_type(struct format_range *fr, struct style *sy)
 	case STYLE_RANGE_NONE:
 	case STYLE_RANGE_LEFT:
 	case STYLE_RANGE_RIGHT:
+	case STYLE_RANGE_CONTROL:
 		return (1);
 	case STYLE_RANGE_PANE:
 	case STYLE_RANGE_WINDOW:
@@ -1063,6 +1064,10 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 			break;
 		case STYLE_RANGE_USER:
 			log_debug("%s: range user|%u at %u-%u", __func__,
+			    sr->argument, sr->start, sr->end);
+			break;
+		case STYLE_RANGE_CONTROL:
+			log_debug("%s: range control|%u at %u-%u", __func__,
 			    sr->argument, sr->start, sr->end);
 			break;
 		}
