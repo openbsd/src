@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.20 2023/07/02 17:21:33 beck Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.21 2026/04/03 07:40:14 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -792,7 +792,7 @@ test_ssl_min_max_version(void)
 		if (!SSL_CTX_set_max_proto_version(ssl_ctx, mmvt->maxver)) {
 			if (!mmvt->want_max_fail) {
 				fprintf(stderr, "FAIL: test %zu - failed to set "
-				    "SSL_CTX min version\n", i);
+				    "SSL_CTX max version\n", i);
 				failed++;
 			}
 			goto next;
@@ -857,7 +857,7 @@ test_ssl_min_max_version(void)
 		if (!SSL_set_max_proto_version(ssl, mmvt->maxver)) {
 			if (mmvt->want_max_fail) {
 				fprintf(stderr, "FAIL: test %zu - failed to set "
-				    "SSL min version\n", i);
+				    "SSL max version\n", i);
 				failed++;
 			}
 			goto next;
