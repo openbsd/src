@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.227 2026/04/03 02:20:03 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.228 2026/04/03 02:23:33 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -422,7 +422,7 @@ cert_check_spki(const char *fn, struct cert *cert)
 }
 
 static int
-cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_ski(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	ASN1_OCTET_STRING	*os = NULL;
 	unsigned char		 md[EVP_MAX_MD_SIZE];
@@ -470,7 +470,7 @@ cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 }
 
 static int
-cert_aki(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_aki(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	AUTHORITY_KEYID	*akid = NULL;
 	int		 length, rc = 0;
@@ -519,7 +519,7 @@ cert_aki(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Parse CRL distribution point per RFC 6487, section 4.8.6.
  */
 static int
-cert_crldp(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	CRL_DIST_POINTS	*crldp = NULL;
 	DIST_POINT	*dp;
@@ -621,7 +621,7 @@ cert_crldp(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-cert_aia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_aia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	AUTHORITY_INFO_ACCESS	*aia = NULL;
 	ACCESS_DESCRIPTION	*ad;
@@ -702,7 +702,7 @@ cert_aia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-cert_ca_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_ca_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	AUTHORITY_INFO_ACCESS	*sia = NULL;
 	ACCESS_DESCRIPTION	*ad;
@@ -842,7 +842,7 @@ cert_ca_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-cert_ee_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_ee_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	AUTHORITY_INFO_ACCESS	*sia = NULL;
 	ACCESS_DESCRIPTION	*ad;
@@ -932,7 +932,7 @@ cert_ee_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 }
 
 static int
-cert_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	switch (cert->purpose) {
 	case CERT_PURPOSE_TA:
@@ -954,7 +954,7 @@ cert_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-cert_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_policies(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	STACK_OF(POLICYINFO)		*policies = NULL;
 	POLICYINFO			*policy;
@@ -1235,7 +1235,7 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+sbgp_ipaddrblk(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	IPAddrBlocks	*addrblk = NULL;
 	int		 rc = 0;
@@ -1467,7 +1467,7 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+sbgp_assysnum(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	ASIdentifiers		*asidentifiers = NULL;
 	int			 rc = 0;
