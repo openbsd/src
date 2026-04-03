@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.78 2026/02/23 16:40:45 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.79 2026/04/03 12:58:40 kirill Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -293,6 +293,12 @@ main(int argc, char *argv[])
 		/* for ed script just up and do it and exit */
 		if (diff_type == ED_DIFF) {
 			do_ed_script();
+			if (ofp)
+				fclose(ofp);
+			ofp = NULL;
+			if (rejfp)
+				fclose(rejfp);
+			rejfp = NULL;
 			continue;
 		}
 
