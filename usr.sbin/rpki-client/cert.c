@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.226 2026/04/03 02:11:43 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.227 2026/04/03 02:20:03 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -437,7 +437,8 @@ cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((os = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((os = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.2: error parsing SKI", fn);
 		goto out;
 	}
@@ -482,7 +483,8 @@ cert_aki(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((akid = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((akid = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.3: error parsing AKI", fn);
 		goto out;
 	}
@@ -539,7 +541,8 @@ cert_crldp(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((crldp = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((crldp = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point: "
 		    "failed extension parse", fn);
 		goto out;
@@ -640,7 +643,8 @@ cert_aia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((aia = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((aia = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.7: AIA: failed extension parse",
 		    fn);
 		goto out;
@@ -715,7 +719,8 @@ cert_ca_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((sia = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: failed extension parse",
 		    fn);
 		goto out;
@@ -853,7 +858,8 @@ cert_ee_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((sia = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: failed extension parse",
 		    fn);
 		goto out;
@@ -963,7 +969,8 @@ cert_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((policies = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((policies = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
 		    "failed extension parse", fn);
 		goto out;
@@ -1239,7 +1246,8 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((addrblk = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((addrblk = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
 		    "failed extension parse", fn);
 		goto out;
@@ -1470,7 +1478,8 @@ sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	if ((asidentifiers = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "failed extension parse", fn);
 		goto out;
