@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.95 2026/04/03 09:14:27 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.96 2026/04/03 09:18:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -122,6 +122,7 @@ screen_reinit(struct screen *s)
 
 	screen_clear_selection(s);
 	screen_free_titles(s);
+	screen_set_progress_bar(s, PROGRESS_BAR_HIDDEN, 0);
 	screen_reset_hyperlinks(s);
 }
 
