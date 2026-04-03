@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.70 2026/04/03 07:17:36 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.71 2026/04/03 07:26:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -351,12 +351,6 @@ ssl3_get_record(SSL *s)
 			return (n);
 
 		s->rstate = SSL_ST_READ_BODY;
-
-		if (s->server && s->first_packet) {
-			if ((ret = ssl_server_legacy_first_packet(s)) != 1)
-				return (ret);
-			ret = -1;
-		}
 
 		CBS_init(&header, s->packet, SSL3_RT_HEADER_LENGTH);
 
