@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.74 2026/01/20 16:49:03 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.75 2026/04/03 02:07:15 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -378,7 +378,7 @@ crl_print(const struct crl *p)
 {
 	STACK_OF(X509_REVOKED)	*revlist;
 	X509_REVOKED *rev;
-	X509_NAME *xissuer;
+	const X509_NAME *xissuer;
 	int i;
 	char *issuer, *serial;
 	time_t t;
