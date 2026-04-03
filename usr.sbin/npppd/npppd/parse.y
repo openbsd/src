@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2025/09/09 04:15:53 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.33 2026/04/03 00:09:24 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1668,7 +1668,7 @@ radconf_fini(struct radconf *radconf)
 	TAILQ_FOREACH_SAFE(server, &radconf->servers, entry, server0) {
 		if (server->secret != NULL)
 			free(server->secret);
-		server->secret = NULL;
+		free(server);
 	}
 }
 
