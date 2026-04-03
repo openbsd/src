@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.49 2026/04/03 09:36:21 op Exp $	*/
+/*	$OpenBSD: config.c,v 1.50 2026/04/03 13:21:00 op Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -186,11 +186,6 @@ config_purge(struct relayd *env, u_int reset)
 			while ((rule = TAILQ_FIRST(&proto->rules)) != NULL)
 				rule_delete(&proto->rules, rule);
 			proto->rulecount = 0;
-		}
-	}
-	if (what & CONFIG_PROTOS && env->sc_protos != NULL) {
-		while ((proto = TAILQ_FIRST(env->sc_protos)) != NULL) {
-			TAILQ_REMOVE(env->sc_protos, proto, entry);
 			free(proto->style);
 			free(proto->tlscapass);
 			while ((keyname =
