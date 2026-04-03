@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.224 2026/02/03 16:21:37 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.225 2026/04/03 02:10:10 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -354,8 +354,12 @@ cert_check_spki(const char *fn, struct cert *cert)
 	const void		*pval = NULL;
 	int			 rc = 0;
 
-	/* Should be called _get0_. It returns a pointer owned by cert->x509. */
-	if ((pubkey = X509_get_X509_PUBKEY(cert->x509)) == NULL) {
+	/*
+	 * Should be called _get0_. It returns a pointer owned by cert->x509.
+	 * XXX - cast away const for OpenSSL 4.
+	 */
+	pubkey = (X509_PUBKEY *)X509_get_X509_PUBKEY(cert->x509);
+	if (pubkey == NULL) {
 		warnx("%s: RFC 6487, 4.7: certificate without SPKI", fn);
 		goto out;
 	}
