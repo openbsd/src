@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.13 2025/05/19 14:36:03 schwarze Exp $
+# $OpenBSD: vi.sh,v 1.14 2026/04/04 09:33:18 jtt Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -122,7 +122,7 @@ testseq "ab\0033Lx" " # ab\b\a \b\b"
 testseq "abc\003302l~" " # abc\b\b\babC\b"
 testseq "abc\00330 rx" " # abc\b\b\bax\b"
 
-# P: Paste at current position.
+# P: Paste at current position after delete.
 testseq "abcde\0033hDhP" " # abcde\b\b  \b\b\b\bdebc\b\b\b"
 testseq "abcde\0033hDh2P" " # abcde\b\b  \b\b\b\bdedebc\b\b\b"
 testseq "A\0033xa\0303\0200\00332Px" \
@@ -132,14 +132,46 @@ testseq "\0302\0251\0033xaA\0033Px" \
 testseq "\0302\0251\0033xa\0303\0200\0033Px" \
  " # \0302\0251\b  \b\b\0303\0200\b\0302\0251\0303\0200\b\b\0303\0200  \b\b\b"
 
-# p: Paste after current position.
+# P: Paste at current position after change.
+testseq "abcde\0033hC\0033hP" " # abcde\b\b  \b\b\b\bdebc\b\b\b"
+testseq "abcde\0033hC\0033h2P" " # abcde\b\b  \b\b\b\bdedebc\b\b\b"
+testseq "A\0033cl\0033a\0303\0200\00332Pcl\0033" \
+	" # A\b \b\0303\0200\bAA\0303\0200\b\b\0303\0200 \b\b\b"
+testseq "\0302\0251\0033cl\0033aA\0033Pcl\0033" \
+	" # \0302\0251\b  \b\bA\b\0302\0251A\b\bA  \b\b\b"
+testseq "\0302\0251\0033cl\0033a\0303\0200\0033Pcl\0033" \
+ " # \0302\0251\b  \b\b\0303\0200\b\0302\0251\0303\0200\b\b\0303\0200  \b\b\b"
+testseq "one two \0033ccthree\00330P" \
+	" # one two \b\r #        \r # three\b\b\b\b\bone two three\b\b\b\b\b\b"
+testseq "one zero\0033bcw\00330Pa \0033" \
+	" # one zero\b\b\b\b    \b\b\b\b\b\b\b\bzeroone\b\b\b\bo one\b\b\b\b"
+testseq "one zero \0033bcf \00330P" \
+	" # one zero \b\b\b\b\b    \b\b\b\b\b\b\b\bzero one\b\b\b\b"
+
+# p: Paste after current position after delete.
 testseq "abcd\0033hDhp" " # abcd\b\b  \b\b\b\bacdb\b\b"
 testseq "abcd\0033hDh2p" " # abcd\b\b  \b\b\b\bacdcdb\b\b"
 testseq "A\0033xa\0303\0200\0033px" " # A\b \b\0303\0200\b\0303\0200A\b \b\b"
 testseq "\0302\0251\0033xaA\0033px" \
-	" # \0302\0251\b  \b\bA\bA\0302\0251\b  \b\b\b" 
+	" # \0302\0251\b  \b\bA\bA\0302\0251\b  \b\b\b"
 testseq "\0302\0251\0033xa\0303\0200\0033px" \
 	" # \0302\0251\b  \b\b\0303\0200\b\0303\0200\0302\0251\b  \b\b\b"
+
+# p: Paste after current position after change.
+testseq "abcd\0033hC\0033hp" " # abcd\b\b  \b\b\b\bacdb\b\b"
+testseq "abcd\0033hC\0033h2p" " # abcd\b\b  \b\b\b\bacdcdb\b\b"
+testseq "A\0033cl\0033a\0303\0200\0033pcl\0033" \
+	" # A\b \b\0303\0200\b\0303\0200A\b \b\b"
+testseq "\0302\0251\0033cl\0033aA\0033pcl\0033" \
+	" # \0302\0251\b  \b\bA\bA\0302\0251\b  \b\b\b"
+testseq "\0302\0251\0033cl\0033a\0303\0200\0033pcl\0033" \
+	" # \0302\0251\b  \b\b\0303\0200\b\0303\0200\0302\0251\b  \b\b\b"
+testseq "one two\0033cczero \0033p" \
+	" # one two\b\r #        \r # zero \b one two\b"
+testseq "one zero\00330cw\0033\$a \0033p" \
+	" # one zero\b\r #  zero   \r #  zero \b one\b"
+testseq "one zero\00330cf \0033\$a \0033p" \
+	" # one zero\b\r # zero    \r # zero \b one"
 
 # R: Replace.
 testseq "abcd\00332h2Rx\0033" " # abcd\b\b\bxx\b"

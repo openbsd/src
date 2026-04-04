@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.68 2026/03/05 05:38:58 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.69 2026/04/04 09:33:18 jtt Exp $	*/
 
 /*
  *	vi command editing
@@ -819,7 +819,7 @@ vi_cmd(int argcnt, const char *cmd)
 						c2++;
 				}
 			}
-			if (*cmd != 'c' && c1 != c2)
+			if (c1 != c2)
 				yank_range(c1, c2);
 			if (*cmd != 'y') {
 				del_range(c1, c2);
@@ -858,6 +858,7 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case 'C':
 			modified = 1; hnum = hlast;
+			yank_range(es->cursor, es->linelen);
 			del_range(es->cursor, es->linelen);
 			insert = INSERT;
 			break;
