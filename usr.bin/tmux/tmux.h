@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1303 2026/04/04 16:40:27 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1304 2026/04/04 17:13:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1958,6 +1958,7 @@ typedef void (*overlay_resize_cb)(struct client *, void *);
 struct client {
 	const char		*name;
 	struct tmuxpeer		*peer;
+	const char		*user;
 	struct cmdq_list	*queue;
 
 	struct client_windows	 windows;

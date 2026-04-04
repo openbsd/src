@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.451 2026/04/04 17:00:33 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.452 2026/04/04 17:13:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -537,6 +537,7 @@ server_client_free(__unused int fd, __unused short events, void *arg)
 
 	if (c->references == 0) {
 		free((void *)c->name);
+		free((void *)c->user);
 		free(c);
 	}
 }
