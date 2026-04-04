@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.161 2026/03/15 19:23:22 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.162 2026/04/04 19:18:37 martijn Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -71,17 +71,6 @@ xstrdup(const char *str)
 	char	*r;
 
 	if ((r = strdup(str)) == NULL)
-		fatal("strdup");
-
-	return (r);
-}
-
-char *
-xstrndup(const char *str, size_t maxlen)
-{
-	char	*r;
-
-	if ((r = strndup(str, maxlen)) == NULL)
 		fatal("strdup");
 
 	return (r);

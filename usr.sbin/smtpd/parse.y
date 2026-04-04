@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.301 2026/03/10 17:40:35 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.302 2026/04/04 19:18:37 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -454,7 +454,7 @@ PROC STRING STRING {
 	processor->command = $3;
 } proc_params {
 	if (!processor->tag)
-		processor->tag = processor_maketag(processor->command);
+		processor->tag = processor_maketag($2);
 	dict_set(conf->sc_filter_processes_dict, $2, processor);
 	processor = NULL;
 }
@@ -1956,7 +1956,7 @@ FILTER STRING PROC_EXEC STRING {
 	dict_set(conf->sc_filters_dict, $2, filter_config);
 } proc_params {
 	if (!processor->tag)
-		processor->tag = processor_maketag(processor->command);
+		processor->tag = processor_maketag(filter_config->proc);
 	dict_set(conf->sc_filter_processes_dict, filter_config->proc, processor);
 	processor = NULL;
 	filter_config = NULL;
@@ -3685,22 +3685,16 @@ config_lo_mask_source(struct listen_opts *lo) {
 
 /* Best effort. If it's ugly: use the tag parameter */
 static const char *
-processor_maketag(const char *cmd)
+processor_maketag(const char *name)
 {
-	char path[PATH_MAX];
-	int i, j;
-	char *tag;
+	char tag[TAG_MAX + 1];
+	size_t i, j;
 
-	strlcpy(path, cmd, sizeof(path));
-	for (i = 0; path[i] != '\0' && !isspace(path[i]); i++)
-		continue;
-	path[i] = '\0';
-	tag = basename(path);
-	for (i = j = 0; tag[j] != '\0'; j++) {
-		if (isalpha(tag[j]))
-			tag[i++] = tag[j];
+	for (i = j = 0; name[i] != '\0' && j < sizeof(tag) - 1; i++) {
+		if (isalnum(name[i]))
+			tag[j++] = name[i];
 	}
-	tag[i] = '\0';
+	tag[j] = '\0';
 
-	return xstrndup(tag, TAG_MAX);
+	return xstrdup(tag);
 }

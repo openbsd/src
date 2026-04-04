@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.282 2026/04/03 10:18:58 jtt Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.283 2026/04/04 19:18:37 martijn Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 3 2026 $
+.Dd $Mdocdate: April 4 2026 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -915,8 +915,7 @@ with which all log messages of this processor are written to syslog.
 .Ar tag
 is limited to 32 letters.
 The default is a best effort representation of the
-.Ar command
-name.
+.Ar proc-name .
 .El
 .It Ic queue Cm compression
 Store queue files in a compressed format.

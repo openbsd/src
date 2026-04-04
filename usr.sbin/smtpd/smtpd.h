@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.692 2026/03/10 17:30:23 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.693 2026/04/04 19:18:37 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1712,7 +1712,6 @@ int xasprintf(char **, const char *, ...)
 void *xmalloc(size_t);
 void *xcalloc(size_t, size_t);
 char *xstrdup(const char *);
-char *xstrndup(const char *, size_t);
 void *xmemdup(const void *, size_t);
 char *strip(char *);
 int io_xprint(struct io *, const char *);
