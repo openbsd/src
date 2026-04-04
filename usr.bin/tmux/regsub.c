@@ -1,4 +1,4 @@
-/* $OpenBSD: regsub.c,v 1.7 2026/04/02 08:45:35 nicm Exp $ */
+/* $OpenBSD: regsub.c,v 1.8 2026/04/04 11:32:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -41,7 +41,7 @@ regsub_expand(char **buf, ssize_t *len, const char *with, const char *text,
 	u_int		 i;
 
 	for (cp = with; *cp != '\0'; cp++) {
-		if (*cp == '\\') {
+		if (cp[0] == '\\' && cp[1] != '\0') {
 			cp++;
 			if (*cp >= '0' && *cp <= '9') {
 				i = *cp - '0';
