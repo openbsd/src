@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.41 2022/05/30 12:52:02 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.42 2026/04/04 16:40:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,7 +90,7 @@ cmd_select_layout_exec(struct cmd *self, struct cmdq_item *item)
 		previous = 1;
 
 	oldlayout = w->old_layout;
-	w->old_layout = layout_dump(w->layout_root);
+	w->old_layout = layout_dump(w, w->layout_root);
 
 	if (next || previous) {
 		if (next)

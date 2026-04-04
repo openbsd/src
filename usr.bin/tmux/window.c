@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.312 2026/04/03 10:13:20 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.313 2026/04/04 16:40:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -882,9 +882,8 @@ window_printable_flags(struct winlink *wl, int escape)
 {
 	struct session	*s = wl->session;
 	static char	 flags[32];
-	int		 pos;
+	u_int		 pos = 0;
 
-	pos = 0;
 	if (wl->flags & WINLINK_ACTIVITY) {
 		flags[pos++] = '#';
 		if (escape)
@@ -902,6 +901,25 @@ window_printable_flags(struct winlink *wl, int escape)
 		flags[pos++] = 'M';
 	if (wl->window->flags & WINDOW_ZOOMED)
 		flags[pos++] = 'Z';
+	flags[pos] = '\0';
+	return (flags);
+}
+
+const char *
+window_pane_printable_flags(struct window_pane *wp)
+{
+	struct window	*w = wp->window;
+	static char	 flags[32];
+	u_int		 pos = 0;
+
+	if (wp == w->active)
+		flags[pos++] = '*';
+	if (wp == TAILQ_FIRST(&w->last_panes))
+		flags[pos++] = '-';
+	if (wp->flags & PANE_ZOOMED)
+		flags[pos++] = 'Z';
+	if (wp->flags & PANE_FLOATING)
+		flags[pos++] = 'F';
 	flags[pos] = '\0';
 	return (flags);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.23 2024/04/15 08:19:55 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.24 2026/04/04 16:40:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -58,7 +58,7 @@ layout_checksum(const char *layout)
 
 /* Dump layout as a string. */
 char *
-layout_dump(struct layout_cell *root)
+layout_dump(__unused struct window *w, struct layout_cell *root)
 {
 	char	layout[8192], *out;
 
