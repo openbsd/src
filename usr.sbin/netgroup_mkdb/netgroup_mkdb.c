@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.24 2023/01/04 13:00:11 jsg Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.25 2026/04/04 21:20:42 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -271,6 +271,9 @@ ng_load(const char *fname)
 					tail = e;
 				}
 				break;
+
+			case _NG_ERROR:
+				errx(1, "syntax error in %s", fname);
 
 			default:
 				abort();
