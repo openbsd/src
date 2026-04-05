@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.101 2023/10/24 13:20:10 claudio Exp $ */
+/*	$OpenBSD: machdep.c,v 1.102 2026/04/05 13:11:58 kn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1307,8 +1307,6 @@ hw_cpu_hatch(struct cpu_info *ci)
 
 	ci->ci_flags |= CPUF_RUNNING;
 	membar_sync();
-
-	ncpus++;
 
 	spl0();
 	(void)updateimask(0);

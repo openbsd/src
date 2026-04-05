@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.86 2026/04/03 22:01:46 sf Exp $ */
+/*	$OpenBSD: cpu.c,v 1.87 2026/04/05 13:11:58 kn Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -103,6 +103,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			ci_last = ci_last->ci_next;
 		ci_last->ci_next = ci;
 		ci->ci_flags |= CPUF_PRESENT;
+		ncpus++;
 	}
 #else
 	ci = &cpu_info_primary;
