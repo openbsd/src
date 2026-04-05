@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2026/04/03 22:01:46 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2026/04/05 11:48:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -30,6 +30,7 @@
 #include <machine/cpufunc.h>
 #include <machine/elf.h>
 #include <machine/fdt.h>
+#include <machine/pmap.h>
 #include <machine/sbi.h>
 
 #include <dev/ofw/openfirm.h>
@@ -89,6 +90,9 @@ const struct vendor {
 	{ 0, NULL }
 };
 
+int riscv_has_svpbmt;
+int riscv_has_zicbom;
+
 char cpu_model[64];
 int cpu_node;
 
@@ -109,11 +113,15 @@ int cpu_errata_sifive_cip_1200;
 
 void	cpu_opp_init(struct cpu_info *, uint32_t);
 
-void	thead_dcache_wbinv_range(paddr_t, psize_t);
-void	thead_dcache_inv_range(paddr_t, psize_t);
-void	thead_dcache_wb_range(paddr_t, psize_t);
+size_t	zicbom_dcache_line_size;
+void	zicbom_dcache_wbinv_range(vaddr_t, vsize_t);
+void	zicbom_dcache_inv_range(vaddr_t, vsize_t);
+void	zicbom_dcache_wb_range(vaddr_t, vsize_t);
 
 size_t	thead_dcache_line_size;
+void	thead_dcache_wbinv_range(vaddr_t, vsize_t);
+void	thead_dcache_inv_range(vaddr_t, vsize_t);
+void	thead_dcache_wb_range(vaddr_t, vsize_t);
 
 void
 cpu_identify(struct cpu_info *ci)
@@ -123,7 +131,10 @@ cpu_identify(struct cpu_info *ci)
 	const char *vendor_name = NULL;
 	const char *arch_name = NULL;
 	struct arch *archlist = cpu_arch_none;
-	int i;
+	char *names;
+	char *name;
+	char *end;
+	int i, len;
 
 	mvendorid = sbi_get_mvendorid();
 	marchid = sbi_get_marchid();
@@ -164,6 +175,36 @@ cpu_identify(struct cpu_info *ci)
 			     mimpid);
 		else
 			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
+	}
+
+	len = OF_getproplen(ci->ci_node, "riscv,isa-extensions");
+	if (len > 0) {
+		names = malloc(len, M_TEMP, M_WAITOK);
+		OF_getprop(ci->ci_node, "riscv,isa-extensions", names, len);
+		end = names + len;
+		name = names;
+		while (name < end) {
+			if (strcmp(name, "svpbmt") == 0)
+				riscv_has_svpbmt = 1;
+			if (strcmp(name, "zicbom") == 0)
+				riscv_has_zicbom = 1;
+			name += strlen(name) + 1;
+		}
+		free(names, M_TEMP, len);
+	}
+
+	if (riscv_has_svpbmt) {
+		pmap_pma = PTE_PMA;
+		pmap_nc = PTE_NC;
+		pmap_io = PTE_IO;
+	}
+
+	if (riscv_has_zicbom) {
+		cpu_dcache_wbinv_range = zicbom_dcache_wbinv_range;
+		cpu_dcache_inv_range = zicbom_dcache_inv_range;
+		cpu_dcache_wb_range = zicbom_dcache_wb_range;
+		zicbom_dcache_line_size =
+		    OF_getpropint(ci->ci_node, "riscv,cbom-block-size", 64);
 	}
 
 	/* Handle errata. */
@@ -346,70 +387,122 @@ cpu_clockspeed(int *freq)
 }
 
 void
-cpu_cache_nop_range(paddr_t pa, psize_t len)
+cpu_cache_nop_range(vaddr_t va, vsize_t len)
 {
 }
 
+__attribute__((target("arch=+zicbom")))
 void
-thead_dcache_wbinv_range(paddr_t pa, psize_t len)
+zicbom_dcache_wbinv_range(vaddr_t va, vsize_t len)
 {
-	paddr_t end, mask;
+	vaddr_t end, mask;
 
-	mask = thead_dcache_line_size - 1;
-	end = (pa + len + mask) & ~mask;
-	pa &= ~mask;
+	mask = zicbom_dcache_line_size - 1;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
 
-	while (pa != end) {
-		/* th.dcache.cipa a0 */
-		__asm volatile ("mv a0, %0; .long 0x02b5000b" :: "r"(pa)
-		    : "a0", "memory");
-		pa += thead_dcache_line_size;
+	while (va != end) {
+		__asm volatile ("cbo.flush (%0)" :: "r"(va) : "memory");
+		va += zicbom_dcache_line_size;
 	}
-	/* th.sync.s */
-	__asm volatile (".long 0x0190000b" ::: "memory");
+
+	__asm volatile ("fence iorw,iorw" ::: "memory");
 }
 
+__attribute__((target("arch=+zicbom")))
 void
-thead_dcache_inv_range(paddr_t pa, psize_t len)
+zicbom_dcache_inv_range(vaddr_t va, vsize_t len)
 {
-	paddr_t end, mask;
+	vaddr_t end, mask;
+
+	mask = zicbom_dcache_line_size - 1;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
+
+	while (va != end) {
+		__asm volatile ("cbo.inval (%0)" :: "r"(va) : "memory");
+		va += zicbom_dcache_line_size;
+	}
+
+	__asm volatile ("fence iorw,iorw" ::: "memory");
+}
+
+__attribute__((target("arch=+zicbom")))
+void
+zicbom_dcache_wb_range(vaddr_t va, vsize_t len)
+{
+	vaddr_t end, mask;
+
+	mask = zicbom_dcache_line_size - 1;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
+
+	while (va != end) {
+		__asm volatile ("cbo.clean (%0)" :: "r"(va) : "memory");
+		va += zicbom_dcache_line_size;
+	}
+
+	__asm volatile ("fence iorw,iorw" ::: "memory");
+}
+
+__attribute__((target("arch=+xtheadcmo,+xtheadsync")))
+void
+thead_dcache_wbinv_range(vaddr_t va, vsize_t len)
+{
+	vaddr_t end, mask;
 
 	mask = thead_dcache_line_size - 1;
-	end = (pa + len + mask) & ~mask;
-	pa &= ~mask;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
 
-	while (pa != end) {
+	while (va != end) {
+		__asm volatile ("th.dcache.civa %0" :: "r"(va) : "memory");
+		va += thead_dcache_line_size;
+	}
+
+	__asm volatile ("th.sync.s" ::: "memory");
+}
+
+__attribute__((target("arch=+xtheadcmo,+xtheadsync")))
+void
+thead_dcache_inv_range(vaddr_t va, vsize_t len)
+{
+	vaddr_t end, mask;
+
+	mask = thead_dcache_line_size - 1;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
+
+	while (va != end) {
 		/* th.dcache.ipa a0 */
-		__asm volatile ("mv a0, %0; .long 0x02a5000b" :: "r"(pa)
-		    : "a0", "memory");
-		pa += thead_dcache_line_size;
+		__asm volatile ("th.dcache.iva %0" :: "r"(va) : "memory");
+		va += thead_dcache_line_size;
 	}
-	/* th.sync.s */
-	__asm volatile (".long 0x0190000b" ::: "memory");
+
+	__asm volatile ("th.sync.s" ::: "memory");
 }
 
+__attribute__((target("arch=+xtheadcmo,+xtheadsync")))
 void
-thead_dcache_wb_range(paddr_t pa, psize_t len)
+thead_dcache_wb_range(vaddr_t va, vsize_t len)
 {
-	paddr_t end, mask;
+	vaddr_t end, mask;
 
 	mask = thead_dcache_line_size - 1;
-	end = (pa + len + mask) & ~mask;
-	pa &= ~mask;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
 
-	while (pa != end) {
-		/* th.dcache.cpa a0 */
-		__asm volatile ("mv a0, %0; .long 0x0295000b" :: "r"(pa)
-		    : "a0", "memory");
-		pa += thead_dcache_line_size;
+	while (va != end) {
+		__asm volatile ("th.dcache.cva %0" :: "r"(va) : "memory");
+		va += thead_dcache_line_size;
 	}
-	/* th.sync.s */
-	__asm volatile (".long 0x0190000b" ::: "memory");
+
+	__asm volatile ("th.sync.s" ::: "memory");
 }
 
-void (*cpu_dcache_wbinv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
-void (*cpu_dcache_inv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
-void (*cpu_dcache_wb_range)(paddr_t, psize_t) = cpu_cache_nop_range;
+void (*cpu_dcache_wbinv_range)(vaddr_t, vsize_t) = cpu_cache_nop_range;
+void (*cpu_dcache_inv_range)(vaddr_t, vsize_t) = cpu_cache_nop_range;
+void (*cpu_dcache_wb_range)(vaddr_t, vsize_t) = cpu_cache_nop_range;
 
 #ifdef MULTIPROCESSOR
 

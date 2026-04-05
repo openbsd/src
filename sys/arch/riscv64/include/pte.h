@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 2024/10/14 12:02:16 jsg Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 2026/04/05 11:48:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -37,6 +37,14 @@
 #define	PTE_RWX		(PTE_R | PTE_W | PTE_X)
 #define	PTE_RX		(PTE_R | PTE_X)
 #define	PTE_KERN	(PTE_V | PTE_R | PTE_W | PTE_A | PTE_D)
+
+/* Svpmbt extension */
+#define	PTE_PMA		(0ULL << 61)
+#define	PTE_NC		(1ULL << 61)
+#define	PTE_IO		(2ULL << 61)
+
+/* Svnapot extension */
+#define	PTE_N		(1ULL << 63)
 
 /* T-Head extended page attributes */
 #define	PTE_THEAD_SO	(1ULL << 63)

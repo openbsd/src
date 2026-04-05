@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfcc.c,v 1.4 2022/12/27 21:13:25 kettenis Exp $	*/
+/*	$OpenBSD: sfcc.c,v 1.5 2026/04/05 11:48:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpufunc.h>
@@ -50,7 +52,7 @@ struct cfdriver sfcc_cd = {
 	NULL, "sfcc", DV_DULL
 };
 
-void	sfcc_cache_wbinv_range(paddr_t, psize_t);
+void	sfcc_cache_wbinv_range(vaddr_t, vsize_t);
 
 int
 sfcc_match(struct device *parent, void *match, void *aux)
@@ -94,19 +96,23 @@ sfcc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-sfcc_cache_wbinv_range(paddr_t pa, psize_t len)
+sfcc_cache_wbinv_range(vaddr_t va, vsize_t len)
 {
 	struct sfcc_softc *sc = sfcc_sc;
-	paddr_t end, mask;
+	vaddr_t end, mask;
+	paddr_t pa;
 
 	mask = sc->sc_line_size - 1;
-	end = (pa + len + mask) & ~mask;
-	pa &= ~mask;
+	end = (va + len + mask) & ~mask;
+	va &= ~mask;
 
 	__asm volatile ("fence iorw,iorw" ::: "memory");
-	while (pa != end) {
-		bus_space_write_8(sc->sc_iot, sc->sc_ioh, SFCC_FLUSH64, pa);
-		__asm volatile ("fence iorw,iorw" ::: "memory");
-		pa += sc->sc_line_size;
+	while (va != end) {
+		if (pmap_extract(pmap_kernel(), va, &pa)) {
+			bus_space_write_8(sc->sc_iot, sc->sc_ioh,
+			    SFCC_FLUSH64, pa);
+			__asm volatile ("fence iorw,iorw" ::: "memory");
+		}
+		va += sc->sc_line_size;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2025/07/14 12:23:28 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2026/04/05 11:48:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -301,7 +301,7 @@ const pt_entry_t ap_bits_kern[8] = {
 	[PROT_EXEC|PROT_WRITE|PROT_READ]	= PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
 };
 
-/* PBMT encodings for the Svpmbt modes. */
+/* PBMT encodings for the Svpbmt modes. */
 uint64_t pmap_pma;
 uint64_t pmap_nc;
 uint64_t pmap_io;
@@ -693,6 +693,12 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	struct pte_desc *pted;
 	struct vm_page *pg;
 
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg && cache == PMAP_CACHE_CI) {
+		_pmap_kenter_pa(va, pa, prot, flags, PMAP_CACHE_WB);
+		cpu_dcache_wbinv_range(va & ~PAGE_MASK, PAGE_SIZE);
+	}
+
 	pted = pmap_vp_lookup(pm, va, NULL);
 
 	/* Do not have pted for this, get one and put it in VP */
@@ -717,10 +723,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	 */
 	pmap_pte_insert(pted);
 	tlb_flush_page(pm, va & ~PAGE_MASK);
-
-	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg && cache == PMAP_CACHE_CI)
-		cpu_dcache_wbinv_range(pa & ~PAGE_MASK, PAGE_SIZE);
 }
 
 void

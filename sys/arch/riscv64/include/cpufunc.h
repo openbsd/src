@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.6 2023/08/21 20:17:30 miod Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.7 2026/04/05 11:48:17 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2014 Andrew Turner
@@ -89,9 +89,9 @@ sfence_vma_page_asid(uintptr_t addr, uint64_t asid)
 extern int64_t dcache_line_size;
 extern int64_t icache_line_size;
 
-extern void (*cpu_dcache_wbinv_range)(paddr_t, psize_t);
-extern void (*cpu_dcache_inv_range)(paddr_t, psize_t);
-extern void (*cpu_dcache_wb_range)(paddr_t, psize_t);
+extern void (*cpu_dcache_wbinv_range)(vaddr_t, vsize_t);
+extern void (*cpu_dcache_inv_range)(vaddr_t, vsize_t);
+extern void (*cpu_dcache_wb_range)(vaddr_t, vsize_t);
 
 static __inline void
 load_satp(uint64_t val)

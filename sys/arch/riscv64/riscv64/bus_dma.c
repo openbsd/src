@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.7 2022/12/29 11:35:01 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.8 2026/04/05 11:48:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -366,16 +366,16 @@ _dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 }
 
 static void
-_dmamap_sync_segment(paddr_t pa, psize_t len, int ops)
+_dmamap_sync_segment(vaddr_t va, vsize_t len, int ops)
 {
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
 	case BUS_DMASYNC_PREREAD:
-		cpu_dcache_wbinv_range(pa, len);
+		cpu_dcache_wbinv_range(va, len);
 		break;
 
 	case BUS_DMASYNC_PREWRITE:
-		cpu_dcache_wb_range(pa, len);
+		cpu_dcache_wb_range(va, len);
 		break;
 
 	/*
@@ -387,7 +387,7 @@ _dmamap_sync_segment(paddr_t pa, psize_t len, int ops)
 	case BUS_DMASYNC_POSTREAD:
 	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
 		membar_sync();
-		cpu_dcache_inv_range(pa, len);
+		cpu_dcache_inv_range(va, len);
 		break;
 	}
 }
@@ -417,18 +417,18 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	curseg = 0;
 
 	while (size && nsegs) {
-		paddr_t paddr;
+		vaddr_t vaddr;
 		bus_size_t ssize;
 
 		ssize = map->dm_segs[curseg].ds_len;
-		paddr = map->dm_segs[curseg]._ds_paddr;
+		vaddr = map->dm_segs[curseg]._ds_vaddr;
 
 		if (addr != 0) {
 			if (addr >= ssize) {
 				addr -= ssize;
 				ssize = 0;
 			} else {
-				paddr += addr;
+				vaddr += addr;
 				ssize -= addr;
 				addr = 0;
 			}
@@ -437,7 +437,7 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			ssize = size;
 
 		if (ssize != 0) {
-			_dmamap_sync_segment(paddr, ssize, op);
+			_dmamap_sync_segment(vaddr, ssize, op);
 			size -= ssize;
 		}
 		curseg++;
