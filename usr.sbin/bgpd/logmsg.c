@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.18 2025/11/04 14:42:37 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.19 2026/04/30 15:48:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ log_peer_info(const struct peer_config *peer, const char *emsg, ...)
 	if (vasprintf(&msg, emsg, ap) == -1)
 		fatal(NULL);
 	va_end(ap);
-	logit(LOG_INFO, "%s: %s", p, msg);
+	log_info("%s: %s", p, msg);
 	free(msg);
 	free(p);
 }
@@ -82,13 +82,13 @@ log_peer_warn(const struct peer_config *peer, const char *emsg, ...)
 
 	p = log_fmt_peer(peer);
 	if (emsg == NULL) {
-		logit(LOG_ERR, "%s: %s", p, strerror(saved_errno));
+		log_warnx("%s: %s", p, strerror(saved_errno));
 	} else {
 		va_start(ap, emsg);
 		if (vasprintf(&msg, emsg, ap) == -1)
 			fatal(NULL);
 		va_end(ap);
-		logit(LOG_ERR, "%s: %s: %s", p, msg, strerror(saved_errno));
+		log_warnx("%s: %s: %s", p, msg, strerror(saved_errno));
 		free(msg);
 	}
 	free(p);
@@ -105,7 +105,7 @@ log_peer_warnx(const struct peer_config *peer, const char *emsg, ...)
 	if (vasprintf(&msg, emsg, ap) == -1)
 		fatal(NULL);
 	va_end(ap);
-	logit(LOG_ERR, "%s: %s", p, msg);
+	log_warnx("%s: %s", p, msg);
 	free(msg);
 	free(p);
 }
@@ -186,7 +186,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			if (ibuf_get_n8(&ibuf, &capa_code) == -1)
 				break;
 
-			logit(LOG_ERR, "%s: %s notification: %s, %s: %s",
+			log_warnx("%s: %s notification: %s, %s: %s",
 			    p, dir, errnames[errcode], suberrname,
 			    log_capability(capa_code));
 			free(p);
@@ -215,7 +215,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			if (ibuf_get_n8(&ibuf, &len) != -1 && len != 0) {
 				char *s;
 				if ((s = ibuf_get_string(&ibuf, len)) != NULL) {
-					logit(LOG_ERR, "%s: %s notification: "
+					log_warnx("%s: %s notification: "
 					    "%s, %s: reason \"%s\"", p, dir,
 					    errnames[errcode], suberrname,
 					    log_reason(s));
@@ -245,27 +245,27 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			suberrname = suberr_rrefresh_names[subcode];
 		break;
 	default:
-		logit(LOG_ERR, "%s: %s notification, unknown errcode "
+		log_warnx("%s: %s notification, unknown errcode "
 		    "%u, subcode %u", p, dir, errcode, subcode);
 		free(p);
 		return;
 	}
 
 	if (uk)
-		logit(LOG_ERR, "%s: %s notification: %s, unknown subcode %u",
+		log_warnx("%s: %s notification: %s, unknown subcode %u",
 		    p, dir, errnames[errcode], subcode);
 	else {
 		if (suberrname == NULL)
-			logit(LOG_ERR, "%s: %s notification: %s", p,
+			log_warnx("%s: %s notification: %s", p,
 			    dir, errnames[errcode]);
 		else
-			logit(LOG_ERR, "%s: %s notification: %s, %s",
+			log_warnx("%s: %s notification: %s, %s",
 			    p, dir, errnames[errcode], suberrname);
 	}
 
 	if (dump && log_getverbose() && ibuf_size(&ibuf) > 0) {
 		size_t off = 0;
-		logit(LOG_INFO, "%s: notification data", p);
+		log_info("%s: notification data", p);
 		while (ibuf_size(&ibuf) > 0) {
 			unsigned char buf[16];
 			size_t len = sizeof(buf);
@@ -273,7 +273,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 				len = ibuf_size(&ibuf);
 			if (ibuf_get(&ibuf, buf, len) == -1)
 				break;
-			logit(LOG_INFO, "   %5zu: %s", off, tohex(buf, len));
+			log_info("   %5zu: %s", off, tohex(buf, len));
 			off += len;
 		}
 	}
@@ -288,14 +288,14 @@ log_conn_attempt(const struct peer *peer, struct sockaddr *sa, socklen_t len)
 
 	if (peer == NULL) {	/* connection from non-peer, drop */
 		if (log_getverbose())
-			logit(LOG_INFO, "connection from non-peer %s refused",
+			log_info("connection from non-peer %s refused",
 			    log_sockaddr(sa, len));
 	} else {
 		/* only log if there is a chance that the session may come up */
 		if (peer->conf.down && peer->state == STATE_IDLE)
 			return;
 		p = log_fmt_peer(&peer->conf);
-		logit(LOG_INFO, "Connection attempt from %s while session is "
+		log_info("Connection attempt from %s while session is "
 		    "in state %s", p, statenames[peer->state]);
 		free(p);
 	}
