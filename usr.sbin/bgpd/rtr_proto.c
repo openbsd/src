@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.52 2025/04/14 14:50:29 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.53 2026/04/30 18:22:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -431,12 +431,19 @@ rtr_reader_callback(struct ibuf *hdr, void *arg, int *fd)
 	struct rtr_session *rs = arg;
 	struct rtr_header rh;
 	struct ibuf *b;
-	ssize_t len;
+	size_t len;
 
 	if (ibuf_get(hdr, &rh, sizeof(rh)) == -1)
 		return NULL;
 
 	len = ntohl(rh.length);
+
+	if (len < sizeof(rh)) {
+		rtr_send_error(rs, hdr, CORRUPT_DATA, "%s: too small: "
+		    "%zu bytes", log_rtr_type(rh.type), len);
+		errno = ERANGE;
+		return NULL;
+	}
 
 	if (len > RTR_MAX_PDU_SIZE) {
 		rtr_send_error(rs, hdr, CORRUPT_DATA, "%s: too big: %zu bytes",
