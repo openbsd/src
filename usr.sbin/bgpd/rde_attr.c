@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.141 2026/03/17 09:29:29 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.142 2026/04/30 15:51:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@
 #include "chash.h"
 
 int
-attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
+attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, const void *data,
     uint16_t data_len)
 {
 	u_char	hdr[4];
@@ -351,7 +351,7 @@ aspath_compare(const struct aspath *a1, const struct aspath *a2)
 }
 
 struct aspath *
-aspath_get(void *data, uint16_t len)
+aspath_get(const void *data, uint16_t len)
 {
 	struct aspath		*aspath;
 
@@ -403,9 +403,10 @@ aspath_put(struct aspath *aspath)
  * convert a 4 byte aspath to a 2 byte one.
  */
 u_char *
-aspath_deflate(u_char *data, uint16_t *len, int *flagnew)
+aspath_deflate(const u_char *data, uint16_t *len, int *flagnew)
 {
-	uint8_t		*seg, *nseg, *ndata = NULL;
+	const uint8_t	*seg;
+	uint8_t		*nseg, *ndata = NULL;
 	uint32_t	 as;
 	int		 i;
 	uint16_t	 seg_size, olen, nlen;
