@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.148 2026/04/27 15:06:01 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.149 2026/04/30 15:20:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -483,8 +483,13 @@ static struct rde_filtertable filter = CH_INITIALIZER(&filter);
 static void
 rde_filter_free(struct rde_filter *rf)
 {
+	size_t i;
+
 	if (rf == NULL)
 		return;
+
+	for (i = 0; i < rf->len; i++)
+		rde_filterset_unref(rf->rules[i].rde_set);
 
 	rdemem.filter_size -= sizeof(*rf) + rf->len * sizeof(rf->rules[0]);
 	rdemem.filter_cnt--;
