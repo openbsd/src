@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.91 2026/04/29 15:13:27 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.92 2026/04/30 15:38:52 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -292,60 +292,61 @@ dtls1_do_write_handshake_message(SSL *s)
 			 * handle the retransmit
 			 */
 			if (BIO_ctrl(SSL_get_wbio(s),
-			    BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0)
-				s->d1->mtu = BIO_ctrl(SSL_get_wbio(s),
-				    BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
-			else
+			    BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) <= 0)
 				return (-1);
-		} else {
 
-			/*
-			 * Bad if this assert fails, only part of the
-			 * handshake message got sent.  but why would
-			 * this happen?
-			 */
-			OPENSSL_assert(len == (unsigned int)ret);
+			s->d1->mtu = BIO_ctrl(SSL_get_wbio(s),
+			    BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
 
-			if (!s->d1->retransmitting) {
-				/*
-				 * Should not be done for 'Hello Request's,
-				 * but in that case we'll ignore the result
-				 * anyway
-				 */
-				unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
-				const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
-				int xlen;
-
-				if (frag_off == 0) {
-					/*
-					 * Reconstruct message header is if it
-					 * is being sent in single fragment
-					 */
-					if (!dtls1_write_message_header(msg_hdr,
-					    0, msg_hdr->msg_len, p))
-						return (-1);
-					xlen = ret;
-				} else {
-					p += DTLS1_HM_HEADER_LENGTH;
-					xlen = ret - DTLS1_HM_HEADER_LENGTH;
-				}
-
-				tls1_transcript_record(s, p, xlen);
-			}
-
-			if (ret == s->init_num) {
-				ssl_msg_callback(s, 1, SSL3_RT_HANDSHAKE,
-				    s->init_buf->data, s->init_off + s->init_num);
-
-				s->init_off = 0;
-				s->init_num = 0;
-
-				return 1;
-			}
-			s->init_off += ret;
-			s->init_num -= ret;
-			frag_off += (ret -= DTLS1_HM_HEADER_LENGTH);
+			continue;
 		}
+
+		/*
+		 * Bad if this assert fails, only part of the
+		 * handshake message got sent.  but why would
+		 * this happen?
+		 */
+		OPENSSL_assert(len == (unsigned int)ret);
+
+		if (!s->d1->retransmitting) {
+			/*
+			 * Should not be done for 'Hello Request's,
+			 * but in that case we'll ignore the result
+			 * anyway
+			 */
+			unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
+			const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
+			int xlen;
+
+			if (frag_off == 0) {
+				/*
+				 * Reconstruct message header is if it
+				 * is being sent in single fragment
+				 */
+				if (!dtls1_write_message_header(msg_hdr,
+				    0, msg_hdr->msg_len, p))
+					return (-1);
+				xlen = ret;
+			} else {
+				p += DTLS1_HM_HEADER_LENGTH;
+				xlen = ret - DTLS1_HM_HEADER_LENGTH;
+			}
+
+			tls1_transcript_record(s, p, xlen);
+		}
+
+		if (ret == s->init_num) {
+			ssl_msg_callback(s, 1, SSL3_RT_HANDSHAKE,
+			    s->init_buf->data, s->init_off + s->init_num);
+
+			s->init_off = 0;
+			s->init_num = 0;
+
+			return (1);
+		}
+		s->init_off += ret;
+		s->init_num -= ret;
+		frag_off += (ret -= DTLS1_HM_HEADER_LENGTH);
 	}
 	return (0);
 }
