@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.20 2020/10/21 06:48:33 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.21 2026/04/30 13:52:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,8 +36,6 @@ void	log_debug(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	logit(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
 __dead void fatal(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 __dead void fatalx(const char *, ...)
