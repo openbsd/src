@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.278 2026/04/07 10:59:19 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.279 2026/05/01 11:22:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1081,5 +1081,9 @@ int	mkpathat(int, const char *);
 #define HTTPS_PROTO_LEN		(sizeof(HTTPS_PROTO) - 1)
 #define RSYNC_PROTO		"rsync://"
 #define RSYNC_PROTO_LEN		(sizeof(RSYNC_PROTO) - 1)
+
+/* Compat helpers for OpenSSL < 4 and LibreSSL. */
+int	ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *, size_t *, int *);
+int	ASN1_BIT_STRING_set1(ASN1_BIT_STRING *, const uint8_t *, size_t, int);
 
 #endif /* ! EXTERN_H */
