@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.53 2026/04/14 08:32:30 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.54 2026/05/01 09:59:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -208,10 +208,12 @@ control_free_sub(struct control_state *cs, struct control_sub *csub)
 
 	RB_FOREACH_SAFE(csp, control_sub_panes, &csub->panes, csp1) {
 		RB_REMOVE(control_sub_panes, &csub->panes, csp);
+		free(csp->last);
 		free(csp);
 	}
 	RB_FOREACH_SAFE(csw, control_sub_windows, &csub->windows, csw1) {
 		RB_REMOVE(control_sub_windows, &csub->windows, csw);
+		free(csw->last);
 		free(csw);
 	}
 	free(csub->last);
