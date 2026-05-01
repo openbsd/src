@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.14 2024/08/17 08:45:22 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.15 2026/05/01 20:03:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -21,6 +21,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -39,7 +41,15 @@ struct	sti_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 
+	uint8_t			sc_region_bars[STI_REGION_MAX];
+
 	bus_space_handle_t	sc_romh;
+
+	bus_size_t		sc_dssize;
+	bus_size_t		sc_romsize;
+	uint8_t			*sc_romcopy;
+
+	int			sc_rom_enabled;
 };
 
 const struct cfattach sti_pci_ca = {
@@ -93,8 +103,14 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
 		spc->sc_base.sc_flags |= STI_CONSOLE;
 	if (sti_attach_common(&spc->sc_base, paa->pa_iot, paa->pa_memt,
-	    spc->sc_romh, STI_CODEBASE_MAIN) == 0)
+	    spc->sc_romh, spc->sc_romcopy + spc->sc_dssize,
+	    STI_CODEBASE_MAIN) == 0)
 		startuphook_establish(sti_end_attach, spc);
+
+	/* unmap ROM image if still mapped */
+	if (spc->sc_romcopy == NULL) {
+		bus_space_unmap(paa->pa_memt, spc->sc_romh, spc->sc_romsize);
+	}
 }
 
 /*
@@ -106,11 +122,11 @@ sti_pci_enable_rom(struct sti_softc *sc)
 	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
 	pcireg_t address;
 
-	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
+	if (spc->sc_rom_enabled == 0) {
 		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_ROM_REG);
 		address |= PCI_ROM_ENABLE;
 		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
-		SET(sc->sc_flags, STI_ROM_ENABLED);
+		spc->sc_rom_enabled = 1;
 	}
 }
 
@@ -123,12 +139,11 @@ sti_pci_disable_rom(struct sti_softc *sc)
 	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
 	pcireg_t address;
 
-	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
+	if (spc->sc_rom_enabled != 0) {
 		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_ROM_REG);
 		address &= ~PCI_ROM_ENABLE;
 		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
-
-		CLR(sc->sc_flags, STI_ROM_ENABLED);
+		spc->sc_rom_enabled = 0;
 	}
 }
 
@@ -138,10 +153,10 @@ sti_pci_disable_rom(struct sti_softc *sc)
  * still using the PDC routines for output at this point.
  *
  * On some devices, if not all, PDC routines assume the STI ROM is *NOT*
- * mapped when they are invoked, and they will cause the system to freeze
+ * mapped when they are invoked, and they may cause the system to freeze
  * if it is mapped.
  *
- * As a result, we need to make sure the ROM is not mapped when invoking
+ * As a result, we need to make sure the ROM is never mapped when invoking
  * printf(). The following wrapper takes care of this to reduce the risk
  * of making a mistake.
  */
@@ -149,9 +164,10 @@ sti_pci_disable_rom(struct sti_softc *sc)
 static int
 sti_local_printf(struct sti_softc *sc, const char *fmt, ...)
 {
+	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
 	va_list ap;
 	int rc;
-	int enabled = sc->sc_flags & STI_ROM_ENABLED;
+	int enabled = spc->sc_rom_enabled;
 
 	if (enabled)
 		sti_pci_disable_rom(sc);
@@ -212,9 +228,9 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	struct sti_softc *sc = &spc->sc_base;
 	pcireg_t address, mask;
 	bus_space_handle_t romh;
-	bus_size_t romsize, stiromsize;
+	bus_size_t romsize, stiromsize, dssize;
 	bus_addr_t offs;
-	uint8_t region_bars[STI_REGION_MAX];
+	uint8_t bussup;
 	int i;
 	int rc;
 
@@ -226,7 +242,7 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
 	address |= PCI_ROM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, address);
-	sc->sc_flags |= STI_ROM_ENABLED;
+	spc->sc_rom_enabled = 1;
 
 	/*
 	 * Map the complete ROM for now.
@@ -267,7 +283,7 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 
 	offs = ctx.romoffs +
 	    (bus_addr_t)bus_space_read_2(pa->pa_memt, romh, ctx.romoffs + 0x0e);
-	bus_space_read_region_1(pa->pa_memt, romh, offs, region_bars,
+	bus_space_read_region_1(pa->pa_memt, romh, offs, spc->sc_region_bars,
 	    STI_REGION_MAX);
 	for (i = 0; i < STI_REGION_MAX; i++) {
 		/*
@@ -276,10 +292,10 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		 * ROM BAR rather than any regular BAR.
 		 * We'll address this later after remapping the ROM.
 		 */
-		if (i == 0 && region_bars[i] == PCI_ROM_REG)
+		if (i == 0 && spc->sc_region_bars[i] == PCI_ROM_REG)
 			continue;
 
-		rc = sti_readbar(sc, pa, i, region_bars[i]);
+		rc = sti_readbar(sc, pa, i, spc->sc_region_bars[i]);
 		if (rc != 0)
 			goto unmap_disable_return;
 	}
@@ -289,34 +305,74 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	 * and its size.
 	 */
 
-	offs = ctx.romoffs +
-	    (bus_addr_t)bus_space_read_4(pa->pa_memt, romh, ctx.romoffs + 0x08);
+	dssize = (bus_size_t)
+	    bus_space_read_4(pa->pa_memt, romh, ctx.romoffs + 0x08);
+	offs = ctx.romoffs + dssize;
 	stiromsize = (bus_addr_t)bus_space_read_4(pa->pa_memt, romh,
 	    offs + 0x18);
 	stiromsize = letoh32(stiromsize);
 
 	/*
+	 * Check the bussup field. If the MULTIPLE MAP bit is set, the PCI
+	 * ROM is only accessible through the PCI expansion ROM space and
+	 * never through regular PCI BARs; if the *DUAL_DECODE bit is also
+	 * set, a single decoder is used for both the ROM and the regular
+	 * BARs, which means that, if the ROM is enabled, only the ROM is
+	 * accessible.
+	 * In this case, we need to make a copy of the STI ROM image and
+	 * point the STI ROM region to that copy.
+	 */
+
+	bussup = bus_space_read_1(pa->pa_memt, romh, offs + 0x36);
+	if ((bussup & (STI_BUSSUPPORT_ROMMAP | STI_BUSSUPPORT_2DECODE)) ==
+	    (STI_BUSSUPPORT_ROMMAP | STI_BUSSUPPORT_2DECODE)) {
+		spc->sc_dssize = dssize;
+		spc->sc_romsize = dssize + stiromsize;
+		if (!(spc->sc_romcopy = km_alloc(round_page(spc->sc_romsize),
+		    &kv_any, &kp_zero, &kd_waitok))) {
+			printf("%s: cannot allocate %u bytes for ROM copy\n",
+			    sc->sc_dev.dv_xname, spc->sc_romsize);
+			rc = ENOMEM;
+			goto unmap_disable_return;
+		}
+		bus_space_read_raw_region_4(pa->pa_memt, romh,
+		    ctx.romoffs, spc->sc_romcopy, spc->sc_romsize);
+	}
+
+	/*
 	 * Replace our mapping with a smaller mapping of only the area
-	 * we are interested in.
+	 * we are interested in (unless we have made a copy).
 	 */
 
 	bus_space_unmap(pa->pa_memt, romh, romsize);
-	rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address) + offs,
-	    stiromsize, 0, &spc->sc_romh);
-	if (rc != 0) {
-		printf("%s: can't map STI ROM (%d)\n",
-		    sc->sc_dev.dv_xname, rc);
-		goto disable_return;
+	if (spc->sc_romcopy == NULL) {
+		rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address) + offs,
+		    stiromsize, 0, &spc->sc_romh);
+		if (rc != 0) {
+			printf("%s: can't map STI ROM (%d)\n",
+			    sc->sc_dev.dv_xname, rc);
+			goto disable_return;
+		}
+		spc->sc_romsize = stiromsize;
+#ifdef STIDEBUG
+		printf("%s: final rom mapping %p len %08lx\n",
+		    sc->sc_dev.dv_xname, (void *)spc->sc_romh, stiromsize);
+#endif
 	}
 
 	/*
 	 * Now set up region 0 if we had skipped it earlier.
 	 */
 
-	if (region_bars[0] == PCI_ROM_REG) {
-		sc->bases[0] =
-		    (bus_addr_t)bus_space_vaddr(pa->pa_memt, spc->sc_romh) -
-		    (offs - ctx.romoffs);
+	if (spc->sc_romcopy == NULL) {
+		if (spc->sc_region_bars[0] == PCI_ROM_REG) {
+			sc->bases[0] = (bus_addr_t)
+			    bus_space_vaddr(pa->pa_memt, spc->sc_romh);
+			/* Include the DS structure in region 0. */
+			sc->bases[0] -= dssize;
+		}
+	} else {
+		sc->bases[0] = (bus_addr_t)spc->sc_romcopy;
 	}
 
 	sti_pci_disable_rom(sc);
@@ -380,6 +436,7 @@ sti_pcirom_check(bus_space_tag_t romt, bus_space_handle_t romh, bus_addr_t offs,
 	struct sti_softc *sc = ctx->sc;
 #endif
 	uint32_t tmp32;
+	uint8_t romtype;
 
 	/*
 	 * Check for a valid STI ROM header.
@@ -404,6 +461,18 @@ sti_pcirom_check(bus_space_tag_t romt, bus_space_handle_t romh, bus_addr_t offs,
 	if (tmp32 != 0x00000001) {	/* 1 == STI ROM */
 #ifdef STIDEBUG
 		printf("Unknown HP ROM type (%08x)\n", tmp32);
+#endif
+		return 0;
+	}
+
+	/*
+	 * Only word mode ROM should exist on PCI.
+	 */
+	tmp32 = bus_space_read_4(romt, romh, offs + 0x08);
+	romtype = bus_space_read_1(romt, romh, offs + tmp32 + 3);
+	if (romtype != STI_DEVTYPE4) {
+#ifdef STIDEBUG
+		printf("Unexpected STI ROM type (%02x)\n", romtype);
 #endif
 		return 0;
 	}

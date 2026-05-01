@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.15 2024/08/17 08:45:22 miod Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.16 2026/05/01 20:03:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -327,7 +327,7 @@ typedef struct sti_unpmvflags {
 } __packed *sti_unpmvflags_t;
 
 typedef struct sti_unpmvin {
-	u_int32_t	*font_addr;	/* font */
+	const u_int32_t	*font_addr;	/* font */
 	u_int16_t	index;		/* character index in the font */
 	u_int8_t	fg_colour;
 	u_int8_t	bg_colour;
