@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.10 2024/01/24 14:51:56 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.11 2026/05/01 04:54:56 anton Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -254,7 +254,7 @@ log_warnx(const char *emsg, ...)
 }
 
 int
-attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
+attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, const void *data,
     uint16_t data_len)
 {
 	u_char  hdr[4];
