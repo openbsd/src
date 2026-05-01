@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.46 2026/01/16 11:25:27 job Exp $
+# $OpenBSD: Makefile.inc,v 1.47 2026/05/01 11:23:57 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -29,7 +29,7 @@ CLEANFILES+=	*.out *.err *.txt
 
 TEST_COMMON= as.c aspa.c ccr.c cert.c cms.c constraints-dummy.c crl.c \
 	     encoding.c io.c ip.c json.c mft.c print.c repo-dummy.c \
-	     rfc3779.c roa.c validate.c x509.c
+	     rfc3779.c roa.c validate.c x509.c asn1_bit_string.c
 
 SRCS_test-ip +=		test-ip.c ${TEST_COMMON}
 run-regress-test-ip: test-ip
