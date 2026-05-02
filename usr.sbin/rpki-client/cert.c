@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.233 2026/05/02 09:25:48 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.234 2026/05/02 10:28:20 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1045,7 +1045,7 @@ int
 sbgp_addr(const char *fn, struct cert_ip *ips, size_t *num_ips, enum afi afi,
     const ASN1_BIT_STRING *bs)
 {
-	struct cert_ip	ip;
+	struct cert_ip ip;
 
 	memset(&ip, 0, sizeof(struct cert_ip));
 
@@ -1075,7 +1075,7 @@ int
 sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *num_ips,
     enum afi afi, const IPAddressRange *range)
 {
-	struct cert_ip	ip;
+	struct cert_ip ip;
 
 	memset(&ip, 0, sizeof(struct cert_ip));
 
@@ -1107,7 +1107,7 @@ static int
 sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *num_ips,
     enum afi afi)
 {
-	struct cert_ip	ip;
+	struct cert_ip ip;
 
 	memset(&ip, 0, sizeof(struct cert_ip));
 
@@ -1121,14 +1121,14 @@ int
 sbgp_parse_ipaddrblocks(const char *fn, const IPAddrBlocks *addrs,
     struct cert_ip **out_ips, size_t *out_num_ips)
 {
-	const IPAddressFamily	*af;
-	const IPAddressOrRanges	*aors;
-	const IPAddressOrRange	*aor;
-	enum afi		 afi;
-	struct cert_ip		*ips = NULL;
-	size_t			 num_ips = 0, num;
-	int			 ipv4_seen = 0, ipv6_seen = 0;
-	int			 i, j, addrsz;
+	const IPAddressFamily *af;
+	const IPAddressOrRanges *aors;
+	const IPAddressOrRange *aor;
+	enum afi afi;
+	struct cert_ip *ips = NULL;
+	size_t num_ips = 0, num;
+	int ipv4_seen = 0, ipv6_seen = 0;
+	int i, j, addrsz;
 
 	assert(*out_ips == NULL && *out_num_ips == 0);
 
@@ -1236,8 +1236,8 @@ sbgp_parse_ipaddrblocks(const char *fn, const IPAddrBlocks *addrs,
 static int
 cert_ipaddrblocks(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
-	IPAddrBlocks	*addrs = NULL;
-	int		 rc = 0;
+	IPAddrBlocks *addrs = NULL;
+	int rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
 		warnx("%s: RFC 6487 section 4.8.10: ipAddrBlocks: "
@@ -1289,7 +1289,7 @@ int
 sbgp_as_range(const char *fn, struct cert_as *ases, size_t *num_ases,
     const ASRange *range)
 {
-	struct cert_as		 as;
+	struct cert_as as;
 
 	memset(&as, 0, sizeof(struct cert_as));
 	as.type = CERT_AS_RANGE;
@@ -1326,7 +1326,7 @@ int
 sbgp_as_id(const char *fn, struct cert_as *ases, size_t *num_ases,
     const ASN1_INTEGER *i)
 {
-	struct cert_as	 as;
+	struct cert_as as;
 
 	memset(&as, 0, sizeof(struct cert_as));
 	as.type = CERT_AS_ID;
@@ -1378,10 +1378,10 @@ int
 sbgp_parse_asids(const char *fn, const ASIdentifiers *asidentifiers,
     struct cert_as **out_as, size_t *out_num_ases)
 {
-	const ASIdOrRanges	*aors = NULL;
-	struct cert_as		*as = NULL;
-	size_t			 num_ases = 0, num;
-	int			 i;
+	const ASIdOrRanges *aors = NULL;
+	struct cert_as *as = NULL;
+	size_t num_ases = 0, num;
+	int i;
 
 	assert(*out_as == NULL && *out_num_ases == 0);
 
