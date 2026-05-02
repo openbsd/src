@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.46 2026/02/23 10:27:49 sthen Exp $ */
+/*	$Id: netproc.c,v 1.47 2026/05/02 13:08:36 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -429,6 +429,7 @@ donewacc(struct conn *c, const struct capaths *p, const char *contact)
 				warnx("%s", error);
 				free(error);
 			}
+			free(detail);
 		}
 	} else if (lc != 200 && lc != 201)
 		warnx("%s: bad HTTP: %ld", p->newaccount, lc);
