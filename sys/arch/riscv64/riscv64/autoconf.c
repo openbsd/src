@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2026/04/23 19:51:37 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2026/05/02 14:09:17 jsing Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -57,6 +57,8 @@ cpu_configure(void)
 	config_rootfound("mainbus", NULL);
 
 	unmap_startup();
+
+	cpu_identify_cleanup();
 
 	cold = 0;
 	spl0();
