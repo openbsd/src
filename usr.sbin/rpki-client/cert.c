@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.232 2026/04/07 10:59:19 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.233 2026/05/02 09:25:48 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1234,7 +1234,7 @@ sbgp_parse_ipaddrblocks(const char *fn, const IPAddrBlocks *addrs,
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_ipaddrblocks(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
+cert_ipaddrblocks(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	IPAddrBlocks	*addrs = NULL;
 	int		 rc = 0;
@@ -1466,7 +1466,7 @@ sbgp_parse_asids(const char *fn, const ASIdentifiers *asidentifiers,
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_asids(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
+cert_asids(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
 	ASIdentifiers		*asidentifiers = NULL;
 	int			 rc = 0;
@@ -1587,13 +1587,13 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		case NID_sbgp_ipAddrBlock:
 			if (ip++ > 0)
 				goto dup;
-			if (!sbgp_ipaddrblocks(fn, cert, ext))
+			if (!cert_ipaddrblocks(fn, cert, ext))
 				goto out;
 			break;
 		case NID_sbgp_autonomousSysNum:
 			if (as++ > 0)
 				goto dup;
-			if (!sbgp_asids(fn, cert, ext))
+			if (!cert_asids(fn, cert, ext))
 				goto out;
 			break;
 		default:
