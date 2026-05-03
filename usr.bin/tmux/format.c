@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.362 2026/05/01 09:34:05 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.363 2026/05/03 14:55:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5261,8 +5261,12 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 		else {
 			value = xstrdup("");
 			for (i = 0; i < nrep; i++) {
-				if (!format_check_time(es))
+				if (!format_check_time(es)) {
+					free(right);
+					free(left);
+					free(value);
 					goto fail;
+				}
 				xasprintf(&new, "%s%s", value, left);
 				free(value);
 				value = new;
