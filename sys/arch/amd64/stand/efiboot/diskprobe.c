@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.3 2024/06/04 20:31:35 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.4 2026/05/03 13:10:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -276,6 +276,9 @@ disksum(int blk)
 int
 bootdev_has_hibernate(void)
 {
+	if (bootdev_dip == NULL)
+		return 0;
+
 	return ((bootdev_dip->bios_info.flags & BDI_HIBVALID)? 1 : 0);
 }
 
