@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.209 2026/05/01 09:44:42 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.210 2026/05/03 15:02:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1486,6 +1486,28 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 0,
 	  .text = "Maximum number of columns in the 'tiled' layout. "
 		  "A value of 0 means no limit."
+	},
+
+	{ .name = "tree-mode-preview-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "#{?pane_format,"
+			 "#{pane_index}:#{pane_title},"
+			 "#{window_index}:#{window_name}}",
+	  .text = "Format of the preview indicator in tree mode."
+	},
+
+	{ .name = "tree-mode-preview-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "fg=#{?#{||:"
+			 "#{&&:#{pane_format},#{pane_active}},"
+			 "#{&&:#{window_format},#{window_active}}},"
+			 "#{display-panes-active-colour},"
+			 "#{display-panes-colour}}",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of preview indicator in tree mode."
 	},
 
 	{ .name = "window-active-style",

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1051 2026/05/01 09:44:42 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1052 2026/05/03 15:02:48 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 1 2026 $
+.Dd $Mdocdate: May 3 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5146,17 +5146,6 @@ section.
 .It Ic copy\-mode\-position\-format Ar format
 Format of the position indicator in copy mode.
 .Pp
-.It Xo Ic mode\-keys
-.Op Ic vi | emacs
-.Xc
-Use vi or emacs-style key bindings in copy mode.
-The default is emacs, unless
-.Ev VISUAL
-or
-.Ev EDITOR
-contains
-.Ql vi .
-.Pp
 .It Ic copy\-mode\-position\-style Ar style
 Set the style of the position indicator in copy mode.
 For how to specify
@@ -5218,6 +5207,17 @@ with
 and
 .Ic hybrid ,
 they use absolute line numbers.
+.Pp
+.It Xo Ic mode\-keys
+.Op Ic vi | emacs
+.Xc
+Use vi or emacs-style key bindings in copy mode.
+The default is emacs, unless
+.Ev VISUAL
+or
+.Ev EDITOR
+contains
+.Ql vi .
 .Pp
 .It Ic mode\-style Ar style
 Set window modes style.
@@ -5462,6 +5462,17 @@ layout.
 A value of 0 (the default) means no limit.
 When a limit is set, panes are arranged to not exceed this number of columns,
 with additional panes stacked in extra rows.
+.Pp
+.It Ic tree\-mode\-preview\-format Ar format
+Format of the preview indicator in tree mode.
+.Pp
+.It Ic tree\-mode\-preview\-style Ar style
+Set the style of the preview indicator in tree mode.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
 .Pp
 .It Ic window\-status\-activity\-style Ar style
 Set status line style for windows with an activity alert.
