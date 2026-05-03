@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.34 2025/09/18 11:49:23 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.35 2026/05/03 15:49:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -992,7 +992,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 
 		switch (opt_hdr.code) {
 		case DHO_IA_PREFIX:
-			if (len < sizeof(struct dhcp_iaprefix)) {
+			if (opt_hdr.len != sizeof(struct dhcp_iaprefix)) {
 				log_warnx("%s: malformed packet, ignoring",
 				    __func__);
 				return DHCP_STATUS_UNSPECFAIL;
@@ -1031,13 +1031,20 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			break;
 		case DHO_STATUS_CODE:
 			/* XXX STATUS_CODE can also appear outside of options */
-			if (len < 2) {
+			if (opt_hdr.len < 2) {
 				log_warnx("%s: malformed packet, ignoring",
 				    __func__);
 				return DHCP_STATUS_UNSPECFAIL;
 			}
 			memcpy(&status_code, p, sizeof(uint16_t));
 			status_code = ntohs(status_code);
+
+			if (opt_hdr.len == 2) {
+				/* empty status-message */
+				log_debug("%s: %s", __func__,
+				    dhcp_status2str(status_code));
+				break;
+			}
 			/* must be at least 4 * srclen + 1 long */
 			visbuf = calloc(4, opt_hdr.len - 2 + 1);
 			if (visbuf == NULL) {
@@ -1047,6 +1054,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			strvisx(visbuf, p + 2, opt_hdr.len - 2, VIS_SAFE);
 			log_debug("%s: %s - %s", __func__,
 			    dhcp_status2str(status_code), visbuf);
+			free(visbuf);
 			break;
 		default:
 			log_debug("unhandled option: %u", opt_hdr.code);
