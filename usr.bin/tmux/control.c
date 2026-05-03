@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.54 2026/05/01 09:59:42 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.55 2026/05/03 15:01:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -301,6 +301,7 @@ control_reset_offsets(struct client *c)
 	struct control_pane	*cp, *cp1;
 
 	RB_FOREACH_SAFE(cp, control_panes, &cs->panes, cp1) {
+		control_discard_pane(c, cp);
 		RB_REMOVE(control_panes, &cs->panes, cp);
 		free(cp);
 	}
