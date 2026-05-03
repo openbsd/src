@@ -124,3 +124,9 @@ intermediate certificates are contained in a bundle.pem file.
 13a. A leaf certificate signed by an intermediate, that is signed by an
      expired root certificate and cross signed as an intermediate, by a
      second root (should verify with one chain).
+
+14a. Deep chain with 32 certificates including root and leaf
+     (should verify with one chain).
+
+14b. Deep chain with 33 certificates including root and leaf
+     (should verify with one chain).
