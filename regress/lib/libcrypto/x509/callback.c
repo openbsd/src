@@ -1,4 +1,4 @@
-/* $OpenBSD: callback.c,v 1.6 2026/03/31 13:39:48 jsing Exp $ */
+/* $OpenBSD: callback.c,v 1.7 2026/05/04 13:49:07 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -110,7 +110,7 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 
 static void
 verify_cert(const char *roots_dir, const char *roots_file,
-    const char *bundle_file, int *chains, int mode)
+    const char *bundle_file, int *chains, int set_depth, int mode)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
@@ -140,6 +140,10 @@ verify_cert(const char *roots_dir, const char *roots_file,
 	if (use_dir) {
 		if (!X509_STORE_load_locations(store, NULL, roots_dir))
 			errx(1, "failed to set by_dir directory of %s", roots_dir);
+	}
+	if (set_depth > 0) {
+		X509_VERIFY_PARAM_set_depth(X509_STORE_CTX_get0_param(xsc),
+		    set_depth);
 	}
 	if (mode == MODE_LEGACY_VFY)
 		X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_LEGACY_VERIFY);
@@ -174,6 +178,7 @@ verify_cert(const char *roots_dir, const char *roots_file,
 
 struct verify_cert_test {
 	const char *id;
+	int set_depth;
 	int want_chains;
 	int failing;
 };
@@ -378,7 +383,8 @@ verify_cert_test(const char *certs_path, int mode)
 		fprintf(output, "== Test %zu (%s)\n", i, vct->id);
 		fprintf(output, "== Legacy:\n");
 		mode = MODE_LEGACY_VFY;
-		verify_cert(roots_dir, roots_file, bundle_file, &chains, mode);
+		verify_cert(roots_dir, roots_file, bundle_file, &chains,
+		   vct->set_depth, mode);
 		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
 		    (chains == 0 && vct->want_chains == 0) ||
 		    (chains == 1 && vct->want_chains > 0)) {
@@ -395,7 +401,8 @@ verify_cert_test(const char *certs_path, int mode)
 		fprintf(output, "\n");
 		fprintf(output, "== Modern:\n");
 		mode = MODE_MODERN_VFY;
-		verify_cert(roots_dir, roots_file, bundle_file, &chains, mode);
+		verify_cert(roots_dir, roots_file, bundle_file, &chains,
+		    vct->set_depth, mode);
 		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
 		    (chains == 0 && vct->want_chains == 0) ||
 		    (chains == 1 && vct->want_chains > 0)) {

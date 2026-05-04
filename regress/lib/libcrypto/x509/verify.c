@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.14 2026/04/01 14:39:11 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.15 2026/05/04 13:49:07 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -105,7 +105,7 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 static void
 verify_cert(const char *roots_dir, const char *roots_file,
     const char *bundle_file, int *chains, int *error, int *error_depth,
-    int mode)
+    int set_depth, int (*verify_cb)(int, X509_STORE_CTX *), int mode)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
@@ -140,14 +140,21 @@ verify_cert(const char *roots_dir, const char *roots_file,
 		if (!X509_STORE_load_locations(store, NULL, roots_dir))
 			errx(1, "failed to set by_dir directory of %s", roots_dir);
 	}
+	if (set_depth > 0) {
+		X509_VERIFY_PARAM_set_depth(X509_STORE_CTX_get0_param(xsc),
+		    set_depth);
+	}
 	if (mode == MODE_LEGACY_VFY)
 		X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_LEGACY_VERIFY);
 	else
 		X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(xsc),
 		    X509_V_FLAG_LEGACY_VERIFY);
 
-	if (verbose)
-		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
+	if (verbose && verify_cb == NULL)
+		verify_cb = verify_cert_cb;
+	if (verify_cb != NULL)
+		X509_STORE_CTX_set_verify_cb(xsc, verify_cb);
+
 	if (!use_dir)
 		X509_STORE_CTX_set0_trusted_stack(xsc, roots);
 
@@ -176,7 +183,8 @@ verify_cert(const char *roots_dir, const char *roots_file,
 }
 
 static void
-verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
+verify_cert_new(const char *roots_file, const char *bundle_file, int *chains,
+    int set_depth, int (*verify_cb)(int, X509_STORE_CTX *))
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
@@ -199,13 +207,19 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
 		ERR_print_errors_fp(stderr);
 		errx(1, "failed to init store context");
 	}
-	if (verbose)
-		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
+	if (verbose && verify_cb == NULL)
+		verify_cb = verify_cert_cb;
+	if (verify_cb != NULL)
+		X509_STORE_CTX_set_verify_cb(xsc, verify_cb);
 
 	if ((ctx = x509_verify_ctx_new(roots)) == NULL)
 		errx(1, "failed to create ctx");
 	if (!x509_verify_ctx_set_intermediates(ctx, bundle))
 		errx(1, "failed to set intermediates");
+	if (set_depth > 0) {
+		if (!x509_verify_ctx_set_max_depth(ctx, set_depth))
+			errx(1, "failed to set max depth");
+	}
 
 	if ((*chains = x509_verify(ctx, leaf, NULL)) == 0) {
 		fprintf(stderr, "failed to verify at %lu: %s\n",
@@ -238,8 +252,10 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
 
 struct verify_cert_test {
 	const char *id;
+	int (*verify_cb)(int, X509_STORE_CTX *);
 	int want_chains;
 	int want_error;
+	int set_depth;
 	int want_error_depth;
 	int want_legacy_error;
 	int want_legacy_error_depth;
@@ -505,10 +521,12 @@ verify_cert_test(const char *certs_path, int mode)
 
 		fprintf(stderr, "== Test %zu (%s)\n", i, vct->id);
 		if (mode == MODE_VERIFY)
-			verify_cert_new(roots_file, bundle_file, &chains);
+			verify_cert_new(roots_file, bundle_file, &chains,
+			    vct->set_depth, vct->verify_cb);
 		else
 			verify_cert(roots_dir, roots_file, bundle_file, &chains,
-			    &error, &error_depth, mode);
+			    &error, &error_depth, vct->set_depth, vct->verify_cb,
+			    mode);
 
 		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
 		    (chains == 0 && vct->want_chains == 0) ||
