@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.48 2025/01/31 16:42:26 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.49 2026/05/04 20:18:42 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -53,8 +53,13 @@ drop_to_el1:
 2:
 	/* Check for EL2 Host mode */
 	mrs	x2, hcr_el2
-	tbnz	x2, #34, 1b	/* HCR_E2H */
+	tbz	x2, #34, 3f	/* HCR_E2H */
 
+	orr	x2, x2, #HCR_TGE
+	msr	hcr_el2, x2
+	isb
+	b	1b
+3:
 	/* Configure the Hypervisor */
 	mov	x2, #(HCR_RW)
 	orr	x2, x2, #(HCR_API | HCR_APK)
@@ -100,13 +105,13 @@ drop_to_el1:
 	ubfx	x2, x2, #ID_AA64PFR0_GIC_SHIFT, #ID_AA64PFR0_GIC_BITS
 	/* GIC[3:0] == 0001 - GIC CPU interface via special regs. supported */
 	cmp	x2, #(ID_AA64PFR0_GIC_CPUIF_EN >> ID_AA64PFR0_GIC_SHIFT)
-	b.ne	3f
+	b.ne	4f
 
 	mrs	x2, icc_sre_el2
 	orr	x2, x2, #ICC_SRE_EL2_EN	/* Enable access from insecure EL1 */
 	orr	x2, x2, #ICC_SRE_EL2_SRE	/* Enable system registers */
 	msr	icc_sre_el2, x2
-3:
+4:
 
 	/* Set the address to return to our return address */
 	msr	elr_el2, x30
