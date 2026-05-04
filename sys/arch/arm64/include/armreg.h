@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.44 2025/07/22 09:20:41 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.45 2026/05/04 20:43:42 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -118,6 +118,14 @@
 #define	CTR_ILINE_SHIFT		0
 #define	CTR_ILINE_MASK		(0xf << CTR_ILINE_SHIFT)
 #define	CTR_ILINE_SIZE(reg)	(((reg) & CTR_ILINE_MASK) >> CTR_ILINE_SHIFT)
+
+/* CurrentEL - Current Exception Level */
+#define	CURRENTEL_EL_SHIFT	2
+#define	CURRENTEL_EL_MASK	(0x3 << CURRENTEL_EL_SHIFT)
+#define	 CURRENTEL_EL_EL0	(0x0 << CURRENTEL_EL_SHIFT)
+#define	 CURRENTEL_EL_EL1	(0x1 << CURRENTEL_EL_SHIFT)
+#define	 CURRENTEL_EL_EL2	(0x2 << CURRENTEL_EL_SHIFT)
+#define	 CURRENTEL_EL_EL3	(0x3 << CURRENTEL_EL_SHIFT)
 
 /* MPIDR_EL1 - Multiprocessor Affinity Register */
 #define MPIDR_AFF3		(0xFFULL << 32)

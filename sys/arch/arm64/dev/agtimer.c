@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.29 2025/01/31 16:46:41 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.30 2026/05/04 20:43:41 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -289,7 +289,9 @@ agtimer_set_clockrate(int32_t new_frequency)
 void
 agtimer_cpu_initclocks(void)
 {
-	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
+	struct agtimer_softc *sc = agtimer_cd.cd_devs[0];
+	uint64_t el;
+	int idx;
 
 	stathz = hz;
 	profhz = stathz * 10;
@@ -299,8 +301,20 @@ agtimer_cpu_initclocks(void)
 		agtimer_set_clockrate(agtimer_frequency);
 	}
 
+	/* Pick the correct PPI depending on the running EL. */
+	el = READ_SPECIALREG(CurrentEL) & CURRENTEL_EL_MASK;
+	if (el == CURRENTEL_EL_EL2) {
+		idx = OF_getindex(sc->sc_node, "hyp-virt", "interrupt-names");
+		if (idx == -1)
+			idx = 4;
+	} else {
+		idx = OF_getindex(sc->sc_node, "virt", "interrupt-names");
+		if (idx == -1)
+			idx = 2;
+	}
+
 	/* configure virtual timer interrupt */
-	sc->sc_ih = arm_intr_establish_fdt_idx(sc->sc_node, 2,
+	sc->sc_ih = arm_intr_establish_fdt_idx(sc->sc_node, idx,
 	    IPL_CLOCK|IPL_MPSAFE, agtimer_intr, NULL, "tick");
 }
 
