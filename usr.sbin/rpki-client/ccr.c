@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.35 2026/04/13 09:22:46 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.36 2026/05/04 17:39:35 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1092,6 +1092,12 @@ parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
 	if (!x509_get_generalized_time(fn, "CCR mostRecentUpdate",
 	    state->mostRecentUpdate, &ccr->most_recent_update))
 		goto out;
+
+	if (sk_ManifestInstance_num(state->mis) == 0 &&
+	    ccr->most_recent_update != 0) {
+		warnx("%s: invalid ManifestState mostRecentUpdate", fn);
+		goto out;
+	}
 
 	if (!parse_mft_instances(fn, ccr, state->mis))
 		goto out;
