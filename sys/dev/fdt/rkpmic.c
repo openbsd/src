@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.20 2025/06/16 20:21:33 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.21 2026/05/04 07:33:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -431,6 +431,7 @@ rkpmic_i2c_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	return (strcmp(ia->ia_name, "rockchip,rk805") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk806") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk808") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk809") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk817") == 0 ||
