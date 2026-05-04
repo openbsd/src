@@ -1,4 +1,4 @@
-/* $OpenBSD: rkvop.c,v 1.8 2024/08/21 11:24:12 jsg Exp $ */
+/* $OpenBSD: rkvop.c,v 1.9 2026/05/04 12:52:57 kettenis Exp $ */
 /* $NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -522,7 +522,7 @@ rkvop_ep_activate(void *cookie, struct endpoint *ep, void *arg)
 	struct drm_device *ddev = arg;
 	struct drm_plane *plane = &sc->sc_plane;
 	struct drm_crtc *crtc = &sc->sc_crtc.base;
-	uint32_t formats[] = { DRM_FORMAT_ARGB8888 };
+	uint32_t formats[] = { DRM_FORMAT_ARGB8888, DRM_FORMAT_XRGB8888 };
 	int error;
 
 	if (sc->sc_crtc.sc)
