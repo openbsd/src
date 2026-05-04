@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.15 2026/05/04 13:49:07 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.16 2026/05/04 13:52:39 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -100,6 +100,41 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 	}
 
 	return ok;
+}
+
+static int
+verify_cert_depth_cb(int ok, X509_STORE_CTX *xsc)
+{
+	int verify_err;
+
+	ok = verify_cert_cb(ok, xsc);
+
+	verify_err = X509_STORE_CTX_get_error(xsc);
+	if (verify_err == X509_V_ERR_CERT_CHAIN_TOO_LONG) {
+		fprintf(stderr, "overriding verify error at depth %d: %s\n",
+		    X509_STORE_CTX_get_error_depth(xsc),
+		    X509_verify_cert_error_string(verify_err));
+		ok = 1;
+	}
+
+	return ok;
+}
+
+static int
+verify_cert_yolo_cb(int ok, X509_STORE_CTX *xsc)
+{
+	int verify_err;
+
+	verify_cert_cb(ok, xsc);
+
+	verify_err = X509_STORE_CTX_get_error(xsc);
+	if (verify_err != X509_V_OK) {
+		fprintf(stderr, "overriding verify error at depth %d: %s\n",
+		    X509_STORE_CTX_get_error_depth(xsc),
+		    X509_verify_cert_error_string(verify_err));
+	}
+
+	return 1;
 }
 
 static void
@@ -251,6 +286,7 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains,
 }
 
 struct verify_cert_test {
+	const char *desc;
 	const char *id;
 	int (*verify_cb)(int, X509_STORE_CTX *);
 	int want_chains;
@@ -270,6 +306,32 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "2a",
 		.want_chains = 1,
+	},
+	{
+		.desc = "2a with depth 2",
+		.id = "2a",
+		.set_depth = 2,
+		.want_chains = 1,
+	},
+	{
+		.desc = "2a with depth 1",
+		.id = "2a",
+		.set_depth = 1,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_CERT_CHAIN_TOO_LONG,
+		.want_error_depth = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
+	},
+	{
+		.desc = "2a with depth 1 and depth callback",
+		.id = "2a",
+		.verify_cb = verify_cert_depth_cb,
+		.set_depth = 1,
+		.want_chains = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
+		.failing = 1,
 	},
 	{
 		.id = "2b",
@@ -482,10 +544,28 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_error_depth = 0,
 	},
 	{
+		.desc = "14a with yolo callback",
+		.id = "14a",
+		.verify_cb = verify_cert_yolo_cb,
+		.want_chains = 1,
+		.want_error_depth = 0,
+	},
+	{
 		.id = "14b",
 		.want_chains = 0,
 		.want_error = X509_V_ERR_CERT_CHAIN_TOO_LONG,
 		.want_error_depth = 31,
+		.want_legacy_error = 0,
+		.want_legacy_error_depth = 0,
+		.failing = 1,
+	},
+	{
+		.desc = "14b with yolo callback",
+		.id = "14b",
+		.verify_cb = verify_cert_yolo_cb,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_CERT_CHAIN_TOO_LONG,
+		.want_error_depth = 32,
 		.want_legacy_error = 0,
 		.want_legacy_error_depth = 0,
 		.failing = 1,
@@ -519,7 +599,8 @@ verify_cert_test(const char *certs_path, int mode)
 		error = 0;
 		error_depth = 0;
 
-		fprintf(stderr, "== Test %zu (%s)\n", i, vct->id);
+		fprintf(stderr, "== Test %zu (%s)\n", i,
+		    vct->desc != NULL ? vct->desc : vct->id);
 		if (mode == MODE_VERIFY)
 			verify_cert_new(roots_file, bundle_file, &chains,
 			    vct->set_depth, vct->verify_cb);

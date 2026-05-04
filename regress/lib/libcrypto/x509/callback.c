@@ -1,4 +1,4 @@
-/* $OpenBSD: callback.c,v 1.7 2026/05/04 13:49:07 tb Exp $ */
+/* $OpenBSD: callback.c,v 1.8 2026/05/04 13:52:39 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -177,6 +177,7 @@ verify_cert(const char *roots_dir, const char *roots_file,
 }
 
 struct verify_cert_test {
+	const char *desc;
 	const char *id;
 	int set_depth;
 	int want_chains;
@@ -191,6 +192,24 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "2a",
 		.want_chains = 1,
+	},
+	{
+		.desc = "2a with depth 2",
+		.id = "2a",
+		.set_depth = 2,
+		.want_chains = 1,
+	},
+	{
+		.desc = "2a with depth 1",
+		.id = "2a",
+		.set_depth = 1,
+		.want_chains = 0,
+	},
+	{
+		.desc = "2a with depth 1",
+		.id = "2a",
+		.set_depth = 1,
+		.want_chains = 0,
 	},
 	{
 		.id = "2b",
@@ -380,7 +399,8 @@ verify_cert_test(const char *certs_path, int mode)
 		if (asprintf(&roots_dir, "./%s/roots", vct->id) == -1)
 			errx(1, "asprintf");
 
-		fprintf(output, "== Test %zu (%s)\n", i, vct->id);
+		fprintf(output, "== Test %zu (%s)\n", i,
+		    vct->desc != NULL ? vct->desc : vct->id);
 		fprintf(output, "== Legacy:\n");
 		mode = MODE_LEGACY_VFY;
 		verify_cert(roots_dir, roots_file, bundle_file, &chains,
