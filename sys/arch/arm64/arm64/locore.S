@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.49 2026/05/04 20:18:42 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.50 2026/05/04 20:21:02 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -51,10 +51,23 @@ drop_to_el1:
 	RETGUARD_CHECK(drop_to_el1, x15)
 	ret
 2:
-	/* Check for EL2 Host mode */
-	mrs	x2, hcr_el2
-	tbz	x2, #34, 3f	/* HCR_E2H */
+	/*
+	 * Check for EL2 Host mode by testing aliasing between
+	 * EL1 and EL2 accessors of the FAR_EL2 register.
+	 */
+	msr	hcr_el2, xzr
+	isb
+	mov	x2, #1
+	msr	far_el1, x2
+	isb
+	mov	x2, #2
+	msr	far_el2, x2
+	isb
+	mrs	x2, far_el1
+	cmp	x2, #2
+	b.ne	3f
 
+	mov	x2, #HCR_E2H
 	orr	x2, x2, #HCR_TGE
 	msr	hcr_el2, x2
 	isb
