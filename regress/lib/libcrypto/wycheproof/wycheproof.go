@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.203 2026/05/04 19:11:01 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.204 2026/05/04 19:15:45 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -3192,7 +3192,7 @@ func runTestVectors(path string) bool {
 			return wtg.run(wtv.Algorithm, variant)
 		})
 	}
-	for _ = range wtv.TestGroups {
+	for range wtv.TestGroups {
 		result := <-testc.resultCh
 		if !result {
 			success = false
