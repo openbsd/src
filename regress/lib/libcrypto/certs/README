@@ -129,4 +129,4 @@ intermediate certificates are contained in a bundle.pem file.
      (should verify with one chain).
 
 14b. Deep chain with 33 certificates including root and leaf
-     (should verify with one chain).
+     (should fail to verify).
