@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.97 2026/03/26 05:59:38 jmatthew Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.98 2026/05/04 08:00:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -208,6 +208,9 @@
 #define RK3576_PHPTOPCRU_CLKSEL_CON(i)	(0x08300 + (i) * 4)
 #define RK3576_PHPTOPCRU_GATE_CON(i)	(0x08800 + (i) * 4)
 #define RK3576_PHPTOPCRU_SOFTRST_CON(i)	(0x08a00 + (i) * 4)
+#define RK3576_SECURECRU_CLKSEL_CON(i)	(0x10300 + (i) * 4)
+#define RK3576_SECURECRU_GATE_CON(i)	(0x10800 + (i) * 4)
+#define RK3576_SECURECRU_SOFTRST_CON(i)	(0x10a00 + (i) * 4)
 
 /* RK3588 registers */
 #define RK3588_CRU_AUPLL_CON(i)		(0x00180 + (i) * 4)
@@ -4223,6 +4226,11 @@ const struct rkclock rk3576_clocks[] = {
 		  RK3576_CLK_CPLL_DIV20, RK3576_XIN24M },
 	},
 	{
+		RK3576_CLK_TSADC, RK3576_CRU_CLKSEL_CON(59),
+		0, DIV(7, 0),
+		{ RK3576_XIN24M },
+	},
+	{
 		RK3576_SCLK_UART0, RK3576_CRU_CLKSEL_CON(60),
 		SEL(10, 8), DIV(7, 0),
 		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
@@ -4398,7 +4406,30 @@ rk3576_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 void
 rk3576_enable(void *cookie, uint32_t *cells, int on)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t bit, mask, reg = -1;
+
+	switch (idx) {
+	case RK3576_CLK_OTP_PHY_G:
+		reg = RK3576_CRU_GATE_CON(6);
+		bit = 3;
+		break;
+	case RK3576_PCLK_OTPC_NS:
+		reg = RK3576_SECURECRU_GATE_CON(0);
+		bit = 8;
+		break;
+	case RK3576_CLK_OTPC_NS:
+		reg = RK3576_SECURECRU_GATE_CON(0);
+		bit = 9;
+		break;
+	}
+
+	if (reg != -1) {
+		mask = (1 << bit);
+		HWRITE4(sc, reg, mask << 16 | (on ? 0 : mask));
+		return;
+	}
 
 	/* All clocks are enabled upon hardware reset. */
 	if (!on) {
@@ -4415,6 +4446,14 @@ rk3576_reset(void *cookie, uint32_t *cells, int on)
 	uint32_t bit, mask, reg;
 
 	switch (idx) {
+	case RK3576_SRST_P_TSADC:
+		reg = RK3576_CRU_SOFTRST_CON(13);
+		bit = 8;
+		break;
+	case RK3576_SRST_TSADC:
+		reg = RK3576_CRU_SOFTRST_CON(13);
+		bit = 9;
+		break;
 	case RK3576_SRST_P_PCIE0:
 		reg = RK3576_CRU_SOFTRST_CON(34);
 		bit = 13;
@@ -4454,6 +4493,14 @@ rk3576_reset(void *cookie, uint32_t *cells, int on)
 	case RK3576_SRST_PCIE1_PIPE_PHY:
 		reg = RK3576_PHPTOPCRU_SOFTRST_CON(1);
 		bit = 8;
+		break;
+	case RK3576_SRST_P_OTPC_NS:
+		reg = RK3576_SECURECRU_SOFTRST_CON(0);
+		bit = 8;
+		break;
+	case RK3576_SRST_OTPC_NS:
+		reg = RK3576_SECURECRU_SOFTRST_CON(0);
+		bit = 9;
 		break;
 	default:
 		printf("%s: 0x%08x\n", __func__, idx);
