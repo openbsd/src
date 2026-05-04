@@ -952,9 +952,6 @@ static int select_bus_fmt_recursive(struct drm_bridge *first_bridge,
 				    struct drm_connector_state *conn_state,
 				    u32 out_bus_fmt)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	unsigned int i, num_in_bus_fmts = 0;
 	struct drm_bridge_state *cur_state;
 	struct drm_bridge *prev_bridge __free(drm_bridge_put) =
@@ -1033,7 +1030,6 @@ static int select_bus_fmt_recursive(struct drm_bridge *first_bridge,
 
 	kfree(in_bus_fmts);
 	return ret;
-#endif
 }
 
 /*
