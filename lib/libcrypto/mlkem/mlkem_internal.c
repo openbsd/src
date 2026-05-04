@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_internal.c,v 1.8 2026/03/29 06:31:07 tb Exp $ */
+/* $OpenBSD: mlkem_internal.c,v 1.9 2026/05/04 20:44:36 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, 2025 Bob Beck <beck@obtuse.com>
@@ -1137,6 +1137,7 @@ mlkem_decap(const MLKEM_private_key *private_key, const uint8_t *ciphertext,
  err:
 	freezero(expected_ciphertext, expected_ciphertext_length);
 	explicit_bzero(key_and_randomness, sizeof(key_and_randomness));
+	explicit_bzero(failure_key, sizeof(failure_key));
 	explicit_bzero(decrypted, sizeof(decrypted));
 
 	return ret;
