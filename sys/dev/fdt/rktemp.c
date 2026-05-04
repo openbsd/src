@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.14 2024/06/27 09:40:15 kettenis Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.15 2026/05/04 08:04:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/sensors.h>
 
 #include <machine/intr.h>
@@ -246,6 +247,24 @@ const struct rktemp_entry rk3568_temps[] = {
 
 const char *const rk3568_names[] = { "CPU", "GPU" };
 
+/* RK3576 conversion table. */
+const struct rktemp_entry rk3576_temps[] = {
+	{ -40000, 215 },
+	{  25000, 285 },
+	{  85000, 350 },
+	{ 125000, 395 },
+};
+
+
+const char *const rk3576_names[] = {
+	"Top",
+	"CPU (big)",
+	"CPU (little)",
+	"DDR",
+	"NPU",
+	"GPU"
+};
+
 /* RK3588 conversion table. */
 const struct rktemp_entry rk3588_temps[] = {
 	{ -40000, 215 },
@@ -273,6 +292,9 @@ struct rktemp_softc {
 
 	bus_size_t		sc_data0;
 
+	int			sc_trim_slope;
+	uint32_t		*sc_trim_temp;
+
 	const struct rktemp_entry *sc_temps;
 	int			sc_ntemps;
 
@@ -296,6 +318,7 @@ struct cfdriver rktemp_cd = {
 
 int	rktemp_intr(void *);
 void	rktemp_rk3568_init(struct rktemp_softc *);
+void	rktemp_config_trim(struct rktemp_softc *);
 int32_t rktemp_calc_code(struct rktemp_softc *, int32_t);
 int32_t rktemp_calc_temp(struct rktemp_softc *, int32_t);
 int	rktemp_valid(struct rktemp_softc *, int32_t);
@@ -313,6 +336,7 @@ rktemp_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-tsadc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3576-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-tsadc"));
 }
 
@@ -341,7 +365,8 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3576-tsadc") ||
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
 		sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_SOFTCLOCK,
 		    rktemp_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL) {
@@ -392,6 +417,15 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		inter_pd_soc = 63;	/* 97 us */
 		auto_period = 1622;	/* 2.5 ms */
 		auto_period_ht = 1622;	/* 2.5 ms */
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3576-tsadc")) {
+		sc->sc_temps = rk3576_temps;
+		sc->sc_ntemps = nitems(rk3576_temps);
+		sc->sc_nsensors = 6;
+		names = rk3576_names;
+		inter_pd_soc = 0;
+		auto_period = 5000;	/* 2.5 ms */
+		auto_period_ht = 5000;	/* 2.5 ms */
+		sc->sc_trim_slope = 923;
 	} else {
 		sc->sc_temps = rk3588_temps;
 		sc->sc_ntemps = nitems(rk3588_temps);
@@ -401,6 +435,11 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		auto_period = 5000;	/* 2.5 ms */
 		auto_period_ht = 5000;	/* 2.5 ms */
 	}
+
+	sc->sc_trim_temp = mallocarray(sc->sc_nsensors,
+	    sizeof(*sc->sc_trim_temp), M_DEVBUF, M_WAITOK | M_ZERO);
+	if (sc->sc_trim_slope)
+		rktemp_config_trim(sc);
 
 	pinctrl_byname(sc->sc_node, "init");
 
@@ -417,7 +456,8 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	polarity = OF_getpropint(sc->sc_node, "rockchip,hw-tshut-polarity", 0);
 	temp = OF_getpropint(sc->sc_node, "rockchip,hw-tshut-temp", 95000);
 
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3576-tsadc") ||
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
 		uint32_t gpio_en, cru_en;
 
 		sc->sc_data0 = TSADC_V3_DATA(0);
@@ -435,7 +475,7 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		/* Set shutdown limit. */
 		for (i = 0; i < sc->sc_nsensors; i++) {
 			HWRITE4(sc, TSADC_V3_COMP_SHUT(i),
-			    rktemp_calc_code(sc, temp));
+			    rktemp_calc_code(sc, temp + sc->sc_trim_temp[i]));
 			HWRITE4(sc, TSADC_V3_AUTO_SRC,
 			    TSADC_V3_AUTO_SRC_CH(i) << 16 |
 			    TSADC_V3_AUTO_SRC_CH(i));
@@ -483,7 +523,7 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		/* Set shutdown limit. */
 		for (i = 0; i < sc->sc_nsensors; i++) {
 			HWRITE4(sc, TSADC_COMP_SHUT(i),
-			    rktemp_calc_code(sc, temp));
+			    rktemp_calc_code(sc, temp + sc->sc_trim_temp[i]));
 			auto_con |= (TSADC_AUTO_CON_SRC_EN(i));
 		}
 		HWRITE4(sc, TSADC_AUTO_CON, auto_con);
@@ -506,7 +546,8 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(sc->sc_node, "default");
 
 	/* Finally turn on the ADC. */
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3576-tsadc") ||
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
 		HWRITE4(sc, TSADC_AUTO_CON,
 		    TSADC_AUTO_CON_AUTO_EN << 16 | TSADC_AUTO_CON_AUTO_EN);
 	} else {
@@ -530,7 +571,8 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ts.ts_node = sc->sc_node;
 	sc->sc_ts.ts_cookie = sc;
 	sc->sc_ts.ts_get_temperature = rktemp_get_temperature;
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc"))
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3576-tsadc") ||
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc"))
 		sc->sc_ts.ts_set_limit = rktemp_set_limit;
 	thermal_sensor_register(&sc->sc_ts);
 }
@@ -579,6 +621,44 @@ rktemp_rk3568_init(struct rktemp_softc *sc)
 		    RK3568_GRF_TSADC_ANA_REG(i));
 	}
 	delay(100);
+}
+
+void
+rktemp_config_trim(struct rktemp_softc *sc)
+{
+	uint32_t reg;
+	int32_t code, temp;
+	int trim_base, trim_base_frac, trim;
+	int node, error;
+
+	trim_base = 0;
+	error = nvmem_read_cell(sc->sc_node, "trim_base",
+	    &trim_base, sizeof(trim_base));
+	if (error)
+		trim_base = 30;
+	trim_base_frac = 0;
+	error = nvmem_read_cell(sc->sc_node, "trim_base_frac",
+	    &trim_base_frac, sizeof(trim_base_frac));
+	if (error)
+		trim_base_frac = 0;
+
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
+		reg = OF_getpropint(node, "reg", -1);
+		if (reg >= sc->sc_nsensors)
+			continue;
+
+		trim = 0;
+		error = nvmem_read_cell(node, "trim", &trim, sizeof(trim));
+		if (error)
+			trim = 0;
+
+		if (trim) {
+			temp = trim_base * 1000 + trim_base_frac * 100;
+			code = rktemp_calc_code(sc, temp);
+			temp = sc->sc_trim_slope * (trim - code);
+			sc->sc_trim_temp[reg] = temp;
+		}
+	}
 }
 
 int32_t
@@ -675,6 +755,7 @@ rktemp_refresh_sensors(void *arg)
 	for (i = 0; i < sc->sc_nsensors; i++) {
 		code = HREAD4(sc, sc->sc_data0 + (i * 4));
 		temp = rktemp_calc_temp(sc, code);
+		temp -= sc->sc_trim_temp[i];
 		sc->sc_sensors[i].value = 273150000 + 1000 * temp;
 		if (rktemp_valid(sc, code))
 			sc->sc_sensors[i].flags &= ~SENSOR_FINVALID;
@@ -688,16 +769,19 @@ rktemp_get_temperature(void *cookie, uint32_t *cells)
 {
 	struct rktemp_softc *sc = cookie;
 	uint32_t ch = cells[0];
-	int32_t code;
+	int32_t code, temp;
 
 	if (ch >= sc->sc_nsensors)
 		return THERMAL_SENSOR_MAX;
 
 	code = HREAD4(sc, sc->sc_data0 + (ch * 4));
-	if (rktemp_valid(sc, code))
-		return rktemp_calc_temp(sc, code);
-	else
-		return THERMAL_SENSOR_MAX;
+	if (rktemp_valid(sc, code)) {
+		temp = rktemp_calc_temp(sc, code);
+		temp -= sc->sc_trim_temp[ch];
+		return temp;
+	}
+
+	return THERMAL_SENSOR_MAX;
 }
 
 int
@@ -710,7 +794,8 @@ rktemp_set_limit(void *cookie, uint32_t *cells, uint32_t temp)
 		return ENXIO;
 
 	/* Set limit for this sensor. */
-	HWRITE4(sc, TSADC_V3_COMP_INT(ch), rktemp_calc_code(sc, temp));
+	HWRITE4(sc, TSADC_V3_COMP_INT(ch),
+	    rktemp_calc_code(sc, temp + sc->sc_trim_temp[ch]));
 
 	/* Clear and enable the corresponding interrupt. */
 	HWRITE4(sc, TSADC_V3_HLT_INT_PD, TSADC_V3_HT_INT_STATUS(ch));
