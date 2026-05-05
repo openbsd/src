@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.356 2026/03/27 05:15:25 dgl Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.357 2026/05/05 13:00:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -226,7 +226,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_waitid] = PLEDGE_STDIO,
 
 	/*
-	 * Can kill self with "stdio".  Killing another pid
+	 * Can kill self with "stdio".  Killing another pid/pgid
 	 * requires "proc"
 	 */
 	[SYS_kill] = PLEDGE_STDIO,
