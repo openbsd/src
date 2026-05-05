@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.142 2026/04/30 15:51:07 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.143 2026/05/05 08:37:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -95,7 +95,7 @@ int
 attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
     void *data, uint16_t len)
 {
-	uint8_t		 l;
+	unsigned int	 l;
 	struct attr	*a, *t;
 	struct attr	**p;
 	uint64_t	 h;
@@ -137,6 +137,8 @@ attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
 		fatalx("attr_optadd: attribute overflow");
 
 	l = bin_of_attrs(asp->others_len + 1);
+	if (l > UCHAR_MAX)
+		l = UCHAR_MAX;
 	if ((p = reallocarray(asp->others, l, sizeof(struct attr *))) == NULL)
 		fatal("%s", __func__);
 	memset(&p[asp->others_len], 0, (l - asp->others_len) * sizeof(*p));
