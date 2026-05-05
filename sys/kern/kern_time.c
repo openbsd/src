@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.170 2024/10/03 10:18:29 claudio Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.171 2026/05/05 12:28:59 kettenis Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		error = copyout(&olditv, SCARG(uap, oitv), sizeof(olditv));
 #ifdef KTRACE
 		if (error == 0 && KTRPOINT(p, KTR_STRUCT))
-			ktritimerval(p, &aitv);
+			ktritimerval(p, &olditv);
 #endif
 		return error;
 	}
