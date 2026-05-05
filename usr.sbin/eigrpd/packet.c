@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.23 2023/12/14 10:02:27 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.24 2026/05/05 11:46:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -355,7 +355,8 @@ recv_packet_eigrp(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 		}
 
 		memcpy(&tlv, buf, sizeof(tlv));
-		if (ntohs(tlv.length) > len) {
+		if (ntohs(tlv.length) < sizeof(tlv) ||
+		    ntohs(tlv.length) > len) {
 			log_debug("%s: malformed packet (bad length)",
 			    __func__);
 			goto error;
