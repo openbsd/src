@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.49 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: server.c,v 1.50 2026/05/05 13:01:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -1435,7 +1435,8 @@ recvit(char *cmd, int type)
 		 owner, group, file, catname, (type == S_IFDIR) ? 1 : 0);
 
 	if (type == S_IFDIR) {
-		if ((size_t) catname >= sizeof(sptarget)) {
+		if ((size_t) catname >=
+		    (sizeof(sptarget) / sizeof(sptarget[0]))) {
 			error("%s: too many directory levels", target);
 			return;
 		}
