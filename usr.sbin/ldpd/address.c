@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.35 2017/03/04 00:21:48 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.36 2026/05/05 11:40:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -208,7 +208,7 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 	memcpy(&alt, buf, sizeof(alt));
 	alt_len = ntohs(alt.length);
 	alt_family = ntohs(alt.family);
-	if (alt_len > len - TLV_HDR_SIZE) {
+	if (alt_len < sizeof(alt.family) || alt_len > len - TLV_HDR_SIZE) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
 		return (-1);
 	}
