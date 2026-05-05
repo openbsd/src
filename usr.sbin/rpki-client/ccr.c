@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.36 2026/05/04 17:39:35 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.37 2026/05/05 09:29:16 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -395,13 +395,9 @@ append_cached_vrp(STACK_OF(ROAIPAddress) *addresses, struct vrp *vrp)
 	if (num_bits > 0)
 		unused_bits = 8 - num_bits;
 
-	if (!ASN1_BIT_STRING_set(ripa->address, vrp->addr.addr, num_bytes))
-		errx(1, "ASN1_BIT_STRING_set");
-
-	/* ip_addr_parse() handles unused bits, no need to clear them here. */
-	ripa->address->flags |= ASN1_STRING_FLAG_BITS_LEFT | unused_bits;
-
-	/* XXX - assert that unused bits are zero */
+	if (!ASN1_BIT_STRING_set1(ripa->address, vrp->addr.addr, num_bytes,
+	    unused_bits))
+		errx(1, "ASN1_BIT_STRING_set1");
 
 	if (vrp->maxlength > vrp->addr.prefixlen) {
 		if ((ripa->maxLength = ASN1_INTEGER_new()) == NULL)
