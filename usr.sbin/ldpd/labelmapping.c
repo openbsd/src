@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.69 2023/07/03 11:51:27 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.70 2026/05/05 11:42:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -811,7 +811,8 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *msg, char *buf,
 			}
 
 			memcpy(&stlv, buf + off, sizeof(stlv));
-			if (stlv.length > pw_len) {
+			if (stlv.length < SUBTLV_HDR_SIZE ||
+			    stlv.length > pw_len) {
 				session_shutdown(nbr, S_BAD_TLV_LEN, msg->id,
 				    msg->type);
 				return (-1);
