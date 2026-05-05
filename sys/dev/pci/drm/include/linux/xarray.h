@@ -32,7 +32,7 @@ struct xarray {
 #define DEFINE_XARRAY_FLAGS(name, flags)			\
 	struct xarray name = {					\
 		.xa_flags = flags,				\
-		.xa_lock = MUTEX_INITIALIZER((flags & XA_FLAGS_LOCK_IRQ) ? \
+		.xa_lock = MUTEX_INITIALIZER(((flags) & XA_FLAGS_LOCK_IRQ) ? \
 		    IPL_TTY : IPL_NONE),			\
 		.xa_tree = SPLAY_INITIALIZER(&name.xa_tree)	\
 	}
