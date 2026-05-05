@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2026/01/22 11:40:25 tb Exp $
+# $OpenBSD: Makefile,v 1.13 2026/05/05 12:56:12 tb Exp $
 
 WYCHEPROOF_TESTVECTORS = /usr/local/share/wycheproof/testvectors_v1/
 
@@ -13,7 +13,7 @@ REGRESS_TARGETS += regress-wycheproof-primes
 
 . if exists(/usr/local/bin/go)
 
-REGRESS_TARGETS += regress-wycheproof
+REGRESS_TARGETS += regress-wycheproof regress-fmt-wycheproof
 
 CLEANFILES +=	wycheproof
 
@@ -22,6 +22,9 @@ wycheproof: wycheproof.go
 
 regress-wycheproof: wycheproof
 	./wycheproof
+
+regress-fmt-wycheproof:
+	gofmt -d ${.CURDIR}/wycheproof.go
 
 REGRESS_CLEANUP =	clean-go-cache
 
