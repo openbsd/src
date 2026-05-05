@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.380 2026/03/09 02:44:04 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.381 2026/05/05 14:01:56 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2315,11 +2315,11 @@ sys_fchflags(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = fp->f_data;
 	if (p->p_fd->fd_ofileflags[SCARG(uap, fd)] & UF_PLEDGEOPEN) {
-		vput(vp);
+		FRELE(fp, p);
 		return (EPERM);
 	}
+	vp = fp->f_data;
 	vref(vp);
 	FRELE(fp, p);
 	return (dovchflags(p, vp, SCARG(uap, flags)));
