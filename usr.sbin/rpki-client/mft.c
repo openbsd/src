@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.136 2026/01/16 11:25:27 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.137 2026/05/05 09:33:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -151,7 +151,8 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 {
 	const unsigned char	*data;
 	char			*file = NULL;
-	int			 length, rc = 0;
+	size_t			 len;
+	int			 length, unused_bits, rc = 0;
 	struct mftfile		*fent;
 	enum rtype		 type;
 	size_t			 new_idx = 0;
@@ -167,15 +168,19 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 	if (file == NULL)
 		err(1, NULL);
 
-	/* XXX - malleability: ensure unused bits are 0. */
 	data = ASN1_STRING_get0_data(fh->hash);
-	length = ASN1_STRING_length(fh->hash);
-
-	if (length != SHA256_DIGEST_LENGTH) {
+	if (!ASN1_BIT_STRING_get_length(fh->hash, &len, &unused_bits)) {
 		warnx("%s: RFC 9286 section 4.2.1: hash: "
 		    "invalid SHA256 length, have %d", fn, length);
 		goto out;
 	}
+	if (len != SHA256_DIGEST_LENGTH || unused_bits != 0) {
+		warnx("%s: RFC 9286 section 4.2.1: hash: "
+		    "invalid SHA256 length, have %zu (%d unused bits)",
+		    fn, len, unused_bits);
+		goto out;
+	}
+	length = len;
 
 	type = rtype_from_mftfile(file);
 	if (type == RTYPE_CRL) {
