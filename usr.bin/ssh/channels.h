@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.h,v 1.165 2026/05/05 05:34:27 djm Exp $ */
+/* $OpenBSD: channels.h,v 1.166 2026/05/05 06:21:14 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -84,7 +84,7 @@
 
 /* default pattern-lists used to classify channel types as bulk */
 #define CHANNEL_BULK_TTY	""
-#define CHANNEL_BULK_NOTTY	"direct-*,forwarded-*,dynamic-*,"
+#define CHANNEL_BULK_NOTTY	"direct-*,forwarded-*,dynamic-*," \
 				"tun-*,x11-*,session*"
 
 struct ssh;
