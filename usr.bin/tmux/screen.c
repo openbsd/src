@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.100 2026/05/05 12:06:52 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.101 2026/05/05 13:18:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -264,6 +264,16 @@ screen_push_title(struct screen *s)
 {
 	struct screen_title_entry *title_entry;
 
+	log_debug("%s: %u", __func__, s->ntitles);
+
+	while (s->ntitles >= 10) {
+		title_entry = TAILQ_LAST(s->titles, screen_titles);
+		free(title_entry->text);
+		TAILQ_REMOVE(s->titles, title_entry, entry);
+		free(title_entry);
+		s->ntitles--;
+	}
+
 	if (s->titles == NULL) {
 		s->titles = xmalloc(sizeof *s->titles);
 		TAILQ_INIT(s->titles);
@@ -271,6 +281,7 @@ screen_push_title(struct screen *s)
 	title_entry = xmalloc(sizeof *title_entry);
 	title_entry->text = xstrdup(s->title);
 	TAILQ_INSERT_HEAD(s->titles, title_entry, entry);
+	s->ntitles++;
 }
 
 /*
@@ -284,14 +295,15 @@ screen_pop_title(struct screen *s)
 
 	if (s->titles == NULL)
 		return;
+	log_debug("%s: %u", __func__, s->ntitles);
 
 	title_entry = TAILQ_FIRST(s->titles);
 	if (title_entry != NULL) {
-		screen_set_title(s, title_entry->text);
-
+		free(s->title);
+		s->title = title_entry->text;
 		TAILQ_REMOVE(s->titles, title_entry, entry);
-		free(title_entry->text);
 		free(title_entry);
+		s->ntitles--;
 	}
 }
 

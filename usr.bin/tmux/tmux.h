@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1310 2026/05/01 09:44:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1311 2026/05/05 13:18:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -979,6 +979,7 @@ struct screen {
 	char				*title;
 	char				*path;
 	struct screen_titles		*titles;
+	u_int				 ntitles;
 
 	struct grid			*grid;	  /* grid data */
 
