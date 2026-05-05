@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.98 2026/05/04 08:00:27 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.99 2026/05/05 10:23:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4493,6 +4493,10 @@ rk3576_reset(void *cookie, uint32_t *cells, int on)
 	case RK3576_SRST_PCIE1_PIPE_PHY:
 		reg = RK3576_PHPTOPCRU_SOFTRST_CON(1);
 		bit = 8;
+		break;
+	case RK3576_SRST_H_TRNG_NS:
+		reg = RK3576_SECURECRU_SOFTRST_CON(0);
+		bit = 4;
 		break;
 	case RK3576_SRST_P_OTPC_NS:
 		reg = RK3576_SECURECRU_SOFTRST_CON(0);
