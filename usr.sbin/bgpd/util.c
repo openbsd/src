@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.99 2026/03/18 15:00:20 sthen Exp $ */
+/*	$OpenBSD: util.c,v 1.100 2026/05/05 09:12:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -319,6 +319,8 @@ log_aspath_error(int error)
 		return "invalid encoding";
 	case AS_ERR_SOFT:
 		return "soft failure";
+	case AS_ERR_MAX:
+		return "too large";
 	default:
 		snprintf(buf, sizeof(buf), "unknown %d", error);
 		return buf;
@@ -572,6 +574,7 @@ aspath_verify(struct ibuf *in, int as4byte, int permit_set)
 	struct ibuf	 buf;
 	int		 pos, error = 0;
 	uint8_t		 seg_len, seg_type;
+	unsigned int	 count = 0;
 
 	ibuf_from_ibuf(&buf, in);
 	if (ibuf_size(&buf) & 1) {
@@ -632,8 +635,13 @@ aspath_verify(struct ibuf *in, int as4byte, int permit_set)
 			}
 			if (as == 0)
 				error = AS_ERR_SOFT;
+
+			count++;
 		}
 	}
+
+	if (count > MAX_ASPATH_COUNT)
+		error = AS_ERR_MAX;
 
  done:
 	return (error);	/* aspath is valid but probably not loop free */

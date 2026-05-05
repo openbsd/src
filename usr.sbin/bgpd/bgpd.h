@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.539 2026/04/27 15:06:01 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.540 2026/05/05 09:12:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@
 
 #define	MAX_PKTSIZE			4096
 #define	MAX_EXT_PKTSIZE			65535
+#define	MAX_ASPATH_COUNT		750	/* max # of asn in a path */
 #define	MAX_BGPD_IMSGSIZE		(128 * 1024)
 #define	MAX_SOCK_BUF			(4 * IBUF_READ_SIZE)
 #define	RT_BUF_SIZE			16384
@@ -1675,6 +1676,7 @@ int		 aspath_verify(struct ibuf *, int, int);
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
 #define		 AS_ERR_SOFT	-4
+#define		 AS_ERR_MAX	-5
 struct ibuf	*aspath_inflate(struct ibuf *);
 int		 extract_prefix(const u_char *, int, void *, uint8_t, uint8_t);
 int		 nlri_get_prefix(struct ibuf *, struct bgpd_addr *, uint8_t *);
