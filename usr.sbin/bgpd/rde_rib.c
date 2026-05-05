@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.290 2026/03/17 09:29:29 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.291 2026/05/05 08:26:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -862,6 +862,8 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 	struct rde_community	*comm, *ncomm = &state->communities;
 	struct prefix		*p;
 
+	filtered = !!filtered;	/* normalize value for later */
+
 	/*
 	 * First try to find a prefix in the specified RIB.
 	 */
@@ -872,13 +874,22 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 		    prefix_nhflags(p) == state->nhflags &&
 		    communities_equal(ncomm, prefix_communities(p)) &&
 		    path_equal(nasp, prefix_aspath(p))) {
+			int p_filtered;
+
 			/* no change, update last change */
 			p->lastchange = getmonotime();
 			p->validation_state = state->vstate;
-			if (filtered)
-				p->flags |= PREFIX_FLAG_FILTERED;
-			else
-				p->flags &= ~PREFIX_FLAG_FILTERED;
+			p_filtered = (p->flags & PREFIX_FLAG_FILTERED) != 0;
+			/* check if filtered flag changed */
+			if (p_filtered != filtered) {
+				struct rib_entry	*re;
+
+				/* toggle filtered flag */
+				p->flags ^= PREFIX_FLAG_FILTERED;
+				/* make route decision */
+				re = rib_get_addr(rib, prefix, prefixlen);
+				prefix_evaluate(re, p, p);
+			}
 			return (0);
 		}
 	}
