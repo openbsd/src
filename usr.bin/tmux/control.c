@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.55 2026/05/03 15:01:21 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.56 2026/05/05 12:02:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -356,6 +356,9 @@ control_set_pane_off(struct client *c, struct window_pane *wp)
 	struct control_pane	*cp;
 
 	cp = control_add_pane(c, wp);
+	control_discard_pane(c, cp);
+	memcpy(&cp->offset, &wp->offset, sizeof cp->offset);
+	memcpy(&cp->queued, &wp->offset, sizeof cp->queued);
 	cp->flags |= CONTROL_PANE_OFF;
 }
 
