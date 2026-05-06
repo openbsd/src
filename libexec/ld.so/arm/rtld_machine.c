@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.42 2022/01/08 06:49:41 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.43 2026/05/06 13:30:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -102,6 +102,8 @@ static const int reloc_target_flags[] = {
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
+#define RELOC_ERROR(t) \
+	((t) >= nitems(reloc_target_flags) || (reloc_target_flags[t] & _RF_E))
 
 static const long reloc_target_bitmask[] = {
 #define _BM(x)  (~(-(1ULL << (x))))
@@ -194,8 +196,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 		type = ELF_R_TYPE(rels->r_info);
 
-		if (reloc_target_flags[type] & _RF_E)
+		if (RELOC_ERROR(type))
 			_dl_die("bad relocation %ld %d", i, type);
+
 		if (type == R_TYPE(NONE))
 			continue;
 
