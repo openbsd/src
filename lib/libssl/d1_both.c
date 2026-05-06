@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.92 2026/04/30 15:38:52 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.93 2026/05/06 15:06:35 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -928,8 +928,8 @@ dtls1_get_queue_priority(unsigned short seq, int is_ccs)
 static int
 dtls1_retransmit_message(SSL *s, hm_fragment *frag)
 {
-	struct dtls1_retransmit_state saved_state;
 	unsigned long header_length;
+	uint16_t epoch;
 	int ret;
 
 	if (frag->msg_header.is_ccs)
@@ -945,25 +945,18 @@ dtls1_retransmit_message(SSL *s, hm_fragment *frag)
 	    frag->msg_header.msg_len, frag->msg_header.seq, 0,
 	    frag->msg_header.frag_len);
 
-	/* save current state */
-	saved_state.session = s->session;
-	saved_state.epoch = tls12_record_layer_write_epoch(s->rl);
+	epoch = tls12_record_layer_write_epoch(s->rl);
 
 	s->d1->retransmitting = 1;
 
-	/* restore state in which the message was originally sent */
-	s->session = frag->msg_header.saved_retransmit_state.session;
-	if (!tls12_record_layer_use_write_epoch(s->rl,
-	    frag->msg_header.saved_retransmit_state.epoch))
+	/* Switch to the epoch that was used to send the message. */
+	if (!tls12_record_layer_use_write_epoch(s->rl, frag->msg_header.epoch))
 		return 0;
 
 	ret = dtls1_do_write(s, frag->msg_header.is_ccs ?
 	    SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
 
-	/* restore current state */
-	s->session = saved_state.session;
-	if (!tls12_record_layer_use_write_epoch(s->rl,
-	    saved_state.epoch))
+	if (!tls12_record_layer_use_write_epoch(s->rl, epoch))
 		return 0;
 
 	s->d1->retransmitting = 0;
@@ -1020,17 +1013,13 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	    (is_ccs ? DTLS1_CCS_HEADER_LENGTH : DTLS1_HM_HEADER_LENGTH) ==
 	    (unsigned int)s->init_num);
 
+	frag->msg_header.epoch = tls12_record_layer_write_epoch(s->rl);
 	frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;
 	frag->msg_header.seq = s->d1->w_msg_hdr.seq;
 	frag->msg_header.type = s->d1->w_msg_hdr.type;
 	frag->msg_header.frag_off = 0;
 	frag->msg_header.frag_len = s->d1->w_msg_hdr.msg_len;
 	frag->msg_header.is_ccs = is_ccs;
-
-	/* save current state*/
-	frag->msg_header.saved_retransmit_state.session = s->session;
-	frag->msg_header.saved_retransmit_state.epoch =
-	    tls12_record_layer_write_epoch(s->rl);
 
 	memset(seq64be, 0, sizeof(seq64be));
 	seq64be[6] = (unsigned char)(dtls1_get_queue_priority(
@@ -1060,7 +1049,7 @@ dtls1_clear_record_buffer(SSL *s)
 		frag = item->data;
 		if (frag->msg_header.is_ccs)
 			tls12_record_layer_write_epoch_done(s->rl,
-			    frag->msg_header.saved_retransmit_state.epoch);
+			    frag->msg_header.epoch);
 		dtls1_hm_fragment_free(frag);
 		pitem_free(item);
 	}

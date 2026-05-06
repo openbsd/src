@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.3 2026/04/29 14:59:26 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.4 2026/05/06 15:06:35 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -77,19 +77,14 @@ typedef struct dtls1_bitmap_st {
 					   encoding */
 } DTLS1_BITMAP;
 
-struct dtls1_retransmit_state {
-	SSL_SESSION *session;
-	unsigned short epoch;
-};
-
 struct hm_header_st {
+	uint16_t epoch;
 	unsigned char type;
 	unsigned long msg_len;
 	unsigned short seq;
 	unsigned long frag_off;
 	unsigned long frag_len;
 	unsigned int is_ccs;
-	struct dtls1_retransmit_state saved_retransmit_state;
 };
 
 struct dtls1_timeout_st {
