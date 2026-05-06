@@ -2090,6 +2090,7 @@
 ./usr/share/man/man4/rkiic.4
 ./usr/share/man/man4/rkiis.4
 ./usr/share/man/man4/rkiovd.4
+./usr/share/man/man4/rkotp.4
 ./usr/share/man/man4/rkpcie.4
 ./usr/share/man/man4/rkpciephy.4
 ./usr/share/man/man4/rkpinctrl.4
