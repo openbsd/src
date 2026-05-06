@@ -1,4 +1,4 @@
-/*	$OpenBSD: sender.c,v 1.33 2024/03/20 09:26:42 claudio Exp $ */
+/*	$OpenBSD: sender.c,v 1.34 2026/05/06 12:07:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -319,7 +319,7 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
 	}
 
 	if ((s = calloc(1, sizeof(struct send_dl))) == NULL) {
-		ERR("callloc");
+		ERR("calloc");
 		return 0;
 	}
 	s->idx = idx;
