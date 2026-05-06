@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.43 2018/09/16 02:44:06 millert Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.44 2026/05/06 12:54:27 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ done:
 		 * on the level: follow it iff it's a command line arg.
 		 */
 		if (fts_options & FTS_COMFOLLOW) {
-			atflags = p->fts_level == FTS_ROOTLEVEL ? 0 : 
+			atflags = p->fts_level == FTS_ROOTLEVEL ? 0 :
 			    AT_SYMLINK_NOFOLLOW;
 		}
 
