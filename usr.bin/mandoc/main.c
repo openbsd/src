@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.270 2026/04/17 17:30:50 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.271 2026/05/06 08:26:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -147,6 +147,7 @@ main(int argc, char *argv[])
 	size_t		 i, ib, ssz;
 	int		 options;	/* Parser options. */
 	int		 show_usage;	/* Invalid argument: give up. */
+	int		 startdir;	/* File descriptor for check_xr(). */
 	int		 prio, best_prio;
 	int		 c;
 	enum mandoc_os	 os_e;		/* Check base system conventions. */
@@ -665,13 +666,39 @@ main(int argc, char *argv[])
 	mchars_alloc();
 	mp = mparse_alloc(options, os_e, os_s);
 
+	startdir = -1;
+	if (search.argmode == ARG_FILE &&
+	    mandoc_msg_getmin() < MANDOCERR_WARNING &&
+	    (startdir = open(".", O_RDONLY | O_DIRECTORY)) == -1) 
+		mandoc_msg(MANDOCERR_OPEN, 0, 0,
+		    "initial working directory: %s", strerror(errno));
+
 	for (i = 0; i < ressz; i++) {
 		if (i > 0)
 			mparse_reset(mp);
+
+		/*
+		 * Outside ARG_FILE mode, change to the manpath
+		 * such that roff(7) .so requests work.
+		 * In ARG_FILE mode, command line arguments may be
+		 * relative file names, so return to the initial
+		 * working directory if check_xr() is in use.
+		 * Do this on a best-effort basis.  Even in case
+		 * of failure, some functionality may still work.
+		 */
+
+		if (res[i].ipath != SIZE_MAX) 
+			(void)chdir(conf.manpath.paths[res[i].ipath]);
+		else if (startdir != -1)
+			(void)fchdir(startdir);
+
 		process_onefile(mp, res + i, &outst, &conf);
 		if (outst.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;
 	}
+	if (startdir != -1)
+		close(startdir);
+
 	if (conf.output.tag != NULL && conf.output.tag_found == 0) {
 		mandoc_msg(MANDOCERR_TAG, 0, 0, "%s", conf.output.tag);
 		conf.output.tag = NULL;
@@ -919,14 +946,6 @@ process_onefile(struct mparse *mp, struct manpage *resp,
     struct outstate *outst, struct manconf *conf)
 {
 	int	 fd;
-
-	/*
-	 * Changing directories is not needed in ARG_FILE mode.
-	 * Do it on a best-effort basis.  Even in case of
-	 * failure, some functionality may still work.
-	 */
-	if (resp->ipath != SIZE_MAX)
-		(void)chdir(conf->manpath.paths[resp->ipath]);
 
 	mandoc_msg_setinfilename(resp->file);
 	if (resp->file != NULL) {
