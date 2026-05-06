@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.76 2024/04/05 13:51:47 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.77 2026/05/06 09:05:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -114,6 +114,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 	Elf_Addr relro_addr = 0, relro_size = 0;
 	struct stat sb;
 	char hbuf[4096], *exec_start;
+	ssize_t hsize;
 	size_t exec_size;
 
 #define powerof2(x) ((((x) - 1) & (x)) == 0)
@@ -144,7 +145,12 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		return NULL;
 	}
 
-	_dl_read(libfile, hbuf, sizeof(hbuf));
+	hsize = _dl_read(libfile, hbuf, sizeof(hbuf));
+	if (hsize < sizeof(Elf_Ehdr)) {
+		_dl_close(libfile);
+		_dl_errno = DL_NOT_ELF;
+		return NULL;
+	}
 	ehdr = (Elf_Ehdr *)hbuf;
 	if (ehdr->e_ident[0] != ELFMAG0  || ehdr->e_ident[1] != ELFMAG1 ||
 	    ehdr->e_ident[2] != ELFMAG2 || ehdr->e_ident[3] != ELFMAG3 ||
@@ -152,6 +158,14 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		_dl_close(libfile);
 		_dl_errno = DL_NOT_ELF;
 		return(0);
+	}
+	if (ehdr->e_phentsize != sizeof(Elf_Phdr) || ehdr->e_phoff > hsize ||
+	    ehdr->e_phnum > (hsize - ehdr->e_phoff) / sizeof(Elf_Phdr)) {
+		_dl_printf("%s: ld.so invalid ELF input %s.\n",
+		    __progname, libname);
+		_dl_close(libfile);
+		_dl_errno = DL_CANT_LOAD_OBJ;
+		return NULL;
 	}
 
 	/* Insertion sort */
