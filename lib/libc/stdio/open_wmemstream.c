@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_wmemstream.c,v 1.10 2023/07/11 12:14:16 claudio Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.11 2026/05/06 02:54:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -138,8 +138,8 @@ open_wmemstream(wchar_t **pbuf, size_t *psize)
 		return (NULL);
 	}
 
-	st->size = BUFSIZ * sizeof(wchar_t);
-	if ((st->string = calloc(1, st->size)) == NULL) {
+	st->size = BUFSIZ;
+	if ((st->string = calloc(st->size, sizeof(wchar_t))) == NULL) {
 		free(st);
 		fp->_flags = 0;
 		return (NULL);
