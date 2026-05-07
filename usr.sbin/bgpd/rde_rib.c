@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.291 2026/05/05 08:26:50 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.292 2026/05/07 11:21:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -610,11 +610,17 @@ static uint64_t
 path_calc_hash(const struct rde_aspath *p)
 {
 	SIPHASH_CTX ctx;
+	unsigned int l;
 
 	SipHash24_Init(&ctx, &pathkey);
-	SipHash24_Update(&ctx, PATH_HASHSTART(p), PATH_HASHSIZE);
+	for (l = 0; l < p->others_len && p->others[l] != NULL; l++)
+		SipHash24_Update(&ctx, &p->others[l]->hash,
+		    sizeof(p->others[l]->hash));
 	SipHash24_Update(&ctx, aspath_dump(p->aspath),
 	    aspath_length(p->aspath));
+	SipHash24_Update(&ctx, &p->path_starthash,
+	    (const char *)&p->path_endhash - (const char *)&p->path_starthash);
+	
 	return SipHash24_End(&ctx);
 }
 

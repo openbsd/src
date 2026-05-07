@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.346 2026/04/30 15:51:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.347 2026/05/07 11:21:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -227,18 +227,17 @@ struct rde_aspath {
 	struct rde_aspa_state		 aspa_state;
 	int				 refcnt;
 	uint32_t			 flags;		/* internally used */
+#define	path_starthash	 med
 	uint32_t			 med;		/* multi exit disc */
 	uint32_t			 lpref;		/* local pref */
 	uint32_t			 weight;	/* low prio lpref */
 	uint16_t			 rtlabelid;	/* route label id */
 	uint16_t			 pftableid;	/* pf table id */
 	uint8_t				 origin;
+#define	path_endhash	 others_len
 	uint8_t				 others_len;
 	uint8_t				 aspa_generation;
 };
-#define PATH_HASHOFF		offsetof(struct rde_aspath, med)
-#define PATH_HASHSTART(x)	((const uint8_t *)x + PATH_HASHOFF)
-#define PATH_HASHSIZE		(sizeof(struct rde_aspath) - PATH_HASHOFF)
 
 enum nexthop_state {
 	NEXTHOP_LOOKUP,
