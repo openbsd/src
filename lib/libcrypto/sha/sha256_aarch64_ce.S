@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.9 2026/05/07 15:41:37 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.10 2026/05/07 15:50:47 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -102,9 +102,7 @@
  *
  * Standard ARM ABI: x0 = ctx, x1 = in, x2 = num
  */
-.globl	sha256_block_ce
-.type   sha256_block_ce,@function
-sha256_block_ce:
+CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha256_block_ce):
 
 	/* Address of SHA-256 constants. */
 	adrp	k256_base, CRYPTO_ASSEMBLY_AARCH64_SYM_HI(K256)
@@ -180,8 +178,7 @@ sha256_block_ce:
  * SHA-256 constants - see FIPS 180-4 section 4.2.3.
  */
 .align	4
-.type	K256,@object
-K256:
+CRYPTO_ASSEMBLY_OBJECT_START(K256):
 .long	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5
 .long	0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5
 .long	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3
@@ -198,4 +195,4 @@ K256:
 .long	0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3
 .long	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208
 .long	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-.size	K256,.-K256
+CRYPTO_ASSEMBLY_OBJECT_END(K256)

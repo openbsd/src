@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_generic.S,v 1.6 2026/05/07 15:38:03 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_generic.S,v 1.7 2026/05/07 15:50:47 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -162,9 +162,7 @@
  * Standard x86-64 ABI: rdi = ctx, rsi = in, rdx = num
  */
 .align 16
-.globl	sha1_block_generic
-.type	sha1_block_generic,@function
-sha1_block_generic:
+CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha1_block_generic):
 	_CET_ENDBR
 
 	/* Save callee save registers. */

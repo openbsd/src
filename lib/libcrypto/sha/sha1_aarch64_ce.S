@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.7 2026/05/07 15:40:33 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.8 2026/05/07 15:50:47 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -111,9 +111,7 @@
  *
  * Standard ARM ABI: x0 = ctx, x1 = in, x2 = num
  */
-.globl	sha1_block_ce
-.type   sha1_block_ce,@function
-sha1_block_ce:
+CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha1_block_ce):
 
 	/*
 	 * Load SHA-1 round constants.

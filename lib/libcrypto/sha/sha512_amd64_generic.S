@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_amd64_generic.S,v 1.6 2026/05/07 15:40:33 jsing Exp $ */
+/* $OpenBSD: sha512_amd64_generic.S,v 1.7 2026/05/07 15:50:47 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -150,9 +150,7 @@
  * Standard x86-64 ABI: rdi = ctx, rsi = in, rdx = num
  */
 .align 16
-.globl	sha512_block_generic
-.type	sha512_block_generic,@function
-sha512_block_generic:
+CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha512_block_generic):
 	_CET_ENDBR
 
 	/* Save callee save registers. */
@@ -281,8 +279,7 @@ sha512_block_generic:
  * SHA-512 constants - see FIPS 180-4 section 4.2.3.
  */
 .align	64
-.type	K512,@object
-K512:
+CRYPTO_ASSEMBLY_OBJECT_START(K512):
 .quad	0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc
 .quad	0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118
 .quad	0xd807aa98a3030242, 0x12835b0145706fbe, 0x243185be4ee4b28c, 0x550c7dc3d5ffb4e2
@@ -303,4 +300,4 @@ K512:
 .quad	0x06f067aa72176fba, 0x0a637dc5a2c898a6, 0x113f9804bef90dae, 0x1b710b35131c471b
 .quad	0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c
 .quad	0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
-.size	K512,.-K512
+CRYPTO_ASSEMBLY_OBJECT_END(K512)

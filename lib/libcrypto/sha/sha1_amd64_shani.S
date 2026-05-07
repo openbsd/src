@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_shani.S,v 1.6 2026/05/07 15:40:33 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_shani.S,v 1.7 2026/05/07 15:50:47 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -77,9 +77,7 @@
  * Standard x86-64 ABI: rdi = ctx, rsi = in, rdx = num
  */
 .align 16
-.globl	sha1_block_shani
-.type	sha1_block_shani,@function
-sha1_block_shani:
+CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha1_block_shani):
 	_CET_ENDBR
 
 	/* Save callee save registers. */
@@ -162,7 +160,6 @@ sha1_block_shani:
  * and reordering to abcd.
  */
 .align	16
-.type	shufmask,@object
-shufmask:
+CRYPTO_ASSEMBLY_OBJECT_START(shufmask):
 .octa	0x000102030405060708090a0b0c0d0e0f
-.size	shufmask,.-shufmask
+CRYPTO_ASSEMBLY_OBJECT_END(shufmask)
