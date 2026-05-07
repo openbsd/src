@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.396 2026/05/01 09:44:42 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.397 2026/05/07 09:15:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -286,6 +286,13 @@ struct window_copy_mode_data {
 		SEL_LINE,		/* select one line at a time */
 	} selflag;
 
+	enum {
+		RECENTRE_TOP,
+		RECENTRE_MIDDLE,
+		RECENTRE_BOTTOM,
+	} recentre_state;
+	u_int		 recentre_line;
+
 	const char	*separators;	/* word separators */
 
 	u_int		 dx;		/* drag start position */
@@ -462,7 +469,7 @@ window_copy_init(struct window_mode_entry *wme,
 	struct screen			*base = &wp->base;
 	struct screen_write_ctx		 ctx;
 	u_int				 i, cx, cy;
-
+	
 	data = window_copy_common_init(wme);
 	data->backing = window_copy_clone_screen(base, &data->screen, &cx, &cy,
 	    wme->swp != wme->wp);
@@ -496,6 +503,9 @@ window_copy_init(struct window_mode_entry *wme,
 	screen_write_cursormove(&ctx, window_copy_cursor_offset(wme, data->cx,
 	    screen_size_x(&data->screen)), data->cy, 0);
 	screen_write_stop(&ctx);
+
+	data->recentre_state = RECENTRE_MIDDLE;
+	data->recentre_line = 0;
 
 	return (&data->screen);
 }
@@ -2789,6 +2799,62 @@ window_copy_cmd_refresh_from_pane(struct window_copy_cmd_state *cs)
 	return (WINDOW_COPY_CMD_REDRAW);
 }
 
+static enum window_copy_cmd_action
+window_copy_cmd_recentre_top_bottom(struct window_copy_cmd_state *cs)
+{
+	struct window_mode_entry	*wme = cs->wme;
+	struct window_copy_mode_data	*data = wme->data;
+	u_int 				 cy = data->cy, oy = data->oy;
+	u_int				 sy = screen_size_y(&data->screen) - 1;
+	u_int				 sm = sy / 2, backing_row;
+	enum { MIDDLE, TOP, BOTTOM }	 target;
+
+	backing_row = screen_hsize(data->backing) + cy - data->oy;
+	if (data->recentre_line != backing_row) {
+		data->recentre_state = RECENTRE_MIDDLE;
+		data->recentre_line = backing_row;
+	}
+
+	switch (data->recentre_state) {
+	case RECENTRE_MIDDLE:
+		data->recentre_state = RECENTRE_TOP;
+		target = MIDDLE;
+		break;
+	case RECENTRE_TOP:
+		data->recentre_state = RECENTRE_BOTTOM;
+		target = TOP;
+		break;
+	case RECENTRE_BOTTOM:
+	default:
+		data->recentre_state = RECENTRE_MIDDLE;
+		target = BOTTOM;
+		break;
+	}
+
+	oy = data->oy;
+	switch (target) {
+	case MIDDLE:
+		if (cy < sm)
+			window_copy_scroll_down(wme, sm - cy);
+		else if (cy > sm)
+			window_copy_scroll_up(wme, cy - sm);
+		if (data->oy != oy)
+			data->cy = cy + (data->oy - oy);
+		break;
+	case TOP:
+		window_copy_scroll_up(wme, cy);
+		data->cy = cy - (oy - data->oy);
+		break;
+	case BOTTOM:
+		window_copy_scroll_down(wme, sy - cy);
+		data->cy = cy + (data->oy - oy);
+		break;
+	}
+	window_copy_update_selection(wme, 0, 0);
+
+	return (WINDOW_COPY_CMD_REDRAW);
+}
+
 static const struct {
 	const char			 *command;
 	u_int				  minargs;
@@ -3172,6 +3238,12 @@ static const struct {
 	  .flags = WINDOW_COPY_CMD_FLAG_READONLY,
 	  .clear = WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  .f = window_copy_cmd_previous_word
+	},
+	{ .command = "recentre-top-bottom",
+	  .args = { "", 0, 0, NULL },
+	  .flags = WINDOW_COPY_CMD_FLAG_READONLY,
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_recentre_top_bottom
 	},
 	{ .command = "rectangle-on",
 	  .args = { "", 0, 0, NULL },

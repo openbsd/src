@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1052 2026/05/03 15:02:48 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1053 2026/05/07 09:15:44 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2026 $
+.Dd $Mdocdate: May 7 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2221,6 +2221,11 @@ Turn off rectangle selection mode.
 (emacs: R)
 .Xc
 Toggle rectangle selection mode.
+.It Xo
+.Ic recentre\-top\-bottom
+(emacs : C-l)
+.Xc
+Cycles the current line between centre, top, and bottom.
 .It Xo
 .Ic refresh\-from\-pane
 (vi: r)
