@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.195 2026/04/27 15:06:01 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.196 2026/05/07 09:17:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,7 @@
 #define	MSGSIZE_RREFRESH_MIN		MSGSIZE_RREFRESH
 #define	MSG_PROCESS_LIMIT		25
 #define	SESSION_CLEAR_DELAY		5
+#define	PAUSEACCEPT_TIMEOUT		1
 
 enum session_state {
 	STATE_NONE,

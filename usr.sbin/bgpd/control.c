@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.138 2026/03/17 15:12:05 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.139 2026/05/07 09:17:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,7 +167,8 @@ control_accept(int listenfd, int restricted)
 	    (struct sockaddr *)&sa_un, &len,
 	    SOCK_NONBLOCK | SOCK_CLOEXEC)) == -1) {
 		if (errno == ENFILE || errno == EMFILE) {
-			pauseaccept = getmonotime();
+			pauseaccept = monotime_add(getmonotime(),
+			    monotime_from_sec(PAUSEACCEPT_TIMEOUT));
 			return (0);
 		} else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)

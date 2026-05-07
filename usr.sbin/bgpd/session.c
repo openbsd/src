@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.530 2026/04/27 15:06:01 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.531 2026/05/07 09:17:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,6 @@
 #define PFD_LISTENERS_START	5
 
 #define MAX_TIMEOUT		240
-#define PAUSEACCEPT_TIMEOUT	1
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
