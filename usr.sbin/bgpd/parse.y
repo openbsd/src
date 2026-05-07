@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.488 2026/03/02 09:51:48 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.489 2026/05/07 18:55:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -772,9 +772,9 @@ conf_main	: AS as4number		{
 			conf->min_holdtime = $3;
 		}
 		| STALETIME NUMBER	{
-			if ($2 < MIN_HOLDTIME || $2 > USHRT_MAX) {
+			if ($2 < MIN_HOLDTIME || $2 > CAPA_GR_TIMEMASK) {
 				yyerror("staletime must be between %u and %u",
-				    MIN_HOLDTIME, USHRT_MAX);
+				    MIN_HOLDTIME, CAPA_GR_TIMEMASK);
 				YYERROR;
 			}
 			conf->staletime = $2;
@@ -1937,9 +1937,9 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.min_holdtime = $3;
 		}
 		| STALETIME NUMBER	{
-			if ($2 < MIN_HOLDTIME || $2 > USHRT_MAX) {
+			if ($2 < MIN_HOLDTIME || $2 > CAPA_GR_TIMEMASK) {
 				yyerror("staletime must be between %u and %u",
-				    MIN_HOLDTIME, USHRT_MAX);
+				    MIN_HOLDTIME, CAPA_GR_TIMEMASK);
 				YYERROR;
 			}
 			curpeer->conf.staletime = $2;
