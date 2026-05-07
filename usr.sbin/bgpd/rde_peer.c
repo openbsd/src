@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.70 2026/03/02 12:08:30 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.71 2026/05/07 09:19:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -192,11 +192,11 @@ peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 	do {
 		struct rde_peer *p;
 
+		while ((peer->path_id_tx = arc4random() << 1) == 0)
+			continue;
 		conflict = 0;
-		peer->path_id_tx = arc4random() << 1;
 		RB_FOREACH(p, peer_tree, &peertable) {
-			if (peer->path_id_tx == 0 ||
-			    p->path_id_tx == peer->path_id_tx) {
+			if (p->path_id_tx == peer->path_id_tx) {
 				conflict = 1;
 				break;
 			}
