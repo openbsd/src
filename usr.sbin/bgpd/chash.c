@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.9 2026/03/17 10:31:03 tb Exp $	*/
+/*	$OpenBSD: chash.c,v 1.10 2026/05/07 09:22:10 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -512,8 +512,10 @@ static void
 ch_sub_free(const struct ch_type *type, struct ch_table *t,
     struct ch_group *table, struct ch_meta *meta)
 {
-	t->ch_counts.cc_num_tables--;
-	type->t_counts->cc_num_tables--;
+	if (table != NULL) {
+		t->ch_counts.cc_num_tables--;
+		type->t_counts->cc_num_tables--;
+	}
 	free(table);
 	free(meta);
 }
@@ -523,7 +525,7 @@ ch_sub_free(const struct ch_type *type, struct ch_table *t,
  * Return 0 on success, -1 on failure and set errno.
  */
 static int
-ch_table_resize(struct ch_table *t)
+ch_table_resize(const struct ch_type *type, struct ch_table *t)
 {
 	struct ch_group **tables;
 	struct ch_meta **metas;
@@ -563,6 +565,7 @@ ch_table_resize(struct ch_table *t)
 	t->ch_metas = metas;
 
 	t->ch_counts.cc_num_extendible += oldsize;
+	type->t_counts->cc_num_extendible += oldsize;
 
 	return 0;
 }
@@ -627,7 +630,7 @@ ch_table_grow(const struct ch_type *type, struct ch_table *t, uint64_t h,
 
 	/* check if the extendible hashing table needs to grow */
 	if (meta->cs_local_level == t->ch_level) {
-		if (ch_table_resize(t) == -1)
+		if (ch_table_resize(type, t) == -1)
 			goto fail;
 	}
 
@@ -720,7 +723,7 @@ _ch_init(const struct ch_type *type, struct ch_table *t)
 	if (ch_sub_alloc(type, t, &table, &meta) == -1)
 		goto fail;
 
-	if (ch_table_resize(t) == -1)
+	if (ch_table_resize(type, t) == -1)
 		goto fail;
 
 	ch_table_fill(t, 0, table, meta);
