@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.16 2026/05/07 09:28:48 robert Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -81,6 +81,7 @@ SRCS+=	CodeExpander.cpp \
 	PatternParser.cpp \
 	Patterns.cpp
 
+CXXFLAGS+=	-D_LIBCPP_USE_LOWER_DEQUE_BLOCK_SIZE
 CPPFLAGS+=	-I${.CURDIR}/../../../llvm/llvm/utils/TableGen
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen \
