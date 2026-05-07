@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.143 2026/05/05 08:37:45 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.144 2026/05/07 20:35:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -152,7 +152,7 @@ attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
 struct attr *
 attr_optget(const struct rde_aspath *asp, uint8_t type)
 {
-	uint8_t l;
+	unsigned int l;
 
 	for (l = 0; l < asp->others_len; l++) {
 		if (asp->others[l] == NULL)
@@ -168,7 +168,7 @@ attr_optget(const struct rde_aspath *asp, uint8_t type)
 void
 attr_copy(struct rde_aspath *t, const struct rde_aspath *s)
 {
-	uint8_t l;
+	unsigned int l;
 
 	if (t->others != NULL)
 		attr_freeall(t);
@@ -208,22 +208,25 @@ attr_eq(const struct attr *oa, const struct attr *ob)
 int
 attr_equal(const struct rde_aspath *a, const struct rde_aspath *b)
 {
-	uint8_t l;
+	unsigned int l;
 
 	if (a->others_len != b->others_len)
 		return (0);
-	for (l = 0; l < a->others_len; l++)
+	for (l = 0; l < a->others_len; l++) {
 		if (a->others[l] != b->others[l])
 			return (0);
+		if (a->others[l] == NULL)
+			break;
+	}
 	return (1);
 }
 
 void
 attr_free(struct rde_aspath *asp, struct attr *attr)
 {
-	uint8_t l;
+	unsigned int l;
 
-	for (l = 0; l < asp->others_len; l++)
+	for (l = 0; l < asp->others_len; l++) {
 		if (asp->others[l] == attr) {
 			attr_put(asp->others[l]);
 			for (++l; l < asp->others_len; l++)
@@ -231,6 +234,9 @@ attr_free(struct rde_aspath *asp, struct attr *attr)
 			asp->others[asp->others_len - 1] = NULL;
 			return;
 		}
+		if (asp->others[l] == NULL)
+			break;
+	}
 
 	/* no realloc() because the slot may be reused soon */
 }
@@ -238,7 +244,7 @@ attr_free(struct rde_aspath *asp, struct attr *attr)
 void
 attr_freeall(struct rde_aspath *asp)
 {
-	uint8_t l;
+	unsigned int l;
 
 	for (l = 0; l < asp->others_len; l++)
 		attr_put(asp->others[l]);

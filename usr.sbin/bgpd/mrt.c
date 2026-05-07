@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.134 2026/02/17 14:06:44 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.135 2026/05/07 20:35:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -222,9 +222,10 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct rde_community *c,
 	struct attr	*oa;
 	u_char		*pdata;
 	uint32_t	 tmp;
+	unsigned int	 l;
 	int		 neednewpath = 0;
 	uint16_t	 plen, afi;
-	uint8_t		 l, safi;
+	uint8_t		 safi;
 
 	/* origin */
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ORIGIN,

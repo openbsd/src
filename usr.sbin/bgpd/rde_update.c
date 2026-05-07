@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.193 2026/02/11 10:24:57 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.194 2026/05/07 20:35:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -591,9 +591,10 @@ up_generate_attr(struct ibuf *buf, struct rde_peer *peer,
 	struct attr	*oa = NULL, *newaggr = NULL;
 	u_char		*pdata;
 	uint32_t	 tmp32;
+	unsigned int	 oalen = 0;
 	int		 flags, neednewpath = 0, rv;
 	uint16_t	 plen;
-	uint8_t		 oalen = 0, type;
+	uint8_t		 type;
 
 	if (asp->others_len > 0)
 		oa = asp->others[oalen++];

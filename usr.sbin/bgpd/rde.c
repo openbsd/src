@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.696 2026/05/07 09:42:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.697 2026/05/07 20:35:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2923,7 +2923,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	struct rde_peer		*peer;
 	monotime_t		 staletime;
 	size_t			 aslen;
-	uint8_t			 l;
+	unsigned int		 l;
 
 	nexthop = prefix_nexthop(p);
 	peer = prefix_peer(p);
@@ -3041,7 +3041,7 @@ rde_dump_adjout_as(struct rde_peer *peer, struct pt_entry *pte,
 	struct rde_aspath	*asp;
 	struct nexthop		*nexthop;
 	size_t			 aslen;
-	uint8_t			 l;
+	unsigned int		 l;
 
 	nexthop = attrs->nexthop;
 	asp = attrs->aspath;
