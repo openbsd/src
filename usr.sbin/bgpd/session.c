@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.532 2026/05/07 14:47:36 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.533 2026/05/07 17:59:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1048,7 +1048,7 @@ void
 session_graceful_restart(struct peer *p)
 {
 	uint8_t	i;
-	uint16_t staletime = conf->staletime;
+	u_int staletime = conf->staletime;
 
 	if (p->conf.staletime)
 		staletime = p->conf.staletime;
@@ -1057,6 +1057,14 @@ session_graceful_restart(struct peer *p)
 	if (staletime > p->capa.neg.grestart.timeout)
 		staletime = p->capa.neg.grestart.timeout;
 	timer_set(&p->timers, Timer_RestartTimeout, staletime);
+
+	if (staletime < INTERVAL_SESSION_DOWN - INTERVAL_STALE)
+		staletime = INTERVAL_SESSION_DOWN - INTERVAL_STALE;
+
+	/* bits from session_down that are also needed here */
+	p->stats.last_updown = getmonotime();
+	timer_set(&p->timers, Timer_SessionDown,
+	    staletime + INTERVAL_STALE);
 
 	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.grestart.flags[i] & CAPA_GR_PRESENT) {
