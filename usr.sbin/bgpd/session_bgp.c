@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.7 2026/03/18 15:16:29 sthen Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.8 2026/05/07 12:20:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -1858,7 +1858,7 @@ change_state(struct peer *peer, enum session_state state,
 				timer_set(&peer->timers, Timer_IdleHold,
 				    peer->IdleHoldTime);
 				if (event != EVNT_NONE &&
-				    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
+				    peer->IdleHoldTime < MAX_IDLE_HOLD / 2)
 					peer->IdleHoldTime *= 2;
 				session_down(peer);
 			} else {
