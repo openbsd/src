@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.540 2026/05/05 09:12:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.541 2026/05/07 18:56:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -437,10 +437,10 @@ struct auth_config {
 
 struct capabilities {
 	struct {
-		int16_t	timeout;	/* graceful restart timeout */
-		int8_t	flags[AID_MAX];	/* graceful restart per AID flags */
-		int8_t	restart;	/* graceful restart, RFC 4724 */
-		int8_t	grnotification;	/* graceful notification, RFC 8538 */
+		uint16_t	timeout;	/* gr restart timeout */
+		int8_t		flags[AID_MAX];	/* gr restart per AID flags */
+		int8_t		restart;	/* gr restart, RFC 4724 */
+		int8_t		grnotification;	/* gr notification, RFC 8538 */
 	}	grestart;
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
 	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
