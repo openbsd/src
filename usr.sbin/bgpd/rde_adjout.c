@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.16 2026/03/17 09:29:29 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.17 2026/05/07 12:33:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -420,7 +420,7 @@ adjout_prefix_index(struct pt_entry *pte, struct adjout_prefix *p)
 {
 	ptrdiff_t idx = p - pte->adjout;
 
-	if (idx < 0 || idx > pte->adjoutlen)
+	if (idx < 0 || (size_t)idx > pte->adjoutlen)
 		fatalx("corrupt pte adjout list");
 
 	return idx;
