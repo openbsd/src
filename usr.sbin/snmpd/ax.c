@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.7 2025/09/08 08:49:14 jsg Exp $ */
+/*	$OpenBSD: ax.c,v 1.8 2026/05/07 14:35:12 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1408,7 +1408,7 @@ ax_pdutoostring(struct ax_pdu_header *header,
 	ostring->aos_slen = ax_pdutoh32(header, buf);
 	rawlen -= 4;
 	buf += 4;
-	if (ostring->aos_slen > rawlen)
+	if (((ostring->aos_slen + 3) & ~3U) > rawlen)
 		goto fail;
 	if ((ostring->aos_string = malloc(ostring->aos_slen + 1)) == NULL)
 		return -1;
