@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.27 2025/01/14 13:15:18 claudio Exp $
+# $OpenBSD: Makefile,v 1.28 2026/05/07 21:08:40 claudio Exp $
 
 REGRESS_TARGETS	= 	network_statement md5 ovs capa policy pftable \
 			mrt maxprefix maxprefixout maxcomm maxattr \
-			l3vpn ixp lladdr extnh \
+			l3vpn ixp lladdr extnh addpath \
 			as0 med eval_all attr
 
 BGPD ?=			/usr/sbin/bgpd
