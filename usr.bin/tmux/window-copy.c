@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.397 2026/05/07 09:15:44 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.398 2026/05/07 09:21:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -469,7 +469,7 @@ window_copy_init(struct window_mode_entry *wme,
 	struct screen			*base = &wp->base;
 	struct screen_write_ctx		 ctx;
 	u_int				 i, cx, cy;
-	
+
 	data = window_copy_common_init(wme);
 	data->backing = window_copy_clone_screen(base, &data->screen, &cx, &cy,
 	    wme->swp != wme->wp);
