@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_aarch64_ce.S,v 1.6 2026/05/07 15:40:33 jsing Exp $ */
+/* $OpenBSD: sha512_aarch64_ce.S,v 1.7 2026/05/07 15:41:37 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -181,8 +181,8 @@ sha512_block_ce:
 	st4	{v12.d, v13.d, v14.d, v15.d}[0], [sp]
 
 	/* Address of SHA-512 constants. */
-	adrp	k512_base, K512
-	add	k512_base, k512_base, :lo12:K512
+	adrp	k512_base, CRYPTO_ASSEMBLY_AARCH64_SYM_HI(K512)
+	add	k512_base, k512_base, CRYPTO_ASSEMBLY_AARCH64_SYM_LO(K512)
 
 	/*
 	 * Load current hash state from context.

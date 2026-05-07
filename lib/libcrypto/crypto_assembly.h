@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_assembly.h,v 1.3 2026/05/07 15:40:33 jsing Exp $ */
+/*	$OpenBSD: crypto_assembly.h,v 1.4 2026/05/07 15:41:37 jsing Exp $ */
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -37,10 +37,15 @@
 #define CRYPTO_ASSEMBLY_SECTION_TEXT		__TEXT,__text
 #define CRYPTO_ASSEMBLY_SECTION_RODATA		__DATA,__const
 
+#define CRYPTO_ASSEMBLY_AARCH64_SYM_HI(name)	name@PAGE
+#define CRYPTO_ASSEMBLY_AARCH64_SYM_LO(name)	name@PAGEOFF
+
 #else
 #define CRYPTO_ASSEMBLY_SECTION_TEXT		.text
 #define CRYPTO_ASSEMBLY_SECTION_RODATA		.rodata
 
+#define CRYPTO_ASSEMBLY_AARCH64_SYM_HI(name)	name
+#define CRYPTO_ASSEMBLY_AARCH64_SYM_LO(name)	:lo12:name
 #endif
 
 #endif

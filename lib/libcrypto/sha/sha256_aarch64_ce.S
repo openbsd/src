@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.8 2026/05/07 15:40:33 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.9 2026/05/07 15:41:37 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -107,8 +107,8 @@
 sha256_block_ce:
 
 	/* Address of SHA-256 constants. */
-	adrp	k256_base, K256
-	add	k256_base, k256_base, :lo12:K256
+	adrp	k256_base, CRYPTO_ASSEMBLY_AARCH64_SYM_HI(K256)
+	add	k256_base, k256_base, CRYPTO_ASSEMBLY_AARCH64_SYM_LO(K256)
 
 	/*
 	 * Load current hash state from context.
