@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.72 2026/03/10 02:55:34 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.73 2026/05/07 17:59:56 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -330,7 +330,7 @@ again:
 	if (__getpwent_has_yppw && (__ypmode != YPMODE_NONE)) {
 		const char *user, *host, *dom;
 		int keylen, datalen, r, s;
-		char *key, *data = NULL;
+		char *key = NULL, *data = NULL;
 
 		if (!__ypdomain)
 			yp_get_default_domain(&__ypdomain);
@@ -344,6 +344,7 @@ again:
 				__ypcurrent = NULL;
 				if (r != 0) {
 					__ypmode = YPMODE_NONE;
+					free(key);
 					free(data);
 					goto again;
 				}
