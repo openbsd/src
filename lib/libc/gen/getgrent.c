@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.51 2026/03/10 00:06:39 deraadt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.52 2026/05/07 18:22:26 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -325,6 +325,10 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				else
 					return 0;
 			}
+			if (datalen >= sizeof(gs->line)) {
+				free(data);
+				continue;
+			}
 			bcopy(data, line, datalen);
 			free(data);
 			line[datalen] = '\0';
@@ -384,6 +388,10 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				default:
 					return 0;
 				}
+				if (datalen >= sizeof(gs->line)) {
+					free(data);
+					continue;
+				}
 				bcopy(data, line, datalen);
 				free(data);
 				line[datalen] = '\0';
@@ -417,6 +425,10 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					continue;
 				default:
 					return 0;
+				}
+				if (datalen >= sizeof(gs->line)) {
+					free(data);
+					continue;
 				}
 				bcopy(data, line, datalen);
 				free(data);
