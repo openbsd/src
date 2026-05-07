@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_shani.S,v 1.4 2026/03/28 13:11:28 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_shani.S,v 1.5 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,8 @@
  */
 
 #include "crypto_assembly.h"
+
+#define	_SEP	CRYPTO_ASSEMBLY_SEPARATOR
 
 /*
  * SHA-256 implementation using the Intel SHA extensions:
@@ -50,30 +52,30 @@
 #define	xtmp0		%xmm12
 
 #define sha256_message_schedule_load(idx, m, xmsgtmp) \
-	movdqu	(idx*16)(m), xmsg;					\
-	pshufb	xshufmask, xmsg;					\
+	movdqu	(idx*16)(m), xmsg					_SEP \
+	pshufb	xshufmask, xmsg						_SEP \
 	movdqa	xmsg, xmsgtmp
 
 #define sha256_message_schedule_update(xmt0, xmt1, xmt2, xmt3) \
-	sha256msg1 xmt1, xmt0;						\
-	movdqa	xmt3, xmsgtmp4;						\
-	palignr	$4, xmt2, xmsgtmp4;					\
-	paddd	xmsgtmp4, xmt0;						\
+	sha256msg1 xmt1, xmt0						_SEP \
+	movdqa	xmt3, xmsgtmp4						_SEP \
+	palignr	$4, xmt2, xmsgtmp4					_SEP \
+	paddd	xmsgtmp4, xmt0						_SEP \
 	sha256msg2 xmt3, xmt0
 
 #define sha256_shani_round(idx) \
-	paddd	(idx*16)(k256), xmsg;					\
-	sha256rnds2 xmsg, xhs0, xhs1;					\
-	pshufd	$0x0e, xmsg, xmsg;					\
+	paddd	(idx*16)(k256), xmsg					_SEP \
+	sha256rnds2 xmsg, xhs0, xhs1					_SEP \
+	pshufd	$0x0e, xmsg, xmsg					_SEP \
 	sha256rnds2 xmsg, xhs1, xhs0
 
 #define sha256_shani_round_load(idx, m, xmsgtmp) \
-	sha256_message_schedule_load(idx, m, xmsgtmp);			\
+	sha256_message_schedule_load(idx, m, xmsgtmp)			_SEP \
 	sha256_shani_round(idx)
 
 #define sha256_shani_round_update(idx, xmt0, xmt1, xmt2, xmt3) \
-	sha256_message_schedule_update(xmt0, xmt1, xmt2, xmt3);		\
-	movdqa	xmt0, xmsg;						\
+	sha256_message_schedule_update(xmt0, xmt1, xmt2, xmt3)		_SEP \
+	movdqa	xmt0, xmsg						_SEP \
 	sha256_shani_round(idx)
 
 .section .text

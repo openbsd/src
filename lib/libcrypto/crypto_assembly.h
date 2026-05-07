@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_assembly.h,v 1.1 2026/03/28 13:09:55 jsing Exp $ */
+/*	$OpenBSD: crypto_assembly.h,v 1.2 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -25,6 +25,12 @@
 #else
 #define _CET_ENDBR
 #endif
+#endif
+
+#if defined(__APPLE__) && defined(__aarch64__)
+#define CRYPTO_ASSEMBLY_SEPARATOR		%%
+#else
+#define CRYPTO_ASSEMBLY_SEPARATOR		;
 #endif
 
 #endif

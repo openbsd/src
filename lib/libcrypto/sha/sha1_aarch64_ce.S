@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.5 2026/01/25 08:22:17 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.6 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "crypto_assembly.h"
+
+#define	_SEP	CRYPTO_ASSEMBLY_SEPARATOR
 
 /*
  * SHA-1 implementation using the ARM Cryptographic Extension (CE).
@@ -65,7 +69,7 @@
  * W0 = W8 ^ W2 ^ W0, while sha1su1 computes rol(W0 ^ W13, 1).
  */
 #define sha1_message_schedule_update(m0, m1, m2, m3) \
-	sha1su0 m0.4s, m1.4s, m2.4s;					\
+	sha1su0 m0.4s, m1.4s, m2.4s					_SEP \
 	sha1su1 m0.4s, m3.4s
 
 /*
@@ -75,27 +79,27 @@
  */
 
 #define sha1_round1(h0, h1, w, k) \
-	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
-	mov	tmp1, h0.s[0];						\
-	sha1c	h0##q, h1##s, tmp0.4s;					\
+	add	tmp0.4s, w.4s, k.4s		/* Tt = Wt + Kt */	_SEP \
+	mov	tmp1, h0.s[0]						_SEP \
+	sha1c	h0##q, h1##s, tmp0.4s					_SEP \
 	sha1h	h1##s, tmp1
 
 #define sha1_round2(h0, h1, w, k) \
-	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
-	mov	tmp1, h0.s[0];						\
-	sha1p	h0##q, h1##s, tmp0.4s;					\
+	add	tmp0.4s, w.4s, k.4s		/* Tt = Wt + Kt */	_SEP \
+	mov	tmp1, h0.s[0]						_SEP \
+	sha1p	h0##q, h1##s, tmp0.4s					_SEP \
 	sha1h	h1##s, tmp1
 
 #define sha1_round3(h0, h1, w, k) \
-	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
-	mov	tmp1, h0.s[0];						\
-	sha1m	h0##q, h1##s, tmp0.4s;					\
+	add	tmp0.4s, w.4s, k.4s		/* Tt = Wt + Kt */	_SEP \
+	mov	tmp1, h0.s[0]						_SEP \
+	sha1m	h0##q, h1##s, tmp0.4s					_SEP \
 	sha1h	h1##s, tmp1
 
 #define sha1_round4(h0, h1, w, k) \
-	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
-	mov	tmp1, h0.s[0];						\
-	sha1p	h0##q, h1##s, tmp0.4s;					\
+	add	tmp0.4s, w.4s, k.4s		/* Tt = Wt + Kt */	_SEP \
+	mov	tmp1, h0.s[0]						_SEP \
+	sha1p	h0##q, h1##s, tmp0.4s					_SEP \
 	sha1h	h1##s, tmp1
 
 .arch	armv8-a+sha2

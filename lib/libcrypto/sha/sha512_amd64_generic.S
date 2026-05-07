@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_amd64_generic.S,v 1.4 2026/03/28 13:11:28 jsing Exp $ */
+/* $OpenBSD: sha512_amd64_generic.S,v 1.5 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,8 @@
  */
 
 #include "crypto_assembly.h"
+
+#define	_SEP	CRYPTO_ASSEMBLY_SEPARATOR
 
 #define	ctx		%rdi
 #define	in		%rsi
@@ -45,8 +47,8 @@
  *  Wt = Mt
  */
 #define sha512_message_schedule_load(idx, m, w, wt) \
-	movq	(m, round, 8), wt;				\
-	bswapq	wt;						\
+	movq	(m, round, 8), wt				_SEP \
+	bswapq	wt						_SEP \
 	movq	wt, ((idx&0xf)*8)(w)
 
 /*
@@ -59,25 +61,25 @@
  *
  */
 #define sha512_message_schedule_update(idx, w, wt) \
-	movq	(((idx-2)&0xf)*8)(w), wt;	/* sigma1 */	\
-	movq	wt, tmp1;			/* sigma1 */	\
-	rorq	$(61-19), tmp1;			/* sigma1 */	\
-	xorq	wt, tmp1;			/* sigma1 */	\
-	rorq	$19, tmp1;			/* sigma1 */	\
-	shrq	$6, wt;				/* sigma1 */	\
-	xorq	tmp1, wt;			/* sigma1 */	\
+	movq	(((idx-2)&0xf)*8)(w), wt	/* sigma1 */	_SEP \
+	movq	wt, tmp1			/* sigma1 */	_SEP \
+	rorq	$(61-19), tmp1			/* sigma1 */	_SEP \
+	xorq	wt, tmp1			/* sigma1 */	_SEP \
+	rorq	$19, tmp1			/* sigma1 */	_SEP \
+	shrq	$6, wt				/* sigma1 */	_SEP \
+	xorq	tmp1, wt			/* sigma1 */	_SEP \
 	\
-	addq	(((idx-7)&0xf)*8)(w), wt;	/* Wt-7 */	\
-	addq	(((idx-16)&0xf)*8)(w), wt;	/* Wt-16 */	\
+	addq	(((idx-7)&0xf)*8)(w), wt	/* Wt-7 */	_SEP \
+	addq	(((idx-16)&0xf)*8)(w), wt	/* Wt-16 */	_SEP \
 	\
-	movq	(((idx-15)&0xf)*8)(w), tmp2;	/* sigma0 */	\
-	movq	tmp2, tmp3;			/* sigma0 */	\
-	rorq	$(8-1), tmp2;			/* sigma0 */	\
-	xorq	tmp3, tmp2;			/* sigma0 */	\
-	rorq	$1, tmp2;			/* sigma0 */	\
-	shrq	$7, tmp3;			/* sigma0 */	\
-	xorq	tmp3, tmp2;			/* sigma0 */	\
-	addq	tmp2, wt;			/* sigma0 */	\
+	movq	(((idx-15)&0xf)*8)(w), tmp2	/* sigma0 */	_SEP \
+	movq	tmp2, tmp3			/* sigma0 */	_SEP \
+	rorq	$(8-1), tmp2			/* sigma0 */	_SEP \
+	xorq	tmp3, tmp2			/* sigma0 */	_SEP \
+	rorq	$1, tmp2			/* sigma0 */	_SEP \
+	shrq	$7, tmp3			/* sigma0 */	_SEP \
+	xorq	tmp3, tmp2			/* sigma0 */	_SEP \
+	addq	tmp2, wt			/* sigma0 */	_SEP \
 	\
 	movq	wt, ((idx&0xf)*8)(w)
 
@@ -95,49 +97,49 @@
  * Upon completion d = d + T1, h = T1 + T2, pending rotation.
  */
 #define sha512_round(idx, a, b, c, d, e, f, g, h, k, w, wt) \
-	addq	wt, h;				/* T1 Wt */	\
-	addq	(k512, round, 8), h;		/* T1 Kt */	\
+	addq	wt, h				/* T1 Wt */	_SEP \
+	addq	(k512, round, 8), h		/* T1 Kt */	_SEP \
 	\
-	movq	e, tmp1;			/* T1 Sigma1 */	\
-	rorq	$(41-18), tmp1;			/* T1 Sigma1 */	\
-	xorq	e, tmp1;			/* T1 Sigma1 */ \
-	rorq	$(18-14), tmp1;			/* T1 Sigma1 */	\
-	xorq	e, tmp1;			/* T1 Sigma1 */ \
-	rorq	$14, tmp1;			/* T1 Sigma1 */	\
-	addq	tmp1, h;			/* T1 Sigma1 */	\
+	movq	e, tmp1				/* T1 Sigma1 */	_SEP \
+	rorq	$(41-18), tmp1			/* T1 Sigma1 */	_SEP \
+	xorq	e, tmp1				/* T1 Sigma1 */ _SEP \
+	rorq	$(18-14), tmp1			/* T1 Sigma1 */	_SEP \
+	xorq	e, tmp1				/* T1 Sigma1 */ _SEP \
+	rorq	$14, tmp1			/* T1 Sigma1 */	_SEP \
+	addq	tmp1, h				/* T1 Sigma1 */	_SEP \
 	\
-	movq	f, tmp2;			/* T1 Ch */	\
-	xorq	g, tmp2;			/* T1 Ch */	\
-	andq	e, tmp2;			/* T1 Ch */	\
-	xorq	g, tmp2;			/* T1 Ch */	\
-	addq	tmp2, h;			/* T1 Ch */	\
+	movq	f, tmp2				/* T1 Ch */	_SEP \
+	xorq	g, tmp2				/* T1 Ch */	_SEP \
+	andq	e, tmp2				/* T1 Ch */	_SEP \
+	xorq	g, tmp2				/* T1 Ch */	_SEP \
+	addq	tmp2, h				/* T1 Ch */	_SEP \
 	\
-	addq	h, d;				/* d += T1 */	\
+	addq	h, d				/* d += T1 */	_SEP \
 	\
-	movq	a, tmp1;			/* T2 Sigma0 */	\
-	rorq	$(39-34), tmp1;			/* T2 Sigma0 */	\
-	xorq	a, tmp1;			/* T2 Sigma0 */	\
-	rorq	$(34-28), tmp1;			/* T2 Sigma0 */	\
-	xorq	a, tmp1;			/* T2 Sigma0 */	\
-	rorq	$28, tmp1;			/* T2 Sigma0 */	\
-	addq	tmp1, h;			/* T2 Sigma0 */	\
+	movq	a, tmp1				/* T2 Sigma0 */	_SEP \
+	rorq	$(39-34), tmp1			/* T2 Sigma0 */	_SEP \
+	xorq	a, tmp1				/* T2 Sigma0 */	_SEP \
+	rorq	$(34-28), tmp1			/* T2 Sigma0 */	_SEP \
+	xorq	a, tmp1				/* T2 Sigma0 */	_SEP \
+	rorq	$28, tmp1			/* T2 Sigma0 */	_SEP \
+	addq	tmp1, h				/* T2 Sigma0 */	_SEP \
 	\
-	movq	b, tmp2;			/* T2 Maj */	\
-	xorq	c, tmp2;			/* T2 Maj */	\
-	andq	a, tmp2;			/* T2 Maj */	\
-	movq	b, tmp3;			/* T2 Maj */	\
-	andq	c, tmp3;			/* T2 Maj */	\
-	xorq	tmp2, tmp3;			/* T2 Maj */	\
-	addq	tmp3, h;			/* T2 Maj */	\
+	movq	b, tmp2				/* T2 Maj */	_SEP \
+	xorq	c, tmp2				/* T2 Maj */	_SEP \
+	andq	a, tmp2				/* T2 Maj */	_SEP \
+	movq	b, tmp3				/* T2 Maj */	_SEP \
+	andq	c, tmp3				/* T2 Maj */	_SEP \
+	xorq	tmp2, tmp3			/* T2 Maj */	_SEP \
+	addq	tmp3, h				/* T2 Maj */	_SEP \
 	\
 	addq	$1, round
 
 #define sha512_round_load(idx, a, b, c, d, e, f, g, h) \
-	sha512_message_schedule_load(idx, in, %rsp, tmp0); \
+	sha512_message_schedule_load(idx, in, %rsp, tmp0) 	_SEP \
 	sha512_round(idx, a, b, c, d, e, f, g, h, k512, %rsp, tmp0)
 
 #define sha512_round_update(idx, a, b, c, d, e, f, g, h) \
-	sha512_message_schedule_update(idx, %rsp, tmp0); \
+	sha512_message_schedule_update(idx, %rsp, tmp0) 	_SEP \
 	sha512_round(idx, a, b, c, d, e, f, g, h, k512, %rsp, tmp0)
 
 .section .text

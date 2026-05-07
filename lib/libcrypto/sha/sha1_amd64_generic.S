@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_generic.S,v 1.5 2026/03/28 13:11:28 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_generic.S,v 1.6 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,8 @@
  */
 
 #include "crypto_assembly.h"
+
+#define	_SEP	CRYPTO_ASSEMBLY_SEPARATOR
 
 #define	ctx		%rdi
 #define	in		%rsi
@@ -40,8 +42,8 @@
  *  Wt = Mt
  */
 #define sha1_message_schedule_load(idx, m, w, wt) \
-	movl	((idx&0xf)*4)(m), wt;				\
-	bswapl	wt;						\
+	movl	((idx&0xf)*4)(m), wt				_SEP \
+	bswapl	wt						_SEP \
 	movl	wt, ((idx&0xf)*4)(w)
 
 /*
@@ -50,11 +52,11 @@
  *  W0 = rol(W13 ^ W8 ^ W2 ^ W0, 1)
  */
 #define sha1_message_schedule_update(idx, w, wt) \
-	movl	(((idx-3)&0xf)*4)(w), wt;	/* W13 */	\
-	xorl	(((idx-8)&0xf)*4)(w), wt;	/* W8 */	\
-	xorl	(((idx-14)&0xf)*4)(w), wt;	/* W2 */	\
-	xorl	(((idx)&0xf)*4)(w), wt;		/* W0 */	\
-	roll	$1, wt;						\
+	movl	(((idx-3)&0xf)*4)(w), wt	/* W13 */	_SEP \
+	xorl	(((idx-8)&0xf)*4)(w), wt	/* W8 */	_SEP \
+	xorl	(((idx-14)&0xf)*4)(w), wt	/* W2 */	_SEP \
+	xorl	(((idx)&0xf)*4)(w), wt		/* W0 */	_SEP \
+	roll	$1, wt						_SEP \
 	\
 	movl	wt, ((idx&0xf)*4)(w)
 
@@ -69,13 +71,13 @@
  * Upon completion b = rol(b, 30), e = T, pending rotation.
  */
 #define sha1_round(a, b, c, d, e, kt, wt) \
-	leal	kt(wt, e, 1), e;		/* Kt + Wt */	\
+	leal	kt(wt, e, 1), e			/* Kt + Wt */	_SEP \
 	\
-	movl	a, tmp1;			/* rol(a, 5) */	\
-	roll	$5, tmp1;					\
-	addl	tmp1, e;					\
+	movl	a, tmp1				/* rol(a, 5) */	_SEP \
+	roll	$5, tmp1					_SEP \
+	addl	tmp1, e						_SEP \
 	\
-	roll	$30, b;				/* rol(b, 30) */
+	roll	$30, b				/* rol(b, 30) */
 
 /*
  * Compute a SHA-1 round with Ch:
@@ -87,11 +89,11 @@
  * Upon completion b = rol(b, 30), e = T, pending rotation.
  */
 #define sha1_round_ch(a, b, c, d, e, kt, wt) \
-	movl	c, tmp2;			/* Ch */	\
-	xorl	d, tmp2;			/* Ch */	\
-	andl	b, tmp2;			/* Ch */	\
-	xorl	d, tmp2;			/* Ch */	\
-	addl	tmp2, e;			/* Ch */	\
+	movl	c, tmp2				/* Ch */	_SEP \
+	xorl	d, tmp2				/* Ch */	_SEP \
+	andl	b, tmp2				/* Ch */	_SEP \
+	xorl	d, tmp2				/* Ch */	_SEP \
+	addl	tmp2, e				/* Ch */	_SEP \
 	\
 	sha1_round(a, b, c, d, e, kt, wt)
 
@@ -105,10 +107,10 @@
  * Upon completion b = rol(b, 30), e = T, pending rotation.
  */
 #define sha1_round_parity(a, b, c, d, e, kt, wt) \
-	movl	b, tmp2;			/* Parity */	\
-	xorl	c, tmp2;			/* Parity */	\
-	xorl	d, tmp2;			/* Parity */	\
-	addl	tmp2, e;			/* Parity */	\
+	movl	b, tmp2				/* Parity */	_SEP \
+	xorl	c, tmp2				/* Parity */	_SEP \
+	xorl	d, tmp2				/* Parity */	_SEP \
+	addl	tmp2, e				/* Parity */	_SEP \
 	\
 	sha1_round(a, b, c, d, e, kt, wt)
 
@@ -122,34 +124,34 @@
  * Upon completion b = rol(b, 30), e = T, pending rotation.
  */
 #define sha1_round_maj(a, b, c, d, e, kt, wt) \
-	movl	c, tmp2;			/* Maj */	\
-	xorl	d, tmp2;			/* Maj */	\
-	andl	b, tmp2;			/* Maj */	\
-	movl	c, tmp3;			/* Maj */	\
-	andl	d, tmp3;			/* Maj */	\
-	xorl	tmp2, tmp3;			/* Maj */	\
-	addl	tmp3, e;			/* Maj */	\
+	movl	c, tmp2				/* Maj */	_SEP \
+	xorl	d, tmp2				/* Maj */	_SEP \
+	andl	b, tmp2				/* Maj */	_SEP \
+	movl	c, tmp3				/* Maj */	_SEP \
+	andl	d, tmp3				/* Maj */	_SEP \
+	xorl	tmp2, tmp3			/* Maj */	_SEP \
+	addl	tmp3, e				/* Maj */	_SEP \
 	\
 	sha1_round(a, b, c, d, e, kt, wt)
 
 #define sha1_round1_load(idx, a, b, c, d, e) \
-	sha1_message_schedule_load(idx, in, %rsp, tmp0); \
+	sha1_message_schedule_load(idx, in, %rsp, tmp0) 	_SEP \
 	sha1_round_ch(a, b, c, d, e, 0x5a827999, tmp0)
 
 #define sha1_round1_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0); \
+	sha1_message_schedule_update(idx, %rsp, tmp0)	 	_SEP \
 	sha1_round_ch(a, b, c, d, e, 0x5a827999, tmp0)
 
 #define sha1_round2_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0); \
+	sha1_message_schedule_update(idx, %rsp, tmp0)		_SEP \
 	sha1_round_parity(a, b, c, d, e, 0x6ed9eba1, tmp0)
 
 #define sha1_round3_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0); \
+	sha1_message_schedule_update(idx, %rsp, tmp0)		_SEP \
 	sha1_round_maj(a, b, c, d, e, 0x8f1bbcdc, tmp0)
 
 #define sha1_round4_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0); \
+	sha1_message_schedule_update(idx, %rsp, tmp0)		_SEP \
 	sha1_round_parity(a, b, c, d, e, 0xca62c1d6, tmp0)
 
 .section .text

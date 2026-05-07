@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.6 2026/01/25 08:22:17 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.7 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "crypto_assembly.h"
+
+#define	_SEP	CRYPTO_ASSEMBLY_SEPARATOR
 
 /*
  * SHA-256 implementation using the ARM Cryptographic Extension (CE).
@@ -68,7 +72,7 @@
  *   W0:W1:W2:W3 = sigma1(W14:W15:W0:W1) + W9:W10:W12:W13 + W0:W1:W2:W3
  */
 #define sha256_message_schedule_update(m0, m1, m2, m3) \
-	sha256su0 m0.4s, m1.4s;						\
+	sha256su0 m0.4s, m1.4s						_SEP \
 	sha256su1 m0.4s, m2.4s, m3.4s
 
 /*
@@ -77,16 +81,16 @@
  * sha256h/sha256h2.
  */
 #define sha256_round(h0, h1, w, k) \
-	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
-	mov	tmp1.16b, h0.16b;					\
-	sha256h	h0##q, h1##q, tmp0.4s;					\
+	add	tmp0.4s, w.4s, k.4s		/* Tt = Wt + Kt */	_SEP \
+	mov	tmp1.16b, h0.16b					_SEP \
+	sha256h	h0##q, h1##q, tmp0.4s					_SEP \
 	sha256h2 h1##q, tmp1##q, tmp0.4s
 
 #define sha256_round_initial(h0, h1, w, k) \
 	sha256_round(h0, h1, w, k)
 
 #define sha256_round_update(h0, h1, m0, m1, m2, m3, k) \
-	sha256_message_schedule_update(m0, m1, m2, m3);			\
+	sha256_message_schedule_update(m0, m1, m2, m3)			_SEP \
 	sha256_round(h0, h1, m0, k)
 
 .arch	armv8-a+sha2

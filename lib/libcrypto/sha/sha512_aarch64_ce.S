@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_aarch64_ce.S,v 1.4 2026/01/25 08:22:17 jsing Exp $ */
+/* $OpenBSD: sha512_aarch64_ce.S,v 1.5 2026/05/07 15:38:03 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "crypto_assembly.h"
+
+#define	_SEP	CRYPTO_ASSEMBLY_SEPARATOR
 
 /*
  * SHA-512 implementation using the ARM Cryptographic Extension (CE).
@@ -103,9 +107,9 @@
  *   W0 = sigma1(W14) + W9 + sigma0(W1) + W0
  */
 #define sha512_message_schedule_update(m0, m1, m4, m5, m7) \
-	sha512su0 m0.2d, m1.2d;			/* W0 += sigma0(W1) */	\
-	ext	tmp2.16b, m4.16b, m5.16b, #8;	/* W9:W10 */		\
-	sha512su1 m0.2d, m7.2d, tmp2.2d;	/* W0 += sigma1(W14) + W9 */
+	sha512su0 m0.2d, m1.2d			/* W0 += sigma0(W1) */	_SEP \
+	ext	tmp2.16b, m4.16b, m5.16b, #8	/* W9:W10 */		_SEP \
+	sha512su1 m0.2d, m7.2d, tmp2.2d		/* W0 += sigma1(W14) + W9 */
 
 /*
  * Compute two SHA-512 rounds by adding W0:W1 + K0:K1, then computing T1 for two
@@ -142,20 +146,20 @@
  * These values are then rotated by the caller to perform the next two rounds.
  */
 #define sha512_round(h0, h1, h2, h3, h4, h5, w, k) \
-	add	h4.2d, w.2d, k.2d;			/* W0:W1 += K0:K1 */	\
-	ext	h4.16b, h4.16b, h4.16b, #8;		/* W1:W0 (swap) */	\
-	add	h4.2d, h4.2d, h3.2d;			/* W1:W0 += g:h */	\
-	ext	tmp0.16b, h2.16b, h3.16b, #8;		/* f:g */		\
-	ext	tmp1.16b, h1.16b, h2.16b, #8;		/* d:e */		\
-	sha512h	h4##q, tmp0##q, tmp1.2d;		/* T1 */		\
-	add	h5.2d, h1.2d, h4.2d;			/* c:d + T1 */		\
-	sha512h2 h4##q, h1##q, h0.2d;			/* T1 + T2 */
+	add	h4.2d, w.2d, k.2d			/* W0:W1 += K0:K1 */	_SEP \
+	ext	h4.16b, h4.16b, h4.16b, #8		/* W1:W0 (swap) */	_SEP \
+	add	h4.2d, h4.2d, h3.2d			/* W1:W0 += g:h */	_SEP \
+	ext	tmp0.16b, h2.16b, h3.16b, #8		/* f:g */		_SEP \
+	ext	tmp1.16b, h1.16b, h2.16b, #8		/* d:e */		_SEP \
+	sha512h	h4##q, tmp0##q, tmp1.2d			/* T1 */		_SEP \
+	add	h5.2d, h1.2d, h4.2d			/* c:d + T1 */		_SEP \
+	sha512h2 h4##q, h1##q, h0.2d			/* T1 + T2 */
 
 #define sha512_round_initial(h0, h1, h2, h3, h4, h5, w, k) \
 	sha512_round(h0, h1, h2, h3, h4, h5, w, k)
 
 #define sha512_round_update(h0, h1, h2, h3, h4, h5, m0, m1, m2, m3, m4, k) \
-	sha512_message_schedule_update(m0, m1, m2, m3, m4) \
+	sha512_message_schedule_update(m0, m1, m2, m3, m4)			_SEP \
 	sha512_round(h0, h1, h2, h3, h4, h5, m0, k)
 
 .arch	armv8-a+sha3
