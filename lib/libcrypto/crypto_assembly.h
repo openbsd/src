@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_assembly.h,v 1.2 2026/05/07 15:38:03 jsing Exp $ */
+/*	$OpenBSD: crypto_assembly.h,v 1.3 2026/05/07 15:40:33 jsing Exp $ */
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -31,6 +31,16 @@
 #define CRYPTO_ASSEMBLY_SEPARATOR		%%
 #else
 #define CRYPTO_ASSEMBLY_SEPARATOR		;
+#endif
+
+#if defined(__APPLE__)
+#define CRYPTO_ASSEMBLY_SECTION_TEXT		__TEXT,__text
+#define CRYPTO_ASSEMBLY_SECTION_RODATA		__DATA,__const
+
+#else
+#define CRYPTO_ASSEMBLY_SECTION_TEXT		.text
+#define CRYPTO_ASSEMBLY_SECTION_RODATA		.rodata
+
 #endif
 
 #endif

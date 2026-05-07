@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.7 2026/05/07 15:38:03 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.8 2026/05/07 15:40:33 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -95,7 +95,7 @@
 
 .arch	armv8-a+sha2
 
-.section .text
+.section CRYPTO_ASSEMBLY_SECTION_TEXT
 
 /*
  * void sha256_block_ce(SHA256_CTX *ctx, const void *in, size_t num);
@@ -174,7 +174,7 @@ sha256_block_ce:
 
 	ret
 
-.section .rodata
+.section CRYPTO_ASSEMBLY_SECTION_RODATA
 
 /*
  * SHA-256 constants - see FIPS 180-4 section 4.2.3.

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_generic.S,v 1.7 2026/05/07 15:38:03 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_generic.S,v 1.8 2026/05/07 15:40:33 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -141,7 +141,7 @@
 	sha256_message_schedule_update(idx, %rsp, tmp0)		_SEP \
 	sha256_round(idx, a, b, c, d, e, f, g, h, k256, %rsp, tmp0)
 
-.section .text
+.section CRYPTO_ASSEMBLY_SECTION_TEXT
 
 /*
  * void sha256_block_generic(SHA256_CTX *ctx, const void *in, size_t num);
@@ -274,7 +274,7 @@ sha256_block_generic:
 
 	ret
 
-.section .rodata
+.section CRYPTO_ASSEMBLY_SECTION_RODATA
 
 /*
  * SHA-256 constants - see FIPS 180-4 section 4.2.2.
