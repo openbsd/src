@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.533 2026/05/07 17:59:15 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.534 2026/05/08 12:03:50 tb Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1047,7 +1047,7 @@ session_handle_rrefresh(struct peer *peer, struct route_refresh *rr)
 void
 session_graceful_restart(struct peer *p)
 {
-	uint8_t	i;
+	u_int i;
 	u_int staletime = conf->staletime;
 
 	if (p->conf.staletime)
@@ -1087,7 +1087,7 @@ session_graceful_restart(struct peer *p)
 void
 session_graceful_stop(struct peer *p)
 {
-	uint8_t	i;
+	u_int	i;
 
 	for (i = AID_MIN; i < AID_MAX; i++) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.185 2026/03/02 09:51:48 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.186 2026/05/08 12:03:50 tb Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -918,7 +918,7 @@ print_addpath_mode(enum addpath_mode mode)
 void
 print_announce(struct peer_config *p, const char *c)
 {
-	uint8_t	aid;
+	u_int	aid;
 	int match = 0;
 
 	for (aid = AID_MIN; aid < AID_MAX; aid++)

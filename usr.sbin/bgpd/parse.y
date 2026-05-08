@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.491 2026/05/08 05:27:25 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.492 2026/05/08 12:03:50 tb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1720,7 +1720,7 @@ neighbor	: { curpeer = new_peer(); }
 			}
 		}
 		    peeropts_h {
-			uint8_t		aid;
+			u_int		aid;
 
 			if (curpeer_filter[0] != NULL)
 				TAILQ_INSERT_TAIL(peerfilter_l,
@@ -1945,10 +1945,11 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.staletime = $2;
 		}
 		| ANNOUNCE af safi enforce {
-			uint8_t		aid, safi;
-			uint16_t	afi;
-
 			if ($3 == SAFI_NONE) {
+				u_int		aid;
+				uint8_t		safi;
+				uint16_t	afi;
+
 				for (aid = AID_MIN; aid < AID_MAX; aid++) {
 					if (aid2afi(aid, &afi, &safi) == -1 ||
 					    afi != $2)
@@ -1956,6 +1957,8 @@ peeropts	: REMOTEAS as4number	{
 					curpeer->conf.capabilities.mp[aid] = -1;
 				}
 			} else {
+				uint8_t aid;
+
 				if (afi2aid($2, $3, &aid) == -1) {
 					yyerror("unknown AFI/SAFI pair");
 					YYERROR;

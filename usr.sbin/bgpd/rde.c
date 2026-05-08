@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.697 2026/05/07 20:35:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.698 2026/05/08 12:03:50 tb Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,7 +168,7 @@ rde_main(int debug, int verbose)
 	void			*newp;
 	u_int			 pfd_elms = 0, i, j;
 	int			 timeout;
-	uint8_t			 aid;
+	u_int			 aid;
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
@@ -468,7 +468,7 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 	uint32_t		 peerid;
 	pid_t			 pid;
 	int			 verbose;
-	uint8_t			 aid;
+	u_int			 aid;
 
 	while (imsgbuf) {
 		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
@@ -3636,7 +3636,7 @@ int
 rde_update_queue_pending(void)
 {
 	struct rde_peer *peer;
-	uint8_t aid;
+	u_int aid;
 
 	if (ibuf_se && imsgbuf_queuelen(ibuf_se) >= SESS_MSG_HIGH_MARK)
 		return 0;
@@ -4209,7 +4209,7 @@ rde_softreconfig_in_done(void *arg, uint8_t dummy)
 	}
 
 	RB_FOREACH(peer, peer_tree, &peertable) {
-		uint8_t aid;
+		u_int aid;
 
 		if (peer->reconf_rib) {
 			/* dump the full table to neighbors that changed rib */

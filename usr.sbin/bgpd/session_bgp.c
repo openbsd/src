@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.8 2026/05/07 12:20:42 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.9 2026/05/08 12:03:50 tb Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -182,7 +182,7 @@ session_open(struct peer *p)
 {
 	struct ibuf		*buf, *opb;
 	size_t			 len, optparamlen;
-	uint8_t			 i;
+	u_int			 i;
 	int			 errs = 0, extlen = 0;
 	int			 mpcapa = 0;
 
@@ -519,7 +519,7 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 int
 session_neighbor_rrefresh(struct peer *p)
 {
-	uint8_t	i;
+	u_int	i;
 
 	if (!(p->capa.neg.refresh || p->capa.neg.enhanced_rr))
 		return (-1);
@@ -1280,7 +1280,8 @@ static int
 capa_neg_calc(struct peer *p)
 {
 	struct ibuf *ebuf;
-	uint8_t	i, hasmp = 0, capa_code, capa_len, capa_aid = 0;
+	u_int	i;
+	uint8_t	hasmp = 0, capa_code, capa_len, capa_aid = 0;
 
 	/* a capability is accepted only if both sides announced it */
 

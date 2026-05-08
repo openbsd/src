@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.17 2026/05/07 12:33:12 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.18 2026/05/08 12:03:50 tb Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -861,7 +861,7 @@ adjout_peer_flush_pending(struct rde_peer *peer)
 {
 	struct pend_attr *pa, *npa;
 	struct pend_prefix *pp, *npp;
-	uint8_t aid;
+	u_int aid;
 
 	for (aid = AID_MIN; aid < AID_MAX; aid++) {
 		TAILQ_FOREACH_SAFE(pp, &peer->withdraws[aid], entry, npp) {
