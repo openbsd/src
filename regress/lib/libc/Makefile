@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2025/08/04 06:10:40 tb Exp $
+#	$OpenBSD: Makefile,v 1.63 2026/05/08 14:37:16 millert Exp $
 
 SUBDIR+= _setjmp
 SUBDIR+= alloca arc4random-fork atexit
@@ -15,7 +15,7 @@ SUBDIR+= ieeefp ifnameindex illumos
 SUBDIR+= ldexp locale longjmp
 SUBDIR+= malloc mkstemp modf
 SUBDIR+= netdb
-SUBDIR+= open_memstream orientation
+SUBDIR+= open_memstream orientation open_wmemstream
 SUBDIR+= popen printf
 SUBDIR+= qsort
 SUBDIR+= regex
