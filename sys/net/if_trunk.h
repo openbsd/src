@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.33 2025/11/24 23:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.34 2026/05/08 03:36:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -87,6 +87,17 @@ struct lacp_opreq {
 	u_int16_t		partner_portno;
 	u_int8_t		partner_state;
 };
+
+#define	LACP_STATE_BITS		\
+	"\020"			\
+	"\001ACTIVITY"		\
+	"\002TIMEOUT"		\
+	"\003AGGREGATION"	\
+	"\004SYNC"		\
+	"\005COLLECTING"	\
+	"\006DISTRIBUTING"	\
+	"\007DEFAULTED"		\
+	"\010EXPIRED"
 
 /* Trunk port settings */
 struct trunk_reqport {

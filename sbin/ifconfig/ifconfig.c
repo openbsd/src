@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.480 2025/12/03 10:19:27 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.481 2026/05/08 03:36:04 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -83,7 +83,6 @@
 #include <net/if_pppoe.h>
 #include <net/if_trunk.h>
 #include <net/if_wg.h>
-#include <net/trunklacp.h>
 #include <net/if_sppp.h>
 #include <net/ppp_defs.h>
 
