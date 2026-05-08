@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.66 2026/02/02 00:04:32 jsg Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.67 2026/05/08 09:38:07 mvs Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 	struct sembuf sopbuf[NSOPS];
 	int semid = SCARG(uap, semid);
 	size_t nsops = SCARG(uap, nsops);
-	struct sembuf *sops;
+	struct sembuf *sops = NULL;
 	struct semid_ds *semaptr;
 	struct sembuf *sopptr = NULL;
 	struct sem *semptr = NULL;
@@ -539,38 +539,52 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 	DPRINTF(("call to semop(%d, %p, %lu)\n", semid, SCARG(uap, sops),
 	    (u_long)nsops));
 
-	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
+	if (nsops == 0)
+		goto skipcopy;
 
-	if (semid < 0 || semid >= seminfo.semmni)
-		return (EINVAL);
-
-	if ((semaptr = sema[semid]) == NULL ||
-	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
-		return (EINVAL);
-
-	if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
-		DPRINTF(("error = %d from ipaccess\n", error));
-		return (error);
-	}
-
-	if (nsops == 0) {
-		*retval = 0;
-		return (0);
-	} else if (nsops > (size_t)seminfo.semopm) {
-		DPRINTF(("too many sops (max=%d, nsops=%lu)\n", seminfo.semopm,
-		    (u_long)nsops));
+	if (nsops > (size_t)seminfo.semopm) {
+		DPRINTF(("too many sops (max=%d, nsops=%lu)\n",
+		    seminfo.semopm, (u_long)nsops));
 		return (E2BIG);
 	}
 
 	if (nsops <= NSOPS)
 		sops = sopbuf;
-	else
-		sops = mallocarray(nsops, sizeof(struct sembuf), M_SEM, M_WAITOK);
+	else {
+		sops = mallocarray(nsops, sizeof(struct sembuf),
+		    M_SEM, M_WAITOK);
+	}
+
 	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(struct sembuf));
 	if (error != 0) {
 		DPRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
 		    SCARG(uap, sops), &sops, nsops * sizeof(struct sembuf)));
 		goto done2;
+	}
+
+skipcopy:
+	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
+
+	if (semid < 0 || semid >= seminfo.semmni) {
+		error = EINVAL;
+		goto done2;
+	}
+
+	if ((semaptr = sema[semid]) == NULL ||
+	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid))) {
+		error = EINVAL;
+		goto done2;
+	}
+
+	if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
+		DPRINTF(("error = %d from ipaccess\n", error));
+		goto done2;
+	}
+
+	if (nsops == 0) {
+		/* `sops' has not been allocated, no need to release */
+		*retval = 0;
+		return (0);
 	}
 
 	/* 
