@@ -1,4 +1,4 @@
-/*	$OpenBSD: threads.c,v 1.1.1.1 2012/07/13 17:49:53 eric Exp $	*/
+/*	$OpenBSD: threads.c,v 1.2 2026/05/08 04:01:04 tb Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -34,9 +34,9 @@ char	**av;
 int	  loop;
 int	  nthreads;
 
-int long_err;
-int gai_errno;
-int rrset_errno;
+extern int long_err;
+extern int gai_errno;
+extern int rrset_errno;
 
 void async_resolver_done(void *);
 
