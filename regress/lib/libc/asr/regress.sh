@@ -1,6 +1,6 @@
-#	$OpenBSD: regress.sh,v 1.7 2017/03/10 17:23:48 eric Exp $
+#	$OpenBSD: regress.sh,v 1.8 2026/05/08 04:13:44 tb Exp $
 
-. regress.subr
+. ${PWD}/regress.subr
 
 test_res_mkquery()
 {
