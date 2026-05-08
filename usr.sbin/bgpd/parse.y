@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.490 2026/05/08 05:26:32 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.491 2026/05/08 05:27:25 tb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5914,13 +5914,13 @@ push_binary_numop(enum comp_ops op, long long min, long long max)
 
 struct icmptypeent {
 	const char *name;
-	u_int8_t type;
+	uint8_t type;
 };
 
 struct icmpcodeent {
 	const char *name;
-	u_int8_t type;
-	u_int8_t code;
+	uint8_t type;
+	uint8_t code;
 };
 
 static const struct icmptypeent icmp_type[] = {
