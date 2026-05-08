@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.489 2026/05/07 18:55:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.490 2026/05/08 05:26:32 tb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1989,7 +1989,7 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| ANNOUNCE ADDPATH RECV yesnoenforce {
 			int8_t *ap = curpeer->conf.capabilities.add_path;
-			uint8_t i;
+			u_int i;
 
 			for (i = AID_MIN; i < AID_MAX; i++) {
 				if ($4) {
@@ -2003,7 +2003,7 @@ peeropts	: REMOTEAS as4number	{
 		| ANNOUNCE ADDPATH SEND STRING addpathextra addpathmax enforce {
 			int8_t *ap = curpeer->conf.capabilities.add_path;
 			enum addpath_mode mode;
-			u_int8_t i;
+			u_int i;
 
 			if (!strcmp($4, "no")) {
 				free($4);
