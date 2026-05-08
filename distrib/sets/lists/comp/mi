@@ -1027,7 +1027,6 @@
 ./usr/include/net/rtable.h
 ./usr/include/net/slcompress.h
 ./usr/include/net/toeplitz.h
-./usr/include/net/trunklacp.h
 ./usr/include/net/wg_cookie.h
 ./usr/include/net/wg_noise.h
 ./usr/include/net80211
