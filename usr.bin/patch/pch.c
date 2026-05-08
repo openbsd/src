@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.66 2023/07/12 15:45:34 florian Exp $	*/
+/*	$OpenBSD: pch.c,v 1.67 2026/05/08 06:35:47 renaud Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -180,6 +180,7 @@ grow_hunkmax(void)
 bool
 there_is_another_patch(void)
 {
+	static off_t prev_p_base = -1;
 	bool exists = false;
 
 	if (p_base != 0 && p_base >= p_filesize) {
@@ -190,6 +191,12 @@ there_is_another_patch(void)
 	if (verbose)
 		say("Hmm...");
 	diff_type = intuit_diff_type();
+	if (diff_type == ED_DIFF && p_base == prev_p_base) {
+		if (verbose)
+			say("  Ignoring the trailing garbage.\ndone\n");
+		return false;
+	}
+	prev_p_base = p_base;
 	if (!diff_type) {
 		if (p_base != 0) {
 			if (verbose)
