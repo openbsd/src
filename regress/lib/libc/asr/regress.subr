@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: regress.subr,v 1.4 2017/03/14 20:22:06 eric Exp $
+#	$OpenBSD: regress.subr,v 1.5 2026/05/08 04:02:59 tb Exp $
 
 set -e
 
@@ -65,7 +65,6 @@ regress_setenv()
 	cp /etc/hosts "${ROOTDIR}/etc/"
 	cp /etc/resolv.conf "${ROOTDIR}/etc/"
 	cp /etc/protocols "${ROOTDIR}/etc/"
-	cp /etc/networks "${ROOTDIR}/etc/"
 	cp /etc/services "${ROOTDIR}/etc/"
 
 	case $_name in
