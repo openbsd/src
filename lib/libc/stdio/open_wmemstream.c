@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_wmemstream.c,v 1.11 2026/05/06 02:54:35 millert Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.12 2026/05/08 14:30:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -79,7 +79,7 @@ static fpos_t
 wmemstream_seek(void *v, fpos_t off, int whence)
 {
 	struct state	*st = v;
-	ssize_t		 base = 0;
+	size_t		 base = 0;
 
 	switch (whence) {
 	case SEEK_SET:
@@ -92,7 +92,8 @@ wmemstream_seek(void *v, fpos_t off, int whence)
 		break;
 	}
 
-	if (off > (SIZE_MAX / sizeof(wchar_t)) - base || off < -base) {
+	if ((off > 0 && off > (SIZE_MAX / sizeof(wchar_t)) - base) ||
+	    (off < 0 && base < -off)) {
 		errno = EOVERFLOW;
 		return (-1);
 	}
