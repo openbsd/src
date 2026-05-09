@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.39 2026/05/05 09:33:15 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.40 2026/05/09 01:42:30 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -150,8 +150,8 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	for (i = 0; i < num_ips; i++) {
 		if (ips[i].afi != ip->afi)
 			continue;
-		if (memcmp(ips[i].max, ip->min, sz) <= 0 ||
-		    memcmp(ips[i].min, ip->max, sz) >= 0)
+		if (memcmp(ips[i].max, ip->min, sz) < 0 ||
+		    memcmp(ips[i].min, ip->max, sz) > 0)
 			continue;
 		if (!quiet) {
 			warnx("%s: RFC 3779 section 2.2.3.5: "
