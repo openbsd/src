@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.68 2026/02/01 08:45:31 martijn Exp $ */
+/* $OpenBSD: s_client.c,v 1.69 2026/05/09 14:16:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1314,7 +1314,9 @@ s_client_main(int argc, char **argv)
 		}
 		BIO_printf(sbio,
 		    "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-		seen = BIO_read(sbio, sbuf, BUFSIZZ);
+		seen = BIO_read(sbio, sbuf, BUFSIZZ - 1);
+		if (seen <= 0)
+			goto shut;
 		sbuf[seen] = 0;
 		if (!strstr(sbuf, "<proceed"))
 			goto shut;
