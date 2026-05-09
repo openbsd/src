@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.271 2026/05/06 08:26:16 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.272 2026/05/09 19:02:53 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -96,7 +96,7 @@ struct	outstate {
 
 int			  mandocdb(int, char *[]);
 
-static	void		  check_xr(struct manpaths *);
+static	void		  check_xr(struct manpaths *, int);
 static	void		  fs_append(char **, size_t, int,
 				size_t, const char *, enum form,
 				struct manpage **, size_t *);
@@ -109,10 +109,10 @@ static	int		  fs_search(const struct mansearch *,
 static	void		  glob_esc(char **, const char *, const char *);
 static	void		  outdata_alloc(struct outstate *, struct manoutput *);
 static	void		  parse(struct mparse *, int, const char *,
-				struct outstate *, struct manconf *);
+				struct outstate *, struct manconf *, int);
 static	void		  passthrough(int, int);
 static	void		  process_onefile(struct mparse *, struct manpage *,
-				struct outstate *, struct manconf *);
+				struct outstate *, struct manconf *, int);
 static	void		  run_pager(struct outstate *, char *);
 static	pid_t		  spawn_pager(struct outstate *, char *);
 static	int		  unveil_pager(struct outstate *);
@@ -692,7 +692,7 @@ main(int argc, char *argv[])
 		else if (startdir != -1)
 			(void)fchdir(startdir);
 
-		process_onefile(mp, res + i, &outst, &conf);
+		process_onefile(mp, res + i, &outst, &conf, startdir);
 		if (outst.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;
 	}
@@ -943,7 +943,7 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 
 static void
 process_onefile(struct mparse *mp, struct manpage *resp,
-    struct outstate *outst, struct manconf *conf)
+    struct outstate *outst, struct manconf *conf, int startdir)
 {
 	int	 fd;
 
@@ -966,7 +966,7 @@ process_onefile(struct mparse *mp, struct manpage *resp,
 	}
 
 	if (resp->form == FORM_SRC)
-		parse(mp, fd, resp->file, outst, conf);
+		parse(mp, fd, resp->file, outst, conf, startdir);
 	else {
 		passthrough(fd, conf->output.synopsisonly);
 		outst->had_output = 1;
@@ -987,7 +987,7 @@ process_onefile(struct mparse *mp, struct manpage *resp,
 
 static void
 parse(struct mparse *mp, int fd, const char *file,
-    struct outstate *outst, struct manconf *conf)
+    struct outstate *outst, struct manconf *conf, int startdir)
 {
 	struct roff_meta	*meta;
 
@@ -1073,13 +1073,13 @@ parse(struct mparse *mp, int fd, const char *file,
 		conf->output.tag_found = 1;
 
 	if (mandoc_msg_getmin() < MANDOCERR_STYLE) {
-		check_xr(&conf->basepath);
+		check_xr(&conf->basepath, startdir);
 	} else if (mandoc_msg_getmin() < MANDOCERR_WARNING)
-		check_xr(&conf->manpath);
+		check_xr(&conf->manpath, startdir);
 }
 
 static void
-check_xr(struct manpaths *paths)
+check_xr(struct manpaths *paths, int startdir)
 {
 	struct mansearch	 search;
 	struct mandoc_xr	*xr;
@@ -1095,6 +1095,8 @@ check_xr(struct manpaths *paths)
 		search.firstmatch = 1;
 		if (mansearch(&search, paths, 1, &xr->name, NULL, &sz))
 			continue;
+		if (startdir != -1)
+			(void)fchdir(startdir);
 		if (fs_search(&search, paths, xr->name, NULL, &sz) != -1)
 			continue;
 		if (xr->count == 1)
