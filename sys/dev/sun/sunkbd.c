@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.28 2020/04/06 19:03:09 cheloha Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.29 2026/05/09 11:20:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -46,16 +46,6 @@
 #include <dev/sun/sunkbdreg.h>
 #include <dev/sun/sunkbdvar.h>
 
-#ifdef __sparc64__
-#define	NTCTRL 0
-#else
-#include "tctrl.h"
-#endif
-
-#if NTCTRL > 0
-#include <sparc/dev/tctrlvar.h>		/* XXX for tadpole_bell() */
-#endif
-
 void	sunkbd_bell(struct sunkbd_softc *, u_int, u_int, u_int);
 void	sunkbd_decode5(u_int8_t, u_int *, int *);
 int	sunkbd_enable(void *, int);
@@ -86,11 +76,6 @@ sunkbd_bell(struct sunkbd_softc *sc, u_int period, u_int pitch, u_int volume)
 {
 	int s;
 	u_int8_t c = SKBD_CMD_BELLON;
-
-#if NTCTRL > 0
-	if (tadpole_bell(period / 10, pitch, volume) != 0)
-		return;
-#endif
 
 	s = spltty();
 	if (sc->sc_bellactive) {
