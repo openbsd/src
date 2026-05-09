@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.36 2026/05/09 07:11:05 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.37 2026/05/09 07:12:51 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -163,7 +163,7 @@ sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num)
 	const uint8_t *in = _in;
 	const SHA_LONG *in32;
 	SHA_LONG a, b, c, d, e, f, g, h;
-	SHA_LONG X[16];
+	SHA_LONG W[16];
 	int i;
 
 	while (num--) {
@@ -179,94 +179,94 @@ sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num)
 		if ((size_t)in % 4 == 0) {
 			/* Input is 32 bit aligned. */
 			in32 = (const SHA_LONG *)in;
-			X[0] = be32toh(in32[0]);
-			X[1] = be32toh(in32[1]);
-			X[2] = be32toh(in32[2]);
-			X[3] = be32toh(in32[3]);
-			X[4] = be32toh(in32[4]);
-			X[5] = be32toh(in32[5]);
-			X[6] = be32toh(in32[6]);
-			X[7] = be32toh(in32[7]);
-			X[8] = be32toh(in32[8]);
-			X[9] = be32toh(in32[9]);
-			X[10] = be32toh(in32[10]);
-			X[11] = be32toh(in32[11]);
-			X[12] = be32toh(in32[12]);
-			X[13] = be32toh(in32[13]);
-			X[14] = be32toh(in32[14]);
-			X[15] = be32toh(in32[15]);
+			W[0] = be32toh(in32[0]);
+			W[1] = be32toh(in32[1]);
+			W[2] = be32toh(in32[2]);
+			W[3] = be32toh(in32[3]);
+			W[4] = be32toh(in32[4]);
+			W[5] = be32toh(in32[5]);
+			W[6] = be32toh(in32[6]);
+			W[7] = be32toh(in32[7]);
+			W[8] = be32toh(in32[8]);
+			W[9] = be32toh(in32[9]);
+			W[10] = be32toh(in32[10]);
+			W[11] = be32toh(in32[11]);
+			W[12] = be32toh(in32[12]);
+			W[13] = be32toh(in32[13]);
+			W[14] = be32toh(in32[14]);
+			W[15] = be32toh(in32[15]);
 		} else {
 			/* Input is not 32 bit aligned. */
-			X[0] = crypto_load_be32toh(&in[0 * 4]);
-			X[1] = crypto_load_be32toh(&in[1 * 4]);
-			X[2] = crypto_load_be32toh(&in[2 * 4]);
-			X[3] = crypto_load_be32toh(&in[3 * 4]);
-			X[4] = crypto_load_be32toh(&in[4 * 4]);
-			X[5] = crypto_load_be32toh(&in[5 * 4]);
-			X[6] = crypto_load_be32toh(&in[6 * 4]);
-			X[7] = crypto_load_be32toh(&in[7 * 4]);
-			X[8] = crypto_load_be32toh(&in[8 * 4]);
-			X[9] = crypto_load_be32toh(&in[9 * 4]);
-			X[10] = crypto_load_be32toh(&in[10 * 4]);
-			X[11] = crypto_load_be32toh(&in[11 * 4]);
-			X[12] = crypto_load_be32toh(&in[12 * 4]);
-			X[13] = crypto_load_be32toh(&in[13 * 4]);
-			X[14] = crypto_load_be32toh(&in[14 * 4]);
-			X[15] = crypto_load_be32toh(&in[15 * 4]);
+			W[0] = crypto_load_be32toh(&in[0 * 4]);
+			W[1] = crypto_load_be32toh(&in[1 * 4]);
+			W[2] = crypto_load_be32toh(&in[2 * 4]);
+			W[3] = crypto_load_be32toh(&in[3 * 4]);
+			W[4] = crypto_load_be32toh(&in[4 * 4]);
+			W[5] = crypto_load_be32toh(&in[5 * 4]);
+			W[6] = crypto_load_be32toh(&in[6 * 4]);
+			W[7] = crypto_load_be32toh(&in[7 * 4]);
+			W[8] = crypto_load_be32toh(&in[8 * 4]);
+			W[9] = crypto_load_be32toh(&in[9 * 4]);
+			W[10] = crypto_load_be32toh(&in[10 * 4]);
+			W[11] = crypto_load_be32toh(&in[11 * 4]);
+			W[12] = crypto_load_be32toh(&in[12 * 4]);
+			W[13] = crypto_load_be32toh(&in[13 * 4]);
+			W[14] = crypto_load_be32toh(&in[14 * 4]);
+			W[15] = crypto_load_be32toh(&in[15 * 4]);
 		}
 		in += SHA256_CBLOCK;
 
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[0], X[0]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[1], X[1]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[2], X[2]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[3], X[3]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[4], X[4]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[5], X[5]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[6], X[6]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[7], X[7]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[8], X[8]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[9], X[9]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[10], X[10]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[11], X[11]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[12], X[12]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[13], X[13]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[14], X[14]);
-		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[15], X[15]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[0], W[0]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[1], W[1]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[2], W[2]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[3], W[3]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[4], W[4]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[5], W[5]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[6], W[6]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[7], W[7]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[8], W[8]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[9], W[9]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[10], W[10]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[11], W[11]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[12], W[12]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[13], W[13]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[14], W[14]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[15], W[15]);
 
 		for (i = 16; i < 64; i += 16) {
-			sha256_msg_schedule_update(&X[0], X[1], X[9], X[14]);
-			sha256_msg_schedule_update(&X[1], X[2], X[10], X[15]);
-			sha256_msg_schedule_update(&X[2], X[3], X[11], X[0]);
-			sha256_msg_schedule_update(&X[3], X[4], X[12], X[1]);
-			sha256_msg_schedule_update(&X[4], X[5], X[13], X[2]);
-			sha256_msg_schedule_update(&X[5], X[6], X[14], X[3]);
-			sha256_msg_schedule_update(&X[6], X[7], X[15], X[4]);
-			sha256_msg_schedule_update(&X[7], X[8], X[0], X[5]);
-			sha256_msg_schedule_update(&X[8], X[9], X[1], X[6]);
-			sha256_msg_schedule_update(&X[9], X[10], X[2], X[7]);
-			sha256_msg_schedule_update(&X[10], X[11], X[3], X[8]);
-			sha256_msg_schedule_update(&X[11], X[12], X[4], X[9]);
-			sha256_msg_schedule_update(&X[12], X[13], X[5], X[10]);
-			sha256_msg_schedule_update(&X[13], X[14], X[6], X[11]);
-			sha256_msg_schedule_update(&X[14], X[15], X[7], X[12]);
-			sha256_msg_schedule_update(&X[15], X[0], X[8], X[13]);
+			sha256_msg_schedule_update(&W[0], W[1], W[9], W[14]);
+			sha256_msg_schedule_update(&W[1], W[2], W[10], W[15]);
+			sha256_msg_schedule_update(&W[2], W[3], W[11], W[0]);
+			sha256_msg_schedule_update(&W[3], W[4], W[12], W[1]);
+			sha256_msg_schedule_update(&W[4], W[5], W[13], W[2]);
+			sha256_msg_schedule_update(&W[5], W[6], W[14], W[3]);
+			sha256_msg_schedule_update(&W[6], W[7], W[15], W[4]);
+			sha256_msg_schedule_update(&W[7], W[8], W[0], W[5]);
+			sha256_msg_schedule_update(&W[8], W[9], W[1], W[6]);
+			sha256_msg_schedule_update(&W[9], W[10], W[2], W[7]);
+			sha256_msg_schedule_update(&W[10], W[11], W[3], W[8]);
+			sha256_msg_schedule_update(&W[11], W[12], W[4], W[9]);
+			sha256_msg_schedule_update(&W[12], W[13], W[5], W[10]);
+			sha256_msg_schedule_update(&W[13], W[14], W[6], W[11]);
+			sha256_msg_schedule_update(&W[14], W[15], W[7], W[12]);
+			sha256_msg_schedule_update(&W[15], W[0], W[8], W[13]);
 
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 0], X[0]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 1], X[1]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 2], X[2]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 3], X[3]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 4], X[4]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 5], X[5]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 6], X[6]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 7], X[7]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 8], X[8]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 9], X[9]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 10], X[10]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 11], X[11]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 12], X[12]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 13], X[13]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 14], X[14]);
-			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 15], X[15]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 0], W[0]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 1], W[1]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 2], W[2]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 3], W[3]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 4], W[4]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 5], W[5]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 6], W[6]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 7], W[7]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 8], W[8]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 9], W[9]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 10], W[10]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 11], W[11]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 12], W[12]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 13], W[13]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 14], W[14]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 15], W[15]);
 		}
 
 		ctx->h[0] += a;
