@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.7 2025/08/01 14:37:06 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.8 2026/05/09 11:49:46 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1019,7 +1019,7 @@ mwx_rx(struct mwx_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 		    htole16(ic->ic_channels[rxi.rxi_chan].ic_freq);
 		tap->wr_chan_flags =
 		    ic->ic_channels[rxi.rxi_chan].ic_flags;
-		tap->wr_dbm_antsignal = 0;
+		tap->wr_dbm_antsignal = rxi.rxi_rssi;
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m,
 		    BPF_DIRECTION_IN);
 	}
@@ -1029,7 +1029,6 @@ mwx_rx(struct mwx_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the 802.11 layer */
-	/* TODO MAYBE rxi.rxi_rssi = rssi; */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* node is no longer needed */
@@ -4225,11 +4224,13 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
     struct ieee80211_rxinfo *rxi)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint32_t *rxd, rxd0, rxd1, rxd2, rxd3, rxd4;
+	uint32_t *rxd, *rxv = NULL;
+	uint32_t rxd0, rxd1, rxd2, rxd3, rxd4;
 //	uint32_t mode = 0;
 	uint16_t hdr_gap /*, seq_ctrl = 0, fc = 0 */;
 	uint8_t chfnum, remove_pad /*, qos_ctl = 0, amsdu_info */;
 	int idx, unicast, num_rxd = 6;
+	int i;
 //	bool insert_ccmp_hdr = false;
 
 	if (m->m_len < num_rxd * sizeof(uint32_t))
@@ -4308,16 +4309,53 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 
 	rxd += 6;
 
-	if (rxd1 & MT_RXD1_NORMAL_GROUP_4)
+	if (rxd1 & MT_RXD1_NORMAL_GROUP_4) {
 		num_rxd += 4;
-	if (rxd1 & MT_RXD1_NORMAL_GROUP_1)
+		rxd += 4;
+	}
+	if (rxd1 & MT_RXD1_NORMAL_GROUP_1) {
 		num_rxd += 4;
-	if (rxd1 & MT_RXD1_NORMAL_GROUP_2)
+		rxd += 4;
+	}
+	if (rxd1 & MT_RXD1_NORMAL_GROUP_2) {
 		num_rxd += 2;
-	if (rxd1 & MT_RXD1_NORMAL_GROUP_3)
+		rxd += 2;
+	}
+	if (rxd1 & MT_RXD1_NORMAL_GROUP_3) {	
+		uint32_t v0, v1;
+		int8_t chain[4], signal;
+
+		rxv = rxd;
 		num_rxd += 2;
-	if (rxd1 & MT_RXD1_NORMAL_GROUP_5)
-		num_rxd += 18;
+		rxd += 2;
+
+		v0 = le32toh(rxv[0]); /* XXX not implemented yet */ 
+		v1 = le32toh(rxv[1]);
+
+		if (rxd1 & MT_RXD1_NORMAL_GROUP_5) {
+			num_rxd += 18;
+			rxd += 6;
+			rxv = rxd;
+			v1 = le32toh(rxv[0]); 
+			rxd += 12;
+		}
+	
+
+		chain[0] = rcpi_to_rssi(MT_PRXV_RCPI0_MASK, MT_PRXV_RCPI0_SHIFT, v1);
+		chain[1] = rcpi_to_rssi(MT_PRXV_RCPI1_MASK, MT_PRXV_RCPI1_SHIFT, v1);
+		chain[2] = rcpi_to_rssi(MT_PRXV_RCPI2_MASK, MT_PRXV_RCPI2_SHIFT, v1);
+		chain[3] = rcpi_to_rssi(MT_PRXV_RCPI3_MASK, MT_PRXV_RCPI3_SHIFT, v1);
+
+		signal = -128;
+		for (i = 0; i < sc->sc_capa.num_streams; i++) {
+			if (!(sc->sc_capa.antenna_mask & (1U << i)))
+				continue;	
+			if (chain[i] >= 0)
+				continue;
+			signal = MAX(signal, chain[i]);
+		}
+		rxi->rxi_rssi = signal;
+	}
 
 	if (m->m_len < num_rxd * sizeof(uint32_t))
 		return -1;
