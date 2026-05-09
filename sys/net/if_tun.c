@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.256 2025/12/14 01:51:26 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.257 2026/05/09 01:47:12 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1009,7 +1009,7 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 			m_clget(m, M_DONTWAIT, alen);
 			if (!ISSET(m->m_flags, M_EXT)) {
 				error = ENOMEM;
-				goto put;
+				goto drop;
 			}
 		}
 
@@ -1031,7 +1031,7 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 		n = m_get(M_DONTWAIT, MT_DATA);
 		if (n == NULL) {
 			error = ENOMEM;
-			goto put;
+			goto drop;
 		}
 
 		align = 0;
