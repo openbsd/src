@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.12 2025/12/19 01:30:17 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.13 2026/05/09 06:36:06 jsg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -36,10 +36,6 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#ifdef MPLS
-#include <netmpls/mpls.h>
 #endif
 
 #include "pf.h"

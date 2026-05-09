@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.257 2026/05/09 01:47:12 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.258 2026/05/09 06:36:06 jsg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -68,10 +68,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#ifdef MPLS
-#include <netmpls/mpls.h>
-#endif /* MPLS */
 
 #include <net/if_tun.h>
 
