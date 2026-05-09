@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxv.h,v 1.1 2024/07/14 09:48:48 jca Exp $	*/
+/*	$OpenBSD: auxv.h,v 1.2 2026/05/09 19:39:14 naddy Exp $	*/
 
 /*
  * Copyright (c) 2024 Jeremie Courreges-Anglas <jca@wxcvbn.org>
@@ -20,6 +20,11 @@
 #define _LIBC_SYS_AUXV_H_
 
 #include_next <sys/auxv.h>
+
+__BEGIN_HIDDEN_DECLS
+extern unsigned long	_hwcap, _hwcap2;
+extern int	_hwcap_avail, _hwcap2_avail;
+__END_HIDDEN_DECLS
 
 PROTO_DEPRECATED(elf_aux_info);
 

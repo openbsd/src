@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.24 2024/07/22 22:06:27 kettenis Exp $ */
+/*	$OpenBSD: init.c,v 1.25 2026/05/09 19:39:14 naddy Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <sys/timetc.h>		/* timekeep */
+#include <sys/auxv.h>		/* _hwcap */
 
 #ifndef PIC
 #include <sys/mman.h>

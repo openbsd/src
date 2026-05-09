@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_aux_info.c,v 1.1 2024/07/14 09:48:48 jca Exp $	*/
+/*	$OpenBSD: elf_aux_info.c,v 1.2 2026/05/09 19:39:14 naddy Exp $	*/
 
 /*
  * Copyright (c) 2024 Jeremie Courreges-Anglas <jca@wxcvbn.org>
@@ -20,10 +20,7 @@
 #include <sys/auxv.h>
 
 #include <errno.h>
-
-extern int _pagesize;
-extern unsigned long _hwcap, _hwcap2;
-extern int _hwcap_avail, _hwcap2_avail;
+#include <unistd.h>
 
 int
 elf_aux_info(int request, void *buf, int buflen)
