@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.37 2026/05/09 07:12:51 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.38 2026/05/09 07:14:42 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -75,7 +75,7 @@ void sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num);
 /*
  * SHA-256 constants - see FIPS 180-4 section 4.2.2.
  */
-static const SHA_LONG K256[64] = {
+static const uint32_t K256[64] = {
 	0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL,
 	0x3956c25bUL, 0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL,
 	0xd807aa98UL, 0x12835b01UL, 0x243185beUL, 0x550c7dc3UL,
@@ -94,55 +94,55 @@ static const SHA_LONG K256[64] = {
 	0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL,
 };
 
-static inline SHA_LONG
-Sigma0(SHA_LONG x)
+static inline uint32_t
+Sigma0(uint32_t x)
 {
 	return crypto_ror_u32(x, 2) ^ crypto_ror_u32(x, 13) ^
 	    crypto_ror_u32(x, 22);
 }
 
-static inline SHA_LONG
-Sigma1(SHA_LONG x)
+static inline uint32_t
+Sigma1(uint32_t x)
 {
 	return crypto_ror_u32(x, 6) ^ crypto_ror_u32(x, 11) ^
 	    crypto_ror_u32(x, 25);
 }
 
-static inline SHA_LONG
-sigma0(SHA_LONG x)
+static inline uint32_t
+sigma0(uint32_t x)
 {
 	return crypto_ror_u32(x, 7) ^ crypto_ror_u32(x, 18) ^ (x >> 3);
 }
 
-static inline SHA_LONG
-sigma1(SHA_LONG x)
+static inline uint32_t
+sigma1(uint32_t x)
 {
 	return crypto_ror_u32(x, 17) ^ crypto_ror_u32(x, 19) ^ (x >> 10);
 }
 
-static inline SHA_LONG
-Ch(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+static inline uint32_t
+Ch(uint32_t x, uint32_t y, uint32_t z)
 {
 	return (x & y) ^ (~x & z);
 }
 
-static inline SHA_LONG
-Maj(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+static inline uint32_t
+Maj(uint32_t x, uint32_t y, uint32_t z)
 {
 	return (x & y) ^ (x & z) ^ (y & z);
 }
 
 static inline void
-sha256_msg_schedule_update(SHA_LONG *W0, SHA_LONG W1, SHA_LONG W9, SHA_LONG W14)
+sha256_msg_schedule_update(uint32_t *W0, uint32_t W1, uint32_t W9, uint32_t W14)
 {
 	*W0 = sigma1(W14) + W9 + sigma0(W1) + *W0;
 }
 
 static inline void
-sha256_round(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
-    SHA_LONG *f, SHA_LONG *g, SHA_LONG *h, SHA_LONG Kt, SHA_LONG Wt)
+sha256_round(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, uint32_t *e,
+    uint32_t *f, uint32_t *g, uint32_t *h, uint32_t Kt, uint32_t Wt)
 {
-	SHA_LONG T1, T2;
+	uint32_t T1, T2;
 
 	T1 = *h + Sigma1(*e) + Ch(*e, *f, *g) + Kt + Wt;
 	T2 = Sigma0(*a) + Maj(*a, *b, *c);
@@ -161,9 +161,9 @@ void
 sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
-	const SHA_LONG *in32;
-	SHA_LONG a, b, c, d, e, f, g, h;
-	SHA_LONG W[16];
+	const uint32_t *in32;
+	uint32_t a, b, c, d, e, f, g, h;
+	uint32_t W[16];
 	int i;
 
 	while (num--) {
@@ -178,7 +178,7 @@ sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num)
 
 		if ((size_t)in % 4 == 0) {
 			/* Input is 32 bit aligned. */
-			in32 = (const SHA_LONG *)in;
+			in32 = (const uint32_t *)in;
 			W[0] = be32toh(in32[0]);
 			W[1] = be32toh(in32[1]);
 			W[2] = be32toh(in32[2]);
