@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.17 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: crl.c,v 1.18 2026/05/09 14:28:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,10 +327,11 @@ crl_main(int argc, char **argv)
 		EVP_PKEY_free(pkey);
 		if (i < 0)
 			goto end;
-		if (i == 0)
+		if (i == 0) {
 			BIO_printf(bio_err, "verify failure\n");
-		else
-			BIO_printf(bio_err, "verify OK\n");
+			goto end;
+		}
+		BIO_printf(bio_err, "verify OK\n");
 	}
 
 	/* Print requested information the order that the flags were given. */
