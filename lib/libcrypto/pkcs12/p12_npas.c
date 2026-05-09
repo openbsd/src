@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.29 2026/05/09 10:52:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -276,11 +276,11 @@ PKCS12_newpass(PKCS12 *pkcs12, const char *oldpass, const char *newpass)
 
 		switch (OBJ_obj2nid(pkcs7->type)) {
 		case NID_pkcs7_data:
-			if (pkcs7_repack_data(pkcs7, safes, oldpass, newpass))
+			if (!pkcs7_repack_data(pkcs7, safes, oldpass, newpass))
 				goto err;
 			break;
 		case NID_pkcs7_encrypted:
-			if (pkcs7_repack_encdata(pkcs7, safes, oldpass, newpass))
+			if (!pkcs7_repack_encdata(pkcs7, safes, oldpass, newpass))
 				goto err;
 			break;
 		}
