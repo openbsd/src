@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.341 2025/11/17 14:27:43 jsg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.342 2026/05/09 09:11:47 jsg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -74,8 +74,6 @@
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 #include <scsi/sdvar.h>
-
-#include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #include <sys/vnode.h>
 

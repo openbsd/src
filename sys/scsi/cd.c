@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.267 2025/11/23 10:32:47 sf Exp $	*/
+/*	$OpenBSD: cd.c,v 1.268 2026/05/09 09:11:47 jsg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -73,9 +73,6 @@
 #include <scsi/scsi_debug.h>
 #include <scsi/scsi_disk.h>	/* rw_10 and start_stop come from there */
 #include <scsi/scsiconf.h>
-
-
-#include <ufs/ffs/fs.h>		/* for BBSIZE and SBSIZE */
 
 #define	CDOUTSTANDING	4
 
