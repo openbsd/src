@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.9 2024/10/17 01:57:18 jsg Exp $	*/
+/*	$OpenBSD: exception.S,v 1.10 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -107,7 +107,7 @@
 	li	t0, SSTATUS_SUM
 	csrc	sstatus, t0
 .endif
-	li	t0, SSTATUS_FS_MASK
+	li	t0, (SSTATUS_FS_MASK | SSTATUS_VS_MASK)
 	csrc	sstatus, t0
 	csrr	t0, stval
 	sd	t0, (TF_STVAL)(sp)

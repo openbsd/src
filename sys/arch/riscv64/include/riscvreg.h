@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscvreg.h,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: riscvreg.h,v 1.6 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -67,6 +67,8 @@
 #define MSTATUS_SPIE		(1 << 5)
 #define MSTATUS_MPIE		(1 << 7)
 #define MSTATUS_SPP		(1 << 8)
+#define MSTATUS_VS_SHIFT	9
+#define MSTATUS_VS_MASK		(0x3 << MSTATUS_VS_SHIFT)
 #define MSTATUS_MPP_SHIFT	11
 #define MSTATUS_MPP_MASK	(0x3 << MSTATUS_MPP_SHIFT)
 #define MSTATUS_FS_SHIFT	13
@@ -90,6 +92,12 @@
 #define SSTATUS_UPIE		(1 << 4)
 #define SSTATUS_SPIE		(1 << 5)
 #define SSTATUS_SPP		(1 << 8)
+#define SSTATUS_VS_SHIFT	9
+#define SSTATUS_VS_MASK		(0x3 << SSTATUS_VS_SHIFT)
+#define SSTATUS_VS_OFF		(0x0 << SSTATUS_VS_SHIFT)
+#define SSTATUS_VS_INITIAL	(0x1 << SSTATUS_VS_SHIFT)
+#define SSTATUS_VS_CLEAN	(0x2 << SSTATUS_VS_SHIFT)
+#define SSTATUS_VS_DIRTY	(0x3 << SSTATUS_VS_SHIFT)
 #define SSTATUS_FS_SHIFT	13
 #define SSTATUS_FS_MASK		(0x3 << SSTATUS_FS_SHIFT)
 #define SSTATUS_FS_OFF		(0x0 << SSTATUS_FS_SHIFT)
@@ -190,6 +198,14 @@
 #define UXLEN			XLEN
 #define INSN_SIZE		4
 #define INSN_C_SIZE		2
+
+/*
+ * The maximum vector register length in bits (VLEN) is 65,536, as
+ * documented in section 31.2 of the The RISC-V Instruction Set Manual,
+ * Volume I: Unprivileged Architecture (Version 20260120).
+ */
+#define VLEN_MAX		65536
+#define VLEN_BYTES_MAX		(VLEN_MAX / 8)
 
 // Check if val can fit in the CSR immediate form
 #define CSR_ZIMM(val)							\

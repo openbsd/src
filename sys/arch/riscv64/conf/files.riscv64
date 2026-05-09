@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.38 2026/04/13 12:03:19 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.39 2026/05/09 17:38:50 jsing Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -35,6 +35,7 @@ file	arch/riscv64/riscv64/pagezero.S
 file	arch/riscv64/riscv64/trap.c
 file	arch/riscv64/riscv64/sbi.c
 file	arch/riscv64/riscv64/fpu.c
+file	arch/riscv64/riscv64/vector.c
 
 file	arch/riscv64/riscv64/db_disasm.c	ddb
 file	arch/riscv64/riscv64/db_interface.c	ddb

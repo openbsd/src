@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2026/04/05 22:13:21 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -29,6 +29,7 @@
 #include <machine/riscvreg.h>
 #include <machine/syscall.h>
 #include <machine/db_machdep.h>
+#include <machine/elf.h>
 
 /* Called from exception.S */
 void do_trap_supervisor(struct trapframe *);
@@ -113,9 +114,9 @@ do_trap_supervisor(struct trapframe *frame)
 void
 do_trap_user(struct trapframe *frame)
 {
+	struct proc *p = curcpu()->ci_curproc;
 	uint64_t exception;
 	union sigval sv;
-	struct proc *p = curcpu()->ci_curproc;
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 
@@ -151,6 +152,12 @@ do_trap_user(struct trapframe *frame)
 		svc_handler(frame);
 		break;
 	case EXCP_ILLEGAL_INSTRUCTION:
+		if ((riscv_hwcap & HWCAP_ISA_V) != 0 &&
+		    vector_instruction(frame->tf_stval) &&
+		    (frame->tf_sstatus & SSTATUS_VS_MASK) == SSTATUS_VS_OFF) {
+			vector_load(p);
+			break;
+		}
 		if ((frame->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF) {
 			fpu_load(p);
 			break;

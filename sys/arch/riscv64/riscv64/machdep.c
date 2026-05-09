@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2025/11/27 19:15:51 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -293,10 +293,12 @@ cpu_switchto(struct proc *old, struct proc *new)
 
 		if (pcb->pcb_flags & PCB_FPU)
 			fpu_save(old, tf);
+		if (pcb->pcb_flags & PCB_VECTOR)
+			vector_save(old, tf);
 
-		/* drop FPU state */
-		tf->tf_sstatus &= ~SSTATUS_FS_MASK;
-		tf->tf_sstatus |= SSTATUS_FS_OFF;
+		/* Drop FPU and vector state */
+		tf->tf_sstatus &= ~(SSTATUS_FS_MASK | SSTATUS_VS_MASK);
+		tf->tf_sstatus |= SSTATUS_FS_OFF | SSTATUS_VS_OFF;
 	}
 
 	cpu_switchto_asm(old, new);
@@ -404,10 +406,15 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	/* If we were using the FPU, forget about it. */
-	pcb->pcb_flags &= ~PCB_FPU;
-	tf->tf_sstatus &= ~SSTATUS_FS_MASK;
-	tf->tf_sstatus |= SSTATUS_FS_OFF;
+	/* If we were using the FPU or vector, forget about it. */
+	if (pcb->pcb_flags & PCB_VECTOR) {
+		free(pcb->pcb_vstate, M_SUBPROC,
+		    sizeof(struct vreg) + 32 * riscv_vlenb);
+		pcb->pcb_vstate = NULL;
+	}
+	pcb->pcb_flags &= ~(PCB_FPU | PCB_VECTOR);
+	tf->tf_sstatus &= ~(SSTATUS_FS_MASK | SSTATUS_VS_MASK);
+	tf->tf_sstatus |= SSTATUS_FS_OFF | SSTATUS_VS_OFF;
 
 	memset(tf, 0, sizeof *tf);
 	tf->tf_sp = STACKALIGN(stack);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2026/05/02 14:09:17 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.27 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -265,8 +265,15 @@ void	delay (unsigned);
 
 extern void (*cpu_startclock_fcn)(void);
 
+extern unsigned long riscv_hwcap;
+extern size_t riscv_vlenb;
+
 void fpu_save(struct proc *, struct trapframe *);
 void fpu_load(struct proc *);
+
+int vector_instruction(register_t stval);
+void vector_save(struct proc *, struct trapframe *);
+void vector_load(struct proc *);
 
 extern int cpu_errata_sifive_cip_1200;
 

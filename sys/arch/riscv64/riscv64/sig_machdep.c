@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.10 2022/03/22 06:49:25 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.11 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,9 +119,11 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	/* make the stack aligned */
 	fp = (struct sigframe *)STACKALIGN(fp);
 
-	/* Save FPU state to PCB if necessary. */
+	/* Save FPU and vector state to PCB if necessary. */
 	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		fpu_save(p, tf);
+	if (p->p_addr->u_pcb.pcb_flags & PCB_VECTOR)
+		vector_save(p, tf);
 
 	/* Build stack frame for signal trampoline. */
 	bzero(&frame, sizeof(frame));

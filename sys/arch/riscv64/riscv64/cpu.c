@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2026/05/02 14:09:17 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -90,6 +90,8 @@ const struct vendor {
 	{ 0, NULL, NULL }
 };
 
+size_t riscv_vlenb;
+
 unsigned long riscv_hwcap;
 unsigned long riscv_hwcap2;
 
@@ -168,6 +170,7 @@ cpu_identify(struct cpu_info *ci)
 	const char *arch_name = NULL;
 	struct arch *archlist = cpu_arch_none;
 	unsigned long cpu_hwcap, cpu_hwcap2;
+	size_t vlenb;
 	char *names;
 	char *name;
 	char *end;
@@ -274,6 +277,23 @@ cpu_identify(struct cpu_info *ci)
 		    ci->ci_dev->dv_xname, riscv_hwcap2, cpu_hwcap2);
 		riscv_hwcap2 &= cpu_hwcap2;
 	}
+
+	if ((riscv_hwcap & HWCAP_ISA_V) != 0) {
+		vlenb = csr_read(vlenb);
+
+		if (CPU_IS_PRIMARY(ci)) {
+			if (vlenb > VLEN_BYTES_MAX) {
+				printf("%s: vlenb exceeds maximum (%lu > %d)\n",
+				    ci->ci_dev->dv_xname, vlenb, VLEN_BYTES_MAX);
+			} else {
+				riscv_vlenb = vlenb;
+			}
+		} else if (riscv_vlenb != vlenb) {
+			printf("%s: mismatched vlenb (%zu != %lu)\n",
+			    ci->ci_dev->dv_xname, riscv_vlenb, vlenb);
+			riscv_hwcap &= ~HWCAP_ISA_V;
+		}
+	}
 }
 
 void
@@ -290,13 +310,6 @@ cpu_identify_cleanup(void)
 
 	/* Remove H extension since userland does not need to know about it. */
 	hwcap &= ~HWCAP_ISA_H;
-
-	/* Remove V extensions since they require kernel support. */
-	hwcap &= ~HWCAP_ISA_V;
-	hwcap2 &= ~(HWCAP2_ISA_ZVBB | HWCAP2_ISA_ZVBC | HWCAP2_ISA_ZVFH |
-	    HWCAP2_ISA_ZVKG | HWCAP2_ISA_ZVKNED | HWCAP2_ISA_ZVKNHA |
-	    HWCAP2_ISA_ZVKNHB | HWCAP2_ISA_ZVKSED | HWCAP2_ISA_ZVKSH |
-	    HWCAP2_ISA_ZVKT);
 }
 
 #ifdef MULTIPROCESSOR
@@ -658,7 +671,7 @@ cpu_start_secondary(void)
 	riscv_intr_cpu_enable();
 	cpu_startclock();
 
-	csr_clear(sstatus, SSTATUS_FS_MASK);
+	csr_clear(sstatus, SSTATUS_FS_MASK | SSTATUS_VS_MASK);
 	csr_set(sie, SIE_SSIE);
 
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);

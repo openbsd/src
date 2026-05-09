@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -55,6 +55,14 @@ struct reg {
 struct fpreg {
 	uint64_t	fp_f[32];	/* floating-point registers */
 	uint64_t	fp_fcsr;	/* floating-point control register */
+};
+
+struct vreg {
+	uint64_t	v_vtype;	/* vector type control register */
+	uint64_t	v_vl;		/* vector length control register */
+	uint64_t	v_vstart;	/* vector start control register */
+	uint64_t	v_vcsr;		/* vector control and status register */
+	uint8_t		v_vdata[];	/* vector register data (sized based on vlenb) */
 };
 
 #endif /* !_MACHINE_REG_H_ */

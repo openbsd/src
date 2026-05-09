@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2025/05/21 09:06:58 mpi Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -39,8 +39,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
@@ -66,12 +67,22 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	CTASSERT((sizeof(struct trapframe) & STACKALIGNBYTES) == 0);
 	CTASSERT((sizeof(struct switchframe) & STACKALIGNBYTES) == 0);
 
-	/* Save FPU state to PCB if necessary. */
+	/* Save FPU and vector state to PCB if necessary. */
 	if (pcb1->pcb_flags & PCB_FPU)
 		fpu_save(p1, pcb1->pcb_tf);
+	if (pcb1->pcb_flags & PCB_VECTOR)
+		vector_save(p1, pcb1->pcb_tf);
 
 	/* Copy the pcb. */
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = *pcb1;
+
+	/* If vector state exists, we need to copy it. */
+	if (pcb1->pcb_flags & PCB_VECTOR) {
+		pcb->pcb_vstate = malloc(sizeof(struct vreg) + 32 * riscv_vlenb,
+		    M_SUBPROC, M_WAITOK);
+		memcpy(pcb->pcb_vstate, pcb1->pcb_vstate,
+		    sizeof(struct vreg) + 32 * riscv_vlenb);
+	}
 
 	pmap_activate(p2);
 
@@ -107,6 +118,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	if (pcb->pcb_flags & PCB_VECTOR) {
+		free(pcb->pcb_vstate, M_SUBPROC,
+		    sizeof(struct vreg) + 32 * riscv_vlenb);
+		pcb->pcb_vstate = NULL;
+	}
 }
 
 struct kmem_va_mode kv_physwait = {

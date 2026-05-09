@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 2024/10/15 09:16:39 jsg Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2026/05/09 17:38:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -31,11 +31,13 @@ struct pcb {
 	u_int		pcb_flags;
 #define	PCB_FPU		0x00000001	/* Process had FPU initialized */
 #define	PCB_SINGLESTEP	0x00000002	/* Single step process */
+#define	PCB_VECTOR	0x00000004	/* Process had vector initialized */
 	struct		trapframe *pcb_tf;
 
-	register_t	pcb_sp;		// stack pointer of switchframe
+	register_t	pcb_sp;		/* stack pointer of switchframe */
 
-	caddr_t		pcb_onfault;	// On fault handler
-	struct fpreg	pcb_fpstate;	// Floating Point state */
+	caddr_t		pcb_onfault;	/* On fault handler */
+	struct fpreg	pcb_fpstate;	/* Floating Point state */
+	struct vreg	*pcb_vstate;	/* Vector state */
 };
 #endif	/* _MACHINE_PCB_H_ */
