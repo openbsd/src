@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.36 2025/11/16 02:20:08 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.37 2026/05/09 00:37:45 dlg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -70,18 +70,32 @@ static const struct bpf_ops bpf_mem_ops = {
 	bpf_mem_ldb,
 };
 
+Static int
+bpf_memcpy(void *dst, const struct bpf_mem *bmp, u_int off, size_t len)
+{
+	struct bpf_mem bm = *bmp;
+
+	if (bm.len < off)
+		return -1;
+	bm.len -= off;
+	if (bm.len < len)
+		return -1;
+	bm.pkt += off;
+
+	memcpy(dst, bm.pkt, len);
+
+	return 0;
+}
+
 Static u_int32_t
 bpf_mem_ldw(const void *mem, u_int32_t k, int *err)
 {
-	const struct bpf_mem *bm = mem;
 	u_int32_t v;
 
-	*err = 1;
-
-	if (k + sizeof(v) > bm->len)
+	if (bpf_memcpy(&v, mem, k, sizeof(v)) == -1) {
+		*err = 1;
 		return (0);
-
-	memcpy(&v, bm->pkt + k, sizeof(v));
+	}
 
 	*err = 0;
 	return ntohl(v);
@@ -90,15 +104,12 @@ bpf_mem_ldw(const void *mem, u_int32_t k, int *err)
 Static u_int32_t
 bpf_mem_ldh(const void *mem, u_int32_t k, int *err)
 {
-	const struct bpf_mem *bm = mem;
 	u_int16_t v;
 
-	*err = 1;
-
-	if (k + sizeof(v) > bm->len)
+	if (bpf_memcpy(&v, mem, k, sizeof(v)) == -1) {
+		*err = 1;
 		return (0);
-
-	memcpy(&v, bm->pkt + k, sizeof(v));
+	}
 
 	*err = 0;
 	return ntohs(v);
@@ -107,15 +118,15 @@ bpf_mem_ldh(const void *mem, u_int32_t k, int *err)
 Static u_int32_t
 bpf_mem_ldb(const void *mem, u_int32_t k, int *err)
 {
-	const struct bpf_mem *bm = mem;
+	u_int8_t v;
 
-	*err = 1;
-
-	if (k >= bm->len)
+	if (bpf_memcpy(&v, mem, k, sizeof(v)) == -1) {
+		*err = 1;
 		return (0);
+	}
 
 	*err = 0;
-	return bm->pkt[k];
+	return v;
 }
 
 /*
