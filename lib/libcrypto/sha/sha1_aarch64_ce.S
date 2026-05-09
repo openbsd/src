@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.8 2026/05/07 15:50:47 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.9 2026/05/09 07:02:29 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -107,7 +107,7 @@
 .section CRYPTO_ASSEMBLY_SECTION_TEXT
 
 /*
- * void sha1_block_ce(SHA256_CTX *ctx, const void *in, size_t num);
+ * void sha1_block_ce(SHA_CTX *ctx, const void *in, size_t num);
  *
  * Standard ARM ABI: x0 = ctx, x1 = in, x2 = num
  */

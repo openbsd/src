@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_shani.S,v 1.7 2026/05/07 15:50:47 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_shani.S,v 1.8 2026/05/09 07:02:29 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -72,7 +72,7 @@
 .section CRYPTO_ASSEMBLY_SECTION_TEXT
 
 /*
- * void sha1_block_shani(SHA256_CTX *ctx, const void *in, size_t num);
+ * void sha1_block_shani(SHA_CTX *ctx, const void *in, size_t num);
  *
  * Standard x86-64 ABI: rdi = ctx, rsi = in, rdx = num
  */
