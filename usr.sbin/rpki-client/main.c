@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.305 2026/04/11 12:02:50 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.306 2026/05/09 01:22:32 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -517,22 +517,25 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 	struct fqdnlistentry	*le;
 	char			*nfile, *npath, *host;
 	const char		*uri, *repouri, *file;
-	size_t			 repourisz;
+	size_t			 hostsz, repourisz;
 	int			 shortlisted = 0;
 
 	if (strncmp(cert->repo, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
 		errx(1, "unexpected protocol");
 	host = cert->repo + RSYNC_PROTO_LEN;
+	hostsz = strcspn(host, "/");
 
 	LIST_FOREACH(le, &skiplist, entry) {
-		if (strncasecmp(host, le->fqdn, strcspn(host, "/")) == 0) {
+		if (strlen(le->fqdn) == hostsz &&
+		    strncasecmp(host, le->fqdn, hostsz) == 0) {
 			warnx("skipping %s (listed in skiplist)", cert->repo);
 			return;
 		}
 	}
 
 	LIST_FOREACH(le, &shortlist, entry) {
-		if (strncasecmp(host, le->fqdn, strcspn(host, "/")) == 0) {
+		if (strlen(le->fqdn) == hostsz &&
+		    strncasecmp(host, le->fqdn, hostsz) == 0) {
 			shortlisted = 1;
 			break;
 		}
