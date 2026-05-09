@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64.c,v 1.1 2025/06/28 12:51:08 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64.c,v 1.2 2026/05/09 07:03:49 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -19,11 +19,11 @@
 
 #include "crypto_arch.h"
 
-void sha1_block_ce(SHA256_CTX *ctx, const void *in, size_t num);
-void sha1_block_generic(SHA256_CTX *ctx, const void *in, size_t num);
+void sha1_block_ce(SHA_CTX *ctx, const void *in, size_t num);
+void sha1_block_generic(SHA_CTX *ctx, const void *in, size_t num);
 
 void
-sha1_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
+sha1_block_data_order(SHA_CTX *ctx, const void *in, size_t num)
 {
 	if ((crypto_cpu_caps_aarch64 & CRYPTO_CPU_CAPS_AARCH64_SHA1) != 0) {
 		sha1_block_ce(ctx, in, num);
