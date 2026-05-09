@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.159 2025/12/04 21:16:17 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.160 2026/05/09 11:45:50 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2558,6 +2558,7 @@ tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
 	 * cookie may be added, padding may be removed.
 	 */
 	struct tls13_ctx *ctx = s->tls13;
+	uint16_t len = CBS_len(cbs);
 
 	if (type == TLSEXT_TYPE_early_data || type == TLSEXT_TYPE_cookie ||
 	    type == TLSEXT_TYPE_padding)
@@ -2571,6 +2572,8 @@ tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
 	 */
 	if (type == TLSEXT_TYPE_pre_shared_key || type == TLSEXT_TYPE_key_share)
 		return 1;
+	if (!tls13_clienthello_hash_update_bytes(ctx, (void *)&len, sizeof(len)))
+		return 0;
 	if (!tls13_clienthello_hash_update(ctx, cbs))
 		return 0;
 
