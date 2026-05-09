@@ -1400,15 +1400,12 @@ enum mt76_phy_type {
 #define	PHY_TYPE_BIT_HE			(1U << 6)
 
 /* P-RXV DW0 */
-#define	MT_PRXV_RCPI0_MASK		0x000000ff
+#define	MT_PRXV_RCPIX_MASK		0x000000ff
 #define	MT_PRXV_RCPI0_SHIFT		0
-#define	MT_PRXV_RCPI1_MASK		0x0000ff00
 #define	MT_PRXV_RCPI1_SHIFT		8
-#define	MT_PRXV_RCPI2_MASK		0x00ff0000
 #define	MT_PRXV_RCPI2_SHIFT		16
-#define	MT_PRXV_RCPI3_MASK		0xff000000
 #define	MT_PRXV_RCPI3_SHIFT		24
 
 #define	rssi_to_rcpi(rssi)		(2 * (rssi) + 220)
-#define	rcpi_to_rssi(mask, shift, rxv)	\
-	(((int)(((rxv) & (mask)) >> (shift)) - 220) / 2)
+#define	rcpi_to_rssi(shift, rxv)	\
+	((((int)(((rxv) >> (shift)) & (MT_PRXV_RCPIX_MASK))) - 220) / 2)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.8 2026/05/09 11:49:46 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.9 2026/05/09 12:13:15 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1289,7 +1289,7 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	/* HW supports up to 288 STAs in HostAP and IBSS modes */
 	ic->ic_max_aid = min(IEEE80211_AID_MAX, MWX_WCID_MAX);
 
-	//XXX TODO ic->ic_max_rssi = IWX_MAX_DBM - IWX_MIN_DBM;
+	ic->ic_max_rssi = 0;	/* RSSI value is in dBm. */
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -4341,10 +4341,10 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 		}
 	
 
-		chain[0] = rcpi_to_rssi(MT_PRXV_RCPI0_MASK, MT_PRXV_RCPI0_SHIFT, v1);
-		chain[1] = rcpi_to_rssi(MT_PRXV_RCPI1_MASK, MT_PRXV_RCPI1_SHIFT, v1);
-		chain[2] = rcpi_to_rssi(MT_PRXV_RCPI2_MASK, MT_PRXV_RCPI2_SHIFT, v1);
-		chain[3] = rcpi_to_rssi(MT_PRXV_RCPI3_MASK, MT_PRXV_RCPI3_SHIFT, v1);
+		chain[0] = rcpi_to_rssi(MT_PRXV_RCPI0_SHIFT, v1);
+		chain[1] = rcpi_to_rssi(MT_PRXV_RCPI1_SHIFT, v1);
+		chain[2] = rcpi_to_rssi(MT_PRXV_RCPI2_SHIFT, v1);
+		chain[3] = rcpi_to_rssi(MT_PRXV_RCPI3_SHIFT, v1);
 
 		signal = -128;
 		for (i = 0; i < sc->sc_capa.num_streams; i++) {
