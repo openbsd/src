@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.34 2026/04/25 05:47:03 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.35 2026/05/09 07:08:43 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -365,19 +365,13 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
 	unsigned char *p;
-	SHA_LONG l;
 	size_t n;
 
 	if (len == 0)
 		return 1;
 
-	l = (c->Nl + (((SHA_LONG)len) << 3)) & 0xffffffffUL;
-	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
-	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh += (SHA_LONG)(len >> 29);	/* might cause compiler warning on 16-bit */
-	c->Nl = l;
+	/* Update message bit counter. */
+	crypto_add_u32dw_u64(&c->Nh, &c->Nl, (uint64_t)len << 3);
 
 	n = c->num;
 	if (n != 0) {
