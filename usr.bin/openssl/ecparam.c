@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.25 2025/01/19 10:24:17 tb Exp $ */
+/* $OpenBSD: ecparam.c,v 1.26 2026/05/09 14:24:58 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -386,8 +386,9 @@ ecparam_main(int argc, char **argv)
 		if (!EC_GROUP_check(group, NULL)) {
 			BIO_printf(bio_err, "failed\n");
 			ERR_print_errors(bio_err);
-		} else
-			BIO_printf(bio_err, "ok\n");
+			goto end;
+		}
+		BIO_printf(bio_err, "ok\n");
 
 	}
 	if (!cfg.noout) {
