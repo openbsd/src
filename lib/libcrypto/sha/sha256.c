@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.35 2026/05/09 07:08:43 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.36 2026/05/09 07:11:05 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -290,78 +290,78 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
 #endif
 
 int
-SHA224_Init(SHA256_CTX *c)
+SHA224_Init(SHA256_CTX *ctx)
 {
-	memset(c, 0, sizeof(*c));
+	memset(ctx, 0, sizeof(*ctx));
 
-	/* FIPS 180-4 section 5.3.2. */	
-	c->h[0] = 0xc1059ed8UL;
-	c->h[1] = 0x367cd507UL;
-	c->h[2] = 0x3070dd17UL;
-	c->h[3] = 0xf70e5939UL;
-	c->h[4] = 0xffc00b31UL;
-	c->h[5] = 0x68581511UL;
-	c->h[6] = 0x64f98fa7UL;
-	c->h[7] = 0xbefa4fa4UL;
+	/* FIPS 180-4 section 5.3.2. */
+	ctx->h[0] = 0xc1059ed8UL;
+	ctx->h[1] = 0x367cd507UL;
+	ctx->h[2] = 0x3070dd17UL;
+	ctx->h[3] = 0xf70e5939UL;
+	ctx->h[4] = 0xffc00b31UL;
+	ctx->h[5] = 0x68581511UL;
+	ctx->h[6] = 0x64f98fa7UL;
+	ctx->h[7] = 0xbefa4fa4UL;
 
-	c->md_len = SHA224_DIGEST_LENGTH;
+	ctx->md_len = SHA224_DIGEST_LENGTH;
 
 	return 1;
 }
 LCRYPTO_ALIAS(SHA224_Init);
 
 int
-SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
+SHA224_Update(SHA256_CTX *ctx, const void *data, size_t len)
 {
-	return SHA256_Update(c, data, len);
+	return SHA256_Update(ctx, data, len);
 }
 LCRYPTO_ALIAS(SHA224_Update);
 
 int
-SHA224_Final(unsigned char *md, SHA256_CTX *c)
+SHA224_Final(unsigned char *md, SHA256_CTX *ctx)
 {
-	return SHA256_Final(md, c);
+	return SHA256_Final(md, ctx);
 }
 LCRYPTO_ALIAS(SHA224_Final);
 
 unsigned char *
-SHA224(const unsigned char *d, size_t n, unsigned char *md)
+SHA224(const unsigned char *data, size_t len, unsigned char *md)
 {
-	SHA256_CTX c;
+	SHA256_CTX ctx;
 
-	SHA224_Init(&c);
-	SHA256_Update(&c, d, n);
-	SHA256_Final(md, &c);
+	SHA224_Init(&ctx);
+	SHA256_Update(&ctx, data, len);
+	SHA256_Final(md, &ctx);
 
-	explicit_bzero(&c, sizeof(c));
+	explicit_bzero(&ctx, sizeof(ctx));
 
 	return (md);
 }
 LCRYPTO_ALIAS(SHA224);
 
 int
-SHA256_Init(SHA256_CTX *c)
+SHA256_Init(SHA256_CTX *ctx)
 {
-	memset(c, 0, sizeof(*c));
+	memset(ctx, 0, sizeof(*ctx));
 
-	/* FIPS 180-4 section 5.3.3. */	
-	c->h[0] = 0x6a09e667UL;
-	c->h[1] = 0xbb67ae85UL;
-	c->h[2] = 0x3c6ef372UL;
-	c->h[3] = 0xa54ff53aUL;
-	c->h[4] = 0x510e527fUL;
-	c->h[5] = 0x9b05688cUL;
-	c->h[6] = 0x1f83d9abUL;
-	c->h[7] = 0x5be0cd19UL;
+	/* FIPS 180-4 section 5.3.3. */
+	ctx->h[0] = 0x6a09e667UL;
+	ctx->h[1] = 0xbb67ae85UL;
+	ctx->h[2] = 0x3c6ef372UL;
+	ctx->h[3] = 0xa54ff53aUL;
+	ctx->h[4] = 0x510e527fUL;
+	ctx->h[5] = 0x9b05688cUL;
+	ctx->h[6] = 0x1f83d9abUL;
+	ctx->h[7] = 0x5be0cd19UL;
 
-	c->md_len = SHA256_DIGEST_LENGTH;
+	ctx->md_len = SHA256_DIGEST_LENGTH;
 
 	return 1;
 }
 LCRYPTO_ALIAS(SHA256_Init);
 
 int
-SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
+SHA256_Update(SHA256_CTX *ctx, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
 	unsigned char *p;
@@ -371,38 +371,38 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 		return 1;
 
 	/* Update message bit counter. */
-	crypto_add_u32dw_u64(&c->Nh, &c->Nl, (uint64_t)len << 3);
+        crypto_add_u32dw_u64(&ctx->Nh, &ctx->Nl, (uint64_t)len << 3);
 
-	n = c->num;
+	n = ctx->num;
 	if (n != 0) {
-		p = (unsigned char *)c->data;
+		p = (unsigned char *)ctx->data;
 
 		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
 			memcpy(p + n, data, SHA_CBLOCK - n);
-			sha256_block_data_order(c, p, 1);
+			sha256_block_data_order(ctx, p, 1);
 			n = SHA_CBLOCK - n;
 			data += n;
 			len -= n;
-			c->num = 0;
+			ctx->num = 0;
 			memset(p, 0, SHA_CBLOCK);	/* keep it zeroed */
 		} else {
 			memcpy(p + n, data, len);
-			c->num += (unsigned int)len;
+			ctx->num += (unsigned int)len;
 			return 1;
 		}
 	}
 
 	n = len/SHA_CBLOCK;
 	if (n > 0) {
-		sha256_block_data_order(c, data, n);
+		sha256_block_data_order(ctx, data, n);
 		n *= SHA_CBLOCK;
 		data += n;
 		len -= n;
 	}
 
 	if (len != 0) {
-		p = (unsigned char *)c->data;
-		c->num = (unsigned int)len;
+		p = (unsigned char *)ctx->data;
+		ctx->num = (unsigned int)len;
 		memcpy(p, data, len);
 	}
 	return 1;
@@ -410,17 +410,17 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 LCRYPTO_ALIAS(SHA256_Update);
 
 void
-SHA256_Transform(SHA256_CTX *c, const unsigned char *data)
+SHA256_Transform(SHA256_CTX *ctx, const unsigned char *data)
 {
-	sha256_block_data_order(c, data, 1);
+	sha256_block_data_order(ctx, data, 1);
 }
 LCRYPTO_ALIAS(SHA256_Transform);
 
 int
-SHA256_Final(unsigned char *md, SHA256_CTX *c)
+SHA256_Final(unsigned char *md, SHA256_CTX *ctx)
 {
-	unsigned char *p = (unsigned char *)c->data;
-	size_t n = c->num;
+	unsigned char *p = (unsigned char *)ctx->data;
+	size_t n = ctx->num;
 	unsigned int nn;
 
 	p[n] = 0x80; /* there is always room for one */
@@ -429,15 +429,15 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 	if (n > (SHA_CBLOCK - 8)) {
 		memset(p + n, 0, SHA_CBLOCK - n);
 		n = 0;
-		sha256_block_data_order(c, p, 1);
+		sha256_block_data_order(ctx, p, 1);
 	}
 
 	memset(p + n, 0, SHA_CBLOCK - 8 - n);
-	c->data[SHA_LBLOCK - 2] = htobe32(c->Nh);
-	c->data[SHA_LBLOCK - 1] = htobe32(c->Nl);
+	ctx->data[SHA_LBLOCK - 2] = htobe32(ctx->Nh);
+	ctx->data[SHA_LBLOCK - 1] = htobe32(ctx->Nl);
 
-	sha256_block_data_order(c, p, 1);
-	c->num = 0;
+	sha256_block_data_order(ctx, p, 1);
+	ctx->num = 0;
 	memset(p, 0, SHA_CBLOCK);
 
 	/*
@@ -448,26 +448,26 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 	 * Idea behind separate cases for pre-defined lengths is to let the
 	 * compiler decide if it's appropriate to unroll small loops.
 	 */
-	switch (c->md_len) {
+	switch (ctx->md_len) {
 	case SHA224_DIGEST_LENGTH:
 		for (nn = 0; nn < SHA224_DIGEST_LENGTH / 4; nn++) {
-			crypto_store_htobe32(md, c->h[nn]);
+			crypto_store_htobe32(md, ctx->h[nn]);
 			md += 4;
 		}
 		break;
 
 	case SHA256_DIGEST_LENGTH:
 		for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) {
-			crypto_store_htobe32(md, c->h[nn]);
+			crypto_store_htobe32(md, ctx->h[nn]);
 			md += 4;
 		}
 		break;
 
 	default:
-		if (c->md_len > SHA256_DIGEST_LENGTH)
+		if (ctx->md_len > SHA256_DIGEST_LENGTH)
 			return 0;
-		for (nn = 0; nn < c->md_len / 4; nn++) {
-			crypto_store_htobe32(md, c->h[nn]);
+		for (nn = 0; nn < ctx->md_len / 4; nn++) {
+			crypto_store_htobe32(md, ctx->h[nn]);
 			md += 4;
 		}
 		break;
@@ -478,15 +478,15 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 LCRYPTO_ALIAS(SHA256_Final);
 
 unsigned char *
-SHA256(const unsigned char *d, size_t n, unsigned char *md)
+SHA256(const unsigned char *data, size_t len, unsigned char *md)
 {
-	SHA256_CTX c;
+	SHA256_CTX ctx;
 
-	SHA256_Init(&c);
-	SHA256_Update(&c, d, n);
-	SHA256_Final(md, &c);
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx, data, len);
+	SHA256_Final(md, &ctx);
 
-	explicit_bzero(&c, sizeof(c));
+	explicit_bzero(&ctx, sizeof(ctx));
 
 	return (md);
 }
