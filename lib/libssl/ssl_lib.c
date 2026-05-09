@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.333 2025/06/09 10:14:38 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.334 2026/05/09 11:29:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -752,7 +752,6 @@ SSL_set_rfd(SSL *s, int fd)
 }
 LSSL_ALIAS(SSL_set_rfd);
 
-
 /* return length of latest Finished message we sent, copy to 'buf' */
 size_t
 SSL_get_finished(const SSL *s, void *buf, size_t count)
@@ -780,7 +779,6 @@ SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 	return (ret);
 }
 LSSL_ALIAS(SSL_get_peer_finished);
-
 
 int
 SSL_get_verify_mode(const SSL *s)
@@ -3498,7 +3496,6 @@ SSL_set_tmp_ecdh_callback(SSL *ssl, EC_KEY *(*ecdh)(SSL *ssl, int is_export,
 }
 LSSL_ALIAS(SSL_set_tmp_ecdh_callback);
 
-
 void
 SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version,
     int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
@@ -3570,6 +3567,7 @@ SSL_set_min_proto_version(SSL *ssl, uint16_t version)
 	    &ssl->min_proto_version);
 }
 LSSL_ALIAS(SSL_set_min_proto_version);
+
 int
 SSL_get_max_proto_version(SSL *ssl)
 {
