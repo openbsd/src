@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.77 2026/05/06 09:05:48 kettenis Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.78 2026/05/10 09:10:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -248,6 +248,19 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		default:
 			break;
 		}
+	}
+
+	if (lowld == NULL) {
+		/*
+		 * No PT_LOAD segments.  While technicaly this is
+		 * allowed by the ELF standard, it just doesn't make
+		 * sense for a shared library.
+		 */
+		DL_DEB(("%s: no PT_LOAD segments in %s\n",
+		    __func__, libname));
+		_dl_close(libfile);
+		_dl_errno = DL_CANT_LOAD_OBJ;
+		return NULL;
 	}
 
 #define LOFF ((Elf_Addr)lowld->start - lowld->moff)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.98 2026/05/06 09:05:48 kettenis Exp $ */
+/*	$OpenBSD: library.c,v 1.99 2026/05/10 09:10:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -213,6 +213,20 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 			break;
 		}
 	}
+
+	if (minva == ELF_NO_ADDR) {
+		/*
+		 * No PT_LOAD segments.  While technicaly this is
+		 * allowed by the ELF standard, it just doesn't make
+		 * sense for a shared library.
+		 */
+		DL_DEB(("%s: no PT_LOAD segments in %s\n",
+		    __func__, libname));
+		_dl_close(libfile);
+		_dl_errno = DL_CANT_LOAD_OBJ;
+		return NULL;
+	}
+
 	minva = TRUNC_PG(minva);
 	maxva = ROUND_PG(maxva);
 
