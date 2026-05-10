@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.12 2025/06/08 22:40:30 schwarze Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.13 2026/05/10 10:35:20 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: May 10 2026 $
 .Dt X509V3_ADDR_ADD_INHERIT 3
 .Os
 .Sh NAME
@@ -467,6 +467,7 @@ dereference.
 The code only supports the IPv4 and IPv6 AFIs.
 This is not consistently enforced across implementations.
 .Pp
+In some implementations
 .Fn X509v3_addr_add_range
 fails to clear the unused bits set to 1 in the last octet of
 the
