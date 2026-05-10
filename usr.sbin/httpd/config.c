@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.69 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.70 2026/05/10 10:02:04 kirill Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -560,6 +560,10 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		}
 
 		f = SRVFLAG_FCGI|SRVFLAG_NO_FCGI;
+		if ((srv_conf->flags & f) == 0)
+			srv_conf->flags |= parent->flags & f;
+
+		f = SRVFLAG_GZIP_STATIC|SRVFLAG_NO_GZIP_STATIC;
 		if ((srv_conf->flags & f) == 0)
 			srv_conf->flags |= parent->flags & f;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.131 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.132 2026/05/10 10:02:04 kirill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1244,9 +1244,11 @@ fcgiport	: NUMBER		{
 
 gzip_static	: NO GZIPSTATIC		{
 			srv->srv_conf.flags &= ~SRVFLAG_GZIP_STATIC;
+			srv->srv_conf.flags |= SRVFLAG_NO_GZIP_STATIC;
 		}
 		| GZIPSTATIC		{
 			srv->srv_conf.flags |= SRVFLAG_GZIP_STATIC;
+			srv->srv_conf.flags &= ~SRVFLAG_NO_GZIP_STATIC;
 		}
 		;
 
