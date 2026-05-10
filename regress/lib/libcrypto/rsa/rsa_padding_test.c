@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_padding_test.c,v 1.2 2024/03/30 02:20:39 jsing Exp $	*/
+/*	$OpenBSD: rsa_padding_test.c,v 1.3 2026/05/10 14:08:02 tb Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -174,7 +174,7 @@ test_pkcs1_type1(void)
 		err = ERR_peek_error();
 		if (pt->want == -1 && ERR_GET_REASON(err) != pt->want_error) {
 			fprintf(stderr, "FAIL: test %zu - PKCS1 type 1 padding "
-			    "check failed with error reason %i, want %i\n",
+			    "check failed with error reason %d, want %d\n",
 			    i, ERR_GET_REASON(err), pt->want_error);
 			ERR_print_errors_fp(stderr);
 			goto failed;
@@ -310,7 +310,7 @@ test_pkcs1_type2(void)
 		err = ERR_peek_error();
 		if (pt->want == -1 && ERR_GET_REASON(err) != pt->want_error) {
 			fprintf(stderr, "FAIL: test %zu - PKCS1 type 2 padding "
-			    "check failed with error reason %i, want %i\n",
+			    "check failed with error reason %d, want %d\n",
 			    i, ERR_GET_REASON(err), pt->want_error);
 			ERR_print_errors_fp(stderr);
 			goto failed;
