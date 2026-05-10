@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.16 2026/05/01 20:03:58 miod Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.17 2026/05/10 15:57:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -149,10 +149,10 @@ struct	sti_dd {
 #define	STI_BUSSUPPORT_GSC15X	0x02	/*	supports GSC 1.5X */
 #define	STI_BUSSUPPORT_GSC2X	0x04	/*	supports GSC 2.X */
 #define	STI_BUSSUPPORT_PCIIOEIM	0x08	/*	will use directed int */
-#define	STI_BUSSUPPORT_PCISTD	0x10	/*	will use std PCI int */
-#define	STI_BUSSUPPORT_ILOCK	0x20	/*	supports implicit locking */
+#define	STI_BUSSUPPORT_ILOCK	0x10	/*	supports implicit locking */
+#define	STI_BUSSUPPORT_2DECODE	0x20	/*	single address decoder */
 #define	STI_BUSSUPPORT_ROMMAP	0x40	/*	rom is only in pci erom space */
-#define	STI_BUSSUPPORT_2DECODE	0x80	/*	single address decoder */
+#define	STI_BUSSUPPORT_PCISTD	0x80	/*	will use std PCI int */
 	u_int8_t	dd_ebussup;	/* 0x37 extended bus support */
 #define	STI_EBUSSUPPORT_DMA	0x01	/*	supports dma */
 #define	STI_EBUSSUPPORT_PIOLOCK	0x02	/*	no implicit locking for dma */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.15 2026/05/01 20:03:58 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.16 2026/05/10 15:57:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -233,6 +233,7 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	uint8_t bussup;
 	int i;
 	int rc;
+	int docopy;
 
 	struct sti_pcirom_walk_ctx ctx;
 
@@ -277,6 +278,8 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		goto unmap_disable_return;
 	}
 
+	docopy = 0;
+
 	/*
 	 * Read the STI region BAR assignments.
 	 */
@@ -290,10 +293,13 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		 * Region 0 is supposed to always be the ROM. FireGL-UX
 		 * ROM agrees so well that it will report the expansion
 		 * ROM BAR rather than any regular BAR.
-		 * We'll address this later after remapping the ROM.
+		 * We'll address this later after making a copy of the ROM
+		 * image.
 		 */
-		if (i == 0 && spc->sc_region_bars[i] == PCI_ROM_REG)
+		if (i == 0 && spc->sc_region_bars[i] == PCI_ROM_REG) {
+			docopy = 1;
 			continue;
+		}
 
 		rc = sti_readbar(sc, pa, i, spc->sc_region_bars[i]);
 		if (rc != 0)
@@ -315,17 +321,17 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	/*
 	 * Check the bussup field. If the MULTIPLE MAP bit is set, the PCI
 	 * ROM is only accessible through the PCI expansion ROM space and
-	 * never through regular PCI BARs; if the *DUAL_DECODE bit is also
-	 * set, a single decoder is used for both the ROM and the regular
-	 * BARs, which means that, if the ROM is enabled, only the ROM is
-	 * accessible.
-	 * In this case, we need to make a copy of the STI ROM image and
-	 * point the STI ROM region to that copy.
+	 * never through regular PCI BARs. Since we do not want to keep the
+	 * PCI ROM space mapped, in this case, we need to make a copy of the
+	 * STI ROM image and point the STI ROM region to that copy.
 	 */
 
-	bussup = bus_space_read_1(pa->pa_memt, romh, offs + 0x36);
-	if ((bussup & (STI_BUSSUPPORT_ROMMAP | STI_BUSSUPPORT_2DECODE)) ==
-	    (STI_BUSSUPPORT_ROMMAP | STI_BUSSUPPORT_2DECODE)) {
+	if (!docopy) {
+		bussup = bus_space_read_1(pa->pa_memt, romh, offs + 0x36);
+		if (bussup & STI_BUSSUPPORT_ROMMAP)
+			docopy = 1;
+	}
+	if (docopy) {
 		spc->sc_dssize = dssize;
 		spc->sc_romsize = dssize + stiromsize;
 		if (!(spc->sc_romcopy = km_alloc(round_page(spc->sc_romsize),
@@ -345,7 +351,7 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	 */
 
 	bus_space_unmap(pa->pa_memt, romh, romsize);
-	if (spc->sc_romcopy == NULL) {
+	if (!docopy) {
 		rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address) + offs,
 		    stiromsize, 0, &spc->sc_romh);
 		if (rc != 0) {
@@ -364,16 +370,8 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	 * Now set up region 0 if we had skipped it earlier.
 	 */
 
-	if (spc->sc_romcopy == NULL) {
-		if (spc->sc_region_bars[0] == PCI_ROM_REG) {
-			sc->bases[0] = (bus_addr_t)
-			    bus_space_vaddr(pa->pa_memt, spc->sc_romh);
-			/* Include the DS structure in region 0. */
-			sc->bases[0] -= dssize;
-		}
-	} else {
+	if (docopy)
 		sc->bases[0] = (bus_addr_t)spc->sc_romcopy;
-	}
 
 	sti_pci_disable_rom(sc);
 	return 0;
@@ -397,10 +395,10 @@ sti_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 	pcireg_t type;
 	int rc;
 
-	if (bar == 0) {
-		sc->bases[region] = 0;
+	sc->bases[region] = 0;
+
+	if (bar == 0)
 		return 0;
-	}
 
 	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
 #ifdef DIAGNOSTIC
