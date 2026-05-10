@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.14 2025/01/02 13:10:03 tb Exp $ */
+/* $OpenBSD: s_socket.c,v 1.15 2026/05/10 03:26:07 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -260,15 +260,8 @@ do_accept(int acc_sock, int *sock)
 		h2 = gethostbyname(host);
 		if (h2 == NULL) {
 			BIO_printf(bio_err, "gethostbyname failure\n");
-			close(ret);
-			free(host);
-			return (0);
-		}
-		if (h2->h_addrtype != AF_INET) {
+		} else if (h2->h_addrtype != AF_INET) {
 			BIO_printf(bio_err, "gethostbyname addr is not AF_INET\n");
-			close(ret);
-			free(host);
-			return (0);
 		}
 	}
 
