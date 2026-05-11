@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.170 2026/05/10 10:02:04 kirill Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.171 2026/05/11 22:33:10 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -119,7 +119,7 @@ enum httpchunk {
 
 struct ctl_flags {
 	uint8_t		 cf_opts;
-	uint32_t	 cf_flags;
+	uint64_t	 cf_flags;
 	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
 };
 
@@ -362,37 +362,37 @@ struct client {
 };
 SPLAY_HEAD(client_tree, client);
 
-#define SRVFLAG_INDEX		0x00000001
-#define SRVFLAG_NO_INDEX	0x00000002
-#define SRVFLAG_AUTO_INDEX	0x00000004
-#define SRVFLAG_NO_AUTO_INDEX	0x00000008
-#define SRVFLAG_ROOT		0x00000010
-#define SRVFLAG_LOCATION	0x00000020
-#define SRVFLAG_FCGI		0x00000040
-#define SRVFLAG_NO_FCGI		0x00000080
-#define SRVFLAG_LOG		0x00000100
-#define SRVFLAG_NO_LOG		0x00000200
-#define SRVFLAG_ERRDOCS		0x00000400
-#define SRVFLAG_SYSLOG		0x00000800
-#define SRVFLAG_NO_SYSLOG	0x00001000
-#define SRVFLAG_TLS		0x00002000
-#define SRVFLAG_ACCESS_LOG	0x00004000
-#define SRVFLAG_ERROR_LOG	0x00008000
-#define SRVFLAG_AUTH		0x00010000
-#define SRVFLAG_NO_AUTH		0x00020000
-#define SRVFLAG_BLOCK		0x00040000
-#define SRVFLAG_NO_BLOCK	0x00080000
-#define SRVFLAG_LOCATION_MATCH	0x00100000
-#define SRVFLAG_SERVER_MATCH	0x00200000
-#define SRVFLAG_SERVER_HSTS	0x00400000
-#define SRVFLAG_DEFAULT_TYPE	0x00800000
-#define SRVFLAG_PATH_REWRITE	0x01000000
-#define SRVFLAG_NO_PATH_REWRITE	0x02000000
-#define SRVFLAG_GZIP_STATIC	0x04000000
-#define SRVFLAG_NO_BANNER	0x08000000
-#define SRVFLAG_NO_GZIP_STATIC	0x10000000
-#define SRVFLAG_LOCATION_FOUND	0x40000000
-#define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
+#define SRVFLAG_INDEX			0x0000000000000001ULL
+#define SRVFLAG_NO_INDEX		0x0000000000000002ULL
+#define SRVFLAG_AUTO_INDEX		0x0000000000000004ULL
+#define SRVFLAG_NO_AUTO_INDEX		0x0000000000000008ULL
+#define SRVFLAG_ROOT			0x0000000000000010ULL
+#define SRVFLAG_LOCATION		0x0000000000000020ULL
+#define SRVFLAG_FCGI			0x0000000000000040ULL
+#define SRVFLAG_NO_FCGI			0x0000000000000080ULL
+#define SRVFLAG_LOG			0x0000000000000100ULL
+#define SRVFLAG_NO_LOG			0x0000000000000200ULL
+#define SRVFLAG_ERRDOCS			0x0000000000000400ULL
+#define SRVFLAG_SYSLOG			0x0000000000000800ULL
+#define SRVFLAG_NO_SYSLOG		0x0000000000001000ULL
+#define SRVFLAG_TLS			0x0000000000002000ULL
+#define SRVFLAG_ACCESS_LOG		0x0000000000004000ULL
+#define SRVFLAG_ERROR_LOG		0x0000000000008000ULL
+#define SRVFLAG_AUTH			0x0000000000010000ULL
+#define SRVFLAG_NO_AUTH			0x0000000000020000ULL
+#define SRVFLAG_BLOCK			0x0000000000040000ULL
+#define SRVFLAG_NO_BLOCK		0x0000000000080000ULL
+#define SRVFLAG_LOCATION_MATCH		0x0000000000100000ULL
+#define SRVFLAG_SERVER_MATCH		0x0000000000200000ULL
+#define SRVFLAG_SERVER_HSTS		0x0000000000400000ULL
+#define SRVFLAG_DEFAULT_TYPE		0x0000000000800000ULL
+#define SRVFLAG_PATH_REWRITE		0x0000000001000000ULL
+#define SRVFLAG_NO_PATH_REWRITE		0x0000000002000000ULL
+#define SRVFLAG_GZIP_STATIC		0x0000000004000000ULL
+#define SRVFLAG_NO_BANNER		0x0000000008000000ULL
+#define SRVFLAG_NO_GZIP_STATIC		0x0000000010000000ULL
+#define SRVFLAG_LOCATION_FOUND		0x0000000040000000ULL
+#define SRVFLAG_LOCATION_NOT_FOUND	0x0000000080000000ULL
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
@@ -516,7 +516,7 @@ struct server_config {
 	struct server_tls_ticket tls_ticket_key;
 	int			 tls_ticket_lifetime;
 
-	uint32_t		 flags;
+	uint64_t		 flags;
 	int			 strip;
 	uint8_t			 tcpflags;
 	int			 tcpbufsiz;
@@ -582,7 +582,7 @@ TAILQ_HEAD(serverlist, server);
 
 struct httpd {
 	uint8_t			 sc_opts;
-	uint32_t		 sc_flags;
+	uint64_t		 sc_flags;
 	const char		*sc_conffile;
 	struct event		 sc_ev;
 	uint16_t		 sc_prefork_server;
@@ -756,7 +756,7 @@ struct auth	*auth_add(struct serverauth *, struct auth *);
 struct auth	*auth_byid(struct serverauth *, uint32_t);
 void		 auth_free(struct serverauth *, struct auth *);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
-const char	*printb_flags(const uint32_t, const char *);
+const char	*printb_flags(const uint64_t, const char *);
 void		 getmonotime(struct timeval *);
 
 extern struct httpd *httpd_env;

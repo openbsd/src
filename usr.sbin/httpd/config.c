@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.70 2026/05/10 10:02:04 kirill Exp $	*/
+/*	$OpenBSD: config.c,v 1.71 2026/05/11 22:33:10 kirill Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -501,7 +501,7 @@ config_getserver_config(struct httpd *env, struct server *srv,
 #endif
 	struct server_config	*srv_conf, *parent;
 	uint8_t			*p = imsg->data;
-	unsigned int		 f;
+	uint64_t		 f;
 	size_t			 s;
 
 	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)

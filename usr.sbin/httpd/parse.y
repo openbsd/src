@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.132 2026/05/10 10:02:04 kirill Exp $	*/
+/*	$OpenBSD: parse.y,v 1.133 2026/05/11 22:33:10 kirill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -646,7 +646,7 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			SPLAY_INIT(&srv->srv_clients);
 		} '{' optnl serveropts_l '}'	{
 			struct server	*s = NULL;
-			uint32_t	 f;
+			uint64_t	 f;
 
 			f = SRVFLAG_LOCATION_FOUND |
 			    SRVFLAG_LOCATION_NOT_FOUND;

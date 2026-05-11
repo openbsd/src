@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.77 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.78 2026/05/11 22:33:10 kirill Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1218,7 +1218,7 @@ print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 }
 
 const char *
-printb_flags(const uint32_t v, const char *bits)
+printb_flags(const uint64_t v, const char *bits)
 {
 	static char	 buf[2][BUFSIZ];
 	static int	 idx = 0;
@@ -1231,13 +1231,15 @@ printb_flags(const uint32_t v, const char *bits)
 	if (bits) {
 		bits++;
 		while ((i = *bits++)) {
-			if (v & (1 << (i - 1))) {
+			if (v & (1ULL << (i - 1))) {
 				if (any) {
 					*p++ = ',';
 					*p++ = ' ';
 				}
 				any = 1;
-				for (; (c = *bits) > 32; bits++) {
+				for (; isalnum((unsigned char)*bits) ||
+				    *bits == '_'; bits++) {
+					c = *bits;
 					if (c == '_')
 						*p++ = ' ';
 					else
@@ -1245,7 +1247,8 @@ printb_flags(const uint32_t v, const char *bits)
 						    tolower((unsigned char)c);
 				}
 			} else
-				for (; *bits > 32; bits++)
+				for (; isalnum((unsigned char)*bits) ||
+				    *bits == '_'; bits++)
 					;
 		}
 	}
