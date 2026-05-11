@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.196 2026/04/11 16:12:40 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.197 2026/05/11 06:09:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -88,7 +88,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
-#include <machine/exec.h>
 #include <machine/elf.h>
 
 int	elf_load_file(struct proc *, char *, struct exec_package *,
