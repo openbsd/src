@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.c,v 1.3 2026/03/06 13:10:14 claudio Exp $	*/
+/*	$OpenBSD: bitmap.c,v 1.4 2026/05/11 12:14:38 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -24,10 +24,10 @@
 #include "bgpd.h"
 
 #define BITMAP_BITS		64
-#define BITMAP_ALLOCBITS	(4 * BITMAP_BITS)
-#define BITMAP_ROUNDUP(x, y)	((((x) + (y) - 1)/(y)) * (y))
-#define BITMAP_SETPTR(x)	((uint64_t)(x) | 0x1)
-#define BITMAP_GETPTR(x)	(uint64_t *)((x) & ~0x1)
+#define BITMAP_ALLOCSIZE	4
+#define BITMAP_ROUNDUP(x, y)	((((x) + (y))/(y)) * (y))
+#define BITMAP_SETPTR(x)	((uint64_t)(uintptr_t)(x) | 0x1)
+#define BITMAP_GETPTR(x)	(uint64_t *)((uintptr_t)(x) & ~0x1)
 
 size_t bitmap_size;
 uint64_t bitmap_cnt;
@@ -37,7 +37,7 @@ bitmap_getset(struct bitmap *map, uint64_t **ptr, uint32_t *max)
 {
 	if ((map->data[0] & 0x1) == 0) {
 		*ptr = map->data;
-		*max = nitems(map->data) * BITMAP_BITS;
+		*max = nitems(map->data);
 	} else {
 		*ptr = BITMAP_GETPTR(map->data[0]);
 		*max = map->data[1];
@@ -52,31 +52,33 @@ bitmap_free(struct bitmap *map)
 
 	if (map->data[0] & 0x1) {
 		bitmap_getset(map, &ptr, &max);
-		bitmap_size -= max / 8;
+		bitmap_size -= max * sizeof(uint64_t);
 		bitmap_cnt--;
 		free(ptr);
 	}
 }
 
 static int
-bitmap_resize(struct bitmap *map, uint32_t bid)
+bitmap_resize(struct bitmap *map, uint32_t elm)
 {
 	uint64_t *ptr, *new;
-	uint32_t elm, size, oldmax, newmax;
+	uint32_t oldmax, newmax;
 
 	bitmap_getset(map, &ptr, &oldmax);
 
 	/* get new map */
-	newmax = BITMAP_ROUNDUP(bid + 1, BITMAP_ALLOCBITS);
-	if ((new = malloc(newmax / 8)) == NULL)
+	newmax = BITMAP_ROUNDUP(elm, BITMAP_ALLOCSIZE);
+	if (newmax < oldmax) {
+		errno = ERANGE;
+		return -1;
+	}
+	if ((new = reallocarray(NULL, newmax, sizeof(*new))) == NULL)
 		return -1;
 
 	/* copy data over */
-	size = oldmax / BITMAP_BITS;
-	for (elm = 0; elm < size; elm++)
+	for (elm = 0; elm < oldmax; elm++)
 		new[elm] = ptr[elm];
-	size = newmax / BITMAP_BITS;
-	for ( ; elm < size; elm++)
+	for ( ; elm < newmax; elm++)
 		new[elm] = 0;
 
 	/* free old data */
@@ -85,7 +87,7 @@ bitmap_resize(struct bitmap *map, uint32_t bid)
 	/* set new data */
 	map->data[0] = BITMAP_SETPTR(new);
 	map->data[1] = newmax;
-	bitmap_size += newmax / 8;
+	bitmap_size += newmax * sizeof(*new);
 	bitmap_cnt++;
 
 	return 0;
@@ -102,21 +104,20 @@ bitmap_set(struct bitmap *map, uint32_t bid)
 	uint32_t  max, elm;
 
 	bitmap_getset(map, &ptr, &max);
+	elm = bid / BITMAP_BITS;
 
 	if (bid == 0) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (bid >= max) {
-		if (bitmap_resize(map, bid) == -1)
+	if (elm >= max) {
+		if (bitmap_resize(map, elm) == -1)
 			return -1;
 		bitmap_getset(map, &ptr, &max);
 	}
 
-	elm = bid / BITMAP_BITS;
 	bid %= BITMAP_BITS;
-
 	ptr[elm] |= (1ULL << bid);
 	return 0;
 }
@@ -131,13 +132,12 @@ bitmap_test(struct bitmap *map, uint32_t bid)
 	uint32_t  max, elm;
 
 	bitmap_getset(map, &ptr, &max);
+	elm = bid / BITMAP_BITS;
 
-	if (bid >= max || bid == 0)
+	if (elm >= max || bid == 0)
 		return 0;
 
-	elm = bid / BITMAP_BITS;
 	bid %= BITMAP_BITS;
-
 	return (ptr[elm] & (1ULL << bid)) != 0;
 }
 
@@ -151,13 +151,12 @@ bitmap_clear(struct bitmap *map, uint32_t bid)
 	uint32_t  max, elm;
 
 	bitmap_getset(map, &ptr, &max);
+	elm = bid / BITMAP_BITS;
 
-	if (bid >= max || bid == 0)
+	if (elm >= max || bid == 0)
 		return;
 
-	elm = bid / BITMAP_BITS;
 	bid %= BITMAP_BITS;
-
 	ptr[elm] &= ~(1ULL << bid);
 }
 
@@ -169,12 +168,11 @@ int
 bitmap_empty(struct bitmap *map)
 {
 	uint64_t *ptr, m;
-	uint32_t elm, max, end;
+	uint32_t elm, max;
 
 	bitmap_getset(map, &ptr, &max);
 
-	end = max / BITMAP_BITS;
-	for (elm = 0; elm < end; elm++) {
+	for (elm = 0; elm < max; elm++) {
 		m = ptr[elm];
 		if (elm == 0)
 			m &= ~0x1;	/* skip inline marker */
@@ -191,12 +189,11 @@ int
 bitmap_id_get(struct bitmap *map, uint32_t *bid)
 {
 	uint64_t *ptr, m;
-	uint32_t elm, max, end;
+	uint32_t elm, max;
 
 	bitmap_getset(map, &ptr, &max);
 
-	end = max / BITMAP_BITS;
-	for (elm = 0; elm < end; elm++) {
+	for (elm = 0; elm < max; elm++) {
 		m = ~ptr[elm];
 		if (elm == 0)
 			m &= ~0x1;	/* skip inline marker */
@@ -209,10 +206,10 @@ bitmap_id_get(struct bitmap *map, uint32_t *bid)
 		return 0;
 	}
 
-	if (bitmap_set(map, max) == -1)
+	*bid = max * BITMAP_BITS;
+	if (bitmap_set(map, *bid) == -1)
 		return -1;
 
-	*bid = max;
 	return 0;
 }
 
