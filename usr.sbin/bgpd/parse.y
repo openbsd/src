@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.492 2026/05/08 12:03:50 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.493 2026/05/11 18:41:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5537,7 +5537,7 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 		RB_INSERT(aspa_tree, &conf->aspa, aspa);
 	}
 
-	if (MAX_ASPA_SPAS_COUNT - aspa->num <= tas->num) {
+	if (tas->num > MAX_ASPA_SPAS_COUNT - aspa->num) {
 		yyerror("too many providers for customer-as %u", as);
 		return -1;
 	}
