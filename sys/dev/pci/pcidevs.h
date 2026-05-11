@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2133 2026/04/06 23:59:43 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2134 2026/05/11 20:16:46 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -9310,6 +9310,7 @@
 #define	PCI_PRODUCT_ROCKCHIP_RK3399	0x0100		/* RK3399 */
 #define	PCI_PRODUCT_ROCKCHIP_RK3528	0x3528		/* RK3528 */
 #define	PCI_PRODUCT_ROCKCHIP_RK3566	0x3566		/* RK3566 */
+#define	PCI_PRODUCT_ROCKCHIP_RK3576	0x3576		/* RK3576 */
 #define	PCI_PRODUCT_ROCKCHIP_RK3588	0x3588		/* RK3588 */
 
 /* Rockwell products */
