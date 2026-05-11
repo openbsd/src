@@ -81,13 +81,13 @@ llist_empty(struct llist_head *head)
 
 #define llist_for_each_entry_safe(pos, n, node, member) 		\
 	for (pos = llist_entry((node), __typeof(*pos), member); 	\
-	    ((char *)(pos) + offsetof(typeof(*(pos)), member)) != NULL && \
+	    ((uintptr_t)(pos) + offsetof(typeof(*(pos)), member)) != 0 && \
 	    (n = llist_entry(pos->member.next, __typeof(*pos), member), pos); \
 	    pos = n)
 
 #define llist_for_each_entry(pos, node, member)				\
 	for ((pos) = llist_entry((node), __typeof(*(pos)), member);	\
-	    ((char *)(pos) + offsetof(typeof(*(pos)), member)) != NULL;	\
+	    ((uintptr_t)(pos) + offsetof(typeof(*(pos)), member)) != 0;	\
 	    (pos) = llist_entry((pos)->member.next, __typeof(*(pos)), member))
 
 #endif
