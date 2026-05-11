@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.17 2025/10/23 19:06:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.18 2026/05/11 22:41:23 bluhm Exp $
 
 .PATH: ${.CURDIR}/lib
 
 LIB=	expat
-SRCS=	xmlparse.c xmltok.c xmlrole.c
+SRCS=	xmlparse.c xmltok.c xmlrole.c random_arc4random_buf.c
 CFLAGS+=-I${.CURDIR} -fvisibility=hidden -DXML_ENABLE_VISIBILITY=1
 
 PC_FILES=expat.pc
