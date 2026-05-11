@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.534 2026/05/08 12:03:50 tb Exp $ */
+/*	$OpenBSD: session.c,v 1.535 2026/05/11 20:33:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1967,6 +1967,8 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 					continue;
 				session_template_clone(xp, NULL, xp->conf.id,
 				    xp->conf.remote_as);
+
+				xp->local_bgpid = nc->bgpid;
 
 				if (xp->rdesession)
 					imsg_rde(IMSG_SESSION_ADD,
