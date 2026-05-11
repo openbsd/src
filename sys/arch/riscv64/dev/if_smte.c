@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smte.c,v 1.1 2026/04/13 12:03:19 kettenis Exp $	*/
+/*	$OpenBSD: if_smte.c,v 1.2 2026/05/11 10:25:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
@@ -153,6 +153,11 @@ struct smte_desc {
 /* Rx bits */
 #define RX_DESC0_FRAME_PACKET_LENGTH_MASK	(0x3fff << 0)
 #define RX_DESC0_FRAME_PACKET_LENGTH_SHIFT	0
+#define RX_DESC0_FRAME_RUNT			(1U << 15)
+#define RX_DESC0_FRAME_CRC_ERR			(1U << 20)
+#define RX_DESC0_FRAME_MAX_LEN_ERR		(1U << 21)
+#define RX_DESC0_FRAME_JABBER_ERR		(1U << 22)
+#define RX_DESC0_FRAME_LENGTH_ERR		(1U << 23)
 #define RX_DESC0_OWN				(1U << 31)
 #define RX_DESC1_SIZE1_MASK			(0xfffff << 0)
 #define RX_DESC1_SIZE1_SHIFT			0
@@ -842,15 +847,24 @@ smte_rx_proc(struct smte_softc *sc)
 		    len, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxb->sb_map);
 
-		/* Strip off CRC. */
-		len -= ETHER_CRC_LEN;
-		KASSERT(len > 0);
-
 		m = rxb->sb_m;
 		rxb->sb_m = NULL;
-		m->m_pkthdr.len = m->m_len = len;
 
-		ml_enqueue(&ml, m);
+		if (len < ETHER_CRC_LEN || len > m->m_len ||
+		    rxd->sd_desc0 & RX_DESC0_FRAME_RUNT ||
+		    rxd->sd_desc0 & RX_DESC0_FRAME_CRC_ERR ||
+		    rxd->sd_desc0 & RX_DESC0_FRAME_MAX_LEN_ERR ||
+		    rxd->sd_desc0 & RX_DESC0_FRAME_JABBER_ERR ||
+		    rxd->sd_desc0 & RX_DESC0_FRAME_LENGTH_ERR) {
+			ifp->if_ierrors++;
+			m_freem(m);
+		} else {
+			/* Strip off CRC. */
+			len -= ETHER_CRC_LEN;
+
+			m->m_pkthdr.len = m->m_len = len;
+			ml_enqueue(&ml, m);
+		}
 
 		put++;
 		if (sc->sc_rx_cons == (SMTE_NRXDESC - 1))
