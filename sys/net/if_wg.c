@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.48 2026/04/13 01:10:39 dlg Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.49 2026/05/11 06:41:29 dlg Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2194,6 +2194,13 @@ wg_qstart(struct ifqueue *ifq)
 	while ((m = ifq_dequeue(ifq)) != NULL) {
 		t = wg_tag_get(m);
 		peer = t->t_peer;
+
+#if NBPFILTER > 0
+		if (sc->sc_if.if_bpf)
+			bpf_mtap_af(sc->sc_if.if_bpf, m->m_pkthdr.ph_family, m,
+			    BPF_DIRECTION_OUT);
+#endif
+
 		if (mq_push(&peer->p_stage_queue, m) != 0)
 			counters_inc(ifp->if_counters, ifc_oqdrops);
 		if (!peer->p_start_onlist) {
@@ -2240,12 +2247,6 @@ wg_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		ret = EAFNOSUPPORT;
 		goto error;
 	}
-
-#if NBPFILTER > 0
-	if (sc->sc_if.if_bpf)
-		bpf_mtap_af(sc->sc_if.if_bpf, sa->sa_family, m,
-		    BPF_DIRECTION_OUT);
-#endif
 
 	if (peer == NULL) {
 		ret = ENETUNREACH;
