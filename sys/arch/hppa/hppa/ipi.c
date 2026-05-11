@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.6 2026/05/11 06:13:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -25,7 +25,6 @@
 #include <machine/fpu.h>
 #include <machine/iomod.h>
 #include <machine/intr.h>
-#include <machine/mutex.h>
 #include <machine/reg.h>
 
 void hppa_ipi_nop(void);
