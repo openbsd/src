@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.37 2022/02/20 23:14:36 jsg Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.38 2026/05/11 19:44:17 kettenis Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 20 2022 $
+.Dd $Mdocdate: May 11 2026 $
 .Dt BUS_DMAMAP_CREATE 9
 .Os
 .Sh NAME
@@ -731,8 +731,7 @@ function maps memory allocated with
 or
 .Fn bus_dmamem_alloc_range
 into kernel virtual address space.
-This function returns 0 on success, an error code otherwise, and must not be
-called from an interrupt context.
+This function returns 0 on success, or an error code otherwise.
 .Pp
 The
 .Fn bus_dmamem_map
@@ -799,8 +798,7 @@ The
 function unmaps memory previously mapped with
 .Fn bus_dmamem_map ,
 freeing the kernel virtual address space used by the mapping.
-This function always succeeds if given valid arguments, but must not be
-called from an interrupt context.
+This function always succeeds if given valid arguments.
 .Pp
 .Fn bus_dmamem_unmap
 arguments are as follows:
@@ -872,6 +870,23 @@ See
 above for a description of this flag.
 .El
 .El
+.Sh CONTEXT
+.Fn bus_dmamap_create ,
+.Fn bus_dmamap_destroy ,
+.Fn bus_dmamem_alloc ,
+.Fn bus_dmamem_alloc_range ,
+.Fn bus_dmamem_free ,
+.Fn bus_dmamem_map
+and
+.Fn bus_dmamem_unmap
+can be called from autoconf, or from process context.
+.Fn bus_dmamap_load_mbuf ,
+.Fn bus_dmamap_load_uio ,
+.Fn bus_dmamap_load_raw ,
+.Fn bus_dmamap_unload
+and
+.Fn bus_dmamap_sync
+can be called during autoconf, from process context, or from interrupt context.
 .Sh SEE ALSO
 .Xr bus_space 9
 .Sh HISTORY
