@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.68 2024/11/07 08:12:12 miod Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.69 2026/05/11 06:24:47 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -186,7 +186,6 @@
 
 #include <machine/pmap.h>
 #include <machine/pcb.h>
-#include <machine/param.h>
 #include <arm/cpufunc.h>
 
 /*
