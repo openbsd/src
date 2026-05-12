@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.46 2024/03/21 11:30:42 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.47 2026/05/12 12:05:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -70,10 +70,10 @@ cmd_display_panes_draw_pane(struct screen_redraw_ctx *ctx,
 	char			 buf[16], lbuf[16], rbuf[16], *ptr;
 	size_t			 len, llen, rlen;
 
-	if (wp->xoff + wp->sx <= ctx->ox ||
-	    wp->xoff >= ctx->ox + ctx->sx ||
-	    wp->yoff + wp->sy <= ctx->oy ||
-	    wp->yoff >= ctx->oy + ctx->sy)
+	if (wp->xoff + (int)wp->sx <= ctx->ox ||
+	    wp->xoff >= ctx->ox + (int)ctx->sx ||
+	    wp->yoff + (int)wp->sy <= ctx->oy ||
+	    wp->yoff >= ctx->oy + (int)ctx->sy)
 		return;
 
 	if (wp->xoff >= ctx->ox && wp->xoff + wp->sx <= ctx->ox + ctx->sx) {

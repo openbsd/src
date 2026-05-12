@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.455 2026/05/12 10:28:09 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.456 2026/05/12 12:05:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -636,7 +636,7 @@ server_client_check_mouse_in_pane(struct window_pane *wp, u_int px, u_int py,
 	if (((pane_status != PANE_STATUS_OFF &&
 	    (int)py != pane_status_line && py != wp->yoff + wp->sy) ||
 	    (wp->yoff == 0 && py < wp->sy) ||
-	    (py >= wp->yoff && py < wp->yoff + wp->sy)) &&
+	    ((int)py >= wp->yoff && py < wp->yoff + wp->sy)) &&
 	    ((sb_pos == PANE_SCROLLBARS_RIGHT &&
 	    (int)px < (int)wp->xoff + (int)wp->sx + sb_pad + sb_w) ||
 	    (sb_pos == PANE_SCROLLBARS_LEFT &&
