@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8-combined.c,v 1.8 2025/12/04 06:04:21 nicm Exp $ */
+/* $OpenBSD: utf8-combined.c,v 1.9 2026/05/12 09:37:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2023 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -175,7 +175,7 @@ utf8_should_combine(const struct utf8_data *with, const struct utf8_data *add)
 			return (1);
 		break;
 	}
-	return 0;
+	return (0);
 }
 
 static enum hanguljamo_subclass

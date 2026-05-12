@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.316 2026/05/03 14:57:09 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.317 2026/05/12 09:37:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -376,12 +376,10 @@ window_pane_destroy_ready(struct window_pane *wp)
 {
 	int	n;
 
-	if (wp->pipe_fd != -1) {
-		if (EVBUFFER_LENGTH(wp->pipe_event->output) != 0)
-			return (0);
-		if (ioctl(wp->fd, FIONREAD, &n) != -1 && n > 0)
-			return (0);
-	}
+	if (wp->pipe_fd != -1 && EVBUFFER_LENGTH(wp->pipe_event->output) != 0)
+		return (0);
+	if (ioctl(wp->fd, FIONREAD, &n) != -1 && n > 0)
+		return (0);
 
 	if (~wp->flags & PANE_EXITED)
 		return (0);

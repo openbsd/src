@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.70 2026/03/18 08:38:54 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.71 2026/05/12 09:37:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -590,7 +590,7 @@ utf8_towc(const struct utf8_data *ud, wchar_t *wc)
 	case 0:
 		return (UTF8_ERROR);
 	}
-	log_debug("UTF-8 %.*s is %05X", (int)ud->size, ud->data, (u_int)*wc);
+	log_debug("UTF-8 %.*s is U+%06X", (int)ud->size, ud->data, (u_int)*wc);
 	return (UTF8_DONE);
 }
 
