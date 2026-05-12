@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.535 2026/05/11 20:33:39 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.536 2026/05/12 20:27:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1102,7 +1102,7 @@ session_graceful_stop(struct peer *p)
 }
 
 void
-session_graceful_flush(struct peer *p, uint8_t aid, const char *why)
+session_graceful_flush(struct peer *p, u_int aid, const char *why)
 {
 	log_peer_warnx(&p->conf, "graceful restart of %s, %s, flushing",
 	    aid2str(aid), why);
@@ -1198,8 +1198,9 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	struct session_dependon	 sdon;
 	uint32_t		 peerid;
 	int			 n, fd, depend_ok, restricted;
+	u_int			 aid;
 	uint16_t		 t;
-	uint8_t			 aid, errcode, subcode;
+	uint8_t			 errcode, subcode;
 
 	while (imsgbuf) {
 		if ((n = imsg_get(imsgbuf, &imsg)) == -1)

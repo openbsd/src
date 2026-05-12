@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.698 2026/05/08 12:03:50 tb Exp $ */
+/*	$OpenBSD: rde.c,v 1.699 2026/05/12 20:27:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,7 +92,7 @@ void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
 uint8_t		 rde_roa_validity(struct rde_prefixset *,
 		    struct bgpd_addr *, uint8_t, uint32_t);
 
-static void	 rde_peer_recv_eor(struct rde_peer *, uint8_t);
+static void	 rde_peer_recv_eor(struct rde_peer *, u_int);
 static void	 rde_peer_send_eor(struct rde_peer *, uint8_t);
 
 void		 network_add(struct network_config *, struct filterstate *);
@@ -4536,7 +4536,7 @@ rde_decisionflags(void)
 
 /* End-of-RIB marker, RFC 4724 */
 static void
-rde_peer_recv_eor(struct rde_peer *peer, uint8_t aid)
+rde_peer_recv_eor(struct rde_peer *peer, u_int aid)
 {
 	peer->stats.prefix_rcvd_eor++;
 	peer->recv_eor |= 1 << aid;
