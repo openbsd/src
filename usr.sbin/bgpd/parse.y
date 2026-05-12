@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.494 2026/05/12 09:12:49 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.495 2026/05/12 16:03:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5625,7 +5625,7 @@ getservice(char *n)
 		s = getservbyname(n, "udp");
 	if (s == NULL)
 		return -1;
-	return s->s_port;
+	return ntohs(s->s_port);
 }
 
 static int
