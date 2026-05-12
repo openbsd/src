@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_amd64_generic.S,v 1.7 2026/05/07 15:50:47 jsing Exp $ */
+/* $OpenBSD: sha512_amd64_generic.S,v 1.8 2026/05/12 15:07:30 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -301,3 +301,7 @@ CRYPTO_ASSEMBLY_OBJECT_START(K512):
 .quad	0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c
 .quad	0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 CRYPTO_ASSEMBLY_OBJECT_END(K512)
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif

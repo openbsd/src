@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.9 2026/05/09 07:02:29 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.10 2026/05/12 15:07:30 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -215,3 +215,7 @@ CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha1_block_ce):
 	str	hc1s, [ctx, #(4*4)]
 
 	ret
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif

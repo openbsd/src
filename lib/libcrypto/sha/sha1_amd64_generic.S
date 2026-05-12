@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_generic.S,v 1.7 2026/05/07 15:50:47 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_generic.S,v 1.8 2026/05/12 15:07:30 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -308,3 +308,7 @@ CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha1_block_generic):
 	popq	%rbx
 
 	ret
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif

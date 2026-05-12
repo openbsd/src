@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_shani.S,v 1.8 2026/05/09 07:02:29 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_shani.S,v 1.9 2026/05/12 15:07:30 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -163,3 +163,7 @@ CRYPTO_ASSEMBLY_GLOBAL_FUNCTION(sha1_block_shani):
 CRYPTO_ASSEMBLY_OBJECT_START(shufmask):
 .octa	0x000102030405060708090a0b0c0d0e0f
 CRYPTO_ASSEMBLY_OBJECT_END(shufmask)
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif

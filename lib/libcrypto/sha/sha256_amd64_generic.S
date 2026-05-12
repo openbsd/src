@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_generic.S,v 1.9 2026/05/07 15:50:47 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_generic.S,v 1.10 2026/05/12 15:07:30 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -296,3 +296,7 @@ CRYPTO_ASSEMBLY_OBJECT_START(K256):
 .long	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208
 .long	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 CRYPTO_ASSEMBLY_OBJECT_END(K256)
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif
