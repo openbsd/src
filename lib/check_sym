@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.14 2024/12/24 18:14:49 tb Exp $
+#  $OpenBSD: check_sym,v 1.15 2026/05/12 15:14:41 naddy Exp $
 #
 # Copyright (c) 2016,2019,2022 Philip Guenther <guenther@openbsd.org>
 #
@@ -130,12 +130,13 @@ output_if_not_empty()
 {
 	leader=$1
 	shift
-	if "$@" | grep -q .
-	then
-		echo "$leader"
-		"$@" | sed 's:^:	:'
-		echo
-	fi
+	"$@" | sed '
+1i\
+'"$leader"'
+s:^:	:
+$a\
+
+'
 }
 
 
