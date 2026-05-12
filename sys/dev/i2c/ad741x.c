@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.15 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.16 2026/05/12 08:54:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -164,6 +164,7 @@ adc_refresh(void *arg)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
+	cmd = AD741X_CONFIG;
 	reg = (sc->sc_config & AD741X_CONFMASK) | (0 << 5);
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &reg, sizeof reg, 0))
@@ -180,6 +181,7 @@ adc_refresh(void *arg)
 		goto done;
 
 	if (sc->sc_chip == 7418) {
+		cmd = AD741X_CONFIG;
 		reg = (reg & AD741X_CONFMASK) | (4 << 5);
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &reg, sizeof reg, 0))
@@ -194,6 +196,7 @@ adc_refresh(void *arg)
 	}
 
 	for (i = 0; i < 4; i++) {
+		cmd = AD741X_CONFIG;
 		reg = (reg & AD741X_CONFMASK) | (i << 5);
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &reg, sizeof reg, 0))
