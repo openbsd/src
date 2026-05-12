@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.114 2026/04/23 11:29:23 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.115 2026/05/12 09:32:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1108,11 +1108,17 @@ screen_redraw_draw_scrollbar(struct screen_redraw_ctx *ctx,
 	if (sb_x >= sx || sb_y >= sy)
 		return;
 	imax = sb_w + sb_pad;
-	if ((int)imax + sb_x > sx)
+	if ((int)imax + sb_x > sx) {
+		if (sb_x >= sx)
+			return;
 		imax = sx - sb_x;
+	}
 	jmax = sb_h;
-	if ((int)jmax + sb_y > sy)
+	if ((int)jmax + sb_y > sy) {
+		if (sb_y >= sy)
+			return;
 		jmax = sy - sb_y;
+	}
 
 	for (j = 0; j < jmax; j++) {
 		py = sb_y + j;
