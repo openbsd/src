@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.35 2022/06/18 03:23:19 gkoehler Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.36 2026/05/12 14:00:24 renaud Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -138,8 +138,9 @@ gz_ropen(int fd, char *name, int gotmagic)
 
 	/* read the .gz header */
 	if (get_header(s, name, gotmagic) != 0) {
-		gz_close(s, NULL, NULL, NULL);
-		s = NULL;
+		(void)inflateEnd(&s->z_stream);
+		free (s);
+		return NULL;
 	}
 
 	return s;
@@ -418,8 +419,9 @@ gz_wopen(int fd, char *name, int bits, u_int32_t mtime)
 
 	/* write the .gz header */
 	if (put_header(s, name, mtime, bits) != 0) {
-		gz_close(s, NULL, NULL, NULL);
-		s = NULL;
+		(void)deflateEnd(&s->z_stream);
+		free (s);
+		return NULL;
 	}
 
 	return s;

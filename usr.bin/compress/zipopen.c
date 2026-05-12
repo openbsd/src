@@ -1,4 +1,4 @@
-/*	$OpenBSD: zipopen.c,v 1.1 2022/10/22 14:41:27 millert Exp $	*/
+/*	$OpenBSD: zipopen.c,v 1.2 2026/05/12 14:00:24 renaud Exp $	*/
 
 /*
  * Copyright (c) 2022 Todd C. Miller <Todd.Miller@sudo.ws>
@@ -276,8 +276,9 @@ zip_ropen(int fd, char *name, int gotmagic)
 
 	/* Read the zip header. */
 	if (get_header(s, name, gotmagic) != 0) {
-		zip_close(s, NULL, NULL, NULL);
-		s = NULL;
+		(void)inflateEnd(&s->z_stream);
+		free(s);
+		return NULL;
 	}
 
 	return s;
