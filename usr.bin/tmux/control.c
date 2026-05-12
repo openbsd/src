@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.56 2026/05/05 12:02:12 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.57 2026/05/12 09:27:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -847,9 +847,9 @@ control_stop(struct client *c)
 	if (evtimer_initialized(&cs->subs_timer))
 		evtimer_del(&cs->subs_timer);
 
+	control_reset_offsets(c);
 	TAILQ_FOREACH_SAFE(cb, &cs->all_blocks, all_entry, cb1)
 		control_free_block(cs, cb);
-	control_reset_offsets(c);
 
 	c->control_state = NULL;
 	free(cs);
