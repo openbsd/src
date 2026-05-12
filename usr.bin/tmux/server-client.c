@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.454 2026/04/23 12:36:15 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.455 2026/05/12 10:28:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1061,6 +1061,8 @@ server_client_is_assume_paste(struct client *c)
 	if (c->flags & CLIENT_BRACKETPASTING)
 		return (0);
 	if ((t = options_get_number(s->options, "assume-paste-time")) == 0)
+		return (0);
+	if (tty_term_has(c->tty.term, TTYC_ENBP))
 		return (0);
 
 	timersub(&c->activity_time, &c->last_activity_time, &tv);
