@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.85 2026/05/01 20:03:58 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.86 2026/05/12 14:49:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -317,25 +317,25 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	printf("%s", rom->rom_softc->sc_dev.dv_xname);
 #endif
 
+	/*
+	 * Figure out how much bytes we need for the STI code.
+	 * Note there could be fewer than STI_END entries pointer
+	 * entries populated, especially on older devices.
+	 */
+
+	for (i = STI_END; dd->dd_pacode[i] == 0; i--)
+		continue;
+	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
+	if (rom->rom_devtype == STI_DEVTYPE1)
+		size = (size + 3) / 4;
+	if (size == 0) {
+		printf(": no code for the requested platform\n");
+		return (EINVAL);
+	}
+
 	if (rom->rom_copy != NULL) {
 		rom->rom_code = rom->rom_copy + dd->dd_pacode[STI_BEGIN];
 	} else {
-		/*
-		 * Figure out how much bytes we need for the STI code.
-		 * Note there could be fewer than STI_END entries pointer
-		 * entries populated, especially on older devices.
-		 */
-
-		for (i = STI_END; dd->dd_pacode[i] == 0; i--)
-			continue;
-		size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
-		if (rom->rom_devtype == STI_DEVTYPE1)
-			size = (size + 3) / 4;
-		if (size == 0) {
-			printf(": no code for the requested platform\n");
-			return (EINVAL);
-		}
-
 		if (!(rom->rom_code = km_alloc(round_page(size), &kv_any,
 		    &kp_zero, &kd_waitok))) {
 			printf(": cannot allocate %u bytes for code\n", size);
