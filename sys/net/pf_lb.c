@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.77 2026/05/08 06:31:51 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.78 2026/05/12 09:34:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -565,10 +565,6 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		weight = rpool->weight;
 		kif = rpool->kif;
 
-		/*
-		 * ->weight is never zero, see pfr_create_kentry()
-		 */
-		KASSERT(rpool->weight != 0);
 		if ((rpool->addr.type == PF_ADDR_TABLE &&
 		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
 		    (rpool->addr.type == PF_ADDR_DYNIFTL &&
@@ -597,10 +593,6 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			    &rpool->counter, af))
 				return (1);
 
-			/*
-			 * ->weight is never zero, see pfr_create_kentry()
-			 */
-			KASSERT(rpool->weight != 0);
 			if ((rpool->addr.type == PF_ADDR_TABLE &&
 			    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
 			    (rpool->addr.type == PF_ADDR_DYNIFTL &&
