@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.214 2026/03/30 13:59:19 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.215 2026/05/12 01:39:42 kevlo Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2477,7 +2477,7 @@ ieee80211_40mhz_valid_secondary_below(uint8_t primary_chan)
 		1, 2, 3, 4, 5, 6, 7, 8, 9,
 		36, 44, 52, 60, 100, 108, 116, 124, 132, 140, 149, 157
 	};
-	int8_t secondary_chan;
+	uint8_t secondary_chan;
 	int i;
 
 	if ((primary_chan >= 5 && primary_chan <= 13) ||
