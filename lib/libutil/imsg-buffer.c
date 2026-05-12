@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.36 2025/08/25 08:29:49 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.37 2026/05/12 16:01:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -378,10 +378,19 @@ ibuf_set_maxsize(struct ibuf *buf, size_t max)
 		errno = EINVAL;
 		return (-1);
 	}
-	if (max > buf->max) {
+	if (max > buf->max) {	/* can only shrink the buffer */
 		errno = ERANGE;
 		return (-1);
 	}
+	if (buf->wpos > max) {	/* cannot shrink below current wpos */
+		errno = ERANGE;
+		return (-1);
+	}
+	if (buf->size > max) {	/* clear excess memory */
+		explicit_bzero(buf->buf + max, buf->size - max);
+		buf->size = max;
+	}
+	
 	buf->max = max;
 	return (0);
 }
