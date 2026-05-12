@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.541 2026/05/07 18:56:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.542 2026/05/12 09:12:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,6 +56,7 @@
 #define	MAX_RTSOCK_BUF			(2 * 1024 * 1024)
 #define	MAX_COMM_MATCH			3
 #define	MAX_ASPA_SPAS_COUNT		10000
+#define	MAX_ADDPATH_COUNT		100
 #define	MIN_HOLDTIME			3
 
 #define	BGPD_OPT_VERBOSE		0x0001

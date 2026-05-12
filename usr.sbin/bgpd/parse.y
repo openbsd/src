@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.493 2026/05/11 18:41:06 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.494 2026/05/12 09:12:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1801,9 +1801,9 @@ groupopts_l	: /* empty */
 
 addpathextra	: /* empty */		{ $$ = 0; }
 		| PLUS NUMBER		{
-			if ($2 < 1 || $2 > USHRT_MAX) {
+			if ($2 < 1 || $2 > MAX_ADDPATH_COUNT) {
 				yyerror("additional paths must be between "
-				    "%u and %u", 1, USHRT_MAX);
+				    "%u and %u", 1, MAX_ADDPATH_COUNT);
 				YYERROR;
 			}
 			$$ = $2;
@@ -1812,9 +1812,9 @@ addpathextra	: /* empty */		{ $$ = 0; }
 
 addpathmax	: /* empty */		{ $$ = 0; }
 		| MAX NUMBER		{
-			if ($2 < 1 || $2 > USHRT_MAX) {
+			if ($2 < 1 || $2 > MAX_ADDPATH_COUNT) {
 				yyerror("maximum additional paths must be "
-				    "between %u and %u", 1, USHRT_MAX);
+				    "between %u and %u", 1, MAX_ADDPATH_COUNT);
 				YYERROR;
 			}
 			$$ = $2;
