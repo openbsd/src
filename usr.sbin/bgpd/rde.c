@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.699 2026/05/12 20:27:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.700 2026/05/13 14:01:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3385,7 +3385,12 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			free(ctx);
 			return;
 		default:
-			fatalx("%s: unsupported imsg type", __func__);
+			log_warnx("%s: bad imsg type %d", __func__, req->type);
+			error = CTL_RES_OPNOTSUPP;
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1,
+			    &error, sizeof(error));
+			free(ctx);
+			return;
 		}
 
 		LIST_INSERT_HEAD(&rde_dump_h, ctx, entry);
