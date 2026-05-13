@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.402 2026/04/09 06:10:38 dlg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.403 2026/05/13 12:07:10 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1231,7 +1231,7 @@ pfctl_show_rules(struct pfctl *pf, char *path, enum pfctl_show format,
 	struct pfioc_rule pr;
 	u_int32_t header = 0;
 	int len = strlen(path), ret = 0;
-	char *npath, *p;
+	char *npath = NULL, *p;
 
 	if (depth > PF_ANCHOR_STACK_MAX) {
 		warnx("%s: max stack depth exceeded for %s", __func__, path);
