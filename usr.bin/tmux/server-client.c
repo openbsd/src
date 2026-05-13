@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.456 2026/05/12 12:05:41 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.457 2026/05/13 08:25:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2137,7 +2137,7 @@ server_client_set_progress_bar(struct client *c)
 	struct session		*s = c->session;
 	struct progress_bar	*pane_pb;
 
-	if (s->curw == NULL)
+	if (s->curw == NULL || s->curw->window->active == NULL)
 		return;
 	pane_pb = &s->curw->window->active->base.progress_bar;
 	if (pane_pb->state == c->progress_bar.state &&
