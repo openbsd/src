@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.82 2026/04/16 05:07:07 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.83 2026/05/13 21:05:23 mvs Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -85,6 +85,10 @@ struct shmid_ds *shm_find_segment_by_shmid(int);
  * shmsegs (an array of 'struct shmid_ds *')
  * per proc 'struct shmmap_head' with an array of 'struct shmmap_state'
  */
+
+/* Limit to prevent chunk size overflow in sys_shmat() */
+#define SHMSEG_MAX \
+    ((0xffffffff - sizeof(int)) / sizeof(struct shmmap_state) / 8)
 
 #define	SHMSEG_REMOVED  	0x0200		/* can't overlap ACCESSPERMS */
 
@@ -611,7 +615,7 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (0);
 	case KERN_SHMINFO_SHMSEG:
 		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &shminfo.shmseg, 1, INT_MAX));
+		    &shminfo.shmseg, 1, SHMSEG_MAX));
 	case KERN_SHMINFO_SHMALL:
 		/* can't decrease shmall */
 		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
