@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.80 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.81 2026/05/13 04:38:42 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -630,12 +630,16 @@ static int
 rrdp_uri_valid(struct rrdprepo *rr, const char *uri)
 {
 	struct repo *rp;
+	size_t len;
 
 	SLIST_FOREACH(rp, &repos, entry) {
 		if (rp->rrdp != rr)
 			continue;
-		if (strncmp(uri, rp->repouri, strlen(rp->repouri)) == 0)
-			return 1;
+		len = strlen(rp->repouri);
+		if (strncmp(uri, rp->repouri, len) == 0) {
+			if (uri[len] == '/')
+				return 1;
+		}
 	}
 	return 0;
 }
