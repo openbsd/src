@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.60 2025/12/24 07:59:55 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.61 2026/05/13 15:12:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -46,7 +46,7 @@
  */
 
 /* internal prototypes */
-static struct pt_entry	*pt_alloc(struct pt_entry *, int len);
+static struct pt_entry	*pt_alloc(struct pt_entry *, size_t len);
 static void		 pt_free(struct pt_entry *);
 
 struct pt_entry4 {
@@ -223,7 +223,7 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 		    addr, &pflow->prefixlen, NULL);
 		break;
 	default:
-		fatalx("pt_getaddr: unknown af");
+		fatalx("%s: unknown aid %d", __func__, pte->aid);
 	}
 }
 
@@ -239,12 +239,16 @@ pt_getflowspec(struct pt_entry *pte, uint8_t **flow)
 		*flow = pflow->flow;
 		return pflow->len - PT_FLOW_SIZE;
 	default:
-		fatalx("pt_getflowspec: unknown af");
+		fatalx("%s: unknown aid %d", __func__, pte->aid);
 	}
 }
 
+/*
+ * Fill out a pt_entry for lookup, on failure return an object initalized
+ * with 0xff. pt_add must reject such objects (by checking pte->aid).
+ */
 struct pt_entry *
-pt_fill(struct bgpd_addr *prefix, int prefixlen)
+pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 {
 	static struct pt_entry4		pte4;
 	static struct pt_entry6		pte6;
@@ -258,8 +262,10 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte4.len = sizeof(pte4);
 		pte4.refcnt = UINT32_MAX;
 		pte4.aid = prefix->aid;
-		if (prefixlen > 32)
-			fatalx("pt_fill: bad IPv4 prefixlen");
+		if (prefixlen > 32) {
+			log_warnx("pt_fill: %d, bad IPv4 prefixlen", prefixlen);
+			prefixlen = 32;
+		}
 		inet4applymask(&pte4.prefix4, &prefix->v4, prefixlen);
 		pte4.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte4);
@@ -268,8 +274,10 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte6.len = sizeof(pte6);
 		pte6.refcnt = UINT32_MAX;
 		pte6.aid = prefix->aid;
-		if (prefixlen > 128)
-			fatalx("pt_fill: bad IPv6 prefixlen");
+		if (prefixlen > 128) {
+			log_warnx("pt_fill: %d, bad IPv6 prefixlen", prefixlen);
+			prefixlen = 128;
+		}
 		inet6applymask(&pte6.prefix6, &prefix->v6, prefixlen);
 		pte6.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte6);
@@ -278,8 +286,10 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte_vpn4.len = sizeof(pte_vpn4);
 		pte_vpn4.refcnt = UINT32_MAX;
 		pte_vpn4.aid = prefix->aid;
-		if (prefixlen > 32)
-			fatalx("pt_fill: bad IPv4 prefixlen");
+		if (prefixlen > 32) {
+			log_warnx("pt_fill: %d, bad IPv4 prefixlen", prefixlen);
+			prefixlen = 32;
+		}
 		inet4applymask(&pte_vpn4.prefix4, &prefix->v4, prefixlen);
 		pte_vpn4.prefixlen = prefixlen;
 		pte_vpn4.rd = prefix->rd;
@@ -292,8 +302,10 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte_vpn6.len = sizeof(pte_vpn6);
 		pte_vpn6.refcnt = UINT32_MAX;
 		pte_vpn6.aid = prefix->aid;
-		if (prefixlen > 128)
-			fatalx("pt_fill: bad IPv6 prefixlen");
+		if (prefixlen > 128) {
+			log_warnx("pt_fill: %d, bad IPv6 prefixlen", prefixlen);
+			prefixlen = 128;
+		}
 		inet6applymask(&pte_vpn6.prefix6, &prefix->v6, prefixlen);
 		pte_vpn6.prefixlen = prefixlen;
 		pte_vpn6.rd = prefix->rd;
@@ -310,13 +322,24 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 			/* See rfc7432 section 7.2 */
 			break;
 		case AID_INET:
+			if (prefixlen > 32) {
+				log_warnx("pt_fill: %d, bad IPv4 prefixlen",
+				    prefixlen);
+				prefixlen = 32;
+			}
 			pte_evpn.prefix4 = prefix->evpn.v4;
 			break;
 		case AID_INET6:
+			if (prefixlen > 128) {
+				log_warnx("pt_fill: %d, bad IPv6 prefixlen",
+				    prefixlen);
+				prefixlen = 128;
+			}
 			pte_evpn.prefix6 = prefix->evpn.v6;
 			break;
 		default:
-			fatalx("pt_fill: bad EVPN prefixlen");
+			log_warnx("pt_fill: unknown EVPN prefix");
+			goto fail;
 		}
 		pte_evpn.aid = prefix->aid;
 		pte_evpn.vpnaid = prefix->evpn.aid;
@@ -333,12 +356,17 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		    sizeof(prefix->evpn.mac));
 		return ((struct pt_entry *)&pte_evpn);
 	default:
-		fatalx("pt_fill: unknown af");
+		log_warnx("%s: unknown aid %d", __func__, prefix->aid);
+		goto fail;
 	}
+
+ fail:
+	memset(&pte4, 0xff, sizeof(pte4));
+	return ((struct pt_entry *)&pte4);
 }
 
 struct pt_entry *
-pt_get(struct bgpd_addr *prefix, int prefixlen)
+pt_get(struct bgpd_addr *prefix, u_int prefixlen)
 {
 	struct pt_entry	*pte;
 
@@ -347,7 +375,7 @@ pt_get(struct bgpd_addr *prefix, int prefixlen)
 }
 
 struct pt_entry *
-pt_get_next(struct bgpd_addr *prefix, int prefixlen)
+pt_get_next(struct bgpd_addr *prefix, u_int prefixlen)
 {
 	struct pt_entry	*pte;
 
@@ -356,11 +384,13 @@ pt_get_next(struct bgpd_addr *prefix, int prefixlen)
 }
 
 struct pt_entry *
-pt_add(struct bgpd_addr *prefix, int prefixlen)
+pt_add(struct bgpd_addr *prefix, u_int prefixlen)
 {
 	struct pt_entry		*p = NULL;
 
 	p = pt_fill(prefix, prefixlen);
+	if (p->aid == 0xff)
+		fatalx("pt_add: insert failed, pt_fill failed");
 	p = pt_alloc(p, p->len);
 
 	if (RB_INSERT(pt_tree, &pttable, p) != NULL)
@@ -457,7 +487,8 @@ pt_lookup(struct bgpd_addr *addr)
 		i = 128;
 		break;
 	default:
-		fatalx("pt_lookup: unknown af");
+		log_warnx("%s: unknown aid %d", __func__, addr->aid);
+		return (NULL);
 	}
 	for (; i >= 0; i--) {
 		p = pt_get(addr, i);
@@ -582,7 +613,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 				return (-1);
 			break;
 		default:
-			fatalx("pt_prefix_cmp: unknown evpn af %d", ea->vpnaid);
+			fatalx("%s: unknown evpn aid %d", __func__, ea->vpnaid);
 		}
 		return (0);
 	case AID_FLOWSPECv4:
@@ -593,7 +624,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 		    bf->flow, bf->len - PT_FLOW_SIZE,
 		    a->aid == AID_FLOWSPECv6);
 	default:
-		fatalx("pt_prefix_cmp: unknown af %d", a->aid);
+		fatalx("%s: unknown aid %d", __func__, a->aid);
 	}
 	return (-1);
 }
@@ -603,7 +634,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
  * Function may not return on failure.
  */
 static struct pt_entry *
-pt_alloc(struct pt_entry *op, int len)
+pt_alloc(struct pt_entry *op, size_t len)
 {
 	struct pt_entry		*p;
 
