@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.h,v 1.6 2026/03/17 09:29:29 claudio Exp $	*/
+/*	$OpenBSD: chash.h,v 1.7 2026/05/13 15:19:07 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -48,14 +48,12 @@ struct ch_type {
 	struct ch_counts *t_counts;
 };
 
-struct ch_group;
-struct ch_meta;
+struct ch_ext;
 
 struct ch_table {
-	struct ch_group		**ch_tables;
-	struct ch_meta		**ch_metas;
-	uint32_t		  ch_level;
-	struct ch_counts	  ch_counts;
+	struct ch_ext		*ch_exts;
+	uint32_t		 ch_level;
+	struct ch_counts	 ch_counts;
 };
 
 
