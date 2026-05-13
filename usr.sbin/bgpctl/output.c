@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.74 2026/03/31 09:32:12 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.75 2026/05/13 15:51:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -345,7 +345,8 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 	if (hascapamp || hascapaap || p->capa.peer.grestart.restart ||
 	    p->capa.peer.refresh || p->capa.peer.enhanced_rr ||
-	    p->capa.peer.as4byte || p->capa.peer.policy) {
+	    p->capa.peer.as4byte || p->capa.peer.policy ||
+	    p->capa.peer.ext_msg) {
 		printf("  Neighbor capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.peer);
@@ -377,7 +378,8 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 	if (hascapamp || hascapaap || p->capa.neg.grestart.restart ||
 	    p->capa.neg.refresh || p->capa.neg.enhanced_rr ||
-	    p->capa.neg.as4byte || p->capa.neg.policy) {
+	    p->capa.neg.as4byte || p->capa.neg.policy ||
+	    p->capa.neg.ext_msg) {
 		printf("  Negotiated capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.neg);

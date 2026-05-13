@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.63 2026/03/17 09:30:11 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.64 2026/05/13 15:51:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -53,7 +53,8 @@ json_neighbor_capabilities(struct capabilities *capa)
 			hascapaap = 1;
 	}
 	if (!hascapamp && !hascapaap && !capa->grestart.restart &&
-	    !capa->refresh && !capa->enhanced_rr && !capa->as4byte)
+	    !capa->refresh && !capa->enhanced_rr && !capa->as4byte &&
+	    !capa->ext_msg)
 		return;
 
 	json_do_object("capabilities", 0);
