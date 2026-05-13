@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.53 2024/07/17 20:57:15 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.54 2026/05/13 15:12:54 renaud Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -380,7 +380,8 @@ compile_delimited(char *p, char *d)
 				/* Other escapes remain unchanged. */
 				} else {
 					*d++ = *p++;
-					*d++ = *p++;
+					if (*p)
+						*d++ = *p++;
 				}
 				continue;
 			}
