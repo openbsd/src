@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.288 2026/03/19 12:44:22 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.289 2026/05/13 13:49:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1439,6 +1439,7 @@ bgpd_rtr_conn_setup(struct rtr_config *r)
  fail:
 	if (ce->fd != -1)
 		close(ce->fd);
+	pfkey_remove(&ce->auth_state);
 	free(ce);
 }
 
@@ -1488,6 +1489,7 @@ bgpd_rtr_conn_setup_done(int fd, struct bgpd_config *conf)
 
 fail:
 	close(fd);
+	pfkey_remove(&ce->auth_state);
 	free(ce);
 }
 
