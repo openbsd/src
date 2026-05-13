@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.10 2026/05/07 09:22:10 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.11 2026/05/13 08:57:39 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -548,7 +548,13 @@ ch_table_resize(const struct ch_type *type, struct ch_table *t)
 		return -1;
 	metas = reallocarray(t->ch_metas, newsize, sizeof(*metas));
 	if (metas == NULL) {
-		free(tables);
+		/*
+		 * tables was correctly reallocated, so update that
+		 * pointer before failing hard. If the caller recovers
+		 * somehow the next reallocarray of ch_tables will simply
+		 * do nothing.
+		 */
+		t->ch_tables = tables;
 		return -1;
 	}
 
