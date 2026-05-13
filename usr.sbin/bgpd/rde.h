@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.348 2026/05/13 15:12:14 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.349 2026/05/13 18:50:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -451,7 +451,7 @@ int		 attr_writebuf(struct ibuf *, uint8_t, uint8_t, const void *,
 		    uint16_t);
 void		 attr_init(void);
 int		 attr_optadd(struct rde_aspath *, uint8_t, uint8_t,
-		    void *, uint16_t);
+		    const void *, uint16_t);
 struct attr	*attr_optget(const struct rde_aspath *, uint8_t);
 void		 attr_copy(struct rde_aspath *, const struct rde_aspath *);
 int		 attr_equal(const struct rde_aspath *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.144 2026/05/07 20:35:19 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.145 2026/05/13 18:50:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -57,8 +57,10 @@ attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, const void *data,
 }
 
 /* optional attribute specific functions */
-static struct attr *attr_alloc(uint8_t, uint8_t, void *, uint16_t, uint64_t);
-static struct attr *attr_lookup(uint8_t, uint8_t, void *, uint16_t, uint64_t);
+static struct attr *attr_alloc(uint8_t, uint8_t, const void *, uint16_t,
+    uint64_t);
+static struct attr *attr_lookup(uint8_t, uint8_t, const void *, uint16_t,
+    uint64_t);
 static void attr_put(struct attr *);
 
 static SIPHASH_KEY	 attrkey;
@@ -93,7 +95,7 @@ attr_init(void)
 
 int
 attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
-    void *data, uint16_t len)
+    const void *data, uint16_t len)
 {
 	unsigned int	 l;
 	struct attr	*a, *t;
@@ -255,7 +257,8 @@ attr_freeall(struct rde_aspath *asp)
 }
 
 struct attr *
-attr_alloc(uint8_t flags, uint8_t type, void *data, uint16_t len, uint64_t hash)
+attr_alloc(uint8_t flags, uint8_t type, const void *data, uint16_t len,
+    uint64_t hash)
 {
 	struct attr	*a;
 
@@ -286,11 +289,33 @@ attr_alloc(uint8_t flags, uint8_t type, void *data, uint16_t len, uint64_t hash)
 	return (a);
 }
 
+struct lookup_attr {
+	const u_char	*data;
+	uint16_t	 len;
+	uint8_t		 flags;
+	uint8_t		 type;
+};
+
+static int
+attr_match(const void *va, void *vb)
+{
+	const struct attr *oa = va;
+	struct lookup_attr *ob = vb;
+
+	if (oa->type != ob->type)
+		return 0;
+	if (oa->flags != ob->flags)
+		return 0;
+	if (oa->len != ob->len)
+		return 0;
+	return (oa->len == 0 || memcmp(oa->data, ob->data, oa->len) == 0);
+}
+
 struct attr *
-attr_lookup(uint8_t flags, uint8_t type, void *data, uint16_t len,
+attr_lookup(uint8_t flags, uint8_t type, const void *data, uint16_t len,
     uint64_t hash)
 {
-	struct attr		needle;
+	struct lookup_attr	needle;
 
 	flags &= ~ATTR_DEFMASK;	/* normalize mask */
 
@@ -298,9 +323,8 @@ attr_lookup(uint8_t flags, uint8_t type, void *data, uint16_t len,
 	needle.type = type;
 	needle.len = len;
 	needle.data = data;
-	needle.hash = hash;
 
-	return CH_FIND(attr_tree, &attrtable, &needle);
+	return CH_LOCATE(attr_tree, &attrtable, hash, attr_match, &needle);
 }
 
 void
