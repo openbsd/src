@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.115 2024/12/27 11:57:16 mpi Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.116 2026/05/13 14:18:20 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ ktrpsig(struct proc *p, int sig, sig_t action, int mask, int code,
 
 	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_PSIG);
+	memset(&kp, 0, sizeof(kp));
 	kp.signo = (char)sig;
 	kp.action = action;
 	kp.mask = mask;
