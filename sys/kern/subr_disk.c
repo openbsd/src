@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.284 2025/11/17 14:27:43 jsg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.285 2026/05/13 15:14:51 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -174,18 +174,19 @@ checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
 	int error = 0;
 	int i;
 
+	/* These fields may not be 0, no point trying a byteswap */
+	if (dlp->d_secpercyl == 0 || dlp->d_nsectors == 0 ||
+	    dlp->d_version == 0)
+		return EINVAL;	/* invalid label */
+	else if (dlp->d_secsize == 0)
+		return ENOSPC; /* disk too small */
+
 	if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
 		error = ENOENT;	/* no disk label */
 	else if (dlp->d_npartitions > MAXPARTITIONS)
 		error = E2BIG;	/* too many partitions */
-	else if (dlp->d_secpercyl == 0)
-		error = EINVAL;	/* invalid label */
-	else if (dlp->d_secsize == 0)
-		error = ENOSPC;	/* disk too small */
 	else if (dkcksum(dlp) != 0)
 		error = EINVAL;	/* incorrect checksum */
-	else if (dlp->d_version == 0)
-		error = EINVAL;	/* version too old to understand */
 
 	if (error) {
 		u_int16_t *start, *end, sum = 0;
