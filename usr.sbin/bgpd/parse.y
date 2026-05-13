@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.495 2026/05/12 16:03:14 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.496 2026/05/13 09:25:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -6089,6 +6089,8 @@ merge_auth_conf(struct auth_config *to, struct auth_config *from)
 				to->spi_in = from->spi_in;
 				to->auth_alg_in = from->auth_alg_in;
 				to->enc_alg_in = from->enc_alg_in;
+				memcpy(to->auth_key_in, from->auth_key_in,
+				    sizeof(to->auth_key_in));
 				memcpy(to->enc_key_in, from->enc_key_in,
 				    sizeof(to->enc_key_in));
 				to->enc_keylen_in = from->enc_keylen_in;
@@ -6098,6 +6100,8 @@ merge_auth_conf(struct auth_config *to, struct auth_config *from)
 				to->spi_out = from->spi_out;
 				to->auth_alg_out = from->auth_alg_out;
 				to->enc_alg_out = from->enc_alg_out;
+				memcpy(to->auth_key_out, from->auth_key_out,
+				    sizeof(to->auth_key_out));
 				memcpy(to->enc_key_out, from->enc_key_out,
 				    sizeof(to->enc_key_out));
 				to->enc_keylen_out = from->enc_keylen_out;
