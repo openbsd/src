@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.19 2026/04/15 16:50:32 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.20 2026/05/14 06:04:08 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -289,7 +289,7 @@ struct imsg_ifinfo {
 struct imsg_propose_rdns {
 	uint32_t		if_index;
 	int			rdomain;
-	int			rdns_count;
+	size_t			rdns_count;
 	struct in_addr		rdns[MAX_RDNS_COUNT];
 };
 

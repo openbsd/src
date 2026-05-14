@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.42 2026/04/15 16:50:32 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.43 2026/05/14 06:04:08 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -627,10 +627,10 @@ main_dispatch_engine(int fd, short event, void *bula)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 			if ((2 + rdns.rdns_count * sizeof(struct in_addr)) >
 			    sizeof(struct sockaddr_rtdns))
-				fatalx("%s: rdns_count too big: %d", __func__,
+				fatalx("%s: rdns_count too big: %zu", __func__,
 				    rdns.rdns_count);
 			if (rdns.rdns_count > MAX_RDNS_COUNT)
-				fatalx("%s: rdns_count too big: %d", __func__,
+				fatalx("%s: rdns_count too big: %zu", __func__,
 				    rdns.rdns_count);
 
 			propose_rdns(&rdns);
@@ -642,7 +642,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 			if (imsg_get_data(&imsg, &rdns, sizeof(rdns)) == -1)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 			if (rdns.rdns_count != 0)
-				fatalx("%s: expected rdns_count == 0: %d",
+				fatalx("%s: expected rdns_count == 0: %zu",
 				    __func__, rdns.rdns_count);
 
 			propose_rdns(&rdns);
