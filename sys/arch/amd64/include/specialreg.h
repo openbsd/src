@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.122 2026/04/19 01:10:28 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.123 2026/05/14 01:39:38 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -709,6 +709,9 @@
 #define	DE_CFG_721	0x00000001	/* errata 721 */
 #define DE_CFG_SERIALIZE_LFENCE	(1 << 1)	/* Enable serializing lfence */
 #define DE_CFG_SERIALIZE_9 (1 << 9)	/* Zenbleed chickenbit */
+
+#define MSR_BP_CFG	0xc001102e
+#define BP_CFG_33	(1ULL << 33)	/* op cache chickenbit, AMD-SB-7052 */
 
 #define IPM_C1E_CMP_HLT	0x10000000
 #define IPM_SMI_CMP_HLT	0x08000000

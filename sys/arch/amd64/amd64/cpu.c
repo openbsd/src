@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.205 2026/04/19 01:10:28 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.206 2026/05/14 01:39:38 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1292,12 +1292,18 @@ cpu_fix_msrs(struct cpu_info *ci)
 			if (msr != nmsr)
 				wrmsr(MSR_DE_CFG, nmsr);
 		}
+		/* Zen 2 mitigations: Zenbleed, op cache corruption */
 		if (family == 0x17 && ci->ci_model >= 0x31 &&
 		    (cpu_ecxfeature & CPUIDECX_HV) == 0) {
 			nmsr = msr = rdmsr(MSR_DE_CFG);
 			nmsr |= DE_CFG_SERIALIZE_9;
 			if (msr != nmsr)
 				wrmsr(MSR_DE_CFG, nmsr);
+
+			nmsr = msr = rdmsr(MSR_BP_CFG);
+			nmsr |= BP_CFG_33;
+			if (msr != nmsr)
+				wrmsr(MSR_BP_CFG, nmsr);
 		}
 		/*
 		 * Mitigation for Floating Point Divider State Sampling
