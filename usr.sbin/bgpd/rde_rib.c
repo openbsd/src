@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.293 2026/05/13 14:06:24 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.294 2026/05/14 18:47:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -890,11 +890,13 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 			if (p_filtered != filtered) {
 				struct rib_entry	*re;
 
+				re = rib_get_addr(rib, prefix, prefixlen);
+				/* remove prefix from rib */
+				prefix_evaluate(re, NULL, p);
 				/* toggle filtered flag */
 				p->flags ^= PREFIX_FLAG_FILTERED;
-				/* make route decision */
-				re = rib_get_addr(rib, prefix, prefixlen);
-				prefix_evaluate(re, p, p);
+				/* redo route decision */
+				prefix_evaluate(re, p, NULL);
 			}
 			return (0);
 		}
