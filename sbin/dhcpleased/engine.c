@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.61 2026/04/15 16:50:32 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.62 2026/05/14 05:40:57 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1780,6 +1780,7 @@ send_routes_withdraw(struct dhcpleased_iface *iface)
 	if (iface->requested_ip.s_addr == INADDR_ANY || iface->routes_len == 0)
 		return;
 
+        memset(&imsg, 0, sizeof(imsg));
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
 	imsg.addr = iface->requested_ip;
