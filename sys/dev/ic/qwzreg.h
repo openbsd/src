@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.13 2026/04/26 19:25:08 mglocker Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.14 2026/05/14 16:17:21 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -1952,6 +1952,7 @@ enum wmi_tlv_tag {
 	WMI_TAG_PDEV_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMD,
 	WMI_TAG_REGULATORY_RULE_EXT_STRUCT = 0x3A9,
 	WMI_TAG_REG_CHAN_LIST_CC_EXT_EVENT,
+	WMI_TAG_MLO_PEER_CREATE_PARAMS = 0x3D5,
 	WMI_TAG_PDEV_SET_BIOS_SAR_TABLE_CMD = 0x3D8,
 	WMI_TAG_PDEV_SET_BIOS_GEO_TABLE_CMD,
 	WMI_TAG_MAX
@@ -2766,6 +2767,13 @@ struct wmi_vdev_create_cmd {
 	uint32_t pdev_id;
 	uint32_t mbssid_flags;
 	uint32_t mbssid_tx_vdev_id;
+	/*
+	 * Trailing fields the FW expects.  Mirror of Linux
+	 * struct wmi_vdev_create_cmd.  Without them the FW reads
+	 * garbage past our struct and may crash.
+	 */
+	uint32_t vdev_stats_id_valid;
+	uint32_t vdev_stats_id;
 } __packed;
 
 struct wmi_vdev_txrx_streams {
@@ -2832,6 +2840,13 @@ struct wmi_vdev_start_request_cmd {
 	uint32_t min_data_rate;
 	uint32_t mbssid_flags;
 	uint32_t mbssid_tx_vdev_id;
+	/*
+	 * Trailing fields the FW expects.  Mirror of Linux
+	 * struct wmi_vdev_start_request_cmd.  Without them the FW
+	 * reads garbage past our struct and may crash.
+	 */
+	uint32_t eht_ops;
+	uint32_t punct_bitmap;
 } __packed;
 
 #define MGMT_TX_DL_FRM_LEN		     64
@@ -3138,6 +3153,11 @@ struct wmi_peer_create_cmd {
 	uint32_t vdev_id;
 	struct wmi_mac_addr peer_macaddr;
 	uint32_t peer_type;
+} __packed;
+
+struct wmi_peer_create_mlo_params {
+	uint32_t tlv_header;
+	uint32_t flags;
 } __packed;
 
 struct wmi_peer_delete_cmd {
@@ -3873,6 +3893,13 @@ struct peer_assoc_params {
 	struct ath12k_ppe_threshold peer_ppet;
 };
 
+/*
+ * EHT (WiFi 7) capability array sizes.  We don't use EHT but the FW
+ * still expects these fields in the wmi_peer_assoc_complete_cmd struct.
+ */
+#define WMI_MAX_EHTCAP_MAC_SIZE	2
+#define WMI_MAX_EHTCAP_PHY_SIZE	3
+
 struct  wmi_peer_assoc_complete_cmd {
 	uint32_t tlv_header;
 	struct wmi_mac_addr peer_macaddr;
@@ -3902,6 +3929,25 @@ struct  wmi_peer_assoc_complete_cmd {
 	uint32_t peer_he_cap_info_internal;
 	uint32_t min_data_rate;
 	uint32_t peer_he_caps_6ghz;
+	/*
+	 * Trailing fields the FW expects.  Zero-initialised via the
+	 * mbuf memset in qwz_htc_alloc_mbuf; we never set them because
+	 * we don't support MLO (multi-link), WiFi 7 EHT, or per-peer
+	 * auth-mode override.  Without these fields the FW reads
+	 * garbage past our struct (interpreting the legacy-rates TLV
+	 * header and following bytes as struct fields) and crashes
+	 * inside dlpager.  Mirror of Linux struct
+	 * wmi_peer_assoc_complete_cmd.
+	 */
+	uint32_t sta_type;
+	uint32_t bss_max_idle_option;
+	uint32_t auth_mode;
+	uint32_t peer_flags_ext;
+	uint32_t punct_bitmap;
+	uint32_t peer_eht_cap_mac[WMI_MAX_EHTCAP_MAC_SIZE];
+	uint32_t peer_eht_cap_phy[WMI_MAX_EHTCAP_PHY_SIZE];
+	uint32_t peer_eht_ops;
+	struct wmi_ppe_threshold peer_eht_ppet;
 } __packed;
 
 struct wmi_stop_scan_cmd {
@@ -7651,8 +7697,8 @@ enum hal_reo_cmd_status {
 #define BUFFER_ADDR_INFO0_ADDR         GENMASK(31, 0)
 
 #define BUFFER_ADDR_INFO1_ADDR         GENMASK(7, 0)
-#define BUFFER_ADDR_INFO1_RET_BUF_MGR  GENMASK(10, 8)
-#define BUFFER_ADDR_INFO1_SW_COOKIE    GENMASK(31, 11)
+#define BUFFER_ADDR_INFO1_RET_BUF_MGR  GENMASK(11, 8)
+#define BUFFER_ADDR_INFO1_SW_COOKIE    GENMASK(31, 12)
 
 struct ath12k_buffer_addr {
 	uint32_t info0;
@@ -9438,14 +9484,14 @@ struct hal_ce_srng_dst_status_desc {
  */
 
 #define HAL_TX_RATE_STATS_INFO0_VALID		BIT(0)
-#define HAL_TX_RATE_STATS_INFO0_BW		GENMASK(2, 1)
-#define HAL_TX_RATE_STATS_INFO0_PKT_TYPE	GENMASK(6, 3)
-#define HAL_TX_RATE_STATS_INFO0_STBC		BIT(7)
-#define HAL_TX_RATE_STATS_INFO0_LDPC		BIT(8)
-#define HAL_TX_RATE_STATS_INFO0_SGI		GENMASK(10, 9)
-#define HAL_TX_RATE_STATS_INFO0_MCS		GENMASK(14, 11)
-#define HAL_TX_RATE_STATS_INFO0_OFDMA_TX	BIT(15)
-#define HAL_TX_RATE_STATS_INFO0_TONES_IN_RU	GENMASK(27, 16)
+#define HAL_TX_RATE_STATS_INFO0_BW		GENMASK(3, 1)
+#define HAL_TX_RATE_STATS_INFO0_PKT_TYPE	GENMASK(7, 4)
+#define HAL_TX_RATE_STATS_INFO0_STBC		BIT(8)
+#define HAL_TX_RATE_STATS_INFO0_LDPC		BIT(9)
+#define HAL_TX_RATE_STATS_INFO0_SGI		GENMASK(11, 10)
+#define HAL_TX_RATE_STATS_INFO0_MCS		GENMASK(15, 12)
+#define HAL_TX_RATE_STATS_INFO0_OFDMA_TX	BIT(16)
+#define HAL_TX_RATE_STATS_INFO0_TONES_IN_RU	GENMASK(28, 17)
 
 enum hal_tx_rate_stats_bw {
 	HAL_TX_RATE_STATS_BW_20,
@@ -9862,19 +9908,19 @@ enum hal_rx_reo_queue_pn_size {
 #define HAL_RX_REO_QUEUE_INFO0_RETRY			BIT(8)
 #define HAL_RX_REO_QUEUE_INFO0_CHECK_2K_MODE		BIT(9)
 #define HAL_RX_REO_QUEUE_INFO0_OOR_MODE			BIT(10)
-#define HAL_RX_REO_QUEUE_INFO0_BA_WINDOW_SIZE		GENMASK(18, 11)
-#define HAL_RX_REO_QUEUE_INFO0_PN_CHECK			BIT(19)
-#define HAL_RX_REO_QUEUE_INFO0_EVEN_PN			BIT(20)
-#define HAL_RX_REO_QUEUE_INFO0_UNEVEN_PN		BIT(21)
-#define HAL_RX_REO_QUEUE_INFO0_PN_HANDLE_ENABLE		BIT(22)
-#define HAL_RX_REO_QUEUE_INFO0_PN_SIZE			GENMASK(24, 23)
-#define HAL_RX_REO_QUEUE_INFO0_IGNORE_AMPDU_FLG		BIT(25)
+#define HAL_RX_REO_QUEUE_INFO0_BA_WINDOW_SIZE		GENMASK(20, 11)
+#define HAL_RX_REO_QUEUE_INFO0_PN_CHECK			BIT(21)
+#define HAL_RX_REO_QUEUE_INFO0_EVEN_PN			BIT(22)
+#define HAL_RX_REO_QUEUE_INFO0_UNEVEN_PN		BIT(23)
+#define HAL_RX_REO_QUEUE_INFO0_PN_HANDLE_ENABLE		BIT(24)
+#define HAL_RX_REO_QUEUE_INFO0_PN_SIZE			GENMASK(26, 25)
+#define HAL_RX_REO_QUEUE_INFO0_IGNORE_AMPDU_FLG		BIT(27)
 
 #define HAL_RX_REO_QUEUE_INFO1_SVLD			BIT(0)
 #define HAL_RX_REO_QUEUE_INFO1_SSN			GENMASK(12, 1)
-#define HAL_RX_REO_QUEUE_INFO1_CURRENT_IDX		GENMASK(20, 13)
-#define HAL_RX_REO_QUEUE_INFO1_SEQ_2K_ERR		BIT(21)
-#define HAL_RX_REO_QUEUE_INFO1_PN_ERR			BIT(22)
+#define HAL_RX_REO_QUEUE_INFO1_CURRENT_IDX		GENMASK(22, 13)
+#define HAL_RX_REO_QUEUE_INFO1_SEQ_2K_ERR		BIT(23)
+#define HAL_RX_REO_QUEUE_INFO1_PN_ERR			BIT(24)
 #define HAL_RX_REO_QUEUE_INFO1_PN_VALID			BIT(31)
 
 #define HAL_RX_REO_QUEUE_INFO2_MPDU_COUNT		GENMASK(6, 0)
@@ -10020,13 +10066,13 @@ struct hal_rx_reo_queue {
 #define HAL_REO_UPD_RX_QUEUE_INFO1_PN_HANDLE_ENABLE		BIT(30)
 #define HAL_REO_UPD_RX_QUEUE_INFO1_IGNORE_AMPDU_FLG		BIT(31)
 
-#define HAL_REO_UPD_RX_QUEUE_INFO2_BA_WINDOW_SIZE		GENMASK(7, 0)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_SIZE			GENMASK(9, 8)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_SVLD				BIT(10)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_SSN				GENMASK(22, 11)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_SEQ_2K_ERR			BIT(23)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_ERR			BIT(24)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_VALID			BIT(25)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_BA_WINDOW_SIZE		GENMASK(9, 0)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_SIZE			GENMASK(11, 10)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_SVLD				BIT(12)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_SSN				GENMASK(24, 13)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_SEQ_2K_ERR			BIT(25)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_ERR			BIT(26)
+#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_VALID			BIT(27)
 
 struct hal_reo_update_rx_queue {
 	struct hal_reo_cmd_hdr cmd;
@@ -12396,7 +12442,7 @@ struct hal_rx_desc_qcn9274_compact {
  * of upstream Linux/ath12k headers would suggest). The padding between
  * msdu_end and mpdu_start_tag is 80 bytes, not 8.
  */
-#define RX_BE_PADDING0_BYTES 80
+#define RX_BE_PADDING0_BYTES 8
 #define RX_BE_PADDING1_BYTES 8
 
 #define HAL_RX_BE_PKT_HDR_TLV_LEN 112
@@ -12454,14 +12500,12 @@ struct hal_rx_desc {
 
 #define HTT_INVALID_PEER_ID	0xffff
 
-/* HTT tx completion is overlaid in wbm_release_ring */
-#define HTT_TX_WBM_COMP_INFO0_STATUS		GENMASK(12, 9)
-#define HTT_TX_WBM_COMP_INFO0_REINJECT_REASON	GENMASK(16, 13)
-#define HTT_TX_WBM_COMP_INFO0_REINJECT_REASON	GENMASK(16, 13)
+/* HTT tx completion is overlaid in wbm_release_ring (ath12k wifi7) */
+#define HTT_TX_WBM_COMP_INFO0_STATUS		GENMASK(16, 13)
+#define HTT_TX_WBM_COMP_INFO1_REINJECT_REASON	GENMASK(3, 0)
+#define HTT_TX_WBM_COMP_INFO1_EXCEPTION_FRAME	BIT(4)
 
-#define HTT_TX_WBM_COMP_INFO1_ACK_RSSI		GENMASK(31, 24)
-#define HTT_TX_WBM_COMP_INFO2_SW_PEER_ID	GENMASK(15, 0)
-#define HTT_TX_WBM_COMP_INFO2_VALID		BIT(21)
+#define HTT_TX_WBM_COMP_INFO2_ACK_RSSI		GENMASK(31, 24)
 
 struct htt_tx_wbm_completion {
 	uint32_t info0;
@@ -12819,8 +12863,30 @@ enum htt_ppdu_stats_tag_type {
 #define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_RING_ID	GENMASK(23, 16)
 #define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_SS		BIT(24)
 #define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PS		BIT(25)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_OFFSET_VALID	BIT(26)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_DROP_THRES_VAL	BIT(27)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_EN_RXMON		BIT(28)
 
-#define HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE	GENMASK(15, 0)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE		GENMASK(15, 0)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_MGMT	GENMASK(18, 16)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_CTRL	GENMASK(21, 19)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_DATA	GENMASK(24, 22)
+
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO2_DROP_THRESHOLD	GENMASK(9, 0)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO2_EN_LOG_MGMT_TYPE	BIT(17)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO2_EN_CTRL_TYPE	BIT(18)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO2_EN_LOG_DATA_TYPE	BIT(19)
+
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO3_EN_TLV_PKT_OFFSET	BIT(0)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO3_PKT_TLV_OFFSET	GENMASK(14, 1)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_PACKET_OFFSET	GENMASK(15, 0)
+#define HTT_RX_RING_SELECTION_CFG_RX_HEADER_OFFSET	GENMASK(31, 16)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_OFFSET	GENMASK(15, 0)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_OFFSET	GENMASK(31, 16)
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_OFFSET	GENMASK(15, 0)
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_START_OFFSET	GENMASK(31, 16)
+#define HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET	GENMASK(15, 0)
 
 enum htt_rx_filter_tlv_flags {
 	HTT_RX_FILTER_TLV_FLAGS_MPDU_START		= BIT(0),
@@ -13132,6 +13198,15 @@ struct htt_rx_ring_selection_cfg_cmd {
 	uint32_t pkt_type_en_flags2;
 	uint32_t pkt_type_en_flags3;
 	uint32_t rx_filter_tlv;
+	uint32_t rx_packet_offset;	/* packet & header offsets */
+	uint32_t rx_mpdu_offset;	/* mpdu start & end offsets */
+	uint32_t rx_msdu_offset;	/* msdu start & end offsets */
+	uint32_t rx_attn_offset;	/* attention TLV offset */
+	uint32_t info2;
+	uint32_t reserved[2];
+	uint32_t rx_mpdu_start_end_mask;
+	uint32_t rx_msdu_end_word_mask;
+	uint32_t info3;
 } __packed;
 
 struct htt_rx_ring_tlv_filter {
@@ -13140,6 +13215,14 @@ struct htt_rx_ring_tlv_filter {
 	uint32_t pkt_filter_flags1; /* MGMT */
 	uint32_t pkt_filter_flags2; /* CTRL */
 	uint32_t pkt_filter_flags3; /* DATA */
+	int offset_valid;
+	uint16_t rx_packet_offset;
+	uint16_t rx_header_offset;
+	uint16_t rx_mpdu_end_offset;
+	uint16_t rx_mpdu_start_offset;
+	uint16_t rx_msdu_end_offset;
+	uint16_t rx_msdu_start_offset;
+	uint16_t rx_attn_offset;
 };
 
 #define HTT_RX_FULL_MON_MODE_CFG_CMD_INFO0_MSG_TYPE	GENMASK(7, 0)

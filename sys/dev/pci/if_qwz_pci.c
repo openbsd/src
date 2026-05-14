@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.8 2026/04/26 19:25:08 mglocker Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.9 2026/05/14 16:17:20 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2886,6 +2886,7 @@ qwz_mhi_fw_load_handler(struct qwz_pci_softc *psc)
 	u_char *data;
 	size_t len;
 
+	amss_path[0] = '\0';
 	if (sc->fw_img[QWZ_FW_AMSS].data) {
 		data = sc->fw_img[QWZ_FW_AMSS].data;
 		len = sc->fw_img[QWZ_FW_AMSS].size;
@@ -2916,16 +2917,40 @@ qwz_mhi_fw_load_handler(struct qwz_pci_softc *psc)
 	/* Second-stage boot loader sits in the first 512 KB of image. */
 	ret = qwz_mhi_fw_load_bhi(psc, data, MHI_DMA_VEC_CHUNK_SIZE);
 	if (ret != 0) {
-		printf("%s: could not load firmware %s\n",
-		    sc->sc_dev.dv_xname, amss_path);
+		printf("%s: could not load firmware %s (BHI ret=%d)\n",
+		    sc->sc_dev.dv_xname, amss_path, ret);
 		return ret;
 	}
 
-	/* Now load the full image. */
+	/*
+	 * Mirror Linux's MHI state-worker ordering: wait for the chip
+	 * to reach SBL EE + M0 before starting the BHIE upload.
+	 */
+	while (psc->bhi_ee < MHI_EE_SBL) {
+		ret = tsleep_nsec(&psc->bhi_ee, 0, "qwzsbl",
+		    SEC_TO_NSEC(5));
+		if (ret) {
+			printf("%s: timeout waiting for SBL EE (bhi_ee=%d)\n",
+			    sc->sc_dev.dv_xname, psc->bhi_ee);
+			return ret;
+		}
+	}
+
+	while (psc->mhi_state != MHI_STATE_M0) {
+		ret = tsleep_nsec(&psc->mhi_state, 0, "qwzm0",
+		    SEC_TO_NSEC(5));
+		if (ret) {
+			printf("%s: timeout waiting for M0 state "
+			    "(mhi_state=0x%x)\n",
+			    sc->sc_dev.dv_xname, psc->mhi_state);
+			return ret;
+		}
+	}
+
 	ret = qwz_mhi_fw_load_bhie(psc, data, len);
 	if (ret != 0) {
-		printf("%s: could not load firmware %s\n",
-		    sc->sc_dev.dv_xname, amss_path);
+		printf("%s: could not load firmware %s (BHIE ret=%d)\n",
+		    sc->sc_dev.dv_xname, amss_path, ret);
 		return ret;
 	}
 
@@ -3143,6 +3168,18 @@ qwz_mhi_fw_load_bhi(struct qwz_pci_softc *psc, uint8_t *data, size_t len)
 	/* Copy firmware image to DMA memory. */
 	memcpy(QWZ_DMA_KVA(data_adm), data, len);
 
+	/*
+	 * Even though the buffer was mapped with BUS_DMA_COHERENT, force
+	 * a PREWRITE sync so any pending CPU stores reach DRAM before the
+	 * device DMAs the firmware bytes.  Every other DMA buffer in qwz
+	 * does this -- BHI/BHIE were the exceptions.  If the FW computes
+	 * an internal hash over what it reads and a few bytes are stale,
+	 * dlpager fails its TPZ authentication and the entire pager
+	 * subsystem refuses to come up post-AMSS.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, QWZ_DMA_MAP(data_adm), 0, len,
+	    BUS_DMASYNC_PREWRITE);
+
 	qwz_pci_write(sc, psc->bhi_off + MHI_BHI_STATUS, 0);
 
 	/* Set data physical address and length. */
@@ -3239,6 +3276,19 @@ qwz_mhi_fw_load_bhie(struct qwz_pci_softc *psc, uint8_t *data, size_t len)
 		} else
 			vec[i].size = remain;
 	}
+
+	/*
+	 * PREWRITE sync both buffers before the device starts DMAing.
+	 * BUS_DMA_COHERENT mappings still need this on ARM64 to flush
+	 * any pending CPU stores to DRAM.  See same rationale in
+	 * qwz_mhi_fw_load_bhi -- the FW image is hash-validated by
+	 * dlpager TPZ, and even a few stale bytes cause authentication
+	 * to fail and the swap region to never come up.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, QWZ_DMA_MAP(psc->amss_data), 0, len,
+	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, QWZ_DMA_MAP(psc->amss_vec), 0, vec_size,
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Set vector physical address and length. */
 	paddr = QWZ_DMA_DVA(psc->amss_vec);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.26 2026/04/26 19:25:08 mglocker Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.27 2026/05/14 16:17:21 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1286,21 +1286,7 @@ qwz_hw_wcn7850_dp_rx_h_mpdu_err(struct hal_rx_desc *desc)
 
 uint32_t qwz_hw_wcn7850_get_rx_desc_size(void)
 {
-	/*
-	 * Empirically observed on WCN7850 hw2.0 fw 0x110cffff: the FW
-	 * places the MSDU payload at offset 512 of the buffer (with the
-	 * mpdu_start_tag at 216 and mpdu_start data at 224, matching our
-	 * 80-byte rx_padding0). The struct sizeof works out to only 472
-	 * bytes, so override the descriptor size getter to return the
-	 * actual 512 bytes for m_adj to strip the right amount.
-	 *
-	 * NOTE: keeping struct sizeof at 472 is intentional; bumping
-	 * pkt_hdr_tlv to 168 to make sizeof = 512 caused spontaneous
-	 * machine reboots, suggesting a downstream code path (likely the
-	 * EAPOL TX response) was crashing the FW once real frames started
-	 * arriving. We isolate that here by only changing what m_adj sees.
-	 */
-	return 512;
+	return sizeof(struct hal_rx_desc_wcn7850);
 }
 
 uint8_t
@@ -1664,10 +1650,16 @@ ath12k_hal_wcn7850_tcl_to_wbm_rbm_map[DP_TCL_NUM_RING_MAX] = {
 
 static const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
 	.rx_buf_rbm = HAL_RX_BUF_RBM_SW1_BM,
-	.wbm2sw_cc_enable = HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN |
-			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW2_EN |
-			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN |
-			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN,
+	/*
+	 * Keep HW cookie-conversion enabled only for the RX release ring
+	 * (WBM2SW3, DP_RX_RELEASE_RING_NUM=3).  Linux ath12k handles the
+	 * new HW-CC TX completion layout (hal_wbm_completion_ring_tx with
+	 * buf_va_lo/buf_va_hi), but qwz parses TX completions using the
+	 * older hal_wbm_release_ring layout with buf_addr_info.  Disabling
+	 * HW CC for the TX rings forces FW to use the SW-cookie path so
+	 * qwz's BUFFER_ADDR_INFO1_SW_COOKIE lookup matches FW writeback.
+	 */
+	.wbm2sw_cc_enable = HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN,
 };
 
 const struct hal_rx_ops hal_rx_wcn7850_ops = {
@@ -2571,7 +2563,7 @@ static const struct qmi_elem_info qmi_wlanfw_host_cap_req_msg_v01_ei[] = {
 	{
 		.data_type	= QMI_UNSIGNED_2_BYTE,
 		.elem_len	= 1,
-		.elem_size	= sizeof(uint8_t),
+		.elem_size	= sizeof(uint16_t),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= 0x24,
 		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
@@ -3875,6 +3867,7 @@ qwz_ce_intr(void *arg)
 {
 	struct qwz_ce_pipe *pipe = arg;
 	struct qwz_softc *sc = pipe->sc;
+	int ret;
 
 	if (!test_bit(ATH12K_FLAG_CE_IRQ_ENABLED, sc->sc_flags) ||
 	    ((sc->msi_ce_irqmask & (1 << pipe->pipe_num)) == 0)) {
@@ -3883,7 +3876,20 @@ qwz_ce_intr(void *arg)
 		return 1;
 	}
 
-	return qwz_ce_per_engine_service(sc, pipe->pipe_num);
+	ret = qwz_ce_per_engine_service(sc, pipe->pipe_num);
+
+	/*
+	 * Multi-MSI ext-IRQ vectors do not deliver on X1E80100; drive
+	 * the DP service path from the CE interrupt instead.
+	 */
+	if (test_bit(ATH12K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags) &&
+	    test_bit(ATH12K_FLAG_EXT_IRQ_ENABLED, sc->sc_flags)) {
+		int i;
+		for (i = 0; i < nitems(sc->ext_irq_grp); i++)
+			qwz_dp_service_srng(sc, i);
+	}
+
+	return ret;
 }
 
 int
@@ -4717,6 +4723,18 @@ qwz_qmi_recv_wlanfw_phy_cap_req_v1(struct qwz_softc *sc, struct mbuf *m,
 	DNPRINTF(QWZ_D_QMI, "%s: resp.single_chip_mlo_support=0x%x\n",
 	   __func__, resp.single_chip_mlo_support);
 
+	/*
+	 * Capture WCN7850's QMI single_chip_mlo_support bit so that
+	 * qwz_qmi_host_cap_send can echo MLO capability back to FW.
+	 * Linux ath12k core.c notes that "WCN7850 firmware uses QMI
+	 * single_chip_mlo_support bit" specifically for MLO advertisement,
+	 * and qwz never captured/echoed this -- without it, FW takes a
+	 * code path different from Linux for this chip.
+	 */
+	if (resp.single_chip_mlo_support_valid && resp.single_chip_mlo_support)
+		sc->single_chip_mlo_support = 1;
+	if (resp.num_phy_valid)
+		sc->qmi_phy_cap_num_phy = resp.num_phy;
 	sc->qmi_resp.result = le16toh(resp.resp.result);
 	sc->qmi_resp.error = le16toh(resp.resp.error);
 	wakeup(&sc->qmi_resp);
@@ -5447,6 +5465,7 @@ qwz_qmi_encode_struct(uint8_t *p, size_t *encoded_len,
 {
 	const struct qmi_elem_info *ei = struct_ei->ei_array;
 	size_t remain = input_len;
+	int nelem, idx;
 
 	*encoded_len = 0;
 
@@ -5472,39 +5491,50 @@ qwz_qmi_encode_struct(uint8_t *p, size_t *encoded_len,
 			}
 		}
 
-		if (ei->elem_size > remain) {
+		/*
+		 * STATIC_ARRAY in a struct member (e.g. hw_link_id[2] in
+		 * wlfw_host_mlo_chip_info_s_v01) means we have to emit
+		 * elem_len consecutive elements; the per-byte/word/etc.
+		 * encoders already use input + offset + idx*elem_size so
+		 * we just call them in a loop and advance p per iteration.
+		 * NO_ARRAY collapses to nelem=1 -- preserves prior behavior.
+		 */
+		nelem = (ei->array_type == STATIC_ARRAY) ? ei->elem_len : 1;
+		if ((size_t)ei->elem_size * nelem > remain) {
 			printf("%s: QMI message buffer too short\n", __func__);
 			return -1;
 		}
 
-		switch (ei->data_type) {
-		case QMI_UNSIGNED_1_BYTE:
-			if (qwz_qmi_encode_byte(p, ei, input, 0))
+		for (idx = 0; idx < nelem; idx++) {
+			switch (ei->data_type) {
+			case QMI_UNSIGNED_1_BYTE:
+				if (qwz_qmi_encode_byte(p, ei, input, idx))
+					return -1;
+				break;
+			case QMI_UNSIGNED_2_BYTE:
+				if (qwz_qmi_encode_word(p, ei, input, idx))
+					return -1;
+				break;
+			case QMI_UNSIGNED_4_BYTE:
+			case QMI_SIGNED_4_BYTE_ENUM:
+				if (qwz_qmi_encode_dword(p, ei, input, idx))
+					return -1;
+				break;
+			case QMI_UNSIGNED_8_BYTE:
+				if (qwz_qmi_encode_qword(p, ei, input, idx))
+					return -1;
+				break;
+			default:
+				printf("%s: unhandled QMI struct element "
+				    "type %d\n", __func__, ei->data_type);
 				return -1;
-			break;
-		case QMI_UNSIGNED_2_BYTE:
-			if (qwz_qmi_encode_word(p, ei, input, 0))
-				return -1;
-			break;
-		case QMI_UNSIGNED_4_BYTE:
-		case QMI_SIGNED_4_BYTE_ENUM:
-			if (qwz_qmi_encode_dword(p, ei, input, 0))
-				return -1;
-			break;
-		case QMI_UNSIGNED_8_BYTE:
-			if (qwz_qmi_encode_qword(p, ei, input, 0))
-				return -1;
-			break;
-		default:
-			printf("%s: unhandled QMI struct element type %d\n",
-			    __func__, ei->data_type);
-			return -1;
+			}
+			if (p != NULL)
+				p += ei->elem_size;
 		}
 
-		remain -= ei->elem_size;
-		if (p != NULL)
-			p += ei->elem_size;
-		*encoded_len += ei->elem_size;
+		remain -= (size_t)ei->elem_size * nelem;
+		*encoded_len += (size_t)ei->elem_size * nelem;
 		ei++;
 	}
 
@@ -5615,6 +5645,33 @@ qwz_qmi_encode_msg(uint8_t **encoded_msg, size_t *encoded_len, int type,
 				goto err;
 			*encoded_len += encoded_string_len;
 			ei++;
+		} else if (ei->array_type == STATIC_ARRAY) {
+			/*
+			 * STATIC_ARRAY without a preceding QMI_DATA_LEN
+			 * always emits exactly elem_len entries on the wire,
+			 * regardless of any "valid count" field elsewhere
+			 * in the message.  Mirrors Linux's QMI library --
+			 * required for fields like mlo_chip_info[3] in
+			 * qmi_wlanfw_host_cap_req_msg_v01.
+			 */
+			if (ei->data_type == QMI_STRUCT) {
+				for (i = 0; i < ei->elem_len; i++) {
+					size_t encoded_struct_len = 0;
+					size_t inoff = ei->offset +
+					    (i * ei->elem_size);
+
+					if (qwz_qmi_encode_struct(NULL,
+					    &encoded_struct_len, ei,
+					    input + inoff,
+					    input_len - inoff))
+						goto err;
+					*encoded_len += encoded_struct_len;
+				}
+			} else {
+				*encoded_len += (size_t)ei->elem_size *
+				    ei->elem_len;
+			}
+			ei++;
 		} else {
 			*encoded_len += ei->elem_size;
 			ei++;
@@ -5677,6 +5734,9 @@ qwz_qmi_encode_msg(uint8_t **encoded_msg, size_t *encoded_len, int type,
 			ei++;
 			if (ei->array_type == VAR_LEN_ARRAY)
 				nelem = datalen;
+		} else if (ei->array_type == STATIC_ARRAY) {
+			/* See first-pass STATIC_ARRAY comment above. */
+			nelem = ei->elem_len;
 		}
 
 		for (i = 0; i < nelem; i++) {
@@ -5956,6 +6016,25 @@ qwz_qmi_host_cap_send(struct qwz_softc *sc)
 		req.nm_modem |= QWZ_SLEEP_CLOCK_SELECT_INTERNAL_BIT;
 		req.nm_modem |= QWZ_PLATFORM_CAP_PCIE_GLOBAL_RESET;
 	}
+
+	/*
+	 * MLO advertisement is intentionally NOT emitted here.
+	 *
+	 * The QMI encoder now handles STATIC_ARRAY correctly so the wire
+	 * format would be valid (FW accepts the request -- verified in
+	 * 2026-05-01 testing with the MLO block enabled), BUT advertising
+	 * MLO capability triggers FW to expect additional MLO-specific
+	 * WMI/HTT initialization that qwz does not currently perform.
+	 * The result is an earlier post-AUTHORIZE FW fault than in the
+	 * non-MLO baseline -- worse, not better.
+	 *
+	 * The PHY_CAP capture (sc->single_chip_mlo_support,
+	 * sc->qmi_phy_cap_num_phy) and the diagnostic printf in
+	 * qwz_qmi_recv_wlanfw_phy_cap_req_v1 stay in place.  When MLO
+	 * support is fully ported (post-association MLO link setup,
+	 * MLO peer state machine, etc.), restore the emission block
+	 * here -- the encoder is ready for it.
+	 */
 
 	DNPRINTF(QWZ_D_QMI, "%s: qmi host cap request\n", __func__);
 
@@ -7141,7 +7220,17 @@ qwz_hal_srng_access_begin(struct qwz_softc *sc, struct hal_srng *srng)
 		srng->u.src_ring.cached_tp =
 			*(volatile uint32_t *)srng->u.src_ring.tp_addr;
 	} else {
-		srng->u.dst_ring.cached_hp = *srng->u.dst_ring.hp_addr;
+		/*
+		 * Volatile load: hp_addr lives in the rdp DMA-shared
+		 * region the device writes to.  Without volatile the
+		 * compiler hoisted the load and we always read a stale
+		 * cached_hp, so TX completion entries the FW wrote
+		 * accumulated indefinitely (4 entries written, only 2
+		 * drained) until the FW's TX desc pool exhausted and
+		 * QURT asserted.
+		 */
+		srng->u.dst_ring.cached_hp =
+			*(volatile uint32_t *)srng->u.dst_ring.hp_addr;
 	}
 }
 
@@ -12518,7 +12607,22 @@ qwz_peer_map_event(struct qwz_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
-	ni = ieee80211_find_node(ic, mac_addr);
+	/*
+	 * For STA mode the only peer is the AP, and the per-peer state
+	 * we care about (FW-assigned ast_hash / hw_peer_id) is consumed
+	 * later via ic->ic_bss in qwz_peer_create.  ieee80211_find_node
+	 * may return a DIFFERENT node from the RB-tree (a stale scan
+	 * entry for the same BSSID), and updating that wrong node
+	 * leaves ic_bss's qwz_peer with ast_hash=0 / hw_peer_id=0
+	 * forever -- causing the FW to AST-look-up slot 0 on the first
+	 * protected post-AUTHORIZE frame and dlpager-fault.  Prefer
+	 * ic_bss whenever the MAC matches.
+	 */
+	if (ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss != NULL &&
+	    IEEE80211_ADDR_EQ(ic->ic_bss->ni_macaddr, mac_addr))
+		ni = ic->ic_bss;
+	else
+		ni = ieee80211_find_node(ic, mac_addr);
 	if (ni == NULL) {
 		printf("%s: peer_map: no node for %s\n", sc->sc_dev.dv_xname,
 		    ether_sprintf(mac_addr));
@@ -12535,6 +12639,16 @@ qwz_peer_map_event(struct qwz_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 	ether_addr_copy(peer->addr, mac_addr);
 	list_add(&peer->list, &ab->peers);
 #endif
+	/* Propagate FW-assigned AST values to STA arvif for qwz_dp_tx(). */
+	{
+		struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list);
+		if (ic->ic_opmode == IEEE80211_M_STA &&
+		    arvif != NULL && arvif->vdev_id == vdev_id) {
+			arvif->ast_hash = ast_hash;
+			arvif->ast_idx = hw_peer_id;
+		}
+	}
+
 	sc->peer_mapped = 1;
 	wakeup(&sc->peer_mapped);
 
@@ -13435,6 +13549,9 @@ qwz_dp_tx_htt_rx_filter_setup(struct qwz_softc *sc, uint32_t ring_id,
 	    !!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP));
 	cmd->info0 |= FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PS,
 	    !!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP));
+	cmd->info0 |= FIELD_PREP(
+	    HTT_RX_RING_SELECTION_CFG_CMD_INFO0_OFFSET_VALID,
+	    !!tlv_filter->offset_valid);
 
 	cmd->info1 = FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE,
 	    rx_buf_size);
@@ -13443,6 +13560,33 @@ qwz_dp_tx_htt_rx_filter_setup(struct qwz_softc *sc, uint32_t ring_id,
 	cmd->pkt_type_en_flags2 = tlv_filter->pkt_filter_flags2;
 	cmd->pkt_type_en_flags3 = tlv_filter->pkt_filter_flags3;
 	cmd->rx_filter_tlv = tlv_filter->rx_filter;
+
+	if (tlv_filter->offset_valid) {
+		cmd->rx_packet_offset = FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_PACKET_OFFSET,
+		    tlv_filter->rx_packet_offset);
+		cmd->rx_packet_offset |= FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_HEADER_OFFSET,
+		    tlv_filter->rx_header_offset);
+
+		cmd->rx_mpdu_offset = FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_OFFSET,
+		    tlv_filter->rx_mpdu_end_offset);
+		cmd->rx_mpdu_offset |= FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_OFFSET,
+		    tlv_filter->rx_mpdu_start_offset);
+
+		cmd->rx_msdu_offset = FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_OFFSET,
+		    tlv_filter->rx_msdu_end_offset);
+		cmd->rx_msdu_offset |= FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_MSDU_START_OFFSET,
+		    tlv_filter->rx_msdu_start_offset);
+
+		cmd->rx_attn_offset = FIELD_PREP(
+		    HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET,
+		    tlv_filter->rx_attn_offset);
+	}
 
 	ret = qwz_htc_send(&sc->htc, sc->dp.eid, m);
 	if (ret)
@@ -13502,6 +13646,31 @@ qwz_dp_rxdma_ring_sel_config_wcn7850(struct qwz_softc *sc)
 	    HTT_RX_FILTER_TLV_FLAGS_MSDU_END;
 	tlv_filter.pkt_filter_flags2 = HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_BAR;
 	tlv_filter.pkt_filter_flags3 = HTT_RX_FP_DATA_FILTER_FLASG3;
+
+	/*
+	 * WCN7850 FW requires explicit RX TLV offsets within our
+	 * hal_rx_desc layout.  Without these the FW DMAs the various
+	 * RX TLVs at default offsets that don't match our struct
+	 * layout, internal FW state corrupts as packets flow, and the
+	 * dlpager eventually faults at a stale function pointer.
+	 * Mirror of Linux ath12k_dp_rxdma_ring_sel_config_wcn7850.
+	 */
+	tlv_filter.offset_valid = 1;
+	/*
+	 * rx_packet_offset uses sc->hal.hal_desc_sz (=512 on WCN7850),
+	 * NOT sizeof(struct hal_rx_desc) (=472).  WCN7850 FW empirically
+	 * places the packet at offset 512 even though our struct is only
+	 * 472; using sizeof here would tell the FW to DMA the packet 40
+	 * bytes earlier than our driver reads it from, and EAPOL never
+	 * reaches net80211 -> 4-way handshake never starts.
+	 */
+	tlv_filter.rx_packet_offset = sc->hal.hal_desc_sz;
+	tlv_filter.rx_header_offset =
+	    offsetof(struct hal_rx_desc_wcn7850, pkt_hdr_tlv);
+	tlv_filter.rx_mpdu_start_offset =
+	    offsetof(struct hal_rx_desc_wcn7850, mpdu_start_tag);
+	tlv_filter.rx_msdu_end_offset =
+	    offsetof(struct hal_rx_desc_wcn7850, msdu_end_tag);
 
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 		ring_id = dp->rx_mac_buf_ring[i].ring_id;
@@ -13863,14 +14032,9 @@ qwz_dp_tx_process_htt_tx_complete(struct qwz_softc *sc, void *desc,
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_TTL:
 		ts.acked = (wbm_status == HAL_WBM_REL_HTT_TX_COMP_STATUS_OK);
 		ts.msdu_id = msdu_id;
-		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO1_ACK_RSSI,
-		    status_desc->info1);
-
-		if (FIELD_GET(HTT_TX_WBM_COMP_INFO2_VALID, status_desc->info2))
-			ts.peer_id = FIELD_GET(HTT_TX_WBM_COMP_INFO2_SW_PEER_ID,
-			    status_desc->info2);
-		else
-			ts.peer_id = HTT_INVALID_PEER_ID;
+		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO2_ACK_RSSI,
+		    status_desc->info2);
+		ts.peer_id = HTT_INVALID_PEER_ID;
 
 		qwz_dp_tx_htt_tx_complete_buf(sc, tx_ring, &ts);
 		break;
@@ -15009,6 +15173,7 @@ qwz_dp_rx_process_msdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	uint16_t msdu_len;
 	int ret;
 	uint32_t hal_rx_desc_sz = sc->hal.hal_desc_sz;
+	struct rx_mpdu_start_qcn9274 *mpdu;
 
 	last_buf = qwz_dp_rx_get_msdu_last_buf(msdu_list, msdu);
 	if (!last_buf) {
@@ -15031,13 +15196,11 @@ qwz_dp_rx_process_msdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 
 	/*
 	 * WCN7850 FW injects internal messages into the REO ring with
-	 * fc_valid=1 but garbage 802.11 contents. Their synthetic addr1
-	 * always ends in 84:e1 (regardless of the multicast bit). Drop
-	 * those, then drop any remaining unicast frames not addressed
+	 * fc_valid=1 but garbage 802.11 contents; their synthetic addr1
+	 * ends in 84:e1.  Drop those and any unicast frames not addressed
 	 * to our own MAC.
 	 */
-	struct rx_mpdu_start_qcn9274 *mpdu = &rx_desc->u.wcn7850.mpdu_start;
-
+	mpdu = &rx_desc->u.wcn7850.mpdu_start;
 	if (mpdu->addr1[4] == 0x84 && mpdu->addr1[5] == 0xe1)
 		return EIO;
 	if (!(mpdu->addr1[0] & 0x01) &&
@@ -16807,21 +16970,45 @@ qwz_wmi_send_peer_create_cmd(struct qwz_softc *sc, uint8_t pdev_id,
 {
 	struct qwz_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
 	struct wmi_peer_create_cmd *cmd;
+	struct wmi_peer_create_mlo_params *ml_param;
+	struct wmi_tlv *tlv;
 	struct mbuf *m;
-	int ret;
+	void *ptr;
+	int ret, len;
 
-	m = qwz_wmi_alloc_mbuf(sizeof(*cmd));
+	/*
+	 * The FW expects a trailing WMI_TAG_ARRAY_STRUCT containing a
+	 * WMI_TAG_MLO_PEER_CREATE_PARAMS struct after the cmd, even when
+	 * MLO is unused.  Without it the FW reads past our buffer when
+	 * walking the TLV stream, stores garbage MLO flags in per-peer
+	 * state, and crashes later when it consumes that state.
+	 */
+	len = sizeof(*cmd) + TLV_HDR_SIZE + sizeof(*ml_param);
+
+	m = qwz_wmi_alloc_mbuf(len);
 	if (!m)
 		return ENOMEM;
 
-	cmd = (struct wmi_peer_create_cmd *)(mtod(m, uint8_t *) +
-	    sizeof(struct ath12k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+	ptr = (void *)(mtod(m, uint8_t *) + sizeof(struct ath12k_htc_hdr) +
+	    sizeof(struct wmi_cmd_hdr));
+	cmd = ptr;
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PEER_CREATE_CMD) |
 	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
 
 	IEEE80211_ADDR_COPY(cmd->peer_macaddr.addr, param->peer_addr);
 	cmd->peer_type = param->peer_type;
 	cmd->vdev_id = param->vdev_id;
+
+	ptr = (uint8_t *)ptr + sizeof(*cmd);
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*ml_param));
+	ptr = (uint8_t *)ptr + TLV_HDR_SIZE;
+	ml_param = ptr;
+	ml_param->tlv_header =
+	    FIELD_PREP(WMI_TLV_TAG, WMI_TAG_MLO_PEER_CREATE_PARAMS) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*ml_param) - TLV_HDR_SIZE);
+	/* flags=0: MLO disabled (mbuf is zero-initialized). */
 
 	ret = qwz_wmi_cmd_send(wmi, m, WMI_PEER_CREATE_CMDID);
 	if (ret) {
@@ -17042,7 +17229,18 @@ qwz_wmi_send_peer_assoc_cmd(struct qwz_softc *sc, uint8_t pdev_id,
 	      TLV_HDR_SIZE + (peer_legacy_rates_align * sizeof(uint8_t)) +
 	      TLV_HDR_SIZE + (peer_ht_rates_align * sizeof(uint8_t)) +
 	      sizeof(*mcs) + TLV_HDR_SIZE +
-	      (sizeof(*he_mcs) * param->peer_he_mcs_count);
+	      (sizeof(*he_mcs) * param->peer_he_mcs_count) +
+	      /*
+	       * The FW expects three trailing TLVs (in this order) after
+	       * the HE rate set, even when the corresponding features are
+	       * unused.  Without these placeholder TLV headers the FW reads
+	       * past the end of our buffer when walking the TLV stream and
+	       * crashes inside dlpager.  Mirror of Linux ath12k.
+	       *   1. WMI_TAG_ARRAY_STRUCT (ML params)
+	       *   2. WMI_TAG_ARRAY_STRUCT (EHT rate set)
+	       *   3. WMI_TAG_ARRAY_STRUCT (ML partner info)
+	       */
+	      3 * TLV_HDR_SIZE;
 
 	m = qwz_wmi_alloc_mbuf(len);
 	if (!m)
@@ -17156,6 +17354,28 @@ qwz_wmi_send_peer_assoc_cmd(struct qwz_softc *sc, uint8_t pdev_id,
 		ptr += sizeof(*he_mcs);
 	}
 
+	/*
+	 * Three trailing placeholder TLVs the FW always expects after the
+	 * HE rate set: ML params, EHT rate set, ML partner info.  All
+	 * empty (length 0) since we don't support MLO or WiFi7 EHT rates.
+	 * Without these the FW walks past our buffer end and crashes in
+	 * dlpager.  Mirror of Linux ath12k_wmi_send_peer_assoc_cmd().
+	 */
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
+	    FIELD_PREP(WMI_TLV_LEN, 0);	/* ML params */
+	ptr += TLV_HDR_SIZE;
+
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
+	    FIELD_PREP(WMI_TLV_LEN, 0);	/* EHT rate set */
+	ptr += TLV_HDR_SIZE;
+
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
+	    FIELD_PREP(WMI_TLV_LEN, 0);	/* ML partner info */
+	ptr += TLV_HDR_SIZE;
+
 	ret = qwz_wmi_cmd_send(wmi, m, WMI_PEER_ASSOC_CMDID);
 	if (ret) {
 		if (ret != ESHUTDOWN) {
@@ -17165,21 +17385,6 @@ qwz_wmi_send_peer_assoc_cmd(struct qwz_softc *sc, uint8_t pdev_id,
 		m_freem(m);
 		return ret;
 	}
-
-	DNPRINTF(QWZ_D_WMI, "%s: cmd peer assoc vdev id %d assoc id %d "
-	    "peer mac %s peer_flags %x rate_caps %x peer_caps %x "
-	    "listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d "
-	    "peer_mpdu_density %d vht_caps %x he cap_info %x he ops %x "
-	    "he cap_info_ext %x he phy %x %x %x peer_bw_rxnss_override %x\n",
-	    __func__, cmd->vdev_id, cmd->peer_associd,
-	    ether_sprintf(param->peer_mac),
-	    cmd->peer_flags, cmd->peer_rate_caps, cmd->peer_caps,
-	    cmd->peer_listen_intval, cmd->peer_ht_caps,
-	    cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,
-	    cmd->peer_mpdu_density, cmd->peer_vht_caps, cmd->peer_he_cap_info,
-	    cmd->peer_he_ops, cmd->peer_he_cap_info_ext,
-	    cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
-	    cmd->peer_he_cap_phy[2], cmd->peer_bw_rxnss_override);
 
 	return 0;
 }
@@ -17523,7 +17728,7 @@ qwz_wmi_mgmt_send(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 	struct wmi_mgmt_send_cmd *cmd;
 	struct wmi_tlv *frame_tlv;
 	struct mbuf *m;
-	uint32_t buf_len;
+	uint32_t buf_len, buf_len_aligned;
 	int ret, len;
 	uint64_t paddr;
 
@@ -17532,7 +17737,9 @@ qwz_wmi_mgmt_send(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 	buf_len = frame->m_pkthdr.len < WMI_MGMT_SEND_DOWNLD_LEN ?
 	    frame->m_pkthdr.len : WMI_MGMT_SEND_DOWNLD_LEN;
 
-	len = sizeof(*cmd) + sizeof(*frame_tlv) + roundup(buf_len, 4);
+	buf_len_aligned = roundup(buf_len, sizeof(uint32_t));
+
+	len = sizeof(*cmd) + sizeof(*frame_tlv) + buf_len_aligned;
 
 	m = qwz_wmi_alloc_mbuf(len);
 	if (!m)
@@ -17555,12 +17762,13 @@ qwz_wmi_mgmt_send(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 	    sizeof(struct ath12k_htc_hdr) + sizeof(struct wmi_cmd_hdr) +
 	    sizeof(*cmd));
 	frame_tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-	    FIELD_PREP(WMI_TLV_LEN, buf_len);
+	    FIELD_PREP(WMI_TLV_LEN, buf_len_aligned);
 
 	memcpy(frame_tlv->value, mtod(frame, void *), buf_len);
 #if 0 /* Not needed on OpenBSD? */
 	ath12k_ce_byte_swap(frame_tlv->value, buf_len);
 #endif
+
 	ret = qwz_wmi_cmd_send(wmi, m, WMI_MGMT_TX_SEND_CMDID);
 	if (ret) {
 		if (ret != ESHUTDOWN) {
@@ -21816,22 +22024,21 @@ qwz_peer_create(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 	spin_lock_bh(&ar->ab->base_lock);
 #endif
 	peer = &nq->peer;
-	if (peer) {
-		if (peer->peer_id != HAL_INVALID_PEERID &&
-		    peer->vdev_id == param->vdev_id) {
-#ifdef notyet
-			spin_unlock_bh(&ar->ab->base_lock);
-			mutex_unlock(&ar->ab->tbl_mtx_lock);
-#endif
-			return EINVAL;
-		}
-#if 0
-		/* Assume sta is transitioning to another band.
-		 * Remove here the peer from rhash.
-		 */
-		ath12k_peer_rhash_delete(ar->ab, peer);
-#endif
-	}
+	/*
+	 * Reset stale peer state from any prior attempt.  After a
+	 * fatal_firmware_error the FW peer table is wiped but the
+	 * host-side qwz_node persists with peer->peer_id and
+	 * peer->vdev_id from the last attempt.  Without this reset
+	 * the subsequent peer_create returns EINVAL and we get stuck
+	 * in a recovery loop (peer_create fail -> wlan mode off fail
+	 * -> mhi_start -> repeat).  The stale ast_hash / hw_peer_id
+	 * are also reset because they will be re-populated by the
+	 * next peer_map_event.
+	 */
+	peer->peer_id = HAL_INVALID_PEERID;
+	peer->vdev_id = 0;
+	peer->ast_hash = 0;
+	peer->hw_peer_id = 0;
 #ifdef notyet
 	spin_unlock_bh(&ar->ab->base_lock);
 	mutex_unlock(&ar->ab->tbl_mtx_lock);
@@ -22619,10 +22826,20 @@ uint8_t
 qwz_dp_tx_get_tid(struct mbuf *m)
 {
 	struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
-	uint16_t qos = ieee80211_get_qos(wh);
-	uint8_t tid = qos & IEEE80211_QOS_TID;
 
-	return tid;
+	/*
+	 * Mirror of Linux ath12k_dp_tx_get_tid: non-QoS data frames go
+	 * onto the special HAL_DESC_REO_NON_QOS_TID (=16), not TID 0.
+	 * qwz used to return 0 for every frame, which made the FW believe
+	 * the non-QoS DHCP/ARP frames belonged in TID 0 (AC_BE) queue;
+	 * the resulting mismatch (TCL desc says TID 0, frame has no QoS
+	 * Control field) tripped a QURT internal-state assertion after
+	 * a handful of such frames post-AUTHORIZE.
+	 */
+	if (!ieee80211_has_qos(wh))
+		return HAL_DESC_REO_NON_QOS_TID;
+
+	return ieee80211_get_qos(wh) & IEEE80211_QOS_TID;
 }
 
 /*
@@ -22743,8 +22960,21 @@ qwz_dp_tx(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 
 	ti.meta_data_flags = arvif->tcl_metadata;
 
-	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
-	    ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW) {
+	/*
+	 * Set the per-frame encrypt_type so the FW knows which cipher
+	 * to apply.  This must run for ALL encap types, not only RAW:
+	 * leaving encrypt_type at HAL_ENCRYPT_TYPE_OPEN for protected
+	 * data frames in NATIVE_WIFI encap caused the FW to crash on
+	 * the first post-AUTHORIZE data TX (e.g. DHCP DISCOVER) because
+	 * the FW saw a frame with FC1_PROTECTED=1 but a TX descriptor
+	 * saying "no encryption" -- inconsistent state -> dlpager fault.
+	 *
+	 * For RAW encap with HW crypto, we additionally need to make
+	 * room in the mbuf for the cipher MIC (FW writes it in place).
+	 * For NATIVE_WIFI encap the FW does the full encrypt path on
+	 * its side, so no host-side space reservation is required.
+	 */
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		k = ieee80211_get_txkey(ic, wh, ni);
 		if (test_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags)) {
 			ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
@@ -22752,16 +22982,18 @@ qwz_dp_tx(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 			switch (k->k_cipher) {
 			case IEEE80211_CIPHER_CCMP:
 				ti.encrypt_type = HAL_ENCRYPT_TYPE_CCMP_128;
-				if (m_makespace(m, m->m_pkthdr.len,
-				    IEEE80211_CCMP_MICLEN, &off) == NULL) {
+				if (ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW &&
+				    m_makespace(m, m->m_pkthdr.len,
+					IEEE80211_CCMP_MICLEN, &off) == NULL) {
 					m_freem(m);
 					return ENOSPC;
 				}
 				break;
 			case IEEE80211_CIPHER_TKIP:
 				ti.encrypt_type = HAL_ENCRYPT_TYPE_TKIP_MIC;
-				if (m_makespace(m, m->m_pkthdr.len,
-				    IEEE80211_TKIP_MICLEN, &off) == NULL) {
+				if (ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW &&
+				    m_makespace(m, m->m_pkthdr.len,
+					IEEE80211_TKIP_MICLEN, &off) == NULL) {
 					m_freem(m);
 					return ENOSPC;
 				}
@@ -22772,7 +23004,8 @@ qwz_dp_tx(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 			}
 		}
 
-		if (ti.encrypt_type == HAL_ENCRYPT_TYPE_OPEN) {
+		if (ti.encrypt_type == HAL_ENCRYPT_TYPE_OPEN &&
+		    ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW) {
 			/* Using software crypto. */
 			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return ENOBUFS;
@@ -23573,11 +23806,14 @@ qwz_auth(struct qwz_softc *sc)
 	qwz_recalculate_mgmt_rate(sc, ni, arvif->vdev_id, pdev->pdev_id);
 	ni->ni_txrate = 0;
 
-	ret = qwz_mac_station_add(sc, arvif, pdev->pdev_id, ni);
-	if (ret)
-		return ret;
-
-	/* Start vdev. */
+	/*
+	 * Start vdev BEFORE creating the peer.  Linux ath12k starts the
+	 * vdev at chanctx-assignment time, well before any PEER_CREATE.
+	 * If we instead PEER_CREATE first, the FW creates the peer entry
+	 * against an unstarted vdev: the entry is half-initialized (no
+	 * channel binding) and AUTHORIZE later dispatches through a stale
+	 * function pointer in dlpager and crashes.
+	 */
 	ret = qwz_mac_vdev_start(sc, arvif, pdev->pdev_id);
 	if (ret) {
 		printf("%s: failed to start MAC for VDEV: %d\n",
@@ -23590,6 +23826,10 @@ qwz_auth(struct qwz_softc *sc)
 	 * Set it once more.
 	 */
 	qwz_recalculate_mgmt_rate(sc, ni, arvif->vdev_id, pdev->pdev_id);
+
+	ret = qwz_mac_station_add(sc, arvif, pdev->pdev_id, ni);
+	if (ret)
+		return ret;
 
 	return ret;
 }
@@ -23640,9 +23880,28 @@ qwz_peer_assoc_h_basic(struct qwz_softc *sc, struct qwz_vif *arvif,
 	arg->vdev_id = arvif->vdev_id;
 	arg->peer_associd = IEEE80211_AID(ni->ni_associd);
 	arg->auth_flag = 1;
-	arg->peer_listen_intval = ni->ni_intval;
+	/*
+	 * peer_listen_intval is the STA wake interval in BEACONS, not in
+	 * TUs.  Linux ath12k passes hw->conf.listen_interval which is 1
+	 * (wake every beacon).  ni->ni_intval would be the beacon
+	 * interval in TUs (~100); using that here causes the FW to set
+	 * up power-save logic with an unrealistic interval, which is
+	 * then dispatched after AUTHORIZE and crashes dlpager.
+	 */
+	arg->peer_listen_intval = 1;
 	arg->peer_nss = 1;
 	arg->peer_caps = ni->ni_capinfo;
+
+	/*
+	 * Modern WCN7850 FW expects WMI_PEER_QOS for any STA peer.
+	 * Without it the FW peer state is internally inconsistent and
+	 * AUTHORIZE later dispatches into a stale function pointer,
+	 * crashing dlpager.  Linux ath12k sets these in
+	 * ath12k_peer_assoc_h_qos based on sta->wme; we don't have an
+	 * easy net80211 equivalent so set them unconditionally for STA.
+	 */
+	arg->is_wme_set = 1;
+	arg->qos_flag = 1;
 }
 
 void
@@ -23745,6 +24004,7 @@ qwz_run(struct qwz_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwz_node *nq = (struct qwz_node *)ni;
 	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct peer_assoc_params peer_arg;
@@ -23756,7 +24016,40 @@ qwz_run(struct qwz_softc *sc)
 	DNPRINTF(QWZ_D_MAC, "%s: vdev %i assoc bssid %pM aid %d\n",
 	    __func__, arvif->vdev_id, arvif->bssid, arvif->aid);
 
+	/*
+	 * Clear stale per-node key-install flags before this association
+	 * attempt.  qwz_run_stop normally resets them on RUN -> lower
+	 * transitions, but a fatal_firmware_error mid-association doesn't
+	 * always tear down through RUN, so flags survive into the next
+	 * cycle.  When that happens, qwz_add_sta_key's "(flags &
+	 * want_keymask) == want_keymask" check passes after the very
+	 * first INSTALL_KEY (because the OTHER bit was carried over),
+	 * AUTHORIZE fires mid-key-install, and the FW ends up authorizing
+	 * an only-half-keyed peer.  The first protected data TX after
+	 * that crashes dlpager.
+	 */
+	nq->flags &= ~(QWZ_NODE_FLAG_HAVE_PAIRWISE_KEY |
+	    QWZ_NODE_FLAG_HAVE_GROUP_KEY);
+
 	qwz_peer_assoc_prepare(sc, arvif, ni, &peer_arg, 0);
+
+	/*
+	 * Tell the FW the per-vdev HE MU mode before peer_assoc.  Linux
+	 * ath12k_bss_assoc explicitly comments "keep this before
+	 * ath12k_wmi_send_peer_assoc_cmd()": the FW configures HE MU
+	 * structures from this value at peer_assoc time, and we don't
+	 * want a stale boot-default left over from earlier configuration.
+	 * For our non-HE peer the computed hemode is always 0 (Linux's
+	 * ath12k_mac_vif_recalc_sta_he_txbf early-returns when
+	 * !he_support, leaving the local "hemode = 0" intact).
+	 */
+	ret = qwz_wmi_vdev_set_param_cmd(sc, arvif->vdev_id, pdev_id,
+	    WMI_VDEV_PARAM_SET_HEMU_MODE, 0);
+	if (ret) {
+		printf("%s: failed to submit vdev param SET_HEMU_MODE 0: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
 
 	peer_arg.is_assoc = 1;
 

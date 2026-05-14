@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.14 2026/04/26 19:25:08 mglocker Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.15 2026/05/14 16:17:21 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1982,6 +1982,8 @@ struct qwz_softc {
 
 	uint16_t			qmi_txn_id;
 	int				qmi_cal_done;
+	int				single_chip_mlo_support;
+	uint8_t				qmi_phy_cap_num_phy;
 	struct qwz_qmi_ce_cfg		qmi_ce_cfg;
 	struct qwz_qmi_target_info	qmi_target;
 	struct qwz_qmi_dev_mem_info	qmi_dev_mem[ATH12K_QMI_WLFW_MAX_DEV_MEM_NUM_V01];
