@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.289 2026/05/13 13:49:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.290 2026/05/14 12:26:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1373,12 +1373,15 @@ bgpd_rtr_conn_setup(struct rtr_config *r)
 		log_warn("rtr %s", r->descr);
 		return;
 	}
+	ce->fd = -1;
+	ce->id = r->id;
 
 	if (pfkey_establish(&ce->auth_state, &r->auth,
-	    &r->local_addr, &r->remote_addr) == -1)
+	    &r->local_addr, &r->remote_addr) == -1) {
 		log_warnx("rtr %s: pfkey setup failed", r->descr);
+		goto fail;
+	}
 
-	ce->id = r->id;
 	ce->fd = socket(aid2af(r->remote_addr.aid),
 	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (ce->fd == -1) {
@@ -1409,8 +1412,10 @@ bgpd_rtr_conn_setup(struct rtr_config *r)
 		goto fail;
 	}
 
-	if (tcp_md5_set(ce->fd, &r->auth, &r->remote_addr) == -1)
+	if (tcp_md5_set(ce->fd, &r->auth, &r->remote_addr) == -1) {
 		log_warn("rtr %s: setting md5sig", r->descr);
+		goto fail;
+	}
 
 	if ((sa = addr2sa(&r->local_addr, 0, &len)) != NULL) {
 		if (bind(ce->fd, sa, len) == -1) {

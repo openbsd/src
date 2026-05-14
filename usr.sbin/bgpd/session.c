@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.536 2026/05/12 20:27:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.537 2026/05/14 12:26:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -796,8 +796,11 @@ session_connect(struct peer *peer)
 	}
 
 	if (tcp_md5_set(peer->fd, &peer->auth_conf,
-	    &peer->conf.remote_addr) == -1)
+	    &peer->conf.remote_addr) == -1) {
 		log_peer_warn(&peer->conf, "setting md5sig");
+		bgp_fsm(peer, EVNT_CON_OPENFAIL, NULL);
+		return (-1);
+	}
 
 	/* if local-address is set we need to bind() */
 	bind_addr = session_localaddr(peer);
