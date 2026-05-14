@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.63 2026/05/14 05:53:13 dgl Exp $	*/
+/*	$OpenBSD: engine.c,v 1.64 2026/05/14 06:09:50 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1064,7 +1064,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			while (slen > 0 && p[slen - 1] == '\0')
 				slen--;
 			/* slen might be 0 here, pretend option is not there. */
-			strvisx(hostname, p, slen, VIS_SAFE);
+			strvisx(hostname, p, slen, VIS_SAFE | VIS_NL);
 			if (log_getverbose() > 1)
 				log_debug("DHO_HOST_NAME: %s", hostname);
 			p += dho_len;
@@ -1083,7 +1083,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			while (slen > 0 && p[slen - 1] == '\0')
 				slen--;
 			/* slen might be 0 here, pretend option is not there. */
-			strvisx(domainname, p, slen, VIS_SAFE);
+			strvisx(domainname, p, slen, VIS_SAFE | VIS_NL);
 			if (log_getverbose() > 1)
 				log_debug("DHO_DOMAIN_NAME: %s", domainname);
 			p += dho_len;
@@ -1364,7 +1364,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 
 		/* we made sure this is a string futher up */
 		strnvis(iface->file, dhcp_hdr->file, sizeof(iface->file),
-		    VIS_SAFE);
+		    VIS_SAFE | VIS_NL);
 
 		strlcpy(iface->domainname, domainname,
 		    sizeof(iface->domainname));
