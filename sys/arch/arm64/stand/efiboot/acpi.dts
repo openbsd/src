@@ -29,6 +29,7 @@
 	timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <0 0 0>, <0 0 0>, <0 0 0>, <0 0 0>;
+		interrupt-names = "sec-phys", "phys", "virt", "hyp-phys";
 		status = "disabled";
 	};
 
