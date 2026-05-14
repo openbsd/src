@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.314 2026/05/04 08:02:42 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.315 2026/05/14 16:20:27 mglocker Exp $
 #
 # GENERIC machine description file
 #
@@ -430,7 +430,7 @@ iwn*		at pci?			# Intel WiFi Link 4965/5000/1000/6000
 iwm*		at pci?			# Intel WiFi Link 7xxx
 iwx*		at pci?			# Intel WiFi Link 22xxx
 qwx*		at pci?			# Qualcomm 802.11ax
-#qwz*		at pci?			# Qualcomm 802.11be
+qwz*		at pci?			# Qualcomm 802.11be
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
