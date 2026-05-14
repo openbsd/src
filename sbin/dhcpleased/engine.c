@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.62 2026/05/14 05:40:57 dgl Exp $	*/
+/*	$OpenBSD: engine.c,v 1.63 2026/05/14 05:53:13 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -370,6 +370,8 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 
 			if (imsg_get_data(&imsg, &imsg_dhcp,
 			    sizeof(imsg_dhcp)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+			if ((size_t)imsg_dhcp.len > sizeof(imsg_dhcp.packet))
 				fatalx("%s: invalid %s", __func__, i2s(type));
 
 			iface = get_dhcpleased_iface_by_id(imsg_dhcp.if_index);
@@ -1780,7 +1782,7 @@ send_routes_withdraw(struct dhcpleased_iface *iface)
 	if (iface->requested_ip.s_addr == INADDR_ANY || iface->routes_len == 0)
 		return;
 
-        memset(&imsg, 0, sizeof(imsg));
+	memset(&imsg, 0, sizeof(imsg));
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
 	imsg.addr = iface->requested_ip;
