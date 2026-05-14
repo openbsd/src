@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.101 2026/05/08 12:03:50 tb Exp $ */
+/*	$OpenBSD: util.c,v 1.102 2026/05/14 11:32:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -95,9 +95,11 @@ log_evpnaddr(const struct bgpd_addr *addr, struct sockaddr *sa,
 
 	switch (addr->evpn.type) {
 	case EVPN_ROUTE_TYPE_2:
-		memcpy(&vni, addr->labelstack, addr->labellen);
+		vni = addr->labelstack[0];
+		vni = vni << 8 | addr->labelstack[1];
+		vni = vni << 8 | addr->labelstack[2];
 		snprintf(buf, sizeof(buf), "[2]:[%s]:[%s]:[%d]:[48]:[%s]",
-		    log_rd(addr->rd), log_esi(addr->evpn.esi), htonl(vni) >> 8,
+		    log_rd(addr->rd), log_esi(addr->evpn.esi), vni,
 		    log_mac(addr->evpn.mac));
 		if (sa != NULL) {
 			len = strlen(buf);
@@ -108,7 +110,6 @@ log_evpnaddr(const struct bgpd_addr *addr, struct sockaddr *sa,
 		break;
 	case EVPN_ROUTE_TYPE_3:
 		if (sa != NULL) {
-			memcpy(&vni, addr->labelstack, addr->labellen);
 			snprintf(buf, sizeof(buf), "[3]:[%s]:[%d]:[%s]",
 			    log_rd(addr->rd),
 			    sa->sa_family == AF_INET ? 32 : 128,
