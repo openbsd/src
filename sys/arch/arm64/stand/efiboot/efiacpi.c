@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.19 2025/02/10 20:40:26 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.20 2026/05/14 12:26:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -221,13 +221,15 @@ struct acpi_gtdt {
 #define ACPI_GTDT_TIMER_ALWAYS_ON	0x4
 	uint32_t	nonsec_el1_interrupt;
 	uint32_t	nonsec_el1_flags;
-	uint32_t	virt_interrupt;
-	uint32_t	virt_flags;
+	uint32_t	virt_el1_interrupt;
+	uint32_t	virt_el1_flags;
 	uint32_t	nonsec_el2_interrupt;
 	uint32_t	nonsec_el2_flags;
 	uint64_t	cnt_read_base;
 	uint32_t	platform_timer_count;
 	uint32_t	platform_timer_offset;
+	uint32_t	virt_el2_interrupt;
+	uint32_t	virt_el2_flags;
 } __packed;
 
 struct acpi_madt {
@@ -402,8 +404,12 @@ efi_acpi_gtdt(struct acpi_table_header *hdr)
 	const uint32_t map[] = { 0x4, 0x1, 0x8, 0x2 };
 	const uint32_t mask = ACPI_GTDT_TIMER_TRIGGER_EDGE |
 	    ACPI_GTDT_TIMER_POLARITY_LOW;
-	uint32_t interrupts[12];
+	char interrupt_names[] = "sec-phys\0phys\0virt\0hyp-phys\0hyp-virt";
+	uint32_t interrupts[15];
 	void *node;
+	size_t len;
+
+	node = fdt_find_node("/timer");
 
 	/* All interrupts are supposed to be PPIs. */
 	interrupts[0] = htobe32(1);
@@ -413,15 +419,25 @@ efi_acpi_gtdt(struct acpi_table_header *hdr)
 	interrupts[4] = htobe32(gtdt->nonsec_el1_interrupt - 16);
 	interrupts[5] = htobe32(map[gtdt->nonsec_el1_flags & mask]);
 	interrupts[6] = htobe32(1);
-	interrupts[7] = htobe32(gtdt->virt_interrupt - 16);
-	interrupts[8] = htobe32(map[gtdt->virt_flags & mask]);
+	interrupts[7] = htobe32(gtdt->virt_el1_interrupt - 16);
+	interrupts[8] = htobe32(map[gtdt->virt_el1_flags & mask]);
 	interrupts[9] = htobe32(1);
 	interrupts[10] = htobe32(gtdt->nonsec_el2_interrupt - 16);
 	interrupts[11] = htobe32(map[gtdt->nonsec_el2_flags & mask]);
+	len = 12 * sizeof(uint32_t);
 
-	node = fdt_find_node("/timer");
-	fdt_node_set_property(node, "interrupts",
-	    interrupts, sizeof(interrupts));
+	if (gtdt->hdr.revision > 2 && gtdt->hdr.length >= 104 &&
+	    gtdt->virt_el2_interrupt > 0) {
+		interrupts[12] = htobe32(1);
+		interrupts[13] = htobe32(gtdt->virt_el2_interrupt - 16);
+		interrupts[14] = htobe32(map[gtdt->virt_el2_flags & mask]);
+		len = 15 * sizeof(uint32_t);
+
+		fdt_node_set_property(node, "interrupt-names",
+		    interrupt_names, sizeof(interrupt_names));
+	}
+
+	fdt_node_set_property(node, "interrupts", interrupts, len);
 	fdt_node_set_string_property(node, "status", "okay");
 }
 
