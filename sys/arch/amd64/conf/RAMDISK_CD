@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.214 2026/04/18 18:23:50 gnezdo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.215 2026/05/14 16:22:31 mglocker Exp $
 
 machine		amd64
 maxusers	4
@@ -293,7 +293,7 @@ iwn*		at pci?			# Intel Wireless WiFi Link 4965AGN
 iwm*		at pci?			# Intel WiFi Link 7xxx
 iwx*		at pci?			# Intel WiFi Link 22xxx
 qwx*		at pci?			# Qualcomm 802.11ax
-#qwz*		at pci?			# Qualcomm 802.11be
+qwz*		at pci?			# Qualcomm 802.11be
 ral*		at pci?			# Ralink RT2500/RT2501/RT2600
 ral*		at cardbus?		# Ralink RT2500/RT2501/RT2600
 rtw*		at pci?			# Realtek 8180
