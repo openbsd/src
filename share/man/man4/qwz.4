@@ -1,4 +1,4 @@
-.\" $OpenBSD: qwz.4,v 1.1 2026/05/15 15:55:45 mglocker Exp $
+.\" $OpenBSD: qwz.4,v 1.2 2026/05/15 19:34:25 mglocker Exp $
 .\"
 .\" Copyright (c) 2022 Martin Pieuchot <mpi@openbsd.org>
 .\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
@@ -139,8 +139,3 @@ Broadcast and Multicast frames are only received on networks which
 do not use encryption or which use WPA2 with the CCMP group cipher.
 This prevents ARP and IPv6 from working correctly on networks which
 use WEP encryption or WPA2 with the TKIP group cipher.
-.Pp
-Taking the interface down and bringing it up again with
-.Xr ifconfig 8
-may leave the device in a state where it can no longer associate.
-The workaround is to reboot the machine.
