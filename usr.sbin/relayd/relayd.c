@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.197 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.198 2026/05/15 13:57:24 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1335,14 +1335,14 @@ relay_load_fd(int fd, off_t *len)
 }
 
 int
-relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
+relay_load_certfiles(struct relayd *env, struct relay *rlay, const struct keyname *name)
 {
 	char	 certfile[PATH_MAX];
 	char	 hbuf[PATH_MAX];
 	struct protocol *proto = rlay->rl_proto;
 	struct relay_cert *cert;
 	int	 useport = htons(rlay->rl_conf.port);
-	int	 cert_fd = -1, key_fd = -1, ocsp_fd = -1;
+	int	 cert_fd = -1, key_fd = -1, ocsp_fd = -1, ret = 0;
 
 	if (rlay->rl_conf.flags & F_TLSCLIENT) {
 		if (strlen(proto->tlsca) && rlay->rl_tls_ca_fd == -1) {
@@ -1385,15 +1385,29 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
 	    print_host(&rlay->rl_conf.ss, hbuf, sizeof(hbuf)) == NULL)
 		goto fail;
 	else if (name != NULL &&
-	    strlcpy(hbuf, name, sizeof(hbuf)) >= sizeof(hbuf))
+	    strlcpy(hbuf, name->name, sizeof(hbuf)) >= sizeof(hbuf))
 		goto fail;
 
-	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/%s:%u.crt", hbuf, useport) == -1)
-		goto fail;
+	if (name != NULL && strcmp(name->certificate, "") != 0) {
+		if (strlcpy(certfile, name->certificate, sizeof(certfile))
+		    >= sizeof(certfile)) {
+			log_warnx("certificate truncated");
+			goto fail;
+		}
+	}
+	else {
+		ret = snprintf(certfile, sizeof(certfile),
+				"/etc/ssl/%s:%u.crt", hbuf, useport);
+
+		if (ret < 0 || (size_t)ret >= sizeof(certfile))
+			goto fail;
+	}
 	if ((cert_fd = open(certfile, O_RDONLY)) == -1) {
-		if (snprintf(certfile, sizeof(certfile),
-		    "/etc/ssl/%s.crt", hbuf) == -1)
+
+		ret = snprintf(certfile, sizeof(certfile),
+					"/etc/ssl/%s.crt", hbuf);
+
+		if (ret < 0 || (size_t)ret >= sizeof(certfile))
 			goto fail;
 		if ((cert_fd = open(certfile, O_RDONLY)) == -1)
 			goto fail;
@@ -1401,27 +1415,56 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
 	}
 	log_debug("%s: using certificate %s", __func__, certfile);
 
-	if (useport) {
-		if (snprintf(certfile, sizeof(certfile),
-		    "/etc/ssl/private/%s:%u.key", hbuf, useport) == -1)
+	if (name != NULL && strcmp(name->key, "") != 0) {
+		if (strlcpy(certfile, name->key, sizeof(certfile))
+		    >= sizeof(certfile)) {
+			log_warnx("certificate key truncated");
 			goto fail;
-	} else {
-		if (snprintf(certfile, sizeof(certfile),
-		    "/etc/ssl/private/%s.key", hbuf) == -1)
-			goto fail;
+		}
+	}
+	else {
+		if (useport) {
+			ret = snprintf(certfile, sizeof(certfile),
+					"/etc/ssl/private/%s:%u.key",
+					hbuf, useport);
+
+			if (ret < 0 || (size_t)ret >= sizeof(certfile))
+				goto fail;
+		} else {
+			ret = snprintf(certfile, sizeof(certfile),
+					"/etc/ssl/private/%s.key", hbuf);
+
+			if (ret < 0 || (size_t)ret >= sizeof(certfile))
+				goto fail;
+		}
 	}
 	if ((key_fd = open(certfile, O_RDONLY)) == -1)
 		goto fail;
 	log_debug("%s: using private key %s", __func__, certfile);
 
-	if (useport) {
-		if (snprintf(certfile, sizeof(certfile),
-		    "/etc/ssl/%s:%u.ocsp", hbuf, useport) == -1)
+	if (name != NULL && strcmp(name->ocsp, "") != 0) {
+		if (strlcpy(certfile, name->ocsp, sizeof(certfile))
+		    >= sizeof(certfile)) {
+			log_warnx("certificate ocsp truncated");
 			goto fail;
-	} else {
-		if (snprintf(certfile, sizeof(certfile),
-		    "/etc/ssl/%s.ocsp", hbuf) == -1)
-			goto fail;
+		}
+
+	}
+	else {
+		if (useport) {
+			ret = snprintf(certfile, sizeof(certfile),
+					"/etc/ssl/%s:%u.ocsp",
+					hbuf, useport);
+
+			if (ret < 0 || (size_t)ret >= sizeof(certfile))
+				goto fail;
+		} else {
+			ret = snprintf(certfile, sizeof(certfile),
+					"/etc/ssl/%s.ocsp", hbuf);
+
+			if (ret < 0 || (size_t)ret >= sizeof(certfile))
+				goto fail;
+		}
 	}
 	if ((ocsp_fd = open(certfile, O_RDONLY)) != -1)
 		log_debug("%s: using OCSP staple file %s", __func__, certfile);

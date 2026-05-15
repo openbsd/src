@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.262 2026/04/06 09:14:54 kirill Exp $	*/
+/*	$OpenBSD: parse.y,v 1.263 2026/05/15 13:57:24 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -140,6 +140,7 @@ int		 relay_id(struct relay *);
 struct relay	*relay_inherit(struct relay *, struct relay *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
+static struct keyname *proto_keyname(char *);
 
 typedef struct {
 	union {
@@ -1342,20 +1343,93 @@ tlsflags	: SESSION TICKETS { proto->tickets = 1; }
 			free($3);
 		}
 		| KEYPAIR STRING		{
-			struct keyname	*name;
+			struct keyname	*kname = NULL;
 
-			if (strlen($2) >= PATH_MAX) {
-				yyerror("keypair name too long");
+			if ((kname = proto_keyname($2)) == NULL) {
 				free($2);
 				YYERROR;
 			}
-			if ((name = calloc(1, sizeof(*name))) == NULL) {
-				yyerror("calloc");
+			free($2);
+		}
+		| KEYPAIR STRING CERTIFICATE STRING {
+			struct keyname	*kname = NULL;
+
+			if ((kname = proto_keyname($2)) == NULL) {
 				free($2);
+				free($4);
 				YYERROR;
 			}
-			name->name = $2;
-			TAILQ_INSERT_TAIL(&proto->tlscerts, name, entry);
+
+			if (strlen($4) >= PATH_MAX) {
+				yyerror("keypair cert too long");
+				free($2);
+				free($4);
+				YYERROR;
+			}
+			if (strlcpy(kname->certificate, $4,
+			    sizeof(kname->certificate)) >=
+			    sizeof(kname->certificate)) {
+				yyerror("keypair certificate truncated");
+				free($2);
+				free($4);
+				YYERROR;
+			}
+			free($2);
+			free($4);
+		}
+		| KEYPAIR STRING KEY STRING {
+			struct keyname	*kname = NULL;
+
+			if ((kname = proto_keyname($2)) == NULL) {
+				free($2);
+				free($4);
+				YYERROR;
+			}
+
+			if (strlen($4) >= PATH_MAX) {
+				yyerror("keypair certificate key too long");
+				free($2);
+				free($4);
+				YYERROR;
+			}
+
+			if (strlcpy(kname->key, $4,
+			    sizeof(kname->key)) >=
+			    sizeof(kname->key)) {
+				yyerror("keypair certificate key truncated");
+				free($2);
+				free($4);
+				YYERROR;
+			}
+			free($2);
+			free($4);
+		}
+		| KEYPAIR STRING OCSP STRING {
+			struct keyname	*kname = NULL;
+
+			if ((kname = proto_keyname($2)) == NULL) {
+				free($2);
+				free($4);
+				YYERROR;
+			}
+
+			if (strlen($4) >= PATH_MAX) {
+				yyerror("keypair ocsp file too long");
+				free($2);
+				free($4);
+				YYERROR;
+			}
+
+			if (strlcpy(kname->ocsp, $4,
+			    sizeof(kname->ocsp)) >=
+			    sizeof(kname->ocsp)) {
+				yyerror("ocsp truncated");
+				free($2);
+				free($4);
+				YYERROR;
+			}
+			free($2);
+			free($4);
 		}
 		| CLIENT CA STRING		{
 			if (strlcpy(proto->tlsclientca, $3,
@@ -1850,7 +1924,7 @@ relay		: RELAY STRING	{
 		} '{' optnl relayopts_l '}'	{
 			struct relay		*r;
 			struct relay_config	*rlconf = &rlay->rl_conf;
-			struct keyname		*name;
+			struct keyname		*kname;
 
 			if (relay_findbyname(conf, rlconf->name) != NULL ||
 			    relay_findbyaddr(conf, rlconf) != NULL) {
@@ -1888,11 +1962,11 @@ relay		: RELAY STRING	{
 				    rlay->rl_conf.name);
 				YYERROR;
 			}
-			TAILQ_FOREACH(name, &rlay->rl_proto->tlscerts, entry) {
+			TAILQ_FOREACH(kname, &rlay->rl_proto->tlscerts, entry) {
 				if (relay_load_certfiles(conf,
-				    rlay, name->name) == -1) {
+				    rlay, kname) == -1) {
 					yyerror("cannot load keypair %s"
-					    " for relay %s", name->name,
+					    " for relay %s", kname->name,
 					    rlay->rl_conf.name);
 					YYERROR;
 				}
@@ -3452,7 +3526,7 @@ relay_inherit(struct relay *ra, struct relay *rb)
 		goto err;
 	}
 	TAILQ_FOREACH(name, &rb->rl_proto->tlscerts, entry) {
-		if (relay_load_certfiles(conf, rb, name->name) == -1) {
+		if (relay_load_certfiles(conf, rb, name) == -1) {
 			yyerror("cannot load keypair %s for relay %s",
 			    name->name, rb->rl_conf.name);
 			goto err;
@@ -3550,4 +3624,32 @@ is_if_in_group(const char *ifname, const char *groupname)
 end:
 	close(s);
 	return (ret);
+}
+
+struct keyname*
+proto_keyname(char *name)
+{
+	struct keyname	*kname = NULL, *key;
+
+	if (strlen(name) >= PATH_MAX) {
+		yyerror("keypair name too long");
+		return NULL;
+	}
+
+
+	TAILQ_FOREACH(key, &proto->tlscerts, entry) {
+	   if (strcmp(key->name, name) == 0)
+			return key;
+	}
+
+	if ((kname = calloc(1, sizeof(*kname))) == NULL) {
+		return NULL;
+	}
+
+	if ((kname->name = strdup(name)) == NULL) {
+		free(kname);
+		return NULL;
+	}
+	TAILQ_INSERT_TAIL(&proto->tlscerts, kname, entry);
+	return kname;
 }

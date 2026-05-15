@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.278 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.279 2026/05/15 13:57:24 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -726,6 +726,9 @@ struct relay_ticket_key {
 struct keyname {
 	TAILQ_ENTRY(keyname)	 entry;
 	char			*name;
+	char			 certificate[PATH_MAX];
+	char			 key[PATH_MAX];
+	char			 ocsp[PATH_MAX];
 };
 TAILQ_HEAD(keynamelist, keyname);
 
@@ -1323,7 +1326,7 @@ struct relay_cert *cert_add(struct relayd *, objid_t);
 struct relay_cert *cert_find(struct relayd *, objid_t);
 char		*relay_load_fd(int, off_t *);
 int		 relay_load_certfiles(struct relayd *, struct relay *,
-		    const char *);
+		    const struct keyname *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_key(char **, off_t);
