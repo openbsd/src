@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.51 2026/03/08 16:41:19 deraadt Exp $	*/
+/*	$OpenBSD: namei.h,v 1.52 2026/05/15 00:39:21 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -144,11 +144,13 @@ struct nameidata {
 #define ISLASTCN	0x008000      /* this is last component of pathname */
 #define ISSYMLINK	0x010000      /* symlink needs interpretation */
 #define REALPATH	0x020000      /* save pathname buffer for realpath */
+#define BPU_LOCALTIME	0x040000      /* /etc/localtime may cross 1 symlink */
 #define	REQUIREDIR	0x080000      /* must be a directory */
 #define STRIPSLASHES    0x100000      /* strip trailing slashes */
 #define PDIRUNLOCK	0x200000      /* vfs_lookup() unlocked parent dir */
 #define BYPASSUNVEIL	0x400000      /* bypass pledgepath check */
 #define KERNELPATH	0x800000      /* access file as kernel, not process */
+#define BPU_ZONEINFO	0x1000000     /* /usr/share/zoneinfo prohibits symlinks */
 
 /*
  * Initialization of an nameidata structure.
@@ -209,6 +211,7 @@ struct unveil *unveil_lookup(struct vnode *, struct process *, ssize_t *);
 void unveil_start_relative(struct proc *, struct nameidata *, struct vnode *);
 void unveil_check_component(struct proc *, struct nameidata *, struct vnode *);
 int unveil_check_final(struct proc *, struct nameidata *);
+int checkzoneinfopath(const char *);
 
 extern struct pool namei_pool;
 

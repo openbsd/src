@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.357 2026/05/05 13:00:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.358 2026/05/15 00:39:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -637,6 +637,24 @@ checkpledgepaths(const char *path)
 
 #endif /* SMALL_KERNEL */
 
+int
+checkzoneinfopath(const char *path)
+{
+	const char *cp;
+
+	if (strncmp(path, "/usr/share/zoneinfo/",
+	    sizeof("/usr/share/zoneinfo/") - 1) != 0)
+		return -1;
+
+	for (cp = path + sizeof("/usr/share/zoneinfo/") - 2; *cp; cp++) {
+		if (cp[0] == '/' &&
+		    cp[1] == '.' && cp[2] == '.' &&
+		    (cp[3] == '/' || cp[3] == '\0'))
+			return -1;	/* bad path */
+	}
+	return 0;
+}
+
 /*
  * Need to make it more obvious that one cannot get through here
  * without the right flags set
@@ -670,23 +688,8 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 		int item;
 
 		item = checkpledgepaths(path);
-		if (item == 0 &&
-		    strncmp(path, "/usr/share/zoneinfo/",
-		    sizeof("/usr/share/zoneinfo/") - 1) == 0) {
-			const char *cp;
-
+		if (item == 0 && checkzoneinfopath(path) == 0)
 			item = PLEDGEPATH_ZONEINFO;
-			for (cp = path + sizeof("/usr/share/zoneinfo/") - 2;
-			    *cp; cp++) {
-				if (cp[0] == '/' &&
-				    cp[1] == '.' && cp[2] == '.' &&
-				    (cp[3] == '/' || cp[3] == '\0')) {
-					item = 0;	/* bad path */
-					break;
-				}
-			}
-		}
-
 		switch (item) {
 		case 0:
 			/* Invalid path provided to __pledge_open */
@@ -734,8 +737,12 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 
 		/* tzset() often happen late in programs */
 		case PLEDGEPATH_LOCALTIME:
-			/* FALLTHROUGH */
+			ni->ni_cnd.cn_flags |= BPU_LOCALTIME;
+			if (nip == PLEDGE_RPATH)
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+			break;
 		case PLEDGEPATH_ZONEINFO:
+			ni->ni_cnd.cn_flags |= BPU_ZONEINFO;
 			if (nip == PLEDGE_RPATH)
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			break;

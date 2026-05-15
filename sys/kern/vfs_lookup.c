@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.91 2026/03/03 17:43:40 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.92 2026/05/15 00:39:21 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -315,6 +315,19 @@ badlink:
 		} else
 			cnp->cn_pnbuf[linklen] = '\0';
 		ndp->ni_pathlen += linklen;
+		if (cnp->cn_flags & BPU_LOCALTIME) {
+			/*
+			 * /etc/localtime can be a symbolic link
+			 * but must point into /usr/share/zoneinfo/
+			 * without ..
+			 */
+			if (checkzoneinfopath(cnp->cn_pnbuf) != 0) {
+				error = EACCES;
+				break;
+			}
+			cnp->cn_flags &= ~BPU_LOCALTIME;
+			cnp->cn_flags |= BPU_ZONEINFO;
+		}
 		vput(ndp->ni_vp);
 		dp = ndp->ni_dvp;
 		/*
@@ -660,6 +673,11 @@ dirloop:
 		ndp->ni_pathlen += slashes;
 		ndp->ni_next -= slashes;
 		cnp->cn_flags |= ISSYMLINK;
+		if (cnp->cn_flags & BPU_ZONEINFO) {
+			/* /usr/share/zoneinfo prohibits symbolic links */
+			error = ELOOP;
+			goto bad2;
+		}
 		return (0);
 	}
 
