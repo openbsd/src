@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.84 2026/05/13 14:45:38 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.85 2026/05/15 04:47:23 jsg Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 13 2026 $
+.Dd $Mdocdate: May 15 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -134,7 +134,7 @@ These are the promises which can read special files:
 .Bl -tag -width "prot_exec" -offset indent
 .It Cm stdio
 .Pa /etc/localtime
-(file or zoneinfo symbolic link)	
+(file or zoneinfo symbolic link)
 .br
 .Pa /usr/share/zoneinfo/<file>
 .br
