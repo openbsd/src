@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.27 2026/05/14 16:17:21 mglocker Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.28 2026/05/15 19:02:12 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -185,6 +185,20 @@ qwz_init(struct ifnet *ifp)
 	struct qwz_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	/* Firmware stays running across ifconfig down/up; only re-scan. */
+	if (sc->fw_initialized) {
+		ic->ic_state = IEEE80211_S_INIT;
+		sc->ns_nstate = IEEE80211_S_INIT;
+		sc->scan.state = ATH12K_SCAN_IDLE;
+		if (ifp->if_flags & IFF_UP) {
+			refcnt_init(&sc->task_refs);
+			ifq_clr_oactive(&ifp->if_snd);
+			ifp->if_flags |= IFF_RUNNING;
+			ieee80211_begin_scan(ifp);
+		}
+		return 0;
+	}
+
 	sc->fw_mode = ATH12K_FIRMWARE_MODE_NORMAL;
 	/*
 	 * There are several known hardware/software crypto issues
@@ -286,6 +300,7 @@ qwz_init(struct ifnet *ifp)
 		ieee80211_begin_scan(ifp);
 	}
 
+	sc->fw_initialized = 1;
 	return 0;
 }
 
@@ -336,6 +351,14 @@ qwz_stop(struct ifnet *ifp)
 
 	clear_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
+	/* Tear down firmware-side association so we can re-associate. */
+	if (!TAILQ_EMPTY(&sc->vif_list)) {
+		if (ic->ic_state == IEEE80211_S_RUN)
+			qwz_run_stop(sc);
+		if (ic->ic_state >= IEEE80211_S_AUTH)
+			qwz_deauth(sc);
+	}
+
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -345,10 +368,12 @@ qwz_stop(struct ifnet *ifp)
 	sc->ns_nstate = IEEE80211_S_INIT;
 	sc->scan.state = ATH12K_SCAN_IDLE;
 	sc->vdev_id_11d_scan = QWZ_11D_INVALID_VDEV_ID;
-	sc->pdevs_active = 0;
 
-	/* power off hardware */
-	qwz_core_deinit(sc);
+	/*
+	 * Firmware stays running across ifconfig down/up; the chip is
+	 * only released on driver detach.  Do not clear pdevs_active
+	 * or call qwz_core_deinit() here.
+	 */
 
 	splx(s);
 }
@@ -12685,25 +12710,30 @@ qwz_peer_unmap_event(struct qwz_softc *sc, uint16_t peer_id)
 	spin_lock_bh(&ab->base_lock);
 #endif
 	ni = qwz_peer_find_by_id(sc, peer_id);
-	if (!ni) {
-		printf("%s: peer-unmap-event: unknown peer id %d\n",
-		    sc->sc_dev.dv_xname, peer_id);
-		goto exit;
+	if (ni) {
+		DNPRINTF(QWZ_D_HTT, "%s: peer unmap peer %s id %d\n",
+		    __func__, ether_sprintf(ni->ni_macaddr), peer_id);
+	} else {
+		/*
+		 * The node may already have been removed from ic_tree
+		 * by ieee80211 cleanup before this event arrived (e.g.
+		 * during a soft ifconfig down/up cycle).  The unmap
+		 * event is FW's confirmation that the peer is gone, so
+		 * still signal the waiter in qwz_peer_delete().
+		 */
+		DNPRINTF(QWZ_D_HTT, "%s: peer unmap for unknown id %d\n",
+		    __func__, peer_id);
 	}
 
-	DNPRINTF(QWZ_D_HTT, "%s: peer unmap peer %s id %d\n",
-	    __func__, ether_sprintf(ni->ni_macaddr), peer_id);
 #if 0
 	list_del(&peer->list);
 	kfree(peer);
 #endif
 	sc->peer_mapped = 1;
 	wakeup(&sc->peer_mapped);
-exit:
 #ifdef notyet
 	spin_unlock_bh(&ab->base_lock);
 #endif
-	return;
 }
 
 void
@@ -16269,7 +16299,6 @@ qwz_wmi_cmd_send_nowait(struct qwz_pdev_wmi *wmi, struct mbuf *m,
 	    sizeof(struct ath12k_htc_hdr));
 	cmd_hdr->cmd_id = htole32(cmd);
 
-	DNPRINTF(QWZ_D_WMI, "%s: sending WMI command 0x%u\n", __func__, cmd);
 	return qwz_htc_send(&sc->htc, wmi->eid, m);
 }
 
@@ -18267,6 +18296,8 @@ qwz_core_start(struct qwz_softc *sc)
 
 	qwz_dp_hal_rx_desc_init(sc);
 
+	sc->wmi.unified_ready = 0;
+
 	ret = qwz_wmi_cmd_init(sc);
 	if (ret) {
 		printf("%s: failed to send wmi init cmd: %d\n", __func__, ret);
@@ -18415,6 +18446,8 @@ qwz_core_deinit(struct qwz_softc *sc)
 	qwz_qmi_deinit_service(sc);
 
 	hal->num_shadow_reg_configured = 0;
+
+	sc->fw_initialized = 0;
 
 	splx(s);
 }
@@ -19677,9 +19710,6 @@ qwz_htc_process_credit_report(struct qwz_htc *htc,
 
 		ep = &htc->endpoint[report->eid];
 		ep->tx_credits += report->credits;
-
-		DNPRINTF(QWZ_D_HTC, "%s: ep %d credits got %d total %d\n",
-		    __func__, report->eid, report->credits, ep->tx_credits);
 
 		if (ep->ep_ops.ep_tx_credits) {
 #ifdef notyet

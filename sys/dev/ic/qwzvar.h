@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.15 2026/05/14 16:17:21 mglocker Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.16 2026/05/15 19:02:12 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1951,6 +1951,7 @@ struct qwz_softc {
 	struct qwz_survey_info	survey[IEEE80211_CHAN_MAX];
 
 	int			attached;
+	int			fw_initialized;
 	struct {
 		u_char *data;
 		size_t size;
