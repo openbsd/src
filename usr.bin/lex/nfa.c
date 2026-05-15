@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfa.c,v 1.12 2024/11/09 18:03:44 op Exp $	*/
+/*	$OpenBSD: nfa.c,v 1.13 2026/05/15 14:24:44 renaud Exp $	*/
 
 /* nfa - NFA construction routines */
 
@@ -553,6 +553,10 @@ int
 mkrep(int mach, int lb, int ub)
 {
 	int base_mach, tail, copy, i;
+
+	if (lb > RE_DUP_MAX || (ub > RE_DUP_MAX &&
+	    ub != INFINITE_REPEAT))
+		flexfatal(_("repetition value too large"));
 
 	base_mach = copysingl(mach, lb - 1);
 
