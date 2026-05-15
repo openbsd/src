@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.52 2026/05/15 00:39:21 deraadt Exp $	*/
+/*	$OpenBSD: namei.h,v 1.53 2026/05/15 15:26:35 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -51,13 +51,9 @@ struct nameidata {
 	const char *ni_dirp;		/* pathname pointer */
 	int	ni_dirfd;		/* dirfd from *at() functions */
 	enum	uio_seg ni_segflg;	/* location of pathname */
-     /* u_long	ni_nameiop;		   namei operation */
-     /* u_long	ni_flags;		   flags to namei */
-     /* struct	proc *ni_proc;		   process requesting lookup */
 	/*
 	 * Arguments to lookup.
 	 */
-     /* struct	ucred *ni_cred;		   credentials */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
 	uint64_t ni_pledge;		/* expected pledge for namei */
