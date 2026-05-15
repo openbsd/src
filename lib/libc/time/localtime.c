@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.77 2026/03/10 00:06:39 deraadt Exp $ */
+/*	$OpenBSD: localtime.c,v 1.78 2026/05/15 01:28:28 deraadt Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -9,6 +9,8 @@
 ** POSIX-style TZ environment variable handling from Guy Harris.
 */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -334,7 +336,8 @@ static int
 open_tzfile(const char *name)
 {
 	char fullname[PATH_MAX];
-	int i;
+	struct stat st;
+	int i, fd;
 
 	if (name != NULL) {
 		/*
@@ -364,7 +367,14 @@ open_tzfile(const char *name)
 		name = fullname;
 	}
 
-	return __pledge_open(name, O_RDONLY|O_CLOEXEC);
+	fd = __pledge_open(name, O_RDONLY|O_CLOEXEC);
+	if (fd != -1)
+		return -1;
+	if (fstat(fd, &st) == -1 || !S_ISREG(st.st_mode)) {
+		close(fd);
+		return -1;
+	}
+	return fd;
 }
 
 static int
