@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2017/07/09 21:23:19 espie Exp $
+#	$OpenBSD: Makefile,v 1.15 2026/05/15 12:25:04 jsg Exp $
 
 PROG=	bioctl
 
@@ -7,7 +7,6 @@ DPADD=	${LIBUTIL}
 
 CDIAGFLAGS=     -Wall
 CDIAGFLAGS+=    -Wpointer-arith
-CDIAGFLAGS+=    -Wno-uninitialized
 CDIAGFLAGS+=    -Wstrict-prototypes
 CDIAGFLAGS+=    -Wmissing-prototypes
 CDIAGFLAGS+=    -Wunused
