@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.95 2025/07/24 22:57:24 mvs Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.96 2026/05/15 09:42:46 sashan Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -274,6 +274,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 				/* dequeue the fragment. */
 				LIST_REMOVE(af6, ip6af_list);
 				pool_put(&ip6af_pool, af6);
+				frag6_nfrags--;
+				q6->ip6q_nfrag--;
 
 				/* adjust pointer. */
 				ip6err = mtod(merr, struct ip6_hdr *);
