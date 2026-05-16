@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_prn.c,v 1.10 2026/05/16 07:10:30 tb Exp $ */
+/* $OpenBSD: x509_prn.c,v 1.11 2026/05/16 07:12:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -55,7 +55,6 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* X509 v3 extension utilities */
 
 #include <stdio.h>
 
@@ -63,10 +62,6 @@
 #include <openssl/x509v3.h>
 
 #include "x509_local.h"
-
-/* Extension printing routines */
-
-/* Print out a name+value stack */
 
 void
 X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
@@ -122,8 +117,6 @@ unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
 		return 1;
 	}
 }
-
-/* Main routine: print out a general extension */
 
 int
 X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent)
