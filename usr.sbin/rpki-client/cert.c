@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.236 2026/05/02 10:36:21 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.237 2026/05/16 07:27:03 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -813,8 +813,7 @@ cert_ca_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 	}
 	mftfilename++;
 	if (!valid_filename(mftfilename, strlen(mftfilename))) {
-		warnx("%s: SIA: rpkiManifest filename contains invalid "
-		    "characters", fn);
+		warnx("%s: SIA: rpkiManifest invalid filename", fn);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.137 2026/05/05 09:33:15 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.138 2026/05/16 07:27:03 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -161,9 +161,11 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 	length = ASN1_STRING_length(fh->file);
 
 	if (!valid_mft_filename(data, length)) {
-		warnx("%s: RFC 9286 section 4.2.2: bad filename", fn);
+		warnx("%s: RFC 9286 section 4.2.2: FileAndHash with "
+		    "invalid filename", fn);
 		goto out;
 	}
+
 	file = strndup(data, length);
 	if (file == NULL)
 		err(1, NULL);

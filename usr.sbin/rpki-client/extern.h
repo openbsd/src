@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.279 2026/05/01 11:22:24 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.280 2026/05/16 07:27:03 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1055,6 +1055,12 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of FileAndHash entries per manifest. */
 #define MAX_MANIFEST_ENTRIES	100000
+
+/*
+ * Maximum allowable filename length in various fields.
+ * Based on IEEE Std 1003.1 limits.h _XOPEN_NAME_MAX.
+ */
+#define MAX_FN_LENGTH		255
 
 /* Maximum number of Providers per ASPA object. */
 #define MAX_ASPA_PROVIDERS	10000

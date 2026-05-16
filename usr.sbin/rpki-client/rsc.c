@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.43 2025/12/02 10:34:48 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.44 2026/05/16 07:27:03 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -270,7 +270,7 @@ rsc_parse_checklist(const char *fn, struct rsc *rsc,
 		length = ASN1_STRING_length(fh->fileName);
 
 		if (!valid_filename(data, length)) {
-			warnx("%s: RSC FileNameAndHash: bad filename", fn);
+			warnx("%s: RSC FileNameAndHash: invalid filename", fn);
 			return 0;
 		}
 
