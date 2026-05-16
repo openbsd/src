@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.83 2026/05/13 21:05:23 mvs Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.84 2026/05/16 21:18:46 mvs Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -228,17 +228,30 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 
 	shmmap_h = (struct shmmap_head *)p->p_vmspace->vm_shm;
 	if (shmmap_h == NULL) {
+		struct shmmap_head *shmmap_h_probe;
+		int shmseg_local = atomic_load_int(&shminfo.shmseg);
+
 		size = sizeof(int) +
-		    shminfo.shmseg * sizeof(struct shmmap_state);
+		    shmseg_local * sizeof(struct shmmap_state);
 		shmmap_h = malloc(size, M_SHM, M_WAITOK | M_CANFAIL);
 		if (shmmap_h == NULL)
 			return (ENOMEM);
-		shmmap_h->shmseg = shminfo.shmseg;
+
+		shmmap_h_probe =
+		    (struct shmmap_head *)READ_ONCE(p->p_vmspace->vm_shm);
+		if (shmmap_h_probe != NULL) {
+			free(shmmap_h, M_SHM, size);
+			shmmap_h = shmmap_h_probe;
+			goto allocated;
+		}
+
+		shmmap_h->shmseg = shmseg_local;
 		for (i = 0, shmmap_s = shmmap_h->state; i < shmmap_h->shmseg;
 		    i++, shmmap_s++)
 			shmmap_s->shmid = -1;
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_h;
 	}
+allocated:
 	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
 	if (shmseg == NULL)
 		return (EINVAL);
