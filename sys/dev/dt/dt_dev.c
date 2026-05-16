@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.48 2026/03/24 09:11:56 cludwig Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.49 2026/05/16 12:59:37 daniel Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -152,7 +152,7 @@ volatile uint32_t		dt_tracing = 0;	/* [D] # of processes tracing */
 
 int allowdt;					/* [a] */
 
-void	dtattach(struct device *, struct device *, void *);
+void	dtattach(int);
 int	dtopen(dev_t, int, int, struct proc *);
 int	dtclose(dev_t, int, int, struct proc *);
 int	dtread(dev_t, struct uio *, int);
@@ -177,7 +177,7 @@ void	dt_wakeup(struct dt_softc *);
 void	dt_deferred_wakeup(void *);
 
 void
-dtattach(struct device *parent, struct device *self, void *aux)
+dtattach(int count)
 {
 	SLIST_INIT(&dtdev_list);
 	SIMPLEQ_INIT(&dt_probe_list);
