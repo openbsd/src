@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_prn.c,v 1.9 2026/05/16 06:30:53 tb Exp $ */
+/* $OpenBSD: x509_prn.c,v 1.10 2026/05/16 07:10:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -66,9 +66,6 @@
 
 /* Extension printing routines */
 
-static int unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
-    int indent, int supported);
-
 /* Print out a name+value stack */
 
 void
@@ -101,6 +98,30 @@ X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
 	}
 }
 LCRYPTO_ALIAS(X509V3_EXT_val_prn);
+
+static int
+unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
+    int indent, int supported)
+{
+	switch (flag & X509V3_EXT_UNKNOWN_MASK) {
+	case X509V3_EXT_DEFAULT:
+		return 0;
+	case X509V3_EXT_ERROR_UNKNOWN:
+		if (supported)
+			BIO_printf(out, "%*s<Parse Error>", indent, "");
+		else
+			BIO_printf(out, "%*s<Not Supported>", indent, "");
+		return 1;
+	case X509V3_EXT_PARSE_UNKNOWN:
+		return ASN1_parse_dump(out,
+		    ext->value->data, ext->value->length, indent, -1) > 0;
+	case X509V3_EXT_DUMP_UNKNOWN:
+		return BIO_dump_indent(out, (const char *)ext->value->data,
+		    ext->value->length, indent) > 0;
+	default:
+		return 1;
+	}
+}
 
 /* Main routine: print out a general extension */
 
@@ -191,31 +212,6 @@ X509V3_extensions_print(BIO *bp, const char *title,
 	return 1;
 }
 LCRYPTO_ALIAS(X509V3_extensions_print);
-
-static int
-unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
-    int indent, int supported)
-{
-	switch (flag & X509V3_EXT_UNKNOWN_MASK) {
-	case X509V3_EXT_DEFAULT:
-		return 0;
-	case X509V3_EXT_ERROR_UNKNOWN:
-		if (supported)
-			BIO_printf(out, "%*s<Parse Error>", indent, "");
-		else
-			BIO_printf(out, "%*s<Not Supported>", indent, "");
-		return 1;
-	case X509V3_EXT_PARSE_UNKNOWN:
-		return ASN1_parse_dump(out,
-		    ext->value->data, ext->value->length, indent, -1) > 0;
-	case X509V3_EXT_DUMP_UNKNOWN:
-		return BIO_dump_indent(out, (const char *)ext->value->data,
-		    ext->value->length, indent) > 0;
-	default:
-		return 1;
-	}
-}
-
 
 int
 X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
