@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_prn.c,v 1.8 2026/05/16 06:27:05 tb Exp $ */
+/* $OpenBSD: x509_prn.c,v 1.9 2026/05/16 06:30:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -209,7 +209,7 @@ unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
 		return ASN1_parse_dump(out,
 		    ext->value->data, ext->value->length, indent, -1) > 0;
 	case X509V3_EXT_DUMP_UNKNOWN:
-		return BIO_dump_indent(out, (char *)ext->value->data,
+		return BIO_dump_indent(out, (const char *)ext->value->data,
 		    ext->value->length, indent) > 0;
 	default:
 		return 1;
