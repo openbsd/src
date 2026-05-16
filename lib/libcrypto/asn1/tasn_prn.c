@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.29 2025/06/07 09:28:00 tb Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.30 2026/05/16 07:06:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -392,7 +392,7 @@ asn1_print_obstring_ctx(BIO *out, ASN1_STRING *str, int indent,
 	} else if (BIO_puts(out, "\n") <= 0)
 		return 0;
 	if ((str->length > 0) &&
-	    BIO_dump_indent(out, (char *)str->data, str->length,
+	    BIO_dump_indent(out, (const char *)str->data, str->length,
 	    indent + 2) <= 0)
 		return 0;
 	return 1;
