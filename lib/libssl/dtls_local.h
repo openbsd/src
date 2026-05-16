@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.4 2026/05/06 15:06:35 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.5 2026/05/16 08:20:41 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -65,6 +65,7 @@
 #include <openssl/dtls1.h>
 
 #include "ssl_local.h"
+#include "dtls12_internal.h"
 #include "tls_content.h"
 
 __BEGIN_HIDDEN_DECLS
@@ -179,6 +180,8 @@ struct dtls1_state_st {
 
 	unsigned int retransmitting;
 	unsigned int change_cipher_spec_ok;
+
+	struct dtls12_handshake_msg *hs_msg;
 };
 
 int dtls1_do_write(SSL *s, int type);

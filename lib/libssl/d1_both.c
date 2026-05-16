@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.93 2026/05/06 15:06:35 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.94 2026/05/16 08:20:41 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -205,12 +205,48 @@ dtls1_hm_fragment_free(hm_fragment *frag)
 }
 
 static int
+dtls12_create_handshake_msg(SSL *s)
+{
+	CBB cbb;
+
+	OPENSSL_assert(s->init_off == 0);
+	OPENSSL_assert(s->init_num == (int)s->d1->w_msg_hdr.msg_len +
+	    DTLS1_HM_HEADER_LENGTH);
+
+	/* Skip over the existing header. */
+	s->init_off += DTLS1_HM_HEADER_LENGTH;
+	s->init_num -= DTLS1_HM_HEADER_LENGTH;
+
+	if (s->d1->hs_msg != NULL)
+		goto err;
+
+	if ((s->d1->hs_msg = dtls12_handshake_msg_new()) == NULL)
+		goto err;
+	if (!dtls12_handshake_msg_start(s->d1->hs_msg, &cbb,
+	    s->d1->w_msg_hdr.type, s->d1->w_msg_hdr.seq))
+		goto err;
+	if (!CBB_add_bytes(&cbb, &s->init_buf->data[s->init_off],
+	    s->init_num))
+		goto err;
+	if (!dtls12_handshake_msg_finish(s->d1->hs_msg))
+		goto err;
+
+	return 1;
+
+ err:
+	dtls12_handshake_msg_free(s->d1->hs_msg);
+	s->d1->hs_msg = NULL;
+
+	return 0;
+}
+
+static int
 dtls1_do_write_handshake_message(SSL *s)
 {
-	int ret;
-	int curr_mtu;
-	unsigned int len, frag_off;
+	int curr_mtu, written;
 	size_t overhead;
+	CBS cbs;
+	int ret;
 
 	/* AHA!  Figure out the MTU, and stick to the right size */
 	if (s->d1->mtu < dtls1_min_mtu() &&
@@ -234,15 +270,15 @@ dtls1_do_write_handshake_message(SSL *s)
 	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu());
 	/* should have something reasonable now */
 
-	if (s->init_off == 0)
-		OPENSSL_assert(s->init_num ==
-		    (int)s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
+	if (s->d1->hs_msg == NULL) {
+		if (!dtls12_create_handshake_msg(s))
+			return -1;
+	}
 
 	if (!tls12_record_layer_write_overhead(s->rl, &overhead))
 		return -1;
 
-	frag_off = 0;
-	while (s->init_num > 0) {
+	do {
 		curr_mtu = s->d1->mtu - BIO_wpending(SSL_get_wbio(s)) -
 		    DTLS1_RT_HEADER_LENGTH - overhead;
 
@@ -255,35 +291,14 @@ dtls1_do_write_handshake_message(SSL *s)
 			    overhead;
 		}
 
-		if (s->init_num > curr_mtu)
-			len = curr_mtu;
-		else
-			len = s->init_num;
+		OPENSSL_assert(curr_mtu >= DTLS1_HM_HEADER_LENGTH);
 
-		if (s->init_off != 0) {
-			OPENSSL_assert(s->init_off > DTLS1_HM_HEADER_LENGTH);
-			s->init_off -= DTLS1_HM_HEADER_LENGTH;
-			s->init_num += DTLS1_HM_HEADER_LENGTH;
-
-			if (s->init_num > curr_mtu)
-				len = curr_mtu;
-			else
-				len = s->init_num;
-		}
-
-		OPENSSL_assert(len >= DTLS1_HM_HEADER_LENGTH);
-
-		s->d1->w_msg_hdr.frag_off = frag_off;
-		s->d1->w_msg_hdr.frag_len = len - DTLS1_HM_HEADER_LENGTH;
-
-		if (!dtls1_write_message_header(&s->d1->w_msg_hdr,
-		    s->d1->w_msg_hdr.frag_off, s->d1->w_msg_hdr.frag_len,
-		    (unsigned char *)&s->init_buf->data[s->init_off]))
+		if (!dtls12_handshake_msg_fragment_build(s->d1->hs_msg,
+		    curr_mtu - DTLS1_HM_HEADER_LENGTH, &cbs))
 			return -1;
 
-		ret = dtls1_write_bytes(s, SSL3_RT_HANDSHAKE,
-		    &s->init_buf->data[s->init_off], len);
-		if (ret < 0) {
+		if ((written = dtls1_write_bytes(s, SSL3_RT_HANDSHAKE,
+		    CBS_data(&cbs), CBS_len(&cbs))) < 0) {
 			/*
 			 * Might need to update MTU here, but we don't know
 			 * which previous packet caused the failure -- so
@@ -293,7 +308,7 @@ dtls1_do_write_handshake_message(SSL *s)
 			 */
 			if (BIO_ctrl(SSL_get_wbio(s),
 			    BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) <= 0)
-				return (-1);
+				return -1;
 
 			s->d1->mtu = BIO_ctrl(SSL_get_wbio(s),
 			    BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
@@ -306,49 +321,34 @@ dtls1_do_write_handshake_message(SSL *s)
 		 * handshake message got sent.  but why would
 		 * this happen?
 		 */
-		OPENSSL_assert(len == (unsigned int)ret);
+		OPENSSL_assert(CBS_len(&cbs) == (size_t)written);
 
-		if (!s->d1->retransmitting) {
-			/*
-			 * Should not be done for 'Hello Request's,
-			 * but in that case we'll ignore the result
-			 * anyway
-			 */
-			unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
-			const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
-			int xlen;
+		if (!dtls12_handshake_msg_fragment_next(s->d1->hs_msg))
+			return -1;
 
-			if (frag_off == 0) {
-				/*
-				 * Reconstruct message header is if it
-				 * is being sent in single fragment
-				 */
-				if (!dtls1_write_message_header(msg_hdr,
-				    0, msg_hdr->msg_len, p))
-					return (-1);
-				xlen = ret;
-			} else {
-				p += DTLS1_HM_HEADER_LENGTH;
-				xlen = ret - DTLS1_HM_HEADER_LENGTH;
-			}
+	} while (dtls12_handshake_msg_fragment_pending(s->d1->hs_msg));
 
-			tls1_transcript_record(s, p, xlen);
-		}
+	dtls12_handshake_msg_data(s->d1->hs_msg, &cbs);
 
-		if (ret == s->init_num) {
-			ssl_msg_callback(s, 1, SSL3_RT_HANDSHAKE,
-			    s->init_buf->data, s->init_off + s->init_num);
-
-			s->init_off = 0;
-			s->init_num = 0;
-
-			return (1);
-		}
-		s->init_off += ret;
-		s->init_num -= ret;
-		frag_off += (ret -= DTLS1_HM_HEADER_LENGTH);
+	if (!s->d1->retransmitting) {
+		/*
+		 * The TLS transcript is based on each handshake message being
+		 * sent as a single fragment - see RFC 6347 section 4.2.6. This
+		 * should not be called for a HelloRequest, however the result
+		 * will be ignored.
+		 */
+		tls1_transcript_record(s, CBS_data(&cbs), CBS_len(&cbs));
 	}
-	return (0);
+
+	ssl_msg_callback(s, 1, SSL3_RT_HANDSHAKE, CBS_data(&cbs), CBS_len(&cbs));
+
+	dtls12_handshake_msg_free(s->d1->hs_msg);
+	s->d1->hs_msg = NULL;
+
+	s->init_off = 0;
+	s->init_num = 0;
+
+	return 1;
 }
 
 static int
