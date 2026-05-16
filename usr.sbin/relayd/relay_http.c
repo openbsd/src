@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.96 2026/04/02 13:35:36 tb Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.97 2026/05/16 15:25:28 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -196,6 +196,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct kv		*upgrade = NULL, *upgrade_ws = NULL;
 	struct kv		*connection_close = NULL;
 	int			 ws_response = 0;
+	int			 headers_only = 0;
 	enum httpmethod		 request_method = HTTP_METHOD_NONE;
 
 	getmonotime(&con->se_tv_last);
@@ -480,6 +481,16 @@ relay_read_http(struct bufferevent *bev, void *arg)
 
 		connection_close = kv_find_value(&desc->http_headers,
 		    "Connection", "close", ",");
+		/*
+		 * RFC 9112 section 6.3: these responses end at the empty
+		 * line after the header section. 101 upgrades become streams.
+		 */
+		headers_only = cre->dir == RELAY_DIR_RESPONSE && !ws_response &&
+		    (request_method == HTTP_METHOD_HEAD ||
+		    (desc->http_status >= 100 && desc->http_status < 200) ||
+		    desc->http_status == 204 || desc->http_status == 304);
+		if (headers_only)
+			cre->toread = 0;
 
 		switch (desc->http_method) {
 		case HTTP_METHOD_CONNECT:
@@ -539,7 +550,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			bev->readcb = relay_read_http;
 			break;
 		}
-		if (desc->http_chunked) {
+		if (desc->http_chunked && !headers_only) {
 			/* Chunked transfer encoding */
 			cre->toread = TOREAD_HTTP_CHUNK_LENGTH;
 			bev->readcb = relay_read_httpchunks;
