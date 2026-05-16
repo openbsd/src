@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.120 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.121 2026/05/16 13:27:03 daniel Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ struct if_clone ppp_cloner =
  * Called from boot code to establish ppp interfaces.
  */
 void
-pppattach(void)
+pppattach(int count)
 {
 	LIST_INIT(&ppp_softc_list);
 	if_clone_attach(&ppp_cloner);

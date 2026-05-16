@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.32 2025/11/02 08:04:04 dlg Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.33 2026/05/16 13:27:03 daniel Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ void sppp_input (struct ifnet *ifp, struct mbuf *m);
 int sppp_proto_up(struct ifnet *ifp, uint16_t);
 
 /* Workaround */
-void spppattach (struct ifnet *ifp);
+void spppattach (int);
 int sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data);
 
 struct mbuf *sppp_dequeue (struct ifnet *ifp);

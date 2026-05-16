@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.200 2025/11/02 08:33:43 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.201 2026/05/16 13:27:03 daniel Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -412,7 +412,7 @@ static const struct cp *cps[IDX_COUNT] = {
 
 /* Workaround */
 void
-spppattach(struct ifnet *ifp)
+spppattach(int count)
 {
 }
 
