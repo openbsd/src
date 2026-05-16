@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_dump.3,v 1.6 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: BIO_dump.3,v 1.7 2026/05/16 06:15:22 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: May 16 2026 $
 .Dt BIO_DUMP 3
 .Os
 .Sh NAME
@@ -77,16 +77,14 @@ is 7 or more, the number of data columns is reduced such that the
 total width of the output does not exceed 79 characters per line.
 .Sh RETURN VALUES
 On success these functions return the total number of bytes written by
-.Xr BIO_write 3
-or
-.Xr fwrite 3 .
+.Xr BIO_printf 3 .
 If a failure occurs at any point when writing, these
 functions will stop after having potentially written out partial results,
 and return -1.
 .Sh SEE ALSO
 .Xr hexdump 1 ,
 .Xr BIO_new 3 ,
-.Xr BIO_write 3
+.Xr BIO_printf 3
 .Sh HISTORY
 .Fn BIO_dump
 first appeared in SSLeay 0.6.5 and has been available since
