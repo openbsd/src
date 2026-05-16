@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.38 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.39 2026/05/16 13:16:50 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,11 +38,13 @@ ssl_password_cb(char *buf, int size, int rwflag, void *u)
 {
 	size_t	len;
 	if (u == NULL) {
-		bzero(buf, size);
+		explicit_bzero(buf, size);
 		return (0);
 	}
-	if ((len = strlcpy(buf, u, size)) >= (size_t)size)
+	if ((len = strlcpy(buf, u, size)) >= (size_t)size) {
+		explicit_bzero(buf, size);
 		return (0);
+	}
 	return (len);
 }
 
