@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.26 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: sem.h,v 1.27 2026/05/16 21:17:43 mvs Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -111,6 +111,19 @@ union semun {
 #define SEMAEM	16384		/* adjust on exit max value */
 
 /*
+ * In-kernel semaphore implementation
+ */
+struct semid_ds_kern {
+	struct ipc_perm	sem_perm;	/* operation permission struct */
+	struct sem	*sem_base;	/* pointer to first semaphore in set */
+	unsigned short	sem_nsems;	/* number of sems in set */
+	time_t		sem_otime;	/* last operation time */
+	time_t		sem_ctime;	/* last change time */
+	    				/* Times measured in secs since */
+	    				/* 00:00:00 GMT, Jan. 1, 1970 */
+};
+
+/*
  * Undo structure (one per process)
  */
 struct sem_undo {
@@ -173,7 +186,7 @@ extern struct seminfo	seminfo;
 /* actual size of an undo structure */
 #define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct undo)*SEMUME)
 
-extern struct	semid_ds **sema;	/* semaphore id list */
+extern struct	semid_ds_kern **sema;	/* semaphore id list */
 
 void	seminit(void);
 void	semexit(struct process *);

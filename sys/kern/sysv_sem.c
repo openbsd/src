@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.67 2026/05/08 09:38:07 mvs Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.68 2026/05/16 21:17:43 mvs Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -49,9 +49,9 @@
 
 int	semtot = 0;
 int	semutot = 0;
-struct	semid_ds **sema;	/* semaphore id list */
+struct	semid_ds_kern **sema;	/* semaphore id list */
 SLIST_HEAD(, sem_undo) semu_list; /* list of undo structures */
-struct	pool sema_pool;		/* pool for struct semid_ds */
+struct	pool sema_pool;		/* pool for struct semid_ds_kern */
 struct	pool semu_pool;		/* pool for struct sem_undo (SEMUSZ) */
 unsigned short *semseqs;	/* array of sem sequence numbers */
 
@@ -63,10 +63,10 @@ void
 seminit(void)
 {
 
-	pool_init(&sema_pool, sizeof(struct semid_ds), 0, 0, PR_WAITOK,
+	pool_init(&sema_pool, sizeof(struct semid_ds_kern), 0, 0, PR_WAITOK,
 	    "semapl", NULL);
 	pool_init(&semu_pool, SEMUSZ, 0, 0, PR_WAITOK, "semupl", NULL);
-	sema = mallocarray(seminfo.semmni, sizeof(struct semid_ds *),
+	sema = mallocarray(seminfo.semmni, sizeof(struct semid_ds_kern *),
 	    M_SEM, M_WAITOK|M_ZERO);
 	semseqs = mallocarray(seminfo.semmni, sizeof(unsigned short),
 	    M_SEM, M_WAITOK|M_ZERO);
@@ -237,7 +237,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 	int cmd = SCARG(uap, cmd);
 	union semun arg, *uarg = SCARG(uap, arg);
 	struct semid_ds sbuf;
-	struct semid_ds *semaptr;
+	struct semid_ds_kern *semaptr;
 	unsigned short *semval = NULL, nsems;
 	int i, ix, error;
 
@@ -293,9 +293,14 @@ again:
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return (error);
-		memcpy(&sbuf, semaptr, sizeof sbuf);
-		sbuf.sem_base = NULL;
-		error = copyout(&sbuf, arg.buf, sizeof(struct semid_ds));
+
+		memset(&sbuf, 0, sizeof(sbuf));
+		sbuf.sem_perm = semaptr->sem_perm;
+		sbuf.sem_nsems = semaptr->sem_nsems;
+		sbuf.sem_otime = semaptr->sem_otime;
+		sbuf.sem_ctime = semaptr->sem_ctime;
+
+		error = copyout(&sbuf, arg.buf, sizeof(sbuf));
 		break;
 
 	case GETNCNT:
@@ -416,7 +421,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
 	int semflg = SCARG(uap, semflg);
-	struct semid_ds *semaptr, *semaptr_new = NULL;
+	struct semid_ds_kern *semaptr, *semaptr_new = NULL;
 	struct ucred *cred = p->p_ucred;
 
 	DPRINTF(("semget(0x%x, %d, 0%o)\n", key, nsems, semflg));
@@ -528,7 +533,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 	int semid = SCARG(uap, semid);
 	size_t nsops = SCARG(uap, nsops);
 	struct sembuf *sops = NULL;
-	struct semid_ds *semaptr;
+	struct semid_ds_kern *semaptr;
 	struct sembuf *sopptr = NULL;
 	struct sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
@@ -835,7 +840,7 @@ semexit(struct process *pr)
 			int semid = suptr->un_ent[ix].un_id;
 			int semnum = suptr->un_ent[ix].un_num;
 			int adjval = suptr->un_ent[ix].un_adjval;
-			struct semid_ds *semaptr;
+			struct semid_ds_kern *semaptr;
 
 			if ((semaptr = sema[semid]) == NULL)
 				panic("semexit - semid not allocated");
@@ -872,17 +877,17 @@ semexit(struct process *pr)
 void
 sema_reallocate(int val)
 {
-	struct semid_ds **sema_new;
+	struct semid_ds_kern **sema_new;
 	unsigned short *newseqs;
-	sema_new = mallocarray(val, sizeof(struct semid_ds *),
+	sema_new = mallocarray(val, sizeof(struct semid_ds_kern *),
 	    M_SEM, M_WAITOK|M_ZERO);
 	memcpy(sema_new, sema,
-	    seminfo.semmni * sizeof(struct semid_ds *));
+	    seminfo.semmni * sizeof(struct semid_ds_kern *));
 	newseqs = mallocarray(val, sizeof(unsigned short), M_SEM,
 	    M_WAITOK|M_ZERO);
 	memcpy(newseqs, semseqs,
 	    seminfo.semmni * sizeof(unsigned short));
-	free(sema, M_SEM, seminfo.semmni * sizeof(struct semid_ds *));
+	free(sema, M_SEM, seminfo.semmni * sizeof(struct semid_ds_kern *));
 	free(semseqs, M_SEM, seminfo.semmni * sizeof(unsigned short));
 	sema = sema_new;
 	semseqs = newseqs;

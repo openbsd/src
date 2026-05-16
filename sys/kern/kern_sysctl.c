@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.491 2026/04/16 20:03:14 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.492 2026/05/16 21:17:43 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2758,12 +2758,17 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 			switch (*name) {
 #ifdef SYSVSEM
 			case KERN_SYSVIPC_SEM_INFO:
-				if (sema[i] != NULL)
-					memcpy(&semsi->semids[i], sema[i],
-					    dssize);
-				else
-					memset(&semsi->semids[i], 0, dssize);
-				semsi->semids[i].sem_base = NULL;
+				if (sema[i] != NULL) {
+					semsi->semids[i].sem_perm =
+					    sema[i]->sem_perm;
+					semsi->semids[i].sem_nsems =
+					    sema[i]->sem_nsems;
+					semsi->semids[i].sem_otime =
+					    sema[i]->sem_otime;
+					semsi->semids[i].sem_ctime =
+					    sema[i]->sem_ctime;
+				}
+
 				break;
 #endif
 #ifdef SYSVSHM
