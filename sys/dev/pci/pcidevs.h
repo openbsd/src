@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2134 2026/05/11 20:16:46 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2135 2026/05/17 04:22:45 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1217,6 +1217,7 @@
 #define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
 #define	PCI_PRODUCT_APPLE_NVME1	0x2001		/* NVMe */
 #define	PCI_PRODUCT_APPLE_NVME2	0x2003		/* NVMe */
+#define	PCI_PRODUCT_APPLE_NVME3	0x2005		/* NVMe */
 
 /* Aquantia Corp. */
 #define	PCI_PRODUCT_AQUANTIA_AQC100	0x00b1		/* AQC100 */
