@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.55 2023/11/26 16:04:17 espie Exp $	*/
+/*	$OpenBSD: tables.c,v 1.56 2026/05/17 02:00:36 jsg Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -1604,6 +1604,7 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 		}
 		name = rp;
 	}
+	sigfillset(&allsigs);
 	if (dircnt == dirsize) {
 		dblk = reallocarray(dirp, dirsize * 2, sizeof(DIRDATA));
 		if (dblk == NULL) {
