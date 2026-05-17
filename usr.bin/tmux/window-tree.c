@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.74 2026/05/03 15:02:48 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.75 2026/05/17 16:01:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -387,7 +387,7 @@ window_tree_build(void *modedata, struct sort_criteria *sort_crit,
 		*tag = (uint64_t)data->fs.wl;
 		break;
 	case WINDOW_TREE_PANE:
-		if (window_count_panes(data->fs.wl->window) == 1)
+		if (window_count_panes(data->fs.wl->window, 1) == 1)
 			*tag = (uint64_t)data->fs.wl;
 		else
 			*tag = (uint64_t)data->fs.wp;
@@ -578,7 +578,7 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 	struct format_tree	*ft;
 	struct options		*oo;
 
-	total = window_count_panes(w);
+	total = window_count_panes(w, 1);
 
 	if (sx / total < 24) {
 		visible = sx / 24;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.70 2025/03/04 08:45:04 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.71 2026/05/17 16:01:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -103,7 +103,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		 * spawned without being visited (for example split-window -d).
 		 */
 		lastwp = TAILQ_FIRST(&w->last_panes);
-		if (lastwp == NULL && window_count_panes(w) == 2) {
+		if (lastwp == NULL && window_count_panes(w, 1) == 2) {
 			lastwp = TAILQ_PREV(w->active, window_panes, entry);
 			if (lastwp == NULL)
 				lastwp = TAILQ_NEXT(w->active, entry);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.63 2025/09/01 07:53:49 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.64 2026/05/17 16:01:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,7 +73,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	server_unzoom_window(w);
 
-	if (window_count_panes(w) == 1) {
+	if (window_count_panes(w, 1) == 1) {
 		if (server_link_window(src_s, wl, dst_s, idx, 0,
 		    !args_has(args, 'd'), &cause) != 0) {
 			cmdq_error(item, "%s", cause);

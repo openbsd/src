@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.144 2026/04/04 17:00:33 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.145 2026/05/17 16:01:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -185,7 +185,7 @@ server_kill_pane(struct window_pane *wp)
 {
 	struct window	*w = wp->window;
 
-	if (window_count_panes(w) == 1) {
+	if (window_count_panes(w, 1) == 1) {
 		server_kill_window(w, 1);
 		recalculate_sizes();
 	} else {

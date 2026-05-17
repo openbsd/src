@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.53 2026/04/28 08:32:44 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.54 2026/05/17 16:01:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -171,7 +171,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	} else
 		server_status_session(dst_s);
 
-	if (window_count_panes(src_w) == 0)
+	if (window_count_panes(src_w, 1) == 0)
 		server_kill_window(src_w, 1);
 	else
 		notify_window("window-layout-changed", src_w);
