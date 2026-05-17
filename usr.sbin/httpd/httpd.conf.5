@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.129 2026/01/18 16:38:02 schwarze Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.130 2026/05/17 10:56:41 kirill Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2026 $
+.Dd $Mdocdate: May 17 2026 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -254,6 +254,18 @@ If
 is omitted, enable the banner for the current
 .Ic server
 if it was disabled globally.
+.It Oo Ic no Oc Ic static-cache-control
+Send
+.Dq Cache-Control: no-cache
+with static file responses.
+When
+.Ic gzip-static
+is enabled, also send
+.Dq Vary: Accept-Encoding
+with static file responses.
+This is enabled by default; use
+.Ic no static-cache-control
+to disable these headers.
 .It Ic block drop
 Drop the connection without sending an error page.
 .It Ic block Op Ic return Ar code Op Ar uri

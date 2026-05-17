@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.133 2026/05/11 22:33:10 kirill Exp $	*/
+/*	$OpenBSD: parse.y,v 1.134 2026/05/17 10:56:41 kirill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -142,7 +142,7 @@ typedef struct {
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
 %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
-%token	ERRDOCS GZIPSTATIC BANNER
+%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -275,7 +275,8 @@ server		: SERVER optmatch STRING	{
 			    SERVER_REQUESTTIMEOUT;
 			s->srv_conf.maxrequests = SERVER_MAXREQUESTS;
 			s->srv_conf.maxrequestbody = SERVER_MAXREQUESTBODY;
-			s->srv_conf.flags = SRVFLAG_LOG;
+			s->srv_conf.flags = SRVFLAG_LOG |
+			    SRVFLAG_STATIC_CACHE_CONTROL;
 			if ($2)
 				s->srv_conf.flags |= SRVFLAG_SERVER_MATCH;
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
@@ -558,6 +559,7 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 		| root
 		| directory
 		| banner
+		| static_cache_control
 		| logformat
 		| fastcgi
 		| authenticate
@@ -1252,6 +1254,16 @@ gzip_static	: NO GZIPSTATIC		{
 		}
 		;
 
+static_cache_control	: NO STATIC_CACHE_CONTROL	{
+			srv_conf->flags &= ~SRVFLAG_STATIC_CACHE_CONTROL;
+			srv_conf->flags |= SRVFLAG_NO_STATIC_CACHE_CONTROL;
+		}
+		| STATIC_CACHE_CONTROL	{
+			srv_conf->flags &= ~SRVFLAG_NO_STATIC_CACHE_CONTROL;
+			srv_conf->flags |= SRVFLAG_STATIC_CACHE_CONTROL;
+		}
+		;
+
 tcpip		: TCP '{' optnl tcpflags_l '}'
 		| TCP tcpflags
 		;
@@ -1511,6 +1523,7 @@ lookup(char *s)
 		{ "sack",		SACK },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
+		{ "static-cache-control",	STATIC_CACHE_CONTROL },
 		{ "strip",		STRIP },
 		{ "style",		STYLE },
 		{ "subdomains",		SUBDOMAINS },

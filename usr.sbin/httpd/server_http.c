@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.161 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.162 2026/05/17 10:56:41 kirill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1607,6 +1607,16 @@ server_response_http(struct client *clt, unsigned int code,
 	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
 	    kv_set(cl, "%lld", (long long)size) == -1))
 		return (-1);
+
+	if (srv_conf->flags & SRVFLAG_STATIC_CACHE_CONTROL) {
+		if (kv_add(&resp->http_headers, "Cache-Control",
+		    "no-cache") == NULL)
+			return (-1);
+		if (srv_conf->flags & SRVFLAG_GZIP_STATIC &&
+		    kv_add(&resp->http_headers, "Vary",
+		    "Accept-Encoding") == NULL)
+			return (-1);
+	}
 
 	/* Set last modification time */
 	if (server_http_time(mtime, tmbuf, sizeof(tmbuf)) <= 0 ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.71 2026/05/11 22:33:10 kirill Exp $	*/
+/*	$OpenBSD: config.c,v 1.72 2026/05/17 10:56:41 kirill Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -632,6 +632,11 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			(void)strlcpy(srv_conf->path, parent->path,
 			    sizeof(srv_conf->path));
 		}
+
+		f = SRVFLAG_STATIC_CACHE_CONTROL |
+		    SRVFLAG_NO_STATIC_CACHE_CONTROL;
+		if ((srv_conf->flags & f) == 0)
+			srv_conf->flags |= parent->flags & f;
 
 		f = SRVFLAG_SERVER_HSTS;
 		srv_conf->flags |= parent->flags & f;
