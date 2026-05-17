@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2135 2026/05/17 04:22:45 jcs Exp 
+ *	OpenBSD: pcidevs,v 1.2136 2026/05/17 05:01:45 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7990,6 +7990,7 @@
 #define	PCI_PRODUCT_MEDIATEK_MT7921K	0x0608		/* MT7921K */
 #define	PCI_PRODUCT_MEDIATEK_MT7922	0x0616		/* MT7922 */
 #define	PCI_PRODUCT_MEDIATEK_MT7921	0x7961		/* MT7921 */
+#define	PCI_PRODUCT_MEDIATEK_MT7920	0x7920		/* MT7920 */
 #define	PCI_PRODUCT_MEDIATEK_MT7925	0x7925		/* MT7925 */
 
 /* Meinberg Funkuhren */
