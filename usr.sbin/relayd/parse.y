@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.263 2026/05/15 13:57:24 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.264 2026/05/17 09:11:01 kirill Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -131,8 +131,10 @@ int		 host_dns(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 int		 host_if(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
+int		 host_ifaddr(struct sockaddr_storage *, struct ifaddrs *);
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
+int		 host_local(struct addresslist *);
 void		 host_free(struct addresslist *);
 
 struct table	*table_inherit(struct table *);
@@ -1995,35 +1997,60 @@ relayopts_l	: relayopts_l relayoptsl nl
 relayoptsl	: LISTEN ON STRING port opttls {
 			struct addresslist	 al;
 			struct address		*h;
-			struct relay		*r;
+			struct relay		*nr, *r;
+			int			 cnt = 0;
 
 			if (rlay->rl_conf.ss.ss_family != AF_UNSPEC) {
-				if ((r = calloc(1, sizeof (*r))) == NULL)
+				if ((r = calloc(1, sizeof(*r))) == NULL)
 					fatal("out of memory");
-				TAILQ_INSERT_TAIL(&relays, r, rl_entry);
 			} else
 				r = rlay;
 			if ($4.op != PF_OP_EQ) {
 				yyerror("invalid port");
 				free($3);
+				if (r != rlay)
+					free(r);
 				YYERROR;
 			}
 
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, &$4, NULL, -1) <= 0) {
+			if (host($3, &al, SRV_MAX_VIRTS, &$4, NULL, -1) <= 0) {
 				yyerror("invalid listen ip: %s", $3);
 				free($3);
+				if (r != rlay)
+					free(r);
+				YYERROR;
+			}
+			if (host_local(&al) == 0) {
+				yyerror("no local listen ip: %s", $3);
+				free($3);
+				host_free(&al);
+				if (r != rlay)
+					free(r);
 				YYERROR;
 			}
 			free($3);
-			h = TAILQ_FIRST(&al);
-			bcopy(&h->ss, &r->rl_conf.ss, sizeof(r->rl_conf.ss));
-			r->rl_conf.port = h->port.val[0];
-			if ($5) {
-				r->rl_conf.flags |= F_TLS;
-				conf->sc_conf.flags |= F_TLS;
+			TAILQ_FOREACH(h, &al, entry) {
+				if (cnt == 0) {
+					nr = r;
+					if (nr != rlay)
+						TAILQ_INSERT_TAIL(&relays, nr,
+						    rl_entry);
+				} else {
+					if ((nr = calloc(1, sizeof(*nr))) == NULL)
+						fatal("out of memory");
+					TAILQ_INSERT_TAIL(&relays, nr, rl_entry);
+				}
+				bcopy(&h->ss, &nr->rl_conf.ss,
+				    sizeof(nr->rl_conf.ss));
+				nr->rl_conf.port = h->port.val[0];
+				if ($5)
+					nr->rl_conf.flags |= F_TLS;
+				cnt++;
 			}
-			tableport = h->port.val[0];
+			if ($5)
+				conf->sc_conf.flags |= F_TLS;
+			tableport = $4.val[0];
 			host_free(&al);
 		}
 		| forwardmode opttlsclient TO forwardspec dstaf optproxyproto {
@@ -3376,6 +3403,64 @@ host(const char *s, struct addresslist *al, int max,
 
 	TAILQ_INSERT_HEAD(al, h, entry);
 	return (1);
+}
+
+int
+host_ifaddr(struct sockaddr_storage *ss, struct ifaddrs *ifap)
+{
+	struct ifaddrs		*p;
+	struct sockaddr_in	*sin;
+	struct sockaddr_in6	*sin6;
+
+	switch (ss->ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)ss;
+		if (sin->sin_addr.s_addr == INADDR_ANY)
+			return (1);
+		break;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)ss;
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
+			return (1);
+		break;
+	default:
+		return (0);
+	}
+
+	for (p = ifap; p != NULL; p = p->ifa_next) {
+		if (p->ifa_addr == NULL ||
+		    p->ifa_addr->sa_family != ss->ss_family ||
+		    sockaddr_cmp((struct sockaddr *)ss, p->ifa_addr, -1) != 0)
+			continue;
+		bzero(ss, sizeof(*ss));
+		memcpy(ss, p->ifa_addr, p->ifa_addr->sa_len);
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+host_local(struct addresslist *al)
+{
+	struct ifaddrs		*ifap;
+	struct address		*h, *next;
+	int			 cnt = 0;
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	TAILQ_FOREACH_SAFE(h, al, entry, next) {
+		if (host_ifaddr(&h->ss, ifap)) {
+			cnt++;
+			continue;
+		}
+		TAILQ_REMOVE(al, h, entry);
+		free(h);
+	}
+
+	freeifaddrs(ifap);
+	return (cnt);
 }
 
 void

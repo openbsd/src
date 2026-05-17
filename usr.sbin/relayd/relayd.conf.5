@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.216 2026/05/15 13:57:24 rsadowski Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.217 2026/05/17 09:11:01 kirill Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 15 2026 $
+.Dd $Mdocdate: May 17 2026 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -727,7 +727,19 @@ Like the previous directive, but for redirections with rdr-to in
 .Op Ic tls
 .Xc
 Specify the address and port for the relay to listen on.
-The relay will accept incoming connections to the specified address.
+The relay will accept incoming connections to the specified address or
+addresses.
+If
+.Ar address
+resolves to multiple IPv4 or IPv6 addresses, such as an interface
+name, interface group, or DNS hostname,
+.Xr relayd 8
+will create a listener for each local address.
+For DNS hostnames, all resolved IPv4 and IPv6 addresses are considered,
+but only addresses configured on a local interface are used.
+Addresses that are not configured on a local interface are ignored.
+If none of the resolved addresses are local, the configuration is
+invalid.
 If the
 .Ic tls
 keyword is present, the relay will accept connections using the
