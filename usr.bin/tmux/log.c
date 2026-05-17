@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.32 2026/05/17 16:01:42 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.33 2026/05/17 16:02:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -150,7 +150,6 @@ fatal(const char *msg, ...)
 	log_vwrite(msg, ap, tmp);
 	va_end(ap);
 
-	abort ();//XXX
 	exit(1);
 }
 
@@ -164,6 +163,5 @@ fatalx(const char *msg, ...)
 	log_vwrite(msg, ap, "fatal: ");
 	va_end(ap);
 
-	abort ();//XXX
 	exit(1);
 }
