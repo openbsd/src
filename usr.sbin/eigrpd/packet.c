@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.24 2026/05/05 11:46:18 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.25 2026/05/17 06:07:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -175,7 +175,7 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 		rtp_ack_stop_timer(nbr);
 	}
 
-	ibuf_from_ibuf(buf, &ebuf);
+	ibuf_from_ibuf(&ebuf, buf);
 	if (ibuf_get(&ebuf, &eigrp_hdr, sizeof(eigrp_hdr)) == -1)
 		fatalx("send_packet: get hdr failed");
 
