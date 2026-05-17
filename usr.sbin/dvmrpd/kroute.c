@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.15 2025/01/02 06:35:57 anton Exp $ */
+/*	$OpenBSD: kroute.c,v 1.16 2026/05/17 00:18:11 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -82,7 +82,7 @@ kif_init(void)
 int
 kr_init(void)
 {
-	int opt, fd;
+	int opt = 0, fd;
 
 	if ((fd = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    0)) == -1) {
