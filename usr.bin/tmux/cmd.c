@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.183 2026/05/12 12:05:41 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.184 2026/05/17 10:44:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,6 +72,7 @@ extern const struct cmd_entry cmd_lock_server_entry;
 extern const struct cmd_entry cmd_lock_session_entry;
 extern const struct cmd_entry cmd_move_pane_entry;
 extern const struct cmd_entry cmd_move_window_entry;
+extern const struct cmd_entry cmd_new_pane_entry;
 extern const struct cmd_entry cmd_new_session_entry;
 extern const struct cmd_entry cmd_new_window_entry;
 extern const struct cmd_entry cmd_next_layout_entry;
@@ -164,6 +165,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_lock_session_entry,
 	&cmd_move_pane_entry,
 	&cmd_move_window_entry,
+	&cmd_new_pane_entry,
 	&cmd_new_session_entry,
 	&cmd_new_window_entry,
 	&cmd_next_layout_entry,
