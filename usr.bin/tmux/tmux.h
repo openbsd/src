@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1314 2026/05/17 10:44:53 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1315 2026/05/17 13:01:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1945,6 +1945,9 @@ struct client_window {
 };
 RB_HEAD(client_windows, client_window);
 
+/* Maximum time to be pasting. */
+#define CLIENT_PASTE_TIME_LIMIT 5
+
 /* Client connection. */
 typedef int (*prompt_input_cb)(struct client *, void *, const char *, int);
 typedef void (*prompt_free_cb)(void *);
@@ -2084,6 +2087,7 @@ struct client {
 
 	struct key_table	*keytable;
 	key_code		 last_key;
+	time_t			 paste_time;
 
 	uint64_t		 redraw_panes;
 	uint64_t		 redraw_scrollbars;
