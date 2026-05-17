@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.51 2026/02/03 10:25:28 sashan Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.52 2026/05/17 14:11:57 sashan Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -691,6 +691,7 @@ reorder_rules(struct pfctl *pf, struct superblock *block, int depth)
 
 	while (!TAILQ_EMPTY(&head)) {
 		largest = 1;
+		largest_list = 0;
 
 		/*
 		 * Find the most useful skip steps remaining

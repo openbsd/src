@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.403 2026/05/13 12:07:10 jsg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.404 2026/05/17 14:11:57 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1769,6 +1769,8 @@ pfctl_load_queues(struct pfctl *pf)
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0)
 		ticket = pfctl_get_ticket(pf->trans, PF_TRANS_RULESET, "");
+	else
+		ticket = 0;
 
 	TAILQ_FOREACH_SAFE(qi, &rootqs, entries, tempqi) {
 		TAILQ_REMOVE(&rootqs, qi, entries);
