@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.398 2026/05/07 09:21:05 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.399 2026/05/17 12:38:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -898,9 +898,9 @@ window_copy_get_line(struct window_pane *wp, u_int y)
 {
 	struct window_mode_entry	*wme = TAILQ_FIRST(&wp->modes);
 	struct window_copy_mode_data	*data = wme->data;
-	struct grid			*gd = data->screen.grid;
+	struct grid			*gd = data->backing->grid;
 
-	return (format_grid_line(gd, gd->hsize + y));
+	return (format_grid_line(gd, gd->hsize + y - data->oy));
 }
 
 char *
