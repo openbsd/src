@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.654 2025/11/04 12:52:28 tb Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.655 2026/05/18 13:21:17 kirill Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 4 2025 $
+.Dd $Mdocdate: May 18 2026 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -172,6 +172,13 @@ Apply
 to all subpackages of the current port.
 .It Cm checkpatch
 Check that patches would apply cleanly, but do not modify anything.
+.It Cm check-shlib-syms
+Compare exported dynamic symbols for
+.Ev PLIST
+shared libraries after
+.Cm fake ,
+against matching installed libraries.
+Libraries with no installed counterpart are reported and skipped.
 .It Cm checksum
 Compute a
 .Xr sha256 1
