@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.12 2026/05/13 15:19:07 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.13 2026/05/18 12:34:51 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -328,7 +328,7 @@ ch_sub_find(const struct ch_type *type, struct ch_group *table, uint64_t h,
  */
 static void *
 ch_sub_locate(const struct ch_type *type, struct ch_group *table, uint64_t h,
-    int (*cmp)(const void *, void *), void *arg)
+    int (*eq)(const void *, const void *), const void *arg)
 {
 	uint64_t mask;
 	uint32_t bucket = CH_H2(h);
@@ -342,7 +342,7 @@ ch_sub_locate(const struct ch_type *type, struct ch_group *table, uint64_t h,
 		for (i = 0; i < 7; i++) {
 			if (hits & (1 << i)) {
 				/* most porbably a hit */
-				if (cmp(g->cg_data[i], arg))
+				if (eq(g->cg_data[i], arg))
 					return g->cg_data[i];
 			}
 		}
@@ -837,7 +837,7 @@ _ch_find(const struct ch_type *type, struct ch_table *t, uint64_t h,
 
 void *
 _ch_locate(const struct ch_type *type, struct ch_table *t, uint64_t h,
-    int (*cmp)(const void *, void *), void *arg)
+    int (*eq)(const void *, const void *), const void *arg)
 {
 	struct ch_group *table;
 	uint64_t idx;
@@ -848,7 +848,7 @@ _ch_locate(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	idx = CH_H1(h, t->ch_level);
 	table = t->ch_exts[idx].ce_table;
 
-	return ch_sub_locate(type, table, h, cmp, arg);
+	return ch_sub_locate(type, table, h, eq, arg);
 }
 
 void *

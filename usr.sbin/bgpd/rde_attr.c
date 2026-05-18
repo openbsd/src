@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.145 2026/05/13 18:50:09 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.146 2026/05/18 12:34:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -297,10 +297,10 @@ struct lookup_attr {
 };
 
 static int
-attr_match(const void *va, void *vb)
+attr_match(const void *va, const void *vb)
 {
 	const struct attr *oa = va;
-	struct lookup_attr *ob = vb;
+	const struct lookup_attr *ob = vb;
 
 	if (oa->type != ob->type)
 		return 0;
