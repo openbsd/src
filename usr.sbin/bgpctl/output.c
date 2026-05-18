@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.75 2026/05/13 15:51:49 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.76 2026/05/18 09:22:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1147,7 +1147,7 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->attr_data + stats->bitmap_size + stats->hash_size));
 	printf("Sets and filters using %s of memory\n",
 	    fmt_mem(stats->aset_size + stats->pset_size + stats->aspa_size +
-	    stats->filter_set_size));
+	    stats->filter_size + stats->filter_set_size));
 
 	printf("\nRDE queue statistics\n");
 	printf("%10lld messages queued holding %s of data\n",
