@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.31 2026/01/20 11:19:50 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.32 2026/05/18 13:35:49 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2206,21 +2206,6 @@ qwx_pci_power_up(struct qwx_softc *sc)
 	return 0;
 }
 
-void
-qwx_pci_power_down(struct qwx_softc *sc)
-{
-	/* restore aspm in case firmware bootup fails */
-	qwx_pci_aspm_restore(sc);
-
-	qwx_pci_force_wake(sc);
-
-	qwx_pci_msi_disable(sc);
-
-	qwx_mhi_stop(sc);
-	clear_bit(ATH11K_FLAG_DEVICE_INIT_DONE, sc->sc_flags);
-	qwx_pci_sw_reset(sc, false);
-}
-
 /*
  * MHI
  */
@@ -2413,6 +2398,47 @@ struct qwx_dma_vec_entry {
 	uint64_t paddr;
 	uint64_t size;
 };
+
+void
+qwx_pci_power_down(struct qwx_softc *sc)
+{
+	uint32_t state;
+	int i;
+
+	/* Restore ASPM in case firmware bootup fails. */
+	qwx_pci_aspm_restore(sc);
+
+	qwx_pci_force_wake(sc);
+
+	/*
+	 * Ask firmware to transition to M3 before resetting the device
+	 * so it can flush state cleanly.  Otherwise stale chip RAM from
+	 * the previous boot causes the next firmware boot to silently
+	 * drop WMI PDEV commands.
+	 */
+	state = (qwx_pci_read(sc, MHI_STATUS) & MHI_STATUS_MHISTATE_MASK) >>
+	    MHI_STATUS_MHISTATE_SHFT;
+	if (state == MHI_STATE_M0) {
+		qwx_mhi_set_state(sc, MHI_STATE_M3);
+		for (i = 0; i < 100; i++) {
+			state = (qwx_pci_read(sc, MHI_STATUS) &
+			    MHI_STATUS_MHISTATE_MASK) >>
+			    MHI_STATUS_MHISTATE_SHFT;
+			if (state == MHI_STATE_M3)
+				break;
+			DELAY(10 * 1000);
+		}
+		if (state != MHI_STATE_M3)
+			printf("%s: MHI M3 transition timeout (state=0x%x)\n",
+			    sc->sc_dev.dv_xname, state);
+	}
+
+	qwx_pci_msi_disable(sc);
+
+	qwx_mhi_stop(sc);
+	clear_bit(ATH11K_FLAG_DEVICE_INIT_DONE, sc->sc_flags);
+	qwx_pci_sw_reset(sc, false);
+}
 
 void
 qwx_mhi_ring_doorbell(struct qwx_softc *sc, uint64_t db_addr, uint64_t val)
@@ -3664,6 +3690,11 @@ qwx_mhi_state_change(struct qwx_pci_softc *psc, int ee, int mhi_state)
 			    sc->sc_dev.dv_xname);
 			psc->mhi_state = mhi_state;
 			qwx_mhi_low_power_mode_state_transition(psc);
+			break;
+		case MHI_STATE_M3:
+			DNPRINTF(QWX_D_MHI, "%s: new MHI state M3\n",
+			    sc->sc_dev.dv_xname);
+			psc->mhi_state = mhi_state;
 			break;
 		case MHI_STATE_SYS_ERR:
 			DNPRINTF(QWX_D_MHI,
