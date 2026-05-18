@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.95 2026/04/26 17:58:58 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.96 2026/05/18 04:24:01 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -504,10 +504,10 @@ IPAddressFamily_cmp(const IPAddressFamily *const *a_,
 	const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
 	int len, cmp;
 
-	len = MINIMUM(a->length, b->length);
-
-	if ((cmp = memcmp(a->data, b->data, len)) != 0)
-		return cmp;
+	if ((len = MINIMUM(a->length, b->length)) != 0) {
+		if ((cmp = memcmp(a->data, b->data, len)) != 0)
+			return cmp;
+	}
 
 	return a->length - b->length;
 }
