@@ -1,4 +1,4 @@
-.\" $OpenBSD: ix.4,v 1.11 2024/11/02 06:47:03 jmc Exp $
+.\" $OpenBSD: ix.4,v 1.12 2026/05/18 12:15:08 stsp Exp $
 .\"
 .\" Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2024 $
+.Dd $Mdocdate: May 18 2026 $
 .Dt IX 4
 .Os
 .Sh NAME
 .Nm ix
-.Nd Intel 82598/82599/X540/X550 PCI Express 100/1Gb/10Gb Ethernet device
+.Nd Intel 82598/82599/X540/X550/E610 PCI Express 100/1Gb/10Gb Ethernet device
 .Sh SYNOPSIS
 .Cd "ix* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for PCI Express 10Gb Ethernet adapters based
-on the Intel 82598EB, 82599EB, X540 and X550 Ethernet controller chips,
+on the Intel 82598EB, 82599EB, X540, X550, and E610 Ethernet controller chips,
 including the following:
 .Pp
 .Bl -bullet -offset indent -compact
@@ -68,6 +68,8 @@ Intel X552 10GbE Adapter (SFP+)
 Intel Xeon-D X552/X557 embedded 10GbE Adapter (SFP+/10GbaseT)
 .It
 HotLava Tambora 64G4/80G4/64G6/120G6 (SFP+)
+.It
+Intel E610-XAT2 10GbE Adapter (10GbaseT)
 .El
 .Pp
 SFP+ adapters generally also support SFP type modules with their
