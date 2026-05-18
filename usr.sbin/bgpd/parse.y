@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.496 2026/05/13 09:25:11 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.497 2026/05/18 15:49:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1221,7 +1221,11 @@ flowspec	: FLOWSPEC af {
 		}
 		;
 
-proto		: PROTO proto_item
+proto		: PROTO proto_item {
+			curflow->type = FLOWSPEC_TYPE_PROTO;
+			if (push_unary_numop(OP_EQ, $2) == -1)
+				YYERROR;
+		}
 		| PROTO '{' optnl proto_list optnl '}'
 		;
 
@@ -1337,11 +1341,11 @@ flowrule	: from
 		} flags
 		| FRAGMENT {
 			curflow->type = FLOWSPEC_TYPE_FRAG;
-		} flags;
+		} flags
 		| icmpspec
-		| LENGTH lengthspec {
+		| LENGTH {
 			curflow->type = FLOWSPEC_TYPE_PKT_LEN;
-		}
+		} lengthspec
 		| proto
 		| TOS tos {
 			curflow->type = FLOWSPEC_TYPE_DSCP;
@@ -1473,7 +1477,7 @@ tos		: STRING		{
 			free($1);
 		}
 		| NUMBER		{
-			if ($$ < 0 || $$ > 255) {
+			if ($1 < 0 || $1 > 255) {
 				yyerror("illegal tos value %lld", $1);
 				YYERROR;
 			}
@@ -1504,7 +1508,7 @@ length_item	: length			{
 		;
 
 length		: NUMBER			{
-			if ($$ < 0 || $$ > USHRT_MAX) {
+			if ($1 < 0 || $1 > USHRT_MAX) {
 				yyerror("illegal ptk length value %lld", $1);
 				YYERROR;
 			}
