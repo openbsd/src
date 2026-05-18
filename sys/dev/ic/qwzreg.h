@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.14 2026/05/14 16:17:21 mglocker Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.15 2026/05/18 13:47:32 kirill Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -13250,6 +13250,13 @@ struct htt_rx_full_monitor_mode_cfg_cmd {
 	uint32_t info0;
 	uint32_t cfg;
 } __packed;
+
+#define WMI_HOST_RC_DS_FLAG			0x01
+#define WMI_HOST_RC_SGI_FLAG			0x04
+#define WMI_HOST_RC_HT_FLAG			0x08
+#define WMI_HOST_RC_TX_STBC_FLAG		0x20
+#define WMI_HOST_RC_RX_STBC_FLAG_S		6
+#define WMI_HOST_RC_TS_FLAG			0x200
 
 /* HTT message target->host */
 

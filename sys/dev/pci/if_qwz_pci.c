@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.10 2026/05/15 19:02:12 mglocker Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.11 2026/05/18 13:47:32 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -953,9 +953,7 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set device capabilities. */
 	ic->ic_caps =
-#if 0
 	    IEEE80211_C_QOS | IEEE80211_C_TX_AMPDU | /* A-MPDU */
-#endif
 	    IEEE80211_C_ADDBA_OFFLOAD | /* device sends ADDBA/DELBA frames */
 	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN |		/* WPA/RSN */
@@ -970,6 +968,17 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+
+	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_AMSDU7935;
+	ic->ic_htcaps |=
+	    (IEEE80211_HTCAP_SMPS_DIS << IEEE80211_HTCAP_SMPS_SHIFT);
+	ic->ic_htxcaps = 0;
+	ic->ic_txbfcaps = 0;
+	ic->ic_aselcaps = 0;
+	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_NONE | 0x3 /* 64k */);
+
+	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
+	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
 
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[1];
