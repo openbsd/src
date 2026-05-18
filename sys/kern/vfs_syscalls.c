@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.381 2026/05/05 14:01:56 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.382 2026/05/18 01:25:10 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1076,6 +1076,12 @@ sys___pledge_open(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) flags;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
+	int rw = SCARG(uap, flags) & O_ACCMODE;
+
+	/* libc only calls with O_RDONLY, O_RDWR, O_CLOEXEC */
+	if ((SCARG(uap, flags) & ~(O_ACCMODE|O_CLOEXEC)) ||
+	    !(rw == O_RDONLY || rw == O_RDWR))
+		return (EINVAL);
 
 	return (doopenat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, flags),
 	    SCARG(uap, mode), UNVEIL_PLEDGEOPEN, retval));
