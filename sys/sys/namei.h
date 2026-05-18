@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.53 2026/05/15 15:26:35 deraadt Exp $	*/
+/*	$OpenBSD: namei.h,v 1.54 2026/05/18 06:45:53 jsg Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ struct	nchstats {
 #define	UNVEIL_CREATE		0x04
 #define	UNVEIL_EXEC		0x08
 #define	UNVEIL_USERSET		0x10
-#define	UNVEIL_PLEDGEOPEN	0X20
+#define	UNVEIL_PLEDGEOPEN	0x20
 #define	UNVEIL_MASK		0x0f
 
 #endif /* !_SYS_NAMEI_H_ */
