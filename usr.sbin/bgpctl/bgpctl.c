@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.320 2026/02/04 11:48:33 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.321 2026/05/18 18:37:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1971,6 +1971,8 @@ res_to_flowspec(struct parse_result *r)
 
 	if (len == 0)
 		errx(1, "no flowspec rule defined");
+	if (len > FLOWSPEC_SIZE_MAX)
+		errx(1, "flowspec rule too long");
 
 	f = malloc(FLOWSPEC_SIZE + len);
 	if (f == NULL)
