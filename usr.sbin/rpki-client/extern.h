@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.280 2026/05/16 07:27:03 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.281 2026/05/18 16:26:41 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -433,11 +433,11 @@ RB_HEAD(brk_tree, brk);
 RB_PROTOTYPE(brk_tree, brk, entry, brkcmp);
 
 struct ccr_mft_sub_ski {
-	SLIST_ENTRY(ccr_mft_sub_ski) entry;
+	SIMPLEQ_ENTRY(ccr_mft_sub_ski) entry;
 	unsigned char ski[SHA_DIGEST_LENGTH];
 };
 
-SLIST_HEAD(subordinates_head, ccr_mft_sub_ski);
+SIMPLEQ_HEAD(subordinates_head, ccr_mft_sub_ski);
 
 struct ccr_mft {
 	RB_ENTRY(ccr_mft) entry;

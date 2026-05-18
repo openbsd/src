@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.77 2026/05/04 17:34:57 job Exp $ */
+/*	$OpenBSD: print.c,v 1.78 2026/05/18 16:26:41 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -866,7 +866,7 @@ print_ccr_mftstate(struct ccr *ccr)
 			json_do_string("sia", ccr_mft->sia);
 
 			json_do_array("subordinates");
-			SLIST_FOREACH(sub, &ccr_mft->subordinates, entry) {
+			SIMPLEQ_FOREACH(sub, &ccr_mft->subordinates, entry) {
 				ski = hex_encode(sub->ski, SHA_DIGEST_LENGTH);
 				json_do_string("ski", ski);
 				free(ski);
@@ -884,7 +884,7 @@ print_ccr_mftstate(struct ccr *ccr)
 			    (long long)ccr_mft->thisupdate, ccr_mft->sia);
 
 			i = 0;
-			SLIST_FOREACH(sub, &ccr_mft->subordinates, entry) {
+			SIMPLEQ_FOREACH(sub, &ccr_mft->subordinates, entry) {
 				if (i++ == 0)
 					printf(" subordinates:");
 				else

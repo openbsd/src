@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.37 2026/05/05 09:29:16 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.38 2026/05/18 16:26:41 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -324,13 +324,13 @@ append_cached_manifest(STACK_OF(ManifestInstance) *mis, struct ccr_mft *cm)
 
 	location_add_sia(mi->locations, cm->sia);
 
-	if (SLIST_EMPTY(&cm->subordinates))
+	if (SIMPLEQ_EMPTY(&cm->subordinates))
 		goto done;
 
 	if ((mi->subordinates = sk_SubjectKeyIdentifier_new(ski_cmp)) == NULL)
 		err(1, NULL);
 
-	SLIST_FOREACH(sub, &cm->subordinates, entry) {
+	SIMPLEQ_FOREACH(sub, &cm->subordinates, entry) {
 		if ((ski = SubjectKeyIdentifier_new()) == NULL)
 			err(1, NULL);
 
@@ -725,7 +725,7 @@ ccr_insert_mft_sub(struct ccr_mft_tree *tree, const struct cert *cert)
 	if (hex_decode(cert->ski, sub->ski, sizeof(sub->ski)) != 0)
 		errx(1, "hex_decode");
 
-	SLIST_INSERT_HEAD(&m->subordinates, sub, entry);
+	SIMPLEQ_INSERT_TAIL(&m->subordinates, sub, entry);
 }
 
 static inline int
@@ -744,7 +744,7 @@ ccr_mft_new(void)
 	if ((ccr_mft = calloc(1, sizeof(*ccr_mft))) == NULL)
 		err(1, NULL);
 
-	SLIST_INIT(&ccr_mft->subordinates);
+	SIMPLEQ_INIT(&ccr_mft->subordinates);
 
 	return ccr_mft;
 }
@@ -860,9 +860,9 @@ ccr_mft_free(struct ccr_mft *ccr_mft)
 	if (ccr_mft == NULL)
 		return;
 
-	while (!SLIST_EMPTY(&ccr_mft->subordinates)) {
-		sub_ski = SLIST_FIRST(&ccr_mft->subordinates);
-		SLIST_REMOVE_HEAD(&ccr_mft->subordinates, entry);
+	while (!SIMPLEQ_EMPTY(&ccr_mft->subordinates)) {
+		sub_ski = SIMPLEQ_FIRST(&ccr_mft->subordinates);
+		SIMPLEQ_REMOVE_HEAD(&ccr_mft->subordinates, entry);
 		free(sub_ski);
 	}
 
@@ -1054,7 +1054,7 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 				    fn, i);
 				goto out;
 			}
-			SLIST_INSERT_HEAD(&ccr_mft->subordinates, sub, entry);
+			SIMPLEQ_INSERT_TAIL(&ccr_mft->subordinates, sub, entry);
 			sub = NULL;
 		}
 
