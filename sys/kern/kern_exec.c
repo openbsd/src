@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.268 2025/09/16 12:15:06 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.269 2026/05/18 03:11:34 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -586,10 +586,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
 		p->p_pledge = 0;
 		pr->ps_pledge = 0;
-		/* XXX XXX XXX XXX */
-		/* Clear our unveil paths out so the child
-		 * starts afresh
-		 */
+		/* Clear our unveil paths out so the child starts afresh */
 		unveil_destroy(pr);
 		pr->ps_uvdone = 0;
 	}
