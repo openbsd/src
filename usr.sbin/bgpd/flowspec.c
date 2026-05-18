@@ -1,4 +1,4 @@
-/*	$OpenBSD: flowspec.c,v 1.5 2023/10/23 13:07:44 claudio Exp $ */
+/*	$OpenBSD: flowspec.c,v 1.6 2026/05/18 18:36:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -175,6 +175,10 @@ flowspec_valid(const uint8_t *buf, int len, int is_v6)
 
 	/* empty NLRI is invalid */
 	if (len == 0)
+		return -1;
+
+	/* flowspec rule is too large */
+	if (len > FLOWSPEC_SIZE_MAX)
 		return -1;
 
 	while (len > 0) {

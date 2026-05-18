@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.497 2026/05/18 15:49:22 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.498 2026/05/18 18:36:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1201,7 +1201,6 @@ flowspec	: FLOWSPEC af {
 
 			f = flow_to_flowspec(curflow);
 			if (f == NULL) {
-				yyerror("out of memory");
 				free($5);
 				flow_free(curflow);
 				curflow = NULL;
@@ -5692,6 +5691,7 @@ flow_to_flowspec(struct flowspec_context *ctx)
 		aid = AID_FLOWSPECv6;
 		break;
 	default:
+		yyerror("unknown AID %d", ctx->aid);
 		return NULL;
 	}
 
@@ -5699,9 +5699,16 @@ flow_to_flowspec(struct flowspec_context *ctx)
 		if (ctx->components[i] != NULL)
 			len += ctx->complen[i] + 1;
 
-	f = flowspec_alloc(aid, len);
-	if (f == NULL)
+	if (len > FLOWSPEC_SIZE_MAX) {
+		yyerror("flowspec too long %d > %d", len, FLOWSPEC_SIZE_MAX);
 		return NULL;
+	}
+
+	f = flowspec_alloc(aid, len);
+	if (f == NULL) {
+		yyerror("out of memory");
+		return NULL;
+	}
 
 	len = 0;
 	for (i = FLOWSPEC_TYPE_MIN; i < FLOWSPEC_TYPE_MAX; i++)

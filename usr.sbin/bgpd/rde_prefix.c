@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.61 2026/05/13 15:12:14 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.62 2026/05/18 18:36:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -405,10 +405,15 @@ pt_get_flow(struct flowspec *f)
 	struct pt_entry *needle;
 	union {
 		struct pt_entry_flow	flow;
-		uint8_t			buf[4096];
+		uint8_t			buf[FLOWSPEC_SIZE_MAX + PT_FLOW_SIZE];
 	} x;
 
 	needle = (struct pt_entry *)&x.flow;
+
+	if (f->len >  FLOWSPEC_SIZE_MAX) {
+		log_warnx("%s: flowspec too long", __func__);
+		return NULL;
+	}
 
 	memset(needle, 0, PT_FLOW_SIZE);
 	needle->aid = f->aid;
@@ -423,6 +428,9 @@ pt_add_flow(struct flowspec *f)
 {
 	struct pt_entry *p;
 	int len = f->len + PT_FLOW_SIZE;
+
+	if (f->len > FLOWSPEC_SIZE_MAX)
+		fatalx("%s: flowspec too long", __func__);
 
 	p = malloc(len);
 	if (p == NULL)

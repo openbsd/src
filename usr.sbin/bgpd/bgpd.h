@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.542 2026/05/12 09:12:49 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.543 2026/05/18 18:36:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -594,6 +594,7 @@ struct flowspec {
 	uint8_t			data[1];
 };
 #define FLOWSPEC_SIZE	(offsetof(struct flowspec, data))
+#define FLOWSPEC_SIZE_MAX	4000
 
 struct flowspec_config {
 	RB_ENTRY(flowspec_config)	 entry;
