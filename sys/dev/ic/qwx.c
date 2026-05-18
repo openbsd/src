@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.104 2026/05/18 12:26:14 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.105 2026/05/18 13:32:43 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -20389,6 +20389,8 @@ qwx_core_start(struct qwx_softc *sc)
 		    __func__, ret);
 		goto err_mac_destroy;
 	}
+
+	sc->wmi.unified_ready = 0;
 
 	ret = qwx_wmi_cmd_init(sc);
 	if (ret) {
