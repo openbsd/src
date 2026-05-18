@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.225 2026/04/22 22:12:49 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.226 2026/05/18 12:14:38 stsp Exp $	*/
 
 /******************************************************************************
 
@@ -101,7 +101,11 @@ const struct pci_matchid ixgbe_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SGMII_L },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_10G_T },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_1G_T },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_1G_T_L }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_1G_T_L },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E610_SFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E610_10G },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E610_2_5G },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E610_SGMII },
 };
 
 /*********************************************************************
@@ -132,6 +136,7 @@ void	ixgbe_config_gpie(struct ix_softc *);
 void	ixgbe_config_delay_values(struct ix_softc *);
 void	ixgbe_add_media_types(struct ix_softc *);
 void	ixgbe_config_link(struct ix_softc *);
+void	ixgbe_handle_fw_event(struct ix_softc *);
 
 int	ixgbe_allocate_transmit_buffers(struct ix_txring *);
 int	ixgbe_setup_transmit_structures(struct ix_softc *);
@@ -177,6 +182,8 @@ void	ixgbe_setup_vlan_hw_support(struct ix_softc *);
 void	ixgbe_handle_mod(struct ix_softc *);
 void	ixgbe_handle_msf(struct ix_softc *);
 void	ixgbe_handle_phy(struct ix_softc *);
+int	ixgbe_enable_lse(struct ix_softc *sc);
+int	ixgbe_disable_lse(struct ix_softc *sc);
 
 /* Legacy (single vector interrupt handler */
 int	ixgbe_legacy_intr(void *);
@@ -263,6 +270,9 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	/* Determine hardware revision */
 	ixgbe_identify_hardware(sc);
 
+	if (hw->mac.type == ixgbe_mac_E610)
+		ixgbe_init_aci(hw);
+
 	/* Indicate to RX setup to use Jumbo Clusters */
 	sc->num_tx_desc = DEFAULT_TXD;
 	sc->num_rx_desc = DEFAULT_RXD;
@@ -294,6 +304,14 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->hw.eeprom.ops.validate_checksum(&sc->hw, &csum) < 0) {
 		printf(": The EEPROM Checksum Is Not Valid\n");
 		goto err_late;
+	}
+
+	if (hw->mac.type == ixgbe_mac_E610) {
+		error = ixgbe_get_caps(&sc->hw);
+		if (error) {
+			printf(": could not get device capabilities\n");
+			goto err_late;
+		}
 	}
 
 	error = ixgbe_init_hw(hw);
@@ -383,6 +401,11 @@ ixgbe_detach(struct device *self, int flags)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	if (sc->hw.mac.type == ixgbe_mac_E610) {
+		ixgbe_disable_lse(sc);
+		ixgbe_shutdown_aci(&sc->hw);
+	}
 
 	ixgbe_free_pci_resources(sc);
 
@@ -611,8 +634,26 @@ ixgbe_get_sffpage(struct ix_softc *sc, struct if_sffpage *sff)
 	size_t i;
 	int error = EIO;
 
-	if (hw->phy.type == ixgbe_phy_fw)
-		return (ENODEV);
+	if (hw->phy.type == ixgbe_phy_fw) {
+		if (hw->phy.ops.read_i2c_sff8472 == NULL)
+			return (ENODEV);
+
+		for (i = 0; i < sizeof(sff->sff_data); i++) {
+			error = hw->phy.ops.read_i2c_sff8472(hw, i,
+			    &sff->sff_data[i]);
+			if (error) {
+				if (error == IXGBE_ERR_PARAM)
+					error = EINVAL;
+				else if (error == IXGBE_ERR_OUT_OF_MEM)
+					error = ENOMEM;
+				else
+					error = ENODEV;
+				break;
+			}
+		}
+
+		return (error);
+	}
 
 	if (hw->mac.ops.acquire_swfw_sync(hw, swfw_mask))
 		return (EBUSY); /* XXX */
@@ -1171,6 +1212,13 @@ ixgbe_intr(struct ix_softc *sc)
 		KERNEL_UNLOCK();
 	}
 
+	if (reg_eicr & IXGBE_EICR_FW_EVENT) {
+		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EICR_FW_EVENT);
+		KERNEL_LOCK();
+		ixgbe_handle_fw_event(sc);
+		KERNEL_UNLOCK();
+	}
+
 	if (hw->mac.type != ixgbe_mac_82598EB) {
 		if (reg_eicr & IXGBE_EICR_ECC) {
 			printf("%s: CRITICAL: ECC ERROR!! "
@@ -1185,8 +1233,13 @@ ixgbe_intr(struct ix_softc *sc)
 		}
 	}
 
-	/* Pluggable optics-related interrupt */
-	if (ixgbe_is_sfp(hw)) {
+	/*
+	 * Pluggable optics-related interrupt.
+	 *
+	 * On E610, the firmware handles PHY configuration, so
+	 * there is no need to perform any SFP-specific tasks.
+	 */
+	if (hw->mac.type != ixgbe_mac_E610 && ixgbe_is_sfp(hw)) {
 		if (hw->device_id == IXGBE_DEV_ID_X550EM_X_SFP) {
 			mod_mask = IXGBE_EICR_GPI_SDP0_X540;
 			msf_mask = IXGBE_EICR_GPI_SDP1_X540;
@@ -1233,7 +1286,7 @@ ixgbe_intr(struct ix_softc *sc)
 		KERNEL_UNLOCK();
 	}
 
-	IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER | IXGBE_EIMS_LSC);
+	ixgbe_enable_intr(sc);
 
 	return (1);
 }
@@ -1267,7 +1320,9 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq *ifmr)
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T ||
 	    layer & IXGBE_PHYSICAL_LAYER_1000BASE_T ||
 	    layer & IXGBE_PHYSICAL_LAYER_100BASE_TX ||
-	    layer & IXGBE_PHYSICAL_LAYER_10BASE_T) {
+	    layer & IXGBE_PHYSICAL_LAYER_10BASE_T ||
+	    layer & IXGBE_PHYSICAL_LAYER_5000BASE_T ||
+	    layer & IXGBE_PHYSICAL_LAYER_2500BASE_T) {
 		switch (sc->link_speed) {
 		case IXGBE_LINK_SPEED_10GB_FULL:
 			ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
@@ -1277,6 +1332,12 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq *ifmr)
 			break;
 		case IXGBE_LINK_SPEED_100_FULL:
 			ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
+			break;
+		case IXGBE_LINK_SPEED_5GB_FULL:
+			ifmr->ifm_active |= IFM_5000_T | IFM_FDX;
+			break;
+		case IXGBE_LINK_SPEED_2_5GB_FULL:
+			ifmr->ifm_active |= IFM_2500_T | IFM_FDX;
 			break;
 		case IXGBE_LINK_SPEED_10_FULL:
 			ifmr->ifm_active |= IFM_10_T | IFM_FDX;
@@ -1630,6 +1691,56 @@ ixgbe_update_link_status(struct ix_softc *sc)
 	}
 }
 
+void
+ixgbe_handle_fw_event(struct ix_softc *sc)
+{
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	struct ixgbe_aci_event event;
+	bool pending = false;
+	int32_t error;
+
+	event.buf_len = IXGBE_ACI_MAX_BUFFER_SIZE;
+	event.msg_buf = malloc(event.buf_len, M_TEMP, M_ZERO | M_NOWAIT);
+	if (!event.msg_buf)
+		return;
+
+	do {
+		error = ixgbe_aci_get_event(&sc->hw, &event, &pending);
+		if (error) {
+			printf("%s: Error getting event from FW: %d\n",
+			    ifp->if_xname, error);
+			break;
+		}
+
+		switch (le16toh(event.desc.opcode)) {
+		case ixgbe_aci_opc_get_link_status:
+			ixgbe_update_link_status(sc);
+			break;
+
+		case ixgbe_aci_opc_fw_logs_event:
+#if 0
+			ixgbe_fwlog_event_dump(&sc->hw, &event.desc,
+			    event.msg_buf);
+#endif
+			break;
+
+		case ixgbe_aci_opc_temp_tca_event:
+			if (sc->hw.adapter_stopped == FALSE) {
+				ixgbe_stop(sc);
+				printf("%s: CRITICAL: OVER TEMP! "
+				    "PHY IS SHUT DOWN!!\n", ifp->if_xname);
+			}
+			break;
+
+		default:
+			printf("%s: Unknown FW event captured, opcode=0x%04X\n",
+			    ifp->if_xname, le16toh(event.desc.opcode));
+			break;
+		}
+	} while (pending);
+
+	free(event.msg_buf, M_TEMP, event.buf_len);
+}
 
 /*********************************************************************
  *
@@ -2032,6 +2143,10 @@ ixgbe_add_media_types(struct ix_softc *sc)
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_KX, 0, NULL);
 	if (layer & IXGBE_PHYSICAL_LAYER_2500BASE_KX)
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_2500_KX, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_5000BASE_T)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_5000_T, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_2500BASE_T)
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_2500_T, 0, NULL);
 
 	if (hw->device_id == IXGBE_DEV_ID_82598AT) {
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T | IFM_FDX, 0,
@@ -2045,6 +2160,7 @@ ixgbe_add_media_types(struct ix_softc *sc)
 void
 ixgbe_config_link(struct ix_softc *sc)
 {
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	uint32_t	autoneg, err = 0;
 	bool		negotiate;
 
@@ -2068,6 +2184,15 @@ ixgbe_config_link(struct ix_softc *sc)
 			    &autoneg, &negotiate);
 		if (err)
 			return;
+		if (sc->hw.mac.type == ixgbe_mac_E610) {
+			sc->hw.phy.ops.init(&sc->hw);
+			err = ixgbe_enable_lse(sc);
+			if (err) {
+				printf("%s: Failed to enable Link Status "
+				    "Event, error: %d", ifp->if_xname, err);
+			}
+		}
+
 		if (sc->hw.mac.ops.setup_link)
 			sc->hw.mac.ops.setup_link(&sc->hw,
 			    autoneg, sc->link_up);
@@ -3034,6 +3159,7 @@ ixgbe_initialize_rss_mapping(struct ix_softc *sc)
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
+	case ixgbe_mac_E610:
 		table_size = 512;
 		break;
 	default:
@@ -3481,6 +3607,10 @@ ixgbe_enable_intr(struct ix_softc *sc)
 		if (hw->device_id == IXGBE_DEV_ID_X550EM_X_SFP ||
 		    hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T)
 			mask |= IXGBE_EIMS_GPI_SDP0_X540;
+		break;
+	case ixgbe_mac_E610:
+		mask |= IXGBE_EIMS_FW_EVENT;
+		break;
 	default:
 		break;
 	}
@@ -3493,6 +3623,7 @@ ixgbe_enable_intr(struct ix_softc *sc)
 		/* Don't autoclear Link */
 		mask &= ~IXGBE_EIMS_OTHER;
 		mask &= ~IXGBE_EIMS_LSC;
+		mask &= ~IXGBE_EIMS_FW_EVENT;
 		IXGBE_WRITE_REG(hw, IXGBE_EIAC, mask);
 	}
 
@@ -3589,6 +3720,7 @@ ixgbe_set_ivar(struct ix_softc *sc, uint8_t entry, uint8_t vector, int8_t type)
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
+	case ixgbe_mac_E610:
 		if (type == -1) { /* MISC IVAR */
 			index = (entry & 1) * 8;
 			ivar = IXGBE_READ_REG(hw, IXGBE_IVAR_MISC);
@@ -3699,6 +3831,41 @@ ixgbe_handle_phy(struct ix_softc *sc)
 		    sc->dev.dv_xname, error);
 
 }
+
+ /*
+ * ixgbe_enable_lse - enable link status events
+ */
+int32_t
+ixgbe_enable_lse(struct ix_softc *sc)
+{
+	int32_t error;
+
+	uint16_t mask = ~((uint16_t)(IXGBE_ACI_LINK_EVENT_UPDOWN |
+			   IXGBE_ACI_LINK_EVENT_MEDIA_NA |
+			   IXGBE_ACI_LINK_EVENT_MODULE_QUAL_FAIL |
+			   IXGBE_ACI_LINK_EVENT_PHY_FW_LOAD_FAIL));
+
+	error = ixgbe_configure_lse(&sc->hw, TRUE, mask);
+	if (error)
+		return (error);
+
+	sc->lse_mask = mask;
+	return (IXGBE_SUCCESS);
+}
+
+int32_t
+ixgbe_disable_lse(struct ix_softc *sc)
+{
+	int32_t error;
+
+	error = ixgbe_configure_lse(&sc->hw, false, sc->lse_mask);
+	if (error)
+		return (error);
+
+	sc->lse_mask = 0;
+	return (IXGBE_SUCCESS);
+}
+
 
 #if NKSTAT > 0
 enum ix_counter_idx {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.38 2026/04/15 17:30:50 stsp Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.39 2026/05/18 12:14:38 stsp Exp $	*/
 
 /******************************************************************************
 
@@ -263,8 +263,13 @@ int32_t ixgbe_init_ops_X550(struct ixgbe_hw *hw);
 int32_t ixgbe_init_ops_X550EM(struct ixgbe_hw *hw);
 int32_t ixgbe_init_ops_X550EM_a(struct ixgbe_hw *hw);
 int32_t ixgbe_init_ops_X550EM_x(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_E610(struct ixgbe_hw *hw);
 
+int32_t ixgbe_get_caps(struct ixgbe_hw *hw);
 int32_t ixgbe_set_mac_type(struct ixgbe_hw *hw);
+void ixgbe_init_aci(struct ixgbe_hw *hw);
+int32_t ixgbe_aci_get_event(struct ixgbe_hw *, struct ixgbe_aci_event *, bool *);
+void ixgbe_shutdown_aci(struct ixgbe_hw *hw);
 int32_t ixgbe_init_hw(struct ixgbe_hw *hw);
 enum ixgbe_media_type ixgbe_get_media_type(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_phy(struct ixgbe_hw *hw);
@@ -284,6 +289,8 @@ void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr);
 
 void ixgbe_disable_rx(struct ixgbe_hw *hw);
 void ixgbe_enable_rx(struct ixgbe_hw *hw);
+
+int32_t ixgbe_configure_lse(struct ixgbe_hw *, bool, uint16_t);
 
 /* PHY */
 int32_t ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.48 2024/10/04 05:22:10 yasuoka Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.49 2026/05/18 12:14:38 stsp Exp $	*/
 
 /******************************************************************************
 
@@ -283,6 +283,9 @@ struct ix_softc {
 	struct mutex		 sc_kstat_mtx;
 	struct timeout		 sc_kstat_tmo;
 	struct kstat		*sc_kstat;
+
+	/* Link Status Event mask. */
+	uint32_t		lse_mask;
 };
 
 #endif /* _IX_H_ */

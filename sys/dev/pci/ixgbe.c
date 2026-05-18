@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.28 2024/10/27 04:44:41 yasuoka Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.29 2026/05/18 12:14:38 stsp Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -213,6 +213,7 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 		case IXGBE_DEV_ID_X550EM_A_SFP_N:
 		case IXGBE_DEV_ID_X550EM_A_QSFP:
 		case IXGBE_DEV_ID_X550EM_A_QSFP_N:
+		case IXGBE_DEV_ID_E610_SFP:
 			supported = FALSE;
 			break;
 		default:
@@ -245,6 +246,8 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 		case IXGBE_DEV_ID_X550EM_A_10G_T:
 		case IXGBE_DEV_ID_X550EM_A_1G_T:
 		case IXGBE_DEV_ID_X550EM_A_1G_T_L:
+		case IXGBE_DEV_ID_E610_10G_T:
+		case IXGBE_DEV_ID_E610_2_5G_T:
 			supported = TRUE;
 			break;
 		default:
@@ -747,6 +750,9 @@ void ixgbe_set_pci_config_data_generic(struct ixgbe_hw *hw,
 	case IXGBE_PCI_LINK_SPEED_8000:
 		hw->bus.speed = ixgbe_bus_speed_8000;
 		break;
+	case IXGBE_PCI_LINK_SPEED_16000:
+		hw->bus.speed = ixgbe_bus_speed_16000;
+		break;
 	default:
 		hw->bus.speed = ixgbe_bus_speed_unknown;
 		break;
@@ -769,7 +775,9 @@ int32_t ixgbe_get_bus_info_generic(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_get_bus_info_generic");
 
 	/* Get the negotiated link width and speed from PCI config space */
-	link_status = IXGBE_READ_PCIE_WORD(hw, IXGBE_PCI_LINK_STATUS);
+	link_status = IXGBE_READ_PCIE_WORD(hw, hw->mac.type == ixgbe_mac_E610 ?
+					   IXGBE_PCI_LINK_STATUS_E610 :
+					   IXGBE_PCI_LINK_STATUS);
 
 	ixgbe_set_pci_config_data_generic(hw, link_status);
 
@@ -3023,6 +3031,10 @@ uint16_t ixgbe_get_pcie_msix_count_generic(struct ixgbe_hw *hw)
 		pcie_offset = IXGBE_PCIE_MSIX_82599_CAPS;
 		max_msix_count = IXGBE_MAX_MSIX_VECTORS_82599;
 		break;
+	case ixgbe_mac_E610:
+		pcie_offset = IXGBE_PCIE_MSIX_E610_CAPS;
+		max_msix_count = IXGBE_MAX_MSIX_VECTORS_82599;
+		break;
 	default:
 		return msix_count;
 	}
@@ -3554,7 +3566,8 @@ int32_t ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *spee
 		break;
 	case IXGBE_LINKS_SPEED_100_82599:
 		*speed = IXGBE_LINK_SPEED_100_FULL;
-		if (hw->mac.type == ixgbe_mac_X550) {
+		if (hw->mac.type == ixgbe_mac_X550 ||
+		    hw->mac.type == ixgbe_mac_E610) {
 			if (links_reg & IXGBE_LINKS_SPEED_NON_STD)
 				*speed = IXGBE_LINK_SPEED_5GB_FULL;
 		}
@@ -4190,6 +4203,9 @@ int32_t ixgbe_init_shared_code(struct ixgbe_hw *hw)
 	case ixgbe_mac_X550EM_a:
 		status = ixgbe_init_ops_X550EM_a(hw);
 		break;
+	case ixgbe_mac_E610:
+		status = ixgbe_init_ops_E610(hw);
+		break;
 	default:
 		status = IXGBE_ERR_DEVICE_NOT_SUPPORTED;
 		break;
@@ -4286,6 +4302,14 @@ int32_t ixgbe_set_mac_type(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_X550EM_A_QSFP_N:
 	case IXGBE_DEV_ID_X550EM_A_SFP:
 		hw->mac.type = ixgbe_mac_X550EM_a;
+		hw->mvals = ixgbe_mvals_X550EM_a;
+		break;
+	case IXGBE_DEV_ID_E610_BACKPLANE:
+	case IXGBE_DEV_ID_E610_SFP:
+	case IXGBE_DEV_ID_E610_10G_T:
+	case IXGBE_DEV_ID_E610_2_5G_T:
+	case IXGBE_DEV_ID_E610_SGMII:
+		hw->mac.type = ixgbe_mac_E610;
 		hw->mvals = ixgbe_mvals_X550EM_a;
 		break;
 	default:

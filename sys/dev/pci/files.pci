@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.371 2025/11/14 01:55:07 jcs Exp $
+#	$OpenBSD: files.pci,v 1.372 2026/05/18 12:14:38 stsp Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -356,6 +356,7 @@ file	dev/pci/ixgbe_82598.c		ix | ixv
 file	dev/pci/ixgbe_82599.c		ix | ixv
 file	dev/pci/ixgbe_x540.c		ix | ixv
 file	dev/pci/ixgbe_x550.c		ix | ixv
+file	dev/pci/ixgbe_e610.c		ix | ixv
 file	dev/pci/ixgbe_phy.c		ix | ixv
 
 # Virtual Function of i82599.
