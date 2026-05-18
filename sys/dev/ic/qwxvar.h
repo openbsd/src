@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.32 2025/12/01 16:57:36 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.33 2026/05/18 12:26:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1012,7 +1012,7 @@ struct qwx_hp_update_timer {
 
 struct dp_rx_tid {
 	uint8_t tid;
-	struct qwx_dmamem *mem;
+	const struct qwx_dmamem *mem;
 	uint32_t *vaddr;
 	uint64_t paddr;
 	uint32_t size;
@@ -1131,6 +1131,17 @@ struct qwx_dp {
 #endif
 	struct qwx_hp_update_timer reo_cmd_timer;
 	struct qwx_hp_update_timer tx_ring_timer[DP_TCL_NUM_RING_MAX];
+
+	/*
+	 * Cache of DMA memory regions used for Rx aggregation.
+	 * We used to free these DMA allocations in interrupt context but
+	 * destroying DMA memory in interrupt context is not allowed.
+	 *
+	 * This array contains enough entries for client station mode.
+	 * It will need to grow in order to support multiple clients if
+	 * support for HostAP mode gets added to the driver.
+	 */
+	struct qwx_dmamem *rx_tid_mem[HAL_DESC_REO_NON_QOS_TID + 1];
 };
 
 #define ATH11K_SHADOW_DP_TIMER_INTERVAL 20
