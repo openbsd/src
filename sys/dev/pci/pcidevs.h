@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2136 2026/05/17 05:01:45 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2137 2026/05/18 12:11:50 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6162,6 +6162,11 @@
 #define	PCI_PRODUCT_INTEL_ATS_M75	0x56c1		/* Flex 140 */
 #define	PCI_PRODUCT_INTEL_I219_LM24	0x57a0		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V24	0x57a1		/* I219-V */
+#define	PCI_PRODUCT_INTEL_E610_VF	0x57ad		/* E610-VF */
+#define	PCI_PRODUCT_INTEL_E610_SFP	0x57af		/* E610-SFP */
+#define	PCI_PRODUCT_INTEL_E610_10G	0x57b0		/* E610-10G */
+#define	PCI_PRODUCT_INTEL_E610_2_5G	0x57b1		/* E610-2.5G */
+#define	PCI_PRODUCT_INTEL_E610_SGMII	0x57b2		/* E610-SGMII */
 #define	PCI_PRODUCT_INTEL_I219_LM25	0x57b3		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V25	0x57b4		/* I219-V */
 #define	PCI_PRODUCT_INTEL_QEMU_NVME	0x5845		/* QEMU NVM Express Controller */
