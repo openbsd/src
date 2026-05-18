@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.15 2026/05/12 15:14:41 naddy Exp $
+#  $OpenBSD: check_sym,v 1.16 2026/05/18 23:36:50 kirill Exp $
 #
 # Copyright (c) 2016,2019,2022 Philip Guenther <guenther@openbsd.org>
 #
@@ -20,7 +20,7 @@
 #	versions of a library
 #
 #  SYNOPSIS
-#	check_sym [-chkSv] [old [new]]
+#	check_sym [-chIkSv] [old [new]]
 #
 #  DESCRIPTION
 #	Library developers need to be aware when they have changed the
@@ -34,6 +34,9 @@
 #	symbols it also reports when a symbol is weakened or strengthened.
 #
 #	With the -S option, a similar analysis is done but for the static lib.
+#
+#	The -I option ignores changes to undefined external references and
+#	lazily-resolved functions (PLT).
 #
 #	The shared libraries to compare can be specified on the
 #	command-line.  Otherwise, check_sym expects to be run from the
@@ -110,7 +113,7 @@ fail() { echo "$*" >&2; exit 1; }
 
 usage()
 {
-	usage="usage: check_sym [-chkSv] [old [new]]"
+	usage="usage: check_sym [-chIkSv] [old [new]]"
 	[[ $# -eq 0 ]] || fail "check_sym: $*
 $usage"
 	echo "$usage"
@@ -221,7 +224,7 @@ dynamic_output()
 		output_if_not_empty "data object sizes changes:" \
 						data_sym_changes DO[12]
 	fi
-	if ! cmp -s DU[12]
+	if ! $ignore_refs && ! cmp -s DU[12]
 	then
 		printf "External reference changes:\n"
 		output_if_not_empty "added:" comm -13 DU[12]
@@ -235,8 +238,11 @@ dynamic_output()
 		grep ^R r2
 	fi
 
-	output_if_not_empty "PLT added:" comm -13 J[12]
-	output_if_not_empty "PLT removed:" comm -23 J[12]
+	if ! $ignore_refs
+	then
+		output_if_not_empty "PLT added:" comm -13 J[12]
+		output_if_not_empty "PLT removed:" comm -23 J[12]
+	fi
 }
 
 
@@ -278,7 +284,7 @@ static_output()
 		output_if_not_empty "data object sizes changes:" \
 						data_sym_changes SO[12]
 	fi
-	if ! cmp -s SU[12]
+	if ! $ignore_refs && ! cmp -s SU[12]
 	then
 		printf "External reference changes:\n"
 		output_if_not_empty "added:" comm -13 SU[12]
@@ -295,15 +301,17 @@ keep_temp=false
 dynamic=true
 static=false
 verbose=false
+ignore_refs=false
 
 do_static() { static=true dynamic=false file_list=$static_file_list; }
 
-while getopts :chkSv opt "$@"
+while getopts :chIkSv opt "$@"
 do
 	case $opt in
 	c)	rm -f /tmp/$file_list
 		exit 0;;
 	h)	usage;;
+	I)	ignore_refs=true;;
 	k)	keep_temp=true;;
 	S)	do_static;;
 	v)	verbose=true;;
