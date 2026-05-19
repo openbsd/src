@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.32 2026/05/18 13:35:49 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.33 2026/05/19 08:57:27 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3302,6 +3302,9 @@ qwx_mhi_fw_load_bhi(struct qwx_pci_softc *psc, uint8_t *data, size_t len)
 	/* Copy firmware image to DMA memory. */
 	memcpy(QWX_DMA_KVA(data_adm), data, len);
 
+	bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(data_adm), 0, len,
+	    BUS_DMASYNC_PREWRITE);
+
 	qwx_pci_write(sc, psc->bhi_off + MHI_BHI_STATUS, 0);
 
 	/* Set data physical address and length. */
@@ -3384,6 +3387,11 @@ qwx_mhi_fw_load_bhie(struct qwx_pci_softc *psc, uint8_t *data, size_t len)
 
 	/* Copy firmware image to DMA memory. */
 	memcpy(QWX_DMA_KVA(psc->amss_data), data, len);
+
+	bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(psc->amss_data), 0, len,
+	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(psc->amss_vec), 0, vec_size,
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Create vector which controls chunk-wise DMA copy in hardware. */
 	paddr = QWX_DMA_DVA(psc->amss_data);
