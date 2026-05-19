@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.108 2026/05/19 09:00:11 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.109 2026/05/19 10:06:35 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -402,6 +402,11 @@ qwx_stop(struct ifnet *ifp)
 
 	rw_assert_wrlock(&sc->ioctl_rwl);
 
+	if (ic->ic_opmode == IEEE80211_M_STA &&
+	    ic->ic_state == IEEE80211_S_RUN &&
+	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP))
+		qwx_mfp_leave(sc);
+
 	timeout_del(&sc->mon_reap_timer);
 	qwx_dp_stop_shadow_timers(sc);
 	qwx_ce_stop_shadow_timers(sc);
@@ -417,19 +422,14 @@ qwx_stop(struct ifnet *ifp)
 	qwx_del_task(sc, systq, &sc->bgscan_task);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
 
-	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
-
-	if (ic->ic_opmode == IEEE80211_M_STA &&
-	    ic->ic_state == IEEE80211_S_RUN &&
-	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP))
-		qwx_mfp_leave(sc);
-
 	qwx_setkey_clear(sc);
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
 	/*
 	 * Manually run the newstate task's code for switching to INIT state.
