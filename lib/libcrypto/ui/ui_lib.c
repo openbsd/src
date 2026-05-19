@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.52 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.53 2026/05/19 09:17:44 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -67,6 +67,39 @@
 #include "ui_local.h"
 
 static const UI_METHOD *default_UI_meth = NULL;
+
+struct ui_string_st {
+	enum UI_string_types type; /* Input */
+	const char *out_string;	/* Input */
+	int input_flags;	/* Flags from the user */
+
+	/* The following parameters are completely irrelevant for UIT_INFO,
+	   and can therefore be set to 0 or NULL */
+	char *result_buf;	/* Input and Output: If not NULL, user-defined
+				   with size in result_maxsize.  Otherwise, it
+				   may be allocated by the UI routine, meaning
+				   result_minsize is going to be overwritten.*/
+	union {
+		struct {
+			int result_minsize;	/* Input: minimum required
+						   size of the result.
+						*/
+			int result_maxsize;	/* Input: maximum permitted
+						   size of the result */
+
+			const char *test_buf;	/* Input: test string to verify
+						   against */
+		} string_data;
+		struct {
+			const char *action_desc; /* Input */
+			const char *ok_chars; /* Input */
+			const char *cancel_chars; /* Input */
+		} boolean_data;
+	} _;
+
+#define OUT_STRING_FREEABLE 0x01
+	int flags;		/* flags for internal use */
+};
 
 UI *
 UI_new(void)

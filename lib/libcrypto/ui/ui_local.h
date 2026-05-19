@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
+/* $OpenBSD: ui_local.h,v 1.3 2026/05/19 09:17:44 tb Exp $ */
 
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
@@ -99,39 +99,6 @@ struct ui_method_st {
 	   malloc(), and need to be free'd with free(). */
 	char *(*ui_construct_prompt)(UI *ui, const char *object_desc,
 	    const char *object_name);
-};
-
-struct ui_string_st {
-	enum UI_string_types type; /* Input */
-	const char *out_string;	/* Input */
-	int input_flags;	/* Flags from the user */
-
-	/* The following parameters are completely irrelevant for UIT_INFO,
-	   and can therefore be set to 0 or NULL */
-	char *result_buf;	/* Input and Output: If not NULL, user-defined
-				   with size in result_maxsize.  Otherwise, it
-				   may be allocated by the UI routine, meaning
-				   result_minsize is going to be overwritten.*/
-	union {
-		struct {
-			int result_minsize;	/* Input: minimum required
-						   size of the result.
-						*/
-			int result_maxsize;	/* Input: maximum permitted
-						   size of the result */
-
-			const char *test_buf;	/* Input: test string to verify
-						   against */
-		} string_data;
-		struct {
-			const char *action_desc; /* Input */
-			const char *ok_chars; /* Input */
-			const char *cancel_chars; /* Input */
-		} boolean_data;
-	} _;
-
-#define OUT_STRING_FREEABLE 0x01
-	int flags;		/* flags for internal use */
 };
 
 struct ui_st {
