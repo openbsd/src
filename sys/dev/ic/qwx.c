@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.110 2026/05/19 10:10:03 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.111 2026/05/19 10:36:02 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1139,6 +1139,14 @@ qwx_newstate_task(void *arg)
 	if (nstate <= ostate) {
 		switch (ostate) {
 		case IEEE80211_S_RUN:
+			if (ic->ic_opmode == IEEE80211_M_STA &&
+			    (ifp->if_flags & IFF_RUNNING) &&
+			    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP) &&
+			    ic->ic_bss->ni_port_valid &&
+			    (nstate != IEEE80211_S_AUTH ||
+			     sc->ns_arg != IEEE80211_FC0_SUBTYPE_DEAUTH))
+				qwx_mfp_leave(sc);
+
 			err = qwx_run_stop(sc);
 			if (err)
 				goto out;
