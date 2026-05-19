@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.31 2026/05/19 09:29:08 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.32 2026/05/19 20:32:59 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8392,6 +8392,8 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 	struct ath12k_tx_desc_info *tx_descs, **tx_desc_addr;
 	uint32_t i, j, pool_id, tx_spt_page;
 	uint32_t ppt_idx;
+	const bus_size_t size = DP_RX_BUFFER_SIZE;
+	int ret;
 
 #ifdef notyet
 	spin_lock_bh(&dp->rx_desc_lock);
@@ -8417,6 +8419,11 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 			rx_descs[j].magic = ATH12K_DP_RX_DESC_MAGIC;
 			TAILQ_INSERT_TAIL(&dp->rx_desc_free_list,
 			    &rx_descs[j], entry);
+
+			ret = bus_dmamap_create(sc->sc_dmat, size, 1, size,
+			    0, BUS_DMA_WAITOK, &rx_descs[j].map);
+			if (ret)
+				return ret;
 
 			/* Update descriptor VA in SPT */
 			rx_desc_addr = ath12k_dp_cc_get_desc_addr_ptr(sc, ppt_idx, j);
@@ -13386,13 +13393,6 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
 		rx_desc = TAILQ_FIRST(used_list);
 		if (rx_desc == NULL)
 			goto fail_free_mbuf;
-
-		if (rx_desc->map == NULL) {
-			ret = bus_dmamap_create(sc->sc_dmat, size, 1,
-			    size, 0, BUS_DMA_NOWAIT, &rx_desc->map);
-			if (ret)
-				goto fail_free_mbuf;
-		}
 
 		ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_desc->map, m,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT);
