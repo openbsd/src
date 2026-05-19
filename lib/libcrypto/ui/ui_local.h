@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_local.h,v 1.3 2026/05/19 09:17:44 tb Exp $ */
+/* $OpenBSD: ui_local.h,v 1.4 2026/05/19 10:44:42 jsg Exp $ */
 
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
@@ -64,10 +64,6 @@
 #include <openssl/crypto.h>
 
 __BEGIN_HIDDEN_DECLS
-
-#ifdef _
-#undef _
-#endif
 
 struct ui_method_st {
 	char *name;
