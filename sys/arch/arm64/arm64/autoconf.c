@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2024/11/10 06:51:59 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2026/05/19 13:05:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -22,6 +22,8 @@
 #include <sys/hibernate.h>
 #include <sys/systm.h>
 #include <uvm/uvm_extern.h>
+
+#include <machine/bus.h>
 
 #if defined(NFSCLIENT)
 #include <net/if.h>
@@ -57,6 +59,8 @@ cpu_configure(void)
 	splhigh();
 
 	softintr_init();
+	bus_dma_init();
+
 	config_rootfound("mainbus", NULL);
 
 	unmap_startup();

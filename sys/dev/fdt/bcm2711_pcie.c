@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.18 2025/08/29 11:50:43 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.19 2026/05/19 13:05:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2020, 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -254,7 +254,8 @@ int	bcmpcie_bs_iomap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 int	bcmpcie_bs_memmap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 int	bcmpcie_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int *,
+	    int *, int);
 int	bcmpcie_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 
@@ -1113,7 +1114,7 @@ bcmpcie_bs_memmap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 int
 bcmpcie_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
-    int *segp, int first)
+    int *segp, int *usedp, int *lastbouncep, int first)
 {
 	struct bcmpcie_softc *sc = t->_cookie;
 	paddr_t lastaddr = *lastaddrp;
@@ -1123,7 +1124,7 @@ bcmpcie_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	lastlen = map->dm_segs[firstseg].ds_len;
 	error = sc->sc_dmat->_dmamap_load_buffer(sc->sc_dmat, map, buf, buflen,
-	    p, flags, lastaddrp, segp, first);
+	    p, flags, lastaddrp, segp, usedp, lastbouncep, first);
 	if (error)
 		return error;
 
