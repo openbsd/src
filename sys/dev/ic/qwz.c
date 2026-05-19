@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.32 2026/05/19 20:32:59 kettenis Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.33 2026/05/19 21:15:21 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8497,11 +8497,15 @@ qwz_dp_cc_cleanup(struct qwz_softc *sc)
 			continue;
 
 		for (j = 0; j < ATH12K_MAX_SPT_ENTRIES; j++) {
-			if (!rx_descs[j].m)
-				continue;
-			bus_dmamap_unload(sc->sc_dmat, rx_descs[j].map);
-			m_freem(rx_descs[j].m);
-			rx_descs[j].m = NULL;
+			if (rx_descs[j].m) {
+				bus_dmamap_unload(sc->sc_dmat, rx_descs[j].map);
+				m_freem(rx_descs[j].m);
+				rx_descs[j].m = NULL;
+			}
+			if (rx_descs[j].map) {
+				bus_dmamap_destroy(sc->sc_dmat, rx_descs[j].map);
+				rx_descs[j].map = NULL;
+			}
 		}
 
 		free(dp->spt_info->rxbaddr[i], M_DEVBUF,
