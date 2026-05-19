@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.22 2026/01/05 20:06:15 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.23 2026/05/19 16:56:59 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -36,7 +36,7 @@ int simplebus_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
     bus_space_handle_t *);
 paddr_t simplebus_bs_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 int simplebus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+    bus_size_t, struct proc *, int, paddr_t *, int *, int *, int *, int);
 int simplebus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
     bus_dma_segment_t *, int, bus_size_t, int);
 
@@ -388,7 +388,7 @@ simplebus_bs_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t off,
 int
 simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
-    int *segp, int first)
+    int *segp, int *usedp, int *lastbouncep, int first)
 {
 	struct simplebus_softc *sc = t->_cookie;
 	paddr_t lastaddr = *lastaddrp;
@@ -399,7 +399,7 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	lastlen = map->dm_segs[firstseg].ds_len;
 	error = sc->sc_dmat->_dmamap_load_buffer(sc->sc_dmat, map, buf, buflen,
-	    p, flags, lastaddrp, segp, first);
+	    p, flags, lastaddrp, segp, usedp, lastbouncep, first);
 	if (error)
 		return error;
 

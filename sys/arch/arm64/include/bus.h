@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.11 2024/11/18 05:32:39 jsg Exp $ */
+/* $OpenBSD: bus.h,v 1.12 2026/05/19 16:56:59 kettenis Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -364,6 +364,7 @@ struct machine_bus_dma_segment {
 
 	paddr_t		_ds_paddr;	/* CPU address */
 	vaddr_t		_ds_vaddr;	/* CPU address */
+	vaddr_t		_ds_bounce_va;	/* mapped bounced data */
 };
 typedef struct machine_bus_dma_segment	bus_dma_segment_t;
 
@@ -393,7 +394,8 @@ struct machine_bus_dma_tag {
 	int	(*_dmamap_load_raw)(bus_dma_tag_t , bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int);
 	int	(*_dmamap_load_buffer)(bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+		    bus_size_t, struct proc *, int, paddr_t *, int *,
+		    int *, int *, int);
 	void	(*_dmamap_unload)(bus_dma_tag_t , bus_dmamap_t);
 	void	(*_dmamap_sync)(bus_dma_tag_t , bus_dmamap_t,
 		    bus_addr_t, bus_size_t, int);
@@ -451,6 +453,8 @@ struct machine_bus_dma_tag {
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
 
+void	bus_dma_init(void);
+
 int	_dmamap_create(bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 void	_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -461,7 +465,8 @@ int	_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
 int	_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 int	_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int *,
+	    int *, int);
 void	_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 void	_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
@@ -492,6 +497,11 @@ struct machine_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
+
+	struct vm_page **_dm_pages;	/* replacement pages */
+	vaddr_t		_dm_pgva;	/* those above -- mapped */
+	int		_dm_npages;	/* number of pages allocated */
+	int		_dm_nused;	/* number of pages replaced */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
