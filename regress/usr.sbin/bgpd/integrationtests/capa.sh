@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: capa.sh,v 1.1 2024/04/09 09:35:57 claudio Exp $
+#	$OpenBSD: capa.sh,v 1.2 2026/05/19 12:55:40 claudio Exp $
 
 set -e
 
@@ -52,11 +52,11 @@ test_bgpd() {
 		;;
 	yes)
 		local mpopt=vpn
-		local apopt="best max 3"
+		local apopt="best plus 3"
 		;;
 	enforce)
 		local mpopt="vpn enforce"
-		local apopt="best max 3 enforce"
+		local apopt="best plus 3 enforce"
 		;;
 	esac
 
