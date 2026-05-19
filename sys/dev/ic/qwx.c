@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.105 2026/05/18 13:32:43 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.106 2026/05/19 08:53:41 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -26108,10 +26108,6 @@ qwx_auth(struct qwx_softc *sc)
 	qwx_recalculate_mgmt_rate(sc, ni, arvif->vdev_id, pdev->pdev_id);
 	ni->ni_txrate = 0;
 	
-	ret = qwx_mac_station_add(sc, arvif, pdev->pdev_id, ni);
-	if (ret)
-		return ret;
-
 	/* Start vdev. */
 	ret = qwx_mac_vdev_start(sc, arvif, pdev->pdev_id);
 	if (ret) {
@@ -26126,7 +26122,7 @@ qwx_auth(struct qwx_softc *sc)
 	 */
 	qwx_recalculate_mgmt_rate(sc, ni, arvif->vdev_id, pdev->pdev_id);
 
-	return ret;
+	return qwx_mac_station_add(sc, arvif, pdev->pdev_id, ni);
 }
 
 int
