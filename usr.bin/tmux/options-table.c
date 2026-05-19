@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.210 2026/05/03 15:02:48 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.211 2026/05/19 13:12:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1314,7 +1314,7 @@ const struct options_table_entry options_table[] = {
 
 	{ .name = "pane-active-border-style",
 	  .type = OPTIONS_TABLE_STRING,
-	  .scope = OPTIONS_TABLE_WINDOW,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_str = "#{?pane_in_mode,fg=yellow,#{?synchronize-panes,fg=red,fg=green}}",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
@@ -1373,7 +1373,7 @@ const struct options_table_entry options_table[] = {
 
 	{ .name = "pane-border-style",
 	  .type = OPTIONS_TABLE_STRING,
-	  .scope = OPTIONS_TABLE_WINDOW,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_str = "default",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",

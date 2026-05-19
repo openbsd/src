@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1319 2026/05/19 10:26:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1320 2026/05/19 13:12:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1299,6 +1299,8 @@ struct window_pane {
 	int		 control_fg;
 
 	struct style	 scrollbar_style;
+
+	struct visible_ranges r;
 
 	TAILQ_ENTRY(window_pane) entry;  /* link in list of all panes */
 	TAILQ_ENTRY(window_pane) sentry; /* link in list of last visited */
@@ -3287,6 +3289,9 @@ void	 screen_write_alternateoff(struct screen_write_ctx *,
 /* screen-redraw.c */
 void	 screen_redraw_screen(struct client *);
 void	 screen_redraw_pane(struct client *, struct window_pane *, int);
+int	 screen_redraw_is_visible(struct visible_ranges *, u_int);
+struct visible_ranges *screen_redraw_get_visible_ranges(struct window_pane *,
+	     u_int, u_int, u_int, struct visible_ranges *);
 
 /* screen.c */
 void	 screen_init(struct screen *, u_int, u_int, u_int);
