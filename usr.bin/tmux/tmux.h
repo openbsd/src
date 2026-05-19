@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1318 2026/05/19 09:48:14 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1319 2026/05/19 10:26:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1345,6 +1345,9 @@ struct window {
 	u_int			 new_sy;
 	u_int			 new_xpixel;
 	u_int			 new_ypixel;
+
+	u_int			 last_new_pane_x;
+	u_int			 last_new_pane_y;
 
 	struct utf8_data	*fill_character;
 	int			 flags;
@@ -3421,8 +3424,11 @@ enum client_theme window_pane_get_theme(struct window_pane *);
 void		 window_pane_send_theme_update(struct window_pane *);
 struct style_range *window_pane_border_status_get_range(struct window_pane *,
 			u_int, u_int);
-int		 window_pane_tile_geometry(struct window *,
+int              window_pane_tiled_geometry(struct window *,
 		     struct window_pane *, int *, int *, enum layout_type *,
+		     struct cmdq_item *, struct args *, char **);
+int              window_pane_floating_geometry(struct window *,
+		     struct window_pane *, u_int *, u_int *, u_int *, u_int *,
 		     struct cmdq_item *, struct args *, char **);
 
 /* layout.c */
