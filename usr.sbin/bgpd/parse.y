@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.499 2026/05/19 11:39:08 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.500 2026/05/19 12:23:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2014,7 +2014,7 @@ peeropts	: REMOTEAS as4number	{
 			if (!strcmp($4, "no")) {
 				free($4);
 				if ($5 != 0 || $6 != 0 || $7 != 0) {
-					yyerror("no additional option allowed "
+					yyerror("cannot use additional options "
 					    "for 'add-path send no'");
 					YYERROR;
 				}
@@ -2022,13 +2022,18 @@ peeropts	: REMOTEAS as4number	{
 			} else if (!strcmp($4, "all")) {
 				free($4);
 				if ($5 != 0 || $6 != 0) {
-					yyerror("no additional option allowed "
+					yyerror("cannot use additional options "
 					    "for 'add-path send all'");
 					YYERROR;
 				}
 				mode = ADDPATH_EVAL_ALL;
 			} else if (!strcmp($4, "best")) {
 				free($4);
+				if ($6 != 0) {
+					yyerror("cannot use max option "
+					    "for 'add-path send best'");
+					YYERROR;
+				}
 				mode = ADDPATH_EVAL_BEST;
 			} else if (!strcmp($4, "ecmp")) {
 				free($4);
