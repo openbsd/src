@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.107 2026/05/19 08:55:46 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.108 2026/05/19 09:00:11 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14762,7 +14762,11 @@ qwx_peer_map_event(struct qwx_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 	if (peer == NULL)
 		return;
 
-	ni = ieee80211_find_node(ic, mac_addr);
+	if (ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss != NULL &&
+	    IEEE80211_ADDR_EQ(ic->ic_bss->ni_macaddr, mac_addr))
+		ni = ic->ic_bss;
+	else
+		ni = ieee80211_find_node(ic, mac_addr);
 	if (ni == NULL)
 		return;
 	nq = (struct qwx_node *)ni;
