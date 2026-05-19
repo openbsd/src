@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.109 2026/05/19 10:06:35 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.110 2026/05/19 10:10:03 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -404,7 +404,8 @@ qwx_stop(struct ifnet *ifp)
 
 	if (ic->ic_opmode == IEEE80211_M_STA &&
 	    ic->ic_state == IEEE80211_S_RUN &&
-	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP))
+	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP) &&
+	    ic->ic_bss->ni_port_valid)
 		qwx_mfp_leave(sc);
 
 	timeout_del(&sc->mon_reap_timer);
