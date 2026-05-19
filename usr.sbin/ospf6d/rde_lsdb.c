@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.48 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.49 2026/05/19 08:21:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -249,7 +249,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 		}
 		if (lsa_get_prefix(((char *)lsa) + sizeof(lsa->hdr) +
 		    sizeof(lsa->data.pref_sum),
-		    len - sizeof(lsa->hdr) + sizeof(lsa->data.pref_sum),
+		    len - (sizeof(lsa->hdr) + sizeof(lsa->data.pref_sum)),
 		    NULL) == -1) {
 			log_warnx("lsa_check: "
 			    "invalid LSA prefix summary packet");
