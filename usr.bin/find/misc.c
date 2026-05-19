@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2026/05/19 02:08:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,14 +60,12 @@ brace_subst(char *orig, char **store, char *path, int len)
 	plen = strlen(path);
 	for (p = *store; (ch = *orig); ++orig)
 		if (ch == '{' && orig[1] == '}') {
-			while ((p - *store) + plen > len) {
+			while ((p - *store) + plen >= len) {
 				ptrdiff_t p_off;
 				char *newstore;
 
 				p_off = (p - *store);
-				newstore = reallocarray(*store, len, 2);
-				if (newstore == NULL)
-					err(1, NULL);
+				newstore = ereallocarray(*store, len, 2);
 				p = newstore + p_off;
 				*store = newstore;
 				len *= 2;
