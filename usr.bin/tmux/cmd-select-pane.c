@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.71 2026/05/17 16:01:42 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.72 2026/05/19 12:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,6 +159,10 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 			    PANE_THEMECHANGED);
 			server_redraw_window_borders(markedwp->window);
 			server_status_window(markedwp->window);
+		}
+		if (wp->flags & PANE_FLOATING) {
+			window_redraw_active_switch(w, wp);
+			window_set_active_pane(w, wp, 1);
 		}
 		return (CMD_RETURN_NORMAL);
 	}

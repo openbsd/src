@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.168 2026/05/07 09:15:44 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.169 2026/05/19 12:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -459,6 +459,9 @@ key_bindings_init(void)
 
 		/* Mouse button 1 triple click on pane. */
 		"bind -n TripleClick1Pane { select-pane -t=; if -F '#{||:#{pane_in_mode},#{mouse_any_flag}}' { send -M } { copy-mode -H; send -X select-line; run -d0.3; send -X copy-pipe-and-cancel } }",
+
+		/* Mouse button 1 on border. */
+		"bind -n MouseDown1Border { select-pane -M }",
 
 		/* Mouse button 1 drag on border. */
 		"bind -n MouseDrag1Border { resize-pane -M }",

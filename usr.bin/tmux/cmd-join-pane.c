@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.55 2026/05/19 09:48:14 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.56 2026/05/19 12:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -147,14 +147,14 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	server_client_remove_pane(src_wp);
 	window_lost_pane(src_w, src_wp);
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
-        TAILQ_REMOVE(&src_w->z_index, src_wp, zentry);
+	TAILQ_REMOVE(&src_w->z_index, src_wp, zentry);
 
 	src_wp->window = dst_w;
 	options_set_parent(src_wp->options, dst_w->options);
 	src_wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 	if (flags & SPAWN_BEFORE) {
 		TAILQ_INSERT_BEFORE(dst_wp, src_wp, entry);
-                TAILQ_INSERT_BEFORE(dst_wp, src_wp, zentry);
+		TAILQ_INSERT_BEFORE(dst_wp, src_wp, zentry);
 	} else {
 		TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
 		TAILQ_INSERT_AFTER(&dst_w->z_index, dst_wp, src_wp, zentry);

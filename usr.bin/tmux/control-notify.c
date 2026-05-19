@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.33 2026/04/13 09:35:20 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.34 2026/05/19 12:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,6 +77,8 @@ control_notify_window_pane_changed(struct window *w)
 {
 	struct client	*c;
 
+	if (w->active == NULL)
+		return;
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
 			continue;

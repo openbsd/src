@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-pane.c,v 1.31 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-kill-pane.c,v 1.32 2026/05/19 12:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -62,6 +62,10 @@ cmd_kill_pane_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
+	if (wp == NULL) {
+		cmdq_error(item, "no active pane to kill");
+		return (CMD_RETURN_ERROR);
+	}
 	server_kill_pane(wp);
 	return (CMD_RETURN_NORMAL);
 }

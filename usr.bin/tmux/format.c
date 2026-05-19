@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.366 2026/05/19 09:48:14 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.367 2026/05/19 12:16:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4199,7 +4199,6 @@ format_strip(struct format_expand_state *es, const char *s)
 	*cp = '\0';
 	return (out);
 }
-
 
 /* Skip until end. */
 static const char *
