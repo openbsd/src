@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.54 2024/08/21 15:18:00 florian Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.55 2026/05/19 08:14:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -269,7 +269,8 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 				return;
 			}
 			memcpy(&lsa, buf, sizeof(lsa));
-			if (len < ntohs(lsa.len)) {
+			if (ntohs(lsa.len) < sizeof(lsa) ||
+			    len < ntohs(lsa.len)) {
 				log_warnx("recv_ls_update: bad packet size, "
 				    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
 				    nbr->iface->name);
