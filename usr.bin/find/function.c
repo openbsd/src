@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.55 2023/08/11 04:45:05 guenther Exp $	*/
+/*	$OpenBSD: function.c,v 1.56 2026/05/19 01:55:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -1458,14 +1458,13 @@ c_prune(char *ignore, char ***ignored, int unused)
  *	a c, the size is in bytes.
  */
 #define	FIND_SIZE	512
-static int divsize = 1;
 
 int
 f_size(PLAN *plan, FTSENT *entry)
 {
 	off_t size;
 
-	size = divsize ? (entry->fts_statp->st_size + FIND_SIZE - 1) /
+	size = plan->o_divsize ? (entry->fts_statp->st_size + FIND_SIZE - 1) /
 	    FIND_SIZE : entry->fts_statp->st_size;
 	COMPARE(size, plan->o_data);
 }
@@ -1481,8 +1480,8 @@ c_size(char *arg, char ***ignored, int unused)
 	new = palloc(N_SIZE, f_size);
 	endch = 'c';
 	new->o_data = find_parsenum(new, "-size", arg, &endch);
-	if (endch == 'c')
-		divsize = 0;
+	if (endch != 'c')
+		new->o_divsize = 1;
 	return (new);
 }
 

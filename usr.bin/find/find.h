@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.h,v 1.18 2017/01/03 21:31:16 tedu Exp $ */
+/*	$OpenBSD: find.h,v 1.19 2026/05/19 01:55:45 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,10 @@ typedef struct _plandata {
 			u_int _f_mask;
 		} fl;
 		nlink_t _l_data;		/* link count */
-		off_t _o_data;			/* file size */
+		struct {
+			off_t _o_data;		/* file size */
+			int _o_divsize;		/* divide size into blocks */
+		} _sz_data;
 		struct timespec _t_data;	/* time value */
 		uid_t _u_data;			/* uid */
 		short _mt_data;			/* mount flags */
@@ -103,7 +106,8 @@ typedef struct _plandata {
 #define	max_data	p_un._max_data
 #define	min_data	p_un._min_data
 #define	mt_data		p_un._mt_data
-#define	o_data		p_un._o_data
+#define	o_data		p_un._sz_data._o_data
+#define	o_divsize	p_un._sz_data._o_divsize
 #define	p_data		p_un._p_data
 #define	t_data		p_un._t_data
 #define	sec_data	p_un._t_data.tv_sec
