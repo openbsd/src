@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.16 2026/05/15 19:02:12 mglocker Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.17 2026/05/19 04:17:51 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1125,7 +1125,7 @@ struct ath12k_spt_info {
 
 struct dp_rx_tid {
 	uint8_t tid;
-	struct qwz_dmamem *mem;
+	const struct qwz_dmamem *mem;
 	uint32_t *vaddr;
 	uint64_t paddr;
 	uint32_t size;
@@ -1291,6 +1291,17 @@ struct qwz_dp {
 	struct dp_srng rx_mac_buf_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_rxdma_mon_ring rxdma_mon_buf_ring;
+
+	/*
+	 * Cache of DMA memory regions used for Rx aggregation.
+	 * We used to free these DMA allocations in interrupt context but
+	 * destroying DMA memory in interrupt context is not allowed.
+	 *
+	 * This array contains enough entries for client station mode.
+	 * It will need to grow in order to support multiple clients if
+	 * support for HostAP mode gets added to the driver.
+	 */
+	struct qwz_dmamem *rx_tid_mem[HAL_DESC_REO_NON_QOS_TID + 1];
 };
 
 #define ATH12K_SHADOW_DP_TIMER_INTERVAL 20

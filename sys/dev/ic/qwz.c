@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.29 2026/05/18 13:47:32 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.30 2026/05/19 04:17:51 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8884,6 +8884,15 @@ fail_link_desc_cleanup:
 }
 
 void
+qwz_dp_rx_tid_clear(struct qwz_softc *sc, struct dp_rx_tid *rx_tid)
+{
+	rx_tid->mem = NULL;
+	rx_tid->vaddr = NULL;
+	rx_tid->paddr = 0ULL;
+	rx_tid->size = 0;
+}
+
+void
 qwz_dp_reo_cmd_list_cleanup(struct qwz_softc *sc)
 {
 	struct qwz_dp *dp = &sc->dp;
@@ -8896,13 +8905,7 @@ qwz_dp_reo_cmd_list_cleanup(struct qwz_softc *sc)
 	TAILQ_FOREACH_SAFE(cmd, &dp->reo_cmd_list, entry, tmp) {
 		TAILQ_REMOVE(&dp->reo_cmd_list, cmd, entry);
 		rx_tid = &cmd->data;
-		if (rx_tid->mem) {
-			qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-			rx_tid->mem = NULL;
-			rx_tid->vaddr = NULL;
-			rx_tid->paddr = 0ULL;
-			rx_tid->size = 0;
-		}
+		qwz_dp_rx_tid_clear(sc, rx_tid);
 		free(cmd, M_DEVBUF, sizeof(*cmd));
 	}
 
@@ -8911,13 +8914,7 @@ qwz_dp_reo_cmd_list_cleanup(struct qwz_softc *sc)
 		TAILQ_REMOVE(&dp->reo_cmd_cache_flush_list, cmd_cache, entry);
 		dp->reo_cmd_cache_flush_count--;
 		rx_tid = &cmd_cache->data;
-		if (rx_tid->mem) {
-			qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-			rx_tid->mem = NULL;
-			rx_tid->vaddr = NULL;
-			rx_tid->paddr = 0ULL;
-			rx_tid->size = 0;
-		}
+		qwz_dp_rx_tid_clear(sc, rx_tid);
 		free(cmd_cache, M_DEVBUF, sizeof(*cmd_cache));
 	}
 #ifdef notyet
@@ -8951,6 +8948,13 @@ qwz_dp_free(struct qwz_softc *sc)
 		free(dp->tx_ring[i].tx_status, M_DEVBUF,
 		    sizeof(struct hal_wbm_release_ring) * DP_TX_COMP_RING_SIZE);
 		dp->tx_ring[i].tx_status = NULL;
+	}
+
+	for (i = 0; i <= HAL_DESC_REO_NON_QOS_TID; i++) {
+		if (dp->rx_tid_mem[i]) {
+			qwz_dmamem_free(sc->sc_dmat, dp->rx_tid_mem[i]);
+			dp->rx_tid_mem[i] = NULL;
+		}
 	}
 
 	/* Deinit any SOC level resource */
@@ -22359,13 +22363,7 @@ qwz_dp_reo_cmd_free(struct qwz_dp *dp, void *ctx,
 		printf("%s: failed to flush rx tid hw desc, tid %d status %d\n",
 		    sc->sc_dev.dv_xname, rx_tid->tid, status);
 
-	if (rx_tid->mem) {
-		qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-		rx_tid->mem = NULL;
-		rx_tid->vaddr = NULL;
-		rx_tid->paddr = 0ULL;
-		rx_tid->size = 0;
-	}
+	qwz_dp_rx_tid_clear(sc, rx_tid);
 }
 
 void
@@ -22400,13 +22398,7 @@ qwz_dp_reo_cache_flush(struct qwz_softc *sc, struct dp_rx_tid *rx_tid)
 	if (ret) {
 		printf("%s: failed to send HAL_REO_CMD_FLUSH_CACHE cmd, "
 		    "tid %d (%d)\n", sc->sc_dev.dv_xname, rx_tid->tid, ret);
-		if (rx_tid->mem) {
-			qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-			rx_tid->mem = NULL;
-			rx_tid->vaddr = NULL;
-			rx_tid->paddr = 0ULL;
-			rx_tid->size = 0;
-		}
+		qwz_dp_rx_tid_clear(sc, rx_tid);
 	}
 }
 
@@ -22420,7 +22412,8 @@ qwz_dp_rx_tid_del_func(struct qwz_dp *dp, void *ctx,
 	uint64_t now;
 
 	if (status == HAL_REO_CMD_DRAIN) {
-		goto free_desc;
+		qwz_dp_rx_tid_clear(sc, rx_tid);
+		return;
 	} else if (status != HAL_REO_CMD_SUCCESS) {
 		/* Shouldn't happen! Cleanup in case of other failure? */
 		printf("%s: failed to delete rx tid %d hw descriptor %d\n",
@@ -22429,17 +22422,16 @@ qwz_dp_rx_tid_del_func(struct qwz_dp *dp, void *ctx,
 	}
 
 	elem = malloc(sizeof(*elem), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (!elem)
-		goto free_desc;
+	if (!elem) {
+		qwz_dp_rx_tid_clear(sc, rx_tid);
+		return;
+	}
 
 	now = getnsecuptime();
 	elem->ts = now;
 	memcpy(&elem->data, rx_tid, sizeof(*rx_tid));
 
-	rx_tid->mem = NULL;
-	rx_tid->vaddr = NULL;
-	rx_tid->paddr = 0ULL;
-	rx_tid->size = 0;
+	qwz_dp_rx_tid_clear(sc, rx_tid);
 
 #ifdef notyet
 	spin_lock_bh(&dp->reo_cmd_lock);
@@ -22466,15 +22458,6 @@ qwz_dp_rx_tid_del_func(struct qwz_dp *dp, void *ctx,
 #ifdef notyet
 	spin_unlock_bh(&dp->reo_cmd_lock);
 #endif
-	return;
-free_desc:
-	if (rx_tid->mem) {
-		qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-		rx_tid->mem = NULL;
-		rx_tid->vaddr = NULL;
-		rx_tid->paddr = 0ULL;
-		rx_tid->size = 0;
-	}
 }
 
 void
@@ -22503,13 +22486,7 @@ qwz_peer_rx_tid_delete(struct qwz_softc *sc, struct ath12k_peer *peer,
 			    sc->sc_dev.dv_xname, tid, ret);
 		}
 
-		if (rx_tid->mem) {
-			qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-			rx_tid->mem = NULL;
-			rx_tid->vaddr = NULL;
-			rx_tid->paddr = 0ULL;
-			rx_tid->size = 0;
-		}
+		qwz_dp_rx_tid_clear(sc, rx_tid);
 	}
 }
 
@@ -22622,13 +22599,11 @@ qwz_dp_rx_tid_mem_free(struct qwz_softc *sc, struct ieee80211_node *ni,
 #endif
 	rx_tid = &peer->rx_tid[tid];
 
-	if (rx_tid->mem) {
-		qwz_dmamem_free(sc->sc_dmat, rx_tid->mem);
-		rx_tid->mem = NULL;
-		rx_tid->vaddr = NULL;
-		rx_tid->paddr = 0ULL;
-		rx_tid->size = 0;
-	}
+	/*
+	 * Nothing to free here since DMA memory pointers are
+	 * managed as part of qwz_softc.
+	 */
+	qwz_dp_rx_tid_clear(sc, rx_tid);
 
 	rx_tid->active = 0;
 #ifdef notyet
@@ -22641,6 +22616,7 @@ qwz_peer_rx_tid_setup(struct qwz_softc *sc, struct ieee80211_node *ni,
     int vdev_id, int pdev_id, uint8_t tid, uint32_t ba_win_sz, uint16_t ssn,
     enum hal_pn_type pn_type)
 {
+	struct qwz_dp *dp = &sc->dp;
 	struct qwz_node *nq = (struct qwz_node *)ni;
 	struct ath12k_peer *peer = &nq->peer;
 	struct dp_rx_tid *rx_tid;
@@ -22688,18 +22664,25 @@ qwz_peer_rx_tid_setup(struct qwz_softc *sc, struct ieee80211_node *ni,
 	else
 		hw_desc_sz = qwz_hal_reo_qdesc_size(DP_BA_WIN_SZ_MAX, tid);
 
-	rx_tid->mem = qwz_dmamem_alloc(sc->sc_dmat, hw_desc_sz,
-	    HAL_LINK_DESC_ALIGN);
-	if (rx_tid->mem == NULL) {
+	if (dp->rx_tid_mem[tid] == NULL) {
+		dp->rx_tid_mem[tid] = qwz_dmamem_alloc(sc->sc_dmat, hw_desc_sz,
+		    HAL_LINK_DESC_ALIGN);
+		if (dp->rx_tid_mem[tid] == NULL) {
 #ifdef notyet
-		spin_unlock_bh(&ab->base_lock);
+			spin_unlock_bh(&ab->base_lock);
 #endif
-		return ENOMEM;
+			return ENOMEM;
+		}
 	}
+
+	rx_tid->mem = dp->rx_tid_mem[tid];
 
 	vaddr = QWZ_DMA_KVA(rx_tid->mem);
 
 	qwz_hal_reo_qdesc_setup(vaddr, tid, ba_win_sz, ssn, pn_type);
+
+	bus_dmamap_sync(sc->sc_dmat, rx_tid->mem->map,
+	    0, rx_tid->mem->size, BUS_DMASYNC_PREWRITE);
 
 	paddr = QWZ_DMA_DVA(rx_tid->mem);
 
