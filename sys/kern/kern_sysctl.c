@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.492 2026/05/16 21:17:43 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.493 2026/05/19 17:50:23 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2773,12 +2773,12 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 #endif
 #ifdef SYSVSHM
 			case KERN_SYSVIPC_SHM_INFO:
-				if (shmsegs[i] != NULL)
+				if (shmsegs[i] != NULL) {
 					memcpy(&shmsi->shmids[i], shmsegs[i],
 					    dssize);
-				else
-					memset(&shmsi->shmids[i], 0, dssize);
-				shmsi->shmids[i].shm_internal = NULL;
+					shmsi->shmids[i].shm_internal = NULL;
+				}
+
 				break;
 #endif
 			}
