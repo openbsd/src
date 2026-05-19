@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.498 2026/05/18 18:36:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.499 2026/05/19 11:39:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -430,8 +430,8 @@ yesno		: STRING			{
 varset		: STRING '=' string		{
 			char *s = $1;
 			if (strlen($1) >= MACRO_NAME_LEN) {
-				yyerror("macro name to long, max %d characters",
-				    MACRO_NAME_LEN - 1);
+				yyerror("macro name too long, "
+				    "max %d characters", MACRO_NAME_LEN - 1);
 				free($1);
 				free($3);
 				YYERROR;
