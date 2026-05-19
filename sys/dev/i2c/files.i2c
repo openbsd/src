@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.74 2025/11/23 21:28:15 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.75 2026/05/19 04:40:45 mglocker Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -273,6 +273,11 @@ file	dev/i2c/tmp451.c			titmp
 device	pijuice
 attach	pijuice at i2c
 file	dev/i2c/pijuice.c			pijuice
+
+# Samsung SAM060B battery monitor
+device	sambat
+attach	sambat at i2c
+file	dev/i2c/sambat.c			sambat
 
 # Consumer Control Keyboards
 device	icc: hid, hidcc, wskbddev
