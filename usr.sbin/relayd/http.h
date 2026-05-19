@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.12 2021/03/24 20:59:53 benno Exp $	*/
+/*	$OpenBSD: http.h,v 1.13 2026/05/19 05:06:41 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -72,6 +72,9 @@ enum httpmethod {
 	/* WebDAV Search, RFC 5323 */
 	HTTP_METHOD_SEARCH,
 
+	/* WebDAV Calendaring Extensions, RFC 4791 */
+	HTTP_METHOD_MKCALENDAR,
+
 	/* PATCH, RFC 5789 */
 	HTTP_METHOD_PATCH,
 
@@ -115,6 +118,7 @@ struct http_method {
 	{ HTTP_METHOD_MKREDIRECTREF,	"MKREDIRECTREF" }, \
 	{ HTTP_METHOD_UPDATEREDIRECTREF, "UPDATEREDIRECTREF" }, \
 	{ HTTP_METHOD_SEARCH,		"SEARCH" },	\
+	{ HTTP_METHOD_MKCALENDAR,	"MKCALENDAR" },	\
 	{ HTTP_METHOD_PATCH,		"PATCH" },	\
 	{ HTTP_METHOD_NONE,		NULL }		\
 }

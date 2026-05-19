@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.97 2026/05/16 15:25:28 kirill Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.98 2026/05/19 05:06:41 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -532,6 +532,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_MKREDIRECTREF:
 		case HTTP_METHOD_UPDATEREDIRECTREF:
 		case HTTP_METHOD_SEARCH:
+		case HTTP_METHOD_MKCALENDAR:
 		case HTTP_METHOD_PATCH:
 			/* HTTP request payload */
 			if (cre->toread > 0) {
