@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.68 2024/04/23 13:34:51 jsg Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.69 2026/05/19 01:12:49 kirill Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -340,8 +340,10 @@ external_exec(struct ifsd_external *external, int async)
 	if (!async) {
 		waitpid(external->pid, &s, 0);
 		external->pid = 0;
-		if (WIFEXITED(s))
+		if (WIFEXITED(s)) {
 			external->prevstatus = WEXITSTATUS(s);
+			external->lastexec = time(NULL);
+		}
 	}
 }
 
