@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.106 2026/05/19 08:53:41 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.107 2026/05/19 08:55:46 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -26172,7 +26172,7 @@ qwx_peer_assoc_h_basic(struct qwx_softc *sc, struct qwx_vif *arvif,
 	arg->vdev_id = arvif->vdev_id;
 	arg->peer_associd = ni->ni_associd;
 	arg->auth_flag = 1;
-	arg->peer_listen_intval = ni->ni_intval;
+	arg->peer_listen_intval = 1;
 	arg->peer_nss = 1;
 	arg->peer_caps = ni->ni_capinfo;
 }
