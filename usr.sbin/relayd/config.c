@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.50 2026/04/03 13:21:00 op Exp $	*/
+/*	$OpenBSD: config.c,v 1.51 2026/05/19 05:04:11 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1177,9 +1177,9 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 		break;
 	}
 
-	DPRINTF("%s: %s %d received relay fd %d type %d for relay %s", __func__,
+	DPRINTF("%s: %s %d received relay type %d for relay %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
-	    imsg->fd, crfd.type, rlay->rl_conf.name);
+	    crfd.type, rlay->rl_conf.name);
 
 	return (0);
 }

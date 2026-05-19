@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2026/02/18 22:27:03 kirill Exp $
+#	$OpenBSD: Makefile,v 1.37 2026/05/19 05:04:11 rsadowski Exp $
 
 PROG=		relayd
 SRCS=		parse.y
@@ -11,6 +11,7 @@ MAN=		relayd.8 relayd.conf.5
 
 LDADD=		-lagentx -levent -ltls -lssl -lcrypto -lutil
 DPADD=		${LIBAGENTX} ${LIBEVENT} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
+#DEBUG=		-g -DDEBUG=3 -O0
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
