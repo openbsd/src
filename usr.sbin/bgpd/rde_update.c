@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.194 2026/05/07 20:35:19 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.195 2026/05/19 11:25:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -278,14 +278,6 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 	/* update paths */
 	new = prefix_best(re);
 	while (new != NULL) {
-		/* check limits and stop when a limit is reached */
-		if (peer->eval.maxpaths != 0 &&
-		    maxpaths >= peer->eval.maxpaths)
-			break;
-		if (peer->eval.extrapaths != 0 &&
-		    extrapaths >= peer->eval.extrapaths)
-			break;
-
 		extra = 1;
 		if (checkmode) {
 			switch (peer->eval.mode) {
@@ -311,13 +303,20 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 					checkmode = 0;
 				break;
 			case ADDPATH_EVAL_ALL:
-				/* nothing to check */
-				checkmode = 0;
+				/* no extra paths */
+				extra = 0;
 				break;
 			default:
 				fatalx("unknown add-path eval mode");
 			}
 		}
+
+		/* check limits and stop when a limit is reached */
+		if (peer->eval.maxpaths != 0 &&
+		    maxpaths >= peer->eval.maxpaths)
+			break;
+		if (extra != 0 && extrapaths >= peer->eval.extrapaths)
+			break;
 
 		switch (up_process_prefix(peer, new, (void *)-1)) {
 		case UP_OK:
