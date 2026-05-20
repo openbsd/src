@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.20 2022/12/04 23:50:47 cheloha Exp $	*/
+/*	$OpenBSD: col.c,v 1.21 2026/05/20 06:23:13 renaud Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -295,8 +295,11 @@ main(int argc, char *argv[])
 			l->l_max_col = cur_col;
 		cur_col++;
 	}
-	if (extra_lines)
+	if (extra_lines) {
 		flush_lines(extra_lines);
+		l = lines;
+		this_line = 0;
+	}
 
 	/* goto the last line that had a character on it */
 	for (; l->l_next; l = l->l_next)
