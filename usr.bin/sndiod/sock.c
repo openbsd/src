@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.58 2026/05/20 13:03:14 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.59 2026/05/20 13:24:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -180,6 +180,7 @@ sock_close(struct sock *f)
 		f->midi = NULL;
 	}
 	if (f->port) {
+		midi_unlink(f->midi, f->port->midi);
 		port_unref(f->port);
 		f->port = NULL;
 	}
