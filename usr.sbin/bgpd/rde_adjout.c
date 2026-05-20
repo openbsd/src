@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.18 2026/05/08 12:03:50 tb Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.19 2026/05/20 18:33:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -530,7 +530,8 @@ adjout_prefix_next(struct rde_peer *peer, struct pt_entry *pte,
  */
 void
 adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
-    struct filterstate *state, struct pt_entry *pte, uint32_t path_id_tx)
+    struct filterstate *state, struct pt_entry *pte, uint32_t path_id_tx,
+    int force_update)
 {
 	struct adjout_attr *attrs;
 
@@ -552,6 +553,8 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 		    attrs->communities) &&
 		    path_equal(&state->aspath, attrs->aspath)) {
 			/* nothing changed */
+			if (force_update && peer_is_up(peer))
+				pend_prefix_add(peer, attrs, pte, path_id_tx);
 			return;
 		}
 

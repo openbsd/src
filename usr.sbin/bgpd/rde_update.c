@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.195 2026/05/19 11:25:57 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.196 2026/05/20 18:33:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -159,7 +159,7 @@ up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state,
  */
 static enum up_state
 up_process_prefix(struct rde_peer *peer, struct prefix *new,
-    struct adjout_prefix *p)
+    struct adjout_prefix *p, int force_update)
 {
 	struct filterstate state;
 	struct bgpd_addr addr;
@@ -201,7 +201,8 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new,
 	}
 
 	up_prep_adjout(peer, &state, new->pt->aid);
-	adjout_prefix_update(p, peer, &state, new->pt, path_id_tx);
+	adjout_prefix_update(p, peer, &state, new->pt, path_id_tx,
+	    force_update);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */
@@ -219,7 +220,8 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new,
 }
 
 void
-up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
+up_generate_updates(struct rde_peer *peer, struct rib_entry *re,
+    int force_update)
 {
 	struct prefix		*new;
 	struct adjout_prefix	*p;
@@ -228,7 +230,7 @@ up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
 
 	new = prefix_best(re);
 	while (new != NULL) {
-		switch (up_process_prefix(peer, new, p)) {
+		switch (up_process_prefix(peer, new, p, force_update)) {
 		case UP_OK:
 		case UP_ERR_LIMIT:
 			return;
@@ -258,7 +260,8 @@ done:
  * less churn is needed.
  */
 void
-up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
+up_generate_addpath(struct rde_peer *peer, struct rib_entry *re,
+    int force_update)
 {
 	struct prefix		*new;
 	struct adjout_prefix	*head, *p;
@@ -318,7 +321,8 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 		if (extra != 0 && extrapaths >= peer->eval.extrapaths)
 			break;
 
-		switch (up_process_prefix(peer, new, (void *)-1)) {
+		switch (up_process_prefix(peer, new, (void *)-1,
+		    force_update)) {
 		case UP_OK:
 			maxpaths++;
 			extrapaths += extra;
@@ -360,7 +364,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
  */
 void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
-    struct prefix *new, uint32_t old_pathid_tx)
+    struct prefix *new, uint32_t old_pathid_tx, int force_update)
 {
 	struct adjout_prefix	*p;
 
@@ -369,7 +373,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 	 * use up_generate_addpath() for that.
 	 */
 	if (old_pathid_tx == 0 && new == NULL) {
-		up_generate_addpath(peer, re);
+		up_generate_addpath(peer, re, force_update);
 		return;
 	}
 
@@ -380,7 +384,8 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 
 	if (new != NULL) {
 		/* add new path */
-		switch (up_process_prefix(peer, new, (void *)-1)) {
+		switch (up_process_prefix(peer, new, (void *)-1,
+		    force_update)) {
 		case UP_OK:
 			/* don't remove old if an existing prefix was updated */
 			if (old_pathid_tx == new->path_id_tx)
@@ -403,7 +408,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 	}
 }
 
-/* send a default route to the specified peer */
+/* send a default route to the specified peer, always force the update out */
 void
 up_generate_default(struct rde_peer *peer, uint8_t aid)
 {
@@ -446,7 +451,7 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	if (pte == NULL)
 		pte = pt_add(&addr, 0);
 	p = adjout_prefix_first(peer, pte);
-	adjout_prefix_update(p, peer, &state, pte, 0);
+	adjout_prefix_update(p, peer, &state, pte, 0, 1);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */

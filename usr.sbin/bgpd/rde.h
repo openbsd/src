@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.349 2026/05/13 18:50:09 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.350 2026/05/20 18:33:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -773,7 +773,7 @@ struct adjout_prefix	*adjout_prefix_next(struct rde_peer *,
 			    struct pt_entry *, struct adjout_prefix *);
 
 void		 adjout_prefix_update(struct adjout_prefix *, struct rde_peer *,
-		    struct filterstate *, struct pt_entry *, uint32_t);
+		    struct filterstate *, struct pt_entry *, uint32_t, int);
 void		 adjout_prefix_withdraw(struct rde_peer *, struct pt_entry *,
 		    struct adjout_prefix *);
 void		 adjout_prefix_reaper(struct rde_peer *);
@@ -805,15 +805,14 @@ void		 pend_prefix_stats(struct ch_stats *);
 void		 adjout_attr_stats(struct ch_stats *);
 
 /* rde_update.c */
-void		 up_generate_updates(struct rde_peer *, struct rib_entry *);
-void		 up_generate_addpath(struct rde_peer *, struct rib_entry *);
-void		 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
-		    struct prefix *, uint32_t);
-void		 up_generate_default(struct rde_peer *, uint8_t);
-int		 up_is_eor(struct rde_peer *, uint8_t);
-void		 up_dump_withdraws(struct imsgbuf *, struct rde_peer *,
-		    uint8_t);
-void		 up_dump_update(struct imsgbuf *, struct rde_peer *, uint8_t);
+void	 up_generate_updates(struct rde_peer *, struct rib_entry *, int);
+void	 up_generate_addpath(struct rde_peer *, struct rib_entry *, int);
+void	 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
+	    struct prefix *, uint32_t, int);
+void	 up_generate_default(struct rde_peer *, uint8_t);
+int	 up_is_eor(struct rde_peer *, uint8_t);
+void	 up_dump_withdraws(struct imsgbuf *, struct rde_peer *, uint8_t);
+void	 up_dump_update(struct imsgbuf *, struct rde_peer *, uint8_t);
 
 /* rde_aspa.c */
 void		 aspa_validation(struct rde_aspa *, struct aspath *,
