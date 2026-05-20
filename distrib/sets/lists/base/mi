@@ -1850,10 +1850,14 @@
 ./usr/libdata/perl5/pod/perl5382delta.pod
 ./usr/libdata/perl5/pod/perl5383delta.pod
 ./usr/libdata/perl5/pod/perl5384delta.pod
+./usr/libdata/perl5/pod/perl5385delta.pod
 ./usr/libdata/perl5/pod/perl5400delta.pod
 ./usr/libdata/perl5/pod/perl5401delta.pod
 ./usr/libdata/perl5/pod/perl5402delta.pod
+./usr/libdata/perl5/pod/perl5403delta.pod
 ./usr/libdata/perl5/pod/perl5420delta.pod
+./usr/libdata/perl5/pod/perl5421delta.pod
+./usr/libdata/perl5/pod/perl5422delta.pod
 ./usr/libdata/perl5/pod/perl561delta.pod
 ./usr/libdata/perl5/pod/perl56delta.pod
 ./usr/libdata/perl5/pod/perl581delta.pod
