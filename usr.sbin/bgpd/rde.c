@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.700 2026/05/13 14:01:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.701 2026/05/20 09:56:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3276,7 +3276,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	struct rib_entry	*re;
 	struct adjout_prefix	*p;
 	u_int			 error;
-	uint8_t			 hostplen, plen;
+	int			 hostplen, plen;
 	uint16_t		 rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
@@ -3342,6 +3342,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 
 			do {
 				struct pt_entry *pte;
+				int found;
 
 				if (req->flags & F_SHORTER) {
 					for (plen = 0; plen <= req->prefixlen;
@@ -3370,13 +3371,28 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 				if (pte == NULL)
 					continue;
 
-				/* dump all matching paths */
-				for (p = adjout_prefix_first(peer, pte);
-				    p != NULL;
-				    p = adjout_prefix_next(peer, pte, p)) {
-					rde_dump_adjout_upcall(peer, pte, p,
-					    ctx);
-				}
+				do {
+					/* dump all matching paths */
+					found = 0;
+					for (p = adjout_prefix_first(peer, pte);
+					    p != NULL;
+					    p = adjout_prefix_next(peer, pte,
+					    p)) {
+						rde_dump_adjout_upcall(peer,
+						    pte, p, ctx);
+						found = 1;
+					}
+					if (!found &&
+					    req->prefixlen == hostplen) {
+						for (plen = pte->prefixlen - 1;
+						    plen >= 0; plen--) {
+							pte = pt_get(
+							    &req->prefix, plen);
+							if (pte != NULL)
+								break;
+						}
+					}
+				} while (!found && pte != NULL);
 			} while ((peer = peer_match(&req->neighbor,
 			    peer->conf.id)));
 
