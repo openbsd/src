@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.294 2026/05/14 18:47:32 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.295 2026/05/20 20:32:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -755,6 +755,9 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 	dst->rtlabelid = rtlabel_ref(src->rtlabelid);
 	dst->pftableid = pftable_ref(src->pftableid);
 	dst->origin = src->origin;
+
+	dst->aspa_state = src->aspa_state;
+	dst->aspa_generation = src->aspa_generation;
 
 	attr_copy(dst, src);
 
