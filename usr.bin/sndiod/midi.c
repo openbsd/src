@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.34 2026/05/20 13:26:02 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.35 2026/05/20 13:26:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -147,11 +147,11 @@ midi_del(struct midi *ep)
 void
 midi_link(struct midi *ep, struct midi *peer)
 {
-	if (ep->mode & MODE_MIDIOUT) {
+	if ((ep->mode & MODE_MIDIOUT) && (peer->mode & MODE_MIDIIN)) {
 		ep->txmask |= peer->self;
 		midi_tickets(ep);
 	}
-	if (ep->mode & MODE_MIDIIN) {
+	if ((ep->mode & MODE_MIDIIN) && (peer->mode & MODE_MIDIOUT)) {
 #ifdef DEBUG
 		if (ep->obuf.used > 0) {
 			logx(0, "midi%u: linked with non-empty buffer", ep->num);
