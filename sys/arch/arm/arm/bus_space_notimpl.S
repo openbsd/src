@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space_notimpl.S,v 1.4 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: bus_space_notimpl.S,v 1.5 2026/05/20 07:49:55 jsg Exp $	*/
 /*	$NetBSD: bus_space_notimpl.S,v 1.2 2001/09/10 02:20:19 reinoud Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ LABEL(func)							;	\
 								;	\
 LLABEL(__C(func,_text))						;	\
 	.asciz	__S(func)                                       ;	\
-	.align	0						;
+	.align	2						;
 
 bs_notimpl_message:
         .asciz  __S(BUS_SPACE), "_%s: args at %p"
