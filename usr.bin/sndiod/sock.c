@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.57 2026/02/27 08:31:01 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.58 2026/05/20 13:03:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -172,7 +172,7 @@ sock_close(struct sock *f)
 	}
 	if (f->midi) {
 		tags = midi_tags(f->midi);
-		for (i = 0; i < DEV_NMAX; i++) {
+		for (i = 0; i < OPT_NMAX; i++) {
 			if ((tags & (1 << i)) && (o = opt_bynum(i)) != NULL)
 				opt_unref(o);
 		}
