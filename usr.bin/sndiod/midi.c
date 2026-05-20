@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.33 2026/05/20 13:24:58 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.34 2026/05/20 13:26:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -228,25 +228,6 @@ midi_tag(struct midi *ep, unsigned int tag)
 		t->rxmask |= ep->self;
 	if (ep->mode & MODE_MIDIIN)
 		t->txmask |= ep->self;
-}
-
-/*
- * return the list of tags
- */
-unsigned int
-midi_tags(struct midi *ep)
-{
-	int i;
-	struct midithru *t;
-	unsigned int tags;
-
-	tags = 0;
-	for (i = 0; i < MIDITHRU_NMAX; i++) {
-		t = midithru + i;
-		if ((t->txmask | t->rxmask) & ep->self)
-			tags |= 1 << i;
-	}
-	return tags;
 }
 
 /*
