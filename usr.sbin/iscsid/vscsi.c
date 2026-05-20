@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.18 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.19 2026/05/20 20:55:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -177,7 +177,7 @@ vscsi_status(int tag, int status, void *buf, size_t len)
 	bzero(&t2i, sizeof(t2i));
 	t2i.tag = tag;
 	t2i.status = status;
-	if (buf) {
+	if (len > 0) {
 		if (len > sizeof(t2i.sense))
 			len = sizeof(t2i.sense);
 		memcpy(&t2i.sense, buf, len);
@@ -241,9 +241,12 @@ vscsi_callback(struct connection *c, void *arg, struct pdu *p)
 			status = VSCSI_STAT_SENSE;
 			/* stupid encoding of sense data in the data segment */
 			buf = pdu_getbuf(p, &n, PDU_DATA);
-			if (buf) {
+			if (buf && n >= 2) {
 				size = buf[0] << 8 | buf[1];
 				buf += 2;
+				n -= 2;
+				if (size > n)
+					size = n;
 			}
 			break;
 		default:
