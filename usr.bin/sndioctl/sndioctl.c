@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.24 2026/05/20 13:12:31 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.25 2026/05/20 13:15:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -755,19 +755,22 @@ cmd(char *line)
 		}
 		break;
 	case SIOCTL_SEL:
-		if (*pos == '\0') {
+		if (*pos == '\0' || *pos == '+' || *pos == '-' || *pos == '!') {
 			fprintf(stderr, "%s.%s: expects value\n", astr, func);
 			exit(1);
 		}
 		/* FALLTHROUGH */
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
+		parse_mode(&pos, &mode);
 		for (i = g; i != NULL; i = nextpar(i)) {
 			if (!matchpar(i, astr, aunit))
 				continue;
-			for (e = i; e != NULL; e = nextent(e, 0)) {
-				e->newval = 0;
-				e->mode = MODE_SET;
+			if (mode == MODE_SET) {
+				for (e = i; e != NULL; e = nextent(e, 0)) {
+					e->newval = 0;
+					e->mode = MODE_SET;
+				}
 			}
 			npar++;
 		}
@@ -784,12 +787,11 @@ cmd(char *line)
 				return 0;
 			if (*pos == ':') {
 				pos++;
-				if (!parse_modeval(&pos, &mode, &val))
+				if (!parse_val(&pos, &val))
 					return 0;
-			} else {
+			} else
 				val = 1.;
-				mode = MODE_SET;
-			}
+
 			nent = 0;
 			for (i = g; i != NULL; i = nextpar(i)) {
 				if (!matchpar(i, astr, aunit))
