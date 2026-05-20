@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.53 2026/04/30 18:22:59 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.54 2026/05/20 13:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -471,6 +471,7 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *msg,
 	struct ibuf hdr;
 	size_t len;
 	uint16_t errcode;
+	int neg_done = 0;
 
 	len = ibuf_size(msg);
 
@@ -482,12 +483,14 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *msg,
 		switch (rh.type) {
 		case CACHE_RESPONSE:
 		case CACHE_RESET:
-			/* implicit downgrade */
+			/* implicit downgrade if allowed */
 			if (rh.version < rs->version) {
+				if (rh.version < rs->min_version)
+					goto badversion;
 				rs->prev_version = rs->version;
 				rs->version = rh.version;
 			}
-			rtr_fsm(rs, RTR_EVNT_NEGOTIATION_DONE);
+			neg_done = 1;
 			break;
 		case ERROR_REPORT:
 			errcode = ntohs(rh.session_id);
@@ -563,8 +566,10 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *msg,
 		return -1;
 	}
 
-	*msgtype = rh.type;
+	if (neg_done)
+		rtr_fsm(rs, RTR_EVNT_NEGOTIATION_DONE);
 
+	*msgtype = rh.type;
 	return 0;
 
  badlen:
@@ -573,8 +578,8 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *msg,
 	return -1;
 
  badversion:
-	rtr_send_error(rs, msg, UNEXP_PROTOCOL_VERS, "%s: version %d",
-	    log_rtr_type(rh.type), rh.version);
+	rtr_send_error(rs, msg, UNEXP_PROTOCOL_VERS, "%s: version %d want %d",
+	    log_rtr_type(rh.type), rh.version, rs->version);
 	return -1;
 }
 
@@ -1133,10 +1138,20 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 			rtr_send_serial_query(rs);
 		break;
 	case RTR_EVNT_RESET_AND_CLOSE:
-		rtr_reset_cache(rs);
-		rtr_recalc();
-		/* FALLTHROUGH */
 	case RTR_EVNT_CON_CLOSE:
+		/*
+		 * Reset cache after an error or if the connection is reset
+		 * during a delta exchange. The internal state in that moment
+		 * is possibly corrupt and should not be used.
+		 */
+		if (event == RTR_EVNT_RESET_AND_CLOSE ||
+		    rs->active_lock) {
+			rtr_reset_cache(rs);
+			rtr_sem_release(rs->active_lock);
+			rs->active_lock = 0;
+			rtr_recalc();
+		}
+
 		if (rs->fd != -1) {
 			/* flush buffers */
 			msgbuf_clear(rs->w);
