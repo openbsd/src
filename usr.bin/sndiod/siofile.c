@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.30 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.31 2026/05/20 13:02:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -104,7 +104,7 @@ int
 dev_sio_open(struct dev *d)
 {
 	struct sio_par par;
-	unsigned int rate, mode = d->reqmode & (SIO_PLAY | SIO_REC);
+	unsigned int rate, mode = SIO_PLAY | SIO_REC;
 
 	d->sio.hdl = fdpass_sio_open(d->num, mode);
 	if (d->sio.hdl == NULL) {

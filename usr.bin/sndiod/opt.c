@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.16 2025/11/26 08:40:16 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.17 2026/05/20 13:02:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,6 +35,12 @@ struct midiops opt_midiops = {
 	opt_midi_omsg,
 	opt_midi_fill,
 	opt_midi_exit
+};
+
+const struct opt_mode opt_modes[] = {
+	{MODE_PLAY, "play"},
+	{MODE_REC, "rec"},
+	{MODE_MON, "mon"},
 };
 
 struct app *
@@ -378,14 +384,10 @@ opt_new(struct dev *d, char *name,
 	o->midi = midi_new(&opt_midiops, o, MODE_MIDIIN | MODE_MIDIOUT);
 	midi_tag(o->midi, o->num);
 
-	if (mode & MODE_PLAY) {
-		o->pmin = pmin;
-		o->pmax = pmax;
-	}
-	if (mode & MODE_RECMASK) {
-		o->rmin = rmin;
-		o->rmax = rmax;
-	}
+	o->pmin = pmin;
+	o->pmax = pmax;
+	o->rmin = rmin;
+	o->rmax = rmax;
 	o->maxweight = maxweight;
 	o->mtc = mmc ? &mtc_array[0] : NULL;
 	o->dup = dup;
@@ -486,19 +488,52 @@ opt_del(struct opt *o)
 void
 opt_init(struct opt *o)
 {
+	int i;
+
+	for (i = 0; i < sizeof(opt_modes) / sizeof(opt_modes[0]); i++) {
+		ctl_new(CTL_OPT_MODE, o, &i, CTL_VEC, "",
+		    o->name, "server", -1, "mode", opt_modes[i].name, -1,
+		    1, (o->mode & opt_modes[i].bit) ? 1 : 0);
+	}
 }
 
 void
 opt_done(struct opt *o)
 {
 	struct dev *d;
+	int i;
 
 	if (o->refcnt != 0) {
 		// XXX: all clients are already kicked, so this never happens
 		logx(0, "%s: still has refs", o->name);
 	}
+
+	for (i = 0; i < sizeof(opt_modes) / sizeof(opt_modes[0]); i++)
+		ctl_del(CTL_OPT_MODE, o, &i);
+
 	for (d = dev_list; d != NULL; d = d->next)
 		ctl_del(CTL_OPT_DEV, o, d);
+}
+
+/*
+ * Flip a bit of opt's mode
+ */
+void
+opt_setmode(struct opt *o, int idx, int val)
+{
+	int mode;
+
+	/*
+	 * The o->mode field is directly used by the device,
+	 * so just flipping the bit is OK.
+	 */
+	mode = opt_modes[idx].bit;
+	if (val)
+		o->mode |= mode;
+	else
+		o->mode &= ~mode;
+
+	logx(2, "%s: %s -> %d", __func__, opt_modes[idx].name, val);
 }
 
 /*

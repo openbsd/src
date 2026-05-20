@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.53 2026/03/15 10:05:09 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.54 2026/05/20 13:02:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -103,8 +103,7 @@ unsigned int opt_mode(void);
 void getbasepath(char *);
 void setsig(void);
 void unsetsig(void);
-struct dev *mkdev(char *, struct aparams *,
-    int, int, int, int, int, int);
+struct dev *mkdev(char *, struct aparams *, int, int, int, int, int);
 struct port *mkport(char *, int);
 struct opt *mkopt(char *, struct dev *, struct opt_alt *,
     int, int, int, int, int, int, int, int);
@@ -366,7 +365,7 @@ unsetsig(void)
 
 struct dev *
 mkdev(char *path, struct aparams *par,
-    int mode, int bufsz, int round, int rate, int hold, int autovol)
+    int bufsz, int round, int rate, int hold, int autovol)
 {
 	struct dev *d;
 
@@ -381,7 +380,7 @@ mkdev(char *path, struct aparams *par,
 		bufsz = round * 2;
 	} else if (!round)
 		round = bufsz / 2;
-	d = dev_new(path, par, mode, bufsz, round, rate, hold, autovol);
+	d = dev_new(path, par, bufsz, round, rate, hold, autovol);
 	if (d == NULL)
 		exit(1);
 	return d;
@@ -414,7 +413,7 @@ mkopt(char *path, struct dev *d, struct opt_alt *alt_list,
 	    MIDI_TO_ADATA(vol), mmc, dup, mode);
 	if (o == NULL)
 		return NULL;
-	dev_adjpar(d, o->mode, o->pmax, o->rmax);
+	dev_adjpar(d, o->pmax, o->rmax);
 	for (a = alt_list; a != NULL; a = a->next)
 		opt_setalt(o, a->dev);
 	return o;
@@ -602,7 +601,7 @@ main(int argc, char **argv)
 		case 's':
 			if (d == NULL) {
 				for (i = 0; default_devs[i] != NULL; i++) {
-					mkdev(default_devs[i], &par, 0,
+					mkdev(default_devs[i], &par,
 					    bufsz, round, rate, 0, autovol);
 				}
 				d = dev_list;
@@ -642,7 +641,7 @@ main(int argc, char **argv)
 				errx(1, "%s: block size is %s", optarg, str);
 			break;
 		case 'f':
-			d = mkdev(optarg, &par, 0, bufsz, round,
+			d = mkdev(optarg, &par, bufsz, round,
 			    rate, hold, autovol);
 			while ((a = alt_list) != NULL) {
 				alt_list = a->next;
@@ -653,7 +652,7 @@ main(int argc, char **argv)
 			if (d == NULL)
 				errx(1, "-F %s: no devices defined", optarg);
 			a = xmalloc(sizeof(struct opt_alt));
-			a->dev = mkdev(optarg, &par, 0, bufsz, round,
+			a->dev = mkdev(optarg, &par, bufsz, round,
 			    rate, hold, autovol);
 			for (pa = &alt_list; *pa != NULL; pa = &(*pa)->next)
 				;
@@ -677,7 +676,7 @@ main(int argc, char **argv)
 	}
 	if (dev_list == NULL) {
 		for (i = 0; default_devs[i] != NULL; i++) {
-			mkdev(default_devs[i], &par, 0,
+			mkdev(default_devs[i], &par,
 			    bufsz, round, rate, 0, autovol);
 		}
 	}
@@ -701,7 +700,7 @@ main(int argc, char **argv)
 		if (opt_new(d, NULL, o->pmin, o->pmax, o->rmin, o->rmax,
 			o->maxweight, o->mtc != NULL, o->dup, o->mode) == NULL)
 			return 1;
-		dev_adjpar(d, o->mode, o->pmax, o->rmax);
+		dev_adjpar(d, o->pmax, o->rmax);
 	}
 
 	while ((a = alt_list) != NULL) {

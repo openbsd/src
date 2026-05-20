@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.53 2026/03/15 14:24:43 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.54 2026/05/20 13:02:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -124,6 +124,7 @@ struct ctl {
 #define CTL_DEV_MASTER	1
 #define CTL_OPT_DEV	2
 #define CTL_APP_LEVEL	3
+#define CTL_OPT_MODE	4
 	unsigned int scope;
 	union {
 		struct {
@@ -145,6 +146,10 @@ struct ctl {
 			struct opt *opt;
 			struct dev *dev;
 		} opt_dev;
+		struct {
+			struct opt *opt;
+			int idx;
+		} opt_mode;
 	} u;
 
 	unsigned int addr;		/* slot side control address */
@@ -240,7 +245,6 @@ struct dev {
 	/*
 	 * desired parameters
 	 */
-	unsigned int reqmode;			/* mode */
 	struct aparams reqpar;			/* parameters */
 	int reqpchan, reqrchan;			/* play & rec chans */
 	unsigned int reqbufsz;			/* buffer size */
@@ -280,11 +284,11 @@ int dev_open(struct dev *);
 void dev_close(struct dev *);
 void dev_abort(struct dev *);
 void dev_migrate(struct dev *);
-struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
+struct dev *dev_new(char *, struct aparams *, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 struct dev *dev_bynum(int);
 void dev_del(struct dev *);
-void dev_adjpar(struct dev *, int, int, int);
+void dev_adjpar(struct dev *, int, int);
 int  dev_init(struct dev *);
 void dev_done(struct dev *);
 int dev_ref(struct dev *);
