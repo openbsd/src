@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.106 2025/12/01 13:07:28 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.107 2026/05/20 14:00:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -524,9 +524,11 @@ prefix_best(struct rib_entry *re)
 /*
  * Find the correct place to insert the prefix in the prefix list.
  * If the active prefix has changed we need to send an update also special
- * treatment is needed if 'rde evaluate all' is used on some peers.
- * To re-evaluate a prefix just call prefix_evaluate with old and new pointing
- * to the same prefix.
+ * treatment is needed if 'rde evaluate all' or add-path is used on some peers.
+ * To re-evaluate a prefix it is best to first call prefix_evaluate with
+ * new = NULL, old = prefix, adjust the prefix and then call prefix_evaluate
+ * with new = prefix, old = NULL. This ensures proper evaluation in case
+ * the prefix change influences prefix_eligible() or MED handling.
  */
 void
 prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
@@ -552,8 +554,13 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		prefix_remove(old, re);
 		old_pathid_tx = old->path_id_tx;
 	}
-	if (new != NULL)
+	if (new != NULL) {
 		prefix_insert(new, NULL, re);
+		if (!prefix_eligible(new))
+			new = NULL;
+		else
+			old_pathid_tx = 0;
+	}
 	newbest = prefix_best(re);
 
 	/*
@@ -578,10 +585,10 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 * rde_generate_updates() will then take care of distribution.
 	 */
 	if (rde_evaluate_all()) {
-		if (new != NULL && !prefix_eligible(new))
-			new = NULL;
-		if (new != NULL || old != NULL)
-			rde_generate_updates(re, new, old_pathid_tx, EVAL_ALL);
+		/* no old path to remove and path is ineligible, skip rest */
+		if (old_pathid_tx == 0 && new == NULL)
+			return;
+		rde_generate_updates(re, new, old_pathid_tx, EVAL_ALL);
 	}
 }
 
@@ -592,7 +599,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	struct rib_entry *re = prefix_re(p);
 	struct prefix	*newbest, *oldbest, *new, *old;
 	struct rib	*rib;
-	uint32_t	 old_pathid_tx;
+	uint32_t	 old_pathid_tx = 0;
 
 	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
 	rib = re_rib(re);
@@ -625,7 +632,8 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 
 	old = p;
 	prefix_remove(old, re);
-	old_pathid_tx = old->path_id_tx;
+	if (prefix_eligible(old))
+		old_pathid_tx = old->path_id_tx;
 
 	if (state == NEXTHOP_REACH)
 		p->nhflags |= NEXTHOP_VALID;
@@ -635,6 +643,15 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	new = p;
 	prefix_insert(new, NULL, re);
 	newbest = prefix_best(re);
+
+	if (!prefix_eligible(new))
+		new = NULL;
+	else
+		old_pathid_tx = 0;
+
+	/* path was and still is ineligible, skip rest */
+	if (old_pathid_tx == 0 && new == NULL)
+		return;
 
 	/*
 	 * If the active prefix changed or the active prefix was removed
@@ -657,9 +674,6 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	 * to be passed on (not only a change of the best prefix).
 	 * rde_generate_updates() will then take care of distribution.
 	 */
-	if (rde_evaluate_all()) {
-		if (!prefix_eligible(new))
-			new = NULL;
+	if (rde_evaluate_all())
 		rde_generate_updates(re, new, old_pathid_tx, EVAL_ALL);
-	}
 }
