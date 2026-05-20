@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.23 2026/02/27 08:26:16 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.24 2026/05/20 13:12:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,6 +57,7 @@ int parse_name(char **, char *);
 int parse_unit(char **, int *);
 int parse_val(char **, float *);
 int parse_node(char **, char *, int *);
+void parse_mode(char **, int *);
 int parse_modeval(char **, int *, float *);
 void dump(void);
 int cmd(char *);
@@ -607,8 +608,8 @@ parse_node(char **line, char *str, int *unit)
 /*
  * parse a decimal prefixed by the optional mode
  */
-int
-parse_modeval(char **line, int *rmode, float *rval)
+void
+parse_mode(char **line, int *rmode)
 {
 	char *p = *line;
 	unsigned mode;
@@ -629,6 +630,20 @@ parse_modeval(char **line, int *rmode, float *rval)
 	default:
 		mode = MODE_SET;
 	}
+	*line = p;
+	*rmode = mode;
+}
+
+/*
+ * parse a decimal prefixed by the optional mode
+ */
+int
+parse_modeval(char **line, int *rmode, float *rval)
+{
+	char *p = *line;
+	unsigned mode;
+
+	parse_mode(&p, &mode);
 	if (mode != MODE_TOGGLE) {
 		if (!parse_val(&p, rval))
 			return 0;
