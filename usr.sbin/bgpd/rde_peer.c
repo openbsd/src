@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.73 2026/05/20 18:33:21 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.74 2026/05/21 15:20:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -300,7 +300,7 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 }
 
 void
-rde_generate_updates(struct rib_entry *re, struct prefix *newpath,
+rde_enqueue_updates(struct rib_entry *re, struct prefix *newpath,
     uint32_t old_pathid_tx, enum eval_mode mode)
 {
 	struct rde_peer	*peer;

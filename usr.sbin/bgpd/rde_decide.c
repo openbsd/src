@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.107 2026/05/20 14:00:59 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.108 2026/05/21 15:20:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -575,20 +575,20 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		 */
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
-		rde_generate_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
+		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
 		return;
 	}
 
 	/*
 	 * If there are peers with 'rde evaluate all' every update needs
 	 * to be passed on (not only a change of the best prefix).
-	 * rde_generate_updates() will then take care of distribution.
+	 * rde_enqueue_updates() will then take care of distribution.
 	 */
 	if (rde_evaluate_all()) {
 		/* no old path to remove and path is ineligible, skip rest */
 		if (old_pathid_tx == 0 && new == NULL)
 			return;
-		rde_generate_updates(re, new, old_pathid_tx, EVAL_ALL);
+		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_ALL);
 	}
 }
 
@@ -665,15 +665,15 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 		 */
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
-		rde_generate_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
+		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
 		return;
 	}
 
 	/*
 	 * If there are peers with 'rde evaluate all' every update needs
 	 * to be passed on (not only a change of the best prefix).
-	 * rde_generate_updates() will then take care of distribution.
+	 * rde_enqueue_updates() will then take care of distribution.
 	 */
 	if (rde_evaluate_all())
-		rde_generate_updates(re, new, old_pathid_tx, EVAL_ALL);
+		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_ALL);
 }
