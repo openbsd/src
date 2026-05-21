@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.102 2026/04/09 18:35:49 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.103 2026/05/21 21:12:04 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1546,7 +1546,10 @@ http_read(struct http_connection *conn)
 		goto again;
 
 read_more:
-	assert(conn->bufpos < conn->bufsz);
+	if (conn->bufpos >= conn->bufsz) {
+		warnx("%s: read buffer full", conn_info(conn));
+		return http_failed(conn);
+	}
 	s = tls_read(conn->tls, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
@@ -1772,7 +1775,10 @@ proxy_read(struct http_connection *conn)
 	char *buf;
 	int done;
 
-	assert(conn->bufpos < conn->bufsz);
+	if (conn->bufpos >= conn->bufsz) {
+		warnx("%s: read buffer full", conn_info(conn));
+		return http_failed(conn);
+	}
 	s = read(conn->fd, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
