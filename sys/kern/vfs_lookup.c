@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.92 2026/05/15 00:39:21 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.93 2026/05/21 02:20:53 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -702,6 +702,11 @@ nextname:
 	}
 
 terminal:
+	/* __pledge_open() only opens regular files in /usr/share/zoneinfo */
+	if ((cnp->cn_flags & BPU_ZONEINFO) && dp->v_type != VREG) {
+		error = EACCES;
+		goto bad2;
+	}
 	/*
 	 * Check for read-only file systems.
 	 */
