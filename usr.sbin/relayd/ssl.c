@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.39 2026/05/16 13:16:50 rsadowski Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.40 2026/05/21 14:56:34 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -127,12 +127,15 @@ ssl_update_certificate(const uint8_t *oldcert, size_t oldlen, EVP_PKEY *pkey,
 	    name[1], sizeof(name[1])))
 		goto done;
 
-	if ((cert = X509_dup(cert)) == NULL)
-		goto done;
-
 	/* Update certificate key and use our CA as the issuer */
-	X509_set_pubkey(cert, pkey);
-	X509_set_issuer_name(cert, X509_get_subject_name(cacert));
+	if (!X509_set_pubkey(cert, pkey)) {
+		log_warnx("%s: X509_set_pubkey failed", __func__);
+		goto done;
+	}
+	if (!X509_set_issuer_name(cert, X509_get_subject_name(cacert))) {
+		log_warnx("%s: X509_get_issuer_name failed", __func__);
+		goto done;
+	}
 
 	/* Sign with our CA */
 	if (!X509_sign(cert, capkey, EVP_sha256())) {
