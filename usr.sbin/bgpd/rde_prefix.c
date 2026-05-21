@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.62 2026/05/18 18:36:25 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.63 2026/05/21 13:28:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -161,7 +161,7 @@ void
 pt_shutdown(void)
 {
 	if (!RB_EMPTY(&pttable))
-		log_debug("pt_shutdown: tree is not empty.");
+		log_debug("prefix tree is not empty.");
 }
 
 void
@@ -263,7 +263,7 @@ pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 		pte4.refcnt = UINT32_MAX;
 		pte4.aid = prefix->aid;
 		if (prefixlen > 32) {
-			log_warnx("pt_fill: %d, bad IPv4 prefixlen", prefixlen);
+			log_warnx("bad IPv4 prefixlen %d", prefixlen);
 			prefixlen = 32;
 		}
 		inet4applymask(&pte4.prefix4, &prefix->v4, prefixlen);
@@ -275,7 +275,7 @@ pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 		pte6.refcnt = UINT32_MAX;
 		pte6.aid = prefix->aid;
 		if (prefixlen > 128) {
-			log_warnx("pt_fill: %d, bad IPv6 prefixlen", prefixlen);
+			log_warnx("bad IPv6 prefixlen %d", prefixlen);
 			prefixlen = 128;
 		}
 		inet6applymask(&pte6.prefix6, &prefix->v6, prefixlen);
@@ -287,7 +287,7 @@ pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 		pte_vpn4.refcnt = UINT32_MAX;
 		pte_vpn4.aid = prefix->aid;
 		if (prefixlen > 32) {
-			log_warnx("pt_fill: %d, bad IPv4 prefixlen", prefixlen);
+			log_warnx("bad IPv4 vpn prefixlen %d", prefixlen);
 			prefixlen = 32;
 		}
 		inet4applymask(&pte_vpn4.prefix4, &prefix->v4, prefixlen);
@@ -303,7 +303,7 @@ pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 		pte_vpn6.refcnt = UINT32_MAX;
 		pte_vpn6.aid = prefix->aid;
 		if (prefixlen > 128) {
-			log_warnx("pt_fill: %d, bad IPv6 prefixlen", prefixlen);
+			log_warnx("bad IPv6 vpn prefixlen %d", prefixlen);
 			prefixlen = 128;
 		}
 		inet6applymask(&pte_vpn6.prefix6, &prefix->v6, prefixlen);
@@ -323,7 +323,7 @@ pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 			break;
 		case AID_INET:
 			if (prefixlen > 32) {
-				log_warnx("pt_fill: %d, bad IPv4 prefixlen",
+				log_warnx("bad IPv4 in EVPN prefixlen %d",
 				    prefixlen);
 				prefixlen = 32;
 			}
@@ -331,14 +331,15 @@ pt_fill(struct bgpd_addr *prefix, u_int prefixlen)
 			break;
 		case AID_INET6:
 			if (prefixlen > 128) {
-				log_warnx("pt_fill: %d, bad IPv6 prefixlen",
+				log_warnx("bad IPv6 in EVPN prefixlen %d",
 				    prefixlen);
 				prefixlen = 128;
 			}
 			pte_evpn.prefix6 = prefix->evpn.v6;
 			break;
 		default:
-			log_warnx("pt_fill: unknown EVPN prefix");
+			log_warnx("unknown EVPN prefix type %d",
+			    prefix->evpn.aid);
 			goto fail;
 		}
 		pte_evpn.aid = prefix->aid;
@@ -390,11 +391,11 @@ pt_add(struct bgpd_addr *prefix, u_int prefixlen)
 
 	p = pt_fill(prefix, prefixlen);
 	if (p->aid == 0xff)
-		fatalx("pt_add: insert failed, pt_fill failed");
+		fatalx("prefix insertion failed, pt_fill failed");
 	p = pt_alloc(p, p->len);
 
 	if (RB_INSERT(pt_tree, &pttable, p) != NULL)
-		fatalx("pt_add: insert failed");
+		fatalx("prefix insertion failed, already present");
 
 	return (p);
 }
@@ -444,7 +445,7 @@ pt_add_flow(struct flowspec *f)
 	memcpy(((struct pt_entry_flow *)p)->flow, f->data, f->len);
 
 	if (RB_INSERT(pt_tree, &pttable, p) != NULL)
-		fatalx("pt_add: insert failed");
+		fatalx("flowspec insertion failed, already present");
 
 	return (p);
 }
@@ -472,10 +473,10 @@ void
 pt_remove(struct pt_entry *pte)
 {
 	if (pte->refcnt != 0)
-		fatalx("pt_remove: entry still holds references");
+		fatalx("prefix remove: entry still holds references");
 
 	if (RB_REMOVE(pt_tree, &pttable, pte) == NULL)
-		log_warnx("pt_remove: remove failed.");
+		log_warnx("prefix remove failed: not in table");
 	pt_free(pte);
 }
 
@@ -621,7 +622,8 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 				return (-1);
 			break;
 		default:
-			fatalx("%s: unknown evpn aid %d", __func__, ea->vpnaid);
+			fatalx("unknown EVPN prefix type %d",
+			    ea->vpnaid);
 		}
 		return (0);
 	case AID_FLOWSPECv4:
