@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: l3vpn.sh,v 1.8 2025/04/29 18:35:51 claudio Exp $
+#	$OpenBSD: l3vpn.sh,v 1.9 2026/05/21 18:51:06 claudio Exp $
 
 set -e
 
@@ -13,7 +13,7 @@ RDOMAIN3=$7
 RDOMAIN4=$8
 
 RDOMAINS="${RDOMAIN1} ${RDOMAIN2} ${RDOMAIN3} ${RDOMAIN4}"
-IFACES="${PAIR1} ${PAIR2} ${MPE1} ${MPE2}"
+IFACES="${PAIR1} ${PAIR2} mpe${RDOMAIN3} mpe${RDOMAIN4}"
 PAIR1IP=10.12.57.1
 PAIR2IP=10.12.57.2
 PAIR1IP6=2001:db8:57::1
