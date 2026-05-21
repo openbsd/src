@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.76 2026/05/18 09:22:09 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.77 2026/05/21 14:48:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1045,7 +1045,7 @@ show_rib_detail(struct ctl_show_rib *r, struct ibuf *asbuf, int flag0)
 	printf("avs %s, %s", fmt_avs(r->aspa_validation_state, 0),
 	    fmt_flags(r->flags, 0));
 
-	printf("%c    Last update: %s ago%c", EOL0(flag0),
+	printf("%c    Last update: %s%c", EOL0(flag0),
 	    fmt_monotime(r->lastchange), EOL0(flag0));
 }
 

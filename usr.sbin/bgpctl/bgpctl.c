@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.321 2026/05/18 18:37:22 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.322 2026/05/21 14:48:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -66,6 +66,7 @@ struct mrt_parser net_mrt = { network_mrt_dump, NULL, NULL };
 const struct output	*output = &show_output;
 int tableid;
 int nodescr;
+int abs_time;
 
 __dead void
 usage(void)
@@ -134,6 +135,7 @@ main(int argc, char *argv[])
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 
+		abs_time = 1;
 		memset(&ribreq, 0, sizeof(ribreq));
 		if (res->as.type != AS_UNDEF)
 			ribreq.as = res->as;
@@ -588,14 +590,10 @@ show(struct imsg *imsg, struct parse_result *res)
 }
 
 time_t
-get_rel_monotime(monotime_t t)
+get_rel_monotime(monotime_t mt)
 {
-	monotime_t now;
-
-	if (!monotime_valid(t))
-		return 0;
-	now = getmonotime();
-	return monotime_to_sec(monotime_sub(now, t));
+	mt = monotime_sub(getmonotime(), mt);
+	return monotime_to_sec(mt);
 }
 
 char *
@@ -644,7 +642,7 @@ fmt_auth_method(enum auth_method method)
 	}
 }
 
-#define TF_LEN	16
+#define TF_LEN	64
 
 static const char *
 fmt_timeframe(time_t t)
@@ -670,7 +668,7 @@ fmt_timeframe(time_t t)
 	week /= 7;
 
 	if (week >= 1000)
-		snprintf(buf, sizeof(buf), "%s%02lluw", due, week);
+		snprintf(buf, sizeof(buf), "%s%lluw", due, week);
 	else if (week > 0)
 		snprintf(buf, sizeof(buf), "%s%02lluw%01ud%02uh",
 		    due, week, day, hrs);
@@ -688,12 +686,23 @@ const char *
 fmt_monotime(monotime_t mt)
 {
 	time_t t;
+	monotime_t z = monotime_clear();
 
-	if (!monotime_valid(mt))
-		return ("Never");
+	if (abs_time) {
+		struct tm *tm;
+		static char buf[TF_LEN];
 
-	t = get_rel_monotime(mt);
-	return (fmt_timeframe(t));
+		t = monotime_to_time(mt);
+		if ((tm = gmtime(&t)) == NULL)
+			return "invalid";
+		strftime(buf, sizeof(buf), "%FT%TZ", tm);
+		return (buf);
+	} else {
+		if (monotime_cmp(mt, z) == 0)
+			return ("Never");
+		t = get_rel_monotime(mt);
+		return (fmt_timeframe(t));
+	}
 }
 
 const char *
