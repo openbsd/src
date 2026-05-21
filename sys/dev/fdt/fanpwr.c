@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.10 2024/05/26 22:04:52 kettenis Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.11 2026/05/21 10:53:34 jmatthew Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -51,6 +51,7 @@
 /* Distinguish between Fairchild original and Silergy clones. */
 enum fanpwr_id {
 	FANPWR_FAN53555,	/* Fairchild FAN53555 */
+	FANPWR_RK8600,		/* Rockchip RK8600 */
 	FANPWR_RK8602,		/* Rockchip RK8602 */
 	FANPWR_SYR827,		/* Silergy SYR827 */
 	FANPWR_SYR828,		/* Silergy SYR828 */
@@ -93,6 +94,7 @@ fanpwr_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	return (strcmp(ia->ia_name, "fcs,fan53555") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk8600") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk8602") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk8603") == 0 ||
 	    strcmp(ia->ia_name, "silergy,syr827") == 0 ||
@@ -114,7 +116,10 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (OF_is_compatible(node, "rockchip,rk8602") ||
+	if (OF_is_compatible(node, "rockchip,rk8600")) {
+		printf(": RK8600");
+		sc->sc_id = FANPWR_RK8600;
+	} else if (OF_is_compatible(node, "rockchip,rk8602") ||
 	    OF_is_compatible(node, "rockchip,rk8603")) {
 		printf(": RK8602");
 		sc->sc_id = FANPWR_RK8602;
@@ -194,6 +199,7 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_vbase = 500000;
 		sc->sc_vstep = 6250;
 		break;
+	case FANPWR_RK8600:
 	case FANPWR_SYR827:
 	case FANPWR_SYR828:
 		sc->sc_vbase = 712500;
