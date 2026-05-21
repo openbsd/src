@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.12 2026/05/07 14:51:20 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.13 2026/05/21 05:33:20 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1278,26 +1278,23 @@ static ssize_t
 ax_pdutoostring(struct ax_pdu_header *header,
     struct ax_ostring *ostring, uint8_t *buf, size_t rawlen)
 {
-	ssize_t nread;
+	size_t padding;
 
 	if (rawlen < 4)
 		goto fail;
-
 	ostring->aos_slen = ax_pdutoh32(header, buf);
 	rawlen -= 4;
 	buf += 4;
-	if (((ostring->aos_slen + 3) & ~3U) > rawlen)
+
+	padding = (4 - (ostring->aos_slen % 4)) % 4;
+	if (rawlen < ostring->aos_slen || rawlen - ostring->aos_slen < padding)
 		goto fail;
 	if ((ostring->aos_string = malloc(ostring->aos_slen + 1)) == NULL)
 		return -1;
 	memcpy(ostring->aos_string, buf, ostring->aos_slen);
 	ostring->aos_string[ostring->aos_slen] = '\0';
 
-	nread = 4 + ostring->aos_slen;
-	if (ostring->aos_slen % 4 != 0)
-		nread += 4 - (ostring->aos_slen % 4);
-
-	return nread;
+	return 4 + ostring->aos_slen + padding;
 
 fail:
 	errno = EPROTO;
