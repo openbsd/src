@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.38 2024/03/21 11:27:18 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.39 2026/05/22 15:22:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -59,6 +59,7 @@ cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*source = cmdq_get_source(item);
+	struct client		*c = cmdq_get_client(item);
 	struct client		*tc = cmdq_get_target_client(item), *loop;
 	struct session		*s;
 	enum msgtype		 msgtype;
@@ -67,6 +68,13 @@ cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 	if (cmd_get_entry(self) == &cmd_suspend_client_entry) {
 		server_client_suspend(tc);
 		return (CMD_RETURN_NORMAL);
+	}
+
+	if (c->flags & CLIENT_READONLY) {
+		if (args_has(args, 's') || args_has(args, 'a') || c != tc) {
+			cmdq_error(item, "client is read-only");
+			return (CMD_RETURN_ERROR);
+		}
 	}
 
 	if (args_has(args, 'P'))
