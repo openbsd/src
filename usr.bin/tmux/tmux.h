@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1323 2026/05/22 09:05:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1324 2026/05/22 09:21:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1704,9 +1704,20 @@ struct tty_ctx {
 #define TTY_CTX_CELL_DRAW_LINE 0x20
 #define TTY_CTX_CELL_INVALIDATE 0x40
 
-	u_int		 num;
-	void		*ptr;
-	void		*ptr2;
+	union {
+		u_int			 n;
+
+		struct {
+			const char	*data;
+			size_t		 size;
+		} data;
+
+		struct {
+			const char	*clip;
+			const char	*data;
+			size_t		 size;
+		} sel;
+	};
 
 	/*
 	 * Cursor and region position before the screen was updated - this is
