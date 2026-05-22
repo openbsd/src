@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.14 2026/05/22 04:41:35 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.15 2026/05/22 05:02:46 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -41,9 +41,10 @@ report_hexdump(const char *func, const char *description, const char *msg,
     const unsigned char *want, size_t want_len,
     const unsigned char *got, size_t got_len)
 {
-	fprintf(stderr, "%s: \"%s\" %s\nwant:\n", func, description, msg);
+	fprintf(stderr, "%s: \"%s\" %s\nwant %zu bytes:\n",
+	    func, description, msg, want_len);
 	hexdump(want, want_len);
-	fprintf(stderr, "got:\n");
+	fprintf(stderr, "got %zu bytes:\n", got_len);
 	hexdump(got, got_len);
 }
 
@@ -2031,6 +2032,7 @@ run_IPAddressFamily_cmp_ub_test(void)
 	unsigned char *out = NULL;
 	int out_len = 0;
 	unsigned int nlri_safi = 4;
+	int memcmp_failed;
 	int failed = 1;
 
 	if ((addrs = IPAddrBlocks_new()) == NULL) {
@@ -2041,6 +2043,7 @@ run_IPAddressFamily_cmp_ub_test(void)
 	/*
 	 * Add IPv6 NLRI, inheriting
 	 */
+
 	if (!X509v3_addr_add_inherit(addrs, IANA_AFI_IPV6, &nlri_safi)) {
 		fprintf(stderr, "%s: X509v3_addr_add_inherit IPv6\n", __func__);
 		goto err;
@@ -2049,6 +2052,7 @@ run_IPAddressFamily_cmp_ub_test(void)
 	/*
 	 * Add IPv6, inheriting
 	 */
+
 	if (!X509v3_addr_add_inherit(addrs, IANA_AFI_IPV6, NULL)) {
 		fprintf(stderr, "%s: X509v3_addr_add_inherit IPv6\n", __func__);
 		goto err;
@@ -2101,12 +2105,22 @@ run_IPAddressFamily_cmp_ub_test(void)
 	/*
 	 * Add IPv4, inheriting
 	 */
+
 	if (!X509v3_addr_add_inherit(addrs, IANA_AFI_IPV4, NULL)) {
 		fprintf(stderr, "%s: X509v3_addr_add_inherit IPv4\n", __func__);
 		goto err;
 	}
 
+	/*
+	 * Sort the thing.
+	 */
+
 	sk_IPAddressFamily_sort(addrs);
+
+	/*
+	 * Since addrs contains two invalid AFIs, X509v3_addr_is_canonical()
+	 * should reject it. Serializing works nevertheless.
+	 */
 
 	if (X509v3_addr_is_canonical(addrs)) {
 		fprintf(stderr, "%s: X509v3_addr_is_canonical\n", __func__);
@@ -2115,16 +2129,17 @@ run_IPAddressFamily_cmp_ub_test(void)
 
 	if ((out_len = i2d_IPAddrBlocks(addrs, &out)) <= 0) {
 		fprintf(stderr, "%s: i2d_IPAddrBlocks failed\n", __func__);
+		out_len = 0;
 		goto err;
 	}
 
-	if (invalid_block_len != (size_t)out_len) {
-		fprintf(stderr, "%s: length: want %zu, got %d\n",
-		    __func__, invalid_block_len, out_len);
-		goto err;
-	}
+	memcmp_failed = 0;
+	if (invalid_block_len != (size_t)out_len)
+		memcmp_failed = 1;
+	if (!memcmp_failed)
+		memcmp_failed = memcmp(invalid_block, out, out_len) != 0;
 
-	if (memcmp(invalid_block, out, out_len) != 0) {
+	if (memcmp_failed) {
 		report_hexdump(__func__, "invalid IPAddrBlock", "memcmp DER failed",
 		    invalid_block, invalid_block_len, out, out_len);
 		goto err;
@@ -2148,20 +2163,22 @@ run_IPAddressFamily_cmp_ub_test(void)
 
 	if ((out_len = i2d_IPAddrBlocks(addrs, &out)) <= 0) {
 		fprintf(stderr, "%s: i2d_IPAddrBlocks (2) failed\n", __func__);
+		out_len = 0;
 		goto err;
 	}
 
-	if (invalid_block_len != (size_t)out_len) {
-		fprintf(stderr, "%s: length (2): want %zu, got %d\n",
-		    __func__, invalid_block_len, out_len);
-		goto err;
-	}
+	memcmp_failed = 0;
+	if (invalid_block_len != (size_t)out_len)
+		memcmp_failed = 1;
+	if (!memcmp_failed)
+		memcmp_failed = memcmp(invalid_block, out, out_len) != 0;
 
-	if (memcmp(invalid_block, out, out_len) != 0) {
+	if (memcmp_failed) {
 		report_hexdump(__func__, "invalid IPAddrBlock (2)", "memcmp DER failed",
 		    invalid_block, invalid_block_len, out, out_len);
 		goto err;
 	}
+
 	failed = 0;
 
  err:
