@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.27 2026/05/16 21:17:43 mvs Exp $	*/
+/*	$OpenBSD: sem.h,v 1.28 2026/05/22 23:10:05 mvs Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ struct semid_ds_kern {
 	time_t		sem_ctime;	/* last change time */
 	    				/* Times measured in secs since */
 	    				/* 00:00:00 GMT, Jan. 1, 1970 */
+	struct refcnt	sem_refcnt;
 };
 
 /*

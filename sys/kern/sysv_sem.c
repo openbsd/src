@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.68 2026/05/16 21:17:43 mvs Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.69 2026/05/22 23:10:05 mvs Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -71,6 +71,23 @@ seminit(void)
 	semseqs = mallocarray(seminfo.semmni, sizeof(unsigned short),
 	    M_SEM, M_WAITOK|M_ZERO);
 	SLIST_INIT(&semu_list);
+}
+
+static inline void
+sem_ref(struct semid_ds_kern *semaptr)
+{
+	refcnt_take(&semaptr->sem_refcnt);
+}
+
+void
+sem_rele(struct semid_ds_kern *semaptr)
+{
+	if (refcnt_rele(&semaptr->sem_refcnt)) {
+		semtot -= semaptr->sem_nsems;
+		free(semaptr->sem_base, M_SEM,
+		    semaptr->sem_nsems * sizeof(struct sem));
+		pool_put(&sema_pool, semaptr);
+	}
 }
 
 /*
@@ -271,11 +288,8 @@ again:
 			return (error);
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
-		semtot -= semaptr->sem_nsems;
-		free(semaptr->sem_base, M_SEM,
-		    semaptr->sem_nsems * sizeof(struct sem));
-		pool_put(&sema_pool, semaptr);
 		sema[ix] = NULL;
+		sem_rele(semaptr);
 		semundo_clear(ix, -1);
 		wakeup(&sema[ix]);
 		break;
@@ -329,17 +343,20 @@ again:
 
 	case GETALL:
 		nsems = semaptr->sem_nsems;
+
+		sem_ref(semaptr);
 		semval = mallocarray(nsems, sizeof(arg.array[0]),
 		    M_TEMP, M_WAITOK);
-		if (semaptr != sema[ix] || 
-		    semaptr->sem_perm.seq != IPCID_TO_SEQ(semid) ||
-		    semaptr->sem_nsems != nsems) {
+		sem_rele(semaptr);
+
+		if (semaptr != sema[ix]) {
 			free(semval, M_TEMP, nsems * sizeof(arg.array[0]));
 			semval = NULL;
 			goto again;
 		}
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			goto error;
+
 		for (i = 0; i < nsems; i++)
 			semval[i] = semaptr->sem_base[i].semval;
 		for (i = 0; i < nsems; i++) {
@@ -372,21 +389,26 @@ again:
 
 	case SETALL:
 		nsems = semaptr->sem_nsems;
+
+		sem_ref(semaptr);
 		semval = mallocarray(nsems, sizeof(arg.array[0]),
 		    M_TEMP, M_WAITOK);
 		for (i = 0; i < nsems; i++) {
 			error = copyin(&arg.array[i], &semval[i],
 			    sizeof(arg.array[0]));
 			if (error != 0)
-				goto error;
+				break;
 			if (semval[i] > seminfo.semvmx) {
 				error = ERANGE;
-				goto error;
+				break;
 			}
 		}
-		if (semaptr != sema[ix] ||
-		    semaptr->sem_perm.seq != IPCID_TO_SEQ(semid) ||
-		    semaptr->sem_nsems != nsems) {
+		sem_rele(semaptr);
+
+		if (error)
+			goto error;
+
+		if (semaptr != sema[ix]) {
 			free(semval, M_TEMP, nsems * sizeof(arg.array[0]));
 			semval = NULL;
 			goto again;
@@ -491,6 +513,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 			goto error;
 		}
 		DPRINTF(("semid %d is available\n", semid));
+		refcnt_init(&semaptr_new->sem_refcnt);
 		semaptr_new->sem_perm.key = key;
 		semaptr_new->sem_perm.cuid = cred->cr_uid;
 		semaptr_new->sem_perm.uid = cred->cr_uid;
@@ -684,21 +707,27 @@ skipcopy:
 		else
 			semptr->semncnt++;
 
+		sem_ref(semaptr);
+
 		DPRINTF(("semop:  good night!\n"));
 		error = tsleep_nsec(&sema[semid], PLOCK | PCATCH,
 		    "semwait", INFSLP);
 		DPRINTF(("semop:  good morning (error=%d)!\n", error));
 
-		suptr = NULL;	/* sem_undo may have been reallocated */
+		sem_rele(semaptr);
 
 		/*
-		 * Make sure that the semaphore still exists
+		 * Make sure that the semaphore still exists. Even if
+		 * `semaptr' was released, it's address was not used to
+		 * alloc the new one. The semaphore is alive if address
+		 * was not changed.
 		 */
-		if (sema[semid] == NULL ||
-		    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid))) {
+		if (semaptr != sema[semid]) {
 			error = EIDRM;
 			goto done2;
 		}
+
+		suptr = NULL;	/* sem_undo may have been reallocated */
 
 		/*
 		 * The semaphore is still alive.  Readjust the count of
