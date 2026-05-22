@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.32 2023/08/29 14:44:53 op Exp $ */
+/*	$Id: acctproc.c,v 1.33 2026/05/22 01:53:10 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,6 +28,7 @@
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/rsa.h>
 #include <openssl/err.h>
 
@@ -182,18 +183,13 @@ out:
 }
 
 static int
-op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
+op_sign_rsa(char **jwk, EVP_PKEY *pkey)
 {
 	char	*exp = NULL, *mod = NULL;
 	int	rc = 0;
 	RSA	*r;
 
-	*prot = NULL;
-
-	/*
-	 * First, extract relevant portions of our private key.
-	 * Finally, format the header combined with the nonce.
-	 */
+	*jwk = NULL;
 
 	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
 		warnx("EVP_PKEY_get0_RSA");
@@ -201,8 +197,8 @@ op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 		warnx("bn2string");
 	else if ((exp = bn2string(RSA_get0_e(r))) == NULL)
 		warnx("bn2string");
-	else if ((*prot = json_fmt_protected_rsa(exp, mod, nonce, url)) == NULL)
-		warnx("json_fmt_protected_rsa");
+	else if ((*jwk = json_fmt_jwk_rsa(exp, mod)) == NULL)
+		warnx("json_fmt_jwk_rsa");
 	else
 		rc = 1;
 
@@ -212,14 +208,14 @@ op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 }
 
 static int
-op_sign_ec(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
+op_sign_ec(char **jwk, EVP_PKEY *pkey)
 {
 	BIGNUM	*X = NULL, *Y = NULL;
 	EC_KEY	*ec = NULL;
 	char	*x = NULL, *y = NULL;
 	int	rc = 0;
 
-	*prot = NULL;
+	*jwk = NULL;
 
 	if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
 		warnx("EVP_PKEY_get0_EC_KEY");
@@ -234,8 +230,8 @@ op_sign_ec(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 		warnx("bn2string");
 	else if ((y = bn2string(Y)) == NULL)
 		warnx("bn2string");
-	else if ((*prot = json_fmt_protected_ec(x, y, nonce, url)) == NULL)
-		warnx("json_fmt_protected_ec");
+	else if ((*jwk = json_fmt_jwk_ec(x, y)) == NULL)
+		warnx("json_fmt_jwk_ec");
 	else
 		rc = 1;
 
@@ -262,6 +258,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 	char			*prot = NULL, *prot64 = NULL;
 	char			*sign = NULL, *dig64 = NULL, *fin = NULL;
 	char			*url = NULL, *kid = NULL, *alg = NULL;
+	char			*jwk = NULL;
 	const unsigned char	*digp;
 	unsigned char		*dig = NULL, *buf = NULL;
 	size_t			 digsz;
@@ -309,17 +306,21 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 	} else {
 		switch (EVP_PKEY_base_id(pkey)) {
 		case EVP_PKEY_RSA:
-			if (!op_sign_rsa(&prot, pkey, nonce, url))
+			if (!op_sign_rsa(&jwk, pkey))
 				goto out;
 			break;
 		case EVP_PKEY_EC:
-			if (!op_sign_ec(&prot, pkey, nonce, url))
+			if (!op_sign_ec(&jwk, pkey))
 				goto out;
 			break;
 		default:
 			warnx("EVP_PKEY_base_id");
 			goto out;
 		}
+
+		prot = json_fmt_protected_jwk(alg, jwk, nonce, url);
+		if (prot == NULL)
+			goto out;
 	}
 
 	/* The header combined with the nonce, base64. */
@@ -434,6 +435,7 @@ out:
 	free(pay64);
 	free(url);
 	free(nonce);
+	free(jwk);
 	free(kid);
 	free(prot);
 	free(prot64);
@@ -444,8 +446,96 @@ out:
 	return rc;
 }
 
+static int
+op_eab(int fd, EVP_PKEY *pkey, const char *eab_kid,
+    const unsigned char *eab_key, int eab_key_len)
+{
+	char			*url = NULL;
+	char			*prot = NULL, *prot64 = NULL;
+	char			*jwk = NULL, *pay64 = NULL;
+	char			*sign = NULL;
+	char			*dig64 = NULL, *fin = NULL;
+	unsigned char		dig[EVP_MAX_MD_SIZE];
+	unsigned int		digsz;
+	int			sign_len, rc = 0;
+
+	if ((url = readstr(fd, COMM_URL)) == NULL)
+		goto out;
+
+	/* protected component: algorithm, EAB key ID, new account URL */
+	if ((prot = json_fmt_protected_eab(eab_kid, url)) == NULL) {
+		warnx("json_fmt_protected_eab");
+		goto out;
+	}
+
+	if ((prot64 = base64buf_url(prot, strlen(prot))) == NULL) {
+		warnx("base64buf_url");
+		goto out;
+	}
+
+	/* payload component: account public key */
+	switch (EVP_PKEY_base_id(pkey)) {
+	case EVP_PKEY_RSA:
+		if (!op_sign_rsa(&jwk, pkey))
+			goto out;
+		break;
+	case EVP_PKEY_EC:
+		if (!op_sign_ec(&jwk, pkey))
+			goto out;
+		break;
+	default:
+		warnx("EVP_PKEY_base_id");
+		goto out;
+	}
+
+	if ((pay64 = base64buf_url(jwk, strlen(jwk))) == NULL) {
+		warnx("base64buf_url");
+		goto out;
+	}
+
+	sign_len = asprintf(&sign, "%s.%s", prot64, pay64);
+	if (sign_len == -1) {
+		warn("asprintf");
+		sign = NULL;
+		goto out;
+	}
+	
+	/* sign with the EAB key */
+	if (HMAC(EVP_sha256(), eab_key, eab_key_len, sign, sign_len, dig,
+	    &digsz) == NULL) {
+		warnx("HMAC");
+		goto out;
+	}
+
+	if ((dig64 = base64buf_url((char *)dig, digsz)) == NULL) {
+		warnx("base64buf_url");
+		goto out;
+	}
+
+	if ((fin = json_fmt_signed(prot64, pay64, dig64)) == NULL) {
+		warnx("json_fmt_signed");
+		goto out;
+	} else if (writestr(fd, COMM_REQ, fin) < 0) {
+		goto out;
+	}
+
+	rc = 1;
+out:
+	
+	free(fin);
+	free(dig64);
+	free(sign);
+	free(pay64);
+	free(jwk);
+	free(prot64);
+	free(prot);
+	free(url);
+	return rc;
+}
+
 int
-acctproc(int netsock, const char *acctkey, enum keytype keytype)
+acctproc(int netsock, const char *acctkey, enum keytype keytype,
+    const char *eab_kid, const unsigned char *eab_key, int eab_key_len)
 {
 	FILE		*f = NULL;
 	EVP_PKEY	*pkey = NULL;
@@ -522,7 +612,7 @@ acctproc(int netsock, const char *acctkey, enum keytype keytype)
 		if ((lval = readop(netsock, COMM_ACCT)) == 0)
 			op = ACCT_STOP;
 		else if (lval == ACCT_SIGN || lval == ACCT_KID_SIGN ||
-		    lval == ACCT_THUMBPRINT)
+		    lval == ACCT_THUMBPRINT || lval == ACCT_EAB)
 			op = lval;
 
 		if (ACCT__MAX == op) {
@@ -542,6 +632,12 @@ acctproc(int netsock, const char *acctkey, enum keytype keytype)
 			if (op_thumbprint(netsock, pkey))
 				break;
 			warnx("op_thumbprint");
+			goto out;
+		case ACCT_EAB:
+			if (op_eab(netsock, pkey, eab_kid, eab_key,
+			    eab_key_len))
+				break;
+			warnx("op_eab");
 			goto out;
 		default:
 			abort();

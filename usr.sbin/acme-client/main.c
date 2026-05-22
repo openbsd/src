@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.58 2026/02/23 10:27:49 sthen Exp $ */
+/*	$Id: main.c,v 1.59 2026/05/22 01:53:10 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,12 +43,14 @@ main(int argc, char *argv[])
 	char		 *certdir = NULL;
 	char		 *chngdir = NULL, *auth = NULL;
 	char		 *conffile = CONF_FILE;
+	char		 *eab = NULL, *eab_key_enc = NULL;
 	char		 *tmps, *tmpsd;
+	unsigned char	 *eab_key = NULL;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
 	int		  force = 0;
 	int		  c, rc, revocate = 0;
-	int		  popts = 0;
+	int		  popts = 0, eab_key_len = 0;
 	pid_t		  pids[COMP__MAX];
 	size_t		  ne;
 
@@ -60,10 +62,13 @@ main(int argc, char *argv[])
 	if (setlocale(LC_CTYPE, "C") == NULL)
 		errx(1, "setlocale");
 
-	while ((c = getopt(argc, argv, "Fnrvf:")) != -1)
+	while ((c = getopt(argc, argv, "Fe:nrvf:")) != -1)
 		switch (c) {
 		case 'F':
 			force = 1;
+			break;
+		case 'e':
+			eab = strdup(optarg);
 			break;
 		case 'f':
 			if ((conffile = strdup(optarg)) == NULL)
@@ -166,6 +171,22 @@ main(int argc, char *argv[])
 		ne++;
 	}
 
+	if (eab != NULL) {
+		eab_key_enc = eab;
+		eab = strsep(&eab_key_enc, ":");
+		if (eab_key_enc == NULL) {
+			warnx("EAB parameters must be in the format keyid:key");
+			ne++;
+		} else {
+			eab_key_len = unbase64buf_url(
+			    (unsigned char *)eab_key_enc, &eab_key);
+			if (eab_key_len == -1) {
+				warnx("unable to decode EAB key");
+				ne++;
+			}
+		}
+	}
+
 	if (ne > 0)
 		return EXIT_FAILURE;
 
@@ -222,7 +243,7 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1],
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
-		    revocate, authority, domain);
+		    revocate, authority, domain, eab != NULL);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -267,7 +288,7 @@ main(int argc, char *argv[])
 		close(file_fds[0]);
 		close(file_fds[1]);
 		c = acctproc(acct_fds[0], authority->account,
-		    authority->keytype);
+		    authority->keytype, eab, eab_key, eab_key_len);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -378,6 +399,6 @@ main(int argc, char *argv[])
 	return rc != COMP__MAX ? EXIT_FAILURE : (c == 2 ? EXIT_SUCCESS : 2);
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-Fnrv] [-f configfile] handle\n");
+	    "usage: acme-client [-Fnrv] [-f configfile] [-e kid:key] handle\n");
 	return EXIT_FAILURE;
 }

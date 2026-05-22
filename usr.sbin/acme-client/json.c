@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.24 2026/05/02 13:08:36 florian Exp $ */
+/*	$Id: json.c,v 1.25 2026/05/22 01:53:10 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -615,7 +615,7 @@ json_fmt_chkacc(void)
  * Format the "newAccount" resource request.
  */
 char *
-json_fmt_newacc(const char *contact)
+json_fmt_newacc(const char *contact, const char *eab)
 {
 	int	 c;
 	char	*p, *cnt = NULL;
@@ -626,6 +626,18 @@ json_fmt_newacc(const char *contact)
 			warn("asprintf");
 			return NULL;
 		}
+	}
+	if (eab != NULL) {
+		char *ecnt = NULL;
+		c = asprintf(&ecnt, "%s\"externalAccountBinding\": %s, ",
+		    cnt == NULL ? "" : cnt, eab);
+		if (c == -1) {
+			warn("asprintf");
+			return NULL;
+		}
+
+		free(cnt);
+		cnt = ecnt;
 	}
 
 	c = asprintf(&p, "{"
@@ -734,23 +746,35 @@ json_fmt_newcert(const char *cert)
 }
 
 /*
- * Protected component of json_fmt_signed().
+ * Format an RSA public key in JWK format.
  */
 char *
-json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce,
-    const char *url)
+json_fmt_jwk_rsa(const char *exp, const char *mod)
 {
 	int	 c;
 	char	*p;
 
-	c = asprintf(&p, "{"
-	    "\"alg\": \"RS256\", "
-	    "\"jwk\": "
-	    "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}, "
-	    "\"nonce\": \"%s\", "
-	    "\"url\": \"%s\""
-	    "}",
-	    exp, mod, nce, url);
+	c = asprintf(&p, "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}",
+	    exp, mod);
+	if (c == -1) {
+		warn("asprintf");
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Format an EC public key in JWK format.
+ */
+char *
+json_fmt_jwk_ec(const char *x, const char *y)
+{
+	int	 c;
+	char	*p;
+
+	c = asprintf(&p, "{\"crv\": \"P-384\", \"kty\": \"EC\","
+	    " \"x\": \"%s\", \"y\": \"%s\"}",
+	    x, y);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -762,19 +786,19 @@ json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce,
  * Protected component of json_fmt_signed().
  */
 char *
-json_fmt_protected_ec(const char *x, const char *y, const char *nce,
+json_fmt_protected_jwk(const char *alg, const char *jwk, const char *nce,
     const char *url)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"alg\": \"ES384\", "
-	    "\"jwk\": "
-	    "{\"crv\": \"P-384\", \"kty\": \"EC\", \"x\": \"%s\", "
-	    "\"y\": \"%s\"}, \"nonce\": \"%s\", \"url\": \"%s\""
+	    "\"alg\": \"%s\", "
+	    "\"jwk\": %s, "
+	    "\"nonce\": \"%s\", "
+	    "\"url\": \"%s\""
 	    "}",
-	    x, y, nce, url);
+	    alg, jwk, nce, url);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -868,6 +892,28 @@ json_fmt_thumb_ec(const char *x, const char *y)
 	c = asprintf(&p, "{\"crv\":\"P-384\",\"kty\":\"EC\",\"x\":\"%s\","
 	    "\"y\":\"%s\"}",
 	    x, y);
+	if (c == -1) {
+		warn("asprintf");
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Protected component of external account binding.
+ */
+char *
+json_fmt_protected_eab(const char *keyid, const char *url)
+{
+	int	 c;
+	char	*p;
+
+	c = asprintf(&p, "{"
+	    "\"alg\": \"HS256\", "
+	    "\"kid\": \"%s\", "
+	    "\"url\": \"%s\""
+	    "}",
+	    keyid, url);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;

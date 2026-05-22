@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.47 2026/05/02 13:08:36 florian Exp $ */
+/*	$Id: netproc.c,v 1.48 2026/05/22 01:53:10 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -408,14 +408,30 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
  * Returns non-zero on success.
  */
 static int
-donewacc(struct conn *c, const struct capaths *p, const char *contact)
+donewacc(struct conn *c, const struct capaths *p, const char *contact,
+    int eab)
 {
 	struct jsmnn	*j = NULL;
 	int		 rc = 0;
 	char		*req, *detail, *error = NULL, *accturi = NULL;
+	char		*eab_json = NULL;
 	long		 lc;
 
-	if ((req = json_fmt_newacc(contact)) == NULL)
+	if (eab) {
+		/* ask acct proc to produce eab json */
+		if (writeop(c->fd, COMM_ACCT, ACCT_EAB) <= 0) {
+			return -1;
+		} else if (writestr(c->fd, COMM_URL, p->newaccount) <= 0) {
+			return -1;
+		}
+
+		/* Now read back the signed payload. */
+		if ((eab_json = readstr(c->fd, COMM_REQ)) == NULL) {
+			return -1;
+		}
+	}
+
+	if ((req = json_fmt_newacc(contact, eab_json)) == NULL)
 		warnx("json_fmt_newacc");
 	else if ((lc = sreq(c, p->newaccount, 0, req, &c->kid)) < 0)
 		warnx("%s: bad comm", p->newaccount);
@@ -456,7 +472,8 @@ donewacc(struct conn *c, const struct capaths *p, const char *contact)
  * Returns non-zero on success.
  */
 static int
-dochkacc(struct conn *c, const struct capaths *p, const char *contact)
+dochkacc(struct conn *c, const struct capaths *p, const char *contact,
+    int eab)
 {
 	int		 rc = 0;
 	char		*req, *accturi = NULL;
@@ -471,7 +488,7 @@ dochkacc(struct conn *c, const struct capaths *p, const char *contact)
 	else if (c->buf.buf == NULL || c->buf.sz == 0)
 		warnx("%s: empty response", p->newaccount);
 	else if (lc == 400)
-		rc = donewacc(c, p, contact);
+		rc = donewacc(c, p, contact, eab);
 	else
 		rc = 1;
 
@@ -724,7 +741,7 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
     int revocate, struct authority_c *authority,
-    struct domain_c *domain)
+    struct domain_c *domain, int eab)
 {
 	int		 rc = 0, retries = 0;
 	size_t		 i;
@@ -806,7 +823,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	c.newnonce = paths.newnonce;
 
 	/* Check if our account already exists or create it. */
-	if (!dochkacc(&c, &paths, authority->contact))
+	if (!dochkacc(&c, &paths, authority->contact, eab))
 		goto out;
 
 	/*

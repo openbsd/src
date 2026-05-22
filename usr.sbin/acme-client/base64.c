@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: base64.c,v 1.10 2026/05/22 01:53:10 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,6 +19,7 @@
 #include <resolv.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "extern.h"
 
@@ -64,4 +65,70 @@ base64buf_url(const char *data, size_t len)
 		}
 
 	return buf;
+}
+
+static const u_int8_t index_64[128] = {
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255,  62, 255, 255,  52,  53,
+	 54,  55,  56,  57,  58,  59,  60,  61, 255, 255,
+	255, 255, 255, 255, 255,   0,   1,   2,   3,   4,
+	  5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
+	 15,  16,  17,  18,  19,  20,  21,  22,  23,  24,
+	 25, 255, 255, 255, 255,  63, 255,  26,  27,  28,
+	 29,  30,  31,  32,  33,  34,  35,  36,  37,  38,
+	 39,  40,  41,  42,  43,  44,  45,  46,  47,  48,
+	 49,  50,  51, 255, 255, 255, 255, 255
+};
+#define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
+
+int
+unbase64buf_url(const unsigned char *data, unsigned char **decoded)
+{
+	unsigned char		*out, *bp;
+	const unsigned char 	*p;
+	unsigned char		c1, c2, c3, c4;
+	int 			len;
+
+	len = strlen(data);
+	out = malloc(len);
+	if (out == NULL)
+		return -1;
+
+	p = data;
+	bp = out;
+	while (p < data + len) {
+                c1 = CHAR64(*p);
+                /* Invalid data */
+                if (c1 == 255)
+                        return -1;
+
+                c2 = CHAR64(*(p + 1));
+                if (c2 == 255)
+                        return -1;
+
+                *bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
+                if ((p + 2) >= data + len)
+                        break;
+
+                c3 = CHAR64(*(p + 2));
+                if (c3 == 255)
+                        return -1;
+
+                *bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
+                if ((p + 3) >= data + len)
+                        break;
+
+                c4 = CHAR64(*(p + 3));
+                if (c4 == 255)
+                        return -1;
+                *bp++ = ((c3 & 0x03) << 6) | c4;
+
+                p += 4;
+	}
+
+	*decoded = out;
+	return (bp - out);
 }
