@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.13 2026/05/21 13:14:57 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.14 2026/05/22 04:41:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -2029,8 +2029,8 @@ run_IPAddressFamily_cmp_ub_test(void)
 	IPAddressFamily *af = NULL;
 	const unsigned char *p;
 	unsigned char *out = NULL;
-	unsigned int nlri_safi = 4;
 	int out_len = 0;
+	unsigned int nlri_safi = 4;
 	int failed = 1;
 
 	if ((addrs = IPAddrBlocks_new()) == NULL) {
