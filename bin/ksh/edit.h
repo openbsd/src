@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.h,v 1.13 2023/06/21 22:22:08 millert Exp $	*/
+/*	$OpenBSD: edit.h,v 1.14 2026/05/22 18:11:08 kirill Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -48,6 +48,7 @@ int	promptlen(const char *, const char **);
 int	x_do_comment(char *, int, int *);
 void	x_print_expansions(int, char *const *, int);
 int	x_cf_glob(int, const char *, int, int, int *, int *, char ***, int *);
+int	x_is_tilde_user_completion(const char *, int, const char *, int);
 int	x_longest_prefix(int , char *const *);
 int	x_basename(const char *, const char *);
 void	x_free_words(int, char **);

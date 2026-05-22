@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.69 2026/04/04 09:33:18 jtt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.70 2026/05/22 18:11:08 kirill Exp $	*/
 
 /*
  *	vi command editing
@@ -2206,7 +2206,9 @@ complete_word(int command, int count)
 		expanded = NONE;
 
 		/* If not a directory, add a space to the end... */
-		if (match_len > 0 && match[match_len - 1] != '/')
+		if (match_len > 0 && match[match_len - 1] != '/' &&
+		    !x_is_tilde_user_completion(es->cbuf + start,
+		    end - start, match, match_len))
 			rval = putbuf(" ", 1, 0);
 	}
 	x_free_words(nwords, words);

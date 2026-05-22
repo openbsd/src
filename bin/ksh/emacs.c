@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.91 2026/03/05 05:38:58 deraadt Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.92 2026/05/22 18:11:08 kirill Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1767,7 +1767,9 @@ do_complete(int flags,	/* XCF_{COMMAND,FILE,COMMAND_FILE} */
 		completed = 1;
 	}
 	/* add space if single non-dir match */
-	if (nwords == 1 && words[0][nlen - 1] != '/') {
+	if (nwords == 1 && words[0][nlen - 1] != '/' &&
+	    !x_is_tilde_user_completion(xbuf + start, olen, words[0],
+	    nlen)) {
 		x_ins(" ");
 		completed = 1;
 	}

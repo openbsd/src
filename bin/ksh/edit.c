@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.71 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: edit.c,v 1.72 2026/05/22 18:11:08 kirill Exp $	*/
 
 /*
  * Command line editing - common code
@@ -12,6 +12,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -27,9 +28,14 @@ static void x_sigwinch(int);
 volatile sig_atomic_t got_sigwinch;
 static void check_sigwinch(void);
 
-static int	x_file_glob(int, const char *, int, char ***);
+static int	x_file_glob(int, const char *, int, char ***, int);
+static char	*x_tilde_expand(const char *);
+static int	x_tilde_is_dir(const char *, int);
+static int	x_tilde_glob(const char *, int, char ***);
+static const char *x_tilde_name(const char *);
 static int	x_command_glob(int, const char *, int, char ***);
 static int	x_locate_word(const char *, int, int, int *, int *);
+static void	x_preserve_tilde(char **, int, const char *, const char *);
 
 
 /* Called from main */
@@ -402,6 +408,139 @@ x_print_expansions(int nwords, char *const *words, int is_command)
 	pr_list(words);
 }
 
+static char *
+x_tilde_expand(const char *tilde)
+{
+	struct passwd *pw;
+	struct tbl *tp;
+	char *dp;
+
+	if (tilde[0] != '~')
+		return NULL;
+	if (tilde[1] == '\0')
+		dp = str_val(global("HOME"));
+	else if (tilde[1] == '+' && tilde[2] == '\0')
+		dp = str_val(global("PWD"));
+	else if (tilde[1] == '-' && tilde[2] == '\0')
+		dp = str_val(global("OLDPWD"));
+	else {
+		tp = ktsearch(&homedirs, tilde + 1, hash(tilde + 1));
+		if (tp != NULL && (tp->flag & ISSET))
+			dp = tp->val.s;
+		else if ((pw = getpwnam(tilde + 1)) != NULL)
+			dp = pw->pw_dir;
+		else
+			dp = NULL;
+	}
+	if (dp == null || dp == NULL || dp[0] == '~')
+		return NULL;
+	return str_save(dp, ATEMP);
+}
+
+static int
+x_tilde_is_dir(const char *tilde, int len)
+{
+	struct stat statb;
+	char *expanded, *copy;
+	int isdir;
+
+	copy = str_nsave(tilde, len, ATEMP);
+	expanded = x_tilde_expand(copy);
+	afree(copy, ATEMP);
+	if (expanded == NULL)
+		return 0;
+	isdir = stat(expanded, &statb) == 0 && S_ISDIR(statb.st_mode);
+	afree(expanded, ATEMP);
+
+	return isdir;
+}
+
+static int
+x_tilde_glob(const char *str, int slen, char ***wordsp)
+{
+	struct passwd *pw;
+	const char *prefix;
+	char *word;
+	size_t len, prefix_len;
+	int i, nwords;
+	XPtrV w;
+
+	if (slen < 2 || str[0] != '~')
+		return 0;
+	if (str[1] == '+' || str[1] == '-')
+		return 0;
+	for (i = 1; i < slen; i++) {
+		if (str[i] == '/')
+			return 0;
+		if (str[i] == '\\' || str[i] == '*' || str[i] == '?' ||
+		    str[i] == '[' || str[i] == '$')
+			return 0;
+	}
+
+	prefix = str + 1;
+	prefix_len = slen - 1;
+
+	XPinit(w, 32);
+	setpwent();
+	while ((pw = getpwent()) != NULL) {
+		if (strncmp(pw->pw_name, prefix, prefix_len) != 0)
+			continue;
+		len = strlen(pw->pw_name);
+		word = areallocarray(NULL, len + 2, sizeof(char), ATEMP);
+		word[0] = '~';
+		memcpy(word + 1, pw->pw_name, len + 1);
+		XPput(w, word);
+	}
+	endpwent();
+
+	nwords = XPsize(w);
+	if (nwords == 0) {
+		XPfree(w);
+		return 0;
+	}
+	if (nwords == 1 && x_tilde_is_dir(str, slen)) {
+		afree(XPptrv(w)[0], ATEMP);
+		XPfree(w);
+		return 0;
+	}
+
+	qsortp(XPptrv(w), (size_t)nwords, xstrcmp);
+	XPput(w, NULL);
+	*wordsp = (char **)XPclose(w);
+
+	return nwords;
+}
+
+static const char *
+x_tilde_name(const char *tilde)
+{
+	if (tilde[0] != '~' || tilde[1] == '\0')
+		return NULL;
+	if ((tilde[1] == '+' || tilde[1] == '-') && tilde[2] == '\0')
+		return NULL;
+	return tilde + 1;
+}
+
+int
+x_is_tilde_user_completion(const char *str, int slen, const char *word,
+    int wlen)
+{
+	int i;
+
+	if (slen < 2 || wlen <= slen || str[0] != '~' ||
+	    word[0] != '~')
+		return 0;
+	if (strncmp(str, word, slen) != 0)
+		return 0;
+	for (i = 1; i < slen; i++)
+		if (str[i] == '/')
+			return 0;
+	for (i = 1; i < wlen; i++)
+		if (word[i] == '/')
+			return 0;
+	return 1;
+}
+
 /*
  *  Do file globbing:
  *	- appends * to (copy of) str if no globbing chars found
@@ -410,16 +549,41 @@ x_print_expansions(int nwords, char *const *words, int is_command)
  *	- returns number of matching strings
  */
 static int
-x_file_glob(int flags, const char *str, int slen, char ***wordsp)
+x_file_glob(int flags, const char *str, int slen, char ***wordsp,
+    int preserve_tilde)
 {
 	char *toglob;
 	char **words;
 	int nwords;
 	XPtrV w;
 	struct source *s, *sold;
+	struct tbl *tp;
+	char *tilde = NULL;
+	char *tilde_expanded = NULL;
+	const char *tilde_name = NULL;
+	int tilde_cached = 0;
+	int tlen = 0;
 
 	if (slen < 0)
 		return 0;
+
+	nwords = x_tilde_glob(str, slen, wordsp);
+	if (nwords)
+		return nwords;
+
+	if (slen > 0 && str[0] == '~') {
+		for (tlen = 1; tlen < slen; tlen++)
+			if (str[tlen] == '/')
+				break;
+		tilde = str_nsave(str, tlen, ATEMP);
+		tilde_name = x_tilde_name(tilde);
+		if (tilde_name != NULL) {
+			tp = ktsearch(&homedirs, tilde_name,
+			    hash(tilde_name));
+			if (tp != NULL && (tp->flag & ISSET))
+				tilde_cached = 1;
+		}
+	}
 
 	toglob = add_glob(str, slen);
 
@@ -433,7 +597,9 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 	if (yylex(ONEWORD|UNESCAPE) != LWORD) {
 		source = sold;
 		internal_warningf("%s: substitute error", __func__);
-		return 0;
+		afree(toglob, ATEMP);
+		nwords = 0;
+		goto done;
 	}
 	source = sold;
 	XPinit(w, 32);
@@ -461,13 +627,65 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 	afree(toglob, ATEMP);
 
 	if (nwords) {
+		if (preserve_tilde && tilde != NULL &&
+		    (tilde_expanded = x_tilde_expand(tilde)) != NULL)
+			x_preserve_tilde(words, nwords, tilde,
+			    tilde_expanded);
 		*wordsp = words;
 	} else if (words) {
 		x_free_words(nwords, words);
 		*wordsp = NULL;
 	}
+done:
+	if (tilde_name != NULL && !tilde_cached) {
+		/* Do not let completion cache the home directory. */
+		tp = ktsearch(&homedirs, tilde_name, hash(tilde_name));
+		if (tp != NULL) {
+			if (tp->flag & ALLOC) {
+				tp->flag &= ~(ALLOC|ISSET);
+				afree(tp->val.s, APERM);
+			}
+			ktdelete(tp);
+		}
+	}
+	if (tilde)
+		afree(tilde, ATEMP);
+	if (tilde_expanded)
+		afree(tilde_expanded, ATEMP);
 
 	return nwords;
+}
+
+static void
+x_preserve_tilde(char **words, int nwords, const char *tilde,
+    const char *tilde_expanded)
+{
+	size_t tilde_len, exp_len;
+	int i;
+
+	tilde_len = strlen(tilde);
+	exp_len = strlen(tilde_expanded);
+	if (exp_len == 0)
+		return;
+
+	for (i = 0; i < nwords; i++) {
+		char *w = words[i];
+		size_t rest_len;
+		char *nw;
+
+		if (strncmp(w, tilde_expanded, exp_len) != 0)
+			continue;
+		if (w[exp_len] != '\0' && w[exp_len] != '/')
+			continue;
+
+		rest_len = strlen(w + exp_len);
+		nw = areallocarray(NULL, tilde_len + rest_len + 1,
+		    sizeof(char), ATEMP);
+		memcpy(nw, tilde, tilde_len);
+		memcpy(nw + tilde_len, w + exp_len, rest_len + 1);
+		afree(w, ATEMP);
+		words[i] = nw;
+	}
 }
 
 /* Data structure used in x_command_glob() */
@@ -721,10 +939,12 @@ x_cf_glob(int flags, const char *buf, int buflen, int pos, int *startp,
 	int nwords;
 	char **words = NULL;
 	int is_command;
+	int preserve_tilde;
 
 	len = x_locate_word(buf, buflen, pos, startp, &is_command);
 	if (!(flags & XCF_COMMAND))
 		is_command = 0;
+	preserve_tilde = len > 0 && buf[*startp] == '~';
 	/* Don't do command globing on zero length strings - it takes too
 	 * long and isn't very useful.  File globs are more likely to be
 	 * useful, so allow these.
@@ -732,10 +952,20 @@ x_cf_glob(int flags, const char *buf, int buflen, int pos, int *startp,
 	if (len == 0 && is_command)
 		return 0;
 
-	if (is_command)
+	if (is_command && (flags & XCF_FILE) && len > 0 &&
+	    buf[*startp] == '~') {
+		nwords = x_file_glob(flags, buf + *startp, len, &words,
+		    preserve_tilde);
+		if (nwords == 0)
+			nwords = x_command_glob(flags, buf + *startp, len,
+			    &words);
+		else
+			is_command = 0;
+	} else if (is_command)
 		nwords = x_command_glob(flags, buf + *startp, len, &words);
 	else if (!x_try_array(buf, buflen, buf + *startp, len, &nwords, &words))
-		nwords = x_file_glob(flags, buf + *startp, len, &words);
+		nwords = x_file_glob(flags, buf + *startp, len, &words,
+		    preserve_tilde);
 	if (nwords == 0) {
 		*wordsp = NULL;
 		return 0;
@@ -762,14 +992,15 @@ add_glob(const char *str, int slen)
 	if (slen < 0)
 		return NULL;
 
-	toglob = str_nsave(str, slen + 1, ATEMP); /* + 1 for "*" */
+	toglob = str_nsave(str, slen + 1, ATEMP); /* + 1 for "*" or "/" */
 	toglob[slen] = '\0';
 
 	/*
 	 * If the pathname contains a wildcard (an unquoted '*',
 	 * '?', or '[') or parameter expansion ('$'), or a ~username
 	 * with no trailing slash, then it is globbed based on that
-	 * value (i.e., without the appended '*').
+	 * value.  Existing tilde directories get a slash appended
+	 * instead of '*'; other tilde forms are left exact.
 	 */
 	for (s = toglob; *s; s++) {
 		if (*s == '\\' && s[1])
@@ -780,9 +1011,14 @@ add_glob(const char *str, int slen)
 		else if (*s == '/')
 			saw_slash = true;
 	}
-	if (!*s && (*toglob != '~' || saw_slash)) {
-		toglob[slen] = '*';
-		toglob[slen + 1] = '\0';
+	if (!*s) {
+		if (*toglob != '~' || saw_slash) {
+			toglob[slen] = '*';
+			toglob[slen + 1] = '\0';
+		} else if (x_tilde_is_dir(toglob, slen)) {
+			toglob[slen] = '/';
+			toglob[slen + 1] = '\0';
+		}
 	}
 
 	return toglob;
