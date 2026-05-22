@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.35 2026/05/03 15:49:09 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.36 2026/05/22 10:12:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1017,6 +1017,12 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 				break;
 			}
 
+			if (iaprefix.prefix_len > 128) {
+				log_debug("%s: prefix_len > 128, ignoring "
+				    "IA_PD", __func__);
+				break;
+			}
+
 			prefix->prefix = iaprefix.prefix;
 			prefix->prefix_len = iaprefix.prefix_len;
 			prefix->vltime = ntohl(iaprefix.vltime);
@@ -1717,8 +1723,10 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 	u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int bytelen, bitlen, i;
 
-	if (0 > len || len > 128)
-		fatalx("%s: invalid prefix length(%d)\n", __func__, len);
+	if (0 > len || len > 128) {
+		log_debug("%s: invalid prefix length(%d)\n", __func__, len);
+		len = 128;
+	}
 
 	bzero(maskp, sizeof(*maskp));
 	bytelen = len / 8;

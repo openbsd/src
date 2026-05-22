@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.101 2026/04/16 16:59:07 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.102 2026/05/22 10:12:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1493,10 +1493,17 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 				goto err;
 			}
 
+			prf = (struct nd_opt_prefix_info*) nd_opt_hdr;
+
+			if (prf->nd_opt_pi_prefix_len > 128) {
+				log_debug("%s: invalid prefix length(%d)\n",
+				    __func__, prf->nd_opt_pi_prefix_len);
+				goto err;
+			}
+
 			if ((prefix = calloc(1, sizeof(*prefix))) == NULL)
 				fatal("calloc");
 
-			prf = (struct nd_opt_prefix_info*) nd_opt_hdr;
 			prefix->prefix = prf->nd_opt_pi_prefix;
 			prefix->prefix_len = prf->nd_opt_pi_prefix_len;
 			prefix->onlink = prf->nd_opt_pi_flags_reserved &
@@ -1647,8 +1654,10 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 	u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int bytelen, bitlen, i;
 
-	if (0 > len || len > 128)
-		fatalx("%s: invalid prefix length(%d)\n", __func__, len);
+	if (0 > len || len > 128) {
+		log_debug("%s: invalid prefix length(%d)\n", __func__, len);
+		len = 128;
+	}
 
 	bzero(maskp, sizeof(*maskp));
 	bytelen = len / 8;
