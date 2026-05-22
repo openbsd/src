@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.10 2024/08/07 17:39:00 brynet Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.11 2026/05/22 00:38:05 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -105,6 +105,7 @@ static const struct pci_matchid ksmn_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_1X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_3X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_RC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_1X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_6X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_RC },
@@ -215,7 +216,7 @@ ksmn_ccd_attach(struct ksmn_softc *sc, int nccd)
 	uint32_t reg;
 	int i;
 
-	KASSERT(nccd > 0 && nccd < nitems(sc->sc_ccd_sensor));
+	KASSERT(nccd > 0 && nccd <= nitems(sc->sc_ccd_sensor));
 
 	for (i = 0; i < nccd; i++) {
 		reg = ksmn_read_reg(sc, SMU_17H_CCD_THM(sc->sc_ccd_offset, i));
