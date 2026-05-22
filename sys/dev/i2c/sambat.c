@@ -1,4 +1,4 @@
-/*	$OpenBSD: sambat.c,v 1.1 2026/05/19 04:40:45 mglocker Exp $ */
+/*	$OpenBSD: sambat.c,v 1.2 2026/05/22 21:01:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2026 Marcus Glocker <mglocker@openbsd.org>
@@ -269,8 +269,15 @@ sambat_mbox_write(struct sambat_softc *sc, uint8_t hi, uint8_t lo,
 	 * sometimes returns the still-latched target register byte
 	 * instead of the fetched data, which surfaces as nonsense
 	 * sensor values (e.g. remaining == register address).
+	 *
+	 * Busy-wait only during cold boot, otherwise use tsleep to
+	 * prevent hiccups on input devices sharing the same I2C bus.
 	 */
-	delay(5000);
+	if (cold)
+		delay(5000);
+	else
+		tsleep_nsec(sc, PWAIT, "sambat", USEC_TO_NSEC(5000));
+
 	return 0;
 }
 
