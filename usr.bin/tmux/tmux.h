@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1322 2026/05/21 07:28:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1323 2026/05/22 09:05:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1695,18 +1695,18 @@ struct tty_ctx {
 	void			*arg;
 
 	const struct grid_cell	*cell;
-	int			 wrapped;
+	int                      flags;
+#define TTY_CTX_WRAPPED 0x1
+#define TTY_CTX_INVISIBLE_PANES 0x2
+#define TTY_CTX_WINDOW_BIGGER 0x4
+#define TTY_CTX_SYNC 0x8
+#define TTY_CTX_OVERLAY_SYNC 0x10
+#define TTY_CTX_CELL_DRAW_LINE 0x20
+#define TTY_CTX_CELL_INVALIDATE 0x40
 
-	u_int			 num;
-	void			*ptr;
-	void			*ptr2;
-
-	/*
-	 * Whether this command should be sent even when the pane is not
-	 * visible (used for a passthrough sequence when allow-passthrough is
-	 * "all").
-	 */
-	int			 allow_invisible_panes;
+	u_int		 num;
+	void		*ptr;
+	void		*ptr2;
 
 	/*
 	 * Cursor and region position before the screen was updated - this is
@@ -1735,7 +1735,6 @@ struct tty_ctx {
 	struct colour_palette	*palette;
 
 	/* Containing region (usually window) offset and size. */
-	int			 bigger;
 	u_int			 wox;
 	u_int			 woy;
 	u_int			 wsx;

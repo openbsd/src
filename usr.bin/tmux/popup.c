@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.67 2026/04/14 08:39:10 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.68 2026/05/22 09:05:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -186,7 +186,6 @@ popup_set_client_cb(struct tty_ctx *ttyctx, struct client *c)
 	if (pd->c->flags & CLIENT_REDRAWOVERLAY)
 		return (0);
 
-	ttyctx->bigger = 0;
 	ttyctx->wox = 0;
 	ttyctx->woy = 0;
 	ttyctx->wsx = c->tty.sx;
@@ -209,6 +208,7 @@ popup_init_ctx_cb(struct screen_write_ctx *ctx, struct tty_ctx *ttyctx)
 	struct popup_data	*pd = ctx->arg;
 
 	memcpy(&ttyctx->defaults, &pd->defaults, sizeof ttyctx->defaults);
+	ttyctx->flags &= ~TTY_CTX_WINDOW_BIGGER;
 	ttyctx->palette = &pd->palette;
 	ttyctx->redraw_cb = popup_redraw_cb;
 	ttyctx->set_client_cb = popup_set_client_cb;
