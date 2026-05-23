@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_debug.c,v 1.7 2024/05/01 13:15:59 jsg Exp $ */
+/*	$OpenBSD: nfs_debug.c,v 1.8 2026/05/23 22:13:17 kirill Exp $ */
 /*
  * Copyright (c) 2009 Thordur I. Bjornsson. <thib@openbsd.org>
  *
@@ -49,7 +49,7 @@ nfs_request_print(void *v, int full, int (*pr)(const char *, ...))
 	    rep->r_procp);
 
 	if (full) {
-		(*pr)("mreq %p mrep %p md %p nfsmount %p vnode %p timer %i",
+		(*pr)("mreq %p mrep %p md %p nfsmount %p vnode %p timer %i"
 		    " rtt %i\n",
 		    rep->r_mreq, rep->r_mrep, rep->r_md, rep->r_nmp,
 		    rep->r_vp, rep->r_timer, rep->r_rtt);
