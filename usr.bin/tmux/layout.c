@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.56 2026/05/19 12:16:25 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.57 2026/05/23 07:22:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -233,7 +233,7 @@ layout_make_node(struct layout_cell *lc, enum layout_type type)
 	lc->wp = NULL;
 }
 
-/* Fix Z indexes. */
+/* Fix z-indexes. */
 void
 layout_fix_zindexes(struct window *w, struct layout_cell *lc)
 {

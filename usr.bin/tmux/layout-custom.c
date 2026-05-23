@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.28 2026/05/20 08:54:40 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.29 2026/05/23 07:22:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -288,7 +288,7 @@ layout_parse(struct window *w, const char *layout, char **cause)
 	if (floating_lc != NULL)
 		layout_assign(&wp, floating_lc, PANE_FLOATING);
 
-        /* Fix pane Z indexes. */
+        /* Fix pane z-indexes. */
         while (!TAILQ_EMPTY(&w->z_index)) {
                 wp = TAILQ_FIRST(&w->z_index);
 		TAILQ_REMOVE(&w->z_index, wp, zentry);
