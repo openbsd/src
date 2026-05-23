@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1055 2026/05/17 11:12:07 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1056 2026/05/23 16:43:04 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2026 $
+.Dd $Mdocdate: May 23 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -8209,7 +8209,7 @@ was created but is not linked to the current session.
 The window with ID
 .Ar window\-id ,
 which is not linked to the current session, was closed.
-.It Ic %unlinked\-window\-renamed Ar window\-id
+.It Ic %unlinked\-window\-renamed Ar window\-id Ar new\-name
 The window with ID
 .Ar window\-id ,
 which is not linked to the current session, was renamed.
