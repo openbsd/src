@@ -1,4 +1,4 @@
-/*	$OpenBSD: sambat.c,v 1.2 2026/05/22 21:01:06 mglocker Exp $ */
+/*	$OpenBSD: sambat.c,v 1.3 2026/05/23 11:10:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2026 Marcus Glocker <mglocker@openbsd.org>
@@ -276,7 +276,7 @@ sambat_mbox_write(struct sambat_softc *sc, uint8_t hi, uint8_t lo,
 	if (cold)
 		delay(5000);
 	else
-		tsleep_nsec(sc, PWAIT, "sambat", USEC_TO_NSEC(5000));
+		tsleep_nsec(&nowake, PWAIT, "sambat", USEC_TO_NSEC(5000));
 
 	return 0;
 }
