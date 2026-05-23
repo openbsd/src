@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.28 2026/05/22 23:10:05 mvs Exp $	*/
+/*	$OpenBSD: sem.h,v 1.29 2026/05/23 07:24:42 jca Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ union semun {
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+#include <sys/refcnt.h>
 
 /*
  * Kernel implementation stuff
