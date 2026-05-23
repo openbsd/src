@@ -1,4 +1,4 @@
-/* $OpenBSD: ietp.c,v 1.3 2024/08/18 03:25:04 deraadt Exp $ */
+/* $OpenBSD: ietp.c,v 1.4 2026/05/23 05:11:32 mglocker Exp $ */
 /*
  * Elan I2C Touchpad driver
  *
@@ -334,7 +334,7 @@ ietp_sleep(struct ietp_softc *sc, int ms)
 	if (cold)
 		delay(ms * 1000);
 	else
-		tsleep_nsec(&sc, PWAIT, "ietp", MSEC_TO_NSEC(ms));
+		tsleep_nsec(sc, PWAIT, "ietp", MSEC_TO_NSEC(ms));
 }
 
 int
