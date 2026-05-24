@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.261 2026/03/26 12:15:01 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.262 2026/05/24 16:28:44 kirill Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -1310,6 +1310,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			/* stop processing A-MSDU subframes */
 			ic->ic_stats.is_rx_decap++;
 			ml_purge(&subframes);
+			m_freem(n);
 			m_freem(m);
 			return;
 		}
