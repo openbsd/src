@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.5 2025/01/18 12:31:49 mglocker Exp $ */
+/* $OpenBSD: kstat.c,v 1.6 2026/05/24 17:29:50 daniel Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -162,11 +162,10 @@ struct rwlock		kstat_default_lock = RWLOCK_INITIALIZER("kstatlk");
 int	kstat_read(struct kstat *);
 int	kstat_copy(struct kstat *, void *);
 
-int
+void
 kstatattach(int num)
 {
 	/* XXX install system stats here */
-	return (0);
 }
 
 int
