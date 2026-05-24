@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.321 2026/05/19 10:26:03 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.322 2026/05/24 08:40:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -349,10 +349,8 @@ window_destroy(struct window *w)
 	window_unzoom(w, 0);
 	RB_REMOVE(windows, &windows, w);
 
-	if (w->layout_root != NULL)
-		layout_free_cell(w->layout_root);
-	if (w->saved_layout_root != NULL)
-		layout_free_cell(w->saved_layout_root);
+	layout_free_cell(w->layout_root);
+	layout_free_cell(w->saved_layout_root);
 	free(w->old_layout);
 
 	window_destroy_panes(w);

@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.29 2026/05/23 07:22:50 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.30 2026/05/24 08:40:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -304,8 +304,7 @@ layout_parse(struct window *w, const char *layout, char **cause)
 	layout_print_cell(tiled_lc, __func__, 0);
 
 	/* Free the floating layout cell, no longer needed. */
-	if (floating_lc != NULL)
-		layout_free_cell(floating_lc);
+	layout_free_cell(floating_lc);
 
 	notify_window("window-layout-changed", w);
 

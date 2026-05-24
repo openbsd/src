@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.57 2026/05/23 07:22:50 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.58 2026/05/24 08:40:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,6 +77,9 @@ void
 layout_free_cell(struct layout_cell *lc)
 {
 	struct layout_cell	*lcchild;
+
+	if (lc == NULL)
+		return;
 
 	switch (lc->type) {
 	case LAYOUT_LEFTRIGHT:
