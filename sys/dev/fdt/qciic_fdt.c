@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic_fdt.c,v 1.3 2026/01/05 20:06:15 patrick Exp $	*/
+/*	$OpenBSD: qciic_fdt.c,v 1.4 2026/05/24 10:36:01 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -308,39 +309,44 @@ qciic_fdt_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *au
 	int iba_node = *(int *)aux;
 	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
-	char name[32];
+	char *compat;
 	uint32_t reg[1];
 	int node;
+	int len;
 
 	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
-		memset(name, 0, sizeof(name));
-		memset(reg, 0, sizeof(reg));
-
 		if (!OF_is_enabled(node))
 			continue;
 
-		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
-			continue;
-		if (name[0] == '\0')
-			continue;
-
+		memset(reg, 0, sizeof(reg));
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
 			continue;
+
+		len = OF_getproplen(node, "compatible");
+		if (len <= 0)
+			continue;
+
+		compat = malloc(len, M_TEMP, M_WAITOK);
+		OF_getprop(node, "compatible", compat, len);
 
 		memset(&ia, 0, sizeof(ia));
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = bemtoh32(&reg[0]);
-		ia.ia_name = name;
+		ia.ia_name = compat;
+		ia.ia_namelen = len;
 		ia.ia_cookie = &node;
 		ia.ia_intr = &node;
 
 		/* Quirk for ihidev(4) */
-		if (strcmp(name, "hid-over-i2c") == 0) {
+		if (strcmp(compat, "hid-over-i2c") == 0) {
 			ia.ia_name = "ihidev";
+			ia.ia_namelen = 0;
 			ia.ia_size = OF_getpropint(node, "hid-descr-addr", 0);
-			ia.ia_cookie = name;
+			ia.ia_cookie = compat;
 		}
 
 		config_found(self, &ia, iic_print);
+
+		free(compat, M_TEMP, len);
 	}
 }
