@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.38 2025/12/01 16:05:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.39 2026/05/24 16:24:54 kirill Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -113,7 +113,8 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m,
 	/* check packet body length */
 	bodylen = BE_READ_2(key->len);
 	totlen = 4 + bodylen;
-	if (m->m_pkthdr.len < totlen || totlen > MCLBYTES)
+	if (m->m_pkthdr.len < totlen || totlen < sizeof(*key) ||
+	    totlen > MCLBYTES)
 		goto done;
 
 	/* check key data length */
