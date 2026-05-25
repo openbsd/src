@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.58 2025/01/20 20:13:29 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.59 2026/05/25 01:56:50 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/pmap.h>
-#include <arm/cpuconf.h>
 
 #if defined(PERFCTRS)
 struct arm_pmc_funcs *arm_pmc;

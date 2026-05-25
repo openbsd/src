@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space_asm_armv7.S,v 1.5 2016/03/22 23:35:01 patrick Exp $	*/
+/*	$OpenBSD: bus_space_asm_armv7.S,v 1.6 2026/05/25 01:56:50 jsg Exp $	*/
 /*	$NetBSD: bus_space_asm_armv7.S,v 1.3 2003/03/27 19:46:14 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  */
 
 #include <arm/asm.h>
-#include <arm/cpuconf.h>
 
 /*
  * Generic bus_space functions.

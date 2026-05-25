@@ -1,4 +1,4 @@
-/*	$OpenBSD: fiq_subr.S,v 1.5 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: fiq_subr.S,v 1.6 2026/05/25 01:56:50 jsg Exp $	*/
 /*	$NetBSD: fiq_subr.S,v 1.3 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 
 #include <arm/armreg.h>
 #include <arm/asm.h>
-#include <arm/cpuconf.h>
 
 #define	SWITCH_TO_FIQ_MODE						\
 	mrs	r2, cpsr					;	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.34 2023/05/30 08:30:00 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.35 2026/05/25 01:56:50 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #ifdef _KERNEL
 
 #include <sys/types.h>
-#include <arm/cpuconf.h>
 
 struct cpu_functions {
 

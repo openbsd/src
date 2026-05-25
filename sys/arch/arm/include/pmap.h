@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.57 2024/11/07 08:12:12 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.58 2026/05/25 01:56:50 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -71,7 +71,6 @@
 
 #ifdef _KERNEL
 
-#include <arm/cpuconf.h>
 #include <arm/pte.h>
 #ifndef _LOCORE
 #include <arm/cpufunc.h>

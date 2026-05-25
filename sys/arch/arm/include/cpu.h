@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.67 2024/06/09 21:15:29 jca Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.68 2026/05/25 01:56:50 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -93,8 +93,6 @@
 /*
  * Kernel-only definitions
  */
-
-#include <arm/cpuconf.h>
 
 #include <machine/intr.h>
 #include <machine/frame.h>
