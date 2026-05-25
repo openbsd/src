@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.35 2026/05/25 08:50:13 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.36 2026/05/25 20:33:58 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21641,8 +21641,8 @@ qwz_mac_vdev_start_restart(struct qwz_softc *sc, struct qwz_vif *arvif,
 	arg.channel.max_reg_power = 20; /* XXX */
 	arg.channel.max_antenna_gain = 0; /* XXX */
 
-	arg.pref_tx_streams = 1;
-	arg.pref_rx_streams = 1;
+	arg.pref_tx_streams = sc->num_tx_chains;
+	arg.pref_rx_streams = sc->num_rx_chains;
 
 	arg.mbssid_flags = 0;
 	arg.mbssid_tx_vdev_id = 0;
