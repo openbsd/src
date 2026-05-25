@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.5 2026/05/16 08:20:41 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.6 2026/05/25 13:34:58 jsg Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -208,7 +208,6 @@ void dtls1_reset_read_seq_numbers(SSL *s);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 int dtls1_check_timeout_num(SSL *s);
 int dtls1_handle_timeout(SSL *s);
-const SSL_CIPHER *dtls1_get_cipher(unsigned int u);
 void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 int dtls1_is_timer_expired(SSL *s);
