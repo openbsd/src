@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.157 2026/04/13 14:56:46 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.158 2026/05/25 20:29:27 kirill Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -526,7 +526,7 @@ uvmpd_match_constraint(struct vm_page *p,
 {
 	paddr_t paddr;
 
-	paddr = atop(VM_PAGE_TO_PHYS(p));
+	paddr = VM_PAGE_TO_PHYS(p);
 	if (paddr >= constraint->ucr_low && paddr < constraint->ucr_high)
 		return 1;
 
