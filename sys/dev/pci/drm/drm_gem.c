@@ -1209,17 +1209,12 @@ int drm_gem_change_handle_ioctl(struct drm_device *dev, void *data,
 
 	spin_unlock(&file_priv->table_lock);
 
-	if (ret < 0)
-		goto out_unlock;
-
 	if (obj->dma_buf) {
 		ret = drm_prime_add_buf_handle(&file_priv->prime, obj->dma_buf,
 					       handle);
 		if (ret < 0) {
 			spin_lock(&file_priv->table_lock);
 			idr_remove(&file_priv->object_idr, handle);
-			idrobj = idr_replace(&file_priv->object_idr, obj, handle);
-			WARN_ON(idrobj != NULL);
 			spin_unlock(&file_priv->table_lock);
 			goto out_unlock;
 		}
@@ -1231,7 +1226,9 @@ int drm_gem_change_handle_ioctl(struct drm_device *dev, void *data,
 
 	spin_lock(&file_priv->table_lock);
 	idr_remove(&file_priv->object_idr, args->handle);
+	idrobj = idr_replace(&file_priv->object_idr, obj, handle);
 	spin_unlock(&file_priv->table_lock);
+	WARN_ON(idrobj != NULL);
 
 out_unlock:
 	mutex_unlock(&file_priv->prime.lock);
