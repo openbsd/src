@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.30 2026/05/24 08:40:43 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.31 2026/05/25 07:55:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -335,7 +335,7 @@ layout_assign(struct window_pane **wp, struct layout_cell *lc, int flags)
 	case LAYOUT_TOPBOTTOM:
 	case LAYOUT_FLOATING:
 		TAILQ_FOREACH(lcchild, &lc->cells, entry)
-			layout_assign(wp, lcchild, PANE_FLOATING);
+			layout_assign(wp, lcchild, flags);
 		return;
 	}
 }
