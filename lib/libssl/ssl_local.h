@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.37 2026/04/03 13:11:00 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.38 2026/05/25 09:09:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1327,7 +1327,6 @@ int ssl3_do_change_cipher_spec(SSL *ssl);
 
 int ssl3_packet_read(SSL *s, int plen);
 int ssl3_packet_extend(SSL *s, int plen);
-int ssl_server_legacy_first_packet(SSL *s);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
 
