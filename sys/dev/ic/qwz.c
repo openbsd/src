@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.34 2026/05/23 12:27:41 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.35 2026/05/25 08:50:13 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -24649,25 +24649,23 @@ qwz_dmamem_alloc(bus_dma_tag_t dmat, bus_size_t size, bus_size_t align)
 	struct qwz_dmamem *adm;
 	int nsegs;
 
-	adm = malloc(sizeof(*adm), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (adm == NULL)
-		return NULL;
+	adm = malloc(sizeof(*adm), M_DEVBUF, M_WAITOK | M_ZERO);
 	adm->size = size;
 
 	if (bus_dmamap_create(dmat, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &adm->map) != 0)
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &adm->map) != 0)
 		goto admfree;
 
 	if (bus_dmamem_alloc_range(dmat, size, align, 0, &adm->seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO, 0, 0xffffffff) != 0)
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO, 0, 0xffffffff) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(dmat, &adm->seg, nsegs, size,
-	    &adm->kva, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0)
+	    &adm->kva, BUS_DMA_WAITOK | BUS_DMA_COHERENT) != 0)
 		goto free;
 
 	if (bus_dmamap_load_raw(dmat, adm->map, &adm->seg, nsegs, size,
-	    BUS_DMA_NOWAIT) != 0)
+	    BUS_DMA_WAITOK) != 0)
 		goto unmap;
 
 	bzero(adm->kva, size);
@@ -24689,6 +24687,7 @@ admfree:
 void
 qwz_dmamem_free(bus_dma_tag_t dmat, struct qwz_dmamem *adm)
 {
+	bus_dmamap_unload(dmat, adm->map);
 	bus_dmamem_unmap(dmat, adm->kva, adm->size);
 	bus_dmamem_free(dmat, &adm->seg, 1);
 	bus_dmamap_destroy(dmat, adm->map);
