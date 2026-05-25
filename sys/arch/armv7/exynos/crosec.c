@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec.c,v 1.5 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: crosec.c,v 1.6 2026/05/25 02:24:07 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -86,6 +86,7 @@ cros_ec_check_version(struct cros_ec_softc *sc)
 	struct ec_params_hello req;
 	struct ec_response_hello *resp;
 
+	req.in_data = 0;
 	sc->cmd_version_is_supported = 1;
 	if (cros_ec_command_inptr(sc, EC_CMD_HELLO, 0, &req, sizeof(req),
 				(uint8_t **)&resp, sizeof(*resp)) > 0) {
