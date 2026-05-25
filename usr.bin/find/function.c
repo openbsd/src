@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.56 2026/05/19 01:55:45 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.57 2026/05/25 04:40:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -516,7 +516,7 @@ run_f_exec(PLAN *plan)
 	*plan->ep_p = '\0';
 
 	pid = waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
+	if (pid != -1 && WIFEXITED(status))
 		rval = WEXITSTATUS(status);
 	else
 		rval = -1;
