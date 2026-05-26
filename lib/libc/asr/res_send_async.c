@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.41 2022/06/20 06:45:31 jca Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.42 2026/05/26 07:30:37 dgl Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -308,7 +308,7 @@ sockaddr_connect(const struct sockaddr *sa, int socktype)
 	int errno_save, sock;
 
 	if ((sock = socket(sa->sa_family,
-	    socktype | SOCK_NONBLOCK | SOCK_DNS, 0)) == -1)
+	    socktype | SOCK_NONBLOCK | SOCK_DNS | SOCK_CLOEXEC, 0)) == -1)
 		goto fail;
 
 	if (connect(sock, sa, sa->sa_len) == -1) {
