@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.427 2026/04/16 15:29:42 job Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.428 2026/05/26 20:43:31 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1513,7 +1513,7 @@ ip_srcroute(struct mbuf *m0)
 	 * Last hop goes to final destination.
 	 */
 	*q = isr->isr_dst;
-	m_tag_delete(m0, (struct m_tag *)isr);
+	m_tag_delete(m0, mtag);
 	return (m);
 }
 
