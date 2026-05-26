@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.25 2024/01/17 08:25:02 claudio Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.26 2026/05/26 11:17:14 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -61,7 +61,8 @@ struct ocsp_connect {
 
 /* priv */
 void		 ocsp_connect_cb(int, short, void *);
-int		 ocsp_connect_finish(struct iked *, int, struct ocsp_connect *);
+int		 ocsp_connect_finish(struct iked *, int, struct ocsp_connect *,
+		     struct iked_sahdr *);
 
 /* unpriv */
 void		 ocsp_free(struct iked_ocsp *);
@@ -148,12 +149,12 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	oc->oc_sock.sock_env = env;
 	oc->oc_sh = sh;
 	oc->oc_path = path;
+	path = NULL;
 	oc->oc_url = strdup(url);
 	if (oc->oc_url == NULL) {
 		log_warn("%s: strdup failed", SPI_SH(&sh, __func__));
 		goto done;
 	}
-	path = NULL;
 
 	log_debug("%s: connect(%s, %s)", __func__, host, port);
 	if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) {
@@ -169,7 +170,7 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 			log_warn("%s: connect(%s, %s)",
 			    SPI_SH(&oc->oc_sh, __func__), host, port);
 	} else {
-		ocsp_connect_finish(env, fd, oc);
+		ocsp_connect_finish(env, fd, oc, &sh);
 		ret = 0;
 	}
  done:
@@ -180,7 +181,7 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	free(port);
 	free(path);
 	if (ret == -1) {
-		ocsp_connect_finish(env, -1, oc);
+		ocsp_connect_finish(env, -1, oc, &sh);
 		if (fd >= 0)
 			close(fd);
 	}
@@ -212,7 +213,7 @@ ocsp_connect_cb(int fd, short event, void *arg)
 		send_fd = fd;
 	}
  done:
-	ocsp_connect_finish(oc->oc_sock.sock_env, send_fd, oc);
+	ocsp_connect_finish(oc->oc_sock.sock_env, send_fd, oc, &oc->oc_sh);
 
 	/* if we did not send the fd, we need to close it ourself */
 	if (send_fd == -1)
@@ -221,13 +222,14 @@ ocsp_connect_cb(int fd, short event, void *arg)
 
 /* send FD+path or error back to CA process */
 int
-ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
+ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc,
+    struct iked_sahdr *sh)
 {
 	struct iovec		 iov[2];
 	int			 iovcnt = 0, ret;
 
-	iov[iovcnt].iov_base = &oc->oc_sh;
-	iov[iovcnt].iov_len = sizeof(oc->oc_sh);
+	iov[iovcnt].iov_base = sh;
+	iov[iovcnt].iov_len = sizeof(*sh);
 	iovcnt++;
 
 	if (oc && fd >= 0) {
