@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.134 2026/05/20 15:43:07 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.135 2026/05/26 14:50:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,6 +75,11 @@ struct slotops zomb_slotops = {
 struct ctl *ctl_list = NULL;
 struct dev *dev_list = NULL;
 unsigned int dev_sndnum = 0;
+
+/*
+ * Preferred sample rate, buffer size, and block size
+ */
+int dev_rate, dev_bufsz, dev_round;
 
 struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 struct slot slot_array[DEV_NSLOT];
@@ -746,8 +751,7 @@ dev_master(struct dev *d, unsigned int master)
  * Create a sndio device
  */
 struct dev *
-dev_new(char *path, struct aparams *par, unsigned int bufsz, unsigned int round,
-    unsigned int rate, unsigned int hold, unsigned int autovol)
+dev_new(char *path, struct aparams *par, unsigned int hold, unsigned int autovol)
 {
 	struct dev *d, **pd;
 
@@ -761,9 +765,6 @@ dev_new(char *path, struct aparams *par, unsigned int bufsz, unsigned int round,
 
 	d->reqpar = *par;
 	d->reqpchan = d->reqrchan = 0;
-	d->reqbufsz = bufsz;
-	d->reqround = round;
-	d->reqrate = rate;
 	d->hold = hold;
 	d->autovol = autovol;
 	d->refcnt = 0;
@@ -859,9 +860,9 @@ int
 dev_open(struct dev *d)
 {
 	d->mode = MODE_AUDIOMASK;
-	d->round = d->reqround;
-	d->bufsz = d->reqbufsz;
-	d->rate = d->reqrate;
+	d->round = dev_round;
+	d->bufsz = dev_bufsz;
+	d->rate = dev_rate;
 	d->pchan = d->reqpchan;
 	d->rchan = d->reqrchan;
 	d->par = d->reqpar;

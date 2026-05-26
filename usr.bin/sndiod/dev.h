@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.54 2026/05/20 13:02:04 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.55 2026/05/26 14:50:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -247,9 +247,6 @@ struct dev {
 	 */
 	struct aparams reqpar;			/* parameters */
 	int reqpchan, reqrchan;			/* play & rec chans */
-	unsigned int reqbufsz;			/* buffer size */
-	unsigned int reqround;			/* block size */
-	unsigned int reqrate;			/* sample rate */
 	unsigned int hold;			/* hold the device open ? */
 	unsigned int autovol;			/* auto adjust playvol ? */
 	unsigned int refcnt;			/* number of openers */
@@ -278,14 +275,14 @@ extern struct ctl *ctl_list;
 extern struct slot slot_array[DEV_NSLOT];
 extern struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 extern struct mtc mtc_array[1];
+extern int dev_rate, dev_bufsz, dev_round;
 
 size_t chans_fmt(char *, size_t, int, int, int, int, int);
 int dev_open(struct dev *);
 void dev_close(struct dev *);
 void dev_abort(struct dev *);
 void dev_migrate(struct dev *);
-struct dev *dev_new(char *, struct aparams *, unsigned int,
-    unsigned int, unsigned int, unsigned int, unsigned int);
+struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int);
 struct dev *dev_bynum(int);
 void dev_del(struct dev *);
 void dev_adjpar(struct dev *, int, int);
