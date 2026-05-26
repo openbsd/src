@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfa.c,v 1.14 2026/05/17 15:32:55 renaud Exp $	*/
+/*	$OpenBSD: nfa.c,v 1.15 2026/05/26 15:59:22 renaud Exp $	*/
 
 /* nfa - NFA construction routines */
 
@@ -555,6 +555,9 @@ mkrep(int mach, int lb, int ub)
 	int base_mach, tail, copy, i;
 
 	base_mach = copysingl(mach, lb - 1);
+
+	if (lb < 0 || (ub < 0 && ub != INFINITE_REPEAT))
+		flexfatal(_("negative repetition value"));
 
 	if (ub == INFINITE_REPEAT) {
 		copy = dupmachine(mach);
