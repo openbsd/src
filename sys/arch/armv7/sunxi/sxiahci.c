@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.17 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.18 2026/05/26 01:22:08 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -55,8 +55,6 @@ int	sxiahci_activate(struct device *, int);
 int	sxiahci_port_start(struct ahci_port *, int);
 
 extern int ahci_intr(void *);
-extern u_int32_t ahci_read(struct ahci_softc *, bus_size_t);
-extern void ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
 extern u_int32_t ahci_pread(struct ahci_port *, bus_size_t);
 extern void ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 extern int ahci_default_port_start(struct ahci_port *, int);
