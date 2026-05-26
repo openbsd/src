@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkcomphy.c,v 1.4 2026/05/04 07:35:53 kettenis Exp $	*/
+/*	$OpenBSD: rkcomphy.c,v 1.5 2026/05/26 18:28:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -606,6 +606,7 @@ rkcomphy_rk3588_enable(void *cookie, uint32_t *cells)
 			rkcomphy_rk3588_pll_tune(sc);
 			break;
 		}
+		break;
 	default:
 		printf("%s: unsupported reference clock (%d Hz)\n",
 		    sc->sc_dev.dv_xname, freq);
