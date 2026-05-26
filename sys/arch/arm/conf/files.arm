@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.51 2024/01/01 18:25:50 kettenis Exp $
+#	$OpenBSD: files.arm,v 1.52 2026/05/26 01:06:07 jsg Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -10,10 +10,6 @@ file	arch/arm/arm/db_interface.c		ddb
 file	arch/arm/arm/db_trace.c			ddb
 file	arch/arm/arm/db_machdep.c		ddb
 file	arch/arm/arm/disassem.c			ddb
-
-# FIQ support
-file	arch/arm/arm/fiq.c			fiq
-file	arch/arm/arm/fiq_subr.S			fiq
 
 # mainbus files
 define	mainbus {}

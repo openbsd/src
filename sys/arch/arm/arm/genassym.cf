@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.21 2024/11/07 08:12:12 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.22 2026/05/26 01:06:07 jsg Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -40,8 +40,6 @@ include <netinet/ip.h>
 
 include <machine/cpu.h>
 include <machine/cpufunc.h>
-
-include <arm/fiq.h>
 
 include <machine/frame.h>
 include <machine/vmparam.h>
