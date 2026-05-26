@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.24 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.25 2026/05/26 20:27:27 bluhm Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ dest6_input(struct mbuf **mp, int *offp, int proto, int af,
 			break;
 		default:		/* unknown option */
 			optlen = ip6_unknown_opt(mp, opt,
-			    opt - mtod(*mp, u_int8_t *));
+			    *offp + (opt - (u_int8_t *)dstopts));
 			if (optlen == -1)
 				return (IPPROTO_DONE);
 			optlen += 2;
