@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.164 2024/10/18 05:52:33 miod Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.165 2026/05/26 15:01:16 kirill Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1323,18 +1323,22 @@ int
 ufs_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
-	struct uio auio, *uio = ap->a_uio;
-	struct iovec aiov;
+	struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	union {
 		struct	dirent dn;
 		char __pad[roundup(sizeof(struct dirent), 8)];
 	} u;
 	off_t off = uio->uio_offset;
+	off_t bytesinfile;
 	struct direct *dp;
+	struct buf *bp;
 	char *edp;
-	caddr_t diskbuf;
+	char *dirbuf;
 	size_t count, entries;
-	int bufsize, readcnt, error;
+	int done, error, readcnt, xfersize;
+	long size;
 
 	if (uio->uio_rw != UIO_READ)
 		return (EINVAL);
@@ -1346,75 +1350,98 @@ ufs_readdir(void *v)
 	if (count <= entries)
 		return (EINVAL);
 
-	/*
-	 * Convert and copy back the on-disk struct direct format to
-	 * the user-space struct dirent format, one entry at a time
-	 */
-
 	/* read from disk, stopping on a block boundary, max 64kB */
 	readcnt = min(count, 64*1024) - entries;
 
-	auio = *uio;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_resid = readcnt;
-	auio.uio_segflg = UIO_SYSSPACE;
-	aiov.iov_len = readcnt;
-	bufsize = readcnt;
-	diskbuf = malloc(bufsize, M_TEMP, M_WAITOK);
-	aiov.iov_base = diskbuf;
-	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
-	readcnt -= auio.uio_resid;
-	dp = (struct direct *)diskbuf;
-	edp = &diskbuf[readcnt];
+	off = uio->uio_offset;
+	done = 0;
+	error = 0;
+	bp = NULL;
 
 	memset(&u, 0, sizeof(u));
 
-	/*
-	 * While
-	 *  - we haven't failed to VOP_READ or uiomove()
-	 *  - there's space in the read buf for the head of an entry
-	 *  - that entry has a valid d_reclen, and
-	 *  - there's space for the *entire* entry
-	 * then we're good to process this one.
-	 */
-	while (error == 0 &&
-	    (char *)dp + offsetof(struct direct, d_name) < edp &&
-	    dp->d_reclen > offsetof(struct direct, d_name) &&
-	    (char *)dp + dp->d_reclen <= edp) {
-		u.dn.d_reclen = roundup(dp->d_namlen+1 +
-		    offsetof(struct dirent, d_name), 8);
-		if (u.dn.d_reclen > uio->uio_resid)
+	while (error == 0 && done == 0 && readcnt > 0) {
+		bp = NULL;
+		if ((bytesinfile = DIP(ip, size) - off) <= 0)
 			break;
-		off += dp->d_reclen;
-		u.dn.d_off = off;
-		u.dn.d_fileno = dp->d_ino;
-		u.dn.d_type = dp->d_type;
-		u.dn.d_namlen = dp->d_namlen;
-		memcpy(u.dn.d_name, dp->d_name, u.dn.d_namlen);
-		memset(u.dn.d_name + u.dn.d_namlen, 0, u.dn.d_reclen
-		    - u.dn.d_namlen - offsetof(struct dirent, d_name));
+		if ((error = UFS_BUFATOFF(ip, off, &dirbuf, &bp)) != 0)
+			break;
+		size = bp->b_bcount - bp->b_resid -
+		    (dirbuf - (char *)bp->b_data);
+		if (size <= 0)
+			break;
 
-		if (memchr(u.dn.d_name, '/', u.dn.d_namlen) != NULL) {
-			error = EINVAL;
-			break;
+		xfersize = readcnt;
+		if (size < xfersize)
+			xfersize = size;
+		if (bytesinfile < xfersize)
+			xfersize = bytesinfile;
+
+		/*
+		 * Convert and copy back the on-disk struct direct format to
+		 * the user-space struct dirent format, one entry at a time
+		 */
+		dp = (struct direct *)dirbuf;
+		edp = dirbuf + xfersize;
+
+		/*
+		 * While
+		 *  - we haven't failed to read or uiomove()
+		 *  - there's space in the read buf for the head of an entry
+		 *  - that entry has a valid d_reclen, and
+		 *  - there's space for the *entire* entry
+		 * then we're good to process this one.
+		 */
+		while (error == 0 &&
+		    (char *)dp + offsetof(struct direct, d_name) < edp &&
+		    dp->d_reclen > offsetof(struct direct, d_name) &&
+		    (char *)dp + dp->d_reclen <= edp) {
+			u.dn.d_reclen = roundup(dp->d_namlen + 1 +
+			    offsetof(struct dirent, d_name), 8);
+			if (u.dn.d_reclen > uio->uio_resid) {
+				done = 1;
+				break;
+			}
+			off += dp->d_reclen;
+			u.dn.d_off = off;
+			u.dn.d_fileno = dp->d_ino;
+			u.dn.d_type = dp->d_type;
+			u.dn.d_namlen = dp->d_namlen;
+			memcpy(u.dn.d_name, dp->d_name, u.dn.d_namlen);
+			memset(u.dn.d_name + u.dn.d_namlen, 0,
+			    u.dn.d_reclen - u.dn.d_namlen -
+			    offsetof(struct dirent, d_name));
+
+			if (memchr(u.dn.d_name, '/', u.dn.d_namlen) != NULL) {
+				error = EINVAL;
+				break;
+			}
+
+			error = uiomove(&u.dn, u.dn.d_reclen, uio);
+			dp = (struct direct *)((char *)dp + dp->d_reclen);
 		}
 
-		error = uiomove(&u.dn, u.dn.d_reclen, uio);
-		dp = (struct direct *)((char *)dp + dp->d_reclen);
-	}
+		/*
+		 * If there was room for an entry in what we read but its
+		 * d_reclen is bogus, fail
+		 */
+		if ((char *)dp + offsetof(struct direct, d_name) < edp &&
+		    dp->d_reclen <= offsetof(struct direct, d_name))
+			error = EIO;
 
-	/*
-	 * If there was room for an entry in what we read but its
-	 * d_reclen is bogus, fail
-	 */
-	if ((char *)dp + offsetof(struct direct, d_name) < edp &&
-	    dp->d_reclen <= offsetof(struct direct, d_name))
-		error = EIO;
-	free(diskbuf, M_TEMP, bufsize);
+		brelse(bp);
+		bp = NULL;
+		readcnt -= xfersize;
+	}
+	if (bp != NULL)
+		brelse(bp);
 
 	uio->uio_offset = off;
-	*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= off;
+	*ap->a_eofflag = DIP(ip, size) <= off;
+
+	if (!(vp->v_mount->mnt_flag & MNT_NOATIME) ||
+	    (ip->i_flag & (IN_CHANGE | IN_UPDATE)))
+		ip->i_flag |= IN_ACCESS;
 
 	return (error);
 }
