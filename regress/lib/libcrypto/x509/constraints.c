@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.19 2026/04/13 17:04:23 beck Exp $	*/
+/*	$OpenBSD: constraints.c,v 1.20 2026/05/26 09:35:53 jsing Exp $	*/
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -397,7 +397,7 @@ test_valid_uri(void)
 
 	for (j = 0; validuri[j] != NULL; j++) {
 		if (x509_constraints_uri_host(validuri[j],
-		    strlen(invaliduri[j]), &hostpart) == 0) {
+		    strlen(validuri[j]), &hostpart) == 0) {
 			FAIL("Valid URI '%s' NOT accepted\n",
 			    validuri[j]);
 			failure = 1;
