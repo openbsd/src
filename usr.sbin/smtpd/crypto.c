@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.10 2021/06/14 17:58:15 eric Exp $	 */
+/* $OpenBSD: crypto.c,v 1.11 2026/05/26 22:39:33 gilles Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -274,8 +274,10 @@ crypto_decrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	int		len = 0;
 	int		ret = 0;
 
-	/* out does not have enough room */
-	if (outlen < inlen - sizeof tag + sizeof iv)
+	/* input buffer too small or out does not have enough room */
+	if (inlen < sizeof(tag) + sizeof(iv) + 1)
+		return 0;
+	if (outlen < inlen - sizeof(tag) - sizeof(iv) - 1)
 		return 0;
 
 	/* extract tag */
