@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 2025/01/22 18:18:58 jca Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 2026/05/26 14:12:34 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -56,12 +56,6 @@
  */
 	.globl _start_kern_bootstrap
 _start_kern_bootstrap:
-
-	/* Set the global pointer */
-.option push
-.option norelax
-	lla	gp, __global_pointer$
-.option pop
 
 	/*
 	 * Page tables setup
@@ -123,12 +117,6 @@ _start_kern_bootstrap:
 	.align 2
 va:
 	sfence.vma
-
-	/* Set the global pointer again, this time with the virtual address. */
-.option push
-.option norelax
-	lla	gp, __global_pointer$
-.option pop
 
 	/* Setup supervisor trap vector */
 	la	t0, cpu_exception_handler
@@ -238,12 +226,6 @@ cpu_hatch:
 	ld	tp, CI_SELF(a1)
 	ld	a2, CI_SATP(a1)
 
-	/* Set the global pointer */
-.option push
-.option norelax
-	lla	gp, __global_pointer$
-.option pop
-
 	/* Setup stack pointer */
 	ld	sp, CI_INITSTACK_END(a1)
 
@@ -268,12 +250,6 @@ cpu_hatch:
 	.align 2
 mpva:
 	sfence.vma
-
-	/* Set the global pointer again, this time with the virtual address. */
-.option push
-.option norelax
-	lla	gp, __global_pointer$
-.option pop
 
 	/* Setup supervisor trap vector */
 	la	t0, cpu_exception_handler
