@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.11 2026/05/18 13:47:32 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.12 2026/05/26 14:54:32 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -969,8 +969,8 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
-	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_AMSDU7935;
-	ic->ic_htcaps |=
+	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_SGI40 |
+	    IEEE80211_HTCAP_CBW20_40 | IEEE80211_HTCAP_AMSDU7935 |
 	    (IEEE80211_HTCAP_SMPS_DIS << IEEE80211_HTCAP_SMPS_SHIFT);
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;

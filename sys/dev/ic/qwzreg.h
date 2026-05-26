@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.15 2026/05/18 13:47:32 kirill Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.16 2026/05/26 14:54:32 kirill Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -13252,6 +13252,7 @@ struct htt_rx_full_monitor_mode_cfg_cmd {
 } __packed;
 
 #define WMI_HOST_RC_DS_FLAG			0x01
+#define WMI_HOST_RC_CW40_FLAG			0x02
 #define WMI_HOST_RC_SGI_FLAG			0x04
 #define WMI_HOST_RC_HT_FLAG			0x08
 #define WMI_HOST_RC_TX_STBC_FLAG		0x20
