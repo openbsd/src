@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.48 2025/10/30 16:46:19 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.49 2026/05/26 22:48:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -589,6 +589,8 @@ m_get_sockaddr(struct msg *m, struct sockaddr *sa)
 	size_t len;
 
 	m_get_size(m, &len);
+	if (len > sizeof(struct sockaddr_storage))
+		m_error("sockaddr size too large");
 	m_get(m, sa, len);
 }
 
