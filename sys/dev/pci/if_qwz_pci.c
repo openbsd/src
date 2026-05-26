@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.12 2026/05/26 14:54:32 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.13 2026/05/26 14:55:16 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1007,6 +1007,10 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_updateedca = qwz_updateedca;
 	ic->ic_updatedtim = qwz_updatedtim;
 #endif
+	ic->ic_ampdu_rx_start = qwz_ampdu_rx_start;
+	ic->ic_ampdu_rx_stop = qwz_ampdu_rx_stop;
+	ic->ic_ampdu_tx_start = qwz_ampdu_tx_start;
+	ic->ic_ampdu_tx_stop = NULL;
 	/*
 	 * We cannot read the MAC address without loading the
 	 * firmware from disk. Postpone until mountroot is done.

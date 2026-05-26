@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.17 2026/05/19 04:17:51 mglocker Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.18 2026/05/26 14:55:16 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1910,6 +1910,11 @@ struct qwz_setkey_task_arg {
 #define QWZ_DEL_KEY	2
 };
 
+struct qwz_ba_task_data {
+	uint32_t		start_tidmask;
+	uint32_t		stop_tidmask;
+};
+
 struct qwz_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -1943,6 +1948,10 @@ struct qwz_softc {
 
 	int install_key_done;
 	int install_key_status;
+
+	/* Task for firmware BlockAck setup/teardown and its arguments. */
+	struct task		ba_task;
+	struct qwz_ba_task_data	ba_rx;
 
 	enum ath12k_11d_state	state_11d;
 	int			completed_11d_scan;
@@ -2161,6 +2170,12 @@ int	qwz_set_key(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_key *);
 void	qwz_delete_key(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_key *);
+int	qwz_ampdu_rx_start(struct ieee80211com *, struct ieee80211_node *,
+	    uint8_t);
+void	qwz_ampdu_rx_stop(struct ieee80211com *, struct ieee80211_node *,
+	    uint8_t);
+int	qwz_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
+	    uint8_t);
 
 void	qwz_qrtr_recv_msg(struct qwz_softc *, struct mbuf *);
 

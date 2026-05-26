@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.37 2026/05/26 14:54:32 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.38 2026/05/26 14:55:16 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -345,6 +345,7 @@ qwz_stop(struct ifnet *ifp)
 	task_del(systq, &sc->init_task);
 	qwz_del_task(sc, sc->sc_nswq, &sc->newstate_task);
 	qwz_del_task(sc, systq, &sc->setkey_task);
+	qwz_del_task(sc, systq, &sc->ba_task);
 	refcnt_finalize(&sc->task_refs, "qwzstop");
 
 	qwz_setkey_clear(sc);
@@ -868,9 +869,7 @@ qwz_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	    nstate != IEEE80211_S_AUTH)
 		return 0;
 	if (ic->ic_state == IEEE80211_S_RUN) {
-#if 0
 		qwz_del_task(sc, systq, &sc->ba_task);
-#endif
 		qwz_del_task(sc, systq, &sc->setkey_task);
 		qwz_setkey_clear(sc);
 #if 0
@@ -24471,6 +24470,116 @@ qwz_peer_assoc_prepare(struct qwz_softc *sc, struct qwz_vif *arvif,
 	/* TODO: amsdu_disable req? */
 }
 
+void
+qwz_rx_agg_start(struct qwz_softc *sc, struct ieee80211_node *ni, uint8_t tid,
+    uint16_t ssn, uint16_t winsize)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* XXX derive pdev ID somehow */
+	enum hal_pn_type pn_type;
+
+	if (!test_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) &&
+	    (ic->ic_flags & IEEE80211_F_RSNON))
+		pn_type = HAL_PN_TYPE_WPA;
+	else
+		pn_type = HAL_PN_TYPE_NONE;
+
+	if (qwz_peer_rx_tid_setup(sc, ni, arvif->vdev_id, pdev_id, tid,
+	    winsize, ssn, pn_type))
+		ieee80211_addba_req_refuse(ic, ni, tid);
+	else
+		ieee80211_addba_req_accept(ic, ni, tid);
+}
+
+void
+qwz_rx_agg_stop(struct qwz_softc *sc, struct ieee80211_node *ni, uint8_t tid)
+{
+	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* XXX derive pdev ID somehow */
+	struct qwz_node *nq = (struct qwz_node *)ni;
+	struct ath12k_peer *peer = &nq->peer;
+	uint64_t paddr;
+	int ret;
+
+	if (peer->peer_id == HAL_INVALID_PEERID)
+		return;
+
+	if (!peer->rx_tid[tid].active)
+		return;
+
+	ret = qwz_peer_rx_tid_reo_update(sc, peer, &peer->rx_tid[tid],
+	    1, 0, 0);
+	if (ret) {
+		printf("%s: failed to update reo for rx tid %d: %d\n",
+		    sc->sc_dev.dv_xname, tid, ret);
+	}
+
+	paddr = peer->rx_tid[tid].paddr;
+	ret = qwz_wmi_peer_rx_reorder_queue_setup(sc, arvif->vdev_id, pdev_id,
+	    ni->ni_macaddr, paddr, tid, 1, 1);
+	if (ret) {
+		printf("%s: failed to send wmi to delete rx tid %d\n",
+		    sc->sc_dev.dv_xname, ret);
+	}
+}
+
+void
+qwz_ba_task(void *arg)
+{
+	struct qwz_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	int s = splnet();
+	int tid;
+
+	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
+		if (test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags))
+			break;
+		if (sc->ba_rx.start_tidmask & (1 << tid)) {
+			struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
+			qwz_rx_agg_start(sc, ni, tid, ba->ba_winstart,
+			    ba->ba_winsize);
+			sc->ba_rx.start_tidmask &= ~(1 << tid);
+		} else if (sc->ba_rx.stop_tidmask & (1 << tid)) {
+			qwz_rx_agg_stop(sc, ni, tid);
+			sc->ba_rx.stop_tidmask &= ~(1 << tid);
+		}
+	}
+
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
+}
+
+int
+qwz_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	struct qwz_softc *sc = ic->ic_softc;
+
+	sc->ba_rx.start_tidmask |= (1 << tid);
+	qwz_add_task(sc, systq, &sc->ba_task);
+	return EBUSY;
+}
+
+void
+qwz_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	struct qwz_softc *sc = ic->ic_softc;
+
+	sc->ba_rx.stop_tidmask |= (1 << tid);
+	qwz_add_task(sc, systq, &sc->ba_task);
+}
+
+int
+qwz_ampdu_tx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint8_t tid)
+{
+	/* Firmware handles Tx aggregation internally. */
+	return 0;
+}
+
 int
 qwz_run(struct qwz_softc *sc)
 {
@@ -24647,6 +24756,7 @@ qwz_attach(struct qwz_softc *sc)
 	task_set(&sc->init_task, qwz_init_task, sc);
 	task_set(&sc->newstate_task, qwz_newstate_task, sc);
 	task_set(&sc->setkey_task, qwz_setkey_task, sc);
+	task_set(&sc->ba_task, qwz_ba_task, sc);
 	timeout_set_proc(&sc->scan.timeout, qwz_scan_timeout, sc);
 #if NBPFILTER > 0
 	qwz_radiotap_attach(sc);
