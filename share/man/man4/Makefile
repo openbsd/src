@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.879 2026/05/19 04:43:43 mglocker Exp $
+#	$OpenBSD: Makefile,v 1.880 2026/05/26 03:52:37 mglocker Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -88,7 +88,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	rkpcie.4 rkpciephy.4 rkpinctrl.4 rkpmic.4 rkpwm.4 \
 	rkrng.4 rkspi.4 rktcphy.4 rktemp.4 rkusbphy.4 rkvop.4 \
 	rl.4 rlphy.4 route.4 rport.4 rsu.4 rtsx.4 rum.4 run.4 rtw.4 rtwn.4 \
-	safte.4 sambat.4 sbus.4 schsio.4 scmi.4 scsi.4 sd.4 \
+	safte.4 sambat.4 samsabi.4 sbus.4 schsio.4 scmi.4 scsi.4 sd.4 \
 	sdmmc.4 sdhc.4 se.4 sec.4 ses.4 sf.4 sili.4 \
 	simpleamp.4 simpleaudio.4 simplefb.4 simplepanel.4 siop.4 sis.4 sk.4 \
 	sm.4 smsc.4 sncodec.4 \

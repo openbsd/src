@@ -1,0 +1,72 @@
+.\"	$OpenBSD: samsabi.4,v 1.1 2026/05/26 03:52:37 mglocker Exp $
+.\"
+.\" Copyright (c) 2026 Marcus Glocker <mglocker@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 26 2026 $
+.Dt SAMSABI 4
+.Os
+.Sh NAME
+.Nm samsabi
+.Nd Samsung laptop keyboard backlight
+.Sh SYNOPSIS
+.Cd "samsabi* at iic?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Samsung Advanced BIOS Interface
+.Pq SABI ,
+a vendor command interface of the embedded controller found in Samsung
+laptops based on the Qualcomm Snapdragon X1E80100, such as the Galaxy
+Book4 Edge.
+The controller, identified as
+.Dq SAM060B
+in ACPI, is an ENE KB9058 micro controller running Samsung firmware.
+It exposes the SABI command protocol on the I2C bus at a separate
+address from the
+.Dq Mbox
+channel used by
+.Xr sambat 4
+for battery status.
+.Pp
+The
+.Nm
+driver currently uses this interface to control the keyboard backlight.
+The backlight level can be retrieved and modified with the
+.Xr wsconsctl 8
+variable
+.Va keyboard.backlight .
+.Sh SEE ALSO
+.Xr iic 4 ,
+.Xr intro 4 ,
+.Xr sambat 4 ,
+.Xr wskbd 4 ,
+.Xr wsconsctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 8.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Marcus Glocker Aq Mt mglocker@openbsd.org .
+.Sh BUGS
+The embedded controller does not hold intermediate keyboard backlight
+levels: it fades the backlight off shortly after a level is set, and
+only full brightness can be refreshed often enough to be kept lit.
+As a result the driver treats any non-zero brightness request as full
+brightness.
