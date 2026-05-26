@@ -153,6 +153,7 @@ rpz_type_ignored(uint16_t rr_type)
 		case LDNS_RR_TYPE_SOA:
 		case LDNS_RR_TYPE_NS:
 		case LDNS_RR_TYPE_DNAME:
+		case LDNS_RR_TYPE_ZONEMD:
 		/* all DNSSEC-related RRs must be ignored */
 		case LDNS_RR_TYPE_DNSKEY:
 		case LDNS_RR_TYPE_DS:
@@ -2468,6 +2469,7 @@ rpz_callback_from_iterator_module(struct module_qstate* ms, struct iter_qstate* 
 {
 	struct auth_zones* az;
 	struct auth_zone* a;
+	struct dns_msg* ret = NULL;
 	struct clientip_synthesized_rr* raddr = NULL;
 	struct rpz* r = NULL;
 	struct local_zone* z = NULL;
@@ -2511,13 +2513,11 @@ rpz_callback_from_iterator_module(struct module_qstate* ms, struct iter_qstate* 
 		z = rpz_delegation_point_zone_lookup(is->dp, r->nsdname_zones,
 						     is->qchase.qclass, &match);
 		if(z != NULL) {
-			lock_rw_unlock(&a->lock);
 			break;
 		}
 
 		raddr = rpz_delegation_point_ipbased_trigger_lookup(r, is);
 		if(raddr != NULL) {
-			lock_rw_unlock(&a->lock);
 			break;
 		}
 		lock_rw_unlock(&a->lock);
@@ -2532,9 +2532,12 @@ rpz_callback_from_iterator_module(struct module_qstate* ms, struct iter_qstate* 
 		if(z) {
 			lock_rw_unlock(&z->lock);
 		}
-		return rpz_apply_nsip_trigger(ms, &is->qchase, r, raddr, a);
+		ret = rpz_apply_nsip_trigger(ms, &is->qchase, r, raddr, a);
+	} else {
+		ret = rpz_apply_nsdname_trigger(ms, &is->qchase, r, z, &match, a);
 	}
-	return rpz_apply_nsdname_trigger(ms, &is->qchase, r, z, &match, a);
+	lock_rw_unlock(&a->lock);
+	return ret;
 }
 
 struct dns_msg* rpz_callback_from_iterator_cname(struct module_qstate* ms,
