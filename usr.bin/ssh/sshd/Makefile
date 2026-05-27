@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.113 2026/02/08 15:28:01 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.114 2026/05/27 13:57:26 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,6 +8,7 @@ SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} \
 	${SRCS_MAC} ${SRCS_UTL} ${SRCS_SK_CLIENT} ${SRCS_PKCS11_CLIENT}
 
 PROG=	sshd
+RELINK=./${PROG} -V # test it works
 BINMODE=511
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
@@ -26,24 +27,3 @@ DPADD+=	${LIBUTIL}
 LDADD+=	-lz
 DPADD+=	${LIBZ}
 .endif
-
-# The random relink kit, used on OpenBSD by /etc/rc
-
-CLEANFILES+= ${PROG}.tar install.sh
-
-install.sh: Makefile
-	echo "set -o errexit" > $@
-	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
-	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
-	echo "./${PROG} -V # test it works" >> $@
-	echo "install -c -s  -o root -g bin -m ${BINMODE} ${PROG} " \
-	    "${BINDIR}/${PROG}" >> $@
-
-${PROG}.tar: ${OBJS} install.sh
-	tar cf $@ ${OBJS} install.sh
-
-afterinstall: ${PROG}.tar
-	install -d -o root -g wheel -m 755 \
-	    ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}
-	install -o ${BINOWN} -g ${BINGRP} -m 640 \
-	    ${PROG}.tar ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}/${PROG}.tar

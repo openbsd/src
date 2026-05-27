@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2026/05/27 03:05:21 djm Exp $
+#	$OpenBSD: Makefile,v 1.44 2026/05/27 13:57:26 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,6 +8,7 @@ SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} ${SRCS_UTL}
 SRCS+=	${SRCS_SK_CLIENT}
 
 PROG=	ssh-agent
+RELINK=./${PROG} -V # test it works
 BINOWN=	root
 BINGRP=	_sshagnt
 BINMODE=2511
@@ -18,24 +19,3 @@ BINDIR=	/usr/bin
 
 LDADD+=	-lcrypto -lutil
 DPADD+=	${LIBCRYPTO} ${LIBUTIL}
-
-# The random relink kit, used on OpenBSD by /etc/rc
-
-CLEANFILES+= ssh-agent.tar install.sh
-
-install.sh: Makefile
-	echo "set -o errexit" > $@
-	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
-	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
-	echo "./${PROG} -V" >> $@
-	echo "install -c -s -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${PROG} " \
-	    "${BINDIR}/${PROG}" >> $@
-
-${PROG}.tar: ${OBJS} install.sh
-	tar cf $@ ${OBJS} install.sh
-
-afterinstall: ${PROG}.tar
-	install -d -o root -g wheel -m 755 \
-	    ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}
-	install -o root -g bin -m 640 \
-	    ${PROG}.tar ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}/${PROG}.tar
