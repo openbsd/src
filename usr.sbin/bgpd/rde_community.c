@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.25 2026/04/16 19:06:45 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.26 2026/05/27 08:38:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -153,6 +153,7 @@ fc2c(const struct community *fc, struct rde_peer *peer, struct community *c,
 			return 0;
 		case EXT_COMMUNITY_TRANS_OPAQUE:
 		case EXT_COMMUNITY_TRANS_EVPN:
+		default:
 			if ((fc->flags >> 8 & 0xff) == COMMUNITY_ANY)
 				break;
 
@@ -501,7 +502,8 @@ community_ext_add(struct rde_community *comm, int flags, int ebgp,
 		case EXT_COMMUNITY_TRANS_TWO_AS:
 		case EXT_COMMUNITY_TRANS_OPAQUE:
 		case EXT_COMMUNITY_TRANS_EVPN:
-			set.data1 = c >> 32 & 0xffff;
+		default:
+			set.data1 = (c >> 32) & 0xffff;
 			set.data2 = c;
 			break;
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
@@ -604,6 +606,7 @@ community_writebuf(struct rde_community *comm, uint8_t type, int ebgp,
 			case EXT_COMMUNITY_TRANS_TWO_AS:
 			case EXT_COMMUNITY_TRANS_OPAQUE:
 			case EXT_COMMUNITY_TRANS_EVPN:
+			default:
 				ext |= ((uint64_t)cp->data1 & 0xffff) << 32;
 				ext |= (uint64_t)cp->data2;
 				break;
