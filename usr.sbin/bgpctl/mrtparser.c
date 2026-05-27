@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.23 2025/11/03 11:32:07 tb Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.24 2026/05/27 11:17:42 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -28,6 +28,8 @@
 
 #include "mrt.h"
 #include "mrtparser.h"
+
+#define MRT_MAX_LEN	(1024 * 1024)
 
 struct mrt_peer	*mrt_parse_v2_peer(struct mrt_hdr *, struct ibuf *);
 struct mrt_rib	*mrt_parse_v2_rib(struct mrt_hdr *, struct ibuf *, int);
@@ -82,6 +84,8 @@ mrt_read_msg(int fd, struct mrt_hdr *hdr)
 		return (NULL);
 
 	len = ntohl(hdr->length);
+	if (len > MRT_MAX_LEN)
+		errx(1, "oversized message, %zu bytes", len);
 	if ((buf = ibuf_open(len)) == NULL)
 		err(1, "ibuf_open(%zu)", len);
 
@@ -155,8 +159,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			case MRT_DUMP_V2_PEER_INDEX_TABLE:
 				if (p->dump == NULL)
 					break;
-				if (pctx)
-					mrt_free_peers(pctx);
+				mrt_free_peers(pctx);
 				pctx = mrt_parse_v2_peer(&h, msg);
 				break;
 			case MRT_DUMP_V2_RIB_IPV4_UNICAST:
@@ -171,6 +174,8 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			case MRT_DUMP_V2_RIB_GENERIC_ADDPATH:
 				if (p->dump == NULL)
 					break;
+				if (pctx == NULL)
+					errx(1, "DUMP_V2: no peer index table");
 				r = mrt_parse_v2_rib(&h, msg, verbose);
 				if (r) {
 					if (p->dump)
@@ -233,8 +238,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 		}
 		ibuf_free(msg);
 	}
-	if (pctx)
-		mrt_free_peers(pctx);
+	mrt_free_peers(pctx);
 }
 
 static int
@@ -457,16 +461,13 @@ mrt_parse_dump(struct mrt_hdr *hdr, struct ibuf *msg, struct mrt_peer **pp,
 	uint32_t		 tmp32;
 	uint16_t		 tmp16, alen;
 
-	if (*pp == NULL) {
-		*pp = calloc(1, sizeof(struct mrt_peer));
-		if (*pp == NULL)
-			err(1, "calloc");
-		(*pp)->peers = calloc(1, sizeof(struct mrt_peer_entry));
-		if ((*pp)->peers == NULL)
-			err(1, "calloc");
-		(*pp)->npeers = 1;
-	}
-	p = *pp;
+	mrt_free_peers(*pp);
+	if ((p = calloc(1, sizeof(struct mrt_peer))) == NULL)
+		err(1, "calloc");
+	if ((p->peers = calloc(1, sizeof(struct mrt_peer_entry))) == NULL)
+		err(1, "calloc");
+	p->npeers = 1;
+	*pp = p;
 
 	*rp = r = calloc(1, sizeof(struct mrt_rib));
 	if (r == NULL)
@@ -537,16 +538,13 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, struct ibuf *msg, struct mrt_peer **pp,
 	uint16_t		 asnum, alen, afi;
 	uint8_t			 safi, nhlen, aid;
 
-	if (*pp == NULL) {
-		*pp = calloc(1, sizeof(struct mrt_peer));
-		if (*pp == NULL)
-			err(1, "calloc");
-		(*pp)->peers = calloc(1, sizeof(struct mrt_peer_entry));
-		if ((*pp)->peers == NULL)
-			err(1, "calloc");
-		(*pp)->npeers = 1;
-	}
-	p = *pp;
+	mrt_free_peers(*pp);
+	if ((p = calloc(1, sizeof(struct mrt_peer))) == NULL)
+		err(1, "calloc");
+	if ((p->peers = calloc(1, sizeof(struct mrt_peer_entry))) == NULL)
+		err(1, "calloc");
+	p->npeers = 1;
+	*pp = p;
 
 	*rp = r = calloc(1, sizeof(struct mrt_rib));
 	if (r == NULL)
@@ -786,6 +784,8 @@ mrt_extract_attr(struct mrt_rib_entry *re, struct ibuf *buf, uint8_t aid,
 void
 mrt_free_peers(struct mrt_peer *p)
 {
+	if (p == NULL)
+		return;
 	free(p->peers);
 	free(p->view);
 	free(p);
