@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.297 2026/05/27 08:28:35 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.298 2026/05/27 12:38:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1495,9 +1495,9 @@ nexthop_cmp(struct nexthop *na, struct nexthop *nb)
 			return (1);
 		if (ntohl(a->v4.s_addr) < ntohl(b->v4.s_addr))
 			return (-1);
-		return (0);
+		break;
 	case AID_INET6:
-		r = memcmp(&a->v6, &b->v6, sizeof(struct in6_addr));
+		r = memcmp(&a->v6, &b->v6, sizeof(a->v6));
 		if (r != 0)
 			return r;
 		if (IN6_IS_ADDR_LINKLOCAL(&a->v6)) {
@@ -1506,11 +1506,11 @@ nexthop_cmp(struct nexthop *na, struct nexthop *nb)
 			if (a->scope_id < b->scope_id)
 				return (-1);
 		}
-		return (0);
+		break;
 	default:
-		fatalx("nexthop_cmp: %s is unsupported", aid2str(a->aid));
+		fatalx("%s: %s is unsupported", __func__, aid2str(a->aid));
 	}
-	return (-1);
+	return (0);
 }
 
 static struct nexthop *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.313 2025/02/04 16:07:46 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.314 2026/05/27 12:38:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1506,30 +1506,34 @@ kroute6_compare(struct kroute6 *a, struct kroute6 *b)
 int
 knexthop_compare(struct knexthop *a, struct knexthop *b)
 {
-	int	i;
+	int	r;
 
 	if (a->nexthop.aid != b->nexthop.aid)
-		return (b->nexthop.aid - a->nexthop.aid);
+		return (a->nexthop.aid - b->nexthop.aid);
 
 	switch (a->nexthop.aid) {
 	case AID_INET:
-		if (ntohl(a->nexthop.v4.s_addr) < ntohl(b->nexthop.v4.s_addr))
-			return (-1);
 		if (ntohl(a->nexthop.v4.s_addr) > ntohl(b->nexthop.v4.s_addr))
 			return (1);
+		if (ntohl(a->nexthop.v4.s_addr) < ntohl(b->nexthop.v4.s_addr))
+			return (-1);
 		break;
 	case AID_INET6:
-		for (i = 0; i < 16; i++) {
-			if (a->nexthop.v6.s6_addr[i] < b->nexthop.v6.s6_addr[i])
-				return (-1);
-			if (a->nexthop.v6.s6_addr[i] > b->nexthop.v6.s6_addr[i])
+		r = memcmp(&a->nexthop.v6, &b->nexthop.v6,
+		    sizeof(a->nexthop.v6));
+		if (r != 0)
+			return r;
+		if (IN6_IS_ADDR_LINKLOCAL(&a->nexthop.v6)) {
+			if (a->nexthop.scope_id > b->nexthop.scope_id)
 				return (1);
+			if (a->nexthop.scope_id < b->nexthop.scope_id)
+				return (-1);
 		}
 		break;
 	default:
-		fatalx("%s: unknown AF", __func__);
+		fatalx("%s: %s is unsupported", __func__,
+		    aid2str(a->nexthop.aid));
 	}
-
 	return (0);
 }
 
