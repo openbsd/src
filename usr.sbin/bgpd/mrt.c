@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.135 2026/05/07 20:35:19 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.136 2026/05/27 08:34:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -359,7 +359,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	uint16_t	 len;
 	uint8_t		 aid;
 
-	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
+	if ((buf = ibuf_dynamic(0, MAX_EXT_PKTSIZE)) == NULL) {
 		log_warn("mrt_dump_entry_mp: ibuf_dynamic");
 		return (-1);
 	}
@@ -534,7 +534,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, uint16_t snum,
 		/* only able to dump pure IPv4/IPv6 */
 		return (0);
 
-	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
+	if ((buf = ibuf_dynamic(0, MAX_EXT_PKTSIZE)) == NULL) {
 		log_warn("mrt_dump_entry: ibuf_dynamic");
 		return (-1);
 	}
@@ -660,7 +660,7 @@ mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
 			if (ibuf_add_n32(buf, p->path_id) == -1)
 				goto fail;
 
-		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL)
+		if ((tbuf = ibuf_dynamic(0, MAX_EXT_PKTSIZE)) == NULL)
 			goto fail;
 		if (mrt_attr_dump(tbuf, prefix_aspath(p), prefix_communities(p),
 		    nh, 1) == -1)
