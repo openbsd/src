@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.131 2026/04/13 03:36:10 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.132 2026/05/27 13:57:16 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -298,7 +298,8 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 		return 0;
 	if (!ASN1_TIME_to_tm(at, &tm))
 		return 0;
-	if ((*t = timegm(&tm)) < 0)
+	tm.tm_wday = -1;
+	if ((*t = timegm(&tm)) == -1 && tm.tm_wday == -1)
 		return 0;
 	return 1;
 }
