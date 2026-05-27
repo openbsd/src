@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.126 2026/01/14 01:07:57 jmatthew Exp $ */
+/*	$OpenBSD: nvme.c,v 1.127 2026/05/27 15:04:14 jcs Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1090,20 +1090,25 @@ void
 nvme_q_submit(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
     void (*fill)(struct nvme_softc *, struct nvme_ccb *, void *))
 {
-	struct nvme_sqe *sqe = NVME_DMA_KVA(q->q_sq_dmamem);
+	struct nvme_sqe *sqe;
 	u_int32_t tail;
+	u_int sqe_size;
+
+	sqe_size = (q->q_id == NVME_ADMIN_Q) ? sizeof(struct nvme_sqe) :
+	    sc->sc_sqe_size;
 
 	tail = sc->sc_ops->op_sq_enter(sc, q, ccb);
 
-	sqe += tail;
+	sqe = (struct nvme_sqe *)((char *)NVME_DMA_KVA(q->q_sq_dmamem) +
+	    (tail * sqe_size));
 
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
-	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_POSTWRITE);
-	memset(sqe, 0, sizeof(*sqe));
+	    sqe_size * tail, sqe_size, BUS_DMASYNC_POSTWRITE);
+	memset(sqe, 0, sqe_size);
 	(*fill)(sc, ccb, sqe);
 	sqe->cid = ccb->ccb_id;
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
-	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_PREWRITE);
+	    sqe_size * tail, sqe_size, BUS_DMASYNC_PREWRITE);
 
 	sc->sc_ops->op_sq_leave(sc, q, ccb);
 }
@@ -1282,6 +1287,11 @@ nvme_identify(struct nvme_softc *sc, u_int mpsmin)
 	}
 
 	sc->sc_nn = lemtoh32(&identify->nn);
+
+	/* use maximum I/O SQE size reported */
+	sc->sc_sqe_size = 1 << (identify->sqes >> 4);
+	if (sc->sc_sqe_size < sizeof(struct nvme_sqe))
+		sc->sc_sqe_size = sizeof(struct nvme_sqe);
 
 	/*
 	 * At least one Apple NVMe device presents a second, bogus disk that is
@@ -1495,7 +1505,8 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 		return (NULL);
 
 	q->q_sq_dmamem = nvme_dmamem_alloc(sc,
-	    sizeof(struct nvme_sqe) * entries);
+	    (id == NVME_ADMIN_Q ? sizeof(struct nvme_sqe) : sc->sc_sqe_size) *
+	    entries);
 	if (q->q_sq_dmamem == NULL)
 		goto free;
 

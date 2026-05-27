@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.13 2024/11/19 02:31:35 jcs Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.14 2026/05/27 15:04:14 jcs Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -67,7 +67,8 @@ nvme_pci_match(struct device *parent, void *match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_NVME1 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_NVME2))
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_NVME2 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_NVME3))
 	    	return (1);
 
 	return (0);
