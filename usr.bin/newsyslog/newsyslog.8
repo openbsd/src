@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.56 2024/10/30 09:16:24 jan Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.57 2026/05/27 05:56:57 rsadowski Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: October 30 2024 $
+.Dd $Mdocdate: May 27 2026 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -180,6 +180,9 @@ follows:
 .Bl -tag -width XXXXXXXXXXXXXXXX
 .It Ar logfile_name
 The full pathname of the system log file to be archived.
+This path may be a
+.Xr glob 7
+pattern, which will be expanded accordingly.
 .It Ar owner:group
 This optional field specifies the owner and group for the archive file.
 The
@@ -442,6 +445,7 @@ default configuration file
 .Sh SEE ALSO
 .Xr compress 1 ,
 .Xr gzip 1 ,
+.Xr glob 7 ,
 .Xr syslog 3 ,
 .Xr syslogd 8
 .Sh AUTHORS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.120 2026/04/02 18:22:24 kili Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.121 2026/05/27 05:56:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -88,6 +88,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <glob.h>
 #include <grp.h>
 #include <limits.h>
 #include <pwd.h>
@@ -161,6 +162,8 @@ int	stat_suffix(char *, size_t, char *, struct stat *,
 	    int (*)(const char *, struct stat *));
 off_t	sizefile(struct stat *);
 int	parse_file(struct entrylist *, int *);
+int	is_glob_rotation(struct conf_entry *, const char *);
+int	parse_entry(struct entrylist *, int *, int, struct conf_entry *);
 time_t	parse8601(char *);
 time_t	parseDWM(char *);
 void	child_killer(int);
@@ -470,13 +473,14 @@ int
 parse_file(struct entrylist *list, int *nentries)
 {
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
-	struct conf_entry *working;
-	struct stat sb;
+	struct conf_entry *working, *working_glob;
+	size_t i;
 	int lineno = 0;
 	int ret = 0;
 	FILE *f;
 	const char *errstr;
 	long l;
+	glob_t g;
 
 	if (strcmp(conf, "-") == 0)
 		f = stdin;
@@ -503,9 +507,6 @@ nextline:
 		working->log = strdup(q);
 		if (working->log == NULL)
 			err(1, NULL);
-
-		if ((working->logbase = strrchr(working->log, '/')) != NULL)
-			working->logbase++;
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
@@ -739,55 +740,150 @@ nextline:
 			goto nextline;
 		}
 
-		/* If there is an arcdir, set working->backdir. */
-		if (arcdir != NULL && working->logbase != NULL) {
-			if (*arcdir == '/') {
-				/* Fully qualified arcdir */
-				working->backdir = arcdir;
-			} else {
-				/* arcdir is relative to log's parent dir */
-				*(working->logbase - 1) = '\0';
-				if ((asprintf(&working->backdir, "%s/%s",
-				    working->log, arcdir)) == -1)
-					err(1, NULL);
-				*(working->logbase - 1) = '/';
-			}
-			/* Ignore arcdir if it doesn't exist. */
-			if (stat(working->backdir, &sb) != 0 ||
-			    !S_ISDIR(sb.st_mode)) {
-				if (working->backdir != arcdir)
-					free(working->backdir);
-				working->backdir = NULL;
-			}
-		} else
-			working->backdir = NULL;
+		if (glob(working->log, GLOB_NOCHECK | GLOB_NOSORT, NULL, &g)) {
+			warnx("%s:%d: cannot glob(3), %s"
+			    " --> skipping",
+			    conf, lineno, strerror(errno));
+			ret = 1;
+			goto nextline;
+		}
 
-		/* Make sure we can't oflow PATH_MAX */
-		if (working->backdir != NULL) {
-			if (snprintf(line, sizeof(line), "%s/%s.%d%s",
-			    working->backdir, working->logbase,
-			    working->numlogs, COMPRESS_POSTFIX) >= PATH_MAX) {
-				warnx("%s:%d: pathname too long: %s"
-				    " --> skipping", conf, lineno, q);
-				ret = 1;
-				goto nextline;
+		for (i = 0; i < g.gl_pathc; i++) {
+			DPRINTF(("%s:%d: expanded logfile name \"%s\" to \"%s\""
+			    " (%zu/%zu)\n",
+			    conf, lineno, working->log, g.gl_pathv[i],
+			    i+1, g.gl_pathc));
+
+			if (is_glob_rotation(working, g.gl_pathv[i])) {
+				DPRINTF(("%s:%d: \"%s\" looks like a rotation"
+				    " --> skipping\n",
+				    conf, lineno, g.gl_pathv[i]));
+				continue;
 			}
-		} else {
-			if (snprintf(line, sizeof(line), "%s.%d%s",
-			    working->log, working->numlogs, COMPRESS_POSTFIX)
-			    >= PATH_MAX) {
-				warnx("%s:%d: pathname too long: %s"
-				    " --> skipping", conf, lineno,
-				    working->log);
+
+			working_glob = malloc(sizeof(*working));
+			if (working_glob == NULL)
+				err(1, NULL);
+
+			memcpy(working_glob, working, sizeof(*working));
+
+			if ((working_glob->log = strdup(g.gl_pathv[i])) == NULL)
+				err(1, NULL);
+
+			if (parse_entry(list, nentries, lineno, working_glob)) {
 				ret = 1;
-				goto nextline;
+				free(working_glob->log);
+				free(working_glob);
+				/* break to free resources below */
+				break;
 			}
 		}
-		TAILQ_INSERT_TAIL(list, working, next);
-		(*nentries)++;
+
+		/*
+		 * Original working is duplicated into working_glob in the for
+		 * loop above and can be freed now. Every struct char pointer
+		 * next to log is identical in each duplicate and used later.
+		 */
+		free(working->log);
+		free(working);
+
+		globfree(&g);
 	}
 	(void)fclose(f);
 	return (ret);
+}
+
+/*
+ * Checks if glob_line seems to be an already rotated filename based on working
+ * as a result of glob(3).
+ */
+int
+is_glob_rotation(struct conf_entry *working, const char *glob_line)
+{
+	size_t endpos;
+
+	/* Ignore empty inputs or identical to the logfile name. */
+	if (*glob_line == '\0' || strcmp(working->log, glob_line) == 0)
+		return 0;
+
+	endpos = strlen(glob_line) - 1;
+
+	/* Suffix check for compressed files. */
+	if (working->flags & CE_COMPACT && endpos >= strlen(COMPRESS_POSTFIX)) {
+		if (strcmp(glob_line + endpos - (strlen(COMPRESS_POSTFIX) - 1),
+		    COMPRESS_POSTFIX) != 0)
+			return 0;
+
+		endpos -= strlen(COMPRESS_POSTFIX);
+	}
+
+	/* Expect at least one digit. */
+	if (endpos == 0 || !isdigit(glob_line[endpos--]))
+		return 0;
+
+	for (; endpos > 0 && isdigit(glob_line[endpos]); endpos--);
+
+	/* Expect dot before digits. */
+	if (endpos == 0 || glob_line[endpos] != '.')
+		return 0;
+
+	return 1;
+}
+
+/*
+ * Parse a single conf_entry and insert it into the entrylist. If the entry is
+ * invalid, a warning is logged and 1 is returned.
+ */
+int
+parse_entry(struct entrylist *list, int *nentries, int lineno,
+    struct conf_entry *working)
+{
+	char line[BUFSIZ];
+	int linelen;
+	struct stat sb;
+
+	if ((working->logbase = strrchr(working->log, '/')) != NULL)
+		working->logbase++;
+
+	/* If there is an arcdir, set working->backdir. */
+	if (arcdir != NULL && working->logbase != NULL) {
+		if (*arcdir == '/') {
+			/* Fully qualified arcdir */
+			working->backdir = arcdir;
+		} else {
+			/* arcdir is relative to log's parent dir */
+			*(working->logbase - 1) = '\0';
+			if ((asprintf(&working->backdir, "%s/%s",
+			    working->log, arcdir)) == -1)
+				err(1, NULL);
+			*(working->logbase - 1) = '/';
+		}
+		/* Ignore arcdir if it doesn't exist. */
+		if (stat(working->backdir, &sb) != 0 ||
+		    !S_ISDIR(sb.st_mode)) {
+			if (working->backdir != arcdir)
+				free(working->backdir);
+			working->backdir = NULL;
+		}
+	} else
+		working->backdir = NULL;
+
+	/* Make sure we can't oflow PATH_MAX */
+	if (working->backdir != NULL)
+		linelen = snprintf(line, sizeof(line), "%s/%s.%d%s",
+		    working->backdir, working->logbase,
+		    working->numlogs, COMPRESS_POSTFIX);
+	else
+		linelen = snprintf(line, sizeof(line), "%s.%d%s",
+		    working->log, working->numlogs, COMPRESS_POSTFIX);
+	if (linelen < 0 || linelen >= sizeof(line) || linelen >= PATH_MAX) {
+		warnx("%s:%d: pathname too long: %s --> skipping", conf, lineno, line);
+		return 1;
+	}
+
+	TAILQ_INSERT_TAIL(list, working, next);
+	(*nentries)++;
+	return 0;
 }
 
 char *
