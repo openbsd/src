@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.296 2026/05/21 15:20:27 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.297 2026/05/27 08:28:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -346,10 +346,10 @@ rib_remove(struct rib_entry *re)
 		/* entry is locked or queued, don't free it. */
 		return;
 
-	pt_unref(re->prefix);
-
 	if (RB_REMOVE(rib_tree, rib_tree(re_rib(re)), re) == NULL)
 		log_warnx("rib_remove: remove failed.");
+
+	pt_unref(re->prefix);
 
 	free(re);
 	rdemem.rib_cnt--;
