@@ -1,4 +1,4 @@
-/* $OpenBSD: sort.c,v 1.5 2026/05/17 11:17:16 nicm Exp $ */
+/* $OpenBSD: sort.c,v 1.6 2026/05/27 07:05:20 jsg Exp $ */
 
 /*
  * Copyright (c) 2026 Dane Jensen <dhcjensen@gmail.com>
@@ -425,11 +425,11 @@ sort_get_clients(u_int *n, struct sort_criteria *sort_crit)
 
 	i = 0;
 	TAILQ_FOREACH(c, &clients, entry) {
-	       if (c->flags & CLIENT_UNATTACHEDFLAGS)
-		       continue;
-	       if (~c->flags & CLIENT_ATTACHED)
-		       continue;
-	       if (lsz <= i) {
+		if (c->flags & CLIENT_UNATTACHEDFLAGS)
+			continue;
+		if (~c->flags & CLIENT_ATTACHED)
+			continue;
+		if (lsz <= i) {
 			lsz += 100;
 			l = xreallocarray(l, lsz, sizeof *l);
 		}
