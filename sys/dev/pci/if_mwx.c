@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.9 2026/05/09 12:13:15 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.10 2026/05/27 03:12:22 kevlo Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -2615,7 +2615,7 @@ mt7921_e_mcu_fw_pmctrl(struct mwx_softc *sc)
 	for (i = 0; i < MT7921_MCU_INIT_RETRY_COUNT; i++) {
 		mwx_write(sc, MT_CONN_ON_LPCTL, PCIE_LPCR_HOST_SET_OWN);
 		if (mwx_poll(sc, MT_CONN_ON_LPCTL, PCIE_LPCR_HOST_OWN_SYNC,
-		    4, 50) == 0)
+		    PCIE_LPCR_HOST_OWN_SYNC, 50) == 0)
 			break;
 	}
 
