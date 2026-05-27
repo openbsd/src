@@ -113,7 +113,7 @@ alloc_init(struct alloc_cache* alloc, struct alloc_cache* super,
 	alloc->last_id -= 1; 			/* for compiler portability. */
 	alloc->last_id |= alloc->next_id;
 	alloc->next_id += 1;			/* because id=0 is special. */
-	alloc->max_reg_blocks = 10;
+	alloc->max_reg_blocks = 10;		/* XXX different from unbound */
 	alloc->num_reg_blocks = 0;
 	alloc->reg_list = NULL;
 	alloc->cleanup = NULL;
@@ -328,7 +328,7 @@ size_t alloc_get_mem(struct alloc_cache* alloc)
 struct regional* 
 alloc_reg_obtain(struct alloc_cache* alloc)
 {
-	if(alloc->num_reg_blocks > 0) {
+	if(alloc->num_reg_blocks > 0 && alloc->reg_list) {
 		struct regional* r = alloc->reg_list;
 		alloc->reg_list = (struct regional*)r->next;
 		r->next = NULL;

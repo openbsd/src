@@ -71,6 +71,9 @@
 /* Whether the C compiler accepts the "format" attribute */
 #define HAVE_ATTR_FORMAT 1
 
+/* Whether the C compiler accepts the "nonstring" attribute */
+/* #undef HAVE_ATTR_NONSTRING */
+
 /* Whether the C compiler accepts the "noreturn" attribute */
 #define HAVE_ATTR_NORETURN 1
 
@@ -566,11 +569,26 @@
 /* Define if you have POSIX threads libraries and header files. */
 /* #undef HAVE_PTHREAD */
 
+/* Define to 1 if you have the <pthread_np.h> header file. */
+/* #undef HAVE_PTHREAD_NP_H */
+
 /* Have PTHREAD_PRIO_INHERIT. */
 /* #undef HAVE_PTHREAD_PRIO_INHERIT */
 
 /* Define to 1 if the system has the type `pthread_rwlock_t'. */
 /* #undef HAVE_PTHREAD_RWLOCK_T */
+
+/* Define if pthread_setname_np has the common 2 arguments. */
+/* #undef HAVE_PTHREAD_SETNAME_NP */
+
+/* Define if pthread_setname_np has only 1 argument. */
+/* #undef HAVE_PTHREAD_SETNAME_NP1 */
+
+/* Define if pthread_setname_np has 3 arguments. */
+/* #undef HAVE_PTHREAD_SETNAME_NP3 */
+
+/* Define if pthread_setname_np exists as pthread_set_name_np instead. */
+/* #undef HAVE_PTHREAD_SET_NAME_NP */
 
 /* Define to 1 if the system has the type `pthread_spinlock_t'. */
 /* #undef HAVE_PTHREAD_SPINLOCK_T */
@@ -737,6 +755,12 @@
 /* Define to 1 if `sun_len' is a member of `struct sockaddr_un'. */
 #define HAVE_STRUCT_SOCKADDR_UN_SUN_LEN 1
 
+/* Define to 1 if `st_mtimensec' is a member of `struct stat'. */
+#define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
+
+/* Define to 1 if `st_mtim.tv_nsec' is a member of `struct stat'. */
+#define HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC 1
+
 /* Define if you have Swig libraries and header files. */
 /* #undef HAVE_SWIG */
 
@@ -895,7 +919,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.24.1"
+#define PACKAGE_STRING "unbound 1.25.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -904,7 +928,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.24.1"
+#define PACKAGE_VERSION "1.25.1"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -927,7 +951,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,24,1,0
+#define RSRC_PACKAGE_VERSION 1,25,1,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -1384,6 +1408,17 @@
 #else /* !HAVE_ATTR_UNUSED */
 #  define ATTR_UNUSED(x)  x
 #endif /* !HAVE_ATTR_UNUSED */
+
+
+#if defined(DOXYGEN)
+#  define ATTR_NONSTRING(x)  x
+#elif defined(__cplusplus)
+#  define ATTR_NONSTRING(x)  __attribute__((nonstring)) x
+#elif defined(HAVE_ATTR_NONSTRING)
+#  define ATTR_NONSTRING(x)  __attribute__((nonstring)) x
+#else /* !HAVE_ATTR_NONSTRING */
+#  define ATTR_NONSTRING(x)  x
+#endif /* !HAVE_ATTR_NONSTRING */
 
 
 #ifndef HAVE_FSEEKO
