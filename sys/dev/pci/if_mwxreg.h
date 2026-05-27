@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_mwxreg.h,v 1.7 2026/05/27 03:13:13 kevlo Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
