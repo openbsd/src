@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1325 2026/05/22 11:55:43 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1326 2026/05/27 13:41:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1296,6 +1296,8 @@ struct window_pane {
 
 	int		 border_gc_set;
 	struct grid_cell border_gc;
+	int		 active_border_gc_set;
+	struct grid_cell active_border_gc;
 
 	int		 control_bg;
 	int		 control_fg;
