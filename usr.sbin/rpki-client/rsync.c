@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.61 2026/05/16 12:53:52 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.62 2026/05/27 09:42:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -172,6 +172,7 @@ exec_rsync(const char *prog, const char *bind_addr, char *uri, char *dst,
 			args[i++] = "--compare-dest";
 			args[i++] = reldst;
 		}
+		args[i++] = "--";
 		args[i++] = uri;
 		args[i++] = dst;
 		args[i] = NULL;
