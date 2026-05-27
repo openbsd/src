@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.8 2025/12/16 15:46:46 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.9 2026/05/27 08:48:43 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -154,7 +154,7 @@ void		slowcgi_response(int, short, void *);
 void		slowcgi_add_response(struct request *, struct fcgi_response *);
 void		slowcgi_timeout(int, short, void *);
 void		slowcgi_sig_handler(int, short, void *);
-size_t		parse_record(uint8_t * , size_t, struct request *);
+ssize_t		parse_record(uint8_t * , size_t, struct request *);
 void		parse_begin_request(uint8_t *, uint16_t, struct request *,
 		    uint16_t);
 void		parse_params(uint8_t *, uint16_t, struct request *, uint16_t);
@@ -650,8 +650,7 @@ void
 slowcgi_request(int fd, short events, void *arg)
 {
 	struct request	*c;
-	ssize_t		 n;
-	size_t		 parsed;
+	ssize_t		 n, parsed;
 
 	c = arg;
 
@@ -686,6 +685,8 @@ slowcgi_request(int fd, short events, void *arg)
 	 */
 	do {
 		parsed = parse_record(c->buf + c->buf_pos, c->buf_len, c);
+		if (parsed == -1)
+			goto fail;
 		c->buf_pos += parsed;
 		c->buf_len -= parsed;
 	} while (parsed > 0 && c->buf_len > 0);
@@ -743,6 +744,10 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 	 * begin execution of the CGI script.
 	 */
 	if (n == 0) {
+		if (c->command_pid != 0) {
+			lwarnx("extra end-of-param, ignoring");
+			return;
+		}
 		exec_cgi(c);
 		return;
 	}
@@ -828,7 +833,7 @@ parse_stdin(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 		lwarnx("unexpected stdin input, ignoring");
 }
 
-size_t
+ssize_t
 parse_record(uint8_t *buf, size_t n, struct request *c)
 {
 	struct fcgi_record_header	*h;
@@ -845,8 +850,10 @@ parse_record(uint8_t *buf, size_t n, struct request *c)
 	    + h->padding_len)
 		return (0);
 
-	if (h->version != 1)
-		lerrx(1, "wrong version");
+	if (h->version != 1) {
+		lwarnx("wrong version");
+		return (-1);
+	}
 
 	switch (h->type) {
 	case FCGI_BEGIN_REQUEST:
