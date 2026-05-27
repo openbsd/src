@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1057 2026/05/25 14:53:09 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1058 2026/05/27 18:57:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2026 $
+.Dd $Mdocdate: May 27 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5765,6 +5765,20 @@ For how to specify
 see the
 .Sx STYLES
 section.
+.Pp
+.It Ic window-pane-status-format Ar string
+Set the format in which the window pane is displayed in the status line window
+pane list.
+See the
+.Sx FORMATS
+and
+.Sx STYLES
+sections.
+.Pp
+.It Ic window-pane-current-status-format Ar string
+Like
+.Ar window-status-format ,
+but is the format used when the window is the current window.
 .El
 .Sh HOOKS
 .Nm
