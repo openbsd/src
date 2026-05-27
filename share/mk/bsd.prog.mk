@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.84 2025/10/27 18:38:54 denis Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.85 2026/05/27 13:48:56 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -126,6 +126,29 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 .    endif
 .  endif	# defined(OBJS) && !empty(OBJS)
+.endif
+
+# Construct a re-link kit and install it for boot-time use.
+# RELINK variable is a shell command to test the relinked binary works.
+.if defined(RELINK)
+install.sh: Makefile ${PROG}
+	echo "set -o errexit" > $@
+	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
+	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
+	echo "${RELINK}" >> $@
+	echo "install -c -s -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${PROG} " \
+	    "${BINDIR}/${PROG}" >> $@
+
+${PROG}.tar: ${OBJS} install.sh
+	tar cf $@ ${OBJS} install.sh
+
+afterinstall: ${PROG}.tar
+	install -d -o root -g wheel -m 755 \
+	    ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}
+	install -o root -g bin -m 640 \
+	    ${PROG}.tar ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}/${PROG}.tar
+
+CLEANFILES+= ${PROG}.tar install.sh
 .endif
 
 .MAIN: all
