@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.323 2026/05/27 07:01:36 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.324 2026/05/27 19:36:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -452,6 +452,18 @@ window_pane_send_resize(struct window_pane *wp, u_int sx, u_int sy)
 	ws.ws_ypixel = w->ypixel * ws.ws_row;
 	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 		fatal("ioctl failed");
+}
+
+int
+window_has_floating_panes(struct window *w)
+{
+	struct window_pane	*wp;
+
+	TAILQ_FOREACH(wp, &w->panes, entry) {
+		if (wp->flags & PANE_FLOATING)
+			return (1);
+	}
+	return (0);
 }
 
 int

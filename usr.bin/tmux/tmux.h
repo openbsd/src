@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1326 2026/05/27 13:41:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1327 2026/05/27 19:36:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3368,6 +3368,7 @@ struct window	*window_create(u_int, u_int, u_int, u_int);
 void		 window_pane_set_event(struct window_pane *);
 struct window_pane *window_get_active_at(struct window *, u_int, u_int);
 struct window_pane *window_find_string(struct window *, const char *);
+int		 window_has_floating_panes(struct window *);
 int		 window_has_pane(struct window *, struct window_pane *);
 int		 window_set_active_pane(struct window *, struct window_pane *,
 		     int);
