@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgd.c,v 1.4 2024/12/03 10:38:06 claudio Exp $ */
+/*	$OpenBSD: bgplgd.c,v 1.5 2026/05/27 09:39:25 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -101,6 +101,7 @@ bgpctl_call(struct lg_ctx *ctx)
 	argv[argc++] = "-j";
 	argv[argc++] = "-s";
 	argv[argc++] = bgpctlsock;
+	argv[argc++] = "--";
 
 	for (i = 0; ctx->command->args[i] != NULL; i++)
 		argv[argc++] = ctx->command->args[i];
