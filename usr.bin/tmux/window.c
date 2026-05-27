@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.322 2026/05/24 08:40:43 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.323 2026/05/27 07:01:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2091,7 +2091,7 @@ window_pane_tiled_geometry(struct window *w, struct window_pane *wp,
 	} else if (args_has(args, 'p')) {
 		size = args_strtonum_and_expand(args, 'p', 0, 100, item,
 		    cause);
-		if (cause == NULL)
+		if (*cause == NULL)
 			size = curval * size / 100;
 	}
 	if (*cause != NULL)
