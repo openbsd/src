@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-draw.c,v 1.9 2026/05/25 08:07:48 nicm Exp $ */
+/* $OpenBSD: tty-draw.c,v 1.10 2026/05/27 20:47:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -181,7 +181,6 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int px, u_int py, u_int nx,
 		atx += cx;
 		px += cx;
 		nx -= cx;
-		ex -= cx;
 	}
 
 	/* Did the previous line wrap on to this one? */
