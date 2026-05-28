@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.351 2026/05/21 15:20:27 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.352 2026/05/28 09:10:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -369,8 +369,8 @@ struct rib_context {
 	struct pt_entry			*ctx_pt;
 	uint32_t			 ctx_id;
 	void		(*ctx_rib_call)(struct rib_entry *, void *);
-	void		(*ctx_prefix_call)(struct rde_peer *,
-			    struct pt_entry *, struct adjout_prefix *, void *);
+	void		(*ctx_prefix_call)(struct pt_entry *,
+			    struct adjout_prefix *, uint32_t, void *);
 	void		(*ctx_done)(void *, uint8_t);
 	int		(*ctx_throttle)(void *);
 	void				*ctx_arg;
@@ -767,10 +767,9 @@ int		 nexthop_unref(struct nexthop *);
 void			 adjout_init(void);
 struct adjout_prefix	*adjout_prefix_get(struct rde_peer *, uint32_t,
 			    struct pt_entry *);
-struct adjout_prefix	*adjout_prefix_first(struct rde_peer *,
-			    struct pt_entry *);
-struct adjout_prefix	*adjout_prefix_next(struct rde_peer *,
-			    struct pt_entry *, struct adjout_prefix *);
+struct adjout_prefix	*adjout_prefix_first(struct pt_entry *, uint32_t);
+struct adjout_prefix	*adjout_prefix_next(struct pt_entry *, uint32_t,
+			    struct adjout_prefix *);
 
 void		 adjout_prefix_update(struct adjout_prefix *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t, int);
@@ -781,13 +780,13 @@ void		 adjout_prefix_dump_cleanup(struct rib_context *);
 void		 adjout_prefix_dump_r(struct rib_context *);
 int		 adjout_prefix_dump_new(struct rde_peer *, uint8_t,
 		    unsigned int, void *,
-		    void (*)(struct rde_peer *, struct pt_entry *,
-			struct adjout_prefix *, void *),
+		    void (*)(struct pt_entry *, struct adjout_prefix *,
+		    uint32_t, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 int		 adjout_prefix_dump_subtree(struct rde_peer *,
 		    struct bgpd_addr *, uint8_t, unsigned int, void *,
-		    void (*)(struct rde_peer *, struct pt_entry *,
-			struct adjout_prefix *, void *),
+		    void (*)(struct pt_entry *, struct adjout_prefix *,
+		    uint32_t, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 void		 adjout_peer_init(struct rde_peer *);
 void		 adjout_peer_flush_pending(struct rde_peer *);

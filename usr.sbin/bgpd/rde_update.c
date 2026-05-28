@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.196 2026/05/20 18:33:21 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.197 2026/05/28 09:10:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -164,7 +164,6 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new,
 	struct filterstate state;
 	struct bgpd_addr addr;
 	int excluded = 0;
-	uint32_t path_id_tx = 0;
 
 	/*
 	 * up_test_update() needs to run before the output filters
@@ -195,13 +194,11 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new,
 	}
 
 	/* from here on we know this is an update */
-	if (p == (void *)-1) {
-		path_id_tx = new->path_id_tx;
+	if (p == (void *)-1)
 		p = adjout_prefix_get(peer, new->path_id_tx, new->pt);
-	}
 
 	up_prep_adjout(peer, &state, new->pt->aid);
-	adjout_prefix_update(p, peer, &state, new->pt, path_id_tx,
+	adjout_prefix_update(p, peer, &state, new->pt, new->path_id_tx,
 	    force_update);
 	rde_filterstate_clean(&state);
 
@@ -226,7 +223,7 @@ up_generate_updates(struct rde_peer *peer, struct rib_entry *re,
 	struct prefix		*new;
 	struct adjout_prefix	*p;
 
-	p = adjout_prefix_first(peer, re->prefix);
+	p = adjout_prefix_first(re->prefix, peer->adjout_bid);
 
 	new = prefix_best(re);
 	while (new != NULL) {
@@ -271,8 +268,9 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re,
 	unsigned int		pidx = 0, i;
 
 	/* collect all current paths */
-	head = adjout_prefix_first(peer, re->prefix);
-	for (p = head; p != NULL; p = adjout_prefix_next(peer, re->prefix, p)) {
+	head = adjout_prefix_first(re->prefix, peer->adjout_bid);
+	for (p = head; p != NULL;
+	    p = adjout_prefix_next(re->prefix, peer->adjout_bid, p)) {
 		addpath_prefix_list[pidx++] = p->path_id_tx;
 		if (pidx >= nitems(addpath_prefix_list))
 			fatalx("too many addpath paths to select from");
@@ -450,7 +448,7 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	pte = pt_get(&addr, 0);
 	if (pte == NULL)
 		pte = pt_add(&addr, 0);
-	p = adjout_prefix_first(peer, pte);
+	p = adjout_prefix_first(pte, peer->adjout_bid);
 	adjout_prefix_update(p, peer, &state, pte, 0, 1);
 	rde_filterstate_clean(&state);
 
