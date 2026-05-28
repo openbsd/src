@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.205 2023/08/07 04:01:30 dlg Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.206 2026/05/28 09:54:05 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -288,8 +288,11 @@ pf_key_v2_read(u_int32_t seq)
 		    (u_int8_t *) ext - (u_int8_t *) msg <
 		    msg->sadb_msg_len * PF_KEY_V2_CHUNK;
 		    ext = (struct sadb_ext *) ((u_int8_t *) ext +
-		    ext->sadb_ext_len * PF_KEY_V2_CHUNK))
+		    ext->sadb_ext_len * PF_KEY_V2_CHUNK)) {
+			if (ext->sadb_ext_len == 0)
+				break;
 			pf_key_v2_msg_add(ret, ext, 0);
+		}
 
 		/*
 		 * If the message is not the one we are waiting for, queue it

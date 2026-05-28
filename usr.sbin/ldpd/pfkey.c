@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.13 2022/11/07 22:39:13 mbuhl Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.14 2026/05/28 09:54:05 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -325,6 +325,8 @@ pfkey_reply(int sd, uint32_t *spip)
 		    msg->sadb_msg_len * PFKEY2_CHUNK;
 		    ext = (struct sadb_ext *)((uint8_t *)ext +
 		    ext->sadb_ext_len * PFKEY2_CHUNK)) {
+			if (ext->sadb_ext_len == 0)
+				break;
 			if (ext->sadb_ext_type == SADB_EXT_SA) {
 				sa = (struct sadb_sa *) ext;
 				*spip = sa->sadb_sa_spi;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.85 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.86 2026/05/28 09:54:05 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1776,14 +1776,16 @@ pfkey_init(struct iked *env, int fd)
 void *
 pfkey_find_ext(uint8_t *data, ssize_t len, int type)
 {
-	struct sadb_ext	*ext = (struct sadb_ext *)(data +
-	    sizeof(struct sadb_msg));
+	struct sadb_ext *ext;
 
-	while (ext && ((uint8_t *)ext - data < len)) {
+	for (ext = (struct sadb_ext *)(data + sizeof(struct sadb_msg));
+	    (uint8_t *)ext - data < len;
+	    ext = (struct sadb_ext *)((uint8_t *)ext +
+	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
+		if (ext->sadb_ext_len == 0)
+			break;
 		if (ext->sadb_ext_type == type)
 			return (ext);
-		ext = (struct sadb_ext *)((uint8_t *)ext +
-		    ext->sadb_ext_len * PFKEYV2_CHUNK);
 	}
 
 	return (NULL);
