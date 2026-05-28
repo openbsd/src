@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2024/06/30 18:17:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.46 2026/05/28 16:35:12 naddy Exp $
 
 MAN=	cdboot.8
 
@@ -11,7 +11,7 @@ SRCS=	srt0.S boot.c conf.c
 LD?=	ld
 SIZE?=	size
 AFLAGS+=-Dendbr64=
-LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie -znorelro
+LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) --image-base $(LINKADDR) -N -x -nopie -znorelro
 LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
 BINMODE=644

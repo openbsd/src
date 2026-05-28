@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2017/10/17 19:31:56 naddy Exp $
+#	$OpenBSD: Makefile,v 1.13 2026/05/28 16:35:12 naddy Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -10,7 +10,7 @@ AFLAGS+=-m32
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
 AFLAGS+=-fno-pie
 LD=ld
-LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic -e start -nopie -znorelro
+LDFLAGS=-nostdlib -Ttext 0 --image-base=0 -x -N -s -Bstatic -e start -nopie -znorelro
 LDFLAGS+=-melf_i386 -L/usr/libdata
 
 NOMAN=

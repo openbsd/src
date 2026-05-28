@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.12 2026/05/28 16:35:12 naddy Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -13,7 +13,7 @@ AFLAGS+=-DMACH=\"${MACHINE}\" -DMACH_U=\"${MACHINE:U}\"
 AFLAGS+=-fno-pie
 LD=ld
 ORG=	0x0000
-LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start -nopie -znorelro
+LDFLAGS=-nostdlib -Ttext ${ORG} --image-base=${ORG} -x -N -s -Bstatic -e start -nopie -znorelro
 LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
 BINMODE=644

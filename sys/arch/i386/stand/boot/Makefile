@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.76 2024/06/30 18:17:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.77 2026/05/28 16:35:12 naddy Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -20,7 +20,7 @@ LDFLAGS+=-nostdlib -Bstatic -nopie -znorelro
 
 CLEANFILES+=	crt0.o
 SRCS=	srt0.S conf.c
-LDFLAGS+=-Ttext $(LINKADDR) -N -x
+LDFLAGS+=-Ttext $(LINKADDR) --image-base=$(LINKADDR) -N -x
 
 .PATH:	${S}/stand/boot
 SRCS+=	boot.c bootarg.c cmd.c vars.c

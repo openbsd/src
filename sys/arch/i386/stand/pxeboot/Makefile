@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2024/06/30 18:17:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.38 2026/05/28 16:35:12 naddy Exp $
 
 MAN=	pxeboot.8
 
@@ -10,7 +10,7 @@ PROG=	pxeboot
 SRCS=	srt0.S conf.c devopen.c open.c
 LD?=	ld
 SIZE?=	size
-LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie -znorelro
+LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) --image-base=$(LINKADDR) -N -x -nopie -znorelro
 INSTALL_STRIP=
 BINMODE=644
 
