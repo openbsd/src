@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.197 2026/05/11 06:09:45 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.198 2026/05/28 17:24:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1554,6 +1554,7 @@ coredump_note_elf(struct proc *p, void *iocookie, size_t *sizep)
 
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(intreg));
 	if (iocookie) {
+		memset(&intreg, 0, sizeof(intreg));
 		error = process_read_regs(p, &intreg);
 		if (error)
 			return (error);
@@ -1573,6 +1574,7 @@ coredump_note_elf(struct proc *p, void *iocookie, size_t *sizep)
 #ifdef PT_GETFPREGS
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
 	if (iocookie) {
+		memset(&freg, 0, sizeof(freg));
 		error = process_read_fpregs(p, &freg);
 		if (error)
 			return (error);
