@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.36 2026/01/05 20:05:11 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.37 2026/05/28 18:42:29 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -993,6 +993,51 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 	if (len > 0)
 		memcpy(buf, data, min(len, buflen));
 	return len;
+}
+
+int
+OF_getpropstr(int handle, char *prop, char **bufp, int *buflenp)
+{
+	void *node = (char *)tree.header + handle;
+	char *data;
+	int len;
+
+	len = fdt_node_property(node, prop, &data);
+
+	/*
+	 * The "name" property is optional since version 16 of the
+	 * flattened device tree specification, so we synthesize one
+	 * from the unit name of the node if it is missing.
+	 */
+	if (len < 0 && strcmp(prop, "name") == 0) {
+		data = fdt_node_name(node);
+		if (data) {
+			*buflenp = strlen(data) + 1;
+			*bufp = malloc(*buflenp, M_TEMP, M_WAITOK);
+			strlcpy(*bufp, data, *buflenp);
+			data = strchr(*bufp, '@');
+			if (data)
+				*data = 0;
+			return 0;
+		}
+		return -1;
+	}
+
+	if (len > 0) {
+		*buflenp = len + 1;
+		*bufp = malloc(*buflenp, M_TEMP, M_WAITOK);
+		memcpy(*bufp, data, len);
+		*bufp[len] = '\0';
+		return 0;
+	}
+
+	return -1;
+}
+
+void
+OF_freepropstr(char *bufp, int buflenp)
+{
+	free(bufp, M_TEMP, buflenp);
 }
 
 int

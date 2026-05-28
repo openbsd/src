@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.21 2026/01/05 20:05:11 patrick Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.22 2026/05/28 18:42:29 mglocker Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -50,6 +50,8 @@ int OF_parent(int phandle);
 int OF_instance_to_package(int ihandle);
 int OF_getproplen(int handle, char *prop);
 int OF_getprop(int handle, char *prop, void *buf, int buflen);
+int OF_getpropstr(int, char *, char **, int *);
+void OF_freepropstr(char *, int);
 int OF_getpropbool(int handle, char *);
 uint32_t OF_getpropint(int handle, char *, uint32_t);
 int OF_getpropintarray(int, char *, uint32_t *, int);
