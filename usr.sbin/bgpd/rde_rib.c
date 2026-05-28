@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.299 2026/05/28 08:57:30 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.300 2026/05/28 12:53:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -507,9 +507,8 @@ rib_dump_abort(uint16_t id)
 	struct rib_context *ctx, *next;
 
 	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
-		if (ctx->ctx_re != NULL && id != ctx->ctx_id)
-			continue;
-		rib_dump_free(ctx);
+		if (id == ctx->ctx_id && ctx->ctx_re != NULL)
+			rib_dump_free(ctx);
 	}
 }
 
