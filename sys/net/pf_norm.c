@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.237 2026/04/12 22:34:19 sashan Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.238 2026/05/28 06:41:24 sashan Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -175,6 +175,8 @@ pf_frnode_compare(struct pf_frnode *a, struct pf_frnode *b)
 	if ((diff = a->fn_proto - b->fn_proto) != 0)
 		return (diff);
 	if ((diff = a->fn_af - b->fn_af) != 0)
+		return (diff);
+	if ((diff = a->fn_direction - b->fn_direction) != 0)
 		return (diff);
 	if ((diff = pf_addr_compare(&a->fn_src, &b->fn_src, a->fn_af)) != 0)
 		return (diff);
