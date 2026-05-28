@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic_fdt.c,v 1.4 2026/05/24 10:36:01 mglocker Exp $	*/
+/*	$OpenBSD: qciic_fdt.c,v 1.5 2026/05/28 19:03:44 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -322,18 +322,14 @@ qciic_fdt_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *au
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
 			continue;
 
-		len = OF_getproplen(node, "compatible");
-		if (len <= 0)
+		if (OF_getpropstr(node, "compatible", &compat, &len) == -1)
 			continue;
-
-		compat = malloc(len, M_TEMP, M_WAITOK);
-		OF_getprop(node, "compatible", compat, len);
 
 		memset(&ia, 0, sizeof(ia));
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = bemtoh32(&reg[0]);
 		ia.ia_name = compat;
-		ia.ia_namelen = len;
+		ia.ia_namelen = len - 1;
 		ia.ia_cookie = &node;
 		ia.ia_intr = &node;
 
@@ -347,6 +343,6 @@ qciic_fdt_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *au
 
 		config_found(self, &ia, iic_print);
 
-		free(compat, M_TEMP, len);
+		OF_freepropstr(compat, len);
 	}
 }
