@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.228 2026/04/02 11:19:45 kirill Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.229 2026/05/28 10:51:52 kirill Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6612,6 +6612,73 @@ iwx_update_beacon_abort(struct iwx_softc *sc, struct iwx_node *in, int enable)
 	return iwx_beacon_filter_send_cmd(sc, &cmd);
 }
 
+static uint8_t
+iwx_uapsd_qndp_tid(struct ieee80211com *ic, uint8_t acs)
+{
+	if ((acs & IEEE80211_WMM_IE_STA_QOSINFO_AC_VO) &&
+	    !ic->ic_edca_ac[EDCA_AC_VO].ac_acm)
+		return 6;
+	if ((acs & IEEE80211_WMM_IE_STA_QOSINFO_AC_VI) &&
+	    !ic->ic_edca_ac[EDCA_AC_VI].ac_acm)
+		return 5;
+	if ((acs & IEEE80211_WMM_IE_STA_QOSINFO_AC_BE) &&
+	    !ic->ic_edca_ac[EDCA_AC_BE].ac_acm)
+		return 0;
+	if ((acs & IEEE80211_WMM_IE_STA_QOSINFO_AC_BK) &&
+	    !ic->ic_edca_ac[EDCA_AC_BK].ac_acm)
+		return 1;
+	return 0;
+}
+
+static uint8_t
+iwx_uapsd_acs(struct ieee80211_node *ni)
+{
+	uint8_t acs = 0;
+
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_VO)
+		acs |= 1 << IWX_AC_VO;
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_VI)
+		acs |= 1 << IWX_AC_VI;
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_BE)
+		acs |= 1 << IWX_AC_BE;
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_BK)
+		acs |= 1 << IWX_AC_BK;
+
+	return acs | (acs << IWX_AC_NUM);
+}
+
+static uint8_t
+iwx_uapsd_ac_flags(struct ieee80211_node *ni)
+{
+	uint8_t ac_flags = 0;
+
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_BE)
+		ac_flags |= 1 << EDCA_AC_BE;
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_BK)
+		ac_flags |= 1 << EDCA_AC_BK;
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_VI)
+		ac_flags |= 1 << EDCA_AC_VI;
+	if (ni->ni_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_VO)
+		ac_flags |= 1 << EDCA_AC_VO;
+
+	return ac_flags;
+}
+
+static uint8_t
+iwx_uapsd_sp_length(struct ieee80211_node *ni)
+{
+	switch (ni->ni_uapsd_maxsp & IEEE80211_WMM_IE_STA_QOSINFO_SP_MASK) {
+	case IEEE80211_WMM_IE_STA_QOSINFO_SP_2:
+		return 2;
+	case IEEE80211_WMM_IE_STA_QOSINFO_SP_4:
+		return 4;
+	case IEEE80211_WMM_IE_STA_QOSINFO_SP_6:
+		return 6;
+	default:
+		return 128;
+	}
+}
+
 int
 iwx_set_pslevel(struct iwx_softc *sc, int dtim, int level, int async)
 {
@@ -6673,6 +6740,21 @@ iwx_set_pslevel(struct iwx_softc *sc, int dtim, int level, int async)
 		    IWX_POWER_FLAGS_POWER_MANAGEMENT_ENA_MSK);
 		mcmd.rx_data_timeout = htole32(pmgt->rxtimeout * 1024);
 		mcmd.tx_data_timeout = htole32(pmgt->txtimeout * 1024);
+		if ((ni->ni_flags & IEEE80211_NODE_UAPSD) &&
+		    (sc->sc_capaflags & IWX_UCODE_TLV_FLAGS_UAPSD_SUPPORT)) {
+			mcmd.flags |=
+			    htole16(IWX_POWER_FLAGS_ADVANCE_PM_ENA_MSK);
+			mcmd.flags |=
+			    htole16(IWX_POWER_FLAGS_UAPSD_MISBEHAVING_ENA_MSK);
+			mcmd.rx_data_timeout_uapsd =
+			    htole32(IWX_UAPSD_PS_RX_DATA_TIMEOUT);
+			mcmd.tx_data_timeout_uapsd =
+			    htole32(IWX_UAPSD_PS_TX_DATA_TIMEOUT);
+			mcmd.qndp_tid = iwx_uapsd_qndp_tid(ic, ni->ni_uapsd_ac);
+			mcmd.uapsd_ac_flags = iwx_uapsd_ac_flags(ni);
+			mcmd.uapsd_max_sp = ni->ni_uapsd_maxsp &
+			    IEEE80211_WMM_IE_STA_QOSINFO_SP_MASK;
+		}
 		if (skip_dtim != 0) {
 			mcmd.flags |= htole16(IWX_POWER_FLAGS_SKIP_OVER_DTIM_MSK);
 			mcmd.skip_dtim_periods = skip_dtim + 1;
@@ -6834,6 +6916,12 @@ iwx_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 		default:
 			break;
 		}
+	}
+	if ((in->in_ni.ni_flags & IEEE80211_NODE_UAPSD) &&
+	    (sc->sc_capaflags & IWX_UCODE_TLV_FLAGS_UAPSD_SUPPORT)) {
+		add_sta_cmd.modify_mask |= IWX_STA_MODIFY_UAPSD_ACS;
+		add_sta_cmd.uapsd_acs = iwx_uapsd_acs(&in->in_ni);
+		add_sta_cmd.sp_length = iwx_uapsd_sp_length(&in->in_ni);
 	}
 
 	status = IWX_ADD_STA_SUCCESS;
@@ -7041,6 +7129,12 @@ iwx_mld_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 
 	if (in->in_ni.ni_flags & IEEE80211_NODE_MFP)
 		sta_cmd.mfp = htole32(1);
+	if ((in->in_ni.ni_flags & IEEE80211_NODE_UAPSD) &&
+	    (sc->sc_capaflags & IWX_UCODE_TLV_FLAGS_UAPSD_SUPPORT)) {
+		sta_cmd.sp_length =
+		    htole32(iwx_uapsd_sp_length(&in->in_ni));
+		sta_cmd.uapsd_acs = htole32(iwx_uapsd_acs(&in->in_ni));
+	}
 
 	return iwx_send_cmd_pdu(sc,
 	    IWX_WIDE_ID(IWX_MAC_CONF_GROUP, IWX_STA_CONFIG_CMD),
@@ -11104,6 +11198,33 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 		}
 
+		case IWX_PSM_UAPSD_AP_MISBEHAVING_NOTIFICATION: {
+			struct ieee80211com *ic = &sc->sc_ic;
+			struct ifnet *ifp = &ic->ic_if;
+			struct ieee80211_node *ni = ic->ic_bss;
+			struct iwx_uapsd_misbehaving_ap_notif *notif;
+
+			SYNC_RESP_STRUCT(notif, pkt);
+
+			if (ni == NULL ||
+			    (ni->ni_flags & IEEE80211_NODE_UAPSD) == 0)
+				break;
+
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: firmware reported uAPSD "
+				    "misbehaving AP on sta %u, disabling "
+				    "uAPSD\n", ifp->if_xname,
+				    le32toh(notif->sta_id));
+
+			ni->ni_flags &= ~IEEE80211_NODE_UAPSD;
+			ni->ni_uapsd_ac = 0;
+			ni->ni_uapsd_maxsp = 0;
+
+			if (ic->ic_flags & IEEE80211_F_PMGTON)
+				(void)iwx_set_pslevel(sc, 0, 3, 1);
+			break;
+		}
+
 		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,
 		    IWX_SESSION_PROTECTION_NOTIF): {
 			struct iwx_session_prot_notif *notif;
@@ -12510,6 +12631,11 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_MFP;		/* management frame protection */
 	ic->ic_flags |= IEEE80211_F_PMGTON;
+	ic->ic_uapsd_ac = IEEE80211_WMM_IE_STA_QOSINFO_AC_VO |
+	    IEEE80211_WMM_IE_STA_QOSINFO_AC_VI |
+	    IEEE80211_WMM_IE_STA_QOSINFO_AC_BK |
+	    IEEE80211_WMM_IE_STA_QOSINFO_AC_BE;
+	ic->ic_uapsd_maxsp = IEEE80211_WMM_IE_STA_QOSINFO_SP_ALL;
 
 	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_SGI40;
 	ic->ic_htcaps |= IEEE80211_HTCAP_CBW20_40;

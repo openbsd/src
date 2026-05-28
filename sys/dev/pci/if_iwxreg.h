@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.74 2026/03/26 12:15:48 kirill Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.75 2026/05/28 10:51:52 kirill Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5473,6 +5473,8 @@ struct iwx_mac_power_cmd {
 
 #define IWX_DEFAULT_PS_TX_DATA_TIMEOUT      (100 * 1000)
 #define IWX_DEFAULT_PS_RX_DATA_TIMEOUT      (100 * 1000)
+#define IWX_UAPSD_PS_TX_DATA_TIMEOUT       (50 * 1000)
+#define IWX_UAPSD_PS_RX_DATA_TIMEOUT       (50 * 1000)
 
 #define IWX_NDTIMRANGES		3
 #define IWX_NPOWERLEVELS	6
@@ -8312,6 +8314,7 @@ struct iwx_umac_scan_iter_complete_notif {
  * @IWX_STA_MODIFY_QUEUE_REMOVAL: this command removes a queue
  * @IWX_STA_MODIFY_TID_DISABLE_TX: this command modifies %tid_disable_tx
  * @IWX_STA_MODIFY_TX_RATE: unused
+ * @IWX_STA_MODIFY_UAPSD_ACS: this command modifies %uapsd_acs
  * @IWX_STA_MODIFY_ADD_BA_TID: this command modifies %add_immediate_ba_tid
  * @IWX_STA_MODIFY_REMOVE_BA_TID: this command modifies %remove_immediate_ba_tid
  * @IWX_STA_MODIFY_SLEEPING_STA_TX_COUNT: this command modifies %sleep_tx_count
@@ -8321,6 +8324,7 @@ struct iwx_umac_scan_iter_complete_notif {
 #define IWX_STA_MODIFY_QUEUE_REMOVAL		(1 << 0)
 #define IWX_STA_MODIFY_TID_DISABLE_TX		(1 << 1)
 #define IWX_STA_MODIFY_TX_RATE			(1 << 2)
+#define IWX_STA_MODIFY_UAPSD_ACS		IWX_STA_MODIFY_TX_RATE
 #define IWX_STA_MODIFY_ADD_BA_TID		(1 << 3)
 #define IWX_STA_MODIFY_REMOVE_BA_TID		(1 << 4)
 #define IWX_STA_MODIFY_SLEEPING_STA_TX_COUNT	(1 << 5)
