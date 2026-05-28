@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.459 2026/05/21 07:28:51 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.460 2026/05/28 10:45:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1022,7 +1022,8 @@ have_event:
 		/* Only change pane if not already dragging a pane border. */
 		if (lwp == NULL) {
 			lwp = wp = window_get_active_at(w, px, py);
-			c->tty.mouse_last_pane = wp->id;
+			if (wp != NULL)
+				c->tty.mouse_last_pane = wp->id;
 		}
 		if (c->tty.mouse_scrolling_flag == 0 &&
 		    loc == KEYC_MOUSE_LOCATION_SCROLLBAR_SLIDER) {
