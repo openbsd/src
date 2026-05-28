@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.137 2026/04/14 21:41:19 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.138 2026/05/28 17:11:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -294,8 +294,10 @@ viornd_notifyq(struct virtio_dev *dev, uint16_t idx)
 	dxx = avail->ring[aidx] & vq_info->mask;
 
 	sz = desc[dxx].len;
-	if (sz > MAXPHYS)
-		fatalx("viornd descriptor size too large (%zu)", sz);
+	if (sz > MAXPHYS) {
+		log_warnx("viornd descriptor size too large (%zu)", sz);
+		return (0);
+	}
 
 	rnd_data = malloc(sz);
 	if (rnd_data == NULL)
