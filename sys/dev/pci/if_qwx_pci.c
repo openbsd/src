@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.33 2026/05/19 08:57:27 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.34 2026/05/28 15:58:15 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2565,6 +2565,7 @@ qwx_mhi_init_cmd_ring(struct qwx_pci_softc *psc)
 	len = ring->size;
 
 	ring->rp = ring->wp = paddr;
+	ring->queued = 0;
 
 	c = (struct qwx_mhi_cmd_ctxt *)QWX_DMA_KVA(psc->cmd_ctxt);
 	c->rbase = htole64(paddr);
