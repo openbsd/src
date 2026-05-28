@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.112 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.113 2026/05/28 10:50:47 kirill Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -1376,7 +1376,7 @@ justcleanup:
 				else
 					printf(" start %u%sMb",
 					    rate / 2, (rate & 1) ? ".5" : "");
-				printf(" %s preamble %s slot time%s%s%s\n",
+				printf(" %s preamble %s slot time%s%s%s%s\n",
 				    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ?
 					"short" : "long",
 				    (ic->ic_flags & IEEE80211_F_SHSLOT) ?
@@ -1386,7 +1386,12 @@ justcleanup:
 				    (ni->ni_flags & IEEE80211_NODE_HT) ?
 					" HT enabled" : "",
 				    (ni->ni_flags & IEEE80211_NODE_VHT) ?
-					" VHT enabled" : "");
+					" VHT enabled" : "",
+				    ic->ic_uapsd_ac != 0 ?
+					((ni->ni_flags & IEEE80211_NODE_UAPSD) ?
+					    " uAPSD enabled" :
+					    " uAPSD disabled") :
+					"");
 			}
 			if (!(ic->ic_flags & IEEE80211_F_RSNON)) {
 				/*

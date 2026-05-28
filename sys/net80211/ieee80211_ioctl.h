@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.45 2026/03/26 12:15:01 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.46 2026/05/28 10:50:47 kirill Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -410,7 +410,9 @@ struct ieee80211_nodereq_all {
 #define IEEE80211_F_HOSTAPMASK	0x00000003
 #define IEEE80211_F_STAYAUTH	0x00000004	/* CONF: ignore deauth */
 #define IEEE80211_F_NOMIMO	0x00000008	/* CONF: disable MIMO */
-#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE\03STAYAUTH\04NOMIMO"
+#define IEEE80211_F_UAPSD	0x00000010	/* CONF: enable u-APSD */
+#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE\03STAYAUTH\04NOMIMO" \
+				"\05UAPSD"
 
 struct ieee80211_flags {
 	const char		*f_name;
@@ -421,7 +423,8 @@ struct ieee80211_flags {
 	{ "hidenwid", IEEE80211_F_HIDENWID },	\
 	{ "nobridge", IEEE80211_F_NOBRIDGE },	\
 	{ "stayauth", IEEE80211_F_STAYAUTH },	\
-	{ "nomimo", IEEE80211_F_NOMIMO }	\
+	{ "nomimo", IEEE80211_F_NOMIMO },	\
+	{ "uapsd", IEEE80211_F_UAPSD }		\
 }
 
 #define SIOCG80211FLAGS		_IOWR('i', 216, struct ifreq)

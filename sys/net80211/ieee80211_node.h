@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.101 2026/03/29 21:16:21 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.102 2026/05/28 10:50:47 kirill Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -306,6 +306,8 @@ struct ieee80211_node {
 	/* power saving mode */
 	u_int8_t		ni_pwrsave;
 	struct mbuf_queue	ni_savedq;	/* packets queued for pspoll */
+	u_int8_t		ni_uapsd_ac;
+	u_int8_t		ni_uapsd_maxsp;
 
 	/* RSN */
 	struct timeout		ni_eapol_to;
@@ -446,6 +448,7 @@ struct ieee80211_node {
 #define IEEE80211_NODE_HE		0x200000 /* HE negotiated */
 #define IEEE80211_NODE_HECAP		0x400000 /* claims to support HE */
 #define IEEE80211_NODE_CSA		0x800000 /* channel switch announced */
+#define IEEE80211_NODE_UAPSD		0x1000000 /* uAPSD negotiated */
 
 	/* If not NULL, this function gets called when ni_refcnt hits zero. */
 	void			(*ni_unref_cb)(struct ieee80211com *,

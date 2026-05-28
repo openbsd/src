@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.262 2026/05/24 16:28:44 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.263 2026/05/28 10:50:47 kirill Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
 int	ieee80211_parse_wmm_params(struct ieee80211com *, const u_int8_t *);
+int	ieee80211_parse_wmm_qosinfo(const u_int8_t *, u_int8_t *);
 enum	ieee80211_cipher ieee80211_parse_rsn_cipher(const u_int8_t *);
 enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t *);
 int	ieee80211_parse_rsn_body(struct ieee80211com *, const u_int8_t *,
@@ -1388,6 +1389,32 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 	return ieee80211_parse_edca_params_body(ic, frm + 8);
 }
 
+int
+ieee80211_parse_wmm_qosinfo(const u_int8_t *frm, u_int8_t *qosinfo)
+{
+	if (frm[1] < 7)
+		return IEEE80211_REASON_IE_INVALID;
+
+	*qosinfo = frm[8];
+	return 0;
+}
+
+void
+ieee80211_setup_uapsd(struct ieee80211com *ic, struct ieee80211_node *ni,
+    int peer_uapsd)
+{
+	if (peer_uapsd && (ic->ic_userflags & IEEE80211_F_UAPSD) &&
+	    (ni->ni_flags & IEEE80211_NODE_QOS)) {
+		ni->ni_flags |= IEEE80211_NODE_UAPSD;
+		ni->ni_uapsd_ac = ic->ic_uapsd_ac;
+		ni->ni_uapsd_maxsp = ic->ic_uapsd_maxsp;
+	} else {
+		ni->ni_flags &= ~IEEE80211_NODE_UAPSD;
+		ni->ni_uapsd_ac = 0;
+		ni->ni_uapsd_maxsp = 0;
+	}
+}
+
 enum ieee80211_cipher
 ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 {
@@ -1628,7 +1655,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie, *tim;
 	const u_int8_t *rsnie, *wpaie, *htcaps, *htop, *vhtcaps, *vhtop, *hecaps, *heop;
 	u_int16_t capinfo, bintval;
-	u_int8_t chan, bchan, erp;
+	u_int8_t chan, bchan, erp, wmm_qosinfo;
+	int has_wmm_qosinfo = 0;
 	int is_new;
 
 	/*
@@ -1863,6 +1891,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		ni->ni_dtimcount = tim[2];
 		ni->ni_dtimperiod = tim[3];
 	}
+	if (wmmie != NULL &&
+	    ieee80211_parse_wmm_qosinfo(wmmie, &wmm_qosinfo) == 0)
+		has_wmm_qosinfo = 1;
 
 	/*
 	 * When operating in station mode, check for state updates
@@ -1973,10 +2004,17 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		else
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
+	ieee80211_setup_uapsd(ic, ni, has_wmm_qosinfo &&
+	    (wmm_qosinfo & IEEE80211_WMM_IE_AP_QOSINFO_UAPSD));
 
 	if (ic->ic_state == IEEE80211_S_SCAN ||
 	    (ic->ic_flags & IEEE80211_F_BGSCAN)) {
 		struct ieee80211_rsnparams rsn, wpa;
+
+		if (edcaie != NULL || wmmie != NULL)
+			ni->ni_flags |= IEEE80211_NODE_QOS;
+		else
+			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 		ni->ni_supported_rsnprotos = IEEE80211_PROTO_NONE;
@@ -1997,6 +2035,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			ni->ni_supported_rsnprotos |= IEEE80211_PROTO_WPA;
 			ni->ni_supported_rsnakms |= wpa.rsn_akms;
 		}
+
+		ieee80211_setup_uapsd(ic, ni, has_wmm_qosinfo &&
+		    (wmm_qosinfo & IEEE80211_WMM_IE_AP_QOSINFO_UAPSD));
 
 		/*
 		 * If the AP advertises both WPA and RSN IEs (WPA1+WPA2),
@@ -2626,7 +2667,8 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	const u_int8_t *rates, *xrates, *edcaie, *wmmie, *htcaps, *htop;
 	const u_int8_t *vhtcaps, *vhtop, *hecaps, *heop;
 	u_int16_t capinfo, status, associd;
-	u_int8_t rate;
+	u_int8_t rate, wmm_qosinfo;
+	int has_wmm_qosinfo = 0;
 
 	if (ic->ic_opmode != IEEE80211_M_STA ||
 	    ic->ic_state != IEEE80211_S_ASSOC) {
@@ -2714,6 +2756,9 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 		}
 		frm += 2 + frm[1];
 	}
+	if (wmmie != NULL &&
+	    ieee80211_parse_wmm_qosinfo(wmmie, &wmm_qosinfo) == 0)
+		has_wmm_qosinfo = 1;
 	/* supported rates element is mandatory */
 	if (rates == NULL || rates[1] > IEEE80211_RATE_MAXSIZE) {
 		DPRINTF(("invalid supported rates element\n"));
@@ -2742,6 +2787,8 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 		else	/* for Reassociation */
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
+	ieee80211_setup_uapsd(ic, ni, has_wmm_qosinfo &&
+	    (wmm_qosinfo & IEEE80211_WMM_IE_AP_QOSINFO_UAPSD));
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop)

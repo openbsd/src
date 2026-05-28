@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.147 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.148 2026/05/28 10:50:47 kirill Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -985,6 +985,16 @@ ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
 }
 #endif	/* IEEE80211_STA_ONLY */
 
+uint8_t
+ieee80211_uapsd_qosinfo(struct ieee80211com *ic)
+{
+	if ((ic->ic_userflags & IEEE80211_F_UAPSD) == 0)
+		return 0;
+	return (ic->ic_uapsd_ac & IEEE80211_WMM_IE_STA_QOSINFO_AC_MASK) |
+	    ((ic->ic_uapsd_maxsp & IEEE80211_WMM_IE_STA_QOSINFO_SP_MASK) <<
+	    IEEE80211_WMM_IE_STA_QOSINFO_SP_SHIFT);
+}
+
 /*
  * Add a QoS Capability element to a frame (see 7.3.2.35).
  */
@@ -993,7 +1003,7 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
 {
 	*frm++ = IEEE80211_ELEMID_QOS_CAP;
 	*frm++ = 1;
-	*frm++ = 0;	/* QoS Info */
+	*frm++ = ieee80211_uapsd_qosinfo(ic);
 	return frm;
 }
 
@@ -1011,7 +1021,7 @@ ieee80211_add_wme_info(uint8_t *frm, struct ieee80211com *ic)
 	*frm++ = 2; /* OUI type */
 	*frm++ = 0; /* OUI subtype */
 	*frm++ = 1; /* version */
-	*frm++ = 0; /* info */
+	*frm++ = ieee80211_uapsd_qosinfo(ic);
 
 	return frm;
 }
@@ -1585,7 +1595,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t capinfo;
-	int addvht = 0;
+	int addvht = 0, addwme;
 	u_int hecapslen = 0;
 
 	if ((ic->ic_flags & IEEE80211_F_VHTON) && ni->ni_chan != NULL &&
@@ -1601,6 +1611,10 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    IEEE80211_HE_MCS_NSS_SIZE(ic->ic_he_phy_cap[0]);
 	}
 
+	/* Keep QoS Capability aligned with ieee80211_add_wme_info(). */
+	addwme = (ni->ni_flags & IEEE80211_NODE_QOS) &&
+	    (ic->ic_flags & IEEE80211_F_HTON);
+
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    2 + 2 +
 	    ((type == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) ?
@@ -1612,11 +1626,12 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
 	      (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)) ?
 		2 + IEEE80211_RSNIE_MAXLEN : 0) +
-	    ((ni->ni_flags & IEEE80211_NODE_QOS) ? 2 + 1 : 0) +
+	    (addwme ? 2 + 1 : 0) +
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
 	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ?
 		2 + IEEE80211_WPAIE_MAXLEN : 0) +
-	    ((ic->ic_flags & IEEE80211_F_HTON) ? 28 + 9 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_HTON) ? 28 : 0) +
+	    (addwme ? 9 : 0) +
 	    (addvht ? 14 : 0) +
 	    hecapslen);
 	if (m == NULL)
@@ -1644,15 +1659,15 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnprotos & IEEE80211_PROTO_RSN))
 		frm = ieee80211_add_rsn(frm, ic, ni);
-	if (ni->ni_flags & IEEE80211_NODE_QOS)
+	if (addwme)
 		frm = ieee80211_add_qos_capability(frm, ic);
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnprotos & IEEE80211_PROTO_WPA))
 		frm = ieee80211_add_wpa(frm, ic, ni);
-	if (ic->ic_flags & IEEE80211_F_HTON) {
+	if (ic->ic_flags & IEEE80211_F_HTON)
 		frm = ieee80211_add_htcaps(frm, ic);
+	if (addwme)
 		frm = ieee80211_add_wme_info(frm, ic);
-	}
 	if (addvht)
 		frm = ieee80211_add_vhtcaps(frm, ic);
 	if (hecapslen)

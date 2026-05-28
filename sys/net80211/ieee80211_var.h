@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.114 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.115 2026/05/28 10:50:47 kirill Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -344,6 +344,8 @@ struct ieee80211com {
 	u_int			ic_edca_txop_count[EDCA_NUM_AC];
 	struct timeval		ic_edca_txop_time[EDCA_NUM_AC];
 	u_int16_t		ic_tid_noack;
+	u_int8_t		ic_uapsd_ac;
+	u_int8_t		ic_uapsd_maxsp;
 	u_int8_t		ic_globalcnt[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_psk[IEEE80211_PMK_LEN];
