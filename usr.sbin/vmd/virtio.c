@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.138 2026/05/28 17:11:39 deraadt Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.139 2026/05/28 17:14:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -196,6 +196,7 @@ virtio_update_qa(struct virtio_dev *dev)
 {
 	struct virtio_vq_info *vq_info = NULL;
 	void *hva = NULL;
+	uint32_t expected_avail, expected_used, availoff, usedoff;
 
 	if (dev->driver_feature & VIRTIO_F_VERSION_1) {
 		if (dev->pci_cfg.queue_select >= dev->num_queues) {
@@ -212,11 +213,27 @@ virtio_update_qa(struct virtio_dev *dev)
 		vq_info->qs = dev->pci_cfg.queue_size;
 		vq_info->mask = vq_info->qs - 1;
 
+		/* Only enable the queue if the avail and used pointers are valid */
+		if (dev->pci_cfg.queue_avail < dev->pci_cfg.queue_desc ||
+		    dev->pci_cfg.queue_used < dev->pci_cfg.queue_desc) {
+			vq_info->vq_enabled = 0;
+			return;
+		}
+
+		/* Require the avail and used pointers to be set as per Virtio 0.9 */
+		expected_avail = sizeof(struct vring_desc) * vq_info->qs;
+		expected_used = VIRTQUEUE_ALIGN(expected_avail +
+		    sizeof(uint16_t) * (2 + vq_info->qs));
+		availoff = dev->pci_cfg.queue_avail - dev->pci_cfg.queue_desc;
+		usedoff = dev->pci_cfg.queue_used - dev->pci_cfg.queue_desc;
+		if (availoff != expected_avail || usedoff != expected_used) {
+			vq_info->vq_enabled = 0;
+			return;
+		}
+
 		if (vq_info->qs > 0 && vq_info->qs % 2 == 0) {
-			vq_info->vq_availoffset = dev->pci_cfg.queue_avail -
-			    dev->pci_cfg.queue_desc;
-			vq_info->vq_usedoffset = dev->pci_cfg.queue_used -
-			    dev->pci_cfg.queue_desc;
+			vq_info->vq_availoffset = availoff;
+			vq_info->vq_usedoffset = usedoff;
 			vq_info->vq_enabled = (dev->pci_cfg.queue_enable == 1);
 		} else {
 			vq_info->vq_availoffset = 0;
