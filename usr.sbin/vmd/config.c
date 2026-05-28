@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.82 2026/04/27 13:06:14 hshoexer Exp $	*/
+/*	$OpenBSD: config.c,v 1.83 2026/05/28 20:31:57 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -297,11 +297,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			goto fail;
 		}
 
-		if ((vm->vm_kernel = dup(kernfd)) == -1) {
-			ret = errno;
-			goto fail;
-		}
-		vmc->vmc_kernel = vm->vm_kernel;
+		vm->vm_kernel = kernfd;
+		vmc->vmc_kernel = kernfd;
+		kernfd = -1;
 	}
 
 	/* Open CDROM image for child */
@@ -483,6 +481,10 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Send VM information */
+	if ((kernfd = dup(vm->vm_kernel)) == -1) {
+		ret = errno;
+		goto fail;
+	}
 	/* XXX check proc_compose_imsg return values */
 	proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_REQUEST,
 	    vm->vm_vmid, kernfd, vmc, sizeof(*vmc));
@@ -530,8 +532,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
  fail:
 	log_warnx("failed to start vm %s", vmc->vmc_name);
 
-	if (vm->vm_kernel != -1)
-		close(vm->vm_kernel);
 	if (kernfd != -1)
 		close(kernfd);
 	if (cdromfd != -1)
@@ -546,6 +546,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		free(tapfds);
 	}
 
+	/* Both vm_stop() and vm_remove() will close vm->vm_kernel. */
 	if (vm->vm_from_config) {
 		vm_stop(vm, 0, __func__);
 	} else {
