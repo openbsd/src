@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.29 2026/05/28 17:09:38 deraadt Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.30 2026/05/28 17:10:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -267,7 +267,7 @@ vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 	struct vioblk_dev *vioblk = &dev->vioblk;
 
 	/* Invalid queue? */
-	if (vq_idx > dev->num_queues)
+	if (vq_idx >= dev->num_queues)
 		return (0);
 
 	vq_info = &dev->vq[vq_idx];
