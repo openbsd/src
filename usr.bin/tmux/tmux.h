@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1327 2026/05/27 19:36:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1328 2026/05/28 07:23:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1705,9 +1705,8 @@ struct tty_ctx {
 #define TTY_CTX_WINDOW_BIGGER 0x4
 #define TTY_CTX_SYNC 0x8
 #define TTY_CTX_OVERLAY_SYNC 0x10
-#define TTY_CTX_CELL_DRAW_LINE 0x20
-#define TTY_CTX_CELL_INVALIDATE 0x40
-#define TTY_CTX_PANE_OBSCURED 0x80
+#define TTY_CTX_CELL_INVALIDATE 0x20
+#define TTY_CTX_PANE_OBSCURED 0x40
 
 	union {
 		u_int			 n;
