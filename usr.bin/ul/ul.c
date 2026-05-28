@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.23 2016/10/16 11:28:54 jca Exp $	*/
+/*	$OpenBSD: ul.c,v 1.24 2026/05/28 07:01:46 renaud Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -65,8 +65,8 @@ char	*CURS_UP, *CURS_RIGHT, *CURS_LEFT,
 struct	CHAR	{
 	char	c_mode;
 	wchar_t	c_char;
-	int	c_width;
-	int	c_pos;
+	unsigned int	c_width;
+	unsigned int	c_pos;
 } ;
 
 struct	CHAR	obuf[MAXBUF];
@@ -164,7 +164,8 @@ mfilter(FILE *f)
 {
 	struct CHAR	*cp;
 	wint_t		 c;
-	int		 skip_bs, w, wt;
+	int		 skip_bs;
+	unsigned int	 w, wt;
 
 	col = 1;
 	skip_bs = 0;
