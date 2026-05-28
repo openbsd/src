@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.112 2026/05/28 15:54:17 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.113 2026/05/28 15:55:43 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -26141,10 +26141,18 @@ qwx_auth(struct qwx_softc *sc)
 int
 qwx_deauth(struct qwx_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (struct qwx_node *)ni;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct ath11k_peer *peer;
 	int ret;
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		ic->ic_bss->ni_txrate = 0;
+		nq->flags = 0;
+	}
 
 	peer = qwx_peer_find_by_id(sc, sc->bss_peer_id);
 	if (peer == NULL)
