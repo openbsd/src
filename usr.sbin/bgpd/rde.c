@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.703 2026/05/21 15:20:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.704 2026/05/28 05:42:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,7 +57,7 @@ void		 rde_update_withdraw(struct rde_peer *, uint32_t,
 int		 rde_attr_parse(struct ibuf *, struct rde_peer *,
 		    struct filterstate *, struct ibuf *, struct ibuf *);
 int		 rde_attr_add(struct filterstate *, struct ibuf *);
-uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
+uint8_t		 rde_attr_missing(struct rde_aspath *, int, size_t);
 int		 rde_get_mp_nexthop(struct ibuf *, uint8_t,
 		    struct rde_peer *, struct filterstate *);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
@@ -2514,7 +2514,7 @@ rde_attr_add(struct filterstate *state, struct ibuf *buf)
 }
 
 uint8_t
-rde_attr_missing(struct rde_aspath *a, int ebgp, uint16_t nlrilen)
+rde_attr_missing(struct rde_aspath *a, int ebgp, size_t nlrilen)
 {
 	/* ATTR_MP_UNREACH_NLRI may be sent alone */
 	if (nlrilen == 0 && a->flags & F_ATTR_MP_UNREACH &&
@@ -2525,8 +2525,7 @@ rde_attr_missing(struct rde_aspath *a, int ebgp, uint16_t nlrilen)
 		return (ATTR_ORIGIN);
 	if ((a->flags & F_ATTR_ASPATH) == 0)
 		return (ATTR_ASPATH);
-	if ((a->flags & F_ATTR_MP_REACH) == 0 &&
-	    (a->flags & F_ATTR_NEXTHOP) == 0)
+	if (nlrilen != 0 && (a->flags & F_ATTR_NEXTHOP) == 0)
 		return (ATTR_NEXTHOP);
 	if (!ebgp)
 		if ((a->flags & F_ATTR_LOCALPREF) == 0)
@@ -2751,11 +2750,14 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 	uint32_t	 as;
 
 	/*
-	 * if either ATTR_AS4_AGGREGATOR or ATTR_AS4_PATH is present
-	 * try to fixup the attributes.
-	 * Do not fixup if F_ATTR_PARSE_ERR is set.
+	 * Only fix up paths for which all these conditions hold:
+	 *  - ATTR_AS4_AGGREGATOR or ATTR_AS4_PATH is present
+	 *  - ATTR_ASPATH is present as well
+	 *  - no parse error (F_ATTR_PARSE_ERR)
 	 */
-	if (!(a->flags & F_ATTR_AS4BYTE_NEW) || a->flags & F_ATTR_PARSE_ERR)
+	if ((a->flags & F_ATTR_AS4BYTE_NEW) == 0 ||
+	    (a->flags & F_ATTR_ASPATH) == 0 ||
+	    a->flags & F_ATTR_PARSE_ERR)
 		return;
 
 	/* first get the attributes */
