@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.28 2026/04/14 21:41:19 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.29 2026/05/28 17:09:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -284,6 +284,11 @@ vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 	while (idx != avail->idx) {
 		/* Retrieve Command descriptor. */
 		cmd_desc_idx = avail->ring[idx & vq_info->mask];
+		if (cmd_desc_idx >= vq_info->qs) {
+			log_warnx("%s: invalid head descriptor index",
+			    __func__);
+			goto reset;
+		}
 		desc = &table[cmd_desc_idx];
 		cmd_len = desc->len;
 
