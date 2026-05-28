@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.255 2026/05/28 07:23:52 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.256 2026/05/28 07:58:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -191,8 +191,8 @@ screen_write_pane_is_obscured(struct screen_write_ctx *ctx)
 
 	if (ctx->wp->xoff < 0 ||
 	    ctx->wp->yoff < 0 ||
-	    ctx->wp->xoff + ctx->wp->sx >= ctx->wp->window->sx ||
-	    ctx->wp->yoff + ctx->wp->sy >= ctx->wp->window->sy) {
+	    ctx->wp->xoff + ctx->wp->sx > ctx->wp->window->sx ||
+	    ctx->wp->yoff + ctx->wp->sy > ctx->wp->window->sy) {
 		ctx->flags |= SCREEN_WRITE_OBSCURED;
 		return (1);
 	}
