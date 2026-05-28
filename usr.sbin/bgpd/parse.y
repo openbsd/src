@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.501 2026/05/27 08:32:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.502 2026/05/28 08:47:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2071,6 +2071,19 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.capabilities.ext_msg = $4;
 		}
 		| ANNOUNCE EXTENDED NEXTHOP yesnoenforce {
+			if ($4 != 0) {
+				struct rde_rib *rr;
+
+				rr = find_rib("Loc-RIB");
+				if (rr == NULL)
+					fatalx("cannot find the main RIB!");
+
+				if ((rr->flags & F_RIB_NOFIBSYNC) == 0) {
+					yyerror("announce extended nexthop "
+					    "requires 'fib-update no'");
+					YYERROR;
+				}
+			}
 			curpeer->conf.capabilities.ext_nh[AID_VPN_IPv4] =
 			    curpeer->conf.capabilities.ext_nh[AID_INET] = $4;
 		}

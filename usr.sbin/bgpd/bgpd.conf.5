@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.253 2026/04/22 13:51:46 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.254 2026/05/28 08:47:09 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2026 $
+.Dd $Mdocdate: May 28 2026 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1148,6 +1148,8 @@ is set, the session will only be established if the neighbor also announces
 the capability.
 The default is
 .Ic no .
+Currently enabling this capability requires setting
+.Ic fib-update no .
 .Pp
 .It Xo
 .Ic announce graceful notification
