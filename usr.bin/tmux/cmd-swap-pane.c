@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.46 2026/05/20 08:54:40 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.47 2026/05/28 11:17:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -97,6 +97,16 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 		TAILQ_INSERT_HEAD(&dst_w->panes, src_wp, entry);
 	else
 		TAILQ_INSERT_AFTER(&dst_w->panes, tmp_wp, src_wp, entry);
+
+	tmp_wp = TAILQ_PREV(dst_wp, window_panes, zentry);
+	TAILQ_REMOVE(&dst_w->z_index, dst_wp, zentry);
+	TAILQ_REPLACE(&src_w->z_index, src_wp, dst_wp, zentry);
+	if (tmp_wp == src_wp)
+		tmp_wp = dst_wp;
+	if (tmp_wp == NULL)
+		TAILQ_INSERT_HEAD(&dst_w->z_index, src_wp, zentry);
+	else
+		TAILQ_INSERT_AFTER(&dst_w->z_index, tmp_wp, src_wp, zentry);
 
 	src_lc = src_wp->layout_cell;
 	dst_lc = dst_wp->layout_cell;
