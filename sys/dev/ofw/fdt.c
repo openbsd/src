@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.38 2026/05/29 14:12:57 mglocker Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.39 2026/05/29 15:54:54 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1027,7 +1027,7 @@ OF_getpropstr(int handle, char *prop, char **bufp, int *buflenp)
 		*buflenp = len + 1;
 		*bufp = malloc(*buflenp, M_TEMP, M_WAITOK);
 		memcpy(*bufp, data, len);
-		bufp[len] = 0;
+		(*bufp)[len] = 0;
 		return 0;
 	}
 
