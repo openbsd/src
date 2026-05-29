@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.466 2026/05/28 08:43:57 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.467 2026/05/29 15:51:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1409,9 +1409,8 @@ tty_draw_pane(struct tty *tty, const struct tty_ctx *ctx, u_int py)
 			rr = &r->ranges[j];
 			if (rr->nx == 0)
 				continue;
-			tty_draw_line(tty, s, rr->px, py, rr->nx,
-			    ctx->xoff + rr->px, ctx->yoff + py, &ctx->defaults,
-			    ctx->palette);
+			tty_draw_line(tty, s, rr->px - ctx->xoff, py, rr->nx,
+			    rr->px, ctx->yoff + py, &ctx->defaults, ctx->palette);
 		}
 		return;
 	}
@@ -1421,8 +1420,8 @@ tty_draw_pane(struct tty *tty, const struct tty_ctx *ctx, u_int py)
 			rr = &r->ranges[j];
 			if (rr->nx == 0)
 				continue;
-			tty_draw_line(tty, s, i + rr->px, py, rr->nx,
-			    x + rr->px, ry, &ctx->defaults, ctx->palette);
+			tty_draw_line(tty, s, i + rr->px - x, py, rr->nx,
+			    rr->px, ry, &ctx->defaults, ctx->palette);
 		}
 	}
 }
