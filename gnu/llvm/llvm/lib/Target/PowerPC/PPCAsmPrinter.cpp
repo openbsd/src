@@ -1074,7 +1074,7 @@ void PPCAsmPrinter::emitInstruction(const MachineInstr *MI) {
 
     unsigned MTLR = PPC::MTLR;
     unsigned MFLR = PPC::MFLR;
-    unsigned BL   = PPC::BL;
+    unsigned BL   = PPC::BCLalways; // To emit 'bcl 20,31,.+4'
     if (Subtarget->isPPC64()) {
       MTLR = PPC::MTLR8;
       MFLR = PPC::MFLR8;
@@ -1133,7 +1133,7 @@ void PPCAsmPrinter::emitInstruction(const MachineInstr *MI) {
     unsigned DEST       = MI->getOperand(0).getReg();
     MCSymbol *CookieSym = getSymbol(MI->getOperand(1).getGlobal());
     const MCExpr *CookieExprHa = MCSymbolRefExpr::create(
-        CookieSym, PPC::S_HIGHA, OutContext);
+        CookieSym, PPC::S_HA, OutContext);
     const MCExpr *CookieExprLo = MCSymbolRefExpr::create(
         CookieSym, PPC::S_LO, OutContext);
 
