@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.28 2026/03/02 10:38:44 tb Exp $ */
+/*	$Id: revokeproc.c,v 1.29 2026/05/29 04:12:22 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -37,8 +37,8 @@
 /*
  * Convert the X509's notAfter time into a time_t value.
  */
-static time_t
-X509notafter(X509 *x)
+static int
+X509notafter(const X509 *x, time_t *notafter)
 {
 	ASN1_TIME	*atim;
 	struct tm	 t;
@@ -51,14 +51,18 @@ X509notafter(X509 *x)
 	if (!ASN1_TIME_to_tm(atim, &t))
 		return -1;
 
-	return timegm(&t);
+	t.tm_wday = -1;
+	if ((*notafter = timegm(&t)) == -1 && t.tm_wday == -1)
+		return -1;
+
+	return 0;
 }
 
 /*
  * Convert the X509's notBefore time into a time_t value.
  */
-static time_t
-X509notbefore(X509 *x)
+static int
+X509notbefore(const X509 *x, time_t *notbefore)
 {
 	ASN1_TIME	*atim;
 	struct tm	 t;
@@ -71,7 +75,11 @@ X509notbefore(X509 *x)
 	if (!ASN1_TIME_to_tm(atim, &t))
 		return -1;
 
-	return timegm(&t);
+	t.tm_wday = -1;
+	if ((*notbefore = timegm(&t)) == -1 && t.tm_wday == -1)
+		return -1;
+
+	return 0;
 }
 
 int
@@ -141,12 +149,12 @@ revokeproc(int fd, const char *certfile, int force,
 
 	/* Read out the expiration date. */
 
-	if ((notafter = X509notafter(x)) == -1) {
+	if (X509notafter(x, &notafter) == -1) {
 		warnx("X509notafter");
 		goto out;
 	}
 
-	if ((notbefore = X509notbefore(x)) == -1) {
+	if (X509notbefore(x, &notbefore) == -1) {
 		warnx("X509notbefore");
 		goto out;
 	}
