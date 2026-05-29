@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.269 2026/05/18 03:11:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.270 2026/05/29 05:34:51 jsg Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -90,10 +90,30 @@ int exec_sigcode_map(struct process *);
 int exec_timekeep_map(struct process *);
 
 /*
+ * Free exec-package allocations owned by image-format loaders.
+ */
+void exec_free_package(struct exec_package *);
+
+/*
  * If non-zero, stackgap_random specifies the upper limit of the random gap size
  * added to the fixed stack position. Must be n^2.
  */
 int stackgap_random = STACKGAP_RANDOM;
+
+void
+exec_free_package(struct exec_package *pack)
+{
+	if (pack->ep_interp != NULL) {
+		pool_put(&namei_pool, pack->ep_interp);
+		pack->ep_interp = NULL;
+	}
+	free(pack->ep_args, M_TEMP, sizeof(*pack->ep_args));
+	pack->ep_args = NULL;
+	free(pack->ep_pins, M_PINSYSCALL,
+	    pack->ep_npins * sizeof(*pack->ep_pins));
+	pack->ep_pins = NULL;
+	pack->ep_npins = 0;
+}
 
 /*
  * check exec:
@@ -222,6 +242,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	 * and release their references
 	 */
 	kill_vmcmds(&epp->ep_vmcmds);
+	exec_free_package(epp);
 
 bad2:
 	/*
@@ -764,10 +785,7 @@ bad:
 		/* fdrelease unlocks p->p_fd. */
 		(void) fdrelease(p, pack.ep_fd);
 	}
-	if (pack.ep_interp != NULL)
-		pool_put(&namei_pool, pack.ep_interp);
-	free(pack.ep_args, M_TEMP, sizeof *pack.ep_args);
-	free(pack.ep_pins, M_PINSYSCALL, pack.ep_npins * sizeof(u_int));
+	exec_free_package(&pack);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
@@ -787,9 +805,7 @@ exec_abort:
 	 * of our namei data and vnode, and exit noting failure
 	 */
 	uvm_unmap(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
-	if (pack.ep_interp != NULL)
-		pool_put(&namei_pool, pack.ep_interp);
-	free(pack.ep_args, M_TEMP, sizeof *pack.ep_args);
+	exec_free_package(&pack);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
