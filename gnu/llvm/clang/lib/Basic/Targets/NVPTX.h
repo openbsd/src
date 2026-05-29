@@ -17,6 +17,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/NVPTXAddrSpace.h"
 #include "llvm/TargetParser/Triple.h"
 #include <optional>
 
@@ -45,6 +46,11 @@ static const unsigned NVPTXAddrSpaceMap[] = {
     0, // ptr32_uptr
     0, // ptr64
     0, // hlsl_groupshared
+    0, // hlsl_constant
+    0, // hlsl_private
+    0, // hlsl_device
+    0, // hlsl_input
+    0, // hlsl_push_constant
     // Wasm address space values for this target are dummy values,
     // as it is only enabled for Wasm targets.
     20, // wasm_funcref
@@ -73,7 +79,7 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 
-  ArrayRef<Builtin::Info> getTargetBuiltins() const override;
+  llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override;
 
   bool useFP16ConversionIntrinsics() const override { return false; }
 
@@ -83,17 +89,34 @@ public:
                  const std::vector<std::string> &FeaturesVec) const override {
     if (GPU != OffloadArch::UNUSED)
       Features[OffloadArchToString(GPU)] = true;
-    Features["ptx" + std::to_string(PTXVersion)] = true;
+    // Only add PTX feature if explicitly requested. Otherwise, let the backend
+    // use the minimum required PTX version for the target SM.
+    if (PTXVersion != 0)
+      Features["ptx" + std::to_string(PTXVersion)] = true;
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 
   bool hasFeature(StringRef Feature) const override;
 
+  virtual bool isAddressSpaceSupersetOf(LangAS A, LangAS B) const override {
+    // The generic address space AS(0) is a superset of all the other address
+    // spaces used by the backend target.
+    return A == B ||
+           ((A == LangAS::Default ||
+             (isTargetAddressSpace(A) &&
+              toTargetAddressSpace(A) ==
+                  llvm::NVPTXAS::ADDRESS_SPACE_GENERIC)) &&
+            isTargetAddressSpace(B) &&
+            toTargetAddressSpace(B) >= llvm::NVPTXAS::ADDRESS_SPACE_GENERIC &&
+            toTargetAddressSpace(B) <= llvm::NVPTXAS::ADDRESS_SPACE_LOCAL &&
+            toTargetAddressSpace(B) != 2);
+  }
+
   ArrayRef<const char *> getGCCRegNames() const override;
 
   ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
     // No aliases.
-    return std::nullopt;
+    return {};
   }
 
   bool validateAsmConstraint(const char *&Name,
@@ -119,7 +142,7 @@ public:
   }
 
   BuiltinVaListKind getBuiltinVaListKind() const override {
-    return TargetInfo::VoidPtrBuiltinVaList;
+    return TargetInfo::CharPtrBuiltinVaList;
   }
 
   bool isValidCPUName(StringRef Name) const override {
@@ -152,6 +175,8 @@ public:
     Opts["cl_khr_global_int32_extended_atomics"] = true;
     Opts["cl_khr_local_int32_base_atomics"] = true;
     Opts["cl_khr_local_int32_extended_atomics"] = true;
+
+    Opts["__opencl_c_generic_address_space"] = true;
   }
 
   const llvm::omp::GV &getGridValue() const override {
@@ -179,7 +204,7 @@ public:
     // a host function.
     if (HostTarget)
       return HostTarget->checkCallingConvention(CC);
-    return CCCR_Warning;
+    return CC == CC_DeviceKernel ? CCCR_OK : CCCR_Warning;
   }
 
   bool hasBitIntType() const override { return true; }

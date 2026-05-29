@@ -15,6 +15,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/STLForwardCompat.h"
 
 namespace clang {
 
@@ -55,12 +56,16 @@ public:
 /// This type is intended to be small and suitable for passing by value.
 /// It is very frequently copied.
 struct PrintingPolicy {
+  enum class SuppressInlineNamespaceMode : uint8_t { None, Redundant, All };
+
   /// Create a default printing policy for the specified language.
   PrintingPolicy(const LangOptions &LO)
       : Indentation(2), SuppressSpecifiers(false),
-        SuppressTagKeyword(LO.CPlusPlus), IncludeTagDefinition(false),
-        SuppressScope(false), SuppressUnwrittenScope(false),
-        SuppressInlineNamespace(true), SuppressElaboration(false),
+        SuppressTagKeyword(LO.CPlusPlus), SuppressTagKeywordInAnonNames(false),
+        IncludeTagDefinition(false), SuppressScope(false),
+        SuppressUnwrittenScope(false),
+        SuppressInlineNamespace(
+            llvm::to_underlying(SuppressInlineNamespaceMode::Redundant)),
         SuppressInitializers(false), ConstantArraySizeAsWritten(false),
         AnonymousTagLocations(true), SuppressStrongLifetime(false),
         SuppressLifetimeQualifiers(false),
@@ -74,7 +79,7 @@ struct PrintingPolicy {
         MSWChar(LO.MicrosoftExt && !LO.WChar), IncludeNewlines(true),
         MSVCFormatting(false), ConstantsAsWritten(false),
         SuppressImplicitBase(false), FullyQualifiedName(false),
-        PrintCanonicalTypes(false), PrintInjectedClassNameWithArguments(true),
+        PrintAsCanonical(false), PrintInjectedClassNameWithArguments(true),
         UsePreferredNames(true), AlwaysIncludeTypeForTemplateArgument(false),
         CleanUglifiedParameters(false), EntireContentsOfLargeArray(true),
         UseEnumerators(true), UseHLSLTypes(LO.HLSL) {}
@@ -120,6 +125,15 @@ struct PrintingPolicy {
   LLVM_PREFERRED_TYPE(bool)
   unsigned SuppressTagKeyword : 1;
 
+  /// Whether type printing should skip printing the tag keyword
+  /// of anonymous entities. E.g.,
+  ///
+  /// * \c (anonymous) as opopsed to (anonymous struct)
+  /// * \c (unnamed) as opposed to (unnamed enum)
+  ///
+  LLVM_PREFERRED_TYPE(bool)
+  unsigned SuppressTagKeywordInAnonNames : 1;
+
   /// When true, include the body of a tag definition.
   ///
   /// This is used to place the definition of a struct
@@ -141,15 +155,12 @@ struct PrintingPolicy {
   unsigned SuppressUnwrittenScope : 1;
 
   /// Suppress printing parts of scope specifiers that correspond
-  /// to inline namespaces, where the name is unambiguous with the specifier
+  /// to inline namespaces.
+  /// If Redundant, where the name is unambiguous with the specifier removed.
+  /// If All, even if the name is ambiguous with the specifier
   /// removed.
-  LLVM_PREFERRED_TYPE(bool)
-  unsigned SuppressInlineNamespace : 1;
-
-  /// Ignore qualifiers and tag keywords as specified by elaborated type sugar,
-  /// instead letting the underlying type print as normal.
-  LLVM_PREFERRED_TYPE(bool)
-  unsigned SuppressElaboration : 1;
+  LLVM_PREFERRED_TYPE(SuppressInlineNamespaceMode)
+  unsigned SuppressInlineNamespace : 2;
 
   /// Suppress printing of variable initializers.
   ///
@@ -306,9 +317,9 @@ struct PrintingPolicy {
   LLVM_PREFERRED_TYPE(bool)
   unsigned FullyQualifiedName : 1;
 
-  /// Whether to print types as written or canonically.
+  /// Whether to print entities as written or canonically.
   LLVM_PREFERRED_TYPE(bool)
-  unsigned PrintCanonicalTypes : 1;
+  unsigned PrintAsCanonical : 1;
 
   /// Whether to print an InjectedClassNameType with template arguments or as
   /// written. When a template argument is unnamed, printing it results in
