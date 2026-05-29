@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.118 2026/05/29 09:40:04 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.119 2026/05/29 09:52:10 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -18958,9 +18958,17 @@ void
 qwx_set_cc_task(void *arg)
 {
 	struct qwx_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct wmi_set_current_country_params set_current_param = {};
 	struct wmi_init_country_params init_country_param = {};
 	int i;
+
+	if (ifp->if_flags & IFF_DEBUG) {
+		printf("%s: firmware has detected regulatory domain '%c%c' "
+		    "(0x%x)\n", sc->sc_dev.dv_xname,
+		    sc->new_alpha2[0], sc->new_alpha2[1],
+		    (uint32_t)((sc->new_alpha2[0] << 8) | sc->new_alpha2[1]));
+	}
 
 	if (sc->hw_params.current_cc_support) {
 		memcpy(&set_current_param.alpha2, sc->new_alpha2, 2);
