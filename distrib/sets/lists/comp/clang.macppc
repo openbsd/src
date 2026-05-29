@@ -3485,6 +3485,7 @@
 ./usr/lib/clang/22
 ./usr/lib/clang/22/include
 ./usr/lib/clang/22/include/altivec.h
+./usr/lib/clang/22/include/amo.h
 ./usr/lib/clang/22/include/htmintrin.h
 ./usr/lib/clang/22/include/htmxlintrin.h
 ./usr/lib/clang/22/include/intrin.h
