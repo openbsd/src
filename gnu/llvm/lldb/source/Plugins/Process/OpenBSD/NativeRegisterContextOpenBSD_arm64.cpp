@@ -105,7 +105,7 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
   Log *log = GetLog(POSIXLog::Registers);
 
   if (!reg_info) {
-    error.SetErrorString("reg_info NULL");
+    error.FromErrorString("reg_info NULL");
     return error;
   }
 
@@ -113,7 +113,7 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
   if (reg == LLDB_INVALID_REGNUM) {
     // This is likely an internal register for lldb use only and should not be
     // directly queried.
-    error.SetErrorStringWithFormat("register \"%s\" is an internal-only lldb "
+    error.FromErrorStringWithFormat("register \"%s\" is an internal-only lldb "
                                    "register, cannot read directly",
                                    reg_info->name);
     return error;
@@ -123,7 +123,7 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
   if (set == -1) {
     // This is likely an internal register for lldb use only and should not be
     // directly queried.
-    error.SetErrorStringWithFormat("register \"%s\" is in unrecognized set",
+    error.FromErrorStringWithFormat("register \"%s\" is in unrecognized set",
                                    reg_info->name);
     return error;
   }
@@ -131,7 +131,7 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
   if (ReadRegisterSet(set) != 0) {
     // This is likely an internal register for lldb use only and should not be
     // directly queried.
-    error.SetErrorStringWithFormat(
+    error.FromErrorStringWithFormat(
         "reading register set for register \"%s\" failed", reg_info->name);
     return error;
   }
@@ -254,7 +254,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
   Log *log = GetLog(POSIXLog::Registers);
 
   if (!reg_info) {
-    error.SetErrorString("reg_info NULL");
+    error.FromErrorString("reg_info NULL");
     return error;
   }
 
@@ -262,7 +262,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
   if (reg == LLDB_INVALID_REGNUM) {
     // This is likely an internal register for lldb use only and should not be
     // directly queried.
-    error.SetErrorStringWithFormat("register \"%s\" is an internal-only lldb "
+    error.FromErrorStringWithFormat("register \"%s\" is an internal-only lldb "
                                    "register, cannot read directly",
                                    reg_info->name);
     return error;
@@ -272,7 +272,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
   if (set == -1) {
     // This is likely an internal register for lldb use only and should not be
     // directly queried.
-    error.SetErrorStringWithFormat("register \"%s\" is in unrecognized set",
+    error.FromErrorStringWithFormat("register \"%s\" is in unrecognized set",
                                    reg_info->name);
     return error;
   }
@@ -280,7 +280,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
   if (ReadRegisterSet(set) != 0) {
     // This is likely an internal register for lldb use only and should not be
     // directly queried.
-    error.SetErrorStringWithFormat(
+    error.FromErrorStringWithFormat(
         "reading register set for register \"%s\" failed", reg_info->name);
     return error;
   }
@@ -379,7 +379,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
   }
 
   if (WriteRegisterSet(set) != 0)
-    error.SetErrorStringWithFormat("failed to write register set");
+    error.FromErrorStringWithFormat("failed to write register set");
 
   return error;
 }
@@ -390,7 +390,7 @@ Status NativeRegisterContextOpenBSD_arm64::ReadAllRegisterValues(
 
   data_sp.reset(new DataBufferHeap(REG_CONTEXT_SIZE, 0));
   if (!data_sp) {
-    error.SetErrorStringWithFormat(
+    error.FromErrorStringWithFormat(
         "failed to allocate DataBufferHeap instance of size %zu",
         REG_CONTEXT_SIZE);
     return error;
@@ -406,7 +406,7 @@ Status NativeRegisterContextOpenBSD_arm64::ReadAllRegisterValues(
 
   uint8_t *dst = data_sp->GetBytes();
   if (dst == nullptr) {
-    error.SetErrorStringWithFormat("DataBufferHeap instance of size %zu"
+    error.FromErrorStringWithFormat("DataBufferHeap instance of size %zu"
                                    " returned a null pointer",
                                    REG_CONTEXT_SIZE);
     return error;
@@ -426,14 +426,14 @@ Status NativeRegisterContextOpenBSD_arm64::WriteAllRegisterValues(
   Status error;
 
   if (!data_sp) {
-    error.SetErrorStringWithFormat(
+    error.FromErrorStringWithFormat(
         "NativeRegisterContextOpenBSD_arm64::%s invalid data_sp provided",
         __FUNCTION__);
     return error;
   }
 
   if (data_sp->GetByteSize() != REG_CONTEXT_SIZE) {
-    error.SetErrorStringWithFormat(
+    error.FromErrorStringWithFormat(
         "NativeRegisterContextOpenBSD_arm64::%s data_sp contained mismatched "
         "data size, expected %zu, actual %llu",
         __FUNCTION__, REG_CONTEXT_SIZE, data_sp->GetByteSize());
@@ -442,7 +442,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteAllRegisterValues(
 
   const uint8_t *src = data_sp->GetBytes();
   if (src == nullptr) {
-    error.SetErrorStringWithFormat("NativeRegisterContextOpenBSD_arm64::%s "
+    error.FromErrorStringWithFormat("NativeRegisterContextOpenBSD_arm64::%s "
                                    "DataBuffer::GetBytes() returned a null "
                                    "pointer",
                                    __FUNCTION__);

@@ -46,12 +46,12 @@ static Status EnsureFDFlags(int fd, int flags) {
 
   int status = fcntl(fd, F_GETFL);
   if (status == -1) {
-    error.SetErrorToErrno();
+    error = Status::FromErrno();
     return error;
   }
 
   if (fcntl(fd, F_SETFL, status | flags) == -1) {
-    error.SetErrorToErrno();
+    error = Status::FromErrno();
     return error;
   }
 
@@ -217,7 +217,7 @@ Status NativeProcessOpenBSD::PtraceWrapper(int req, lldb::pid_t pid, void *addr,
   ret = ptrace(req, static_cast<::pid_t>(pid), (caddr_t)addr, data);
 
   if (ret == -1)
-    error.SetErrorToErrno();
+    error = Status::FromErrno();
 
   if (result)
     *result = ret;
@@ -279,10 +279,11 @@ Status NativeProcessOpenBSD::Resume(const ResumeActionList &resume_actions) {
     llvm_unreachable("Unexpected state");
 
   default:
-    return Status("NativeProcessOpenBSD::%s (): unexpected state %s specified "
-                  "for pid %" PRIu64 ", tid %" PRIu64,
-                  __FUNCTION__, StateAsCString(action->state), GetID(),
-                  thread->GetID());
+    return Status::FromErrorStringWithFormat(
+         "NativeProcessOpenBSD::%s (): unexpected state %s specified "
+         "for pid %" PRIu64 ", tid %" PRIu64,
+         __FUNCTION__, StateAsCString(action->state), GetID(),
+         thread->GetID());
   }
 
   return Status();
@@ -292,7 +293,7 @@ Status NativeProcessOpenBSD::Halt() {
   Status error;
 
   if (kill(GetID(), SIGSTOP) != 0)
-    error.SetErrorToErrno();
+    error = Status::FromErrno();
 
   return error;
 }
@@ -314,7 +315,7 @@ Status NativeProcessOpenBSD::Signal(int signo) {
   Status error;
 
   if (kill(GetID(), signo))
-    error.SetErrorToErrno();
+    error = Status::FromErrno();
 
   return error;
 }
@@ -348,7 +349,7 @@ Status NativeProcessOpenBSD::Kill() {
   }
 
   if (kill(GetID(), SIGKILL) != 0) {
-    error.SetErrorToErrno();
+    error = Status::FromErrno();
     return error;
   }
 

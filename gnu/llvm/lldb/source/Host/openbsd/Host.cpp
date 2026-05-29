@@ -30,18 +30,12 @@
 
 #include "llvm/TargetParser/Host.h"
 
-extern "C" {
-extern char **environ;
-}
-
 using namespace lldb;
 using namespace lldb_private;
 
 namespace lldb_private {
 class ProcessLaunchInfo;
 }
-
-Environment Host::GetEnvironment() { return Environment(environ); }
 
 static bool
 GetOpenBSDProcessArgs(const ProcessInstanceInfoMatch *match_info_ptr,
@@ -64,11 +58,11 @@ GetOpenBSDProcessArgs(const ProcessInstanceInfoMatch *match_info_ptr,
     return false;
 
   arg_data.resize(kern_proc_args_size);
-
+    
   // arg_data is a NULL terminated list of pointers, where the pointers
   // point within arg_data to the location of the arg string
   DataExtractor data(arg_data.data(), arg_data.length(), endian::InlHostByteOrder(), sizeof(void *));
-
+    
   lldb::offset_t offset = 0;
   lldb::offset_t arg_offset = 0;
   uint64_t arg_addr = 0;
@@ -90,6 +84,7 @@ GetOpenBSDProcessArgs(const ProcessInstanceInfoMatch *match_info_ptr,
   {
     return false;
   }
+
 
   Args &proc_args = process_info.GetArguments();
 
@@ -218,5 +213,5 @@ bool Host::GetProcessInfo(lldb::pid_t pid, ProcessInstanceInfo &process_info) {
 }
 
 Status Host::ShellExpandArguments(ProcessLaunchInfo &launch_info) {
-  return Status("unimplemented");
+  return Status::FromErrorString("unimplemented");
 }

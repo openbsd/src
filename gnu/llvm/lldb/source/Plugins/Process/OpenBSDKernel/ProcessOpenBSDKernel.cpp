@@ -221,7 +221,7 @@ size_t ProcessOpenBSDKernelKVM::DoReadMemory(lldb::addr_t addr, void *buf,
   ssize_t rd = 0;
   rd = kvm_read(m_kvm, addr, buf, size);
   if (rd < 0 || static_cast<size_t>(rd) != size) {
-    error.SetErrorStringWithFormat("Reading memory failed: %s", GetError());
+    error = Status::FromErrorStringWithFormat("Reading memory failed: %s", GetError());
     return rd > 0 ? rd : 0;
   }
   return rd;
