@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.127 2026/05/27 15:04:14 jcs Exp $ */
+/*	$OpenBSD: nvme.c,v 1.128 2026/05/29 21:44:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1288,10 +1288,12 @@ nvme_identify(struct nvme_softc *sc, u_int mpsmin)
 
 	sc->sc_nn = lemtoh32(&identify->nn);
 
-	/* use maximum I/O SQE size reported */
-	sc->sc_sqe_size = 1 << (identify->sqes >> 4);
-	if (sc->sc_sqe_size < sizeof(struct nvme_sqe))
-		sc->sc_sqe_size = sizeof(struct nvme_sqe);
+	if (sc->sc_sqe_size == 0) {
+		/* use maximum I/O SQE size reported */
+		sc->sc_sqe_size = 1 << (identify->sqes >> 4);
+		if (sc->sc_sqe_size < sizeof(struct nvme_sqe))
+			sc->sc_sqe_size = sizeof(struct nvme_sqe);
+	}
 
 	/*
 	 * At least one Apple NVMe device presents a second, bogus disk that is
