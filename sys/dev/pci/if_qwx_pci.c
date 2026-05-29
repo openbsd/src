@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.34 2026/05/28 15:58:15 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.35 2026/05/29 09:40:04 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1091,8 +1091,8 @@ unsupported_wcn6855_soc:
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
-	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_AMSDU7935;
-	ic->ic_htcaps |=
+	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_SGI40 |
+	    IEEE80211_HTCAP_CBW20_40 | IEEE80211_HTCAP_AMSDU7935 |
 	    (IEEE80211_HTCAP_SMPS_DIS << IEEE80211_HTCAP_SMPS_SHIFT);
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
@@ -1122,8 +1122,8 @@ unsupported_wcn6855_soc:
 	ic->ic_newstate = qwx_newstate;
 	ic->ic_set_key = qwx_set_key;
 	ic->ic_delete_key = qwx_delete_key;
-#if 0
 	ic->ic_updatechan = qwx_updatechan;
+#if 0
 	ic->ic_updateprot = qwx_updateprot;
 	ic->ic_updateslot = qwx_updateslot;
 	ic->ic_updateedca = qwx_updateedca;

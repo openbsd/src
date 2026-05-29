@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.117 2026/05/29 09:35:29 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.118 2026/05/29 09:40:04 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12837,6 +12837,8 @@ qwx_init_channels(struct qwx_softc *sc, struct cur_regulatory_info *reg_info)
 				    IEEE80211_CHAN_DYN |
 				    IEEE80211_CHAN_2GHZ |
 				    IEEE80211_CHAN_HT;
+				if (!(rule->flags & REGULATORY_CHAN_NO_HT40))
+					chan->ic_flags |= IEEE80211_CHAN_40MHZ;
 			}
 			chnum++;
 			freq = ieee80211_ieee2mhz(chnum, IEEE80211_CHAN_2GHZ);
@@ -12872,6 +12874,8 @@ qwx_init_channels(struct qwx_softc *sc, struct cur_regulatory_info *reg_info)
 				chan->ic_freq = freq;
 				chan->ic_flags = IEEE80211_CHAN_A |
 				    IEEE80211_CHAN_HT;
+				if (!(rule->flags & REGULATORY_CHAN_NO_HT40))
+					chan->ic_flags |= IEEE80211_CHAN_40MHZ;
 				if (rule->flags & (REGULATORY_CHAN_RADAR |
 				    REGULATORY_CHAN_NO_IR |
 				    REGULATORY_CHAN_INDOOR_ONLY)) {
@@ -23696,6 +23700,7 @@ qwx_mac_vdev_start_restart(struct qwx_softc *sc, struct qwx_vif *arvif,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *chan = ic->ic_bss->ni_chan;
 	struct wmi_vdev_start_req_arg arg = {};
+	uint8_t sco = IEEE80211_HTOP0_SCO_SCN;
 	int ret = 0;
 #ifdef notyet
 	lockdep_assert_held(&ar->conf_mutex);
@@ -23712,7 +23717,25 @@ qwx_mac_vdev_start_restart(struct qwx_softc *sc, struct qwx_vif *arvif,
 	arg.channel.band_center_freq2 = chan->ic_freq;
 
 	/* Deduce a legacy mode based on the channel characteristics. */
-	if (IEEE80211_IS_CHAN_5GHZ(chan))
+	if (ieee80211_node_supports_ht(ic->ic_bss) &&
+	    (chan->ic_flags & IEEE80211_CHAN_HT)) {
+		arg.channel.allow_ht = 1;
+		if (IEEE80211_CHAN_40MHZ_ALLOWED(chan) &&
+		    ieee80211_node_supports_ht_chan40(ic->ic_bss))
+			sco = ic->ic_bss->ni_htop0 &
+			    IEEE80211_HTOP0_SCO_MASK;
+		if (sco == IEEE80211_HTOP0_SCO_SCA) {
+			arg.channel.band_center_freq1 = chan->ic_freq + 10;
+			arg.channel.mode = IEEE80211_IS_CHAN_5GHZ(chan) ?
+			    MODE_11NA_HT40 : MODE_11NG_HT40;
+		} else if (sco == IEEE80211_HTOP0_SCO_SCB) {
+			arg.channel.band_center_freq1 = chan->ic_freq - 10;
+			arg.channel.mode = IEEE80211_IS_CHAN_5GHZ(chan) ?
+			    MODE_11NA_HT40 : MODE_11NG_HT40;
+		} else
+			arg.channel.mode = IEEE80211_IS_CHAN_5GHZ(chan) ?
+			    MODE_11NA_HT20 : MODE_11NG_HT20;
+	} else if (IEEE80211_IS_CHAN_5GHZ(chan))
 		arg.channel.mode = MODE_11A;
 	else if (ic->ic_bss->ni_flags & IEEE80211_NODE_ERP)
 		arg.channel.mode = MODE_11G;
@@ -26419,6 +26442,7 @@ qwx_peer_assoc_h_phymode(struct qwx_softc *sc, struct ieee80211_node *ni,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum wmi_phy_mode phymode;
+	uint8_t sco;
 
 	switch (ic->ic_curmode) {
 	case IEEE80211_MODE_11A:
@@ -26431,10 +26455,17 @@ qwx_peer_assoc_h_phymode(struct qwx_softc *sc, struct ieee80211_node *ni,
 		phymode = MODE_11G;
 		break;
 	case IEEE80211_MODE_11N:
-		if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan))
-			phymode = MODE_11NA_HT20;
+		sco = IEEE80211_HTOP0_SCO_SCN;
+		if (IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
+		    ieee80211_node_supports_ht_chan40(ni))
+			sco = ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK;
+		if (sco == IEEE80211_HTOP0_SCO_SCA ||
+		    sco == IEEE80211_HTOP0_SCO_SCB)
+			phymode = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ?
+			    MODE_11NA_HT40 : MODE_11NG_HT40;
 		else
-			phymode = MODE_11NG_HT20;
+			phymode = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ?
+			    MODE_11NA_HT20 : MODE_11NG_HT20;
 		break;
 	default:
 		phymode = MODE_UNKNOWN;
@@ -26490,13 +26521,18 @@ qwx_peer_assoc_h_ht(struct qwx_softc *sc, struct qwx_vif *arvif,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	int i, n;
-	uint8_t max_nss;
+	uint8_t max_nss, sco;
 	uint32_t stbc, aggsize, mpdu_density;
 #ifdef notyet
 	lockdep_assert_held(&ar->conf_mutex);
 #endif
 	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
 		return;
+
+	sco = IEEE80211_HTOP0_SCO_SCN;
+	if (IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
+	    ieee80211_node_supports_ht_chan40(ni))
+		sco = ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK;
 
 	arg->ht_flag = true;
 
@@ -26511,12 +26547,13 @@ qwx_peer_assoc_h_ht(struct qwx_softc *sc, struct qwx_vif *arvif,
 
 	if (ni->ni_htcaps & IEEE80211_HTCAP_LDPC)
 		arg->ldpc_flag = true;
-#if 0
-	if (sta->deflink.bandwidth >= IEEE80211_STA_RX_BW_40) {
+
+	if (sco == IEEE80211_HTOP0_SCO_SCA ||
+	    sco == IEEE80211_HTOP0_SCO_SCB) {
 		arg->bw_40 = true;
 		arg->peer_rate_caps |= WMI_HOST_RC_CW40_FLAG;
 	}
-#endif
+
 	if (ieee80211_node_supports_ht_sgi20(ni) ||
 	    ieee80211_node_supports_ht_sgi40(ni))
 		arg->peer_rate_caps |= WMI_HOST_RC_SGI_FLAG;
@@ -26602,6 +26639,94 @@ qwx_peer_assoc_prepare(struct qwx_softc *sc, struct qwx_vif *arvif,
 	arsta->peer_nss = arg->peer_nss;
 #endif
 	/* TODO: amsdu_disable req? */
+}
+
+void
+qwx_updatechan(struct ieee80211com *ic)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct qwx_softc *sc = ifp->if_softc;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list);
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (struct qwx_node *)ic->ic_bss;
+	int pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct peer_assoc_params peer_arg;
+	uint32_t old_phymode;
+	enum wmi_peer_chwidth chwidth;
+	int ret;
+
+	old_phymode = nq->phymode;
+
+	qwx_peer_assoc_h_phymode(sc, ni, &peer_arg);
+	qwx_peer_assoc_h_ht(sc, arvif, ni, &peer_arg);
+
+	if (peer_arg.bw_40)
+		chwidth = WMI_PEER_CHWIDTH_40MHZ;
+	else
+		chwidth = WMI_PEER_CHWIDTH_20MHZ;
+
+	if (nq->chwidth == chwidth)
+		return;
+
+	if (nq->chwidth < chwidth) {
+		/*
+		 * BW is upgraded. In this case we send WMI_PEER_PHYMODE
+		 * followed by WMI_PEER_CHWIDTH.
+		 */
+		ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr,
+		    arvif->vdev_id, pdev_id, WMI_PEER_PHYMODE,
+		    peer_arg.peer_phymode);
+		if (ret) {
+			printf("%s: failed to update phymode for peer %s "
+			    "vdev_id %d\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr),
+			    arvif->vdev_id);
+			return;
+		}
+
+		ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr,
+		    arvif->vdev_id, pdev_id, WMI_PEER_CHWIDTH, chwidth);
+		if (ret) {
+			printf("%s: failed to update channel width for peer %s "
+			    "vdev_id %d\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr),
+			    arvif->vdev_id);
+			return;
+		}
+	} else {
+		/*
+		 * BW is downgraded. In this case we send WMI_PEER_CHWIDTH
+		 * followed by WMI_PEER_PHYMODE.
+		 */
+		ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr,
+		    arvif->vdev_id, pdev_id, WMI_PEER_CHWIDTH, chwidth);
+		if (ret) {
+			printf("%s: failed to update channel width for peer %s "
+			    "vdev_id %d\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr),
+			    arvif->vdev_id);
+			return;
+		}
+
+		ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr,
+		    arvif->vdev_id, pdev_id, WMI_PEER_PHYMODE,
+		    peer_arg.peer_phymode);
+		if (ret) {
+			printf("%s: failed to update phymode for peer %s "
+			    "vdev_id %d\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr),
+			    arvif->vdev_id);
+			return;
+		}
+
+	}
+
+	nq->phymode = peer_arg.peer_phymode;
+	nq->chwidth = chwidth;
 }
 
 void
@@ -26784,15 +26909,6 @@ qwx_assoc(struct qwx_softc *sc)
 		}
 	}
 
-	if (ni->ni_flags & IEEE80211_NODE_HT) {
-		ret = qwx_setup_peer_smps(sc, pdev_id, arvif, ni->ni_macaddr,
-		    ni->ni_htcaps);
-		if (ret) {
-			printf("%s: failed to setup SMPS for vdev %d: %d\n",
-			    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
-			return ret;
-		}
-	}
 #if 0
 	if (!ath11k_mac_vif_recalc_sta_he_txbf(ar, vif, &he_cap)) {
 		ath11k_warn(ar->ab, "failed to recalc he txbf for vdev %i on bss %pM\n",
@@ -26822,9 +26938,52 @@ qwx_run(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (struct qwx_node *)ni;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct peer_assoc_params peer_arg;
 	int ret;
+
+	/* Update peer again to apply HT and VHT settings. */
+	qwx_peer_assoc_prepare(sc, arvif, ni, &peer_arg, 1);
+
+	peer_arg.is_assoc = 1;
+
+	sc->peer_assoc_done = 0;
+	ret = qwx_wmi_send_peer_assoc_cmd(sc, pdev_id, &peer_arg);
+	if (ret) {
+		printf("%s: failed to run peer assoc for %s vdev %i: %d\n",
+		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_macaddr),
+		    arvif->vdev_id, ret);
+		return ret;
+	}
+
+	while (!sc->peer_assoc_done) {
+		ret = tsleep_nsec(&sc->peer_assoc_done, 0, "qwxassoc",
+		    SEC_TO_NSEC(1));
+		if (ret) {
+			printf("%s: failed to get peer assoc conf event "
+			    "for %s vdev %i\n", sc->sc_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr), arvif->vdev_id);
+			return ret;
+		}
+	}
+
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		ret = qwx_setup_peer_smps(sc, pdev_id, arvif, ni->ni_macaddr,
+		    ni->ni_htcaps);
+		if (ret) {
+			printf("%s: failed to setup SMPS for vdev %d: %d\n",
+			    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+			return ret;
+		}
+	}
+
+	nq->phymode = peer_arg.peer_phymode;
+	if (peer_arg.bw_40)
+		nq->chwidth = WMI_PEER_CHWIDTH_40MHZ;
+	else
+		nq->chwidth = WMI_PEER_CHWIDTH_20MHZ;
 
 	ret = qwx_wmi_vdev_up(sc, arvif->vdev_id, pdev_id, arvif->aid,
 	    arvif->bssid, NULL, 0, 0);

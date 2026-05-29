@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.34 2026/05/29 09:30:38 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.35 2026/05/29 09:40:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2036,6 +2036,7 @@ void	qwx_init_task(void *);
 int	qwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	qwx_newstate_task(void *);
 int	qwx_bgscan(struct ieee80211com *);
+void	qwx_updatechan(struct ieee80211com *);
 
 struct qwx_node {
 	struct ieee80211_node ni;
@@ -2043,6 +2044,8 @@ struct qwx_node {
 	unsigned int flags;
 #define QWX_NODE_FLAG_HAVE_PAIRWISE_KEY	0x01
 #define QWX_NODE_FLAG_HAVE_GROUP_KEY	0x02
+	uint32_t phymode;
+	enum wmi_peer_chwidth chwidth;
 };
 
 struct ieee80211_node *qwx_node_alloc(struct ieee80211com *);
