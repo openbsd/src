@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.33 2026/05/18 12:26:14 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.34 2026/05/29 09:30:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1868,6 +1868,10 @@ struct qwx_softc {
 	/* Task for firmware BlockAck setup/teardown and its arguments. */
 	struct task		ba_task;
 	struct qwx_ba_task_data	ba_rx;
+
+	/* Task for firmware country code updates. */
+	uint8_t new_alpha2[3];
+	struct task set_cc_task;
 
 	enum ath11k_11d_state	state_11d;
 	int			completed_11d_scan;

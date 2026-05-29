@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.114 2026/05/28 16:00:22 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.115 2026/05/29 09:30:38 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -421,6 +421,7 @@ qwx_stop(struct ifnet *ifp)
 	qwx_del_task(sc, systq, &sc->setkey_task);
 	qwx_del_task(sc, systq, &sc->ba_task);
 	qwx_del_task(sc, systq, &sc->bgscan_task);
+	qwx_del_task(sc, systq, &sc->set_cc_task);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
 
 	qwx_setkey_clear(sc);
@@ -1097,6 +1098,7 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #if 0
 		qwx_del_task(sc, systq, &sc->bgscan_done_task);
 #endif
+		qwx_del_task(sc, systq, &sc->set_cc_task);
 	}
 
 	sc->ns_nstate = nstate;
@@ -13907,6 +13909,50 @@ qwx_vdev_install_key_compl_event(struct qwx_softc *sc, struct mbuf *m)
 	wakeup(&sc->install_key_done);
 }
 
+int
+qwx_reg_11d_new_cc_event(struct qwx_softc *sc, struct mbuf *m)
+{
+	const struct wmi_11d_new_cc_ev *ev;
+	const void **tb;
+	int ret;
+
+	tb = qwx_wmi_tlv_parse_alloc(sc, mtod(m, void *), m->m_pkthdr.len);
+	if (tb == NULL) {
+		ret = ENOMEM;
+		printf("%s: failed to parse tlv: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TAG_11D_NEW_COUNTRY_EVENT];
+	if (!ev) {
+		printf("%s: failed to fetch 11d new cc ev\n",
+		    sc->sc_dev.dv_xname);
+		free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+		return EPROTO;
+	}
+#if 0
+	spin_lock_bh(&ab->base_lock);
+#endif
+	memcpy(&sc->new_alpha2, &ev->new_alpha2, 2);
+	sc->new_alpha2[2] = '\0';
+#if 0
+	spin_unlock_bh(&ab->base_lock);
+#endif
+
+	DNPRINTF(QWX_D_WMI, "event 11d new cc %c%c\n",
+	    sc->new_alpha2[0], sc->new_alpha2[1]);
+
+	free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+
+	sc->state_11d = ATH11K_11D_IDLE;
+	sc->completed_11d_scan = 1;
+	wakeup(&sc->completed_11d_scan);
+
+	qwx_add_task(sc, systq, &sc->set_cc_task);
+
+	return 0;
+}
 void
 qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 {
@@ -14027,10 +14073,10 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 	case WMI_WOW_WAKEUP_HOST_EVENTID:
 		ath11k_wmi_event_wow_wakeup_host(ab, skb);
 		break;
-	case WMI_11D_NEW_COUNTRY_EVENTID:
-		ath11k_reg_11d_new_cc_event(ab, skb);
-		break;
 #endif
+	case WMI_11D_NEW_COUNTRY_EVENTID:
+		qwx_reg_11d_new_cc_event(sc, m);
+		break;
 	case WMI_DIAG_EVENTID:
 		/* Ignore. These events trigger tracepoints in Linux. */
 		break;
@@ -18806,6 +18852,133 @@ qwx_wmi_send_scan_chan_list_cmd(struct qwx_softc *sc, uint8_t pdev_id,
 
 	return 0;
 }
+
+int
+qwx_wmi_send_set_current_country_cmd(struct qwx_softc *sc,
+    int pdev_id, struct wmi_set_current_country_params *param)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_set_current_country_cmd *cmd;
+	struct mbuf *m;
+	int ret;
+
+	m = qwx_wmi_alloc_mbuf(sizeof(*cmd));
+	if (!m)
+		return ENOMEM;
+
+	cmd = (struct wmi_set_current_country_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+	cmd->tlv_header =
+		FIELD_PREP(WMI_TLV_TAG, WMI_TAG_SET_CURRENT_COUNTRY_CMD) |
+		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+
+	cmd->pdev_id = pdev_id;
+	memcpy(&cmd->new_alpha2, &param->alpha2, 3);
+
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_SET_CURRENT_COUNTRY_CMDID);
+	if (ret) {
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send "
+			    "WMI_SET_CURRENT_COUNTRY_CMDID: %d\n",
+			    sc->sc_dev.dv_xname, ret);
+		}
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI,
+	    "%s: cmd set current country pdev id %d alpha2 %c%c\n",
+	    __func__, pdev_id, param->alpha2[0], param->alpha2[1]);
+
+	return ret;
+}
+
+int
+qwx_wmi_send_init_country_cmd(struct qwx_softc *sc, int pdev_id,
+    struct wmi_init_country_params *init_cc_params)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_init_country_cmd *cmd;
+	struct mbuf *m;
+	int ret;
+
+	m = qwx_wmi_alloc_mbuf(sizeof(*cmd));
+	if (!m)
+		return ENOMEM;
+
+	cmd = (struct wmi_init_country_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+	cmd->tlv_header =
+		FIELD_PREP(WMI_TLV_TAG,
+			   WMI_TAG_SET_INIT_COUNTRY_CMD) |
+		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+
+	cmd->pdev_id = pdev_id;
+
+	switch (init_cc_params->flags) {
+	case ALPHA_IS_SET:
+		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_ALPHA;
+		memcpy((uint8_t *)&cmd->cc_info.alpha2,
+		       init_cc_params->cc_info.alpha2, 3);
+		break;
+	case CC_IS_SET:
+		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_COUNTRY_CODE;
+		cmd->cc_info.country_code =
+		    init_cc_params->cc_info.country_code;
+		break;
+	case REGDMN_IS_SET:
+		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_REGDOMAIN;
+		cmd->cc_info.regdom_id = init_cc_params->cc_info.regdom_id;
+		break;
+	default:
+		DPRINTF("%s: unknown cc params flags: 0x%x",
+		    init_cc_params->flags);
+		ret = EINVAL;
+		goto err;
+	}
+
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_SET_INIT_COUNTRY_CMDID);
+	if (ret) {
+		printf("%s: failed to send WMI_SET_INIT_COUNTRY CMD :%d\n",
+		    sc->sc_dev.dv_xname, ret);
+		goto err;
+	}
+
+	DNPRINTF(QWX_D_WMI, "cmd set init country");
+
+	return 0;
+err:
+	m_freem(m);
+	return ret;
+}
+
+void
+qwx_set_cc_task(void *arg)
+{
+	struct qwx_softc *sc = arg;
+	struct wmi_set_current_country_params set_current_param = {};
+	struct wmi_init_country_params init_country_param = {};
+	int i;
+
+	if (sc->hw_params.current_cc_support) {
+		memcpy(&set_current_param.alpha2, sc->new_alpha2, 2);
+		for (i = 0; i < sc->num_radios; i++) {
+			qwx_wmi_send_set_current_country_cmd(sc, i,
+			    &set_current_param);
+		}
+	} else {
+		init_country_param.flags = ALPHA_IS_SET;
+		memcpy(&init_country_param.cc_info.alpha2, sc->new_alpha2, 2);
+		init_country_param.cc_info.alpha2[2] = 0;
+		for (i = 0; i < sc->num_radios; i++) {
+			qwx_wmi_send_init_country_cmd(sc, i,
+			    &init_country_param);
+		}
+	}
+
+	refcnt_rele_wake(&sc->task_refs);
+}
+
 
 int
 qwx_wmi_send_11d_scan_start_cmd(struct qwx_softc *sc,
@@ -26747,6 +26920,7 @@ qwx_attach(struct qwx_softc *sc)
 	task_set(&sc->setkey_task, qwx_setkey_task, sc);
 	task_set(&sc->ba_task, qwx_ba_task, sc);
 	task_set(&sc->bgscan_task, qwx_bgscan_task, sc);
+	task_set(&sc->set_cc_task, qwx_set_cc_task, sc);
 	timeout_set_proc(&sc->scan.timeout, qwx_scan_timeout, sc);
 #if NBPFILTER > 0
 	qwx_radiotap_attach(sc);
