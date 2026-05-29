@@ -3484,10 +3484,17 @@
 ./usr/lib/clang
 ./usr/lib/clang/22
 ./usr/lib/clang/22/include
+./usr/lib/clang/22/include/andes_vector.h
 ./usr/lib/clang/22/include/intrin.h
 ./usr/lib/clang/22/include/module.modulemap
 ./usr/lib/clang/22/include/riscv_bitmanip.h
+./usr/lib/clang/22/include/riscv_corev_alu.h
+./usr/lib/clang/22/include/riscv_crypto.h
+./usr/lib/clang/22/include/riscv_mips.h
+./usr/lib/clang/22/include/riscv_nds.h
+./usr/lib/clang/22/include/riscv_ntlh.h
 ./usr/lib/clang/22/include/riscv_vector.h
+./usr/lib/clang/22/include/sifive_vector.h
 ./usr/lib/clang/22/include/stdalign.h
 ./usr/lib/clang/22/include/stdatomic.h
 ./usr/lib/clang/22/include/stdnoreturn.h
