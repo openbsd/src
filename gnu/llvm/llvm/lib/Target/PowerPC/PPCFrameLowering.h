@@ -12,7 +12,7 @@
 #ifndef LLVM_LIB_TARGET_POWERPC_PPCFRAMELOWERING_H
 #define LLVM_LIB_TARGET_POWERPC_PPCFRAMELOWERING_H
 
-#include "PPCReturnProtectorLowering.h"  
+#include "PPCReturnProtectorLowering.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -108,7 +108,6 @@ public:
   void inlineStackProbe(MachineFunction &MF,
                         MachineBasicBlock &PrologMBB) const override;
 
-  bool hasFP(const MachineFunction &MF) const override;
   bool needsFP(const MachineFunction &MF) const;
   void replaceFPWithRealFP(MachineFunction &MF) const;
 
@@ -180,6 +179,9 @@ public:
 
   const PPCReturnProtectorLowering RPL;
   const ReturnProtectorLowering *getReturnProtector() const override;
+
+protected:
+  bool hasFPImpl(const MachineFunction &MF) const override;
 };
 } // End llvm namespace
 

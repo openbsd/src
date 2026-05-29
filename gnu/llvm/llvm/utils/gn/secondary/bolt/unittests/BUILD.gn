@@ -1,7 +1,0 @@
-group("unittests") {
-  deps = [
-    "Core:CoreTests",
-    "Profile:ProfileTests",
-  ]
-  testonly = true
-}

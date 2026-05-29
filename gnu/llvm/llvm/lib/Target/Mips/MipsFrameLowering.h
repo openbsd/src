@@ -24,6 +24,8 @@ class MipsFrameLowering : public TargetFrameLowering {
 protected:
   const MipsSubtarget &STI;
 
+  bool hasFPImpl(const MachineFunction &MF) const override;
+
 public:
 
   const MipsReturnProtectorLowering RPL;
@@ -33,8 +35,6 @@ public:
   }
 
   static const MipsFrameLowering *create(const MipsSubtarget &ST);
-
-  bool hasFP(const MachineFunction &MF) const override;
 
   bool hasBP(const MachineFunction &MF) const;
 
