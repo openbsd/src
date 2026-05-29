@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.198 2026/05/28 17:24:32 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.199 2026/05/29 23:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -736,10 +736,6 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			} else
 				addr = ELF_NO_ADDR;
 
-			/* Static binaries may not call pinsyscalls() */
-			if (interp == NULL)
-				p->p_vmspace->vm_map.flags |= VM_MAP_PINSYSCALL_ONCE;
-
 			/*
 			 * Calculates size of text and data segments
 			 * by starting at first and going to end of last.
@@ -942,16 +938,18 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 
+	interp = epp->ep_interp;
+
+	/* disable kbind() and pinsyscalls() in programs that don't use ld.so */
+	if (interp == NULL) {
+		p->p_p->ps_kbind_addr = BOGO_PC;
+		p->p_vmspace->vm_map.flags |= VM_MAP_PINSYSCALL_ONCE;
+	}
+
 	ap = epp->ep_args;
 	if (ap == NULL) {
 		return (0);
 	}
-
-	interp = epp->ep_interp;
-
-	/* disable kbind in programs that don't use ld.so */
-	if (interp == NULL)
-		p->p_p->ps_kbind_addr = BOGO_PC;
 
 	if (interp &&
 	    (error = elf_load_file(p, interp, epp, ap)) != 0) {
