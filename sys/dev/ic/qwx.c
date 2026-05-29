@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.115 2026/05/29 09:30:38 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.116 2026/05/29 09:32:06 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15278,12 +15278,7 @@ qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
 			goto fail_free_mbuf;
 
 		rx_data = &rx_ring->rx_data[idx];
-		if (rx_data->map == NULL) {
-			ret = bus_dmamap_create(sc->sc_dmat, size, 1,
-			    size, 0, BUS_DMA_NOWAIT, &rx_data->map);
-			if (ret)
-				goto fail_free_mbuf;
-		}
+		KASSERT(rx_data->map);
 		
 		ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_data->map, m,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT);
@@ -15333,7 +15328,7 @@ qwx_dp_rxdma_ring_buf_setup(struct qwx_softc *sc,
     struct dp_rxdma_ring *rx_ring, uint32_t ringtype)
 {
 	struct qwx_pdev_dp *dp = &sc->pdev_dp;
-	int num_entries;
+	int num_entries, i;
 
 	num_entries = rx_ring->refill_buf_ring.size /
 	    qwx_hal_srng_get_entrysize(sc, ringtype);
@@ -15343,6 +15338,14 @@ qwx_dp_rxdma_ring_buf_setup(struct qwx_softc *sc,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (rx_ring->rx_data == NULL)
 		return ENOMEM;
+
+	for (i = 0; i < num_entries; i++) {
+		struct qwx_rx_data *rx_data = &rx_ring->rx_data[i];
+
+		if (bus_dmamap_create(sc->sc_dmat, DP_RX_BUFFER_SIZE, 1,
+		    DP_RX_BUFFER_SIZE, 0, BUS_DMA_NOWAIT, &rx_data->map))
+			return ENOMEM;
+	}
 
 	rx_ring->bufs_max = num_entries;
 	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
@@ -17674,13 +17677,8 @@ qwx_dp_rx_alloc_mon_status_buf(struct qwx_softc *sc,
 	if (rx_data->m != NULL)
 		goto fail_free_mbuf;
 
-	if (rx_data->map == NULL) {
-		ret = bus_dmamap_create(sc->sc_dmat, size, 1,
-		    size, 0, BUS_DMA_NOWAIT, &rx_data->map);
-		if (ret)
-			goto fail_free_mbuf;
-	}
-	
+	KASSERT(rx_data->map);
+
 	ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_data->map, m,
 	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (ret) {
