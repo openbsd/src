@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbPluginLanguageRuntime
 NOPIC=
@@ -7,8 +7,9 @@ NOPROFILE=
 .include <bsd.own.mk>
 
 # CPlusPlus
-SRCS+= CPPLanguageRuntime.cpp \
-	ItaniumABILanguageRuntime.cpp
+SRCS+=	CPPLanguageRuntime.cpp \
+	ItaniumABILanguageRuntime.cpp \
+	VerboseTrapFrameRecognizer.cpp
 
 # ObjC
 SRCS+=	ObjCLanguageRuntime.cpp \

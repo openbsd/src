@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbABI
 NOPIC=
@@ -15,6 +15,7 @@ SRCS=	ABIAArch64.cpp \
 	ABISysV_arm.cpp \
 	ABISysV_hexagon.cpp \
 	ABIMips.cpp \
+	ABISysV_loongarch.cpp \
 	ABISysV_mips.cpp \
 	ABISysV_mips64.cpp \
 	ABIPowerPC.cpp \
@@ -32,6 +33,7 @@ SRCS=	ABIAArch64.cpp \
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/ARC
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/ARM
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/Hexagon
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/LoongArch
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/Mips
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/PowerPC
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ABI/SystemZ

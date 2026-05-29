@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.14 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
@@ -45,7 +45,10 @@ SRCS+=	AuxVector.cpp \
 	LinuxSignals.cpp \
 	MemoryTagManagerAArch64MTE.cpp \
 	NativeProcessSoftwareSingleStep.cpp \
+	NativeRegisterContextDBReg.cpp \
+	NativeRegisterContextDBReg_arm.cpp \
 	NativeRegisterContextDBReg_arm64.cpp \
+	NativeRegisterContextDBReg_loongarch.cpp \
 	NativeRegisterContextDBReg_x86.cpp \
 	NativeRegisterContextRegisterInfo.cpp \
 	NetBSDSignals.cpp \
@@ -53,7 +56,7 @@ SRCS+=	AuxVector.cpp \
 	RegisterContext_x86.cpp \
 	RegisterContextDarwin_arm.cpp \
 	RegisterContextDarwin_arm64.cpp \
-	RegisterContextDarwin_i386.cpp \
+	RegisterContextDarwin_riscv32.cpp \
 	RegisterContextDarwin_x86_64.cpp \
 	RegisterContextDummy.cpp \
 	RegisterContextFreeBSD_i386.cpp \
@@ -65,7 +68,6 @@ SRCS+=	AuxVector.cpp \
 	RegisterContextLinux_x86_64.cpp \
 	RegisterContextLinux_s390x.cpp \
 	RegisterContextMach_arm.cpp \
-	RegisterContextMach_i386.cpp \
 	RegisterContextMach_x86_64.cpp \
 	RegisterContextMemory.cpp \
 	RegisterContextNetBSD_i386.cpp \
@@ -76,6 +78,7 @@ SRCS+=	AuxVector.cpp \
 	RegisterContextPOSIX_arm64.cpp \
 	RegisterContextPOSIX_loongarch64.cpp \
 	RegisterContextPOSIX_mips64.cpp \
+	RegisterContextPOSIX_riscv32.cpp \
 	RegisterContextPOSIX_powerpc.cpp \
 	RegisterContextPOSIX_ppc64le.cpp \
 	RegisterContextPOSIX_riscv64.cpp \
@@ -90,6 +93,7 @@ SRCS+=	AuxVector.cpp \
 	RegisterInfoPOSIX_arm64.cpp \
 	RegisterInfoPOSIX_loongarch64.cpp \
 	RegisterInfoPOSIX_ppc64le.cpp \
+	RegisterInfoPOSIX_riscv32.cpp \
 	RegisterInfoPOSIX_riscv64.cpp \
 	StopInfoMachException.cpp \
 	ThreadMemory.cpp
@@ -105,12 +109,15 @@ SRCS+=	ProcessElfCore.cpp \
 	RegisterContextPOSIXCore_ppc64le.cpp \
 	RegisterContextPOSIXCore_s390x.cpp \
 	RegisterContextPOSIXCore_x86_64.cpp \
+	RegisterContextPOSIXCore_riscv32.cpp \
 	RegisterContextPOSIXCore_riscv64.cpp \
+	RegisterContextPOSIXCore_loongarch64.cpp \
 	RegisterUtilities.cpp
 
 # Process/mach-core
 SRCS+=	ProcessMachCore.cpp \
-	ThreadMachCore.cpp
+	ThreadMachCore.cpp \
+	RegisterContextUnifiedCore.cpp
 
 # Process/minidump
 SRCS+=	MinidumpTypes.cpp \
@@ -124,7 +131,8 @@ SRCS+=	MinidumpTypes.cpp \
 
 # Process/scripted
 SRCS+=	ScriptedProcess.cpp \
-	ScriptedThread.cpp
+	ScriptedThread.cpp \
+	ScriptedFrame.cpp
 
 # Process/OpenBSDKernel
 SRCS+=	ProcessOpenBSDKernel.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMTableGen
 NOPIC=
@@ -16,8 +16,10 @@ SRCS=	DetailedRecordsBackend.cpp \
 	Record.cpp \
 	SetTheory.cpp \
 	StringMatcher.cpp \
+	StringToOffsetTable.cpp \
 	TGLexer.cpp \
 	TGParser.cpp \
+	TGTimer.cpp \
 	TableGenBackend.cpp \
 	TableGenBackendSkeleton.cpp
 

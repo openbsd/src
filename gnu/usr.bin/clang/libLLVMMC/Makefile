@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.13 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMMC
 NOPROFILE=
@@ -7,6 +7,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/MC
 
 SRCS+=	ConstantPools.cpp \
 	DXContainerPSVInfo.cpp \
+	DXContainerRootSignature.cpp \
 	ELFObjectWriter.cpp \
 	GOFFObjectWriter.cpp \
 	MCAsmBackend.cpp \
@@ -48,17 +49,14 @@ SRCS+=	ConstantPools.cpp \
 	MCRegisterInfo.cpp \
 	MCSchedule.cpp \
 	MCSection.cpp \
-	MCSectionCOFF.cpp \
-	MCSectionDXContainer.cpp \
-	MCSectionELF.cpp \
 	MCSectionMachO.cpp \
-	MCSectionWasm.cpp \
-	MCSectionXCOFF.cpp \
 	MCStreamer.cpp \
+	MCSFrame.cpp \
 	MCSPIRVStreamer.cpp \
 	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
 	MCSymbolELF.cpp \
+	MCSymbolGOFF.cpp \
 	MCSymbolXCOFF.cpp \
 	MCTargetOptions.cpp \
 	MCTargetOptionsCommandFlags.cpp \

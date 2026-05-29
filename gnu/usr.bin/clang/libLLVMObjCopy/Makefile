@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMObjCopy
 NOPIC=
@@ -11,6 +11,12 @@ SRCS+=	Archive.cpp \
 	CommonConfig.cpp \
 	ObjCopy.cpp \
 	ConfigManager.cpp
+
+# DXContainer
+SRCS+=	DXContainerObjcopy.cpp \
+	DXContainerObject.cpp \
+	DXContainerReader.cpp \
+	DXContainerWriter.cpp
 
 # COFF
 SRCS+=	COFFObjcopy.cpp \
@@ -42,6 +48,7 @@ SRCS+=	XCOFFObjcopy.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ObjCopy
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ObjCopy/COFF
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/ObjCopy/DXContainer
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ObjCopy/ELF
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ObjCopy/MachO
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ObjCopy/wasm

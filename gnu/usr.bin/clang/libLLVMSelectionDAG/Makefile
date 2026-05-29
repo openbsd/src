@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMSelectionDAG
 NOPROFILE=
@@ -15,6 +15,7 @@ SRCS+=	DAGCombiner.cpp \
 	LegalizeVectorOps.cpp \
 	LegalizeVectorTypes.cpp \
 	ResourcePriorityQueue.cpp \
+	SDNodeInfo.cpp \
 	ScheduleDAGFast.cpp \
 	ScheduleDAGRRList.cpp \
 	ScheduleDAGSDNodes.cpp \

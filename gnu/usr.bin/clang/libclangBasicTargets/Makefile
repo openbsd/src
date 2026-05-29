@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangBasicTargets
 NOPIC=
@@ -20,14 +20,12 @@ SRCS=	AArch64.cpp \
 	DirectX.cpp \
 	Hexagon.cpp \
 	Lanai.cpp \
-	Le64.cpp \
 	LoongArch.cpp \
 	M68k.cpp \
 	MSP430.cpp \
 	Mips.cpp \
 	NVPTX.cpp \
 	OSTargets.cpp \
-	PNaCl.cpp \
 	PPC.cpp \
 	RISCV.cpp \
 	SPIR.cpp \
@@ -37,7 +35,8 @@ SRCS=	AArch64.cpp \
 	VE.cpp \
 	WebAssembly.cpp \
 	X86.cpp \
-	XCore.cpp
+	XCore.cpp \
+	Xtensa.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Basic/Targets
 

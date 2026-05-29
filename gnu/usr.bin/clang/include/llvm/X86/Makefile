@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ HDRS=	X86GenFoldTables.inc \
 	X86GenGlobalISel.inc \
 	X86GenInstrInfo.inc \
 	X86GenMnemonicTables.inc \
+	X86GenPreLegalizeGICombiner.inc \
 	X86GenRegisterBank.inc \
 	X86GenRegisterInfo.inc \
 	X86GenSubtargetInfo.inc
@@ -27,7 +28,7 @@ install:
 	@# Nothing here so far ...
 
 clean cleandir:
-	rm -f ${HDRS}
+	rm -f ${HDRS} X86GenRegisterInfo*.inc
 
 X86GenFoldTables.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-x86-fold-tables -asmwriternum=1 \
@@ -91,6 +92,12 @@ X86GenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
 
 X86GenMnemonicTables.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-x86-mnemonic-tables -asmwriternum=1 \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/X86 \
+		-o ${.TARGET} ${.ALLSRC}
+
+X86GenPreLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
+		-combiners="X86PreLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/X86 \
 		-o ${.TARGET} ${.ALLSRC}
 

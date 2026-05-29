@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangASTMatchers
 NOPIC=
@@ -11,7 +11,7 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 
 SRCS=	ASTMatchFinder.cpp \
 	ASTMatchersInternal.cpp \
-	GtestMatchers.cpp
+	LowLevelHelpers.cpp
 
 SRCS+=	Diagnostics.cpp \
 	Marshallers.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ HDRS=	AArch64GenAsmMatcher.inc \
 	AArch64GenMCPseudoLowering.inc \
 	AArch64GenRegisterBank.inc \
 	AArch64GenRegisterInfo.inc \
+	AArch64GenSDNodeInfo.inc \
 	AArch64GenSubtargetInfo.inc \
 	AArch64GenSystemOperands.inc \
 	AArch64GenExegesis.inc
@@ -119,6 +120,11 @@ AArch64GenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 
 AArch64GenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-info \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
+		-o ${.TARGET} ${.ALLSRC}
+
+AArch64GenSDNodeInfo.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-sd-node-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 

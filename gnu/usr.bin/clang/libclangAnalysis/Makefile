@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangAnalysis
 NOPIC=
@@ -22,6 +22,7 @@ SRCS=	AnalysisDeclContext.cpp \
 	CodeInjector.cpp \
 	Dominators.cpp \
 	ExprMutationAnalyzer.cpp \
+	FixitUtil.cpp \
 	IntervalPartition.cpp \
 	IssueHash.cpp \
 	LiveVariables.cpp \

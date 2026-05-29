@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbHostPOSIX
 NOPIC=
@@ -14,7 +14,8 @@ SRCS=	ConnectionFileDescriptorPosix.cpp \
 	LockFilePosix.cpp \
 	MainLoopPosix.cpp \
 	PipePosix.cpp \
-	ProcessLauncherPosixFork.cpp
+	ProcessLauncherPosixFork.cpp \
+	Support.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Host/posix
 

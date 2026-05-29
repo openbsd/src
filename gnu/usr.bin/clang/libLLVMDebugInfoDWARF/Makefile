@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMDebugInfoDWARF
 NOPROFILE=
@@ -9,15 +9,14 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/DebugInfo/DWARF \
 SRCS+=	DWARFAbbreviationDeclaration.cpp \
 	DWARFAddressRange.cpp \
 	DWARFAcceleratorTable.cpp \
+	DWARFCFIPrinter.cpp \
 	DWARFCompileUnit.cpp \
 	DWARFContext.cpp \
-	DWARFDataExtractor.cpp \
 	DWARFDebugAbbrev.cpp \
 	DWARFDebugAddr.cpp \
 	DWARFDebugArangeSet.cpp \
 	DWARFDebugAranges.cpp \
 	DWARFDebugFrame.cpp \
-	DWARFTypePrinter.cpp \
 	DWARFDebugInfoEntry.cpp \
 	DWARFDebugLine.cpp \
 	DWARFDebugLoc.cpp \
@@ -26,12 +25,13 @@ SRCS+=	DWARFAbbreviationDeclaration.cpp \
 	DWARFDebugRangeList.cpp \
 	DWARFDebugRnglists.cpp \
 	DWARFDie.cpp \
-	DWARFExpression.cpp \
+	DWARFExpressionPrinter.cpp \
 	DWARFFormValue.cpp \
 	DWARFGdbIndex.cpp \
 	DWARFListTable.cpp \
 	DWARFLocationExpression.cpp \
 	DWARFTypeUnit.cpp \
+	DWARFUnwindTablePrinter.cpp \
 	DWARFUnitIndex.cpp \
 	DWARFUnit.cpp \
 	DWARFVerifier.cpp

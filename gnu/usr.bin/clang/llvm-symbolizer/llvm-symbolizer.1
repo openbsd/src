@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -27,7 +28,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LLVM-SYMBOLIZER" "1" "2025-06-21" "19" "LLVM"
+.TH "LLVM-SYMBOLIZER" "1" "2026-04-20" "22" "LLVM"
 .SH NAME
 llvm-symbolizer \- convert addresses into source code locations
 .SH SYNOPSIS
@@ -37,8 +38,8 @@ llvm-symbolizer \- convert addresses into source code locations
 .sp
 \fBllvm\-symbolizer\fP reads input names and addresses from the command\-line
 and prints corresponding source code locations to standard output. It can also
-symbolize logs containing \fI\%Symbolizer Markup\fP via
-\fI\%\-\-filter\-markup\fP\&. Addresses may be specified as numbers or symbol names.
+symbolize logs containing Symbolizer Markup \%<> via
+\fB\-\-filter\-markup\fP\&. Addresses may be specified as numbers or symbol names.
 .sp
 If no address is specified on the command\-line, it reads the addresses from
 standard input. If no input name is specified on the command\-line, but addresses
@@ -66,7 +67,7 @@ runtime.
 .sp
 All of the following examples use the following two source files as input. They
 use a mixture of C\-style and C++\-style linkage to illustrate how these names are
-printed differently (see \fI\%\-\-demangle\fP).
+printed differently (see \fB\-\-demangle\fP).
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -268,6 +269,45 @@ foz
 .EE
 .UNINDENT
 .UNINDENT
+.sp
+Example 8 \- \fB\-\-skip\-line\-zero\fP output for an address with no line correspondence (an address associated with line zero):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+// test.c
+int foo = 0;
+int x = 1234;
+int main() {
+  if (x)
+    return foo;
+  else
+    return x;
+}
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+These files are built as follows:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+$ clang \-g \-O2 \-S test.c \-o test.s
+$ llvm\-mc \-filetype=obj \-triple=x86_64\-unknown\-linux  test.s \-o test.o
+.EE
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+$ llvm\-symbolizer \-\-obj=test.o \-\-skip\-line\-zero 0xa
+main
+/tmp/test.c:5:7 (approximate)
+.EE
+.UNINDENT
+.UNINDENT
 .SH OPTIONS
 .INDENT 0.0
 .TP
@@ -275,6 +315,13 @@ foz
 Add the specified offset to object file addresses when performing lookups.
 This can be used to perform lookups as if the object were relocated by the
 offset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-skip\-line\-zero
+If an address does not have an associated line number, use the last line
+number from the current sequence in the line\-table. Such lines are labeled
+as \(dqapproximate\(dq in the output as they may be misleading.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -286,12 +333,12 @@ absolute path.
 .TP
 .B \-\-build\-id
 Look up the object using the given build ID, specified as a hexadecimal
-string. Mutually exclusive with \fI\%\-\-obj\fP\&.
+string. Mutually exclusive with \fB\-\-obj\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-color [=<always|auto|never>]
-Specify whether to use color in \fI\%\-\-filter\-markup\fP mode. Defaults to
+Specify whether to use color in \fB\-\-filter\-markup\fP mode. Defaults to
 \fBauto\fP, which detects whether standard output supports color. Specifying
 \fB\-\-color\fP alone is equivalent to \fB\-\-color=always\fP\&.
 .UNINDENT
@@ -334,7 +381,7 @@ it cannot be found relative to the object.
 .TP
 .B \-\-filter\-markup
 Reads from standard input, converts contained
-\fI\%Symbolizer Markup\fP into human\-readable form,
+Symbolizer Markup \%<> into human\-readable form,
 and prints the results to standard output. The following markup elements are
 not yet supported:
 .INDENT 7.0
@@ -389,7 +436,7 @@ Don\(aqt print demangled function names.
 .B \-\-obj <path>, \-\-exe, \-e
 Path to object file to be symbolized. If \fB\-\fP is specified, read the object
 directly from the standard input stream. Mutually exclusive with
-\fI\%\-\-build\-id\fP\&.
+\fB\-\-build\-id\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -411,7 +458,7 @@ produce discriminators is to compile with clang\(aqs \-fdebug\-info\-for\-profil
 .UNINDENT
 .INDENT 7.0
 .TP
-.B \fBJSON\fP style provides a machine readable output in JSON. If addresses are
+.B \fBJSON\fP style provides a machine\-readable output in JSON. If addresses are
 supplied via stdin, the output JSON will be a series of individual objects.
 Otherwise, all results will be contained in a single array.
 .UNINDENT
@@ -490,7 +537,7 @@ $ llvm\-symbolizer \-\-output\-style=JSON \-\-obj=inlined.elf 0x4004be 0x400486 
 .INDENT 0.0
 .TP
 .B \-\-pretty\-print, \-p
-Print human readable output. If \fI\%\-\-inlining\fP is specified, the
+Print human\-readable output. If \fB\-\-inlining\fP is specified, the
 enclosing scope is prefixed by (inlined by).
 For JSON output, the option will cause JSON to be indented and split over
 new lines. Otherwise, the JSON output will be printed in a compact form.
@@ -601,10 +648,12 @@ llvm\-symbolizer will fall back to the native implementation.
 .TP
 .B \-\-default\-arch <arch>
 If a binary contains object files for multiple architectures (e.g. it is a
-Mach\-O universal binary), symbolize the object file for a given architecture.
-You can also specify the architecture by writing \fBbinary_name:arch_name\fP in
-the input (see example below). If the architecture is not specified in either
-way, the address will not be symbolized. Defaults to empty string.
+Mach\-O universal binary or an archive with architecture variants),
+symbolize the object file for a given architecture. You can also specify
+the architecture by writing \fBbinary_name:arch_name\fP in the input (see
+example below). For archives, the format \fBarchive.a(member.o):arch\fP
+is also supported. If the architecture is not specified,
+the address will not be symbolized. Defaults to empty string.
 .INDENT 7.0
 .INDENT 3.5
 .sp
@@ -612,6 +661,8 @@ way, the address will not be symbolized. Defaults to empty string.
 $ cat addr.txt
 /tmp/mach_universal_binary:i386 0x1f84
 /tmp/mach_universal_binary:x86_64 0x100000f24
+/tmp/archive.a(member.o):ppc 0x1000
+/tmp/archive.a(member.o):ppc64 0x2000
 
 $ llvm\-symbolizer < addr.txt
 _main
@@ -619,6 +670,12 @@ _main
 
 _main
 /tmp/source_x86_64.cc:8
+
+_foo
+/tmp/source_ppc.cc:12
+
+_foo
+/tmp/source_ppc64.cc:12
 .EE
 .UNINDENT
 .UNINDENT
@@ -636,10 +693,9 @@ used multiple times.
 error.
 .SH SEE ALSO
 .sp
-\fB\fI\%llvm\-addr2line(1)\fP\fP
-.SH AUTHOR
+\fBllvm\-addr2line(1) \%<llvm-addr2line\:.html>\fP
+.SH Author
 Maintained by the LLVM Team (https://llvm.org/).
-.SH COPYRIGHT
-2003-2025, LLVM Project
-.\" Generated by docutils manpage writer.
-.
+.SH Copyright
+2003-2026, LLVM Project
+.\" End of generated man page.

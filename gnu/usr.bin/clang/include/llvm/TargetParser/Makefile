@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,8 @@ LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
 HDRS=	ARMTargetParserDef.inc \
 	AArch64TargetParserDef.inc \
-	RISCVTargetParserDef.inc
+	RISCVTargetParserDef.inc \
+	PPCGenTargetFeatures.inc
 
 all: ${HDRS}
 
@@ -29,6 +30,11 @@ AArch64TargetParserDef.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 RISCVTargetParserDef.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td 
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-riscv-target-def \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
+		-o ${.TARGET} ${.ALLSRC}
+
+PPCGenTargetFeatures.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-target-features \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

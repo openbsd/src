@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -27,7 +28,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LLVM-OBJDUMP" "1" "2024-12-23" "19" "LLVM"
+.TH "LLVM-OBJDUMP" "1" "2026-04-20" "22" "LLVM"
 .SH NAME
 llvm-objdump \- LLVM's object file dumper
 .SH SYNOPSIS
@@ -54,7 +55,7 @@ Display the information contained within an archive\(aqs headers.
 .B \-d, \-\-disassemble
 Disassemble all executable sections found in the input files. On some
 architectures (AArch64, PowerPC, x86), all known instructions are disassembled by
-default. On the others, \fI\%\-\-mcpu\fP or \fI\%\-\-mattr\fP is needed to
+default. On the others, \fB\-\-mcpu\fP or \fB\-\-mattr\fP is needed to
 enable some instruction sets. Disabled instructions are displayed as
 \fB<unknown>\fP\&.
 .UNINDENT
@@ -67,8 +68,8 @@ Disassemble all sections found in the input files.
 .TP
 .B \-\-disassemble\-symbols=<symbol1[,symbol2,...]>
 Disassemble only the specified symbols. Takes demangled symbol names when
-\fI\%\-\-demangle\fP is specified, otherwise takes mangled symbol names.
-Implies \fI\%\-\-disassemble\fP\&.
+\fB\-\-demangle\fP is specified, otherwise takes mangled symbol names.
+Implies \fB\-\-disassemble\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -149,9 +150,9 @@ with other commands.
 .TP
 .B \-x, \-\-all\-headers
 Display all available header information. Equivalent to specifying
-\fI\%\-\-archive\-headers\fP, \fI\%\-\-file\-headers\fP,
-\fI\%\-\-private\-headers\fP, \fI\%\-\-reloc\fP, \fI\%\-\-section\-headers\fP,
-and \fI\%\-\-syms\fP\&.
+\fB\-\-archive\-headers\fP, \fB\-\-file\-headers\fP,
+\fB\-\-private\-headers\fP, \fB\-\-reloc\fP, \fB\-\-section\-headers\fP,
+and \fB\-\-syms\fP\&.
 .UNINDENT
 .SH OPTIONS
 .sp
@@ -165,7 +166,7 @@ the specified offset.
 .INDENT 0.0
 .TP
 .B \-\-arch\-name=<string>
-Specify the target architecture when disassembling. Use \fI\%\-\-version\fP
+Specify the target architecture when disassembling. Use \fB\-\-version\fP
 for a list of available targets.
 .UNINDENT
 .INDENT 0.0
@@ -188,24 +189,31 @@ are searched in the order given.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-debug\-indent=<width>
+Distance to indent the source\-level variable or inlined function display,
+relative to the start of the disassembly. Defaults to 52 characters.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-debug\-inlined\-funcs[=<format>]
+Print the locations of inlined functions alongside disassembly.
+\fBformat\fP may be \fBascii\fP, \fBlimits\-only\fP, or \fBunicode\fP, defaulting to
+\fBunicode\fP if omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-debug\-vars[=<format>]
+Print the locations (in registers or memory) of source\-level variables
+alongside disassembly. \fBformat\fP may be \fBascii\fP or \fBunicode\fP, defaulting
+to \fBunicode\fP if omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-debuginfod, \-\-no\-debuginfod
 Whether or not to try debuginfod lookups for debug binaries. Unless specified,
 debuginfod is only enabled if libcurl was compiled in (\fBLLVM_ENABLE_CURL\fP)
 and at least one server URL was provided by the environment variable
 \fBDEBUGINFOD_URLS\fP\&.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B \-\-debug\-vars=<format>
-Print the locations (in registers or memory) of source\-level variables
-alongside disassembly. \fBformat\fP may be \fBunicode\fP or \fBascii\fP, defaulting
-to \fBunicode\fP if omitted.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B \-\-debug\-vars\-indent=<width>
-Distance to indent the source\-level variable display, relative to the start
-of the disassembly. Defaults to 52 characters.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -217,7 +225,7 @@ Perform commands on the specified sections only. For Mach\-O use
 .TP
 .B \-l, \-\-line\-numbers
 When disassembling, display source line numbers. Implies
-\fI\%\-\-disassemble\fP\&.
+\fB\-\-disassemble\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -287,20 +295,20 @@ When disassembling, do not print the raw bytes of each instruction.
 .INDENT 0.0
 .TP
 .B \-\-offloading
-Display the content of the LLVM offloading section.
+Display the content of the LLVM offloading sections and HIP offload bundles.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-prefix=<prefix>
-When disassembling with the \fI\%\-\-source\fP option, prepend \fBprefix\fP to
+When disassembling with the \fB\-\-source\fP option, prepend \fBprefix\fP to
 absolute paths.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-prefix\-strip=<level>
-When disassembling with the \fI\%\-\-source\fP option, strip out \fBlevel\fP
+When disassembling with the \fB\-\-source\fP option, strip out \fBlevel\fP
 initial directories from absolute paths. This option has no effect without
-\fI\%\-\-prefix\fP\&.
+\fB\-\-prefix\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -311,7 +319,7 @@ Use hex format when printing immediate values in disassembly output (default).
 .TP
 .B \-S, \-\-source
 When disassembling, display source interleaved with the disassembly. Implies
-\fI\%\-\-disassemble\fP\&.
+\fB\-\-disassemble\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -351,13 +359,13 @@ When disassembling, symbolize a branch target operand to print a label instead o
 When printing a PC\-relative global symbol reference, print it as an offset from the leading symbol.
 .sp
 When a bb\-address\-map section is present (i.e., the object file is built with
-\fB\-fbasic\-block\-sections=labels\fP), labels are retrieved from that section
+\fB\-fbasic\-block\-address\-map\fP), labels are retrieved from that section
 instead. If a pgo\-analysis\-map is present alongside the bb\-address\-map, any
 available analyses are printed after the relevant block label. By default,
 any analysis with a special representation (i.e. BlockFrequency,
 BranchProbability, etc) are printed as raw hex values.
 .sp
-Only works with PowerPC objects or X86 linked images.
+Only supported for AArch64, BPF, PowerPC, and X86.
 .INDENT 7.0
 .TP
 .B Example:
@@ -388,12 +396,12 @@ might become
 .INDENT 0.0
 .TP
 .B \-\-pretty\-pgo\-analysis\-map
-When using \fI\%\-\-symbolize\-operands\fP with bb\-address\-map and
+When using \fB\-\-symbolize\-operands\fP with bb\-address\-map and
 pgo\-analysis\-map, print analyses using the same format as their analysis
 passes would. An example of pretty format would be printing block frequencies
 relative to the entry block, the same as BFI.
 .sp
-Only works when \fI\%\-\-symbolize\-operands\fP is enabled.
+Only works when \fB\-\-symbolize\-operands\fP is enabled.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -409,7 +417,7 @@ Ignored for compatibility with GNU objdump.
 .TP
 .B \-\-x86\-asm\-syntax=<style>
 Deprecated.
-When used with \fI\%\-\-disassemble\fP, choose style of code to emit from
+When used with \fB\-\-disassemble\fP, choose style of code to emit from
 X86 backend. Supported values are:
 .INDENT 7.0
 .INDENT 3.5
@@ -449,7 +457,7 @@ architectures.
 .TP
 .B \-\-archive\-member\-offsets
 Print the offset to each archive member for Mach\-O archives (requires
-\fI\%\-\-archive\-headers\fP).
+\fB\-\-archive\-headers\fP).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -595,18 +603,17 @@ Add symbol description to disassembly output.
 .INDENT 0.0
 .TP
 .B \-\-traceback\-table
-Decode traceback table in disassembly output. Implies \fI\%\-\-disassemble\fP\&.
+Decode traceback table in disassembly output. Implies \fB\-\-disassemble\fP\&.
 .UNINDENT
 .SH BUGS
 .sp
-To report bugs, please visit <\X'tty: link https://github.com/llvm/llvm-project/labels/tools:llvm-objdump/'\fI\%https://github.com/llvm/llvm\-project/labels/tools:llvm\-objdump/\fP\X'tty: link'>.
+To report bugs, please visit <\%<https://\:github\:.com/\:llvm/\:llvm-project/\:labels/\:tools:llvm-objdump/>>.
 .SH SEE ALSO
 .sp
-\fB\fI\%llvm\-nm(1)\fP\fP, \fB\fI\%llvm\-otool(1)\fP\fP, \fB\fI\%llvm\-readelf(1)\fP\fP,
-\fB\fI\%llvm\-readobj(1)\fP\fP
-.SH AUTHOR
+\fBllvm\-nm(1) \%<llvm-nm\:.html>\fP, \fBllvm\-otool(1) \%<llvm-otool\:.html>\fP, \fBllvm\-readelf(1) \%<llvm-readelf\:.html>\fP,
+\fBllvm\-readobj(1) \%<llvm-readobj\:.html>\fP
+.SH Author
 Maintained by the LLVM Team (https://llvm.org/).
-.SH COPYRIGHT
-2003-2024, LLVM Project
-.\" Generated by docutils manpage writer.
-.
+.SH Copyright
+2003-2026, LLVM Project
+.\" End of generated man page.

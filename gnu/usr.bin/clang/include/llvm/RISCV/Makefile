@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,9 @@ HDRS=	RISCVGenAsmMatcher.inc \
 	RISCVGenRegisterBank.inc \
 	RISCVGenRegisterInfo.inc \
 	RISCVGenSearchableTables.inc \
-	RISCVGenSubtargetInfo.inc
+	RISCVGenSubtargetInfo.inc \
+	RISCVGenExegesis.inc \
+	RISCVGenSDNodeInfo.inc
 
 # GISel
 HDRS+=	RISCVGenGlobalISel.inc \
@@ -39,6 +41,7 @@ RISCVGenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 
 RISCVGenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-disassembler \
+		--specialize-decoders-per-bitwidth \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
 		-o ${.TARGET} ${.ALLSRC}
 
@@ -110,6 +113,16 @@ RISCVGenCompressInstEmitter.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 RISCVGenGICombiner.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
 		-combiners="RISCVPreLegalizerCombinerHelper" \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
+		-o ${.TARGET} ${.ALLSRC}
+
+RISCVGenExegesis.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-exegesis \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
+		-o ${.TARGET} ${.ALLSRC}
+
+RISCVGenSDNodeInfo.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-sd-node-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
 		-o ${.TARGET} ${.ALLSRC}
 

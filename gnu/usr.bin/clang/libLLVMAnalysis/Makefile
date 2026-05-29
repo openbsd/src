@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.16 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMAnalysis
 NOPROFILE=
@@ -27,6 +27,7 @@ SRCS+=	AliasAnalysis.cpp \
 	CostModel.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
+	CtxProfAnalysis.cpp \
 	CycleAnalysis.cpp \
 	DDG.cpp \
 	DDGPrinter.cpp \
@@ -40,10 +41,16 @@ SRCS+=	AliasAnalysis.cpp \
 	DomPrinter.cpp \
 	DomTreeUpdater.cpp \
 	DominanceFrontier.cpp \
+	DXILResource.cpp \
+	DXILMetadataAnalysis.cpp \
+	EphemeralValuesCache.cpp \
+	FloatingPointPredicateUtils.cpp \
 	FunctionPropertiesAnalysis.cpp \
 	GlobalsModRef.cpp \
 	GuardUtils.cpp \
+	HashRecognize.cpp \
 	HeatUtils.cpp \
+	IR2Vec.cpp \
 	IRSimilarityIdentifier.cpp \
 	IVDescriptors.cpp \
 	IVUsers.cpp \
@@ -52,11 +59,12 @@ SRCS+=	AliasAnalysis.cpp \
 	InlineCost.cpp \
 	InlineAdvisor.cpp \
 	InlineOrder.cpp \
-	InlineSizeEstimatorAnalysis.cpp \
 	InstCount.cpp \
 	InstructionPrecedenceTracking.cpp \
 	InstructionSimplify.cpp \
 	InteractiveModelRunner.cpp \
+	KernelInfo.cpp \
+	LastRunTrackingAnalysis.cpp \
 	LazyBranchProbabilityInfo.cpp \
 	LazyBlockFrequencyInfo.cpp \
 	LazyCallGraph.cpp \
@@ -98,10 +106,12 @@ SRCS+=	AliasAnalysis.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
 	ReplayInlineAdvisor.cpp \
+	RuntimeLibcallInfo.cpp \
 	ScalarEvolution.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionDivision.cpp \
 	ScalarEvolutionNormalization.cpp \
+	StaticDataProfileInfo.cpp \
 	StackLifetime.cpp \
 	StackSafetyAnalysis.cpp \
 	AnalysisStructuralHash.cpp \

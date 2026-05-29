@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangCodeGen
 NOPIC=
@@ -38,6 +38,7 @@ SRCS=	ABIInfo.cpp \
 	CGExprScalar.cpp \
 	CGGPUBuiltin.cpp \
 	CGHLSLRuntime.cpp \
+	CGHLSLBuiltins.cpp \
 	CGLoopInfo.cpp \
 	CGNonTrivialStruct.cpp \
 	CGObjC.cpp \
@@ -58,21 +59,37 @@ SRCS=	ABIInfo.cpp \
 	CodeGenFunction.cpp \
 	CodeGenModule.cpp \
 	CodeGenPGO.cpp \
+	CodeGenSYCL.cpp \
 	CodeGenTBAA.cpp \
 	CodeGenTypes.cpp \
 	ConstantInitBuilder.cpp \
 	CoverageMappingGen.cpp \
 	ItaniumCXXABI.cpp \
+	HLSLBufferLayoutBuilder.cpp \
 	LinkInModulesPass.cpp \
 	MacroPPCallbacks.cpp \
 	MicrosoftCXXABI.cpp \
 	ModuleBuilder.cpp \
-	ObjectFilePCHContainerOperations.cpp \
+	ObjectFilePCHContainerWriter.cpp \
 	PatternInit.cpp \
 	SanitizerMetadata.cpp \
 	SwiftCallingConv.cpp \
 	TargetInfo.cpp \
+	TrapReasonBuilder.cpp \
 	VarBypassDetector.cpp
+
+# TargetBuiltins
+SRCS+=	TargetBuiltinsARM.cpp \
+	TargetBuiltinsAMDGPU.cpp \
+	TargetBuiltinsDirectX.cpp \
+	TargetBuiltinsHexagon.cpp \
+	TargetBuiltinsNVPTX.cpp \
+	TargetBuiltinsPPC.cpp \
+	TargetBuiltinsRISCV.cpp \
+	TargetBuiltinsSPIR.cpp \
+	TargetBuiltinsSystemZ.cpp \
+	TargetBuiltinsWebAssembly.cpp \
+	TargetBuiltinsX86.cpp
 
 # Targets
 SRCS+=	AArch64.cpp \
@@ -82,6 +99,7 @@ SRCS+=	AArch64.cpp \
 	AVR.cpp \
 	BPF.cpp \
 	CSKY.cpp \
+	DirectX.cpp \
 	Hexagon.cpp \
 	Lanai.cpp \
 	LoongArch.cpp \
@@ -89,7 +107,6 @@ SRCS+=	AArch64.cpp \
 	MSP430.cpp \
 	Mips.cpp \
 	NVPTX.cpp \
-	PNaCl.cpp \
 	PPC.cpp \
 	RISCV.cpp \
 	SPIR.cpp \
@@ -101,10 +118,55 @@ SRCS+=	AArch64.cpp \
 	X86.cpp \
 	XCore.cpp
 
+TargetBuiltinsARM.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/ARM.cpp $@
+
+TargetBuiltinsAMDGPU.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/AMDGPU.cpp $@
+
+TargetBuiltinsDirectX.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/DirectX.cpp $@
+
+TargetBuiltinsHexagon.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/Hexagon.cpp $@
+
+TargetBuiltinsNVPTX.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/NVPTX.cpp $@
+
+TargetBuiltinsPPC.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/PPC.cpp $@
+
+TargetBuiltinsRISCV.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/RISCV.cpp $@
+
+TargetBuiltinsSPIR.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/SPIR.cpp $@
+
+TargetBuiltinsSystemZ.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/SystemZ.cpp $@
+
+TargetBuiltinsWebAssembly.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/WebAssembly.cpp $@
+
+TargetBuiltinsX86.cpp:
+	ln -s ${CLANG_SRCS}/lib/CodeGen/TargetBuiltins/X86.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/CodeGen
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/CodeGen/Targets
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+=	TargetBuiltinsARM.cpp \
+		TargetBuiltinsAMDGPU.cpp \
+		TargetBuiltinsDirectX.cpp \
+		TargetBuiltinsHexagon.cpp \
+		TargetBuiltinsNVPTX.cpp \
+		TargetBuiltinsPPC.cpp \
+		TargetBuiltinsRISCV.cpp \
+		TargetBuiltinsSPIR.cpp \
+		TargetBuiltinsSystemZ.cpp \
+		TargetBuiltinsWebAssembly.cpp \
+		TargetBuiltinsX86.cpp
 
 .include <bsd.lib.mk>

@@ -1,18 +1,24 @@
-# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMProfileData
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/ProfileData
 
-SRCS+=	GCOV.cpp \
+SRCS+=	DataAccessProf.cpp \
+	GCOV.cpp \
+	IndexedMemProfData.cpp \
 	InstrProf.cpp \
 	InstrProfCorrelator.cpp \
 	InstrProfReader.cpp \
 	InstrProfWriter.cpp \
 	ItaniumManglingCanonicalizer.cpp \
 	MemProf.cpp \
+	MemProfCommon.cpp \
 	MemProfReader.cpp \
+	MemProfRadixTree.cpp \
+	MemProfSummary.cpp \
+	MemProfSummaryBuilder.cpp \
 	PGOCtxProfReader.cpp \
 	PGOCtxProfWriter.cpp \
 	ProfileSummaryBuilder.cpp \

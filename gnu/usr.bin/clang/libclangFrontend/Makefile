@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangFrontend
 NOPIC=
@@ -15,7 +15,6 @@ SRCS=	ASTConsumers.cpp \
 	ChainedIncludesSource.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
-	CreateInvocationFromCommandLine.cpp \
 	DependencyFile.cpp \
 	DependencyGraph.cpp \
 	DiagnosticRenderer.cpp \
@@ -34,6 +33,7 @@ SRCS=	ASTConsumers.cpp \
 	SARIFDiagnosticPrinter.cpp \
 	SerializedDiagnosticPrinter.cpp \
 	SerializedDiagnosticReader.cpp \
+	StandaloneDiagnostic.cpp \
 	TestModuleFileExtension.cpp \
 	TextDiagnostic.cpp \
 	TextDiagnosticBuffer.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,8 @@ DEFS=	Attributes.inc \
 	IntrinsicsWebAssembly.h \
 	IntrinsicsX86.h \
 	IntrinsicsXCore.h \
-	IntrinsicsVE.h
+	IntrinsicsVE.h \
+	RuntimeLibcalls.inc
 
 INCDIR=	/usr/include/llvm/IR
 
@@ -155,6 +156,12 @@ IntrinsicsXCore.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 
 IntrinsicsVE.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums -intrinsic-prefix=ve \
+		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
+		-I${LLVM_SRCS}/include \
+		-o ${.TARGET} ${.ALLSRC}
+
+RuntimeLibcalls.inc: ${LLVM_SRCS}/include/llvm/IR/RuntimeLibcalls.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-runtime-libcalls \
 		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}

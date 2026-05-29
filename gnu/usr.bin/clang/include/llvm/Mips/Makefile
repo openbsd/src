@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ HDRS=	MipsGenAsmMatcher.inc \
 	MipsGenMCPseudoLowering.inc \
 	MipsGenRegisterBank.inc \
 	MipsGenRegisterInfo.inc \
+	MipsGenSDNodeInfo.inc \
 	MipsGenSubtargetInfo.inc \
 	MipsGenExegesis.inc
 
@@ -50,6 +51,7 @@ MipsGenDAGISel.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 
 MipsGenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-disassembler \
+			-ignore-non-decodable-operands \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
 
@@ -68,8 +70,6 @@ MipsGenPostLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 		-combiners="MipsPostLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
-
-MipsGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 
 MipsGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-instr-info \
@@ -93,6 +93,11 @@ MipsGenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 
 MipsGenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-info \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
+		-o ${.TARGET} ${.ALLSRC}
+
+MipsGenSDNodeInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-sd-node-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
 

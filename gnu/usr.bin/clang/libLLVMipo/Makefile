@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.17 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMipo
 NOPROFILE=
@@ -21,6 +21,7 @@ SRCS+=	AlwaysInliner.cpp \
 	EmbedBitcodePass.cpp \
 	ExpandVariadics.cpp \
 	ExtractGV.cpp \
+	FatLTOCleanup.cpp \
 	ForceFunctionAttrs.cpp \
 	FunctionAttrs.cpp \
 	FunctionImport.cpp \
@@ -48,7 +49,6 @@ SRCS+=	AlwaysInliner.cpp \
 	ipoSCCP.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp \
-	SyntheticCountsPropagation.cpp \
 	ThinLTOBitcodeWriter.cpp \
 	WholeProgramDevirt.cpp
 

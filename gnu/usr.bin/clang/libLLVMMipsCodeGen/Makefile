@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMMipsCodeGen
 NOPROFILE=
@@ -43,6 +43,7 @@ SRCS+=	Mips16FrameLowering.cpp \
 	MipsSEISelDAGToDAG.cpp \
 	MipsSEISelLowering.cpp \
 	MipsSERegisterInfo.cpp \
+	MipsSelectionDAGInfo.cpp \
 	MipsSubtarget.cpp \
 	MipsTargetMachine.cpp \
 	MipsTargetObjectFile.cpp \

@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.30 2026/01/06 22:27:48 jca Exp $
+# $OpenBSD: Makefile,v 1.31 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			19
+LLVM_V=			22
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -19,7 +19,7 @@ HEADERS=	intrin.h \
 		unwind.h \
 		vadefs.h \
 		varargs.h \
-		module.modulemap \
+		module.modulemap
 
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "arm"
 GEN+=		arm_neon.h
@@ -40,9 +40,26 @@ HEADERS+=	__wmmintrin_aes.h \
 		adcintrin.h \
 		adxintrin.h \
 		ammintrin.h \
+		amxavx512intrin.h \
 		amxcomplexintrin.h \
 		amxfp16intrin.h \
+		amxfp8intrin.h \
 		amxintrin.h \
+		amxmovrsintrin.h \
+		amxtf32intrin.h \
+		avx10_2_512bf16intrin.h \
+		avx10_2_512convertintrin.h \
+		avx10_2_512minmaxintrin.h \
+		avx10_2_512niintrin.h \
+		avx10_2_512satcvtdsintrin.h \
+		avx10_2_512satcvtintrin.h \
+		avx10_2bf16intrin.h \
+		avx10_2convertintrin.h \
+		avx10_2copyintrin.h \
+		avx10_2minmaxintrin.h \
+		avx10_2niintrin.h \
+		avx10_2satcvtdsintrin.h \
+		avx10_2satcvtintrin.h \
 		avx2intrin.h \
 		avx512bf16intrin.h \
 		avx512bitalgintrin.h \
@@ -105,6 +122,9 @@ HEADERS+=	__wmmintrin_aes.h \
 		mm_malloc.h \
 		mmintrin.h \
 		movdirintrin.h \
+		movrs_avx10_2_512intrin.h \
+		movrs_avx10_2intrin.h \
+		movrsintrin.h \
 		mwaitxintrin.h \
 		nmmintrin.h \
 		pconfigintrin.h \
@@ -125,6 +145,7 @@ HEADERS+=	__wmmintrin_aes.h \
 		shaintrin.h \
 		sm3intrin.h \
 		sm4intrin.h \
+		sm4evexintrin.h \
 		smmintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
@@ -146,11 +167,19 @@ HEADERS+=	__wmmintrin_aes.h \
 		xsavesintrin.h \
 		xtestintrin.h
 .elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
-HEADERS+=	altivec.h \
+HEADERS+=	amo.h \
+		altivec.h \
 		htmintrin.h \
 		htmxlintrin.h
 .elif ${MACHINE_ARCH} == "riscv64"
-HEADERS+=	riscv_bitmanip.h
+HEADERS+=	riscv_bitmanip.h \
+		riscv_corev_alu.h \
+		riscv_crypto.h \
+		riscv_nds.h \
+		riscv_ntlh.h \
+		sifive_vector.h \
+		andes_vector.h \
+		riscv_mips.h
 GEN+=		riscv_vector.h
 HEADERS+=	${GEN}
 .endif

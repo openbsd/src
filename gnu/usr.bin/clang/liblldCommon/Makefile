@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldCommon
 NOPROFILE=
@@ -18,6 +18,7 @@ SRCS=	Args.cpp \
 	Strings.cpp \
 	TargetOptionsCommandFlags.cpp \
 	Timer.cpp \
+	Utils.cpp \
 	Version.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lld/Common

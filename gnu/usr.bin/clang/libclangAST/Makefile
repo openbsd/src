@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.13 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -42,9 +42,11 @@ SRCS=	APValue.cpp \
 	DeclFriend.cpp \
 	DeclGroup.cpp \
 	DeclObjC.cpp \
+	DeclOpenACC.cpp \
 	DeclOpenMP.cpp \
 	DeclPrinter.cpp \
 	DeclTemplate.cpp \
+	DynamicRecursiveASTVisitor.cpp \
 	ParentMapContext.cpp \
 	Expr.cpp \
 	ExprClassification.cpp \
@@ -55,6 +57,7 @@ SRCS=	APValue.cpp \
 	ExternalASTMerger.cpp \
 	ExternalASTSource.cpp \
 	FormatString.cpp \
+	InferAlloc.cpp \
 	InheritViz.cpp \
 	ItaniumCXXABI.cpp \
 	ItaniumMangle.cpp \
@@ -96,19 +99,22 @@ SRCS=	APValue.cpp \
 	VTableBuilder.cpp \
 	VTTBuilder.cpp
 
-# Interp
-SRCS+=	ByteCodeEmitter.cpp \
+# ByteCode
+SRCS+=	BitcastBuffer.cpp \
+	ByteCodeEmitter.cpp \
 	Compiler.cpp \
 	Context.cpp \
 	Descriptor.cpp \
 	Disasm.cpp \
 	EvalEmitter.cpp \
-	Frame.cpp \
 	Function.cpp \
+	FunctionPointer.cpp \
 	InterpBuiltin.cpp \
+	InterpBuiltinBitCast.cpp \
 	Floating.cpp \
 	EvaluationResult.cpp \
 	DynamicAllocator.cpp \
+	InitMap.cpp \
 	Interp.cpp \
 	InterpBlock.cpp \
 	InterpFrame.cpp \
@@ -124,7 +130,7 @@ SRCS+=	ByteCodeEmitter.cpp \
 	InterpShared.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/AST
-.PATH:	${.CURDIR}/../../../llvm/clang/lib/AST/Interp
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/AST/ByteCode
 
 BUILDFIRST=	AttrDocTable.inc \
 		Opcodes.inc
@@ -136,7 +142,7 @@ AttrDocTable.inc:
 		-o ${.TARGET} ${.ALLSRC}
 
 Opcodes.inc:
-	${TBLGEN} -I${CLANG_INC} -gen-clang-opcodes ${.CURDIR}/../../../llvm/clang/lib/AST/Interp/Opcodes.td \
+	${TBLGEN} -I${CLANG_INC} -gen-clang-opcodes ${.CURDIR}/../../../llvm/clang/lib/AST/ByteCode/Opcodes.td \
 		-o ${.TARGET} ${.ALLSRC}
 
 install:

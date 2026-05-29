@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbPluginLanguage
 NOPIC=
@@ -12,12 +12,13 @@ SRCS=	BlockPointer.cpp \
 	CPlusPlusLanguage.cpp \
 	CPlusPlusNameParser.cpp \
 	CxxStringTypes.cpp \
+	Generic.cpp \
 	GenericBitset.cpp \
+	GenericInitializerList.cpp \
+	GenericList.cpp \
 	GenericOptional.cpp \
 	LibCxx.cpp \
 	LibCxxAtomic.cpp \
-	LibCxxInitializerList.cpp \
-	LibCxxList.cpp \
 	LibCxxMap.cpp \
 	LibCxxQueue.cpp \
 	LibCxxRangesRefView.cpp \
@@ -30,8 +31,19 @@ SRCS=	BlockPointer.cpp \
 	LibCxxValarray.cpp \
 	LibCxxVector.cpp \
 	LibStdcpp.cpp \
+	LibStdcppSpan.cpp \
 	LibStdcppTuple.cpp \
 	LibStdcppUniquePointer.cpp \
+	MsvcStl.cpp \
+	MsvcStlAtomic.cpp \
+	MsvcStlDeque.cpp \
+	MsvcStlSmartPointer.cpp \
+	MsvcStlSpan.cpp \
+	MsvcStlTree.cpp \
+	MsvcStlTuple.cpp \
+	MsvcStlUnordered.cpp \
+	MsvcStlVariant.cpp \
+	MsvcStlVector.cpp \
 	MSVCUndecoratedNameParser.cpp
 
 # ClangCommon
@@ -66,3 +78,5 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Plugins
+

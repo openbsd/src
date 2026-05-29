@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbHostCommon
 NOPIC=
@@ -6,7 +6,7 @@ NOPROFILE=
 
 .include <bsd.own.mk>
 
-SRCS=	Alarm.cpp \
+SRCS=	DiagnosticsRendering.cpp \
 	Editline.cpp \
 	FileAction.cpp \
 	FileCache.cpp \
@@ -18,9 +18,11 @@ SRCS=	Alarm.cpp \
 	HostNativeThreadBase.cpp \
 	HostProcess.cpp \
 	HostThread.cpp \
-	LockFileBase.cpp \
+	JSONTransport.cpp \
 	LZMA.cpp \
+	LockFileBase.cpp \
 	MainLoopBase.cpp \
+	MemoryMonitor.cpp \
 	MonitoringProcessLauncher.cpp \
 	NativeProcessProtocol.cpp \
 	NativeRegisterContext.cpp \

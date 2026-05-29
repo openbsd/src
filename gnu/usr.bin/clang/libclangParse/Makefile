@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangParse
 NOPIC=
@@ -15,6 +15,7 @@ SRCS=	ParseAST.cpp \
 	ParseExpr.cpp \
 	ParseExprCXX.cpp \
 	ParseHLSL.cpp \
+	ParseHLSLRootSignature.cpp \
 	ParseInit.cpp \
 	ParseObjc.cpp \
 	ParseOpenMP.cpp \

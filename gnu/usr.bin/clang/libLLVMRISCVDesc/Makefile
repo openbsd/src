@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMRISCVDesc
 NOPROFILE=
@@ -15,6 +15,7 @@ SRCS+=	RISCVAsmBackend.cpp \
 	RISCVMCExpr.cpp \
 	RISCVMCObjectFileInfo.cpp \
 	RISCVMCTargetDesc.cpp \
+	RISCVMachObjectWriter.cpp \
 	RISCVMatInt.cpp \
 	RISCVTargetStreamer.cpp \
 	RISCVELFStreamer.cpp

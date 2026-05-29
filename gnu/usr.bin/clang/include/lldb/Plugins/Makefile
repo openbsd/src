@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@ DEFS=	DynamicLoaderDarwinKernelProperties.inc \
 	DynamicLoaderDarwinKernelPropertiesEnum.inc \
 	JITLoaderGDBProperties.inc \
 	JITLoaderGDBPropertiesEnum.inc \
+	LanguageCPlusPlusProperties.inc \
+	LanguageCPlusPlusPropertiesEnum.inc \
 	ObjectFilePECOFFProperties.inc \
 	ObjectFilePECOFFPropertiesEnum.inc \
 	PlatformAndroidProperties.inc \
@@ -18,6 +20,8 @@ DEFS=	DynamicLoaderDarwinKernelProperties.inc \
 	ProcessGDBRemotePropertiesEnum.inc \
 	StructuredDataDarwinLogProperties.inc \
 	StructuredDataDarwinLogPropertiesEnum.inc \
+	SymbolFilePDBProperties.inc \
+	SymbolFilePDBPropertiesEnum.inc \
 	SymbolFileDWARFProperties.inc \
 	SymbolFileDWARFPropertiesEnum.inc
 
@@ -39,6 +43,18 @@ DynamicLoaderDarwinKernelPropertiesEnum.inc: \
 	${LLDB_SRCS}/source/Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernelProperties.td
 	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
 		-I${LLDB_SRCS}/source/Plugins/DynamicLoader/Darwin-Kernel \
+		-o ${.TARGET} ${.ALLSRC}
+
+LanguageCPlusPlusProperties.inc: \
+	${LLDB_SRCS}/source/Plugins/Language/CPlusPlus/LanguageCPlusPlusProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-defs \
+		-I${LLDB_SRCS}/source/Plugins/Language/CPlusPlus \
+		-o ${.TARGET} ${.ALLSRC}
+
+LanguageCPlusPlusPropertiesEnum.inc: \
+	${LLDB_SRCS}/source/Plugins/Language/CPlusPlus/LanguageCPlusPlusProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
+		-I${LLDB_SRCS}/source/Plugins/Language/CPlusPlus \
 		-o ${.TARGET} ${.ALLSRC}
 
 JITLoaderGDBProperties.inc: \
@@ -111,6 +127,18 @@ StructuredDataDarwinLogPropertiesEnum.inc: \
 	${LLDB_SRCS}/source/Plugins/StructuredData/DarwinLog/StructuredDataDarwinLogProperties.td
 	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
 		-I${LLDB_SRCS}/source/Plugins/StructuredData/DarwinLog \
+		-o ${.TARGET} ${.ALLSRC}
+
+SymbolFilePDBProperties.inc: \
+	${LLDB_SRCS}/source/Plugins/SymbolFile/PDB/SymbolFilePDBProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-defs \
+		-I${LLDB_SRCS}/source/Plugins/SymbolFile/PDB \
+		-o ${.TARGET} ${.ALLSRC}
+
+SymbolFilePDBPropertiesEnum.inc: \
+	${LLDB_SRCS}/source/Plugins/SymbolFile/PDB/SymbolFilePDBProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
+		-I${LLDB_SRCS}/source/Plugins/SymbolFile/PDB \
 		-o ${.TARGET} ${.ALLSRC}
 
 SymbolFileDWARFProperties.inc: \

@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -27,7 +28,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "CLANG, CLANG++, CLANG-CPP" "1" "Dec 23, 2024" "19" "Clang"
+.TH "CLANG, CLANG++, CLANG-CPP" "1" "Apr 13, 2026" "22" "Clang"
 .SH NAME
 clang, clang++, clang-cpp \- the Clang C, C++, and Objective-C compiler
 .SH SYNOPSIS
@@ -88,7 +89,7 @@ an \(dqa.out\(dq, \(dq.dylib\(dq or \(dq.so\(dq file.
 .sp
 The Clang Static Analyzer is a tool that scans source code to try to find bugs
 through code analysis.  This tool uses many parts of Clang and is built into
-the same driver.  Please see <\X'tty: link https://clang-analyzer.llvm.org'\fI\%https://clang\-analyzer.llvm.org\fP\X'tty: link'> for more details
+the same driver.  Please see <\%<https://\:clang-analyzer\:.llvm\:.org>> for more details
 on how to use the static analyzer.
 .SH OPTIONS
 .SS Stage Selection Options
@@ -218,6 +219,43 @@ ISO C 2017
 .INDENT 0.0
 .INDENT 3.5
 ISO C 2017 with GNU extensions
+.UNINDENT
+.UNINDENT
+.nf
+\fBc23\fP
+\fBiso9899:2024\fP
+.fi
+.sp
+.INDENT 0.0
+.INDENT 3.5
+ISO C 2023
+.UNINDENT
+.UNINDENT
+.nf
+\fBgnu23\fP
+.fi
+.sp
+.INDENT 0.0
+.INDENT 3.5
+ISO C 2023 with GNU extensions
+.UNINDENT
+.UNINDENT
+.nf
+\fBc2y\fP
+.fi
+.sp
+.INDENT 0.0
+.INDENT 3.5
+ISO C 202y
+.UNINDENT
+.UNINDENT
+.nf
+\fBgnu2y\fP
+.fi
+.sp
+.INDENT 0.0
+.INDENT 3.5
+ISO C 202y with GNU extensions
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -452,9 +490,10 @@ Enable trigraphs.
 .TP
 .B \-ffreestanding
 Indicate that the file should be compiled for a freestanding, not a hosted,
-environment. Note that it is assumed that a freestanding environment will
-additionally provide \fImemcpy\fP, \fImemmove\fP, \fImemset\fP and \fImemcmp\fP
-implementations, as these are needed for efficient codegen for many programs.
+environment. Note that a freestanding build still requires linking against a C
+Standard Library which supports the freestanding interfaces for the specified
+language mode and target environment. This includes functions like \fImemcpy\fP,
+\fImemmove\fP, and \fImemset\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -478,7 +517,7 @@ library function in namespace \fBstd\fP\&. For example,
 \fBstd::move_if_noexcept()\fP library function.
 .sp
 For C standard library functions that the C++ standard library also provides
-in namespace \fBstd\fP, use \fI\%\-fno\-builtin\-<function>\fP instead.
+in namespace \fBstd\fP, use \fB\-fno\-builtin\-<function>\fP instead.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -546,14 +585,14 @@ Select the Objective\-C ABI version to use. Available versions are 1 (legacy
 .B \-fobjc\-nonfragile\-abi\-version=<version>
 Select the Objective\-C non\-fragile ABI version to use by default. This will
 only be used as the Objective\-C ABI when the non\-fragile ABI is enabled
-(either via \fI\%\-fobjc\-nonfragile\-abi\fP, or because it is the platform
+(either via \fB\-fobjc\-nonfragile\-abi\fP, or because it is the platform
 default).
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-fobjc\-nonfragile\-abi, \-fno\-objc\-nonfragile\-abi
 Enable use of the Objective\-C non\-fragile ABI. On platforms for which this is
-the default ABI, it can be disabled with \fI\%\-fno\-objc\-nonfragile\-abi\fP\&.
+the default ABI, it can be disabled with \fB\-fno\-objc\-nonfragile\-abi\fP\&.
 .UNINDENT
 .SS Target Selection Options
 .sp
@@ -586,18 +625,18 @@ application.
 .TP
 .B \-\-print\-supported\-cpus
 Print out a list of supported processors for the given target (specified
-through \fB\-\-target=<architecture>\fP or \fI\%\-arch\fP \fB<architecture>\fP). If no
+through \fB\-\-target=<architecture>\fP or \fB\-arch\fP \fB<architecture>\fP). If no
 target is specified, the system default target will be used.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-mcpu=?, \-mtune=?
-Acts as an alias for \fI\%\-\-print\-supported\-cpus\fP\&.
+Acts as an alias for \fB\-\-print\-supported\-cpus\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-mcpu=help, \-mtune=help
-Acts as an alias for \fI\%\-\-print\-supported\-cpus\fP\&.
+Acts as an alias for \fB\-\-print\-supported\-cpus\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -620,7 +659,7 @@ prints out the ISA string of enabled extensions.
 .B \-\-print\-supported\-extensions
 Prints the list of all extensions that are supported for every CPU target
 for an architecture (specified through \fB\-\-target=<architecture>\fP or
-\fI\%\-arch\fP \fB<architecture>\fP). If no target is specified, the system
+\fB\-arch\fP \fB<architecture>\fP). If no target is specified, the system
 default target will be used. Currently, this option is only supported on
 AArch64 and RISC\-V.
 .UNINDENT
@@ -631,42 +670,45 @@ AArch64 and RISC\-V.
 Specify which optimization level to use:
 .INDENT 7.0
 .INDENT 3.5
-\fI\%\-O0\fP Means \(dqno optimization\(dq: this level compiles the fastest and
+\fB\-O0\fP Means \(dqno optimization\(dq: this level compiles the fastest and
 generates the most debuggable code.
 .sp
-\fI\%\-O1\fP Somewhere between \fI\%\-O0\fP and \fI\%\-O2\fP\&.
+\fB\-O1\fP Somewhere between \fB\-O0\fP and \fB\-O2\fP\&.
 .sp
-\fI\%\-O2\fP Moderate level of optimization which enables most
+\fB\-O2\fP Moderate level of optimization which enables most
 optimizations.
 .sp
-\fI\%\-O3\fP Like \fI\%\-O2\fP, except that it enables optimizations that
+\fB\-O3\fP Like \fB\-O2\fP, except that it enables optimizations that
 take longer to perform or that may generate larger code (in an attempt to
 make the program run faster).
 .sp
-\fI\%\-Ofast\fP Enables all the optimizations from \fI\%\-O3\fP along
+\fB\-Ofast\fP Enables all the optimizations from \fB\-O3\fP along
 with other aggressive optimizations that may violate strict compliance with
 language standards. This is deprecated in Clang 19 and a warning is emitted
-that \fI\%\-O3\fP in combination with \fI\%\-ffast\-math\fP should be used
+that \fB\-O3\fP in combination with \fB\-ffast\-math\fP \%<#\:cmdoption-ffast-math> should be used
 instead if the request for non\-standard math behavior is intended. There
 is no timeline yet for removal; the aim is to discourage use of
-\fI\%\-Ofast\fP due to the surprising behavior of an optimization flag
+\fB\-Ofast\fP due to the surprising behavior of an optimization flag
 changing the observable behavior of correct code.
 .sp
-\fI\%\-Os\fP Like \fI\%\-O2\fP with extra optimizations to reduce code
+\fB\-Os\fP Like \fB\-O2\fP with extra optimizations to reduce code
 size.
 .sp
-\fI\%\-Oz\fP Like \fI\%\-Os\fP (and thus \fI\%\-O2\fP), but reduces code
+\fB\-Oz\fP Like \fB\-Os\fP (and thus \fB\-O2\fP), but reduces code
 size further.
 .sp
-\fI\%\-Og\fP Like \fI\%\-O1\fP\&. In future versions, this option might
-disable different optimizations in order to improve debuggability.
+\fB\-Og\fP Similar to \fB\-O1\fP, but with slightly reduced
+optimization and better variable visibility. The same optimizations are run
+as at \fB\-O1\fP, but the \fB\-fextend\-variable\-liveness\fP flag is
+also set, which tries to prevent optimizations from reducing the liveness of
+user variables, improving their availability when debugging.
 .sp
-\fI\%\-O\fP Equivalent to \fI\%\-O1\fP\&.
+\fB\-O\fP Equivalent to \fB\-O1\fP\&.
 .sp
-\fI\%\-O4\fP and higher
+\fB\-O4\fP and higher
 .INDENT 0.0
 .INDENT 3.5
-Currently equivalent to \fI\%\-O3\fP
+Currently equivalent to \fB\-O3\fP
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -676,17 +718,17 @@ Currently equivalent to \fI\%\-O3\fP
 .TP
 .B \-g, \-gline\-tables\-only, \-gmodules
 Control debug information output.  Note that Clang debug information works
-best at \fI\%\-O0\fP\&.  When more than one option starting with \fI\-g\fP is
+best at \fB\-O0\fP\&.  When more than one option starting with \fI\-g\fP is
 specified, the last one wins:
 .INDENT 7.0
 .INDENT 3.5
-\fI\%\-g\fP Generate debug information.
+\fB\-g\fP Generate debug information.
 .sp
-\fI\%\-gline\-tables\-only\fP Generate only line table debug information. This
+\fB\-gline\-tables\-only\fP Generate only line table debug information. This
 allows for symbolicated backtraces with inlining information, but does not
 include any information about variables, their locations or types.
 .sp
-\fI\%\-gmodules\fP Generate debug information that contains external
+\fB\-gmodules\fP Generate debug information that contains external
 references to types defined in Clang modules or precompiled headers instead
 of emitting redundant debug type information into every object file.  This
 option transparently switches the Clang module format to object file
@@ -713,7 +755,7 @@ needed by a module and could be replaced with a forward declaration.
 Further, Clang will only emit type info for a dynamic C++ class in the
 module that contains the vtable for the class.
 .sp
-The \fI\%\-fstandalone\-debug\fP option turns off these optimizations.
+The \fB\-fstandalone\-debug\fP option turns off these optimizations.
 This is useful when working with 3rd\-party libraries that don\(aqt come with
 debug information.  This is the default on Darwin.  Note that Clang will
 never emit type information for types that are not referenced at all by the
@@ -750,7 +792,7 @@ This flag sets the default visibility level.
 .TP
 .B \-fcommon, \-fno\-common
 This flag specifies that variables without initializers get common linkage.
-It can be disabled with \fI\%\-fno\-common\fP\&.
+It can be disabled with \fB\-fno\-common\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -765,20 +807,20 @@ to choose a more efficient model if possible.
 .TP
 .B \-flto, \-flto=full, \-flto=thin, \-emit\-llvm
 Generate output files in LLVM formats, suitable for link time optimization.
-When used with \fI\%\-S\fP this generates LLVM intermediate language
+When used with \fB\-S\fP this generates LLVM intermediate language
 assembly files, otherwise this generates LLVM bitcode format object files
 (which may be passed to the linker depending on the stage selection options).
 .sp
-The default for \fI\%\-flto\fP is \(dqfull\(dq, in which the
+The default for \fB\-flto\fP is \(dqfull\(dq, in which the
 LLVM bitcode is suitable for monolithic Link Time Optimization (LTO), where
 the linker merges all such modules into a single combined module for
-optimization. With \(dqthin\(dq, \fI\%ThinLTO\fP
+optimization. With \(dqthin\(dq, ThinLTO \%<>
 compilation is invoked instead.
 .sp
-\fBNOTE:\fP
+\fBNote:\fP
 .INDENT 7.0
 .INDENT 3.5
-On Darwin, when using \fI\%\-flto\fP along with \fI\%\-g\fP and
+On Darwin, when using \fB\-flto\fP along with \fB\-g\fP and
 compiling and linking in separate steps, you also need to pass
 \fB\-Wl,\-object_path_lto,<lto\-filename>.o\fP at the linking step to instruct the
 ld64 linker not to delete the temporary object file generated during Link
@@ -874,8 +916,8 @@ Save intermediate compilation results.
 .TP
 .B \-save\-stats, \-save\-stats=cwd, \-save\-stats=obj
 Save internal code generation (LLVM) statistics to a file in the current
-directory (\fI\%\-save\-stats\fP/\(dq\-save\-stats=cwd\(dq) or the directory
-of the output file (\(dq\-save\-state=obj\(dq).
+directory (\fB\-save\-stats\fP/\(dq\-save\-stats=cwd\(dq) or the directory
+of the output file (\(dq\-save\-stats=obj\(dq).
 .sp
 You can also use environment variables to control the statistics reporting.
 Setting \fBCC_PRINT_INTERNAL_STAT\fP to \fB1\fP enables the feature, the report
@@ -964,15 +1006,20 @@ Do not search clang\(aqs builtin directory for include files.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-nostdinc++
+Do not search the system C++ standard library directory for include files.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-fkeep\-system\-includes
-Usable only with \fI\%\-E\fP\&. Do not copy the preprocessed content of
+Usable only with \fB\-E\fP\&. Do not copy the preprocessed content of
 \(dqsystem\(dq headers to the output; instead, preserve the #include directive.
-This can greatly reduce the volume of text produced by \fI\%\-E\fP which
+This can greatly reduce the volume of text produced by \fB\-E\fP which
 can be helpful when trying to produce a \(dqsmall\(dq reproduceable test case.
 .sp
 This option does not guarantee reproduceability, however. If the including
 source defines preprocessor symbols that influence the behavior of system
-headers (for example, \fB_XOPEN_SOURCE\fP) the operation of \fI\%\-E\fP will
+headers (for example, \fB_XOPEN_SOURCE\fP) the operation of \fB\-E\fP will
 remove that definition and thus can change the semantics of the included
 header. Also, using a different version of the system headers (especially a
 different version of the STL) may result in different behavior. Always verify
@@ -988,36 +1035,38 @@ temporary files used during the compilation process.
 .INDENT 0.0
 .TP
 .B CPATH
-If this environment variable is present, it is treated as a delimited list of
-paths to be added to the default system include path list. The delimiter is
-the platform dependent delimiter, as used in the PATH environment variable.
-.sp
-Empty components in the environment variable are ignored.
+This environment variable specifies additional (non\-system) header search
+paths to be used to find included header files. These paths are searched after
+paths specified with the \fB\-I<directory>\fP option, but before any
+system header search paths. Paths are delimited by the platform dependent
+delimiter as used in the \fBPATH\fP environment variable. Empty entries in the
+delimited path list, including those at the beginning or end of the list, are
+treated as specifying the compiler\(aqs current working directory.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B C_INCLUDE_PATH, OBJC_INCLUDE_PATH, CPLUS_INCLUDE_PATH, OBJCPLUS_INCLUDE_PATH
-These environment variables specify additional paths, as for \fI\%CPATH\fP, which are
-only used when processing the appropriate language.
+These environment variables specify additional system header file search
+paths to be used when processing the corresponding language. Search paths are
+delimited as for the \fBCPATH\fP environment variable.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B MACOSX_DEPLOYMENT_TARGET
-If \fI\%\-mmacos\-version\-min\fP is unspecified, the default deployment
+If \fB\-mmacos\-version\-min\fP is unspecified, the default deployment
 target is read from this environment variable. This option only affects
 Darwin targets.
 .UNINDENT
 .SH BUGS
 .sp
-To report bugs, please visit <\X'tty: link https://github.com/llvm/llvm-project/issues/'\fI\%https://github.com/llvm/llvm\-project/issues/\fP\X'tty: link'>.  Most bug reports should
-include preprocessed source files (use the \fI\%\-E\fP option) and the full
+To report bugs, please visit <\%<https://\:github\:.com/\:llvm/\:llvm-project/\:issues/>>.  Most bug reports should
+include preprocessed source files (use the \fB\-E\fP option) and the full
 output of the compiler, along with information to reproduce.
 .SH SEE ALSO
 .sp
 \fBas(1)\fP, \fBclang\-local(1)\fP, \fBld(1)\fP
-.SH AUTHOR
+.SH Author
 Maintained by the Clang / LLVM Team (<http://clang.llvm.org>)
-.SH COPYRIGHT
-2007-2024, The Clang Team
-.\" Generated by docutils manpage writer.
-.
+.SH Copyright
+2007-2026, The Clang Team
+.\" End of generated man page.

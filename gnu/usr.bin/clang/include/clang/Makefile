@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2026/05/29 11:18:30 robert Exp $
 
 SUBDIR+=AST
 SUBDIR+=Basic
-SUBDIR+=Driver
+SUBDIR+=Options
 SUBDIR+=Parse
 SUBDIR+=Sema
 SUBDIR+=Serialization

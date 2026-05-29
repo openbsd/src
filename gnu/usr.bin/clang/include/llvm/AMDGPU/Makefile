@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ HDRS=	AMDGPUGenAsmMatcher.inc \
 	AMDGPUGenMCPseudoLowering.inc \
 	AMDGPUGenRegisterBank.inc \
 	AMDGPUGenRegisterInfo.inc \
+	AMDGPUGenSDNodeInfo.inc \
 	AMDGPUGenSearchableTables.inc \
 	AMDGPUGenSubtargetInfo.inc
 
@@ -31,8 +32,6 @@ HDRS+=	R600GenAsmWriter.inc \
 	R600GenRegisterInfo.inc \
 	R600GenSubtargetInfo.inc
 
-HDRS+=	InstCombineTables.inc
-
 .if ${MACHINE_CPU} == "i386"
 .NOTPARALLEL: ${HDRS}
 .endif
@@ -43,7 +42,7 @@ install:
 	@# Nothing here so far ...
 
 clean cleandir:
-	rm -f ${HDRS}
+	rm -f ${HDRS} AMDGPUGenRegisterInfo*.inc R600GenRegisterInfo*.inc
 
 AMDGPUGenAsmMatcher.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-asm-matcher \
@@ -63,6 +62,9 @@ AMDGPUGenDAGISel.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-disassembler \
+		--specialize-decoders-per-bitwidth \
+		-ignore-non-decodable-operands \
+		-ignore-fully-defined-operands \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
@@ -83,6 +85,10 @@ AMDGPUGenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-info \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
+		-o ${.TARGET} ${.ALLSRC}
+AMDGPUGenSDNodeInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-sd-node-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenSearchableTables.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
@@ -144,11 +150,6 @@ R600GenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/R600.td
 		-o ${.TARGET} ${.ALLSRC}
 R600GenSubtargetInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/R600.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-subtarget \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
-		-o ${.TARGET} ${.ALLSRC}
-
-InstCombineTables.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/InstCombineTables.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-searchable-tables \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 

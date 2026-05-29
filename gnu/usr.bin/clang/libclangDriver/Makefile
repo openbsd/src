@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.13 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangDriver
 NOPIC=
@@ -12,14 +12,14 @@ CPPFLAGS+=	-I${CLANG_SRCS}/lib/Driver
 # Driver
 SRCS=	Action.cpp \
 	Compilation.cpp \
+	CreateASTUnitFromArgs.cpp \
+	CreateInvocationFromArgs.cpp \
 	Distro.cpp \
 	Driver.cpp \
-	DriverOptions.cpp \
 	Job.cpp \
 	Multilib.cpp \
 	MultilibBuilder.cpp \
 	OffloadBundler.cpp \
-	OptionUtils.cpp \
 	Phases.cpp \
 	SanitizerArgs.cpp \
 	Tool.cpp \
@@ -38,6 +38,7 @@ SRCS+=	AIX.cpp \
 	CrossWindows.cpp \
 	CSKYToolChain.cpp \
 	Cuda.cpp \
+	Cygwin.cpp \
 	Darwin.cpp \
 	DragonFly.cpp \
 	Flang.cpp \
@@ -51,20 +52,23 @@ SRCS+=	AIX.cpp \
 	Hexagon.cpp \
 	HLSL.cpp \
 	Hurd.cpp \
+	LFILinux.cpp \
 	Linux.cpp \
+	Managarm.cpp \
 	MipsLinux.cpp \
 	MinGW.cpp \
 	MSP430.cpp \
 	MSVC.cpp \
-	NaCl.cpp \
 	NetBSD.cpp \
 	OHOS.cpp \
 	OpenBSD.cpp \
 	PS4CPU.cpp \
-	RISCVToolchain.cpp \
 	Solaris.cpp \
 	SPIRV.cpp \
+	SPIRVOpenMP.cpp \
+	SYCL.cpp \
 	TCE.cpp \
+	UEFI.cpp \
 	VEToolchain.cpp \
 	WebAssembly.cpp \
 	XCore.cpp \

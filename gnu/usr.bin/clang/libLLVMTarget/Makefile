@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:27 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMTarget
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Target
 
-SRCS+=	Target.cpp \
-	TargetIntrinsicInfo.cpp \
+SRCS+=	RegisterTargetPassConfigCallback.cpp \
+	Target.cpp \
 	TargetLoweringObjectFile.cpp \
 	TargetMachine.cpp \
 	TargetMachineC.cpp

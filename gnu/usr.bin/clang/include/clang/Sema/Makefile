@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ CLANG_SRCS=${.CURDIR}/../../../../../llvm/clang
 CLANG_INC=${CLANG_SRCS}/include
 
 GEN=	AttrTemplateInstantiate.inc \
-	AttrParsedAttrList.inc \
 	AttrParsedAttrKinds.inc \
+	AttrIsTypeDependent.inc \
 	AttrSpellingListIndex.inc \
 	AttrParsedAttrImpl.inc \
 	OpenCLBuiltins.inc
@@ -25,12 +25,12 @@ AttrTemplateInstantiate.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-template-instantiate \
 		-o ${.TARGET} ${.ALLSRC}
 
-AttrParsedAttrList.inc: ${CLANG_INC}/clang/Basic/Attr.td
-	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-parsed-attr-list \
-		-o ${.TARGET} ${.ALLSRC}
-
 AttrParsedAttrKinds.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-parsed-attr-kinds \
+		-o ${.TARGET} ${.ALLSRC}
+
+AttrIsTypeDependent.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-is-type-dependent \
 		-o ${.TARGET} ${.ALLSRC}
 
 AttrSpellingListIndex.inc: ${CLANG_INC}/clang/Basic/Attr.td

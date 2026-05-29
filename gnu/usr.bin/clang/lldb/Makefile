@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.19 2026/05/29 11:18:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ LLVM_LIBDEPS=	clangAST \
 		clangASTMatchers \
 		clangAPINotes \
 		clangAnalysis \
+		clangAnalysisLifetimeSafety \
 		clangBasic \
 		clangBasicTargets \
 		clangCodeGen \
@@ -32,6 +33,7 @@ LLVM_LIBDEPS=	clangAST \
 		clangEdit \
 		clangFrontend \
 		clangLex \
+		clangOptions \
 		clangParse \
 		clangRewrite \
 		clangRewriteFrontend \
@@ -75,7 +77,8 @@ LLVM_LIBDEPS=	clangAST \
 		lldbPluginUnwindAssembly \
 		lldbSymbol \
 		lldbTarget \
-		lldbUtility
+		lldbUtility \
+		lldbValueObject
 
 Driver.o: Options.inc
 

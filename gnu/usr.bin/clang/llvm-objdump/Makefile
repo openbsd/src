@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ DRIVER_NAME=	llvm_objdump
 SRCS=	llvm-objdump.cpp \
 	SourcePrinter.cpp \
 	COFFDump.cpp \
+	DXContainerDump.cpp \
 	ELFDump.cpp \
 	MachODump.cpp \
 	OffloadDump.cpp \

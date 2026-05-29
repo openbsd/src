@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2026/05/29 11:18:30 robert Exp $
 
 PROG=	clang-tblgen
 NOMAN=
@@ -8,10 +8,12 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 .include <bsd.own.mk>
 
 SRCS=	ASTTableGen.cpp \
+	CIRLoweringEmitter.cpp \
 	ClangASTNodesEmitter.cpp \
 	ClangASTPropertiesEmitter.cpp \
 	ClangAttrEmitter.cpp \
 	ClangBuiltinsEmitter.cpp \
+	ClangBuiltinTemplatesEmitter.cpp \
 	ClangCommentCommandInfoEmitter.cpp \
 	ClangCommentHTMLNamedCharacterReferenceEmitter.cpp \
 	ClangCommentHTMLTagsEmitter.cpp \

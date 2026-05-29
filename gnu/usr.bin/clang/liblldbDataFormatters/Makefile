@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/04/28 12:55:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbDataFormatters
 NOPIC=
@@ -11,7 +11,9 @@ SRCS=	CXXFunctionPointer.cpp \
 	FormatCache.cpp \
 	FormatClasses.cpp \
 	FormatManager.cpp \
+	FormatterBytecode.cpp \
 	FormattersHelpers.cpp \
+	FormatterSection.cpp \
 	LanguageCategory.cpp \
 	StringPrinter.cpp \
 	TypeCategory.cpp \

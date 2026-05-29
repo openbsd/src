@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ HDRS=	ARMGenAsmMatcher.inc \
 	ARMGenMCPseudoLowering.inc \
 	ARMGenRegisterBank.inc \
 	ARMGenRegisterInfo.inc \
+	ARMGenSDNodeInfo.inc \
 	ARMGenSubtargetInfo.inc \
 	ARMGenSystemRegister.inc
 
@@ -84,6 +85,11 @@ ARMGenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
 
 ARMGenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-info \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/ARM \
+		-o ${.TARGET} ${.ALLSRC}
+
+ARMGenSDNodeInfo.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-sd-node-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/ARM \
 		-o ${.TARGET} ${.ALLSRC}
 

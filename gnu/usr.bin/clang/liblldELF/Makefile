@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldELF
 NOPROFILE=
@@ -33,6 +33,7 @@ SRCS=	AArch64.cpp \
 # ELF
 SRCS+=	AArch64ErrataFix.cpp \
 	ARMErrataFix.cpp \
+	BPSectionOrderer.cpp \
 	CallGraphSort.cpp \
 	DWARF.cpp \
 	Driver.cpp \

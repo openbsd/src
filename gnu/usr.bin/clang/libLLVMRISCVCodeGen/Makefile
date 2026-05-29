@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMRISCVCodeGen
 NOPROFILE=
@@ -16,32 +16,49 @@ SRCS+=	RISCVCallLowering.cpp \
 	RISCVRegisterBankInfo.cpp
 
 SRCS+=	RISCVAsmPrinter.cpp \
+	RISCVCallingConv.cpp \
 	RISCVCodeGenPrepare.cpp \
+	RISCVConstantPoolValue.cpp \
 	RISCVDeadRegisterDefinitions.cpp \
-	RISCVMakeCompressible.cpp \
 	RISCVExpandAtomicPseudoInsts.cpp \
 	RISCVExpandPseudoInsts.cpp \
+	RISCVFoldMemOffset.cpp \
 	RISCVFrameLowering.cpp \
 	RISCVGatherScatterLowering.cpp \
-	RISCVInsertVSETVLI.cpp \
+	RISCVIndirectBranchTracking.cpp \
 	RISCVInsertReadWriteCSR.cpp \
+	RISCVInsertVSETVLI.cpp \
 	RISCVInsertWriteVXRM.cpp \
 	RISCVInstrInfo.cpp \
+	RISCVInterleavedAccess.cpp \
 	RISCVISelDAGToDAG.cpp \
 	RISCVISelLowering.cpp \
+	RISCVLandingPadSetup.cpp \
+	RISCVLateBranchOpt.cpp \
+	RISCVLoadStoreOptimizer.cpp \
 	RISCVMachineFunctionInfo.cpp \
+	RISCVMakeCompressible.cpp \
+	RISCVMachineScheduler.cpp \
 	RISCVMergeBaseOffset.cpp \
+	RISCVMoveMerger.cpp \
 	RISCVOptWInstrs.cpp \
 	RISCVPostRAExpandPseudoInsts.cpp \
-	RISCVRedundantCopyElimination.cpp \
-	RISCVMoveMerger.cpp \
+	RISCVPromoteConstant.cpp \
 	RISCVPushPopOptimizer.cpp \
+	RISCVRedundantCopyElimination.cpp \
 	RISCVRegisterInfo.cpp \
+	RISCVSelectionDAGInfo.cpp \
 	RISCVSubtarget.cpp \
 	RISCVTargetMachine.cpp \
 	RISCVTargetObjectFile.cpp \
 	RISCVTargetTransformInfo.cpp \
-	RISCVVectorPeephole.cpp
+	RISCVVectorMaskDAGMutation.cpp \
+	RISCVVectorPeephole.cpp \
+	RISCVVLOptimizer.cpp \
+	RISCVVMV0Elimination.cpp \
+	RISCVVSETVLIInfoAnalysis.cpp \
+	RISCVZacasABIFix.cpp \
+	RISCVZilsdOptimizer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/RISCV
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/RISCV/GISel

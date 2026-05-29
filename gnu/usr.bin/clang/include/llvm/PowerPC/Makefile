@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:30 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ HDRS=	PPCGenAsmMatcher.inc \
 	PPCGenInstrInfo.inc \
 	PPCGenMCCodeEmitter.inc \
 	PPCGenRegisterInfo.inc \
+	PPCGenSDNodeInfo.inc \
 	PPCGenSubtargetInfo.inc \
 	PPCGenExegesis.inc \
 	PPCGenRegisterBank.inc \
@@ -68,6 +69,11 @@ PPCGenMCCodeEmitter.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
 
 PPCGenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-info \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
+		-o ${.TARGET} ${.ALLSRC}
+
+PPCGenSDNodeInfo.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-sd-node-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
 		-o ${.TARGET} ${.ALLSRC}
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangRewrite
 NOPIC=
@@ -7,9 +7,7 @@ NOPROFILE=
 CPPFLAGS+=	${CLANG_INCLUDES}
 
 .include <bsd.own.mk>
-SRCS=	DeltaTree.cpp \
-	HTMLRewrite.cpp \
-	RewriteRope.cpp \
+SRCS=	HTMLRewrite.cpp \
 	Rewriter.cpp \
 	TokenRewriter.cpp
 

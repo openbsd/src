@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2026/05/29 11:18:32 robert Exp $
 
 PROG=	llvm-min-tblgen
 NOMAN=
@@ -12,9 +12,14 @@ SRCS=	ARMTargetDefEmitter.cpp \
 	DirectiveEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	RISCVTargetDefEmitter.cpp \
+	RuntimeLibcallsEmitter.cpp \
+	RuntimeLibcalls.cpp \
 	SDNodeProperties.cpp \
 	TableGen.cpp \
-	VTEmitter.cpp
+	TargetFeaturesEmitter.cpp \
+	TargetLibraryInfoEmitter.cpp \
+	VTEmitter.cpp \
+	llvm-min-tblgen.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen \
 	${.CURDIR}/../../../llvm/llvm/utils/TableGen/Basic

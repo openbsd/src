@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangSema
 NOPIC=
@@ -14,6 +14,8 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	CodeCompleteConsumer.cpp \
 	DeclSpec.cpp \
 	DelayedDiagnostic.cpp \
+	HeuristicResolver.cpp \
+	HLSLBuiltinTypeDeclBuilder.cpp \
 	HLSLExternalSemaSource.cpp \
 	IdentifierResolver.cpp \
 	JumpDiagnostics.cpp \
@@ -40,6 +42,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaConsumer.cpp \
 	SemaCoroutine.cpp \
 	SemaCUDA.cpp \
+	SemaDirectX.cpp \
 	SemaDecl.cpp \
 	SemaDeclAttr.cpp \
 	SemaDeclCXX.cpp \
@@ -50,6 +53,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaExprMember.cpp \
 	SemaExprObjC.cpp \
 	SemaFixItUtils.cpp \
+	SemaFunctionEffects.cpp \
 	SemaHLSL.cpp \
 	SemaHexagon.cpp \
 	SemaInit.cpp \
@@ -64,6 +68,9 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaObjC.cpp \
 	SemaObjCProperty.cpp \
 	SemaOpenACC.cpp \
+	SemaOpenACCAtomic.cpp \
+	SemaOpenACCClause.cpp \
+	SemaOpenACCClauseAppertainment.cpp \
 	SemaOpenCL.cpp \
 	SemaOpenMP.cpp \
 	SemaOverload.cpp \
@@ -73,6 +80,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaStmt.cpp \
 	SemaStmtAsm.cpp \
 	SemaStmtAttr.cpp \
+	SemaSPIRV.cpp \
 	SemaSYCL.cpp \
 	SemaSwift.cpp \
 	SemaSystemZ.cpp \
@@ -83,6 +91,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaTemplateInstantiateDecl.cpp \
 	SemaTemplateVariadic.cpp \
 	SemaType.cpp \
+	SemaTypeTraits.cpp \
 	SemaWasm.cpp \
 	SemaX86.cpp \
 	TypeLocBuilder.cpp

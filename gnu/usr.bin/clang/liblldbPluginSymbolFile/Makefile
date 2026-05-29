@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbPluginSymbolFile
 NOPIC=
@@ -24,11 +24,9 @@ SRCS+=	AppleDWARFIndex.cpp \
 	DWARFContext.cpp \
 	DWARFDataExtractor.cpp \
 	DWARFDebugAranges.cpp \
-	DWARFDebugArangeSet.cpp \
 	DWARFDebugInfo.cpp \
 	DWARFDebugInfoEntry.cpp \
 	DWARFDebugMacro.cpp \
-	DWARFDebugRanges.cpp \
 	DWARFDeclContext.cpp \
 	DWARFDefines.cpp \
 	DWARFDIE.cpp \
@@ -38,10 +36,12 @@ SRCS+=	AppleDWARFIndex.cpp \
 	DWARFUnit.cpp \
 	LogChannelDWARF.cpp \
 	ManualDWARFIndex.cpp \
+	ManualDWARFIndexSet.cpp \
 	NameToDIE.cpp \
 	SymbolFileDWARF.cpp \
 	SymbolFileDWARFDwo.cpp \
 	SymbolFileDWARFDebugMap.cpp \
+	SymbolFileWasm.cpp \
 	UniqueDWARFASTType.cpp
 
 # SymbolFile/JSON

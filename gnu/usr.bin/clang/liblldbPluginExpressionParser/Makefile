@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbPluginExpressionParser
 NOPIC=
@@ -12,7 +12,6 @@ SRCS=	ASTResultSynthesizer.cpp \
 	ClangASTImporter.cpp \
 	ClangASTMetadata.cpp \
 	ClangASTSource.cpp \
-	ClangDeclVendor.cpp \
 	ClangExpressionDeclMap.cpp \
 	ClangExpressionHelper.cpp \
 	ClangExpressionParser.cpp \

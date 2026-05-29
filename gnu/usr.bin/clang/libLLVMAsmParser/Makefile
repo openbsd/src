@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMAsmParser
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/ASMParser
 
-SRCS+=	LLLexer.cpp \
+SRCS+=	AsmParserContext.cpp \
+	LLLexer.cpp \
 	LLParser.cpp \
 	Parser.cpp
 

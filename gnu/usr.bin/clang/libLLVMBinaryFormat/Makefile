@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMBinaryFormat
 NOPROFILE=
@@ -12,17 +12,12 @@ SRCS+=	AMDGPUMetadataVerifier.cpp \
 	ELF.cpp \
 	MachO.cpp \
 	Magic.cpp \
-	BinaryFormatMinidump.cpp \
 	MsgPackDocument.cpp \
 	MsgPackDocumentYAML.cpp \
 	MsgPackReader.cpp \
 	MsgPackWriter.cpp \
+	SFrame.cpp \
 	Wasm.cpp \
 	XCOFF.cpp
 
-BinaryFormatMinidump.cpp:
-	ln -s ${LLVM_SRCS}/lib/BinaryFormat/Minidump.cpp $@
-
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/BinaryFormat
-
-CLEANFILES+= BinaryFormatMinidump.cpp \

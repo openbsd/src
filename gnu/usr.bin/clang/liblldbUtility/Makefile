@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2026/05/29 11:18:32 robert Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -33,6 +33,7 @@ SRCS=	AddressableBits.cpp \
 	Log.cpp \
 	NameMatches.cpp \
 	ProcessInfo.cpp \
+	RealpathPrefixes.cpp \
 	RegisterValue.cpp \
 	RegularExpression.cpp \
 	Instrumentation.cpp \
@@ -44,7 +45,6 @@ SRCS=	AddressableBits.cpp \
 	StreamString.cpp \
 	StringExtractor.cpp \
 	StringExtractorGDBRemote.cpp \
-	StringLexer.cpp \
 	StringList.cpp \
 	StructuredData.cpp \
 	TildeExpressionResolver.cpp \
@@ -58,6 +58,7 @@ SRCS=	AddressableBits.cpp \
 	UserIDResolver.cpp \
 	VASprintf.cpp \
 	VMRange.cpp \
+	VirtualDataExtractor.cpp \
 	XcodeSDK.cpp \
 	ZipFile.cpp
 

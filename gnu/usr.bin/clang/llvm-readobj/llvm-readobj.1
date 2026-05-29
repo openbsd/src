@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -27,7 +28,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LLVM-READOBJ" "1" "2024-12-23" "19" "LLVM"
+.TH "LLVM-READOBJ" "1" "2026-04-20" "22" "LLVM"
 .SH NAME
 llvm-readobj \- LLVM Object Reader
 .SH SYNOPSIS
@@ -42,29 +43,29 @@ If \fBinput\fP is \(dq\fB\-\fP\(dq, \fBllvm\-readobj\fP reads from standard
 input. Otherwise, it will read from the specified \fBfilenames\fP\&.
 .SH DIFFERENCES TO LLVM-READELF
 .sp
-\fBllvm\-readelf\fP is an alias for the \fB\fI\%llvm\-readobj\fP\fP tool with a
+\fBllvm\-readelf\fP is an alias for the \fBllvm\-readobj \%<llvm-readobj\:.html>\fP tool with a
 slightly different command\-line interface and output that is GNU compatible.
 Following is a list of differences between \fBllvm\-readelf\fP and
 \fBllvm\-readobj\fP:
 .INDENT 0.0
 .IP \(bu 2
-\fBllvm\-readelf\fP uses \fIGNU\fP for the \fI\%\-\-elf\-output\-style\fP option
+\fBllvm\-readelf\fP uses \fIGNU\fP for the \fB\-\-elf\-output\-style\fP option
 by default. \fBllvm\-readobj\fP uses \fILLVM\fP\&.
 .IP \(bu 2
 \fBllvm\-readelf\fP allows single\-letter grouped flags (e.g.
 \fBllvm\-readelf \-SW\fP is the same as  \fBllvm\-readelf \-S \-W\fP).
 \fBllvm\-readobj\fP does not allow grouping.
 .IP \(bu 2
-\fBllvm\-readelf\fP provides \fI\%\-s\fP as an alias for
-\fI\%\-\-symbols\fP, for GNU \fBreadelf\fP compatibility, whereas it is
-an alias for \fI\%\-\-section\-headers\fP in \fBllvm\-readobj\fP\&.
+\fBllvm\-readelf\fP provides \fB\-s\fP as an alias for
+\fB\-\-symbols\fP, for GNU \fBreadelf\fP compatibility, whereas it is
+an alias for \fB\-\-section\-headers\fP in \fBllvm\-readobj\fP\&.
 .IP \(bu 2
-\fBllvm\-readobj\fP provides \fB\-t\fP as an alias for \fI\%\-\-symbols\fP\&.
+\fBllvm\-readobj\fP provides \fB\-t\fP as an alias for \fB\-\-symbols\fP\&.
 \fBllvm\-readelf\fP does not.
 .IP \(bu 2
 \fBllvm\-readobj\fP provides \fB\-\-sr\fP, \fB\-\-sd\fP, \fB\-\-st\fP and \fB\-\-dt\fP as
-aliases for \fI\%\-\-section\-relocations\fP, \fI\%\-\-section\-data\fP,
-\fI\%\-\-section\-symbols\fP and \fI\%\-\-dyn\-symbols\fP respectively.
+aliases for \fB\-\-section\-relocations\fP, \fB\-\-section\-data\fP,
+\fB\-\-section\-symbols\fP and \fB\-\-dyn\-symbols\fP respectively.
 \fBllvm\-readelf\fP does not provide these aliases, to avoid conflicting
 with grouped flags.
 .UNINDENT
@@ -98,7 +99,7 @@ XCOFF file formats.
 .INDENT 0.0
 .TP
 .B \-\-expand\-relocs
-When used with \fI\%\-\-relocs\fP, display each relocation in an expanded
+When used with \fB\-\-relocs\fP, display each relocation in an expanded
 multi\-line format.
 .UNINDENT
 .INDENT 0.0
@@ -109,8 +110,8 @@ Display file headers.
 .INDENT 0.0
 .TP
 .B \-\-headers, \-e
-Equivalent to setting: \fI\%\-\-file\-header\fP, \fI\%\-\-program\-headers\fP,
-and \fI\%\-\-sections\fP\&.
+Equivalent to setting: \fB\-\-file\-header\fP, \fB\-\-program\-headers\fP,
+and \fB\-\-sections\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -144,6 +145,11 @@ XCOFF file formats. The option is enabled by default.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-offloading
+Display list of HIP offload bundles.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-relocations, \-\-relocs, \-r
 Display the relocation entries in the file.
 .UNINDENT
@@ -155,19 +161,19 @@ Display all sections.
 .INDENT 0.0
 .TP
 .B \-\-section\-data, \-\-sd
-When used with \fI\%\-\-sections\fP, display section data for each section
+When used with \fB\-\-sections\fP, display section data for each section
 shown. This option has no effect for GNU style output.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-section\-relocations, \-\-sr
-When used with \fI\%\-\-sections\fP, display relocations for each section
+When used with \fB\-\-sections\fP, display relocations for each section
 shown. This option has no effect for GNU style output.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-section\-symbols, \-\-st
-When used with \fI\%\-\-sections\fP, display symbols for each section shown.
+When used with \fB\-\-sections\fP, display symbols for each section shown.
 This option has no effect for GNU style output.
 .UNINDENT
 .INDENT 0.0
@@ -236,7 +242,7 @@ When pgo analysis maps are present in the basic block address map section(s),
 analyses with special formats (i.e. BlockFrequency, BranchProbability, etc)
 are printed using the same format as their respective analysis pass.
 .sp
-Requires \fI\%\-\-bb\-addr\-map\fP to have an effect.
+Requires \fB\-\-bb\-addr\-map\fP to have an effect.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -316,7 +322,7 @@ Display all notes.
 .INDENT 0.0
 .TP
 .B \-\-pretty\-print
-When used with \fI\%\-\-elf\-output\-style\fP, JSON output will be formatted in
+When used with \fB\-\-elf\-output\-style\fP, JSON output will be formatted in
 a more readable format.
 .UNINDENT
 .INDENT 0.0
@@ -471,10 +477,9 @@ Display relocation entries of loader section.
 exit code if there were any errors.
 .SH SEE ALSO
 .sp
-\fB\fI\%llvm\-nm(1)\fP\fP, \fB\fI\%llvm\-objdump(1)\fP\fP, \fB\fI\%llvm\-readelf(1)\fP\fP
-.SH AUTHOR
+\fBllvm\-nm(1) \%<llvm-nm\:.html>\fP, \fBllvm\-objdump(1) \%<llvm-objdump\:.html>\fP, \fBllvm\-readelf(1) \%<llvm-readelf\:.html>\fP
+.SH Author
 Maintained by the LLVM Team (https://llvm.org/).
-.SH COPYRIGHT
-2003-2024, LLVM Project
-.\" Generated by docutils manpage writer.
-.
+.SH Copyright
+2003-2026, LLVM Project
+.\" End of generated man page.

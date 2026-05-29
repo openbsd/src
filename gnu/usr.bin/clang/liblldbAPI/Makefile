@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbAPI
 NOPIC=
@@ -21,7 +21,6 @@ SRCS=	SBAddress.cpp \
 	SBCommandReturnObject.cpp \
 	SBCommunication.cpp \
 	SBCompileUnit.cpp \
-	SBSaveCoreOptions.cpp \
 	SBData.cpp \
 	SBDebugger.cpp \
 	SBDeclaration.cpp \
@@ -30,11 +29,12 @@ SRCS=	SBAddress.cpp \
 	SBEvent.cpp \
 	SBExecutionContext.cpp \
 	SBExpressionOptions.cpp \
-	SBFileSpec.cpp \
 	SBFile.cpp \
+	SBFileSpec.cpp \
 	SBFileSpecList.cpp \
 	SBFormat.cpp \
 	SBFrame.cpp \
+	SBFrameList.cpp \
 	SBFunction.cpp \
 	SBHostOS.cpp \
 	SBInstruction.cpp \
@@ -47,13 +47,16 @@ SRCS=	SBAddress.cpp \
 	SBMemoryRegionInfoList.cpp \
 	SBModule.cpp \
 	SBModuleSpec.cpp \
+	SBMutex.cpp \
 	SBPlatform.cpp \
 	SBProcess.cpp \
 	SBProcessInfo.cpp \
 	SBProcessInfoList.cpp \
+	SBProgress.cpp \
 	SBQueue.cpp \
 	SBQueueItem.cpp \
 	SBReproducer.cpp \
+	SBSaveCoreOptions.cpp \
 	SBScriptObject.cpp \
 	SBSection.cpp \
 	SBSourceManager.cpp \
@@ -78,12 +81,12 @@ SRCS=	SBAddress.cpp \
 	SBTypeNameSpecifier.cpp \
 	SBTypeSummary.cpp \
 	SBTypeSynthetic.cpp \
+	SBUnixSignals.cpp \
 	SBValue.cpp \
 	SBValueList.cpp \
 	SBVariablesOptions.cpp \
 	SBWatchpoint.cpp \
 	SBWatchpointOptions.cpp \
-	SBUnixSignals.cpp \
 	SystemInitializerFull.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/API

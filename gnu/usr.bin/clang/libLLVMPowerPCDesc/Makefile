@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMPowerPCDesc
 NOPROFILE=
@@ -11,7 +11,6 @@ SRCS+=	PPCAsmBackend.cpp \
 	PPCMCTargetDesc.cpp \
 	PPCMCAsmInfo.cpp \
 	PPCMCCodeEmitter.cpp \
-	PPCMCExpr.cpp \
 	PPCPredicates.cpp \
 	PPCELFObjectWriter.cpp \
 	PPCXCOFFObjectWriter.cpp \

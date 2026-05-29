@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2026/05/07 09:28:48 robert Exp $
+# $OpenBSD: Makefile,v 1.17 2026/05/29 11:18:32 robert Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -6,16 +6,15 @@ NOMAN=
 .include <bsd.own.mk>
 
 # TableGen
-SRCS=	ARMTargetDefEmitter.cpp \
-	AsmMatcherEmitter.cpp \
+SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
-	Attributes.cpp \
 	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenMapTable.cpp \
 	CompressInstEmitter.cpp \
 	DAGISelEmitter.cpp \
+	DAGISelMatcher.cpp \
 	DAGISelMatcherEmitter.cpp \
 	DAGISelMatcherGen.cpp \
 	DAGISelMatcherOpt.cpp \
@@ -23,7 +22,8 @@ SRCS=	ARMTargetDefEmitter.cpp \
 	DFAPacketizerEmitter.cpp \
 	DXILEmitter.cpp \
 	DecoderEmitter.cpp \
-	DirectiveEmitter.cpp \
+	DecoderTableEmitter.cpp \
+	DecoderTree.cpp \
 	DisassemblerEmitter.cpp \
 	ExegesisEmitter.cpp \
 	FastISelEmitter.cpp \
@@ -31,29 +31,38 @@ SRCS=	ARMTargetDefEmitter.cpp \
 	GlobalISelEmitter.cpp \
 	InstrDocsEmitter.cpp \
 	InstrInfoEmitter.cpp \
-	IntrinsicEmitter.cpp \
 	MacroFusionPredicatorEmitter.cpp \
-	OptParserEmitter.cpp \
-	OptRSTEmitter.cpp \
+	OptionParserEmitter.cpp \
+	OptionRSTEmitter.cpp \
 	PseudoLoweringEmitter.cpp \
-	RISCVTargetDefEmitter.cpp \
 	RegisterBankEmitter.cpp \
 	RegisterInfoEmitter.cpp \
+	SDNodeInfoEmitter.cpp \
 	SearchableTableEmitter.cpp \
 	SubtargetEmitter.cpp \
-	TableGen.cpp \
-	VTEmitter.cpp \
 	WebAssemblyDisassemblerEmitter.cpp \
 	X86DisassemblerTables.cpp \
 	X86InstrMappingEmitter.cpp \
 	X86FoldTablesEmitter.cpp \
 	X86MnemonicTables.cpp \
 	X86ModRMFilters.cpp \
-	X86RecognizableInstr.cpp
+	X86RecognizableInstr.cpp \
+	llvm-tblgen.cpp
 
 # TableGen/Basic
-SRCS+=	CodeGenIntrinsics.cpp \
-	SDNodeProperties.cpp
+SRCS+=	ARMTargetDefEmitter.cpp \
+	Attributes.cpp \
+	CodeGenIntrinsics.cpp \
+	DirectiveEmitter.cpp \
+	IntrinsicEmitter.cpp \
+	RISCVTargetDefEmitter.cpp \
+	RuntimeLibcallsEmitter.cpp \
+	RuntimeLibcalls.cpp \
+	SDNodeProperties.cpp \
+	TableGen.cpp \
+	TargetFeaturesEmitter.cpp \
+	TargetLibraryInfoEmitter.cpp \
+	VTEmitter.cpp
 
 # TableGen/Common
 SRCS+=	AsmWriterInst.cpp \
@@ -64,12 +73,13 @@ SRCS+=	AsmWriterInst.cpp \
 	CodeGenRegisters.cpp \
 	CodeGenSchedule.cpp \
 	CodeGenTarget.cpp \
-	DAGISelMatcher.cpp \
 	InfoByHwMode.cpp \
+	InstructionEncoding.cpp \
 	OptEmitter.cpp \
 	PredicateExpander.cpp \
 	SubtargetFeatureInfo.cpp \
 	Types.cpp \
+	Utils.cpp \
 	VarLenCodeEmitterGen.cpp
 
 # TableGen/Common/GlobalISel

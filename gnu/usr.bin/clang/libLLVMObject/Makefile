@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.13 2026/05/29 11:18:31 robert Exp $
 
 LIB=	LLVMObject
 NOPROFILE=
@@ -27,8 +27,10 @@ SRCS+=	Archive.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
 	OffloadBinary.cpp \
+	OffloadBundle.cpp \
 	RecordStreamer.cpp \
 	RelocationResolver.cpp \
+	SFrameParser.cpp \
 	SymbolicFile.cpp \
 	SymbolSize.cpp \
 	TapiFile.cpp \

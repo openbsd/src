@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:31 robert Exp $
 
 LIB=	clangLex
 NOPIC=
@@ -13,10 +13,12 @@ SRCS=	DependencyDirectivesScanner.cpp \
 	HeaderSearch.cpp \
 	InitHeaderSearch.cpp \
 	Lexer.cpp \
+	LexHLSLRootSignature.cpp \
 	LiteralSupport.cpp \
 	MacroArgs.cpp \
 	MacroInfo.cpp \
 	ModuleMap.cpp \
+	ModuleMapFile.cpp \
 	PPCaching.cpp \
 	PPCallbacks.cpp \
 	PPConditionalDirectiveRecord.cpp \

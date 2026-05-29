@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 NOPROFILE=
@@ -8,24 +8,26 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AMDGPU \
 
 SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAlwaysInlinePass.cpp \
-	AMDGPUAnnotateKernelFeatures.cpp \
 	AMDGPUAnnotateUniformValues.cpp \
 	AMDGPUArgumentUsageInfo.cpp \
+	AMDGPUAsanInstrumentation.cpp \
 	AMDGPUAsmPrinter.cpp \
 	AMDGPUAtomicOptimizer.cpp \
 	AMDGPUAttributor.cpp \
+	AMDGPUBarrierLatency.cpp \
 	AMDGPUCallLowering.cpp \
-	AMDGPUCodeGenPassBuilder.cpp \
 	AMDGPUCodeGenPrepare.cpp \
 	AMDGPUCombinerHelper.cpp \
 	AMDGPUCtorDtorLowering.cpp \
 	AMDGPUExportClustering.cpp \
+	AMDGPUExportKernelRuntimeHandles.cpp \
 	AMDGPUFrameLowering.cpp \
 	AMDGPUGlobalISelDivergenceLowering.cpp \
 	AMDGPUGlobalISelUtils.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
 	AMDGPUInsertDelayAlu.cpp \
 	AMDGPUInstCombineIntrinsic.cpp \
+	AMDGPUUniformIntrinsicCombine.cpp \
 	AMDGPUInstrInfo.cpp \
 	AMDGPUInstructionSelector.cpp \
 	AMDGPUISelDAGToDAG.cpp \
@@ -36,40 +38,52 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUImageIntrinsicOptimizer.cpp \
 	AMDGPULibFunc.cpp \
 	AMDGPULowerBufferFatPointers.cpp \
+	AMDGPULowerIntrinsics.cpp \
 	AMDGPULowerKernelArguments.cpp \
 	AMDGPULowerKernelAttributes.cpp \
 	AMDGPULowerModuleLDSPass.cpp \
-	AMDGPUMachineCFGStructurizer.cpp \
+	AMDGPUPrepareAGPRAlloc.cpp \
+	AMDGPULowerExecSync.cpp \
+	AMDGPUSwLowerLDS.cpp \
 	AMDGPUMachineFunction.cpp \
 	AMDGPUMachineModuleInfo.cpp \
 	AMDGPUMacroFusion.cpp \
 	AMDGPUMCInstLower.cpp \
+	AMDGPUMemoryUtils.cpp \
 	AMDGPUIGroupLP.cpp \
-	AMDGPUInsertSingleUseVDST.cpp \
+	AMDGPULowerVGPREncoding.cpp \
+	AMDGPUMCResourceInfo.cpp \
 	AMDGPUMarkLastScratchLoad.cpp \
 	AMDGPUMIRFormatter.cpp \
-	AMDGPUOpenCLEnqueuedBlockLowering.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
 	AMDGPUPostLegalizerCombiner.cpp \
 	AMDGPUPreLegalizerCombiner.cpp \
+	AMDGPUPreloadKernArgProlog.cpp \
+	AMDGPUPreloadKernelArguments.cpp \
 	AMDGPUPrintfRuntimeBinding.cpp \
 	AMDGPUPromoteAlloca.cpp \
 	AMDGPUPromoteKernelArguments.cpp \
 	AMDGPURegBankCombiner.cpp \
+	AMDGPURegBankLegalize.cpp \
+	AMDGPURegBankLegalizeHelper.cpp \
+	AMDGPURegBankLegalizeRules.cpp \
 	AMDGPURegBankSelect.cpp \
 	AMDGPURegisterBankInfo.cpp \
 	AMDGPURemoveIncompatibleFunctions.cpp \
+	AMDGPUReserveWWMRegs.cpp \
 	AMDGPUResourceUsageAnalysis.cpp \
+	AMDGPURewriteAGPRCopyMFMA.cpp \
 	AMDGPURewriteOutArguments.cpp \
 	AMDGPURewriteUndefForPHI.cpp \
+	AMDGPUSelectionDAGInfo.cpp \
 	AMDGPUSetWavePriority.cpp \
 	AMDGPUSplitModule.cpp \
 	AMDGPUSubtarget.cpp \
 	AMDGPUTargetMachine.cpp \
 	AMDGPUTargetObjectFile.cpp \
 	AMDGPUTargetTransformInfo.cpp \
+	AMDGPUWaitSGPRHazards.cpp \
 	AMDGPUUnifyDivergentExitNodes.cpp \
-	AMDGPUUnifyMetadata.cpp \
 	R600MachineCFGStructurizer.cpp \
 	GCNCreateVOPD.cpp \
 	GCNDPPCombine.cpp \
@@ -83,10 +97,10 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	GCNRegPressure.cpp \
 	GCNRewritePartialRegUses.cpp \
 	GCNSchedStrategy.cpp \
+	GCNSubtarget.cpp \
 	GCNVOPDUtils.cpp \
 	R600AsmPrinter.cpp \
 	R600ClauseMergePass.cpp \
-	R600CodeGenPassBuilder.cpp \
 	R600ControlFlowFinalizer.cpp \
 	R600EmitClauseMarkers.cpp \
 	R600ExpandSpecialInstrs.cpp \

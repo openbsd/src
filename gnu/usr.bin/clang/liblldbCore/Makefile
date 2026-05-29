@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:33 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2026/05/29 11:18:31 robert Exp $
 
 LIB=	lldbCore
 NOPIC=
@@ -16,6 +16,7 @@ SRCS=	Address.cpp \
 	Debugger.cpp \
 	DebuggerEvents.cpp \
 	Declaration.cpp \
+	DemangledNameInfo.cpp \
 	Disassembler.cpp \
 	DumpDataExtractor.cpp \
 	DumpRegisterValue.cpp \
@@ -34,30 +35,18 @@ SRCS=	Address.cpp \
 	Opcode.cpp \
 	PluginManager.cpp \
 	Progress.cpp \
+	ProtocolServer.cpp \
+	Statusline.cpp \
 	RichManglingContext.cpp \
 	SearchFilter.cpp \
 	Section.cpp \
 	SourceLocationSpec.cpp \
 	SourceManager.cpp \
 	StreamAsynchronousIO.cpp \
+	Telemetry.cpp \
 	ThreadedCommunication.cpp \
 	UserSettingsController.cpp \
-	Value.cpp \
-	ValueObject.cpp \
-	ValueObjectCast.cpp \
-	ValueObjectChild.cpp \
-	ValueObjectConstResult.cpp \
-	ValueObjectConstResultCast.cpp \
-	ValueObjectConstResultChild.cpp \
-	ValueObjectConstResultImpl.cpp \
-	ValueObjectDynamicValue.cpp \
-	ValueObjectList.cpp \
-	ValueObjectMemory.cpp \
-	ValueObjectRegister.cpp \
-	ValueObjectSyntheticFilter.cpp \
-	ValueObjectUpdater.cpp \
-	ValueObjectVariable.cpp \
-	ValueObjectVTable.cpp
+	Value.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Core
 

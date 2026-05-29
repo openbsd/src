@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.15 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMCore
 NOPROFILE=
@@ -15,6 +15,7 @@ SRCS+=	AbstractCallSite.cpp \
 	BuiltinGCs.cpp \
 	Comdat.cpp \
 	ConstantFold.cpp \
+	ConstantFPRange.cpp \
 	ConstantRange.cpp \
 	ConstantRangeList.cpp \
 	Constants.cpp \
@@ -32,12 +33,16 @@ SRCS+=	AbstractCallSite.cpp \
 	DiagnosticInfo.cpp \
 	DiagnosticPrinter.cpp \
 	Dominators.cpp \
+	DroppedVariableStats.cpp \
+	DroppedVariableStatsIR.cpp \
 	EHPersonalities.cpp \
 	FPEnv.cpp \
 	Function.cpp \
 	GCStrategy.cpp \
 	GVMaterializer.cpp \
 	Globals.cpp \
+	Intrinsics.cpp \
+	NVVMIntrinsicUtils.cpp \
 	IRBuilder.cpp \
 	IRPrintingPasses.cpp \
 	SSAContext.cpp \
@@ -78,7 +83,7 @@ SRCS+=	AbstractCallSite.cpp \
 	User.cpp \
 	Value.cpp \
 	ValueSymbolTable.cpp \
-	VectorBuilder.cpp \
+	VectorTypeUtils.cpp \
 	VFABIDemangler.cpp \
 	Verifier.cpp
 

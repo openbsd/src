@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:24 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMARMDesc
 NOPROFILE=
@@ -13,7 +13,6 @@ SRCS+=	ARMAsmBackend.cpp \
 	ARMMachORelocationInfo.cpp \
 	ARMMCAsmInfo.cpp \
 	ARMMCCodeEmitter.cpp \
-	ARMMCExpr.cpp \
 	ARMMCTargetDesc.cpp \
 	ARMTargetStreamer.cpp \
 	ARMUnwindOpAsm.cpp \

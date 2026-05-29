@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.19 2026/05/29 11:18:30 robert Exp $
 
 LIB=	LLVMCodeGen
 NOPROFILE=
@@ -18,6 +18,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	BasicBlockSections.cpp \
 	BasicBlockPathCloning.cpp \
 	BasicBlockSectionsProfileReader.cpp \
+	BasicBlockMatchingAndInference.cpp \
 	CalcSpillWeights.cpp \
 	CallBrPrepare.cpp \
 	CallingConvLower.cpp \
@@ -33,13 +34,13 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	DeadMachineInstructionElim.cpp \
 	DetectDeadLanes.cpp \
 	DFAPacketizer.cpp \
+	DroppedVariableStatsMIR.cpp \
 	DwarfEHPrepare.cpp \
 	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
-	EHContGuardCatchret.cpp \
+	EHContGuardTargets.cpp \
 	ExecutionDomainFix.cpp \
-	ExpandLargeDivRem.cpp \
-	ExpandLargeFpConvert.cpp \
+	ExpandIRInsts.cpp \
 	ExpandMemCmp.cpp \
 	ExpandPostRAPseudos.cpp \
 	ExpandReductions.cpp \
@@ -54,12 +55,14 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	GCMetadataPrinter.cpp \
 	GCRootLowering.cpp \
 	GlobalMerge.cpp \
+	GlobalMergeFunctions.cpp \
 	HardwareLoops.cpp \
 	IfConversion.cpp \
 	ImplicitNullChecks.cpp \
 	IndirectBrExpandPass.cpp \
 	InitUndef.cpp \
 	InlineSpiller.cpp \
+	InsertCodePrefetch.cpp \
 	InterferenceCache.cpp \
 	InterleavedAccessPass.cpp \
 	InterleavedLoadCombinePass.cpp \
@@ -69,6 +72,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LatencyPriorityQueue.cpp \
 	LazyMachineBlockFrequencyInfo.cpp \
 	LexicalScopes.cpp \
+	LibcallLoweringInfo.cpp \
 	LiveDebugVariables.cpp \
 	LiveIntervals.cpp \
 	LiveInterval.cpp \
@@ -82,13 +86,14 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LiveRegUnits.cpp \
 	LiveStacks.cpp \
 	LiveVariables.cpp \
-	LLVMTargetMachine.cpp \
+	CodeGenTargetMachineImpl.cpp \
 	LocalStackSlotAllocation.cpp \
 	LoopTraversal.cpp \
 	LowLevelTypeUtils.cpp \
 	LowerEmuTLS.cpp \
 	MachineBasicBlock.cpp \
 	MachineBlockFrequencyInfo.cpp \
+	MachineBlockHashInfo.cpp \
 	MachineBlockPlacement.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineCFGPrinter.cpp \
@@ -137,6 +142,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MIRFSDiscriminator.cpp \
 	MIRSampleProfile.cpp \
 	MIRYamlMapping.cpp \
+	MIR2Vec.cpp \
 	MLRegAllocEvictAdvisor.cpp \
 	MLRegAllocPriorityAdvisor.cpp \
 	ModuloSchedule.cpp \
@@ -183,6 +189,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegisterUsageInfo.cpp \
 	RegUsageInfoCollector.cpp \
 	RegUsageInfoPropagate.cpp \
+	RemoveLoadsIntoFakeUses.cpp \
 	ReplaceWithVeclib.cpp \
 	ResetMachineFunctionPass.cpp \
 	ReturnProtectorLowering.cpp \
@@ -209,6 +216,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	StackMaps.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
+	StaticDataSplitter.cpp \
+	StaticDataAnnotator.cpp \
 	SwiftErrorValueTracking.cpp \
 	SwitchLoweringUtils.cpp \
 	TailDuplication.cpp \
@@ -230,6 +239,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	VirtRegMap.cpp \
 	WasmEHPrepare.cpp \
 	WindowScheduler.cpp \
+	WindowsSecureHotPatching.cpp \
 	WinEHPrepare.cpp \
 	XRayInstrumentation.cpp
 	
