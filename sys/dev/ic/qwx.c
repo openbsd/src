@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.116 2026/05/29 09:32:06 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.117 2026/05/29 09:35:29 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15260,6 +15260,13 @@ qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
 	while (num_remain > 0) {
 		const size_t size = DP_RX_BUFFER_SIZE;
 
+		idx = qwx_next_free_rxbuf_idx(rx_ring);
+		if (idx == -1)
+			break;
+
+		rx_data = &rx_ring->rx_data[idx];
+		KASSERT(rx_data->map);
+
 		m = m_gethdr(M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			goto fail_free_mbuf;
@@ -15272,13 +15279,6 @@ qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
 			goto fail_free_mbuf;
 
 		m->m_len = m->m_pkthdr.len = size;
-
-		idx = qwx_next_free_rxbuf_idx(rx_ring);
-		if (idx == -1)
-			goto fail_free_mbuf;
-
-		rx_data = &rx_ring->rx_data[idx];
-		KASSERT(rx_data->map);
 		
 		ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_data->map, m,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT);
