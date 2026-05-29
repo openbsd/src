@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.9 2020/10/26 12:11:47 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.10 2026/05/29 13:21:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -29,7 +29,7 @@
 #include <openssl/x509_vfy.h>
 
 static int verbose = 0;
-static int json = 0; /* print out json like bettertls expects resuls in */
+static int json = 0; /* print out json like bettertls expects results in */
 
 static int
 passwd_cb(char *buf, int size, int rwflag, void *u)
