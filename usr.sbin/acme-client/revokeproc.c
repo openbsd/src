@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.29 2026/05/29 04:12:22 tb Exp $ */
+/*	$Id: revokeproc.c,v 1.30 2026/05/29 04:17:55 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,10 +40,10 @@
 static int
 X509notafter(const X509 *x, time_t *notafter)
 {
-	ASN1_TIME	*atim;
+	const ASN1_TIME	*atim;
 	struct tm	 t;
 
-	if ((atim = X509_getm_notAfter(x)) == NULL)
+	if ((atim = X509_get0_notAfter(x)) == NULL)
 		return -1;
 
 	memset(&t, 0, sizeof(t));
@@ -64,10 +64,10 @@ X509notafter(const X509 *x, time_t *notafter)
 static int
 X509notbefore(const X509 *x, time_t *notbefore)
 {
-	ASN1_TIME	*atim;
+	const ASN1_TIME	*atim;
 	struct tm	 t;
 
-	if ((atim = X509_getm_notBefore(x)) == NULL)
+	if ((atim = X509_get0_notBefore(x)) == NULL)
 		return -1;
 
 	memset(&t, 0, sizeof(t));
