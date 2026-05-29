@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.52 2026/04/15 00:20:28 job Exp $
+.\"	$OpenBSD: ctime.3,v 1.53 2026/05/29 06:33:12 job Exp $
 .\"
 .\"
-.Dd $Mdocdate: April 15 2026 $
+.Dd $Mdocdate: May 29 2026 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -396,6 +396,8 @@ instead.
 .Pp
 A workaround for the ambiguous return value of
 .Fn mktime
+and
+.Fn timegm
 is to use
 .Fa tm_wday
 as a sentinel.
