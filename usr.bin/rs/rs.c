@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.30 2015/12/03 12:23:15 schwarze Exp $	*/
+/*	$OpenBSD: rs.c,v 1.31 2026/05/30 15:18:44 renaud Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -146,6 +146,8 @@ getfile(void)
 			icols++;
 			while (*p && *p != isep)
 				p++;
+			if (*p == '\0')
+				break;
 		}
 	ep = getptrs(NULL);
 	p = curline;
