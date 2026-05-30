@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1328 2026/05/28 07:23:52 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1329 2026/05/30 11:19:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3306,7 +3306,7 @@ void	 screen_redraw_screen(struct client *);
 void	 screen_redraw_pane(struct client *, struct window_pane *, int);
 int	 screen_redraw_is_visible(struct visible_ranges *, u_int);
 struct visible_ranges *screen_redraw_get_visible_ranges(struct window_pane *,
-	     u_int, u_int, u_int, struct visible_ranges *);
+	     int, int, u_int, struct visible_ranges *);
 
 /* screen.c */
 void	 screen_init(struct screen *, u_int, u_int, u_int);

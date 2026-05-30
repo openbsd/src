@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.260 2026/05/30 09:48:30 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.261 2026/05/30 11:19:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1129,7 +1129,7 @@ screen_write_redraw_line(struct screen_write_ctx *ctx, struct tty_ctx *ttyctx,
 	struct screen		*s = ctx->s;
 	struct grid_cell	 gc, ngc;
 	u_int			 sx = screen_size_x(s), cx, i, n;
-	u_int			 xoff = wp->xoff, yoff = wp->yoff;
+	int			 xoff = wp->xoff, yoff = wp->yoff;
 	struct visible_ranges	*r;
 	struct visible_range	*ri;
 
