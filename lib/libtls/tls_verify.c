@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.33 2026/03/28 11:33:33 tb Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.34 2026/05/30 17:06:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -58,6 +58,9 @@ tls_match_name(const char *cert_name, const char *name)
 		next_dot = strchr(&cert_domain[1], '.');
 		/* Disallow "*.bar" */
 		if (next_dot == NULL)
+			return -1;
+		/* Disallow "*.bar." */
+		if (next_dot[1] == '\0')
 			return -1;
 		/* Disallow "*.bar.." */
 		if (next_dot[1] == '.')
