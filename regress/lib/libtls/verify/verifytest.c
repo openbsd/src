@@ -1,4 +1,4 @@
-/*	$OpenBSD: verifytest.c,v 1.9 2026/05/30 16:55:09 jsing Exp $	*/
+/*	$OpenBSD: verifytest.c,v 1.10 2026/05/30 17:04:48 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -121,6 +121,14 @@ struct verify_test verify_tests[] = {
 		.common_name = "*.org",
 		.common_name_len = -1,
 		.name = "openbsd.org",
+		.want_return = 0,
+		.want_match = 0,
+	},
+	{
+		/* CN wildcard without SANs - invalid CN wildcard. */
+		.common_name = "*.org.",
+		.common_name_len = -1,
+		.name = "openbsd.org.",
 		.want_return = 0,
 		.want_match = 0,
 	},
