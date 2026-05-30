@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.21 2025/12/15 12:59:24 dlg Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.22 2026/05/30 11:17:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -62,19 +62,14 @@
 #define  AIC_IPI_OTHER		(1U << 0)
 #define  AIC_IPI_SELF		(1U << 31)
 #define AIC_TARGET_CPU(irq)	(0x3000 + ((irq) << 2))
-#define AIC_SW_SET(irq)		(0x4000 + (((irq) >> 5) << 2))
-#define AIC_SW_CLR(irq)		(0x4080 + (((irq) >> 5) << 2))
+#define AIC_SW_REG(off, irq)	((off) + (((irq) >> 5) << 2))
 #define  AIC_SW_BIT(irq)	(1U << ((irq) & 0x1f))
-#define AIC_MASK_SET(irq)	(0x4100 + (((irq) >> 5) << 2))
-#define AIC_MASK_CLR(irq)	(0x4180 + (((irq) >> 5) << 2))
+#define AIC_MASK_REG(off, irq)	((off) + (((irq) >> 5) << 2))
 #define  AIC_MASK_BIT(irq)	(1U << ((irq) & 0x1f))
 
+#define AIC2_INFO3		0x000c
 #define AIC2_CONFIG		0x0014
 #define  AIC2_CONFIG_ENABLE	(1 << 0)
-#define AIC2_SW_SET(die, irq)	(0x6000 + (die) * 0x4a00 + (((irq) >> 5) << 2))
-#define AIC2_SW_CLR(die, irq)	(0x6200 + (die) * 0x4a00 + (((irq) >> 5) << 2))
-#define AIC2_MASK_SET(die, irq)	(0x6400 + (die) * 0x4a00 + (((irq) >> 5) << 2))
-#define AIC2_MASK_CLR(die, irq)	(0x6600 + (die) * 0x4a00 + (((irq) >> 5) << 2))
 #define AIC2_EVENT		0xc000
 
 #define AIC_MAXCPUS		32
@@ -110,13 +105,19 @@ struct aplintc_softc {
 
 	int			sc_version;
 
+	bus_size_t		sc_sw_clr;
+	bus_size_t		sc_sw_set;
+	bus_size_t		sc_mask_clr;
+	bus_size_t		sc_mask_set;
+	bus_size_t		sc_die_stride;
+
 	struct interrupt_controller sc_ic;
 
 	struct intrhand		*sc_fiq_handler;
 	int			sc_fiq_pending[AIC_MAXCPUS];
 	struct intrhand		**sc_irq_handler[AIC_MAXDIES];
-	int 			sc_nirq;
-	int			sc_ndie;
+	int 			sc_nirq, sc_nirq_max;
+	int			sc_ndie, sc_ndie_max;
 	int			sc_ncells;
 	TAILQ_HEAD(, intrhand)	sc_irq_list[NIPL];
 
@@ -128,37 +129,29 @@ struct aplintc_softc {
 static inline void
 aplintc_sw_clr(struct aplintc_softc *sc, int die, int irq)
 {
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_SW_CLR(irq), AIC_SW_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_SW_CLR(die, irq), AIC_SW_BIT(irq));
+	bus_size_t off = sc->sc_sw_clr + die * sc->sc_die_stride;
+	HWRITE4(sc, AIC_SW_REG(off, irq), AIC_SW_BIT(irq));
 }
 
 static inline void
 aplintc_sw_set(struct aplintc_softc *sc, int die, int irq)
 {
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_SW_SET(irq), AIC_SW_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_SW_SET(die, irq), AIC_SW_BIT(irq));
+	bus_size_t off = sc->sc_sw_set + die * sc->sc_die_stride;
+	HWRITE4(sc, AIC_SW_REG(off, irq), AIC_SW_BIT(irq));
 }
 
 static inline void
 aplintc_mask_clr(struct aplintc_softc *sc, int die, int irq)
 {
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_MASK_CLR(die, irq), AIC_MASK_BIT(irq));
+	bus_size_t off = sc->sc_mask_clr + die * sc->sc_die_stride;
+	HWRITE4(sc, AIC_MASK_REG(off, irq), AIC_MASK_BIT(irq));
 }
 
 static inline void
 aplintc_mask_set(struct aplintc_softc *sc, int die, int irq)
 {
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_MASK_SET(irq), AIC_MASK_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_MASK_SET(die, irq), AIC_MASK_BIT(irq));
+	bus_size_t off = sc->sc_mask_set + die * sc->sc_die_stride;
+	HWRITE4(sc, AIC_MASK_REG(off, irq), AIC_MASK_BIT(irq));
 }
 
 struct aplintc_softc *aplintc_sc;
@@ -199,7 +192,8 @@ aplintc_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "apple,aic") ||
-	    OF_is_compatible(faa->fa_node, "apple,aic2");
+	    OF_is_compatible(faa->fa_node, "apple,aic2") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8122-aic3");
 }
 
 void
@@ -207,6 +201,7 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aplintc_softc *sc = (struct aplintc_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	bus_size_t base;
 	uint32_t info;
 	int die, ipl;
 
@@ -222,7 +217,9 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (OF_is_compatible(faa->fa_node, "apple,aic2"))
+	if (OF_is_compatible(faa->fa_node, "apple,t8122-aic3"))
+		sc->sc_version = 3;
+	else if (OF_is_compatible(faa->fa_node, "apple,aic2"))
 		sc->sc_version = 2;
 	else
 		sc->sc_version = 1;
@@ -234,10 +231,10 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * AIC2 has the event register specified separately.  However
-	 * a preliminary device tree binding for AIC2 had it included
-	 * in the main register area, like with AIC1.  Support both
-	 * for now.
+	 * AIC2 and up have the event register specified separately.
+	 * However a preliminary device tree binding for AIC2 had it
+	 * included in the main register area, like with AIC1.
+	 * Support both for now.
 	 */
 	if (faa->fa_nreg > 1) {
 		if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
@@ -258,6 +255,31 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	info = HREAD4(sc, AIC_INFO);
 	sc->sc_nirq = AIC_INFO_NIRQ(info);
 	sc->sc_ndie = AIC_INFO_NDIE(info) + 1;
+	if (sc->sc_version == 1) {
+		sc->sc_nirq_max = 1024;
+		sc->sc_ndie_max = 1;
+		base = 0x3000;
+	} else {
+		info = HREAD4(sc, AIC2_INFO3);
+		sc->sc_nirq_max = AIC_INFO_NIRQ(info);
+		sc->sc_ndie_max = AIC_INFO_NDIE(info);
+		if (sc->sc_version == 2)
+			base = 0x2000;
+		else
+			base = 0x10000;
+	}
+
+	sc->sc_die_stride = (sc->sc_nirq_max << 2);
+	sc->sc_sw_set = base + sc->sc_die_stride;
+	sc->sc_die_stride += ((sc->sc_nirq_max >> 5) << 2);
+	sc->sc_sw_clr = base + sc->sc_die_stride;
+	sc->sc_die_stride += ((sc->sc_nirq_max >> 5) << 2);
+	sc->sc_mask_set = base + sc->sc_die_stride; 
+	sc->sc_die_stride += ((sc->sc_nirq_max >> 5) << 2);
+	sc->sc_mask_clr = base + sc->sc_die_stride;
+	sc->sc_die_stride += ((sc->sc_nirq_max >> 5) << 2);
+	sc->sc_die_stride += ((sc->sc_nirq_max >> 5) << 2);
+
 	for (die = 0; die < sc->sc_ndie; die++) {
 		sc->sc_irq_handler[die] = mallocarray(sc->sc_nirq,
 		    sizeof(struct intrhand), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -265,7 +287,8 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	for (ipl = 0; ipl < NIPL; ipl++)
 		TAILQ_INIT(&sc->sc_irq_list[ipl]);
 
-	printf(" nirq %d ndie %d\n", sc->sc_nirq, sc->sc_ndie);
+	printf(" nirq %d/%d ndie %d/%d\n", sc->sc_nirq, sc->sc_nirq_max,
+	    sc->sc_ndie, sc->sc_ndie_max);
 
 	arm_init_smask();
 
