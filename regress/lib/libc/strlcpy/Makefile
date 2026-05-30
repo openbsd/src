@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2014/12/02 20:23:05 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2026/05/30 05:07:03 anton Exp $
 
 PROG=	strlcpytest
+
+CFLAGS+=-fno-builtin
 
 .include <bsd.regress.mk>
