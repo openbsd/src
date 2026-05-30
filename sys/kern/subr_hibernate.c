@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.157 2026/05/30 07:53:05 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.158 2026/05/30 08:06:09 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1334,6 +1334,15 @@ hibernate_process_chunk(union hibernate_info *hib,
     struct hibernate_disk_chunk *chunk, paddr_t img_cur)
 {
 	char *pva = (char *)hib->piglet_va;
+
+	if (chunk->compressed_size > HIBERNATE_CHUNK_SIZE * 2) {
+		/*
+		 * XXX - this will likely reboot/hang most machines
+		 *       since the console output buffer will be unmapped,
+		 *       but there's not much else we can do here.
+		 */
+		panic("hibernate compressed chunk too large");
+	}
 
 	hibernate_copy_chunk_to_piglet(img_cur,
 	 (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)), chunk->compressed_size);
