@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.156 2026/05/30 07:24:46 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.157 2026/05/30 07:53:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1720,16 +1720,28 @@ hibernate_read_image(union hibernate_info *hib)
 		goto unmap;
 	}
 
-	for (i = 0; i < hib->chunk_ctr; i++)
+	for (i = 0; i < hib->chunk_ctr; i++) {
+		/* check for overflow */
+		if (compressed_size + chunks[i].compressed_size <
+		    compressed_size) {
+			status = 1;
+			goto unmap;
+		}
 		compressed_size += chunks[i].compressed_size;
+	}
 
 	disk_size = compressed_size;
 
 	printf("unhibernating @ block %lld length %luMB\n",
 	    hib->image_offset, compressed_size / (1024 * 1024));
 
-	/* Allocate the pig area */
+	/* Allocate the pig area and check for overflow */
 	pig_sz = compressed_size + HIBERNATE_CHUNK_SIZE;
+	if (pig_sz < compressed_size) {
+		status = 1;
+		goto unmap;
+	}
+
 	if (uvm_pmr_alloc_pig(&pig_start, pig_sz, hib->piglet_pa) == ENOMEM) {
 		status = 1;
 		goto unmap;
