@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.258 2026/05/30 08:50:09 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.259 2026/05/30 08:58:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2097,9 +2097,9 @@ screen_write_collect_flush_line(struct screen_write_ctx *ctx, u_int y)
 				w_end = r_end - xoff;
 			else
 				w_end = c_end;
-			w_length = w_end - w_start;
-			if (w_length <= 0)
+			if (w_end <= w_start)
 				continue;
+			w_length = w_end - w_start;
 
 			screen_write_set_cursor(ctx, w_start, y);
 			if (ci->type == CLEAR) {
