@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.155 2026/02/11 22:34:41 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.156 2026/05/30 07:24:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1714,6 +1714,11 @@ hibernate_read_image(union hibernate_info *hib)
 	compressed_size = 0;
 
 	chunks = (struct hibernate_disk_chunk *)chunktable;
+	if (hib->chunk_ctr > (HIBERNATE_CHUNK_TABLE_SIZE /
+	    sizeof(struct hibernate_disk_chunk))) {
+		status = 1;
+		goto unmap;
+	}
 
 	for (i = 0; i < hib->chunk_ctr; i++)
 		compressed_size += chunks[i].compressed_size;
