@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.199 2026/05/29 23:32:52 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.200 2026/05/30 08:54:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -356,7 +356,7 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 	} loadmap[ELF_MAX_VALID_PHDR];
 	int nload, idx = 0;
 	Elf_Addr pos;
-	int file_align;
+	Elf_Off file_align = PAGE_SIZE;
 	int loop;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
 	vaddr_t text_start = -1, text_end = 0;
@@ -409,11 +409,16 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			loadmap[idx].vaddr = trunc_page(ph[i].p_vaddr);
 			loadmap[idx].memsz = round_page (ph[i].p_vaddr +
 			    ph[i].p_memsz - loadmap[idx].vaddr);
-			file_align = ph[i].p_align;
+			if (ph[i].p_align > file_align)
+				file_align = ph[i].p_align;
 			idx++;
 		}
 	}
 	nload = idx;
+	if (nload == 0) {
+		error = EINVAL;
+		goto bad1;
+	}
 
 	/*
 	 * Load the interpreter where a non-fixed mmap(NULL, ...)
