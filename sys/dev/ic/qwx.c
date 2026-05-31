@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.123 2026/05/31 13:53:02 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.124 2026/05/31 13:54:17 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1221,7 +1221,8 @@ next_scan:
 		break;
 	}
 out:
-	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
+	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags) &&
+	    (ifp->if_flags & IFF_RUNNING)) {
 		if (err)
 			task_add(systq, &sc->init_task);
 		else
