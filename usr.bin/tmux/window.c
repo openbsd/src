@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.324 2026/05/27 19:36:04 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.325 2026/05/31 20:41:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2126,7 +2126,7 @@ window_pane_floating_geometry(struct window *w, __unused struct window_pane *wp,
     u_int *out_x, u_int *out_y, u_int *out_sx, u_int *out_sy,
     struct cmdq_item *item, struct args *args, char **cause)
 {
-	u_int	x, y, sx = w->sx / 2, sy = w->sy / 2;
+	u_int	x, y, sx = w->sx / 2, sy = w->sy / 4;
 
 	if (args_has(args, 'x')) {
 		sx = args_percentage_and_expand(args, 'x', 0, USHRT_MAX, w->sx,
@@ -2151,8 +2151,12 @@ window_pane_floating_geometry(struct window *w, __unused struct window_pane *wp,
 			x = 4;
 		else {
 			x = w->last_new_pane_x + 4;
-			if (w->last_new_pane_x > w->sx)
+			if (x + sx >= w->sx) {
+				w->last_new_pane_x = 0;
+				w->last_new_pane_y = 0;
 				x = 4;
+				y = 2;
+			}
 		}
 		w->last_new_pane_x = x;
 	}
@@ -2166,8 +2170,12 @@ window_pane_floating_geometry(struct window *w, __unused struct window_pane *wp,
 			y = 2;
 		else {
 			y = w->last_new_pane_y + 2;
-			if (w->last_new_pane_y > w->sy)
+			if (y + sy >= w->sy) {
+				w->last_new_pane_x = 0;
+				w->last_new_pane_y = 0;
+				x = 4;
 				y = 2;
+			}
 		}
 		w->last_new_pane_y = y;
 	}
