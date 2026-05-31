@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.120 2026/05/31 13:20:20 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.121 2026/05/31 13:21:55 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -173,6 +173,8 @@ void qwx_dp_stop_shadow_timers(struct qwx_softc *);
 void qwx_ce_stop_shadow_timers(struct qwx_softc *);
 int qwx_wmi_vdev_set_param_cmd(struct qwx_softc *, uint32_t, uint8_t,
     uint32_t, uint32_t);
+int qwx_dp_rx_h_null_q_desc(struct qwx_softc *, struct qwx_rx_msdu *,
+    struct qwx_rx_msdu_list *);
 
 int qwx_scan(struct qwx_softc *, int);
 void qwx_scan_abort(struct qwx_softc *);
@@ -1500,6 +1502,13 @@ qwx_hw_ipq8074_rx_desc_get_first_msdu(struct hal_rx_desc *desc)
 	    le32toh(desc->u.ipq8074.msdu_end.info2));
 }
 
+int
+qwx_hw_ipq8074_rx_desc_get_last_msdu(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO2_LAST_MSDU,
+			   le32toh(desc->u.ipq8074.msdu_end.info2));
+}
+
 uint8_t
 qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes(struct hal_rx_desc *desc)
 {
@@ -1670,6 +1679,12 @@ int
 qwx_dp_rx_h_msdu_end_first_msdu(struct qwx_softc *sc, struct hal_rx_desc *desc)
 {
 	return sc->hw_params.hw_ops->rx_desc_get_first_msdu(desc);
+}
+
+int
+qwx_dp_rx_h_msdu_end_last_msdu(struct qwx_softc *sc, struct hal_rx_desc *desc)
+{
+	return sc->hw_params.hw_ops->rx_desc_get_last_msdu(desc);
 }
 
 int
@@ -2140,9 +2155,7 @@ const struct ath11k_hw_ops ipq8074_ops = {
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
 #endif
 	.rx_desc_get_first_msdu = qwx_hw_ipq8074_rx_desc_get_first_msdu,
-#if notyet
-	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
-#endif
+	.rx_desc_get_last_msdu = qwx_hw_ipq8074_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes,
 	.rx_desc_get_hdr_status = qwx_hw_ipq8074_rx_desc_get_hdr_status,
 	.rx_desc_encrypt_valid = qwx_hw_ipq8074_rx_desc_encrypt_valid,
@@ -2164,9 +2177,7 @@ const struct ath11k_hw_ops ipq8074_ops = {
 	.rx_desc_get_msdu_pkt_type = ath11k_hw_ipq8074_rx_desc_get_msdu_pkt_type,
 #endif
 	.rx_desc_get_msdu_nss = qwx_hw_ipq8074_rx_desc_get_msdu_nss,
-#ifdef notyet
-	.rx_desc_get_mpdu_tid = ath11k_hw_ipq8074_rx_desc_get_mpdu_tid,
-#endif
+	.rx_desc_get_mpdu_tid = qwx_hw_ipq8074_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = qwx_hw_ipq8074_rx_desc_get_mpdu_peer_id,
 #if 0
 	.rx_desc_copy_attn_end_tlv = ath11k_hw_ipq8074_rx_desc_copy_attn_end,
@@ -2196,9 +2207,7 @@ const struct ath11k_hw_ops ipq6018_ops = {
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
 #endif
 	.rx_desc_get_first_msdu = qwx_hw_ipq8074_rx_desc_get_first_msdu,
-#if notyet
-	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
-#endif
+	.rx_desc_get_last_msdu = qwx_hw_ipq8074_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes,
 	.rx_desc_get_hdr_status = qwx_hw_ipq8074_rx_desc_get_hdr_status,
 	.rx_desc_encrypt_valid = qwx_hw_ipq8074_rx_desc_encrypt_valid,
@@ -2218,9 +2227,7 @@ const struct ath11k_hw_ops ipq6018_ops = {
 	.rx_desc_get_msdu_freq = qwx_hw_ipq8074_rx_desc_get_msdu_freq,
 	.rx_desc_get_msdu_pkt_type = qwx_hw_ipq8074_rx_desc_get_msdu_pkt_type,
 	.rx_desc_get_msdu_nss = qwx_hw_ipq8074_rx_desc_get_msdu_nss,
-#ifdef notyet
-	.rx_desc_get_mpdu_tid = ath11k_hw_ipq8074_rx_desc_get_mpdu_tid,
-#endif
+	.rx_desc_get_mpdu_tid = qwx_hw_ipq8074_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = qwx_hw_ipq8074_rx_desc_get_mpdu_peer_id,
 #if 0
 	.rx_desc_copy_attn_end_tlv = ath11k_hw_ipq8074_rx_desc_copy_attn_end,
@@ -2250,9 +2257,7 @@ const struct ath11k_hw_ops qca6390_ops = {
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
 #endif
 	.rx_desc_get_first_msdu = qwx_hw_ipq8074_rx_desc_get_first_msdu,
-#if notyet
-	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
-#endif
+	.rx_desc_get_last_msdu = qwx_hw_ipq8074_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes,
 	.rx_desc_get_hdr_status = qwx_hw_ipq8074_rx_desc_get_hdr_status,
 	.rx_desc_encrypt_valid = qwx_hw_ipq8074_rx_desc_encrypt_valid,
@@ -2272,9 +2277,7 @@ const struct ath11k_hw_ops qca6390_ops = {
 	.rx_desc_get_msdu_freq = qwx_hw_ipq8074_rx_desc_get_msdu_freq,
 	.rx_desc_get_msdu_pkt_type = qwx_hw_ipq8074_rx_desc_get_msdu_pkt_type,
 	.rx_desc_get_msdu_nss = qwx_hw_ipq8074_rx_desc_get_msdu_nss,
-#ifdef notyet
-	.rx_desc_get_mpdu_tid = ath11k_hw_ipq8074_rx_desc_get_mpdu_tid,
-#endif
+	.rx_desc_get_mpdu_tid = qwx_hw_ipq8074_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = qwx_hw_ipq8074_rx_desc_get_mpdu_peer_id,
 #if 0
 	.rx_desc_copy_attn_end_tlv = ath11k_hw_ipq8074_rx_desc_copy_attn_end,
@@ -2304,9 +2307,7 @@ const struct ath11k_hw_ops qcn9074_ops = {
 	.tx_mesh_enable = ath11k_hw_qcn9074_tx_mesh_enable,
 #endif
 	.rx_desc_get_first_msdu = qwx_hw_qcn9074_rx_desc_get_first_msdu,
-#if notyet
-	.rx_desc_get_last_msdu = ath11k_hw_qcn9074_rx_desc_get_last_msdu,
-#endif
+	.rx_desc_get_last_msdu = qwx_hw_qcn9074_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = qwx_hw_qcn9074_rx_desc_get_l3_pad_bytes,
 	.rx_desc_get_hdr_status = qwx_hw_qcn9074_rx_desc_get_hdr_status,
 	.rx_desc_encrypt_valid = qwx_hw_qcn9074_rx_desc_encrypt_valid,
@@ -2326,9 +2327,7 @@ const struct ath11k_hw_ops qcn9074_ops = {
 	.rx_desc_get_msdu_freq = qwx_hw_qcn9074_rx_desc_get_msdu_freq,
 	.rx_desc_get_msdu_pkt_type = qwx_hw_qcn9074_rx_desc_get_msdu_pkt_type,
 	.rx_desc_get_msdu_nss = qwx_hw_qcn9074_rx_desc_get_msdu_nss,
-#ifdef notyet
-	.rx_desc_get_mpdu_tid = ath11k_hw_qcn9074_rx_desc_get_mpdu_tid,
-#endif
+	.rx_desc_get_mpdu_tid = qwx_hw_qcn9074_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = qwx_hw_qcn9074_rx_desc_get_mpdu_peer_id,
 #if 0
 	.rx_desc_copy_attn_end_tlv = ath11k_hw_qcn9074_rx_desc_copy_attn_end,
@@ -2358,9 +2357,7 @@ const struct ath11k_hw_ops wcn6855_ops = {
 	.tx_mesh_enable = ath11k_hw_wcn6855_tx_mesh_enable,
 #endif
 	.rx_desc_get_first_msdu = qwx_hw_wcn6855_rx_desc_get_first_msdu,
-#if notyet
-	.rx_desc_get_last_msdu = ath11k_hw_wcn6855_rx_desc_get_last_msdu,
-#endif
+	.rx_desc_get_last_msdu = qwx_hw_wcn6855_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = qwx_hw_wcn6855_rx_desc_get_l3_pad_bytes,
 	.rx_desc_get_hdr_status = qwx_hw_wcn6855_rx_desc_get_hdr_status,
 	.rx_desc_encrypt_valid = qwx_hw_wcn6855_rx_desc_encrypt_valid,
@@ -2380,9 +2377,7 @@ const struct ath11k_hw_ops wcn6855_ops = {
 	.rx_desc_get_msdu_freq = qwx_hw_wcn6855_rx_desc_get_msdu_freq,
 	.rx_desc_get_msdu_pkt_type = qwx_hw_wcn6855_rx_desc_get_msdu_pkt_type,
 	.rx_desc_get_msdu_nss = qwx_hw_wcn6855_rx_desc_get_msdu_nss,
-#ifdef notyet
-	.rx_desc_get_mpdu_tid = ath11k_hw_wcn6855_rx_desc_get_mpdu_tid,
-#endif
+	.rx_desc_get_mpdu_tid = qwx_hw_wcn6855_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = qwx_hw_wcn6855_rx_desc_get_mpdu_peer_id,
 #if 0
 	.rx_desc_copy_attn_end_tlv = ath11k_hw_wcn6855_rx_desc_copy_attn_end,
@@ -2412,9 +2407,7 @@ const struct ath11k_hw_ops wcn6750_ops = {
 	.tx_mesh_enable = ath11k_hw_qcn9074_tx_mesh_enable,
 #endif
 	.rx_desc_get_first_msdu = qwx_hw_qcn9074_rx_desc_get_first_msdu,
-#if notyet
-	.rx_desc_get_last_msdu = ath11k_hw_qcn9074_rx_desc_get_last_msdu,
-#endif
+	.rx_desc_get_last_msdu = qwx_hw_qcn9074_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = qwx_hw_qcn9074_rx_desc_get_l3_pad_bytes,
 	.rx_desc_get_hdr_status = qwx_hw_qcn9074_rx_desc_get_hdr_status,
 	.rx_desc_encrypt_valid = qwx_hw_qcn9074_rx_desc_encrypt_valid,
@@ -2434,9 +2427,7 @@ const struct ath11k_hw_ops wcn6750_ops = {
 	.rx_desc_get_msdu_freq = qwx_hw_qcn9074_rx_desc_get_msdu_freq,
 	.rx_desc_get_msdu_pkt_type = qwx_hw_qcn9074_rx_desc_get_msdu_pkt_type,
 	.rx_desc_get_msdu_nss = qwx_hw_qcn9074_rx_desc_get_msdu_nss,
-#ifdef notyet
-	.rx_desc_get_mpdu_tid = ath11k_hw_qcn9074_rx_desc_get_mpdu_tid,
-#endif
+	.rx_desc_get_mpdu_tid = qwx_hw_qcn9074_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = qwx_hw_qcn9074_rx_desc_get_mpdu_peer_id,
 #if 0
 	.rx_desc_copy_attn_end_tlv = ath11k_hw_qcn9074_rx_desc_copy_attn_end,
@@ -16636,14 +16627,6 @@ qwx_hal_wbm_desc_parse_err(void *desc, struct hal_rx_wbm_rel_info *rel_info)
 }
 
 int
-qwx_dp_rx_h_null_q_desc(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
-    struct qwx_rx_msdu_list *msdu_list)
-{
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
-}
-
-int
 qwx_dp_rx_h_reo_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
     struct qwx_rx_msdu_list *msdu_list)
 {
@@ -16921,6 +16904,12 @@ static inline uint8_t
 qwx_dp_rx_h_msdu_start_nss(struct qwx_softc *sc, struct hal_rx_desc *desc)
 {
 	return hweight8(sc->hw_params.hw_ops->rx_desc_get_msdu_nss(desc));
+}
+
+static inline uint8_t
+qwx_dp_rx_h_mpdu_start_tid(struct qwx_softc *sc, struct hal_rx_desc *desc)
+{
+	return sc->hw_params.hw_ops->rx_desc_get_mpdu_tid(desc);
 }
 
 uint32_t
@@ -17358,6 +17347,97 @@ qwx_dp_rx_h_mpdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 	}
 
 	return err_bitmap ? EIO : 0;
+}
+
+void
+qwx_dp_rx_null_q_desc_sg_drop(struct qwx_softc *sc, int msdu_len,
+    struct qwx_rx_msdu_list *msdu_list)
+{
+	struct qwx_rx_msdu *msdu, *tmp;
+	int n_buffs;
+
+	n_buffs = howmany(msdu_len,
+	    (DP_RX_BUFFER_SIZE - sc->hw_params.hal_desc_sz));
+
+	TAILQ_FOREACH_SAFE(msdu, msdu_list, entry, tmp) {
+		if (msdu->err_rel_src == HAL_WBM_REL_SRC_MODULE_REO &&
+		    msdu->err_code ==
+		    HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO) {
+			if (!n_buffs)
+				break;
+			TAILQ_REMOVE(msdu_list, msdu, entry);
+			m_freem(msdu->m);
+			msdu->m = NULL;
+			n_buffs--;
+		}
+	}
+}
+
+int
+qwx_dp_rx_h_null_q_desc(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
+    struct qwx_rx_msdu_list *msdu_list)
+{
+	uint16_t msdu_len;
+	struct rx_attention *rx_attention;
+	uint8_t l3pad_bytes;
+	uint32_t hal_rx_desc_sz = sc->hw_params.hal_desc_sz;
+
+	msdu_len = qwx_dp_rx_h_msdu_start_msdu_len(sc, msdu->rx_desc);
+
+	if (!msdu->is_frag && (msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE) {
+		/*
+		 * First buffer will be freed by the caller, so deduct its
+		 * length.
+		 */
+		msdu_len = msdu_len - (DP_RX_BUFFER_SIZE - hal_rx_desc_sz);
+		qwx_dp_rx_null_q_desc_sg_drop(sc, msdu_len, msdu_list);
+		return EINVAL;
+	}
+
+	rx_attention = qwx_dp_rx_get_attention(sc, msdu->rx_desc);
+	if (!qwx_dp_rx_h_attn_msdu_done(rx_attention)) {
+		while ((msdu = TAILQ_FIRST(msdu_list))) {
+			TAILQ_REMOVE(msdu_list, msdu, entry);
+			m_freem(msdu->m);
+			msdu->m = NULL;
+		}
+		return EIO;
+	}
+
+	/* Handle NULL queue descriptor violations arising out a missing
+	 * REO queue for a given peer or a given TID. This typically
+	 * may happen if a packet is received on a QOS enabled TID before the
+	 * ADDBA negotiation for that TID, when the TID queue is setup. Or
+	 * it may also happen for MC/BC frames if they are not routed to the
+	 * non-QOS TID queue, in the absence of any other default TID queue.
+	 * This error can show up both in a REO destination or WBM release ring.
+	 */
+
+	msdu->is_first_msdu = qwx_dp_rx_h_msdu_end_first_msdu(sc,
+	    msdu->rx_desc);
+	msdu->is_last_msdu = qwx_dp_rx_h_msdu_end_last_msdu(sc, msdu->rx_desc);
+
+	if (msdu->is_frag) {
+		m_adj(msdu->m, hal_rx_desc_sz);
+		msdu->m->m_len = msdu->m->m_pkthdr.len = msdu_len;
+	} else {
+		l3pad_bytes = qwx_dp_rx_h_msdu_end_l3pad(sc, msdu->rx_desc);
+
+		if ((hal_rx_desc_sz + l3pad_bytes + msdu_len) >
+		    DP_RX_BUFFER_SIZE)
+			return EINVAL;
+
+		m_adj(msdu->m, hal_rx_desc_sz + l3pad_bytes);
+		msdu->m->m_len = msdu->m->m_pkthdr.len = msdu_len;
+	}
+
+	qwx_dp_rx_h_ppdu(sc, msdu->rx_desc, &msdu->rxi);
+
+	qwx_dp_rx_h_mpdu(sc, msdu, msdu->rx_desc);
+
+	msdu->tid = qwx_dp_rx_h_mpdu_start_tid(sc, msdu->rx_desc);
+
+	return 0;
 }
 
 int
