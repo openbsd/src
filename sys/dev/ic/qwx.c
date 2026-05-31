@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.121 2026/05/31 13:21:55 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.122 2026/05/31 13:51:58 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -317,12 +317,12 @@ qwx_init(struct ifnet *ifp)
 		refcnt_init(&sc->task_refs);
 
 		ifq_clr_oactive(&ifp->if_snd);
-		ifp->if_flags |= IFF_RUNNING;
 
 		error = qwx_mac_start(sc);
 		if (error)
 			return error;
 
+		ifp->if_flags |= IFF_RUNNING;
 		ieee80211_begin_scan(ifp);
 	}
 
