@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.122 2026/05/31 13:51:58 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.123 2026/05/31 13:53:02 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1079,7 +1079,8 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct qwx_softc *sc = ifp->if_softc;
 
 	/* We may get triggered by received frames during qwx_stop(). */
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags) ||
+	    !(ifp->if_flags & IFF_RUNNING))
 		return 0;
 
 	/*
