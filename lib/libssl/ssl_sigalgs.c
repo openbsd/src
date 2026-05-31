@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.53 2026/03/30 06:20:08 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.54 2026/05/31 14:34:44 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -134,12 +134,6 @@ const struct ssl_sigalg sigalgs[] = {
 		.security_level = 1,
 	},
 	{
-		.value = SIGALG_RSA_PKCS1_MD5_SHA1,
-		.key_type = EVP_PKEY_RSA,
-		.md = EVP_md5_sha1,
-		.security_level = 1,
-	},
-	{
 		.value = SIGALG_NONE,
 	},
 };
@@ -237,9 +231,6 @@ ssl_sigalgs_build(uint16_t tls_version, CBB *cbb, int security_level)
 
 	/* Add values in order as long as they are supported. */
 	for (i = 0; i < len; i++) {
-		/* Do not allow the legacy value for < 1.2 to be used. */
-		if (values[i] == SIGALG_RSA_PKCS1_MD5_SHA1)
-			return 0;
 		if ((sigalg = ssl_sigalg_lookup(values[i])) == NULL)
 			return 0;
 		if (sigalg->security_level < security_level)
@@ -262,8 +253,6 @@ ssl_sigalg_for_legacy(SSL *s, EVP_PKEY *pkey)
 	/* Default signature algorithms used for TLSv1.2 and earlier. */
 	switch (EVP_PKEY_id(pkey)) {
 	case EVP_PKEY_RSA:
-		if (s->s3->hs.negotiated_tls_version < TLS1_2_VERSION)
-			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
 		return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
 	case EVP_PKEY_EC:
 		return ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
@@ -317,9 +306,6 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 {
 	CBS cbs;
 
-	if (!SSL_USE_SIGALGS(s))
-		return ssl_sigalg_for_legacy(s, pkey);
-
 	/*
 	 * RFC 5246 allows a TLS 1.2 client to send no sigalgs extension,
 	 * in which case the server must use the default.
@@ -352,9 +338,6 @@ const struct ssl_sigalg *
 ssl_sigalg_for_peer(SSL *s, EVP_PKEY *pkey, uint16_t sigalg_value)
 {
 	const struct ssl_sigalg *sigalg;
-
-	if (!SSL_USE_SIGALGS(s))
-		return ssl_sigalg_for_legacy(s, pkey);
 
 	if ((sigalg = ssl_sigalg_from_value(s, sigalg_value)) == NULL) {
 		SSLerror(s, SSL_R_UNKNOWN_DIGEST);

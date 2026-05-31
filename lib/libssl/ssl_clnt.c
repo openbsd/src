@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.171 2026/04/03 12:58:19 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.172 2026/05/31 14:34:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1034,13 +1034,6 @@ ssl3_get_server_hello(SSL *s)
 	if (!tls1_transcript_hash_init(s))
 		goto err;
 
-	/*
-	 * Don't digest cached records if no sigalgs: we may need them for
-	 * client authentication.
-	 */
-	if (!SSL_USE_SIGALGS(s))
-		tls1_transcript_free(s);
-
 	if (!CBS_get_u8(&cbs, &compression_method))
 		goto decode_err;
 
@@ -1384,10 +1377,9 @@ ssl3_get_server_key_exchange(SSL *s)
 			goto fatal_err;
 		}
 
-		if (SSL_USE_SIGALGS(s)) {
-			if (!CBS_get_u16(&cbs, &sigalg_value))
-				goto decode_err;
-		}
+		if (!CBS_get_u16(&cbs, &sigalg_value))
+			goto decode_err;
+
 		if (!CBS_get_u16_length_prefixed(&cbs, &signature))
 			goto decode_err;
 		if (CBS_len(&signature) > EVP_PKEY_size(pkey)) {
@@ -1448,7 +1440,7 @@ ssl3_get_server_key_exchange(SSL *s)
 static int
 ssl3_get_certificate_request(SSL *s)
 {
-	CBS cert_request, cert_types, rdn_list;
+	CBS cert_request, cert_types, rdn_list, sigalgs;
 	X509_NAME *xn = NULL;
 	const unsigned char *q;
 	STACK_OF(X509_NAME) *ca_sk = NULL;
@@ -1497,27 +1489,23 @@ ssl3_get_certificate_request(SSL *s)
 	if (!CBS_get_u8_length_prefixed(&cert_request, &cert_types))
 		goto decode_err;
 
-	if (SSL_USE_SIGALGS(s)) {
-		CBS sigalgs;
-
-		if (CBS_len(&cert_request) < 2) {
-			SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
-			goto err;
-		}
-		if (!CBS_get_u16_length_prefixed(&cert_request, &sigalgs)) {
-			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-			SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
-			goto err;
-		}
-		if (CBS_len(&sigalgs) % 2 != 0 || CBS_len(&sigalgs) > 64) {
-			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-			SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
-			goto err;
-		}
-		if (!CBS_stow(&sigalgs, &s->s3->hs.sigalgs,
-		    &s->s3->hs.sigalgs_len))
-			goto err;
+	if (CBS_len(&cert_request) < 2) {
+		SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
+		goto err;
 	}
+	if (!CBS_get_u16_length_prefixed(&cert_request, &sigalgs)) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
+		goto err;
+	}
+	if (CBS_len(&sigalgs) % 2 != 0 || CBS_len(&sigalgs) > 64) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+		goto err;
+	}
+	if (!CBS_stow(&sigalgs, &s->s3->hs.sigalgs,
+	    &s->s3->hs.sigalgs_len))
+		goto err;
 
 	/* get the CA RDNs */
 	if (CBS_len(&cert_request) < 2) {
@@ -2035,77 +2023,6 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
 }
 
 static int
-ssl3_send_client_verify_rsa(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
-{
-	CBB cbb_signature;
-	RSA *rsa;
-	unsigned char data[EVP_MAX_MD_SIZE];
-	unsigned char *signature = NULL;
-	unsigned int signature_len;
-	size_t data_len;
-	int ret = 0;
-
-	if (!tls1_transcript_hash_value(s, data, sizeof(data), &data_len))
-		goto err;
-	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
-		goto err;
-	if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL)
-		goto err;
-	if (RSA_sign(NID_md5_sha1, data, data_len, signature, &signature_len,
-	    rsa) <= 0 ) {
-		SSLerror(s, ERR_R_RSA_LIB);
-		goto err;
-	}
-
-	if (!CBB_add_u16_length_prefixed(cert_verify, &cbb_signature))
-		goto err;
-	if (!CBB_add_bytes(&cbb_signature, signature, signature_len))
-		goto err;
-	if (!CBB_flush(cert_verify))
-		goto err;
-
-	ret = 1;
- err:
-	free(signature);
-	return ret;
-}
-
-static int
-ssl3_send_client_verify_ec(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
-{
-	CBB cbb_signature;
-	EC_KEY *eckey;
-	unsigned char data[EVP_MAX_MD_SIZE];
-	unsigned char *signature = NULL;
-	unsigned int signature_len;
-	int ret = 0;
-
-	if (!tls1_transcript_hash_value(s, data, sizeof(data), NULL))
-		goto err;
-	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
-		goto err;
-	if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
-		goto err;
-	if (!ECDSA_sign(0, &data[MD5_DIGEST_LENGTH], SHA_DIGEST_LENGTH,
-	    signature, &signature_len, eckey)) {
-		SSLerror(s, ERR_R_ECDSA_LIB);
-		goto err;
-	}
-
-	if (!CBB_add_u16_length_prefixed(cert_verify, &cbb_signature))
-		goto err;
-	if (!CBB_add_bytes(&cbb_signature, signature, signature_len))
-		goto err;
-	if (!CBB_flush(cert_verify))
-		goto err;
-
-	ret = 1;
- err:
-	free(signature);
-	return ret;
-}
-
-static int
 ssl3_send_client_verify(SSL *s)
 {
 	const struct ssl_sigalg *sigalg;
@@ -2130,20 +2047,9 @@ ssl3_send_client_verify(SSL *s)
 		 * For TLS v1.2 send signature algorithm and signature using
 		 * agreed digest and cached handshake records.
 		 */
-		if (SSL_USE_SIGALGS(s)) {
-			if (!ssl3_send_client_verify_sigalgs(s, pkey, sigalg,
-			    &cert_verify))
-				goto err;
-		} else if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
-			if (!ssl3_send_client_verify_rsa(s, pkey, &cert_verify))
-				goto err;
-		} else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
-			if (!ssl3_send_client_verify_ec(s, pkey, &cert_verify))
-				goto err;
-		} else {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
+		if (!ssl3_send_client_verify_sigalgs(s, pkey, sigalg,
+		    &cert_verify))
 			goto err;
-		}
 
 		tls1_transcript_free(s);
 

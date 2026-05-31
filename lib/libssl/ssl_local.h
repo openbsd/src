@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.38 2026/05/25 09:09:34 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.39 2026/05/31 14:34:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -262,10 +262,6 @@ __BEGIN_HIDDEN_DECLS
  * Cipher argument is so that this can be variable in the future.
  */
 #define SSL_C_PKEYLENGTH(c)	1024
-
-/* See if we use signature algorithms extension. */
-#define SSL_USE_SIGALGS(s) \
-	(s->method->enc_flags & SSL_ENC_FLAG_SIGALGS)
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_USE_TLS1_2_CIPHERS(s) \
@@ -1163,9 +1159,6 @@ typedef struct ssl3_state_st {
  * Flag values for enc_flags.
  */
 
-/* Uses signature algorithms extension. */
-#define SSL_ENC_FLAG_SIGALGS            (1 << 1)
-
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS     (1 << 4)
 
@@ -1174,10 +1167,8 @@ typedef struct ssl3_state_st {
 
 #define TLSV1_ENC_FLAGS		0
 #define TLSV1_1_ENC_FLAGS	0
-#define TLSV1_2_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
-				 SSL_ENC_FLAG_TLS1_2_CIPHERS)
-#define TLSV1_3_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
-				 SSL_ENC_FLAG_TLS1_3_CIPHERS)
+#define TLSV1_2_ENC_FLAGS	SSL_ENC_FLAG_TLS1_2_CIPHERS
+#define TLSV1_3_ENC_FLAGS	SSL_ENC_FLAG_TLS1_3_CIPHERS
 
 extern const SSL_CIPHER ssl3_ciphers[];
 
