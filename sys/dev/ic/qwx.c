@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.119 2026/05/29 09:52:10 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.120 2026/05/31 13:20:20 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16811,8 +16811,8 @@ qwx_dp_rx_process_wbm_err(struct qwx_softc *sc, int purge)
 
 	if (purge) {
 		for (i = 0; i < sc->num_radios; i++) {
-			while ((msdu = TAILQ_FIRST(msdu_list))) {
-				TAILQ_REMOVE(msdu_list, msdu, entry);
+			while ((msdu = TAILQ_FIRST(&msdu_list[i]))) {
+				TAILQ_REMOVE(&msdu_list[i], msdu, entry);
 				m_freem(msdu->m);
 				msdu->m = NULL;
 			}
@@ -16831,8 +16831,8 @@ qwx_dp_rx_process_wbm_err(struct qwx_softc *sc, int purge)
 	}
 
 	for (i = 0; i < sc->num_radios; i++) {
-		while ((msdu = TAILQ_FIRST(msdu_list))) {
-			TAILQ_REMOVE(msdu_list, msdu, entry);
+		while ((msdu = TAILQ_FIRST(&msdu_list[i]))) {
+			TAILQ_REMOVE(&msdu_list[i], msdu, entry);
 			if (test_bit(ATH11K_CAC_RUNNING, sc->sc_flags)) {
 				m_freem(msdu->m);
 				msdu->m = NULL;
@@ -17633,7 +17633,7 @@ try_again:
 
 		if (purge) {
 			while ((msdu = TAILQ_FIRST(&msdu_list[i]))) {
-				TAILQ_REMOVE(msdu_list, msdu, entry);
+				TAILQ_REMOVE(&msdu_list[i], msdu, entry);
 				m_freem(msdu->m);
 				msdu->m = NULL;
 			}
