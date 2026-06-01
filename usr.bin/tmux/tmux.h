@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1329 2026/05/30 11:19:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1330 2026/06/01 18:19:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2334,6 +2334,7 @@ enum sort_order {
 	SORT_NAME,
 	SORT_ORDER,
 	SORT_SIZE,
+	SORT_Z,
 	SORT_END,
 };
 
@@ -3391,6 +3392,7 @@ struct window_pane *window_pane_next_by_number(struct window *,
 struct window_pane *window_pane_previous_by_number(struct window *,
 			struct window_pane *, u_int);
 int		 window_pane_index(struct window_pane *, u_int *);
+int		 window_pane_zindex(struct window_pane *, u_int *);
 u_int		 window_count_panes(struct window *, int);
 void		 window_destroy_panes(struct window *);
 struct window_pane *window_pane_find_by_id_str(const char *);

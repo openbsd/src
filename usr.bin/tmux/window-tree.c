@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.76 2026/06/01 18:00:20 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.77 2026/06/01 18:19:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -136,6 +136,7 @@ static enum sort_order window_tree_order_seq[] = {
 	SORT_INDEX,
 	SORT_NAME,
 	SORT_ACTIVITY,
+	SORT_Z,
 	SORT_END,
 };
 
