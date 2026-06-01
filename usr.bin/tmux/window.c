@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.326 2026/06/01 18:19:51 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.327 2026/06/01 19:59:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -637,16 +637,11 @@ window_get_active_at(struct window *w, u_int x, u_int y)
 					continue;
 			}
 		} else {
-			/* Floating - include top or or left border. */
+			/* Floating - include all borders. */
 			if ((int)x < xoff - 1 || x > xoff + sx)
 				continue;
-			if (pane_status == PANE_STATUS_TOP) {
-				if ((int)y <= yoff - 2 || y > yoff + sy - 1)
-					continue;
-			} else {
-				if ((int)y < yoff - 1 || y > yoff + sy)
-					continue;
-			}
+			if ((int)y < yoff - 1 || y > yoff + sy)
+				continue;
 		}
 		return (wp);
 	}
