@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.134 2026/05/17 10:56:41 kirill Exp $	*/
+/*	$OpenBSD: parse.y,v 1.135 2026/06/01 09:28:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -832,6 +832,16 @@ fcgiflags	: SOCKET STRING {
 				YYERROR;
 			}
 			srv_conf->fcgistrip = $2;
+		}
+		| PASS STRING {
+			if (strcmp($2, "chunked") != 0) {
+				yyerror("Invalid token '%s' expected 'chunked'",
+				    $2);
+				free($2);
+				YYERROR;
+			}
+			srv_conf->fcgiallowchunked = 1;
+			free($2);
 		}
 		;
 

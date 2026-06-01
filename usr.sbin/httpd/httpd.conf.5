@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.130 2026/05/17 10:56:41 kirill Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.131 2026/06/01 09:28:42 claudio Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2026 $
+.Dd $Mdocdate: June 1 2026 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -404,6 +404,15 @@ This allows FastCGI server chroot to be a directory under httpd chroot.
 .It Ic param Ar variable value
 Sets a variable that will be sent to the FastCGI server.
 Each statement defines one variable.
+.It Ic pass Ic chunked
+Allow chunked uploads to be passed to the FastCGI server.
+By default data uploads with
+.Ar Transfer-Encoding: chunked
+are forbidden.
+By setting
+.Ic pass Ic chunked
+uploads with chunked encoding are accepted but because the CONTENT_LENGTH
+variable can not be set it violates the CGI speficfication.
 .El
 .Pp
 The FastCGI handler will be given the following variables by default:

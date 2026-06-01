@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.100 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.101 2026/06/01 09:28:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -388,7 +388,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 		bufferevent_enable(clt->clt_bev, EV_READ);
 	} else {
 		bufferevent_disable(clt->clt_bev, EV_READ);
-		fcgi_add_stdin(clt, NULL);
+		fcgi_add_stdin(clt, NULL, 0);
 	}
 
 	if (strcmp(desc->http_version, "HTTP/1.1") == 0) {
@@ -414,7 +414,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 }
 
 int
-fcgi_add_stdin(struct client *clt, struct evbuffer *evbuf)
+fcgi_add_stdin(struct client *clt, const char *buf, size_t len)
 {
 	struct fcgi_record_header	h;
 
@@ -424,16 +424,16 @@ fcgi_add_stdin(struct client *clt, struct evbuffer *evbuf)
 	h.id = htons(1);
 	h.padding_len = 0;
 
-	if (evbuf == NULL) {
+	if (len == 0) {
 		h.content_len = 0;
 		return bufferevent_write(clt->clt_srvbev, &h,
 		    sizeof(struct fcgi_record_header));
 	} else {
-		h.content_len = htons(EVBUFFER_LENGTH(evbuf));
+		h.content_len = htons(len);
 		if (bufferevent_write(clt->clt_srvbev, &h,
 		    sizeof(struct fcgi_record_header)) == -1)
 			return -1;
-		return bufferevent_write_buffer(clt->clt_srvbev, evbuf);
+		return bufferevent_write(clt->clt_srvbev, buf, len);
 	}
 	return (0);
 }

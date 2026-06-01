@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.172 2026/05/17 10:56:41 kirill Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.173 2026/06/01 09:28:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -108,7 +108,8 @@ enum httpchunk {
 	TOREAD_HTTP_CHUNK_LENGTH	= -3,
 	TOREAD_HTTP_CHUNK_TRAILER	= -4,
 	TOREAD_HTTP_NONE		= -5,
-	TOREAD_HTTP_RANGE		= TOREAD_HTTP_CHUNK_LENGTH
+	TOREAD_HTTP_RANGE		= TOREAD_HTTP_CHUNK_LENGTH,
+	TOREAD_HTTP_FINAL_CHUNK_TRAILER	= -6,
 };
 
 #if DEBUG
@@ -544,6 +545,7 @@ struct server_config {
 
 	struct server_fcgiparams fcgiparams;
 	int			 fcgistrip;
+	int			 fcgiallowchunked;
 	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
 
 	TAILQ_ENTRY(server_config) entry;
@@ -711,7 +713,7 @@ void	 server_file_error(struct bufferevent *, short, void *);
 
 /* server_fcgi.c */
 int	 server_fcgi(struct httpd *, struct client *);
-int	 fcgi_add_stdin(struct client *, struct evbuffer *);
+int	 fcgi_add_stdin(struct client *, const char *, size_t);
 
 /* httpd.c */
 void		 event_again(struct event *, int, short,

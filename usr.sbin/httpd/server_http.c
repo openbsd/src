@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.162 2026/05/17 10:56:41 kirill Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.163 2026/06/01 09:28:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -512,11 +512,11 @@ server_read_httpcontent(struct bufferevent *bev, void *arg)
 {
 	struct client		*clt = arg;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
-	size_t			 size;
+	const char		*buf = EVBUFFER_DATA(src);
+	size_t			 size = EVBUFFER_LENGTH(src);
 
 	getmonotime(&clt->clt_tv_last);
 
-	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld", __func__,
 	    clt->clt_id, size, clt->clt_toread);
 	if (!size)
@@ -524,21 +524,18 @@ server_read_httpcontent(struct bufferevent *bev, void *arg)
 
 	if (clt->clt_toread > 0) {
 		/* Read content data */
-		if ((off_t)size > clt->clt_toread) {
+		if ((off_t)size > clt->clt_toread)
 			size = clt->clt_toread;
-			if (fcgi_add_stdin(clt, src) == -1)
-				goto fail;
-			clt->clt_toread = 0;
-		} else {
-			if (fcgi_add_stdin(clt, src) == -1)
-				goto fail;
-			clt->clt_toread -= size;
-		}
+
+		if (fcgi_add_stdin(clt, buf, size) == -1)
+			goto fail;
+		evbuffer_drain(src, size);
+		clt->clt_toread -= size;
 		DPRINTF("%s: done, size %lu, to read %lld", __func__,
 		    size, clt->clt_toread);
 	}
 	if (clt->clt_toread == 0) {
-		fcgi_add_stdin(clt, NULL);
+		fcgi_add_stdin(clt, NULL, 0);
 		clt->clt_toread = TOREAD_HTTP_HEADER;
 		bufferevent_disable(bev, EV_READ);
 		bev->readcb = server_read_http;
@@ -561,13 +558,13 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 {
 	struct client		*clt = arg;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
+	const char		*buf = EVBUFFER_DATA(src);
+	size_t			 size = EVBUFFER_LENGTH(src);
 	char			*line;
 	long long		 llval;
-	size_t			 size;
 
 	getmonotime(&clt->clt_tv_last);
 
-	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld", __func__,
 	    clt->clt_id, size, clt->clt_toread);
 	if (!size)
@@ -575,17 +572,15 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 
 	if (clt->clt_toread > 0) {
 		/* Read chunk data */
-		if ((off_t)size > clt->clt_toread) {
+		if ((off_t)size > clt->clt_toread)
 			size = clt->clt_toread;
-			if (server_bufferevent_write_chunk(clt, src, size)
-			    == -1)
-				goto fail;
-			clt->clt_toread = 0;
-		} else {
-			if (server_bufferevent_write_buffer(clt, src) == -1)
-				goto fail;
-			clt->clt_toread -= size;
-		}
+		if (fcgi_add_stdin(clt, buf, size) == -1)
+			goto fail;
+		clt->clt_toread -= size;
+		evbuffer_drain(src, size);
+
+		if (clt->clt_toread == 0)
+			clt->clt_toread = TOREAD_HTTP_CHUNK_TRAILER;
 		DPRINTF("%s: done, size %lu, to read %lld", __func__,
 		    size, clt->clt_toread);
 	}
@@ -612,18 +607,15 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 			return;
 		}
 
-		if (server_bufferevent_print(clt, line) == -1 ||
-		    server_bufferevent_print(clt, "\r\n") == -1) {
-			free(line);
-			goto fail;
-		}
 		free(line);
 
 		if ((clt->clt_toread = llval) == 0) {
 			DPRINTF("%s: last chunk", __func__);
-			clt->clt_toread = TOREAD_HTTP_CHUNK_TRAILER;
+			fcgi_add_stdin(clt, NULL, 0);
+			clt->clt_toread = TOREAD_HTTP_FINAL_CHUNK_TRAILER;
 		}
 		break;
+	case TOREAD_HTTP_FINAL_CHUNK_TRAILER:
 	case TOREAD_HTTP_CHUNK_TRAILER:
 		/* Last chunk is 0 bytes followed by trailer and empty line */
 		line = evbuffer_readln(src, NULL, EVBUFFER_EOL_CRLF_STRICT);
@@ -632,15 +624,15 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 			bufferevent_enable(bev, EV_READ);
 			return;
 		}
-		if (server_bufferevent_print(clt, line) == -1 ||
-		    server_bufferevent_print(clt, "\r\n") == -1) {
-			free(line);
-			goto fail;
-		}
 		if (strlen(line) == 0) {
 			/* Switch to HTTP header mode */
-			clt->clt_toread = TOREAD_HTTP_HEADER;
-			bev->readcb = server_read_http;
+			if (clt->clt_toread == TOREAD_HTTP_CHUNK_TRAILER) {
+				clt->clt_toread = TOREAD_HTTP_CHUNK_LENGTH;
+			} else {
+				clt->clt_toread = TOREAD_HTTP_HEADER;
+				bufferevent_disable(bev, EV_READ);
+				bev->readcb = server_read_http;
+			}
 		}
 		free(line);
 		break;
@@ -648,8 +640,6 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 		/* Chunk is terminated by an empty newline */
 		line = evbuffer_readln(src, NULL, EVBUFFER_EOL_CRLF_STRICT);
 		free(line);
-		if (server_bufferevent_print(clt, "\r\n") == -1)
-			goto fail;
 		clt->clt_toread = TOREAD_HTTP_CHUNK_LENGTH;
 		break;
 	}
@@ -1463,6 +1453,11 @@ server_response(struct httpd *httpd, struct client *clt)
 	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
 	    srv_conf->maxrequestbody) {
 		server_abort_http(clt, 413, "request body too large");
+		return (-1);
+	}
+	if (desc->http_chunked && !srv_conf->fcgiallowchunked) {
+		server_abort_http(clt, 400,
+		    "Transfer-Encoding: chunked not allowed");
 		return (-1);
 	}
 
