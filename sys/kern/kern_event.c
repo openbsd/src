@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.205 2025/05/21 14:10:16 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.206 2026/06/01 18:24:58 mvs Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -423,18 +423,18 @@ fail:
 void
 filt_procdetach(struct knote *kn)
 {
-	struct process *pr = kn->kn_ptr.p_process;
-	int status;
-
-	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
+	/*
+	 * We set KN_DETACHED with both kqueue_ps_list_lock rwlock
+	 * and &kq->kq_lock held. One of them is enough here.
+	 */
 	rw_enter_write(&kqueue_ps_list_lock);
-	mtx_enter(&pr->ps_mtx);
-	status = kn->kn_status;
+	if ((kn->kn_status & KN_DETACHED) == 0) {
+		struct process *pr = kn->kn_ptr.p_process;
 
-	if ((status & KN_DETACHED) == 0)
+		mtx_enter(&pr->ps_mtx);
 		klist_remove_locked(&pr->ps_klist, kn);
-
-	mtx_leave(&pr->ps_mtx);
+		mtx_leave(&pr->ps_mtx);
+	}
 	rw_exit_write(&kqueue_ps_list_lock);
 }
 
@@ -463,13 +463,15 @@ filt_proc(struct knote *kn, long hint)
 	if (event == NOTE_EXIT) {
 		struct process *pr = kn->kn_ptr.p_process;
 
+		rw_assert_wrlock(&kqueue_ps_list_lock);
 		mtx_enter(&kq->kq_lock);
 		kn->kn_status |= KN_DETACHED;
 		mtx_leave(&kq->kq_lock);
 
+		klist_remove_locked(&pr->ps_klist, kn);
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
-		klist_remove_locked(&pr->ps_klist, kn);
+		kn->kn_ptr.p_process = NULL;
 		return (1);
 	}
 
@@ -508,30 +510,46 @@ filt_proc(struct knote *kn, long hint)
 int
 filt_procmodify(struct kevent *kev, struct knote *kn)
 {
-	struct process *pr = kn->kn_ptr.p_process;
 	int active;
 
-	mtx_enter(&pr->ps_mtx);
-	active = knote_modify(kev, kn);
-	mtx_leave(&pr->ps_mtx);
+	rw_enter_write(&kqueue_ps_list_lock);
+	if ((kn->kn_status & KN_DETACHED) == 0) {
+		struct process *pr = kn->kn_ptr.p_process;
+
+		mtx_enter(&pr->ps_mtx);
+		active = knote_modify(kev, kn);
+		mtx_leave(&pr->ps_mtx);
+	} else {
+		knote_assign(kev, kn);
+		active = (kn->kn_fflags != 0);
+	}
+	rw_exit_write(&kqueue_ps_list_lock);
 
 	return (active);
 }
 
-/*
- * By default only grab the mutex here. If the event requires extra protection
- * because it alters the klist (NOTE_EXIT, NOTE_FORK the caller of the knote
- * needs to grab the rwlock first.
- */
 int
 filt_procprocess(struct knote *kn, struct kevent *kev)
 {
-	struct process *pr = kn->kn_ptr.p_process;
-	int active;
+	int active, do_lock = (rw_status(&kqueue_ps_list_lock) != RW_WRITE);
 
-	mtx_enter(&pr->ps_mtx);
-	active = knote_process(kn, kev);
-	mtx_leave(&pr->ps_mtx);
+	if (do_lock)
+		rw_enter_write(&kqueue_ps_list_lock);
+
+	if ((kn->kn_status & KN_DETACHED) == 0) {
+		struct process *pr = kn->kn_ptr.p_process;
+
+		mtx_enter(&pr->ps_mtx);
+		active = knote_process(kn, kev);
+		mtx_leave(&pr->ps_mtx);
+	} else {
+		active = (kn->kn_fflags != 0);
+		if (active)
+			knote_submit(kn, kev);
+	}
+
+	if (do_lock)
+		rw_exit_write(&kqueue_ps_list_lock);
 
 	return (active);
 }
