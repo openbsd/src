@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.10 2026/05/27 03:12:22 kevlo Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.11 2026/06/01 14:11:32 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -4321,7 +4321,7 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 		num_rxd += 2;
 		rxd += 2;
 	}
-	if (rxd1 & MT_RXD1_NORMAL_GROUP_3) {	
+	if (rxd1 & MT_RXD1_NORMAL_GROUP_3) {
 		uint32_t v0, v1;
 		int8_t chain[4], signal;
 
@@ -4329,17 +4329,16 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 		num_rxd += 2;
 		rxd += 2;
 
-		v0 = le32toh(rxv[0]); /* XXX not implemented yet */ 
+		v0 = le32toh(rxv[0]); /* XXX not implemented yet */
 		v1 = le32toh(rxv[1]);
 
 		if (rxd1 & MT_RXD1_NORMAL_GROUP_5) {
 			num_rxd += 18;
 			rxd += 6;
 			rxv = rxd;
-			v1 = le32toh(rxv[0]); 
+			v1 = le32toh(rxv[0]);
 			rxd += 12;
 		}
-	
 
 		chain[0] = rcpi_to_rssi(MT_PRXV_RCPI0_SHIFT, v1);
 		chain[1] = rcpi_to_rssi(MT_PRXV_RCPI1_SHIFT, v1);
@@ -4349,7 +4348,7 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 		signal = -128;
 		for (i = 0; i < sc->sc_capa.num_streams; i++) {
 			if (!(sc->sc_capa.antenna_mask & (1U << i)))
-				continue;	
+				continue;
 			if (chain[i] >= 0)
 				continue;
 			signal = MAX(signal, chain[i]);
