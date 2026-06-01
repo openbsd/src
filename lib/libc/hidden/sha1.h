@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.1 2015/09/11 09:18:27 guenther Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.2 2026/06/01 13:27:24 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -14,12 +14,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*	$OpenBSD: sha1.h,v 1.1 2015/09/11 09:18:27 guenther Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.2 2026/06/01 13:27:24 jsing Exp $	*/
 
 #ifndef _LIBC_SHA1_H
 #define _LIBC_SHA1_H
 
 #include_next <sha1.h>
+
+__BEGIN_HIDDEN_DECLS
+void __sha1_block(uint32_t state[5], const uint8_t *in, size_t num);
+void __sha1_block_generic(uint32_t state[5], const uint8_t *in, size_t num);
+__END_HIDDEN_DECLS
 
 PROTO_NORMAL(SHA1Data);
 PROTO_NORMAL(SHA1End);
