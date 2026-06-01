@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.261 2026/05/30 11:19:39 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.262 2026/06/01 10:53:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2483,7 +2483,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		return;
 
 	/* Do a full line redraw if needed. */
-	if (redraw) {
+	if (redraw && wp != NULL) {
 		screen_write_redraw_line(ctx, &ttyctx, s->cy);
 		return;
 	}
