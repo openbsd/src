@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1330 2026/06/01 18:19:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1331 2026/06/01 20:10:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1429,7 +1429,6 @@ TAILQ_HEAD(winlink_stack, winlink);
 enum layout_type {
 	LAYOUT_LEFTRIGHT,
 	LAYOUT_TOPBOTTOM,
-	LAYOUT_FLOATING,
 	LAYOUT_WINDOWPANE
 };
 
