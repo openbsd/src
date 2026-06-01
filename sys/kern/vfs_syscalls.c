@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.383 2026/05/23 14:56:20 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.384 2026/06/01 16:33:49 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -558,6 +558,7 @@ sys_quotactl(struct proc *p, void *v, register_t *retval)
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	nd.ni_unveil = UNVEIL_READ | UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
