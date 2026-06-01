@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.7 2026/05/27 03:13:13 kevlo Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.8 2026/06/01 18:59:24 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -386,11 +386,11 @@ enum mt76_rxq_id {
 #define	MT_PACKET_ID_FIRST		3
 #define	MT_PACKET_ID_HAS_RATE		(1U << 7)
 
-struct mt76_desc {
-	volatile uint32_t	buf0;
-	volatile uint32_t	ctrl;
-	volatile uint32_t	buf1;
-	volatile uint32_t	info;
+struct mwx_desc {
+	uint32_t	buf0;
+	uint32_t	ctrl;
+	uint32_t	buf1;
+	uint32_t	info;
 } __packed __aligned(4);
 
 struct mt76_connac_txp_ptr {

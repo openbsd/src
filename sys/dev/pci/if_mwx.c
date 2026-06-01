@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.11 2026/06/01 14:11:32 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.12 2026/06/01 18:59:24 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -128,7 +128,7 @@ struct mwx_queue {
 	u_int				mq_prod;
 	u_int				mq_cons;
 
-	struct mt76_desc		*mq_desc;
+	struct mwx_desc			*mq_desc;
 	struct mwx_queue_data		*mq_data;
 
 	bus_dmamap_t			mq_map;
@@ -354,7 +354,7 @@ int	mwx_queue_alloc(struct mwx_softc *, struct mwx_queue *, int, uint32_t);
 void	mwx_queue_free(struct mwx_softc *, struct mwx_queue *);
 void	mwx_queue_reset(struct mwx_softc *, struct mwx_queue *);
 int	mwx_buf_fill(struct mwx_softc *, struct mwx_queue_data *,
-	    struct mt76_desc *);
+	    struct mwx_desc *);
 int	mwx_queue_fill(struct mwx_softc *, struct mwx_queue *);
 int	mwx_dma_alloc(struct mwx_softc *);
 int	mwx_dma_reset(struct mwx_softc *, int);
@@ -1708,7 +1708,7 @@ mwx_queue_reset(struct mwx_softc *sc, struct mwx_queue *q)
 
 int
 mwx_buf_fill(struct mwx_softc *sc, struct mwx_queue_data *md,
-    struct mt76_desc *desc)
+    struct mwx_desc *desc)
 {
 	struct mbuf *m;
 	uint32_t buf0, len0, ctrl;
@@ -1886,7 +1886,7 @@ int
 mwx_dma_tx_enqueue(struct mwx_softc *sc, struct mwx_queue *q, struct mbuf *m)
 {
 	struct mwx_queue_data *md;
-	struct mt76_desc *desc;
+	struct mwx_desc *desc;
 	int i, nsegs, idx, rv;
 
 	idx = q->mq_prod;
@@ -1963,7 +1963,7 @@ mwx_dma_txwi_enqueue(struct mwx_softc *sc, struct mwx_queue *q,
     struct mwx_txwi *mt)
 {
 	struct mwx_queue_data *md;
-	struct mt76_desc *desc;
+	struct mwx_desc *desc;
 	uint32_t buf0, len0, ctrl;
 	int idx;
 
@@ -2010,7 +2010,7 @@ void
 mwx_dma_tx_cleanup(struct mwx_softc *sc, struct mwx_queue *q)
 {
 	struct mwx_queue_data *md;
-	struct mt76_desc *desc;
+	struct mwx_desc *desc;
 	int idx, last;
 
 	idx = q->mq_cons;
@@ -2126,7 +2126,7 @@ mwx_dma_rx_dequeue(struct mwx_softc *sc, struct mwx_queue *q,
     struct mbuf_list *ml)
 {
 	struct mwx_queue_data *md;
-	struct mt76_desc *desc;
+	struct mwx_desc *desc;
 	struct mbuf *m, *m0 = NULL, *mtail = NULL;
 	int idx, last;
 
