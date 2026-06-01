@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.39 2026/02/27 08:25:12 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.40 2026/06/01 14:01:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -110,22 +110,28 @@ cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
 		switch (type) {
 		case 0:
 			template = "#{pane_index}: "
-			    "[#{pane_width}x#{pane_height}] [history "
+			    "[#{pane_width}x#{pane_height}"
+			    "#{?pane_floating_flag, "
+			    "#{pane_x}#,#{pane_y}#,#{pane_z}}] [history "
 			    "#{history_size}/#{history_limit}, "
 			    "#{history_bytes} bytes] #{pane_id}"
 			    "#{?pane_active, (active),}#{?pane_dead, (dead),}";
 			break;
 		case 1:
 			template = "#{window_index}.#{pane_index}: "
-			    "[#{pane_width}x#{pane_height}] [history "
+			    "[#{pane_width}x#{pane_height}"
+			    "#{?pane_floating_flag, "
+			    "#{pane_x}#,#{pane_y}#,#{pane_z}}] [history "
 			    "#{history_size}/#{history_limit}, "
 			    "#{history_bytes} bytes] #{pane_id}"
 			    "#{?pane_active, (active),}#{?pane_dead, (dead),}";
 			break;
 		case 2:
 			template = "#{session_name}:#{window_index}."
-			    "#{pane_index}: [#{pane_width}x#{pane_height}] "
-			    "[history #{history_size}/#{history_limit}, "
+			    "#{pane_index}: [#{pane_width}x#{pane_height}"
+			    "#{?pane_floating_flag, "
+			    "#{pane_x}#,#{pane_y}#,#{pane_z}}] [history "
+			    "#{history_size}/#{history_limit}, "
 			    "#{history_bytes} bytes] #{pane_id}"
 			    "#{?pane_active, (active),}#{?pane_dead, (dead),}";
 			break;
