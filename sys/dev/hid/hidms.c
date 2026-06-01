@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.11 2024/05/10 10:49:10 mglocker Exp $ */
+/*	$OpenBSD: hidms.c,v 1.12 2026/06/01 18:04:05 mglocker Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 {
 	int dx, dy, dz, dw;
 	u_int32_t buttons = 0;
-	int i, s;
+	int i, s, released;
 
 	DPRINTFN(5,("hidms_input: len=%d\n", len));
 
@@ -595,17 +595,26 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 	    buttons != ms->sc_buttons) {
 		DPRINTFN(10, ("hidms_input: x:%d y:%d z:%d w:%d buttons:0x%x\n",
 			dx, dy, dz, dw, buttons));
+		released = (ms->sc_buttons != 0 && buttons == 0);
 		ms->sc_buttons = buttons;
 		if (ms->sc_wsmousedev != NULL) {
 			s = spltty();
+			/*
+			 * A polled touchscreen reports finger-up as a zeroed
+			 * packet; emitting its (0,0) as an absolute position
+			 * would snap the pointer to the corner.  On a button
+			 * release edge, hold the last position instead.
+			 */
 			if (ms->sc_flags & HIDMS_ABSX) {
-				wsmouse_set(ms->sc_wsmousedev,
-				    WSMOUSE_ABS_X, dx, 0);
+				if (!released)
+					wsmouse_set(ms->sc_wsmousedev,
+					    WSMOUSE_ABS_X, dx, 0);
 				dx = 0;
 			}
 			if (ms->sc_flags & HIDMS_ABSY) {
-				wsmouse_set(ms->sc_wsmousedev,
-				    WSMOUSE_ABS_Y, dy, 0);
+				if (!released)
+					wsmouse_set(ms->sc_wsmousedev,
+					    WSMOUSE_ABS_Y, dy, 0);
 				dy = 0;
 			}
 			WSMOUSE_INPUT(ms->sc_wsmousedev,

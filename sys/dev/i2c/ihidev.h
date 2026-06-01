@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.11 2025/01/07 19:26:14 mglocker Exp $ */
+/* $OpenBSD: ihidev.h,v 1.12 2026/06/01 18:04:05 mglocker Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -85,6 +85,8 @@ struct ihidev_softc {
 
 	u_int		sc_isize;
 	u_char		*sc_ibuf;
+	int		sc_lastrepid;	/* report id of last non-empty input */
+	int		*sc_repsizes;	/* per-report input size, for poll path */
 
 	int		sc_refcnt;
 

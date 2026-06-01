@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.43 2026/05/23 11:10:57 mglocker Exp $ */
+/* $OpenBSD: ihidev.c,v 1.44 2026/06/01 18:04:05 mglocker Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -142,6 +142,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_hid_desc_addr = ia->ia_size;
+	sc->sc_lastrepid = -1;
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_DESCR, NULL) ||
 	    ihidev_hid_desc_parse(sc)) {
@@ -159,10 +160,13 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 
 	/* find largest report size and allocate memory for input buffer */
 	sc->sc_isize = letoh16(sc->hid_desc.wMaxInputLength);
+	sc->sc_repsizes = mallocarray(sc->sc_nrepid, sizeof(int),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	for (repid = 0; repid < sc->sc_nrepid; repid++) {
 		repsz = hid_report_size(sc->sc_report, sc->sc_reportlen,
 		    hid_input, repid);
 		repsizes[repid] = repsz;
+		sc->sc_repsizes[repid] = repsz;
 		if (repsz > sc->sc_isize)
 			sc->sc_isize = repsz;
 		if (repsz != 0)
@@ -254,6 +258,9 @@ ihidev_detach(struct device *self, int flags)
 
 	if (sc->sc_report != NULL)
 		free(sc->sc_report, M_DEVBUF, sc->sc_reportlen);
+
+	if (sc->sc_repsizes != NULL)
+		free(sc->sc_repsizes, M_DEVBUF, sc->sc_nrepid * sizeof(int));
 
 	return (0);
 }
@@ -718,10 +725,21 @@ ihidev_intr(void *arg)
 	psize = sc->sc_ibuf[0] | sc->sc_ibuf[1] << 8;
 	if (psize <= 2 || psize > sc->sc_isize) {
 		if (sc->sc_poll) {
-			/*
-			 * TODO: all fingers are up, should we pass to hid
-			 * layer?
-			 */
+			/* empty packet: hand the last subdev a zeroed report
+			 * once so it releases its contacts (polled finger-up) */
+			int lrep = sc->sc_lastrepid;
+			int rsz;
+
+			if (lrep >= 0 && lrep < sc->sc_nrepid &&
+			    (scd = sc->sc_subdevs[lrep]) != NULL &&
+			    (scd->sc_state & IHIDEV_OPEN) && !sc->sc_dying) {
+				rsz = sc->sc_repsizes[lrep];
+				if (rsz > 0 && rsz <= sc->sc_isize) {
+					memset(sc->sc_ibuf, 0, rsz);
+					scd->sc_intr(scd, sc->sc_ibuf, rsz);
+				}
+				sc->sc_lastrepid = -1;
+			}
 			sc->sc_fastpoll = 0;
 			goto more_polling;
 		} else
@@ -770,8 +788,10 @@ ihidev_intr(void *arg)
 		return (1);
 	}
 
-	if (!sc->sc_dying)
+	if (!sc->sc_dying) {
+		sc->sc_lastrepid = rep;
 		scd->sc_intr(scd, p, psize);
+	}
 
 	if (sc->sc_poll && (fast != sc->sc_fastpoll)) {
 		DPRINTF(("%s: %s->%s polling\n", sc->sc_dev.dv_xname,
