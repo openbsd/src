@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.130 2024/07/10 13:29:23 krw Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.131 2026/06/01 16:38:09 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -296,27 +296,40 @@ main(int argc, char *argv[])
 		kvm_nlist(kd, nl);
 		globalnl = nl;
 		for (i = 0; i < argc; i++) {
-			uint64_t v;
+			uint64_t v = 0;
+			int bad = 0;
 
-			printf("%s ", argv[i]);
 			if (!nl[i].n_value && argv[i][0] == '0') {
 				nl[i].n_value = strtoul(argv[i], NULL, 16);
 				nl[i].n_type = N_DATA;
 			}
 			if (!nl[i].n_value) {
-				printf("not found\n");
+				printf("%s not found\n", argv[i]);
 				error++;
 				continue;
 			}
 
-			printf("at %p: ", (void *)nl[i].n_value);
 			if ((nl[i].n_type & N_TYPE) == N_DATA ||
 			    (nl[i].n_type & N_TYPE) == N_COMM) {
 				if (stringformat) {
-					KGET1(i, &buf, sizeof(buf), argv[i]);
+					if (kvm_read(kd, globalnl[i].n_value,
+					    &buf, sizeof(buf)) != sizeof buf)
+						bad = 1;
 					buf[sizeof(buf) - 1] = '\0';
-				} else
-					KGET1(i, &v, sizeof(v), argv[i]);
+				} else {
+					if (kvm_read(kd, globalnl[i].n_value,
+					    &v, sizeof(v)) != sizeof v)
+						bad = 1;
+				}
+				if (bad) {
+					warnx("cannot read %s: %s",
+					    argv[i], kvm_geterr(kd));
+					error++;
+					continue;
+				}
+
+				printf("%s at %p: ", argv[i],
+				    (void *)nl[i].n_value);
 				if (stringformat)
 					printf(format, &buf);
 				else if (longformat)
