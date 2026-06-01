@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.367 2026/05/19 12:16:25 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.368 2026/06/01 08:27:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5560,7 +5560,7 @@ format_expand1(struct format_expand_state *es, const char *fmt)
 	const char		*ptr, *s, *style_end = NULL;
 	size_t			 off, len, n, outlen;
 	int			 ch, brackets;
-	char			 expanded[8192];
+	char			 expanded[8192], number[2] = { 0 };
 
 	if (fmt == NULL || *fmt == '\0' || !format_check_time(es))
 		return (xstrdup(""));
@@ -5689,6 +5689,13 @@ format_expand1(struct format_expand_state *es, const char *fmt)
 			continue;
 		default:
 			s = NULL;
+			if (ch >= '1' && ch <= '9') {
+				number[0] = ch;
+				if (format_replace(es, number, 1, &buf, &len,
+				    &off) != 0)
+					break;
+				continue;
+			}
 			if (fmt > style_end) { /* skip inside #[] */
 				if (ch >= 'A' && ch <= 'Z')
 					s = format_upper[ch - 'A'];

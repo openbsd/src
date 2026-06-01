@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1058 2026/05/27 18:57:10 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1059 2026/06/01 08:27:38 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2026 $
+.Dd $Mdocdate: June 1 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -7844,7 +7844,7 @@ option.
 .Op Fl c Ar start\-directory
 .Op Fl d Ar delay
 .Op Fl t Ar target\-pane
-.Op Ar shell\-command
+.Op Ar shell\-command Op Ar argument ...
 .Xc
 .D1 Pq alias: Ic run
 Execute
@@ -7861,6 +7861,20 @@ Before being executed,
 is expanded using the rules specified in the
 .Sx FORMATS
 section.
+If
+.Ar argument
+values are given, they are available as
+.Ql #1 ,
+.Ql #2
+or
+.Ql #{1} ,
+.Ql #{2}
+and so on.
+For example:
+.Bd -literal -offset indent
+run-shell 'myscript.sh #1 #2' foo bar
+.Ed
+.Pp
 With
 .Fl b ,
 the command is run in the background.
