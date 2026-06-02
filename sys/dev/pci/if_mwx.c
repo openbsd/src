@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.12 2026/06/01 18:59:24 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.13 2026/06/02 11:02:10 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -383,8 +383,8 @@ int	mwx_mcu_wait_resp_msg(struct mwx_softc *, uint32_t, int,
 
 int		mt7921_dma_disable(struct mwx_softc *sc, int force);
 void		mt7921_dma_enable(struct mwx_softc *sc);
-int		mt7921_e_mcu_fw_pmctrl(struct mwx_softc *);
-int		mt7921_e_mcu_drv_pmctrl(struct mwx_softc *);
+int		mwx_mcu_fw_pmctrl(struct mwx_softc *);
+int		mwx_mcu_drv_pmctrl(struct mwx_softc *);
 int		mt7921_wfsys_reset(struct mwx_softc *sc);
 uint32_t	mt7921_reg_addr(struct mwx_softc *, uint32_t);
 int		mt7921_init_hardware(struct mwx_softc *);
@@ -1220,8 +1220,7 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
 	    mwx_intr, sc, DEVNAME(sc));
 
-	if (mt7921_e_mcu_fw_pmctrl(sc) != 0 ||
-	    mt7921_e_mcu_drv_pmctrl(sc) != 0)
+	if (mwx_mcu_fw_pmctrl(sc) != 0 || mwx_mcu_drv_pmctrl(sc) != 0)
 		goto fail;
 
 	if ((error = mwx_txwi_alloc(sc, MWX_TXWI_MAX)) != 0) {
@@ -2608,18 +2607,18 @@ mt7921_dma_enable(struct mwx_softc *sc)
 }
 
 int
-mt7921_e_mcu_fw_pmctrl(struct mwx_softc *sc)
+mwx_mcu_fw_pmctrl(struct mwx_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < MT7921_MCU_INIT_RETRY_COUNT; i++) {
+	for (i = 0; i < MWX_MCU_INIT_RETRY_COUNT; i++) {
 		mwx_write(sc, MT_CONN_ON_LPCTL, PCIE_LPCR_HOST_SET_OWN);
 		if (mwx_poll(sc, MT_CONN_ON_LPCTL, PCIE_LPCR_HOST_OWN_SYNC,
-		    PCIE_LPCR_HOST_OWN_SYNC, 50) == 0)
+		    4, 50) == 0)
 			break;
 	}
 
-	if (i == MT7921_MCU_INIT_RETRY_COUNT) {
+	if (i == MWX_MCU_INIT_RETRY_COUNT) {
 		printf("%s: firmware own failed\n", DEVNAME(sc));
 		return EIO;
 	}
@@ -2628,18 +2627,19 @@ mt7921_e_mcu_fw_pmctrl(struct mwx_softc *sc)
 }
 
 int
-mt7921_e_mcu_drv_pmctrl(struct mwx_softc *sc)
+mwx_mcu_drv_pmctrl(struct mwx_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < MT7921_MCU_INIT_RETRY_COUNT; i++) {
+	for (i = 0; i < MWX_MCU_INIT_RETRY_COUNT; i++) {
 		mwx_write(sc, MT_CONN_ON_LPCTL, PCIE_LPCR_HOST_CLR_OWN);
+		delay(3000);	/* 3ms for MT7925 */
 		if (mwx_poll(sc, MT_CONN_ON_LPCTL, 0,
 		    PCIE_LPCR_HOST_OWN_SYNC, 50) == 0)
 			break;
 	}
 
-	if (i == MT7921_MCU_INIT_RETRY_COUNT) {
+	if (i == MWX_MCU_INIT_RETRY_COUNT) {
 		printf("%s: driver own failed\n", DEVNAME(sc));
 		return EIO;
 	}

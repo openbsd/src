@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.8 2026/06/01 18:59:24 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.9 2026/06/02 11:02:10 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -337,7 +337,7 @@
 #define	MT_DNA_CTL_SD_GET_LEN0(c)	\
 	    (((c) >> MT_DMA_CTL_SD_LEN0_SHIFT) & MT_DMA_CTL_SD_LEN_MASK)
 
-#define	MT7921_MCU_INIT_RETRY_COUNT	10
+#define	MWX_MCU_INIT_RETRY_COUNT	10
 
 enum mt76_txq_id {
 	MT_TXQ_VO,
