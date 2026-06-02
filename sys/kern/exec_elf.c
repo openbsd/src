@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.200 2026/05/30 08:54:30 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.201 2026/06/02 09:45:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1039,7 +1039,7 @@ elf_os_pt_note_name(Elf_Note *np, int *typep)
 
 	for (i = 0; i < nitems(elf_note_names); i++) {
 		size_t namlen = strlen(elf_note_names[i].name);
-		if (np->namesz < namlen)
+		if (np->namesz <= namlen)
 			continue;
 		/* verify name padding (after the NUL) is NUL */
 		for (j = namlen + 1; j < elfround(np->namesz); j++)
@@ -1097,14 +1097,26 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh, int *name
 
 		for (offset = 0; offset < ph->p_filesz; offset += total) {
 			Elf_Note *np2 = (Elf_Note *)((char *)np + offset);
+			size_t remaining = ph->p_filesz - offset;
 			int name, type;
 
-			if (offset + sizeof(Elf_Note) > ph->p_filesz)
+			if (sizeof(Elf_Note) > remaining)
 				break;
+			remaining -= sizeof(Elf_Note);
+
+			if (elfround(np2->namesz) < np2->namesz ||
+			    elfround(np2->descsz) < np2->descsz)
+				break;
+
+			if (elfround(np2->namesz) > remaining)
+				break;
+			remaining -= elfround(np2->namesz);
+			if (elfround(np2->descsz) > remaining)
+				break;
+			remaining -= elfround(np2->descsz);
+
 			total = sizeof(Elf_Note) + elfround(np2->namesz) +
 			    elfround(np2->descsz);
-			if (offset + total > ph->p_filesz)
-				break;
 			name = elf_os_pt_note_name(np2, &type);
 			if (name == ELF_NOTE_NAME_OPENBSD &&
 			    type == NT_OPENBSD_PROF)
