@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.137 2026/04/28 03:44:14 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.138 2026/06/02 03:17:28 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3648,6 +3648,19 @@ seq_buf_printf(struct seq_buf *s, const char *fmt, ...)
 		s->pos = s->size - 1;
 		s->overflowed = 1;
 	}
+}
+
+u64
+hrtimer_forward_now(struct timeout *to, ktime_t val)
+{
+	struct timespec now, ts;
+
+	getnanotime(&now);
+	NSEC_TO_TIMESPEC(ktime_to_ns(val), &ts);
+	timespecadd(&ts, &now, &ts);
+	timeout_abs_ts(to, &ts);
+
+	return 0;
 }
 
 #ifdef __HAVE_FDT
