@@ -53,6 +53,8 @@ typedef int pgprot_t;
 
 typedef int atomic_t;
 
+typedef int64_t ktime_t;
+
 struct list_head {
 	struct list_head *next, *prev;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.8 2024/03/28 02:36:38 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.9 2026/06/02 03:04:53 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -21,8 +21,8 @@
 #include <sys/time.h>
 #include <linux/time.h>
 #include <linux/jiffies.h>
+#include <linux/types.h>
 
-typedef int64_t ktime_t;
 #define KTIME_MAX INT64_MAX
 
 static inline ktime_t
