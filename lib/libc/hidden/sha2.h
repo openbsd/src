@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.2 2016/09/03 16:25:03 tedu Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.3 2026/06/02 15:18:16 naddy Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -14,7 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*	$OpenBSD: sha2.h,v 1.2 2016/09/03 16:25:03 tedu Exp $	*/
 
 #ifndef _LIBC_SHA2_H
 #define _LIBC_SHA2_H

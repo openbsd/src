@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.2 2026/06/01 13:27:24 jsing Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.3 2026/06/02 15:18:16 naddy Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -14,7 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*	$OpenBSD: sha1.h,v 1.2 2026/06/01 13:27:24 jsing Exp $	*/
 
 #ifndef _LIBC_SHA1_H
 #define _LIBC_SHA1_H
