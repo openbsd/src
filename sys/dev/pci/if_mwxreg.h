@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.10 2026/06/02 11:55:57 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.11 2026/06/02 14:23:47 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -274,11 +274,18 @@
 #define	MT_RX_FWDL_RING_BASE		0xd4500
 
 #define	MT_INFRA_CFG_BASE		0xfe000
-#define	MT_HIF_REMAP_L1			0xfe24c
-#define	MT_HIF_REMAP_L1_MASK		0x0000ffff
-#define	MT_HIF_REMAP_L1_GET_OFFSET(x)	((x) & 0xffff)
-#define	MT_HIF_REMAP_L1_GET_BASE(x)	((x >> 16) & 0xffff)
-#define	MT_HIF_REMAP_BASE_L1		0x40000
+#define	MT7921_HIF_REMAP_L1		0xfe24c
+#define	MT7921_HIF_REMAP_L1_MASK	0x0000ffff
+#define	MT7921_HIF_REMAP_L1_SHIFT	0
+#define	MT7921_HIF_REMAP_BASE_L1	0x40000
+
+#define	MT7925_HIF_REMAP_L1		0x155024
+#define	MT7925_HIF_REMAP_L1_MASK	0xffff0000
+#define	MT7925_HIF_REMAP_L1_SHIFT	16
+#define	MT7925_HIF_REMAP_BASE_L1	0x130000
+
+#define	MWX_HIF_REG_OFFSET(x)		((x) & 0xffff)
+#define	MWX_HIF_REG_BASE(x)		(((x) >> 16) & 0xffff)
 
 #define	MT_SWDEF_BASE			0x41f200
 #define	MT_SWDEF_MODE			0x41f23c
@@ -640,7 +647,7 @@ struct mt76_txwi {
 #define	MT_TXD1_HDR_FORMAT_MASK			0x00030000
 #define	MT_TXD1_HDR_FORMAT_SHIFT		16
 #define	MT_TXD1_HDR_INFO_MASK			0x0000f800
-#define MT_TXD1_HDR_INFO(x)		(((x) << 11) & MT_TXD1_HDR_INFO_MASK)
+#define	MT_TXD1_HDR_INFO(x)		(((x) << 11) & MT_TXD1_HDR_INFO_MASK)
 #define	MT_TXD1_ETH_802_3			(1U << 15)
 #define	MT_TXD1_VTA				(1U << 10)
 #define	MT_TXD1_WLAN_IDX_MASK			0x000003ff
