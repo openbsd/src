@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.9 2026/06/02 03:04:53 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.10 2026/06/02 03:11:32 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -169,6 +169,16 @@ ktime_set(time_t s, long ns)
 	ts.tv_sec = s;
 	ts.tv_nsec = ns;
 	return TIMESPEC_TO_NSEC(&ts);
+}
+
+static inline int
+ktime_compare(const ktime_t a, const ktime_t b)
+{
+	if (a < b)
+		return -1;
+	if (a == b)
+		return 0;
+	return 1;
 }
 
 #include <linux/timekeeping.h>
