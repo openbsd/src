@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.129 2026/06/01 20:00:25 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.130 2026/06/02 07:11:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -882,7 +882,9 @@ screen_redraw_draw_borders_style(struct screen_redraw_ctx *ctx, u_int x,
 	struct format_tree	*ft;
 	int			*flag;
 
-	if (screen_redraw_check_is(ctx, x, y, active)) {
+	if ((wp->flags & PANE_FLOATING && wp == active) ||
+	    (!(wp->flags & PANE_FLOATING) &&
+	    screen_redraw_check_is(ctx, x, y, active))) {
 		flag = &wp->active_border_gc_set;
 		gc = &wp->active_border_gc;
 		border_option = "pane-active-border-style";
