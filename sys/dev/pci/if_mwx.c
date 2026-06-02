@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.13 2026/06/02 11:02:10 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.14 2026/06/02 11:10:57 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -50,17 +50,25 @@
 #include <dev/pci/if_mwxreg.h>
 
 static const struct pci_matchid mwx_devices[] = {
+	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7920 },
 	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921 },
 	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921K },
 	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7922 },
+	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_RZ616 },
+	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7925 },
+	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_RZ717 },
 };
 
 #define MWX_DEBUG	1
 
+#define	MT7920_ROM_PATCH	"mwx-mt7961_patch_mcu_1a_2_hdr"
+#define	MT7920_FIRMWARE_WM	"mwx-mt7961_ram_code_1a"
 #define	MT7921_ROM_PATCH	"mwx-mt7961_patch_mcu_1_2_hdr"
 #define	MT7921_FIRMWARE_WM	"mwx-mt7961_ram_code_1"
 #define	MT7922_ROM_PATCH	"mwx-mt7922_patch_mcu_1_1_hdr"
 #define	MT7922_FIRMWARE_WM	"mwx-mt7922_ram_code_1"
+#define	MT7925_ROM_PATCH	"mwx-mt7925_patch_mcu_1_1_hdr"
+#define	MT7925_FIRMWARE_WM	"mwx-mt7925_ram_code_1_1"
 
 #if NBPFILTER > 0
 struct mwx_rx_radiotap_header {
@@ -160,8 +168,10 @@ struct mwx_vif {
 };
 
 enum mwx_hw_type {
+	MWX_HW_MT7920,
 	MWX_HW_MT7921,
 	MWX_HW_MT7922,
+	MWX_HW_MT7925,
 };
 
 struct mwx_softc {
@@ -1188,10 +1198,26 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MEDIATEK_MT7922)
-		sc->sc_hwtype = MWX_HW_MT7922;
-	else
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_MEDIATEK_MT7920:
+		sc->sc_hwtype = MWX_HW_MT7920;
+		break;
+	case PCI_PRODUCT_MEDIATEK_MT7921:
+	case PCI_PRODUCT_MEDIATEK_MT7921K:
 		sc->sc_hwtype = MWX_HW_MT7921;
+		break;
+	case PCI_PRODUCT_MEDIATEK_MT7922:
+	case PCI_PRODUCT_MEDIATEK_RZ616:
+		sc->sc_hwtype = MWX_HW_MT7922;
+		break;
+	case PCI_PRODUCT_MEDIATEK_MT7925:
+	case PCI_PRODUCT_MEDIATEK_RZ717:
+		sc->sc_hwtype = MWX_HW_MT7925;
+		break;
+	default:
+		printf(": unknown chip id 0x%04x\n", PCI_PRODUCT(pa->pa_id));
+		return;
+	}
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
@@ -2872,6 +2898,9 @@ mt7921_load_firmware(struct mwx_softc *sc)
 	}
 
 	switch (sc->sc_hwtype) {
+	case MWX_HW_MT7920:
+		rompatch = MT7920_ROM_PATCH;
+		fw = MT7920_FIRMWARE_WM;
 	case MWX_HW_MT7921:
 		rompatch = MT7921_ROM_PATCH;
 		fw = MT7921_FIRMWARE_WM;
@@ -2879,6 +2908,10 @@ mt7921_load_firmware(struct mwx_softc *sc)
 	case MWX_HW_MT7922:
 		rompatch = MT7922_ROM_PATCH;
 		fw = MT7922_FIRMWARE_WM;
+		break;
+	case MWX_HW_MT7925:
+		rompatch = MT7925_ROM_PATCH;
+		fw = MT7925_FIRMWARE_WM;
 		break;
 	}
 	if ((rv = loadfirmware(rompatch, &buf, &buflen)) != 0 ||
