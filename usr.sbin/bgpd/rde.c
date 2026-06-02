@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.705 2026/05/28 09:10:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.706 2026/06/02 08:23:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2804,7 +2804,11 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 
 	/* merge AS4_PATH with ASPATH */
 	if (nasp)
-		aspath_merge(a, nasp);
+		if (aspath_merge(a, nasp) == -1) {
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "aspath merge failed, "
+			    "path invalidated and prefix withdrawn");
+		}
 }
 
 
