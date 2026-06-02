@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.15 2026/06/02 11:55:57 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.16 2026/06/02 12:18:13 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -329,67 +329,74 @@ pkt_hex_dump(struct mbuf *m)
 	}
 }
 
-int	mwx_init(struct ifnet *);
-void	mwx_stop(struct ifnet *);
-void	mwx_watchdog(struct ifnet *);
-void	mwx_start(struct ifnet *);
-int	mwx_ioctl(struct ifnet *, u_long, caddr_t);
+int		mwx_init(struct ifnet *);
+void		mwx_stop(struct ifnet *);
+void		mwx_watchdog(struct ifnet *);
+void		mwx_start(struct ifnet *);
+int		mwx_ioctl(struct ifnet *, u_long, caddr_t);
 
 struct ieee80211_node *mwx_node_alloc(struct ieee80211com *);
-int	mwx_media_change(struct ifnet *);
+int		mwx_media_change(struct ifnet *);
 #if NBPFILTER > 0
-void	mwx_radiotap_attach(struct mwx_softc *);
+void		mwx_radiotap_attach(struct mwx_softc *);
 #endif
 
-int	mwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
-void	mwx_newstate_task(void *);
+int		mwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
+void		mwx_newstate_task(void *);
 
-int	mwx_tx(struct mwx_softc *, struct mbuf *, struct ieee80211_node *);
-void	mwx_rx(struct mwx_softc *, struct mbuf *, struct mbuf_list *);
-int	mwx_intr(void *);
-int	mwx_preinit(struct mwx_softc *);
-void	mwx_attach_hook(struct device *);
-int	mwx_match(struct device *, void *, void *);
-void	mwx_attach(struct device *, struct device *, void *);
-int	mwx_activate(struct device *, int);
+int		mwx_tx(struct mwx_softc *, struct mbuf *,
+		    struct ieee80211_node *);
+void		mwx_rx(struct mwx_softc *, struct mbuf *, struct mbuf_list *);
+int		mwx_intr(void *);
+int		mwx_preinit(struct mwx_softc *);
+void		mwx_attach_hook(struct device *);
+int		mwx_match(struct device *, void *, void *);
+void		mwx_attach(struct device *, struct device *, void *);
+int		mwx_activate(struct device *, int);
 
-void	mwx_reset(struct mwx_softc *);
-void	mwx_reset_task(void *);
-int	mwx_txwi_alloc(struct mwx_softc *, int);
-void	mwx_txwi_free(struct mwx_softc *);
+void		mwx_reset(struct mwx_softc *);
+void		mwx_reset_task(void *);
+int		mwx_txwi_alloc(struct mwx_softc *, int);
+void		mwx_txwi_free(struct mwx_softc *);
 struct mwx_txwi	*mwx_txwi_get(struct mwx_softc *);
-void	mwx_txwi_put(struct mwx_softc *, struct mwx_txwi *);
-int	mwx_txwi_enqueue(struct mwx_softc *, struct mwx_txwi *, struct mbuf *);
-int	mwx_queue_alloc(struct mwx_softc *, struct mwx_queue *, int, uint32_t);
-void	mwx_queue_free(struct mwx_softc *, struct mwx_queue *);
-void	mwx_queue_reset(struct mwx_softc *, struct mwx_queue *);
-int	mwx_buf_fill(struct mwx_softc *, struct mwx_queue_data *,
-	    struct mwx_desc *);
-int	mwx_queue_fill(struct mwx_softc *, struct mwx_queue *);
-int	mwx_dma_alloc(struct mwx_softc *);
-int	mwx_dma_reset(struct mwx_softc *, int);
-void	mwx_dma_free(struct mwx_softc *);
-int	mwx_dma_tx_enqueue(struct mwx_softc *, struct mwx_queue *,
-	    struct mbuf *);
-int	mwx_dma_txwi_enqueue(struct mwx_softc *, struct mwx_queue *,
-	    struct mwx_txwi *);
-void	mwx_dma_tx_cleanup(struct mwx_softc *, struct mwx_queue *);
-void	mwx_dma_tx_done(struct mwx_softc *);
-void	mwx_dma_rx_process(struct mwx_softc *, struct mbuf_list *);
-void	mwx_dma_rx_dequeue(struct mwx_softc *, struct mwx_queue *,
-	    struct mbuf_list *);
-void	mwx_dma_rx_done(struct mwx_softc *, struct mwx_queue *);
+void		mwx_txwi_put(struct mwx_softc *, struct mwx_txwi *);
+int		mwx_txwi_enqueue(struct mwx_softc *, struct mwx_txwi *,
+		    struct mbuf *);
+int		mwx_queue_alloc(struct mwx_softc *, struct mwx_queue *, int,
+		    uint32_t);
+void		mwx_queue_free(struct mwx_softc *, struct mwx_queue *);
+void		mwx_queue_reset(struct mwx_softc *, struct mwx_queue *);
+int		mwx_buf_fill(struct mwx_softc *, struct mwx_queue_data *,
+		    struct mwx_desc *);
+int		mwx_queue_fill(struct mwx_softc *, struct mwx_queue *);
+int		mwx_dma_alloc(struct mwx_softc *);
+int		mwx_dma_reset(struct mwx_softc *, int);
+void		mwx_dma_free(struct mwx_softc *);
+int		mwx_dma_tx_enqueue(struct mwx_softc *, struct mwx_queue *,
+		    struct mbuf *);
+int		mwx_dma_txwi_enqueue(struct mwx_softc *, struct mwx_queue *,
+		    struct mwx_txwi *);
+void		mwx_dma_tx_cleanup(struct mwx_softc *, struct mwx_queue *);
+void		mwx_dma_tx_done(struct mwx_softc *);
+void		mwx_dma_rx_process(struct mwx_softc *, struct mbuf_list *);
+void		mwx_dma_rx_dequeue(struct mwx_softc *, struct mwx_queue *,
+		    struct mbuf_list *);
+void		mwx_dma_rx_done(struct mwx_softc *, struct mwx_queue *);
 
 struct mbuf	*mwx_mcu_alloc_msg(size_t);
-void	mwx_mcu_set_len(struct mbuf *, void *);
-int	mwx_mcu_send_mbuf(struct mwx_softc *, uint32_t, struct mbuf *, int *);
-int	mwx_mcu_send_msg(struct mwx_softc *, uint32_t, void *, size_t, int *);
-int	mwx_mcu_send_wait(struct mwx_softc *, uint32_t, void *, size_t);
-int	mwx_mcu_send_mbuf_wait(struct mwx_softc *, uint32_t, struct mbuf *);
-void	mwx_mcu_rx_event(struct mwx_softc *, struct mbuf *);
-int	mwx_mcu_wait_resp_int(struct mwx_softc *, uint32_t, int, uint32_t *);
-int	mwx_mcu_wait_resp_msg(struct mwx_softc *, uint32_t, int,
-	    struct mbuf **);
+void		mwx_mcu_set_len(struct mbuf *, void *);
+int		mwx_mcu_send_mbuf(struct mwx_softc *, uint32_t, struct mbuf *,
+		    int *);
+int		mwx_mcu_send_msg(struct mwx_softc *, uint32_t, void *, size_t,
+		    int *);
+int		mwx_mcu_send_wait(struct mwx_softc *, uint32_t, void *, size_t);
+int		mwx_mcu_send_mbuf_wait(struct mwx_softc *, uint32_t,
+		    struct mbuf *);
+void		mwx_mcu_rx_event(struct mwx_softc *, struct mbuf *);
+int		mwx_mcu_wait_resp_int(struct mwx_softc *, uint32_t, int,
+		    uint32_t *);
+int		mwx_mcu_wait_resp_msg(struct mwx_softc *, uint32_t, int,
+		    struct mbuf **);
 
 int		mwx_dma_disable(struct mwx_softc *sc, int force);
 void		mt7921_dma_enable(struct mwx_softc *sc);
