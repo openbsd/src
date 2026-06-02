@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.186 2026/05/08 12:03:50 tb Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.187 2026/06/02 08:40:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -953,8 +953,8 @@ print_announce(struct peer_config *p, const char *c)
 	    p->capabilities.grestart.grnotification)
 		printf("%s\tannounce graceful notification yes\n", c);
 
-	if (p->capabilities.as4byte == 2)
-		printf("%s\tannounce as4byte enforce\n", c);
+	if (p->capabilities.as4byte == 1)
+		printf("%s\tannounce as4byte yes\n", c);
 	else if (p->capabilities.as4byte == 0)
 		printf("%s\tannounce as4byte no\n", c);
 

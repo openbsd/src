@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.502 2026/05/28 08:47:09 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.503 2026/06/02 08:40:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4716,7 +4716,7 @@ alloc_peer(void)
 	p->conf.export_type = EXPORT_UNSET;
 	p->conf.capabilities.refresh = 1;
 	p->conf.capabilities.grestart.restart = 1;
-	p->conf.capabilities.as4byte = 1;
+	p->conf.capabilities.as4byte = 2;
 	p->conf.capabilities.policy = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
