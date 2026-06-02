@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.271 2026/03/08 16:41:21 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.272 2026/06/02 21:46:21 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -312,7 +312,7 @@
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
 162	OBSOL		ogetdomainname
 163	OBSOL		osetdomainname
-164	STD		{ int sys___tmpfd(int flags); }
+164	OBSOL		__tmpfd
 165	STD		{ int sys_sysarch(int op, void *parms); }
 166	STD NOLOCK	{ off_t sys_lseek(int fd, off_t offset, int whence); }
 167	STD		{ int sys_truncate(const char *path, off_t length); }

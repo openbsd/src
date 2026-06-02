@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.384 2026/06/01 16:33:49 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.385 2026/06/02 21:46:21 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1235,94 +1235,6 @@ error:
 	KERNEL_UNLOCK();
 	fdpunlock(fdp);
 	closef(fp, p);
-	return (error);
-}
-
-/*
- * Open a new created file (in /tmp) suitable for mmaping.
- */
-int
-sys___tmpfd(struct proc *p, void *v, register_t *retval)
-{
-	struct sys___tmpfd_args /* {
-		syscallarg(int) flags;
-	} */ *uap = v;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	int oflags = SCARG(uap, flags);
-	int flags, fdflags, cmode;
-	int indx, error;
-	unsigned int i;
-	struct nameidata nd;
-	char path[64];
-	static const char *letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
-
-	/* most flags are hardwired */
-	oflags = O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW |
-	    (oflags & (O_CLOEXEC | O_CLOFORK));
-
-	fdflags = ((oflags & O_CLOEXEC) ? UF_EXCLOSE : 0)
-	    | ((oflags & O_CLOFORK) ? UF_FORKCLOSE : 0);
-
-	fdplock(fdp);
-	if ((error = falloc(p, &fp, &indx)) != 0) {
-		fdpunlock(fdp);
-		return (error);
-	}
-	fdpunlock(fdp);
-
-	flags = FFLAGS(oflags);
-
-	arc4random_buf(path, sizeof(path));
-	memcpy(path, "/tmp/", 5);
-	for (i = 5; i < sizeof(path) - 1; i++)
-		path[i] = letters[(unsigned char)path[i] & 63];
-	path[sizeof(path)-1] = 0;
-
-	cmode = 0600;
-	NDINITAT(&nd, 0, KERNELPATH, UIO_SYSSPACE, AT_FDCWD, path, p);
-	if ((error = vn_open(&nd, flags, cmode)) != 0) {
-		if (error == ERESTART)
-			error = EINTR;
-		fdplock(fdp);
-		fdremove(fdp, indx);
-		fdpunlock(fdp);
-		closef(fp, p);
-		return (error);
-	}
-	vp = nd.ni_vp;
-	fp->f_flag = flags & FMASK;
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
-	fp->f_data = vp;
-	VOP_UNLOCK(vp);
-	*retval = indx;
-	fdplock(fdp);
-	fdinsert(fdp, indx, fdflags, fp);
-	fdpunlock(fdp);
-	FRELE(fp, p);
-
-	/* unlink it */
-	/* XXX
-	 * there is a wee race here, although it is mostly inconsequential.
-	 * perhaps someday we can create a file like object without a name...
-	 */
-	NDINITAT(&nd, DELETE, KERNELPATH | LOCKPARENT | LOCKLEAF, UIO_SYSSPACE,
-	    AT_FDCWD, path, p);
-	if ((error = namei(&nd)) != 0) {
-		printf("can't unlink temp file! %d\n", error);
-		error = 0;
-	} else {
-		vp = nd.ni_vp;
-		uvm_vnp_uncache(vp);
-		error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-		if (error) {
-			printf("error removing vop: %d\n", error);
-			error = 0;
-		}
-	}
-
 	return (error);
 }
 
