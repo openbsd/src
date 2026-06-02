@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2139 2026/05/20 04:22:12 jsg Exp $
+$OpenBSD: pcidevs,v 1.2140 2026/06/02 09:19:16 claudio Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8010,10 +8010,12 @@ product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 
 /* MediaTek products */
 product MEDIATEK MT7921K	0x0608	MT7921K
-product MEDIATEK MT7922		0x0616	MT7922
-product MEDIATEK MT7921		0x7961	MT7921
+product MEDIATEK RZ616		0x0616	RZ616
+product MEDIATEK RZ717		0x0717	RZ717
 product MEDIATEK MT7920		0x7920	MT7920
+product MEDIATEK MT7922		0x7922	MT7922
 product MEDIATEK MT7925		0x7925	MT7925
+product MEDIATEK MT7921		0x7961	MT7921
 
 /* Meinberg Funkuhren */
 product MEINBERG PCI32		0x0101	PCI32
