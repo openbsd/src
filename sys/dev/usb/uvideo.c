@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.265 2025/09/06 13:45:41 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.266 2026/06/02 20:33:29 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -387,7 +387,37 @@ const struct uvideo_devs {
 	    UVIDEO_FLAG_ISIGHT_STREAM_HEADER
 	},
 	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
+	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMFUSION_1 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_VENDOR_CLASS
+	},
+	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
+	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMORBITMP_1 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_VENDOR_CLASS
+	},
+	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
+	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMNBPRO },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_VENDOR_CLASS
+	},
+	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
+	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO5K_1 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_VENDOR_CLASS
+	},
+	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
 	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_VENDOR_CLASS
+	},
+	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
+	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_2 },
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_VENDOR_CLASS
@@ -560,6 +590,9 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = uaa->device;
 
+	/* maybe the device has quirks */
+	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
+
 	/* Find the first unclaimed video interface. */
 	for (i = 0; i < uaa->nifaces; i++) {
 		if (usbd_iface_claimed(sc->sc_udev, i))
@@ -568,6 +601,10 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 		if (id == NULL)
 			continue;
 		if (id->bInterfaceClass == UICLASS_VIDEO)
+			break;
+		if (sc->sc_quirk != NULL &&
+		    sc->sc_quirk->flags & UVIDEO_FLAG_VENDOR_CLASS &&
+		    id->bInterfaceClass == UICLASS_VENDOR)
 			break;
 	}
 	if (i == uaa->nifaces) {
@@ -612,9 +649,6 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	/* Remember our association by saving the first interface. */
 	sc->sc_iface = iad->bFirstInterface;
 	sc->sc_nifaces = iad->bInterfaceCount;
-
-	/* maybe the device has quirks */
-	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
 
 	if (sc->sc_quirk && sc->sc_quirk->flags & UVIDEO_FLAG_NOATTACH) {
 		printf("%s: device not supported\n", DEVNAME(sc));
