@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.14 2026/06/02 11:10:57 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.15 2026/06/02 11:55:57 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -391,11 +391,11 @@ int	mwx_mcu_wait_resp_int(struct mwx_softc *, uint32_t, int, uint32_t *);
 int	mwx_mcu_wait_resp_msg(struct mwx_softc *, uint32_t, int,
 	    struct mbuf **);
 
-int		mt7921_dma_disable(struct mwx_softc *sc, int force);
+int		mwx_dma_disable(struct mwx_softc *sc, int force);
 void		mt7921_dma_enable(struct mwx_softc *sc);
 int		mwx_mcu_fw_pmctrl(struct mwx_softc *);
 int		mwx_mcu_drv_pmctrl(struct mwx_softc *);
-int		mt7921_wfsys_reset(struct mwx_softc *sc);
+int		mwx_wfsys_reset(struct mwx_softc *sc);
 uint32_t	mt7921_reg_addr(struct mwx_softc *, uint32_t);
 int		mt7921_init_hardware(struct mwx_softc *);
 int		mt7921_mcu_init(struct mwx_softc *);
@@ -1810,9 +1810,9 @@ mwx_dma_alloc(struct mwx_softc *sc)
 	int rv;
 
 	/* Stop DMA engine and reset wfsys */
-	if ((rv = mt7921_dma_disable(sc, 1)) != 0)
+	if ((rv = mwx_dma_disable(sc, 1)) != 0)
 		return rv;
-	if ((rv = mt7921_wfsys_reset(sc)) != 0)
+	if ((rv = mwx_wfsys_reset(sc)) != 0)
 		return rv;
 
 	/* TX queues */
@@ -1853,10 +1853,10 @@ mwx_dma_reset(struct mwx_softc *sc, int fullreset)
 
 	DPRINTF("%s: DMA reset\n", DEVNAME(sc));
 
-	if ((rv = mt7921_dma_disable(sc, fullreset)) != 0)
+	if ((rv = mwx_dma_disable(sc, fullreset)) != 0)
 		return rv;
 	if (fullreset)
-		if ((rv = mt7921_wfsys_reset(sc)) != 0)
+		if ((rv = mwx_wfsys_reset(sc)) != 0)
 			return rv;
 
 	/* TX queues */
@@ -2557,8 +2557,10 @@ mwx_mcu_wait_resp_msg(struct mwx_softc *sc, uint32_t cmd, int seq,
 }
 
 int
-mt7921_dma_disable(struct mwx_softc *sc, int force)
+mwx_dma_disable(struct mwx_softc *sc, int force)
 {
+	int rv;
+
 	/* disable WFDMA0 */
 	mwx_clear(sc, MT_WFDMA0_GLO_CFG,
 	    MT_WFDMA0_GLO_CFG_TX_DMA_EN | MT_WFDMA0_GLO_CFG_RX_DMA_EN |
@@ -2566,6 +2568,15 @@ mt7921_dma_disable(struct mwx_softc *sc, int force)
 	    MT_WFDMA0_GLO_CFG_OMIT_TX_INFO |
 	    MT_WFDMA0_GLO_CFG_OMIT_RX_INFO |
 	    MT_WFDMA0_GLO_CFG_OMIT_RX_INFO_PFET2);
+
+	rv = mwx_poll(sc, MT_WFDMA0_GLO_CFG, 0,
+	    MT_WFDMA0_GLO_CFG_TX_DMA_BUSY | MT_WFDMA0_GLO_CFG_RX_DMA_BUSY, 100);
+	if (rv != 0)
+		return rv;
+
+	/* disable dmashdl */
+	mwx_clear(sc, MT_WFDMA0_GLO_CFG_EXT0, MT_WFDMA0_CSR_TX_DMASHDL_ENABLE);
+	mwx_set(sc, MT_DMASHDL_SW_CONTROL, MT_DMASHDL_DMASHDL_BYPASS);
 
 	if (force) {
 		/* reset */
@@ -2575,13 +2586,7 @@ mt7921_dma_disable(struct mwx_softc *sc, int force)
 		    MT_WFDMA0_RST_LOGIC_RST);
 	}
 
-	/* disable dmashdl */
-	mwx_clear(sc, MT_WFDMA0_GLO_CFG_EXT0, MT_WFDMA0_CSR_TX_DMASHDL_ENABLE);
-	mwx_set(sc, MT_DMASHDL_SW_CONTROL, MT_DMASHDL_DMASHDL_BYPASS);
-
-	return mwx_poll(sc, MT_WFDMA0_GLO_CFG, 0,
-	    MT_WFDMA0_GLO_CFG_TX_DMA_BUSY | MT_WFDMA0_GLO_CFG_RX_DMA_BUSY,
-	    1000);
+	return 0;
 }
 
 void
@@ -2674,16 +2679,20 @@ mwx_mcu_drv_pmctrl(struct mwx_softc *sc)
 }
 
 int
-mt7921_wfsys_reset(struct mwx_softc *sc)
+mwx_wfsys_reset(struct mwx_softc *sc)
 {
+	uint32_t reg;
+
 	DPRINTF("%s: WFSYS reset\n", DEVNAME(sc));
 
-	mwx_clear(sc, MT_WFSYS_SW_RST_B, WFSYS_SW_RST_B);
+	reg = (sc->sc_hwtype == MWX_HW_MT7925) ?
+	    MT7925_WFSYS_SW_RST_B : MT_WFSYS_SW_RST_B;
+
+	mwx_clear(sc, reg, WFSYS_SW_RST_B);
 	delay(50 * 1000);
 	mwx_set(sc, MT_WFSYS_SW_RST_B, WFSYS_SW_RST_B);
 
-	return mwx_poll(sc, MT_WFSYS_SW_RST_B, WFSYS_SW_INIT_DONE,
-	    WFSYS_SW_INIT_DONE, 500);
+	return mwx_poll(sc, reg, WFSYS_SW_INIT_DONE, WFSYS_SW_INIT_DONE, 500);
 }
 
 /*
