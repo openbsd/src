@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.16 2026/06/02 12:18:13 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.17 2026/06/02 13:20:28 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -2697,7 +2697,7 @@ mwx_wfsys_reset(struct mwx_softc *sc)
 
 	mwx_clear(sc, reg, WFSYS_SW_RST_B);
 	delay(50 * 1000);
-	mwx_set(sc, MT_WFSYS_SW_RST_B, WFSYS_SW_RST_B);
+	mwx_set(sc, reg, WFSYS_SW_RST_B);
 
 	return mwx_poll(sc, reg, WFSYS_SW_INIT_DONE, WFSYS_SW_INIT_DONE, 500);
 }
