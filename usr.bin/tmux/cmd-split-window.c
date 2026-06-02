@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.119 2026/05/20 08:54:40 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.120 2026/06/02 08:13:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -107,7 +107,7 @@ cmd_split_window_get_tiled_cell(struct cmdq_item *item, struct args *args,
 	char			*cause = NULL;
 	int			 size;
 
-	if (wp->flags & PANE_FLOATING) {
+	if (window_pane_is_floating(wp)) {
 		cmdq_error(item, "can't split a floating pane");
 		return (NULL);
 	}

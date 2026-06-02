@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.54 2026/05/21 07:28:51 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.55 2026/06/02 08:13:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,7 +159,7 @@ cmd_resize_pane_mouse_update(__unused struct cmd *self, struct cmdq_item *item)
 	if (wp == NULL || c == NULL || c->session != s)
 		return (CMD_RETURN_NORMAL);
 
-	if (~wp->flags & PANE_FLOATING) {
+	if (!window_pane_is_floating(wp)) {
 		c->tty.mouse_drag_update = cmd_resize_pane_mouse_update_tiled;
 		cmd_resize_pane_mouse_update_tiled(c, &event->m);
 		return (CMD_RETURN_NORMAL);

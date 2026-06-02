@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.32 2026/06/01 20:09:26 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.33 2026/06/02 08:13:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -69,7 +69,7 @@ layout_dump(struct window *w, struct layout_cell *root)
 		return (NULL);
 
 	TAILQ_FOREACH(wp, &w->z_index, zentry) {
-		if (~wp->flags & PANE_FLOATING)
+		if (!window_pane_is_floating(wp))
 			break;
 		if (!bracket) {
 			strlcat(layout, "<", sizeof layout);
@@ -307,7 +307,7 @@ layout_assign(struct window_pane **wp, struct layout_cell *lc, int flags)
 	switch (lc->type) {
 	case LAYOUT_WINDOWPANE:
 		layout_make_leaf(lc, *wp);
-		(*wp)->flags |= flags;
+		lc->flags |= flags;
 		*wp = TAILQ_NEXT(*wp, entry);
 		return;
 	case LAYOUT_LEFTRIGHT:

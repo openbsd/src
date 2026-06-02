@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.460 2026/05/28 10:45:17 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.461 2026/06/02 08:13:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -659,7 +659,7 @@ server_client_check_mouse_in_pane(struct window_pane *wp, int px, int py,
 				return (KEYC_MOUSE_LOCATION_SCROLLBAR_SLIDER);
 			} else /* py > sl_bottom */
 				return (KEYC_MOUSE_LOCATION_SCROLLBAR_DOWN);
-		} else if (wp->flags & PANE_FLOATING &&
+		} else if (window_pane_is_floating(wp) &&
 		    (px == wp->xoff - 1 ||
 		    py == wp->yoff - 1 ||
 		    py == wp->yoff + (int)wp->sy)) {
@@ -687,7 +687,7 @@ server_client_check_mouse_in_pane(struct window_pane *wp, int px, int py,
 			    py <= fwp->yoff + (int)fwp->sy) {
 				if (px == bdr_right)
 					break;
-				if (wp->flags & PANE_FLOATING) {
+				if (window_pane_is_floating(wp)) {
 					/* Floating pane, check left border. */
 					bdr_left = fwp->xoff - 1;
 					if (px == bdr_left)
@@ -699,7 +699,7 @@ server_client_check_mouse_in_pane(struct window_pane *wp, int px, int py,
 				bdr_bottom = fwp->yoff + fwp->sy;
 				if (py == bdr_bottom)
 					break;
-				if (wp->flags & PANE_FLOATING) {
+				if (window_pane_is_floating(wp)) {
 					/* Floating pane, check top border. */
 					bdr_top = fwp->yoff - 1;
 					if (py == bdr_top)

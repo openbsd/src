@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.38 2026/06/01 19:56:26 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.39 2026/06/02 08:13:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -282,6 +282,8 @@ spawn_pane(struct spawn_context *sc, char **cause)
 			else
 				layout_assign_pane(sc->lc, new_wp, 0);
 		}
+		if (sc->flags & SPAWN_FLOATING)
+			new_wp->layout_cell->flags |= LAYOUT_CELL_FLOATING;
 
 		/*
 		 * If window currently zoomed, window_set_active_pane calls
