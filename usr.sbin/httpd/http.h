@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.17 2024/03/24 10:53:27 job Exp $	*/
+/*	$OpenBSD: http.h,v 1.18 2026/06/03 20:00:07 kirill Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -241,6 +241,7 @@ struct http_descriptor {
 	char			*http_host;
 	enum httpmethod		 http_method;
 	int			 http_chunked;
+	int			 http_cl;
 	char			*http_version;
 	unsigned int		 http_status;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.164 2026/06/03 19:25:06 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.165 2026/06/03 20:00:07 kirill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -118,6 +118,7 @@ server_httpdesc_free(struct http_descriptor *desc)
 	desc->http_lastheader = NULL;
 	desc->http_method = 0;
 	desc->http_chunked = 0;
+	desc->http_cl = 0;
 }
 
 int
@@ -384,6 +385,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 				server_abort_http(clt, 500, errstr);
 				goto abort;
 			}
+			desc->http_cl = 1;
 		}
 
 		if (strcasecmp("Transfer-Encoding", key) == 0 &&
@@ -403,6 +405,17 @@ server_read_http(struct bufferevent *bev, void *arg)
 	if (clt->clt_headersdone) {
 		if (desc->http_method == HTTP_METHOD_NONE) {
 			server_abort_http(clt, 406, "no method");
+			return;
+		}
+
+		/*
+		 * RFC 9112 sections 6.1 and 6.3 forbid sending
+		 * Content-Length with Transfer-Encoding and identify
+		 * this framing ambiguity as request smuggling input.
+		 * httpd is an origin server, so reject it.
+		 */
+		if (desc->http_chunked && desc->http_cl) {
+			server_abort_http(clt, 400, "malformed");
 			return;
 		}
 
