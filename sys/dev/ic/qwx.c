@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.124 2026/05/31 13:54:17 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.125 2026/06/03 06:57:42 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -323,6 +323,7 @@ qwx_init(struct ifnet *ifp)
 			return error;
 
 		ifp->if_flags |= IFF_RUNNING;
+		sc->ops.irq_enable(sc);
 		ieee80211_begin_scan(ifp);
 	}
 
@@ -20926,7 +20927,6 @@ qwx_core_qmi_firmware_ready(struct qwx_softc *sc)
 		goto err_core_stop;
 	}
 
-	sc->ops.irq_enable(sc);
 #if 0
 	mutex_unlock(&ab->core_lock);
 #endif
@@ -27013,13 +27013,6 @@ qwx_assoc(struct qwx_softc *sc)
 	IEEE80211_ADDR_COPY(arvif->bssid, ni->ni_bssid);
 	sc->bss_peer_id = nq->peer_id;
 
-	/*
-	 * Enable reception of data frames now, if not already enabled.
-	 * We may need to receive EAPOL data frames very soon after the
-	 * AP sends a response to our assoc request.
-	 */
-	sc->ops.irq_enable(sc);
-
 	return 0;
 }
 
@@ -27111,8 +27104,6 @@ qwx_run_stop(struct qwx_softc *sc)
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_node *nq = (void *)ni;
 	int ret;
-
-	sc->ops.irq_disable(sc);
 
 	ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
 	    pdev_id, WMI_PEER_AUTHORIZE, 0);
