@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.132 2026/06/03 05:59:45 jsg Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.133 2026/06/03 06:10:06 jsg Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -248,7 +248,7 @@ suppress the
 .Va Server
 HTTP response header, and hide the server software name in error documents for
 the current
-.Ic server.
+.Ic server .
 If
 .Ic no
 is omitted, enable the banner for the current
@@ -725,8 +725,8 @@ For legacy a fixed key length of 1024 bits is used, whereas for auto the key
 length is determined automatically.
 The default is none, which disables DHE cipher suites.
 .It Ic ecdhe Ar curves
-Specify a comma separated list of elliptic curves to use for ECDHE cipher suites,
-in order of preference.
+Specify a comma separated list of elliptic curves to use for
+ECDHE cipher suites, in order of preference.
 The special value of "default" will use the default curves; see
 .Xr tls_config_set_ecdhecurves 3
 for further details.
