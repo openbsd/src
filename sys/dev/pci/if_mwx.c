@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.20 2026/06/03 11:38:02 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.21 2026/06/03 11:48:57 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1359,10 +1359,19 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (mwx_mcu_fw_pmctrl(sc) != 0 || mwx_mcu_drv_pmctrl(sc) != 0)
+		goto fail;
+
 	hwid = mwx_read(sc, MT_HW_CHIPID) & 0xffff;
 	hwrev = mwx_read(sc, MT_HW_REV) & 0xff;
 
-	printf(": %s, rev: %x.%x\n", pci_intr_string(pa->pa_pc, ih),
+	if (sc->sc_hwtype == MWX_HW_MT7921 &&
+	    (mwx_read(sc, MT_HW_BOUND) & 0x80) != 0) {
+		hwid = 0x7920;
+		sc->sc_hwtype = MWX_HW_MT7920;
+	}
+
+	printf(": %s, rev: MT%x.%x\n", pci_intr_string(pa->pa_pc, ih),
 	    hwid, hwrev);
 
 	mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, 0);
@@ -1370,9 +1379,6 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
 	    mwx_intr, sc, DEVNAME(sc));
-
-	if (mwx_mcu_fw_pmctrl(sc) != 0 || mwx_mcu_drv_pmctrl(sc) != 0)
-		goto fail;
 
 	if ((error = mwx_txwi_alloc(sc, MWX_TXWI_MAX)) != 0) {
 		printf("%s: failed to allocate DMA resources %d\n",

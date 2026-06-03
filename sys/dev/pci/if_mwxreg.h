@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.12 2026/06/03 11:22:50 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.13 2026/06/03 11:48:57 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -324,6 +324,7 @@
 #define	MT_WFDMA_DUMMY_CR		0x54000120
 #define	MT_WFDMA_NEED_REINIT		(1U << 1)
 
+#define	MT_HW_BOUND			0x70010020
 #define	MT_HW_CHIPID			0x70010200
 #define	MT_HW_REV			0x70010204
 
