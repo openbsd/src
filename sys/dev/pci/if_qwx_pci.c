@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.35 2026/05/29 09:40:04 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.36 2026/06/03 06:59:51 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1134,6 +1134,7 @@ unsupported_wcn6855_soc:
 	ic->ic_ampdu_tx_start = qwx_ampdu_tx_start;
 	ic->ic_ampdu_tx_stop = NULL;
 	ic->ic_bgscan_start = qwx_bgscan;
+	ic->ic_bgscan_done = qwx_bgscan_done;
 
 	/*
 	 * We cannot read the MAC address without loading the

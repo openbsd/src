@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.36 2026/05/31 13:21:55 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.37 2026/06/03 06:59:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -412,6 +412,8 @@ enum ath11k_dev_flags {
 	ATH11K_FLAG_FIXED_MEM_RGN,
 	ATH11K_FLAG_DEVICE_INIT_DONE,
 	ATH11K_FLAG_MULTI_MSI_VECTORS,
+
+	QWX_FLAG_ROAMING,
 };
 
 enum ath11k_scan_state {
@@ -1886,6 +1888,9 @@ struct qwx_softc {
 	u_int			scan_channel;
 	struct qwx_survey_info	survey[IEEE80211_CHAN_MAX];
 	struct task		bgscan_task;
+	struct task		bgscan_done_task;
+	struct ieee80211_node_switch_bss_arg *bgscan_unref_arg;
+	size_t bgscan_unref_arg_size;
 
 	int			attached;
 	struct {
@@ -2032,6 +2037,8 @@ void	qwx_init_task(void *);
 int	qwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	qwx_newstate_task(void *);
 int	qwx_bgscan(struct ieee80211com *);
+void	qwx_bgscan_done(struct ieee80211com *,
+	    struct ieee80211_node_switch_bss_arg *, size_t);
 void	qwx_updatechan(struct ieee80211com *);
 
 struct qwx_node {

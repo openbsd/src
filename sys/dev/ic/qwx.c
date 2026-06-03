@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.125 2026/06/03 06:57:42 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.126 2026/06/03 06:59:51 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -397,6 +397,18 @@ qwx_mfp_leave(struct qwx_softc *sc)
 }
 
 void
+qwx_del_task_all(struct qwx_softc *sc)
+{
+	qwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
+	qwx_del_task(sc, systq, &sc->setkey_task);
+	qwx_setkey_clear(sc);
+	qwx_del_task(sc, systq, &sc->ba_task);
+	qwx_del_task(sc, systq, &sc->bgscan_task);
+	qwx_del_task(sc, systq, &sc->bgscan_done_task);
+	qwx_del_task(sc, systq, &sc->set_cc_task);
+}
+
+void
 qwx_stop(struct ifnet *ifp)
 {
 	struct qwx_softc *sc = ifp->if_softc;
@@ -420,19 +432,17 @@ qwx_stop(struct ifnet *ifp)
 
 	/* Cancel scheduled tasks and let any stale tasks finish up. */
 	task_del(systq, &sc->init_task);
-	qwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
-	qwx_del_task(sc, systq, &sc->setkey_task);
-	qwx_del_task(sc, systq, &sc->ba_task);
-	qwx_del_task(sc, systq, &sc->bgscan_task);
-	qwx_del_task(sc, systq, &sc->set_cc_task);
+	qwx_del_task_all(sc);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
-
-	qwx_setkey_clear(sc);
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+	sc->bgscan_unref_arg = NULL;
+	sc->bgscan_unref_arg_size = 0;
 
 	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
@@ -455,6 +465,8 @@ qwx_stop(struct ifnet *ifp)
 		qwx_free_peers(sc);
 		sc->bss_peer_id = HAL_INVALID_PEERID;
 	}
+
+	sc->sc_flags &= ~QWX_FLAG_ROAMING;
 
 	sc->scan.state = ATH11K_SCAN_IDLE;
 	sc->vdev_id_11d_scan = QWX_11D_INVALID_VDEV_ID;
@@ -1099,9 +1111,7 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		qwx_setkey_clear(sc);
 
 		qwx_del_task(sc, systq, &sc->bgscan_task);
-#if 0
 		qwx_del_task(sc, systq, &sc->bgscan_done_task);
-#endif
 		qwx_del_task(sc, systq, &sc->set_cc_task);
 	}
 
@@ -1145,6 +1155,15 @@ qwx_newstate_task(void *arg)
 	if (nstate <= ostate) {
 		switch (ostate) {
 		case IEEE80211_S_RUN:
+			if (sc->sc_flags & QWX_FLAG_ROAMING) {
+				/*
+				 * Previous association state has already
+				 * been torn down. Don't try do to it again.
+				 */
+				sc->sc_flags &= ~QWX_FLAG_ROAMING;
+				break;
+			}
+
 			if (ic->ic_opmode == IEEE80211_M_STA &&
 			    (ifp->if_flags & IFF_RUNNING) &&
 			    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP) &&
@@ -1196,14 +1215,8 @@ next_scan:
 			printf("%s: %s -> %s\n", ifp->if_xname,
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[IEEE80211_S_SCAN]);
-#if 0
-		if ((sc->sc_flags & QWX_FLAG_BGSCAN) == 0) {
-#endif
-			ieee80211_set_link_state(ic, LINK_STATE_DOWN);
-			ieee80211_node_cleanup(ic, ic->ic_bss);
-#if 0
-		}
-#endif
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+		ieee80211_node_cleanup(ic, ic->ic_bss);
 		ic->ic_state = IEEE80211_S_SCAN;
 		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
@@ -13708,8 +13721,11 @@ qwx_wmi_process_mgmt_tx_comp(struct qwx_softc *sc,
 	ieee80211_release_node(ic, tx_data->ni);
 	tx_data->ni = NULL;
 
-	if (arvif->txmgmt.queued > 0)
+	if (arvif->txmgmt.queued > 0) {
 		arvif->txmgmt.queued--;
+		if (arvif->txmgmt.queued == 0)
+			wakeup(&arvif->txmgmt.queued);
+	}
 
 	if (tx_compl_param->status != 0)
 		ifp->if_oerrors++;
@@ -15981,8 +15997,11 @@ qwx_dp_tx_free_txbuf(struct qwx_softc *sc, int msdu_id,
 		m_freem(tx_data->m);
 		tx_data->m = NULL;
 
-		if (tx_ring->queued > 0)
+		if (tx_ring->queued > 0) {
 			tx_ring->queued--;
+			if (tx_ring->queued == 0)
+				wakeup(&tx_ring->queued);
+		}
 	}
 
 	if (tx_data->ni) {
@@ -16134,8 +16153,11 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 		m_freem(tx_data->m);
 		tx_data->m = NULL;
 	
-		if (tx_ring->queued > 0)
+		if (tx_ring->queued > 0) {
 			tx_ring->queued--;
+			if (tx_ring->queued == 0)
+				wakeup(&tx_ring->queued);
+		}
 	}
 
 	if (tx_data->ni == NULL)
@@ -26304,6 +26326,170 @@ qwx_bgscan(struct ieee80211com *ic)
 	return 0;
 }
 
+
+void
+qwx_bgscan_done_task(void *arg)
+{
+	struct qwx_softc *sc = arg;
+	struct qwx_dp *dp = &sc->dp;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (struct qwx_node *)ni;
+	int err = 0, s, i;
+
+	s = splnet();
+
+	/* Prevent races with ifconfig commands. */
+	if (rw_enter(&sc->ioctl_rwl, RW_WRITE | RW_NOSLEEP) != 0) {
+		refcnt_rele_wake(&sc->task_refs);
+		splx(s);
+		return;
+	}
+
+	/* Ensure that we start in expected state. */
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0 ||
+	    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0 ||
+	    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY) == 0 ||
+	    (sc->sc_flags & QWX_FLAG_ROAMING) ||
+	    ic->ic_state != IEEE80211_S_RUN) {
+		/* Don't touch the device, just return. */
+		rw_exit(&sc->ioctl_rwl);
+		refcnt_rele_wake(&sc->task_refs);
+		splx(s);
+		return;
+	}
+
+	/* Send a DEAUTH frame to our old AP. */
+	err = IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+	    IEEE80211_REASON_AUTH_LEAVE);
+	if (err)
+		goto done;
+
+	/* Prevent state changes due to received frames. */
+	ifp->if_flags &= ~IFF_RUNNING;
+
+	/* Disallow new tasks. */
+	set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+
+	qwx_del_task_all(sc);
+
+	/* Wait for Tx queues to drain. */
+	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
+		struct dp_tx_ring *tx_ring = &dp->tx_ring[i];
+
+		while (tx_ring->queued > 0) {
+			err = tsleep_nsec(&tx_ring->queued, 0, "qwxtxdr",
+			    SEC_TO_NSEC(1));
+			if (err) {
+				if (tx_ring->queued == 0) {
+					err = 0;
+					break;
+				}
+				DPRINTF("%s: Tx ring %d has %d frames queued\n",
+				    __func__, i, tx_ring->queued);
+				goto done;
+			}
+		}
+	}
+	while (arvif->txmgmt.queued > 0) {
+		err = tsleep_nsec(&arvif->txmgmt.queued, 0, "qwxtxdr",
+		    MSEC_TO_NSEC(500));
+		if (err) {
+			if (arvif->txmgmt.queued == 0) {
+				err = 0;
+				break;
+			}
+			DPRINTF("%s: %d management frames still queued\n",
+			    __func__, arvif->txmgmt.queued);
+			goto done;
+		}
+	}
+
+	/*
+	 * Remove installed crypto keys while we still have access to them.
+	 * Once qwx_newstate() is entered ic_bss will already contain
+	 * information about our next AP.
+	 */
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		struct ieee80211_key *k;
+	
+		if (nq->flags & QWX_NODE_FLAG_HAVE_PAIRWISE_KEY)
+			(*ic->ic_delete_key)(ic, ni, &ni->ni_pairwise_key);
+
+		if ((nq->flags & QWX_NODE_FLAG_HAVE_GROUP_KEY) &&
+		    (ic->ic_def_txkey == 1 || ic->ic_def_txkey == 2)) {
+			k = &ic->ic_nw_keys[ic->ic_def_txkey];
+			if ((k->k_flags & IEEE80211_KEY_GROUP) &&
+			    k->k_cipher == IEEE80211_CIPHER_CCMP)
+				(*ic->ic_delete_key)(ic, ni, k);
+		}
+
+		if (ic->ic_igtk_kid == 4 || ic->ic_igtk_kid == 5) {
+			k = &ic->ic_nw_keys[ic->ic_igtk_kid];
+			if (k->k_flags & IEEE80211_KEY_IGTK)
+				(*ic->ic_delete_key)(ic, ni, k);
+		}
+
+		ni->ni_port_valid = 0;
+		ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
+		ni->ni_flags &= ~IEEE80211_NODE_TXMGMTPROT;
+		ni->ni_flags &= ~IEEE80211_NODE_RXMGMTPROT;
+		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
+	}
+
+	/*
+	 * XXX: This needs to be unset for vdev shutdown to work.
+	 * Perhaps we need a separate flag?
+	 */
+	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+
+	/* Clear association to our old AP in firmware. */
+	err = qwx_run_stop(sc);
+	if (err)
+		goto done;
+
+	err = qwx_deauth(sc);
+	if (err)
+		goto done;
+
+	/* Allow roaming to proceed. */
+	sc->sc_flags |= QWX_FLAG_ROAMING;
+	ifp->if_flags |= IFF_RUNNING;
+	ni->ni_unref_arg = sc->bgscan_unref_arg;
+	ni->ni_unref_arg_size = sc->bgscan_unref_arg_size;
+	sc->bgscan_unref_arg = NULL;
+	sc->bgscan_unref_arg_size = 0;
+	ieee80211_node_switch_bss(ic, ni);
+done:
+	if (err) {
+		free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+		sc->bgscan_unref_arg = NULL;
+		sc->bgscan_unref_arg_size = 0;
+
+		ifp->if_flags |= IFF_RUNNING;
+		task_add(systq, &sc->init_task);
+	}
+
+	rw_exit(&sc->ioctl_rwl);
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
+}
+
+void
+qwx_bgscan_done(struct ieee80211com *ic,
+    struct ieee80211_node_switch_bss_arg *arg, size_t arg_size)
+{
+	struct qwx_softc *sc = ic->ic_softc;
+
+	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+	sc->bgscan_unref_arg = arg;
+	sc->bgscan_unref_arg_size = arg_size;
+	qwx_add_task(sc, systq, &sc->bgscan_done_task);
+}
+
 /*
  * Find a pdev which corresponds to a given channel.
  * This doesn't exactly match the semantics of the Linux driver
@@ -26407,7 +26593,7 @@ qwx_auth(struct qwx_softc *sc)
 
 	qwx_recalculate_mgmt_rate(sc, ni, arvif->vdev_id, pdev->pdev_id);
 	ni->ni_txrate = 0;
-	
+
 	/* Start vdev. */
 	ret = qwx_mac_vdev_start(sc, arvif, pdev->pdev_id);
 	if (ret) {
@@ -27158,6 +27344,7 @@ qwx_attach(struct qwx_softc *sc)
 	task_set(&sc->setkey_task, qwx_setkey_task, sc);
 	task_set(&sc->ba_task, qwx_ba_task, sc);
 	task_set(&sc->bgscan_task, qwx_bgscan_task, sc);
+	task_set(&sc->bgscan_done_task, qwx_bgscan_done_task, sc);
 	task_set(&sc->set_cc_task, qwx_set_cc_task, sc);
 	timeout_set_proc(&sc->scan.timeout, qwx_scan_timeout, sc);
 #if NBPFILTER > 0
