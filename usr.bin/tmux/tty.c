@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.468 2026/05/30 11:19:39 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.469 2026/06/03 20:16:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -999,7 +999,7 @@ tty_window_offset1(struct tty *tty, u_int *ox, u_int *oy, u_int *sx, u_int *sy)
 		else if (cy > w->sy - *sy)
 			*oy = w->sy - *sy;
 		else
-			*oy = cy - *sy / 2;
+			*oy = cy - *sy + 1;
 	}
 
 	c->pan_window = NULL;
