@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.13 2026/06/03 11:48:57 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.14 2026/06/03 15:11:50 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -314,6 +314,9 @@
 #define	MT7925_WFSYS_SW_RST_B		0x7c000140
 #define	WFSYS_SW_RST_B			(1U << 0)
 #define	WFSYS_SW_INIT_DONE		(1U << 4)
+
+#define	MT_HW_EMI_CTL			0x18011100
+#define	MT_HW_EMI_CTL_SLPPROT_EN	(1U << 1)
 
 #define	MT_TOP_BASE			0x18060000
 #define	MT_TOP_LPCR_HOST_BAND0		0x18060010

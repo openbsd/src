@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.21 2026/06/03 11:48:57 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.22 2026/06/03 15:11:50 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1373,6 +1373,12 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s, rev: MT%x.%x\n", pci_intr_string(pa->pa_pc, ih),
 	    hwid, hwrev);
+
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		mwx_set(sc, MT_HW_EMI_CTL, MT_HW_EMI_CTL_SLPPROT_EN);
+
+	if (mwx_wfsys_reset(sc) != 0)
+		goto fail;
 
 	mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, 0);
 	mwx_write(sc, MT_PCIE_MAC_INT_ENABLE, 0xff);
