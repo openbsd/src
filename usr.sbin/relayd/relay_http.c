@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.99 2026/06/03 19:26:56 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.100 2026/06/03 20:00:34 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -162,6 +162,7 @@ relay_httpdesc_free(struct http_descriptor *desc)
 	desc->query_val = NULL;
 	kv_purge(&desc->http_headers);
 	desc->http_lastheader = NULL;
+	desc->http_cl = NULL;
 }
 
 static int
@@ -331,6 +332,10 @@ relay_read_http(struct bufferevent *bev, void *arg)
 						    errstr, 0);
 						goto abort;
 					}
+					desc->http_cl = desc->http_lastheader;
+					if (desc->http_cl->kv_parent != NULL)
+						desc->http_cl =
+						    desc->http_cl->kv_parent;
 					break;
 				}
 				/*
@@ -434,6 +439,18 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (action != RES_PASS) {
 			relay_abort_http(con, 403, "Forbidden", con->se_label);
 			return;
+		}
+
+		/*
+		 * RFC 9112 section 6.1 requires an intermediary that
+		 * forwards a message with Transfer-Encoding to first
+		 * remove Content-Length. relayd keeps chunked framing,
+		 * so strip Content-Length before header emission.
+		 */
+		if (desc->http_chunked && desc->http_cl != NULL) {
+			kv_delete(&desc->http_headers, desc->http_cl);
+			desc->http_cl = NULL;
+			desc->http_lastheader = NULL;
 		}
 
 		/*
@@ -814,6 +831,7 @@ relay_reset_http(struct ctl_relay_event *cre)
 	relay_httpdesc_free(desc);
 	desc->http_method = 0;
 	desc->http_chunked = 0;
+	desc->http_cl = NULL;
 	cre->headerlen = 0;
 	cre->line = 0;
 	cre->done = 0;
