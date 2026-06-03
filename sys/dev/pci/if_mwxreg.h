@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.11 2026/06/02 14:23:47 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.12 2026/06/03 11:22:50 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -902,13 +902,21 @@ struct mt7921_uni_txd {
 } __packed __aligned(4);
 
 
-struct mt7921_mcu_rxd {
-	uint32_t	rxd[6];
-	uint16_t	len;		/* includes hdr but without rxd[6] */
+/*
+ * Common part of a mcu response without the rxd header.
+ * On connac2 (7921) the RXD is 6 dwords.
+ * On connac3 (7925) the RXD is 8 dwords.
+ */
+#define MT7921_MCU_RXD_SIZE	(6 * sizeof(uint32_t))
+#define MT7925_MCU_RXD_SIZE	(8 * sizeof(uint32_t))
+struct mwx_mcu_rxd {
+	/* uint32_t	rxd[6 or 8] */
+	uint16_t	len;		/* includes hdr but without rxd */
 	uint16_t	pkt_type_id;
 	uint8_t		eid;
 	uint8_t		seq;
-	uint16_t	pad0;
+	uint8_t		option;
+	uint8_t		pad0;
 	uint8_t		ext_eid;
 	uint8_t		pad1[2];
 	uint8_t		s2d_index;

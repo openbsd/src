@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.18 2026/06/02 14:23:47 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.19 2026/06/03 11:22:50 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -2519,13 +2519,17 @@ mwx_mcu_send_mbuf_wait(struct mwx_softc *sc, uint32_t cmd, struct mbuf *m)
 void
 mwx_mcu_rx_event(struct mwx_softc *sc, struct mbuf *m)
 {
-	struct mt7921_mcu_rxd *rxd;
+	struct mwx_mcu_rxd *rxd;
 	uint32_t cmd, mcu_int = 0;
-	int len;
+	int len, rxd_size;
 
-	if ((m = m_pullup(m, sizeof(*rxd))) == NULL)
+	rxd_size = (sc->sc_hwtype == MWX_HW_MT7925) ?
+	    MT7925_MCU_RXD_SIZE : MT7921_MCU_RXD_SIZE;
+
+	if ((m = m_pullup(m, sizeof(*rxd) + rxd_size)) == NULL)
 		return;
-	rxd = mtod(m, struct mt7921_mcu_rxd *);
+	m_adj(m, rxd_size);
+	rxd = mtod(m, struct mwx_mcu_rxd *);
 
 	if (rxd->ext_eid == MCU_EXT_EVENT_RATE_REPORT) {
 		printf("%s: MCU_EXT_EVENT_RATE_REPORT COMMAND\n", DEVNAME(sc));
@@ -2533,14 +2537,14 @@ mwx_mcu_rx_event(struct mwx_softc *sc, struct mbuf *m)
 		return;
 	}
 
-	len = sizeof(*rxd) - sizeof(rxd->rxd) + le16toh(rxd->len);
+	len = le16toh(rxd->len);
 	/* make sure all the data is in one mbuf */
 	if ((m = m_pullup(m, len)) == NULL) {
 		printf("%s: mwx_mcu_rx_event m_pullup failed\n", DEVNAME(sc));
 		return;
 	}
 	/* refetch after pullup */
-	rxd = mtod(m, struct mt7921_mcu_rxd *);
+	rxd = mtod(m, struct mwx_mcu_rxd *);
 	m_adj(m, sizeof(*rxd));
 
 	switch (rxd->eid) {
@@ -3011,7 +3015,7 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		break;
 	}
 	if ((rv = loadfirmware(rompatch, &buf, &buflen)) != 0 ||
-	    (rv= loadfirmware(fw, &fwbuf, &fwlen)) != 0) {
+	    (rv = loadfirmware(fw, &fwbuf, &fwlen)) != 0) {
 		printf("%s: loadfirmware error %d\n", DEVNAME(sc), rv);
 		return rv;
 	}
