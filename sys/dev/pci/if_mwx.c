@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.19 2026/06/03 11:22:50 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.20 2026/06/03 11:38:02 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -504,17 +504,17 @@ int		mwx_mcu_wait_resp_int(struct mwx_softc *, uint32_t, int,
 int		mwx_mcu_wait_resp_msg(struct mwx_softc *, uint32_t, int,
 		    struct mbuf **);
 
-int		mwx_dma_disable(struct mwx_softc *sc, int force);
-void		mt7921_dma_enable(struct mwx_softc *sc);
+int		mwx_dma_disable(struct mwx_softc *, int);
+void		mt7921_dma_enable(struct mwx_softc *);
 int		mwx_mcu_fw_pmctrl(struct mwx_softc *);
 int		mwx_mcu_drv_pmctrl(struct mwx_softc *);
-int		mwx_wfsys_reset(struct mwx_softc *sc);
+int		mwx_wfsys_reset(struct mwx_softc *);
 uint32_t	mwx_reg_addr(struct mwx_softc *, uint32_t);
 int		mt7921_init_hardware(struct mwx_softc *);
 int		mt7921_mcu_init(struct mwx_softc *);
 int		mt7921_load_firmware(struct mwx_softc *);
 int		mt7921_mac_wtbl_update(struct mwx_softc *, int);
-void		mt7921_mac_init_band(struct mwx_softc *sc, uint32_t);
+void		mt7921_mac_init_band(struct mwx_softc *, uint32_t);
 int		mt7921_mac_init(struct mwx_softc *);
 int		mt7921_mcu_patch_sem_ctrl(struct mwx_softc *, int);
 int		mt7921_mcu_init_download(struct mwx_softc *, uint32_t,
