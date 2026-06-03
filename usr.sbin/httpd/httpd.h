@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.173 2026/06/01 09:28:42 claudio Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.174 2026/06/03 19:25:06 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -740,7 +740,6 @@ int		 kv_set(struct kv *, char *, ...)
 int		 kv_setkey(struct kv *, char *, ...)
 		    __attribute__((__format__ (printf, 2, 3)));
 void		 kv_delete(struct kvtree *, struct kv *);
-struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
 void		 kv_purge(struct kvtree *);
 void		 kv_free(struct kv *);
 struct kv	*kv_find(struct kvtree *, struct kv *);

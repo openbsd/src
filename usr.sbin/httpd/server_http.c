@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.163 2026/06/01 09:28:42 claudio Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.164 2026/06/03 19:25:06 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -284,31 +284,22 @@ server_read_http(struct bufferevent *bev, void *arg)
 		 */
 		if (++clt->clt_line == 1)
 			value = strchr(key, ' ');
-		else if (*key == ' ' || *key == '\t')
-			/* Multiline headers wrap with a space or tab */
-			value = NULL;
+		else if (*key == ' ' || *key == '\t') {
+			/*
+			 * RFC 9112 section 5.2 permits unconditional rejection
+			 */
+			server_abort_http(clt, 400, "malformed");
+			goto abort;
+		}
 		else {
-			/* Not a multiline header, should have a : */
 			value = strchr(key, ':');
-			if (value == NULL) {
-				server_abort_http(clt, 400, "malformed");
-				goto abort;
-			}
 		}
+
 		if (value == NULL) {
-			if (clt->clt_line == 1) {
-				server_abort_http(clt, 400, "malformed");
-				goto abort;
-			}
-
-			/* Append line to the last header, if present */
-			if (kv_extend(&desc->http_headers,
-			    desc->http_lastheader, line) == NULL)
-				goto fail;
-
-			free(line);
-			continue;
+			server_abort_http(clt, 400, "malformed");
+			goto abort;
 		}
+
 		if (*value == ':') {
 			*value++ = '\0';
 			value += strspn(value, " \t\r\n");

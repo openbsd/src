@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.78 2026/05/11 22:33:10 kirill Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.79 2026/06/03 19:25:06 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1021,25 +1021,6 @@ kv_delete(struct kvtree *keys, struct kv *kv)
 
 	kv_free(kv);
 	free(kv);
-}
-
-struct kv *
-kv_extend(struct kvtree *keys, struct kv *kv, char *value)
-{
-	char		*newvalue;
-
-	if (kv == NULL) {
-		return (NULL);
-	} else if (kv->kv_value != NULL) {
-		if (asprintf(&newvalue, "%s%s", kv->kv_value, value) == -1)
-			return (NULL);
-
-		free(kv->kv_value);
-		kv->kv_value = newvalue;
-	} else if ((kv->kv_value = strdup(value)) == NULL)
-		return (NULL);
-
-	return (kv);
 }
 
 void
