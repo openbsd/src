@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.98 2026/05/19 05:06:41 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.99 2026/06/03 19:26:56 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -261,23 +261,17 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			continue;
 		}
 
-		/* Multiline headers wrap with a space or tab. */
+		/*
+		 * RFC 9112 section 5.2 permits unconditional rejection.
+		 * Obs-fold creates parser differentials between intermediaries
+		 * and backends.
+		 */
 		if (*line == ' ' || *line == '\t') {
-			if (cre->line == 2) {
-				/* First header line cannot start with space. */
+			if (cre->dir == RELAY_DIR_RESPONSE)
+				relay_abort_http(con, 502, "Bad Gateway", 0);
+			else
 				relay_abort_http(con, 400, "malformed", 0);
-				goto abort;
-			}
-
-			/* Append line to the last header, if present */
-			if (kv_extend(&desc->http_headers,
-			    desc->http_lastheader, line) == NULL) {
-				free(line);
-				goto fail;
-			}
-
-			free(line);
-			continue;
+			goto abort;
 		}
 
 		/* Process the last complete header line. */

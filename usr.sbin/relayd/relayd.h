@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.279 2026/05/15 13:57:24 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.280 2026/06/03 19:26:56 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1355,7 +1355,6 @@ int		 kv_set(struct kv *, char *, ...)
 int		 kv_setkey(struct kv *, char *, ...)
 				__attribute__((__format__ (printf, 2, 3)));
 void		 kv_delete(struct kvtree *, struct kv *);
-struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
 void		 kv_purge(struct kvtree *);
 void		 kv_free(struct kv *);
 struct kv	*kv_inherit(struct kv *, struct kv *);

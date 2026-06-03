@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.198 2026/05/15 13:57:24 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.199 2026/06/03 19:26:56 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -725,25 +725,6 @@ kv_delete(struct kvtree *keys, struct kv *kv)
 
 	kv_free(kv);
 	free(kv);
-}
-
-struct kv *
-kv_extend(struct kvtree *keys, struct kv *kv, char *value)
-{
-	char		*newvalue;
-
-	if (kv == NULL) {
-		return (NULL);
-	} else if (kv->kv_value != NULL) {
-		if (asprintf(&newvalue, "%s%s", kv->kv_value, value) == -1)
-			return (NULL);
-
-		free(kv->kv_value);
-		kv->kv_value = newvalue;
-	} else if ((kv->kv_value = strdup(value)) == NULL)
-		return (NULL);
-
-	return (kv);
 }
 
 void
