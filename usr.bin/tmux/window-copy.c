@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.400 2026/05/17 13:12:21 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.401 2026/06/04 09:18:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4981,7 +4981,7 @@ window_copy_write_lines(struct window_mode_entry *wme,
 	u_int	yy;
 
 	for (yy = py; yy < py + ny; yy++)
-		window_copy_write_line(wme, ctx, py);
+		window_copy_write_line(wme, ctx, yy);
 }
 
 static void
