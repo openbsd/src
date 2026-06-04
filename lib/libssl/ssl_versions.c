@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.27 2023/07/02 17:21:32 beck Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.28 2026/06/04 12:05:57 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -125,7 +125,7 @@ ssl_version_set_max(const SSL_METHOD *meth, uint16_t proto_ver,
 }
 
 int
-ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
+ssl_enabled_tls_version_range(const SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 {
 	uint16_t min_version, max_version;
 	unsigned long options;
@@ -186,7 +186,8 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 }
 
 int
-ssl_supported_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
+ssl_supported_tls_version_range(const SSL *s, uint16_t *min_ver,
+    uint16_t *max_ver)
 {
 	uint16_t min_version, max_version;
 
@@ -222,7 +223,7 @@ ssl_tls_version(uint16_t version)
 }
 
 uint16_t
-ssl_effective_tls_version(SSL *s)
+ssl_effective_tls_version(const SSL *s)
 {
 	if (s->s3->hs.negotiated_tls_version > 0)
 		return s->s3->hs.negotiated_tls_version;
@@ -231,7 +232,7 @@ ssl_effective_tls_version(SSL *s)
 }
 
 int
-ssl_max_supported_version(SSL *s, uint16_t *max_ver)
+ssl_max_supported_version(const SSL *s, uint16_t *max_ver)
 {
 	uint16_t max_version;
 
@@ -251,7 +252,7 @@ ssl_max_supported_version(SSL *s, uint16_t *max_ver)
 }
 
 int
-ssl_max_legacy_version(SSL *s, uint16_t *max_ver)
+ssl_max_legacy_version(const SSL *s, uint16_t *max_ver)
 {
 	uint16_t max_version;
 
@@ -269,7 +270,7 @@ ssl_max_legacy_version(SSL *s, uint16_t *max_ver)
 }
 
 int
-ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
+ssl_max_shared_version(const SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 {
 	uint16_t min_version, max_version, peer_tls_version, shared_version;
 
@@ -338,7 +339,7 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 }
 
 int
-ssl_check_version_from_server(SSL *s, uint16_t server_version)
+ssl_check_version_from_server(const SSL *s, uint16_t server_version)
 {
 	uint16_t min_tls_version, max_tls_version, server_tls_version;
 
@@ -363,7 +364,7 @@ ssl_check_version_from_server(SSL *s, uint16_t server_version)
 }
 
 int
-ssl_legacy_stack_version(SSL *s, uint16_t version)
+ssl_legacy_stack_version(const SSL *s, uint16_t version)
 {
 	if (SSL_is_dtls(s))
 		return version == DTLS1_VERSION || version == DTLS1_2_VERSION;
