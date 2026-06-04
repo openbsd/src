@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.30 2025/09/17 18:39:50 sf Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.31 2026/06/04 05:22:04 mlarkin Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -612,7 +612,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
 			goto ok;
 
-		if (bsh >= PMAP_DIRECT_BASE && bsh < PMAP_DIRECT_END) {
+		if (bsh >= pmap_direct_base && bsh < pmap_direct_end) {
 			bpa = PMAP_DIRECT_UNMAP(bsh);
 			goto ok;
 		}

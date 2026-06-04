@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.309 2026/04/03 14:20:23 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.310 2026/06/04 05:22:04 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1483,7 +1483,14 @@ init_x86_64(paddr_t first_avail)
 	struct region_descriptor region;
 	bios_memmap_t *bmp;
 	int x, ist;
-	uint64_t max_dm_size = ((uint64_t)512 * NUM_L4_SLOT_DIRECT) << 30;
+	uint64_t max_dm_size = DIRECT_MAP_SIZE;
+	extern vaddr_t pmap_direct_base, pmap_direct_end;
+	extern char pmap_direct_rand;
+
+	pmap_direct_base = (VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)));
+	pmap_direct_base = (VA_SIGN_NEG((pmap_direct_base +
+	    ((pmap_direct_rand & DIRECT_MAP_START_MASK) * NBPD_L4))));
+	pmap_direct_end = pmap_direct_base + DIRECT_MAP_SIZE;
 
 	/*
 	 * locore0 mapped 2 pages for use as GHCB before pmap is initialized.
@@ -1639,8 +1646,8 @@ init_x86_64(paddr_t first_avail)
 		}
 
 		/*
-		 * The direct map is limited to 512GB * NUM_L4_SLOT_DIRECT of
-		 * memory, so discard anything above that.
+		 * The direct map is limited to DIRECT_MAP_SIZE of memory, so
+		 * discard anything above that.
 		 */
 		if (e1 >= max_dm_size) {
 			e1 = max_dm_size;

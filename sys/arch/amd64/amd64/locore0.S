@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.34 2026/01/15 12:09:49 hshoexer Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.35 2026/06/04 05:22:04 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -655,6 +655,10 @@ store_pte:
 	fillkpt_nx
 
 	leal	(PROC0_PML4_OFF + PDIR_SLOT_DIRECT * 8)(%esi), %ebx
+	movb	RELOC((pmap_direct_rand)), %al
+	andl	$DIRECT_MAP_START_MASK, %eax
+	shll	$0x3, %eax
+	addl	%eax, %ebx
 	leal	(PROC0_DMP3_OFF)(%esi), %eax
 	orl	$(PG_V|PG_KW), %eax
 	movl	$NDML3_ENTRIES, %ecx
@@ -921,4 +925,3 @@ farjmp64:
 	.align 8, 0xcc
 	.space 512
 tmpstk:
-

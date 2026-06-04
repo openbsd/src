@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.94 2025/07/07 00:55:15 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.95 2026/06/04 05:22:04 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -92,11 +92,8 @@
  * The other levels are kept as physical pages in 3 UVM objects and are
  * temporarily mapped for virtual access when needed.
  *
- * The other obvious difference from i386 is that it has a direct map of all
- * physical memory in the VA range:
- *
- *     0xfffffd8000000000 - 0xffffff7fffffffff
- *
+ * The other obvious difference from i386 is that it has a direct map of
+ * physical memory in a randomized VA subrange of the direct-map window.
  * The direct map is used in some cases to access PTEs of non-current pmaps.
  *
  * Note that address space is signed, so the layout for 48 bits is:
@@ -104,8 +101,8 @@
  *  +---------------------------------+ 0xffffffffffffffff
  *  |         Kernel Image            |
  *  +---------------------------------+ 0xffffff8000000000
- *  |         Direct Map              |
- *  +---------------------------------+ 0xfffffd8000000000
+ *  |      Direct Map Window          |
+ *  +---------------------------------+ 0xffffee0000000000
  *  ~                                 ~
  *  |                                 |
  *  |         Kernel Space            |
@@ -139,12 +136,22 @@
  */
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
-#define L4_SLOT_PTE		255
-#define L4_SLOT_KERN		256
-#define L4_SLOT_KERNBASE	511
-#define NUM_L4_SLOT_DIRECT	4
-#define L4_SLOT_DIRECT		(L4_SLOT_KERNBASE - NUM_L4_SLOT_DIRECT)
+#define L4_SLOT_PTE			255
+#define L4_SLOT_KERN			256
+#define L4_SLOT_KERNBASE		511
+#define DIRECT_MAP_PML4_SLOTS		4
+#define DIRECT_MAP_START_CHOICES	32
+#define DIRECT_MAP_START_MASK		(DIRECT_MAP_START_CHOICES - 1)
+#define DIRECT_MAP_RESERVED_PML4_SLOTS	(DIRECT_MAP_PML4_SLOTS + \
+    DIRECT_MAP_START_CHOICES - 1)
+#define DIRECT_MAP_SIZE		((vaddr_t)DIRECT_MAP_PML4_SLOTS * NBPD_L4)
+#define L4_SLOT_DIRECT		(L4_SLOT_KERNBASE - \
+    DIRECT_MAP_RESERVED_PML4_SLOTS)
 #define L4_SLOT_EARLY		(L4_SLOT_DIRECT - 1)
+
+#if (DIRECT_MAP_START_CHOICES & DIRECT_MAP_START_MASK) != 0
+#error DIRECT_MAP_START_CHOICES must be a power of two
+#endif
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
@@ -160,9 +167,7 @@
  */
 
 #define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
-#define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
-#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + \
-    NUM_L4_SLOT_DIRECT) * NBPD_L4)))
+extern vaddr_t pmap_direct_base, pmap_direct_end;
 
 #define L1_BASE		PTE_BASE
 
@@ -498,8 +503,8 @@ kvtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-#define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + (pa))
-#define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - PMAP_DIRECT_BASE)
+#define PMAP_DIRECT_MAP(pa)	((vaddr_t)pmap_direct_base + (pa))
+#define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - pmap_direct_base)
 #define pmap_map_direct(pg)	PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(pg))
 #define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))
 

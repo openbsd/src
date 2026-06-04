@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.61 2026/04/19 09:59:22 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.62 2026/06/04 05:22:04 mlarkin Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -748,7 +748,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
-	if (kva >= (caddr_t)PMAP_DIRECT_BASE && kva <= (caddr_t)PMAP_DIRECT_END)
+	if (kva >= (caddr_t)pmap_direct_base && kva <= (caddr_t)pmap_direct_end)
 		return;
 
 	km_free(kva, round_page(size), &kv_any, &kp_none);

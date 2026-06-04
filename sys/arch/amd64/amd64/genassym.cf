@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.50 2026/01/07 03:25:44 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.51 2026/06/04 05:22:04 mlarkin Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -162,6 +162,7 @@ export	NDML2_ENTRIES
 export	NBPD_L2
 export	NPDPG
 
+export	DIRECT_MAP_START_MASK
 export	PDIR_SLOT_DIRECT
 export	PCID_PROC
 export	PCID_PROC_INTEL

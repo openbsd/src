@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.190 2026/04/06 18:27:33 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.191 2026/06/04 05:22:04 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -217,6 +217,10 @@ pd_entry_t *const normal_pdes[] = PDES_INITIALIZER;
 #define pmap_pte_set(p, n)		atomic_swap_64(p, n)
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
 #define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
+
+vaddr_t pmap_direct_base;
+vaddr_t pmap_direct_end;
+char pmap_direct_rand __attribute((section(".openbsd.randomdata")));
 
 /*
  * global data structures
@@ -661,13 +665,16 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 {
 	vaddr_t kva_start = VM_MIN_KERNEL_ADDRESS;
 	struct pmap *kpm;
-	int curslot, i, j, p;
+	int curslot, i, j, p, pdir_rand_slot;
 	long ndmpdp;
 	paddr_t dmpd, dmpdp, start_cur, cur_pa;
 	vaddr_t kva, kva_end;
 	pt_entry_t *pml3, *pml2;
 
 	KASSERT(((0x1000ULL | pg_crypt) & pg_frame) == 0x1000ULL);
+
+	pdir_rand_slot = PDIR_SLOT_DIRECT +
+	    (pmap_direct_rand & DIRECT_MAP_START_MASK);
 
 	/*
 	 * define the boundaries of the managed kernel virtual address
@@ -795,7 +802,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	if (ndmpdp > 512)
 		ndmpdp = 512;			/* At most 512GB */
 
-	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & pg_frame;
+	dmpdp = kpm->pm_pdir[pdir_rand_slot] & pg_frame;
 
 	dmpd = first_avail; first_avail += ndmpdp * PAGE_SIZE;
 	memset((void *)PMAP_DIRECT_MAP(dmpd), 0, ndmpdp * PAGE_SIZE);
@@ -824,11 +831,11 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 		    pg_crypt;
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_V | PG_KW | PG_U |
-	    PG_M | pg_nx | pg_crypt;
+	kpm->pm_pdir[pdir_rand_slot] =
+	    dmpdp | PG_V | PG_KW | PG_U | PG_M | pg_nx | pg_crypt;
 
 	/* Map any remaining physical memory > 512GB */
-	for (curslot = 1 ; curslot < NUM_L4_SLOT_DIRECT ; curslot++) {
+	for (curslot = 1 ; curslot < DIRECT_MAP_PML4_SLOTS ; curslot++) {
 		/*
 		 * Start of current range starts at PA (curslot) * 512GB
 		 */
@@ -838,7 +845,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 			dmpd = first_avail; first_avail += PAGE_SIZE;
 			pml3 = (pt_entry_t *)PMAP_DIRECT_MAP(dmpd);
 			memset(pml3, 0, PAGE_SIZE);
-			kpm->pm_pdir[PDIR_SLOT_DIRECT + curslot] = dmpd |
+			kpm->pm_pdir[pdir_rand_slot + curslot] = dmpd |
 			    PG_KW | PG_V | PG_U | PG_M | pg_nx | pg_crypt;
 
 			/* Calculate full 1GB pages in this 512GB region */
@@ -1329,7 +1336,7 @@ pmap_pdp_ctor(pd_entry_t *pdir)
 	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
 	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
 
-	for (i = 0; i < NUM_L4_SLOT_DIRECT; i++)
+	for (i = 0; i < DIRECT_MAP_RESERVED_PML4_SLOTS; i++)
 		pdir[PDIR_SLOT_DIRECT + i] = kpm->pm_pdir[PDIR_SLOT_DIRECT + i];
 
 #if VM_MIN_KERNEL_ADDRESS != KERNBASE
@@ -1565,9 +1572,9 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pt_entry_t *ptes, pte;
 	int level, offs;
 
-	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE &&
-	    va < PMAP_DIRECT_END) {
-		*pap = va - PMAP_DIRECT_BASE;
+	if (pmap == pmap_kernel() && va >= pmap_direct_base &&
+	    va < pmap_direct_end) {
+		*pap = va - pmap_direct_base;
 		return 1;
 	}
 
