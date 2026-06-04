@@ -1,4 +1,4 @@
-/*  $OpenBSD: ed25519.c,v 1.4 2023/01/15 23:05:32 djm Exp $ */
+/*  $OpenBSD: ed25519.c,v 1.5 2026/06/04 04:26:51 djm Exp $ */
 
 /*
  * Public Domain, Authors:
@@ -1908,13 +1908,13 @@ static void ge25519_scalarmult_base(ge25519_p3 *r, const sc25519 *s)
 }
 /* from supercop-20221122/crypto_sign/ed25519/ref/keypair.c */
 
-int crypto_sign_ed25519_keypair(unsigned char *pk,unsigned char *sk)
+int crypto_sign_ed25519_keypair_from_seed(unsigned char *pk,unsigned char *sk, const unsigned char *seed)
 {
   unsigned char az[64];
   sc25519 scsk;
   ge25519 gepk;
 
-  randombytes(sk,32);
+  memcpy(sk, seed, 32);
   crypto_hash_sha512(az,sk,32);
   az[0] &= 248;
   az[31] &= 127;
@@ -1926,6 +1926,18 @@ int crypto_sign_ed25519_keypair(unsigned char *pk,unsigned char *sk)
   ge25519_pack(pk, &gepk);
   memmove(sk + 32,pk,32);
   return 0;
+}
+
+int
+crypto_sign_ed25519_keypair(unsigned char *pk, unsigned char *sk)
+{
+  unsigned char seed[32];
+  int r;
+
+  randombytes(seed, 32);
+  r = crypto_sign_ed25519_keypair_from_seed(pk, sk, seed);
+  explicit_bzero(seed, sizeof(seed));
+  return r;
 }
 /* from supercop-20221122/crypto_sign/ed25519/ref/sign.c */
 
@@ -1983,6 +1995,22 @@ int crypto_sign_ed25519(
 }
 /* from supercop-20221122/crypto_sign/ed25519/ref/open.c */
 
+/*
+ * Local OpenSSH addition: check that S < group order L
+ * Where L = 2^{252} + 27742317777372353535851937790883648493
+ * This can be variable time as the signature is public.
+ */
+static inline int sc25519_inrange(const unsigned char *pk)
+{
+  int i;
+
+  for (i = 0; i < 32; i++) {
+    if (pk[31 - i] > sc25519_m[31 - i]) return -1;
+    if (pk[31 - i] < sc25519_m[31 - i]) return 0;
+  }
+  return -1;
+}
+
 int crypto_sign_ed25519_open(
     unsigned char *m,unsigned long long *mlen,
     const unsigned char *sm,unsigned long long smlen,
@@ -1998,7 +2026,9 @@ int crypto_sign_ed25519_open(
 
   if (smlen < 64) goto badsig;
   if (sm[63] & 224) goto badsig;
+  if (sc25519_inrange(sm+32)) goto badsig;
   if (ge25519_unpackneg_vartime(&get1,pk)) goto badsig;
+  if (ge25519_isneutral_vartime(&get1)) goto badsig;
 
   memmove(pkcopy,pk,32);
   memmove(rcopy,sm,32);
