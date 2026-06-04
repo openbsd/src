@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.16 2026/06/04 11:40:51 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.17 2026/06/04 12:01:55 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -332,8 +332,7 @@ run_IPAddressOrRange_tests(void)
 	int failed = 0;
 
 	for (i = 0; i < N_IPADDRESSORRANGE_TESTS; i++)
-		failed |=
-		    test_IPAddressOrRange(&IPAddressOrRange_test_data[i]);
+		failed |= test_IPAddressOrRange(&IPAddressOrRange_test_data[i]);
 
 	return failed;
 }
