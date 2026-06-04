@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.50 2021/08/14 14:22:26 millert Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.51 2026/06/04 09:29:47 tb Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -254,10 +254,6 @@ showbcache(void)
 	print_fld_ssize(FLD_IO_SVAL, bccur.numbufpages);
 	end_line();
 
-	print_fld_str(FLD_IO_SSTR, "dma pages");
-	print_fld_ssize(FLD_IO_SVAL, bccur.dmapages);
-	end_line();
-
 	print_fld_str(FLD_IO_SSTR, "dirty pages");
 	print_fld_ssize(FLD_IO_SVAL, bccur.numdirtypages);
 	end_line();
@@ -288,17 +284,5 @@ showbcache(void)
 
 	print_fld_str(FLD_IO_SSTR, "cache hits");
 	print_fld_ssize(FLD_IO_SVAL, bccur.cachehits - bclast.cachehits);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "high flips");
-	print_fld_ssize(FLD_IO_SVAL, bccur.highflips - bclast.highflips);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "high flops");
-	print_fld_ssize(FLD_IO_SVAL, bccur.highflops - bclast.highflops);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "dma flips");
-	print_fld_ssize(FLD_IO_SVAL, bccur.dmaflips - bclast.dmaflips);
 	end_line();
 }
