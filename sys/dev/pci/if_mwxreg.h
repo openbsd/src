@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.15 2026/06/04 13:15:20 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.16 2026/06/04 19:26:48 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -104,7 +104,7 @@
 /* AGG: band 0(0x20800), band 1(0xa0800) */
 #define	MT_AGG_ACR0(_band)		MT_BAND_ADDR(_band, 0x2084)
 #define	MT_AGG_ACR_CFEND_RATE_MASK	0x00001fff
-#define	MT7921_CFEND_RATE_DEFAULT       0x49    /* OFDM 24M */
+#define	MT7921_CFEND_RATE_DEFAULT	0x49    /* OFDM 24M */
 #define	MT7921_CFEND_RATE_11B		0x03    /* 11B LP, 11M */
 #define	MT_AGG_ACR_BAR_RATE		GENMASK(29, 16)
 
@@ -259,8 +259,8 @@
 
 #define	MT_WFDMA0_RST_DTX_PTR		0xd420c
 #define	MT_WFDMA0_RST_DRX_PTR		0xd4280
-#define	MT_WFDMA0_INT_RX_PRI            0xd4298
-#define	MT_WFDMA0_INT_TX_PRI            0xd429c
+#define	MT_WFDMA0_INT_RX_PRI		0xd4298
+#define	MT_WFDMA0_INT_TX_PRI		0xd429c
 #define	MT_WFDMA0_GLO_CFG_EXT0		0xd42b0
 #define	MT_WFDMA0_CSR_TX_DMASHDL_ENABLE	(1U << 6)
 #define	MT_WFDMA0_PRI_DLY_INT_CFG0	0xd42f0
@@ -465,6 +465,7 @@ struct mt76_txwi {
 #define	MCU_CMD_UNI				0x02
 #define	MCU_CMD_QUERY				0x04
 #define	MCU_CMD_UNI_EXT_ACK	(MCU_CMD_ACK | MCU_CMD_UNI | MCU_CMD_QUERY)
+#define	MCU_CMD_UNI_QUERY_ACK	(MCU_CMD_ACK | MCU_CMD_UNI)
 
 #define	MCU_CMD_FIELD_ID_MASK			0x000000ff
 #define	MCU_CMD_FIELD_EXT_ID_MASK		0x0000ff00
@@ -473,6 +474,7 @@ struct mt76_txwi {
 #define	MCU_CMD_FIELD_UNI			(1U << 17)
 #define	MCU_CMD_FIELD_CE			(1U << 18)
 #define	MCU_CMD_FIELD_WA			(1U << 19)
+#define	MCU_CMD_FIELD_WM			(1U << 20)
 
 #define	MCU_CMD_TARGET_ADDRESS_LEN_REQ		0x00000001
 #define	MCU_CMD_FW_START_REQ			0x00000002
@@ -542,6 +544,8 @@ struct mt76_txwi {
 #define	MCU_UNI_CMD_SUSPEND			0x00020005
 #define	MCU_UNI_CMD_OFFLOAD			0x00020006
 #define	MCU_UNI_CMD_HIF_CTRL			0x00020007
+#define	MCU_UNI_CMD_WSYS_CONFIG			0x0002000b
+#define	MCU_UNI_CMD_CHIP_CONFIG			0x0002000e
 #define	MCU_UNI_CMD_SNIFFER			0x00020024
 
 #define	UNI_BSS_INFO_BASIC			0
@@ -553,6 +557,14 @@ struct mt76_txwi {
 #define	UNI_BSS_INFO_UAPSD			19
 #define	UNI_BSS_INFO_PS				21
 #define	UNI_BSS_INFO_BCNFT			22
+
+#define	UNI_CHIP_CONFIG_CHIP_CFG		2
+#define	UNI_CHIP_CONFIG_NIC_CAPA		3
+
+#define	UNI_EFUSE_ACCESS			1
+#define	UNI_EFUSE_BUFFER_MODE			2
+
+#define	UNI_WSYS_CONFIG_FW_LOG_CTRL		0
 
 /* offload mcu commands */
 #define	MCU_CE_CMD_TEST_CTRL			0x00040001
@@ -656,11 +668,17 @@ struct mt76_txwi {
 #define	MT_TXD0_ETH_TYPE_OFFSET			0x007f0000
 #define	MT_TXD0_TX_BYTES_MASK			0x0000ffff
 
-/* values for MT_TXD1_HDR_FORMAT */
+/* values for MT_TXD1_HDR_FORMAT for connac2 */
 #define	MT_HDR_FORMAT_802_3			(0 << 16)
 #define	MT_HDR_FORMAT_CMD			(1 << 16)
 #define	MT_HDR_FORMAT_802_11			(2 << 16)
 #define	MT_HDR_FORMAT_802_11_EXT		(3 << 16)
+
+/* values for MT_TXD1_HDR_FORMAT for connac3 (MT7925) */
+#define	MT7925_HDR_FORMAT_802_3			(0 << 14)
+#define	MT7925_HDR_FORMAT_CMD			(1 << 14)
+#define	MT7925_HDR_FORMAT_802_11		(2 << 14)
+#define	MT7925_HDR_FORMAT_802_11_EXT		(3 << 14)
 
 #define	MT_TXD1_LONG_FORMAT			(1U << 31)
 #define	MT_TXD1_TGID				(1U << 30)
@@ -858,7 +876,7 @@ struct mt76_txwi {
 #define	PKT_TYPE_RX_EVENT			7
 #define	PKT_TYPE_NORMAL_MCU			8
 
-struct mt7921_mcu_txd {
+struct mwx_mcu_txd {
 	uint32_t	txd[8];
 
 	uint16_t	len;
@@ -878,7 +896,7 @@ struct mt7921_mcu_txd {
 } __packed __aligned(4);
 
 /**
- * struct mt7921_uni_txd - mcu command descriptor for firmware v3
+ * struct mwx_uni_txd - mcu command descriptor for firmware v3
  * @txd: hardware descriptor
  * @len: total length not including txd
  * @cid: command identifier
@@ -906,7 +924,7 @@ struct mt7921_mcu_txd {
  *		0: QUERY command
  *		1: SET command
  */
-struct mt7921_uni_txd {
+struct mwx_uni_txd {
 	uint32_t	txd[8];
 
 	/* DW1 */
@@ -960,6 +978,21 @@ struct mt7921_mcu_reg_event {
 	uint32_t	val;
 } __packed;
 
+struct mwx_connac_phy_cap {
+	uint8_t		ht;
+	uint8_t		vht;
+	uint8_t		_5g;
+	uint8_t		max_bw;
+	uint8_t		nss;
+	uint8_t		dbdc;
+	uint8_t		tx_ldpc;
+	uint8_t		rx_ldpc;
+	uint8_t		tx_stbc;
+	uint8_t		rx_stbc;
+	uint8_t		hw_path;
+	uint8_t		he;
+} __packed;
+
 struct mt76_connac_config {
 	uint16_t	id;
 	uint8_t		type;
@@ -969,7 +1002,7 @@ struct mt76_connac_config {
 	uint8_t		data[320];
 };
 
-#define	MT_SKU_POWER_LIMIT      161
+#define	MT_SKU_POWER_LIMIT	161
 
 struct mt76_connac_sku_tlv {
 	uint8_t		channel;

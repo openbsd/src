@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.23 2026/06/04 13:15:20 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.24 2026/06/04 19:26:48 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -529,7 +529,9 @@ int		mwx_mcu_start_patch(struct mwx_softc *);
 int		mwx_mcu_start_firmware(struct mwx_softc *, uint32_t,
 		    uint32_t);
 int		mt7921_mcu_get_nic_capability(struct mwx_softc *);
+int		mt7925_mcu_get_nic_capability(struct mwx_softc *);
 int		mt7921_mcu_fw_log_2_host(struct mwx_softc *, uint8_t);
+int		mt7925_mcu_fw_log_2_host(struct mwx_softc *, uint8_t);
 int		mt7921_mcu_set_eeprom(struct mwx_softc *);
 int		mt7921_mcu_set_rts_thresh(struct mwx_softc *, uint32_t,
 		    uint8_t);
@@ -2164,7 +2166,7 @@ mwx_dma_txwi_enqueue(struct mwx_softc *sc, struct mwx_queue *q,
 	    BUS_DMASYNC_PREWRITE);
 
 	buf0 = mt->mt_addr;
-	len0 = sizeof(mt->mt_desc);
+	len0 = sizeof(*mt->mt_desc);
 	ctrl = MT_DMA_CTL_SD_LEN0(len0);
 	ctrl |= MT_DMA_CTL_LAST_SEC0;
 
@@ -2390,7 +2392,7 @@ mwx_dma_rx_done(struct mwx_softc *sc, struct mwx_queue *q)
 struct mbuf *
 mwx_mcu_alloc_msg(size_t len)
 {
-	const int headspace = sizeof(struct mt7921_mcu_txd);
+	const int headspace = sizeof(struct mwx_mcu_txd);
 	struct mbuf *m;
 
 	/* Allocate mbuf with enough space */
@@ -2426,16 +2428,17 @@ mwx_mcu_set_len(struct mbuf *m, void *end)
 int
 mwx_mcu_send_mbuf(struct mwx_softc *sc, uint32_t cmd, struct mbuf *m, int *seqp)
 {
-	struct mt7921_uni_txd *uni_txd;
-	struct mt7921_mcu_txd *mcu_txd;
+	struct mwx_uni_txd *uni_txd;
+	struct mwx_mcu_txd *mcu_txd;
 	struct mwx_queue *q;
 	uint32_t *txd, val;
-	int s, rv, txd_len, mcu_cmd = cmd & MCU_CMD_FIELD_ID_MASK;
-	int len = m->m_pkthdr.len;
+	int s, rv, mcu_cmd = cmd & MCU_CMD_FIELD_ID_MASK;
+	int tot_len, txd_len, len = m->m_pkthdr.len;
 	uint8_t seq;
 
 	if (cmd == MCU_CMD_FW_SCATTER) {
 		q = &sc->sc_txfwdlq;
+		KASSERT(seqp == NULL);
 		goto enqueue;
 	}
 
@@ -2443,30 +2446,47 @@ mwx_mcu_send_mbuf(struct mwx_softc *sc, uint32_t cmd, struct mbuf *m, int *seqp)
 	if (seq == 0)
 		seq = ++sc->sc_mcu_seq & 0x0f;
 
+	KASSERT(seq < nitems(sc->sc_mcu_wait));
+
 	txd_len = cmd & MCU_CMD_FIELD_UNI ? sizeof(*uni_txd) : sizeof(*mcu_txd);
+	tot_len = txd_len + len;
 	KASSERT(m_leadingspace(m) >= txd_len);
 	m = m_prepend(m, txd_len, M_DONTWAIT);
 	txd = mtod(m, uint32_t *);
 	memset(txd, 0, txd_len);
 
-	val = (m->m_len & MT_TXD0_TX_BYTES_MASK) |
+	val = (tot_len & MT_TXD0_TX_BYTES_MASK) |
 	    MT_TX_TYPE_CMD | MT_TXD0_Q_IDX(MT_TX_MCU_PORT_RX_Q0);
 	txd[0] = htole32(val);
 
-	val = MT_TXD1_LONG_FORMAT | MT_HDR_FORMAT_CMD;
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		val = MT7925_HDR_FORMAT_CMD;
+	else
+		val = MT_TXD1_LONG_FORMAT | MT_HDR_FORMAT_CMD;
 	txd[1] = htole32(val);
 
 	if (cmd & MCU_CMD_FIELD_UNI) {
-		uni_txd = (struct mt7921_uni_txd *)txd;
-		uni_txd->len = htole16(len);
-		uni_txd->option = MCU_CMD_UNI_EXT_ACK;
+		uni_txd = (struct mwx_uni_txd *)txd;
+		uni_txd->len = htole16(tot_len - sizeof(uni_txd->txd));
+		if (sc->sc_hwtype == MWX_HW_MT7925) {
+			if (cmd & MCU_CMD_FIELD_QUERY)
+				uni_txd->option = MCU_CMD_UNI_QUERY_ACK;
+			else
+				uni_txd->option = MCU_CMD_UNI_EXT_ACK;
+			/* Non-QUERY CHIP_CONFIG/HIF_CTRL must NOT have ACK */
+			if (cmd == MCU_UNI_CMD_HIF_CTRL ||
+			    cmd == MCU_UNI_CMD_CHIP_CONFIG)
+				uni_txd->option &= ~MCU_CMD_ACK;
+		} else {
+			uni_txd->option = MCU_CMD_UNI_EXT_ACK;
+		}
 		uni_txd->cid = htole16(mcu_cmd);
 		uni_txd->s2d_index = CMD_S2D_IDX_H2N;
 		uni_txd->pkt_type = MCU_PKT_ID;
 		uni_txd->seq = seq;
 	} else {
-		mcu_txd = (struct mt7921_mcu_txd *)txd;
-		mcu_txd->len = htole16(len);
+		mcu_txd = (struct mwx_mcu_txd *)txd;
+		mcu_txd->len = htole16(tot_len - sizeof(uni_txd->txd));
 		mcu_txd->pq_id = htole16(MCU_PQ_ID(MT_TX_PORT_IDX_MCU,
 			MT_TX_MCU_PORT_RX_Q0));
 		mcu_txd->pkt_type = MCU_PKT_ID;
@@ -2486,8 +2506,11 @@ mwx_mcu_send_mbuf(struct mwx_softc *sc, uint32_t cmd, struct mbuf *m, int *seqp)
 		}
 	}
 
-	if (seqp != NULL)
+	if (seqp != NULL) {
+		memset(&sc->sc_mcu_wait[seq], 0, sizeof(sc->sc_mcu_wait[0]));
+		sc->sc_mcu_wait[seq].mcu_cmd = cmd;
 		*seqp = seq;
+	}
 	q = &sc->sc_txmcuq;
 enqueue:
 
@@ -2505,6 +2528,10 @@ printf("%s: %s: cmd %08x\n", DEVNAME(sc), __func__, cmd);
 		tsleep_nsec(q, 0, "mwxq", MSEC_TO_NSEC(100));
 	}
 	splx(s);
+	if (rv != 0) {
+		memset(&sc->sc_mcu_wait[seq], 0, sizeof(sc->sc_mcu_wait[0]));
+		m_freem(m);
+	}
 	return rv;
 }
 
@@ -2667,9 +2694,6 @@ mwx_mcu_wait_resp_int(struct mwx_softc *sc, uint32_t cmd, int seq,
 
 	KASSERT(seq < nitems(sc->sc_mcu_wait));
 
-	memset(&sc->sc_mcu_wait[seq], 0, sizeof(sc->sc_mcu_wait[0]));
-	sc->sc_mcu_wait[seq].mcu_cmd = cmd;
-
 	rv = tsleep_nsec(&sc->sc_mcu_wait[seq], 0, "mwxwait", SEC_TO_NSEC(3));
 	if (rv != 0) {
 		printf("%s: command %x timeout\n", DEVNAME(sc), cmd);
@@ -2693,9 +2717,6 @@ mwx_mcu_wait_resp_msg(struct mwx_softc *sc, uint32_t cmd, int seq,
 	int rv;
 
 	KASSERT(seq < nitems(sc->sc_mcu_wait));
-
-	memset(&sc->sc_mcu_wait[seq], 0, sizeof(sc->sc_mcu_wait[0]));
-	sc->sc_mcu_wait[seq].mcu_cmd = cmd;
 
 	rv = tsleep_nsec(&sc->sc_mcu_wait[seq], 0, "mwxwait", SEC_TO_NSEC(3));
 	if (rv != 0) {
@@ -2974,10 +2995,17 @@ mwx_mcu_init(struct mwx_softc *sc)
 	if ((rv = mwx_load_firmware(sc)) != 0)
 		return rv;
 
-	if ((rv = mt7921_mcu_get_nic_capability(sc)) != 0)
-		return rv;
-	if ((rv = mt7921_mcu_fw_log_2_host(sc, 1)) != 0)
-		return rv;
+	if (sc->sc_hwtype == MWX_HW_MT7925) {
+		if ((rv = mt7925_mcu_get_nic_capability(sc)) != 0)
+			return rv;
+		if ((rv = mt7925_mcu_fw_log_2_host(sc, 1)) != 0)
+			return rv;
+	} else {
+		if ((rv = mt7921_mcu_get_nic_capability(sc)) != 0)
+			return rv;
+		if ((rv = mt7921_mcu_fw_log_2_host(sc, 1)) != 0)
+			return rv;
+	}
 
 	/* TODO mark MCU running */
 
@@ -3196,6 +3224,7 @@ out:
 	DPRINTF("%s: firmware loaded\n", DEVNAME(sc));
 	rv = 0;
 
+	/* TODO load CLC data if available */
 fail:
 	free(buf, M_DEVBUF, buflen);
 	free(fwbuf, M_DEVBUF, fwlen);
@@ -3396,20 +3425,7 @@ mt7921_mcu_get_nic_capability(struct mwx_softc *sc)
 		uint32_t	type;
 		uint32_t	len;
 	} __packed *tlv;
-	struct mt76_connac_phy_cap {
-		uint8_t		ht;
-		uint8_t		vht;
-		uint8_t		_5g;
-		uint8_t		max_bw;
-		uint8_t		nss;
-		uint8_t		dbdc;
-		uint8_t		tx_ldpc;
-		uint8_t		rx_ldpc;
-		uint8_t		tx_stbc;
-		uint8_t		rx_stbc;
-		uint8_t		hw_path;
-		uint8_t		he;
-	} __packed *cap;
+	struct mwx_connac_phy_cap *cap;
 	struct mbuf *m;
 	int rv, seq, count, i;
 
@@ -3446,8 +3462,12 @@ mt7921_mcu_get_nic_capability(struct mwx_softc *sc)
 		len = le32toh(tlv->len);
 		m_adj(m, sizeof(*tlv));
 
-		if (m->m_len < len)
-			break;
+		if (m->m_len < len) {
+			printf("%s: GET_NIC_CAPAB tlv length error\n",
+			    DEVNAME(sc));
+			m_freem(m);
+			return EINVAL;
+		}
 		switch (type) {
 		case MT_NIC_CAP_6G:
 			/* TODO 6GHZ SUPPORT */
@@ -3461,7 +3481,7 @@ mt7921_mcu_get_nic_capability(struct mwx_softc *sc)
 		case MT_NIC_CAP_PHY:
 			if (len < sizeof(*cap))
 				break;
-			cap = mtod(m, struct mt76_connac_phy_cap *);
+			cap = mtod(m, struct mwx_connac_phy_cap *);
 
 			sc->sc_capa.num_streams = cap->nss;
 			sc->sc_capa.antenna_mask = (1U << cap->nss) - 1;
@@ -3482,6 +3502,102 @@ mt7921_mcu_get_nic_capability(struct mwx_softc *sc)
 }
 
 int
+mt7925_mcu_get_nic_capability(struct mwx_softc *sc)
+{
+	struct mt76_connac_cap_hdr {
+		uint16_t	n_elements;
+		uint8_t		pad[2];
+	} __packed *hdr;
+	struct tlv_hdr {
+		uint16_t	tag;
+		uint16_t	len;
+	} __packed *tlv;
+	struct mwx_connac_phy_cap *cap;
+	struct mbuf *m;
+	struct {
+		uint8_t		rsv[4];
+		uint16_t	tag;
+		uint16_t	len;
+	} __packed req = {
+		.tag = htole16(UNI_CHIP_CONFIG_NIC_CAPA),
+		.len = htole16(sizeof(req) - 4),
+	};
+	int rv, seq, count, i;
+
+	rv = mwx_mcu_send_msg(sc, MCU_UNI_CMD_CHIP_CONFIG, &req, sizeof(req),
+	    &seq);
+	if (rv != 0)
+		return rv;
+
+	rv = mwx_mcu_wait_resp_msg(sc, MCU_UNI_CMD_CHIP_CONFIG, seq, &m);
+	if (rv != 0)
+		return rv;
+
+	if (m->m_len < sizeof(*hdr)) {
+		printf("%s: CHIP_CONFIG NIC_CAPA response size error\n",
+		    DEVNAME(sc));
+		m_freem(m);
+		return EINVAL;
+	}
+	hdr = mtod(m, struct mt76_connac_cap_hdr *);
+	count = le16toh(hdr->n_elements);
+	m_adj(m, sizeof(*hdr));
+
+	for (i = 0; i < count; i++) {
+		uint16_t tag, len;
+
+		if (m->m_len < sizeof(*tlv)) {
+			printf("%s: GET_NIC_CAPAB tlv size error\n",
+			    DEVNAME(sc));
+			m_freem(m);
+			return EINVAL;
+		}
+
+		tlv = mtod(m, struct tlv_hdr *);
+		tag = le16toh(tlv->tag);
+		len = le16toh(tlv->len);
+		/* unlike 7921 the len includes the header */
+		if (len < sizeof(*tlv) || m->m_len < len) {
+			printf("%s: GET_NIC_CAPAB tlv length error\n",
+			    DEVNAME(sc));
+			m_freem(m);
+			return EINVAL;
+		}
+		len -= sizeof(*tlv);
+		m_adj(m, sizeof(*tlv));
+
+		switch (tag) {
+		case MT_NIC_CAP_6G:
+			/* TODO 6GHZ SUPPORT */
+			sc->sc_capa.has_6ghz = 0; /* *mtod(m, caddr_t) != 0; */
+			break;
+		case MT_NIC_CAP_MAC_ADDR:
+			if (len < ETHER_ADDR_LEN)
+				break;
+			memcpy(sc->sc_lladdr, mtod(m, caddr_t), ETHER_ADDR_LEN);
+			break;
+		case MT_NIC_CAP_PHY:
+			if (len < sizeof(*cap))
+				break;
+			cap = mtod(m, struct mwx_connac_phy_cap *);
+
+			sc->sc_capa.num_streams = cap->nss;
+			sc->sc_capa.antenna_mask = (1U << cap->nss) - 1;
+			sc->sc_capa.has_2ghz = cap->hw_path & 0x01;
+			sc->sc_capa.has_5ghz = cap->hw_path & 0x02;
+			break;
+		}
+
+		m_adj(m, len);
+	}
+
+	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(sc->sc_lladdr));
+
+	m_freem(m);
+	return 0;
+}
+
+int
 mt7921_mcu_fw_log_2_host(struct mwx_softc *sc, uint8_t ctrl)
 {
 	struct {
@@ -3492,6 +3608,26 @@ mt7921_mcu_fw_log_2_host(struct mwx_softc *sc, uint8_t ctrl)
 	};
 
 	return mwx_mcu_send_msg(sc, MCU_CE_CMD_FWLOG_2_HOST, &req,
+	    sizeof(req), NULL);
+}
+
+int
+mt7925_mcu_fw_log_2_host(struct mwx_softc *sc, uint8_t ctrl)
+{
+	struct {
+		uint8_t		rsv[4];
+		uint16_t	tag;
+		uint16_t	len;
+		uint8_t		ctrl;
+		uint8_t		interval;
+		uint8_t		rsv2[2];
+	} req = {
+		.tag = htole16(UNI_WSYS_CONFIG_FW_LOG_CTRL),
+		.len = htole16(sizeof(req) - 4),
+		.ctrl = ctrl,
+	};
+
+	return mwx_mcu_send_msg(sc, MCU_UNI_CMD_WSYS_CONFIG, &req,
 	    sizeof(req), NULL);
 }
 
@@ -5109,7 +5245,7 @@ mt7921_alloc_sta_tlv(int len)
 		return NULL;
 
 	/* align to have space for the mcu header */
-	m->m_data += sizeof(struct mt7921_mcu_txd) + len;
+	m->m_data += sizeof(struct mwx_mcu_txd) + len;
 	m->m_len = m->m_pkthdr.len = 0;
 
 	return m;
