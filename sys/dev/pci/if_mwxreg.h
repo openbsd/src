@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.14 2026/06/03 15:11:50 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.15 2026/06/04 13:15:20 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -201,6 +201,7 @@
 #define	HOST_TX_COHERENT_EN		(1U << 21)
 #define	HOST_RX_DONE_INT_ENA4		(1U << 22)
 #define	HOST_RX_DONE_INT_ENA5		(1U << 23)
+#define	HOST_TX_DONE_INT_ENA15		(1U << 25)
 #define	HOST_TX_DONE_INT_ENA16		(1U << 26)
 #define	HOST_TX_DONE_INT_ENA17		(1U << 27)
 #define	MCU2HOST_SW_INT_ENA		(1U << 29)
@@ -215,36 +216,51 @@
 #define	MT_INT_RX_DONE_DATA		HOST_RX_DONE_INT_ENA2
 #define	MT_INT_RX_DONE_WM		HOST_RX_DONE_INT_ENA0
 #define	MT_INT_RX_DONE_WM2		HOST_RX_DONE_INT_ENA4
-#define	MT_INT_RX_DONE_ALL		(MT_INT_RX_DONE_DATA |	\
-					MT_INT_RX_DONE_WM |	\
+
+#define	MT_INT_RX_DONE_ALL		(MT_INT_RX_DONE_DATA |		\
+					MT_INT_RX_DONE_WM |		\
 					MT_INT_RX_DONE_WM2)
 
+#define	MT7925_INT_RX_DONE_ALL		(MT_INT_RX_DONE_DATA |		\
+					MT_INT_RX_DONE_WM)
+
 #define	MT_INT_TX_DONE_MCU_WM		HOST_TX_DONE_INT_ENA17
+#define	MT7925_INT_TX_DONE_MCU_WM	HOST_TX_DONE_INT_ENA15
 #define	MT_INT_TX_DONE_FWDL		HOST_TX_DONE_INT_ENA16
 #define	MT_INT_TX_DONE_BAND0		HOST_TX_DONE_INT_ENA0
-#define	MT_INT_MCU_CMD			MCU2HOST_SW_INT_ENA
 #define	MT_INT_TX0_TO_TX14		0x7fff0
 
-#define	MT_INT_TX_DONE_MCU		(MT_INT_TX_DONE_MCU_WM |	\
-					MT_INT_TX_DONE_FWDL)
-
-#define	MT_INT_TX_DONE_ALL		(MT_INT_TX_DONE_MCU |		\
+#define	MT_INT_TX_DONE_ALL		(MT_INT_TX_DONE_MCU_WM |	\
+					MT_INT_TX_DONE_FWDL |		\
 					MT_INT_TX0_TO_TX14)
 
+#define	MT7925_INT_TX_DONE_ALL		(MT7925_INT_TX_DONE_MCU_WM |	\
+					MT_INT_TX_DONE_FWDL |		\
+					MT_INT_TX0_TO_TX14)
+
+#define	MT_INT_MCU_CMD			MCU2HOST_SW_INT_ENA
+
 #define	MT_WFDMA0_GLO_CFG		0xd4208
-#define	MT_WFDMA0_GLO_CFG_TX_DMA_EN	(1U << 0)
-#define	MT_WFDMA0_GLO_CFG_TX_DMA_BUSY	(1U << 1)
-#define	MT_WFDMA0_GLO_CFG_RX_DMA_EN	(1U << 2)
-#define	MT_WFDMA0_GLO_CFG_RX_DMA_BUSY	(1U << 3)
-#define	MT_WFDMA0_GLO_CFG_TX_WB_DDONE	(1U << 6)
+#define	MT_WFDMA0_GLO_CFG_TX_DMA_EN			(1U << 0)
+#define	MT_WFDMA0_GLO_CFG_TX_DMA_BUSY			(1U << 1)
+#define	MT_WFDMA0_GLO_CFG_RX_DMA_EN			(1U << 2)
+#define	MT_WFDMA0_GLO_CFG_RX_DMA_BUSY			(1U << 3)
+#define	MT_WFDMA0_GLO_CFG_TX_WB_DDONE			(1U << 6)
+#define	MT_WFDMA0_GLO_CFG_FIFO_DIS_CHECK		(1U << 11)
 #define	MT_WFDMA0_GLO_CFG_FIFO_LITTLE_ENDIAN		(1U << 12)
+#define	MT_WFDMA0_GLO_CFG_RX_WB_DDONE			(1U << 13)
 #define	MT_WFDMA0_GLO_CFG_CSR_DISP_BASE_PTR_CHAIN_EN	(1U << 15)
 #define	MT_WFDMA0_GLO_CFG_OMIT_RX_INFO_PFET2		(1U << 21)
-#define	MT_WFDMA0_GLO_CFG_OMIT_RX_INFO	(1U << 27)
-#define	MT_WFDMA0_GLO_CFG_OMIT_TX_INFO	(1U << 28)
-#define	MT_WFDMA0_GLO_CFG_CLK_GAT_DIS	(1U << 30)
+#define	MT_WFDMA0_GLO_CFG_OMIT_RX_INFO			(1U << 27)
+#define	MT_WFDMA0_GLO_CFG_OMIT_TX_INFO			(1U << 28)
+#define	MT_WFDMA0_GLO_CFG_CLK_GAT_DIS			(1U << 30)
+/* DMA burst size field [5:4], value 3 = max burst */
+#define	MT_WFDMA0_GLO_CFG_DMA_SIZE(x)		(((x) & 0x3) << 4)
 
 #define	MT_WFDMA0_RST_DTX_PTR		0xd420c
+#define	MT_WFDMA0_RST_DRX_PTR		0xd4280
+#define	MT_WFDMA0_INT_RX_PRI            0xd4298
+#define	MT_WFDMA0_INT_TX_PRI            0xd429c
 #define	MT_WFDMA0_GLO_CFG_EXT0		0xd42b0
 #define	MT_WFDMA0_CSR_TX_DMASHDL_ENABLE	(1U << 6)
 #define	MT_WFDMA0_PRI_DLY_INT_CFG0	0xd42f0
@@ -256,6 +272,7 @@
 #define	MT_WFDMA0_TX_RING4_EXT_CTRL	0xd4610
 #define	MT_WFDMA0_TX_RING5_EXT_CTRL	0xd4614
 #define	MT_WFDMA0_TX_RING6_EXT_CTRL	0xd4618
+#define	MT_WFDMA0_TX_RING15_EXT_CTRL	0xd463c
 #define	MT_WFDMA0_TX_RING16_EXT_CTRL	0xd4640
 #define	MT_WFDMA0_TX_RING17_EXT_CTRL	0xd4644
 
@@ -267,8 +284,10 @@
 #define	MT_WFDMA0_RX_RING5_EXT_CTRL	0xd4694
 
 #define	MT_TX_DATA_RING_BASE		0xd4300
+#define	MT7925_TX_MCU_RING_BASE		0xd43f0
 #define	MT_TX_FWDL_RING_BASE		0xd4400
 #define	MT_TX_MCU_RING_BASE		0xd4410
+
 #define	MT_RX_DATA_RING_BASE		0xd4520
 #define	MT_RX_MCU_RING_BASE		0xd4540
 #define	MT_RX_FWDL_RING_BASE		0xd4500
@@ -293,6 +312,9 @@
 #define	MT_SWDEF_ICAP_MODE		1
 #define	MT_SWDEF_SPECTRUM_MODE		2
 
+/* UWFDMA0 (MCU-side WFDMA, mapped via CONN_INFRA) */
+#define	MT_UWFDMA0_GLO_CFG_EXT1		0x7c0242b4
+
 #define	MT_DMASHDL_SW_CONTROL		0x7c026004
 #define	MT_DMASHDL_DMASHDL_BYPASS	(1U << 28)
 #define	MT_DMASHDL_OPTIONAL		0xd6008
@@ -315,6 +337,7 @@
 #define	WFSYS_SW_RST_B			(1U << 0)
 #define	WFSYS_SW_INIT_DONE		(1U << 4)
 
+/* MT7925-specific */
 #define	MT_HW_EMI_CTL			0x18011100
 #define	MT_HW_EMI_CTL_SLPPROT_EN	(1U << 1)
 
@@ -911,8 +934,8 @@ struct mt7921_uni_txd {
  * On connac2 (7921) the RXD is 6 dwords.
  * On connac3 (7925) the RXD is 8 dwords.
  */
-#define MT7921_MCU_RXD_SIZE	(6 * sizeof(uint32_t))
-#define MT7925_MCU_RXD_SIZE	(8 * sizeof(uint32_t))
+#define	MT7921_MCU_RXD_SIZE	(6 * sizeof(uint32_t))
+#define	MT7925_MCU_RXD_SIZE	(8 * sizeof(uint32_t))
 struct mwx_mcu_rxd {
 	/* uint32_t	rxd[6 or 8] */
 	uint16_t	len;		/* includes hdr but without rxd */
@@ -1114,7 +1137,7 @@ struct mt76_connac_hw_scan_done {
 	uint32_t	beacon_5g_num;
 } __packed;
 
-struct mt7921_patch_hdr {
+struct mwx_patch_hdr {
 	char		build_date[16];
 	char		platform[4];
 	uint32_t	hw_sw_ver;
@@ -1131,7 +1154,7 @@ struct mt7921_patch_hdr {
 	} desc;
 } __packed;
 
-struct mt7921_patch_sec {
+struct mwx_patch_sec {
 	uint32_t	type;
 	uint32_t	offs;
 	uint32_t	size;
@@ -1147,7 +1170,7 @@ struct mt7921_patch_sec {
 	};
 } __packed;
 
-struct mt7921_fw_trailer {
+struct mwx_fw_trailer {
 	uint8_t		chip_id;
 	uint8_t		eco_code;
 	uint8_t		n_region;
@@ -1159,7 +1182,7 @@ struct mt7921_fw_trailer {
 	uint32_t	crc;
 } __packed;
 
-struct mt7921_fw_region {
+struct mwx_fw_region {
 	uint32_t	decomp_crc;
 	uint32_t	decomp_len;
 	uint32_t	decomp_blk_sz;
@@ -1301,6 +1324,7 @@ struct wtbl_smps {
 #define	FW_FEATURE_SET_KEY_IDX_MASK	0x06
 #define	FW_FEATURE_ENCRY_MODE		0x10
 #define	FW_FEATURE_OVERRIDE_ADDR	0x20
+#define	FW_FEATURE_NON_DL		0x40
 
 #define	PATCH_SEC_NOT_SUPPORT		0xffffffff
 #define	PATCH_SEC_TYPE_MASK		0x0000ffff

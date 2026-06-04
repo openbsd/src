@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.22 2026/06/03 15:11:50 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.23 2026/06/04 13:15:20 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -281,6 +281,9 @@ enum mwx_hw_type {
 	MWX_HW_MT7925,
 };
 
+#define	MWX_IS_CONNAC3(x)	((x)->sc_hwtype == MWX_HW_MT7925)
+#define	MWX_IS_CONNAC2(x)	(!MWX_IS_CONNAC3(x))
+
 struct mwx_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -333,6 +336,7 @@ struct mwx_softc {
 #endif
 
 	struct mwx_vif		sc_vif;
+	uint32_t		sc_intr_mask;
 
 	/* mcu */
 	uint32_t		sc_mcu_seq;
@@ -412,7 +416,7 @@ const struct mwx_rate {
 #define	DPRINTF(x...)
 #endif
 
-static void
+__unused static void
 pkt_hex_dump(struct mbuf *m)
 {
 	int len, rowsize = 16;
@@ -505,31 +509,31 @@ int		mwx_mcu_wait_resp_msg(struct mwx_softc *, uint32_t, int,
 		    struct mbuf **);
 
 int		mwx_dma_disable(struct mwx_softc *, int);
-void		mt7921_dma_enable(struct mwx_softc *);
+void		mwx_dma_enable(struct mwx_softc *);
 int		mwx_mcu_fw_pmctrl(struct mwx_softc *);
 int		mwx_mcu_drv_pmctrl(struct mwx_softc *);
 int		mwx_wfsys_reset(struct mwx_softc *);
 uint32_t	mwx_reg_addr(struct mwx_softc *, uint32_t);
-int		mt7921_init_hardware(struct mwx_softc *);
-int		mt7921_mcu_init(struct mwx_softc *);
-int		mt7921_load_firmware(struct mwx_softc *);
+int		mwx_init_hardware(struct mwx_softc *);
+int		mwx_mcu_init(struct mwx_softc *);
+int		mwx_load_firmware(struct mwx_softc *);
 int		mt7921_mac_wtbl_update(struct mwx_softc *, int);
 void		mt7921_mac_init_band(struct mwx_softc *, uint32_t);
 int		mt7921_mac_init(struct mwx_softc *);
-int		mt7921_mcu_patch_sem_ctrl(struct mwx_softc *, int);
-int		mt7921_mcu_init_download(struct mwx_softc *, uint32_t,
+int		mwx_mcu_patch_sem_ctrl(struct mwx_softc *, int);
+int		mwx_mcu_init_download(struct mwx_softc *, uint32_t,
 		    uint32_t, uint32_t);
-int		mt7921_mcu_send_firmware(struct mwx_softc *, int,
+int		mwx_mcu_send_firmware(struct mwx_softc *, int,
 		    u_char *, size_t, size_t);
-int		mt7921_mcu_start_patch(struct mwx_softc *);
-int		mt7921_mcu_start_firmware(struct mwx_softc *, uint32_t,
+int		mwx_mcu_start_patch(struct mwx_softc *);
+int		mwx_mcu_start_firmware(struct mwx_softc *, uint32_t,
 		    uint32_t);
 int		mt7921_mcu_get_nic_capability(struct mwx_softc *);
 int		mt7921_mcu_fw_log_2_host(struct mwx_softc *, uint8_t);
 int		mt7921_mcu_set_eeprom(struct mwx_softc *);
 int		mt7921_mcu_set_rts_thresh(struct mwx_softc *, uint32_t,
 		    uint8_t);
-int		mt7921_mcu_set_deep_sleep(struct mwx_softc *, int);
+int		mwx_mcu_set_deep_sleep(struct mwx_softc *, int);
 void		mt7921_mcu_low_power_event(struct mwx_softc *, struct mbuf *);
 void		mt7921_mcu_tx_done_event(struct mwx_softc *, struct mbuf *);
 void		mwx_end_scan_task(void *);
@@ -688,7 +692,7 @@ mwx_init(struct ifnet *ifp)
 	}
 
 	DPRINTF("%s: init\n", DEVNAME(sc));
-	mt7921_mcu_set_deep_sleep(sc, 0);
+	mwx_mcu_set_deep_sleep(sc, 0);
 
 	rv = mt7921_mcu_set_mac_enable(sc, 0, 1);
 	if (rv)
@@ -1031,7 +1035,7 @@ mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	switch (ostate) {
 	case IEEE80211_S_RUN:
 		if (nstate != ostate)
-			mt7921_mcu_set_deep_sleep(sc, 1);
+			mwx_mcu_set_deep_sleep(sc, 1);
 		break;
 	case IEEE80211_S_SCAN:
 		if (nstate == ostate) {
@@ -1059,15 +1063,15 @@ printf("%s: %s %d -> %d\n", DEVNAME(sc), __func__, ostate, nstate);
 		rv = mt7921_set_channel(sc);
 		if (rv)
 			return rv;
-		mt7921_mcu_set_deep_sleep(sc, 0);
+		mwx_mcu_set_deep_sleep(sc, 0);
 		mt7921_mac_sta_update(sc, sc->sc_ic.ic_bss, 1, 1);
 		break;
 	case IEEE80211_S_ASSOC:
-		mt7921_mcu_set_deep_sleep(sc, 1);
+		mwx_mcu_set_deep_sleep(sc, 1);
 		break;
 	case IEEE80211_S_RUN:
 		mt7921_mcu_hw_scan_cancel(sc); /* XXX */
-		mt7921_mcu_set_deep_sleep(sc, 0);
+		mwx_mcu_set_deep_sleep(sc, 0);
 		break;
 	}
 
@@ -1178,7 +1182,7 @@ mwx_intr(void *arg)
 {
 	struct mwx_softc *sc = arg;
 	uint32_t intr, intr_sw;
-	uint32_t mask = MT_INT_RX_DONE_ALL|MT_INT_TX_DONE_ALL|MT_INT_MCU_CMD;
+	uint32_t mask = sc->sc_intr_mask;
 
 	mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, 0);
 	intr = mwx_read(sc, MT_WFDMA0_HOST_INT_STA);
@@ -1205,7 +1209,7 @@ mwx_intr(void *arg)
 			intr |= MT_INT_RX_DONE_DATA;
 	}
 
-	if (intr & MT_INT_TX_DONE_ALL)
+	if (intr & (MT_INT_TX_DONE_ALL | MT7925_INT_TX_DONE_ALL))
 		mwx_dma_tx_done(sc);
 
 	if (intr & MT_INT_RX_DONE_WM)
@@ -1231,12 +1235,12 @@ mwx_preinit(struct mwx_softc *sc)
 	int rv, i;
 	uint8_t chan;
 
-	DPRINTF("%s: init\n", DEVNAME(sc));
+	DPRINTF("%s: preinit\n", DEVNAME(sc));
 
-	if ((rv = mt7921_init_hardware(sc)) != 0)
+	if ((rv = mwx_init_hardware(sc)) != 0)
 		return rv;
 
-	if ((rv = mt7921_mcu_set_deep_sleep(sc, 1)) != 0)
+	if ((rv = mwx_mcu_set_deep_sleep(sc, 1)) != 0)
 		return rv;
 
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -1323,6 +1327,9 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
+
+	sc->sc_intr_mask = MT_INT_RX_DONE_ALL | MT_INT_TX_DONE_ALL |
+	    MT_INT_MCU_CMD;
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_MEDIATEK_MT7920:
 		sc->sc_hwtype = MWX_HW_MT7920;
@@ -1338,6 +1345,8 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_MEDIATEK_MT7925:
 	case PCI_PRODUCT_MEDIATEK_RZ717:
 		sc->sc_hwtype = MWX_HW_MT7925;
+		sc->sc_intr_mask = MT7925_INT_RX_DONE_ALL |
+		    MT7925_INT_TX_DONE_ALL | MT_INT_MCU_CMD;
 		break;
 	default:
 		printf(": unknown chip id 0x%04x\n", PCI_PRODUCT(pa->pa_id));
@@ -1376,6 +1385,7 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_hwtype == MWX_HW_MT7925)
 		mwx_set(sc, MT_HW_EMI_CTL, MT_HW_EMI_CTL_SLPPROT_EN);
+	mwx_set(sc, MT_MCU2HOST_SW_INT_ENA, MT_MCU_CMD_WAKE_RX_PCIE);
 
 	if (mwx_wfsys_reset(sc) != 0)
 		goto fail;
@@ -1498,7 +1508,8 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 fail:
 	mwx_txwi_free(sc);
 	mwx_dma_free(sc);
-	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 	bus_space_unmap(sc->sc_st, sc->sc_memh, sc->sc_mems);
 	return;
 }
@@ -1829,6 +1840,9 @@ mwx_queue_reset(struct mwx_softc *sc, struct mwx_queue *q)
 	uint32_t dmaaddr;
 	struct mwx_queue_data *md;
 
+	if (q->mq_desc == NULL)
+		return;
+
 	/* clear descriptors */
 	bus_dmamap_sync(sc->sc_dmat, q->mq_map, 0, q->mq_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1900,7 +1914,8 @@ mwx_buf_fill(struct mwx_softc *sc, struct mwx_queue_data *md,
 	buf0 = md->md_map->dm_segs[0].ds_addr;
 	len0 = md->md_map->dm_segs[0].ds_len;
 	ctrl = MT_DMA_CTL_SD_LEN0(len0);
-	ctrl |= MT_DMA_CTL_LAST_SEC0;
+	if (MWX_IS_CONNAC2(sc))
+		ctrl |= MT_DMA_CTL_LAST_SEC0;
 
 	desc->buf0 = htole32(buf0);
 	desc->buf1 = 0;
@@ -1915,6 +1930,9 @@ mwx_queue_fill(struct mwx_softc *sc, struct mwx_queue *q)
 {
 	u_int idx, last;
 	int rv;
+
+	if (q->mq_desc == NULL)
+		return 0;
 
 	last = (q->mq_count + q->mq_cons - 1) % q->mq_count;
 	idx = q->mq_prod;
@@ -1944,20 +1962,18 @@ mwx_queue_fill(struct mwx_softc *sc, struct mwx_queue *q)
 int
 mwx_dma_alloc(struct mwx_softc *sc)
 {
+	uint32_t txq_mcu_regbase = MT_TX_MCU_RING_BASE;
 	int rv;
 
-	/* Stop DMA engine and reset wfsys */
-	if ((rv = mwx_dma_disable(sc, 1)) != 0)
-		return rv;
-	if ((rv = mwx_wfsys_reset(sc)) != 0)
-		return rv;
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		txq_mcu_regbase = MT7925_TX_MCU_RING_BASE;
 
 	/* TX queues */
 	if ((rv = mwx_queue_alloc(sc, &sc->sc_txq, 256,
 	    MT_TX_DATA_RING_BASE)) != 0)
 		return rv;
-	if ((rv = mwx_queue_alloc(sc, &sc->sc_txmcuq, 16 /* XXX */,
-	    MT_TX_MCU_RING_BASE)) != 0)
+	if ((rv = mwx_queue_alloc(sc, &sc->sc_txmcuq, 256,
+	    txq_mcu_regbase)) != 0)
 		return rv;
 	if ((rv = mwx_queue_alloc(sc, &sc->sc_txfwdlq, 16 /* XXX */,
 	    MT_TX_FWDL_RING_BASE)) != 0)
@@ -1968,17 +1984,19 @@ mwx_dma_alloc(struct mwx_softc *sc)
 	    MT_RX_DATA_RING_BASE)) != 0 ||
 	    (rv = mwx_queue_fill(sc, &sc->sc_rxq)) != 0)
 		return rv;
-	if ((rv = mwx_queue_alloc(sc, &sc->sc_rxmcuq, 16 /* XXX */,
-	    MT_RX_MCU_RING_BASE)) != 0 ||
-	    (rv = mwx_queue_fill(sc, &sc->sc_rxmcuq)) != 0)
-		return rv;
+	if (sc->sc_hwtype != MWX_HW_MT7925) {
+		if ((rv = mwx_queue_alloc(sc, &sc->sc_rxmcuq, 256,
+		    MT_RX_MCU_RING_BASE)) != 0 ||
+		    (rv = mwx_queue_fill(sc, &sc->sc_rxmcuq)) != 0)
+			return rv;
+	}
 	if ((rv = mwx_queue_alloc(sc, &sc->sc_rxfwdlq, 16 /* XXX */,
 	    MT_RX_FWDL_RING_BASE)) != 0 ||
 	    (rv = mwx_queue_fill(sc, &sc->sc_rxfwdlq)) != 0)
 		return rv;
 
 	/* enable DMA engine */
-	mt7921_dma_enable(sc);
+	mwx_dma_enable(sc);
 
 	return 0;
 }
@@ -2015,7 +2033,7 @@ mwx_dma_reset(struct mwx_softc *sc, int fullreset)
 		return rv;
 
 	/* enable DMA engine */
-	mt7921_dma_enable(sc);
+	mwx_dma_enable(sc);
 
 	return 0;
 }
@@ -2475,7 +2493,7 @@ enqueue:
 
 if (cmd != MCU_CMD_FW_SCATTER) {
 printf("%s: %s: cmd %08x\n", DEVNAME(sc), __func__, cmd);
-pkt_hex_dump(m);
+//pkt_hex_dump(m);
 }
 
 	s = splnet();
@@ -2715,7 +2733,7 @@ mwx_dma_disable(struct mwx_softc *sc, int force)
 	if (rv != 0)
 		return rv;
 
-	/* disable dmashdl */
+	/* disable DMASHDL and set bypass */
 	mwx_clear(sc, MT_WFDMA0_GLO_CFG_EXT0, MT_WFDMA0_CSR_TX_DMASHDL_ENABLE);
 	mwx_set(sc, MT_DMASHDL_SW_CONTROL, MT_DMASHDL_DMASHDL_BYPASS);
 
@@ -2725,36 +2743,55 @@ mwx_dma_disable(struct mwx_softc *sc, int force)
 		    MT_WFDMA0_RST_LOGIC_RST);
 		mwx_set(sc, MT_WFDMA0_RST, MT_WFDMA0_RST_DMASHDL_ALL_RST |
 		    MT_WFDMA0_RST_LOGIC_RST);
+		delay(20);
 	}
 
 	return 0;
 }
 
 void
-mt7921_dma_enable(struct mwx_softc *sc)
+mwx_dma_enable(struct mwx_softc *sc)
 {
-#define PREFETCH(base, depth)   ((base) << 16 | (depth))
+#define P(base, depth)   ((base) << 16 | (depth))
 	/* configure perfetch settings */
-	mwx_write(sc, MT_WFDMA0_RX_RING0_EXT_CTRL, PREFETCH(0x0, 0x4));
-	mwx_write(sc, MT_WFDMA0_RX_RING2_EXT_CTRL, PREFETCH(0x40, 0x4));
-	mwx_write(sc, MT_WFDMA0_RX_RING3_EXT_CTRL, PREFETCH(0x80, 0x4));
-	mwx_write(sc, MT_WFDMA0_RX_RING4_EXT_CTRL, PREFETCH(0xc0, 0x4));
-	mwx_write(sc, MT_WFDMA0_RX_RING5_EXT_CTRL, PREFETCH(0x100, 0x4));
+	if (sc->sc_hwtype == MWX_HW_MT7925) {
+		mwx_write(sc, MT_WFDMA0_RX_RING0_EXT_CTRL, P(0x0, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING1_EXT_CTRL, P(0x40, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING2_EXT_CTRL, P(0x80, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING3_EXT_CTRL, P(0xc0, 0x4));
 
-	mwx_write(sc, MT_WFDMA0_TX_RING0_EXT_CTRL, PREFETCH(0x140, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING1_EXT_CTRL, PREFETCH(0x180, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING2_EXT_CTRL, PREFETCH(0x1c0, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING3_EXT_CTRL, PREFETCH(0x200, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING4_EXT_CTRL, PREFETCH(0x240, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING5_EXT_CTRL, PREFETCH(0x280, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING6_EXT_CTRL, PREFETCH(0x2c0, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING16_EXT_CTRL, PREFETCH(0x340, 0x4));
-	mwx_write(sc, MT_WFDMA0_TX_RING17_EXT_CTRL, PREFETCH(0x380, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING0_EXT_CTRL, P(0x100, 0x10));
+		mwx_write(sc, MT_WFDMA0_TX_RING1_EXT_CTRL, P(0x200, 0x10));
+		mwx_write(sc, MT_WFDMA0_TX_RING2_EXT_CTRL, P(0x300, 0x10));
+		mwx_write(sc, MT_WFDMA0_TX_RING3_EXT_CTRL, P(0x400, 0x10));
+		mwx_write(sc, MT_WFDMA0_TX_RING15_EXT_CTRL, P(0x500, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING16_EXT_CTRL, P(0x540, 0x4));
+
+	} else {
+		mwx_write(sc, MT_WFDMA0_RX_RING0_EXT_CTRL, P(0x0, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING2_EXT_CTRL, P(0x40, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING3_EXT_CTRL, P(0x80, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING4_EXT_CTRL, P(0xc0, 0x4));
+		mwx_write(sc, MT_WFDMA0_RX_RING5_EXT_CTRL, P(0x100, 0x4));
+
+		mwx_write(sc, MT_WFDMA0_TX_RING0_EXT_CTRL, P(0x140, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING1_EXT_CTRL, P(0x180, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING2_EXT_CTRL, P(0x1c0, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING3_EXT_CTRL, P(0x200, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING4_EXT_CTRL, P(0x240, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING5_EXT_CTRL, P(0x280, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING6_EXT_CTRL, P(0x2c0, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING16_EXT_CTRL, P(0x340, 0x4));
+		mwx_write(sc, MT_WFDMA0_TX_RING17_EXT_CTRL, P(0x380, 0x4));
+	}
+#undef P
 
 	/* reset dma idx */
 	mwx_write(sc, MT_WFDMA0_RST_DTX_PTR, ~0);
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		mwx_write(sc, MT_WFDMA0_RST_DRX_PTR, ~0);
 
-	/* configure delay interrupt */
+	/* disable delayed interrupt */
 	mwx_write(sc, MT_WFDMA0_PRI_DLY_INT_CFG0, 0);
 
 	mwx_set(sc, MT_WFDMA0_GLO_CFG,
@@ -2762,6 +2799,9 @@ mt7921_dma_enable(struct mwx_softc *sc)
 	    MT_WFDMA0_GLO_CFG_FIFO_LITTLE_ENDIAN |
 	    MT_WFDMA0_GLO_CFG_CLK_GAT_DIS |
 	    MT_WFDMA0_GLO_CFG_OMIT_TX_INFO |
+	    MT_WFDMA0_GLO_CFG_DMA_SIZE(3) |
+	    MT_WFDMA0_GLO_CFG_FIFO_DIS_CHECK |
+	    MT_WFDMA0_GLO_CFG_RX_WB_DDONE |
 	    MT_WFDMA0_GLO_CFG_CSR_DISP_BASE_PTR_CHAIN_EN |
 	    MT_WFDMA0_GLO_CFG_OMIT_RX_INFO_PFET2);
 
@@ -2769,12 +2809,18 @@ mt7921_dma_enable(struct mwx_softc *sc)
 	mwx_set(sc, MT_WFDMA0_GLO_CFG,
 	    MT_WFDMA0_GLO_CFG_TX_DMA_EN | MT_WFDMA0_GLO_CFG_RX_DMA_EN);
 
+	if (sc->sc_hwtype == MWX_HW_MT7925) {
+		/* enable extended DMA config */
+		mwx_set(sc, MT_UWFDMA0_GLO_CFG_EXT1, (1U << 28));
+		mwx_set(sc, MT_WFDMA0_INT_RX_PRI, 0x0f00);
+		mwx_set(sc, MT_WFDMA0_INT_TX_PRI, 0x7f00);
+	}
+
 	mwx_set(sc, MT_WFDMA_DUMMY_CR, MT_WFDMA_NEED_REINIT);
 
 	/* enable interrupts for TX/RX rings */
-	mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, MT_INT_RX_DONE_ALL |
-	    MT_INT_TX_DONE_ALL | MT_INT_MCU_CMD);
-	mwx_set(sc, MT_MCU2HOST_SW_INT_ENA, MT_MCU_CMD_WAKE_RX_PCIE);
+	mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, sc->sc_intr_mask);
+	/* maybe not needed */
 	mwx_write(sc, MT_PCIE_MAC_INT_ENABLE, 0xff);
 }
 
@@ -2881,7 +2927,7 @@ mwx_reg_addr(struct mwx_softc *sc, uint32_t reg)
 }
 
 int
-mt7921_init_hardware(struct mwx_softc *sc)
+mwx_init_hardware(struct mwx_softc *sc)
 {
 	int rv;
 
@@ -2897,7 +2943,7 @@ mt7921_init_hardware(struct mwx_softc *sc)
 	mwx_write(sc, MT_SWDEF_MODE, MT_SWDEF_NORMAL_MODE);
 	mwx_barrier(sc);
 
-	rv = mt7921_mcu_init(sc);
+	rv = mwx_mcu_init(sc);
 	if (rv != 0)
 		goto fail;
 	/* TODO override eeprom for systems with FDT */
@@ -2921,22 +2967,11 @@ mt7921_init_hardware(struct mwx_softc *sc)
 }
 
 int
-mt7921_mcu_init(struct mwx_softc *sc)
+mwx_mcu_init(struct mwx_softc *sc)
 {
 	int rv;
 
-	/* this read is needed to make interrupts work */
-	(void) mwx_read(sc, MT_TOP_LPCR_HOST_BAND0);
-	mwx_write(sc, MT_TOP_LPCR_HOST_BAND0, MT_TOP_LPCR_HOST_DRV_OWN);
-	if (mwx_poll(sc, MT_TOP_LPCR_HOST_BAND0, 0, MT_TOP_LPCR_HOST_FW_OWN,
-	    5000) != 0) {
-	    printf("%s: timeout for driver own\n", DEVNAME(sc));
-	    return EIO;
-	}
-
-	mwx_set(sc, MT_PCIE_MAC_PM, MT_PCIE_MAC_PM_L0S_DIS);
-
-	if ((rv = mt7921_load_firmware(sc)) != 0)
+	if ((rv = mwx_load_firmware(sc)) != 0)
 		return rv;
 
 	if ((rv = mt7921_mcu_get_nic_capability(sc)) != 0)
@@ -2950,7 +2985,7 @@ mt7921_mcu_init(struct mwx_softc *sc)
 }
 
 static inline uint32_t
-mt7921_get_data_mode(struct mwx_softc *sc, uint32_t info)
+mwx_get_data_mode(struct mwx_softc *sc, uint32_t info)
 {
 	uint32_t mode = DL_MODE_NEED_RSP;
 
@@ -2976,7 +3011,7 @@ mt7921_get_data_mode(struct mwx_softc *sc, uint32_t info)
 }
 
 static inline uint32_t
-mt7921_mcu_gen_dl_mode(uint8_t feature_set)
+mwx_mcu_gen_dl_mode(uint8_t feature_set)
 {
 	uint32_t ret = DL_MODE_NEED_RSP;
 
@@ -2993,10 +3028,10 @@ mt7921_mcu_gen_dl_mode(uint8_t feature_set)
 
 
 int
-mt7921_load_firmware(struct mwx_softc *sc)
+mwx_load_firmware(struct mwx_softc *sc)
 {
-	struct mt7921_patch_hdr *hdr;
-	struct mt7921_fw_trailer *fwhdr;
+	const struct mwx_patch_hdr *hdr;
+	const struct mwx_fw_trailer *fwhdr;
 	const char *rompatch, *fw;
 	u_char *buf, *fwbuf, *dl;
 	size_t buflen, fwlen, offset = 0;
@@ -3008,6 +3043,20 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		DPRINTF("%s: firmware already downloaded\n", DEVNAME(sc));
 		return 0;
 	}
+
+	/* this read is needed to make interrupts work */
+	(void) mwx_read(sc, MT_TOP_LPCR_HOST_BAND0);
+
+	/* Take driver ownership before touching firmware registers */
+	mwx_write(sc, MT_TOP_LPCR_HOST_BAND0, MT_TOP_LPCR_HOST_DRV_OWN);
+	if (mwx_poll(sc, MT_TOP_LPCR_HOST_BAND0, 0, MT_TOP_LPCR_HOST_FW_OWN,
+	    5000) != 0) {
+	    printf("%s: timeout for driver own\n", DEVNAME(sc));
+	    return EIO;
+	}
+
+	/* Disable PCIe L0s to prevent the link from entering low-power state */
+	mwx_set(sc, MT_PCIE_MAC_PM, MT_PCIE_MAC_PM_L0S_DIS);
 
 	switch (sc->sc_hwtype) {
 	case MWX_HW_MT7920:
@@ -3032,24 +3081,24 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		return rv;
 	}
 
-	rv = mt7921_mcu_patch_sem_ctrl(sc, 1);
+	rv = mwx_mcu_patch_sem_ctrl(sc, 1);
 	if (rv != 0)
-		return rv;
+		goto fail;
 
 	if (buflen < sizeof(*hdr)) {
 		DPRINTF("%s: invalid firmware\n", DEVNAME(sc));
 		rv = EINVAL;
 		goto out;
 	}
-	hdr = (struct mt7921_patch_hdr *)buf;
+	hdr = (struct mwx_patch_hdr *)buf;
 	printf("%s: HW/SW version: 0x%x, build time: %.15s\n",
 	    DEVNAME(sc), be32toh(hdr->hw_sw_ver), hdr->build_date);
 
 	for (i = 0; i < be32toh(hdr->desc.n_region); i++) {
-		struct mt7921_patch_sec *sec;
+		const struct mwx_patch_sec *sec;
 		uint32_t len, addr, mode, sec_info;
 
-		sec = (struct mt7921_patch_sec *)(buf + sizeof(*hdr) +
+		sec = (struct mwx_patch_sec *)(buf + sizeof(*hdr) +
 		    i * sizeof(*sec));
 		if ((be32toh(sec->type) & PATCH_SEC_TYPE_MASK) !=
 		    PATCH_SEC_TYPE_INFO) {
@@ -3062,14 +3111,14 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		len = be32toh(sec->info.len);
 		dl = buf + be32toh(sec->offs);
 		sec_info = be32toh(sec->info.sec_key_idx);
-		mode = mt7921_get_data_mode(sc, sec_info);
+		mode = mwx_get_data_mode(sc, sec_info);
 
-		rv = mt7921_mcu_init_download(sc, addr, len, mode);
+		rv = mwx_mcu_init_download(sc, addr, len, mode);
 		if (rv != 0) {
 			DPRINTF("%s: download request failed\n", DEVNAME(sc));
 			goto out;
 		}
-		rv = mt7921_mcu_send_firmware(sc, MCU_CMD_FW_SCATTER,
+		rv = mwx_mcu_send_firmware(sc, MCU_CMD_FW_SCATTER,
 		    dl, len, 4096);
 		if (rv != 0) {
 			DPRINTF("%s: failed to send patch\n", DEVNAME(sc));
@@ -3077,44 +3126,49 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		}
 	}
 
-	rv = mt7921_mcu_start_patch(sc);
+	/* Give MCU time to process final FWDL data */
+	delay(5000);
+	rv = mwx_mcu_start_patch(sc);
 	if (rv != 0) {
 		printf("%s: patch start failed\n", DEVNAME(sc));
 		goto fail;
 	}
 
 out:
-	sem = mt7921_mcu_patch_sem_ctrl(sc, 0);
+	sem = mwx_mcu_patch_sem_ctrl(sc, 0);
 	if (sem != 0)
 		rv = sem;
 	if (rv != 0)
 		goto fail;
 
-	fwhdr = (struct mt7921_fw_trailer *)(fwbuf + fwlen - sizeof(*fwhdr));
+	fwhdr = (struct mwx_fw_trailer *)(fwbuf + fwlen - sizeof(*fwhdr));
 	printf("%s: WM firmware version: %.10s, build time: %.15s\n",
 	    DEVNAME(sc), fwhdr->fw_ver, fwhdr->build_date);
 
 	for (i = 0; i < fwhdr->n_region; i++) {
-		struct mt7921_fw_region *region;
+		const struct mwx_fw_region *region;
 		uint32_t len, addr, mode;
 
-		region = (struct mt7921_fw_region *)((u_char *)fwhdr -
+		region = (struct mwx_fw_region *)((u_char *)fwhdr -
 		    (fwhdr->n_region - i) * sizeof(*region));
 
 		addr = le32toh(region->addr);
 		len = le32toh(region->len);
-		mode = mt7921_mcu_gen_dl_mode(region->feature_set);
+		mode = mwx_mcu_gen_dl_mode(region->feature_set);
 
 		if (region->feature_set & FW_FEATURE_OVERRIDE_ADDR)
 			override = addr;
+		/* Skip non-download regions */
+		if (region->feature_set & FW_FEATURE_NON_DL)
+			continue;
 
-		rv = mt7921_mcu_init_download(sc, addr, len, mode);
+		rv = mwx_mcu_init_download(sc, addr, len, mode);
 		if (rv != 0) {
 			DPRINTF("%s: download request failed\n", DEVNAME(sc));
 			goto fail;
 		}
 
-		rv = mt7921_mcu_send_firmware(sc, MCU_CMD_FW_SCATTER,
+		rv = mwx_mcu_send_firmware(sc, MCU_CMD_FW_SCATTER,
 		    fwbuf + offset, len, 4096);
 		if (rv != 0) {
 			DPRINTF("%s: failed to send firmware\n", DEVNAME(sc));
@@ -3126,7 +3180,7 @@ out:
 	if (override != 0)
 		option |= FW_START_OVERRIDE;
 
-	rv = mt7921_mcu_start_firmware(sc, override, option);
+	rv = mwx_mcu_start_firmware(sc, override, option);
 	if (rv != 0) {
 		DPRINTF("%s: firmware start failed\n", DEVNAME(sc));
 		goto fail;
@@ -3206,7 +3260,7 @@ mt7921_mac_init(struct mwx_softc *sc)
 }
 
 int
-mt7921_mcu_patch_sem_ctrl(struct mwx_softc *sc, int semget)
+mwx_mcu_patch_sem_ctrl(struct mwx_softc *sc, int semget)
 {
 #define	PATCH_SEM_RELEASE		0
 #define PATCH_SEM_GET			1
@@ -3256,7 +3310,7 @@ mt7921_mcu_patch_sem_ctrl(struct mwx_softc *sc, int semget)
 }
 
 int
-mt7921_mcu_init_download(struct mwx_softc *sc, uint32_t addr,
+mwx_mcu_init_download(struct mwx_softc *sc, uint32_t addr,
     uint32_t len, uint32_t mode)
 {
 	struct {
@@ -3279,7 +3333,7 @@ mt7921_mcu_init_download(struct mwx_softc *sc, uint32_t addr,
 }
 
 int
-mt7921_mcu_send_firmware(struct mwx_softc *sc, int cmd, u_char *data,
+mwx_mcu_send_firmware(struct mwx_softc *sc, int cmd, u_char *data,
     size_t len, size_t max_len)
 {
 	size_t cur_len;
@@ -3304,7 +3358,7 @@ mt7921_mcu_send_firmware(struct mwx_softc *sc, int cmd, u_char *data,
 }
 
 int
-mt7921_mcu_start_patch(struct mwx_softc *sc)
+mwx_mcu_start_patch(struct mwx_softc *sc)
 {
 	struct {
 		uint8_t check_crc;
@@ -3318,7 +3372,7 @@ mt7921_mcu_start_patch(struct mwx_softc *sc)
 }
 
 int
-mt7921_mcu_start_firmware(struct mwx_softc *sc, uint32_t addr, uint32_t option)
+mwx_mcu_start_firmware(struct mwx_softc *sc, uint32_t addr, uint32_t option)
 {
 	struct {
 		uint32_t option;
@@ -3478,7 +3532,7 @@ mt7921_mcu_set_rts_thresh(struct mwx_softc *sc, uint32_t val, uint8_t band)
 }
 
 int
-mt7921_mcu_set_deep_sleep(struct mwx_softc *sc, int ena)
+mwx_mcu_set_deep_sleep(struct mwx_softc *sc, int ena)
 {
 	struct mt76_connac_config req = {
 		.resp_type = 0,
