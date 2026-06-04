@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.207 2025/12/04 21:16:17 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.208 2026/06/04 18:02:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -788,7 +788,7 @@ int
 ssl_check_clienthello_tlsext_late(SSL *s)
 {
 	int ret = SSL_TLSEXT_ERR_OK;
-	int al = 0;	/* XXX gcc3 */
+	int al;
 
 	/* If status request then ask callback what to do.
  	 * Note: this must be called after servername callbacks in case
