@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.116 2026/06/04 05:43:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.1 2026/06/04 05:43:00 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
-PROG=		smtpd
+PROG=		smtpd-lka
 RELINK=		"./${PROG} -V > /dev/null"
-BINDIR=		/usr/sbin
+BINDIR=		/usr/libexec
+NOMAN=
 
 SRCS=	aliases.c bounce.c ca.c compress_backend.c config.c control.c \
 	crypto.c dict.c dns.c unpack_dns.c envelope.c esc.c expand.c \
@@ -19,9 +20,6 @@ SRCS=	aliases.c bounce.c ca.c compress_backend.c config.c control.c \
 	table_static.c queue_fs.c queue_null.c queue_proc.c \
 	queue_ram.c scheduler_ramqueue.c scheduler_null.c \
 	scheduler_proc.c stat_ramstat.c
-
-MAN=		sendmail.8 smtpd.8 smtpd-filters.7 smtpd-tables.7
-MAN+=		smtpd.conf.5 table.5
 
 .include "../smtpd/Makefile.inc"
 .include <bsd.prog.mk>

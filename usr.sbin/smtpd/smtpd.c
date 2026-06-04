@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.359 2026/03/10 17:30:23 martijn Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.360 2026/06/04 05:42:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -494,7 +494,7 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&offline_q);
 
-	while ((c = getopt(argc, argv, "B:dD:hnP:f:FT:vx:")) != -1) {
+	while ((c = getopt(argc, argv, "B:dD:hnP:f:FT:vVx:")) != -1) {
 		switch (c) {
 		case 'B':
 			if (strstr(optarg, "queue=") == optarg)
@@ -589,6 +589,8 @@ main(int argc, char *argv[])
 		case 'v':
 			tracing |=  TRACE_DEBUG;
 			break;
+		case 'V':
+			exit(0);
 		case 'x':
 			rexec = optarg;
 			break;
@@ -804,7 +806,7 @@ static struct mproc *
 start_child(int save_argc, char **save_argv, char *rexec)
 {
 	struct mproc *p;
-	char *argv[SMTPD_MAXARG];
+	char *argv[SMTPD_MAXARG], *a0;
 	int sp[2], argc = 0;
 	pid_t pid;
 
@@ -849,9 +851,10 @@ start_child(int save_argc, char **save_argv, char *rexec)
 	argv[argc++] = "-x";
 	argv[argc++] = rexec;
 	argv[argc++] = NULL;
+	asprintf(&a0, "/usr/libexec/smtpd-%s", rexec);
 
-	execvp(argv[0], argv);
-	fatal("%s: execvp", rexec);
+	execvp(a0, argv);
+	fatal("%s: execvp", a0);
 }
 
 static void
