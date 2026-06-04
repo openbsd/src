@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.51 2026/05/01 09:44:42 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.52 2026/06/04 09:24:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -63,6 +63,7 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*c = cmdq_get_client(item);
 	struct session		*s;
 	struct window_pane	*wp = target->wp, *swp;
+	u_int			 tty_ox, tty_oy, tty_sx, tty_sy;
 	int			 line_numbers;
 
 	if (args_has(args, 'q')) {
@@ -100,8 +101,9 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'd'))
 		window_copy_pagedown(wp, 0, args_has(args, 'e'));
 	if (args_has(args, 'S')) {
+		tty_window_offset(&c->tty, &tty_ox, &tty_oy, &tty_sx, &tty_sy);
 		window_copy_scroll(wp, c->tty.mouse_slider_mpos, event->m.y,
-		    args_has(args, 'e'));
+		    tty_oy, args_has(args, 'e'));
 		return (CMD_RETURN_NORMAL);
 	}
 
