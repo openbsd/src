@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.16 2023/03/08 04:43:05 guenther Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.17 2026/06/04 05:25:04 deraadt Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -68,9 +68,32 @@ _kvm_freevtop(kvm_t *kd)
 	kd->vmst = NULL;
 }
 
+vaddr_t pmap_direct_base;
+vaddr_t pmap_direct_end;
+
 int
 _kvm_initvtop(kvm_t *kd)
 {
+	struct nlist nl[3];
+
+	nl[0].n_name = "_pmap_direct_base";
+	nl[1].n_name = "_pmap_direct_end";
+	nl[2].n_name = NULL;
+
+	if (kvm_nlist(kd, nl) != 0) {
+		_kvm_err(kd, kd->program, "bad namelist");
+		return (-1);
+	}
+
+	if (_kvm_pread(kd, kd->pmfd, &pmap_direct_base,
+	    sizeof pmap_direct_base,
+	    _kvm_pa2off(kd, nl[0].n_value)) != sizeof pmap_direct_base)
+		return (-1);
+
+	if (_kvm_pread(kd, kd->pmfd, &pmap_direct_end,
+	    sizeof pmap_direct_end,
+	    _kvm_pa2off(kd, nl[1].n_value)) != sizeof pmap_direct_end)
+		return (-1);
 
 	return (0);
 }
@@ -94,8 +117,8 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 
 	page_off = va & (kd->nbpg - 1);
 
-	if (va >= PMAP_DIRECT_BASE && va <= PMAP_DIRECT_END) {
-		*pa = va - PMAP_DIRECT_BASE;
+	if (va >= pmap_direct_base && va <= pmap_direct_end) {
+		*pa = va - pmap_direct_base;
 		return (int)(kd->nbpg - page_off);
 	}
 
