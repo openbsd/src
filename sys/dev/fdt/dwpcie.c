@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.61 2026/04/25 11:41:41 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.62 2026/06/04 10:07:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -2111,7 +2111,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 	struct dwpcie_softc *sc = v;
 	struct dwpcie_intr_handle *pih;
-	void *cookie = NULL;
+	void *cookie;
 
 	KASSERT(ih.ih_type != PCI_NONE);
 
@@ -2128,6 +2128,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 				return NULL;
 			addr = sc->sc_msi_addr;
 			data = dm->dm_vec;
+			cookie = sc->sc_msi_ih[dm->dm_vec / 32];
 		} else {
 			/*
 			 * Assume hardware passes Requester ID as
