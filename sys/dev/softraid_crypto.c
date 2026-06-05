@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.147 2026/02/17 04:51:47 asou Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.148 2026/06/05 08:22:12 asou Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -696,7 +696,6 @@ sr_crypto_create_key_disk(struct sr_discipline *sd,
 	km = &key_disk->src_meta;
 
 	key_disk->src_dev_mm = dev;
-	key_disk->src_vn = vn;
 	strlcpy(key_disk->src_devname, devname, sizeof(km->scmi.scm_devname));
 	key_disk->src_size = 0;
 
@@ -779,6 +778,7 @@ fail:
 	free(key_disk, M_DEVBUF, sizeof(struct sr_chunk));
 	key_disk = NULL;
 
+	/* keep `open = 1' to close dev */
 done:
 	free(label, M_DEVBUF, sizeof(*label));
 	free(omi, M_DEVBUF, sizeof(struct sr_meta_opt_item));
@@ -910,7 +910,7 @@ done:
 	free(label, M_DEVBUF, sizeof(*label));
 	free(sm, M_DEVBUF, SR_META_SIZE * DEV_BSIZE);
 
-	if (vn && open) {
+	if (open) {
 		VOP_CLOSE(vn, FREAD, NOCRED, curproc);
 		vput(vn);
 	}
