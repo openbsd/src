@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.154 2026/05/31 04:59:51 djm Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.155 2026/06/05 08:48:43 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -1122,7 +1122,7 @@ process_readdir(uint32_t id)
 		send_status(id, SSH2_FX_FAILURE);
 	} else {
 		struct stat st;
-		char pathname[PATH_MAX];
+		char *pathname;
 		Stat *stats;
 		int nstats = 10, count = 0, i;
 
@@ -1132,10 +1132,11 @@ process_readdir(uint32_t id)
 				nstats *= 2;
 				stats = xreallocarray(stats, nstats, sizeof(Stat));
 			}
-/* XXX OVERFLOW ? */
-			snprintf(pathname, sizeof pathname, "%s%s%s", path,
+			xasprintf(&pathname, "%s%s%s", path,
 			    strcmp(path, "/") ? "/" : "", dp->d_name);
-			if (lstat(pathname, &st) == -1)
+			r = lstat(pathname, &st);
+			free(pathname);
+			if (r == -1)
 				continue;
 			stat_to_attrib(&st, &(stats[count].attrib));
 			stats[count].name = xstrdup(dp->d_name);
