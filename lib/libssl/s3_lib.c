@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.258 2025/12/04 21:16:17 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.259 2026/06/06 15:08:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1163,13 +1163,6 @@ ssl3_pending(const SSL *s)
 }
 
 int
-ssl3_handshake_msg_hdr_len(SSL *s)
-{
-	return (SSL_is_dtls(s) ? DTLS1_HM_HEADER_LENGTH :
-            SSL3_HM_HEADER_LENGTH);
-}
-
-int
 ssl3_handshake_msg_start(SSL *s, CBB *handshake, CBB *body, uint8_t msg_type)
 {
 	int ret = 0;
@@ -1224,7 +1217,7 @@ ssl3_handshake_msg_finish(SSL *s, CBB *handshake)
 		if (!CBS_get_u8(&cbs, &msg_type))
 			goto err;
 
-		len = outlen - ssl3_handshake_msg_hdr_len(s);
+		len = outlen - DTLS1_HM_HEADER_LENGTH;
 
 		dtls1_set_message_header(s, msg_type, len, 0, len);
 		dtls1_buffer_message(s, 0);

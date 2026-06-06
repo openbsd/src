@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.40 2026/06/04 12:05:57 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.41 2026/06/06 15:08:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1309,7 +1309,6 @@ long	ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void));
 long	ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp)(void));
 int	ssl3_pending(const SSL *s);
 
-int ssl3_handshake_msg_hdr_len(SSL *s);
 int ssl3_handshake_msg_start(SSL *s, CBB *handshake, CBB *body,
     uint8_t msg_type);
 int ssl3_handshake_msg_finish(SSL *s, CBB *handshake);
