@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.172 2026/05/31 14:34:44 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.173 2026/06/06 15:24:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2258,11 +2258,8 @@ ssl3_send_client_change_cipher_spec(SSL *s)
 		s->init_off = 0;
 
 		if (SSL_is_dtls(s)) {
-			s->d1->handshake_write_seq =
-			    s->d1->next_handshake_write_seq;
-			dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
-			    s->d1->handshake_write_seq, 0, 0);
-			dtls1_buffer_message(s, 1);
+			if (!dtls12_ccs_built(s))
+				goto err;
 		}
 
 		s->s3->hs.state = SSL3_ST_CW_CHANGE_B;
