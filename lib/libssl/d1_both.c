@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.96 2026/06/06 15:24:26 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.97 2026/06/06 15:28:14 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1171,7 +1171,8 @@ dtls12_ccs_built(SSL *s)
 	dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
 	    s->d1->handshake_write_seq, 0, 0);
 
-	dtls1_buffer_message(s, 1);
+	if (!dtls1_buffer_message(s, 1))
+		return 0;
 
 	return 1;
 }
@@ -1196,7 +1197,8 @@ dtls12_handshake_msg_built(SSL *s)
 
 	dtls1_set_message_header(s, msg_type, len, 0, len);
 
-	dtls1_buffer_message(s, 0);
+	if (!dtls1_buffer_message(s, 0))
+		return 0;
 
 	return 1;
 }
