@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.46 2025/01/18 19:42:39 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.47 2026/06/06 16:12:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -311,7 +311,7 @@ int
 ufshci_is_poll(struct ufshci_softc *sc, uint32_t type)
 {
 	uint32_t status;
-	int i, retry = 25;
+	int i, retry = 50;
 
 	for (i = 0; i < retry; i++) {
 		status = UFSHCI_READ_4(sc, UFSHCI_REG_IS);
