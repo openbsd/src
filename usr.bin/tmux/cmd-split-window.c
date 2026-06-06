@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.122 2026/06/02 19:31:36 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.123 2026/06/06 17:30:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -105,7 +105,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		flags |= SPAWN_EMPTY;
 
 	if (is_floating)
-		lc = layout_get_floating_cell(item, args, w, wp, lc, &cause);
+		lc = layout_get_floating_cell(item, args, w, wp, &cause);
 	else
 		lc = layout_get_tiled_cell(item, args, w, wp, flags, &cause);
 	if (cause != NULL) {
