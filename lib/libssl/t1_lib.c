@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.208 2026/06/04 18:02:52 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.209 2026/06/06 08:45:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,6 +154,7 @@ struct supported_group {
 	uint16_t group_id;
 	int nid;
 	int bits;
+	uint16_t min_version;
 };
 
 /*
@@ -310,6 +311,7 @@ static const struct supported_group nid_list[] = {
 		.group_id = 4588,
 		.nid = NID_X25519MLKEM768,
 		.bits = 128,
+		.min_version = TLS1_3_VERSION,
 	},
 };
 
@@ -512,6 +514,17 @@ tls1_group_id_present(uint16_t group_id, const uint16_t *list, size_t list_len)
 	return 0;
 }
 
+static int
+tls1_group_id_allowed(const SSL *ssl, uint16_t group_id)
+{
+	const struct supported_group *sg;
+
+	if ((sg = tls1_supported_group_by_id(group_id)) == NULL)
+		return 0;
+
+	return ssl_effective_tls_version(ssl) >= sg->min_version;
+}
+
 int
 tls1_count_shared_groups(const SSL *ssl, size_t *out_count)
 {
@@ -527,6 +540,9 @@ tls1_count_shared_groups(const SSL *ssl, size_t *out_count)
 			continue;
 
 		if (!ssl_security_shared_group(ssl, pref[i]))
+			continue;
+
+		if (!tls1_group_id_allowed(ssl, pref[i]))
 			continue;
 
 		count++;
@@ -553,6 +569,9 @@ tls1_group_by_index(const SSL *ssl, size_t n, int *out_nid,
 			continue;
 
 		if (!ssl_security_fn(ssl, pref[i]))
+			continue;
+
+		if (!tls1_group_id_allowed(ssl, pref[i]))
 			continue;
 
 		if (count++ == n)
@@ -659,6 +678,10 @@ tls1_check_group(SSL *s, uint16_t group_id)
 	for (i = 0; i < groupslen; i++) {
 		if (!ssl_security_supported_group(s, groups[i]))
 			continue;
+
+		if (!tls1_group_id_allowed(s, groups[i]))
+			continue;
+
 		if (groups[i] == group_id)
 			return 1;
 	}
