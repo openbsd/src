@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_protocols.3,v 1.13 2025/07/07 10:54:00 schwarze Exp $
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.14 2026/06/06 16:23:30 sthen Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015, 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: June 6 2026 $
 .Dt TLS_CONFIG_SET_PROTOCOLS 3
 .Os
 .Sh NAME
@@ -174,8 +174,8 @@ which disables DHE key exchange.
 specifies the names of the elliptic curves that may be used during Elliptic
 Curve Diffie-Hellman Ephemeral (ECDHE) key exchange.
 This is a comma separated list, given in order of preference.
-The special value of "default" will use the default curves (currently X25519,
-P-256 and P-384).
+The special value of "default" will use the default curves (currently
+X25519MLKEM768, X25519, P-256 and P-384).
 This function replaces
 .Fn tls_config_set_ecdhecurve ,
 which is deprecated.
