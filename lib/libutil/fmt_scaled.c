@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.24 2026/06/06 23:49:25 djm Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.25 2026/06/06 23:53:59 djm Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -190,7 +190,7 @@ scan_scaled(char *scaled, long long *result)
 			 * multiply-by-1024 with divide-by-10 so the running
 			 * value stays within long long range while preserving
 			 * precision.
- 			 */
+			 */
 			muls = i;
 			divs = fract_digits > 0 ?  fract_digits - 1 : 0;
 			while (muls > 0 && divs > 0) {
