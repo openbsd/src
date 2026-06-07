@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.461 2026/06/02 08:13:50 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.462 2026/06/07 20:05:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1819,12 +1819,13 @@ server_client_reset_state(struct client *c)
 			cx = wp->xoff + (int)s->cx - (int)ox;
 			cy = wp->yoff + (int)s->cy - (int)oy;
 
+			r = screen_redraw_get_visible_ranges(wp, cx, cy, 1, NULL);
+			if (!screen_redraw_is_visible(r, cx))
+				cursor = 0;
+
 			if (status_at_line(c) == 0)
 				cy += status_line_size(c);
 		}
-		r = screen_redraw_get_visible_ranges(wp, cx, cy, 1, NULL);
-		if (!screen_redraw_is_visible(r, cx))
-			cursor = 0;
 
 		if (!cursor)
 			mode &= ~MODE_CURSOR;
