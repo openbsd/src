@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.125 2026/06/07 09:54:25 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.126 2026/06/07 13:15:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_new_pane_entry = {
 	.name = "new-pane",
 	.alias = "newp",
 
-	.args = { "bc:de:fF:hIkl:Lm:p:PR:s:S:t:vx:X:y:Y:Z", 0, -1, NULL },
+	.args = { "bc:de:EfF:hIkl:Lm:p:PR:s:S:t:vx:X:y:Y:Z", 0, -1, NULL },
 	.usage = "[-bdefhIklPvZ] [-c start-directory] [-e environment] "
 		 "[-F format] [-l size] [-m message] [-p percentage] "
 		 "[-s style] [-S active-border-style] "
@@ -57,7 +57,7 @@ const struct cmd_entry cmd_split_window_entry = {
 	.name = "split-window",
 	.alias = "splitw",
 
-	.args = { "bc:de:fF:hIkl:m:p:PR:s:S:t:vZ", 0, -1, NULL },
+	.args = { "bc:de:EfF:hIkl:m:p:PR:s:S:t:vZ", 0, -1, NULL },
 	.usage = "[-bdefhIklPvZ] [-c start-directory] [-e environment] "
 		 "[-F format] [-l size] [-m message] [-p percentage] "
 		 "[-s style] [-S active-border-style] "
@@ -84,7 +84,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct window_pane	*wp = target->wp, *new_wp;
 	struct layout_cell	*lc = NULL;
 	struct cmd_find_state	 fs;
-	int			 input, is_floating, flags = 0;
+	int			 input, empty, is_floating, flags = 0;
 	const char		*template, *style;
 	char			*cause = NULL, *cp;
 	struct args_value	*av;
@@ -94,14 +94,20 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		is_floating = !args_has(args, 'L');
 	else
 		is_floating = 0;
-	input = (args_has(args, 'I') && count == 0);
 
 	flags = is_floating ? SPAWN_FLOATING : 0;
 	if (args_has(args, 'b'))
 		flags |= SPAWN_BEFORE;
 	if (args_has(args, 'f'))
 		flags |= SPAWN_FULLSIZE;
-	if (input || (count == 1 && *args_string(args, 0) == '\0'))
+
+	input = args_has(args, 'I');
+	empty = (count == 1 && *args_string(args, 0) == '\0');
+	if (!empty && (input || args_has(args, 'E'))) {
+		cmdq_error(item, "command cannot be given for empty pane");
+		return (CMD_RETURN_ERROR);
+	}
+	if (input || empty || args_has(args, 'E'))
 		flags |= SPAWN_EMPTY;
 
 	if (is_floating)
