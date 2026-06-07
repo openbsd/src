@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.170 2026/05/28 10:34:38 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.171 2026/06/07 08:25:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -362,6 +362,7 @@ key_bindings_init(void)
 		"bind -N 'Split window horizontally' % { split-window -h }",
 		"bind -N 'Kill current window' & { confirm-before -p\"kill-window #W? (y/n)\" kill-window }",
 		"bind -N 'Prompt for window index to select' \"'\" { command-prompt -T window-target -pindex { select-window -t ':%%' } }",
+		"bind -N 'New floating pane' * { new-pane }",
 		"bind -N 'Switch to previous client' ( { switch-client -p }",
 		"bind -N 'Switch to next client' ) { switch-client -n }",
 		"bind -N 'Rename current window' , { command-prompt -I'#W' { rename-window -- '%%' } }",
