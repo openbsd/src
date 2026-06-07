@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.127 2026/06/07 13:29:16 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.128 2026/06/07 14:11:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -221,7 +221,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		window_pop_zoom(wp->window);
 		server_redraw_window(wp->window);
 	}
-	server_status_session(s);
+	server_redraw_session(s);
 
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
