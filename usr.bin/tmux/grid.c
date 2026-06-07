@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.147 2026/06/07 14:41:27 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.148 2026/06/07 20:03:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -125,6 +125,8 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 	else if (gce->offset >= gl->extdsize)
 		fatalx("offset too big");
 	gl->flags |= GRID_LINE_EXTENDED;
+	if (gc->link != 0)
+		gl->flags |= GRID_LINE_HYPERLINK;
 
 	if (gc->flags & GRID_FLAG_TAB)
 		uc = gc->data.width;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1335 2026/06/06 17:30:48 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1336 2026/06/07 20:03:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -771,6 +771,7 @@ struct colour_palette {
 #define GRID_LINE_DEAD 0x4
 #define GRID_LINE_START_PROMPT 0x8
 #define GRID_LINE_START_OUTPUT 0x10
+#define GRID_LINE_HYPERLINK 0x20
 
 /* Grid string flags. */
 #define GRID_STRING_WITH_SEQUENCES 0x1
