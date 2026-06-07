@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.8 2023/05/11 22:28:38 guenther Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.9 2026/06/07 14:22:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2019,2023 Philip Guenther <guenther@openbsd.org>
  *
@@ -78,7 +78,11 @@ pd_entry_t *pt[5];
 int meltdown, hide_direct, hide_pte, reproducible, show[5], show_leaves;
 int user_proc;
 
-struct nlist proc0[] = { { "_proc0paddr" }, { NULL } };
+struct nlist nl[] = {
+	{ "_proc0paddr" },
+	{ "_pmap_direct_base" },
+	{ NULL }
+};
 
 #define KGET(addr, var)							\
 	KGETRET(addr, &var, sizeof var, #var)
@@ -102,6 +106,8 @@ const char * const ptname[] = {
     [2] = "pt2",
     [1] = "pt1",
 };
+
+vaddr_t pmap_direct_base;
 
 /* Not currently used */
 const pd_entry_t ign_normal[] = {
@@ -135,7 +141,7 @@ enum l4_type { T_NORMAL = 0, T_DIRECT, T_PTE, T_KERNBASE, };
 static inline enum l4_type
 l4type(int i)
 {
-	if (i >= L4_SLOT_DIRECT && i < L4_SLOT_DIRECT + NUM_L4_SLOT_DIRECT)
+	if (i >= L4_SLOT_DIRECT && i < L4_SLOT_DIRECT + DIRECT_MAP_PML4_SLOTS)
 		return T_DIRECT;
 	if (i == L4_SLOT_PTE)
 		return T_PTE;
@@ -289,9 +295,10 @@ main(int argc, char **argv)
 			sizeof *kp, &cnt);
 		paddr = kp->p_addr;
 	} else {
-		if (kvm_nlist(k, proc0) != 0)
+		if (kvm_nlist(k, nl) != 0)
 			err(1, "nlist");
-		KGET(proc0[0].n_value, paddr);
+		KGET(nl[0].n_value, paddr);
+		KGET(nl[1].n_value, pmap_direct_base);
 	}
 
 	KGET(paddr, pcb);
