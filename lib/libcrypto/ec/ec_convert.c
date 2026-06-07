@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.16 2025/12/26 18:44:19 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.17 2026/06/07 11:17:15 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -78,8 +78,8 @@
  * at infinity. In compressed and hybrid form bit 1 indicates if the even
  * or the odd solution of the quadratic equation for y should be used.
  *
- * The public point_conversion_t enum lacks the point at infinity, so we
- * ignore it except at the API boundary.
+ * The public point_conversion_form_t enum lacks the point at infinity,
+ * so we ignore it except at the API boundary.
  */
 
 #define EC_POINT_YBIT			0x01
