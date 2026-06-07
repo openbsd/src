@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.44 2026/06/01 18:04:05 mglocker Exp $ */
+/* $OpenBSD: ihidev.c,v 1.45 2026/06/07 16:29:28 deraadt Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -272,6 +272,9 @@ ihidev_activate(struct device *self, int act)
 	int rv;
 
 	DPRINTF(("%s(%d)\n", __func__, act));
+
+	if (sc->sc_nrepid <= 0)
+		return (0);
 
 	switch (act) {
 	case DVACT_QUIESCE:
