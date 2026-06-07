@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.12 2023/07/28 16:02:34 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.13 2026/06/07 02:36:04 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <openssl/objects.h>
 
 #include "bytestring.h"
+#include "ssl_local.h"
 
 #define DHE_MINIMUM_BITS	1024
 
