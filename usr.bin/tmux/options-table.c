@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.212 2026/05/27 18:57:10 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.213 2026/06/07 13:37:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1029,7 +1029,8 @@ const struct options_table_entry options_table[] = {
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .default_str = "DISPLAY KRB5CCNAME MSYSTEM SSH_ASKPASS SSH_AUTH_SOCK "
 			 "SSH_AGENT_PID SSH_CONNECTION WAYLAND_DISPLAY "
-			 "WINDOWID XAUTHORITY",
+			 "WINDOWID XAUTHORITY XDG_CURRENT_DESKTOP "
+			 "XDG_SESSION_DESKTOP XDG_SESSION_TYPE",
 	  .text = "List of environment variables to update in the session "
 		  "environment when a client is attached."
 	},
