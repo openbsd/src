@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.48 2026/06/02 08:13:50 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.49 2026/06/07 08:22:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,7 +79,7 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (src_wp == dst_wp)
 		goto out;
 
-	if (window_pane_is_floating(src_wp) &&
+	if (window_pane_is_floating(src_wp) ||
 	    window_pane_is_floating(dst_wp)) {
 		cmdq_error(item, "cannot swap floating panes");
 		return (CMD_RETURN_ERROR);
