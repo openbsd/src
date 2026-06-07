@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.38 2026/05/26 14:55:16 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.39 2026/06/07 16:13:08 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -24857,8 +24857,14 @@ qwz_activate(struct device *self, int act)
 			qwz_stop(ifp);
 			rw_exit(&sc->ioctl_rwl);
 		}
+		if (sc->fw_initialized)
+			qwz_core_deinit(sc);
 		break;
 	case DVACT_RESUME:
+		err = qwz_hal_srng_init(sc);
+		if (err)
+			printf("%s: could not initialize hal\n",
+			    sc->sc_dev.dv_xname);
 		break;
 	case DVACT_WAKEUP:
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP) {
