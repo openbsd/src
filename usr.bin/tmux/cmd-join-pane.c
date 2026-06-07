@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.57 2026/06/02 19:31:36 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.58 2026/06/07 09:54:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -94,7 +94,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	lc = layout_get_tiled_cell(item, args, dst_w, dst_wp, flags, &cause);
 	if (cause != NULL) {
-		cmdq_error(item, "%s", cause);
+		cmdq_error(item, "size or position %s", cause);
 		free(cause);
 		return (CMD_RETURN_ERROR);
 	}
