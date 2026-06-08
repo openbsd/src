@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.81 2026/05/13 04:38:42 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.82 2026/06/08 12:12:00 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -709,10 +709,14 @@ rrdp_session_parse(struct rrdprepo *rr)
 			line[n - 1] = '\0';
 		switch (ln) {
 		case 0:
+			if (!valid_uri(line, strlen(line), HTTPS_PROTO))
+				goto reset;
+			break;
+		case 1:
 			if ((state->session_id = strdup(line)) == NULL)
 				err(1, NULL);
 			break;
-		case 1:
+		case 2:
 			state->serial = strtonum(line, 1, LLONG_MAX, &errstr);
 			if (errstr) {
 				warnx("%s: state file: serial is %s: %s",
@@ -720,7 +724,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 				goto reset;
 			}
 			break;
-		case 2:
+		case 3:
 			rr->last_reset = strtonum(line, 1, LLONG_MAX, &errstr);
 			if (errstr) {
 				warnx("%s: state file: last_reset is %s: %s",
@@ -728,7 +732,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 				goto reset;
 			}
 			break;
-		case 3:
+		case 4:
 			if (strcmp(line, "-") == 0)
 				break;
 			if ((state->last_mod = strdup(line)) == NULL)
@@ -805,7 +809,7 @@ rrdp_session_save(unsigned int id, struct rrdp_session *state)
 		err(1, "fdopen");
 
 	/* write session state file out */
-	if (fprintf(f, "%s\n%lld\n%lld\n", state->session_id,
+	if (fprintf(f, "%s\n%s\n%lld\n%lld\n", rr->notifyuri, state->session_id,
 	    state->serial, (long long)rr->last_reset) < 0)
 		goto fail;
 
