@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.118 2023/12/20 15:36:36 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.119 2026/06/08 12:46:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,7 +241,8 @@ handle_auto(uint8_t trusted, double offset)
 	 * It happens the (constraint) resolves initially fail, don't give up
 	 * but see if we get validated replies later.
 	 */
-	if (!trusted && conf->constraint_median == 0)
+	if (!trusted && !TAILQ_EMPTY(&conf->constraints) &&
+	    conf->constraint_median == 0)
 		return;
 
 	if (offset < AUTO_THRESHOLD) {
