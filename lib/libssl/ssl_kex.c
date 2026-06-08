@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.14 2026/06/08 11:38:04 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.15 2026/06/08 11:52:43 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -355,13 +355,31 @@ ssl_kex_public_ecdhe_ecp(EC_KEY *ecdh, CBB *cbb)
 	return ret;
 }
 
+#define EC_POINT_UNCOMPRESSED		0x04
+#define EC_POINT_CONVERSION_MASK	0x06
+
 int
 ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs,
     int *decode_error)
 {
 	EC_GROUP *group = NULL;
 	EC_POINT *point = NULL;
+	uint8_t form;
 	int ret = 0;
+
+	/*
+	 * Check that the peer's public key uses uncompressed encoding.
+	 * This ensures that the public key is not the point at infinity
+	 * and enforces correct point encoding via EC_POINT_oct2point().
+	 */
+	if (!CBS_peek_u8(cbs, &form)) {
+		*decode_error = 1;
+		goto err;
+	}
+	if ((form & EC_POINT_CONVERSION_MASK) != EC_POINT_UNCOMPRESSED) {
+		*decode_error = 1;
+		goto err;
+	}
 
 	if ((group = EC_GROUP_new_by_curve_name(nid)) == NULL)
 		goto err;
@@ -372,8 +390,10 @@ ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs,
 	if ((point = EC_POINT_new(group)) == NULL)
 		goto err;
 	if (EC_POINT_oct2point(group, point, CBS_data(cbs), CBS_len(cbs),
-	    NULL) == 0)
+	    NULL) == 0) {
+		*decode_error = 1;
 		goto err;
+	}
 	if (!EC_KEY_set_public_key(ecdh, point))
 		goto err;
 
