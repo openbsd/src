@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.213 2026/06/07 13:37:39 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.214 2026/06/08 20:42:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -646,6 +646,14 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_num = 4,
 	  .text = "Colour of not active panes for 'display-panes'."
+	},
+
+	{ .name = "display-panes-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_str = "#[align=right]#{pane_width}x#{pane_height}",
+	  .text = "Format of text shown by 'display-panes', expanded for each "
+		  "pane."
 	},
 
 	{ .name = "display-panes-time",
