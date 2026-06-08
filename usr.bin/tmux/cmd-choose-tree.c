@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.54 2026/06/08 20:38:54 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.55 2026/06/08 21:01:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -33,8 +33,8 @@ const struct cmd_entry cmd_choose_tree_entry = {
 	.name = "choose-tree",
 	.alias = NULL,
 
-	.args = { "F:f:GK:kNO:rst:wyZ", 0, 1, cmd_choose_tree_args_parse },
-	.usage = "[-GkNrswZ] [-F format] [-f filter] [-K key-format] "
+	.args = { "F:f:GhK:kNO:rst:wyZ", 0, 1, cmd_choose_tree_args_parse },
+	.usage = "[-GhkNrswZ] [-F format] [-f filter] [-K key-format] "
 		 "[-O sort-order] " CMD_TARGET_PANE_USAGE " [template]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
@@ -47,8 +47,8 @@ const struct cmd_entry cmd_choose_client_entry = {
 	.name = "choose-client",
 	.alias = NULL,
 
-	.args = { "F:f:K:kNO:rt:yZ", 0, 1, cmd_choose_tree_args_parse },
-	.usage = "[-kNrZ] [-F format] [-f filter] [-K key-format] "
+	.args = { "F:f:hK:kNO:rt:yZ", 0, 1, cmd_choose_tree_args_parse },
+	.usage = "[-hkNrZ] [-F format] [-f filter] [-K key-format] "
 		 "[-O sort-order] " CMD_TARGET_PANE_USAGE " [template]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
