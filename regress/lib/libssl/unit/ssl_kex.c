@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_kex.c,v 1.1 2026/06/08 11:31:29 tb Exp $ */
+/*	$OpenBSD: ssl_kex.c,v 1.2 2026/06/08 11:41:21 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -85,6 +85,7 @@ ssl_key_share_ecdhe_test(void)
 	size_t shared_key_len = 0;
 	CBS cbs;
 	int nid = NID_secp384r1;
+	int decode_error = 0;
 	int failed = 0;
 
 	if ((ecdh = EC_KEY_new()) == NULL)
@@ -95,10 +96,11 @@ ssl_key_share_ecdhe_test(void)
 		failed |= 1;
 	}
 
+	decode_error = 0;
 	CBS_init(&cbs, secp384r1_uncompressed_point, secp384r1_uncompressed_point_len);
 	if ((ecdh_peer = EC_KEY_new()) == NULL)
 		err(1, NULL);
-	if (!ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+	if (!ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs, &decode_error)) {
 		fprintf(stderr, "FAIL: failed to parse uncompressed P-384 point\n");
 		failed |= 1;
 	}
@@ -111,10 +113,11 @@ ssl_key_share_ecdhe_test(void)
 	EC_KEY_free(ecdh_peer);
 	ecdh_peer = NULL;
 
+	decode_error = 0;
 	CBS_init(&cbs, point_at_infinity, point_at_infinity_len);
 	if ((ecdh_peer = EC_KEY_new()) == NULL)
 		err(1, NULL);
-	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs, &decode_error)) {
 		fprintf(stderr, "FAIL: parsed point at infinity\n");
 		failed |= 1;
 	}
@@ -122,10 +125,11 @@ ssl_key_share_ecdhe_test(void)
 	EC_KEY_free(ecdh_peer);
 	ecdh_peer = NULL;
 
+	decode_error = 0;
 	CBS_init(&cbs, secp384r1_compressed_point, secp384r1_compressed_point_len);
 	if ((ecdh_peer = EC_KEY_new()) == NULL)
 		err(1, NULL);
-	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs, &decode_error)) {
 		fprintf(stderr, "FAIL: parsed compressed P-384 point\n");
 		failed |= 1;
 	}
@@ -133,10 +137,11 @@ ssl_key_share_ecdhe_test(void)
 	EC_KEY_free(ecdh_peer);
 	ecdh_peer = NULL;
 
+	decode_error = 0;
 	CBS_init(&cbs, secp384r1_hybrid_point, secp384r1_hybrid_point_len);
 	if ((ecdh_peer = EC_KEY_new()) == NULL)
 		err(1, NULL);
-	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs, &decode_error)) {
 		fprintf(stderr, "FAIL: parsed hybrid P-384 point\n");
 		failed |= 1;
 	}
