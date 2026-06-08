@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1070 2026/06/08 20:42:39 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1071 2026/06/08 20:44:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3345,6 +3345,7 @@ but a different format may be specified with
 .Op Fl s Ar style
 .Op Fl S Ar active\-border\-style
 .Op Fl t Ar target\-pane
+.Op Fl T Ar title
 .Op Ar shell\-command Op Ar argument ...
 .Xc
 .D1 Pq alias: Ic newp
@@ -3363,6 +3364,8 @@ sets the border style when the pane is active and
 .Fl R
 sets the border style when the pane is inactive (see
 .Sx STYLES ) .
+.Fl T
+sets the pane title.
 .Pp
 .Fl h
 does a horizontal split and
@@ -3760,6 +3763,7 @@ the command behaves like
 .Op Fl s Ar style
 .Op Fl S Ar active\-border\-style
 .Op Fl t Ar target\-pane
+.Op Fl T Ar title
 .Op Ar shell\-command Op Ar argument ...
 .Xc
 .D1 Pq alias: Ic splitw
