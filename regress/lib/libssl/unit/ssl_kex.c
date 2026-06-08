@@ -1,0 +1,162 @@
+/*	$OpenBSD: ssl_kex.c,v 1.1 2026/06/08 11:31:29 tb Exp $ */
+
+/*
+ * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <err.h>
+#include <stdio.h>
+
+#include <openssl/ec.h>
+#include <openssl/objects.h>
+
+#include "bytestring.h"
+#include "ssl_local.h"
+
+static const uint8_t point_at_infinity[] = {
+	0x00,
+};
+static const size_t point_at_infinity_len = sizeof(point_at_infinity);
+
+static const uint8_t secp384r1_uncompressed_point[] = {
+	0x04, 0xca, 0x0e, 0xc0, 0x60, 0xce, 0x24, 0x25,
+	0xa7, 0x6e, 0xd1, 0x96, 0x69, 0x33, 0x36, 0x04,
+	0x87, 0x69, 0x36, 0xfd, 0x2a, 0x83, 0x7a, 0x99,
+	0xad, 0xb7, 0x35, 0xe9, 0x4c, 0x2f, 0x56, 0xfc,
+	0xee, 0x7e, 0x68, 0x43, 0x90, 0x41, 0xb7, 0x3c,
+	0x64, 0xd4, 0xec, 0x82, 0xc1, 0xc6, 0xd9, 0x4b,
+	0x7d, 0xfa, 0xaa, 0x43, 0x46, 0x19, 0x94, 0x7f,
+	0xb4, 0xe2, 0xa7, 0xbd, 0x75, 0xaf, 0x4d, 0x8f,
+	0x45, 0xed, 0x3a, 0x8f, 0xef, 0x93, 0x57, 0x50,
+	0x3f, 0x24, 0xf4, 0xa8, 0x68, 0x22, 0xf8, 0xa3,
+	0x8c, 0xa9, 0x8b, 0xe8, 0xb9, 0x28, 0xff, 0x9f,
+	0xcf, 0xcd, 0xac, 0xc1, 0x20, 0x5f, 0x23, 0x07,
+	0x40,
+};
+static const size_t secp384r1_uncompressed_point_len =
+    sizeof(secp384r1_uncompressed_point);
+
+static const uint8_t secp384r1_compressed_point[] = {
+	0x02, 0xca, 0x0e, 0xc0, 0x60, 0xce, 0x24, 0x25,
+	0xa7, 0x6e, 0xd1, 0x96, 0x69, 0x33, 0x36, 0x04,
+	0x87, 0x69, 0x36, 0xfd, 0x2a, 0x83, 0x7a, 0x99,
+	0xad, 0xb7, 0x35, 0xe9, 0x4c, 0x2f, 0x56, 0xfc,
+	0xee, 0x7e, 0x68, 0x43, 0x90, 0x41, 0xb7, 0x3c,
+	0x64, 0xd4, 0xec, 0x82, 0xc1, 0xc6, 0xd9, 0x4b,
+	0x7d,
+};
+static const size_t secp384r1_compressed_point_len =
+    sizeof(secp384r1_compressed_point);
+
+static const uint8_t secp384r1_hybrid_point[] = {
+	0x06, 0xca, 0x0e, 0xc0, 0x60, 0xce, 0x24, 0x25,
+	0xa7, 0x6e, 0xd1, 0x96, 0x69, 0x33, 0x36, 0x04,
+	0x87, 0x69, 0x36, 0xfd, 0x2a, 0x83, 0x7a, 0x99,
+	0xad, 0xb7, 0x35, 0xe9, 0x4c, 0x2f, 0x56, 0xfc,
+	0xee, 0x7e, 0x68, 0x43, 0x90, 0x41, 0xb7, 0x3c,
+	0x64, 0xd4, 0xec, 0x82, 0xc1, 0xc6, 0xd9, 0x4b,
+	0x7d, 0xfa, 0xaa, 0x43, 0x46, 0x19, 0x94, 0x7f,
+	0xb4, 0xe2, 0xa7, 0xbd, 0x75, 0xaf, 0x4d, 0x8f,
+	0x45, 0xed, 0x3a, 0x8f, 0xef, 0x93, 0x57, 0x50,
+	0x3f, 0x24, 0xf4, 0xa8, 0x68, 0x22, 0xf8, 0xa3,
+	0x8c, 0xa9, 0x8b, 0xe8, 0xb9, 0x28, 0xff, 0x9f,
+	0xcf, 0xcd, 0xac, 0xc1, 0x20, 0x5f, 0x23, 0x07,
+	0x40,
+};
+static const size_t secp384r1_hybrid_point_len = sizeof(secp384r1_hybrid_point);
+
+static int
+ssl_key_share_ecdhe_test(void)
+{
+	EC_KEY *ecdh = NULL, *ecdh_peer = NULL;
+	uint8_t *shared_key = NULL;
+	size_t shared_key_len = 0;
+	CBS cbs;
+	int nid = NID_secp384r1;
+	int failed = 0;
+
+	if ((ecdh = EC_KEY_new()) == NULL)
+		err(1, NULL);
+
+	if (!ssl_kex_generate_ecdhe_ecp(ecdh, nid)) {
+		fprintf(stderr, "FAIL: failed to generate P-384 key\n");
+		failed |= 1;
+	}
+
+	CBS_init(&cbs, secp384r1_uncompressed_point, secp384r1_uncompressed_point_len);
+	if ((ecdh_peer = EC_KEY_new()) == NULL)
+		err(1, NULL);
+	if (!ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+		fprintf(stderr, "FAIL: failed to parse uncompressed P-384 point\n");
+		failed |= 1;
+	}
+
+	if (!ssl_kex_derive_ecdhe_ecp(ecdh, ecdh_peer, &shared_key, &shared_key_len)) {
+		fprintf(stderr, "FAIL: failed to derive shared P-384 key\n");
+		failed |= 1;
+	}
+
+	EC_KEY_free(ecdh_peer);
+	ecdh_peer = NULL;
+
+	CBS_init(&cbs, point_at_infinity, point_at_infinity_len);
+	if ((ecdh_peer = EC_KEY_new()) == NULL)
+		err(1, NULL);
+	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+		fprintf(stderr, "FAIL: parsed point at infinity\n");
+		failed |= 1;
+	}
+
+	EC_KEY_free(ecdh_peer);
+	ecdh_peer = NULL;
+
+	CBS_init(&cbs, secp384r1_compressed_point, secp384r1_compressed_point_len);
+	if ((ecdh_peer = EC_KEY_new()) == NULL)
+		err(1, NULL);
+	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+		fprintf(stderr, "FAIL: parsed compressed P-384 point\n");
+		failed |= 1;
+	}
+
+	EC_KEY_free(ecdh_peer);
+	ecdh_peer = NULL;
+
+	CBS_init(&cbs, secp384r1_hybrid_point, secp384r1_hybrid_point_len);
+	if ((ecdh_peer = EC_KEY_new()) == NULL)
+		err(1, NULL);
+	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs)) {
+		fprintf(stderr, "FAIL: parsed hybrid P-384 point\n");
+		failed |= 1;
+	}
+
+	EC_KEY_free(ecdh_peer);
+	ecdh_peer = NULL;
+
+	EC_KEY_free(ecdh);
+	freezero(shared_key, shared_key_len);
+
+	return failed;
+}
+
+int
+main(void)
+{
+	int failed = 0;
+
+	/* XXX - add DHE and X25519. */
+	failed |= ssl_key_share_ecdhe_test();
+
+	return failed;
+}
