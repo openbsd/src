@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.462 2026/06/07 20:05:16 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.463 2026/06/08 20:41:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1590,10 +1590,7 @@ server_client_resize_timer(__unused int fd, __unused short events, void *data)
 static void
 server_client_check_pane_resize(struct window_pane *wp)
 {
-	struct window_pane_resize	*r;
-	struct window_pane_resize	*r1;
-	struct window_pane_resize	*first;
-	struct window_pane_resize	*last;
+	struct window_pane_resize	*r, *r1, *first, *last;
 	struct timeval			 tv = { .tv_usec = 250000 };
 
 	if (TAILQ_EMPTY(&wp->resize_queue))

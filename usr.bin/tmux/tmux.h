@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1337 2026/06/08 20:38:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1338 2026/06/08 20:41:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3337,8 +3337,8 @@ void	 screen_hide_selection(struct screen *);
 int	 screen_check_selection(struct screen *, u_int, u_int);
 int	 screen_select_cell(struct screen *, struct grid_cell *,
 	     const struct grid_cell *);
-void	 screen_alternate_on(struct screen *, struct grid_cell *, int);
-void	 screen_alternate_off(struct screen *, struct grid_cell *, int);
+int	 screen_alternate_on(struct screen *, struct grid_cell *, int);
+int	 screen_alternate_off(struct screen *, struct grid_cell *, int);
 const char *screen_mode_to_string(int);
 const char *screen_print(struct screen *, int);
 
