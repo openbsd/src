@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.161 2026/06/06 08:45:41 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.162 2026/06/08 12:05:25 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -385,6 +385,8 @@ tlsext_ecpf_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		return 0;
 	if (CBS_len(&ecpf) == 0)
 		return 0;
+
+	/* XXX - tighten this to reject anything but uncompressed format? */
 
 	/* Must contain uncompressed (0) - RFC 8422, section 5.1.2. */
 	if (!CBS_contains_zero_byte(&ecpf)) {
