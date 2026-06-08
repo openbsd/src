@@ -20,7 +20,7 @@ neighbor 192.0.2.1 {
 	announce IPv4 flowspec
 	announce IPv6 flowspec
 	announce enhanced refresh yes
-	announce as4byte yes
+	announce as-4byte yes
 	announce add-path recv yes
 	announce add-path send all
 	announce policy yes
@@ -34,7 +34,7 @@ neighbor 192.0.2.2 {
 	announce IPv6 none
 	announce refresh no
 	announce restart no
-	announce as4byte no
+	announce as-4byte no
 	announce policy no
 }
 neighbor 192.0.2.3 {
