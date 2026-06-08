@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.82 2026/05/01 11:56:41 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.83 2026/06/08 15:16:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1223,6 +1223,11 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 	struct mode_tree_item	*current, *parent, *mti;
 	u_int			 i, x, y;
 	int			 choice, preview;
+
+	if (mtd->line_size == 0) {
+		*key = KEYC_NONE;
+		return (1);
+	}
 
 	if (KEYC_IS_MOUSE(*key) && m != NULL) {
 		if (cmd_mouse_at(mtd->wp, m, &x, &y, 0) != 0) {
