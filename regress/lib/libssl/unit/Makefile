@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2026/06/08 11:31:29 tb Exp $
+#	$OpenBSD: Makefile,v 1.19 2026/06/08 11:53:51 tb Exp $
 
 PROGS += cipher_list
 PROGS += ssl_get_shared_ciphers
@@ -9,8 +9,6 @@ PROGS += ssl_verify_param
 PROGS += ssl_versions
 PROGS += tls_ext_alpn
 PROGS += tls_prf
-
-REGRESS_EXPECTED_FAILURES +=	run-regress-ssl_kex
 
 WARNINGS=	Yes
 LDADD =		${SSL_INT} -lcrypto
