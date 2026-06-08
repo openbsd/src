@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.13 2026/06/07 02:36:04 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.14 2026/06/08 11:38:04 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -356,7 +356,8 @@ ssl_kex_public_ecdhe_ecp(EC_KEY *ecdh, CBB *cbb)
 }
 
 int
-ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs)
+ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs,
+    int *decode_error)
 {
 	EC_GROUP *group = NULL;
 	EC_POINT *point = NULL;

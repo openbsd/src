@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.11 2026/05/06 15:02:51 jsing Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.12 2026/06/08 11:38:04 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -491,7 +491,8 @@ tls_key_share_peer_public_dhe(struct tls_key_share *ks, CBS *cbs,
 }
 
 static int
-tls_key_share_peer_public_ecdhe_ecp(struct tls_key_share *ks, CBS *cbs)
+tls_key_share_peer_public_ecdhe_ecp(struct tls_key_share *ks, CBS *cbs,
+    int *decode_error)
 {
 	EC_KEY *ecdhe = NULL;
 	int ret = 0;
@@ -501,7 +502,7 @@ tls_key_share_peer_public_ecdhe_ecp(struct tls_key_share *ks, CBS *cbs)
 
 	if ((ecdhe = EC_KEY_new()) == NULL)
 		goto err;
-	if (!ssl_kex_peer_public_ecdhe_ecp(ecdhe, ks->nid, cbs))
+	if (!ssl_kex_peer_public_ecdhe_ecp(ecdhe, ks->nid, cbs, decode_error))
 		goto err;
 
 	ks->ecdhe_peer = ecdhe;
@@ -625,7 +626,7 @@ tls_key_share_peer_public(struct tls_key_share *ks, CBS *cbs, int *decode_error,
 	if (ks->nid == NID_X25519)
 		return tls_key_share_peer_public_x25519(ks, cbs, decode_error);
 
-	return tls_key_share_peer_public_ecdhe_ecp(ks, cbs);
+	return tls_key_share_peer_public_ecdhe_ecp(ks, cbs, decode_error);
 }
 
 /* Called from client to process a server peer */

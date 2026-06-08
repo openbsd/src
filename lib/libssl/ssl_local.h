@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.41 2026/06/06 15:08:15 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.42 2026/06/08 11:38:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1336,7 +1336,8 @@ int ssl_kex_derive_dhe(DH *dh, DH *dh_peer,
 int ssl_kex_dummy_ecdhe_x25519(EVP_PKEY *pkey);
 int ssl_kex_generate_ecdhe_ecp(EC_KEY *ecdh, int nid);
 int ssl_kex_public_ecdhe_ecp(EC_KEY *ecdh, CBB *cbb);
-int ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs);
+int ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs,
+    int *decode_error);
 int ssl_kex_derive_ecdhe_ecp(EC_KEY *ecdh, EC_KEY *ecdh_peer,
     uint8_t **shared_key, size_t *shared_key_len);
 
