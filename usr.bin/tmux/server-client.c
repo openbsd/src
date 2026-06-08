@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.463 2026/06/08 20:41:21 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.464 2026/06/08 23:06:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -699,12 +699,8 @@ server_client_check_mouse_in_pane(struct window_pane *wp, int px, int py,
 				bdr_bottom = fwp->yoff + fwp->sy;
 				if (py == bdr_bottom)
 					break;
-				if (window_pane_is_floating(wp)) {
-					/* Floating pane, check top border. */
-					bdr_top = fwp->yoff - 1;
-					if (py == bdr_top)
-						break;
-				}
+				if (py == bdr_top)
+					break;
 			}
 		}
 		if (fwp != NULL)
