@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.182 2026/04/21 14:31:03 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.183 2026/06/08 12:41:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -632,6 +632,7 @@ ntp_dispatch_imsg_dns(void)
 					    log_ntp_addr(h), peer->addr_head.name);
 					npeer = new_peer();
 					npeer->weight = peer->weight;
+					npeer->trusted = peer->trusted;
 					npeer->query_addr4 = peer->query_addr4;
 					npeer->query_addr6 = peer->query_addr6;
 					h->next = NULL;
