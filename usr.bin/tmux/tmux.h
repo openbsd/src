@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1336 2026/06/07 20:03:02 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1337 2026/06/08 20:38:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1146,6 +1146,8 @@ struct window_mode_entry {
 
 	struct screen			*screen;
 	u_int				 prefix;
+
+	int				 kill;
 
 	TAILQ_ENTRY(window_mode_entry)	 entry;
 };

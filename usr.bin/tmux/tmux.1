@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1068 2026/06/07 20:03:02 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1069 2026/06/08 20:38:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2026 $
+.Dd $Mdocdate: June 8 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2741,7 +2741,7 @@ the end of the visible pane.
 The default is to capture only the visible contents of the pane.
 .It Xo
 .Ic choose\-client
-.Op Fl NryZ
+.Op Fl kNryZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl K Ar key\-format
@@ -2814,10 +2814,12 @@ specifies the format for each item in the list and
 a format for each shortcut key; both are evaluated once for each line.
 .Fl N
 starts without the preview or if given twice with the larger preview.
+.Fl k
+kills the pane when the mode is exited.
 This command works only if at least one client is attached.
 .It Xo
 .Ic choose\-tree
-.Op Fl GNrswyZ
+.Op Fl GkNrswyZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl K Ar key\-format
@@ -2907,10 +2909,12 @@ starts without the preview or if given twice with the larger preview.
 .Fl G
 includes all sessions in any session groups in the tree rather than only the
 first.
+.Fl k
+kills the pane when the mode is exited.
 This command works only if at least one client is attached.
 .It Xo
 .Ic customize\-mode
-.Op Fl NZ
+.Op Fl kNZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl t Ar target\-pane
@@ -2958,6 +2962,8 @@ If a filter would lead to an empty list, it is ignored.
 specifies the format for each item in the tree.
 .Fl N
 starts without the option information.
+.Fl k
+kills the pane when the mode is exited.
 This command works only if at least one client is attached.
 .It Xo
 .Tg displayp
@@ -7615,7 +7621,7 @@ The buffer commands are as follows:
 .Bl -tag -width Ds
 .It Xo
 .Ic choose\-buffer
-.Op Fl NryZ
+.Op Fl kNryZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl K Ar key\-format
@@ -7686,6 +7692,8 @@ specifies the format for each item in the list and
 a format for each shortcut key; both are evaluated once for each line.
 .Fl N
 starts without the preview.
+.Fl k
+kills the pane when the mode is exited.
 This command works only if at least one client is attached.
 .Tg clearhist
 .It Xo Ic clear\-history
