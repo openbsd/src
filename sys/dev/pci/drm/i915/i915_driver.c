@@ -2519,6 +2519,7 @@ inteldrm_activate(struct device *self, int act)
 {
 	struct drm_i915_private *dev_priv = (struct drm_i915_private *)self;
 	struct drm_device *dev = &dev_priv->drm;
+	struct rasops_info *ri = &dev_priv->ro;
 	int rv = 0;
 
 	if (dev->dev == NULL || inteldrm_fatal_error)
@@ -2567,6 +2568,7 @@ inteldrm_activate(struct device *self, int act)
 			i915_pm_resume(self);
 		}
 		drm_client_dev_restore(dev);
+		rasops_show_screen(ri, ri->ri_active, 0, NULL, NULL);
 		rv = config_suspend(dev->dev, act);
 		break;
 	}
