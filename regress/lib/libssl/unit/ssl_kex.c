@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_kex.c,v 1.2 2026/06/08 11:41:21 tb Exp $ */
+/*	$OpenBSD: ssl_kex.c,v 1.3 2026/06/09 05:17:24 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -121,6 +121,10 @@ ssl_key_share_ecdhe_test(void)
 		fprintf(stderr, "FAIL: parsed point at infinity\n");
 		failed |= 1;
 	}
+	if (!decode_error) {
+		fprintf(stderr, "FAIL: no decode_error for point at infinity\n");
+		failed |= 1;
+	}
 
 	EC_KEY_free(ecdh_peer);
 	ecdh_peer = NULL;
@@ -133,6 +137,10 @@ ssl_key_share_ecdhe_test(void)
 		fprintf(stderr, "FAIL: parsed compressed P-384 point\n");
 		failed |= 1;
 	}
+	if (!decode_error) {
+		fprintf(stderr, "FAIL: no decode_error for compressed P-384 point\n");
+		failed |= 1;
+	}
 
 	EC_KEY_free(ecdh_peer);
 	ecdh_peer = NULL;
@@ -143,6 +151,10 @@ ssl_key_share_ecdhe_test(void)
 		err(1, NULL);
 	if (ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, nid, &cbs, &decode_error)) {
 		fprintf(stderr, "FAIL: parsed hybrid P-384 point\n");
+		failed |= 1;
+	}
+	if (!decode_error) {
+		fprintf(stderr, "FAIL: no decode_error for hybrid P-384 point\n");
 		failed |= 1;
 	}
 
