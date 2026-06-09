@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.139 2026/06/09 02:50:21 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.140 2026/06/09 02:55:17 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -304,9 +304,11 @@ nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	vattr_null(&va);
 	if (info.nmi_v3) {
 		va.va_vaflags |= VA_UTIMES_NULL;
-		error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep, &info.nmi_dpos);
+		nfsd->nd_dpos = info.nmi_dpos; /* resync */
+		error = nfsm_srvsattr(nfsd, &va);
 		if (error)
 			goto nfsmout;
+		info.nmi_dpos = nfsd->nd_dpos; /* resync */
 		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
 		if (tl == NULL)
 			goto nfsmout;
@@ -1107,10 +1109,11 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 				break;
 			}
 		case NFSV3CREATE_UNCHECKED:
-			error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep,
-			    &info.nmi_dpos);
+			nfsd->nd_dpos = info.nmi_dpos; /* resync */
+			error = nfsm_srvsattr(nfsd, &va);
 			if (error)
 				goto nfsmout;
+			info.nmi_dpos = nfsd->nd_dpos; /* resync */
 			break;
 		case NFSV3CREATE_EXCLUSIVE:
 			cp = (caddr_t)nfsm_dissect(&info, NFSX_V3CREATEVERF);
@@ -1399,9 +1402,11 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto out;
 	}
 	vattr_null(&va);
-	error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep, &info.nmi_dpos);
+	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfsm_srvsattr(nfsd, &va);
 	if (error)
 		goto nfsmout;
+	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (vtyp == VCHR || vtyp == VBLK) {
 		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
 		if (tl == NULL)
@@ -2002,10 +2007,11 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto out;
 	vattr_null(&va);
 	if (info.nmi_v3) {
-		error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep,
-		    &info.nmi_dpos);
+		nfsd->nd_dpos = info.nmi_dpos; /* resync */
+		error = nfsm_srvsattr(nfsd, &va);
 		if (error)
 			goto nfsmout;
+		info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	}
 	if (nfsm_strsiz(&info, &len2, NFS_MAXPATHLEN) != 0)
 		goto nfsmout;
@@ -2177,10 +2183,11 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	vattr_null(&va);
 	if (info.nmi_v3) {
-		error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep,
-		    &info.nmi_dpos);
+		nfsd->nd_dpos = info.nmi_dpos; /* resync */
+		error = nfsm_srvsattr(nfsd, &va);
 		if (error)
 			goto nfsmout;
+		info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	} else {
 		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
 		if (tl == NULL)

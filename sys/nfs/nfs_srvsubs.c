@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvsubs.c,v 1.4 2026/06/09 02:46:02 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvsubs.c,v 1.5 2026/06/09 02:55:17 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -394,66 +394,59 @@ netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 }
 
 int
-nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
-    caddr_t *dposp)
+nfsm_srvsattr(struct nfsrv_descript *nfsd, struct vattr *va)
 {
-	struct nfsm_info	info;
 	int error = 0;
 	uint32_t *tl;
 
-	info.nmi_md = *mp;
-	info.nmi_dpos = *dposp;
-	info.nmi_mrep = mrep;
-	info.nmi_errorp = &error;
-
-	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 	if (tl == NULL)
 		return error;
 	if (*tl == nfs_true) {
-		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			return error;
 		va->va_mode = nfstov_mode(*tl);
 	}
 
-	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 	if (tl == NULL)
 		return error;
 	if (*tl == nfs_true) {
-		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			return error;
 		va->va_uid = fxdr_unsigned(uid_t, *tl);
 	}
 
-	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 	if (tl == NULL)
 		return error;
 	if (*tl == nfs_true) {
-		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			return error;
 		va->va_gid = fxdr_unsigned(gid_t, *tl);
 	}
 
-	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 	if (tl == NULL)
 		return error;
 	if (*tl == nfs_true) {
-		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nfsd, 2 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			return error;
 		va->va_size = fxdr_hyper(tl);
 	}
 
-	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 	if (tl == NULL)
 		return error;
 	switch (fxdr_unsigned(int, *tl)) {
 	case NFSV3SATTRTIME_TOCLIENT:
 		va->va_vaflags |= VA_UTIMES_CHANGE;
 		va->va_vaflags &= ~VA_UTIMES_NULL;
-		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nfsd, 2 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			return error;
 		fxdr_nfsv3time(tl, &va->va_atime);
@@ -464,14 +457,14 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 		break;
 	}
 
-	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 	if (tl == NULL)
 		return error;
 	switch (fxdr_unsigned(int, *tl)) {
 	case NFSV3SATTRTIME_TOCLIENT:
 		va->va_vaflags |= VA_UTIMES_CHANGE;
 		va->va_vaflags &= ~VA_UTIMES_NULL;
-		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nfsd, 2 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			return error;
 		fxdr_nfsv3time(tl, &va->va_mtime);
@@ -482,7 +475,5 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 		break;
 	}
 
-	*dposp = info.nmi_dpos;
-	*mp = info.nmi_md;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.70 2026/06/09 02:46:02 jsg Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.71 2026/06/09 02:55:17 jsg Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *,
 int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,
 		      struct nfssvc_sock *, struct mbuf *, int *);
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
-int nfsm_srvsattr(struct mbuf **, struct vattr *, struct mbuf *, caddr_t *);
+int nfsm_srvsattr(struct nfsrv_descript *, struct vattr *);
 
 /* nfs_subs.c */
 struct mbuf *nfsm_reqhead(int);
