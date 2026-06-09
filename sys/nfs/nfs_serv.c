@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.148 2026/06/09 03:12:46 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.149 2026/06/09 03:14:22 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -438,19 +438,11 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct nfs_fattr *fp;
 	struct nameidata nd;
 	struct vnode *vp, *dirp;
-	struct nfsm_info	info;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	int error = 0, len, dirattr_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	struct vattr va, dirattr;
-
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_mreq = NULL;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
 
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
@@ -461,7 +453,6 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto nfsmout;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		goto nfsmout;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -474,8 +465,7 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	NDINIT(&nd, LOOKUP, LOCKLEAF | SAVESTART, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md, &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred,
@@ -623,7 +613,6 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct ucred *cred = &nfsd->nd_cr;
 	struct mbuf *m;
 	struct nfs_fattr *fp;
-	struct nfsm_info	info;
 	u_int32_t *tl;
 	int i, reqlen;
 	int error = 0, rdonly, cnt, len, left, siz, tlen, getret = 1;
@@ -637,13 +626,6 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	int v3;
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
-
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
 
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
@@ -769,7 +751,6 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		if (error || (getret = VOP_GETATTR(vp, &va, cred, procp)) != 0){
 			if (!error)
 				error = getret;
-			m_freem(info.nmi_mreq);
 			goto vbad;
 		}
 	} else
@@ -811,7 +792,6 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct mbuf *nam = nfsd->nd_nam;
 	struct mbuf *mb;
 	struct ucred *cred = &nfsd->nd_cr;
-	struct nfsm_info	info;
 	int i, cnt;
 	struct mbuf *mp;
 	struct nfs_fattr *fp;
@@ -830,14 +810,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
-
-	if (info.nmi_mrep == NULL) {
+	if (nfsd->nd_mrep == NULL) {
 		*mrq = NULL;
 		return (0);
 	}
@@ -872,12 +845,11 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	 */
 	if (len > 0) {
 	    zeroing = 1;
-	    mp = info.nmi_mrep;
-	    info.nmi_dpos = nfsd->nd_dpos; /* resync */
+	    mp = nfsd->nd_mrep;
 	    while (mp) {
-		if (mp == info.nmi_md) {
+		if (mp == nfsd->nd_md) {
 			zeroing = 0;
-			adjust = info.nmi_dpos - mtod(mp, caddr_t);
+			adjust = nfsd->nd_dpos - mtod(mp, caddr_t);
 			mp->m_len -= adjust;
 			if (mp->m_len > 0 && adjust > 0)
 				mp->m_data += adjust;
@@ -924,7 +896,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	    ivlen = cnt * sizeof(*ivp);
 	    uiop->uio_iov = iv = ivp;
 	    uiop->uio_iovcnt = cnt;
-	    mp = info.nmi_mrep;
+	    mp = nfsd->nd_mrep;
 	    while (mp) {
 		if (mp->m_len > 0) {
 			ivp->iov_base = mtod(mp, caddr_t);
@@ -1018,7 +990,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct nfs_fattr *fp;
 	struct vattr va, dirfor, diraft;
 	struct nfsv2_sattr *sp;
-	struct nfsm_info	info;
 	u_int32_t *tl;
 	struct nameidata nd;
 	caddr_t cp;
@@ -1034,13 +1005,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
-
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
 	else if (error != 0)
@@ -1050,7 +1014,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		return error;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		return error;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -1064,9 +1027,8 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	NDINIT(&nd, CREATE, LOCKPARENT | LOCKLEAF | SAVESTART, UIO_SYSSPACE,
 	    NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
@@ -1318,7 +1280,6 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct mbuf *mb;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
-	struct nfsm_info	info;
 	u_int32_t *tl;
 	struct nameidata nd;
 	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
@@ -1327,13 +1288,6 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct vnode *vp, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
 
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
@@ -1344,7 +1298,6 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		return error;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		return error;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -1358,8 +1311,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	NDINIT(&nd, CREATE, LOCKPARENT | LOCKLEAF | SAVESTART, UIO_SYSSPACE,
 	    NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md, &nfsd->nd_dpos, &dirp, procp);
 	if (dirp)
 		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
 	if (error) {
@@ -1504,7 +1456,6 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct mbuf *mb;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct nameidata nd;
-	struct nfsm_info	info;
 	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	struct vnode *vp, *dirp;
 	struct vattr dirfor, diraft;
@@ -1513,14 +1464,6 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	int v3;
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
-
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
-
 	vp = NULL;
 
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
@@ -1532,7 +1475,6 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto nfsmout;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		goto nfsmout;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -1545,8 +1487,7 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
  	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md, &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
@@ -1608,7 +1549,6 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct mbuf *nam = nfsd->nd_nam;
 	struct mbuf *mb;
 	struct ucred *cred = &nfsd->nd_cr;
-	struct nfsm_info	info;
 	int error = 0, len, len2, fdirfor_ret = 1, fdiraft_ret = 1;
 	int tdirfor_ret = 1, tdiraft_ret = 1;
 	struct nameidata fromnd, tond;
@@ -1622,13 +1562,6 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
-
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
 	else if (error != 0)
@@ -1638,7 +1571,6 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		return error;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		return error;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -1658,9 +1590,8 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	NDINIT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_SYSSPACE, NULL,
 	    procp);
 	fromnd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&fromnd, ffhp, len, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &fdirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&fromnd, ffhp, len, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &fdirp, procp);
 	if (fdirp) {
 		if (v3)
 			fdirfor_ret = VOP_GETATTR(fdirp, &fdirfor, cred,
@@ -1698,10 +1629,8 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF| NOCACHE | SAVESTART,
 	    UIO_SYSSPACE, NULL, procp);
 	tond.ni_cnd.cn_cred = cred;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
-	error = nfs_namei(&tond, tfhp, len2, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &tdirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&tond, tfhp, len2, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &tdirp, procp);
 	if (tdirp) {
 		if (v3)
 			tdirfor_ret = VOP_GETATTR(tdirp, &tdirfor, cred, procp);
@@ -1824,7 +1753,6 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct mbuf *mb;
-	struct nfsm_info	info;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct nameidata nd;
 	int error = 0, rdonly, len, dirfor_ret = 1, diraft_ret = 1;
@@ -1836,13 +1764,6 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	int v3;
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
-
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
 
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
@@ -1860,7 +1781,6 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto nfsmout;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		goto nfsmout;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -1887,9 +1807,8 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, dfhp, len, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, dfhp, len, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
@@ -1953,7 +1872,6 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct ucred *cred = &nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
 	struct nameidata nd;
-	struct nfsm_info	info;
 	struct nfsv2_sattr *sp;
 	char *pathcp = NULL;
 	struct uio io;
@@ -1966,13 +1884,6 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
-
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
 	else if (error != 0)
@@ -1982,7 +1893,6 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		return error;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		return error;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -1995,9 +1905,8 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	NDINIT(&nd, CREATE, LOCKPARENT | SAVESTART, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -2126,7 +2035,6 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct vattr va, dirfor, diraft;
 	struct nfs_fattr *fp;
 	struct nameidata nd;
-	struct nfsm_info	info;
 	u_int32_t *tl;
 	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	struct vnode *vp, *dirp = NULL;
@@ -2135,13 +2043,6 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	int v3;
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
-
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
 
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
@@ -2152,7 +2053,6 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		return error;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		return error;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -2165,8 +2065,8 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &dirp, procp);
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
@@ -2188,17 +2088,13 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	vattr_null(&va);
 	if (v3) {
-		nfsd->nd_dpos = info.nmi_dpos; /* resync */
 		error = nfsm_srvsattr(nfsd, &va);
 		if (error)
 			goto nfsmout;
-		info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	} else {
-		nfsd->nd_dpos = info.nmi_dpos; /* resync */
 		tl = (uint32_t *)nfsd_dissect(nfsd, NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
-		info.nmi_dpos = nfsd->nd_dpos; /* resync */
 		va.va_mode = nfstov_mode(*tl++);
 	}
 	va.va_type = VDIR;
@@ -2267,7 +2163,6 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct mbuf *nam = nfsd->nd_nam;
 	struct mbuf *mb;
 	struct ucred *cred = &nfsd->nd_cr;
-	struct nfsm_info	info;
 	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	struct vnode *vp, *dirp = NULL;
 	struct vattr dirfor, diraft;
@@ -2278,13 +2173,6 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	info.nmi_mreq = NULL;
-	info.nmi_mrep = nfsd->nd_mrep;
-	info.nmi_md = nfsd->nd_md;
-	info.nmi_dpos = nfsd->nd_dpos;
-	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
-	info.nmi_errorp = &error;
-
 	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
 		return 0;
 	else if (error != 0)
@@ -2294,7 +2182,6 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto nfsmout;
 	if (nfsm_srvnamesiz(nfsd, &len, &error) != 0)
 		goto nfsmout;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (error) {
 		/*
 		 * nfsm_reply would return zero if v3 and an error different
@@ -2307,9 +2194,8 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE, NULL, procp);
 	nd.ni_cnd.cn_cred = cred;
-	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
-	    &info.nmi_dpos, &dirp, procp);
-	nfsd->nd_dpos = info.nmi_dpos; /* resync */
+	error = nfs_namei(&nd, fhp, len, slp, nam, &nfsd->nd_md,
+	    &nfsd->nd_dpos, &dirp, procp);
 	if (dirp) {
 		if (v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
