@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.24 2026/06/04 19:26:48 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.25 2026/06/09 21:07:15 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -280,9 +280,6 @@ enum mwx_hw_type {
 	MWX_HW_MT7922,
 	MWX_HW_MT7925,
 };
-
-#define	MWX_IS_CONNAC3(x)	((x)->sc_hwtype == MWX_HW_MT7925)
-#define	MWX_IS_CONNAC2(x)	(!MWX_IS_CONNAC3(x))
 
 struct mwx_softc {
 	struct device		sc_dev;
@@ -1916,7 +1913,7 @@ mwx_buf_fill(struct mwx_softc *sc, struct mwx_queue_data *md,
 	buf0 = md->md_map->dm_segs[0].ds_addr;
 	len0 = md->md_map->dm_segs[0].ds_len;
 	ctrl = MT_DMA_CTL_SD_LEN0(len0);
-	if (MWX_IS_CONNAC2(sc))
+	if (sc->sc_hwtype != MWX_HW_MT7925)
 		ctrl |= MT_DMA_CTL_LAST_SEC0;
 
 	desc->buf0 = htole32(buf0);
