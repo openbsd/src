@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.25 2026/06/09 21:07:15 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.26 2026/06/09 21:19:41 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -3056,11 +3056,13 @@ int
 mwx_load_firmware(struct mwx_softc *sc)
 {
 	const struct mwx_patch_hdr *hdr;
+	const struct mwx_patch_sec *sec;
 	const struct mwx_fw_trailer *fwhdr;
+	const struct mwx_fw_region *region;
 	const char *rompatch, *fw;
 	u_char *buf, *fwbuf, *dl;
 	size_t buflen, fwlen, offset = 0;
-	uint32_t reg, override = 0, option = 0;
+	uint32_t reg, n_region, override = 0, option = 0;
 	int i, rv, sem;
 
 	reg = mwx_read(sc, MT_CONN_ON_MISC) & MT_TOP_MISC2_FW_N9_RDY;
@@ -3111,23 +3113,28 @@ mwx_load_firmware(struct mwx_softc *sc)
 		goto fail;
 
 	if (buflen < sizeof(*hdr)) {
-		DPRINTF("%s: invalid firmware\n", DEVNAME(sc));
+		printf("%s: invalid firmware\n", DEVNAME(sc));
 		rv = EINVAL;
 		goto out;
 	}
 	hdr = (struct mwx_patch_hdr *)buf;
+	n_region = be32toh(hdr->desc.n_region);
+	if (buflen < sizeof(*hdr) + n_region * sizeof(*sec)) {
+		printf("%s: invalid firmware, short header\n", DEVNAME(sc));
+		rv = EINVAL;
+		goto out;
+	}
 	printf("%s: HW/SW version: 0x%x, build time: %.15s\n",
 	    DEVNAME(sc), be32toh(hdr->hw_sw_ver), hdr->build_date);
 
-	for (i = 0; i < be32toh(hdr->desc.n_region); i++) {
-		const struct mwx_patch_sec *sec;
+	for (i = 0; i < n_region; i++) {
 		uint32_t len, addr, mode, sec_info;
 
 		sec = (struct mwx_patch_sec *)(buf + sizeof(*hdr) +
 		    i * sizeof(*sec));
 		if ((be32toh(sec->type) & PATCH_SEC_TYPE_MASK) !=
 		    PATCH_SEC_TYPE_INFO) {
-			DPRINTF("%s: invalid firmware sector\n", DEVNAME(sc));
+			printf("%s: invalid firmware sector\n", DEVNAME(sc));
 			rv = EINVAL;
 			goto out;
 		}
@@ -3137,6 +3144,13 @@ mwx_load_firmware(struct mwx_softc *sc)
 		dl = buf + be32toh(sec->offs);
 		sec_info = be32toh(sec->info.sec_key_idx);
 		mode = mwx_get_data_mode(sc, sec_info);
+
+		if (dl + len > buf + buflen) {
+			printf("%s: firmware sector %d exceeds payload\n",
+			    DEVNAME(sc), i);
+			rv = EINVAL;
+			goto out;
+		}
 
 		rv = mwx_mcu_init_download(sc, addr, len, mode);
 		if (rv != 0) {
@@ -3166,12 +3180,22 @@ out:
 	if (rv != 0)
 		goto fail;
 
+	if (fwlen < sizeof(*fwhdr)) {
+		printf("%s: invalid WM firmware\n", DEVNAME(sc));
+		rv = EINVAL;
+		goto out;
+	}
 	fwhdr = (struct mwx_fw_trailer *)(fwbuf + fwlen - sizeof(*fwhdr));
 	printf("%s: WM firmware version: %.10s, build time: %.15s\n",
 	    DEVNAME(sc), fwhdr->fw_ver, fwhdr->build_date);
 
+	if (fwlen < sizeof(*fwhdr) + fwhdr->n_region * sizeof(*region)) {
+		printf("%s: invalid WM firmware, short header\n", DEVNAME(sc));
+		rv = EINVAL;
+		goto out;
+	}
+
 	for (i = 0; i < fwhdr->n_region; i++) {
-		const struct mwx_fw_region *region;
 		uint32_t len, addr, mode;
 
 		region = (struct mwx_fw_region *)((u_char *)fwhdr -
@@ -3181,11 +3205,21 @@ out:
 		len = le32toh(region->len);
 		mode = mwx_mcu_gen_dl_mode(region->feature_set);
 
+		if (offset + len > fwlen - sizeof(*fwhdr) -
+		    fwhdr->n_region * sizeof(*region)) {
+			printf("%s: WM region %d exceeds firmware payload\n",
+			    DEVNAME(sc), i);
+			rv = EINVAL;
+			goto fail;
+		}
+
 		if (region->feature_set & FW_FEATURE_OVERRIDE_ADDR)
 			override = addr;
 		/* Skip non-download regions */
-		if (region->feature_set & FW_FEATURE_NON_DL)
+		if (region->feature_set & FW_FEATURE_NON_DL) {
+			offset += len;
 			continue;
+		}
 
 		rv = mwx_mcu_init_download(sc, addr, len, mode);
 		if (rv != 0) {
