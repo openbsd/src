@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.16 2026/06/04 19:26:48 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.17 2026/06/09 21:27:25 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -547,6 +547,7 @@ struct mt76_txwi {
 #define	MCU_UNI_CMD_WSYS_CONFIG			0x0002000b
 #define	MCU_UNI_CMD_CHIP_CONFIG			0x0002000e
 #define	MCU_UNI_CMD_SNIFFER			0x00020024
+#define	MCU_UNI_CMD_EFUSE_CTRL			0x0002002d
 
 #define	UNI_BSS_INFO_BASIC			0
 #define	UNI_BSS_INFO_RLM			2

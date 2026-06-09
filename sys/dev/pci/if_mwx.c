@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.26 2026/06/09 21:19:41 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.27 2026/06/09 21:27:25 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -512,7 +512,6 @@ int		mwx_mcu_drv_pmctrl(struct mwx_softc *);
 int		mwx_wfsys_reset(struct mwx_softc *);
 uint32_t	mwx_reg_addr(struct mwx_softc *, uint32_t);
 int		mwx_init_hardware(struct mwx_softc *);
-int		mwx_mcu_init(struct mwx_softc *);
 int		mwx_load_firmware(struct mwx_softc *);
 int		mt7921_mac_wtbl_update(struct mwx_softc *, int);
 void		mt7921_mac_init_band(struct mwx_softc *, uint32_t);
@@ -530,6 +529,7 @@ int		mt7925_mcu_get_nic_capability(struct mwx_softc *);
 int		mt7921_mcu_fw_log_2_host(struct mwx_softc *, uint8_t);
 int		mt7925_mcu_fw_log_2_host(struct mwx_softc *, uint8_t);
 int		mt7921_mcu_set_eeprom(struct mwx_softc *);
+int		mt7925_mcu_set_eeprom(struct mwx_softc *);
 int		mt7921_mcu_set_rts_thresh(struct mwx_softc *, uint32_t,
 		    uint8_t);
 int		mwx_mcu_set_deep_sleep(struct mwx_softc *, int);
@@ -2959,15 +2959,27 @@ mwx_init_hardware(struct mwx_softc *sc)
 	 * which should be set before firmware download stage.
 	 */
 	mwx_write(sc, MT_SWDEF_MODE, MT_SWDEF_NORMAL_MODE);
-	mwx_barrier(sc);
 
-	rv = mwx_mcu_init(sc);
-	if (rv != 0)
+	if ((rv = mwx_load_firmware(sc)) != 0)
 		goto fail;
-	/* TODO override eeprom for systems with FDT */
-	rv = mt7921_mcu_set_eeprom(sc);
-	if (rv != 0)
-		goto fail;
+
+	if (sc->sc_hwtype == MWX_HW_MT7925) {
+		if (mt7925_mcu_get_nic_capability(sc) != 0)
+			goto fail;
+		if (mt7925_mcu_fw_log_2_host(sc, 1) != 0)
+			goto fail;
+		if (mt7925_mcu_set_eeprom(sc) != 0)
+			goto fail;
+	} else {
+		if (mt7921_mcu_get_nic_capability(sc) != 0)
+			goto fail;
+		if (mt7921_mcu_fw_log_2_host(sc, 1) != 0)
+			goto fail;
+		/* TODO override eeprom for systems with FDT */
+		if (mt7921_mcu_set_eeprom(sc) != 0)
+			goto fail;
+	}
+
 	rv = mt7921_mac_init(sc);
 	if (rv != 0)
 		goto fail;
@@ -2982,31 +2994,6 @@ mwx_init_hardware(struct mwx_softc *sc)
 	if (rv != 0)
 		return rv;
 	return EAGAIN;
-}
-
-int
-mwx_mcu_init(struct mwx_softc *sc)
-{
-	int rv;
-
-	if ((rv = mwx_load_firmware(sc)) != 0)
-		return rv;
-
-	if (sc->sc_hwtype == MWX_HW_MT7925) {
-		if ((rv = mt7925_mcu_get_nic_capability(sc)) != 0)
-			return rv;
-		if ((rv = mt7925_mcu_fw_log_2_host(sc, 1)) != 0)
-			return rv;
-	} else {
-		if ((rv = mt7921_mcu_get_nic_capability(sc)) != 0)
-			return rv;
-		if ((rv = mt7921_mcu_fw_log_2_host(sc, 1)) != 0)
-			return rv;
-	}
-
-	/* TODO mark MCU running */
-
-	return 0;
 }
 
 static inline uint32_t
@@ -3665,7 +3652,7 @@ mt7925_mcu_fw_log_2_host(struct mwx_softc *sc, uint8_t ctrl)
 int
 mt7921_mcu_set_eeprom(struct mwx_softc *sc)
 {
-	struct req_hdr {
+	struct {
 		uint8_t	buffer_mode;
 		uint8_t	format;
 		uint8_t pad[2];
@@ -3675,6 +3662,27 @@ mt7921_mcu_set_eeprom(struct mwx_softc *sc)
 	};
 
 	return mwx_mcu_send_wait(sc, MCU_EXT_CMD_EFUSE_BUFFER_MODE, &req,
+	    sizeof(req));
+}
+
+int
+mt7925_mcu_set_eeprom(struct mwx_softc *sc)
+{
+	struct {
+		uint8_t		rsv[4];
+		uint16_t	tag;
+		uint16_t	len;
+		uint8_t		buffer_mode;
+		uint8_t		format;
+		uint16_t	buf_len;
+	} req = {
+		.tag = htole16(UNI_EFUSE_BUFFER_MODE),
+		.len = htole16(sizeof(req) - 4),
+		.buffer_mode = EE_MODE_EFUSE,
+		.format = EE_FORMAT_WHOLE,
+	};
+
+	return mwx_mcu_send_wait(sc, MCU_UNI_CMD_EFUSE_CTRL, &req,
 	    sizeof(req));
 }
 
