@@ -1,4 +1,4 @@
-/* $OpenBSD: a_mbstr.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: a_mbstr.c,v 1.29 2026/06/09 12:29:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -105,8 +106,16 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	int nchar;
 	int (*cpyfunc)(unsigned long, void *) = NULL;
 
-	if (len < 0)
-		len = strlen((const char *)in);
+	if (len < 0) {
+		size_t length;
+
+		if ((length = strlen((const char *)in)) >= INT_MAX) {
+			ASN1error(ASN1_R_STRING_TOO_LONG);
+			return -1;
+		}
+		len = length;
+	}
+
 	if (!mask)
 		mask = DIRSTRING_TYPE;
 
@@ -221,11 +230,19 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		break;
 
 	case MBSTRING_BMP:
+		if (nchar > INT_MAX / 2) {
+			ASN1error(ASN1_R_STRING_TOO_LONG);
+			goto err;
+		}
 		outlen = nchar << 1;
 		cpyfunc = cpy_bmp;
 		break;
 
 	case MBSTRING_UNIV:
+		if (nchar > INT_MAX / 4) {
+			ASN1error(ASN1_R_STRING_TOO_LONG);
+			goto err;
+		}
 		outlen = nchar << 2;
 		cpyfunc = cpy_univ;
 		break;
