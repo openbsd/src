@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.131 2025/12/26 18:49:13 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.132 2026/06/09 05:23:30 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -972,7 +972,7 @@ EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 	BN_CTX *ctx = NULL;
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, point) > 0) {
+	if (EC_POINT_is_at_infinity(group, point)) {
 		ECerror(EC_R_POINT_AT_INFINITY);
 		goto err;
 	}
