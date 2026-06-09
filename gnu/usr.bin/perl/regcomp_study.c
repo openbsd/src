@@ -2770,6 +2770,13 @@ Perl_study_chunk(pTHX_
                                                (U8 *) SvEND(data->last_found))
                                 - (U8*)s;
                         l -= old;
+
+                        if (l > 0 &&
+                            (mincount >= SSize_t_MAX / (SSize_t)l
+                             || old > SSize_t_MAX - mincount * (SSize_t)l)) {
+                            FAIL("Regexp out of space");
+                        }
+
                         /* Get the added string: */
                         last_str = newSVpvn_utf8(s  + old, l, UTF);
                         last_chrs = UTF ? utf8_length((U8*)(s + old),
