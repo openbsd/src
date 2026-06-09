@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.25 2026/06/06 23:53:59 djm Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.26 2026/06/09 06:00:13 tb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -210,10 +210,19 @@ scan_scaled(char *scaled, long long *result)
 				fpart /= 10;
 				divs--;
 			}
-			if (sign == -1)
+			if (sign == -1) {
+				if (whole < LLONG_MIN + fpart) {
+					errno = ERANGE;
+					return -1;
+				}
 				whole -= fpart;
-			else
+			} else {
+				if (whole > LLONG_MAX - fpart) {
+					errno = ERANGE;
+					return -1;
+				}
 				whole += fpart;
+			}
 			*result = whole;
 			return 0;
 		}
