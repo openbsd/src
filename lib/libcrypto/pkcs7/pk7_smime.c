@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.29 2025/12/20 07:22:43 tb Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.30 2026/06/09 12:34:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -259,7 +259,7 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 	char buf[4096];
 	int i, j = 0, k, ret = 0;
 	BIO *p7bio;
-	BIO *tmpin, *tmpout;
+	BIO *next, *tmpin, *tmpout;
 
 	if (!p7) {
 		PKCS7error(PKCS7_R_INVALID_NULL_POINTER);
@@ -409,12 +409,12 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 
 	ret = 1;
 
-err:
-	if (tmpin == indata) {
-		if (indata)
-			BIO_pop(p7bio);
+ err:
+	while (p7bio != NULL && p7bio != indata) {
+		next = BIO_pop(p7bio);
+		BIO_free(p7bio);
+		p7bio = next;
 	}
-	BIO_free_all(p7bio);
 	sk_X509_free(signers);
 
 	return ret;
