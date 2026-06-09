@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.331 2026/06/08 23:06:21 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.332 2026/06/09 08:11:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1233,7 +1233,7 @@ window_pane_set_mode(struct window_pane *wp, struct window_pane *swp,
 		TAILQ_INSERT_HEAD(&wp->modes, wme, entry);
 		wme->screen = wme->mode->init(wme, fs, args);
 	}
-	wme->kill = args_has(args, 'k');
+	wme->kill = args != NULL ? args_has(args, 'k') : 0;
 	wp->screen = wme->screen;
 
 	wp->flags |= (PANE_REDRAW|PANE_REDRAWSCROLLBAR|PANE_CHANGED);
