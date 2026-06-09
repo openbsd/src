@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.21 2026/06/09 05:58:51 tb Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.22 2026/06/09 06:01:28 tb Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -218,12 +218,17 @@ struct {					/* the test cases */
 	{ "NEGATIVE_LLONG_MAX", LLONG_MAX*-1, 0 },	/* lower limit */
 	{ "LLONG_MIN", 0, ERANGE },	/* can't handle */
 #if LLONG_MAX == 0x7fffffffffffffffLL
+	{ "7.9999999999999999990E", 0, ERANGE },
+	{ "7.999999999999999999E", LLONG_MAX, 0 },
 	{ "-9223372036854775807", -9223372036854775807, 0 },
 	{ "9223372036854775807", 9223372036854775807, 0 },
 	{ "9223372036854775808", 0, ERANGE },
 	{ "9223372036854775809", 0, ERANGE },
 #endif
 #if LLONG_MIN == (-0x7fffffffffffffffLL-1)
+	{ "-8E", LLONG_MIN, 0 },
+	{ "-8.0000000000000000008E", LLONG_MIN, 0 },
+	{ "-8.0000000000000000009E", 0, ERANGE },
 	{ "-9223372036854775808", 0, ERANGE },
 	{ "-9223372036854775809", 0, ERANGE },
 	{ "-9223372036854775810", 0, ERANGE },
