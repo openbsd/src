@@ -141,6 +141,7 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     Features.push_back("+relax");
   else
     Features.push_back("-relax");
+#endif
 
   // If -mstrict-align, -mno-strict-align, -mscalar-strict-align, or
   // -mno-scalar-strict-align is passed, use it. Otherwise, the
@@ -158,7 +159,6 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   } else if (CPUFastScalarUnaligned || Triple.isAndroid()) {
     Features.push_back("+unaligned-scalar-mem");
   }
-#endif
 
   // If -mstrict-align, -mno-strict-align, -mvector-strict-align, or
   // -mno-vector-strict-align is passed, use it. Otherwise, the
