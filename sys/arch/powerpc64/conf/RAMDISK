@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.13 2023/09/21 12:11:34 kn Exp $
+# $OpenBSD: RAMDISK,v 1.14 2026/06/09 15:18:26 kirill Exp $
 
 machine		powerpc64
 maxusers	4
@@ -42,6 +42,7 @@ igc*		at pci?
 ix*		at pci?
 ixl*		at pci?
 mcx*		at pci?
+em*		at pci?
 mpii*		at pci?
 nvme*		at pci?
 ppb*		at pci?
