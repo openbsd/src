@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.62 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.63 2026/06/09 21:46:48 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -467,6 +467,8 @@ printit(char *file)
 			continue;
 
 		default:	/* some file to print */
+			if (strchr(line+1, '/'))
+				continue;
 			switch (i = print(line[0], line+1)) {
 			case ERROR:
 				if (bombed == OK)
