@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.469 2026/06/03 20:16:14 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.470 2026/06/09 11:49:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1979,6 +1979,8 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 		tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
 
 	tty_margin_off(tty);
+	if (ctx->flags & TTY_CTX_CELL_INVALIDATE)
+		tty_invalidate(tty);
 	tty_cursor_pane_unless_wrap(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_cell(tty, ctx->cell, &ctx->defaults, ctx->palette,
