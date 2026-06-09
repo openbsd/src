@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.36 2026/06/09 12:12:34 tb Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.37 2026/06/09 12:20:34 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -231,6 +231,10 @@ kek_unwrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
 	size_t blocklen = EVP_CIPHER_CTX_block_size(ctx);
 	unsigned char *tmp;
 	int outl, rv = 0;
+
+	/* Ensure inlen is large enough that tmp[6] is in bounds. */
+	if (blocklen < 4)
+		return 0;
 
 	if (inlen < 2 * blocklen) {
 		/* too small */
