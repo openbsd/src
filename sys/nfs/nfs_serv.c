@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.137 2026/06/09 02:46:02 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.138 2026/06/09 02:47:59 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -105,7 +105,7 @@ nfsm_reply(struct nfsm_info *infop, struct nfsrv_descript *nfsd,
 
 static inline int
 nfsm_srvmtofh1(struct nfsm_info *infop, struct nfsrv_descript *nfsd,
-    struct nfssvc_sock *slp, struct mbuf **mrq)
+    struct nfssvc_sock *slp, struct mbuf **mrq, struct mbuf **mb)
 {
 	if (infop->nmi_v3) {
 		uint32_t *tl = (uint32_t *)nfsm_dissect(infop, NFSX_UNSIGNED);
@@ -113,7 +113,7 @@ nfsm_srvmtofh1(struct nfsm_info *infop, struct nfsrv_descript *nfsd,
 			return 0; /* *infop->nmi_errorp set */
 		if (fxdr_unsigned(int, *tl) != NFSX_V3FH) {
 			*infop->nmi_errorp = EBADRPC;
-			return nfsm_reply(infop, nfsd, slp, mrq, &infop->nmi_mb,
+			return nfsm_reply(infop, nfsd, slp, mrq, mb,
 			    *infop->nmi_errorp, 0);
 		}
 	}
@@ -159,7 +159,7 @@ nfsrv3_access(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -233,7 +233,7 @@ nfsrv_getattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -291,7 +291,7 @@ nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -463,7 +463,7 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -557,7 +557,7 @@ nfsrv_readlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	memset(&uio, 0, sizeof(uio));
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -655,7 +655,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -848,7 +848,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		*mrq = NULL;
 		return (0);
 	}
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -1043,7 +1043,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		return error;
@@ -1336,7 +1336,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		return error;
@@ -1518,7 +1518,7 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 
 	vp = NULL;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -1619,7 +1619,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		return error;
@@ -1672,7 +1672,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	}
 
 	fvp = fromnd.ni_vp;
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -1828,14 +1828,14 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
 	fhp = &nfh.fh_generic;
 	if (nfsm_srvmtofh2(&info, fhp) != 0)
 		goto nfsmout;
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -1953,7 +1953,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		return error;
@@ -2119,7 +2119,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		return error;
@@ -2254,7 +2254,7 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -2410,7 +2410,7 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -2646,7 +2646,7 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -2908,7 +2908,7 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -2983,7 +2983,7 @@ nfsrv_statfs(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -3064,7 +3064,7 @@ nfsrv_fsinfo(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
@@ -3140,7 +3140,7 @@ nfsrv_pathconf(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 	info.nmi_errorp = &error;
 
-	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
+	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq, &info.nmi_mb) != 0)
 		return 0;
 	else if (error != 0)
 		goto nfsmout;
