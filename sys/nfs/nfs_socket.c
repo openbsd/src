@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.157 2026/06/09 03:07:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.158 2026/06/09 03:20:01 jsg Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1450,19 +1450,14 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 	u_int32_t *tl;
 	u_int32_t nfsvers, auth_type;
 	int error = 0;
-	struct nfsm_info info;
 
-	info.nmi_mrep = nd->nd_mrep;
-	info.nmi_md = nd->nd_md;
-	info.nmi_dpos = nd->nd_dpos;
-	info.nmi_errorp = &error;
 	if (has_header) {
 		tl = (uint32_t *)nfsd_dissect(nd, 10 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
 		nd->nd_retxid = fxdr_unsigned(u_int32_t, *tl++);
 		if (*tl++ != rpc_call) {
-			m_freem(info.nmi_mrep);
+			m_freem(nd->nd_mrep);
 			return (EBADRPC);
 		}
 	} else {
@@ -1470,7 +1465,6 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		if (tl == NULL)
 			goto nfsmout;
 	}
-	info.nmi_dpos = nd->nd_dpos; /* resync */
 	nd->nd_repstat = 0;
 	nd->nd_flag = 0;
 	if (*tl++ != rpc_vers) {
@@ -1507,7 +1501,7 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 	auth_type = *tl++;
 	len = fxdr_unsigned(int, *tl++);
 	if (len < 0 || len > RPCAUTH_MAXSIZ) {
-		m_freem(info.nmi_mrep);
+		m_freem(nd->nd_mrep);
 		return (EBADRPC);
 	}
 
@@ -1515,12 +1509,11 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 	if (auth_type == rpc_auth_unix) {
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
-			m_freem(info.nmi_mrep);
+			m_freem(nd->nd_mrep);
 			return (EBADRPC);
 		}
-		if (nfsm_adv(&info, nfsm_rndup(len)) != 0)
+		if (nfsd_adv(nd, nfsm_rndup(len), &error) != 0)
 			goto nfsmout;
-		nd->nd_dpos = info.nmi_dpos; /* resync */
 		tl = (uint32_t *)nfsd_dissect(nd, 3 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
@@ -1530,14 +1523,13 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
-			m_freem(info.nmi_mrep);
+			m_freem(nd->nd_mrep);
 			return (EBADRPC);
 		}
 		tl = (uint32_t *)
 		    nfsd_dissect(nd, (len + 2) * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
-		info.nmi_dpos = nd->nd_dpos; /* resync */
 		for (i = 0; i < len; i++) {
 			if (i < NGROUPS_MAX)
 				nd->nd_cr.cr_groups[i] =
@@ -1548,11 +1540,11 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		nd->nd_cr.cr_ngroups = (len > NGROUPS_MAX) ? NGROUPS_MAX : len;
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
-			m_freem(info.nmi_mrep);
+			m_freem(nd->nd_mrep);
 			return (EBADRPC);
 		}
 		if (len > 0) {
-			if (nfsm_adv(&info, nfsm_rndup(len)) != 0)
+			if (nfsd_adv(nd, nfsm_rndup(len), &error) != 0)
 				goto nfsmout;
 		}
 	} else {
@@ -1561,8 +1553,6 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		return (0);
 	}
 
-	nd->nd_md = info.nmi_md;
-	nd->nd_dpos = info.nmi_dpos;
 	return (0);
 nfsmout:
 	return (error);
