@@ -1381,6 +1381,8 @@ sub write_header_lines {
         my $field_name = $HeaderCase{$k};
         my $v = $headers->{$k};
         for (ref $v eq 'ARRAY' ? @$v : $v) {
+            die(qq/Invalid HTTP header field value ($field_name): / . $Printable->($_). "\n")
+              unless $_ eq '' || /\A $Field_Content \z/xo;
             $_ = '' unless defined $_;
             $buf .= "$field_name: $_\x0D\x0A";
         }
@@ -1571,6 +1573,12 @@ sub read_response_header {
 sub write_request_header {
     @_ == 5 || die(q/Usage: $handle->write_request_header(method, request_uri, headers, header_case)/ . "\n");
     my ($self, $method, $request_uri, $headers, $header_case) = @_;
+
+    die (q/Invalid characters in Request-URI /. $Printable->($request_uri). "\n")
+      if $request_uri =~ /[\x00-\x20\x7F]/;
+
+    die (q/Invalid characters in Method /. $Printable->($method). "\n")
+      if $method =~ /[\x00-\x20\x7F]/;
 
     return $self->write_header_lines($headers, $header_case, "$method $request_uri HTTP/1.1\x0D\x0A");
 }
