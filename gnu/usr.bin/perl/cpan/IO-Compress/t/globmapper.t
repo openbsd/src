@@ -24,7 +24,7 @@ Perl $]" )
     $extra = 1
         if eval { require Test::NoWarnings ;  Test::NoWarnings->import; 1 };
 
-    plan tests => 68 + $extra ;
+    plan tests => 76 + $extra ;
 
     use_ok('File::GlobMapper') ;
 }
@@ -287,6 +287,56 @@ Perl $]" )
         [ [map { "$tmpDir/$_" } qw(abc1.tmp X-c1-a-X)],
           [map { "$tmpDir/$_" } qw(abc2.tmp X-c2-a-X)],
           [map { "$tmpDir/$_" } qw(abc3.tmp X-c3-a-X)],
+        ], "  got mapping";
+}
+
+{
+    title "check escaping";
+
+    my $tmpDir ;#= 'td';
+    my $lex = LexDir->new( $tmpDir );
+
+    my $BEGIN_DELIM = "\xFF";
+    my $END_DELIM   = "\xFE";
+
+    #mkdir $tmpDir, 0777 ;
+
+    touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
+
+    my $map = File::GlobMapper::globmap("$tmpDir/*b*.tmp", "$tmpDir/X-${BEGIN_DELIM}#2-#1${END_DELIM}-X");
+    ok $map, "  got map"
+        or diag $File::GlobMapper::Error ;
+
+    is @{ $map }, 3, "  returned 3 maps";
+    is_deeply $map,
+        [ [map { "$tmpDir/$_" } ("abc1.tmp", "X-${BEGIN_DELIM}c1-a${END_DELIM}-X")],
+          [map { "$tmpDir/$_" } ("abc2.tmp", "X-${BEGIN_DELIM}c2-a${END_DELIM}-X")],
+          [map { "$tmpDir/$_" } ("abc3.tmp", "X-${BEGIN_DELIM}c3-a${END_DELIM}-X")],
+        ], "  got mapping";
+}
+
+{
+    title "check backslash escaping";
+
+    my $tmpDir ;#= 'td';
+    my $lex = LexDir->new( $tmpDir );
+
+    my $BEGIN_DELIM = "\xFF";
+    my $END_DELIM   = "\xFE";
+
+    #mkdir $tmpDir, 0777 ;
+
+    touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
+
+    my $map = File::GlobMapper::globmap("$tmpDir/*b*.tmp", $tmpDir . '/X-#2-\\#1\\*-X');
+    ok $map, "  got map"
+        or diag $File::GlobMapper::Error ;
+
+    is @{ $map }, 3, "  returned 3 maps";
+    is_deeply $map,
+        [ [map { "$tmpDir/$_" } ("abc1.tmp", "X-c1-#1*-X")],
+          [map { "$tmpDir/$_" } ("abc2.tmp", "X-c2-#1*-X")],
+          [map { "$tmpDir/$_" } ("abc3.tmp", "X-c3-#1*-X")],
         ], "  got mapping";
 }
 

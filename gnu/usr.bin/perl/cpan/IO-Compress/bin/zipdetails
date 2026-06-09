@@ -93,7 +93,7 @@ use constant ZIP_EXTRA_SUBFIELD_MAX_SIZE    => ZIP_EXTRA_MAX_SIZE -
                                                ZIP_EXTRA_SUBFIELD_HEADER_SIZE;
 
 use constant ZIP_EOCD_MIN_SIZE              => 22 ;
-
+use constant ZIP_CENTRAL_HDR_MIN_SIZE       => 46 ;
 
 use constant ZIP_LD_FILENAME_OFFSET         => 30;
 use constant ZIP_CD_FILENAME_OFFSET         => 46;
@@ -107,7 +107,7 @@ my %ZIP_CompressionMethods =
           4 => 'Reduced compression factor 3',
           5 => 'Reduced compression factor 4',
           6 => 'Imploded',
-          7 => 'Reserved for Tokenizing compression algorithm',
+          7 => 'Tokenized',
           8 => 'Deflated',
           9 => 'Deflate64',
          10 => 'PKWARE Data Compression Library Imploding',
@@ -120,7 +120,7 @@ my %ZIP_CompressionMethods =
          17 => 'Reserved by PKWARE',
          18 => 'IBM/TERSE or Xceed BWT', # APPNOTE has IBM/TERSE. Xceed reuses it unofficially
          19 => 'IBM LZ77 z Architecture (PFS)',
-         20 => 'Ipaq8', # see https://encode.su/threads/1048-info-zip-lpaq8
+         20 => 'Zstandard (Deprecated) or Ipaq8', # Deprecated ZStandard and see https://encode.su/threads/1048-info-zip-lpaq8
          92 => 'Reference', # Winzip Only from version 25
          93 => 'Zstandard',
          94 => 'MP3',
@@ -4002,7 +4002,7 @@ sub walkExtra
 
                 # Belt & Braces - should now be at $endExtraOffset
                 # error here means issue in an extra handler
-                # should noy happen, but just in case
+                # should not happen, but just in case
                 # TODO -- need tests for this
                 my $here = $FH->tell() ;
                 if ($here > $endExtraOffset)
@@ -4132,7 +4132,7 @@ sub walk_Zip64_in_LD
 
     if ($assumeLengthsPresent || $assumeAllFieldsPresent || full32 $entry->std_uncompressedSize )
     {
-        # TODO defer a warning if in local header & central/local don't have std_uncompressedSizeset to 0xffffffff
+        # TODO defer a warning if in local header & central/local don't have std_uncompressedSize set to 0xffffffff
         if (length $zip64Extended < 8)
         {
             my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for 'Uncompressed Size': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
@@ -4733,7 +4733,7 @@ sub decode_Minizip_Hash
     # 0x1a51 Minizip Hash
     # Definition in https://github.com/zlib-ng/minizip-ng/blob/master/doc/mz_extrafield.md#hash-0x1a51
 
-    # caller ckecks there are at least 4 bytes available
+    # caller checks there are at least 4 bytes available
     my $extraID = shift ;
     my $len = shift;
     my $entry = shift;
@@ -4975,13 +4975,21 @@ sub decode_Ux
     out_v "  GID";
 }
 
-sub decodeLitteEndian
+sub canDecodeLittleEndian
+{
+    my $value = shift;
+
+    state $valid = { 0 => 1, 1 => 1, 2 => 1, 4 => 2, 8 => 1} ;
+    return $valid->{$value};
+}
+
+sub decodeLittleEndian
 {
     my $value = shift ;
 
     if (length $value == 8)
     {
-        return unpackValueQ ($value)
+        return unpackValue_Q ($value)
     }
     elsif (length $value == 4)
     {
@@ -4997,7 +5005,7 @@ sub decodeLitteEndian
     }
     else {
         # TODO - fix this
-        internalFatal undef, "unsupported decodeLitteEndian length '" . length ($value) . "'";
+        internalFatal undef, "unsupported decodeLittleEndian length '" . length ($value) . "'";
     }
 }
 
@@ -5032,8 +5040,20 @@ sub decode_ux
         }
 
         myRead(my $data, $uidSize);
-        out2 $data, "UID", decodeLitteEndian($data);
+        if (canDecodeLittleEndian($uidSize))
+        {
+            out2 $data, "UID", decodeLittleEndian($data);
+        }
+        else
+        {
+            out2 $data, "UID", "Invalid UID Value: " . hexDump($data);
+            info $FH->tell() - $uidSize, extraFieldIdentifier($extraID) . ": UID value is not a valid value"
+        }
         $available -= $uidSize ;
+    }
+    else
+    {
+        info $FH->tell() - 1, extraFieldIdentifier($extraID) . ": 'UID Size' should not be zero"
     }
 
     if ($available < 1)
@@ -5058,8 +5078,20 @@ sub decode_ux
         }
 
         myRead(my $data, $gidSize);
-        out2 $data, "GID", decodeLitteEndian($data);
+        if (canDecodeLittleEndian($gidSize))
+        {
+            out2 $data, "GID", decodeLittleEndian($data);
+        }
+        else
+        {
+            out2 $data, "GID", "Invalid GID Value: " .hexDump($data);
+            info $FH->tell() - $gidSize, extraFieldIdentifier($extraID) . ":  GID value is not a valid value"
+        }
         $available -= $gidSize ;
+    }
+    else
+    {
+        info $FH->tell() - 1, extraFieldIdentifier($extraID) . ": 'GID Size' should not be zero"
     }
 
 }
@@ -5517,6 +5549,9 @@ sub peekAtOffset
     my $offset = shift;
     my $len = shift;
 
+    return undef
+        if $offset + $len > $FILELEN;
+
     my $here = $FH->tell();
 
     seekTo($offset) ;
@@ -5526,7 +5561,7 @@ sub peekAtOffset
     seekTo($here);
 
     length $buffer == $len
-        or return '';
+        or return undef;
 
     return $buffer;
 }
@@ -5572,7 +5607,7 @@ sub chckForAPKSigningBlock
     my $cdOffset = shift;
     my $cdSize = shift;
 
-    # APK Signing Block comes directy before the Central directory
+    # APK Signing Block comes directly before the Central directory
     # See https://source.android.com/security/apksigning/v2
 
     # If offset available is less than 44, it isn't an APK signing block
@@ -5735,7 +5770,7 @@ sub scanCentralDirectory
         if (! full32 $locHeaderOffset)
         {
             # Check for corrupt offset
-            # 1. ponting paset EOF
+            # 1. pointing paset EOF
             # 2. offset points forward in the file
             # 3. value at offset is not a CD record signature
 
@@ -5998,7 +6033,39 @@ sub findCentralDirectoryOffset
     if (needZip64EOCDLocator($diskNumber, $cdDiskNumber, $entriesOnThisDisk, $totalEntries, $centralDirOffset, $centralDirSize) &&
         ! emptyArchive($here, $diskNumber, $cdDiskNumber, $entriesOnThisDisk, $totalEntries, $centralDirOffset, $centralDirSize))
     {
+        # Possible/probable that need a zip64 record
+        # Must have if -- centralDirOffset > 0xFFFFFFFF or centralDirSize
+
+        my $want_zip64 = 0;
+
+        # Edge condition where centralDirOffset is exactly full32, but archive isn't a zip64 file
+        # Check if offset to central header is full32 and the central signature is not present
+        if (full32($centralDirOffset))
+        {
+            my $value = peekAtOffset($centralDirOffset, 4);
+            $want_zip64 = 1
+                if defined $value && unpack( "V",  $value) != ZIP_CENTRAL_HDR_SIG ;
+        }
+
+        # Already past point of no return?
+        $want_zip64 = 1
+            if $here > MAX32 + ZIP_EOCD_MIN_SIZE + ZIP_CENTRAL_HDR_MIN_SIZE;
+
+        # may look like there should be a zip64 entry, but not always the case
+        {
+            my $gotSig = peekAtOffset($here - ZIP64_END_CENTRAL_LOC_HDR_SIZE, 4) ;
+            if (defined $gotSig && unpack("V", $gotSig) != ZIP64_END_CENTRAL_LOC_HDR_SIG)
+            {
+                warning $$here - ZIP64_END_CENTRAL_LOC_HDR_SIZE - 4, sprintf("Expected signature for " . Signatures::nameAndHex(ZIP64_END_CENTRAL_LOC_HDR_SIG) . " not found, got 0x%X", $gotSig);
+            }
+            else
+            {
+                $want_zip64 = 1;
+            }
+        }
+
         ($centralDirOffset, $centralDirSize) = offsetFromZip64($fh, $here, ZIP_EOCD_MIN_SIZE + $commentLength + $trailingBytes)
+            if $want_zip64;
     }
     elsif ($is64bit)
     {
@@ -6131,7 +6198,7 @@ sub nibbles
 {
     package HeaderOffsetIndex;
 
-    # Store a list of header offsets recorded when scannning the central directory
+    # Store a list of header offsets recorded when scanning the central directory
 
     sub new
     {
@@ -7546,7 +7613,7 @@ at hand to help understand the output from this program.
 By default the program expects to be given a well-formed zip file.  It will
 navigate the zip file by first parsing the zip C<Central Directory> at the end
 of the file.  If the C<Central Directory> is found, it will then walk
-sequentally through the zip records starting at the beginning of the file.
+sequentially through the zip records starting at the beginning of the file.
 See L<Advanced Analysis> for other processing options.
 
 If the program finds any structural or portability issues with the zip file
@@ -7567,7 +7634,7 @@ C<--utc> option to display these fields in Coordinated Universal Time (UTC).
 =head3 Filenames & Comments
 
 Filenames and comments are decoded/encoded using the default system
-encoding of the host running C<zipdetails>. When the sytem encoding cannot
+encoding of the host running C<zipdetails>. When the system encoding cannot
 be determined C<cp437> will be used.
 
 The exceptions are
@@ -7605,7 +7672,7 @@ where the zip files contains sensitive data that cannot be shared.
 
 =item C<--scan>
 
-Pessimistically scan the zip file loking for possible zip records. Can be
+Pessimistically scan the zip file looking for possible zip records. Can be
 error-prone. For very large zip files this option is slow. Consider using
 the C<--walk> option first. See L<"Advanced Analysis Options">
 
@@ -7915,7 +7982,7 @@ any zip metadata that is still present in the file.
 When either of these options is enabled, this program will bypass the
 initial step of reading the C<Central Directory> at the end of the file and
 simply scan the zip file sequentially from the start of the file looking
-for zip metedata records. Although this can be error prone, for the most
+for zip metadata records. Although this can be error prone, for the most
 part it will find any zip file metadata that is still present in the file.
 
 The difference between the two options is how aggressive the sequential
@@ -7933,7 +8000,7 @@ record and display it.
 =head3 C<--walk>
 
 The C<--walk> option optimistically assumes that it has found a real zip
-metatada record and so starts the scan for the next record directly after
+metadata record and so starts the scan for the next record directly after
 the record it has just output.
 
 =head3 C<--scan>
@@ -7942,8 +8009,8 @@ The C<--scan> option is pessimistic and assumes the 4-byte signature
 sequence may have been a false-positive, so before starting the scan for
 the next resord, it will rewind to the location in the file directly after
 the 4-byte sequecce it just processed. This means it will rescan data that
-has already been processed.  For very lage zip files the C<--scan> option
-can be really realy slow, so trying the C<--walk> option first.
+has already been processed.  For very large zip files the C<--scan> option
+can be really really slow, so trying the C<--walk> option first.
 
 B<Important Note>: If the zip file being processed contains one or more
 nested zip files, and the outer zip file uses the C<STORE> compression
@@ -7994,7 +8061,7 @@ can display the filenames using the C<--encoding> option
 
 A less common variation of this is where the C<EFS> bit is set, signalling
 that the filename will be encoded in UTF-8, but the filename is not encoded
-in UTF-8. To deal with this scenarion, use the C<--no-language-encoding>
+in UTF-8. To deal with this scenario, use the C<--no-language-encoding>
 option along with the C<--encoding> option.
 
 

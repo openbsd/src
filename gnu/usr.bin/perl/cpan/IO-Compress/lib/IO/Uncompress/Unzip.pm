@@ -157,8 +157,8 @@ sub fastForward
 
     while ($offset > 0)
     {
-        $c = length $offset
-            if length $offset < $c ;
+        $c = $offset
+            if $offset < $c ;
 
         $offset -= $c;
 
@@ -802,7 +802,14 @@ sub filterUncompressed
 # from Archive::Zip & info-zip
 sub _dosToUnixTime
 {
+    # Returns zero when $dt is already zero or it doesn't expand to a value that Time::Local::timelocal()
+    # can handle.
+
 	my $dt = shift;
+    # warn "_dosToUnixTime dt=[$dt]\n";
+
+    # some zip files don't populate the datetime field at all
+    return 0 if ! $dt;
 
 	my $year = ( ( $dt >> 25 ) & 0x7f ) + 80;
 	my $mon  = ( ( $dt >> 21 ) & 0x0f ) - 1;
@@ -813,10 +820,15 @@ sub _dosToUnixTime
 	my $sec  = ( ( $dt << 1 ) & 0x3e );
 
     use Time::Local ;
-    my $time_t = Time::Local::timelocal( $sec, $min, $hour, $mday, $mon, $year);
+
+    my $time_t ;
+    # wrap in an eval to catch out of range errors
+    eval {
+        $time_t = Time::Local::timelocal( $sec, $min, $hour, $mday, $mon, $year);
+    } ;
+
     return 0 if ! defined $time_t;
     return $time_t;
-
 }
 
 #sub scanCentralDirectory
