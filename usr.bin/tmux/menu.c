@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.63 2026/04/28 10:01:07 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.64 2026/06/09 21:22:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -281,10 +281,8 @@ menu_draw_cb(struct client *c, void *data,
 	    &md->style_gc, &md->border_style_gc, &md->selected_style_gc);
 	screen_write_stop(&ctx);
 
-	for (i = 0; i < screen_size_y(&md->s); i++) {
-		tty_draw_line(tty, s, 0, i, menu->width + 4, px, py + i,
-		    &grid_default_cell, NULL);
-	}
+	for (i = 0; i < screen_size_y(&md->s); i++)
+		tty_draw_line(tty, s, 0, i, menu->width + 4, px, py + i, NULL);
 }
 
 void

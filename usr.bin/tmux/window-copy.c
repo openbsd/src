@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.402 2026/06/04 09:24:03 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.403 2026/06/09 21:22:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -567,13 +567,8 @@ window_copy_add(struct window_pane *wp, int parse, const char *fmt, ...)
 
 static void
 window_copy_init_ctx_cb(__unused struct screen_write_ctx *ctx,
-    struct tty_ctx *ttyctx)
+    __unused struct tty_ctx *ttyctx)
 {
-	memcpy(&ttyctx->defaults, &grid_default_cell, sizeof ttyctx->defaults);
-	ttyctx->palette = NULL;
-	ttyctx->redraw_cb = NULL;
-	ttyctx->set_client_cb = NULL;
-	ttyctx->arg = NULL;
 }
 
 void
