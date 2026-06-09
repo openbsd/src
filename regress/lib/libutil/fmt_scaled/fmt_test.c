@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.20 2026/06/06 23:50:28 djm Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.21 2026/06/09 05:58:51 tb Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -150,12 +150,12 @@ fmt_test(void)
 
 #define	IMPROBABLE	(-42)
 
-static const long long K = 1024LL;
-static const long long M = K * K;
-static const long long G = M * K;
-static const long long T = G * K;
-static const long long P = T * K;
-static const long long E = P * K;
+#define K (1024LL)
+#define M (K * K)
+#define G (M * K)
+#define T (G * K)
+#define P (T * K)
+#define E (P * K)
 
 struct {					/* the test cases */
 	char *input;
