@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.129 2026/06/08 20:44:57 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.130 2026/06/09 09:11:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_new_pane_entry = {
 	.name = "new-pane",
 	.alias = "newp",
 
-	.args = { "bc:de:EfF:hIkl:Lm:p:PR:s:S:t:T:vx:X:y:Y:Z", 0, -1, NULL },
+	.args = { "bBc:de:EfF:hIkl:Lm:p:PR:s:S:t:T:vx:X:y:Y:Z", 0, -1, NULL },
 	.usage = "[-bdefhIklPvZ] [-c start-directory] [-e environment] "
 		 "[-F format] [-l size] [-m message] [-p percentage] "
 		 "[-s style] [-S active-border-style] "
@@ -57,7 +57,7 @@ const struct cmd_entry cmd_split_window_entry = {
 	.name = "split-window",
 	.alias = "splitw",
 
-	.args = { "bc:de:EfF:hIkl:m:p:PR:s:S:t:T:vZ", 0, -1, NULL },
+	.args = { "bBc:de:EfF:hIkl:m:p:PR:s:S:t:T:vZ", 0, -1, NULL },
 	.usage = "[-bdefhIklPvZ] [-c start-directory] [-e environment] "
 		 "[-F format] [-l size] [-m message] [-p percentage] "
 		 "[-s style] [-S active-border-style] "
@@ -245,5 +245,15 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	environ_free(sc.environ);
 	if (input)
 		return (CMD_RETURN_WAIT);
+
+	if (args_has(args, 'B')) {
+		/*
+		 * With -B, block this command queue item until the pane's
+		 * command exits; window_pane_block_finish will be called to
+		 * continue it.
+		 */
+		new_wp->block_item = item;
+		return (CMD_RETURN_WAIT);
+	}
 	return (CMD_RETURN_NORMAL);
 }
