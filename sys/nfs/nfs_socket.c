@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.156 2025/02/16 16:05:07 bluhm Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.157 2026/06/09 03:07:19 jsg Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1457,7 +1457,7 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 	info.nmi_dpos = nd->nd_dpos;
 	info.nmi_errorp = &error;
 	if (has_header) {
-		tl = (uint32_t *)nfsm_dissect(&info, 10 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nd, 10 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
 		nd->nd_retxid = fxdr_unsigned(u_int32_t, *tl++);
@@ -1466,10 +1466,11 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 			return (EBADRPC);
 		}
 	} else {
-		tl = (uint32_t *)nfsm_dissect(&info, 8 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsd_dissect(nd, 8 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
 	}
+	info.nmi_dpos = nd->nd_dpos; /* resync */
 	nd->nd_repstat = 0;
 	nd->nd_flag = 0;
 	if (*tl++ != rpc_vers) {
@@ -1519,7 +1520,8 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		}
 		if (nfsm_adv(&info, nfsm_rndup(len)) != 0)
 			goto nfsmout;
-		tl = (uint32_t *)nfsm_dissect(&info, 3 * NFSX_UNSIGNED);
+		nd->nd_dpos = info.nmi_dpos; /* resync */
+		tl = (uint32_t *)nfsd_dissect(nd, 3 * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
 		memset(&nd->nd_cr, 0, sizeof (struct ucred));
@@ -1532,9 +1534,10 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 			return (EBADRPC);
 		}
 		tl = (uint32_t *)
-		    nfsm_dissect(&info, (len + 2) * NFSX_UNSIGNED);
+		    nfsd_dissect(nd, (len + 2) * NFSX_UNSIGNED, &error);
 		if (tl == NULL)
 			goto nfsmout;
+		info.nmi_dpos = nd->nd_dpos; /* resync */
 		for (i = 0; i < len; i++) {
 			if (i < NGROUPS_MAX)
 				nd->nd_cr.cr_groups[i] =
