@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.136 2026/06/09 02:42:10 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.137 2026/06/09 02:46:02 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -355,7 +355,7 @@ nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		if (nfsm_reply(&info, nfsd, slp, mrq, &info.nmi_mb, error,
 		    2 * NFSX_UNSIGNED) != 0)
 			return 0;
-		nfsm_srvwcc(nfsd, preat_ret, &preat, postat_ret, &va, &info);
+		nfsm_srvwcc(nfsd, preat_ret, &preat, postat_ret, &va, &info.nmi_mb);
 		error = 0;
 		goto nfsmout;
 	}
@@ -371,7 +371,7 @@ nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			    error, NFSX_WCCDATA(info.nmi_v3)) != 0)
 				return 0;
 			nfsm_srvwcc(nfsd, preat_ret, &preat, postat_ret, &va,
-			    &info);
+			    &info.nmi_mb);
 			error = 0;
 			goto nfsmout;
 		}
@@ -405,7 +405,7 @@ out:
 		return 0;
 	if (info.nmi_v3) {
 		nfsm_srvwcc(nfsd, preat_ret, &preat, postat_ret, &va,
-		    &info);
+		    &info.nmi_mb);
 		error = 0;
 		goto nfsmout;
 	} else {
@@ -964,7 +964,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	    2 * NFSX_UNSIGNED + NFSX_WRITEVERF(info.nmi_v3)) != 0)
 		return 0;
 	if (info.nmi_v3) {
-		nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &info);
+		nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &info.nmi_mb);
 		if (error) {
 			error = 0;
 			goto nfsmout;
@@ -995,7 +995,7 @@ vbad:
 bad:
 	if (nfsm_reply(&info, nfsd, slp, mrq, &info.nmi_mb, error, 0) != 0)
 		return 0;
-	nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &info);
+	nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &info.nmi_mb);
 	return (0);
 }
 
@@ -1080,7 +1080,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		    NFSX_WCCDATA(info.nmi_v3)) != 0)
 			return 0;
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		if (dirp)
 			vrele(dirp);
 		return (0);
@@ -1282,7 +1282,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 		}
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 	} else {
 		nfsm_srvfhtom(&info.nmi_mb, fhp, info.nmi_v3);
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
@@ -1366,7 +1366,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		    NFSX_WCCDATA(1)) != 0)
 			return 0;
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		if (dirp)
 			vrele(dirp);
 		return (0);
@@ -1473,7 +1473,7 @@ out:
 		nfsm_srvpostop_fh(&info.nmi_mb, fhp);
 		nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 	}
-	nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft, &info);
+	nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft, &info.nmi_mb);
 	return (0);
 nfsmout:
 	if (dirp)
@@ -1584,7 +1584,7 @@ out:
 		return 0;
 	if (info.nmi_v3) {
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		return (0);
 	}
 
@@ -1663,9 +1663,9 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		    2 * NFSX_WCCDATA(info.nmi_v3)) != 0)
 			return 0;
 		nfsm_srvwcc(nfsd, fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft,
-		    &info);
+		    &info.nmi_mb);
 		nfsm_srvwcc(nfsd, tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft,
-		    &info);
+		    &info.nmi_mb);
 		if (fdirp)
 			vrele(fdirp);
 		return (0);
@@ -1777,9 +1777,9 @@ out1:
 		return 0;
 	if (info.nmi_v3) {
 		nfsm_srvwcc(nfsd, fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft,
-		    &info);
+		    &info.nmi_mb);
 		nfsm_srvwcc(nfsd, tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft,
-		    &info);
+		    &info.nmi_mb);
 	}
 	return (0);
 
@@ -1862,7 +1862,7 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			return 0;
 		nfsm_srvpostop_attr(nfsd, getret, &at, &info.nmi_mb);
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		error = 0;
 		goto nfsmout;
 	}
@@ -1918,7 +1918,7 @@ out1:
 	if (info.nmi_v3) {
 		nfsm_srvpostop_attr(nfsd, getret, &at, &info.nmi_mb);
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		     &info);
+		     &info.nmi_mb);
 		error = 0;
 	}
 nfsmout:
@@ -2071,7 +2071,7 @@ out:
 			nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 		}
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 	}
 	return (0);
 nfsmout:
@@ -2155,7 +2155,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		    NFSX_WCCDATA(info.nmi_v3)) != 0)
 			return 0;
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		if (dirp)
 			vrele(dirp);
 		return (0);
@@ -2210,7 +2210,7 @@ out:
 			nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 		}
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 	} else {
 		nfsm_srvfhtom(&info.nmi_mb, fhp, info.nmi_v3);
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
@@ -2291,7 +2291,7 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		    NFSX_WCCDATA(info.nmi_v3)) != 0)
 			return 0;
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		if (dirp)
 			vrele(dirp);
 		return (0);
@@ -2340,7 +2340,7 @@ out:
 		return 0;
 	if (info.nmi_v3) {
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
-		    &info);
+		    &info.nmi_mb);
 		error = 0;
 	}
 nfsmout:
@@ -2933,7 +2933,7 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		if (nfsm_reply(&info, nfsd, slp, mrq, &info.nmi_mb, error,
 		    2 * NFSX_UNSIGNED) != 0)
 			return 0;
-		nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &info);
+		nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &info.nmi_mb);
 		error = 0;
 		goto nfsmout;
 	}
@@ -2944,7 +2944,7 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nfsm_reply(&info, nfsd, slp, mrq, &info.nmi_mb, error,
 	    NFSX_V3WCCDATA + NFSX_V3WRITEVERF) != 0)
 		return 0;
-	nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &info);
+	nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &info.nmi_mb);
 	if (!error) {
 		tl = nfsm_build(&info.nmi_mb, NFSX_V3WRITEVERF);
 		microboottime(&boottime);
