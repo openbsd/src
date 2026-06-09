@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.146 2026/06/09 03:09:31 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.147 2026/06/09 03:11:12 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2044,11 +2044,9 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
 	io.uio_procp = NULL;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
-	if (nfsm_mtouio(&info, &io, len2) != 0)
+	if (nfsd_mtouio(nfsd, &io, len2, &error) != 0)
 		goto nfsmout;
 	if (!info.nmi_v3) {
-		nfsd->nd_dpos = info.nmi_dpos; /* resync */
 		sp = (struct nfsv2_sattr *)nfsd_dissect(nfsd, NFSX_V2SATTR, &error);
 		if (sp == NULL)
 			goto nfsmout;
