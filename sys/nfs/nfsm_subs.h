@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.49 2024/09/11 12:22:34 claudio Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.50 2026/06/09 02:36:29 jsg Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -170,7 +170,8 @@ nfsm_mtouio(struct nfsm_info *infop, struct uio *uiop, int len)
 }
 
 static inline int
-nfsm_strtom(struct nfsm_info *infop, char *str, size_t len, size_t maxlen)
+nfsm_strtom(struct nfsm_info *infop, struct mbuf **mb,
+    char *str, size_t len, size_t maxlen)
 {
 	if (len > maxlen) {
 		m_freem(infop->nmi_mreq);
@@ -178,7 +179,7 @@ nfsm_strtom(struct nfsm_info *infop, char *str, size_t len, size_t maxlen)
 		*infop->nmi_errorp = ENAMETOOLONG;
 		return 1;
 	}
-	nfsm_strtombuf(&infop->nmi_mb, str, len);
+	nfsm_strtombuf(mb, str, len);
 	return 0;
 }
 
