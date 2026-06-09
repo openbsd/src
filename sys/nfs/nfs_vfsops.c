@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.134 2026/06/09 02:44:06 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.135 2026/06/09 02:50:21 jsg Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	struct vnode *vp;
 	struct nfs_statfs *sfp = NULL;
 	struct nfsm_info	info;
+	struct mbuf *mb;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, retattr;
 	struct ucred *cred;
@@ -132,8 +133,8 @@ nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	if (info.nmi_v3 && (nmp->nm_flag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
-	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(info.nmi_v3));
-	nfsm_fhtom(&info.nmi_mb, vp, info.nmi_v3);
+	mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(info.nmi_v3));
+	nfsm_fhtom(&mb, vp, info.nmi_v3);
 
 	info.nmi_procp = p;
 	info.nmi_cred = cred;
@@ -192,12 +193,13 @@ nfs_fsinfo(struct nfsmount *nmp, struct vnode *vp, struct ucred *cred,
 {
 	struct nfsv3_fsinfo *fsp;
 	struct nfsm_info	info;
+	struct mbuf *mb;
 	u_int32_t pref, max;
 	int error = 0, retattr;
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
-	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(1));
-	nfsm_fhtom(&info.nmi_mb, vp, 1);
+	mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(1));
+	nfsm_fhtom(&mb, vp, 1);
 
 	info.nmi_procp = p;
 	info.nmi_cred = cred;

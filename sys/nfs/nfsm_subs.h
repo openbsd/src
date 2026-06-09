@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.50 2026/06/09 02:36:29 jsg Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.51 2026/06/09 02:50:21 jsg Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ struct nfsm_info {
 
 	/* Setting up / Tearing down. */
 	struct mbuf	*nmi_md;
-	struct mbuf	*nmi_mb;
 	caddr_t		 nmi_dpos;
 
 	int		 nmi_v3;  
