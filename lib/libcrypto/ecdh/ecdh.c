@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.14 2026/06/08 12:08:08 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.15 2026/06/09 05:24:47 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -169,11 +169,15 @@ ec_key_ecdh_compute_key(unsigned char **out, size_t *out_len,
 	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
 		goto err;
 
-	if (EC_POINT_is_at_infinity(group, pub_key))
+	if (EC_POINT_is_at_infinity(group, pub_key)) {
+		ECerror(EC_R_POINT_AT_INFINITY);
 		goto err;
+	}
 
-	if (EC_POINT_is_on_curve(group, pub_key, ctx) <= 0)
+	if (EC_POINT_is_on_curve(group, pub_key, ctx) <= 0) {
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
+	}
 
 	if ((point = EC_POINT_new(group)) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
