@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.145 2026/06/09 03:05:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.146 2026/06/09 03:09:31 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1709,14 +1709,14 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	tfhp = &tnfh.fh_generic;
 	if (nfsm_srvmtofh2(nfsd, tfhp, &error) != 0)
 		goto nfsmout;
-	info.nmi_dpos = nfsd->nd_dpos; /* resync */
-	if (nfsm_strsiz(&info, &len2, NFS_MAXNAMLEN) != 0)
+	if (nfsd_strsiz(nfsd, &len2, NFS_MAXNAMLEN, &error) != 0)
 		goto nfsmout;
 	cred->cr_uid = saved_uid;
 
 	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF| NOCACHE | SAVESTART,
 	    UIO_SYSSPACE, NULL, procp);
 	tond.ni_cnd.cn_cred = cred;
+	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	error = nfs_namei(&tond, tfhp, len2, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &tdirp, procp);
 	nfsd->nd_dpos = info.nmi_dpos; /* resync */
@@ -2013,6 +2013,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	nd.ni_cnd.cn_cred = cred;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md,
 	    &info.nmi_dpos, &dirp, procp);
+	nfsd->nd_dpos = info.nmi_dpos; /* resync */
 	if (dirp) {
 		if (info.nmi_v3)
 			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
@@ -2026,13 +2027,11 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto out;
 	vattr_null(&va);
 	if (info.nmi_v3) {
-		nfsd->nd_dpos = info.nmi_dpos; /* resync */
 		error = nfsm_srvsattr(nfsd, &va);
 		if (error)
 			goto nfsmout;
-		info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	}
-	if (nfsm_strsiz(&info, &len2, NFS_MAXPATHLEN) != 0)
+	if (nfsd_strsiz(nfsd, &len2, NFS_MAXPATHLEN, &error) != 0)
 		goto nfsmout;
 	pathlen = len2 + 1;
 	pathcp = malloc(pathlen, M_TEMP, M_WAITOK);
@@ -2045,6 +2044,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
 	io.uio_procp = NULL;
+	info.nmi_dpos = nfsd->nd_dpos; /* resync */
 	if (nfsm_mtouio(&info, &io, len2) != 0)
 		goto nfsmout;
 	if (!info.nmi_v3) {
