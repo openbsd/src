@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.135 2026/06/09 02:40:16 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.136 2026/06/09 02:42:10 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1000,11 +1000,11 @@ bad:
 }
 
 static inline void
-nfsm_srvpostop_fh(struct nfsm_info *infop, fhandle_t *fhp)
+nfsm_srvpostop_fh(struct mbuf **mb, fhandle_t *fhp)
 {
 	uint32_t *tl;
 
-	tl = nfsm_build(&infop->nmi_mb, 2 * NFSX_UNSIGNED + NFSX_V3FH);
+	tl = nfsm_build(mb, 2 * NFSX_UNSIGNED + NFSX_V3FH);
 	*tl++ = nfs_true;
 	*tl++ = txdr_unsigned(NFSX_V3FH);
 	bcopy(fhp, tl, NFSX_V3FH);
@@ -1278,7 +1278,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		return 0;
 	if (info.nmi_v3) {
 		if (!error) {
-			nfsm_srvpostop_fh(&info, fhp);
+			nfsm_srvpostop_fh(&info.nmi_mb, fhp);
 			nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 		}
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
@@ -1470,7 +1470,7 @@ out:
 	    NFSX_SRVFH(1) + NFSX_POSTOPATTR(1) + NFSX_WCCDATA(1)) != 0)
 		return 0;
 	if (!error) {
-		nfsm_srvpostop_fh(&info, fhp);
+		nfsm_srvpostop_fh(&info.nmi_mb, fhp);
 		nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 	}
 	nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft, &info);
@@ -2067,7 +2067,7 @@ out:
 		return 0;
 	if (info.nmi_v3) {
 		if (!error) {
-			nfsm_srvpostop_fh(&info, fhp);
+			nfsm_srvpostop_fh(&info.nmi_mb, fhp);
 			nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 		}
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
@@ -2206,7 +2206,7 @@ out:
 		return 0;
 	if (info.nmi_v3) {
 		if (!error) {
-			nfsm_srvpostop_fh(&info, fhp);
+			nfsm_srvpostop_fh(&info.nmi_mb, fhp);
 			nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 		}
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
