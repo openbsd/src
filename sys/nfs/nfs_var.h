@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.67 2026/04/22 01:43:48 jsg Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.68 2026/06/09 02:40:16 jsg Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ void nfsm_adj(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
 		      struct vattr *, struct nfsm_info *);
 void nfsm_srvpostop_attr(struct nfsrv_descript *, int, struct vattr *,
-			     struct nfsm_info *);
+			     struct mbuf **);
 void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *);
 int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,

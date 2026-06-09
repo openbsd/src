@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvsubs.c,v 1.2 2024/09/18 05:21:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvsubs.c,v 1.3 2026/06/09 02:40:16 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -253,21 +253,21 @@ nfsm_srvwcc(struct nfsrv_descript *nfsd, int before_ret,
 		tl += 2;
 		txdr_nfsv3time(&(before_vap->va_ctime), tl);
 	}
-	nfsm_srvpostop_attr(nfsd, after_ret, after_vap, info);
+	nfsm_srvpostop_attr(nfsd, after_ret, after_vap, &info->nmi_mb);
 }
 
 void
 nfsm_srvpostop_attr(struct nfsrv_descript *nfsd, int after_ret,
-    struct vattr *after_vap, struct nfsm_info *info)
+    struct vattr *after_vap, struct mbuf **mb)
 {
 	u_int32_t *tl;
 	struct nfs_fattr *fp;
 
 	if (after_ret) {
-		tl = nfsm_build(&info->nmi_mb, NFSX_UNSIGNED);
+		tl = nfsm_build(mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	} else {
-		tl = nfsm_build(&info->nmi_mb, NFSX_UNSIGNED + NFSX_V3FATTR);
+		tl = nfsm_build(mb, NFSX_UNSIGNED + NFSX_V3FATTR);
 		*tl++ = nfs_true;
 		fp = (struct nfs_fattr *)tl;
 		nfsm_srvfattr(nfsd, after_vap, fp);
