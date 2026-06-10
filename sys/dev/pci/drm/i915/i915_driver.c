@@ -2567,8 +2567,8 @@ inteldrm_activate(struct device *self, int act)
 			i915_pm_resume_early(self);
 			i915_pm_resume(self);
 		}
-		drm_client_dev_restore(dev);
 		rasops_show_screen(ri, ri->ri_active, 0, NULL, NULL);
+		drm_client_dev_restore(dev);
 		rv = config_suspend(dev->dev, act);
 		break;
 	}
