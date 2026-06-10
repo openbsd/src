@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.18 2026/06/10 12:23:52 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.19 2026/06/10 14:28:59 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -635,6 +635,29 @@ struct mt76_txwi {
 #define	MCU_EVENT_RESTART_DL			0xef
 #define	MCU_EVENT_COREDUMP			0xf0
 
+/* unified event commands */
+#define	MCU_UNI_EVENT_RESULT			0x01
+#define	MCU_UNI_EVENT_HIF_CTRL			0x03
+#define	MCU_UNI_EVENT_FW_LOG_2_HOST		0x04
+#define	MCU_UNI_EVENT_ACCESS_REG		0x06
+#define	MCU_UNI_EVENT_IE_COUNTDOWN		0x09
+#define	MCU_UNI_EVENT_COREDUMP			0x0a
+#define	MCU_UNI_EVENT_BSS_BEACON_LOSS		0x0c
+#define	MCU_UNI_EVENT_SCAN_DONE			0x0e
+#define	MCU_UNI_EVENT_RDD_REPORT		0x11
+#define	MCU_UNI_EVENT_ROC			0x27
+#define	MCU_UNI_EVENT_TX_DONE			0x2d
+#define	MCU_UNI_EVENT_THERMAL			0x35
+#define	MCU_UNI_EVENT_RSSI_MONITOR		0x41
+#define	MCU_UNI_EVENT_NIC_CAPAB			0x43
+#define	MCU_UNI_EVENT_WED_RRO			0x57
+#define	MCU_UNI_EVENT_PER_STA_INFO		0x6d
+#define	MCU_UNI_EVENT_ALL_STA_INFO		0x6e
+#define	MCU_UNI_EVENT_SDO			0x83
+
+#define	MCU_UNI_CMD_EVENT			(1U << 1)
+#define	MCU_UNI_CMD_UNSOLICITED_EVENT		(1U << 2)
+
 /* extended event commands */
 #define	MCU_EXT_EVENT_PS_SYNC			0x5
 #define	MCU_EXT_EVENT_FW_LOG_2_HOST		0x13
@@ -1016,7 +1039,7 @@ struct mwx_connac_phy_cap {
 	uint8_t		he;
 } __packed;
 
-struct mt76_connac_config {
+struct mwx_connac_config {
 	uint16_t	id;
 	uint8_t		type;
 	uint8_t		resp_type;

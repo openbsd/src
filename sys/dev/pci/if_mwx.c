@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.31 2026/06/10 12:32:40 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.32 2026/06/10 14:28:59 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1042,7 +1042,7 @@ mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	}
 
-printf("%s: %s %d -> %d\n", DEVNAME(sc), __func__, ostate, nstate);
+	DPRINTF("%s: %s %d -> %d\n", DEVNAME(sc), __func__, ostate, nstate);
 
 	/* XXX TODO */
 	switch (nstate) {
@@ -2644,12 +2644,16 @@ mwx_mcu_rx_event(struct mwx_softc *sc, struct mbuf *m)
 		printf("%s: MAGIC COMMAND\n", DEVNAME(sc));
 	default:
 		if (rxd->seq == 0 || rxd->seq >= nitems(sc->sc_mcu_wait)) {
-			printf("%s: mcu rx bad seq %x\n", DEVNAME(sc),
-			    rxd->seq);
+			printf("%s: mcu rx bad seq %x, eid %x ext_eid %x, "
+			    "opt %x len %u\n",
+			    DEVNAME(sc), rxd->seq, rxd->eid, rxd->ext_eid,
+			    rxd->option, le16toh(rxd->len));
 			break;
 		}
 
 		cmd = sc->sc_mcu_wait[rxd->seq].mcu_cmd;
+		if (cmd == 0)
+			break;
 
 		if (cmd == MCU_CMD_PATCH_SEM_CONTROL ||
 		    cmd == MCU_CMD_PATCH_FINISH_REQ) {
@@ -2945,6 +2949,7 @@ mwx_reg_addr(struct mwx_softc *sc, uint32_t reg)
 	if ((reg >= 0x18000000 && reg < 0x18c00000) ||
 	    (reg >= 0x70000000 && reg < 0x78000000) ||
 	    (reg >= 0x7c000000 && reg < 0x7c400000)) {
+		DPRINTF("%s: %s reg %x via L1\n", DEVNAME(sc), __func__, reg);
 		if (sc->sc_hwtype == MWX_HW_MT7925)
 			return mt7925_map_reg_l1(sc, reg);
 		else
@@ -3785,14 +3790,29 @@ mt7921_mcu_set_rts_thresh(struct mwx_softc *sc, uint32_t val, uint8_t band)
 int
 mwx_mcu_set_deep_sleep(struct mwx_softc *sc, int ena)
 {
-	struct mt76_connac_config req = {
-		.resp_type = 0,
+	struct {
+		uint8_t				rsv[4];
+		uint16_t			tag;
+		uint16_t			len;
+		struct mwx_connac_config	config;
+	} req = {
+		.tag = htole16(UNI_CHIP_CONFIG_CHIP_CFG),
+		.len = htole16(sizeof(req) - 4),
 	};
+	int len;
 
 	DPRINTF("%s: %s deep sleep\n", DEVNAME(sc), ena ? "enable" : "disable");
-	snprintf(req.data, sizeof(req.data), "KeepFullPwr %d", !ena);
-	return mwx_mcu_send_msg(sc, MCU_CE_CMD_CHIP_CONFIG, &req,
-	     sizeof(req), NULL);
+	len = snprintf(req.config.data, sizeof(req.config.data),
+	    "KeepFullPwr %d", !ena);
+
+	if (sc->sc_hwtype != MWX_HW_MT7925) {
+		return mwx_mcu_send_msg(sc, MCU_CE_CMD_CHIP_CONFIG,
+		    &req.config, sizeof(req.config), NULL);
+	} else {
+		req.config.data_size = htole16(len + 1);
+		return mwx_mcu_send_msg(sc, MCU_UNI_CMD_CHIP_CONFIG,
+		     &req, sizeof(req), NULL);
+	}
 }
 
 void
