@@ -1690,6 +1690,8 @@ struct intel_psr {
 	bool pkg_c_latency_used;
 
 	u8 active_non_psr_pipes;
+
+	struct ref_tracker *vblank_wakeref;
 };
 
 struct intel_dp {
