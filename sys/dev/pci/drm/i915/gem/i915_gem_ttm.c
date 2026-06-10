@@ -426,8 +426,6 @@ void i915_ttm_free_cached_io_rsgt(struct drm_i915_gem_object *obj)
 int i915_ttm_purge(struct drm_i915_gem_object *obj)
 {
 	struct ttm_buffer_object *bo = i915_gem_to_ttm(obj);
-	struct i915_ttm_tt *i915_tt =
-		container_of(bo->ttm, typeof(*i915_tt), ttm);
 	struct ttm_operation_ctx ctx = {
 		.interruptible = true,
 		.no_wait_gpu = false,
@@ -442,23 +440,29 @@ int i915_ttm_purge(struct drm_i915_gem_object *obj)
 	if (ret)
 		return ret;
 
-	if (bo->ttm && i915_tt->filp) {
-		/*
-		 * The below fput(which eventually calls shmem_truncate) might
-		 * be delayed by worker, so when directly called to purge the
-		 * pages(like by the shrinker) we should try to be more
-		 * aggressive and release the pages immediately.
-		 */
+	if (bo->ttm) {
+		struct i915_ttm_tt *i915_tt =
+			container_of(bo->ttm, typeof(*i915_tt), ttm);
+
+		if (i915_tt->filp) {
+			/*
+			 * The below fput(which eventually calls shmem_truncate)
+			 * might be delayed by worker, so when directly called
+			 * to purge the pages(like by the shrinker) we should
+			 * try to be more aggressive and release the pages
+			 * immediately.
+			 */
 #ifdef __linux__
-		shmem_truncate_range(file_inode(i915_tt->filp),
-				     0, (loff_t)-1);
+			shmem_truncate_range(file_inode(i915_tt->filp),
+					     0, (loff_t)-1);
 #else
-		rw_enter(obj->base.uao->vmobjlock, RW_WRITE);
-		obj->base.uao->pgops->pgo_flush(obj->base.uao, 0, obj->base.size,
-		    PGO_ALLPAGES | PGO_FREE);
-		rw_exit(obj->base.uao->vmobjlock);
+			rw_enter(obj->base.uao->vmobjlock, RW_WRITE);
+			obj->base.uao->pgops->pgo_flush(obj->base.uao, 0,
+			    obj->base.size, PGO_ALLPAGES | PGO_FREE);
+			rw_exit(obj->base.uao->vmobjlock);
 #endif
-		fput(fetch_and_zero(&i915_tt->filp));
+			fput(fetch_and_zero(&i915_tt->filp));
+		}
 	}
 
 	obj->write_domain = 0;
