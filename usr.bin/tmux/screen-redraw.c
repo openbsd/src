@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.132 2026/06/09 21:22:22 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.133 2026/06/10 14:51:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -713,7 +713,7 @@ screen_redraw_draw_pane_status(struct screen_redraw_ctx *ctx)
 			/* Right not visible. */
 			l = 0;
 			x = xoff - ctx->ox;
-			width = size - x;
+			width = ctx->sx - x;
 		}
 
 		r = tty_check_overlay_range(tty, x, yoff, width);
