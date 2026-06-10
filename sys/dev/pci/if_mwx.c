@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.27 2026/06/09 21:27:25 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.28 2026/06/10 12:16:19 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -660,12 +660,12 @@ mwx_poll(struct mwx_softc *sc, uint32_t reg, uint32_t val, uint32_t mask,
 	uint32_t cur;
 
 	reg = mwx_reg_addr(sc, reg);
-	timeout *= 100;
+	timeout *= 10;
 	do {
 		cur = bus_space_read_4(sc->sc_st, sc->sc_memh, reg) & mask;
 		if (cur == val)
 			return 0;
-		delay(10);
+		delay(100);
 	} while (timeout-- > 0);
 
 	DPRINTF("%s: poll timeout reg %x val %x mask %x cur %x\n",
