@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.29 2026/06/10 12:23:52 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.30 2026/06/10 12:29:03 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1253,7 +1253,8 @@ mwx_preinit(struct mwx_softc *sc)
 			ic->ic_channels[chan].ic_flags =
 			    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
 			    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
-			/* TODO 11n and 11ac flags */
+			/* TODO 11n and 11ac flags:
+			 * IEEE80211_CHAN_HT | IEEE80211_CHAN_40MHZ */
 		}
 
 	}
@@ -1265,8 +1266,18 @@ mwx_preinit(struct mwx_softc *sc)
 			chan = mwx_channels_5ghz[i];
 			ic->ic_channels[chan].ic_freq =
 			    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
-			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_A;
-			/* TODO 11n and 11ac flags */
+			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_A |
+			    IEEE80211_CHAN_5GHZ;
+			/* TODO 11n and 11ac flags:
+			 * IEEE80211_CHAN_HT | IEEE80211_CHAN_40MHZ |
+			 * IEEE80211_CHAN_VHT
+			 * ic_xflags |= IEEE80211_CHANX_80MHZ
+			 */
+
+			/* 5250-5720 MHz are DFS channels (52-140) */
+			if (chan >= 52 && chan <= 140)
+				ic->ic_channels[chan].ic_flags |=
+				    IEEE80211_CHAN_PASSIVE;
 		}
 	}
 #ifdef NOTYET
@@ -1291,7 +1302,7 @@ mwx_preinit(struct mwx_softc *sc)
 
 	ieee80211_media_init(ifp, mwx_media_change, ieee80211_media_status);
 
-	sc->sc_fw_loaded = 1;
+	DPRINTF("%s: preinit done\n", DEVNAME(sc));
 	return 0;
 }
 
