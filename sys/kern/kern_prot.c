@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.85 2026/06/10 04:45:22 mvs Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.86 2026/06/10 04:46:18 mvs Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -1032,11 +1032,13 @@ sys_getlogin_r(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	size_t namelen = SCARG(uap, namelen);
 	struct session *s = p->p_p->ps_pgrp->pg_session;
+	char buf[sizeof(s->s_login)];
 	int error;
 
 	if (namelen > sizeof(s->s_login))
 		namelen = sizeof(s->s_login);
-	error = copyoutstr(s->s_login, SCARG(uap, namebuf), namelen, NULL);
+	strlcpy(buf, s->s_login, namelen);
+	error = copyoutstr(buf, SCARG(uap, namebuf), namelen, NULL);
 	if (error == ENAMETOOLONG)
 		error = ERANGE;
 	*retval = error;
@@ -1052,16 +1054,17 @@ sys_setlogin(struct proc *p, void *v, register_t *retval)
 	struct sys_setlogin_args /* {
 		syscallarg(const char *) namebuf;
 	} */ *uap = v;
-	struct session *s = p->p_p->ps_pgrp->pg_session;
+	struct session *s;
 	char buf[sizeof(s->s_login)];
 	int error;
 
 	if ((error = suser(p)) != 0)
 		return (error);
 	error = copyinstr(SCARG(uap, namebuf), buf, sizeof(buf), NULL);
-	if (error == 0)
+	if (error == 0) {
+		s = p->p_p->ps_pgrp->pg_session;
 		strlcpy(s->s_login, buf, sizeof(s->s_login));
-	else if (error == ENAMETOOLONG)
+	} else if (error == ENAMETOOLONG)
 		error = EINVAL;
 	return (error);
 }
