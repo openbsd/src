@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.214 2026/06/08 20:42:39 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.215 2026/06/10 16:08:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -739,7 +739,7 @@ const struct options_table_entry options_table[] = {
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the command prompt when in command mode, if "
-		  "'mode-keys' is set to 'vi'."
+		  "'status-keys' is set to 'vi'."
 	},
 
 	{ .name = "message-format",
