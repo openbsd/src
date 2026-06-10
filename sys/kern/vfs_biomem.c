@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.54 2026/04/10 02:03:40 kirill Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.55 2026/06/10 00:04:38 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -282,8 +282,6 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 		    "of size %lu", size);
 
 	bcstats.numbufpages += atop(size);
-	bcstats.dmapages += atop(size);
-	SET(bp->b_flags, B_DMA);
 	bp->b_pobj = &bp->b_uobj;
 	bp->b_poffs = 0;
 	bp->b_bufsize = size;
@@ -310,82 +308,8 @@ buf_free_pages(struct buf *bp)
 		KASSERT(pg->wire_count == 1);
 		pg->wire_count = 0;
 		bcstats.numbufpages--;
-		if (ISSET(bp->b_flags, B_DMA))
-			bcstats.dmapages--;
 	}
-	CLR(bp->b_flags, B_DMA);
 
 	/* XXX refactor to do this without splbio later */
 	uvm_obj_free(uobj);
-}
-
-/* Reallocate a buf into a particular pmem range specified by "where". */
-int
-buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
-    int flags)
-{
-	vsize_t size;
-	vaddr_t va;
-	int dma;
-  	int i, r;
-	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
-
-	splassert(IPL_BIO);
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
-	dma = ISSET(bp->b_flags, B_DMA);
-
-	/* if the original buf is mapped, unmap it */
-	if (bp->b_data != NULL) {
-		va = (vaddr_t)bp->b_data;
-		pmap_kremove(va, bp->b_bufsize);
-		pmap_update(pmap_kernel());
-	}
-
-	do {
-		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
-		    bp->b_bufsize, UVM_PLA_NOWAIT | UVM_PLA_NOWAKE, where);
-		if (r == 0)
-			break;
-		size = atop(bp->b_bufsize);
-	} while	((bufbackoff(where, size) >= size));
-
-	/*
-	 * bufbackoff() failed, so there's no more we can do without
-	 * waiting.  If allowed do, make that attempt.
-	 */
-	if (r != 0 && (flags & UVM_PLA_WAITOK))
-		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
-		    bp->b_bufsize, flags, where);
-
-	/*
-	 * If the allocation has succeeded, we may be somewhere different.
-	 * If the allocation has failed, we are in the same place.
-	 *
-	 * We still have to re-map the buffer before returning.
-	 */
-
-	/* take it out of dma stats until we know where we are */
-	if (dma)
-		bcstats.dmapages -= atop(bp->b_bufsize);
-
-	dma = 1;
-	/* if the original buf was mapped, re-map it */
-	for (i = 0; i < atop(bp->b_bufsize); i++) {
-		struct vm_page *pg = uvm_pagelookup(bp->b_pobj,
-		    bp->b_poffs + ptoa(i));
-		KASSERT(pg != NULL);
-		if  (!PADDR_IS_DMA_REACHABLE(VM_PAGE_TO_PHYS(pg)))
-			dma = 0;
-		if (bp->b_data != NULL) {
-			pmap_kenter_pa(va + ptoa(i), VM_PAGE_TO_PHYS(pg),
-			    PROT_READ|PROT_WRITE);
-			pmap_update(pmap_kernel());
-		}
-	}
-	if (dma) {
-		SET(bp->b_flags, B_DMA);
-		bcstats.dmapages += atop(bp->b_bufsize);
-	} else
-		CLR(bp->b_flags, B_DMA);
-	return(r);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.493 2026/05/19 17:50:23 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.494 2026/06/10 00:04:38 beck Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -783,7 +783,7 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (0);
 	    }
 	case KERN_CACHEPCT: {
-		u_int64_t dmapages;
+		u_int64_t pages;
 		int opct, pgs;
 		opct = bufcachepercent;
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
@@ -794,9 +794,9 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			bufcachepercent = opct;
 			return (EINVAL);
 		}
-		dmapages = uvm_pagecount(&dma_constraint);
+		pages = uvm_pagecount(&no_constraint);
 		if (bufcachepercent != opct) {
-			pgs = bufcachepercent * dmapages / 100;
+			pgs = bufcachepercent * pages / 100;
 			bufadjust(pgs); /* adjust bufpages */
 			bufhighpages = bufpages; /* set high water mark */
 		}

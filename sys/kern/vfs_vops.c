@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.38 2025/05/02 10:44:20 claudio Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.39 2026/06/10 00:04:38 beck Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -629,9 +629,6 @@ VOP_STRATEGY(struct vnode *vp, struct buf *bp)
 	struct vop_strategy_args a;
 	a.a_vp = vp;
 	a.a_bp = bp;
-
-	if ((ISSET(bp->b_flags, B_BC)) && (!ISSET(bp->b_flags, B_DMA)))
-		panic("Non dma reachable buffer passed to VOP_STRATEGY");
 
 	if (vp->v_op->vop_strategy == NULL)
 		return (EOPNOTSUPP);

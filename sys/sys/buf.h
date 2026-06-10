@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.120 2025/08/14 16:13:52 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.121 2026/06/10 00:04:38 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ struct buf {
 	LIST_ENTRY(buf) b_list;		/* All allocated buffers. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
-	int cache;			/* which cache are we in */
 	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
 	volatile long	b_flags;	/* B_* flags. */
 	long	b_bufsize;		/* Allocated buffer size. */
@@ -193,7 +192,6 @@ struct bufcache {
 #define	B_WARM		0x00800000	/* buffer is or has been on the warm queue */
 #define	B_COLD		0x01000000	/* buffer is on the cold queue */
 #define	B_BC		0x02000000	/* buffer is managed by the cache */
-#define	B_DMA		0x04000000	/* buffer is DMA reachable */
 
 #define	B_BITS	"\20\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY" \
     "\006CACHE\007CALL\010DELWRI\011DONE\012EINTR\013ERROR" \
@@ -264,7 +262,7 @@ void bufcache_release(struct buf *);
 
 int buf_flip_high(struct buf *);
 void buf_flip_dma(struct buf *);
-struct buf *bufcache_getcleanbuf(int, int);
+struct buf *bufcache_getcleanbuf(int);
 struct buf *bufcache_getdirtybuf(void);
 
 /*
@@ -284,7 +282,6 @@ int	buf_dealloc_mem(struct buf *);
 void	buf_fix_mapping(struct buf *, vsize_t);
 void	buf_alloc_pages(struct buf *, vsize_t);
 void	buf_free_pages(struct buf *);
-int	buf_realloc_pages(struct buf *, struct uvm_constraint_range *, int);
 
 void	minphys(struct buf *bp);
 int	physio(void (*strategy)(struct buf *), dev_t dev, int flags,

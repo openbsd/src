@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.213 2026/06/09 02:50:21 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.214 2026/06/10 00:04:38 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3432,7 +3432,6 @@ nfs_writebp(struct buf *bp, int force)
 	}
 	if (retv) {
 		s = splbio();
-		buf_flip_dma(bp);
 		if (force)
 			bp->b_flags |= B_WRITEINPROG;
 		splx(s);
