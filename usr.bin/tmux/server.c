@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.210 2026/06/09 09:11:05 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.211 2026/06/10 16:03:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -491,7 +491,7 @@ server_child_exited(pid_t pid, int status)
 				log_debug("%%%u exited", wp->id);
 				wp->flags |= PANE_EXITED;
 
-				window_pane_block_finish(wp);
+				window_pane_wait_finish(wp);
 
 				if (window_pane_destroy_ready(wp))
 					server_destroy_pane(wp, 1);
