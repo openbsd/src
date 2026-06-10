@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.28 2026/06/10 12:16:19 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.29 2026/06/10 12:23:52 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -513,9 +513,12 @@ int		mwx_wfsys_reset(struct mwx_softc *);
 uint32_t	mwx_reg_addr(struct mwx_softc *, uint32_t);
 int		mwx_init_hardware(struct mwx_softc *);
 int		mwx_load_firmware(struct mwx_softc *);
-int		mt7921_mac_wtbl_update(struct mwx_softc *, int);
-void		mt7921_mac_init_band(struct mwx_softc *, uint32_t);
-int		mt7921_mac_init(struct mwx_softc *);
+int		mwx_mac_wtbl_update(struct mwx_softc *, uint32_t);
+void		mt7925_mac_set_fixed_rate_table(struct mwx_softc *, uint8_t,
+		    uint16_t);
+void		mt7925_mac_init_basic_rates(struct mwx_softc *);
+void		mwx_mac_init_band(struct mwx_softc *, uint32_t);
+void		mwx_mac_init(struct mwx_softc *);
 int		mwx_mcu_patch_sem_ctrl(struct mwx_softc *, int);
 int		mwx_mcu_init_download(struct mwx_softc *, uint32_t,
 		    uint32_t, uint32_t);
@@ -724,7 +727,7 @@ mwx_init(struct ifnet *ifp)
 	if (rv)
 		return rv;
 
-	mt7921_mac_wtbl_update(sc, mn->wcid);
+	mwx_mac_wtbl_update(sc, mn->wcid);
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		rv = mt7921_mcu_set_chan_info(sc, MCU_EXT_CMD_SET_RX_PATH);
@@ -736,14 +739,11 @@ mwx_init(struct ifnet *ifp)
 
 		mt7921_mcu_set_sniffer(sc, 1);
 		mt7921_mcu_set_beacon_filter(sc, 0);
-		sc->sc_rxfilter = 0;
 		mwx_set(sc, MT_DMA_DCR0(0), MT_DMA_DCR0_RXD_G5_EN);
 	} else {
 		mt7921_mcu_set_sniffer(sc, 0);
-		sc->sc_rxfilter |= MT_WF_RFCR_DROP_OTHER_UC;
 		mwx_clear(sc, MT_DMA_DCR0(0), MT_DMA_DCR0_RXD_G5_EN);
 	}
-	mwx_write(sc, MT_WF_RFCR(0), sc->sc_rxfilter);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
@@ -931,7 +931,7 @@ struct ieee80211_node *
 mwx_node_alloc(struct ieee80211com *ic)
 {
 	/* XXX this is just wrong */
-	static int wcid = 1;
+	static uint32_t wcid = 1;
 	struct mwx_softc *sc = ic->ic_softc;
 	struct mwx_node *mn;
 
@@ -941,7 +941,7 @@ mwx_node_alloc(struct ieee80211com *ic)
 	mn->wcid = wcid++;
 
 	/* init WCID table entry */
-	mt7921_mac_wtbl_update(sc, mn->wcid);
+	mwx_mac_wtbl_update(sc, mn->wcid);
 
 	return &mn->ni;
 }
@@ -2980,11 +2980,14 @@ mwx_init_hardware(struct mwx_softc *sc)
 			goto fail;
 	}
 
-	rv = mt7921_mac_init(sc);
-	if (rv != 0)
-		goto fail;
+	mwx_mac_init(sc);
 
+	/*
+	 * mcu_uni_add_dev, mwx_mac_wtbl_update,
+	 * mcu_set_rxfilter_enable, mcu_radio_on_off_ctrl
+	 */
 	/* MAYBE alloc beacon and mgmt frame wcid 0 here */
+	sc->sc_fw_loaded = 1;
 
 	return 0;
 
@@ -3250,23 +3253,68 @@ fail:
 }
 
 int
-mt7921_mac_wtbl_update(struct mwx_softc *sc, int idx)
+mwx_mac_wtbl_update(struct mwx_softc *sc, uint32_t idx)
 {
-	mwx_rmw(sc, MT_WTBL_UPDATE,
-	    (idx & MT_WTBL_UPDATE_WLAN_IDX) | MT_WTBL_UPDATE_ADM_COUNT_CLEAR,
-	    MT_WTBL_UPDATE_WLAN_IDX);
+	uint32_t reg, val, mask;
 
-	return mwx_poll(sc, MT_WTBL_UPDATE, 0, MT_WTBL_UPDATE_BUSY, 5000);
+	if (sc->sc_hwtype == MWX_HW_MT7925) {
+		reg = MT7925_WTBL_UPDATE;
+		mask = MT7925_WTBL_UPDATE_WLAN_IDX_MASK;
+		val = (idx & mask) | MT7925_WTBL_UPDATE_ADM_COUNT_CLEAR;
+	} else {
+		reg = MT_WTBL_UPDATE;
+		mask = MT_WTBL_UPDATE_WLAN_IDX_MASK;
+		val = (idx & mask) | MT_WTBL_UPDATE_ADM_COUNT_CLEAR;
+	}
+
+	mwx_rmw(sc, reg, val, mask);
+
+	return mwx_poll(sc, reg, 0, MT_WTBL_UPDATE_BUSY, 5000);
 }
 
 void
-mt7921_mac_init_band(struct mwx_softc *sc, uint32_t band)
+mt7925_mac_set_fixed_rate_table(struct mwx_softc *sc, uint8_t tbl_idx,
+    uint16_t rate_idx)
 {
+	uint32_t ctrl;
+
+	ctrl = MT_WTBL_ITCR_WR | MT_WTBL_ITCR_EXEC | tbl_idx;
+
+	mwx_write(sc, MT_WTBL_ITDR0, rate_idx);
+	/* Use the WTBL SPE index, matching Linux MT7925. */
+	mwx_write(sc, MT_WTBL_ITDR1, MT_WTBL_SPE_IDX_SEL);
+	mwx_write(sc, MT_WTBL_ITCR, ctrl);
+}
+
+void
+mt7925_mac_init_basic_rates(struct mwx_softc *sc)
+{
+	size_t i;
+
+	for (i = 0; i < nitems(mt76_rates); i++) {
+		uint16_t rate, idx;
+		uint16_t mode;
+
+		rate = mt76_rates[i].hw_value;
+		idx = 11 + i;
+
+		mode = (rate >> 8) << MT_TX_RATE_MODE_SHIFT;
+		rate = (rate & MT_TX_RATE_IDX_MASK) |
+		    (mode & MT_TX_RATE_MODE_MASK);
+		mt7925_mac_set_fixed_rate_table(sc, idx, rate);
+	}
+}
+
+void
+mwx_mac_init_band(struct mwx_softc *sc, uint32_t band)
+{
+	/* configure tx count control timer */
 	mwx_rmw(sc, MT_TMAC_CTCR0(band), 0x3f, MT_TMAC_CTCR0_INS_DDLMT_REFTIME);
 	mwx_set(sc, MT_TMAC_CTCR0(band),
 	    MT_TMAC_CTCR0_INS_DDLMT_VHT_SMPDU_EN |
 	    MT_TMAC_CTCR0_INS_DDLMT_EN);
 
+	/* enable MIB rx time reporting */
 	mwx_set(sc, MT_WF_RMAC_MIB_TIME0(band), MT_WF_RMAC_MIB_RXTIME_EN);
 	mwx_set(sc, MT_WF_RMAC_MIB_AIRTIME0(band), MT_WF_RMAC_MIB_RXTIME_EN);
 
@@ -3274,36 +3322,53 @@ mt7921_mac_init_band(struct mwx_softc *sc, uint32_t band)
 	mwx_set(sc, MT_MIB_SCR1(band), MT_MIB_TXDUR_EN);
 	mwx_set(sc, MT_MIB_SCR1(band), MT_MIB_RXDUR_EN);
 
+	/* set max RX length */
 	mwx_rmw(sc, MT_DMA_DCR0(band),
 	    1536 << MT_DMA_DCR0_MAX_RX_LEN_SHIFT, MT_DMA_DCR0_MAX_RX_LEN_MASK);
 	/* disable rx rate report by default due to hw issues */
 	mwx_clear(sc, MT_DMA_DCR0(band), MT_DMA_DCR0_RXD_G5_EN);
+
+	/* filter out non-resp frames and get instantaneous signal reporting */
+	mwx_rmw(sc, MT_WTBLOFF_TOP_RSCR(band),
+	    0 << MT_WTBLOFF_TOP_RSCR_RCPI_MODE_SHIFT |
+	    0x3 << MT_WTBLOFF_TOP_RSCR_RCPI_PARAM_SHIFT,
+	    MT_WTBLOFF_TOP_RSCR_RCPI_MODE_MASK |
+	    MT_WTBLOFF_TOP_RSCR_RCPI_PARAM_MASK);
 }
 
-int
-mt7921_mac_init(struct mwx_softc *sc)
+void
+mwx_mac_init(struct mwx_softc *sc)
 {
-	int i;
+	uint32_t dcr0, dcr1;
+	uint32_t i;
 
-	mwx_rmw(sc, MT_MDP_DCR1, 1536 << MT_MDP_DCR1_MAX_RX_LEN_SHIFT,
+	if (sc->sc_hwtype == MWX_HW_MT7925) {
+		dcr0 = MT7925_MDP_DCR0;
+		dcr1 = MT7925_MDP_DCR1;
+	} else {
+		dcr0 = MT_MDP_DCR0;
+		dcr1 = MT_MDP_DCR1;
+	}
+
+	mwx_rmw(sc, dcr1, 1536 << MT_MDP_DCR1_MAX_RX_LEN_SHIFT,
 	    MT_MDP_DCR1_MAX_RX_LEN_MASK);
 
-	/* enable hardware de-agg */
-	mwx_set(sc, MT_MDP_DCR0, MT_MDP_DCR0_DAMSDU_EN);
-#if 0
-	/* not enabled since our stack does not handle 802.3 frames */
-	/* enable hardware rx header translation */
-	mwx_set(sc, MT_MDP_DCR0, MT_MDP_DCR0_RX_HDR_TRANS_EN);
-#endif
+	/* enable hardware de-aggregation */
+	mwx_set(sc, dcr0, MT_MDP_DCR0_DAMSDU_EN);
+
+	if (sc->sc_hwtype != MWX_HW_MT7925) {
+		/* enable hardware rx header translation */
+		mwx_set(sc, dcr0, MT_MDP_DCR0_RX_HDR_TRANS_EN);
+	}
 
 	for (i = 0; i < MT7921_WTBL_SIZE; i++)
-		mt7921_mac_wtbl_update(sc, i);
+		mwx_mac_wtbl_update(sc, i);
 
-	mt7921_mac_init_band(sc, 0);
-	mt7921_mac_init_band(sc, 1);
+	mwx_mac_init_band(sc, 0);
+	mwx_mac_init_band(sc, 1);
 
-	sc->sc_rxfilter = mwx_read(sc, MT_WF_RFCR(0));
-	return mt7921_mcu_set_rts_thresh(sc, 0x92b, 0);
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		mt7925_mac_init_basic_rates(sc);
 }
 
 int
