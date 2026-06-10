@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.32 2026/06/10 14:28:59 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.33 2026/06/10 19:07:22 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -308,6 +308,8 @@ struct mwx_softc {
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 
+	struct taskq		*sc_nswq;;
+	struct task		sc_newstate_task;
 	struct task		sc_scan_task;
 	struct task		sc_reset_task;
 	u_int			sc_flags;
@@ -315,6 +317,9 @@ struct mwx_softc {
 #define MWX_FLAG_BGSCAN			0x02
 	int8_t			sc_resetting;
 	int8_t			sc_fw_loaded;
+
+	enum ieee80211_state	sc_ns_state;
+	int			sc_ns_arg;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
@@ -1021,11 +1026,37 @@ int
 mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct mwx_softc *sc = ic->ic_softc;
-	enum ieee80211_state ostate;
+
+	/*
+	 * Prevent attempts to transition towards the same state, unless
+	 * we are scanning in which case a SCAN -> SCAN transition
+	 * triggers another scan iteration. And AUTH -> AUTH is needed
+	 * to support band-steering.
+	 */
+	if (sc->sc_ns_state == nstate && nstate != IEEE80211_S_SCAN &&
+	    nstate != IEEE80211_S_AUTH)
+		return 0;
+
+	if (ic->ic_state == IEEE80211_S_RUN) {
+		/* cancel other tasks here */
+	}
+
+	sc->sc_ns_state = nstate;
+	sc->sc_ns_arg = arg;
+
+	task_add(sc->sc_nswq, &sc->sc_newstate_task);
+	return 0;
+}
+
+void
+mwx_newstate_task(void *ptr)
+{
+	struct mwx_softc *sc = ptr;
+	struct ieee80211com *ic = &sc->sc_ic;
+	enum ieee80211_state ostate = ic->ic_state;
+	enum ieee80211_state nstate = sc->sc_ns_state;
+	int arg = sc->sc_ns_arg;
 	int rv;
-
-	ostate = ic->ic_state;
-
 
 	switch (ostate) {
 	case IEEE80211_S_RUN:
@@ -1035,7 +1066,7 @@ mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		if (nstate == ostate) {
 			if (sc->sc_flags & MWX_FLAG_SCANNING)
-				return 0;
+				return;
 		}
 		break;
 	default:
@@ -1052,12 +1083,12 @@ mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rv = mwx_scan(sc);
 		if (rv)
 			/* XXX error handling */
-			return rv;
-		return 0;
+			return;
+		return;
 	case IEEE80211_S_AUTH:
 		rv = mt7921_set_channel(sc);
 		if (rv)
-			return rv;
+			return;
 		mwx_mcu_set_deep_sleep(sc, 0);
 		mt7921_mac_sta_update(sc, sc->sc_ic.ic_bss, 1, 1);
 		break;
@@ -1074,7 +1105,7 @@ mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	}
 
-	return sc->sc_newstate(ic, nstate, arg);
+	sc->sc_newstate(ic, nstate, arg);
 }
 
 #if NBPFILTER > 0
@@ -1504,6 +1535,13 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = mwx_newstate;
 
+	sc->sc_nswq = taskq_create("mwxns", 1, IPL_NET, 0);
+	if (sc->sc_nswq == NULL) {
+		printf(": can't create task queue\n");
+		goto fail;
+	}
+
+	task_set(&sc->sc_newstate_task, mwx_newstate_task, sc);
 	task_set(&sc->sc_reset_task, mwx_reset_task, sc);
 	task_set(&sc->sc_scan_task, mwx_end_scan_task, sc);
 
