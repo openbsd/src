@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.76 2026/05/04 13:55:20 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.77 2026/06/10 04:26:58 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -909,7 +909,8 @@ x509_verify_cert_extensions(struct x509_verify_ctx *ctx, X509 *cert, int need_ca
 		ctx->error = X509_V_ERR_INVALID_CA;
 		return 0;
 	}
-	if (ctx->purpose > 0 && X509_check_purpose(cert, ctx->purpose, need_ca)) {
+	if (ctx->purpose > 0 &&
+	    X509_check_purpose(cert, ctx->purpose, need_ca) != 1) {
 		ctx->error = X509_V_ERR_INVALID_PURPOSE;
 		return 0;
 	}
