@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.30 2026/06/10 12:29:03 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.31 2026/06/10 12:32:40 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -351,10 +351,6 @@ struct mwx_softc {
 
 	int16_t			sc_coverage_class;
 	uint8_t			sc_slottime;
-
-	/* mac specific */
-	uint32_t		sc_rxfilter;
-
 };
 
 const uint8_t mwx_channels_2ghz[] = {
@@ -1069,8 +1065,12 @@ printf("%s: %s %d -> %d\n", DEVNAME(sc), __func__, ostate, nstate);
 		mwx_mcu_set_deep_sleep(sc, 1);
 		break;
 	case IEEE80211_S_RUN:
+		if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			break;
+
 		mt7921_mcu_hw_scan_cancel(sc); /* XXX */
 		mwx_mcu_set_deep_sleep(sc, 0);
+		mt7921_mcu_set_rts_thresh(sc, 0x92b, 0);
 		break;
 	}
 
