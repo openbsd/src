@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.160 2025/10/24 15:09:56 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.161 2026/06/11 12:50:52 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@ TAILQ_HEAD(soqhead, socket);
  */
 struct sosplice {
 	struct	socket *ssp_socket;	/* [mr ms] send data to drain socket */
-	struct	socket *ssp_soback;	/* [ms ms] back ref to source socket */
+	struct	socket *ssp_soback;	/* [mr ms] back ref to source socket */
 	off_t	ssp_len;		/* [mr] number of bytes spliced */
 	off_t	ssp_max;		/* [I] maximum number of bytes */
 	struct	timeval ssp_idletv;	/* [I] idle timeout */
