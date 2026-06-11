@@ -29,6 +29,7 @@ struct fb_var_screeninfo {
 
 struct fb_ops {
 	int (*fb_set_par)(struct fb_info *);
+	int (*fb_blank)(int, struct fb_info *);
 };
 
 struct fb_fix_screeninfo {
@@ -95,6 +96,15 @@ static inline int
 fb_get_options(const char *name, char **opt)
 {
 	return 0;
+}
+
+static inline int
+fb_blank(struct fb_info *fbi, int b)
+{
+	int r = 0;
+	if (fbi->fbops && fbi->fbops->fb_blank)
+		r = fbi->fbops->fb_blank(b, fbi);
+	return r;
 }
 
 static inline int

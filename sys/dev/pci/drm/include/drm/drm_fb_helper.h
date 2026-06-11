@@ -242,7 +242,8 @@ drm_fb_helper_from_client(struct drm_client_dev *client)
 	.fb_ioctl	= drm_fb_helper_ioctl
 #else
 #define DRM_FB_HELPER_DEFAULT_OPS \
-	.fb_set_par	= drm_fb_helper_set_par
+	.fb_set_par	= drm_fb_helper_set_par, \
+	.fb_blank	= drm_fb_helper_blank
 #endif
 
 #ifdef CONFIG_DRM_FBDEV_EMULATION

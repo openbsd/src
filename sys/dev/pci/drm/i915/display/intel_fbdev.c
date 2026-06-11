@@ -164,8 +164,8 @@ static const struct fb_ops intelfb_ops = {
 	DRM_FB_HELPER_DEFAULT_OPS,
 #endif
 	.fb_set_par = intel_fbdev_set_par,
-#ifdef notyet
 	.fb_blank = intel_fbdev_blank,
+#ifdef notyet
 	.fb_pan_display = intel_fbdev_pan_display,
 	__FB_DEFAULT_DEFERRED_OPS_DRAW(intel_fbdev),
 	.fb_mmap = intel_fbdev_mmap,
