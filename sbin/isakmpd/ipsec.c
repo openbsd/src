@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.155 2025/04/30 03:53:21 tb Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.156 2026/06/11 09:46:59 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1748,6 +1748,7 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
     struct payload *payload)
 {
 	u_int32_t       spisz, nspis;
+	size_t		len;
 	struct sockaddr *dst;
 	int             reenter = 0;
 	u_int8_t       *spis, proto;
@@ -1771,6 +1772,13 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			log_print("ipsec_handle_leftover_payload: invalid SPI "
 			    "size %d for proto %d in DELETE payload",
 			    spisz, proto);
+			return -1;
+		}
+		len = GET_ISAKMP_GEN_LENGTH(payload->p);
+		if (len < ISAKMP_DELETE_SPI_OFF ||
+		    (len - ISAKMP_DELETE_SPI_OFF) / spisz < nspis) {
+			log_print("ipsec_handle_leftover_payload: "
+			    "SPI count %u exceeds payload length %zu", nspis, len);
 			return -1;
 		}
 		spis = calloc(nspis, spisz);
