@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.142 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: exchange.c,v 1.143 2026/06/11 09:55:17 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -279,8 +279,14 @@ exchange_run(struct message *msg)
 		 */
 		if (exchange->initiator ^ (exchange->step % 2)) {
 			done = 1;
-			if (exchange->step)
+			if (exchange->step) {
 				msg = message_alloc_reply(msg);
+				if (!msg) {
+					log_error("exchange_run: "
+					    "message_alloc_reply() failed");
+					return;
+				}
+			}
 			message_setup_header(msg, exchange->type, 0,
 			    exchange->message_id);
 			if (handler(msg)) {
@@ -939,6 +945,11 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
 			}
 	}
 	msg = message_alloc(isakmp_sa->transport, 0, ISAKMP_HDR_SZ);
+	if (!msg) {
+		log_error("exchange_establish_p2: message_alloc() failed");
+		exchange_free(exchange);
+		return 0; /* exchange_free() runs finalize */
+	}
 	msg->isakmp_sa = isakmp_sa;
 	sa_reference(isakmp_sa);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.132 2026/06/11 09:50:49 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.133 2026/06/11 09:55:17 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -162,6 +162,8 @@ message_alloc_reply(struct message *msg)
 	struct message *reply;
 
 	reply = message_alloc(msg->transport, 0, ISAKMP_HDR_SZ);
+	if (!reply)
+		return NULL;
 	reply->exchange = msg->exchange;
 	reply->isakmp_sa = msg->isakmp_sa;
 	reply->flags = msg->flags;
