@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.388 2026/02/22 21:30:58 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.389 2026/06/11 19:21:51 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1323,10 +1323,15 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if (fd < 0) {
 		if ((error = sblock(&so->so_rcv, SBL_WAIT)) != 0)
 			return (error);
+		if ((error = sblock(&so->so_snd, SBL_WAIT)) != 0) {
+			sbunlock(&so->so_rcv);
+			return (error);
+		}
 		if (so->so_sp && so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 0);
 		else
 			error = EPROTO;
+		sbunlock(&so->so_snd);
 		sbunlock(&so->so_rcv);
 		return (error);
 	}
