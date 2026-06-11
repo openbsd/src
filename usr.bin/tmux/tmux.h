@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1344 2026/06/11 10:16:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1345 2026/06/11 14:19:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3418,6 +3418,8 @@ struct window_pane *window_pane_find_by_id_str(const char *);
 struct window_pane *window_pane_find_by_id(u_int);
 int		 window_pane_destroy_ready(struct window_pane *);
 void		 window_pane_resize(struct window_pane *, u_int, u_int);
+void		 window_pane_clear_resizes(struct window_pane *,
+		     struct window_pane_resize *);
 int		 window_pane_set_mode(struct window_pane *,
 		     struct window_pane *, const struct window_mode *,
 		     struct cmd_find_state *, struct args *);
