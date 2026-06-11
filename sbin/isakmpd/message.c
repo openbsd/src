@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.129 2016/04/04 17:35:07 yasuoka Exp $	 */
+/* $OpenBSD: message.c,v 1.130 2026/06/11 09:40:20 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -335,13 +335,26 @@ next_payload:
  * Parse a proposal payload found in message MSG.  PAYLOAD is always
  * ISAKMP_PAYLOAD_PROPOSAL and ignored in here.  It's needed as the API for
  * message_parse_payloads requires it.  BUF points to the proposal's
- * generic payload header.
+ * generic payload header.  P is the outer SA payload.
  */
 static int
 message_parse_proposal(struct message *msg, struct payload *p,
     u_int8_t payload, u_int8_t *buf)
 {
 	set	payload_set;
+
+	/* Proposal must lie within outer SA payload. */
+	if (buf + GET_ISAKMP_GEN_LENGTH(buf) >
+	    p->p + GET_ISAKMP_GEN_LENGTH(p->p)) {
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
+
+	if ((ISAKMP_PROP_SPI_OFF + GET_ISAKMP_PROP_SPI_SZ(buf) +
+	    ISAKMP_GEN_SZ) > GET_ISAKMP_GEN_LENGTH(buf)) {
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
 
 	/* Put the proposal into the proposal bucket.  */
 	if (message_index_payload(msg, p, payload, buf) == -1)
@@ -363,6 +376,13 @@ static int
 message_parse_transform(struct message *msg, struct payload *p,
     u_int8_t payload, u_int8_t *buf)
 {
+	/* Transform must lie within outer proposal payload. */
+	if (buf + GET_ISAKMP_GEN_LENGTH(buf) >
+	    p->p + GET_ISAKMP_GEN_LENGTH(p->p)) {
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
+
 	/* Put the transform into the transform bucket.  */
 	if (message_index_payload(msg, p, payload, buf) == -1)
 		return -1;
