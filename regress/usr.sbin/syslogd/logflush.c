@@ -1,4 +1,4 @@
-/*	$OpenBSD: logflush.c,v 1.2 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: logflush.c,v 1.3 2026/06/11 16:51:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -28,8 +28,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
-__dead void
-usage()
+static __dead void
+usage(void)
 {
 	fprintf(stderr, "usage: %s\n", getprogname());
 	exit(2);

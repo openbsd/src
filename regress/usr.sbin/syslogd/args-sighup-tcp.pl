@@ -25,7 +25,8 @@ our %args = (
 	},
 	ktrace => {
 	    qr/syslogd  PSIG  SIGHUP caught handler/ => 1,
-	    qr/syslogd  RET   execve JUSTRETURN/ => 2,
+	    qr/syslogd  RET   execve JUSTRETURN/ => 1,
+	    qr/syslogd-parent RET   execve JUSTRETURN/ => 1,
 	},
 	loghost => '@tcp://127.0.0.1:$connectport',
 	loggrep => {

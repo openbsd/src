@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.26 2021/03/09 15:16:28 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.27 2026/06/11 16:51:14 bluhm Exp $
 
 # Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -277,7 +277,7 @@ sub fstat {
 	my @cmd = ("fstat");
 	open(my $fs, '-|', @cmd)
 	    or die ref($self), " open pipe from '@cmd' failed: $!";
-	print $fh grep { /^\w+ *syslogd *\d+/ } <$fs>;
+	print $fh grep { /^\w+ *syslogd(-parent)? *\d+/ } <$fs>;
 	close($fs) or die ref($self), $! ?
 	    " close pipe from '@cmd' failed: $!" :
 	    " command '@cmd' failed: $?";

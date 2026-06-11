@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttylog.c,v 1.8 2021/07/06 11:50:34 bluhm Exp $	*/
+/*	$OpenBSD: ttylog.c,v 1.9 2026/06/11 16:51:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Alexander Bluhm <bluhm@openbsd.org>
@@ -32,7 +32,6 @@
 #include <util.h>
 #include <utmp.h>
 
-__dead void usage(void);
 void redirect(void);
 void restore(void);
 void timeout(int);
@@ -43,8 +42,8 @@ FILE *lg;
 char ptyname[16], *console, *username, *logfile, *tty;
 int mfd, sfd;
 
-__dead void
-usage()
+static __dead void
+usage(void)
 {
 	fprintf(stderr, "usage: %s /dev/console|username logfile\n",
 	    getprogname());

@@ -20,7 +20,8 @@ our %args = (
     syslogd => {
 	ktrace => {
 	    qr/syslogd  PSIG  SIGTERM caught handler/ => 1,
-	    qr/syslogd  RET   execve JUSTRETURN/ => 2,
+	    qr/syslogd  RET   execve JUSTRETURN/ => 1,
+	    qr/syslogd-parent RET   execve JUSTRETURN/ => 1,
 	},
 	loggrep => {
 	    qr/syslogd: exited/ => 1,
