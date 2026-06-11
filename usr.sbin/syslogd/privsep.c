@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.78 2026/06/11 15:41:33 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.79 2026/06/11 18:28:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -152,7 +152,7 @@ priv_init(int debug, int lockfd, int nullfd, int argc, char *argv[])
 	snprintf(childnum, sizeof(childnum), "%d", child_pid);
 	if ((privargv = reallocarray(NULL, argc + 3, sizeof(char *))) == NULL)
 		err(1, "alloc priv argv failed");
-	privargv[0] = "/usr/sbin/syslogd-parent";
+	privargv[0] = "/usr/libexec/syslogd-parent";
 	for (i = 1; i < argc; i++)
 		privargv[i] = argv[i];
 	privargv[i++] = "-P";

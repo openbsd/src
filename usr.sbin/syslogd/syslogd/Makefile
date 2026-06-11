@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2026/06/11 15:41:33 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2026/06/11 18:28:46 bluhm Exp $
 
 .PATH:	${.CURDIR}/..
 
 PROG=	syslogd
+BINDIR=	/usr/sbin
 SRCS=	evbuffer_tls.c log.c parsemsg.c privsep.c \
 	privsep_fdpass.c ringbuf.c syslogd.c ttymsg.c
 LDADD=	-levent -ltls -lssl -lcrypto

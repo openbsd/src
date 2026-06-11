@@ -2801,6 +2801,7 @@
 ./usr/libexec/ssh-sk-helper
 ./usr/libexec/sshd-auth
 ./usr/libexec/sshd-session
+./usr/libexec/syslogd-parent
 ./usr/libexec/tradcpp
 ./usr/libexec/vi.recover
 ./usr/local
