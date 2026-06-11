@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.135 2026/05/26 14:50:52 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.136 2026/06/11 06:56:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -653,7 +653,7 @@ dev_cycle(struct dev *d)
 		} else {
 			if (s->paused) {
 #ifdef DEBUG
-				logx(3, "slot%zu: resumed\n", s - slot_array);
+				logx(3, "slot%zu: resumed", s - slot_array);
 #endif
 				s->paused = 0;
 			}
