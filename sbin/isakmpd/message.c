@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.130 2026/06/11 09:40:20 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.131 2026/06/11 09:44:07 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -620,6 +620,7 @@ message_validate_delete(struct message *msg, struct payload *p)
 	struct doi     *doi;
 	struct sa      *sa, *isakmp_sa;
 	struct sockaddr *dst, *dst_isa;
+	size_t		spisz, len;
 	u_int32_t       nspis = GET_ISAKMP_DELETE_NSPIS(p->p);
 	u_int8_t       *spis = (u_int8_t *)p->p + ISAKMP_DELETE_SPI_OFF;
 	u_int32_t       i;
@@ -663,6 +664,24 @@ message_validate_delete(struct message *msg, struct payload *p)
 	}
 	if (proto != ISAKMP_PROTO_ISAKMP && doi->validate_proto(proto)) {
 		log_print("message_validate_delete: protocol not supported");
+		message_free(msg);
+		return -1;
+	}
+	/* Enforce that SPI size matches the protocol. */
+	spisz = (proto == ISAKMP_PROTO_ISAKMP) ?
+	    ISAKMP_HDR_COOKIES_LEN : sizeof(u_int32_t);
+	if (GET_ISAKMP_DELETE_SPI_SZ(p->p) != spisz) {
+		log_print("message_validate_delete: invalid SPI size %u "
+		    "for protocol %u", GET_ISAKMP_DELETE_SPI_SZ(p->p), proto);
+		message_free(msg);
+		return -1;
+	}
+	/* All SPIs must fit into the DELETE payload. */
+	len = GET_ISAKMP_GEN_LENGTH(p->p);
+	if (len < ISAKMP_DELETE_SPI_OFF ||
+	    (len - ISAKMP_DELETE_SPI_OFF) / spisz < nspis) {
+		log_print("message_validate_delete: SPI count %u exceeds "
+		    "payload length %zu", nspis, len);
 		message_free(msg);
 		return -1;
 	}
