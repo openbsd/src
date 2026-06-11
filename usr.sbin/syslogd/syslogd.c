@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.287 2025/06/26 19:10:13 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.288 2026/06/11 15:41:33 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -121,7 +121,7 @@
 #include "evbuffer_tls.h"
 #include "parsemsg.h"
 
-char *ConfFile = _PATH_LOGCONF;
+const char *ConfFile = _PATH_LOGCONF;
 const char ctty[] = _PATH_CONSOLE;
 
 #define MAXUNAMES	20	/* maximum number of user names */
@@ -226,7 +226,6 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
-int	PrivChild = 0;		/* Exec the privileged parent process */
 int	Repeat = 0;		/* 0 msg repeated, 1 in files only, 2 never */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, refrain from doing DNS lookups */
@@ -350,7 +349,6 @@ struct filed *find_dup(struct filed *);
 void	printline(char *, char *);
 void	printsys(char *);
 void	current_time(char *);
-void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
 int	loghost_parse(char *, char **, char **, char **);
 int	getmsgbufsize(void);
@@ -362,6 +360,17 @@ void	double_sockbuf(int, int, int);
 void	set_sockbuf(int);
 void	set_keepalive(int);
 void	tailify_replytext(char *, int);
+
+static __dead void
+usage(void)
+{
+	(void)fprintf(stderr,
+	    "usage: syslogd [-46dFhnruVZ] [-a path] [-C CAfile]\n"
+	    "\t[-c cert_file] [-f config_file] [-K CAfile] [-k key_file]\n"
+	    "\t[-m mark_interval] [-p log_socket] [-S listen_address]\n"
+	    "\t[-s reporting_socket] [-T listen_address] [-U bind_address]\n");
+	exit(1);
+}
 
 int
 main(int argc, char *argv[])
@@ -399,7 +408,7 @@ main(int argc, char *argv[])
 	nbind = nlisten = ntls = 0;
 
 	while ((ch = getopt(argc, argv,
-	    "46a:C:c:dFf:hK:k:m:nP:p:rS:s:T:U:uVZ")) != -1) {
+	    "46a:C:c:dFf:hK:k:m:np:rS:s:T:U:uVZ")) != -1) {
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			Family = PF_INET;
@@ -445,11 +454,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':		/* don't do DNS lookups */
 			NoDNS = 1;
-			break;
-		case 'P':		/* used internally, exec the parent */
-			PrivChild = strtonum(optarg, 2, INT_MAX, &errstr);
-			if (errstr)
-				errx(1, "priv child %s: %s", errstr, optarg);
 			break;
 		case 'p':		/* path */
 			path_unix[0] = optarg;
@@ -502,9 +506,6 @@ main(int argc, char *argv[])
 			if (dup2(nullfd, fd) == -1)
 				fatal("dup2 null");
 	}
-
-	if (PrivChild > 1)
-		priv_exec(ConfFile, NoDNS, PrivChild, argc, argv);
 
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
@@ -757,7 +758,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Privilege separation begins here */
-	priv_init(lockpipe[1], nullfd, argc, argv);
+	priv_init(Debug, lockpipe[1], nullfd, argc, argv);
 
 	if (pledge("stdio unix inet recvfd", NULL) == -1)
 		err(1, "pledge");
@@ -1662,18 +1663,6 @@ tcpbuf_countmsg(struct bufferevent *bufev)
 			i++;
 	}
 	return (i);
-}
-
-void
-usage(void)
-{
-
-	(void)fprintf(stderr,
-	    "usage: syslogd [-46dFhnruVZ] [-a path] [-C CAfile]\n"
-	    "\t[-c cert_file] [-f config_file] [-K CAfile] [-k key_file]\n"
-	    "\t[-m mark_interval] [-p log_socket] [-S listen_address]\n"
-	    "\t[-s reporting_socket] [-T listen_address] [-U bind_address]\n");
-	exit(1);
 }
 
 /*

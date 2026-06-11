@@ -1,10 +1,7 @@
-#	$OpenBSD: Makefile,v 1.9 2022/01/13 10:34:07 martijn Exp $
+#	$OpenBSD: Makefile,v 1.10 2026/06/11 15:41:33 bluhm Exp $
 
-PROG=	syslogd
-SRCS=	evbuffer_tls.c log.c parsemsg.c privsep.c privsep_fdpass.c ringbuf.c \
-	syslogd.c ttymsg.c
-MAN=	syslogd.8 syslog.conf.5
-LDADD=	-levent -ltls -lssl -lcrypto
-DPADD=	${LIBEVENT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
+.include <bsd.own.mk>
 
-.include <bsd.prog.mk>
+SUBDIR=	syslogd parent
+
+.include <bsd.subdir.mk>

@@ -1,12 +1,12 @@
 #!/bin/ksh
 #
-# $OpenBSD: syslogd,v 1.5 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: syslogd,v 1.6 2026/06/11 15:41:33 bluhm Exp $
 
 daemon="/usr/sbin/syslogd"
 
 . /etc/rc.d/rc.subr
 
-pexp="syslogd: \[priv\]"
+pexp="syslogd-parent: \[priv\]"
 
 rc_pre() {
 	rm -f /dev/log

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.37 2023/10/12 22:36:54 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.38 2026/06/11 15:41:33 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -26,8 +26,8 @@
 extern int	ZuluTime;
 
 /* Privilege separation */
-void  priv_init(int, int, int, char **);
-__dead void priv_exec(char *, int, int, int, char **);
+void  priv_init(int, int, int, int, char **);
+__dead void priv_exec(const char *, int, int, int, char **);
 int   priv_open_tty(const char *);
 int   priv_open_log(const char *);
 FILE *priv_open_utmp(void);
@@ -52,7 +52,6 @@ int  receive_fd(int);
 #define ERRBUFSIZE	256
 void vlogmsg(int pri, const char *, const char *, va_list);
 __dead void die(int);
-extern int Debug;
 
 struct ringbuf {
 	char *buf;
