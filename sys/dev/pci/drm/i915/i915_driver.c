@@ -2155,7 +2155,7 @@ inteldrm_burner_cb(void *arg1)
 	struct drm_device *dev = &dev_priv->drm;
 	struct drm_fb_helper *helper = dev->fb_helper;
 
-	drm_fb_helper_blank(dev_priv->burner_fblank, helper->info);
+	fb_blank(helper->info, dev_priv->burner_fblank);
 }
 
 int
