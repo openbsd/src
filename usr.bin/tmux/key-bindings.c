@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.172 2026/06/10 14:29:08 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.173 2026/06/11 07:52:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -65,7 +65,7 @@
 	" ''" \
 	" '#{?#{&&:#{!:#{pane_floating_flag}},#{>:#{window_panes},1}},Swap Up,}' 'u' {swap-pane -U}" \
 	" '#{?#{&&:#{!:#{pane_floating_flag}},#{>:#{window_panes},1}},Swap Down,}' 'd' {swap-pane -D}" \
-	" '#{?pane_marked_set,,-}Swap Marked' 's' {swap-pane}" \
+	" '#{?#{!:#{pane_floating_flag}},#{?pane_marked_set,,-}Swap Marked,}' 's' {swap-pane}" \
 	" ''" \
 	" 'Kill' 'X' {kill-pane}" \
 	" 'Respawn' 'R' {respawn-pane -k}" \
