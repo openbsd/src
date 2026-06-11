@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.33 2026/06/10 19:07:22 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.34 2026/06/11 13:52:45 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -219,6 +219,7 @@ struct mwx_txwi {
 	LIST_ENTRY(mwx_txwi)		mt_entry;
 	u_int32_t			mt_addr;
 	u_int				mt_idx;
+	int				mt_busy;
 };
 
 struct mwx_txwi_desc {
@@ -566,7 +567,7 @@ void		mt7921_mac_write_txwi_80211(struct mwx_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct mt76_txwi *);
 void		mt7921_mac_write_txwi(struct mwx_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct mt76_txwi *);
-void		mt7921_mac_tx_free(struct mwx_softc *, struct mbuf *);
+void		mwx_mac_tx_free(struct mwx_softc *, struct mbuf *);
 int		mt7921_set_channel(struct mwx_softc *);
 
 uint8_t		 mt7921_get_phy_mode_v2(struct mwx_softc *,
@@ -1719,13 +1720,26 @@ mwx_txwi_get(struct mwx_softc *sc)
 	if (mt == NULL)
 		return NULL;
 	LIST_REMOVE(mt, mt_entry);
+	mt->mt_busy = 1;
 	return mt;
 }
 
 void
 mwx_txwi_put(struct mwx_softc *sc, struct mwx_txwi *mt)
 {
-	/* TODO more cleanup here probably */
+	if (mt->mt_busy == 0)
+		return;
+
+	if (mt->mt_mbuf != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, mt->mt_map, 0,
+		    mt->mt_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, mt->mt_map);
+		m_freem(mt->mt_mbuf);
+		mt->mt_mbuf = NULL;
+	}
+
+	memset(mt->mt_desc, 0, sizeof(*mt->mt_desc));
+	mt->mt_busy = 0;
 
 	if (mt->mt_idx < MT_PACKET_ID_FIRST)
 		return;
@@ -2262,9 +2276,8 @@ mwx_dma_tx_cleanup(struct mwx_softc *sc, struct mwx_queue *q)
 			md->md_mbuf = NULL;
 		}
 		if (md->md_txwi != NULL) {
-			/* nothing here, cleanup via mt7921_mac_tx_free() */
+			/* nothing here, cleanup via mwx_mac_tx_free() */
 			md->md_txwi = NULL;
-printf("%s: %s txwi acked, idx %d\n", DEVNAME(sc), __func__, idx);
 		}
 
 		/* clear DMA desc just to be sure */
@@ -2324,15 +2337,15 @@ mwx_dma_rx_process(struct mwx_softc *sc, struct mbuf_list *ml)
 			mwx_mcu_rx_event(sc, m);
 			break;
 		case PKT_TYPE_TXRX_NOTIFY:
-			mt7921_mac_tx_free(sc, m);
+			mwx_mac_tx_free(sc, m);
 			break;
-#if TODO
 		case PKT_TYPE_TXS:
+#if TODO
 			for (rxd += 2; rxd + 8 <= end; rxd += 8)
 				mt7921_mac_add_txs(dev, rxd);
+#endif
 			m_freem(m);
 			break;
-#endif
 		case PKT_TYPE_NORMAL_MCU:
 		case PKT_TYPE_NORMAL:
 			mwx_rx(sc, m, &mlout);
@@ -5328,34 +5341,61 @@ mt7921_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 }
 
 void
-mt7921_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
+mwx_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
 {
-#ifdef NOTYET
-	struct mt7921_mcu_rxd *rxd;
-	uint32_t cmd, mcu_int = 0;
-	int len;
+	struct mwx_txwi *mt;
+	uint32_t *txfree;
+	uint32_t  txval;
+	int count, i;
 
-	if ((m = m_pullup(m, sizeof(*rxd))) == NULL)
-		return;
-	rxd = mtod(m, struct mt7921_mcu_rxd *);
+	/* first cleanup the TX dma rings */
+	mwx_dma_tx_cleanup(sc, &sc->sc_txq);
 
-	if (rxd->ext_eid == MCU_EXT_EVENT_RATE_REPORT) {
-		printf("%s: MCU_EXT_EVENT_RATE_REPORT COMMAND\n", DEVNAME(sc));
-		m_freem(m);
+	if ((m = m_pullup(m, m->m_pkthdr.len)) == NULL)
 		return;
-	}
 
-	len = sizeof(*rxd) - sizeof(rxd->rxd) + le16toh(rxd->len);
-	/* make sure all the data is in one mbuf */
-	if ((m = m_pullup(m, len)) == NULL) {
-		printf("%s: mwx_mcu_rx_event m_pullup failed\n", DEVNAME(sc));
-		return;
-	}
-	/* refetch after pullup */
-	rxd = mtod(m, struct mt7921_mcu_rxd *);
-	m_adj(m, sizeof(*rxd));
+	txfree = mtod(m, uint32_t *);
+	txval = le32toh(txfree[0]);
+	m_adj(m, 2 * sizeof(txval));
+
+	count = MT_TX_FREE0_MSDU_CNT_GET(txval);
+
+	printf("%s: val %x count %d\n", __func__, txval, count);
+	pkt_hex_dump(m);
+
+	if (count * sizeof(txval) > m->m_len)
+		goto out;
+
+	txfree = mtod(m, uint32_t *);
+	for (i = 0; i < count; i++) {
+		uint16_t msdu;
+
+		txval = le32toh(txfree[i]);
+		if (txval & MT_TX_FREE_PAIR) {
+			count++;
+			/* TODO any wcid fumbling */
+			/* wcid = MT_TX_FREE_WLAN_ID_GET(txval); */
+			continue;
+		}
+
+#if NOTYET
+		if (wcid != NULL) {
+			status = !!(txval & MT_TX_FREE_STATUS_MASK);
+			retries = txval & MT_TX_FREE_COUNT_MASK;
+		}
 #endif
-	printf("%s\n", __func__);
+
+		msdu = MT_TX_FREE_MSDU_ID_GET(txval);
+		if (msdu >= sc->sc_txwi.mt_count)
+			continue;
+		mt = &sc->sc_txwi.mt_data[msdu];
+		if (mt->mt_busy == 0)
+			continue;
+		mwx_txwi_put(sc, mt);
+
+	}
+
+ out:
 	m_freem(m);
 }
 
