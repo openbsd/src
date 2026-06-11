@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.37 2022/01/10 18:23:39 tobhe Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.38 2026/06/11 18:55:13 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -1336,7 +1336,7 @@ sdmmc_mem_hibernate_write(struct sdmmc_function *sf, daddr_t blkno,
 {
 	struct sdmmc_softc *sc = sf->sc;
 	int i, error;
-	struct bus_dmamap dmamap;
+	bus_dmamap_t dmamap;
 	paddr_t phys_addr;
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
@@ -1353,12 +1353,16 @@ sdmmc_mem_hibernate_write(struct sdmmc_function *sf, daddr_t blkno,
 	}
 
 	/* pretend we're bus_dmamap_load */
-	bzero(&dmamap, sizeof(dmamap));
+	dmamap = malloc(sizeof(*dmamap), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (dmamap == NULL)
+		return ENOMEM;
 	pmap_extract(pmap_kernel(), (vaddr_t)data, &phys_addr);
-	dmamap.dm_mapsize = datalen;
-	dmamap.dm_nsegs = 1;
-	dmamap.dm_segs[0].ds_addr = phys_addr;
-	dmamap.dm_segs[0].ds_len = datalen;
-	return (sdmmc_mem_write_block_subr(sf, &dmamap, blkno, data, datalen));
+	dmamap->dm_mapsize = datalen;
+	dmamap->dm_nsegs = 1;
+	dmamap->dm_segs[0].ds_addr = phys_addr;
+	dmamap->dm_segs[0].ds_len = datalen;
+	error = sdmmc_mem_write_block_subr(sf, dmamap, blkno, data, datalen);
+	free(dmamap, M_DEVBUF, sizeof(*dmamap));
+	return error;
 }
 #endif
