@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.131 2026/06/11 09:44:07 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.132 2026/06/11 09:50:49 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -623,7 +623,7 @@ message_validate_delete(struct message *msg, struct payload *p)
 	size_t		spisz, len;
 	u_int32_t       nspis = GET_ISAKMP_DELETE_NSPIS(p->p);
 	u_int8_t       *spis = (u_int8_t *)p->p + ISAKMP_DELETE_SPI_OFF;
-	u_int32_t       i;
+	u_int32_t       i, spi;
 	char           *addr;
 
 	/* Only accept authenticated DELETEs. */
@@ -704,9 +704,11 @@ message_validate_delete(struct message *msg, struct payload *p)
 		if (proto == ISAKMP_PROTO_ISAKMP)
 			sa = sa_lookup_isakmp_sa(dst, spis + i
 			    * ISAKMP_HDR_COOKIES_LEN);
-		else
-			sa = ipsec_sa_lookup(dst, ((u_int32_t *) spis)[i],
-			    proto);
+		else {
+			/* Ensure correct alignment of SPI. */
+			memcpy(&spi, spis + i * sizeof(spi), sizeof(spi));
+			sa = ipsec_sa_lookup(dst, spi, proto);
+		}
 		if (!sa) {
 			LOG_DBG((LOG_MESSAGE, 50, "message_validate_delete: "
 			    "invalid spi (no valid SA found)"));
