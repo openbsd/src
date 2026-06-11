@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.h,v 1.1 2003/07/06 21:54:38 deraadt Exp $	*/
+/*	$OpenBSD: login_radius.h,v 1.2 2026/06/11 04:55:12 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -18,4 +18,4 @@
 
 int
 raddauth(char *username, char *class, char *style, char *challenge,
-    char *password, char **emsg);
+    size_t challlen, char *password, char **emsg);

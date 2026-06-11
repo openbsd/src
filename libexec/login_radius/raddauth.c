@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.33 2024/07/18 02:45:31 yasuoka Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.34 2026/06/11 04:55:12 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -105,7 +105,7 @@
 #define	PW_PASSWORD			2
 #define	PW_CLIENT_ID			4
 #define	PW_CLIENT_PORT_ID		5
-#define PW_PORT_MESSAGE			18
+#define PW_REPLY_MESSAGE		18
 #define PW_STATE			24
 #define PW_MSG_AUTH			80
 
@@ -136,8 +136,8 @@ typedef struct {
 void servtimeout(int);
 in_addr_t get_ipaddr(char *);
 in_addr_t gethost(void);
-int rad_recv(char *, char *, u_char *);
-void parse_challenge(auth_hdr_t *, char *, char *);
+int rad_recv(char *, char *, size_t, u_char *);
+void parse_challenge(auth_hdr_t *, char *, char *, size_t);
 void rad_request(u_char, char *, char *, int, char *, char *);
 void getsecret(void);
 
@@ -147,7 +147,7 @@ void getsecret(void);
  */
 int
 raddauth(char *username, char *class, char *style, char *challenge,
-    char *password, char **emsg)
+    size_t challlen, char *password, char **emsg)
 {
 	static char _pwstate[1024];
 	u_char req_id;
@@ -292,7 +292,7 @@ retry:
 		rad_request(req_id, userstyle, passwd, auth_port, vector,
 		    pwstate);
 
-		switch (i = rad_recv(_pwstate, challenge, vector)) {
+		switch (i = rad_recv(_pwstate, challenge, challlen, vector)) {
 		case PW_AUTHENTICATION_ACK:
 			/*
 			 * Make sure we don't think a challenge was issued.
@@ -461,7 +461,7 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
  * Receive UDP responses from the radius server
  */
 int
-rad_recv(char *state, char *challenge, u_char *req_vector)
+rad_recv(char *state, char *challenge, size_t challlen, u_char *req_vector)
 {
 	auth_hdr_t auth;
 	socklen_t salen;
@@ -498,7 +498,7 @@ rad_recv(char *state, char *challenge, u_char *req_vector)
 		errx(1, "shared secret incorrect");
 
 	if (auth.code == PW_ACCESS_CHALLENGE)
-		parse_challenge(&auth, state, challenge);
+		parse_challenge(&auth, state, challenge, challlen);
 
 	return (auth.code);
 }
@@ -607,7 +607,8 @@ servtimeout(int signo)
  * Parse a challenge received from the server
  */
 void
-parse_challenge(auth_hdr_t *authhdr, char *state, char *challenge)
+parse_challenge(auth_hdr_t *authhdr, char *state, char *challenge,
+    size_t challlen)
 {
 	int length;
 	int attribute, attribute_len;
@@ -619,13 +620,21 @@ parse_challenge(auth_hdr_t *authhdr, char *state, char *challenge)
 	*state = 0;
 
 	while (length > 0) {
+		if (length < 2)
+			errx(1, "bogus auth packet from server");
 		attribute = *ptr++;
 		attribute_len = *ptr++;
+		if (attribute_len < 2 || length < attribute_len)
+			errx(1, "bogus attribute in auth packet from server");
 		length -= attribute_len;
 		attribute_len -= 2;
 
 		switch (attribute) {
-		case PW_PORT_MESSAGE:
+		case PW_REPLY_MESSAGE:
+			if (attribute_len < 1)
+				errx(1, "bogus reply-message from server");
+			if (attribute_len > challlen)
+				errx(1, "reply-message too long");
 			if (challenge) {
 				memcpy(challenge, ptr, attribute_len);
 				challenge[attribute_len] = '\0';
@@ -633,6 +642,10 @@ parse_challenge(auth_hdr_t *authhdr, char *state, char *challenge)
 				printf("%.*s", attribute_len, ptr);
 			break;
 		case PW_STATE:
+			if (attribute_len < 1)
+				errx(1, "bogus reply message from server");
+			if (attribute_len > AUTH_VECTOR_LEN)
+				errx(1, "state too long");
 			memcpy(state, ptr, attribute_len);
 			state[attribute_len] = '\0';
 			break;
