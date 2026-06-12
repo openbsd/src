@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.55 2026/05/26 14:50:52 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.56 2026/06/12 07:12:12 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -100,7 +100,6 @@ int opt_mmc(void);
 int opt_onoff(void);
 int getword(char *, char **);
 unsigned int opt_mode(void);
-void getbasepath(char *);
 void setsig(void);
 void unsetsig(void);
 struct dev *mkdev(char *, struct aparams *, int, int);
