@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-draw.c,v 1.11 2026/06/09 21:22:22 nicm Exp $ */
+/* $OpenBSD: tty-draw.c,v 1.12 2026/06/12 13:16:36 jsg Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -181,7 +181,7 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int px, u_int py, u_int nx,
 					bg = ngc.bg;
 			}
 		}
-			tty_attributes(tty, &last, style_ctx);
+		tty_attributes(tty, &last, style_ctx);
 		log_debug("%s: clearing %u padding cells", __func__, cx);
 		tty_draw_line_clear(tty, atx, aty, cx, style_ctx->defaults, bg, 0);
 		if (cx == ex)
