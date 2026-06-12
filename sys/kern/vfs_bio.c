@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.218 2026/06/10 00:04:38 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.219 2026/06/12 06:34:19 jsg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ int needbuffer;
 /* private bufcache functions */
 void bufcache_init(void);
 void bufcache_adjust(void);
-struct buf *bufcache_gethighcleanbuf(void);
 
 /*
  * Buffer pool for I/O buffers.
