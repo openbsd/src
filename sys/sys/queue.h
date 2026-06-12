@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.46 2020/12/30 13:33:12 millert Exp $	*/
+/*	$OpenBSD: queue.h,v 1.47 2026/06/12 01:04:42 millert Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -589,9 +589,9 @@ struct {								\
 } while (0)
 
 #define	STAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
-	if ((STAILQ_NEXT((elm), field) = STAILQ_NEXT((elm), field)) == NULL)\
+	if ((STAILQ_NEXT((elm), field) = STAILQ_NEXT((listelm), field)) == NULL)\
 		(head)->stqh_last = &STAILQ_NEXT((elm), field);		\
-	STAILQ_NEXT((elm), field) = (elm);				\
+	STAILQ_NEXT((listelm), field) = (elm);				\
 } while (0)
 
 #define STAILQ_REMOVE_HEAD(head, field) do {                            \
