@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.121 2026/06/10 00:04:38 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.122 2026/06/12 06:24:31 jsg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -260,8 +260,6 @@ struct buf *incore(struct vnode *, daddr_t);
 void bufcache_take(struct buf *);
 void bufcache_release(struct buf *);
 
-int buf_flip_high(struct buf *);
-void buf_flip_dma(struct buf *);
 struct buf *bufcache_getcleanbuf(int);
 struct buf *bufcache_getdirtybuf(void);
 
