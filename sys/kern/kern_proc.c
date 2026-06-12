@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.104 2026/02/02 15:20:51 claudio Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.105 2026/06/12 11:00:30 mvs Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -333,15 +333,16 @@ enterthispgrp(struct process *pr, struct pgrp *pgrp)
 void
 leavepgrp(struct process *pr)
 {
+	struct pgrp *savepgrp = pr->ps_pgrp;
 
 	if (pr->ps_session->s_verauthppid == pr->ps_pid)
 		zapverauth(pr->ps_session);
-	LIST_REMOVE(pr, ps_pglist);
-	if (LIST_EMPTY(&pr->ps_pgrp->pg_members))
-		pgdelete(pr->ps_pgrp);
 	mtx_enter(&pr->ps_mtx);
 	pr->ps_pgrp = NULL;
 	mtx_leave(&pr->ps_mtx);
+	LIST_REMOVE(pr, ps_pglist);
+	if (LIST_EMPTY(&savepgrp->pg_members))
+		pgdelete(savepgrp);
 }
 
 /*
