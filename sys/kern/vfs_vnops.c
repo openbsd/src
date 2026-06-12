@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.127 2026/04/08 12:08:25 jsg Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.128 2026/06/12 12:20:25 kirill Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -592,9 +592,9 @@ vn_lock(struct vnode *vp, int flags)
 				 */
 				error = ENOENT;
 				VOP_UNLOCK(vp);
-				if (do_wakeup)
-					wakeup_one(&vp->v_lockcount);
 			}
+			if (do_wakeup && xlocked)
+				wakeup_one(&vp->v_lockcount);
 		}
 	} while (flags & LK_RETRY);
 	return (error);
