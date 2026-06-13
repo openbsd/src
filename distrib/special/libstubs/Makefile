@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2026/03/10 06:34:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2026/06/13 16:23:43 jsing Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
@@ -34,7 +34,7 @@ SRCS+=	aarch64_lse.c
 NOPIC=	Yes
 NOPROFILE=Yes
 
-CFLAGS+=-DSHA2_SMALL -UYP -DNO_LOG_BAD_DNS_RESPONSES \
+CFLAGS+=-DSHA1_SMALL -DSHA2_SMALL -UYP -DNO_LOG_BAD_DNS_RESPONSES \
 	-DFLOATING_POINT -DASRNODEBUG -D__LIBC__ -DMALLOC_SMALL \
 	-I${LIBCSRCDIR}/include -I${LIBCSRCDIR}/hidden \
 	-I${LIBCSRCDIR}/asr -I${LIBCSRCDIR}/locale -I${LIBCSRCDIR}/gdtoa \
