@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.40 2026/06/13 10:32:54 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.41 2026/06/13 13:06:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,7 @@ static const char *window_client_info_lines[] = {
 	"#{t:client_created} "
 	"#[dim](#{t/r:client_created})#[default]",
 	"Activity Time #[acs]x#[default] "
-	"#{t:client_created} "
+	"#{t:client_activity} "
 	"#[dim](#{t/r:client_created})#[default]",
 	"Terminal Type #[acs]x#[default] "
 	"#{?client_termtype,#{client_termtype},Unknown}",
