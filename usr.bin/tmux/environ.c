@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.30 2026/02/23 08:45:27 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.31 2026/06/13 20:07:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -152,7 +152,8 @@ environ_clear(struct environ *env, const char *name)
 void
 environ_put(struct environ *env, const char *var, int flags)
 {
-	char	*name, *value;
+	char		*name;
+	const char	*value;
 
 	value = strchr(var, '=');
 	if (value == NULL)

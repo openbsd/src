@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.112 2026/03/31 11:46:43 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.113 2026/06/13 20:07:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -484,7 +484,7 @@ input_key_vt10x(struct bufferevent *bev, key_code key)
 {
 	struct utf8_data	 ud;
 	key_code		 onlykey;
-	char			*p;
+	const char		*p;
 	static const char	*standard_map[2] = {
 		"1!9(0)=+;:'\",<.>/-8? 2",
 		"119900=+;;'',,..\x1f\x1f\x7f\x7f\0\0",

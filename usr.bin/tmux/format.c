@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.376 2026/06/13 09:17:29 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.377 2026/06/13 20:07:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3760,7 +3760,7 @@ format_table_compare(const void *key0, const void *entry0)
 }
 
 /* Get a format callback. */
-static struct format_table_entry *
+static const struct format_table_entry *
 format_table_get(const char *key)
 {
 	return (bsearch(key, format_table, nitems(format_table),
@@ -4094,7 +4094,7 @@ static char *
 format_find(struct format_tree *ft, const char *key, int modifiers,
     const char *time_format)
 {
-	struct format_table_entry	*fte;
+	const struct format_table_entry	*fte;
 	void				*value;
 	struct format_entry		*fe, fe_find;
 	struct environ_entry		*envent;
