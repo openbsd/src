@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.60 2026/06/13 17:12:02 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.61 2026/06/13 17:43:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -68,8 +68,9 @@ cmd_join_pane_place(struct cmdq_item *item, struct winlink *wl,
 {
 	struct window		*w = wl->window;
 	struct layout_cell	*lc = wp->layout_cell;
+	struct window_pane	*owp;
 	int			 wx = w->sx, wy = w->sy, px = lc->sx;
-	int			 py = lc->sy, xoff, yoff;
+	int			 py = lc->sy, xoff = lc->xoff, yoff = lc->yoff;
 
 	if (strcmp(position, "top-left") == 0) {
 		xoff = 1;
@@ -119,15 +120,66 @@ cmd_join_pane_place(struct cmdq_item *item, struct winlink *wl,
 	    strcmp(position, "bottom-right-center") == 0) {
 		xoff = (3 * wx) / 4 - px / 2;
 		yoff = (3 * wy) / 4 - py / 2;
+	} else if (strcmp(position, "front") == 0) {
+		TAILQ_REMOVE(&w->z_index, wp, zentry);
+		TAILQ_INSERT_HEAD(&w->z_index, wp, zentry);
+	} else if (strcmp(position, "back") == 0) {
+		TAILQ_REMOVE(&w->z_index, wp, zentry);
+		TAILQ_FOREACH(owp, &w->z_index, zentry) {
+			if (!window_pane_is_floating(owp))
+				break;
+		}
+		if (owp != NULL)
+			TAILQ_INSERT_BEFORE(owp, wp, zentry);
+		else
+			TAILQ_INSERT_TAIL(&w->z_index, wp, zentry);
+	} else if (strcmp(position, "forward") == 0) {
+		owp = TAILQ_PREV(wp, window_panes_zindex, zentry);
+		if (owp != NULL) {
+			TAILQ_REMOVE(&w->z_index, wp, zentry);
+			TAILQ_INSERT_BEFORE(owp, wp, zentry);
+		}
+	} else if (strcmp(position, "backward") == 0) {
+		owp = TAILQ_NEXT(wp, zentry);
+		if (owp != NULL && window_pane_is_floating(owp)) {
+			TAILQ_REMOVE(&w->z_index, wp, zentry);
+			TAILQ_INSERT_AFTER(&w->z_index, owp, wp, zentry);
+		}
+	} else if (strcmp(position, "forward-loop") == 0) {
+		owp = TAILQ_PREV(wp, window_panes_zindex, zentry);
+		TAILQ_REMOVE(&w->z_index, wp, zentry);
+		if (owp != NULL)
+			TAILQ_INSERT_BEFORE(owp, wp, zentry);
+		else {
+			TAILQ_FOREACH(owp, &w->z_index, zentry) {
+				if (!window_pane_is_floating(owp))
+					break;
+			}
+			if (owp != NULL)
+				TAILQ_INSERT_BEFORE(owp, wp, zentry);
+			else
+				TAILQ_INSERT_TAIL(&w->z_index, wp, zentry);
+		}
+	} else if (strcmp(position, "backward-loop") == 0) {
+		owp = TAILQ_NEXT(wp, zentry);
+		if (owp != NULL && window_pane_is_floating(owp)) {
+			TAILQ_REMOVE(&w->z_index, wp, zentry);
+			TAILQ_INSERT_AFTER(&w->z_index, owp, wp, zentry);
+		} else {
+			TAILQ_REMOVE(&w->z_index, wp, zentry);
+			TAILQ_INSERT_HEAD(&w->z_index, wp, zentry);
+		}
 	} else {
 		cmdq_error(item, "unknown position: %s", position);
 		return (CMD_RETURN_ERROR);
 	}
 
-	lc->xoff = xoff;
-	lc->yoff = yoff;
-	layout_fix_panes(w, NULL);
-	notify_window("window-layout-changed", w);
+	if (xoff != lc->xoff || yoff != lc->yoff) {
+		lc->xoff = xoff;
+		lc->yoff = yoff;
+		layout_fix_panes(w, NULL);
+		notify_window("window-layout-changed", w);
+	}
 	server_redraw_window(w);
 
 	return (CMD_RETURN_NORMAL);

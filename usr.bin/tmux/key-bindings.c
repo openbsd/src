@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.174 2026/06/13 17:12:02 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.175 2026/06/13 17:43:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -406,10 +406,10 @@ key_bindings_init(void)
 		"bind -N 'Choose a window from a list' w { choose-tree -Zw }",
 		"bind -N 'Kill the active pane' x { confirm-before -p\"kill-pane #P? (y/n)\" kill-pane }",
 		"bind -N 'Zoom the active pane' z { resize-pane -Z }",
-		"bind -N 'Move pane to top-left corner' '{' { move-pane -P top-left }",
-		"bind -N 'Move pane to top-right corner' '}' { move-pane -P top-right }",
-		"bind -N 'Move pane to bottom-left corner' 'M-{' { move-pane -P bottom-left }",
-		"bind -N 'Move pane to bottom-right corner' 'M-}' { move-pane -P bottom-right }",
+		"bind -N 'Move pane to top-left corner' '{' { resize-pane -x50% -y50%; move-pane -P top-left }",
+		"bind -N 'Move pane to top-right corner' '}' { resize-pane -x50% -y50%; move-pane -P top-right }",
+		"bind -N 'Move pane to bottom-left corner' 'M-{' { resize-pane -x50% -y50%; move-pane -P bottom-left }",
+		"bind -N 'Move pane to bottom-right corner' 'M-}' { resize-pane -x50% -y50%; move-pane -P bottom-right }",
 		"bind -N 'Show messages' '~' { show-messages }",
 		"bind -N 'Enter copy mode and scroll up' PPage { copy-mode -u }",
 		"bind -N 'Select the pane above the active pane' -r Up { select-pane -U }",
