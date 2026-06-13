@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.65 2026/06/13 18:30:16 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.66 2026/06/13 20:03:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -743,6 +743,7 @@ layout_resize_floating_pane(struct window_pane *wp, enum layout_type type,
 	}
 }
 
+/* Resize a layout cell. */
 void
 layout_resize_layout(struct window *w, struct layout_cell *lc,
     enum layout_type type, int change, int opposite)
@@ -788,8 +789,11 @@ layout_resize_pane(struct window_pane *wp, enum layout_type type, int change,
 		return;
 
 	/* If this is the last cell, move back one. */
-	if (lc == TAILQ_LAST(&lcparent->cells, layout_cells))
-		lc = TAILQ_PREV(lc, layout_cells, entry);
+	if (lc == TAILQ_LAST(&lcparent->cells, layout_cells)) {
+		do
+			lc = TAILQ_PREV(lc, layout_cells, entry);
+		while (lc->flags & LAYOUT_CELL_FLOATING);
+	}
 
 	layout_resize_layout(wp->window, lc, type, change, opposite);
 }
