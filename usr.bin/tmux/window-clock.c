@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.32 2026/04/22 07:05:59 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.33 2026/06/13 08:59:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -175,7 +175,7 @@ window_clock_init(struct window_mode_entry *wme,
 	struct window_clock_mode_data	*data;
 	struct screen			*s;
 
-	wme->data = data = xmalloc(sizeof *data);
+	wme->data = data = xcalloc(1, sizeof *data);
 	data->tim = time(NULL);
 
 	evtimer_set(&data->timer, window_clock_timer_callback, wme);

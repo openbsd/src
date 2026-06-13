@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.404 2026/06/10 14:29:08 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.405 2026/06/13 08:59:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5102,14 +5102,10 @@ window_copy_set_line_numbers(struct window_pane *wp, int enabled)
 	struct window_mode_entry	*wme = TAILQ_FIRST(&wp->modes);
 	struct window_copy_mode_data	*data;
 
-	if (wme == NULL)
-		return;
-	if (wme->mode != &window_copy_mode)
+	if (wme == NULL || wme->mode != &window_copy_mode)
 		return;
 	data = wme->data;
-	if (data == NULL)
-		return;
-	if (data->line_numbers == enabled)
+	if (data == NULL || data->line_numbers == enabled)
 		return;
 	data->line_numbers = enabled;
 	window_copy_redraw_screen(wme);
