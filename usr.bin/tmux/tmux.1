@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1087 2026/06/13 18:06:01 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1088 2026/06/13 20:39:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -2320,6 +2320,11 @@ that line.
 (emacs: C\-Down)
 .Xc
 Scroll down.
+If
+.Ic mode\-keys
+is
+.Ic vi ,
+the cursor is fixed relative to the text.
 .It Xo
 .Ic scroll\-down\-and\-cancel
 .Xc
@@ -2361,6 +2366,11 @@ that line.
 (emacs: C\-Up)
 .Xc
 Scroll up.
+If
+.Ic mode\-keys
+is
+.Ic vi ,
+the cursor is fixed relative to the text.
 .It Xo
 .Ic search\-again
 (vi: n)
