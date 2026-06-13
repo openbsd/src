@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.237 2026/05/16 07:27:03 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.238 2026/06/13 19:17:59 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -918,8 +918,8 @@ cert_ee_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 		plen = strlen(p);
 
 		if (fnlen < plen || strcmp(p, fn + fnlen - plen) != 0) {
-			warnx("%s: mismatch between pathname and SIA (%s)",
-			    fn, cert->signedobj);
+			warnx("%s: RFC 9981 section 4: mismatch between "
+			    "pathname and SIA (%s)", fn, cert->signedobj);
 			goto out;
 		}
 	}
