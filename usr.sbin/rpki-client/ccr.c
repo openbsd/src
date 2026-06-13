@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.38 2026/05/18 16:26:41 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.39 2026/06/13 19:16:14 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -508,7 +508,9 @@ generate_aspapayloadstate(struct validation_data *vd)
 		errx(1, "ASPAPayloadState_new");
 
 	RB_FOREACH(vap, vap_tree, &vd->vaps) {
-		append_cached_aspa(vaps->aps, vap);
+		if (!vap->overflowed) {
+			append_cached_aspa(vaps->aps, vap);
+		}
 	}
 
 	hash_asn1_item(vaps->hash, ASN1_ITEM_rptr(ASPAPayloadSets), vaps->aps);
