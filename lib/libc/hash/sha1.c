@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.29 2026/06/01 13:27:24 jsing Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.30 2026/06/13 16:21:29 jsing Exp $	*/
 /*
  * Copyright (c) 2024, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -143,6 +143,7 @@ sha1_round4(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, uint32_t *e,
 	*a = T;
 }
 
+#ifndef SHA1_SMALL
 void
 __sha1_block_generic(uint32_t state[5], const uint8_t *in, size_t num)
 {
@@ -358,13 +359,61 @@ __sha1_block_generic(uint32_t state[5], const uint8_t *in, size_t num)
 	}
 }
 #endif
+#endif
 
+#ifdef SHA1_SMALL
+void
+__sha1_block(uint32_t state[5], const uint8_t *in, size_t num)
+{
+	const uint32_t *in32;
+	uint32_t a, b, c, d, e;
+	uint32_t W[16];
+	int i;
+
+	while (num-- > 0) {
+		a = state[0];
+		b = state[1];
+		c = state[2];
+		d = state[3];
+		e = state[4];
+
+		for (i = 0; i < 80; i++) {
+			if (i < 16) {
+				W[i] = crypto_load_be32toh(&in[i * 4]);
+			} else {
+				sha1_msg_schedule_update(&W[i % 16],
+				    W[(i + 2) % 16], W[(i + 8) % 16],
+				    W[(i + 13) % 16]);
+			}
+			if (i < 20) {
+				sha1_round1(&a, &b, &c, &d, &e, W[i % 16]);
+			} else if (i < 40) {
+				sha1_round2(&a, &b, &c, &d, &e, W[i % 16]);
+			} else if (i < 60) {
+				sha1_round3(&a, &b, &c, &d, &e, W[i % 16]);
+			} else {
+				sha1_round4(&a, &b, &c, &d, &e, W[i % 16]);
+			}
+		}
+
+		in += SHA1_BLOCK_LENGTH;
+
+		state[0] += a;
+		state[1] += b;
+		state[2] += c;
+		state[3] += d;
+		state[4] += e;
+	}
+}
+
+#else
 #ifndef HAVE_SHA1_BLOCK
 void
 __sha1_block(uint32_t state[5], const uint8_t *in, size_t num)
 {
 	__sha1_block_generic(state, in, num);
 }
+#endif
 #endif
 
 void
