@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpthread.c,v 1.5 2025/05/24 03:44:06 bluhm Exp $	*/
+/*	$OpenBSD: tcpthread.c,v 1.6 2026/06/13 13:16:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
@@ -21,6 +21,8 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+
+#include <arpa/inet.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -504,6 +506,23 @@ drop_routine(void *arg)
 	return (void *)count;
 }
 
+static void
+print_addr(FILE* fh, const union sockaddr_union *su)
+{
+	char buf[100];
+
+	switch (su->su_sa.sa_family) {
+	case AF_INET:
+		fprintf(fh, "%s.%u\n", inet_ntop(AF_INET,
+		    &su->su_sin.sin_addr, buf, sizeof(buf)),
+		    ntohs(su->su_sin.sin_port));
+	case AF_INET6:
+		fprintf(fh, "%s.%u\n", inet_ntop(AF_INET6,
+		    &su->su_sin6.sin6_addr, buf, sizeof(buf)),
+		    ntohs(su->su_sin6.sin6_port));
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -516,6 +535,7 @@ main(int argc, char *argv[])
 	unsigned long connect_count, accept_count, send_count, recv_count,
 	    close_count, splice_count, unsplice_count, drop_count;
 	socklen_t len;
+	FILE *fh;
 
 	while ((ch = getopt(argc, argv, "a:c:D:I:M:n:o:r:S:s:t:U:")) != -1) {
 		switch (ch) {
@@ -685,6 +705,16 @@ main(int argc, char *argv[])
 				err(1, "listen");
 		}
 	}
+
+	if ((fh = fopen("listen.addrs", "w")) == NULL)
+		err(1, "fopen listen.addrs");
+	for (n = 0; n < sock_num; n++) {
+		print_addr(fh, &listen_addrs[n]);
+		if (splice_num > 0)
+			print_addr(fh, &splice_listen_addrs[n]);
+	}
+	if (fclose(fh) == EOF)
+		err(1, "fclose listen.addrs");
 
 	run = 1;
 
