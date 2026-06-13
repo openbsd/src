@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1346 2026/06/11 19:13:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1347 2026/06/13 09:17:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2729,6 +2729,7 @@ int		 tty_term_read_list(const char *, int, char ***, u_int *,
 		     char **);
 void		 tty_term_free_list(char **, u_int);
 int		 tty_term_has(struct tty_term *, enum tty_code_code);
+int		 tty_term_has_name(struct tty_term *, const char *);
 const char	*tty_term_string(struct tty_term *, enum tty_code_code);
 const char	*tty_term_string_i(struct tty_term *, enum tty_code_code, int);
 const char	*tty_term_string_ii(struct tty_term *, enum tty_code_code, int,
@@ -2746,6 +2747,7 @@ const char	*tty_term_describe(struct tty_term *, enum tty_code_code);
 /* tty-features.c */
 void		 tty_add_features(int *, const char *, const char *);
 const char	*tty_get_features(int);
+int		 tty_feature_present(struct tty_term *, const char *);
 int		 tty_apply_features(struct tty_term *, int);
 void		 tty_default_features(int *, const char *, u_int);
 

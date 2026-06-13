@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1081 2026/06/13 08:59:52 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1082 2026/06/13 09:17:29 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -6427,6 +6427,24 @@ option):
 .Ql #{t/f/%%H#:%%M:window_activity} ,
 see
 .Xr strftime 3 .
+.Pp
+The
+.Ql I:\&
+prefix will interrogate the client.
+.Ql I/f
+will be true if
+.Nm
+believes that the client supports the given terminal feature, for example
+.Ql I/f:RGB ,
+.Ql I/c
+will be true if a client has the given
+.Xr terminfo 3
+capability, for example
+.Ql I/c:smcup ,
+and
+.Ql I/e
+gives the value of a client environment variable, for example
+.Ql #{I/e:FOO} .
 .Pp
 The
 .Ql b:\&

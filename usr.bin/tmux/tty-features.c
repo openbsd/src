@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.36 2026/05/13 10:24:57 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.37 2026/06/13 09:17:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -430,6 +430,45 @@ tty_get_features(int feat)
 	if (*s != '\0')
 		s[strlen(s) - 1] = '\0';
 	return (s);
+}
+
+int
+tty_feature_present(struct tty_term *term, const char *name)
+{
+	const struct tty_feature	*tf = NULL;
+	const char *const		*capability;
+	u_int				 i;
+	char				*copy;
+
+	for (i = 0; i < nitems(tty_features); i++) {
+		tf = tty_features[i];
+		if (strcmp(tf->name, name) == 0) {
+			if (term->features & (1 << i))
+			    return (1);
+			break;
+		}
+	}
+
+	/*
+	 * We don't just have the feature flag set. Check if the capabilities
+	 * supported by the client are actual set instead.
+	 */
+	if (tf == NULL || strcmp(name, "ignorefkeys") == 0)
+		return (0);
+	if (tf->flags != 0 && (term->flags & tf->flags) != tf->flags)
+		return (0);
+	capability = tf->capabilities;
+	while (*capability != NULL) {
+		copy = xstrdup(*capability);
+		copy[strcspn(copy, "=")] = '\0';
+		if (!tty_term_has_name(term, copy)) {
+			free(copy);
+			return (0);
+		}
+		free(copy);
+		capability++;
+	}
+	return (1);
 }
 
 int
