@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.7 2024/05/20 23:13:33 jsg Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.8 2026/06/13 11:48:05 kirill Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -1277,11 +1277,13 @@ ogx_send_mbuf(struct ogx_softc *sc, struct mbuf *m0)
 			hdr |= (ehdrlen + sizeof(struct ip)) <<
 			    PKO3_SEND_HDR_L4PTR_S;
 			break;
+#ifdef INET6
 		case ETHERTYPE_IPV6:
 			hdr |= ehdrlen << PKO3_SEND_HDR_L3PTR_S;
 			hdr |= (ehdrlen + sizeof(struct ip6_hdr)) <<
 			    PKO3_SEND_HDR_L4PTR_S;
 			break;
+#endif
 		default:
 			break;
 		}
