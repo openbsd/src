@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.132 2026/06/13 08:59:52 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.133 2026/06/13 18:30:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -120,7 +120,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	else
 		lc = layout_get_tiled_cell(item, args, w, wp, flags, &cause);
 	if (cause != NULL) {
-		cmdq_error(item, "size or position %s", cause);
+		cmdq_error(item, "%s", cause);
 		free(cause);
 		return (CMD_RETURN_ERROR);
 	}
