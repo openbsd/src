@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.107 2026/06/14 14:53:07 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.108 2026/06/14 15:51:17 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -460,9 +460,19 @@ tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		return 0;
 	}
+	if (ctx->hs->tls13.key_share != NULL &&
+	    ctx->hs->tls13.server_group == tls_key_share_group(ctx->hs->tls13.key_share)) {
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+		return 0;
+	}
 
-	/* Switch to new key share. */
+	/* Free original key shares. */
 	tls_key_share_free(ctx->hs->key_share);
+	ctx->hs->key_share = NULL;
+	tls_key_share_free(ctx->hs->tls13.key_share);
+	ctx->hs->tls13.key_share = NULL;
+
+	/* Create new key share for server selected group. */
 	if ((ctx->hs->key_share =
 	    tls_key_share_new(ctx->hs->tls13.server_group)) == NULL)
 		return 0;
