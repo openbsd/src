@@ -1,4 +1,4 @@
-/* $OpenBSD: renegotiation_test.c,v 1.3 2025/03/12 14:07:35 jsing Exp $ */
+/* $OpenBSD: renegotiation_test.c,v 1.4 2026/06/14 14:33:36 jsing Exp $ */
 /*
  * Copyright (c) 2020,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "ssl_local.h"
+
 const char *server_ca_file;
 const char *server_cert_file;
 const char *server_key_file;
@@ -28,7 +30,13 @@ const char *server_key_file;
 int debug = 0;
 
 int tls_client_alert;
+int tls_client_error;
+
 int tls_server_alert;
+int tls_server_error;
+
+int tls_client_disable_ri;
+int tls_server_disable_ri;
 
 static void
 hexdump(const unsigned char *buf, size_t len)
@@ -101,7 +109,7 @@ tls_server(BIO *rbio, BIO *wbio)
 }
 
 static int
-ssl_error(SSL *ssl, const char *name, const char *desc, int ssl_ret)
+ssl_error(SSL *ssl, const char *name, const char *desc, int ssl_ret, int *error)
 {
 	int ssl_err;
 
@@ -122,10 +130,11 @@ ssl_error(SSL *ssl, const char *name, const char *desc, int ssl_ret)
 		if (tls_client_alert >> 8 == SSL3_AL_WARNING ||
 		    tls_server_alert >> 8 == SSL3_AL_WARNING) {
 			ERR_clear_error();
-			return 1;
+			return 0;
 		}
-		fprintf(stderr, "FAIL: %s %s failed - ssl err = %d, errno = %d\n",
+		fprintf(stderr, "INFO: %s %s failed - ssl err = %d, errno = %d\n",
 		    name, desc, ssl_err, errno);
+		*error = ERR_peek_error();
 		ERR_print_errors_fp(stderr);
 		return 0;
 	}
@@ -134,7 +143,7 @@ ssl_error(SSL *ssl, const char *name, const char *desc, int ssl_ret)
 }
 
 static int
-do_connect(SSL *ssl, const char *name, int *done)
+do_connect(SSL *ssl, const char *name, int *done, int *error)
 {
 	int ssl_ret;
 
@@ -144,11 +153,11 @@ do_connect(SSL *ssl, const char *name, int *done)
 		return 1;
 	}
 
-	return ssl_error(ssl, name, "connect", ssl_ret);
+	return ssl_error(ssl, name, "connect", ssl_ret, error);
 }
 
 static int
-do_accept(SSL *ssl, const char *name, int *done)
+do_accept(SSL *ssl, const char *name, int *done, int *error)
 {
 	int ssl_ret;
 
@@ -158,11 +167,11 @@ do_accept(SSL *ssl, const char *name, int *done)
 		return 1;
 	}
 
-	return ssl_error(ssl, name, "accept", ssl_ret);
+	return ssl_error(ssl, name, "accept", ssl_ret, error);
 }
 
 static int
-do_read(SSL *ssl, const char *name, int *done)
+do_read(SSL *ssl, const char *name, int *done, int *error)
 {
 	uint8_t buf[512];
 	int ssl_ret;
@@ -175,11 +184,11 @@ do_read(SSL *ssl, const char *name, int *done)
 		return 1;
 	}
 
-	return ssl_error(ssl, name, "read", ssl_ret);
+	return ssl_error(ssl, name, "read", ssl_ret, error);
 }
 
 static int
-do_write(SSL *ssl, const char *name, int *done)
+do_write(SSL *ssl, const char *name, int *done, int *error)
 {
 	const uint8_t buf[] = "Hello, World!\n";
 	int ssl_ret;
@@ -190,11 +199,11 @@ do_write(SSL *ssl, const char *name, int *done)
 		return 1;
 	}
 
-	return ssl_error(ssl, name, "write", ssl_ret);
+	return ssl_error(ssl, name, "write", ssl_ret, error);
 }
 
 static int
-do_shutdown(SSL *ssl, const char *name, int *done)
+do_shutdown(SSL *ssl, const char *name, int *done, int *error)
 {
 	int ssl_ret;
 
@@ -204,10 +213,10 @@ do_shutdown(SSL *ssl, const char *name, int *done)
 		*done = 1;
 		return 1;
 	}
-	return ssl_error(ssl, name, "shutdown", ssl_ret);
+	return ssl_error(ssl, name, "shutdown", ssl_ret, error);
 }
 
-typedef int (*ssl_func)(SSL *ssl, const char *name, int *done);
+typedef int (*ssl_func)(SSL *ssl, const char *name, int *done, int *error);
 
 static int
 do_client_server_loop(SSL *client, ssl_func client_func, SSL *server,
@@ -220,13 +229,15 @@ do_client_server_loop(SSL *client, ssl_func client_func, SSL *server,
 		if (!client_done) {
 			if (debug)
 				fprintf(stderr, "DEBUG: client loop\n");
-			if (!client_func(client, "client", &client_done))
+			if (!client_func(client, "client", &client_done,
+			    &tls_client_error))
 				return 0;
 		}
 		if (!server_done) {
 			if (debug)
 				fprintf(stderr, "DEBUG: server loop\n");
-			if (!server_func(server, "server", &server_done))
+			if (!server_func(server, "server", &server_done,
+			    &tls_server_error))
 				return 0;
 		}
 	} while (i++ < 100 && (!client_done || !server_done));
@@ -245,8 +256,12 @@ struct tls_reneg_test {
 	int renegotiate_client;
 	int renegotiate_server;
 	int client_ignored;
+	int client_disable_ri;
+	int server_disable_ri;
 	int want_client_alert;
 	int want_server_alert;
+	int want_client_connect_error;
+	int want_server_renegotiate_error;
 	int want_failure;
 };
 
@@ -346,6 +361,38 @@ static const struct tls_reneg_test tls_reneg_tests[] = {
 		.want_failure = 1,
 	},
 	{
+		.desc = "TLSv1.2 - Server Renegotiation Indication disabled, "
+		    "client legacy connect",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_client_options = SSL_OP_LEGACY_SERVER_CONNECT,
+		.server_disable_ri = 1,
+	},
+	{
+		.desc = "TLSv1.2 - Server Renegotiation Indication disabled, "
+		    "no client legacy connect",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.server_disable_ri = 1,
+		.want_client_connect_error = SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED,
+	},
+	{
+		.desc = "TLSv1.2 - Server Renegotiation Indication disabled, "
+		    "client legacy connect, client renegotiates",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_client_options = SSL_OP_LEGACY_SERVER_CONNECT,
+		.server_disable_ri = 1,
+		.renegotiate_client = 1,
+		.want_client_alert = SSL3_AL_WARNING << 8 | SSL_AD_NO_RENEGOTIATION,
+	},
+	{
+		.desc = "TLSv1.2 - Server Renegotiation Indication disabled, "
+		    "client legacy connect, server renegotiates",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_client_options = SSL_OP_LEGACY_SERVER_CONNECT,
+		.server_disable_ri = 1,
+		.renegotiate_server = 1,
+		.want_server_renegotiate_error = SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED,
+	},
+	{
 		.desc = "TLSv1.3 - No renegotiation supported, no renegotiation",
 		.ssl_max_proto_version = TLS1_3_VERSION,
 	},
@@ -376,6 +423,11 @@ tls_client_info_callback(const SSL *ssl, int where, int value)
 		    SSL_alert_desc_string_long(value));
 		tls_client_alert = value;
 	}
+
+	if (tls_client_disable_ri) {
+		ssl->s3->renegotiate_seen = 0;
+		ssl->s3->send_connection_binding = 0;
+	}
 }
 
 static void
@@ -386,6 +438,11 @@ tls_server_info_callback(const SSL *ssl, int where, int value)
 		    SSL_alert_type_string_long(value),
 		    SSL_alert_desc_string_long(value));
 		tls_server_alert = value;
+	}
+
+	if (tls_server_disable_ri) {
+		ssl->s3->renegotiate_seen = 0;
+		ssl->s3->send_connection_binding = 0;
 	}
 }
 
@@ -445,6 +502,8 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 	if ((client = tls_client(server_wbio, client_wbio)) == NULL)
 		goto failure;
 
+	SSL_clear_options(client, SSL_OP_LEGACY_SERVER_CONNECT);
+
 	SSL_set_options(client, trt->ssl_client_options);
 	SSL_set_info_callback(client, tls_client_info_callback);
 
@@ -458,10 +517,30 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 		goto failure;
 
 	tls_client_alert = 0;
+	tls_client_error = 0;
+
 	tls_server_alert = 0;
+	tls_server_error = 0;
+
+	tls_client_disable_ri = trt->client_disable_ri;
+	tls_server_disable_ri = trt->server_disable_ri;
 
 	if (!do_client_server_loop(client, do_connect, server, do_accept)) {
+		if (trt->want_client_connect_error != 0) {
+			if (ERR_GET_REASON(tls_client_error) != trt->want_client_connect_error) {
+				fprintf(stderr, "FAIL: got client error 0x%x, want "
+				    "error 0x%x\n", ERR_GET_REASON(tls_client_error),
+				    trt->want_client_connect_error);
+				goto failure;
+			}
+			goto done;
+		}
 		fprintf(stderr, "FAIL: client and server handshake failed\n");
+		goto failure;
+	}
+
+	if (trt->want_client_connect_error != 0) {
+		fprintf(stderr, "FAIL: handshake should have failed\n");
 		goto failure;
 	}
 
@@ -500,7 +579,16 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 			goto failure;
 
 		if (!do_client_server_loop(client, do_read, server, do_write)) {
-			fprintf(stderr, "FAIL: client read and server write failed\n");
+			if (trt->want_server_renegotiate_error != 0) {
+				if (ERR_GET_REASON(tls_server_error) != trt->want_server_renegotiate_error) {
+					fprintf(stderr, "FAIL: got server error 0x%x, want "
+					    "error 0x%x\n", ERR_GET_REASON(tls_server_error),
+					    trt->want_server_renegotiate_error);
+					goto failure;
+				}
+				goto done;
+			}
+			fprintf(stderr, "FAIL: client write and server read failed\n");
 			goto failure;
 		}
 
