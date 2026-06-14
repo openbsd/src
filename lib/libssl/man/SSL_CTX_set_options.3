@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.17 2025/06/08 22:52:00 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.18 2026/06/14 14:30:52 jsing Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 14 2026 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -151,14 +151,8 @@ The following
 .Em bug workaround
 options are available:
 .Bl -tag -width Ds
-.It Dv SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
-Disables a countermeasure against a TLS 1.0 protocol vulnerability
-affecting CBC ciphers, which cannot be handled by some broken SSL
-implementations.
-This option has no effect for connections using other ciphers.
 .It Dv SSL_OP_ALL
-This is currently an alias for
-.Dv SSL_OP_LEGACY_SERVER_CONNECT .
+This currently does nothing.
 .El
 .Pp
 It is usually safe to use
@@ -179,9 +173,7 @@ When set, the server will choose following its own preferences.
 Turn on Cookie Exchange as described in RFC 4347 Section 4.2.1.
 Only affects DTLS connections.
 .It Dv SSL_OP_LEGACY_SERVER_CONNECT
-Allow legacy insecure renegotiation between OpenSSL and unpatched servers
-.Em only :
-this option is currently set by default.
+Allow connections to legacy servers that do not support secure renegotiation.
 See the
 .Sx SECURE RENEGOTIATION
 section for more details.
@@ -229,6 +221,7 @@ instead.
 The following options used to be supported at some point in the past
 and no longer have any effect:
 .Dv SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION ,
+.Dv SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS ,
 .Dv SSL_OP_EPHEMERAL_RSA ,
 .Dv SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER ,
 .Dv SSL_OP_MICROSOFT_SESS_ID_BUG ,
@@ -250,83 +243,6 @@ and no longer have any effect:
 .Dv SSL_OP_TLS_D5_BUG ,
 .Dv SSL_OP_TLS_ROLLBACK_BUG ,
 .Dv SSL_OP_TLSEXT_PADDING .
-.Sh SECURE RENEGOTIATION
-OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
-described in RFC 5746.
-This counters the prefix attack described in CVE-2009-3555 and elsewhere.
-.Pp
-This attack has far-reaching consequences which application writers should be
-aware of.
-In the description below an implementation supporting secure renegotiation is
-referred to as
-.Dq patched .
-A server not supporting secure
-renegotiation is referred to as
-.Dq unpatched .
-.Pp
-The following sections describe the operations permitted by OpenSSL's secure
-renegotiation implementation.
-.Ss Patched client and server
-Connections and renegotiation are always permitted by OpenSSL implementations.
-.Ss Unpatched client and patched OpenSSL server
-The initial connection succeeds but client renegotiation is denied by the
-server with a
-.Em no_renegotiation
-warning alert.
-.Pp
-If the patched OpenSSL server attempts to renegotiate, a fatal
-.Em handshake_failure
-alert is sent.
-This is because the server code may be unaware of the unpatched nature of the
-client.
-.Pp
-Note that a bug in OpenSSL clients earlier than 0.9.8m (all of which
-are unpatched) will result in the connection hanging if it receives a
-.Em no_renegotiation
-alert.
-OpenSSL versions 0.9.8m and later will regard a
-.Em no_renegotiation
-alert as fatal and respond with a fatal
-.Em handshake_failure
-alert.
-This is because the OpenSSL API currently has no provision to indicate to an
-application that a renegotiation attempt was refused.
-.Ss Patched OpenSSL client and unpatched server
-If the option
-.Dv SSL_OP_LEGACY_SERVER_CONNECT
-is set then initial connections and renegotiation between patched OpenSSL
-clients and unpatched servers succeeds.
-If neither option is set then initial connections to unpatched servers will
-fail.
-.Pp
-The option
-.Dv SSL_OP_LEGACY_SERVER_CONNECT
-is currently set by default even though it has security implications:
-otherwise it would be impossible to connect to unpatched servers (i.e., all of
-them initially) and this is clearly not acceptable.
-Renegotiation is permitted because this does not add any additional security
-issues: during an attack clients do not see any renegotiations anyway.
-.Pp
-As more servers become patched, the option
-.Dv SSL_OP_LEGACY_SERVER_CONNECT
-will
-.Em not
-be set by default in a future version of OpenSSL.
-.Pp
-OpenSSL client applications wishing to ensure they can connect to unpatched
-servers should always
-.Em set
-.Dv SSL_OP_LEGACY_SERVER_CONNECT .
-.Pp
-OpenSSL client applications that want to ensure they can
-.Em not
-connect to unpatched servers (and thus avoid any security issues) should always
-.Em clear
-.Dv SSL_OP_LEGACY_SERVER_CONNECT
-using
-.Fn SSL_CTX_clear_options
-or
-.Fn SSL_clear_options .
 .Sh RETURN VALUES
 .Fn SSL_CTX_set_options
 and
