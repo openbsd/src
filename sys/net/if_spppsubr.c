@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.201 2026/05/16 13:27:03 daniel Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.202 2026/06/14 05:39:23 mvs Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -3813,8 +3813,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_string((char*)passwd, passwd_len);
 			addlog(">\n");
 		}
-		if (name_len > AUTHMAXLEN ||
-		    passwd_len > AUTHMAXLEN ||
+		if (name_len != strlen(sp->hisauth.name) ||
+		    passwd_len != strlen(sp->hisauth.secret) ||
 		    bcmp(name, sp->hisauth.name, name_len) != 0 ||
 		    bcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
 			/* action scn, tld */
