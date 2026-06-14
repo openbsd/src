@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.51 2026/05/19 05:04:11 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.52 2026/06/14 08:48:04 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -250,9 +250,10 @@ int
 config_getreset(struct relayd *env, struct imsg *imsg)
 {
 	u_int		 mode;
-
-	IMSG_SIZE_CHECK(imsg, &mode);
-	memcpy(&mode, imsg->data, sizeof(mode));
+	if (imsg_get_data(imsg, &mode, sizeof(mode)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		return (-1);
+	}
 
 	config_purge(env, mode);
 
@@ -267,11 +268,12 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 	struct host		*h, *ph;
 	u_int			 what;
 
-	if (IMSG_DATA_SIZE(imsg) != sizeof(struct relayd_config))
-		return (0); /* ignore */
-
 	/* Update runtime flags */
-	memcpy(&env->sc_conf, imsg->data, sizeof(env->sc_conf));
+	if (imsg_get_data(imsg, &env->sc_conf,
+		    sizeof(struct relayd_config)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		return (-1);
+	}
 
 	what = ps->ps_what[privsep_process];
 
@@ -341,21 +343,26 @@ config_settable(struct relayd *env, struct table *tb)
 int
 config_gettable(struct relayd *env, struct imsg *imsg)
 {
+	struct ibuf		 ibuf;
 	struct table		*tb;
 	size_t			 sb;
-	u_int8_t		*p = imsg->data;
-	size_t			 s;
+
+	if (imsg_get_ibuf(imsg, &ibuf) == -1) {
+		log_warn("%s: imsg_get_ibuf", __func__);
+		return (-1);
+	}
 
 	if ((tb = calloc(1, sizeof(*tb))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, &tb->conf);
-	memcpy(&tb->conf, p, sizeof(tb->conf));
-	s = sizeof(tb->conf);
-
-	sb = IMSG_DATA_SIZE(imsg) - s;
-	if (sb > 0) {
-		if ((tb->sendbuf = get_string(p + s, sb)) == NULL) {
+	if (ibuf_get(&ibuf, &tb->conf, sizeof(tb->conf)) == -1) {
+		log_warn("%s: ibuf_get", __func__);
+		free(tb);
+		return (-1);
+	}
+	if ((sb = ibuf_size(&ibuf)) > 0) {
+		if ((tb->sendbuf = get_string(ibuf_data(&ibuf), sb)) == NULL) {
+			log_warn("%s: get_string", __func__);
 			free(tb);
 			return (-1);
 		}
@@ -363,6 +370,7 @@ config_gettable(struct relayd *env, struct imsg *imsg)
 	if (tb->conf.check == CHECK_BINSEND_EXPECT) {
 		tb->sendbinbuf = string2binary(tb->sendbuf);
 		if (tb->sendbinbuf == NULL) {
+			free(tb->sendbuf);
 			free(tb);
 			return (-1);
 		}
@@ -389,8 +397,11 @@ config_gethost(struct relayd *env, struct imsg *imsg)
 	if ((host = calloc(1, sizeof(*host))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, &host->conf);
-	memcpy(&host->conf, imsg->data, sizeof(host->conf));
+	if (imsg_get_data(imsg, &host->conf, sizeof(host->conf)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		free(host);
+		return (-1);
+	}
 
 	if (host_find(env, host->conf.id) != NULL) {
 		log_debug("%s: host %d already exists",
@@ -457,8 +468,11 @@ config_getrdr(struct relayd *env, struct imsg *imsg)
 	if ((rdr = calloc(1, sizeof(*rdr))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, &rdr->conf);
-	memcpy(&rdr->conf, imsg->data, sizeof(rdr->conf));
+	if (imsg_get_data(imsg, &rdr->conf, sizeof(rdr->conf)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		free(rdr);
+		return (-1);
+	}
 
 	if ((rdr->table = table_find(env, rdr->conf.table_id)) == NULL) {
 		log_debug("%s: table not found", __func__);
@@ -488,11 +502,14 @@ config_getvirt(struct relayd *env, struct imsg *imsg)
 	struct rdr	*rdr;
 	struct address	*virt;
 
-	IMSG_SIZE_CHECK(imsg, virt);
-
 	if ((virt = calloc(1, sizeof(*virt))) == NULL)
 		return (-1);
-	memcpy(virt, imsg->data, sizeof(*virt));
+
+	if (imsg_get_data(imsg, virt, sizeof(*virt)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		free(virt);
+		return (-1);
+	}
 
 	if ((rdr = rdr_find(env, virt->rdrid)) == NULL) {
 		log_debug("%s: rdr not found", __func__);
@@ -544,8 +561,11 @@ config_getrt(struct relayd *env, struct imsg *imsg)
 	if ((rt = calloc(1, sizeof(*rt))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, &rt->rt_conf);
-	memcpy(&rt->rt_conf, imsg->data, sizeof(rt->rt_conf));
+	if (imsg_get_data(imsg, &rt->rt_conf, sizeof(rt->rt_conf)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		free(rt);
+		return (-1);
+	}
 
 	if ((rt->rt_gwtable = table_find(env, rt->rt_conf.gwtable)) == NULL) {
 		log_debug("%s: table not found", __func__);
@@ -574,8 +594,11 @@ config_getroute(struct relayd *env, struct imsg *imsg)
 	if ((nr = calloc(1, sizeof(*nr))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, &nr->nr_conf);
-	memcpy(&nr->nr_conf, imsg->data, sizeof(nr->nr_conf));
+	if (imsg_get_data(imsg, &nr->nr_conf, sizeof(nr->nr_conf)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		free(nr);
+		return (-1);
+	}
 
 	if (route_find(env, nr->nr_conf.id) != NULL) {
 		log_debug("%s: route %d already exists",
@@ -690,22 +713,28 @@ config_setrule(struct relayd *env, struct protocol *proto)
 int
 config_getproto(struct relayd *env, struct imsg *imsg)
 {
+	struct ibuf		 ibuf;
 	struct protocol		*proto;
-	size_t			 styl;
 	size_t			 s;
-	u_int8_t		*p = imsg->data;
+
+	if (imsg_get_ibuf(imsg, &ibuf) == -1) {
+		log_warn("%s: imsg_get_ibuf", __func__);
+		return (-1);
+	}
 
 	if ((proto = calloc(1, sizeof(*proto))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, proto);
-	memcpy(proto, p, sizeof(*proto));
-	s = sizeof(*proto);
-
-	styl = IMSG_DATA_SIZE(imsg) - s;
-	proto->style = NULL;
-	if (styl > 0) {
-		if ((proto->style = get_string(p + s, styl - 1)) == NULL) {
+	if (ibuf_get(&ibuf, proto, sizeof(*proto)) == -1) {
+		log_warn("%s: ibuf_get", __func__);
+		free(proto);
+		return (-1);
+	}
+	if ((s = ibuf_size(&ibuf)) > 0) {
+		proto->style = NULL;
+		if ((proto->style = get_string(ibuf_data(&ibuf), s - 1))
+		    == NULL) {
+			log_warn("%s: get_string", __func__);
 			free(proto);
 			return (-1);
 		}
@@ -729,40 +758,48 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 int
 config_getrule(struct relayd *env, struct imsg *imsg)
 {
+	struct ibuf		 ibuf;
 	struct protocol		*proto;
 	struct relay_rule	*rule;
-	size_t			 s, i;
-	u_int8_t		*p = imsg->data;
+	size_t			 i;
 	ssize_t			 len;
+
+	if (imsg_get_ibuf(imsg, &ibuf) == -1) {
+		log_warn("%s: imsg_get_ibuf", __func__);
+		return (-1);
+	}
 
 	if ((rule = calloc(1, sizeof(*rule))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, rule);
-	memcpy(rule, p, sizeof(*rule));
-	s = sizeof(*rule);
-	len = IMSG_DATA_SIZE(imsg) - s;
+	if (ibuf_get(&ibuf, rule, sizeof(*rule)) == -1) {
+		log_warn("%s: ibuf_get", __func__);
+		free(rule);
+		return (-1);
+	}
 
 	if ((proto = proto_find(env, rule->rule_protoid)) == NULL) {
 		free(rule);
 		return (-1);
 	}
 
+
 #define GETKV(_n, _f)	{						\
-	if (rule->rule_ctl.kvlen[_n]._f >= 0) {				\
+	len = rule->rule_ctl.kvlen[_n]._f;				\
+	if (len >= 0) {							\
 		/* Also accept "empty" 0-length strings */		\
-		if ((len < rule->rule_ctl.kvlen[_n]._f) ||		\
+		if (ibuf_size(&ibuf) < (size_t)len ||			\
 		    (rule->rule_kv[_n].kv_##_f =			\
-		    get_string(p + s,					\
-		    rule->rule_ctl.kvlen[_n]._f)) == NULL) {		\
+		    get_string(ibuf_data(&ibuf), len)) == NULL) {	\
 			free(rule);					\
 			return (-1);					\
 		}							\
-		s += rule->rule_ctl.kvlen[_n]._f;			\
-		len -= rule->rule_ctl.kvlen[_n]._f;			\
-									\
+		if (len > 0 && ibuf_skip(&ibuf, len) == -1) {		\
+			free(rule);					\
+			return (-1);					\
+		}							\
 		DPRINTF("%s: %s %s (len %ld, option %d): %s", __func__,	\
-		    #_n, #_f, rule->rule_ctl.kvlen[_n]._f,		\
+		    #_n, #_f, len,					\
 		    rule->rule_kv[_n].kv_option,			\
 		    rule->rule_kv[_n].kv_##_f);				\
 	}								\
@@ -1027,17 +1064,24 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 int
 config_getrelay(struct relayd *env, struct imsg *imsg)
 {
+	struct ibuf		 ibuf;
 	struct privsep		*ps = env->sc_ps;
 	struct relay		*rlay;
-	u_int8_t		*p = imsg->data;
-	size_t			 s;
+	size_t			s;
+
+	if (imsg_get_ibuf(imsg, &ibuf) == -1) {
+		log_warn("%s: imsg_get_ibuf", __func__);
+		return (-1);
+	}
 
 	if ((rlay = calloc(1, sizeof(*rlay))) == NULL)
 		return (-1);
 
-	IMSG_SIZE_CHECK(imsg, &rlay->rl_conf);
-	memcpy(&rlay->rl_conf, p, sizeof(rlay->rl_conf));
-	s = sizeof(rlay->rl_conf);
+	if (ibuf_get(&ibuf, &rlay->rl_conf, sizeof(rlay->rl_conf)) == -1) {
+		log_warn("%s: ibuf_get", __func__);
+		free(rlay);
+		return (-1);
+	}
 
 	rlay->rl_s = imsg_get_fd(imsg);
 	rlay->rl_tls_ca_fd = -1;
@@ -1054,17 +1098,15 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 		}
 	}
 
-	if ((off_t)(IMSG_DATA_SIZE(imsg) - s) <
-	    (rlay->rl_conf.tls_cakey_len)) {
+	s = ibuf_size(&ibuf);
+	if (s != (size_t)rlay->rl_conf.tls_cakey_len) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
-
-	if (rlay->rl_conf.tls_cakey_len) {
-		if ((rlay->rl_tls_cakey = get_data(p + s,
-		    rlay->rl_conf.tls_cakey_len)) == NULL)
+	if (s > 0) {
+		if ((rlay->rl_tls_cakey = get_data(ibuf_data(&ibuf), s))
+		    == NULL)
 			goto fail;
-		s += rlay->rl_conf.tls_cakey_len;
 	}
 
 	TAILQ_INIT(&rlay->rl_tables);
@@ -1092,10 +1134,14 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 	struct ctl_relaytable	 crt;
 	struct relay		*rlay;
 	struct table		*table;
-	u_int8_t		*p = imsg->data;
 
-	IMSG_SIZE_CHECK(imsg, &crt);
-	memcpy(&crt, p, sizeof(crt));
+	if (imsg_get_data(imsg, &crt, sizeof(crt)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		return (-1);
+	}
+
+	if ((rlt = calloc(1, sizeof(*rlt))) == NULL)
+		goto fail;
 
 	if ((rlay = relay_find(env, crt.relayid)) == NULL) {
 		log_debug("%s: unknown relay", __func__);
@@ -1106,9 +1152,6 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 		log_debug("%s: unknown table", __func__);
 		goto fail;
 	}
-
-	if ((rlt = calloc(1, sizeof(*rlt))) == NULL)
-		goto fail;
 
 	rlt->rlt_table = table;
 	rlt->rlt_mode = crt.mode;
@@ -1133,10 +1176,11 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 	struct ctl_relayfd	 crfd;
 	struct relay		*rlay = NULL;
 	struct relay_cert	*cert;
-	u_int8_t		*p = imsg->data;
 
-	IMSG_SIZE_CHECK(imsg, &crfd);
-	memcpy(&crfd, p, sizeof(crfd));
+	if (imsg_get_data(imsg, &crfd, sizeof(crfd)) == -1) {
+		log_warn("%s: imsg_get_data", __func__);
+		return (-1);
+	}
 
 	switch (crfd.type) {
 	case RELAY_FD_CERT:
