@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.67 2026/06/14 08:45:02 rsadowski Exp $	*/
+/*	$OpenBSD: control.c,v 1.68 2026/06/14 08:53:06 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -403,7 +403,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 void
 control_imsg_forward(struct imsg *imsg)
 {
-        struct ctl_conn *c;
+	struct ctl_conn *c;
 
 	TAILQ_FOREACH(c, &ctl_conns, entry) {
 		if (c->flags & CTL_CONN_NOTIFY) {
