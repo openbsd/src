@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.162 2026/06/08 12:05:25 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.163 2026/06/14 15:47:49 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1501,7 +1501,7 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	const uint16_t *client_groups = NULL, *server_groups = NULL;
 	size_t client_groups_len = 0, server_groups_len = 0;
 	size_t i, j, client_groups_index;
-	int preferred_group_found = 0;
+	int shared_group_found = 0;
 	int decode_error;
 	uint16_t client_preferred_group = 0;
 	uint16_t group;
@@ -1577,19 +1577,30 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	/*
 	 * Find the group that is most preferred by the client that
-	 * we also support.
+	 * is also supported by the server.
 	 */
-	for (i = 0; i < client_groups_len && !preferred_group_found; i++) {
+	for (i = 0; i < client_groups_len && !shared_group_found; i++) {
 		if (!ssl_security_supported_group(s, client_groups[i]))
 			continue;
 		for (j = 0; j < server_groups_len; j++) {
 			if (server_groups[j] == client_groups[i]) {
+				/* XXX - this should be equivalent to tls1_check_group() */
 				client_preferred_group = client_groups[i];
 				s->s3->hs.tls13.server_group = client_preferred_group;
-				preferred_group_found = 1;
+				shared_group_found = 1;
 				break;
 			}
 		}
+	}
+
+	if (!shared_group_found) {
+		/*
+		 * There are no supported groups that are shared between the
+		 * client and server - this is treated as a handshake failure
+		 * or as insufficient security - see RFC 8446 section 4.1.1.
+		 */
+		*alert = TLS13_ALERT_HANDSHAKE_FAILURE;
+		return 0;
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &client_shares))
@@ -1637,7 +1648,7 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		 * less preferred, and we choose to to use it instead of
 		 * requesting the more preferred group.
 		 */
-		if (!preferred_group_found || group != client_preferred_group)
+		if (group != client_preferred_group)
 			continue;
 
 		/* Decode and store the selected key share. */
