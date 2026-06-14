@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.54 2026/06/14 08:37:00 rsadowski Exp $	*/
+/*	$OpenBSD: proc.c,v 1.55 2026/06/14 08:52:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -793,7 +793,7 @@ proc_composev(struct privsep *ps, enum privsep_procid id,
 	return (proc_composev_imsg(ps, id, -1, type, -1, -1, iov, iovcnt));
 }
 
-int
+void
 proc_forward_imsg(struct privsep *ps, struct imsg *imsg,
     enum privsep_procid id)
 {
@@ -802,11 +802,9 @@ proc_forward_imsg(struct privsep *ps, struct imsg *imsg,
 	proc_range(ps, id, &n, &m);
 	for (; n < m; n++) {
 		if (imsg_forward(&ps->ps_ievs[id][n].ibuf, imsg) == -1)
-			return (-1);
+			fatal("%s: imsg_forward", __func__);
 		imsg_event_add(&ps->ps_ievs[id][n]);
 	}
-
-	return (0);
 }
 
 struct imsgbuf *
