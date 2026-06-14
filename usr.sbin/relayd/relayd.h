@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.282 2026/06/14 08:45:02 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.283 2026/06/14 08:51:11 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -929,12 +929,6 @@ struct imsgev {
 	void			*data;
 	short			 events;
 };
-
-#define IMSG_SIZE_CHECK(imsg, p) do {				\
-	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))			\
-		fatalx("bad length imsg received");		\
-} while (0)
-#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;

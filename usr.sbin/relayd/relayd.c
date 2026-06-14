@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.199 2026/06/03 19:26:56 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.200 2026/06/14 08:51:11 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -399,36 +399,49 @@ parent_shutdown(struct relayd *env)
 int
 parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
+	struct ibuf		 ibuf;
 	struct privsep		*ps = p->p_ps;
 	struct relayd		*env = ps->ps_env;
 	struct ctl_demote	 demote;
 	struct ctl_netroute	 crt;
 	u_int			 v;
 	char			*str = NULL;
+	size_t			 s;
 
 	switch (imsg->hdr.type) {
 	case IMSG_DEMOTE:
-		IMSG_SIZE_CHECK(imsg, &demote);
-		memcpy(&demote, imsg->data, sizeof(demote));
+		if (imsg_get_data(imsg, &demote, sizeof(demote)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
 		demote.group[sizeof(demote.group) - 1] = '\0';
 		carp_demote_set(demote.group, demote.level);
 		break;
 	case IMSG_RTMSG:
-		IMSG_SIZE_CHECK(imsg, &crt);
-		memcpy(&crt, imsg->data, sizeof(crt));
+		if (imsg_get_data(imsg, &crt, sizeof(crt)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
 		crt.host.name[sizeof(crt.host.name) - 1] = '\0';
 		crt.rt.name[sizeof(crt.rt.name) - 1] = '\0';
 		crt.rt.label[sizeof(crt.rt.label) - 1] = '\0';
 		pfe_route(env, &crt);
 		break;
 	case IMSG_CTL_RESET:
-		IMSG_SIZE_CHECK(imsg, &v);
-		memcpy(&v, imsg->data, sizeof(v));
+		if (imsg_get_data(imsg, &v, sizeof(v)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
 		parent_reload(env, v, NULL);
 		break;
 	case IMSG_CTL_RELOAD:
-		if (IMSG_DATA_SIZE(imsg) > 0)
-			str = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
+		if (imsg_get_ibuf(imsg, &ibuf) != -1 &&
+		    (s = ibuf_size(&ibuf)) > 0) {
+			if ((str = get_string(ibuf_data(&ibuf), s)) == NULL) {
+				log_warn("%s: get_string", __func__);
+				return (-1);
+			}
+		}
 		parent_reload(env, CONFIG_RELOAD, str);
 		free(str);
 		break;
@@ -457,8 +470,10 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_SCRIPT:
-		IMSG_SIZE_CHECK(imsg, &scr);
-		bcopy(imsg->data, &scr, sizeof(scr));
+		if (imsg_get_data(imsg, &scr, sizeof(scr)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
 		scr.name[sizeof(scr.name) - 1] = '\0';
 		scr.path[sizeof(scr.path) - 1] = '\0';
 		scr.retval = script_exec(env, &scr);
@@ -484,8 +499,11 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_BINDANY:
-		IMSG_SIZE_CHECK(imsg, &bnd);
-		bcopy(imsg->data, &bnd, sizeof(bnd));
+		if (imsg_get_data(imsg, &bnd, sizeof(bnd)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
+
 		if (bnd.bnd_proc < 0 || bnd.bnd_proc > env->sc_conf.prefork_relay)
 			fatalx("%s: invalid relay proc", __func__);
 		switch (bnd.bnd_proto) {
