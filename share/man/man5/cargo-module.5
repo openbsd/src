@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cargo-module.5,v 1.10 2025/01/13 18:20:47 kirill Exp $
+.\"	$OpenBSD: cargo-module.5,v 1.11 2026/06/14 14:02:44 semarie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\" Copyright (c) 2017 Daniel Jakots
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 13 2025 $
+.Dd $Mdocdate: June 14 2026 $
 .Dt CARGO-MODULE 5
 .Os
 .Sh NAME
@@ -57,6 +57,17 @@ crates defined in
 are moved to the
 .Ev MODCARGO_VENDOR_DIR
 directory.
+If
+.Ev MODCARGO_CRATES_BUILDDEP
+is enabled,
+the module may modify vendored crates in order to prefer system libraries
+instead of bundled upstream copies.
+This affects several common
+.Dq -sys
+crates such as
+.Dq openssl-sys
+and
+.Dq libsqlite3-sys .
 .Pp
 During
 .Cm post-patch ,
@@ -89,6 +100,15 @@ is added to
 .Pp
 This module defines:
 .Bl -tag -width MODCARGO_INSTALL_TARGET_PATHS
+.It Ev MODCARGO_BUILD
+Whether to define the default
+.Cm do-build
+target.
+Defaults to
+.Sq Yes .
+.It Ev MODCARGO_BUILD_ARGS
+Additional arguments passed to
+.Cm cargo build .
 .It Ev MODCARGO_CARGOTOML
 Path to cargo manifest.
 Defaults to
@@ -103,16 +123,74 @@ Defaults to
 .Pa ${MODCARGO_CARGOTOML:toml=lock} .
 .It Ev MODCARGO_CRATES
 Crates that will be downloaded by the module.
+.It Ev MODCARGO_CRATES_BUILDDEP
+Whether to modify vendored crates in order to prefer system libraries over
+bundled upstream sources.
+Defaults to
+.Sq Yes .
+.It Ev MODCARGO_CRATES_KEEP
+List of crates that should not be modified during
+.Cm post-extract .
+Entries may be specified either as crate names or
+.Dq name-version .
 .It Ev MODCARGO_CRATES_UPDATE
 List of crates to update, overriding the version listed in Cargo.lock.
+.It Ev MODCARGO_DIST_SUBDIR
+Subdirectory used for crate distfiles.
+Defaults to
+.Sq cargo .
+If
+.Ev DIST_SUBDIR
+is defined,
+.Ev MODCARGO_DIST_SUBDIR
+must also be defined.
 .It Ev MODCARGO_FEATURES
 List of features to be used when building.
+.It Ev MODCARGO_INSTALL
+Whether to define the default
+.Cm do-install
+target.
+Defaults to
+.Sq Yes .
+.It Ev MODCARGO_INSTALL_ARGS
+Additional arguments passed to
+.Cm cargo install .
 .It Ev MODCARGO_INSTALL_TARGET_PATHS
 List of paths to pass to
 .Cm cargo install
 instead of
 .Pa \&. .
 Needs to be set for some virtual manifests.
+.It Ev MODCARGO_NO_DEFAULT_FEATURES
+If set to
+.Sq Yes ,
+pass
+.Cm --no-default-features
+to cargo commands.
+.It Ev MODCARGO_RUSTFLAGS
+Flags passed to all
+.Xr rustc 1
+invocations performed by
+.Xr cargo 1 .
+.It Ev MODCARGO_TARGET_DIR
+Location of cargo build artifacts.
+Defaults to
+.Pa ${WRKBUILD}/target .
+.It Ev MODCARGO_TEST
+Whether to define the default
+.Cm do-test
+target.
+Defaults to
+.Sq Yes .
+.It Ev MODCARGO_TEST_ARGS
+Additional arguments passed to
+.Cm cargo test .
+.It Ev MODCARGO_CARGO_BIN
+Path to the
+.Xr cargo 1
+binary.
+Defaults to the version provided by
+.Pa devel/cargo .
 .It Ev MODCARGO_VENDOR_DIR
 Name of the local directory for vendoring crates.
 Defaults to
@@ -125,6 +203,11 @@ It is a copy of
 .Ev MODRUST_WANTLIB
 provided for simplicity.
 .El
+.Pp
+The module creates a local cargo configuration in
+.Pa ${WRKDIR}/.cargo/config.toml
+which configures vendored sources, offline operation,
+Rust toolchain paths, and build profiles.
 .Pp
 This module adds three
 .Xr make 1
