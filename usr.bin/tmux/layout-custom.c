@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.33 2026/06/02 08:13:50 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.34 2026/06/14 08:47:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -379,6 +379,8 @@ layout_construct(struct layout_cell *lcparent, const char **layout,
 	struct layout_cell	*lcchild;
 
 	*lc = layout_construct_cell(lcparent, layout);
+	if (*lc == NULL)
+		return (-1);
 
 	switch (**layout) {
 	case ',':
