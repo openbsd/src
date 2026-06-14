@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.65 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: control.c,v 1.66 2026/06/14 08:37:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -361,7 +361,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 		case IMSG_CTL_SHUTDOWN:
 		case IMSG_CTL_RELOAD:
-			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, -1);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT);
 			break;
 		case IMSG_CTL_POLL:
 			proc_compose(env->sc_ps, PROC_HCE,
@@ -385,9 +385,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 
-			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT, -1);
-			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE, -1);
-			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY, -1);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY);
 
 			memcpy(imsg.data, &verbose, sizeof(verbose));
 			control_imsg_forward(ps, &imsg);
