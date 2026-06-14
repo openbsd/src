@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.53 2026/06/14 08:55:54 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.54 2026/06/14 08:57:43 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -476,6 +476,8 @@ ca_engine_init(struct relayd *x_env)
 		goto fail;
 	}
 
+	ERR_clear_error();
+
 	RSA_meth_set_priv_enc(rsae_method, rsae_priv_enc);
 	RSA_meth_set_priv_dec(rsae_method, rsae_priv_dec);
 
@@ -489,6 +491,6 @@ ca_engine_init(struct relayd *x_env)
 	return;
 
  fail:
-	RSA_meth_free(rsae_method);
+	ssl_error(errstr);
 	fatalx("%s: %s", __func__, errstr);
 }

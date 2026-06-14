@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.40 2026/05/21 14:56:34 tb Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.41 2026/06/14 08:57:43 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -63,6 +63,8 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	if ((fp = fopen(name, "r")) == NULL)
 		return (NULL);
 
+	ERR_clear_error();
+
 	key = PEM_read_PrivateKey(fp, NULL, ssl_password_cb, pass);
 	fclose(fp);
 	if (key == NULL)
@@ -88,6 +90,7 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	return (buf);
 
  fail:
+	ssl_error("ssl_load_key");
 	free(buf);
 	if (bio != NULL)
 		BIO_free_all(bio);
@@ -236,4 +239,16 @@ ssl_load_pkey(char *buf, off_t len, X509 **x509ptr, EVP_PKEY **pkeyptr)
 	BIO_free(in);
 
 	return (0);
+}
+
+void
+ssl_error(const char *where)
+{
+	unsigned long	code;
+	char		errbuf[128];
+
+	for (; (code = ERR_get_error()) != 0 ;) {
+		ERR_error_string_n(code, errbuf, sizeof(errbuf));
+		log_warnx("SSL library error: %s: %s", where, errbuf);
+	}
 }

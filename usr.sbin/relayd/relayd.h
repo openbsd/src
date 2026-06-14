@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.285 2026/06/14 08:54:21 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.286 2026/06/14 08:57:43 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1286,6 +1286,7 @@ void	 script_done(struct relayd *, struct ctl_script *);
 int	 script_exec(struct relayd *, struct ctl_script *);
 
 /* ssl.c */
+void	 ssl_error(const char *);
 char	*ssl_load_key(struct relayd *, const char *, off_t *, char *);
 uint8_t *ssl_update_certificate(const uint8_t *, size_t, EVP_PKEY *,
 	    EVP_PKEY *, X509 *, size_t *);
