@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.377 2026/06/13 20:07:30 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.378 2026/06/14 19:31:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1151,7 +1151,7 @@ format_cb_pane_at_top(struct format_tree *ft)
 		return (NULL);
 	w = wp->window;
 
-	status = options_get_number(w->options, "pane-border-status");
+	status = window_get_pane_status(w);
 	if (status == PANE_STATUS_TOP)
 		flag = (wp->yoff == 1);
 	else

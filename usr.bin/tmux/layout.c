@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.67 2026/06/14 18:59:15 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.68 2026/06/14 19:31:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -348,7 +348,7 @@ layout_fix_panes(struct window *w, struct window_pane *skip)
 	int			 status, scrollbars, sb_pos, sb_w, sb_pad;
 	u_int			 sx, sy;
 
-	status = options_get_number(w->options, "pane-border-status");
+	status = window_get_pane_status(w);
 	scrollbars = options_get_number(w->options, "pane-scrollbars");
 	sb_pos = options_get_number(w->options, "pane-scrollbars-position");
 
@@ -426,7 +426,7 @@ layout_resize_check(struct window *w, struct layout_cell *lc,
 	u_int			 available, minimum;
 	int			 status, scrollbars;
 
-	status = options_get_number(w->options, "pane-border-status");
+	status = window_get_pane_status(w);
 	scrollbars = options_get_number(w->options, "pane-scrollbars");
 
 	if (lc->type == LAYOUT_WINDOWPANE) {
@@ -1060,7 +1060,7 @@ layout_split_pane(struct window_pane *wp, enum layout_type type, int size,
 		lc = wp->window->layout_root;
 	else
 		lc = wp->layout_cell;
-	status = options_get_number(wp->window->options, "pane-border-status");
+	status = window_get_pane_status(wp->window);
 	scrollbars = options_get_number(wp->window->options, "pane-scrollbars");
 
 	/* Copy the old cell size. */
@@ -1283,7 +1283,7 @@ layout_spread_cell(struct window *w, struct layout_cell *parent)
 		number++;
 	if (number <= 1)
 		return (0);
-	status = options_get_number(w->options, "pane-border-status");
+	status = window_get_pane_status(w);
 
 	if (parent->type == LAYOUT_LEFTRIGHT)
 		size = parent->sx;

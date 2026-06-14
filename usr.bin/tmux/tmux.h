@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1348 2026/06/13 10:32:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1349 2026/06/14 19:31:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3472,8 +3472,9 @@ int		 window_pane_get_bg_control_client(struct window_pane *);
 int		 window_get_bg_client(struct window_pane *);
 enum client_theme window_pane_get_theme(struct window_pane *);
 void		 window_pane_send_theme_update(struct window_pane *);
-struct style_range *window_pane_border_status_get_range(struct window_pane *,
-			u_int, u_int);
+int		 window_get_pane_status(struct window *);
+struct style_range *window_pane_status_get_range(struct window_pane *, u_int,
+		     u_int);
 int		 window_pane_is_floating(struct window_pane *);
 
 /* layout.c */
