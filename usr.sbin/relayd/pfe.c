@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.92 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.93 2026/06/14 08:41:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -126,10 +126,10 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	control_imsg_forward(p->p_ps, imsg);
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_HOST_STATUS:
-		IMSG_SIZE_CHECK(imsg, &st);
-		memcpy(&st, imsg->data, sizeof(st));
+		if (imsg_get_data(imsg, &st, sizeof(st)) == -1)
+			return (-1);
 		if ((host = host_find(env, st.id)) == NULL)
 			fatalx("%s: invalid host id", __func__);
 		host->he = st.he;
@@ -199,7 +199,7 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_TABLE:
 		config_gettable(env, imsg);
 		break;
@@ -260,10 +260,10 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	int			 cid;
 	objid_t			 sid;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_NATLOOK:
-		IMSG_SIZE_CHECK(imsg, &cnl);
-		bcopy(imsg->data, &cnl, sizeof(cnl));
+		if (imsg_get_data(imsg, &cnl, sizeof(cnl)) == -1)
+			return (-1);
 		if (cnl.proc > env->sc_conf.prefork_relay)
 			fatalx("%s: invalid relay proc", __func__);
 		if (natlook(env, &cnl) != 0)
@@ -272,8 +272,8 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    IMSG_NATLOOK, -1, -1, &cnl, sizeof(cnl));
 		break;
 	case IMSG_STATISTICS:
-		IMSG_SIZE_CHECK(imsg, &crs);
-		bcopy(imsg->data, &crs, sizeof(crs));
+		if (imsg_get_data(imsg, &crs, sizeof(crs)) == -1)
+			return (-1);
 		if (crs.proc > env->sc_conf.prefork_relay)
 			fatalx("%s: invalid relay proc", __func__);
 		if ((rlay = relay_find(env, crs.id)) == NULL)
@@ -283,8 +283,8 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    env->sc_conf.statinterval.tv_sec;
 		break;
 	case IMSG_CTL_SESSION:
-		IMSG_SIZE_CHECK(imsg, &con);
-		memcpy(&con, imsg->data, sizeof(con));
+		if (imsg_get_data(imsg, &con, sizeof(con)) == -1)
+			return (-1);
 		if ((c = control_connbyfd(con.se_cid)) == NULL) {
 			log_debug("%s: control connection %d not found",
 			    __func__, con.se_cid);
@@ -295,8 +295,8 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    &con, sizeof(con));
 		break;
 	case IMSG_CTL_END:
-		IMSG_SIZE_CHECK(imsg, &cid);
-		memcpy(&cid, imsg->data, sizeof(cid));
+		if (imsg_get_data(imsg, &cid, sizeof(cid)) == -1)
+			return (-1);
 		if ((c = control_connbyfd(cid)) == NULL) {
 			log_debug("%s: control connection %d not found",
 			    __func__, cid);
@@ -312,10 +312,10 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_SESS_PUBLISH:
-		IMSG_SIZE_CHECK(imsg, s);
 		if ((s = calloc(1, sizeof(*s))) == NULL)
 			return (0);		/* XXX */
-		memcpy(s, imsg->data, sizeof(*s));
+		if (imsg_get_data(imsg, s, sizeof(*s)) == -1)
+			return (-1);
 		TAILQ_FOREACH(t, &env->sc_sessions, se_entry) {
 			/* duplicate registration */
 			if (t->se_id == s->se_id) {
@@ -331,8 +331,8 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			TAILQ_INSERT_TAIL(&env->sc_sessions, s, se_entry);
 		break;
 	case IMSG_SESS_UNPUBLISH:
-		IMSG_SIZE_CHECK(imsg, &sid);
-		memcpy(&sid, imsg->data, sizeof(sid));
+		if (imsg_get_data(imsg, &sid, sizeof(sid)) == -1)
+			return (-1);
 		TAILQ_FOREACH(s, &env->sc_sessions, se_entry)
 			if (s->se_id == sid)
 				break;

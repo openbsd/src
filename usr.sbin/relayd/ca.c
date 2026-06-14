@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.50 2026/03/05 07:27:01 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.51 2026/06/14 08:41:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -193,7 +193,7 @@ ca_launch(void)
 int
 ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_RELAY:
 		config_getrelay(env, imsg);
 		break;
@@ -226,7 +226,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct iovec		 iov[2];
 	int			 c = 0;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CA_PRIVENC:
 	case IMSG_CA_PRIVDEC:
 		IMSG_SIZE_CHECK(imsg, (&cko));
@@ -244,7 +244,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			iov[c].iov_base = &cko;
 			iov[c++].iov_len = sizeof(cko);
 			if (proc_composev_imsg(env->sc_ps, PROC_RELAY,
-			    cko.cko_proc, imsg->hdr.type, -1, -1, iov,
+			    cko.cko_proc, imsg_get_type(imsg), -1, -1, iov,
 			     c) == -1)
 				log_warn("%s: proc_composev_imsg", __func__);
 			break;
@@ -260,7 +260,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((to = calloc(1, cko.cko_tlen)) == NULL)
 			fatalx("%s: calloc", __func__);
 
-		switch (imsg->hdr.type) {
+		switch (imsg_get_type(imsg)) {
 		case IMSG_CA_PRIVENC:
 			cko.cko_tlen = RSA_private_encrypt(cko.cko_flen,
 			    from, to, rsa, cko.cko_padding);
@@ -285,7 +285,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 
 		if (proc_composev_imsg(env->sc_ps, PROC_RELAY, cko.cko_proc,
-		    imsg->hdr.type, -1, -1, iov, c) == -1)
+		    imsg_get_type(imsg), -1, -1, iov, c) == -1)
 			log_warn("%s: proc_composev_imsg", __func__);
 
 		free(to);

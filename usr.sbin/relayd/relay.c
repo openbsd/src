@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.263 2026/04/02 13:38:24 tb Exp $	*/
+/*	$OpenBSD: relay.c,v 1.264 2026/06/14 08:41:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1868,7 +1868,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	objid_t			 id;
 	int			 cid;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_HOST_DISABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((host = host_find(env, id)) == NULL)
@@ -1907,8 +1907,8 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			host->up = HOST_UNKNOWN;
 		break;
 	case IMSG_HOST_STATUS:
-		IMSG_SIZE_CHECK(imsg, &st);
-		memcpy(&st, imsg->data, sizeof(st));
+		if (imsg_get_data(imsg, &st, sizeof(st)) == -1)
+			return (-1);
 		if ((host = host_find(env, st.id)) == NULL)
 			fatalx("%s: invalid host id", __func__);
 		if (host->flags & F_DISABLE)
@@ -1953,8 +1953,8 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		evtimer_add(&con->se_ev, &tv);
 		break;
 	case IMSG_CTL_SESSION:
-		IMSG_SIZE_CHECK(imsg, &cid);
-		memcpy(&cid, imsg->data, sizeof(cid));
+		if (imsg_get_data(imsg, &cid, sizeof(cid)) == -1)
+			return (-1);
 		TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 			SPLAY_FOREACH(con, session_tree,
 			    &rlay->rl_sessions) {
@@ -1977,11 +1977,11 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 relay_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CA_PRIVENC:
 	case IMSG_CA_PRIVDEC:
 		log_warnx("%s: priv%s result after timeout", __func__,
-		    imsg->hdr.type == IMSG_CA_PRIVENC ? "enc" : "dec");
+		    imsg_get_type(imsg) == IMSG_CA_PRIVENC ? "enc" : "dec");
 		return (0);
 	}
 
@@ -1991,13 +1991,12 @@ relay_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct relay_ticket_key	 ticket;
 	struct relay		*rlay;
 	struct rsession		*con;
 	struct timeval		 tv;
 	objid_t			 id;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_BINDANY:
 		bcopy(imsg->data, &id, sizeof(id));
 		if ((con = session_find(env, id)) == NULL) {
@@ -2045,8 +2044,9 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		config_getreset(env, imsg);
 		break;
 	case IMSG_TLSTICKET_REKEY:
-		IMSG_SIZE_CHECK(imsg, (&ticket));
-		memcpy(&env->sc_ticket, imsg->data, sizeof(env->sc_ticket));
+		if (imsg_get_data(imsg, &env->sc_ticket,
+		    sizeof(env->sc_ticket)) == -1)
+			return (-1);
 		TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 			if (rlay->rl_conf.flags & F_TLS)
 				tls_config_add_ticket_key(rlay->rl_tls_cfg,
@@ -2065,7 +2065,7 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 relay_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	default:
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.83 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: hce.c,v 1.84 2026/06/14 08:41:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -289,7 +289,7 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct host		*host;
 	struct table		*table;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_HOST_DISABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((host = host_find(env, id)) == NULL)
@@ -342,10 +342,10 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ctl_script	 scr;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_SCRIPT:
-		IMSG_SIZE_CHECK(imsg, &scr);
-		bcopy(imsg->data, &scr, sizeof(scr));
+		if (imsg_get_data(imsg, &scr, sizeof(scr)) == -1)
+			return (-1);
 		script_done(env, &scr);
 		break;
 	case IMSG_CFG_TABLE:
@@ -373,7 +373,7 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 hce_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	default:
 		break;
 	}
