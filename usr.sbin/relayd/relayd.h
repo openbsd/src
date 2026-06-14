@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.284 2026/06/14 08:52:16 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.285 2026/06/14 08:54:21 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1336,8 +1336,7 @@ void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 void		 socket_rlimit(int);
-char		*get_string(u_int8_t *, size_t);
-void		*get_data(u_int8_t *, size_t);
+void		*get_data(struct ibuf *, size_t);
 int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
 struct in6_addr *prefixlen2mask6(u_int8_t, u_int32_t *);
 u_int32_t	 prefixlen2mask(u_int8_t);

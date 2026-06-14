@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.200 2026/06/14 08:51:11 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.201 2026/06/14 08:54:21 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -437,8 +437,8 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_RELOAD:
 		if (imsg_get_ibuf(imsg, &ibuf) != -1 &&
 		    (s = ibuf_size(&ibuf)) > 0) {
-			if ((str = get_string(ibuf_data(&ibuf), s)) == NULL) {
-				log_warn("%s: get_string", __func__);
+			if ((str = ibuf_get_string(&ibuf, s)) == NULL) {
+				log_warn("%s: ibuf_get_string", __func__);
 				return (-1);
 			}
 		}
@@ -1787,28 +1787,21 @@ socket_rlimit(int maxfd)
 		fatal("%s: failed to set resource limit", __func__);
 }
 
-char *
-get_string(u_int8_t *ptr, size_t len)
-{
-	size_t	 i;
-
-	for (i = 0; i < len; i++)
-		if (!(isprint((unsigned char)ptr[i]) ||
-		    isspace((unsigned char)ptr[i])))
-			break;
-
-	return strndup(ptr, i);
-}
-
 void *
-get_data(u_int8_t *ptr, size_t len)
+get_data(struct ibuf *ibuf, size_t len)
 {
 	u_int8_t	*data;
 
+	if (len == 0)
+		return (NULL);
+
 	if ((data = malloc(len)) == NULL)
 		return (NULL);
-	memcpy(data, ptr, len);
 
+	if (ibuf_get(ibuf, data, len) == -1) {
+		free(data);
+		return (NULL);
+	}
 	return (data);
 }
 

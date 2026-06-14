@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.52 2026/06/14 08:48:04 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.53 2026/06/14 08:54:21 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -361,8 +361,8 @@ config_gettable(struct relayd *env, struct imsg *imsg)
 		return (-1);
 	}
 	if ((sb = ibuf_size(&ibuf)) > 0) {
-		if ((tb->sendbuf = get_string(ibuf_data(&ibuf), sb)) == NULL) {
-			log_warn("%s: get_string", __func__);
+		if ((tb->sendbuf = ibuf_get_string(&ibuf, sb)) == NULL) {
+			log_warn("%s: ibuf_get_string", __func__);
 			free(tb);
 			return (-1);
 		}
@@ -732,9 +732,9 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 	}
 	if ((s = ibuf_size(&ibuf)) > 0) {
 		proto->style = NULL;
-		if ((proto->style = get_string(ibuf_data(&ibuf), s - 1))
+		if ((proto->style = ibuf_get_string(&ibuf, s - 1))
 		    == NULL) {
-			log_warn("%s: get_string", __func__);
+			log_warn("%s: ibuf_get_string", __func__);
 			free(proto);
 			return (-1);
 		}
@@ -790,11 +790,7 @@ config_getrule(struct relayd *env, struct imsg *imsg)
 		/* Also accept "empty" 0-length strings */		\
 		if (ibuf_size(&ibuf) < (size_t)len ||			\
 		    (rule->rule_kv[_n].kv_##_f =			\
-		    get_string(ibuf_data(&ibuf), len)) == NULL) {	\
-			free(rule);					\
-			return (-1);					\
-		}							\
-		if (len > 0 && ibuf_skip(&ibuf, len) == -1) {		\
+		    ibuf_get_string(&ibuf, len)) == NULL) {		\
 			free(rule);					\
 			return (-1);					\
 		}							\
@@ -1104,8 +1100,7 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 		goto fail;
 	}
 	if (s > 0) {
-		if ((rlay->rl_tls_cakey = get_data(ibuf_data(&ibuf), s))
-		    == NULL)
+		if ((rlay->rl_tls_cakey = get_data(&ibuf, s)) == NULL)
 			goto fail;
 	}
 
