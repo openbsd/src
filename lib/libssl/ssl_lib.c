@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.334 2026/05/09 11:29:51 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.335 2026/06/14 14:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2178,11 +2178,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;
 
-	/*
-	 * Default is to connect to non-RI servers. When RI is more widely
-	 * deployed might change this.
-	 */
-	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+	ret->options = 0;
 
 	return (ret);
  err:

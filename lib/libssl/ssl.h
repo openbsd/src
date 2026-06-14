@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.250 2026/04/03 13:11:00 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.251 2026/06/14 14:25:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -402,8 +402,7 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
 #define SSL_OP_NO_DTLSv1_2				0x80000000L
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
-#define SSL_OP_ALL \
-    (SSL_OP_LEGACY_SERVER_CONNECT)
+#define SSL_OP_ALL					0x0
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
 #define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0
