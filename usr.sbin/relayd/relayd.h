@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.281 2026/06/14 08:37:00 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.282 2026/06/14 08:45:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1154,7 +1154,7 @@ int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
 void	 control_cleanup(struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
-void	 control_imsg_forward(struct privsep *ps, struct imsg *);
+void	 control_imsg_forward(struct imsg *);
 struct ctl_conn	*
 	 control_connbyfd(int);
 
