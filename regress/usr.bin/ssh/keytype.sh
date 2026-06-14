@@ -1,4 +1,4 @@
-#	$OpenBSD: keytype.sh,v 1.12 2025/05/06 06:05:48 djm Exp $
+#	$OpenBSD: keytype.sh,v 1.13 2026/06/14 04:08:05 djm Exp $
 #	Placed in the Public Domain.
 
 tid="login with different key types"
@@ -17,14 +17,15 @@ for i in ${SSH_KEYTYPES}; do
 		ecdsa-sha2-nistp521)	ktypes="$ktypes ecdsa-521" ;;
 		sk-ssh-ed25519*)	ktypes="$ktypes ed25519-sk" ;;
 		sk-ecdsa-sha2-nistp256*) ktypes="$ktypes ecdsa-sk" ;;
+		ssh-mldsa44-ed25519*)	ktypes="$ktypes mldsa44-ed25519" ;;
 	esac
 done
 
 for kt in $ktypes; do
 	rm -f $OBJ/key.$kt
 	case "$kt" in
-	*sk)	type="$kt"; bits="n/a"; bits_arg="";;
-	*)	type=${kt%-*}; bits=${kt#*-}; bits_arg="-b $bits";;
+	mldsa*|*sk) type="$kt"; bits="n/a"; bits_arg="";;
+	*) type=${kt%-*}; bits=${kt#*-}; bits_arg="-b $bits";;
 	esac
 	verbose "keygen $type, $bits bits"
 	${SSHKEYGEN} $bits_arg -q -N '' -t $type  -f $OBJ/key.$kt || \
@@ -40,6 +41,7 @@ kname_to_ktype() {
 	rsa-*)		echo rsa-sha2-512,rsa-sha2-256,ssh-rsa;;
 	ed25519-sk)	echo sk-ssh-ed25519@openssh.com;;
 	ecdsa-sk)	echo sk-ecdsa-sha2-nistp256@openssh.com;;
+	mldsa44-ed25519) echo ssh-mldsa44-ed25519@openssh.com ;;
 	esac
 }
 
