@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.161 2026/02/06 22:59:18 dtucker Exp $ */
+/* $OpenBSD: sshkey.c,v 1.162 2026/06/14 03:59:34 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -87,6 +87,8 @@ extern const struct sshkey_impl sshkey_ed25519_impl;
 extern const struct sshkey_impl sshkey_ed25519_cert_impl;
 extern const struct sshkey_impl sshkey_ed25519_sk_impl;
 extern const struct sshkey_impl sshkey_ed25519_sk_cert_impl;
+extern const struct sshkey_impl sshkey_mldsa44_ed25519_impl;
+extern const struct sshkey_impl sshkey_mldsa44_ed25519_cert_impl;
 #ifdef WITH_OPENSSL
 extern const struct sshkey_impl sshkey_ecdsa_sk_impl;
 extern const struct sshkey_impl sshkey_ecdsa_sk_cert_impl;
@@ -111,6 +113,8 @@ const struct sshkey_impl * const keyimpls[] = {
 	&sshkey_ed25519_cert_impl,
 	&sshkey_ed25519_sk_impl,
 	&sshkey_ed25519_sk_cert_impl,
+	&sshkey_mldsa44_ed25519_impl,
+	&sshkey_mldsa44_ed25519_cert_impl,
 #ifdef WITH_OPENSSL
 	&sshkey_ecdsa_nistp256_impl,
 	&sshkey_ecdsa_nistp256_cert_impl,
@@ -422,6 +426,8 @@ sshkey_type_plain(int type)
 		return KEY_ECDSA_SK;
 	case KEY_ED25519_CERT:
 		return KEY_ED25519;
+	case KEY_MLDSA44_ED25519_CERT:
+		return KEY_MLDSA44_ED25519;
 	case KEY_ED25519_SK_CERT:
 		return KEY_ED25519_SK;
 	default:
@@ -442,6 +448,8 @@ sshkey_type_certified(int type)
 		return KEY_ECDSA_SK_CERT;
 	case KEY_ED25519:
 		return KEY_ED25519_CERT;
+	case KEY_MLDSA44_ED25519:
+		return KEY_MLDSA44_ED25519_CERT;
 	case KEY_ED25519_SK:
 		return KEY_ED25519_SK_CERT;
 	default:
@@ -3342,6 +3350,7 @@ sshkey_private_to_fileblob(struct sshkey *key, struct sshbuf *blob,
 #ifdef WITH_OPENSSL
 	case KEY_ECDSA_SK:
 #endif /* WITH_OPENSSL */
+	case KEY_MLDSA44_ED25519:
 		return sshkey_private_to_blob2(key, blob, passphrase,
 		    comment, openssh_format_cipher, openssh_format_rounds);
 	default:

@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.448 2026/05/31 13:12:07 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.449 2026/06/14 03:59:34 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -302,6 +302,8 @@ fill_default_server_options(ServerOptions *options)
 		    _PATH_HOST_ECDSA_KEY_FILE, 0);
 		servconf_add_hostkey("[default]", 0, options,
 		    _PATH_HOST_ED25519_KEY_FILE, 0);
+		servconf_add_hostkey("[default]", 0, options,
+		    _PATH_HOST_MLDSA44_ED25519_KEY_FILE, 0);
 	}
 	/* No certificates by default */
 	if (options->num_ports == 0)
