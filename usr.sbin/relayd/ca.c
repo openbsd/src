@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.52 2026/06/14 08:50:26 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.53 2026/06/14 08:55:54 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -223,7 +223,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ctl_keyop	 cko;
 	EVP_PKEY		*pkey;
 	RSA			*rsa;
-	u_char			*from = NULL, *to = NULL;
+	u_char			*to = NULL;
 	struct iovec		 iov[2];
 	int			 c = 0;
 
@@ -265,19 +265,17 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		DPRINTF("%s:%d: key hash %s proc %d",
 		    __func__, __LINE__, cko.cko_hash, cko.cko_proc);
 
-		from = ibuf_data(&ibuf);
-
 		if ((to = calloc(1, cko.cko_tlen)) == NULL)
 			fatalx("%s: calloc", __func__);
 
 		switch (imsg_get_type(imsg)) {
 		case IMSG_CA_PRIVENC:
-			cko.cko_tlen = RSA_private_encrypt(cko.cko_flen,
-			    from, to, rsa, cko.cko_padding);
+			cko.cko_tlen = RSA_private_encrypt(ibuf_size(&ibuf),
+			    ibuf_data(&ibuf), to, rsa, cko.cko_padding);
 			break;
 		case IMSG_CA_PRIVDEC:
-			cko.cko_tlen = RSA_private_decrypt(cko.cko_flen,
-			    from, to, rsa, cko.cko_padding);
+			cko.cko_tlen = RSA_private_decrypt(ibuf_size(&ibuf),
+			    ibuf_data(&ibuf), to, rsa, cko.cko_padding);
 			break;
 		}
 
@@ -330,7 +328,6 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	struct imsgev	*iev;
 	struct imsg	 imsg;
 	int		 n, done = 0, cnt = 0;
-	u_char		*toptr;
 	static u_int	 seq = 0;
 
 	if ((hash = RSA_get_ex_data(rsa, 0)) == NULL)
@@ -430,10 +427,9 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				    __func__, cmd == IMSG_CA_PRIVENC ?
 				    "enc" : "dec", cko.cko_hash);
 			} else if (ret > 0) {
-				if (ibuf_size(&ibuf) != (size_t)ret)
+				if (ibuf_get(&ibuf, to, ret) == -1
+				    || ibuf_size(&ibuf) != 0)
 					fatalx("data size");
-				toptr = ibuf_data(&ibuf);
-				memcpy(to, toptr, ret);
 			}
 			done = 1;
 
