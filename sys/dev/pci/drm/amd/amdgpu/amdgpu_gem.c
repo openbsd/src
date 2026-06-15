@@ -176,10 +176,10 @@ amdgpu_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 			goto unlock;
 		}
 
-		 ret = ttm_bo_vm_fault_reserved(ufi, vaddr,
-						TTM_BO_VM_NUM_PREFAULT, 1);
+		ret = ttm_bo_vm_fault_reserved(ufi, vaddr,
+					       TTM_BO_VM_NUM_PREFAULT, 1);
 
-		 drm_dev_exit(idx);
+		drm_dev_exit(idx);
 	} else {
 		STUB();
 #ifdef notyet
