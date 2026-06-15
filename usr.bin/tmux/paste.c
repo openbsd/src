@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.50 2026/04/28 08:52:37 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.51 2026/06/15 21:41:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,7 +177,6 @@ paste_add(const char *prefix, char *data, size_t size)
 	}
 
 	pb = xmalloc(sizeof *pb);
-
 	pb->name = NULL;
 	do {
 		free(pb->name);
@@ -297,7 +296,6 @@ paste_set(char *data, size_t size, const char *name, char **cause)
 	}
 
 	pb = xmalloc(sizeof *pb);
-
 	pb->name = newname;
 
 	pb->data = data;

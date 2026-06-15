@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.69 2026/06/09 21:22:22 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.70 2026/06/15 21:41:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -438,7 +438,7 @@ popup_make_pane(struct popup_data *pd, enum layout_type type)
 		pd->job = NULL;
 	}
 
-	screen_set_title(&pd->s, new_wp->base.title);
+	screen_set_title(&pd->s, new_wp->base.title, 0);
 	screen_free(&new_wp->base);
 	memcpy(&new_wp->base, &pd->s, sizeof wp->base);
 	screen_resize(&new_wp->base, new_wp->sx, new_wp->sy, 1);

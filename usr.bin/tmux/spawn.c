@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.39 2026/06/02 08:13:50 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.40 2026/06/15 21:41:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -76,15 +76,12 @@ spawn_log(const char *from, struct spawn_context *sc)
 struct winlink *
 spawn_window(struct spawn_context *sc, char **cause)
 {
-	struct cmdq_item	*item = sc->item;
-	struct client		*c = cmdq_get_client(item);
 	struct session		*s = sc->s;
 	struct window		*w;
 	struct window_pane	*wp;
 	struct winlink		*wl;
 	int			 idx = sc->idx;
 	u_int			 sx, sy, xpixel, ypixel;
-	char			*name;
 
 	spawn_log(__func__, sc);
 
@@ -182,15 +179,12 @@ spawn_window(struct spawn_context *sc, char **cause)
 	/* Set the name of the new window. */
 	if (~sc->flags & SPAWN_RESPAWN) {
 		free(w->name);
-		if (sc->name != NULL) {
-			name = format_single(item, sc->name, c, s, NULL, NULL);
-			w->name = clean_name(name, "#");
-			free(name);
-			if (w->name == NULL)
-				w->name = xstrdup("");
-			options_set_number(w->options, "automatic-rename", 0);
-		} else
+		if (sc->name == NULL || *sc->name == '\0')
 			w->name = default_window_name(w);
+		else {
+			w->name = xstrdup(sc->name);
+			options_set_number(w->options, "automatic-rename", 0);
+		}
 	}
 
 	/* Switch to the new window if required. */

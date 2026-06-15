@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.103 2026/04/22 07:10:16 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.104 2026/06/15 21:41:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -118,7 +118,6 @@ session_create(const char *prefix, const char *name, const char *cwd,
 	s = xcalloc(1, sizeof *s);
 	s->references = 1;
 	s->flags = 0;
-
 	s->cwd = xstrdup(cwd);
 
 	TAILQ_INIT(&s->lastw);

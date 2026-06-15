@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.134 2026/06/15 09:21:40 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.135 2026/06/15 21:41:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -214,7 +214,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	if (args_has(args, 'T')) {
 		title = format_single_from_target(item, args_get(args, 'T'));
-		screen_set_title(&new_wp->base, title);
+		screen_set_title(&new_wp->base, title, 0);
 		notify_pane("pane-title-changed", new_wp);
 		free(title);
 	}

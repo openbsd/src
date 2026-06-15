@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.260 2026/06/13 20:07:30 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.261 2026/06/15 21:41:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2664,7 +2664,7 @@ input_exit_osc(struct input_ctx *ictx)
 	case 2:
 		if (wp != NULL &&
 		    options_get_number(wp->options, "allow-set-title") &&
-		    screen_set_title(sctx->s, p)) {
+		    screen_set_title(sctx->s, p, 1)) {
 			notify_pane("pane-title-changed", wp);
 			server_redraw_window_borders(wp->window);
 			server_status_window(wp->window);
@@ -2674,7 +2674,7 @@ input_exit_osc(struct input_ctx *ictx)
 		input_osc_4(ictx, p);
 		break;
 	case 7:
-		if (screen_set_path(sctx->s, p) && wp != NULL) {
+		if (wp != NULL && screen_set_path(sctx->s, p, 1)) {
 			server_redraw_window_borders(wp->window);
 			server_status_window(wp->window);
 		}
@@ -2742,7 +2742,7 @@ input_exit_apc(struct input_ctx *ictx)
 
 	if (wp != NULL &&
 	    options_get_number(wp->options, "allow-set-title") &&
-	    screen_set_title(sctx->s, ictx->input_buf)) {
+	    screen_set_title(sctx->s, ictx->input_buf, 1)) {
 		notify_pane("pane-title-changed", wp);
 		server_redraw_window_borders(wp->window);
 		server_status_window(wp->window);
@@ -2785,10 +2785,10 @@ input_exit_rename(struct input_ctx *ictx)
 		if (o != NULL)
 			options_remove_or_default(o, -1, NULL);
 		if (!options_get_number(w->options, "automatic-rename"))
-			window_set_name(w, "");
+			window_set_name(w, "", WINDOW_NAME_FORBID_EXT);
 	} else {
 		options_set_number(w->options, "automatic-rename", 0);
-		window_set_name(w, ictx->input_buf);
+		window_set_name(w, ictx->input_buf, WINDOW_NAME_FORBID_EXT);
 	}
 	server_redraw_window_borders(w);
 	server_status_window(w);
