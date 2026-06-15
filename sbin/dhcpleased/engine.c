@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.64 2026/05/14 06:09:50 dgl Exp $	*/
+/*	$OpenBSD: engine.c,v 1.65 2026/06/15 17:07:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -860,6 +860,9 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		}
 		rem = ntohs(udp->uh_ulen);
 	}
+
+	if (rem < sizeof(*udp))
+		goto too_short;
 
 	p += sizeof(*udp);
 	rem -= sizeof(*udp);
