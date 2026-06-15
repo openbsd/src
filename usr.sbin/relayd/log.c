@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.36 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: log.c,v 1.37 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,7 +159,7 @@ log_debug(const char *emsg, ...)
 static void
 vfatalc(int code, const char *emsg, va_list ap)
 {
-	static char	s[BUFSIZ];
+	static char	 s[BUFSIZ];
 	const char	*sep;
 
 	if (emsg != NULL) {

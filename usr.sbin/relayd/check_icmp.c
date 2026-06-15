@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.49 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.50 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,7 +39,7 @@
 
 void	icmp_setup(struct relayd *, struct ctl_icmp_event *, int);
 void	check_icmp_add(struct ctl_icmp_event *, int, struct timeval *,
-	    void (*)(int, short, void *));
+    void (*)(int, short, void *));
 int	icmp_checks_done(struct ctl_icmp_event *);
 void	icmp_checks_timeout(struct ctl_icmp_event *, enum host_error);
 void	send_icmp(int, short, void *);
@@ -222,7 +222,7 @@ send_icmp(int s, short event, void *arg)
 			}
 
 			ttl = host->conf.ttl;
-			switch(cie->af) {
+			switch (cie->af) {
 			case AF_INET:
 				if (ttl > 0) {
 					if (setsockopt(s, IPPROTO_IP, IP_TTL,
@@ -393,14 +393,14 @@ in_cksum(u_short *addr, int len)
 	 * sequential 16 bit words to it, and at the end, fold back all the
 	 * carry bits from the top 16 bits into the lower 16 bits.
 	 */
-	while (nleft > 1)  {
+	while (nleft > 1) {
 		sum += *w++;
 		nleft -= 2;
 	}
 
 	/* mop up an odd byte, if necessary */
 	if (nleft == 1) {
-		*(u_char *)(&answer) = *(u_char *)w ;
+		*(u_char *)(&answer) = *(u_char *)w;
 		sum += answer;
 	}
 

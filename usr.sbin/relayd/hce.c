@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.84 2026/06/14 08:41:08 rsadowski Exp $	*/
+/*	$OpenBSD: hce.c,v 1.85 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,7 +39,7 @@ int	 hce_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 hce_dispatch_pfe(int, struct privsep_proc *, struct imsg *);
 int	 hce_dispatch_relay(int, struct privsep_proc *, struct imsg *);
 
-static struct relayd *env = NULL;
+static struct relayd	*env = NULL;
 int			 running = 0;
 
 static struct privsep_proc procs[] = {
@@ -259,7 +259,7 @@ hce_notify_done(struct host *host, enum host_error he)
 
 	if (env->sc_conf.opts & logopt) {
 		if (host->code > 0)
-		    asprintf(&codemsg, ",%d", host->code);
+			asprintf(&codemsg, ",%d", host->code);
 		log_info("host %s, check %s%s (%lums,%s%s), state %s -> %s, "
 		    "availability %s",
 		    host->conf.name, table_check(table->conf.check),

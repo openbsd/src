@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.53 2026/06/14 08:54:21 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.54 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -68,14 +68,12 @@ config_init(struct relayd *env)
 		env->sc_empty_table.conf.flags |= F_DISABLE;
 		(void)strlcpy(env->sc_empty_table.conf.name, "empty",
 		    sizeof(env->sc_empty_table.conf.name));
-
 	}
 	if (what & CONFIG_RDRS) {
 		if ((env->sc_rdrs =
 		    calloc(1, sizeof(*env->sc_rdrs))) == NULL)
 			return (-1);
 		TAILQ_INIT(env->sc_rdrs);
-
 	}
 	if (what & CONFIG_RELAYS) {
 		if ((env->sc_relays =
@@ -270,7 +268,7 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 
 	/* Update runtime flags */
 	if (imsg_get_data(imsg, &env->sc_conf,
-		    sizeof(struct relayd_config)) == -1) {
+	    sizeof(struct relayd_config)) == -1) {
 		log_warn("%s: imsg_get_data", __func__);
 		return (-1);
 	}
@@ -732,8 +730,8 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 	}
 	if ((s = ibuf_size(&ibuf)) > 0) {
 		proto->style = NULL;
-		if ((proto->style = ibuf_get_string(&ibuf, s - 1))
-		    == NULL) {
+		if ((proto->style = ibuf_get_string(&ibuf, s - 1)) ==
+		    NULL) {
 			log_warn("%s: ibuf_get_string", __func__);
 			free(proto);
 			return (-1);
@@ -782,7 +780,6 @@ config_getrule(struct relayd *env, struct imsg *imsg)
 		free(rule);
 		return (-1);
 	}
-
 
 #define GETKV(_n, _f)	{						\
 	len = rule->rule_ctl.kvlen[_n]._f;				\
@@ -1060,10 +1057,10 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 int
 config_getrelay(struct relayd *env, struct imsg *imsg)
 {
-	struct ibuf		 ibuf;
-	struct privsep		*ps = env->sc_ps;
-	struct relay		*rlay;
-	size_t			s;
+	struct ibuf	 ibuf;
+	struct privsep	*ps = env->sc_ps;
+	struct relay	*rlay;
+	size_t		 s;
 
 	if (imsg_get_ibuf(imsg, &ibuf) == -1) {
 		log_warn("%s: imsg_get_ibuf", __func__);

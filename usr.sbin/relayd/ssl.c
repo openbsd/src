@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.41 2026/06/14 08:57:43 rsadowski Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.42 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -247,7 +247,7 @@ ssl_error(const char *where)
 	unsigned long	code;
 	char		errbuf[128];
 
-	for (; (code = ERR_get_error()) != 0 ;) {
+	for (; (code = ERR_get_error()) != 0;) {
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));
 		log_warnx("SSL library error: %s: %s", where, errbuf);
 	}

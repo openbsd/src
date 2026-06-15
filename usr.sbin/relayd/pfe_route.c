@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.15 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.16 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -57,7 +57,7 @@ sync_routes(struct relayd *env, struct router *rt)
 {
 	struct netroute		*nr;
 	struct host		*host;
-	char			 buf[HOST_NAME_MAX+1];
+	char			 buf[HOST_NAME_MAX + 1];
 	struct ctl_netroute	 crt;
 
 	if (!(env->sc_conf.flags & F_NEEDRT))

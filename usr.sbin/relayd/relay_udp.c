@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.52 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.53 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -45,13 +45,13 @@ static struct relayd *env = NULL;
 struct shuffle relay_shuffle;
 
 int		 relay_udp_socket(struct sockaddr_storage *, in_port_t,
-		    struct protocol *);
+    struct protocol *);
 void		 relay_udp_timeout(int, short, void *);
 
 void		 relay_dns_log(struct rsession *, u_int8_t *, size_t);
 void		*relay_dns_validate(struct rsession *,
-		    struct relay *, struct sockaddr_storage *,
-		    u_int8_t *, size_t);
+    struct relay *, struct sockaddr_storage *,
+    u_int8_t *, size_t);
 int		 relay_dns_request(struct rsession *);
 void		 relay_udp_response(int, short, void *);
 void		 relay_dns_result(struct rsession *, u_int8_t *, size_t);
@@ -196,7 +196,7 @@ relay_udp_response(int fd, short sig, void *arg)
 
 	slen = sizeof(ss);
 	if ((len = recvfrom(fd, buf, sizeof(buf), 0,
-	    (struct sockaddr*)&ss, &slen)) < 1)
+	    (struct sockaddr *)&ss, &slen)) < 1)
 		return;
 
 	/* Parse and validate the packet header */
@@ -230,7 +230,7 @@ relay_udp_server(int fd, short sig, void *arg)
 
 	slen = sizeof(ss);
 	if ((len = recvfrom(fd, buf, sizeof(buf), 0,
-	    (struct sockaddr*)&ss, &slen)) < 1)
+	    (struct sockaddr *)&ss, &slen)) < 1)
 		return;
 
 	if (proto->validate != NULL &&

@@ -81,8 +81,8 @@ proxy_protocol_v1(struct rsession *con, struct evbuffer *dstout)
 	}
 
 	ret = evbuffer_add_printf(dstout,
-		"PROXY %s %s %s %d %d\r\n", proxyproto, ibuf, obuf,
-		ntohs(con->se_in.port), ntohs(con->se_relay->rl_conf.port));
+	    "PROXY %s %s %s %d %d\r\n", proxyproto, ibuf, obuf,
+	    ntohs(con->se_in.port), ntohs(con->se_relay->rl_conf.port));
 
 	return ret == -1 ? -1 : 0;
 }
@@ -90,15 +90,15 @@ proxy_protocol_v1(struct rsession *con, struct evbuffer *dstout)
 int
 proxy_protocol_v2(struct rsession *con, struct evbuffer *dstout)
 {
-	union proxy_v2_addr 	       addr;
-	struct proxy_v2_hdr 	       hdr;
-	const struct relay_config     *conf = &con->se_relay->rl_conf;
-	const struct sockaddr_storage *srcss = &con->se_in.ss;
-	const struct sockaddr_storage *dstss = &con->se_sockname;
-	int 			       error;
-	in_port_t		       srcport = con->se_in.port;
-	in_port_t		       dstport = conf->port;
-	u_int16_t 		       len;
+	union proxy_v2_addr		 addr;
+	struct proxy_v2_hdr		 hdr;
+	const struct relay_config	*conf = &con->se_relay->rl_conf;
+	const struct sockaddr_storage	*srcss = &con->se_in.ss;
+	const struct sockaddr_storage	*dstss = &con->se_sockname;
+	int				 error;
+	in_port_t			 srcport = con->se_in.port;
+	in_port_t			 dstport = conf->port;
+	u_int16_t			 len;
 
 	bcopy(PROXY_V2_SIG, hdr.sig, sizeof(hdr.sig));
 	hdr.ver_cmd = 0x20 | PROXY_V2_CMD_PROXY;
@@ -106,7 +106,7 @@ proxy_protocol_v2(struct rsession *con, struct evbuffer *dstout)
 	switch (dstss->ss_family) {
 	case AF_INET:
 		hdr.fam = (conf->flags & F_UDP) ?
-			PROXY_V2_FAM_UDP4 : PROXY_V2_FAM_TCP4;
+		    PROXY_V2_FAM_UDP4 : PROXY_V2_FAM_TCP4;
 		len = sizeof(addr.ipv4_addr);
 		addr.ipv4_addr.src_addr =
 		    ((const struct sockaddr_in *)srcss)->sin_addr.s_addr;
@@ -117,7 +117,7 @@ proxy_protocol_v2(struct rsession *con, struct evbuffer *dstout)
 		break;
 	case AF_INET6:
 		hdr.fam = (conf->flags & F_UDP) ?
-			PROXY_V2_FAM_UDP6 : PROXY_V2_FAM_TCP6;
+		    PROXY_V2_FAM_UDP6 : PROXY_V2_FAM_TCP6;
 		len = sizeof(addr.ipv6_addr);
 		bcopy(&((const struct sockaddr_in6 *)srcss)->sin6_addr,
 		    addr.ipv6_addr.src_addr, sizeof(addr.ipv6_addr.src_addr));

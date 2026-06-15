@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.201 2026/06/14 08:54:21 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.202 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -62,9 +62,9 @@ void		 parent_shutdown(struct relayd *);
 int		 parent_dispatch_pfe(int, struct privsep_proc *, struct imsg *);
 int		 parent_dispatch_hce(int, struct privsep_proc *, struct imsg *);
 int		 parent_dispatch_relay(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 parent_dispatch_ca(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 bindany(struct ctl_bindany *);
 void		 parent_tls_ticket_rekey(int, short, void *);
 
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if ((ps->ps_pw =  getpwnam(RELAYD_USER)) == NULL)
+	if ((ps->ps_pw = getpwnam(RELAYD_USER)) == NULL)
 		errx(1, "unknown user %s", RELAYD_USER);
 
 	log_init(debug, LOG_DAEMON);
@@ -504,7 +504,8 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (-1);
 		}
 
-		if (bnd.bnd_proc < 0 || bnd.bnd_proc > env->sc_conf.prefork_relay)
+		if (bnd.bnd_proc < 0 ||
+		    bnd.bnd_proc > env->sc_conf.prefork_relay)
 			fatalx("%s: invalid relay proc", __func__);
 		switch (bnd.bnd_proto) {
 		case IPPROTO_TCP:
@@ -683,7 +684,7 @@ kv_add(struct kvtree *keys, char *key, char *value, int unique)
 int
 kv_set(struct kv *kv, char *fmt, ...)
 {
-	va_list		  ap;
+	va_list		 ap;
 	char		*value = NULL;
 	struct kv	*ckv;
 	int		 ret;
@@ -691,7 +692,7 @@ kv_set(struct kv *kv, char *fmt, ...)
 	va_start(ap, fmt);
 	ret = vasprintf(&value, fmt, ap);
 	va_end(ap);
- 	if (ret == -1)
+	if (ret == -1)
 		return (-1);
 
 	/* Remove all children */
@@ -711,7 +712,7 @@ kv_set(struct kv *kv, char *fmt, ...)
 int
 kv_setkey(struct kv *kv, char *fmt, ...)
 {
-	va_list  ap;
+	va_list	 ap;
 	char	*key = NULL;
 	int	 ret;
 
@@ -1191,8 +1192,8 @@ table_findbyconf(struct relayd *env, struct table *tb)
 		 */
 		if (bcmp(&a, &b, sizeof(b)) == 0 &&
 		    ((tb->sendbuf == NULL && table->sendbuf == NULL) ||
-		    (tb->sendbuf != NULL && table->sendbuf != NULL &&
-		    strcmp(tb->sendbuf, table->sendbuf) == 0)))
+		     (tb->sendbuf != NULL && table->sendbuf != NULL &&
+		      strcmp(tb->sendbuf, table->sendbuf) == 0)))
 			return (table);
 	}
 	return (NULL);
@@ -1233,7 +1234,7 @@ relay_findbyaddr(struct relayd *env, struct relay_config *rc)
 }
 
 EVP_PKEY *
-pkey_find(struct relayd *env, char * hash)
+pkey_find(struct relayd *env, char *hash)
 {
 	struct ca_pkey	*pkey;
 
@@ -1334,14 +1335,16 @@ relay_load_fd(int fd, off_t *len)
 }
 
 int
-relay_load_certfiles(struct relayd *env, struct relay *rlay, const struct keyname *name)
+relay_load_certfiles(struct relayd *env, struct relay *rlay,
+    const struct keyname *name)
 {
-	char	 certfile[PATH_MAX];
-	char	 hbuf[PATH_MAX];
-	struct protocol *proto = rlay->rl_proto;
-	struct relay_cert *cert;
-	int	 useport = htons(rlay->rl_conf.port);
-	int	 cert_fd = -1, key_fd = -1, ocsp_fd = -1, ret = 0;
+	char			 certfile[PATH_MAX];
+	char			 hbuf[PATH_MAX];
+	struct protocol		*proto = rlay->rl_proto;
+	struct relay_cert	*cert;
+	int			 useport = htons(rlay->rl_conf.port);
+	int			 cert_fd = -1, key_fd = -1, ocsp_fd = -1,
+				 ret = 0;
 
 	if (rlay->rl_conf.flags & F_TLSCLIENT) {
 		if (strlen(proto->tlsca) && rlay->rl_tls_ca_fd == -1) {
@@ -1388,23 +1391,21 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const struct keynam
 		goto fail;
 
 	if (name != NULL && strcmp(name->certificate, "") != 0) {
-		if (strlcpy(certfile, name->certificate, sizeof(certfile))
-		    >= sizeof(certfile)) {
+		if (strlcpy(certfile, name->certificate, sizeof(certfile)) >=
+		    sizeof(certfile)) {
 			log_warnx("certificate truncated");
 			goto fail;
 		}
-	}
-	else {
+	} else {
 		ret = snprintf(certfile, sizeof(certfile),
-				"/etc/ssl/%s:%u.crt", hbuf, useport);
+		    "/etc/ssl/%s:%u.crt", hbuf, useport);
 
 		if (ret < 0 || (size_t)ret >= sizeof(certfile))
 			goto fail;
 	}
 	if ((cert_fd = open(certfile, O_RDONLY)) == -1) {
-
 		ret = snprintf(certfile, sizeof(certfile),
-					"/etc/ssl/%s.crt", hbuf);
+		    "/etc/ssl/%s.crt", hbuf);
 
 		if (ret < 0 || (size_t)ret >= sizeof(certfile))
 			goto fail;
@@ -1415,23 +1416,22 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const struct keynam
 	log_debug("%s: using certificate %s", __func__, certfile);
 
 	if (name != NULL && strcmp(name->key, "") != 0) {
-		if (strlcpy(certfile, name->key, sizeof(certfile))
-		    >= sizeof(certfile)) {
+		if (strlcpy(certfile, name->key, sizeof(certfile)) >=
+		    sizeof(certfile)) {
 			log_warnx("certificate key truncated");
 			goto fail;
 		}
-	}
-	else {
+	} else {
 		if (useport) {
 			ret = snprintf(certfile, sizeof(certfile),
-					"/etc/ssl/private/%s:%u.key",
-					hbuf, useport);
+			    "/etc/ssl/private/%s:%u.key",
+			    hbuf, useport);
 
 			if (ret < 0 || (size_t)ret >= sizeof(certfile))
 				goto fail;
 		} else {
 			ret = snprintf(certfile, sizeof(certfile),
-					"/etc/ssl/private/%s.key", hbuf);
+			    "/etc/ssl/private/%s.key", hbuf);
 
 			if (ret < 0 || (size_t)ret >= sizeof(certfile))
 				goto fail;
@@ -1442,24 +1442,22 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const struct keynam
 	log_debug("%s: using private key %s", __func__, certfile);
 
 	if (name != NULL && strcmp(name->ocsp, "") != 0) {
-		if (strlcpy(certfile, name->ocsp, sizeof(certfile))
-		    >= sizeof(certfile)) {
+		if (strlcpy(certfile, name->ocsp, sizeof(certfile)) >=
+		    sizeof(certfile)) {
 			log_warnx("certificate ocsp truncated");
 			goto fail;
 		}
-
-	}
-	else {
+	} else {
 		if (useport) {
 			ret = snprintf(certfile, sizeof(certfile),
-					"/etc/ssl/%s:%u.ocsp",
-					hbuf, useport);
+			    "/etc/ssl/%s:%u.ocsp",
+			    hbuf, useport);
 
 			if (ret < 0 || (size_t)ret >= sizeof(certfile))
 				goto fail;
 		} else {
 			ret = snprintf(certfile, sizeof(certfile),
-					"/etc/ssl/%s.ocsp", hbuf);
+			    "/etc/ssl/%s.ocsp", hbuf);
 
 			if (ret < 0 || (size_t)ret >= sizeof(certfile))
 				goto fail;
@@ -1883,7 +1881,7 @@ prefixlen2mask(u_int8_t prefixlen)
 struct in6_addr *
 prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
 {
-	static struct in6_addr  s6;
+	static struct in6_addr	s6;
 	int			i;
 
 	if (prefixlen > 128)
@@ -1914,7 +1912,7 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 
 	if ((ret = accept4(sockfd, addr, addrlen, SOCK_NONBLOCK)) > -1) {
 		(*counter)++;
-		DPRINTF("%s: inflight incremented, now %d",__func__, *counter);
+		DPRINTF("%s: inflight incremented, now %d", __func__, *counter);
 	}
 	return (ret);
 }

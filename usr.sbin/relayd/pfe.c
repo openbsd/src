@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.94 2026/06/14 08:45:02 rsadowski Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.95 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -154,8 +154,8 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		proc_compose(env->sc_ps, PROC_RELAY,
 		    IMSG_HOST_STATUS, &st, sizeof(st));
 
-		if ((table = table_find(env, host->conf.tableid))
-		    == NULL)
+		if ((table = table_find(env, host->conf.tableid)) ==
+		    NULL)
 			fatalx("%s: invalid table id", __func__);
 
 		log_debug("%s: state %d for host %u %s", __func__,
@@ -586,14 +586,13 @@ disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 {
 	struct host	*h;
 	struct table	*table, *t;
-	int	 host_byname = 0;
+	int		 host_byname = 0;
 
 	if (host == NULL) {
 		if (id->id == EMPTY_ID) {
 			host = host_findbyname(env, id->name);
 			host_byname = 1;
-		}
-		else
+		} else
 			host = host_find(env, id->id);
 		if (host == NULL || host->conf.parentid)
 			return (-1);
@@ -649,15 +648,13 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 {
 	struct host	*h;
 	struct table	*t;
-	int	 host_byname = 0;
-
+	int		 host_byname = 0;
 
 	if (host == NULL) {
 		if (id->id == EMPTY_ID) {
 			host = host_findbyname(env, id->name);
 			host_byname = 1;
-		}
-		else
+		} else
 			host = host_find(env, id->id);
 		if (host == NULL || host->conf.parentid)
 			return (-1);
@@ -673,7 +670,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 	host->flags &= ~(F_ADD);
 
 	proc_compose(env->sc_ps, PROC_HCE, IMSG_HOST_ENABLE,
-	    &host->conf.id, sizeof (host->conf.id));
+	    &host->conf.id, sizeof(host->conf.id));
 
 	/* Forward to relay engine(s) */
 	proc_compose(env->sc_ps, PROC_RELAY, IMSG_HOST_ENABLE,
@@ -790,8 +787,7 @@ pfe_sync(void)
 		if (table->up && table->conf.flags & F_DEMOTED) {
 			demote.level = -1;
 			table->conf.flags &= ~F_DEMOTED;
-		}
-		else if (!table->up && !(table->conf.flags & F_DEMOTED)) {
+		} else if (!table->up && !(table->conf.flags & F_DEMOTED)) {
 			demote.level = 1;
 			table->conf.flags |= F_DEMOTED;
 		}

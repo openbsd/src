@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.264 2026/06/14 08:41:08 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.265 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -48,13 +48,13 @@
 
 void		 relay_statistics(int, short, void *);
 int		 relay_dispatch_parent(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 relay_dispatch_pfe(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 relay_dispatch_ca(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 relay_dispatch_hce(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 void		 relay_shutdown(void);
 
 void		 relay_protodebug(struct relay *);
@@ -62,11 +62,11 @@ void		 relay_ruledebug(struct relay_rule *);
 void		 relay_init(struct privsep *, struct privsep_proc *p, void *);
 void		 relay_launch(void);
 int		 relay_socket(struct sockaddr_storage *, in_port_t,
-		    struct protocol *, int, int);
+    struct protocol *, int, int);
 int		 relay_socket_listen(struct sockaddr_storage *, in_port_t,
-		    struct protocol *);
+    struct protocol *);
 int		 relay_socket_connect(struct sockaddr_storage *, in_port_t,
-		    struct protocol *, int);
+    struct protocol *, int);
 
 void		 relay_accept(int, short, void *);
 void		 relay_input(struct rsession *);
@@ -75,7 +75,7 @@ void		 relay_hash_addr(SIPHASH_CTX *, struct sockaddr_storage *, int);
 
 int		 relay_tls_ctx_create(struct relay *);
 void		 relay_tls_transaction(struct rsession *,
-		    struct ctl_relay_event *);
+    struct ctl_relay_event *);
 void		 relay_tls_handshake(int, short, void *);
 void		 relay_tls_connected(struct ctl_relay_event *);
 void		 relay_tls_readcb(int, short, void *);
@@ -83,10 +83,10 @@ void		 relay_tls_writecb(int, short, void *);
 
 void		 relay_connect_retry(int, short, void *);
 void		 relay_connect_state(struct rsession *,
-		    struct ctl_relay_event *, enum relay_state);
+    struct ctl_relay_event *, enum relay_state);
 
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
-		    size_t, void *);
+    size_t, void *);
 
 volatile int relay_sessions;
 volatile int relay_inflight = 0;
@@ -232,7 +232,7 @@ relay_ruledebug(struct relay_rule *rule)
 		}
 
 		int kvv = (kv->kv_option == KEY_OPTION_STRIP ||
-		     kv->kv_value == NULL);
+		    kv->kv_value == NULL);
 		fprintf(stderr, "%s%s%s%s%s%s ",
 		    kv->kv_key == NULL ? "" : "\"",
 		    kv->kv_key == NULL ? "" : kv->kv_key,
@@ -439,7 +439,7 @@ relay_statistics(int fd, short events, void *arg)
 void
 relay_launch(void)
 {
-	void			(*callback)(int, short, void *);
+	void			 (*callback)(int, short, void *);
 	struct relay		*rlay;
 	struct host		*host;
 	struct relay_table	*rlt;
@@ -560,7 +560,7 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 	if (reuseport) {
 		val = 1;
 		if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &val,
-			sizeof(int)) == -1)
+		    sizeof(int)) == -1)
 			goto bad;
 	}
 	if (proto->tcpflags & TCPFLAG_BUFSIZ) {
@@ -795,7 +795,7 @@ relay_connected(int fd, short sig, void *arg)
 	bufferevent_settimeout(bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
 	bufferevent_setwatermark(bev, EV_WRITE,
-		RELAY_MIN_PREFETCHED * proto->tcpbufsiz, 0);
+	    RELAY_MIN_PREFETCHED * proto->tcpbufsiz, 0);
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
 	if (con->se_in.bev)
 		bufferevent_enable(con->se_in.bev, EV_READ);
@@ -846,7 +846,7 @@ relay_input(struct rsession *con)
 	bufferevent_settimeout(con->se_in.bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
 	bufferevent_setwatermark(con->se_in.bev, EV_WRITE,
-		RELAY_MIN_PREFETCHED * proto->tcpbufsiz, 0);
+	    RELAY_MIN_PREFETCHED * proto->tcpbufsiz, 0);
 	bufferevent_enable(con->se_in.bev, EV_READ|EV_WRITE);
 
 	if (relay_splice(&con->se_in) == -1)
@@ -1035,7 +1035,7 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 	struct evbuffer		*dst;
 
 	DPRINTF("%s: session %d: dir %d state %d to read %lld event error %x",
-		__func__, con->se_id, cre->dir, cre->state, cre->toread, error);
+	    __func__, con->se_id, cre->dir, cre->state, cre->toread, error);
 	if (error & EVBUFFER_TIMEOUT) {
 		if (cre->splicelen >= 0) {
 			bufferevent_enable(bev, EV_READ);
@@ -1538,7 +1538,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 		relay_inflight = 1;
 	}
 
-	DPRINTF("%s: retry %d of %d, inflight: %d",__func__,
+	DPRINTF("%s: retry %d of %d, inflight: %d", __func__,
 	    con->se_retrycount, con->se_retry, relay_inflight);
 
 	if (sig != EV_TIMEOUT)
@@ -1598,7 +1598,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 	else
 		relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 	relay_inflight--;
-	DPRINTF("%s: inflight decremented, now %d",__func__, relay_inflight);
+	DPRINTF("%s: inflight decremented, now %d", __func__, relay_inflight);
 
 	event_add(&rlay->rl_ev, NULL);
 
@@ -1724,7 +1724,7 @@ relay_connect(struct rsession *con)
 
 	relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 	relay_inflight--;
-	DPRINTF("%s: inflight decremented, now %d",__func__,
+	DPRINTF("%s: inflight decremented, now %d", __func__,
 	    relay_inflight);
 
 	if (errno == EINPROGRESS)
@@ -1919,8 +1919,8 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("%s: desynchronized", __func__);
 		}
 
-		if ((table = table_find(env, host->conf.tableid))
-		    == NULL)
+		if ((table = table_find(env, host->conf.tableid)) ==
+		    NULL)
 			fatalx("%s: invalid table id", __func__);
 
 		DPRINTF("%s: [%d] state %d for "
@@ -2173,7 +2173,8 @@ relay_tls_ctx_create(struct relay *rlay)
 		tls_config_insecure_noverifyname(tls_client_cfg);
 
 		if (rlay->rl_tls_ca_fd != -1) {
-			if ((buf = relay_load_fd(rlay->rl_tls_ca_fd, &len)) == NULL) {
+			if ((buf = relay_load_fd(rlay->rl_tls_ca_fd, &len)) ==
+			    NULL) {
 				log_warn("failed to read root certificates");
 				goto err;
 			}
@@ -2219,7 +2220,7 @@ relay_tls_ctx_create(struct relay *rlay)
 
 			if (cert->cert_ocsp_fd != -1 &&
 			    (ocspbuf = relay_load_fd(cert->cert_ocsp_fd,
-			    &ocsplen)) == NULL) {
+			     &ocsplen)) == NULL) {
 				log_warn("failed to load OCSP staplefile");
 				goto err;
 			}

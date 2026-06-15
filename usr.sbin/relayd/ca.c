@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.54 2026/06/14 08:57:43 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.55 2026/06/15 11:02:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -254,7 +254,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			iov[c++].iov_len = sizeof(cko);
 			if (proc_composev_imsg(env->sc_ps, PROC_RELAY,
 			    cko.cko_proc, imsg_get_type(imsg), -1, -1, iov,
-			     c) == -1)
+			    c) == -1)
 				log_warn("%s: proc_composev_imsg", __func__);
 			break;
 		}
@@ -427,8 +427,8 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				    __func__, cmd == IMSG_CA_PRIVENC ?
 				    "enc" : "dec", cko.cko_hash);
 			} else if (ret > 0) {
-				if (ibuf_get(&ibuf, to, ret) == -1
-				    || ibuf_size(&ibuf) != 0)
+				if (ibuf_get(&ibuf, to, ret) == -1 ||
+				    ibuf_size(&ibuf) != 0)
 					fatalx("data size");
 			}
 			done = 1;
