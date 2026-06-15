@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.238 2026/06/13 19:17:59 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.239 2026/06/15 17:30:04 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -34,6 +34,68 @@ int certid = TALSZ_MAX;
 
 static pthread_rwlock_t	cert_lk = PTHREAD_RWLOCK_INITIALIZER;
 
+/* Helper to sort a STACK_OF(X509_EXTENSION) by OID. */
+static int
+cert_extension_oid_cmp(const X509_EXTENSION *const *a,
+    const X509_EXTENSION *const *b)
+{
+	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+	const ASN1_OBJECT *ao = X509_EXTENSION_get_object((X509_EXTENSION *)*a);
+	const ASN1_OBJECT *bo = X509_EXTENSION_get_object((X509_EXTENSION *)*b);
+
+	return OBJ_cmp(ao, bo);
+}
+
+/*
+ * Per RFC 5280, Section 4.2, a certificate MUST NOT include more than
+ * one instance of a particular extension.
+ * Returns 1 if certificate conforms to this and 0 otherwise.
+ */
+static int
+cert_extension_oids_are_unique(const char *fn, const struct cert *cert)
+{
+	const X509 *x509 = cert->x509;
+	const STACK_OF(X509_EXTENSION) *cexts = NULL;
+	STACK_OF(X509_EXTENSION) *exts = NULL;
+	const X509_EXTENSION *prev, *curr;
+	const ASN1_OBJECT *obj;
+	int i, nid, rc = 0;
+
+	if (X509_get_ext_count(x509) <= 1)
+		goto done;
+
+	if ((cexts = X509_get0_extensions(x509)) == NULL)
+		goto out;
+
+	if ((exts = sk_X509_EXTENSION_dup(cexts)) == NULL)
+		goto out;
+
+	(void)sk_X509_EXTENSION_set_cmp_func(exts, cert_extension_oid_cmp);
+	sk_X509_EXTENSION_sort(exts);
+
+	prev = sk_X509_EXTENSION_value(exts, 0);
+	for (i = 1; i < sk_X509_EXTENSION_num(exts); i++) {
+		curr = sk_X509_EXTENSION_value(exts, i);
+		if (cert_extension_oid_cmp(&prev, &curr) == 0) {
+			/* XXX - cast away const for OpenSSL 3 and LibreSSL */
+			obj = X509_EXTENSION_get_object((X509_EXTENSION *)curr);
+			nid = OBJ_obj2nid(obj);
+			warnx("%s: RFC 5280 section 4.2: duplicate extension: "
+			   "%s", fn, nid2str(nid));
+			goto out;
+		}
+		prev = curr;
+	}
+
+ done:
+	rc = 1;
+
+ out:
+	sk_X509_EXTENSION_free(exts);
+
+	return rc;
+}
+
 /*
  * Check the cert's purpose: the cA bit in basic constraints distinguishes
  * between TA/CA and EE/BGPsec router and the key usage bits must match.
@@ -60,6 +122,9 @@ cert_check_purpose(const char *fn, struct cert *cert)
 		warnx("%s: could not cache X509v3 extensions", fn);
 		goto out;
 	}
+
+	if (!cert_extension_oids_are_unique(fn, cert))
+		goto out;
 
 	ext_flags = X509_get_extension_flags(x);
 
