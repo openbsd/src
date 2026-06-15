@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.471 2026/06/09 21:22:22 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.472 2026/06/15 07:40:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1426,6 +1426,26 @@ tty_draw_pane(struct tty *tty, const struct tty_ctx *ctx, u_int py)
 				continue;
 			tty_draw_line(tty, s, i + rr->px - x, py, rr->nx,
 			    rr->px, ry, &ctx->style_ctx);
+		}
+	}
+}
+
+void
+tty_cmd_redrawline(struct tty *tty, const struct tty_ctx *ctx)
+{
+	u_int			 i, x, rx, ry, j;
+	struct visible_ranges	*r;
+	struct visible_range	*rr;
+
+	if (tty_clamp_line(tty, ctx, ctx->ocx, ctx->ocy, ctx->n,
+	    &i, &x, &rx, &ry)) {
+		r = tty_check_overlay_range(tty, x, ry, rx);
+		for (j = 0; j < r->used; j++) {
+			rr = &r->ranges[j];
+			if (rr->nx == 0)
+				continue;
+			tty_draw_line(tty, ctx->s, i + rr->px - x,
+			    ctx->ocy, rr->nx, rr->px, ry, &ctx->style_ctx);
 		}
 	}
 }
