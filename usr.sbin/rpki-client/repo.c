@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.83 2026/06/15 14:30:53 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.84 2026/06/15 14:45:19 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -480,7 +480,7 @@ static struct rsyncrepo *
 rsync_get(const char *uri, const char *validdir)
 {
 	struct rsyncrepo *rr;
-	char *repo;
+	char *repo = NULL;
 
 	if (!rsync_base_uri(uri, &repo))
 		errx(1, "bad caRepository URI: %s", uri);
@@ -1225,7 +1225,7 @@ struct repo *
 repo_lookup(int talid, const char *uri, const char *notify)
 {
 	struct repo	*rp;
-	char		*repouri;
+	char		*repouri = NULL;
 
 	if (!rsync_base_uri(uri, &repouri))
 		errx(1, "bad caRepository URI: %s", uri);

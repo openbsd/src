@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.63 2026/06/15 14:30:53 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.64 2026/06/15 14:45:19 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,6 +65,8 @@ int
 rsync_base_uri(const char *uri, char **out_base_uri)
 {
 	const char *host, *module, *rest;
+
+	assert(out_base_uri == NULL || *out_base_uri == NULL);
 
 	/* Case-insensitive rsync URI. */
 	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
