@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.7 2021/12/13 16:56:50 deraadt Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.8 2026/06/15 13:40:41 mvs Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -216,16 +216,14 @@ main(int argc, char **argv)
 }
 
 void
-sigsys_handler(signo)
-	int signo;
+sigsys_handler(int signo)
 {
 
 	errx(1, "System V Message Queue support is not present in the kernel");
 }
 
 void
-sigchld_handler(signo)
-	int signo;
+sigchld_handler(int signo)
 {
 	struct msqid_ds m_ds;
 	int cstatus;
@@ -259,7 +257,7 @@ sigchld_handler(signo)
 }
 
 void
-cleanup()
+cleanup(void)
 {
 
 	/*
@@ -274,9 +272,7 @@ cleanup()
 }
 
 void
-print_msqid_ds(mp, mode)
-	struct msqid_ds *mp;
-	mode_t mode;
+print_msqid_ds(struct msqid_ds *mp, mode_t mode)
 {
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
@@ -309,7 +305,7 @@ print_msqid_ds(mp, mode)
 }
 
 void
-receiver()
+receiver(void)
 {
 	struct thismsg m;
 	int msqid;
