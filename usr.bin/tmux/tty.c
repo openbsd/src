@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.472 2026/06/15 07:40:45 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.473 2026/06/15 11:45:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1444,7 +1444,7 @@ tty_cmd_redrawline(struct tty *tty, const struct tty_ctx *ctx)
 			rr = &r->ranges[j];
 			if (rr->nx == 0)
 				continue;
-			tty_draw_line(tty, ctx->s, i + rr->px - x,
+			tty_draw_line(tty, ctx->s, ctx->ocx + i + rr->px - x,
 			    ctx->ocy, rr->nx, rr->px, ry, &ctx->style_ctx);
 		}
 	}
