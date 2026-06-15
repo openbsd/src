@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.34 2026/06/11 13:52:45 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.35 2026/06/15 08:53:14 kevlo Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -3146,6 +3146,7 @@ mwx_load_firmware(struct mwx_softc *sc)
 	case MWX_HW_MT7920:
 		rompatch = MT7920_ROM_PATCH;
 		fw = MT7920_FIRMWARE_WM;
+		break;
 	case MWX_HW_MT7921:
 		rompatch = MT7921_ROM_PATCH;
 		fw = MT7921_FIRMWARE_WM;
