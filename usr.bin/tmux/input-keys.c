@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.113 2026/06/13 20:07:30 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.114 2026/06/15 21:47:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -807,7 +807,7 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 		return;
 	if (cmd_mouse_at(wp, m, &x, &y, 0) != 0)
 		return;
-	if (!window_pane_visible(wp))
+	if (!window_pane_is_visible(wp))
 		return;
 	if (!input_key_get_mouse(s, m, x, y, &buf, &len))
 		return;

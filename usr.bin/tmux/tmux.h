@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1354 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1355 2026/06/15 21:47:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3446,7 +3446,7 @@ int		 window_pane_key(struct window_pane *, struct client *,
 		     struct mouse_event *);
 void		 window_pane_paste(struct window_pane *, key_code, char *,
 		     size_t);
-int		 window_pane_visible(struct window_pane *);
+int		 window_pane_is_visible(struct window_pane *);
 int		 window_pane_exited(struct window_pane *);
 u_int		 window_pane_search(struct window_pane *, const char *, int,
 		     int);

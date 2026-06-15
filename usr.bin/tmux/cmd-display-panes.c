@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.51 2026/06/09 21:31:16 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.52 2026/06/15 21:47:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -264,7 +264,7 @@ cmd_display_panes_draw(struct client *c, __unused void *data,
 	log_debug("%s: %s @%u", __func__, c->name, w->id);
 
 	TAILQ_FOREACH(wp, &w->panes, entry) {
-		if (window_pane_visible(wp))
+		if (window_pane_is_visible(wp))
 			cmd_display_panes_draw_pane(ctx, wp);
 	}
 }
