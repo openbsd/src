@@ -3803,6 +3803,7 @@ amdgpu_attachhook(struct device *self)
 	struct drm_framebuffer *fb;
 	struct drm_gem_object *obj;
 	struct amdgpu_bo *rbo;
+	struct pci_device_id ent;
 
 	pci_set_drvdata(pdev, dev);
 
@@ -3813,6 +3814,15 @@ amdgpu_attachhook(struct device *self)
 		goto out;
 
 	r = drm_dev_register(dev, adev->flags);
+	if (r)
+		goto out;
+
+	ent.driver_data = adev->flags;
+	r = amdgpu_xcp_dev_register(adev, &ent);
+	if (r)
+		goto out;
+
+	r = amdgpu_amdkfd_drm_client_create(adev);
 	if (r)
 		goto out;
 
