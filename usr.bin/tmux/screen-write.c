@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.269 2026/06/15 07:40:45 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.270 2026/06/15 14:56:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2587,7 +2587,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		if (ri->nx == 0)
 			continue;
 		for (n = 0; n < ri->nx; n++) {
-			ttyctx.ocx = ri->px + n;
+			ttyctx.ocx = (int)ri->px - xoff + (int)n;
 			tty_write(tty_cmd_cell, &ttyctx);
 		}
 	}
