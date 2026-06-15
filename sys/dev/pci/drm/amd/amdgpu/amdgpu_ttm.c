@@ -1960,7 +1960,7 @@ static void amdgpu_ttm_mmio_remap_bo_fini(struct amdgpu_device *adev)
 int amdgpu_ttm_init(struct amdgpu_device *adev)
 {
 	uint64_t gtt_size;
-	int r;
+	int r, flags;
 
 	rw_init(&adev->mman.gtt_window_lock, "gttwin");
 
@@ -2019,10 +2019,21 @@ int amdgpu_ttm_init(struct amdgpu_device *adev)
 #endif
 		adev->mman.aper_base_kaddr = ioremap_wc(adev->gmc.aper_base,
 				adev->gmc.visible_vram_size);
-#else
-	if (bus_space_map(adev->memt, adev->gmc.aper_base,
-	    adev->gmc.visible_vram_size,
-	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+#endif
+#ifdef __OpenBSD__
+	flags = BUS_SPACE_MAP_LINEAR;
+#ifdef CONFIG_X86
+	if (adev->gmc.xgmi.connected_to_cpu)
+		flags |= BUS_SPACE_MAP_CACHEABLE;
+	else
+#endif
+		flags |= BUS_SPACE_MAP_PREFETCHABLE;
+	
+	if (adev->gmc.is_app_apu)
+		DRM_DEBUG_DRIVER(
+			"No need to ioremap when real vram size is 0\n");
+	else if (bus_space_map(adev->memt, adev->gmc.aper_base,
+	    adev->gmc.visible_vram_size, flags,
 	    &adev->mman.aper_bsh)) {
 		adev->mman.aper_base_kaddr = NULL;
 	} else {
