@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleasectl.c,v 1.13 2024/11/21 13:38:14 claudio Exp $	*/
+/*	$OpenBSD: dhcpleasectl.c,v 1.14 2026/06/15 17:09:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -221,7 +221,7 @@ show_interface_msg(struct ctl_engine_info *cei)
 {
 	struct timespec		 now, diff;
 	time_t			 d, h, m, s;
-	int			 i;
+	uint32_t		 i;
 	char			 buf[IF_NAMESIZE], *bufp;
 	char			 ipbuf[INET_ADDRSTRLEN];
 	char			 maskbuf[INET_ADDRSTRLEN];

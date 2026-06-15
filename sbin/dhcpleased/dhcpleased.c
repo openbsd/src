@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.44 2026/06/15 17:08:15 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.45 2026/06/15 17:09:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1022,7 +1022,7 @@ configure_routes(uint8_t rtm_type, struct imsg_configure_interface *imsg)
 {
 	struct sockaddr_in	 dst, mask, gw, ifa;
 	in_addr_t		 addrnet, gwnet;
-	int			 i;
+	uint32_t		 i;
 
 	memset(&ifa, 0, sizeof(ifa));
 	ifa.sin_family = AF_INET;

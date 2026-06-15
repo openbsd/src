@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.20 2026/05/14 06:04:08 dgl Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.21 2026/06/15 17:09:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -240,7 +240,7 @@ struct ctl_engine_info {
 	struct in_addr		requested_ip;
 	struct in_addr		mask;
 	struct dhcp_route	routes[MAX_DHCP_ROUTES];
-	int			routes_len;
+	uint32_t		routes_len;
 	struct in_addr		nameservers[MAX_RDNS_COUNT];
 	uint32_t		lease_time;
 	uint32_t		renewal_time;
