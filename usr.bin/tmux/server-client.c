@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.468 2026/06/14 19:31:37 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.469 2026/06/15 08:16:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -614,7 +614,7 @@ server_client_check_mouse_in_pane(struct window_pane *wp, int px, int py,
 
 	sb = options_get_number(w->options, "pane-scrollbars");
 	sb_pos = options_get_number(w->options, "pane-scrollbars-position");
-	pane_status = window_get_pane_status(w);
+	pane_status = window_pane_get_pane_status(wp);
 
 	if (window_pane_show_scrollbar(wp, sb)) {
 		sb_w = wp->scrollbar_style.width;

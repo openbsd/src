@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1088 2026/06/13 20:39:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1089 2026/06/15 08:16:05 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2026 $
+.Dd $Mdocdate: June 15 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5638,9 +5638,14 @@ and
 will fall back to standard ACS line drawing when UTF\-8 is not supported.
 .Pp
 .It Xo Ic pane\-border\-status
-.Op Ic off | top | bottom
+.Op Ic off | top | bottom | top\-floating | bottom\-floating
 .Xc
 Turn pane border status lines off or set their position.
+If set to
+.Ic top\-floating
+or
+.Ic bottom\-floating ,
+status lines are shown only on floating panes.
 .Pp
 .It Ic pane\-border\-style Ar style
 Set the pane border style for panes aside from the active pane.
