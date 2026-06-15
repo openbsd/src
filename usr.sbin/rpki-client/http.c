@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.103 2026/05/21 21:12:04 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.104 2026/06/15 09:20:21 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -941,11 +941,13 @@ http_done(struct http_connection *conn, enum http_result res)
 	LIST_REMOVE(conn, entry);
 	LIST_INSERT_HEAD(&idle, conn, entry);
 
-	/* reset totalsz, status and keep-alive for good measure */
+	/* reset connection parameters in preparation for a next request */
 	conn->totalsz = 0;
 	conn->was_gzipped = 0;
 	conn->status = 0;
 	conn->keep_alive = 0;
+	free(conn->last_modified);
+	conn->last_modified = NULL;
 
 	return WANT_POLLIN;
 }
