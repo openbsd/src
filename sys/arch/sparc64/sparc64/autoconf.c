@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.154 2025/10/05 14:29:16 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.155 2026/06/15 11:35:19 kirill Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1470,7 +1470,8 @@ device_register(struct device *dev, void *aux)
 		struct ata_atapi_attach *aa = aux;
 		u_int channel, drive;
 
-		if (strcmp(bp->name, "ata") == 0 &&
+		if ((strcmp(bp->name, "ata") == 0 ||
+		    strcmp(bp->name, "ide") == 0) &&
 		    bp->val[0] == aa->aa_channel) {
 			channel = bp->val[0]; bp++;
 			drive = bp->val[0];
