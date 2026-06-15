@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.62 2026/05/27 09:42:19 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.63 2026/06/15 14:30:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,22 +54,22 @@ struct rsync {
 static TAILQ_HEAD(, rsync)	states = TAILQ_HEAD_INITIALIZER(states);
 
 /*
- * Return the base of a rsync URI (rsync://hostname/module). The
- * caRepository provided by the RIR CAs point deeper than they should
- * which would result in many rsync calls for almost every subdirectory.
- * This is inefficient so instead crop the URI to a common base.
- * The returned string needs to be freed by the caller.
+ * Check whether the provided URI contains a valid rsync base URI.
+ * (rsync://hostname/module/). Optionally copy it into out_base_uri, which must
+ * be freed by the caller. This is useful because the caRepository provided by
+ * the CAs point deeper than they should which would result in many rsync
+ * executions for almost every subdirectory. This is too inefficient, so crop
+ * the URI to a common base. Returns 1 on success, 0 on failure.
  */
-char *
-rsync_base_uri(const char *uri)
+int
+rsync_base_uri(const char *uri, char **out_base_uri)
 {
 	const char *host, *module, *rest;
-	char *base_uri;
 
 	/* Case-insensitive rsync URI. */
 	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
 		warnx("%s: not using rsync schema", uri);
-		return NULL;
+		return 0;
 	}
 
 	/* Parse the non-zero-length hostname. */
@@ -77,32 +77,37 @@ rsync_base_uri(const char *uri)
 
 	if ((module = strchr(host, '/')) == NULL) {
 		warnx("%s: missing rsync module", uri);
-		return NULL;
+		return 0;
 	} else if (module == host) {
 		warnx("%s: zero-length rsync host", uri);
-		return NULL;
+		return 0;
 	}
 
 	/* The non-zero-length module follows the hostname. */
 	module++;
-	if (*module == '\0') {
+	if (*module == '\0' || *module == '/') {
 		warnx("%s: zero-length rsync module", uri);
-		return NULL;
+		return 0;
 	}
 
 	/* The path component is optional. */
 	if ((rest = strchr(module, '/')) == NULL) {
-		if ((base_uri = strdup(uri)) == NULL)
-			err(1, NULL);
-		return base_uri;
+		if (out_base_uri != NULL) {
+			if ((*out_base_uri = strdup(uri)) == NULL)
+				err(1, NULL);
+		}
+		return 1;
 	} else if (rest == module) {
 		warnx("%s: zero-length module", uri);
-		return NULL;
+		return 0;
 	}
 
-	if ((base_uri = strndup(uri, rest - uri)) == NULL)
-		err(1, NULL);
-	return base_uri;
+	if (out_base_uri != NULL) {
+		if ((*out_base_uri = strndup(uri, rest - uri)) == NULL)
+			err(1, NULL);
+	}
+
+	return 1;
 }
 
 /*

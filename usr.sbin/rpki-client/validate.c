@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.83 2026/05/16 07:27:03 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.84 2026/06/15 14:30:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -241,6 +241,7 @@ valid_filename(const char *fn, size_t len)
  * Validate a URI to make sure it is pure ASCII and does not point backwards
  * or doing some other silly tricks. To enforce the protocol pass either
  * https:// or rsync:// as proto, if NULL is passed no protocol is enforced.
+ * If it's rsync, check that the URI contains a module component.
  * Returns 1 if valid, 0 otherwise.
  */
 int
@@ -267,6 +268,11 @@ valid_uri(const char *uri, size_t usz, const char *proto)
 	/* do not allow files or directories to start with a '.' */
 	if (strstr(uri, "/.") != NULL)
 		return 0;
+
+	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+		if (!rsync_base_uri(uri, NULL))
+			return 0;
+	}
 
 	return 1;
 }
