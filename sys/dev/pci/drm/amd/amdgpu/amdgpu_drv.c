@@ -3806,6 +3806,8 @@ amdgpu_attachhook(struct device *self)
 
 	pci_set_drvdata(pdev, dev);
 
+	amdgpu_init_debug_options(adev);
+
 	r = amdgpu_driver_load_kms(adev, adev->flags);
 	if (r)
 		goto out;
