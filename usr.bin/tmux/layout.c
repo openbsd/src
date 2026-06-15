@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.69 2026/06/14 20:37:57 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.70 2026/06/15 17:34:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -712,7 +712,8 @@ layout_resize_floating_pane_to(struct window_pane *wp, enum layout_type type,
 		return;
 	}
 
-	if (size >= PANE_MINIMUM + 2)
+	if (window_pane_get_pane_lines(wp) != PANE_LINES_NONE &&
+	    size >= PANE_MINIMUM + 2)
 		size -= 2;
 	if (size < PANE_MINIMUM || size > PANE_MAXIMUM) {
 		*cause = xstrdup("size is too big or too small");
