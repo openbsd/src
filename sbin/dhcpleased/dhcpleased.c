@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.43 2026/05/14 06:04:08 dgl Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.44 2026/06/15 17:08:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -568,7 +568,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 			if (imsg_interface.hostname[
 			    sizeof(imsg_interface.hostname) - 1] != '\0')
 				fatalx("%s: invalid %s", __func__, i2s(type));
-			if (imsg_interface.routes_len >= MAX_DHCP_ROUTES)
+			if (imsg_interface.routes_len > MAX_DHCP_ROUTES)
 				fatalx("%s: too many routes in imsg", __func__);
 
 			configure_interface(&imsg_interface);
@@ -589,7 +589,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 			if (imsg_interface.hostname[
 			    sizeof(imsg_interface.hostname) - 1] != '\0')
 				fatalx("%s: invalid %s", __func__, i2s(type));
-			if (imsg_interface.routes_len >= MAX_DHCP_ROUTES)
+			if (imsg_interface.routes_len > MAX_DHCP_ROUTES)
 				fatalx("%s: too many routes in imsg", __func__);
 
 			deconfigure_interface(&imsg_interface);
@@ -613,7 +613,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 			if (imsg_interface.hostname[
 			    sizeof(imsg_interface.hostname) - 1] != '\0')
 				fatalx("%s: invalid %s", __func__, i2s(type));
-			if (imsg_interface.routes_len >= MAX_DHCP_ROUTES)
+			if (imsg_interface.routes_len > MAX_DHCP_ROUTES)
 				fatalx("%s: too many routes in imsg", __func__);
 
 			if (imsg_interface.routes_len > 0)
