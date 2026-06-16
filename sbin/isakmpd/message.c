@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.133 2026/06/11 09:55:17 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.134 2026/06/16 11:50:53 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1053,7 +1053,8 @@ message_validate_sa(struct message *msg, struct payload *p)
 		if (zero_test(pkt + ISAKMP_HDR_RCOOKIE_OFF,
 		    ISAKMP_HDR_RCOOKIE_LEN))
 			exchange = exchange_setup_p1(msg, doi_id);
-		else if (msg->isakmp_sa->flags & SA_FLAG_READY)
+		else if (msg->isakmp_sa &&
+		    (msg->isakmp_sa->flags & SA_FLAG_READY))
 			exchange = exchange_setup_p2(msg, doi_id);
 		else {
 			/* XXX What to do here?  */
