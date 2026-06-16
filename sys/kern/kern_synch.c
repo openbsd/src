@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.233 2025/11/24 12:54:53 jca Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.234 2026/06/16 19:29:25 bluhm Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -926,11 +926,13 @@ int
 refcnt_rele(struct refcnt *r)
 {
 	u_int refs;
+	int trace;
 
+	trace = r->r_traceidx;
 	membar_exit_before_atomic();
 	refs = atomic_dec_int_nv(&r->r_refs);
 	KASSERT(refs != ~0);
-	TRACEINDEX(refcnt, r->r_traceidx, r, refs + 1, -1);
+	TRACEINDEX(refcnt, trace, r, refs + 1, -1);
 	if (refs == 0) {
 		membar_enter_after_atomic();
 		return (1);
@@ -949,17 +951,19 @@ void
 refcnt_finalize(struct refcnt *r, const char *wmesg)
 {
 	u_int refs;
+	int trace;
 
+	trace = r->r_traceidx;
 	membar_exit_before_atomic();
 	refs = atomic_dec_int_nv(&r->r_refs);
 	KASSERT(refs != ~0);
-	TRACEINDEX(refcnt, r->r_traceidx, r, refs + 1, -1);
+	TRACEINDEX(refcnt, trace, r, refs + 1, -1);
 	while (refs) {
 		sleep_setup(r, PWAIT, wmesg);
 		refs = atomic_load_int(&r->r_refs);
 		sleep_finish(INFSLP, refs);
 	}
-	TRACEINDEX(refcnt, r->r_traceidx, r, refs, 0);
+	TRACEINDEX(refcnt, trace, r, refs, 0);
 	/* Order subsequent loads and stores after refs == 0 load. */
 	membar_sync();
 }
