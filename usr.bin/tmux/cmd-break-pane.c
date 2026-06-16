@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.67 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.68 2026/06/16 07:07:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -114,7 +114,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 	w->active = wp;
 	w->latest = tc;
 
-	if (name != NULL) {
+	if (name == NULL) {
 		newname = default_window_name(w);
 		window_set_name(w, newname, WINDOW_NAME_FORBID);
 		free(newname);
