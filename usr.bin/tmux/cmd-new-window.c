@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.99 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.100 2026/06/16 09:00:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct session		*s = target->s;
 	struct winlink		*wl = target->wl, *new_wl = NULL;
 	int			 idx = target->idx, before;
-	char			*cause = NULL, *cp, *expanded, *wname;
+	char			*cause = NULL, *cp, *expanded, *wname = NULL;
 	const char		*template, *name;
 	struct cmd_find_state	 fs;
 	struct args_value	*av;
