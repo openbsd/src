@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.140 2026/06/15 21:47:01 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.141 2026/06/16 08:53:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -129,7 +129,7 @@ screen_redraw_pane_border(struct screen_redraw_ctx *ctx, struct window_pane *wp,
 	int		 hsplit = 0, vsplit = 0;
 	int		 pane_status = window_pane_get_pane_status(wp);
 	int		 pane_scrollbars = ctx->pane_scrollbars, sb_w = 0;
-	int		 sb_pos, sx = wp->sx, sy = wp->sy;
+	int		 sb_pos, sx = wp->sx, sy = wp->sy, left, right;
 	enum layout_type split_type;
 
 	if (pane_scrollbars != 0)
@@ -151,20 +151,19 @@ screen_redraw_pane_border(struct screen_redraw_ctx *ctx, struct window_pane *wp,
 
 	/* Floating pane borders. */
 	if (window_pane_is_floating(wp)) {
+		left = wp->xoff - 1;
+		right = wp->xoff + sx;
+		if (sb_pos == PANE_SCROLLBARS_LEFT)
+			left -= sb_w;
+		else
+			right += sb_w;
 		if (py >= wp->yoff - 1 && py <= wp->yoff + sy) {
-			if (sb_pos == PANE_SCROLLBARS_LEFT) {
-				if (px == wp->xoff - 1 - sb_w)
-					return (SCREEN_REDRAW_BORDER_LEFT);
-				if (px == wp->xoff + sx)
-					return (SCREEN_REDRAW_BORDER_RIGHT);
-			} else { /* PANE_SCROLLBARS_RIGHT or none. */
-				if (px == wp->xoff - 1)
-					return (SCREEN_REDRAW_BORDER_LEFT);
-				if (px == wp->xoff + sx + sb_w)
-					return (SCREEN_REDRAW_BORDER_RIGHT);
-			}
+			if (px == left)
+				return (SCREEN_REDRAW_BORDER_LEFT);
+			if (px == right)
+				return (SCREEN_REDRAW_BORDER_RIGHT);
 		}
-		if (px >= wp->xoff && px <= wp->xoff + sx) {
+		if (px > left && px <= right) {
 			if (py == wp->yoff - 1)
 				return (SCREEN_REDRAW_BORDER_TOP);
 			if (py == wp->yoff + sy)
