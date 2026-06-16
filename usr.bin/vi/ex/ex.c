@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.24 2026/04/22 07:15:43 renaud Exp $	*/
+/*	$OpenBSD: ex.c,v 1.25 2026/06/16 02:03:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1440,7 +1440,7 @@ addr_verify:
 		 * The print commands have already handled the `print' flags.
 		 * If so, clear them.
 		 */
-		if (FL_ISSET(ecp->iflags, E_CLRFLAG))
+		if (F_ISSET(ecp, E_CLRFLAG))
 			FL_CLR(ecp->iflags, E_C_HASH | E_C_LIST | E_C_PRINT);
 
 		/* If hash set only because of the number option, discard it. */
