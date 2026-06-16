@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_mldsa.c,v 1.1 2026/06/14 04:08:06 djm Exp $ */
+/* 	$OpenBSD: test_mldsa.c,v 1.2 2026/06/16 09:00:47 dtucker Exp $ */
 /*
  * Regress test for ML-DSA
  *
@@ -6,6 +6,7 @@
  */
 
 #include <sys/types.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
