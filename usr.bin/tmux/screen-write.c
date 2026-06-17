@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.271 2026/06/16 10:47:35 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.272 2026/06/17 13:22:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -148,10 +148,10 @@ screen_write_set_client_cb(struct tty_ctx *ttyctx, struct client *c)
 
 	if (wp->flags & (PANE_REDRAW|PANE_DROP))
 		return (-1);
-	if (c->flags & CLIENT_REDRAWPANES) {
+	if (c->flags & CLIENT_REDRAWWINDOW) {
 		/*
-		 * Redraw is already deferred to redraw another pane - redraw
-		 * this one also when that happens.
+		 * Redraw is already deferred to redraw the window - redraw this
+		 * one also when that happens.
 		 */
 		log_debug("%s: adding %%%u to deferred redraw", __func__,
 		    wp->id);
