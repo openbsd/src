@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.13 2026/01/29 06:04:27 helg Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.14 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -69,13 +69,14 @@ ref_vn(struct fuse_vnode *vn)
 }
 
 void
-unref_vn(struct fuse *f, struct fuse_vnode *vn)
+unref_vn(struct fuse *f, struct fuse_vnode *vn, const uint64_t nlookup)
 {
-	if (--vn->ref == 0) {
+	vn->ref -= nlookup;
+	if (vn->ref == 0) {
 		tree_pop(&f->vnode_tree, vn->ino);
 		remove_vnode_from_name_tree(f, vn);
 		if (vn->parent != NULL)
-			unref_vn(f, vn->parent);
+			unref_vn(f, vn->parent, 1);
 		free(vn);
 	}
 }

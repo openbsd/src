@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.42 2026/01/29 06:04:27 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.43 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -33,7 +33,7 @@
  */
 static fuse_req_t ireq;
 
-const fuse_req_t
+fuse_req_t
 ifuse_req(void)
 {
 	return (ireq);
@@ -192,9 +192,6 @@ out:
 		fuse_reply_err(req, -err);
 }
 
-#define GENERIC_DIRSIZ(NLEN) \
-((sizeof (struct dirent) - (MAXNAMLEN+1)) + ((NLEN+1 + 7) &~ 7))
-
 /*
  * This function adds one directory entry to the buffer.
  * FUSE file systems can implement readdir in one of two ways.
@@ -265,10 +262,14 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	/* advance buf to start of next entry and now add it for real */
 	buf = (char *) fd->buf + fd->len;
 	resid = fd->size - fd->len;
-	len = fuse_add_direntry(ifuse_req(), buf, resid, name, &attr, off);
-
 	fd->len += len;
 	fd->idx += len;
+
+	if (off)
+		fuse_add_direntry(ifuse_req(), buf, resid, name, &attr, off);
+	else
+		fuse_add_direntry(ifuse_req(), buf, resid, name, &attr,
+		    fd->idx);
 
 	return (0);
 }
@@ -769,23 +770,23 @@ ifuse_ops_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
 	}
 
 	ictx_init(req);
-	if (flags & FUSE_FATTR_MODE) {
+	if (flags & FUSE_SET_ATTR_MODE) {
 		if (f->op.chmod)
 			err = f->op.chmod(realname, attr->st_mode);
 		else
 			err = ENOSYS;
 	}
 
-	if (!err && (flags & FUSE_FATTR_UID || flags & FUSE_FATTR_GID)) {
-		uid = (flags & FUSE_FATTR_UID) ? attr->st_uid : (uid_t)-1;
-		gid = (flags & FUSE_FATTR_GID) ? attr->st_gid : (gid_t)-1;
+	if (!err && (flags & FUSE_SET_ATTR_UID || flags & FUSE_SET_ATTR_GID)) {
+		uid = (flags & FUSE_SET_ATTR_UID) ? attr->st_uid : (uid_t)-1;
+		gid = (flags & FUSE_SET_ATTR_GID) ? attr->st_gid : (gid_t)-1;
 		if (f->op.chown)
 			err = f->op.chown(realname, uid, gid);
 		else
 			err = ENOSYS;
 	}
 
-	if (!err && (flags & FUSE_FATTR_MTIME || flags & FUSE_FATTR_ATIME)) {
+	if (!err && (flags & FUSE_SET_ATTR_MTIME || flags & FUSE_SET_ATTR_ATIME)) {
 		if (f->op.utimens) {
 			ts[0] = attr->st_atim;
 			ts[1] = attr->st_mtim;
@@ -798,7 +799,7 @@ ifuse_ops_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
 			err = ENOSYS;
 	}
 
-	if (!err && (flags & FUSE_FATTR_SIZE)) {
+	if (!err && (flags & FUSE_SET_ATTR_SIZE)) {
 		if (f->op.truncate)
 			err = f->op.truncate(realname, attr->st_size);
 		else
@@ -918,16 +919,16 @@ ifuse_ops_destroy(void *userdata)
 }
 
 static void
-ifuse_ops_forget(fuse_req_t req, fuse_ino_t ino, uint64_t nlookup /* XXX */)
+ifuse_ops_forget(fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
 {
 	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	struct fuse_vnode *vn;
 
 	vn = tree_get(&f->vnode_tree, ino);
 	if (vn != NULL)
-		unref_vn(f, vn);
+		unref_vn(f, vn, nlookup);
 
-	fuse_reply_err(req, 0);
+	fuse_reply_none(req);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lowlevel.h,v 1.2 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_lowlevel.h,v 1.3 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2025 Helg Bredow <helg@openbsd.org>
  *
@@ -126,7 +126,6 @@ void fuse_session_reset(struct fuse_session *);
 void fuse_session_process(struct fuse_session *, const char *, size_t,
     struct fuse_chan *);
 
-
 /*
  * FUSE Channel API Prototypes
  */
@@ -161,7 +160,8 @@ const struct fuse_ctx *fuse_req_ctx(fuse_req_t);
 void *fuse_req_userdata(fuse_req_t);
 
 /*
- * Bitmasks for setattr to indicate what to set.
+ * Bitmasks for setattr to indicate what to set. These must be the same
+ * as the FUSE_FATTR_* definitions in <sys/fusebuf.h>
  */
 #define FUSE_SET_ATTR_MODE	(1 << 0)
 #define FUSE_SET_ATTR_UID	(1 << 1)

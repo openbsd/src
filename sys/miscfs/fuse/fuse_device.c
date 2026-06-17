@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.49 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.50 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -303,7 +303,6 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct fuse_d *fd;
 	struct fusebuf *fbuf;
-	struct fb_hdr hdr;
 	int error = 0;
 
 	fd = fuse_lookup(minor(dev));
@@ -342,20 +341,16 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	/* We get the whole fusebuf or nothing */
-	if (uio->uio_resid < sizeof(fbuf->fb_hdr) + sizeof(fbuf->FD) +
+	if (uio->uio_resid < sizeof(fbuf->hdr) + fbuf->op_in_len +
 	    fbuf->fb_len) {
 		error = EINVAL;
 		goto end;
 	}
 
-	/* Do not send kernel pointers */
-	memcpy(&hdr.fh_next, &fbuf->fb_next, sizeof(fbuf->fb_next));
-	memset(&fbuf->fb_next, 0, sizeof(fbuf->fb_next));
-
-	error = uiomove(&fbuf->fb_hdr, sizeof(fbuf->fb_hdr), uio);
+	error = uiomove(&fbuf->hdr, sizeof(fbuf->hdr), uio);
 	if (error)
 		goto end;
-	error = uiomove(&fbuf->FD, sizeof(fbuf->FD), uio);
+	error = uiomove(&fbuf->op, fbuf->op_in_len, uio);
 	if (error)
 		goto end;
 	if (fbuf->fb_len > 0) {
@@ -367,8 +362,6 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 #ifdef FUSE_DEBUG
 	fuse_dump_buff((char *)fbuf, sizeof(struct fusebuf));
 #endif
-	/* Restore kernel pointers */
-	memcpy(&fbuf->fb_next, &hdr.fh_next, sizeof(fbuf->fb_next));
 
 	free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
 	fbuf->fb_dat = NULL;
@@ -376,6 +369,13 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 	/* Move the fbuf to the wait queue */
 	SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
 	stat_fbufs_in--;
+
+	/* FUSE_FORGET has no response */
+	if (fbuf->fb_type == FUSE_FORGET) {
+		fb_delete(fbuf);
+		goto end;
+ 	}
+
 	SIMPLEQ_INSERT_TAIL(&fd->fd_fbufs_wait, fbuf, fb_next);
 	stat_fbufs_wait++;
 
@@ -391,37 +391,35 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	struct fusebuf *lastfbuf;
 	struct fuse_d *fd;
 	struct fusebuf *fbuf;
-	struct fb_hdr hdr;
+	struct fuse_out_header hdr;
 	int error = 0;
 
 	fd = fuse_lookup(minor(dev));
 	if (fd == NULL)
-		return (ENXIO);
+		return (ENODEV);
 
-	/* Check for sanity - must receive more than just the header */
-	if (uio->uio_resid <= sizeof(hdr)) {
+	/* Check for sanity - must receive at least the header */
+	if (uio->uio_resid < sizeof(hdr)) {
 		error = EINVAL;
 		goto out;
 	}
 
+	/* Read the header */
 	if ((error = uiomove(&hdr, sizeof(hdr), uio)) != 0)
 		goto out;
 
-	/* Check for sanity */
-	if (hdr.fh_len > FUSEBUFMAXSIZE) {
-		error = EINVAL;
-		goto out;
-	}
-
-	/* We get the whole fusebuf or nothing */
-	if (uio->uio_resid != sizeof(fbuf->FD) + hdr.fh_len) {
-		error = EINVAL;
+	/*
+	 * A unique value of zero means daemon is notifying us and hdr.error
+	 * contains notification type. Currently unsupported.
+	 */
+	if (hdr.unique == 0) {
+		error = 0;
 		goto out;
 	}
 
 	/* looking for uuid in fd_fbufs_wait */
 	SIMPLEQ_FOREACH(fbuf, &fd->fd_fbufs_wait, fb_next) {
-		if (fbuf->fb_uuid == hdr.fh_uuid)
+		if (fbuf->fb_uuid == hdr.unique)
 			break;
 
 		lastfbuf = fbuf;
@@ -432,49 +430,93 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	/* Update fb_hdr */
-	fbuf->fb_len = hdr.fh_len;
-	fbuf->fb_err = hdr.fh_err;
-	fbuf->fb_ino = hdr.fh_ino;
+	fbuf->fb_err = -hdr.error;
 
-	/* Check for corrupted fbufs */
-	if ((fbuf->fb_len && fbuf->fb_err) || fbuf->fb_len > fbuf->fb_io_len ||
-	    SIMPLEQ_EMPTY(&fd->fd_fbufs_wait)) {
-		printf("fuse: dropping corrupted fusebuf: %zu: %zu: %d\n",
-		    fbuf->fb_io_len, fbuf->fb_len, fbuf->fb_err);
+	/* Don't expect out struct or data if there was an error */
+	if (fbuf->fb_err) {
+		if (uio->uio_resid > 0) {
+			error = EINVAL;
+			fbuf->fb_err = EIO;
+		}
+ 		goto end;
+ 	}
+
+	/* get operation output */
+	if (fbuf->op_out_len > 0) {
+		if ((error = uiomove(&fbuf->op, fbuf->op_out_len, uio)) != 0) {
+			fbuf->fb_err = error;
+			goto end;
+		}
+	}
+
+	/* Calculate the length of the data buffer to expect */
+	if (fbuf->op_out_buf) {
+		fbuf->fb_len = hdr.len - sizeof(hdr) - fbuf->op_out_len;
+		if (fbuf->fb_len > fd->fd_fmp->max_read || fbuf->fb_len < 0) {
+			printf("fuse: invalid fusebuf read size: %llu "
+			    "opcode=%d\n", fbuf->fb_len, fbuf->fb_type);
+			error = EINVAL;
+			fbuf->fb_err = EIO;
+			goto end;
+		}
+	} else
+		fbuf->fb_len = 0;
+
+	/* validate remaining data */
+	if (uio->uio_resid != fbuf->fb_len) {
 		error = EINVAL;
 		fbuf->fb_err = EIO;
 		goto end;
 	}
 
-	/* Get the missing data from the fbuf */
-	error = uiomove(&fbuf->FD, sizeof(fbuf->FD), uio);
-	if (error)
-		return error;
-
-	fbuf->fb_dat = NULL;
 	if (fbuf->fb_len > 0) {
-		fbuf->fb_dat = malloc(fbuf->fb_len, M_FUSEFS,
-		    M_WAITOK | M_ZERO);
-		error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio);
-		if (error) {
+		fbuf->fb_dat = malloc(fbuf->fb_len, M_FUSEFS, M_WAITOK);
+		if ((error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio)) != 0) {
 			free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
 			fbuf->fb_dat = NULL;
+			fbuf->fb_err = error;
 			goto end;
 		}
 	}
 
-#ifdef FUSE_DEBUG
-	fuse_dump_buff((char *)fbuf, sizeof(struct fusebuf));
-#endif
-
-	switch (fbuf->fb_type) {
-	case FBT_INIT:
+	if (fbuf->fb_type == FUSE_INIT && fbuf->fb_err == 0) {
+		/*
+		 * We don't support userspace with a smaller major version and
+		 * it's up to userspace implementations to fall back to our
+	 	 * version if they are capable of a later version.
+	 	 */
+		if (fbuf->op.out.init.major != FUSE_KERNEL_VERSION) {
+			printf("fuse: unsupported major version: %d.%d\n",
+ 			    fbuf->op.out.init.major, fbuf->op.out.init.minor);
+			error = EINVAL;
+			goto end;
+		}
+		/*
+		 * If the major versions match then both shall use the smallest
+ 		 * of the two minor versions for communication. 7.9 is the
+		 * smallest version less than what we support where the ABI has
+		 * not changed. Supporting an earlier version would require
+		 * conditional handling of some FUSE input arguments. If the
+		 * daemon supports a later version then it must fall back to
+		 * ours.
+		 */
+		if (fbuf->op.out.init.minor < 9) {
+			printf("fuse: unsupported minor version: %d.%d\n",
+ 			    fbuf->op.out.init.major, fbuf->op.out.init.minor);
+			error = EINVAL;
+			goto end;
+		}
+		/*
+		 * max_write determines the size of buffer to send to the file
+		 * system daemon when writing so ensure that it's sane.
+		 */
+		fd->fd_fmp->max_write = MIN(fbuf->op.out.init.max_write,
+		    FUSEBUFMAXSIZE);
+		if (fd->fd_fmp->max_write == 0)
+			fd->fd_fmp->max_write = FUSEBUFMAXSIZE;
 		fd->fd_fmp->sess_init = 1;
-		break ;
-	case FBT_DESTROY:
-		fd->fd_fmp = NULL;
-		break ;
-	}
+ 	}
+
 end:
 	/* Remove the fbuf from the wait queue */
 	if (fbuf == SIMPLEQ_FIRST(&fd->fd_fbufs_wait))
@@ -488,7 +530,7 @@ end:
 	 * FBT_INIT doesn't expect a response. Otherwise let the VFS
 	 * syscall that is waiting on this fbuf know the reponse is ready.
 	 */
-	if (fbuf->fb_type == FBT_INIT)
+	if (fbuf->fb_type == FUSE_INIT)
 		fb_delete(fbuf);
 	else
 		wakeup(fbuf);

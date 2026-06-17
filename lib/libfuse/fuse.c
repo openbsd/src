@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.59 2026/03/10 16:20:57 deraadt Exp $ */
+/* $OpenBSD: fuse.c,v 1.60 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,6 +82,7 @@ static struct fuse_opt fuse_lib_opts[] = {
 	FUSE_OPT_KEY("fmask=%o",		KEY_STUB),
 	FUSE_LIB_OPT("umask=",			set_mode),
 	FUSE_LIB_OPT("umask=%o",		umask),
+	FUSE_OPT_KEY("max_write=",		FUSE_OPT_KEY_KEEP),
 	FUSE_OPT_END
 };
 
@@ -98,7 +99,6 @@ static struct fuse_opt fuse_mount_opts[] = {
 	FUSE_MOUNT_OPT("fsname=%s",		fsname),
 	FUSE_MOUNT_OPT("max_read=%u",		max_read),
 	FUSE_OPT_KEY("max_readahead",		KEY_STUB),
-	FUSE_OPT_KEY("max_write",		KEY_STUB),
 	FUSE_MOUNT_OPT("noatime",		noatime),
 	FUSE_MOUNT_OPT("nonempty",		nonempty),
 	FUSE_MOUNT_OPT("-r",			rdonly),

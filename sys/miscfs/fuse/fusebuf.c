@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.18 2021/03/11 13:31:35 jsg Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.19 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -35,7 +35,82 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 {
 	struct fusebuf *fbuf;
 
-	fbuf = pool_get(&fusefs_fbuf_pool, PR_WAITOK | PR_ZERO);
+	KASSERT(len <= FUSEBUFMAXSIZE);
+
+ 	fbuf = pool_get(&fusefs_fbuf_pool, PR_WAITOK | PR_ZERO);
+
+	fbuf->op_in_len = 0;
+	fbuf->op_out_len = 0;
+	fbuf->op_out_buf = 0;
+	switch(op) {
+		case FUSE_GETATTR:
+			fbuf->op_in_len = sizeof(struct fuse_getattr_in);
+			fbuf->op_out_len = sizeof(struct fuse_attr_out);
+			break;
+		case FUSE_SETATTR:
+			fbuf->op_in_len = sizeof(struct fuse_setattr_in);
+			fbuf->op_out_len = sizeof(struct fuse_attr_out);
+			break;
+		case FUSE_READLINK:
+			fbuf->op_out_buf = 1;
+			break;
+		case FUSE_FLUSH:
+			fbuf->op_in_len = sizeof(struct fuse_flush_in);
+			break;
+		case FUSE_INIT:
+			fbuf->op_in_len = sizeof(struct fuse_init_in);
+			fbuf->op_out_len = sizeof(struct fuse_init_out);
+			break;
+		case FUSE_OPEN:
+		case FUSE_OPENDIR:
+			fbuf->op_in_len = sizeof(struct fuse_open_in);
+			fbuf->op_out_len = sizeof(struct fuse_open_out);
+			break;
+		case FUSE_READ:
+		case FUSE_READDIR:
+			fbuf->op_in_len = sizeof(struct fuse_read_in);
+			fbuf->op_out_buf = 1;
+			break;
+		case FUSE_MKDIR:
+			fbuf->op_in_len = sizeof(struct fuse_mkdir_in);
+			fbuf->op_out_len = sizeof(struct fuse_entry_out);
+			break;
+		case FUSE_MKNOD:
+			fbuf->op_in_len = sizeof(struct fuse_mknod_in);
+			fbuf->op_out_len = sizeof(struct fuse_entry_out);
+			break;
+		case FUSE_FSYNC:
+			fbuf->op_in_len = sizeof(struct fuse_fsync_in);
+			break;
+		case FUSE_RENAME:
+			fbuf->op_in_len = sizeof(struct fuse_rename_in);
+			break;
+		case FUSE_LINK:
+			fbuf->op_in_len = sizeof(struct fuse_link_in);
+			fbuf->op_out_len = sizeof(struct fuse_entry_out);
+			break;
+		case FUSE_SYMLINK:
+			fbuf->op_out_len = sizeof(struct fuse_entry_out);
+			break;
+		case FUSE_RELEASE:
+		case FUSE_RELEASEDIR:
+			fbuf->op_in_len = sizeof(struct fuse_release_in);
+			break;
+		case FUSE_WRITE:
+			fbuf->op_in_len = sizeof(struct fuse_write_in);
+			fbuf->op_out_len = sizeof(struct fuse_write_out);
+			break;
+		case FUSE_FORGET:
+			fbuf->op_in_len = sizeof(struct fuse_forget_in);
+			break;
+		case FUSE_LOOKUP:
+			fbuf->op_out_len = sizeof(struct fuse_entry_out);
+			break;
+		case FUSE_STATFS:
+			fbuf->op_out_len = sizeof(struct fuse_statfs_out);
+			break;
+	}
+	fbuf->hdr.len = sizeof(fbuf->hdr) + fbuf->op_in_len + len;
 	fbuf->fb_len = len;
 	fbuf->fb_err = 0;
 	arc4random_buf(&fbuf->fb_uuid, sizeof fbuf->fb_uuid);
@@ -48,7 +123,6 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	fbuf->fb_tid = p->p_tid + THREAD_PID_OFFSET;
 	fbuf->fb_uid = p->p_ucred->cr_uid;
 	fbuf->fb_gid = p->p_ucred->cr_gid;
-	fbuf->fb_umask = p->p_p->ps_fd->fd_cmask;
 	if (len == 0)
 		fbuf->fb_dat = NULL;
 	else

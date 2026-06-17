@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.28 2026/01/29 06:04:27 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.29 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -58,10 +58,11 @@ SPLAY_HEAD(tree, treeentry);
 
 struct fuse_session {
 	struct fuse_lowlevel_ops llops;
-	struct fuse_chan	*chan;
-	void			*userdata;
-	int			 init;
-	int			 exit;
+	struct fuse_conn_info fci;
+	struct fuse_chan *chan;
+	void *userdata;
+	int init;
+	int exit;
 };
 
 struct fuse_chan {
@@ -122,12 +123,13 @@ struct fuse_req {
 #define FUSE_ROOT_INO ((ino_t)1)
 
 /* fuse_ops.c */
-const fuse_req_t ifuse_req(void);
+fuse_req_t ifuse_req(void);
 
 /* fuse_subr.c */
 struct fuse_vnode	*alloc_vn(struct fuse *, const char *, ino_t, ino_t);
 void			 ref_vn(struct fuse_vnode *);
-void			 unref_vn(struct fuse *, struct fuse_vnode *);
+void			 unref_vn(struct fuse *, struct fuse_vnode *,
+    const uint64_t);
 struct fuse_vnode	*get_vn_by_name_and_parent(struct fuse *, const char *,
     ino_t);
 void			remove_vnode_from_name_tree(struct fuse *,

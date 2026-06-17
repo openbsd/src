@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_chan.c,v 1.2 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_chan.c,v 1.3 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2025 Helg Bredow <helg@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <unistd.h>
 
 #include "debug.h"
 #include "fuse_private.h"
@@ -33,27 +34,9 @@ DEF(fuse_chan_fd);
 int
 fuse_chan_recv(struct fuse_chan **chp, char *buf, size_t size)
 {
-	struct fuse_chan *ch = *chp;
-	struct fusebuf *fbuf = (struct fusebuf *)buf;
-	struct iovec iov[2];
 	ssize_t n;
 
-	if (chp == NULL || *chp == NULL || buf == NULL)
-		return (-EINVAL);
-
-	/* XXX
-	 * This will change once the kernel protocol is updated to be compatible
-	 * with Linux.
-	 * buf is contiguous memory but our fbuf is separated into the header
-	 * and io structs with a pointer to the data buffer so we need to
-	 * overlay our fbuf with pointer to data buffer.
-	 */
-	iov[0].iov_base = fbuf;
-	iov[0].iov_len  = sizeof(fbuf->fb_hdr) + sizeof(fbuf->FD);
-	iov[1].iov_base = fbuf->fb_dat;
-	iov[1].iov_len  = size - (sizeof(fbuf->fb_hdr) + sizeof(fbuf->FD));
-
-	n = readv(ch->fd, iov, 2);
+	n = read((*chp)->fd, buf, size);
 	if (n == -1)
 		return (-errno);
 
@@ -67,10 +50,8 @@ fuse_chan_send(struct fuse_chan *ch, const struct iovec iov[], size_t count)
 	ssize_t n;
 
 	n = writev(ch->fd, iov, count);
-	if (n == -1) {
-		DPERROR(__func__);
+	if (n == -1)
 		return (-errno);
-	}
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.23 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.24 2026/06/17 13:29:01 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,7 +82,7 @@ fusefs_lookup(void *v)
 
 		/* got a real entry */
 		fbuf = fb_setup(cnp->cn_namelen + 1, dp->i_number,
-		    FBT_LOOKUP, p);
+		    FUSE_LOOKUP, p);
 
 		memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 		fbuf->fb_dat[cnp->cn_namelen] = '\0';
@@ -119,8 +119,8 @@ fusefs_lookup(void *v)
 			return (ENOENT);
 		}
 
-		nid = fbuf->fb_ino;
-		nvtype = IFTOVT(fbuf->fb_attr.st_mode);
+		nid = fbuf->op.out.entry.nodeid;
+		nvtype = IFTOVT(fbuf->op.out.entry.attr.mode);
 		fb_delete(fbuf);
 
 		/*
@@ -159,6 +159,7 @@ fusefs_lookup(void *v)
 			goto reclaim;
 
 		tdp->v_type = nvtype;
+		VTOI(tdp)->i_parent_cache = dp->i_number;
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 
@@ -193,6 +194,9 @@ fusefs_lookup(void *v)
 		}
 		*vpp = tdp;
 
+		/* Didn't actually make a call but vget increments lookup */
+		VTOI(tdp)->nlookup--;
+
 	} else if (nid == dp->i_number) {
 		vref(vdp);
 		*vpp = vdp;
@@ -203,6 +207,7 @@ fusefs_lookup(void *v)
 			goto reclaim;
 
 		tdp->v_type = nvtype;
+		VTOI(tdp)->i_parent_cache = dp->i_number;
 
 		/*
 		 * Cache the parent if it's a directory so that we can resolve
@@ -222,11 +227,10 @@ fusefs_lookup(void *v)
 	return (error);
 
 reclaim:
-	if (nid != dp->i_number && nid != FUSE_ROOTINO) {
-		fbuf = fb_setup(0, nid, FBT_RECLAIM, p);
-		if (fb_queue(fmp->dev, fbuf))
-			printf("fusefs: libfuse vnode reclaim failed\n");
-		fb_delete(fbuf);
+	if (nid != dp->i_number && nid != FUSE_ROOT_ID) {
+		fbuf = fb_setup(0, nid, FUSE_FORGET, p);
+		fbuf->op.in.forget.nlookup = 1;
+		fuse_device_queue_fbuf(fmp->dev, fbuf); /* no response */
 	}
 	return (error);
 }
