@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1092 2026/06/16 05:01:56 jsg Exp $
+.\" $OpenBSD: tmux.1,v 1.1093 2026/06/17 07:52:21 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 16 2026 $
+.Dd $Mdocdate: June 17 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3313,7 +3313,7 @@ or
 reverses the sort order.
 .Tg movep
 .It Xo Ic move\-pane
-.Op Fl bdfhv
+.Op Fl bdfhMv
 .Op Fl D Op Ar lines
 .Op Fl l Ar size
 .Op Fl L Op Ar columns
@@ -3385,6 +3385,10 @@ move it to an absolute position.
 moves the pane to the given
 .Ar z-index ,
 where zero is the front.
+.Pp
+.Fl M
+begins a mouse drag (only valid if bound to a mouse key binding, see
+.Sx MOUSE SUPPORT ) .
 .Tg movew
 .It Xo Ic move\-window
 .Op Fl abrdk
