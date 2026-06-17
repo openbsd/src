@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.35 2026/06/15 08:53:14 kevlo Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.36 2026/06/17 13:34:53 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -311,6 +311,7 @@ struct mwx_softc {
 
 	struct taskq		*sc_nswq;;
 	struct task		sc_newstate_task;
+	struct task		sc_bgscan_done_task;
 	struct task		sc_scan_task;
 	struct task		sc_reset_task;
 	u_int			sc_flags;
@@ -321,6 +322,9 @@ struct mwx_softc {
 
 	enum ieee80211_state	sc_ns_state;
 	int			sc_ns_arg;
+
+	struct ieee80211_node_switch_bss_arg	*sc_bgscan_arg;
+	size_t			sc_bgscan_arg_size;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
@@ -452,6 +456,15 @@ void		mwx_radiotap_attach(struct mwx_softc *);
 
 int		mwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void		mwx_newstate_task(void *);
+int		mwx_scan(struct mwx_softc *);
+int		mwx_bgscan(struct ieee80211com *);
+void		mwx_bgscan_done(struct ieee80211com *,
+		    struct ieee80211_node_switch_bss_arg *, size_t);
+void		mwx_bgscan_done_task(void *);
+int		mwx_set_key(struct ieee80211com *, struct ieee80211_node *,
+		    struct ieee80211_key *);
+void		mwx_delete_key(struct ieee80211com *, struct ieee80211_node *,
+		    struct ieee80211_key *);
 
 int		mwx_tx(struct mwx_softc *, struct mbuf *,
 		    struct ieee80211_node *);
@@ -560,6 +573,7 @@ int		mt7921_mcu_set_sniffer(struct mwx_softc *, int);
 int		mt7921_mcu_set_beacon_filter(struct mwx_softc *, int);
 int		mt7921_mcu_set_bss_pm(struct mwx_softc *, int);
 int		mt7921_mcu_set_tx(struct mwx_softc *, struct mwx_vif *);
+int		mwx_mcu_set_hif_suspend(struct mwx_softc *, int);
 int		mt7921_mac_fill_rx(struct mwx_softc *, struct mbuf *,
 		    struct ieee80211_rxinfo *);
 uint32_t	mt7921_mac_tx_rate_val(struct mwx_softc *);
@@ -771,26 +785,53 @@ mwx_stop(struct ifnet *ifp)
 {
 	struct mwx_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s = splnet();
+	int was_running = (ifp->if_flags & IFF_RUNNING) != 0;
 
 	DPRINTF("%s: stop\n", DEVNAME(sc));
 
-	//XXX sc->sc_flags |= MWX_FLAG_SHUTDOWN;
 	/* Cancel scheduled tasks and let any stale tasks finish up. */
-	task_del(systq, &sc->sc_reset_task);
-	task_del(systq, &sc->sc_scan_task);
+	task_del(sc->sc_nswq, &sc->sc_newstate_task);
+	task_del(sc->sc_nswq, &sc->sc_bgscan_done_task);
+	task_del(sc->sc_nswq, &sc->sc_reset_task);
+	task_del(sc->sc_nswq, &sc->sc_scan_task);
+
+	/* XXX need a barrier here */
+
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
 
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);  /* free all nodes */
 
-	mt7921_mcu_set_mac_enable(sc, 0, 0);
+	/* reset soft state */
+	if (was_running) {
+		struct mwx_node *mn;
 
-	/* XXX anything more ??? */
-	/* check out mt7921e_mac_reset, mt7921e_unregister_device and
-	   mt7921_pci_suspend
-	 */
+		free(sc->sc_bgscan_arg, M_DEVBUF, sc->sc_bgscan_arg_size);
+		sc->sc_bgscan_arg = NULL;
+		sc->sc_bgscan_arg_size = 0;
+		if (sc->sc_flags & MWX_FLAG_SCANNING) {
+			mt7921_mcu_hw_scan_cancel(sc);
+			sc->sc_flags &= ~MWX_FLAG_SCANNING;
+		}
+
+		mn = (void *)ic->ic_bss;
+		mt7921_mcu_uni_add_dev(sc, &sc->sc_vif, mn, 0);
+		mwx_mcu_set_deep_sleep(sc, 1);
+		mt7921_mcu_set_mac_enable(sc, 0, 0);
+
+		/* XXX anything more ??? */
+		/* check out mt7921e_mac_reset, mt7921e_unregister_device and
+		   mt7921_pci_suspend
+		 */
+	}
+
+	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
+	sc->sc_ns_state = IEEE80211_S_INIT;
+	ifp->if_timer = 0;
+
+	splx(s);
 }
 
 void
@@ -981,49 +1022,6 @@ mwx_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 #endif
 
 int
-mwx_scan(struct mwx_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	int rv;
-
-	if (sc->sc_flags & MWX_FLAG_BGSCAN) {
-		rv = mt7921_mcu_hw_scan_cancel(sc);
-		if (rv) {
-			printf("%s: could not abort background scan\n",
-			    DEVNAME(sc));
-			return rv;
-		}
-	}
-
-	rv = mt7921_mcu_hw_scan(sc, 0);
-	if (rv) {
-		printf("%s: could not initiate scan\n", DEVNAME(sc));
-		return rv;
-	}
-
-	/*
-	 * The current mode might have been fixed during association.
-	 * Ensure all channels get scanned.
-	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
-		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
-
-	sc->sc_flags |= MWX_FLAG_SCANNING;
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: %s -> %s\n", ifp->if_xname,
-		    ieee80211_state_name[ic->ic_state],
-		    ieee80211_state_name[IEEE80211_S_SCAN]);
-	if ((sc->sc_flags & MWX_FLAG_BGSCAN) == 0) {
-		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
-		ieee80211_node_cleanup(ic, ic->ic_bss);
-	}
-	ic->ic_state = IEEE80211_S_SCAN;
-
-	return 0;
-}
-
-int
 mwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct mwx_softc *sc = ic->ic_softc;
@@ -1057,7 +1055,8 @@ mwx_newstate_task(void *ptr)
 	enum ieee80211_state ostate = ic->ic_state;
 	enum ieee80211_state nstate = sc->sc_ns_state;
 	int arg = sc->sc_ns_arg;
-	int rv;
+	int s = splnet();
+	int rv = 0;
 
 	switch (ostate) {
 	case IEEE80211_S_RUN:
@@ -1066,8 +1065,10 @@ mwx_newstate_task(void *ptr)
 		break;
 	case IEEE80211_S_SCAN:
 		if (nstate == ostate) {
-			if (sc->sc_flags & MWX_FLAG_SCANNING)
+			if (sc->sc_flags & MWX_FLAG_SCANNING) {
+				splx(s);
 				return;
+			}
 		}
 		break;
 	default:
@@ -1076,20 +1077,18 @@ mwx_newstate_task(void *ptr)
 
 	DPRINTF("%s: %s %d -> %d\n", DEVNAME(sc), __func__, ostate, nstate);
 
-	/* XXX TODO */
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		break;
 	case IEEE80211_S_SCAN:
 		rv = mwx_scan(sc);
 		if (rv)
-			/* XXX error handling */
-			return;
-		return;
+			break;
+		break;
 	case IEEE80211_S_AUTH:
 		rv = mt7921_set_channel(sc);
 		if (rv)
-			return;
+			break;
 		mwx_mcu_set_deep_sleep(sc, 0);
 		mt7921_mac_sta_update(sc, sc->sc_ic.ic_bss, 1, 1);
 		break;
@@ -1106,7 +1105,175 @@ mwx_newstate_task(void *ptr)
 		break;
 	}
 
-	sc->sc_newstate(ic, nstate, arg);
+	if (rv) {
+		mwx_reset(sc);
+	} else {
+		sc->sc_newstate(ic, nstate, arg);
+	}
+	splx(s);
+}
+
+int
+mwx_scan(struct mwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	int rv;
+
+	if (sc->sc_flags & MWX_FLAG_BGSCAN) {
+		rv = mt7921_mcu_hw_scan_cancel(sc);
+		if (rv) {
+			printf("%s: could not abort background scan\n",
+			    DEVNAME(sc));
+			return rv;
+		}
+	}
+
+	rv = mt7921_mcu_hw_scan(sc, 0);
+	if (rv) {
+		printf("%s: could not initiate scan\n", DEVNAME(sc));
+		return rv;
+	}
+
+	/*
+	 * The current mode might have been fixed during association.
+	 * Ensure all channels get scanned.
+	 */
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
+		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
+
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: %s -> %s\n", ifp->if_xname,
+		    ieee80211_state_name[ic->ic_state],
+		    ieee80211_state_name[IEEE80211_S_SCAN]);
+	if ((sc->sc_flags & MWX_FLAG_BGSCAN) == 0) {
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+		ieee80211_node_cleanup(ic, ic->ic_bss);
+	}
+	ic->ic_state = IEEE80211_S_SCAN;
+
+	return 0;
+}
+
+int
+mwx_bgscan(struct ieee80211com *ic)
+{
+	struct mwx_softc *sc = ic->ic_softc;
+	int err;
+
+	if (sc->sc_flags & MWX_FLAG_SCANNING)
+		return 0;
+
+	err = mt7921_mcu_hw_scan(sc, 1);
+	if (err) {
+		printf("%s: could not initiate scan\n", DEVNAME(sc));
+		return err;
+	}
+	
+	sc->sc_flags |= MWX_FLAG_BGSCAN;
+	return 0;
+}
+
+void
+mwx_bgscan_done(struct ieee80211com *ic,
+    struct ieee80211_node_switch_bss_arg *arg, size_t arg_size)
+{
+	struct mwx_softc *sc = ic->ic_softc;
+
+	free(sc->sc_bgscan_arg, M_DEVBUF, sc->sc_bgscan_arg_size);
+	sc->sc_bgscan_arg = arg;
+	sc->sc_bgscan_arg_size = arg_size;
+	task_add(sc->sc_nswq, &sc->sc_bgscan_done_task);
+}
+
+void
+mwx_bgscan_done_task(void *arg)
+{
+	struct mwx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	int err = 0;
+	int s = splnet();
+
+	if (ic->ic_state != IEEE80211_S_RUN ||
+	    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0) {
+		err = ENXIO;
+		goto done;
+	}
+
+#ifdef NOTYET
+	/*
+	 * Remove installed crypto keys while we still have access to them.
+	 * Once mwx_newstate() is entered ic_bss will already contain
+	 * information about our next AP.
+	 */
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		struct ieee80211_key *k;
+
+		if (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP)
+			mwx_mfp_leave(sc);
+
+		if (ni->ni_pairwise_key.k_cipher != IEEE80211_CIPHER_NONE)
+			(*ic->ic_delete_key)(ic, ni, &ni->ni_pairwise_key);
+
+		if (ic->ic_def_txkey == 1 || ic->ic_def_txkey == 2) {
+			k = &ic->ic_nw_keys[ic->ic_def_txkey];
+			if ((k->k_flags & IEEE80211_KEY_GROUP) &&
+			    k->k_cipher == IEEE80211_CIPHER_CCMP)
+				*ic->ic_delete_key)(ic, ni, k);
+		}
+
+		if (ic->ic_igtk_kid == 4 || ic->ic_igtk_kid == 5) {
+			k = &ic->ic_nw_keys[ic->ic_igtk_kid];
+			if (k->k_flags & IEEE80211_KEY_IGTK)
+				(*ic->ic_delete_key)(ic, ni, k);
+		}
+
+		ni->ni_port_valid = 0;
+		ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
+		ni->ni_flags &= ~IEEE80211_NODE_TXMGMTPROT;
+		ni->ni_flags &= ~IEEE80211_NODE_RXMGMTPROT;
+		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
+	}
+#else
+	(void)ic;
+#endif
+
+        /*
+	 * Tx queues have been flushed and Tx agg has been stopped.
+	 * Allow roaming to proceed.
+	 */
+	ni->ni_unref_arg = sc->sc_bgscan_arg;
+	ni->ni_unref_arg_size = sc->sc_bgscan_arg_size;
+	sc->sc_bgscan_arg = NULL;
+	sc->sc_bgscan_arg_size = 0;
+	if (ni->ni_flags & IEEE80211_NODE_MFP) {
+		/* Deauth frame already sent. */
+		ieee80211_node_switch_bss(ic, ni);
+	} else {
+		ieee80211_node_tx_stopped(ic, ni);
+	}
+
+ done:
+	if (err) {
+		free(sc->sc_bgscan_arg, M_DEVBUF, sc->sc_bgscan_arg_size);
+		sc->sc_bgscan_arg = NULL;
+		sc->sc_bgscan_arg_size = 0;
+	}
+	splx(s);
+}
+
+int
+mwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	return 0;
+}
+
+void
+mwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
 }
 
 #if NBPFILTER > 0
@@ -1146,7 +1313,7 @@ mwx_tx(struct mwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		return rv;
 
 printf("%s: TX WCID %08x id %d pid %d\n", DEVNAME(sc), mn->wcid, 0, mt->mt_idx);
-printf("%s: TX twxi %08x %08x %08x %08x %08x %08x %08x %08x\n",
+printf("%s: TX txwi %08x %08x %08x %08x %08x %08x %08x %08x\n",
 DEVNAME(sc), txp->txwi[0], txp->txwi[1],
 txp->txwi[2], txp->txwi[3], txp->txwi[4], txp->txwi[5],
 txp->txwi[6], txp->txwi[7]);
@@ -1525,16 +1692,14 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 #ifndef IEEE80211_STA_ONLY
 	ic->ic_node_leave = mwx_node_leave;
 #endif
-	/* TODO XXX
-	ic->ic_bgscan_start = mwx_bgscan;
-	ic->ic_bgscan_done = mwx_bgscan_done;
-	ic->ic_set_key = mwx_set_key;
-	ic->ic_delete_key = mwx_delete_key;
-	*/
 
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = mwx_newstate;
+	ic->ic_bgscan_start = mwx_bgscan;
+	ic->ic_bgscan_done = mwx_bgscan_done;
+	ic->ic_set_key = mwx_set_key;
+	ic->ic_delete_key = mwx_delete_key;
 
 	sc->sc_nswq = taskq_create("mwxns", 1, IPL_NET, 0);
 	if (sc->sc_nswq == NULL) {
@@ -1543,6 +1708,7 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	task_set(&sc->sc_newstate_task, mwx_newstate_task, sc);
+	task_set(&sc->sc_bgscan_done_task, mwx_bgscan_done_task, sc);
 	task_set(&sc->sc_reset_task, mwx_reset_task, sc);
 	task_set(&sc->sc_scan_task, mwx_end_scan_task, sc);
 
@@ -1566,7 +1732,48 @@ fail:
 int
 mwx_activate(struct device *self, int act)
 {
-	/* XXX TODO */
+	struct mwx_softc *sc = (struct mwx_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int err;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		if (ifp->if_flags & IFF_RUNNING) {
+			mwx_stop(ifp);
+		}
+		mwx_mcu_set_hif_suspend(sc, 1);
+		/* wait until dma is idle  */
+
+		/* put dma disabled */
+		mwx_dma_disable(sc, 1);
+
+		/* disable interrupt */
+		mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, 0);
+		mwx_write(sc, MT_PCIE_MAC_INT_ENABLE, 0);
+
+		mwx_mcu_fw_pmctrl(sc);
+		break;
+	case DVACT_WAKEUP:
+		mwx_mcu_drv_pmctrl(sc);
+		/* mt792x_wpdma_reinit_cond(sc); */
+
+		/* enable interrupt */
+		mwx_write(sc, MT_PCIE_MAC_INT_ENABLE, 0xff);
+		mwx_write(sc, MT_WFDMA0_HOST_INT_ENA, sc->sc_intr_mask);
+
+		/* put dma enabled */
+		mwx_dma_reset(sc, 0);
+
+		mwx_mcu_set_hif_suspend(sc, 0);
+
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP) {
+			err = mwx_init(ifp);
+			if (err)
+				printf("%s: could not initialize hardware\n",
+				    sc->sc_dev.dv_xname);
+		}
+		break;
+	}
 	return 0;
 }
 
@@ -1585,7 +1792,7 @@ mwx_reset(struct mwx_softc *sc)
 	if (sc->sc_resetting)
 		return;
 	sc->sc_resetting = 1;
-	task_add(systq, &sc->sc_reset_task);
+	task_add(sc->sc_nswq, &sc->sc_reset_task);
 }
 
 void
@@ -1600,6 +1807,7 @@ mwx_reset_task(void *arg)
 
 	if (!fatal && (ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		mwx_init(ifp);
+	sc->sc_resetting = 0;
 }
 
 int
@@ -2068,7 +2276,7 @@ mwx_dma_reset(struct mwx_softc *sc, int fullreset)
 {
 	int rv;
 
-	DPRINTF("%s: DMA reset\n", DEVNAME(sc));
+	DPRINTF("%s: DMA %sreset\n", DEVNAME(sc), fullreset ? "full-" : "");
 
 	if ((rv = mwx_dma_disable(sc, fullreset)) != 0)
 		return rv;
@@ -2814,7 +3022,7 @@ mwx_dma_disable(struct mwx_softc *sc, int force)
 
 	rv = mwx_poll(sc, MT_WFDMA0_GLO_CFG, 0,
 	    MT_WFDMA0_GLO_CFG_TX_DMA_BUSY | MT_WFDMA0_GLO_CFG_RX_DMA_BUSY, 100);
-	if (rv != 0)
+	if (!force && rv != 0)
 		return rv;
 
 	/* disable DMASHDL and set bypass */
@@ -3146,7 +3354,6 @@ mwx_load_firmware(struct mwx_softc *sc)
 	case MWX_HW_MT7920:
 		rompatch = MT7920_ROM_PATCH;
 		fw = MT7920_FIRMWARE_WM;
-		break;
 	case MWX_HW_MT7921:
 		rompatch = MT7921_ROM_PATCH;
 		fw = MT7921_FIRMWARE_WM;
@@ -4052,7 +4259,7 @@ mt7921_mcu_scan_event(struct mwx_softc *sc, struct mbuf *m)
 {
 	if (mt7921_mcu_hw_scan_cancel(sc) != 0)
 		return;
-	task_add(systq, &sc->sc_scan_task);
+	task_add(sc->sc_nswq, &sc->sc_scan_task);
 }
 
 int
@@ -4486,8 +4693,7 @@ mt7921_mcu_uni_add_dev(struct mwx_softc *sc, struct mwx_vif *mvif,
 		},
 		.basic = {
 			.tag = htole16(UNI_BSS_INFO_BASIC),
-			.len = htole16(
-			    sizeof(struct mt76_connac_bss_basic_tlv)),
+			.len = htole16(sizeof(basic_req.basic)),
 			.omac_idx = mvif->omac_idx,
 			.band_idx = mvif->band_idx,
 			.wmm_idx = mvif->wmm_idx,
@@ -4739,6 +4945,34 @@ mt7921_mcu_set_tx(struct mwx_softc *sc, struct mwx_vif *mvif)
 	    &req_mu, sizeof(req_mu), false);
 #endif
 	return rv;
+}
+
+int
+mwx_mcu_set_hif_suspend(struct mwx_softc *sc, int suspend)
+{
+	struct {
+		struct {
+			uint8_t	hif_type;	/* 0x2: HIF_PCIE */
+			uint8_t	pad[3];
+		} __packed hdr;
+		struct {
+			uint16_t	tag;
+			uint16_t	len;
+			uint8_t		suspend;
+			uint8_t		pad[7];
+		} __packed hif_suspend;
+	} req = {
+		.hdr = {
+			.hif_type = 0x2,
+		},
+		.hif_suspend = {
+			.tag = htole16(UNI_HIF_CTRL_BASIC),
+			.len = htole16(sizeof(req.hif_suspend)),
+			.suspend = suspend
+		},
+	};
+
+	return mwx_mcu_send_wait(sc, MCU_UNI_CMD_HIF_CTRL, &req, sizeof(req));
 }
 
 int
