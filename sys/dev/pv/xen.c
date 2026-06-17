@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.100 2024/11/27 02:38:35 jsg Exp $	*/
+/*	$OpenBSD: xen.c,v 1.101 2026/06/17 23:43:16 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -1331,8 +1331,12 @@ void
 xen_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
     bus_size_t size, int op)
 {
-	if ((op == (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) ||
-	    (op == (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)))
+	struct xen_softc *sc = t->_cookie;
+
+	if (op == (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE))
+		virtio_membar_sync();
+	bus_dmamap_sync(sc->sc_dmat, map, addr, size, op);
+	if (op == (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE))
 		virtio_membar_sync();
 }
 
