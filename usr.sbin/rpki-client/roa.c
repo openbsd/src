@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.88 2026/06/17 08:22:21 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.89 2026/06/17 08:47:28 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -272,7 +272,7 @@ roa_parse(struct cert **out_cert, const char *fn, int talid,
 	cert = NULL;
 
 	rc = 1;
-out:
+ out:
 	if (rc == 0) {
 		roa_free(roa);
 		roa = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.82 2026/02/15 17:55:14 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.83 2026/06/17 08:47:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -274,7 +274,7 @@ parse_load_ta(struct tal *tal)
 		uripath_add(tal->uri[i], cert);
 	}
 
-out:
+ out:
 	free(file);
 	free(f);
 }

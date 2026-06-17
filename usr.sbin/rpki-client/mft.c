@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.139 2026/06/17 08:22:21 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.140 2026/06/17 08:47:28 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -462,7 +462,7 @@ mft_parse(struct cert **out_cert, const char *fn, int talid,
 	cert = NULL;
 
 	rc = 1;
-out:
+ out:
 	if (rc == 0) {
 		mft_free(mft);
 		mft = NULL;

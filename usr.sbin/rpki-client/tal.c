@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.45 2026/01/20 16:51:44 tb Exp $ */
+/*	$OpenBSD: tal.c,v 1.46 2026/06/17 08:47:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -147,7 +147,7 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 		    tal->spki + tal->spkisz - der);
 	}
 	rc = 1;
-out:
+ out:
 	if (rc == 0) {
 		tal_free(tal);
 		tal = NULL;
