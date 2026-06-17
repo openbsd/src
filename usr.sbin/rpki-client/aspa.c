@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.42 2026/02/08 12:35:07 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.43 2026/06/17 08:22:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -117,9 +117,10 @@ aspa_parse_providers(const char *fn, struct aspa *aspa,
  * Returns zero on failure, non-zero on success.
  */
 static int
-aspa_parse_econtent(const char *fn, struct aspa *aspa, const unsigned char *d,
+aspa_parse_econtent(const char *fn, void *obj, const unsigned char *d,
     size_t dsz)
 {
+	struct aspa		*aspa = obj;
 	const unsigned char	*oder;
 	ASProviderAttestation	*aspa_asn1;
 	int			 rc = 0;
@@ -152,6 +153,32 @@ aspa_parse_econtent(const char *fn, struct aspa *aspa, const unsigned char *d,
 	return rc;
 }
 
+static int
+aspa_cert_info(const char *fn, void *obj, const struct cert *cert)
+{
+	if (cert->num_ips > 0) {
+		warnx("%s: superfluous IP Resources extension present", fn);
+		return 0;
+	}
+
+	if (x509_any_inherits(cert->x509)) {
+		warnx("%s: inherit elements not allowed in EE cert", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+aspa_validate(const char *fn, void *obj, struct cert *cert)
+{
+	struct aspa *aspa = obj;
+
+	aspa->valid = valid_aspa(fn, cert, aspa);
+
+	return 1; /* XXX */
+}
+
 /*
  * Parse a full ASPA file.
  * Returns the payload or NULL if the file was malformed.
@@ -178,20 +205,11 @@ aspa_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	aspa->signtime = signtime;
 
-	if (cert->num_ips > 0) {
-		warnx("%s: superfluous IP Resources extension present", fn);
+	if (!aspa_cert_info(fn, aspa, cert))
 		goto out;
-	}
-
-	if (x509_any_inherits(cert->x509)) {
-		warnx("%s: inherit elements not allowed in EE cert", fn);
-		goto out;
-	}
-
 	if (!aspa_parse_econtent(fn, aspa, cms, cmsz))
 		goto out;
-
-	aspa->valid = valid_aspa(fn, cert, aspa);
+	(void)aspa_validate(fn, aspa, cert);
 
 	*out_cert = cert;
 	cert = NULL;

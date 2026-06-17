@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.87 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.88 2026/06/17 08:22:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -64,9 +64,10 @@ ASN1_SEQUENCE(ROAIPAddress) = {
  * Returns zero on failure, non-zero on success.
  */
 static int
-roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
+roa_parse_econtent(const char *fn, void *obj, const unsigned char *d,
     size_t dsz)
 {
+	struct roa			*roa = obj;
 	const unsigned char		*oder;
 	RouteOriginAttestation		*roa_asn1;
 	const ROAIPAddressFamily	*addrfam;
@@ -204,6 +205,37 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 	return rc;
 }
 
+static int
+roa_cert_info(const char *fn, void *obj, const struct cert *cert)
+{
+	if (x509_any_inherits(cert->x509)) {
+		warnx("%s: inherit elements not allowed in EE cert", fn);
+		return 0;
+	}
+
+	if (cert->num_ases > 0) {
+		warnx("%s: superfluous AS Resources extension present", fn);
+		return 0;
+	}
+
+	if (cert->num_ips == 0) {
+		warnx("%s: no IP address present", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+roa_validate(const char *fn, void *obj, struct cert *cert)
+{
+	struct roa *roa = obj;
+
+	roa->valid = valid_roa(fn, cert, roa);
+
+	return 1; /* XXX */
+}
+
 /*
  * Parse a full RFC 9582 file.
  * Returns the ROA or NULL if the document was malformed.
@@ -230,29 +262,11 @@ roa_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	roa->signtime = signtime;
 
+	if (!roa_cert_info(fn, roa, cert))
+		goto out;
 	if (!roa_parse_econtent(fn, roa, cms, cmsz))
 		goto out;
-
-	if (x509_any_inherits(cert->x509)) {
-		warnx("%s: inherit elements not allowed in EE cert", fn);
-		goto out;
-	}
-
-	if (cert->num_ases > 0) {
-		warnx("%s: superfluous AS Resources extension present", fn);
-		goto out;
-	}
-
-	if (cert->num_ips == 0) {
-		warnx("%s: no IP address present", fn);
-		goto out;
-	}
-
-	/*
-	 * If the ROA isn't valid, we accept it anyway and depend upon
-	 * the code around roa_read() to check the "valid" field itself.
-	 */
-	roa->valid = valid_roa(fn, cert, roa);
+	(void)roa_validate(fn, roa, cert);
 
 	*out_cert = cert;
 	cert = NULL;

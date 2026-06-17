@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.44 2026/05/16 07:27:03 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.45 2026/06/17 08:22:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -288,9 +288,10 @@ rsc_parse_checklist(const char *fn, struct rsc *rsc,
  * Returns zero on failure, non-zero on success.
  */
 static int
-rsc_parse_econtent(const char *fn, struct rsc *rsc, const unsigned char *d,
+rsc_parse_econtent(const char *fn, void *obj, const unsigned char *d,
     size_t dsz)
 {
+	struct rsc		*rsc = obj;
 	const unsigned char	*oder;
 	RpkiSignedChecklist	*rsc_asn1;
 	ResourceBlock		*resources;
@@ -339,6 +340,27 @@ rsc_parse_econtent(const char *fn, struct rsc *rsc, const unsigned char *d,
 	return rc;
 }
 
+static int
+rsc_cert_info(const char *fn, void *obj, const struct cert *cert)
+{
+	if (x509_any_inherits(cert->x509)) {
+		warnx("%s: inherit elements not allowed in EE cert", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+rsc_validate(const char *fn, void *obj, struct cert *cert)
+{
+	struct rsc *rsc = obj;
+
+	rsc->valid = valid_rsc(fn, cert, rsc);
+
+	return 1; /* XXX */
+}
+
 /*
  * Parse a full RFC 9323 file.
  * Returns the RSC or NULL if the object was malformed.
@@ -365,15 +387,11 @@ rsc_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	rsc->signtime = signtime;
 
-	if (x509_any_inherits(cert->x509)) {
-		warnx("%s: inherit elements not allowed in EE cert", fn);
+	if (!rsc_cert_info(fn, rsc, cert))
 		goto out;
-	}
-
 	if (!rsc_parse_econtent(fn, rsc, cms, cmsz))
 		goto out;
-
-	rsc->valid = valid_rsc(fn, cert, rsc);
+	(void)rsc_validate(fn, rsc, cert);
 
 	*out_cert = cert;
 	cert = NULL;

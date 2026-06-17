@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.29 2025/12/02 12:47:48 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.30 2026/06/17 08:22:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -140,9 +140,10 @@ parse_takey(const char *fn, const TAKey *takey)
  * Returns zero on failure, non-zero on success.
  */
 static int
-tak_parse_econtent(const char *fn, struct tak *tak, const unsigned char *d,
+tak_parse_econtent(const char *fn, void *obj, const unsigned char *d,
     size_t dsz)
 {
+	struct tak		*tak = obj;
 	const unsigned char	*oder;
 	TAK			*tak_asn1;
 	int			 rc = 0;
@@ -183,6 +184,30 @@ tak_parse_econtent(const char *fn, struct tak *tak, const unsigned char *d,
 	return rc;
 }
 
+static int
+tak_cert_info(const char *fn, void *obj, const struct cert *cert)
+{
+	if (!x509_inherits(cert->x509)) {
+		warnx("%s: RFC 3779 extension not set to inherit", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+tak_validate(const char *fn, void *obj, struct cert *cert)
+{
+	struct tak *tak = obj;
+
+	if (strcmp(cert->aki, tak->current->ski) != 0) {
+		warnx("%s: current TAKey's SKI does not match EE AKI", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
 /*
  * Parse a full RFC 9691 Trust Anchor Key file.
  * Returns the TAK or NULL if the object was malformed.
@@ -209,18 +234,12 @@ tak_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	tak->signtime = signtime;
 
-	if (!x509_inherits(cert->x509)) {
-		warnx("%s: RFC 3779 extension not set to inherit", fn);
+	if (!tak_cert_info(fn, tak, cert))
 		goto out;
-	}
-
 	if (!tak_parse_econtent(fn, tak, cms, cmsz))
 		goto out;
-
-	if (strcmp(cert->aki, tak->current->ski) != 0) {
-		warnx("%s: current TAKey's SKI does not match EE AKI", fn);
+	if (!tak_validate(fn, tak, cert))
 		goto out;
-	}
 
 	*out_cert = cert;
 	cert = NULL;
