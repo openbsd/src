@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.90 2025/11/02 08:33:43 dlg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.91 2026/06/17 17:02:03 bket Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -989,8 +989,8 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			}
 
 			if (sc->sc_sppp.pp_if.if_mtu >
-			    eth_if->if_mtu - PPPOE_OVERHEAD) {
-				sc->sc_sppp.pp_if.if_mtu = eth_if->if_mtu -
+			    eth_if->if_hardmtu - PPPOE_OVERHEAD) {
+				sc->sc_sppp.pp_if.if_mtu = eth_if->if_hardmtu -
 				    PPPOE_OVERHEAD;
 			}
 			sc->sc_eth_ifidx = eth_if->if_index;
@@ -1093,7 +1093,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 
 		if (ifr->ifr_mtu > MIN(PPPOE_MAXMTU,
 		    (eth_if == NULL ? PPPOE_MAXMTU :
-		    (eth_if->if_mtu - PPPOE_OVERHEAD))))
+		    (eth_if->if_hardmtu - PPPOE_OVERHEAD))))
 			error = EINVAL;
 		else
 			error = 0;
