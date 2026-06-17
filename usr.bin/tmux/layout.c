@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.71 2026/06/16 07:06:32 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.72 2026/06/17 07:43:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -635,7 +635,7 @@ layout_destroy_cell(struct window *w, struct layout_cell *lc,
 
 		lc->parent = lcparent->parent;
 		if (lc->parent == NULL) {
-			if (!layout_cell_is_tiled(lc)) {
+			if (layout_cell_is_tiled(lc)) {
 				lc->xoff = 0;
 				lc->yoff = 0;
 			}
@@ -1062,8 +1062,8 @@ layout_resize_child_cells(struct window *w, struct layout_cell *lc)
 	count = 0;
 	previous = 0;
 	TAILQ_FOREACH(lcchild, &lc->cells, entry) {
-		if (!layout_cell_is_tiled(lc) &&
-		    !layout_cell_has_tiled_child(lc))
+		if (!layout_cell_is_tiled(lcchild) &&
+		    !layout_cell_has_tiled_child(lcchild))
 			continue;
 		count++;
 		if (lc->type == LAYOUT_LEFTRIGHT)
@@ -1083,8 +1083,8 @@ layout_resize_child_cells(struct window *w, struct layout_cell *lc)
 	/* Resize children into the new size. */
 	idx = 0;
 	TAILQ_FOREACH(lcchild, &lc->cells, entry) {
-		if (!layout_cell_is_tiled(lc) &&
-		    !layout_cell_has_tiled_child(lc))
+		if (!layout_cell_is_tiled(lcchild) &&
+		    !layout_cell_has_tiled_child(lcchild))
 			continue;
 		if (lc->type == LAYOUT_TOPBOTTOM) {
 			lcchild->sx = lc->sx;
