@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.786 2026/02/15 19:09:27 jcs Exp $
+$OpenBSD: usbdevs,v 1.787 2026/06/18 01:16:52 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3790,6 +3790,7 @@ product QUECTEL EG91		0x0191	EG91
 product QUECTEL EG95		0x0195	EG95
 product QUECTEL BG96		0x0296	BG96
 product QUECTEL EG06		0x0306	EG06/EP06/EM06
+product QUECTEL EM12G_MSFT3	0x0307	EM12-G MSFT
 product QUECTEL EM060K		0x030b	EM060K
 product QUECTEL AG15		0x0415	AG15
 product QUECTEL AG35		0x0435	AG35
