@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.79 2026/04/16 21:00:00 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.80 2026/06/18 09:10:12 kirill Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -297,6 +297,7 @@ struct vio_softc {
 	uint16_t		sc_rxr_lwm;
 	int			sc_tx_slots_per_req;
 	int			sc_rx_mbuf_size;
+	int			sc_rx_mbuf_offset;
 
 	enum vio_ctrl_state	sc_ctrl_inuse;
 
@@ -747,6 +748,8 @@ negotiate:
 	} else {
 		sc->sc_hdr_size = offsetof(struct virtio_net_hdr, num_buffers);
 	}
+	sc->sc_rx_mbuf_offset = (ETHER_ALIGN + sizeof(uint32_t) -
+	    sc->sc_hdr_size % sizeof(uint32_t)) % sizeof(uint32_t);
 
 	ifp->if_capabilities = 0;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -780,9 +783,11 @@ negotiate:
 	if (!virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF)) {
 		if (device_mtu)
 			sc->sc_rx_mbuf_size = MAX(sc->sc_rx_mbuf_size,
-			    device_mtu + sc->sc_hdr_size + ETHER_HDR_LEN);
+			    sc->sc_rx_mbuf_offset + device_mtu +
+			    sc->sc_hdr_size + ETHER_HDR_LEN);
 		ifp->if_hardmtu = MIN(ifp->if_hardmtu,
-		    sc->sc_rx_mbuf_size - sc->sc_hdr_size - ETHER_HDR_LEN);
+		    sc->sc_rx_mbuf_size - sc->sc_rx_mbuf_offset -
+		    sc->sc_hdr_size - ETHER_HDR_LEN);
 	}
 
 	txsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
@@ -790,13 +795,16 @@ negotiate:
 	    virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
 		txsize = MAXMCLBYTES + sc->sc_hdr_size;
 
-	rxsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
+	rxsize = ifp->if_hardmtu + sc->sc_rx_mbuf_offset +
+	    sc->sc_hdr_size + ETHER_HDR_LEN;
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4) ||
 	    virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))
-		rxsize = MAXMCLBYTES + sc->sc_hdr_size;
+		rxsize = MAXMCLBYTES + sc->sc_rx_mbuf_offset +
+		    sc->sc_hdr_size;
 
 	printf("\n");
-	sc->sc_rxr_lwm = 2 * howmany(rxsize, sc->sc_rx_mbuf_size);
+	sc->sc_rxr_lwm = 2 * howmany(rxsize,
+	    sc->sc_rx_mbuf_size - sc->sc_rx_mbuf_offset);
 
 	/* defrag for longer mbuf chains */
 	tx_max_segments = 16;
@@ -1438,7 +1446,7 @@ vio_add_rx_mbuf(struct vio_softc *sc, struct vio_queue *vioq, int i)
 		return ENOBUFS;
 	vioq->viq_rxmbufs[i] = m;
 	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
-	/* XXX m_adj ETHER_ALIGN ? */
+	m_adj(m, sc->sc_rx_mbuf_offset);
 	r = bus_dmamap_load_mbuf(sc->sc_virtio->sc_dmat,
 	    vioq->viq_rxdmamaps[i], m, BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (r) {
@@ -1509,7 +1517,8 @@ vio_populate_rx_mbufs(struct vio_softc *sc, struct vio_queue *vioq)
 			    0, sc->sc_hdr_size, 0);
 			virtio_enqueue_p(vq, slot, vioq->viq_rxdmamaps[slot],
 			    sc->sc_hdr_size,
-			    sc->sc_rx_mbuf_size - sc->sc_hdr_size, 0);
+			    sc->sc_rx_mbuf_size - sc->sc_rx_mbuf_offset -
+			    sc->sc_hdr_size, 0);
 		}
 		virtio_enqueue_commit(vsc, vq, slot, 0);
 		done = 1;
