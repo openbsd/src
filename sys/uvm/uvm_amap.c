@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.98 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.99 2026/06/18 13:14:26 kirill Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -477,8 +477,6 @@ amap_wipeout(struct vm_amap *amap)
 		amap_unlock(amap);
 		return;
 	}
-
-	amap_list_remove(amap);
 
 	AMAP_CHUNK_FOREACH(chunk, amap) {
 		int i, refs, map = chunk->ac_usedmap;
@@ -1063,7 +1061,7 @@ amap_swap_off(int startslot, int endslot)
 		struct vm_amap_chunk *chunk;
 
 		amap_lock(am, RW_WRITE);
-		if (am->am_nused == 0) {
+		if (am->am_ref == 0 || am->am_nused == 0) {
 			amap_unlock(am);
 			am_next = LIST_NEXT(am, am_list);
 			continue;
@@ -1096,6 +1094,9 @@ again:
 
 				am->am_flags &= ~AMAP_SWAPOFF;
 				if (amap_refs(am) == 0) {
+					amap_unlock(am);
+					amap_list_remove(am);
+					amap_lock(am, RW_WRITE);
 					amap_wipeout(am);
 					am = NULL;
 					goto nextamap;
@@ -1333,6 +1334,13 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, boolean_t all)
 		 * If the last reference - wipeout and destroy the amap.
 		 */
 		amap->am_ref--;
+		if ((amap->am_flags & AMAP_SWAPOFF) != 0) {
+			amap_wipeout(amap);
+			return;
+		}
+		amap_unlock(amap);
+		amap_list_remove(amap);
+		amap_lock(amap, RW_WRITE);
 		amap_wipeout(amap);
 		return;
 	}
