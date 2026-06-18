@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.53 2025/11/27 10:17:19 martijn Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.54 2026/06/18 10:45:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -45,8 +45,6 @@ struct snmpd	*snmpd_env;
 static struct privsep_proc procs[] = {
 	{ "snmpe", PROC_SNMPE, snmpd_dispatch_snmpe, snmpe, snmpe_shutdown },
 };
-
-enum privsep_procid privsep_process;
 
 void
 snmpd_sig_handler(int sig, short event, void *arg)
@@ -241,7 +239,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_connect(ps);
+	proc_connect(ps, NULL);
 	snmpd_backend(env);
 
 	if (pledge("stdio dns sendfd proc exec id", NULL) == -1)
@@ -388,4 +386,7 @@ snmpd_backend(struct snmpd *env)
 			continue;
 		}
 	}
+	if (proc_compose(&env->sc_ps, PROC_SNMPE,
+	    IMSG_SENDFD_DONE, NULL, 0) == -1)
+		fatal("proc_compose");
 }

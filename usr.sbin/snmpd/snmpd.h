@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.122 2025/12/24 13:36:38 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.123 2026/06/18 10:45:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -89,8 +89,10 @@ enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_PROCFD,
+	IMSG_CTL_PROCREADY,
 	IMSG_TRAP_EXEC,
-	IMSG_AX_FD
+	IMSG_AX_FD,
+	IMSG_SENDFD_DONE
 };
 
 struct imsgev {
@@ -143,6 +145,12 @@ struct privsep {
 	struct event		 ps_evsigusr1;
 
 	void			*ps_env;
+	unsigned int		 ps_connecting;
+	void			(*ps_connected)(struct privsep *);
+	void			(*ps_run)(struct privsep *,
+				    struct privsep_proc *, void *);
+	void			*ps_arg;
+
 };
 
 struct privsep_proc {
@@ -492,7 +500,7 @@ enum privsep_procid
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
-void	 proc_connect(struct privsep *);
+void	 proc_connect(struct privsep *, void (*connected)(struct privsep *));
 void	 proc_dispatch(int, short event, void *);
 void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
@@ -511,6 +519,8 @@ int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, u_int32_t, int, const struct iovec *, int);
 int	 proc_composev(struct privsep *, enum privsep_procid,
 	    uint16_t, const struct iovec *, int);
+int	 proc_forward_imsg(struct privsep *, struct imsg *,
+	    enum privsep_procid, int);
 struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *
