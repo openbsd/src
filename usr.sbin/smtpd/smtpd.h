@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.694 2026/04/16 19:37:42 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.695 2026/06/18 10:50:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1606,10 +1606,6 @@ void smtp_session_imsg(struct mproc *, struct imsg *);
 
 /* smtpd.c */
 void imsg_dispatch(struct mproc *, struct imsg *);
-const char *proc_name(enum smtp_proc_type);
-const char *proc_title(enum smtp_proc_type);
-const char *imsg_to_str(int);
-void log_imsg(int, int, struct imsg *);
 int fork_proc_backend(const char *, const char *, const char *, int);
 
 
@@ -1724,6 +1720,10 @@ int base64_decode(char const *, unsigned char *, size_t);
 int base64_encode_rfc3548(unsigned char const *, size_t,
 		      char *, size_t);
 
+const char *proc_name(enum smtp_proc_type);
+const char *proc_title(enum smtp_proc_type);
+const char *imsg_to_str(int);
+void log_imsg(int, int, struct imsg *);
 void log_trace_verbose(int);
 void log_trace0(const char *, ...)
     __attribute__((format (printf, 1, 2)));
