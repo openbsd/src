@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.341 2026/06/15 21:47:01 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.342 2026/06/18 09:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -591,6 +591,8 @@ window_redraw_active_switch(struct window *w, struct window_pane *wp)
 		gc1 = &wp->cached_gc;
 		gc2 = &wp->cached_active_gc;
 		if (!grid_cells_look_equal(gc1, gc2))
+			wp->flags |= PANE_REDRAW;
+		else if (wp->cached_dim != wp->cached_active_dim)
 			wp->flags |= PANE_REDRAW;
 		else {
 			c1 = window_pane_get_palette(wp, gc1->fg);
@@ -1963,7 +1965,7 @@ window_pane_get_bg(struct window_pane *wp)
 
 	c = window_pane_get_bg_control_client(wp);
 	if (c == -1) {
-		tty_default_colours(&defaults, wp);
+		tty_default_colours(&defaults, wp, NULL);
 		if (COLOUR_DEFAULT(defaults.bg))
 			c = window_get_bg_client(wp);
 		else

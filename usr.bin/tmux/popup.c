@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.70 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.71 2026/06/18 09:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -328,6 +328,7 @@ popup_draw_cb(struct client *c, void *data, struct screen_redraw_ctx *rctx)
 		defaults.bg = pd->palette.bg;
 	style_ctx.defaults = &defaults;
 	style_ctx.palette = &pd->palette;
+	style_ctx.dim = 0;
 	style_ctx.hyperlinks = s.hyperlinks;
 
 	if (pd->md != NULL) {

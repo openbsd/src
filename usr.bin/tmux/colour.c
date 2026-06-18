@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.31 2025/12/03 07:41:38 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.32 2026/06/18 09:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -118,6 +118,28 @@ colour_force_rgb(int c)
 	if (c >= 90 && c <= 97)
 		return (colour_256toRGB(8 + c - 90));
 	return (-1);
+}
+
+/* Dim colour by a percentage. */
+int
+colour_dim(int c, u_int dim)
+{
+	u_char	r, g, b;
+
+	if (dim == 0 || COLOUR_DEFAULT(c))
+		return (c);
+	if (dim >= 100)
+		return (colour_join_rgb(0, 0, 0));
+
+	c = colour_force_rgb(c);
+	if (c == -1)
+		return (-1);
+	colour_split_rgb(c, &r, &g, &b);
+
+	r = (r * (100 - dim)) / 100;
+	g = (g * (100 - dim)) / 100;
+	b = (b * (100 - dim)) / 100;
+	return (colour_join_rgb(r, g, b));
 }
 
 /* Convert colour to a string. */

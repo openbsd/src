@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1093 2026/06/17 07:52:21 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1094 2026/06/18 09:59:55 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2026 $
+.Dd $Mdocdate: June 18 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -7011,6 +7011,9 @@ is the terminal alternate character set.
 Align text to the left, centre or right of the available space if appropriate.
 .It Ic fill=colour
 Fill the available space with a background colour if appropriate.
+.It Ic dim=percentage
+Dim foreground and background colours by
+.Ar percentage .
 .It Ic width=N
 Set the width of the styled area.
 .Ar N

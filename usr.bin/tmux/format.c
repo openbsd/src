@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.379 2026/06/15 08:16:05 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.380 2026/06/18 09:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1006,7 +1006,7 @@ format_cb_pane_fg(struct format_tree *ft)
 	if (wp == NULL)
 		return (NULL);
 
-	tty_default_colours(&gc, wp);
+	tty_default_colours(&gc, wp, NULL);
 	return (xstrdup(colour_tostring(gc.fg)));
 }
 
@@ -1043,7 +1043,7 @@ format_cb_pane_bg(struct format_tree *ft)
 	if (wp == NULL)
 		return (NULL);
 
-	tty_default_colours(&gc, wp);
+	tty_default_colours(&gc, wp, NULL);
 	return (xstrdup(colour_tostring(gc.bg)));
 }
 

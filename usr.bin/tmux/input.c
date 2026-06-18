@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.261 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.262 2026/06/18 09:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3018,7 +3018,7 @@ input_osc_10(struct input_ctx *ictx, const char *p)
 			return;
 		c = window_pane_get_fg_control_client(wp);
 		if (c == -1) {
-			tty_default_colours(&defaults, wp);
+			tty_default_colours(&defaults, wp, NULL);
 			if (COLOUR_DEFAULT(defaults.fg))
 				c = window_pane_get_fg(wp);
 			else

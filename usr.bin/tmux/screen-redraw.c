@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.142 2026/06/16 10:47:35 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.143 2026/06/18 09:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1212,7 +1212,7 @@ screen_redraw_draw_pane(struct screen_redraw_ctx *ctx, struct window_pane *wp)
 		}
 
 		/* Set up the default style. */
-		tty_default_colours(&defaults, wp);
+		tty_default_colours(&defaults, wp, &style_ctx.dim);
 		style_ctx.defaults = &defaults;
 		style_ctx.palette = palette;
 		style_ctx.hyperlinks = s->hyperlinks;
