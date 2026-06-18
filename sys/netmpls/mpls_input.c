@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.81 2025/11/27 03:06:59 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.82 2026/06/18 08:53:32 mvs Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -359,6 +359,11 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 		if (MPLS_BOS_ISSET(stack[nstk].shim_label))
 			break;
 	}
+	if (nstk >= MPLS_INKERNEL_LOOP_MAX) {
+		m_freem(m);
+		return (NULL);
+	}
+
 	shim = &stack[0];
 
 	if (m->m_len < sizeof(u_char) &&
