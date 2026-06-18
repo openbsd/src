@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.13 2019/11/28 09:51:58 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.14 2026/06/18 10:56:22 nicm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -102,6 +102,18 @@ xstrndup(const char *str, size_t maxlen)
 
 	if ((cp = strndup(str, maxlen)) == NULL)
 		fatalx("xstrndup: %s", strerror(errno));
+	return cp;
+}
+
+char *
+xmemdup(const void *ptr, size_t len)
+{
+	char *cp;
+
+	cp = xmalloc(len + 1);
+	if (len != 0)
+		memcpy(cp, ptr, len);
+	cp[len] = '\0';
 	return cp;
 }
 
