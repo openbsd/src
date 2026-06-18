@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.138 2026/04/01 18:58:15 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.139 2026/06/18 16:58:51 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -492,85 +492,86 @@ ikev2_pld_xform(struct iked *env, struct iked_message *msg,
 {
 	struct ikev2_transform		 xfrm;
 	char				 id[BUFSIZ];
-	int				 ret = 0;
 	int				 r;
 	size_t				 xfrm_length;
 
-	if (ikev2_validate_xform(msg, offset, total, &xfrm))
-		return (-1);
-
-	xfrm_length = betoh16(xfrm.xfrm_length);
-
-	switch (xfrm.xfrm_type) {
-	case IKEV2_XFORMTYPE_ENCR:
-		strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
-		    ikev2_xformencr_map), sizeof(id));
-		break;
-	case IKEV2_XFORMTYPE_PRF:
-		strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
-		    ikev2_xformprf_map), sizeof(id));
-		break;
-	case IKEV2_XFORMTYPE_INTEGR:
-		strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
-		    ikev2_xformauth_map), sizeof(id));
-		break;
-	case IKEV2_XFORMTYPE_DH:
-		strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
-		    ikev2_xformdh_map), sizeof(id));
-		break;
-	case IKEV2_XFORMTYPE_ESN:
-		strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
-		    ikev2_xformesn_map), sizeof(id));
-		break;
-	default:
-		snprintf(id, sizeof(id), "<%d>", betoh16(xfrm.xfrm_id));
-		break;
-	}
-
-	log_debug("%s: more %d reserved %d length %zu"
-	    " type %s id %s",
-	    __func__, xfrm.xfrm_more, xfrm.xfrm_reserved, xfrm_length,
-	    print_map(xfrm.xfrm_type, ikev2_xformtype_map), id);
-
-	/*
-	 * Parse transform attributes, if available
-	 */
-	msg->msg_attrlength = 0;
-	if (xfrm_length > sizeof(xfrm)) {
-		if (ikev2_pld_attr(env, &xfrm, msg, offset + sizeof(xfrm),
-		    xfrm_length - sizeof(xfrm)) != 0) {
+	do {
+		if (ikev2_validate_xform(msg, offset, total, &xfrm))
 			return (-1);
-		}
-	}
 
-	if (ikev2_msg_frompeer(msg)) {
-		r = config_add_transform(msg->msg_parent->msg_prop,
-		    xfrm.xfrm_type, betoh16(xfrm.xfrm_id),
-		    msg->msg_attrlength, msg->msg_attrlength);
-		if (r == -1) {
-			log_debug("%s: failed to add transform: alloc error",
-			    __func__);
-			return (r);
-		} else if (r == -2) {
-			log_debug("%s: failed to add transform: unknown type",
-			    __func__);
-			return (r);
-		}
-	}
+		xfrm_length = betoh16(xfrm.xfrm_length);
 
-	/* Next transform */
-	offset += xfrm_length;
-	total -= xfrm_length;
-	if (xfrm.xfrm_more == IKEV2_XFORM_MORE)
-		ret = ikev2_pld_xform(env, msg, offset, total);
-	else if (total != 0) {
+		switch (xfrm.xfrm_type) {
+		case IKEV2_XFORMTYPE_ENCR:
+			strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
+			    ikev2_xformencr_map), sizeof(id));
+			break;
+		case IKEV2_XFORMTYPE_PRF:
+			strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
+			    ikev2_xformprf_map), sizeof(id));
+			break;
+		case IKEV2_XFORMTYPE_INTEGR:
+			strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
+			    ikev2_xformauth_map), sizeof(id));
+			break;
+		case IKEV2_XFORMTYPE_DH:
+			strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
+			    ikev2_xformdh_map), sizeof(id));
+			break;
+		case IKEV2_XFORMTYPE_ESN:
+			strlcpy(id, print_map(betoh16(xfrm.xfrm_id),
+			    ikev2_xformesn_map), sizeof(id));
+			break;
+		default:
+			snprintf(id, sizeof(id), "<%d>", betoh16(xfrm.xfrm_id));
+			break;
+		}
+
+		log_debug("%s: more %d reserved %d length %zu"
+		    " type %s id %s",
+		    __func__, xfrm.xfrm_more, xfrm.xfrm_reserved, xfrm_length,
+		    print_map(xfrm.xfrm_type, ikev2_xformtype_map), id);
+
+		/*
+		 * Parse transform attributes, if available
+		 */
+		msg->msg_attrlength = 0;
+		if (xfrm_length > sizeof(xfrm)) {
+			if (ikev2_pld_attr(env, &xfrm, msg,
+			    offset + sizeof(xfrm),
+			    xfrm_length - sizeof(xfrm)) != 0) {
+				return (-1);
+			}
+		}
+
+		if (ikev2_msg_frompeer(msg)) {
+			r = config_add_transform(msg->msg_parent->msg_prop,
+			    xfrm.xfrm_type, betoh16(xfrm.xfrm_id),
+			    msg->msg_attrlength, msg->msg_attrlength);
+			if (r == -1) {
+				log_debug("%s: failed to add transform:"
+				    " alloc error", __func__);
+				return (r);
+			} else if (r == -2) {
+				log_debug("%s: failed to add transform:"
+				    " unknown type", __func__);
+				return (r);
+			}
+		}
+
+		/* Next transform */
+		offset += xfrm_length;
+		total -= xfrm_length;
+	} while (xfrm.xfrm_more == IKEV2_XFORM_MORE);
+
+	if (total != 0) {
 		/* No more transforms but still some data left. */
 		log_debug("%s: less data than specified, %zu bytes left",
 		    __func__, total);
-		ret = -1;
+		return (-1);
 	}
 
-	return (ret);
+	return (0);
 }
 
 int
@@ -596,52 +597,49 @@ ikev2_pld_attr(struct iked *env, struct ikev2_transform *xfrm,
 	struct ikev2_attribute		 attr;
 	unsigned int			 type;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
-	int				 ret = 0;
 	size_t				 attr_length;
 
-	if (ikev2_validate_attr(msg, offset, total, &attr))
-		return (-1);
-
-	type = betoh16(attr.attr_type) & ~IKEV2_ATTRAF_TV;
-
-	log_debug("%s: attribute type %s length %d total %zu",
-	    __func__, print_map(type, ikev2_attrtype_map),
-	    betoh16(attr.attr_length), total);
-
-	if (betoh16(attr.attr_type) & IKEV2_ATTRAF_TV) {
-		/* Type-Value attribute */
-		offset += sizeof(attr);
-		total -= sizeof(attr);
-
-		if (type == IKEV2_ATTRTYPE_KEY_LENGTH)
-			msg->msg_attrlength = betoh16(attr.attr_length);
-	} else {
-		/* Type-Length-Value attribute */
-		attr_length = betoh16(attr.attr_length);
-		if (attr_length < sizeof(attr)) {
-			log_debug("%s: malformed payload: shorter than "
-			    "minimum header size (%zu < %zu)", __func__,
-			    attr_length, sizeof(attr));
+	do {
+		if (ikev2_validate_attr(msg, offset, total, &attr))
 			return (-1);
-		}
-		if (total < attr_length) {
-			log_debug("%s: malformed payload: attribute larger "
-			    "than actual payload (%zu < %zu)", __func__,
-			    total, attr_length);
-			return (-1);
-		}
-		print_hex(msgbuf, offset + sizeof(attr),
-		    attr_length - sizeof(attr));
-		offset += attr_length;
-		total -= attr_length;
-	}
 
-	if (total > 0) {
+		type = betoh16(attr.attr_type) & ~IKEV2_ATTRAF_TV;
+
+		log_debug("%s: attribute type %s length %d total %zu",
+		    __func__, print_map(type, ikev2_attrtype_map),
+		    betoh16(attr.attr_length), total);
+
+		if (betoh16(attr.attr_type) & IKEV2_ATTRAF_TV) {
+			/* Type-Value attribute */
+			offset += sizeof(attr);
+			total -= sizeof(attr);
+
+			if (type == IKEV2_ATTRTYPE_KEY_LENGTH)
+				msg->msg_attrlength = betoh16(attr.attr_length);
+		} else {
+			/* Type-Length-Value attribute */
+			attr_length = betoh16(attr.attr_length);
+			if (attr_length < sizeof(attr)) {
+				log_debug("%s: malformed payload: shorter than "
+				    "minimum header size (%zu < %zu)", __func__,
+				    attr_length, sizeof(attr));
+				return (-1);
+			}
+			if (total < attr_length) {
+				log_debug("%s: malformed payload: attribute "
+				    "larger than actual payload (%zu < %zu)",
+				    __func__, total, attr_length);
+				return (-1);
+			}
+			print_hex(msgbuf, offset + sizeof(attr),
+			    attr_length - sizeof(attr));
+			offset += attr_length;
+			total -= attr_length;
+		}
 		/* Next attribute */
-		ret = ikev2_pld_attr(env, xfrm, msg, offset, total);
-	}
+	} while (total > 0);
 
-	return (ret);
+	return (0);
 }
 
 int
