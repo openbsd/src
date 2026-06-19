@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.90 2026/04/27 16:54:49 kirill Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.91 2026/06/19 15:12:10 kirill Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -722,12 +722,12 @@ cnmac_buf_free_work(struct cnmac_softc *sc, uint64_t *work)
 		    PIP_WQE_WORD3_BACK_SHIFT;
 		pktbuf = (addr & ~(CACHELINESIZE - 1)) - back * CACHELINESIZE;
 
-		cn30xxfpa_store(pktbuf, OCTEON_POOL_NO_PKT,
-		    OCTEON_POOL_SIZE_PKT / CACHELINESIZE);
-
 		if (nbufs > 0)
 			memcpy(&word3, (void *)PHYS_TO_XKPHYS(addr -
 			    sizeof(word3), CCA_CACHED), sizeof(word3));
+
+		cn30xxfpa_store(pktbuf, OCTEON_POOL_NO_PKT,
+		    OCTEON_POOL_SIZE_PKT / CACHELINESIZE);
 	}
 
 	cn30xxfpa_buf_put_paddr(cnmac_fb_wqe, XKPHYS_TO_PHYS(work));
