@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.h,v 1.6 2022/02/20 19:45:51 tb Exp $	*/
+/*	$OpenBSD: exf.h,v 1.7 2026/06/19 14:45:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -24,7 +24,8 @@ struct _exf {
 	size_t	 c_len;			/* Cached line length. */
 	recno_t	 c_lno;			/* Cached line number. */
 	recno_t	 c_nlines;		/* Cached lines in the file. */
-
+	char	*c_buf;			/* Buffer used for line cache */
+	size_t	 c_buf_len;		/* Length of line cache buffer */
 	DB	*log;			/* Log db structure. */
 	char	*l_lp;			/* Log buffer. */
 	size_t	 l_len;			/* Log buffer length. */

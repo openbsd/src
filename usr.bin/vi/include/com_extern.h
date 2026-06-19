@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_extern.h,v 1.17 2025/08/23 21:02:10 millert Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.18 2026/06/19 14:45:26 millert Exp $	*/
 
 int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
 int cut_line(SCR *, recno_t, size_t, size_t, CB *);
@@ -34,6 +34,7 @@ int db_insert(SCR *, recno_t, char *, size_t);
 int db_set(SCR *, recno_t, char *, size_t);
 int db_exist(SCR *, recno_t);
 int db_last(SCR *, recno_t *);
+int db_cache_update(SCR *, EXF *, recno_t, void *, size_t);
 void db_err(SCR *, recno_t);
 int log_init(SCR *, EXF *);
 int log_end(SCR *, EXF *);

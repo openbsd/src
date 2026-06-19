@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.18 2026/04/20 10:30:02 tb Exp $	*/
+/*	$OpenBSD: line.c,v 1.19 2026/06/19 14:45:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "common.h"
@@ -156,9 +157,8 @@ err3:		if (lenp != NULL)
 	}
 
 	/* Reset the cache. */
-	ep->c_lno = lno;
-	ep->c_len = data.size;
-	ep->c_lp = data.data;
+	if (db_cache_update(sp, ep, lno, data.data, data.size))
+		goto err3;
 
 #if defined(DEBUG) && 0
 	TRACE(sp, "retrieve DB line %lu\n", (u_long)lno);
@@ -484,9 +484,9 @@ db_last(SCR *sp, recno_t *lnop)
 
 	/* Fill the cache. */
 	memcpy(&lno, key.data, sizeof(lno));
-	ep->c_nlines = ep->c_lno = lno;
-	ep->c_len = data.size;
-	ep->c_lp = data.data;
+	if (db_cache_update(sp, ep, lno, data.data, data.size))
+		return (1);
+	ep->c_nlines = lno;
 
 	/* Return the value. */
 	*lnop = (F_ISSET(sp, SC_TINPUT) &&
@@ -529,4 +529,31 @@ scr_update(SCR *sp, recno_t lno, lnop_t op, int current)
 				if (vs_change(tsp, lno, op))
 					return (1);
 	return (current ? vs_change(sp, lno, op) : 0);
+}
+
+/*
+ * db_cache_update --
+ *	Update the line cache with a private copy of the data.
+ */
+int
+db_cache_update(SCR *sp, EXF *ep, recno_t lno, void *data, size_t size)
+{
+	if (size > ep->c_buf_len) {
+		free(ep->c_buf);
+		MALLOC(sp, ep->c_buf, size);
+		if (ep->c_buf == NULL) {
+			ep->c_buf_len = 0;
+			ep->c_lp = NULL;
+			ep->c_lno = OOBLNO;
+			return (1);
+		}
+		ep->c_buf_len = size;
+	}
+	if (size > 0)
+		memcpy(ep->c_buf, data, size);
+
+	ep->c_lno = lno;
+	ep->c_len = size;
+	ep->c_lp = ep->c_buf;
+	return (0);
 }
