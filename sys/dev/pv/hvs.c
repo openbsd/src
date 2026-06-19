@@ -445,6 +445,9 @@ hvs_start(struct hvs_softc *sc, struct hvs_ccb *ccb)
 	ccb->ccb_cmd = NULL;
 
 	if (ccb->ccb_nsge > 0) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmap, 0,
+		    ccb->ccb_dmap->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		rv = hv_channel_send_prpl(sc->sc_chan, ccb->ccb_sgl,
 		    ccb->ccb_nsge, cmd, HVS_CMD_SIZE, ccb->ccb_rid);
 		if (rv) {
