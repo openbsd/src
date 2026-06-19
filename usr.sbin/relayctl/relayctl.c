@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.63 2024/11/21 13:38:15 claudio Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.64 2026/06/19 12:50:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -49,7 +49,7 @@ char		*print_rdr_status(int);
 char		*print_host_status(int, int);
 char		*print_table_status(int, int);
 char		*print_relay_status(int);
-void		 print_statistics(struct ctl_stats[PROC_MAX_INSTANCES + 1]);
+void		 print_statistics(struct ctl_stats [PROC_MAX_INSTANCES+1]);
 
 struct imsgname {
 	int type;
@@ -57,13 +57,13 @@ struct imsgname {
 	void (*func)(struct imsg *);
 };
 
-struct imsgname *monitor_lookup(u_int8_t);
+struct imsgname	*monitor_lookup(u_int8_t);
 void		 monitor_host_status(struct imsg *);
 void		 monitor_id(struct imsg *);
 int		 monitor(struct imsg *);
 
 struct imsgname imsgs[] = {
-	{ IMSG_HOST_STATUS,		"host_status",	monitor_host_status },
+	{ IMSG_HOST_STATUS,		"host_status",		monitor_host_status },
 	{ IMSG_CTL_RDR_DISABLE,		"ctl_rdr_disable",	monitor_id },
 	{ IMSG_CTL_RDR_ENABLE,		"ctl_rdr_enable",	monitor_id },
 	{ IMSG_CTL_TABLE_DISABLE,	"ctl_table_disable",	monitor_id },
@@ -81,7 +81,7 @@ struct imsgname imsgunknown = {
 };
 
 struct imsgbuf	*ibuf;
-int error = 0;
+int		 error = 0;
 
 __dead void
 usage(void)
@@ -350,7 +350,7 @@ show_summary_msg(struct imsg *imsg, int type)
 	struct router		*rt;
 	struct netroute		*nr;
 	struct ctl_stats	 stats[PROC_MAX_INSTANCES];
-	char			 name[HOST_NAME_MAX+1];
+	char			 name[HOST_NAME_MAX + 1];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RDR:
@@ -555,7 +555,7 @@ print_relay_status(int flags)
 }
 
 void
-print_statistics(struct ctl_stats stats[PROC_MAX_INSTANCES + 1])
+print_statistics(struct ctl_stats stats[PROC_MAX_INSTANCES+1])
 {
 	struct ctl_stats	 crs;
 	int			 i;

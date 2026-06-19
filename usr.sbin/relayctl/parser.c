@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.28 2018/05/11 20:33:54 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.29 2026/06/19 12:50:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -131,9 +131,9 @@ static void show_valid_args(const struct token *);
 struct parse_result *
 parse(int argc, char *argv[])
 {
-	static struct parse_result	res;
-	const struct token	*table = t_main;
-	const struct token	*match;
+	static struct parse_result	 res;
+	const struct token		*table = t_main;
+	const struct token		*match;
 
 	bzero(&res, sizeof(res));
 
