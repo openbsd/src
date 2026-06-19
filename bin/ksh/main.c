@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.100 2023/07/23 23:42:03 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.101 2026/06/19 14:17:40 kirill Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -587,6 +587,7 @@ shell(Source *volatile s, volatile int toplevel)
 				 */
 				/* toss any input we have so far */
 				s->start = s->str = null;
+				source = s;
 				break;
 			}
 			/* FALLTHROUGH */
