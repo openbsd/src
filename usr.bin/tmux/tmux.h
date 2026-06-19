@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1360 2026/06/19 18:37:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1361 2026/06/19 18:41:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3798,7 +3798,6 @@ int		 popup_display(int, enum box_lines, struct cmdq_item *, u_int,
                     char **, const char *, const char *, struct client *,
                     struct session *, const char *, const char *,
                     popup_close_cb, void *);
-void		 popup_write(struct client *, const char *, size_t);
 int		 popup_present(struct client *);
 int		 popup_modify(struct client *, const char *, const char *,
 		    const char *, enum box_lines, int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.72 2026/06/19 18:37:10 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.73 2026/06/19 18:41:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -855,18 +855,4 @@ popup_display(int flags, enum box_lines lines, struct cmdq_item *item, u_int px,
 	server_client_set_overlay(c, 0, popup_check_cb, popup_mode_cb,
 	    popup_draw_cb, popup_key_cb, popup_free_cb, popup_resize_cb, pd);
 	return (0);
-}
-
-void
-popup_write(struct client *c, const char *data, size_t size)
-{
-	struct popup_data	*pd = c->overlay_data;
-
-	if (!popup_present(c))
-		return;
-	c->overlay_check = NULL;
-	c->overlay_data = NULL;
-	input_parse_screen(pd->ictx, &pd->s, popup_init_ctx_cb, pd, data, size);
-	c->overlay_check = popup_check_cb;
-	c->overlay_data = pd;
 }
