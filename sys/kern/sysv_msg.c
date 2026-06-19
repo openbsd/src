@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.42 2026/06/15 13:41:47 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.43 2026/06/19 20:30:31 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -574,7 +574,8 @@ msg_copyin(struct msg *msg, const char *ubuf, size_t len)
 	if (msg == NULL)
 		panic ("msg NULL");
 
-	if ((error = copyin(ubuf, &msg->msg_type, sizeof(long)))) {
+	/* msg->msg_type size is not included to `len' */
+	if ((error = copyin(ubuf, &msg->msg_type, sizeof(msg->msg_type)))) {
 		msg_free(msg);
 		return (error);
 	}
@@ -584,18 +585,18 @@ msg_copyin(struct msg *msg, const char *ubuf, size_t len)
 		return (EINVAL);
 	}
 
-	ubuf += sizeof(long);
+	ubuf += sizeof(msg->msg_type);
 
 	msg->msg_len = 0;
 	mm = &msg->msg_data;
 
 	while (msg->msg_len < len) {
 		m = m_get(M_WAIT, MT_DATA);
-		if (len >= MINCLSIZE) {
+		if ((xfer = len - msg->msg_len) >= MINCLSIZE) {
 			MCLGET(m, M_WAIT);
-			xfer = min(len, MCLBYTES);
+			xfer = min(xfer, MCLBYTES);
 		} else {
-			xfer = min(len, MLEN);
+			xfer = min(xfer, MLEN);
 		}
 		m->m_len = xfer;
 		msg->msg_len += xfer;
