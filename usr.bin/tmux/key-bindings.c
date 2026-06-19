@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.177 2026/06/17 07:52:21 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.178 2026/06/19 15:28:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -578,6 +578,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode M-Down { send -X halfpage-down }",
 		"bind -Tcopy-mode C-Up { send -X scroll-up }",
 		"bind -Tcopy-mode C-Down { send -X scroll-down }",
+		"bind -Tcopy-mode M-C-Up { send -X previous-prompt }",
+		"bind -Tcopy-mode M-C-Down { send -X next-prompt }",
 
 		/* Copy mode (vi) keys. */
 		"bind -Tcopy-mode-vi '#' { send -FX search-backward -- '#{copy_cursor_word}' }",
