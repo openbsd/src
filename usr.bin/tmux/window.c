@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.342 2026/06/18 09:59:55 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.343 2026/06/19 18:37:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -389,6 +389,8 @@ window_pane_destroy_ready(struct window_pane *wp)
 	 * child's exit status before destroying it.
 	 */
 	if (wp->wait_item != NULL && (~wp->flags & PANE_STATUSREADY))
+		return (0);
+	if (wp->editor != NULL && (~wp->flags & PANE_STATUSREADY))
 		return (0);
 	return (1);
 }
@@ -1124,6 +1126,7 @@ static void
 window_pane_destroy(struct window_pane *wp)
 {
 	window_pane_wait_finish(wp);
+	spawn_editor_finish(wp);
 
 	window_pane_reset_mode_all(wp);
 	free(wp->searchstr);
