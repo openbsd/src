@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.178 2026/06/19 15:28:26 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.179 2026/06/19 16:25:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -25,11 +25,10 @@
 #include "tmux.h"
 
 #define DEFAULT_SESSION_MENU \
-	" 'Next' 'n' {switch-client -n}" \
-	" 'Previous' 'p' {switch-client -p}" \
+	" #{S/t:#{?#{&&:#{<:#{loop_index},6},#{!:#{session_active}}},'Switch To #[underscore]#{session_name}' '' {switch-client -t=#{session_id}#} ,}}" \
 	" ''" \
 	" 'Renumber' 'N' {move-window -r}" \
-	" 'Rename' 'r' {command-prompt -I \"#S\" {rename-session -- '%%'}}" \
+	" 'Rename' 'r' {command-prompt -I '#S' {rename-session -- '%%'}}" \
 	" 'Detach' 'd' {detach-client}" \
 	" ''" \
 	" 'New Session' 's' {new-session}" \
@@ -486,8 +485,8 @@ key_bindings_init(void)
 		"bind -n WheelUpStatus { previous-window }",
 
 		/* Mouse button 3 down on status left. */
-		"bind -n MouseDown3StatusLeft { display-menu -t= -xM -yW -T '#[align=centre]#{session_name}' " DEFAULT_SESSION_MENU " }",
-		"bind -n M-MouseDown3StatusLeft { display-menu -t= -xM -yW -T '#[align=centre]#{session_name}' " DEFAULT_SESSION_MENU " }",
+		"bind -n MouseDown3StatusLeft { run -C \"display-menu -t= -xM -yW -T '#[align=centre]#{session_name}' " DEFAULT_SESSION_MENU "\" }",
+		"bind -n M-MouseDown3StatusLeft { run -C \"display-menu -t= -xM -yW -T '#[align=centre]#{session_name}' " DEFAULT_SESSION_MENU "\" }",
 
 		/* Mouse button 3 down on status line. */
 		"bind -n MouseDown3Status { display-menu -t= -xW -yW -T '#[align=centre]#{window_index}:#{window_name}' " DEFAULT_WINDOW_MENU "}",
