@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.25 2026/06/18 12:54:35 helg Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.26 2026/06/20 13:45:13 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -173,7 +173,7 @@ fusefs_lookup(void *v)
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 
 		if (!error && tdp->v_type != VDIR) {
-			printf("%s: parent not dir: %s\n", __func__,
+			DPRINTF("%s: parent not dir: %s\n", __func__,
 			    cnp->cn_nameptr);
 			error = EIO;
 		}

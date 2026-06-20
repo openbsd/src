@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_file.c,v 1.11 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fuse_file.c,v 1.12 2026/06/20 13:45:13 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -67,7 +67,7 @@ fusefs_file_close(struct fusefs_mnt *fmp, struct fusefs_node * ip,
 
 		error = fb_queue(fmp->dev, fbuf);
 		if (error && (error != ENOSYS))
-			printf("fusefs: file close error: %d\n", error);
+			DPRINTF("file close error: %d\n", error);
 
 		fb_delete(fbuf);
 	}

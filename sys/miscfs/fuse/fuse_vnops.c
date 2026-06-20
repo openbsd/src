@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.77 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.78 2026/06/20 13:45:13 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -1003,11 +1003,8 @@ fusefs_readlink(void *v)
 	}
 
 	if (strnlen(fbuf->fb_dat, fbuf->fb_len) != fbuf->fb_len) {
-		/*
-		 * TODO
-		 * DPRINTF("fusefs: symbolic link contains embedded NUL: %s\n",
-		 *     fbuf->fb_dat);
-		 */
+		DPRINTF("symbolic link contains embedded NUL: %s\n",
+		    fbuf->fb_dat);
 
 		fb_delete(fbuf);
 		return (EIO);
@@ -1037,7 +1034,7 @@ fusefs_reclaim(void *v)
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
 		if (fufh->fh_type != FUFH_INVALID) {
-			printf("fusefs: vnode being reclaimed is valid\n");
+			DPRINTF("vnode being reclaimed is valid\n");
 			fusefs_file_close(fmp, ip, fufh->fh_type, type,
 			    (vp->v_type == VDIR), ap->a_p);
 		}
@@ -1327,7 +1324,7 @@ fusefs_write(void *v)
 		fbuf->op.in.write.size = len;
 
 		if ((error = uiomove(fbuf->fb_dat, len, uio))) {
-			printf("fusefs: uio error %i\n", error);
+			DPRINTF("uio error %i\n", error);
 			break;
 		}
 

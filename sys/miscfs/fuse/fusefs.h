@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.16 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fusefs.h,v 1.17 2026/06/20 13:45:13 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -76,6 +76,12 @@ void fuse_device_queue_fbuf(dev_t, struct fusebuf *);
 void fuse_device_set_fmp(struct fusefs_mnt *, int);
 
 #define VFSTOFUSEFS(mp)	((struct fusefs_mnt *)((mp)->mnt_data))
+
+#ifdef	FUSE_DEBUG
+#define	DPRINTF(fmt, arg...)	printf("%s: " fmt, "fusefs", ##arg)
+#else
+#define	DPRINTF(fmt, arg...)
+#endif
 
 #endif /* _KERNEL */
 #endif /* __FUSEFS_H__ */

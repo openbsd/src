@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.50 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.51 2026/06/20 13:45:13 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -30,12 +30,6 @@
 
 #include "fusefs_node.h"
 #include "fusefs.h"
-
-#ifdef	FUSE_DEBUG
-#define	DPRINTF(fmt, arg...)	printf("%s: " fmt, "fuse", ##arg)
-#else
-#define	DPRINTF(fmt, arg...)
-#endif
 
 /*
  * Locks used to protect struct members and global data
@@ -85,47 +79,6 @@ static const struct filterops fuse_rd_filtops = {
 	.f_modify	= filt_fuse_modify,
 	.f_process	= filt_fuse_process,
 };
-
-#ifdef FUSE_DEBUG
-static void
-fuse_dump_buff(char *buff, int len)
-{
-	char text[17];
-	int i;
-
-	if (len < 0) {
-		printf("invalid len: %d", len);
-		return;
-	}
-	if (buff == NULL) {
-		printf("invalid buff");
-		return;
-	}
-
-	memset(text, 0, 17);
-	for (i = 0; i < len; i++) {
-		if (i != 0 && (i % 16) == 0) {
-			printf(": %s\n", text);
-			memset(text, 0, 17);
-		}
-
-		printf("%.2x ", buff[i] & 0xff);
-
-		if (buff[i] > ' ' && buff[i] < '~')
-			text[i%16] = buff[i] & 0xff;
-		else
-			text[i%16] = '.';
-	}
-
-	if ((i % 16) != 0)
-		while ((i % 16) != 0) {
-			printf("   ");
-			i++;
-		}
-
-	printf(": %s\n", text);
-}
-#endif
 
 struct fuse_d *
 fuse_lookup(int unit)
@@ -359,10 +312,6 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 			goto end;
 	}
 
-#ifdef FUSE_DEBUG
-	fuse_dump_buff((char *)fbuf, sizeof(struct fusebuf));
-#endif
-
 	free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
 	fbuf->fb_dat = NULL;
 
@@ -453,8 +402,8 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	if (fbuf->op_out_buf) {
 		fbuf->fb_len = hdr.len - sizeof(hdr) - fbuf->op_out_len;
 		if (fbuf->fb_len > fd->fd_fmp->max_read || fbuf->fb_len < 0) {
-			printf("fuse: invalid fusebuf read size: %llu "
-			    "opcode=%d\n", fbuf->fb_len, fbuf->fb_type);
+			DPRINTF("invalid fusebuf read size: %llu opcode=%d\n",
+			    fbuf->fb_len, fbuf->fb_type);
 			error = EINVAL;
 			fbuf->fb_err = EIO;
 			goto end;
@@ -486,7 +435,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	 	 * version if they are capable of a later version.
 	 	 */
 		if (fbuf->op.out.init.major != FUSE_KERNEL_VERSION) {
-			printf("fuse: unsupported major version: %d.%d\n",
+			DPRINTF("unsupported major version: %d.%d\n",
  			    fbuf->op.out.init.major, fbuf->op.out.init.minor);
 			error = EINVAL;
 			goto end;
@@ -501,7 +450,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 		 * ours.
 		 */
 		if (fbuf->op.out.init.minor < 9) {
-			printf("fuse: unsupported minor version: %d.%d\n",
+			DPRINTF("unsupported minor version: %d.%d\n",
  			    fbuf->op.out.init.major, fbuf->op.out.init.minor);
 			error = EINVAL;
 			goto end;
