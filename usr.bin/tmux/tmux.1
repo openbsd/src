@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1095 2026/06/19 16:25:43 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1096 2026/06/20 08:46:08 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2026 $
+.Dd $Mdocdate: June 20 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -361,9 +361,13 @@ Kill the current pane.
 .It z
 Toggle zoom state of the current pane.
 .It {
-Swap the current pane with the previous pane.
+Move floating pane to top-left corner.
 .It }
-Swap the current pane with the next pane.
+Move floating pane to top-right corner.
+.It M-{
+Move floating pane to bottom-left corner.
+.It M-}
+Move floating pane to bottom-right corner.
 .It \[ti]
 Show previous messages from
 .Nm ,
