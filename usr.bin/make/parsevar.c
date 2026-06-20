@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsevar.c,v 1.18 2024/06/18 02:11:03 millert Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.19 2026/06/20 08:45:39 sthen Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -133,6 +133,8 @@ parse_variable_assignment(const char *line, int ctxt)
 		}
 	}
 
+	if (name.s == name.e)
+		Parse_Error(PARSE_FATAL, "empty variable name");
 	arg++;
 	while (ISSPACE(*arg))
 		arg++;
