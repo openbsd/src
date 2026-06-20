@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.62 2025/05/16 16:35:12 kirill Exp $
+#	$OpenBSD: GENERIC,v 1.63 2026/06/20 11:07:49 kirill Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -50,6 +50,9 @@ pci*		at pcibus?
 
 ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
+
+# PCI Ethernet
+em*		at pci?		# Intel Pro/1000 ethernet
 
 octsmi*		at fdt?		# MDIO controller
 com*		at fdt_octeon?

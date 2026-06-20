@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 2023/01/11 03:28:42 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.48 2026/06/20 11:07:49 kirill Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -48,6 +48,9 @@ pcibus*		at iobus0
 pci*		at pcibus?
 ppb*		at pci?
 pci*		at ppb?
+
+# PCI Ethernet
+em*		at pci?		# Intel Pro/1000 ethernet
 
 octsmi*		at fdt?		# MDIO controller
 com*		at fdt_octeon?
