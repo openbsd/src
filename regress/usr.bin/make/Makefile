@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.51 2021/09/02 07:14:15 jasper Exp $
+# $OpenBSD: Makefile,v 1.52 2026/06/20 08:49:07 sthen Exp $
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
 		t20 t21 t22 t23 t24 t25 t26 t27 t28 t29 \
 		t30 t31 t32 t33 t34 t35 t36 t37 t38 t38j t39 \
-		t40 t41 t42 t42bis t43 t44 t45 t46 t47 t48
+		t40 t41 t42 t42bis t43 t44 t45 t46 t47 t48 t49
 
 REGRESS_EXPECTED_FAILURES = t14 t17 t18
 
@@ -204,6 +204,11 @@ t47: tok.o
 
 t48:
 	cd ${.CURDIR} && make -r -f mk43 a
+
+t49:
+	if cd ${.CURDIR} && env -i PATH=${PATH} ${MAKE} -r -f mk44 all 2>/dev/null; then \
+	    false; \
+	fi
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@

@@ -1,0 +1,7 @@
+# empty variable !
+=
+
+all:
+	echo "not okay"
+
+.PHONY: all
