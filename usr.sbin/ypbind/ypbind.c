@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.80 2024/01/23 14:13:55 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.81 2026/06/20 11:29:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -136,7 +136,7 @@ ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 	time_t now;
 	int count = 0;
 
-	if (strchr((char *)argp, '/'))
+	if (strchr(*argp, '/'))
 		return NULL;
 
 	memset(&res, 0, sizeof(res));
