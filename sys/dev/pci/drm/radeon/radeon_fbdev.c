@@ -338,36 +338,3 @@ bool radeon_fbdev_robj_is_fb(struct radeon_device *rdev, struct radeon_bo *robj)
 
 	return true;
 }
-
-void
-radeondrm_burner(void *v, u_int on, u_int flags)
-{
-	struct rasops_info *ri = v;
-	struct radeon_device *rdev = ri->ri_hw;
-
-	task_del(systq, &rdev->burner_task);
-
-	if (on)
-		rdev->burner_fblank = FB_BLANK_UNBLANK;
-	else {
-		if (flags & WSDISPLAY_BURN_VBLANK)
-			rdev->burner_fblank = FB_BLANK_VSYNC_SUSPEND;
-		else
-			rdev->burner_fblank = FB_BLANK_NORMAL;
-	}
-
-	/*
-	 * Setting the DPMS mode may sleep while waiting for vblank so
-	 * hand things off to a taskq.
-	 */
-	task_add(systq, &rdev->burner_task);
-}
-
-void
-radeondrm_burner_cb(void *arg1)
-{
-	struct radeon_device *rdev = arg1;
-	struct drm_fb_helper *helper = rdev_to_drm(rdev)->fb_helper;
-
-	drm_fb_helper_blank(rdev->burner_fblank, helper->info);
-}

@@ -733,6 +733,7 @@ radeondrm_detach_kms(struct device *self, int flags)
 }
 
 void radeondrm_burner(void *, u_int, u_int);
+void radeondrm_burner_cb(void *);
 int radeondrm_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t radeondrm_wsmmap(void *, off_t, int);
 int radeondrm_alloc_screen(void *, const struct wsscreen_descr *,
@@ -1265,6 +1266,7 @@ radeondrm_attachhook(struct device *self)
 	const struct drm_format_info *format;
 
 	task_set(&rdev->switchtask, radeondrm_doswitch, ri);
+	task_set(&rdev->burner_task, radeondrm_burner_cb, rdev);
 
 	/* from linux radeon_pci_probe() */
 
@@ -1358,4 +1360,37 @@ radeondrm_activate_kms(struct device *self, int act)
 	}
 
 	return (rv);
+}
+
+void
+radeondrm_burner(void *v, u_int on, u_int flags)
+{
+	struct rasops_info *ri = v;
+	struct radeon_device *rdev = ri->ri_hw;
+
+	task_del(systq, &rdev->burner_task);
+
+	if (on)
+		rdev->burner_fblank = FB_BLANK_UNBLANK;
+	else {
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			rdev->burner_fblank = FB_BLANK_VSYNC_SUSPEND;
+		else
+			rdev->burner_fblank = FB_BLANK_NORMAL;
+	}
+
+	/*
+	 * Setting the DPMS mode may sleep while waiting for vblank so
+	 * hand things off to a taskq.
+	 */
+	task_add(systq, &rdev->burner_task);
+}
+
+void
+radeondrm_burner_cb(void *arg1)
+{
+	struct radeon_device *rdev = arg1;
+	struct drm_fb_helper *helper = rdev_to_drm(rdev)->fb_helper;
+
+	drm_fb_helper_blank(rdev->burner_fblank, helper->info);
 }
