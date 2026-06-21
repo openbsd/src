@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.27 2022/01/29 00:06:26 cheloha Exp $	*/
+/*	$OpenBSD: touch.c,v 1.28 2026/06/21 19:24:43 tb Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -223,8 +223,9 @@ stime_arg1(char *arg, struct timespec *tsp)
 	}
 
 	lt->tm_isdst = -1;		/* Figure out DST. */
+	lt->tm_wday = -1;		/* sentinel for error */
 	tsp[0].tv_sec = tsp[1].tv_sec = mktime(lt);
-	if (tsp[0].tv_sec == -1)
+	if (tsp[0].tv_sec == -1 && lt->tm_wday == -1)
 terr:		errx(1,
 	"out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
 
@@ -264,8 +265,9 @@ stime_arg2(char *arg, int year, struct timespec *tsp)
 	lt->tm_sec = 0;
 
 	lt->tm_isdst = -1;		/* Figure out DST. */
+	lt->tm_wday = -1;		/* sentinel for error */
 	tsp[0].tv_sec = tsp[1].tv_sec = mktime(lt);
-	if (tsp[0].tv_sec == -1)
+	if (tsp[0].tv_sec == -1 && lt->tm_wday == -1)
 terr:		errx(1,
 	"out of range or illegal time specification: MMDDhhmm[YY]");
 
@@ -323,8 +325,9 @@ stime_argd(char *arg, struct timespec *tsp)
 		goto terr;
 
 	tm.tm_isdst = -1;
+	tm.tm_wday = -1;		/* sentinel for error */
 	tsp[0].tv_sec = utc ? timegm(&tm) : mktime(&tm);
-	if (tsp[0].tv_sec == -1)
+	if (tsp[0].tv_sec == -1 && tm.tm_wday == -1)
 terr:		errx(1,
   "out of range or illegal time specification: YYYY-MM-DDThh:mm:ss[.frac][Z]");
 	tsp[1] = tsp[0];
