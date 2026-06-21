@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.55 2026/06/21 08:16:35 tb Exp $
+.\"	$OpenBSD: ctime.3,v 1.56 2026/06/21 15:56:13 deraadt Exp $
 .\"
 .\"
 .Dd $Mdocdate: June 21 2026 $
@@ -406,7 +406,7 @@ did not change from \-1, an error has occurred.
 .Bd -literal -offset indent
 struct tm tm;
 \&...
-tm.tm_wday = -1;
+tm.tm_wday = -1;	/* sentinel for error */
 if (mktime(&tm) == -1 && tm.tm_wday == -1)
 	goto error;
 .Ed
