@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.51 2026/03/10 00:06:39 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.52 2026/06/21 19:28:07 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -55,7 +55,7 @@ struct netent_ext {
 static int gethostnamadr_async_run(struct asr_query *, struct asr_result *);
 static struct hostent_ext *hostent_alloc(int);
 static int hostent_set_cname(struct hostent_ext *, const char *, int);
-static int hostent_add_alias(struct hostent_ext *, const char *, int);
+static void hostent_add_alias(struct hostent_ext *, const char *, int);
 static int hostent_add_addr(struct hostent_ext *, const void *, size_t);
 static struct hostent_ext *hostent_from_addr(int, const char *, const char *);
 static struct hostent_ext *hostent_file_match(FILE *, int, int, const char *,
@@ -477,8 +477,7 @@ found:
 	if (hostent_set_cname(h, tokens[1], 0) == -1)
 		goto fail;
 	for (i = 2; i < n; i ++)
-		if (hostent_add_alias(h, tokens[i], 0) == -1)
-			goto fail;
+		hostent_add_alias(h, tokens[i], 0);
 	if (hostent_add_addr(h, addr, h->h.h_length) == -1)
 		goto fail;
 	return (h);
@@ -517,8 +516,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 
 		case T_CNAME:
 			if (reqtype == ASR_GETHOSTBYNAME) {
-				if (hostent_add_alias(h, rr.rr_dname, 1) == -1)
-					goto fail;
+				hostent_add_alias(h, rr.rr_dname, 1);
 			} else {
 				if (strcasecmp(rr.rr_dname, dname) == 0)
 					strlcpy(dname, rr.rr.cname.cname,
@@ -612,7 +610,7 @@ hostent_set_cname(struct hostent_ext *h, const char *name, int isdname)
 	return (0);
 }
 
-static int
+static void
 hostent_add_alias(struct hostent_ext *h, const char *name, int isdname)
 {
 	char	buf[MAXDNAME];
@@ -622,24 +620,23 @@ hostent_add_alias(struct hostent_ext *h, const char *name, int isdname)
 		if (h->aliases[i] == NULL)
 			break;
 	if (i == MAXALIASES)
-		return (0);
+		return;
 
 	if (isdname) {
 		_asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf)-1] = '\0';
 		if (!res_hnok(buf))
-			return (-1);
+			return;
 		name = buf;
 	}
 
 	n = strlen(name) + 1;
 	if (h->pos + n >= h->end)
-		return (0);
+		return;
 
 	h->aliases[i] = h->pos;
 	memmove(h->pos, name, n);
 	h->pos += n;
-	return (0);
 }
 
 static int
