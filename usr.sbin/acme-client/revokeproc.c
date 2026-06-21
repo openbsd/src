@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.30 2026/05/29 04:17:55 tb Exp $ */
+/*	$Id: revokeproc.c,v 1.31 2026/06/21 19:23:56 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -51,7 +51,7 @@ X509notafter(const X509 *x, time_t *notafter)
 	if (!ASN1_TIME_to_tm(atim, &t))
 		return -1;
 
-	t.tm_wday = -1;
+	t.tm_wday = -1;		/* sentinel for error */
 	if ((*notafter = timegm(&t)) == -1 && t.tm_wday == -1)
 		return -1;
 
@@ -75,7 +75,7 @@ X509notbefore(const X509 *x, time_t *notbefore)
 	if (!ASN1_TIME_to_tm(atim, &t))
 		return -1;
 
-	t.tm_wday = -1;
+	t.tm_wday = -1;		/* sentinel for error */
 	if ((*notbefore = timegm(&t)) == -1 && t.tm_wday == -1)
 		return -1;
 

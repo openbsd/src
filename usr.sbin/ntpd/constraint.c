@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.61 2026/06/01 12:22:06 tb Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.62 2026/06/21 19:23:56 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1062,7 +1062,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when, int synced)
 	 */
 	notbefore = tls_peer_cert_notbefore(httpsdate->tls_ctx);
 	notafter = tls_peer_cert_notafter(httpsdate->tls_ctx);
-	httpsdate->tls_tm.tm_wday = -1;
+	httpsdate->tls_tm.tm_wday = -1;		/* sentinel for error */
 	if ((httptime = timegm(&httpsdate->tls_tm)) == -1 &&
 	    httpsdate->tls_tm.tm_wday == -1)
 		goto fail;
@@ -1116,7 +1116,7 @@ httpsdate_query(const char *addr, const char *port, const char *hostname,
 	if (httpsdate_request(httpsdate, &when, synced) == -1)
 		return (NULL);
 
-	httpsdate->tls_tm.tm_wday = -1;
+	httpsdate->tls_tm.tm_wday = -1;		/* sentinel for error */
 	t = timegm(&httpsdate->tls_tm);
 	if (t == -1 && httpsdate->tls_tm.tm_wday == -1) {
 		httpsdate_free(httpsdate);

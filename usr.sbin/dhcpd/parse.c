@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.30 2026/06/20 07:29:55 tb Exp $	*/
+/*	$OpenBSD: parse.c,v 1.31 2026/06/21 19:23:56 tb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -552,7 +552,7 @@ parse_date(FILE *cfile)
 		}
 	}
 
-	tm.tm_wday = -1;
+	tm.tm_wday = -1;	/* sentinel for error */
 	guess = timegm(&tm);
 	if (guess == -1 && tm.tm_wday == -1) {
 		parse_warn("time could not be represented");
