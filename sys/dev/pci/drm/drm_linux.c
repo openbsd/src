@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.138 2026/06/02 03:17:28 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.139 2026/06/21 23:30:02 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3486,7 +3486,7 @@ dma_map_resource(struct device *dev, phys_addr_t phys_addr, size_t size,
 
 #include <linux/iommu.h>
 
-size_t
+ssize_t
 iommu_map_sgtable(struct iommu_domain *domain, u_long iova,
     struct sg_table *sgt, int prot)
 {

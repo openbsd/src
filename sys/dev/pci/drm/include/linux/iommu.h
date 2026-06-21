@@ -13,7 +13,7 @@ struct iommu_domain {
 #define IOMMU_READ	0x0001
 #define IOMMU_WRITE	0x0002
 
-size_t	iommu_map_sgtable(struct iommu_domain *, u_long,
+ssize_t	iommu_map_sgtable(struct iommu_domain *, u_long,
 	    struct sg_table *, int);
 size_t	iommu_unmap(struct iommu_domain *, u_long, size_t);
 
