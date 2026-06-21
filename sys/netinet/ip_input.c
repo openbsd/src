@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.428 2026/05/26 20:43:31 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.429 2026/06/21 21:17:07 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -191,6 +191,8 @@ ip_init(void)
 	const u_int16_t defbaddynamicports_udp[] = DEFBADDYNAMICPORTS_UDP;
 	const u_int16_t defrootonlyports_tcp[] = DEFROOTONLYPORTS_TCP;
 	const u_int16_t defrootonlyports_udp[] = DEFROOTONLYPORTS_UDP;
+
+	ip_randomid_init();
 
 	ipcounters = counters_alloc(ips_ncounters);
 
