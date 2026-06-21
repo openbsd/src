@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.64 2026/06/09 21:22:22 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.65 2026/06/21 17:43:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -438,7 +438,7 @@ menu_key_cb(struct client *c, void *data, struct key_event *event)
 					break;
 			}
 		}
-		while (name == NULL || *name == '-') {
+		while ((name == NULL || *name == '-') && md->choice != 0) {
 			md->choice--;
 			name = menu->items[md->choice].name;
 		}
@@ -448,7 +448,7 @@ menu_key_cb(struct client *c, void *data, struct key_event *event)
 	case KEYC_HOME:
 		md->choice = 0;
 		name = menu->items[md->choice].name;
-		while (name == NULL || *name == '-') {
+		while ((name == NULL || *name == '-') && md->choice != count - 1) {
 			md->choice++;
 			name = menu->items[md->choice].name;
 		}
@@ -458,7 +458,7 @@ menu_key_cb(struct client *c, void *data, struct key_event *event)
 	case KEYC_END:
 		md->choice = count - 1;
 		name = menu->items[md->choice].name;
-		while (name == NULL || *name == '-') {
+		while ((name == NULL || *name == '-') && md->choice != 0) {
 			md->choice--;
 			name = menu->items[md->choice].name;
 		}
