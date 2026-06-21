@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.16 2025/09/17 09:17:12 kettenis Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.17 2026/06/21 14:10:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -589,22 +589,10 @@ cad_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct cad_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int error = 0, netlock_held = 1;
+	int error = 0;
 	int s;
 
-	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-	case SIOCGIFSFFPAGE:
-		netlock_held = 0;
-		break;
-	}
-
-	if (netlock_held)
-		NET_UNLOCK();
 	rw_enter_write(&sc->sc_cfg_lock);
-	if (netlock_held)
-		NET_LOCK();
 	s = splnet();
 
 	switch (cmd) {
@@ -721,9 +709,6 @@ cad_up(struct cad_softc *sc)
 	uint32_t val;
 
 	rw_assert_wrlock(&sc->sc_cfg_lock);
-
-	/* Release lock for memory allocation. */
-	NET_UNLOCK();
 
 	if (sc->sc_dma64)
 		flags |= BUS_DMA_64BIT;
@@ -880,8 +865,6 @@ cad_up(struct cad_softc *sc)
 		}
 	}
 
-	NET_LOCK();
-
 	/*
 	 * Set MAC address filters.
 	 */
@@ -985,9 +968,6 @@ cad_down(struct cad_softc *sc)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
-	/* Avoid lock order issues with barriers. */
-	NET_UNLOCK();
-
 	timeout_del_barrier(&sc->sc_tick);
 
 	/* Disable data transfer. */
@@ -1011,7 +991,7 @@ cad_down(struct cad_softc *sc)
 	/* Wait for activity to cease. */
 	intr_barrier(sc->sc_ih);
 	ifq_barrier(&ifp->if_snd);
-	taskq_del_barrier(systq, &sc->sc_statchg_task);
+	task_del(systq, &sc->sc_statchg_task);
 
 	/* Disable the packet clock as it is not needed any longer. */
 	clock_disable(sc->sc_node, GEM_CLK_TX);
@@ -1059,8 +1039,6 @@ cad_down(struct cad_softc *sc)
 	cad_dmamem_free(sc, sc->sc_rxring);
 	sc->sc_rxring = NULL;
 	sc->sc_rxdesc = NULL;
-
-	NET_LOCK();
 }
 
 uint8_t
@@ -1683,8 +1661,14 @@ void
 cad_statchg_task(void *arg)
 {
 	struct cad_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
-	clock_set_frequency(sc->sc_node, GEM_CLK_TX, sc->sc_tx_freq);
+	rw_enter_write(&sc->sc_cfg_lock);
+
+	if ((ifp->if_flags & IFF_RUNNING))
+		clock_set_frequency(sc->sc_node, GEM_CLK_TX, sc->sc_tx_freq);
+
+	rw_exit_write(&sc->sc_cfg_lock);
 }
 
 struct cad_dmamem *
