@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.54 2026/05/31 15:21:04 tb Exp $
+.\"	$OpenBSD: ctime.3,v 1.55 2026/06/21 08:16:35 tb Exp $
 .\"
 .\"
-.Dd $Mdocdate: May 31 2026 $
+.Dd $Mdocdate: June 21 2026 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -325,11 +325,14 @@ and
 conform to
 .St -p1003.1-2008 .
 .Pp
-The functions
+The function
 .Fn timegm
-and
+conforms to
+.St -isoC-2023 .
+.Pp
+The function
 .Fn timelocal
-are extensions to these standards.
+is an extension to these standards.
 .Sh HISTORY
 A
 .Fn ctime
