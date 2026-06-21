@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.60 2024/04/28 16:43:15 florian Exp $	*/
+/*	$OpenBSD: date.c,v 1.61 2026/06/21 19:25:26 tb Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -223,11 +223,12 @@ setthetime(char *p, const char *pformat)
 	}
 
 	/* convert broken-down time to UTC clock time */
+	lt->tm_wday = -1;	/* sentinel for error */
 	if (pformat != NULL && strstr(pformat, "%s") != NULL)
 		tval = timegm(lt);
 	else
 		tval = mktime(lt);
-	if (tval == -1)
+	if (tval == -1 && lt->tm_wday == -1)
 		errx(1, "specified date is outside allowed range");
 
 	if (jflag)
