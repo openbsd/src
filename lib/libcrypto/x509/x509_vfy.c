@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.151 2026/06/22 19:13:53 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.152 2026/06/22 19:29:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1082,7 +1082,7 @@ get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
 		}
 	}
 
-	if (best_crl) {
+	if (best_crl != NULL) {
 		X509_CRL_free(*pcrl);
 		*pcrl = best_crl;
 		*pissuer = best_crl_issuer;
