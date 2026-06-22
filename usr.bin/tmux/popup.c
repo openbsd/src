@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.73 2026/06/19 18:41:36 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.74 2026/06/22 08:47:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -274,7 +274,7 @@ popup_check_cb(struct client* c, void *data, u_int px, u_int py, u_int nx)
 }
 
 static void
-popup_draw_cb(struct client *c, void *data, struct screen_redraw_ctx *rctx)
+popup_draw_cb(struct client *c, void *data)
 {
 	struct popup_data	*pd = data;
 	struct tty		*tty = &c->tty;
@@ -329,7 +329,7 @@ popup_draw_cb(struct client *c, void *data, struct screen_redraw_ctx *rctx)
 	if (pd->md != NULL) {
 		c->overlay_check = NULL;
 		c->overlay_data = NULL;
-		menu_draw_cb(c, pd->md, rctx);
+		menu_draw_cb(c, pd->md);
 	}
 	c->overlay_check = popup_check_cb;
 	c->overlay_data = pd;

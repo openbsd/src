@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.64 2026/06/07 20:03:02 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.65 2026/06/22 08:47:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -318,6 +318,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 		grid_clear_history(wp->base.grid);
 		if (args_has(args, 'H'))
 			screen_reset_hyperlinks(wp->screen);
+		server_redraw_window(wp->window);
 		return (CMD_RETURN_NORMAL);
 	}
 

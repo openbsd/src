@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.33 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.34 2026/06/22 08:47:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -109,6 +109,7 @@ cmd_rotate_window_exec(struct cmd *self, struct cmdq_item *item)
 	window_set_active_pane(w, wp, 1);
 	cmd_find_from_winlink_pane(current, wl, wp, 0);
 	window_pop_zoom(w);
+	redraw_invalidate_scene(w);
 	server_redraw_window(w);
 
 	return (CMD_RETURN_NORMAL);
