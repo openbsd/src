@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.104 2025/07/09 06:48:09 yasuoka Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.105 2026/06/22 14:01:13 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -632,7 +632,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		integrdata = ibuf_seek(src, integroff, integrlen);
 		if (integrdata == NULL)
 			goto done;
-		if (memcmp(ibuf_data(tmp), integrdata, integrlen) != 0) {
+		if (timingsafe_memcmp(ibuf_data(tmp), integrdata, integrlen) != 0) {
 			log_debug("%s: integrity check failed", __func__);
 			goto done;
 		}
