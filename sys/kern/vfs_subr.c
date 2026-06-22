@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.333 2025/11/08 17:23:22 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.334 2026/06/22 17:35:50 kirill Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1021,7 +1021,7 @@ vflush(struct mount *mp, struct vnode *skipvp, int flags)
 void
 vclean(struct vnode *vp, int flags, struct proc *p)
 {
-	int active, do_wakeup = 0;
+	int active, do_wakeup = 0, error;
 	int s;
 
 	/*
@@ -1070,8 +1070,18 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	/*
 	 * Clean out any buffers associated with the vnode.
 	 */
-	if (flags & DOCLOSE)
-		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, INFSLP);
+	if (flags & DOCLOSE) {
+		error = vinvalbuf(vp, V_SAVE, NOCRED, p, 0, INFSLP);
+		if (error) {
+			printf("vclean: failed to flush buffers, error %d; "
+			    "discarding dirty buffers", error);
+			if (vp->v_mount != NULL)
+				printf("; mounted on: %s",
+				    vp->v_mount->mnt_stat.f_mntonname);
+			printf("\n");
+			vinvalbuf(vp, 0, NOCRED, p, 0, INFSLP);
+		}
+	}
 	/*
 	 * If purging an active vnode, it must be closed and
 	 * deactivated before being reclaimed. Note that the
