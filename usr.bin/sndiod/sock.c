@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.61 2026/06/22 14:15:26 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.62 2026/06/22 14:16:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -180,9 +180,9 @@ sock_close(struct sock *f)
 			opt_unref(f->opt);
 			f->opt = NULL;
 		}
-		if (f->tag) {
-			midithru_unref(f->tag);
-			f->tag = 0;
+		if (f->midithru) {
+			midithru_unref(f->midithru);
+			f->midithru = NULL;
 		}
 	}
 	if (f->ctlslot) {
@@ -315,7 +315,7 @@ sock_new(int fd)
 
 	f = xmalloc(sizeof(struct sock));
 	f->pstate = SOCK_AUTH;
-	f->tag = 0;
+	f->midithru = NULL;
 	f->slot = NULL;
 	f->port = NULL;
 	f->midi = NULL;
@@ -716,9 +716,9 @@ sock_hello(struct sock *f)
 	struct amsg_hello *p = &f->rmsg.u.hello;
 	struct port *c;
 	struct opt *opt;
+	struct midithru *midithru;
 	unsigned int mode;
 	unsigned int id;
-	unsigned int tag;
 
 	mode = ntohs(p->mode);
 	id = ntohl(p->id);
@@ -760,7 +760,7 @@ sock_hello(struct sock *f)
 			if (!opt_ref(opt))
 				return 0;
 			f->opt = opt;
-			midithru_addprog(opt->num, f->midi);
+			midithru_addprog(midithru_array + opt->num, f->midi);
 		} else if (p->devnum < 16) {
 			opt = legacy_opt(p->devnum, p->opt);
 			if (opt == NULL)
@@ -768,11 +768,11 @@ sock_hello(struct sock *f)
 			if (!opt_ref(opt))
 				return 0;
 			f->opt = opt;
-			midithru_addprog(opt->num, f->midi);
+			midithru_addprog(midithru_array + opt->num, f->midi);
 		} else if (p->devnum < 32) {
-			f->tag = p->devnum;
-			midithru_ref(f->tag);
-			midithru_addprog(f->tag, f->midi);
+			f->midithru = midithru_array + p->devnum;
+			midithru_ref(f->midithru);
+			midithru_addprog(f->midithru, f->midi);
 		} else if (p->devnum < 48) {
 			c = port_bynum(p->devnum - 32);
 			if (c == NULL || !port_ref(c))
@@ -785,24 +785,24 @@ sock_hello(struct sock *f)
 	}
 	if (mode & MODE_CTLMASK) {
 		if (p->devnum == AMSG_NODEV) {
-			tag = 0;
+			midithru = NULL;
 			opt = opt_byname(p->opt);
 			if (opt == NULL)
 				return 0;
 		} else if (p->devnum < 16) {
-			tag = 0;
+			midithru = NULL;
 			opt = legacy_opt(p->devnum, p->opt);
 			if (opt == NULL)
 				return 0;
 		} else if (p->devnum < 32) {
-			tag = p->devnum;
+			midithru = midithru_array + p->devnum;
 			opt = NULL;
 			logx(2, "sock %d: controlling midithru", f->fd);
 		} else {
 			logx(2, "sock %d: unhandled device", f->fd);
 			return 0;
 		}
-		f->ctlslot = ctlslot_new(opt, tag, &sock_ctlops, f);
+		f->ctlslot = ctlslot_new(opt, midithru, &sock_ctlops, f);
 		if (f->ctlslot == NULL) {
 			logx(2, "sock %d: couldn't get ctlslot", f->fd);
 			return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.137 2026/06/22 14:15:26 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.138 2026/06/22 14:16:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1726,7 +1726,7 @@ slot_read(struct slot *s)
  * allocate at control slot
  */
 struct ctlslot *
-ctlslot_new(struct opt *o, unsigned int tag, struct ctlops *ops, void *arg)
+ctlslot_new(struct opt *o, struct midithru *t, struct ctlops *ops, void *arg)
 {
 	struct ctlslot *s;
 	struct ctl *c;
@@ -1742,12 +1742,12 @@ ctlslot_new(struct opt *o, unsigned int tag, struct ctlops *ops, void *arg)
 		i++;
 	}
 	s->opt = o;
-	s->tag = tag;
+	s->midithru = t;
 	s->self = 1 << i;
 	if (s->opt != NULL && !opt_ref(s->opt))
 		return NULL;
-	if (s->tag != 0)
-		midithru_ref(tag);
+	if (s->midithru)
+		midithru_ref(t);
 	s->ops = ops;
 	s->arg = arg;
 	for (c = ctl_list; c != NULL; c = c->next) {
@@ -1778,8 +1778,8 @@ ctlslot_del(struct ctlslot *s)
 	s->ops = NULL;
 	if (s->opt != NULL)
 		opt_unref(s->opt);
-	if (s->tag)
-		midithru_unref(s->tag);
+	if (s->midithru)
+		midithru_unref(s->midithru);
 }
 
 int
@@ -1803,7 +1803,7 @@ ctlslot_visible(struct ctlslot *s, struct ctl *c)
 	case CTL_APP_LEVEL:
 		return (s->opt != NULL && s->opt == c->u.app_level.opt);
 	case CTL_MIDI_PORT:
-		return (s->tag == c->u.midi.tag);
+		return (s->midithru == c->u.midi.midithru);
 	default:
 		return 0;
 	}
@@ -1885,8 +1885,8 @@ ctl_scope_fmt(char *buf, size_t size, struct ctl *c)
 		return snprintf(buf, size, "opt_mode:%s/%s",
 		    c->u.opt_mode.opt->name, opt_modes[c->u.opt_mode.idx].name);
 	case CTL_MIDI_PORT:
-		return snprintf(buf, size, "midi_port:%u/%u",
-		    c->u.midi.tag, c->u.midi.port->num);
+		return snprintf(buf, size, "midi_port:%zu/%u",
+		    c->u.midi.midithru - midithru_array, c->u.midi.port->num);
 	default:
 		return snprintf(buf, size, "unknown");
 	}
@@ -1961,7 +1961,7 @@ ctl_setval(struct ctl *c, int val)
 		c->curval = val;
 		return 1;
 	case CTL_MIDI_PORT:
-		if (midithru_setport(c->u.midi.tag, c->u.midi.port, val)) {
+		if (midithru_setport(c->u.midi.midithru, c->u.midi.port, val)) {
 			c->val_mask = ~0U;
 			c->curval = val;
 		}
@@ -2026,7 +2026,7 @@ ctl_new(int scope, void *arg0, void *arg1,
 		c->u.opt_mode.idx = *(int *)arg1;
 		break;
 	case CTL_MIDI_PORT:
-		c->u.midi.tag = *(unsigned int *)arg1;
+		c->u.midi.midithru = arg1;
 		break;
 	default:
 		c->u.any.arg1 = NULL;
@@ -2100,7 +2100,7 @@ ctl_match(struct ctl *c, int scope, void *arg0, void *arg1)
 			return 0;
 		break;
 	case CTL_MIDI_PORT:
-		if (arg1 != NULL && c->u.midi.tag != *(unsigned int *)arg1)
+		if (arg1 != NULL && c->u.midi.midithru != arg1)
 			return 0;
 		break;
 	}

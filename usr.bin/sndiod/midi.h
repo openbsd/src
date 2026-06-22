@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.21 2026/06/22 14:15:26 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.22 2026/06/22 14:16:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -96,10 +96,23 @@ struct port {
 	struct midi *midi;
 };
 
+struct midithru {
+	unsigned int portmask;
+	unsigned int progmask;
+	unsigned int prefportmask;
+	int refcnt;
+};
+
 /*
  * midi ports
  */
 extern struct port *port_list;
+
+/*
+ * midithru ports
+ */
+#define MIDITHRU_NMAX 32
+extern struct midithru midithru_array[MIDITHRU_NMAX];
 
 void midi_init(void);
 void midi_done(void);
@@ -130,12 +143,12 @@ int  port_close(struct port *);
 struct port *port_alt_ref(int);
 void port_abort(struct port *p);
 
-void midithru_ref(unsigned int);
-void midithru_unref(unsigned int);
-void midithru_addport(unsigned int, struct port *);
-void midithru_addprog(unsigned int, struct midi *);
-void midithru_rm(unsigned int, struct midi *);
-int  midithru_setport(unsigned int, struct port *, int);
+void midithru_ref(struct midithru *);
+void midithru_unref(struct midithru *);
+void midithru_addport(struct midithru *, struct port *);
+void midithru_addprog(struct midithru *, struct midi *);
+void midithru_rm(struct midithru *, struct midi *);
+int  midithru_setport(struct midithru *, struct port *, int);
 void midithru_scanports(void);
 
 #endif /* !defined(MIDI_H) */
