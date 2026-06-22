@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.35 2025/04/30 03:51:42 tb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.36 2026/06/22 13:16:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -755,8 +755,15 @@ int
 ec25519_create_shared(struct dh_group *group, uint8_t *shared, uint8_t *public)
 {
 	struct curve25519_key	*curve25519 = group->curve25519;
+	uint8_t			 zero[CURVE25519_SIZE];
 
 	crypto_scalarmult_curve25519(shared, curve25519->secret, public);
+
+	/* Check for all-zero shared secret */
+	explicit_bzero(zero, CURVE25519_SIZE);
+	if (timingsafe_bcmp(zero, shared, CURVE25519_SIZE) == 0)
+		return (-1);
+
 	return (0);
 }
 
