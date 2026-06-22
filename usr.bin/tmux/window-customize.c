@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.20 2026/06/19 17:37:26 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.21 2026/06/22 12:39:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -740,8 +740,10 @@ window_customize_draw_option(struct window_customize_modedata *data,
 		if (strcmp(expanded, value) != 0) {
 			if (!screen_write_text(ctx, cx, sx, sy - (s->cy - cy),
 			    0, &grid_default_cell, "This expands to: %s",
-			    expanded))
+			    expanded)) {
+				free(expanded);
 				goto out;
+			}
 		}
 		free(expanded);
 	}
