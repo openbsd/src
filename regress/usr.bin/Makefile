@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.52 2025/05/04 05:21:14 tb Exp $
+#	$OpenBSD: Makefile,v 1.53 2026/06/22 15:55:46 tim Exp $
 
-SUBDIR+= apply
+SUBDIR+= apply awk
 SUBDIR+= basename bc
 SUBDIR+= calendar colrm column cut
 SUBDIR+= dc diff diff3 dirname doas
