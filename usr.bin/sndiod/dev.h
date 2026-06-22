@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.57 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.58 2026/06/22 14:17:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -152,8 +152,8 @@ struct ctl {
 			int idx;
 		} opt_mode;
 		struct {
-			struct port *port;
 			struct midithru *midithru;
+			struct port *port;
 		} midi;
 	} u;
 

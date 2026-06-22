@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.38 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.39 2026/06/22 14:17:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -560,7 +560,7 @@ port_abort(struct port *p)
 	for (i = 0; i < MIDITHRU_NMAX; i++) {
 		midithru_rm(midithru_array + i, p->midi);
 
-		c = ctl_find(CTL_MIDI_PORT, p, midithru_array + i);
+		c = ctl_find(CTL_MIDI_PORT, midithru_array + i, p);
 		if (c != NULL && c->curval != 0) {
 			c->val_mask = ~0U;
 			c->curval = 0;
@@ -587,7 +587,7 @@ midithru_ref(struct midithru *t)
 		if (c->state == DEV_INIT && (t->prefportmask & c->midi->self))
 			midithru_addport(t, c);
 		snprintf(name, sizeof(name), "%u", c->num);
-		ctl_new(CTL_MIDI_PORT, c, t,
+		ctl_new(CTL_MIDI_PORT, t, c,
 		    CTL_LIST, "", "", "server", -1, "port",
 		    name, -1, 1, !!(t->portmask & c->midi->self));
 	}
@@ -605,7 +605,7 @@ midithru_unref(struct midithru *t)
 		return;
 	/* delete server.port control */
 	for (c = port_list; c != NULL; c = c->next) {
-		if (ctl_del(CTL_MIDI_PORT, c, t)) {
+		if (ctl_del(CTL_MIDI_PORT, t, c)) {
 			midithru_rm(t, c->midi);
 			port_unref(c);
 		}
@@ -686,7 +686,7 @@ midithru_scanports(void)
 			if (!(midithru_array[i].prefportmask & p->midi->self))
 				continue;
 			midithru_addport(midithru_array + i, p);
-			c = ctl_find(CTL_MIDI_PORT, p, midithru_array + i);
+			c = ctl_find(CTL_MIDI_PORT, midithru_array + i, p);
 			if (c != NULL && c->curval != 0) {
 				c->val_mask = ~0U;
 				c->curval = 1;

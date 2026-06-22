@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.138 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.139 2026/06/22 14:17:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2020,13 +2020,11 @@ ctl_new(int scope, void *arg0, void *arg1,
 		break;
 	case CTL_OPT_DEV:
 	case CTL_APP_LEVEL:
+	case CTL_MIDI_PORT:
 		c->u.any.arg1 = arg1;
 		break;
 	case CTL_OPT_MODE:
 		c->u.opt_mode.idx = *(int *)arg1;
-		break;
-	case CTL_MIDI_PORT:
-		c->u.midi.midithru = arg1;
 		break;
 	default:
 		c->u.any.arg1 = NULL;
@@ -2092,15 +2090,12 @@ ctl_match(struct ctl *c, int scope, void *arg0, void *arg1)
 		break;
 	case CTL_OPT_DEV:
 	case CTL_APP_LEVEL:
+	case CTL_MIDI_PORT:
 		if (arg1 != NULL && c->u.any.arg1 != arg1)
 			return 0;
 		break;
 	case CTL_OPT_MODE:
 		if (arg1 != NULL && c->u.opt_mode.idx != *(int *)arg1)
-			return 0;
-		break;
-	case CTL_MIDI_PORT:
-		if (arg1 != NULL && c->u.midi.midithru != arg1)
 			return 0;
 		break;
 	}
