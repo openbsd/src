@@ -1,0 +1,4 @@
+this is before calling myabort
+in myabort - before exit 1
+into END
+in myabort - before exit 2

@@ -1,0 +1,106 @@
+17379	mel
+16693	bwk	me
+15713	srb
+11895	lem
+10409	scj
+ 9853	shen
+ 8895	dmr
+ 8491	cda
+ 7273	jrv
+ 7063	greg
+ 6567	dict
+ 6291	rje
+ 6211	lwf
+ 5671	dave
+ 5373	jhc
+ 5167	doug
+ 5007	valerie
+ 3963	jca
+ 3895	bbs
+ 3481	xchar
+ 2845	s
+ 2641	met
+ 2511	port
+ 2479	sue
+ 2127	root
+ 1989	bsb
+ 1989	jeg
+ 1933	eag
+ 1801	pdj
+ 1385	cvw
+ 1205	eg
+ 1153	dl
+ 1031	cmb
+  931	marc
+  865	ggr
+  803	mihalis
+  559	acs
+  541	uucp
+  523	raf
+  495	adh
+  375	jj
+  327	stars
+  263	ralph
+  253	tom
+  251	sjb
+  213	dsj
+  201	bill
+  163	jon
+  143	fox
+  123	dale
+   95	buz
+   79	jas
+   79	trt
+   47	dlc
+   45	dls
+   45	jwf
+   43	ars
+   43	vgl
+   37	jfo
+   31	pd
+   29	jns
+   25	spm
+   15	egb
+    5	evp
+    3	ast
+    3	jfr
+    3	lax
+    3	nel
+    1	122sec
+    1	ddwar
+    1	gopi
+    1	jk
+    1	learn
+    1	low
+    1	nac
+    1	sidor
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh
+3sysadm:*:0:0:System V Administration:/usr/admin:/bin/sh
+5daemon:*:1:1:daemons:/:/bin/sh
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/sh
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp:
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/null
+27changes:*:11:11:system change log:/:
+29man:*:99:995:On-line Manual Owner:/:
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh
+5d aemon * 1 1 daemons / /bin/sh
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp 
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null
+27 changes * 11 11 system change log / 
+29 man * 99 995 On-line Manual Owner / 

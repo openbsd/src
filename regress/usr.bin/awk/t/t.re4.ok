@@ -1,0 +1,82 @@
+ 9748	a68 matches a
+ 8491	cda matches a
+ 7360	ava matches a
+ 5671	dave matches a
+ 5220	agf matches a
+ 5007	valerie matches a
+ 3963	jca matches a
+ 3481	xchar matches a
+ 1933	eag matches a
+ 1316	avg matches a
+ 1194	jam matches a
+  931	marc matches a
+  822	daemon matches a
+  803	mihalis matches a
+  624	tad matches a
+  559	acs matches a
+  523	raf matches a
+  495	adh matches a
+  414	craig matches a
+  386	donmac matches a
+  348	ravi matches a
+  327	stars matches a
+  263	ralph matches a
+  248	haight matches a
+  224	sharon matches a
+  144	dan matches a
+  123	dale matches a
+  116	kab matches a
+   80	asc matches a
+   79	jas matches a
+   44	mash matches a
+   43	ars matches a
+   32	rab matches a
+    6	aed matches a
+    3	ast matches a
+    3	lax matches a
+    2	njas matches a
+    1	ddwar matches a
+    1	learn matches a
+    1	nac matches a
+3sysadm:*:0:0:System V Administration:/usr/admin:/bin/sh matches a
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh matches a
+5daemon:*:1:1:daemons:/:/bin/sh matches a
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh matches a
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh matches a
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh matches a
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/sh matches a
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/sh matches a
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp: matches a
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp: matches a
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/sh matches a
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh matches a
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/csh matches a
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh matches a
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh matches a
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/null matches a
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/null matches a
+27changes:*:11:11:system change log:/: matches a
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh matches a
+29man:*:99:995:On-line Manual Owner:/: matches a
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh matches a
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh matches a
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh matches a
+5d aemon * 1 1 daemons / /bin/sh matches a
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh matches a
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh matches a
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh matches a
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh matches a
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh matches a
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp  matches a
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp  matches a
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh matches a
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh matches a
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh matches a
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh matches a
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh matches a
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null matches a
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null matches a
+27 changes * 11 11 system change log /  matches a
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh matches a
+29 man * 99 995 On-line Manual Owner /  matches a
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh matches a

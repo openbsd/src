@@ -1,0 +1,37 @@
+16116	ken	him	someone else has duplicate letters
+ 9748	a68 has duplicate letters
+ 7360	ava has duplicate letters
+ 7063	greg has duplicate letters
+ 5007	valerie has duplicate letters
+ 1989	bsb has duplicate letters
+  375	jj has duplicate letters
+  327	stars has duplicate letters
+  201	bill has duplicate letters
+  176	sys has duplicate letters
+   79	trt has duplicate letters
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh has duplicate letters
+6bin:*:2:2:System Tools Owner:/bin:/dev/null has duplicate letters
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico has duplicate letters
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp: has duplicate letters
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp: has duplicate letters
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp: has duplicate letters
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null has duplicate letters
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/null has duplicate letters
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/null has duplicate letters
+26rje:*:8:8:RJE Owner:/usr/spool/rje: has duplicate letters
+27changes:*:11:11:system change log:/: has duplicate letters
+29man:*:99:995:On-line Manual Owner:/: has duplicate letters
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh has duplicate letters
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh has duplicate letters
+6b in * 2 2 System Tools Owner /bin /dev/null has duplicate letters
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico has duplicate letters
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp  has duplicate letters
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp  has duplicate letters
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp  has duplicate letters
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null has duplicate letters
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null has duplicate letters
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null has duplicate letters
+26 rje * 8 8 RJE Owner /usr/spool/rje  has duplicate letters
+27 changes * 11 11 system change log /  has duplicate letters
+29 man * 99 995 On-line Manual Owner /  has duplicate letters
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh has duplicate letters

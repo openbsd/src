@@ -1,0 +1,40 @@
+   44	mash
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh
+3sysadm:*:0:0:System V Administration:/usr/admin:/bin/sh
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh
+5daemon:*:1:1:daemons:/:/bin/sh
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/sh
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/sh
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/sh
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/csh
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh
+5d aemon * 1 1 daemons / /bin/sh
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh
+22 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh
+0 39 2061 52.846154n

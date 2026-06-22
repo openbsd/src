@@ -1,0 +1,4 @@
+../a.out: repetition count a{256} too large
+ source line number 1 source file repetition-overflow.awk
+ context is
+	 >>> /a{256}/ <<< 

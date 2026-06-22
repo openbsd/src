@@ -1,0 +1,199 @@
+31    
+31    
+16    
+16    
+16    
+16    
+16    
+16    
+16    
+13     
+16     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+13     
+10      	gdb   
+10      	marc   
+10      	usg   
+10      	ggr   
+10      	daemon   
+10      	mihalis   
+10      	honey   
+10      	tad   
+10      	acs   
+10      	uucp   
+10      	raf   
+10      	adh   
+10      	kec   
+10      	craig   
+10      	donmac   
+10      	jj   
+10      	ravi   
+10      	drw   
+10      	stars   
+10      	mrg   
+10      	jcb   
+10      	ralph   
+10      	tom   
+10      	sjb   
+10      	haight   
+10      	sharon   
+10      	chuck   
+10      	dsj   
+10      	bill   
+10      	god   
+10      	sys   
+10      	meh   
+10      	jon   
+10      	dan   
+10      	fox   
+10      	dale   
+10      	kab   
+7      	buz     
+7      	asc     
+7      	jas     
+7      	trt     
+7      	wsb     
+7      	dwh     
+7      	ktf     
+7      	lr     
+7      	dlc     
+7      	dls     
+7      	jwf     
+7      	mash     
+7      	ars     
+7      	vgl     
+7      	jfo     
+7      	rab     
+7      	pd     
+7      	jns     
+7      	spm     
+7      	rob     
+7      	egb     
+7      	hm     
+7      	mhb     
+4      	aed      	aed      	aed
+4      	cpb      	cpb      	cpb
+4      	evp      	evp      	evp
+4      	ber      	ber      	ber
+4      	men      	men      	men
+4      	mitch      	mitch      	mitch
+4      	ast      	ast      	ast
+4      	jfr      	jfr      	jfr
+4      	lax      	lax      	lax
+4      	nel      	nel      	nel
+4      	blue      	blue      	blue
+4      	jfk      	jfk      	jfk
+4      	njas      	njas      	njas
+7      	 22sec      	
+4      	ddwar      	ddwar      	ddwar
+4      	gopi      	gopi      	gopi
+4      	jk      	jk      	jk
+4      	learn      	learn      	learn
+4      	low      	low      	low
+4      	nac      	nac      	nac
+4      	sidor      	sidor      	sidor
+139    
+112    
+100    
+103    
+94    
+82    
+223    
+112    
+79    
+97    
+91    
+115    
+139    
+85    
+82    
+109    
+148    
+139    
+112    
+103    
+184    
+157    
+121    
+139    
+124    
+70    
+100    
+130    
+85    
+106    
+13    oot EMpNB8Zp56 0 0 Supe -Use
+16    oottcsh * 0 0 Supe -Use
+22    y adm * 0 0 Sy
+13    iag * 0 996 Har ware Diagnostics /usr/
+10    aemon * 1 1  aemons / /bin/sh 
+10    in * 2 2 System Tools Owner / in /dev/null 
+13    uucp BJ uQbAo 6 10 UUCP.Admi
+19     cp * 3 5 UUCP.Admin /
+19    y  * 4 0 Sy
+7    adm * 5 3 Accounting Files Owner /usr/adm /bin/sh  
+7    lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh  
+13    auditor *  
+10    dbadmin *  2 0 Security Database Owner /dbadmin /bin/sh 
+10    bootes dcon 50   Tom Killian (DO NOT REMOVE) /tmp  
+16    cdjuke dcon  
+16    rfindd *  
+7    EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh  
+7    demos * 993 997 Demonstration User /usr/demos /bin/csh  
+19    tutor *  
+7    tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh  
+7    guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh  
+7    4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh  
+7    nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null  
+13    noaccess * 6000  6000
+13    nobody * -  -
+7    rje * 8 8 RJE Owner /usr/spool/rje   
+7    changes * 11 11 system change log /   
+7    dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh  
+19    man *  
+7    phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh  

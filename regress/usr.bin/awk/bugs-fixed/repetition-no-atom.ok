@@ -1,0 +1,4 @@
+../a.out: illegal primary in regular expression {00} at 
+ source line number 1 source file repetition-no-atom.awk
+ context is
+	 >>> /{00}/ <<< 

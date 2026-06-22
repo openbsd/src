@@ -1,0 +1,198 @@
+(/)dev(/)rrp3:
+(1)7379	mel
+(1)6693	bwk	me
+(1)6(1)(1)6	ken	him	someone else
+(1)57(1)3	srb
+(1)(1)895	lem
+(1)0409	scj
+(1)0252	rhm
+ (9)853	shen
+ (9)748	a68
+ (9)4(9)2	sif
+ (9)1(9)0	pjw
+ (8)912	nls
+ (8)(8)95	dmr
+ (8)491	cda
+ (8)372	bs
+ (8)252	llc
+ (7)450	mb
+ (7)360	ava
+ (7)2(7)3	jrv
+ (7)080	bin
+ (7)063	greg
+ (6)5(6)7	dict
+ (6)4(6)2	lck
+ (6)291	rje
+ (6)211	lwf
+ (5)671	dave
+ (5)373	jhc
+ (5)220	agf
+ (5)167	doug
+ (5)007	valerie
+ (3)96(3)	jca
+ (3)895	bbs
+ (3)796	moh
+ (3)481	xchar
+ (3)200	tbl
+ (2)845	s
+ (2)774	tgs
+ (2)641	met
+ (2)566	jck
+ (2)511	port
+ (2)479	sue
+ (2)1(2)7	root
+ (1)989	bsb
+ (1)989	jeg
+ (1)933	eag
+ (1)80(1)	pdj
+ (1)590	tpc
+ (1)385	cvw
+ (1)370	rwm
+ (1)3(1)6	avg
+ (1)205	eg
+ (1)(1)94	jam
+ (1)(1)53	dl
+ (1)(1)50	lgm
+ (1)03(1)	cmb
+ (1)0(1)8	jwr
+  (9)50	gdb
+  (9)31	marc
+  (8)9(8)	usg
+  (8)65	ggr
+  (8)22	daemon
+  (8)03	mihalis
+  (7)00	honey
+  (6)24	tad
+  (5)(5)9	acs
+  (5)41	uucp
+  (5)23	raf
+  (4)95	adh
+  (4)56	kec
+  (4)1(4)	craig
+  (3)86	donmac
+  (3)75	jj
+  (3)48	ravi
+  (3)44	drw
+  (3)27	stars
+  (2)88	mrg
+  (2)7(2)	jcb
+  (2)63	ralph
+  (2)53	tom
+  (2)51	sjb
+  (2)48	haight
+  (2)(2)4	sharon
+  (2)(2)(2)	chuck
+  (2)13	dsj
+  (2)01	bill
+  (1)84	god
+  (1)76	sys
+  (1)66	meh
+  (1)63	jon
+  (1)44	dan
+  (1)43	fox
+  (1)23	dale
+  (1)(1)6	kab
+   (9)5	buz
+   (8)0	asc
+   (7)9	jas
+   (7)9	trt
+   (6)4	wsb
+   (6)2	dwh
+   (5)6	ktf
+   (5)4	lr
+   (4)7	dlc
+   (4)5	dls
+   (4)5	jwf
+   (4)(4)	mash
+   (4)3	ars
+   (4)3	vgl
+   (3)7	jfo
+   (3)2	rab
+   (3)1	pd
+   (2)9	jns
+   (2)5	spm
+   (2)(2)	rob
+   (1)5	egb
+   (1)0	hm
+   (1)0	mhb
+    (6)	aed
+    (6)	cpb
+    (5)	evp
+    (4)	ber
+    (4)	men
+    (4)	mitch
+    (3)	ast
+    (3)	jfr
+    (3)	lax
+    (3)	nel
+    (2)	blue
+    (2)	jfk
+    (2)	njas
+    (1)	(1)22sec
+    (1)	ddwar
+    (1)	gopi
+    (1)	jk
+    (1)	learn
+    (1)	low
+    (1)	nac
+    (1)	sidor
+(1)root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh
+(2)roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh
+(3)sysadm:*:0:0:System V Administration:/usr/admin:/bin/sh
+(4)diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh
+(5)daemon:*:1:1:daemons:/:/bin/sh
+(6)bin:*:2:2:System Tools Owner:/bin:/dev/null
+(7)nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico
+(8)uucp:*:3:5:UUCP.Admin:/usr/lib/uucp:
+(9)sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh
+(1)0adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh
+(1)(1)lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh
+(1)2auditor:*:(1)(1):0:Audit Activity Owner:/auditor:/bin/sh
+(1)3dbadmin:*:(1)2:0:Security Database Owner:/dbadmin:/bin/sh
+(1)4bootes:dcon:50:(1):Tom Killian (DO NOT REMOVE):/tmp:
+(1)5cdjuke:dcon:5(1):(1):Tom Killian (DO NOT REMOVE):/tmp:
+(1)6rfindd:*:66:(1):Rfind Daemon and Fsdump:/var/rfindd:/bin/sh
+(1)7EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh
+(1)8demos:*:993:997:Demonstration User:/usr/demos:/bin/csh
+(1)9tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh
+(2)0tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh
+(2)1guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh
+(2)(2)4Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh
+(2)3nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null
+(2)4noaccess:*:6000(2):6000(2):uid no access:/dev/null:/dev/null
+(2)5nobody:*:-(2):-(2):original nobody uid:/dev/null:/dev/null
+(2)6rje:*:8:8:RJE Owner:/usr/spool/rje:
+(2)7changes:*:11:11:system change log:/:
+(2)8dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh
+(2)9man:*:99:995:On-line Manual Owner:/:
+(3)0phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh
+(1)r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh
+(2)r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh
+(3)s ysadm * 0 0 System V Administration /usr/admin /bin/sh
+(4)d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh
+(5)d aemon * 1 1 daemons / /bin/sh
+(6)b in * 2 2 System Tools Owner /bin /dev/null
+(7)n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico
+(8)u ucp * 3 5 UUCP.Admin /usr/lib/uucp 
+(9)s ys * 4 0 System Activity Owner /usr/adm /bin/sh
+(1)0 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh
+(1)(1) lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh
+(1)2 auditor * (1)(1) 0 Audit Activity Owner /auditor /bin/sh
+(1)3 dbadmin * (1)2 0 Security Database Owner /dbadmin /bin/sh
+(1)4 bootes dcon 50 (1) Tom Killian (DO NOT REMOVE) /tmp 
+(1)5 cdjuke dcon 5(1) (1) Tom Killian (DO NOT REMOVE) /tmp 
+(1)6 rfindd * 66 (1) Rfind Daemon and Fsdump /var/rfindd /bin/sh
+(1)7 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh
+(1)8 demos * 993 997 Demonstration User /usr/demos /bin/csh
+(1)9 tutor * 994 997 Tutorial User /usr/tutor /bin/csh
+(2)0 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh
+(2)1 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh
+(2)(2) 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh
+(2)3 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null
+(2)4 noaccess * 6000(2) 6000(2) uid no access /dev/null /dev/null
+(2)5 nobody * -(2) -(2) original nobody uid /dev/null /dev/null
+(2)6 rje * 8 8 RJE Owner /usr/spool/rje 
+(2)7 changes * 11 11 system change log / 
+(2)8 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh
+(2)9 man * 99 995 On-line Manual Owner / 
+(3)0 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh

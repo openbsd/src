@@ -1,0 +1,93 @@
+/dev/rrp3:
+
+16116	ken	him	someone else
+10252	rhm
+ 9748	a68
+ 9492	sif
+ 9190	pjw
+ 8912	nls
+ 8372	bs
+ 8252	llc
+ 7450	mb
+ 7360	ava
+ 7080	bin
+ 6462	lck
+ 5220	agf
+ 3796	moh
+ 3200	tbl
+ 2774	tgs
+ 2566	jck
+ 1590	tpc
+ 1370	rwm
+ 1316	avg
+ 1194	jam
+ 1150	lgm
+ 1018	jwr
+  950	gdb
+  898	usg
+  822	daemon
+  700	honey
+  624	tad
+  456	kec
+  414	craig
+  386	donmac
+  348	ravi
+  344	drw
+  288	mrg
+  272	jcb
+  248	haight
+  224	sharon
+  222	chuck
+  184	god
+  176	sys
+  166	meh
+  144	dan
+  116	kab
+   80	asc
+   64	wsb
+   62	dwh
+   56	ktf
+   54	lr
+   44	mash
+   32	rab
+   22	rob
+   10	hm
+   10	mhb
+    6	aed
+    6	cpb
+    4	ber
+    4	men
+    4	mitch
+    2	blue
+    2	jfk
+    2	njas
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh
+6bin:*:2:2:System Tools Owner:/bin:/dev/null
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp:
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/sh
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp:
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/sh
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/csh
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/null
+26rje:*:8:8:RJE Owner:/usr/spool/rje:
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh
+6b in * 2 2 System Tools Owner /bin /dev/null
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp 
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp 
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh
+22 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null
+26 rje * 8 8 RJE Owner /usr/spool/rje 
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh

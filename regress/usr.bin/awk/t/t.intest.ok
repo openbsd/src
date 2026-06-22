@@ -1,0 +1,398 @@
+/dev/rrp3:
+no
+
+no
+17379	mel
+no
+16693	bwk	me
+no
+ else
+no
+15713	srb
+no
+11895	lem
+no
+10409	scj
+no
+10252	rhm
+no
+ 9853	shen
+no
+ 9748	a68
+no
+ 9492	sif
+no
+ 9190	pjw
+no
+ 8912	nls
+no
+ 8895	dmr
+no
+ 8491	cda
+no
+ 8372	bs
+no
+ 8252	llc
+no
+ 7450	mb
+no
+ 7360	ava
+no
+ 7273	jrv
+no
+ 7080	bin
+no
+ 7063	greg
+no
+ 6567	dict
+no
+ 6462	lck
+no
+ 6291	rje
+no
+ 6211	lwf
+no
+ 5671	dave
+no
+ 5373	jhc
+no
+ 5220	agf
+no
+ 5167	doug
+no
+ 5007	valerie
+no
+ 3963	jca
+no
+ 3895	bbs
+no
+ 3796	moh
+no
+ 3481	xchar
+no
+ 3200	tbl
+no
+ 2845	s
+no
+ 2774	tgs
+no
+ 2641	met
+no
+ 2566	jck
+no
+ 2511	port
+no
+ 2479	sue
+no
+ 2127	root
+no
+ 1989	bsb
+no
+ 1989	jeg
+no
+ 1933	eag
+no
+ 1801	pdj
+no
+ 1590	tpc
+no
+ 1385	cvw
+no
+ 1370	rwm
+no
+ 1316	avg
+no
+ 1205	eg
+no
+ 1194	jam
+no
+ 1153	dl
+no
+ 1150	lgm
+no
+ 1031	cmb
+no
+ 1018	jwr
+no
+  950	gdb
+no
+  931	marc
+no
+  898	usg
+no
+  865	ggr
+no
+  822	daemon
+no
+  803	mihalis
+no
+  700	honey
+no
+  624	tad
+no
+  559	acs
+no
+  541	uucp
+no
+  523	raf
+no
+  495	adh
+no
+  456	kec
+no
+  414	craig
+no
+  386	donmac
+no
+  375	jj
+no
+  348	ravi
+no
+  344	drw
+no
+  327	stars
+no
+  288	mrg
+no
+  272	jcb
+no
+  263	ralph
+no
+  253	tom
+no
+  251	sjb
+no
+  248	haight
+no
+  224	sharon
+no
+  222	chuck
+no
+  213	dsj
+no
+  201	bill
+no
+  184	god
+no
+  176	sys
+no
+  166	meh
+no
+  163	jon
+no
+  144	dan
+no
+  143	fox
+no
+  123	dale
+no
+  116	kab
+no
+   95	buz
+no
+   80	asc
+no
+   79	jas
+no
+   79	trt
+no
+   64	wsb
+no
+   62	dwh
+no
+   56	ktf
+no
+   54	lr
+no
+   47	dlc
+no
+   45	dls
+no
+   45	jwf
+no
+   44	mash
+no
+   43	ars
+no
+   43	vgl
+no
+   37	jfo
+no
+   32	rab
+no
+   31	pd
+no
+   29	jns
+no
+   25	spm
+no
+   22	rob
+no
+   15	egb
+no
+   10	hm
+no
+   10	mhb
+no
+    6	aed
+no
+    6	cpb
+no
+    5	evp
+no
+    4	ber
+no
+    4	men
+no
+    4	mitch
+no
+    3	ast
+no
+    3	jfr
+no
+    3	lax
+no
+    3	nel
+no
+    2	blue
+yes
+    2	jfk
+yes
+    2	njas
+yes
+    1	122sec
+yes
+    1	ddwar
+yes
+    1	gopi
+yes
+    1	jk
+yes
+    1	learn
+yes
+    1	low
+yes
+    1	nac
+yes
+    1	sidor
+yes
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh
+no
+ running tcsh [cbm]:/:/bin/tcsh
+no
+ V Administration:/usr/admin:/bin/sh
+no
+ Diagnostics:/usr/diags:/bin/csh
+no
+5daemon:*:1:1:daemons:/:/bin/sh
+no
+ Tools Owner:/bin:/dev/null
+no
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico
+no
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp:
+no
+ Activity Owner:/usr/adm:/bin/sh
+no
+ Files Owner:/usr/adm:/bin/sh
+no
+ Spooler Owner:/var/spool/lp:/bin/sh
+no
+ Activity Owner:/auditor:/bin/sh
+no
+ Database Owner:/dbadmin:/bin/sh
+no
+ Killian (DO NOT REMOVE):/tmp:
+no
+ Killian (DO NOT REMOVE):/tmp:
+no
+ Daemon and Fsdump:/var/rfindd:/bin/sh
+no
+ Setup:/var/sysadmdesktop/EZsetup:/bin/csh
+no
+ User:/usr/demos:/bin/csh
+no
+ User:/usr/tutor:/bin/csh
+no
+ Space Tour:/usr/people/tour:/bin/csh
+no
+ Account:/usr/people/guest:/bin/csh
+no
+ Account:/usr/people/4Dgifts:/bin/csh
+no
+ nobody uid:/dev/null:/dev/null
+no
+ no access:/dev/null:/dev/null
+no
+ nobody uid:/dev/null:/dev/null
+no
+ Owner:/usr/spool/rje:
+no
+ change log:/:
+no
+ distributions:/v/adm/dist:/v/bin/sh
+no
+ Manual Owner:/:
+no
+ call log [tom]:/v/adm/log:/v/bin/sh
+no
+ oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh
+no
+ oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh
+no
+ ysadm * 0 0 System V Administration /usr/admin /bin/sh
+no
+ iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh
+no
+ aemon * 1 1 daemons / /bin/sh
+no
+ in * 2 2 System Tools Owner /bin /dev/null
+no
+ uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico
+no
+ ucp * 3 5 UUCP.Admin /usr/lib/uucp 
+no
+ ys * 4 0 System Activity Owner /usr/adm /bin/sh
+no
+ adm * 5 3 Accounting Files Owner /usr/adm /bin/sh
+no
+ lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh
+no
+ auditor * 11 0 Audit Activity Owner /auditor /bin/sh
+no
+ dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh
+no
+ bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp 
+no
+ cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp 
+no
+ rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh
+no
+ EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh
+no
+ demos * 993 997 Demonstration User /usr/demos /bin/csh
+no
+ tutor * 994 997 Tutorial User /usr/tutor /bin/csh
+no
+ tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh
+no
+ guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh
+no
+ 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh
+no
+ nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null
+no
+ noaccess * 60002 60002 uid no access /dev/null /dev/null
+no
+ nobody * -2 -2 original nobody uid /dev/null /dev/null
+no
+ rje * 8 8 RJE Owner /usr/spool/rje 
+no
+ changes * 11 11 system change log / 
+no
+ dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh
+no
+ man * 99 995 On-line Manual Owner / 
+no
+ phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh
+no

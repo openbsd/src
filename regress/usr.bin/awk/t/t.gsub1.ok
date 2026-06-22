@@ -1,0 +1,199 @@
+/dev/rrp3:x
+x
+17379	melx
+16693	bwk	mex
+16116	ken	him	someone elsex
+15713	srbx
+11895	lemx
+10409	scjx
+10252	rhmx
+ 9853	shenx
+ 9748	a68x
+ 9492	sifx
+ 9190	pjwx
+ 8912	nlsx
+ 8895	dmrx
+ 8491	cdax
+ 8372	bsx
+ 8252	llcx
+ 7450	mbx
+ 7360	avax
+ 7273	jrvx
+ 7080	binx
+ 7063	gregx
+ 6567	dictx
+ 6462	lckx
+ 6291	rjex
+ 6211	lwfx
+ 5671	davex
+ 5373	jhcx
+ 5220	agfx
+ 5167	dougx
+ 5007	valeriex
+ 3963	jcax
+ 3895	bbsx
+ 3796	mohx
+ 3481	xcharx
+ 3200	tblx
+ 2845	sx
+ 2774	tgsx
+ 2641	metx
+ 2566	jckx
+ 2511	portx
+ 2479	suex
+ 2127	rootx
+ 1989	bsbx
+ 1989	jegx
+ 1933	eagx
+ 1801	pdjx
+ 1590	tpcx
+ 1385	cvwx
+ 1370	rwmx
+ 1316	avgx
+ 1205	egx
+ 1194	jamx
+ 1153	dlx
+ 1150	lgmx
+ 1031	cmbx
+ 1018	jwrx
+  950	gdbx
+  931	marcx
+  898	usgx
+  865	ggrx
+  822	daemonx
+  803	mihalisx
+  700	honeyx
+  624	tadx
+  559	acsx
+  541	uucpx
+  523	rafx
+  495	adhx
+  456	kecx
+  414	craigx
+  386	donmacx
+  375	jjx
+  348	ravix
+  344	drwx
+  327	starsx
+  288	mrgx
+  272	jcbx
+  263	ralphx
+  253	tomx
+  251	sjbx
+  248	haightx
+  224	sharonx
+  222	chuckx
+  213	dsjx
+  201	billx
+  184	godx
+  176	sysx
+  166	mehx
+  163	jonx
+  144	danx
+  143	foxx
+  123	dalex
+  116	kabx
+   95	buzx
+   80	ascx
+   79	jasx
+   79	trtx
+   64	wsbx
+   62	dwhx
+   56	ktfx
+   54	lrx
+   47	dlcx
+   45	dlsx
+   45	jwfx
+   44	mashx
+   43	arsx
+   43	vglx
+   37	jfox
+   32	rabx
+   31	pdx
+   29	jnsx
+   25	spmx
+   22	robx
+   15	egbx
+   10	hmx
+   10	mhbx
+    6	aedx
+    6	cpbx
+    5	evpx
+    4	berx
+    4	menx
+    4	mitchx
+    3	astx
+    3	jfrx
+    3	laxx
+    3	nelx
+    2	bluex
+    2	jfkx
+    2	njasx
+    1	122secx
+    1	ddwarx
+    1	gopix
+    1	jkx
+    1	learnx
+    1	lowx
+    1	nacx
+    1	sidorx
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/shx
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcshx
+3sysadm:*:0:0:System V Administration:/usr/admin:/bin/shx
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/cshx
+5daemon:*:1:1:daemons:/:/bin/shx
+6bin:*:2:2:System Tools Owner:/bin:/dev/nullx
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucicox
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp:x
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/shx
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/shx
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/shx
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/shx
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/shx
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp:x
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp:x
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/shx
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/cshx
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/cshx
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/cshx
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/cshx
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/cshx
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/cshx
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/nullx
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/nullx
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/nullx
+26rje:*:8:8:RJE Owner:/usr/spool/rje:x
+27changes:*:11:11:system change log:/:x
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/shx
+29man:*:99:995:On-line Manual Owner:/:x
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/shx
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/shx
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcshx
+3s ysadm * 0 0 System V Administration /usr/admin /bin/shx
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/cshx
+5d aemon * 1 1 daemons / /bin/shx
+6b in * 2 2 System Tools Owner /bin /dev/nullx
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucicox
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp x
+9s ys * 4 0 System Activity Owner /usr/adm /bin/shx
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/shx
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/shx
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/shx
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/shx
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp x
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp x
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/shx
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/cshx
+18 demos * 993 997 Demonstration User /usr/demos /bin/cshx
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/cshx
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/cshx
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/cshx
+22 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/cshx
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/nullx
+24 noaccess * 60002 60002 uid no access /dev/null /dev/nullx
+25 nobody * -2 -2 original nobody uid /dev/null /dev/nullx
+26 rje * 8 8 RJE Owner /usr/spool/rje x
+27 changes * 11 11 system change log / x
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/shx
+29 man * 99 995 On-line Manual Owner / x
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/shx

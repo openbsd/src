@@ -1,0 +1,389 @@
+/dev/rrp3: matches /[a-cg-j1-3]/
+/dev/rrp3: matches /[^aeiou]/
+17379	mel matches /[a-cg-j1-3]/
+17379	mel matches /[^aeiou]/
+16693	bwk	me matches /[a-cg-j1-3]/
+16693	bwk	me matches /[^aeiou]/
+16116	ken	him	someone else matches /[a-cg-j1-3]/
+16116	ken	him	someone else matches /[^aeiou]/
+15713	srb matches /[a-cg-j1-3]/
+15713	srb matches /[^aeiou]/
+11895	lem matches /[a-cg-j1-3]/
+11895	lem matches /[^aeiou]/
+10409	scj matches /[a-cg-j1-3]/
+10409	scj matches /[^aeiou]/
+10252	rhm matches /[a-cg-j1-3]/
+10252	rhm matches /[^aeiou]/
+ 9853	shen matches /[a-cg-j1-3]/
+ 9853	shen matches /[^aeiou]/
+ 9748	a68 matches /[a-cg-j1-3]/
+ 9748	a68 matches /[^aeiou]/
+ 9492	sif matches /[a-cg-j1-3]/
+ 9492	sif matches /[^aeiou]/
+ 9190	pjw matches /[a-cg-j1-3]/
+ 9190	pjw matches /[^aeiou]/
+ 8912	nls matches /[a-cg-j1-3]/
+ 8912	nls matches /[^aeiou]/
+ 8895	dmr matches /[^aeiou]/
+ 8491	cda matches /[a-cg-j1-3]/
+ 8491	cda matches /[^aeiou]/
+ 8372	bs matches /[a-cg-j1-3]/
+ 8372	bs matches /[^aeiou]/
+ 8252	llc matches /[a-cg-j1-3]/
+ 8252	llc matches /[^aeiou]/
+ 7450	mb matches /[a-cg-j1-3]/
+ 7450	mb matches /[^aeiou]/
+ 7360	ava matches /[a-cg-j1-3]/
+ 7360	ava matches /[^aeiou]/
+ 7273	jrv matches /[a-cg-j1-3]/
+ 7273	jrv matches /[^aeiou]/
+ 7080	bin matches /[a-cg-j1-3]/
+ 7080	bin matches /[^aeiou]/
+ 7063	greg matches /[a-cg-j1-3]/
+ 7063	greg matches /[^aeiou]/
+ 6567	dict matches /[a-cg-j1-3]/
+ 6567	dict matches /[^aeiou]/
+ 6462	lck matches /[a-cg-j1-3]/
+ 6462	lck matches /[^aeiou]/
+ 6291	rje matches /[a-cg-j1-3]/
+ 6291	rje matches /[^aeiou]/
+ 6211	lwf matches /[a-cg-j1-3]/
+ 6211	lwf matches /[^aeiou]/
+ 5671	dave matches /[a-cg-j1-3]/
+ 5671	dave matches /[^aeiou]/
+ 5373	jhc matches /[a-cg-j1-3]/
+ 5373	jhc matches /[^aeiou]/
+ 5220	agf matches /[a-cg-j1-3]/
+ 5220	agf matches /[^aeiou]/
+ 5167	doug matches /[a-cg-j1-3]/
+ 5167	doug matches /[^aeiou]/
+ 5007	valerie matches /[a-cg-j1-3]/
+ 5007	valerie matches /[^aeiou]/
+ 3963	jca matches /[a-cg-j1-3]/
+ 3963	jca matches /[^aeiou]/
+ 3895	bbs matches /[a-cg-j1-3]/
+ 3895	bbs matches /[^aeiou]/
+ 3796	moh matches /[a-cg-j1-3]/
+ 3796	moh matches /[^aeiou]/
+ 3481	xchar matches /[a-cg-j1-3]/
+ 3481	xchar matches /[^aeiou]/
+ 3200	tbl matches /[a-cg-j1-3]/
+ 3200	tbl matches /[^aeiou]/
+ 2845	s matches /[a-cg-j1-3]/
+ 2845	s matches /[^aeiou]/
+ 2774	tgs matches /[a-cg-j1-3]/
+ 2774	tgs matches /[^aeiou]/
+ 2641	met matches /[a-cg-j1-3]/
+ 2641	met matches /[^aeiou]/
+ 2566	jck matches /[a-cg-j1-3]/
+ 2566	jck matches /[^aeiou]/
+ 2511	port matches /[a-cg-j1-3]/
+ 2511	port matches /[^aeiou]/
+ 2479	sue matches /[a-cg-j1-3]/
+ 2479	sue matches /[^aeiou]/
+ 2127	root matches /[a-cg-j1-3]/
+ 2127	root matches /[^aeiou]/
+ 1989	bsb matches /[a-cg-j1-3]/
+ 1989	bsb matches /[^aeiou]/
+ 1989	jeg matches /[a-cg-j1-3]/
+ 1989	jeg matches /[^aeiou]/
+ 1933	eag matches /[a-cg-j1-3]/
+ 1933	eag matches /[^aeiou]/
+ 1801	pdj matches /[a-cg-j1-3]/
+ 1801	pdj matches /[^aeiou]/
+ 1590	tpc matches /[a-cg-j1-3]/
+ 1590	tpc matches /[^aeiou]/
+ 1385	cvw matches /[a-cg-j1-3]/
+ 1385	cvw matches /[^aeiou]/
+ 1370	rwm matches /[a-cg-j1-3]/
+ 1370	rwm matches /[^aeiou]/
+ 1316	avg matches /[a-cg-j1-3]/
+ 1316	avg matches /[^aeiou]/
+ 1205	eg matches /[a-cg-j1-3]/
+ 1205	eg matches /[^aeiou]/
+ 1194	jam matches /[a-cg-j1-3]/
+ 1194	jam matches /[^aeiou]/
+ 1153	dl matches /[a-cg-j1-3]/
+ 1153	dl matches /[^aeiou]/
+ 1150	lgm matches /[a-cg-j1-3]/
+ 1150	lgm matches /[^aeiou]/
+ 1031	cmb matches /[a-cg-j1-3]/
+ 1031	cmb matches /[^aeiou]/
+ 1018	jwr matches /[a-cg-j1-3]/
+ 1018	jwr matches /[^aeiou]/
+  950	gdb matches /[a-cg-j1-3]/
+  950	gdb matches /[^aeiou]/
+  931	marc matches /[a-cg-j1-3]/
+  931	marc matches /[^aeiou]/
+  898	usg matches /[a-cg-j1-3]/
+  898	usg matches /[^aeiou]/
+  865	ggr matches /[a-cg-j1-3]/
+  865	ggr matches /[^aeiou]/
+  822	daemon matches /[a-cg-j1-3]/
+  822	daemon matches /[^aeiou]/
+  803	mihalis matches /[a-cg-j1-3]/
+  803	mihalis matches /[^aeiou]/
+  700	honey matches /[a-cg-j1-3]/
+  700	honey matches /[^aeiou]/
+  624	tad matches /[a-cg-j1-3]/
+  624	tad matches /[^aeiou]/
+  559	acs matches /[a-cg-j1-3]/
+  559	acs matches /[^aeiou]/
+  541	uucp matches /[a-cg-j1-3]/
+  541	uucp matches /[^aeiou]/
+  523	raf matches /[a-cg-j1-3]/
+  523	raf matches /[^aeiou]/
+  495	adh matches /[a-cg-j1-3]/
+  495	adh matches /[^aeiou]/
+  456	kec matches /[a-cg-j1-3]/
+  456	kec matches /[^aeiou]/
+  414	craig matches /[a-cg-j1-3]/
+  414	craig matches /[^aeiou]/
+  386	donmac matches /[a-cg-j1-3]/
+  386	donmac matches /[^aeiou]/
+  375	jj matches /[a-cg-j1-3]/
+  375	jj matches /[^aeiou]/
+  348	ravi matches /[a-cg-j1-3]/
+  348	ravi matches /[^aeiou]/
+  344	drw matches /[a-cg-j1-3]/
+  344	drw matches /[^aeiou]/
+  327	stars matches /[a-cg-j1-3]/
+  327	stars matches /[^aeiou]/
+  288	mrg matches /[a-cg-j1-3]/
+  288	mrg matches /[^aeiou]/
+  272	jcb matches /[a-cg-j1-3]/
+  272	jcb matches /[^aeiou]/
+  263	ralph matches /[a-cg-j1-3]/
+  263	ralph matches /[^aeiou]/
+  253	tom matches /[a-cg-j1-3]/
+  253	tom matches /[^aeiou]/
+  251	sjb matches /[a-cg-j1-3]/
+  251	sjb matches /[^aeiou]/
+  248	haight matches /[a-cg-j1-3]/
+  248	haight matches /[^aeiou]/
+  224	sharon matches /[a-cg-j1-3]/
+  224	sharon matches /[^aeiou]/
+  222	chuck matches /[a-cg-j1-3]/
+  222	chuck matches /[^aeiou]/
+  213	dsj matches /[a-cg-j1-3]/
+  213	dsj matches /[^aeiou]/
+  201	bill matches /[a-cg-j1-3]/
+  201	bill matches /[^aeiou]/
+  184	god matches /[a-cg-j1-3]/
+  184	god matches /[^aeiou]/
+  176	sys matches /[a-cg-j1-3]/
+  176	sys matches /[^aeiou]/
+  166	meh matches /[a-cg-j1-3]/
+  166	meh matches /[^aeiou]/
+  163	jon matches /[a-cg-j1-3]/
+  163	jon matches /[^aeiou]/
+  144	dan matches /[a-cg-j1-3]/
+  144	dan matches /[^aeiou]/
+  143	fox matches /[a-cg-j1-3]/
+  143	fox matches /[^aeiou]/
+  123	dale matches /[a-cg-j1-3]/
+  123	dale matches /[^aeiou]/
+  116	kab matches /[a-cg-j1-3]/
+  116	kab matches /[^aeiou]/
+   95	buz matches /[a-cg-j1-3]/
+   95	buz matches /[^aeiou]/
+   80	asc matches /[a-cg-j1-3]/
+   80	asc matches /[^aeiou]/
+   79	jas matches /[a-cg-j1-3]/
+   79	jas matches /[^aeiou]/
+   79	trt matches /[^aeiou]/
+   64	wsb matches /[a-cg-j1-3]/
+   64	wsb matches /[^aeiou]/
+   62	dwh matches /[a-cg-j1-3]/
+   62	dwh matches /[^aeiou]/
+   56	ktf matches /[^aeiou]/
+   54	lr matches /[^aeiou]/
+   47	dlc matches /[a-cg-j1-3]/
+   47	dlc matches /[^aeiou]/
+   45	dls matches /[^aeiou]/
+   45	jwf matches /[a-cg-j1-3]/
+   45	jwf matches /[^aeiou]/
+   44	mash matches /[a-cg-j1-3]/
+   44	mash matches /[^aeiou]/
+   43	ars matches /[a-cg-j1-3]/
+   43	ars matches /[^aeiou]/
+   43	vgl matches /[a-cg-j1-3]/
+   43	vgl matches /[^aeiou]/
+   37	jfo matches /[a-cg-j1-3]/
+   37	jfo matches /[^aeiou]/
+   32	rab matches /[a-cg-j1-3]/
+   32	rab matches /[^aeiou]/
+   31	pd matches /[a-cg-j1-3]/
+   31	pd matches /[^aeiou]/
+   29	jns matches /[a-cg-j1-3]/
+   29	jns matches /[^aeiou]/
+   25	spm matches /[a-cg-j1-3]/
+   25	spm matches /[^aeiou]/
+   22	rob matches /[a-cg-j1-3]/
+   22	rob matches /[^aeiou]/
+   15	egb matches /[a-cg-j1-3]/
+   15	egb matches /[^aeiou]/
+   10	hm matches /[a-cg-j1-3]/
+   10	hm matches /[^aeiou]/
+   10	mhb matches /[a-cg-j1-3]/
+   10	mhb matches /[^aeiou]/
+    6	aed matches /[a-cg-j1-3]/
+    6	aed matches /[^aeiou]/
+    6	cpb matches /[a-cg-j1-3]/
+    6	cpb matches /[^aeiou]/
+    5	evp matches /[^aeiou]/
+    4	ber matches /[a-cg-j1-3]/
+    4	ber matches /[^aeiou]/
+    4	men matches /[^aeiou]/
+    4	mitch matches /[a-cg-j1-3]/
+    4	mitch matches /[^aeiou]/
+    3	ast matches /[a-cg-j1-3]/
+    3	ast matches /[^aeiou]/
+    3	jfr matches /[a-cg-j1-3]/
+    3	jfr matches /[^aeiou]/
+    3	lax matches /[a-cg-j1-3]/
+    3	lax matches /[^aeiou]/
+    3	nel matches /[a-cg-j1-3]/
+    3	nel matches /[^aeiou]/
+    2	blue matches /[a-cg-j1-3]/
+    2	blue matches /[^aeiou]/
+    2	jfk matches /[a-cg-j1-3]/
+    2	jfk matches /[^aeiou]/
+    2	njas matches /[a-cg-j1-3]/
+    2	njas matches /[^aeiou]/
+    1	122sec matches /[a-cg-j1-3]/
+    1	122sec matches /[^aeiou]/
+    1	ddwar matches /[a-cg-j1-3]/
+    1	ddwar matches /[^aeiou]/
+    1	gopi matches /[a-cg-j1-3]/
+    1	gopi matches /[^aeiou]/
+    1	jk matches /[a-cg-j1-3]/
+    1	jk matches /[^aeiou]/
+    1	learn matches /[a-cg-j1-3]/
+    1	learn matches /[^aeiou]/
+    1	low matches /[a-cg-j1-3]/
+    1	low matches /[^aeiou]/
+    1	nac matches /[a-cg-j1-3]/
+    1	nac matches /[^aeiou]/
+    1	sidor matches /[a-cg-j1-3]/
+    1	sidor matches /[^aeiou]/
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh matches /[a-cg-j1-3]/
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh matches /[^aeiou]/
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh matches /[a-cg-j1-3]/
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh matches /[^aeiou]/
+3sysadm:*:0:0:System V Administration:/usr/admin:/bin/sh matches /[a-cg-j1-3]/
+3sysadm:*:0:0:System V Administration:/usr/admin:/bin/sh matches /[^aeiou]/
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh matches /[a-cg-j1-3]/
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh matches /[^aeiou]/
+5daemon:*:1:1:daemons:/:/bin/sh matches /[a-cg-j1-3]/
+5daemon:*:1:1:daemons:/:/bin/sh matches /[^aeiou]/
+6bin:*:2:2:System Tools Owner:/bin:/dev/null matches /[a-cg-j1-3]/
+6bin:*:2:2:System Tools Owner:/bin:/dev/null matches /[^aeiou]/
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico matches /[a-cg-j1-3]/
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico matches /[^aeiou]/
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp: matches /[a-cg-j1-3]/
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp: matches /[^aeiou]/
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh matches /[a-cg-j1-3]/
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh matches /[^aeiou]/
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh matches /[a-cg-j1-3]/
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh matches /[^aeiou]/
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh matches /[a-cg-j1-3]/
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh matches /[^aeiou]/
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/sh matches /[a-cg-j1-3]/
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/sh matches /[^aeiou]/
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/sh matches /[a-cg-j1-3]/
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/sh matches /[^aeiou]/
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp: matches /[a-cg-j1-3]/
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp: matches /[^aeiou]/
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp: matches /[a-cg-j1-3]/
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp: matches /[^aeiou]/
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/sh matches /[a-cg-j1-3]/
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/sh matches /[^aeiou]/
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh matches /[a-cg-j1-3]/
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh matches /[^aeiou]/
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/csh matches /[a-cg-j1-3]/
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/csh matches /[^aeiou]/
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh matches /[a-cg-j1-3]/
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh matches /[^aeiou]/
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh matches /[a-cg-j1-3]/
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh matches /[^aeiou]/
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh matches /[a-cg-j1-3]/
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh matches /[^aeiou]/
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh matches /[a-cg-j1-3]/
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh matches /[^aeiou]/
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null matches /[a-cg-j1-3]/
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null matches /[^aeiou]/
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/null matches /[a-cg-j1-3]/
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/null matches /[^aeiou]/
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/null matches /[a-cg-j1-3]/
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/null matches /[^aeiou]/
+26rje:*:8:8:RJE Owner:/usr/spool/rje: matches /[a-cg-j1-3]/
+26rje:*:8:8:RJE Owner:/usr/spool/rje: matches /[^aeiou]/
+27changes:*:11:11:system change log:/: matches /[a-cg-j1-3]/
+27changes:*:11:11:system change log:/: matches /[^aeiou]/
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh matches /[a-cg-j1-3]/
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh matches /[^aeiou]/
+29man:*:99:995:On-line Manual Owner:/: matches /[a-cg-j1-3]/
+29man:*:99:995:On-line Manual Owner:/: matches /[^aeiou]/
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh matches /[a-cg-j1-3]/
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh matches /[^aeiou]/
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh matches /[a-cg-j1-3]/
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh matches /[^aeiou]/
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh matches /[a-cg-j1-3]/
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh matches /[^aeiou]/
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh matches /[a-cg-j1-3]/
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh matches /[^aeiou]/
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh matches /[a-cg-j1-3]/
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh matches /[^aeiou]/
+5d aemon * 1 1 daemons / /bin/sh matches /[a-cg-j1-3]/
+5d aemon * 1 1 daemons / /bin/sh matches /[^aeiou]/
+6b in * 2 2 System Tools Owner /bin /dev/null matches /[a-cg-j1-3]/
+6b in * 2 2 System Tools Owner /bin /dev/null matches /[^aeiou]/
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico matches /[a-cg-j1-3]/
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico matches /[^aeiou]/
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp  matches /[a-cg-j1-3]/
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp  matches /[^aeiou]/
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh matches /[a-cg-j1-3]/
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh matches /[^aeiou]/
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh matches /[a-cg-j1-3]/
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh matches /[^aeiou]/
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh matches /[a-cg-j1-3]/
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh matches /[^aeiou]/
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh matches /[a-cg-j1-3]/
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh matches /[^aeiou]/
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh matches /[a-cg-j1-3]/
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh matches /[^aeiou]/
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp  matches /[a-cg-j1-3]/
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp  matches /[^aeiou]/
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp  matches /[a-cg-j1-3]/
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp  matches /[^aeiou]/
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh matches /[a-cg-j1-3]/
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh matches /[^aeiou]/
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh matches /[a-cg-j1-3]/
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh matches /[^aeiou]/
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh matches /[a-cg-j1-3]/
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh matches /[^aeiou]/
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh matches /[a-cg-j1-3]/
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh matches /[^aeiou]/
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh matches /[a-cg-j1-3]/
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh matches /[^aeiou]/
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh matches /[a-cg-j1-3]/
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh matches /[^aeiou]/
+22 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh matches /[a-cg-j1-3]/
+22 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh matches /[^aeiou]/
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null matches /[a-cg-j1-3]/
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null matches /[^aeiou]/
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null matches /[a-cg-j1-3]/
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null matches /[^aeiou]/
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null matches /[a-cg-j1-3]/
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null matches /[^aeiou]/
+26 rje * 8 8 RJE Owner /usr/spool/rje  matches /[a-cg-j1-3]/
+26 rje * 8 8 RJE Owner /usr/spool/rje  matches /[^aeiou]/
+27 changes * 11 11 system change log /  matches /[a-cg-j1-3]/
+27 changes * 11 11 system change log /  matches /[^aeiou]/
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh matches /[a-cg-j1-3]/
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh matches /[^aeiou]/
+29 man * 99 995 On-line Manual Owner /  matches /[a-cg-j1-3]/
+29 man * 99 995 On-line Manual Owner /  matches /[^aeiou]/
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh matches /[a-cg-j1-3]/
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh matches /[^aeiou]/

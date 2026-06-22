@@ -1,0 +1,175 @@
+/dev/rrp3: matches /dev/rrp3:
+17379	mel matches 17379
+16693	bwk	me matches 16693
+16116	ken	him	someone else matches 16116
+15713	srb matches 15713
+11895	lem matches 11895
+10409	scj matches 10409
+10252	rhm matches 10252
+ 9853	shen matches 9853
+ 9748	a68 matches 9748
+ 9492	sif matches 9492
+ 9190	pjw matches 9190
+ 8912	nls matches 8912
+ 8895	dmr matches 8895
+ 8491	cda matches 8491
+ 8372	bs matches 8372
+ 8252	llc matches 8252
+ 7450	mb matches 7450
+ 7360	ava matches 7360
+ 7273	jrv matches 7273
+ 7080	bin matches 7080
+ 7063	greg matches 7063
+ 6567	dict matches 6567
+ 6462	lck matches 6462
+ 6291	rje matches 6291
+ 6211	lwf matches 6211
+ 5671	dave matches 5671
+ 5373	jhc matches 5373
+ 5220	agf matches 5220
+ 5167	doug matches 5167
+ 5007	valerie matches 5007
+ 3963	jca matches 3963
+ 3895	bbs matches 3895
+ 3796	moh matches 3796
+ 3481	xchar matches 3481
+ 3200	tbl matches 3200
+ 2845	s matches 2845
+ 2774	tgs matches 2774
+ 2641	met matches 2641
+ 2566	jck matches 2566
+ 2511	port matches 2511
+ 2479	sue matches 2479
+ 2127	root matches 2127
+ 1989	bsb matches 1989
+ 1989	jeg matches 1989
+ 1933	eag matches 1933
+ 1801	pdj matches 1801
+ 1590	tpc matches 1590
+ 1385	cvw matches 1385
+ 1370	rwm matches 1370
+ 1316	avg matches 1316
+ 1205	eg matches 1205
+ 1194	jam matches 1194
+ 1153	dl matches 1153
+ 1150	lgm matches 1150
+ 1031	cmb matches 1031
+ 1018	jwr matches 1018
+  950	gdb matches 950
+  931	marc matches 931
+  898	usg matches 898
+  865	ggr matches 865
+  822	daemon matches 822
+  803	mihalis matches 803
+  700	honey matches 700
+  624	tad matches 624
+  559	acs matches 559
+  541	uucp matches 541
+  523	raf matches 523
+  495	adh matches 495
+  456	kec matches 456
+  414	craig matches 414
+  386	donmac matches 386
+  375	jj matches 375
+  348	ravi matches 348
+  344	drw matches 344
+  327	stars matches 327
+  288	mrg matches 288
+  272	jcb matches 272
+  263	ralph matches 263
+  253	tom matches 253
+  251	sjb matches 251
+  248	haight matches 248
+  224	sharon matches 224
+  222	chuck matches 222
+  213	dsj matches 213
+  201	bill matches 201
+  184	god matches 184
+  176	sys matches 176
+  166	meh matches 166
+  163	jon matches 163
+  144	dan matches 144
+  143	fox matches 143
+  123	dale matches 123
+  116	kab matches 116
+   95	buz matches 95
+   80	asc matches 80
+   79	jas matches 79
+   79	trt matches 79
+   64	wsb matches 64
+   62	dwh matches 62
+   56	ktf matches 56
+   54	lr matches 54
+   47	dlc matches 47
+   45	dls matches 45
+   45	jwf matches 45
+   44	mash matches 44
+   43	ars matches 43
+   43	vgl matches 43
+   37	jfo matches 37
+   32	rab matches 32
+   31	pd matches 31
+   29	jns matches 29
+   25	spm matches 25
+   22	rob matches 22
+   15	egb matches 15
+   10	hm matches 10
+   10	mhb matches 10
+    6	aed matches 6
+    6	cpb matches 6
+    5	evp matches 5
+    4	ber matches 4
+    4	men matches 4
+    4	mitch matches 4
+    3	ast matches 3
+    3	jfr matches 3
+    3	lax matches 3
+    3	nel matches 3
+    2	blue matches 2
+    2	jfk matches 2
+    2	njas matches 2
+    1	122sec matches 1
+    1	ddwar matches 1
+    1	gopi matches 1
+    1	jk matches 1
+    1	learn matches 1
+    1	low matches 1
+    1	nac matches 1
+    1	sidor matches 1
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh matches 1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico matches 7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp: matches 14bootes:dcon:50:1:Tom
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp: matches 15cdjuke:dcon:51:1:Tom
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh matches 21guest:nfP4/Wpvio/Rw:998:998:Guest
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh matches 224Dgifts:0nWRTZsOMt.:999:998:4Dgifts
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh matches 28dist:sorry:9999:4:file
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh matches 1r
+2r oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh matches 2r
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh matches 3s
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh matches 4d
+5d aemon * 1 1 daemons / /bin/sh matches 5d
+6b in * 2 2 System Tools Owner /bin /dev/null matches 6b
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico matches 7n
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp  matches 8u
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh matches 9s
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh matches 10
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh matches 11
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh matches 12
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh matches 13
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp  matches 14
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp  matches 15
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh matches 16
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh matches 17
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh matches 18
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh matches 19
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh matches 20
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh matches 21
+22 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh matches 22
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null matches 23
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null matches 24
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null matches 25
+26 rje * 8 8 RJE Owner /usr/spool/rje  matches 26
+27 changes * 11 11 system change log /  matches 27
+28 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh matches 28
+29 man * 99 995 On-line Manual Owner /  matches 29
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh matches 30

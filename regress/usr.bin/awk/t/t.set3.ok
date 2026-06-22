@@ -1,0 +1,199 @@
+0
+0
+1737.9 mel
+1669.3 bwk me
+1611.6 ken him someone else
+1571.3 srb
+1189.5 lem
+1040.9 scj
+1025.2 rhm
+985.3 shen
+974.8 a68
+949.2 sif
+919 pjw
+891.2 nls
+889.5 dmr
+849.1 cda
+837.2 bs
+825.2 llc
+745 mb
+736 ava
+727.3 jrv
+708 bin
+706.3 greg
+656.7 dict
+646.2 lck
+629.1 rje
+621.1 lwf
+567.1 dave
+537.3 jhc
+522 agf
+516.7 doug
+500.7 valerie
+396.3 jca
+389.5 bbs
+379.6 moh
+348.1 xchar
+320 tbl
+284.5 s
+277.4 tgs
+264.1 met
+256.6 jck
+251.1 port
+247.9 sue
+212.7 root
+198.9 bsb
+198.9 jeg
+193.3 eag
+180.1 pdj
+159 tpc
+138.5 cvw
+137 rwm
+131.6 avg
+120.5 eg
+119.4 jam
+115.3 dl
+115 lgm
+103.1 cmb
+101.8 jwr
+95 gdb
+93.1 marc
+89.8 usg
+86.5 ggr
+82.2 daemon
+80.3 mihalis
+70 honey
+62.4 tad
+55.9 acs
+54.1 uucp
+52.3 raf
+49.5 adh
+45.6 kec
+41.4 craig
+38.6 donmac
+37.5 jj
+34.8 ravi
+34.4 drw
+32.7 stars
+28.8 mrg
+27.2 jcb
+26.3 ralph
+25.3 tom
+25.1 sjb
+24.8 haight
+22.4 sharon
+22.2 chuck
+21.3 dsj
+20.1 bill
+18.4 god
+17.6 sys
+16.6 meh
+16.3 jon
+14.4 dan
+14.3 fox
+12.3 dale
+11.6 kab
+9.5 buz
+8 asc
+7.9 jas
+7.9 trt
+6.4 wsb
+6.2 dwh
+5.6 ktf
+5.4 lr
+4.7 dlc
+4.5 dls
+4.5 jwf
+4.4 mash
+4.3 ars
+4.3 vgl
+3.7 jfo
+3.2 rab
+3.1 pd
+2.9 jns
+2.5 spm
+2.2 rob
+1.5 egb
+1 hm
+1 mhb
+0.6 aed
+0.6 cpb
+0.5 evp
+0.4 ber
+0.4 men
+0.4 mitch
+0.3 ast
+0.3 jfr
+0.3 lax
+0.3 nel
+0.2 blue
+0.2 jfk
+0.2 njas
+0.1 122sec
+0.1 ddwar
+0.1 gopi
+0.1 jk
+0.1 learn
+0.1 low
+0.1 nac
+0.1 sidor
+0.1
+0.2 running tcsh [cbm]:/:/bin/tcsh
+0.3 V Administration:/usr/admin:/bin/sh
+0.4 Diagnostics:/usr/diags:/bin/csh
+0.5
+0.6 Tools Owner:/bin:/dev/null
+0.7
+0.8
+0.9 Activity Owner:/usr/adm:/bin/sh
+1 Files Owner:/usr/adm:/bin/sh
+1.1 Spooler Owner:/var/spool/lp:/bin/sh
+1.2 Activity Owner:/auditor:/bin/sh
+1.3 Database Owner:/dbadmin:/bin/sh
+1.4 Killian (DO NOT REMOVE):/tmp:
+1.5 Killian (DO NOT REMOVE):/tmp:
+1.6 Daemon and Fsdump:/var/rfindd:/bin/sh
+1.7 Setup:/var/sysadmdesktop/EZsetup:/bin/csh
+1.8 User:/usr/demos:/bin/csh
+1.9 User:/usr/tutor:/bin/csh
+2 Space Tour:/usr/people/tour:/bin/csh
+2.1 Account:/usr/people/guest:/bin/csh
+22.4 Account:/usr/people/4Dgifts:/bin/csh
+2.3 nobody uid:/dev/null:/dev/null
+2.4 no access:/dev/null:/dev/null
+2.5 nobody uid:/dev/null:/dev/null
+2.6 Owner:/usr/spool/rje:
+2.7 change log:/:
+2.8 distributions:/v/adm/dist:/v/bin/sh
+2.9 Manual Owner:/:
+3 call log [tom]:/v/adm/log:/v/bin/sh
+0.1 oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh
+0.2 oottcsh * 0 0 Super-User running tcsh [cbm] / /bin/tcsh
+0.3 ysadm * 0 0 System V Administration /usr/admin /bin/sh
+0.4 iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh
+0.5 aemon * 1 1 daemons / /bin/sh
+0.6 in * 2 2 System Tools Owner /bin /dev/null
+0.7 uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico
+0.8 ucp * 3 5 UUCP.Admin /usr/lib/uucp
+0.9 ys * 4 0 System Activity Owner /usr/adm /bin/sh
+1 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh
+1.1 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh
+1.2 auditor * 11 0 Audit Activity Owner /auditor /bin/sh
+1.3 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh
+1.4 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp
+1.5 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp
+1.6 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh
+1.7 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh
+1.8 demos * 993 997 Demonstration User /usr/demos /bin/csh
+1.9 tutor * 994 997 Tutorial User /usr/tutor /bin/csh
+2 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh
+2.1 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh
+2.2 4Dgifts 0nWRTZsOMt. 999 998 4Dgifts Account /usr/people/4Dgifts /bin/csh
+2.3 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null
+2.4 noaccess * 60002 60002 uid no access /dev/null /dev/null
+2.5 nobody * -2 -2 original nobody uid /dev/null /dev/null
+2.6 rje * 8 8 RJE Owner /usr/spool/rje
+2.7 changes * 11 11 system change log /
+2.8 dist sorry 9999 4 file distributions /v/adm/dist /v/bin/sh
+2.9 man * 99 995 On-line Manual Owner /
+3 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh

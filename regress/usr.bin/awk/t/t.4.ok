@@ -1,0 +1,90 @@
+15713	srb
+11895	lem
+10409	scj
+10252	rhm
+ 9853	shen
+ 9748	a68
+ 9492	sif
+ 8895	dmr
+ 8491	cda
+ 8252	llc
+ 7450	mb
+ 6567	dict
+ 6462	lck
+ 5671	dave
+ 5373	jhc
+ 5220	agf
+ 5167	doug
+ 5007	valerie
+ 3895	bbs
+ 3481	xchar
+ 2845	s
+ 2774	tgs
+ 2641	met
+ 2566	jck
+ 2511	port
+ 2479	sue
+ 1590	tpc
+ 1385	cvw
+ 1205	eg
+ 1194	jam
+ 1153	dl
+ 1150	lgm
+  950	gdb
+  865	ggr
+  624	tad
+  559	acs
+  541	uucp
+  523	raf
+  495	adh
+  456	kec
+  414	craig
+  375	jj
+  348	ravi
+  344	drw
+  253	tom
+  251	sjb
+  248	haight
+  224	sharon
+  184	god
+  144	dan
+  143	fox
+   95	buz
+   64	wsb
+   56	ktf
+   54	lr
+   47	dlc
+   45	dls
+   45	jwf
+   44	mash
+   43	ars
+   43	vgl
+   25	spm
+   15	egb
+    5	evp
+    4	ber
+    4	men
+    4	mitch
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh
+4diag:*:0:996:Hardware Diagnostics:/usr/diags:/bin/csh
+5daemon:*:1:1:daemons:/:/bin/sh
+8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp:
+9sys:*:4:0:System Activity Owner:/usr/adm:/bin/sh
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp:
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp:
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh
+20tour:*:995:997:IRIS Space Tour:/usr/people/tour:/bin/csh
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh
+224Dgifts:0nWRTZsOMt.:999:998:4Dgifts Account:/usr/people/4Dgifts:/bin/csh
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null
+24noaccess:*:60002:60002:uid no access:/dev/null:/dev/null
+25nobody:*:-2:-2:original nobody uid:/dev/null:/dev/null
+28dist:sorry:9999:4:file distributions:/v/adm/dist:/v/bin/sh
+29man:*:99:995:On-line Manual Owner:/:
+4d iag * 0 996 Hardware Diagnostics /usr/diags /bin/csh
+5d aemon * 1 1 daemons / /bin/sh
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp 
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp 
+24 noaccess * 60002 60002 uid no access /dev/null /dev/null
+25 nobody * -2 -2 original nobody uid /dev/null /dev/null

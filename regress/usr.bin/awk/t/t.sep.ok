@@ -1,0 +1,93 @@
+field separator is 1
+17379	mel has 2 fields
+16693	bwk	me has 2 fields
+16116	ken	him	someone else has 4 fields
+15713	srb has 3 fields
+11895	lem has 3 fields
+10409	scj has 2 fields
+10252	rhm has 2 fields
+ 9190	pjw has 2 fields
+ 8912	nls has 2 fields
+ 8491	cda has 2 fields
+ 6291	rje has 2 fields
+ 6211	lwf has 3 fields
+ 5671	dave has 2 fields
+ 5167	doug has 2 fields
+ 3481	xchar has 2 fields
+ 2641	met has 2 fields
+ 2511	port has 3 fields
+ 2127	root has 2 fields
+ 1989	bsb has 2 fields
+ 1989	jeg has 2 fields
+ 1933	eag has 2 fields
+ 1801	pdj has 3 fields
+ 1590	tpc has 2 fields
+ 1385	cvw has 2 fields
+ 1370	rwm has 2 fields
+ 1316	avg has 3 fields
+ 1205	eg has 2 fields
+ 1194	jam has 3 fields
+ 1153	dl has 3 fields
+ 1150	lgm has 3 fields
+ 1031	cmb has 3 fields
+ 1018	jwr has 3 fields
+  931	marc has 2 fields
+  541	uucp has 2 fields
+  414	craig has 2 fields
+  251	sjb has 2 fields
+  213	dsj has 2 fields
+  201	bill has 2 fields
+  184	god has 2 fields
+  176	sys has 2 fields
+  166	meh has 2 fields
+  163	jon has 2 fields
+  144	dan has 2 fields
+  143	fox has 2 fields
+  123	dale has 2 fields
+  116	kab has 3 fields
+   31	pd has 2 fields
+   15	egb has 2 fields
+   10	hm has 2 fields
+   10	mhb has 2 fields
+    1	122sec has 3 fields
+    1	ddwar has 2 fields
+    1	gopi has 2 fields
+    1	jk has 2 fields
+    1	learn has 2 fields
+    1	low has 2 fields
+    1	nac has 2 fields
+    1	sidor has 2 fields
+1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh has 2 fields
+5daemon:*:1:1:daemons:/:/bin/sh has 3 fields
+7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico has 2 fields
+10adm:*:5:3:Accounting Files Owner:/usr/adm:/bin/sh has 2 fields
+11lp:*:9:9:Print Spooler Owner:/var/spool/lp:/bin/sh has 3 fields
+12auditor:*:11:0:Audit Activity Owner:/auditor:/bin/sh has 4 fields
+13dbadmin:*:12:0:Security Database Owner:/dbadmin:/bin/sh has 3 fields
+14bootes:dcon:50:1:Tom Killian (DO NOT REMOVE):/tmp: has 3 fields
+15cdjuke:dcon:51:1:Tom Killian (DO NOT REMOVE):/tmp: has 4 fields
+16rfindd:*:66:1:Rfind Daemon and Fsdump:/var/rfindd:/bin/sh has 3 fields
+17EZsetup:*:992:998:System Setup:/var/sysadmdesktop/EZsetup:/bin/csh has 2 fields
+18demos:*:993:997:Demonstration User:/usr/demos:/bin/csh has 2 fields
+19tutor:*:994:997:Tutorial User:/usr/tutor:/bin/csh has 2 fields
+21guest:nfP4/Wpvio/Rw:998:998:Guest Account:/usr/people/guest:/bin/csh has 2 fields
+23nobody:*:60001:60001:SVR4 nobody uid:/dev/null:/dev/null has 3 fields
+27changes:*:11:11:system change log:/: has 5 fields
+30phoneca:*:991:991:phone call log [tom]:/v/adm/log:/v/bin/sh has 3 fields
+1r oot EMpNB8Zp56 0 0 Super-User,,,,,,, / /bin/sh has 2 fields
+5d aemon * 1 1 daemons / /bin/sh has 3 fields
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico has 2 fields
+10 adm * 5 3 Accounting Files Owner /usr/adm /bin/sh has 2 fields
+11 lp * 9 9 Print Spooler Owner /var/spool/lp /bin/sh has 3 fields
+12 auditor * 11 0 Audit Activity Owner /auditor /bin/sh has 4 fields
+13 dbadmin * 12 0 Security Database Owner /dbadmin /bin/sh has 3 fields
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp  has 3 fields
+15 cdjuke dcon 51 1 Tom Killian (DO NOT REMOVE) /tmp  has 4 fields
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh has 3 fields
+17 EZsetup * 992 998 System Setup /var/sysadmdesktop/EZsetup /bin/csh has 2 fields
+18 demos * 993 997 Demonstration User /usr/demos /bin/csh has 2 fields
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh has 2 fields
+21 guest nfP4/Wpvio/Rw 998 998 Guest Account /usr/people/guest /bin/csh has 2 fields
+23 nobody * 60001 60001 SVR4 nobody uid /dev/null /dev/null has 3 fields
+27 changes * 11 11 system change log /  has 5 fields
+30 phoneca * 991 991 phone call log [tom] /v/adm/log /v/bin/sh has 3 fields

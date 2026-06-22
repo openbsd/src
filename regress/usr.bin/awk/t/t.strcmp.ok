@@ -1,0 +1,56 @@
+16693	bwk	me
+15713	srb
+10409	scj
+10252	rhm
+ 9853	shen
+ 9492	sif
+ 9190	pjw
+ 8372	bs
+ 7360	ava
+ 7080	bin
+ 6291	rje
+ 5007	valerie
+ 3895	bbs
+ 3481	xchar
+ 3200	tbl
+ 2845	s
+ 2774	tgs
+ 2511	port
+ 2479	sue
+ 2127	root
+ 1989	bsb
+ 1590	tpc
+ 1370	rwm
+ 1316	avg
+  898	usg
+  624	tad
+  541	uucp
+  523	raf
+  348	ravi
+  327	stars
+  263	ralph
+  253	tom
+  251	sjb
+  224	sharon
+  201	bill
+  176	sys
+   95	buz
+   79	trt
+   64	wsb
+   43	vgl
+   32	rab
+   25	spm
+   22	rob
+    4	ber
+    2	blue
+    1	sidor
+2roottcsh:*:0:0:Super-User running tcsh [cbm]:/:/bin/tcsh
+3s ysadm * 0 0 System V Administration /usr/admin /bin/sh
+7n uucp BJnuQbAo 6 10 UUCP.Admin /usr/spool/uucppublic /usr/lib/uucp/uucico
+8u ucp * 3 5 UUCP.Admin /usr/lib/uucp 
+9s ys * 4 0 System Activity Owner /usr/adm /bin/sh
+14 bootes dcon 50 1 Tom Killian (DO NOT REMOVE) /tmp 
+16 rfindd * 66 1 Rfind Daemon and Fsdump /var/rfindd /bin/sh
+19 tutor * 994 997 Tutorial User /usr/tutor /bin/csh
+20 tour * 995 997 IRIS Space Tour /usr/people/tour /bin/csh
+26 rje * 8 8 RJE Owner /usr/spool/rje 

@@ -1,0 +1,202 @@
+%:  ... /dev/rrp3: 	       0            0 0 0 / 
+%:  ...  	       0            0 0 0  
+%: mel ... 17379 	   17379        mel 0 0 0 䏣 m
+%: bwk ... 16693 	   16693        bwk 0 0 0 䄵 b
+%: ken ... 16116 	   16116        ken 0 0 0 㻴 k
+%: srb ... 15713 	   15713        srb 0 0 0 㵡 s
+%: lem ... 11895 	   11895        lem 0 0 0 ⹷ l
+%: scj ... 10409 	   10409        scj 0 0 0 ⢩ s
+%: rhm ... 10252 	   10252        rhm 0 0 0 ⠌ r
+%: shen ... 9853 	    9853       shen 0 0 0 ♽ s
+%: a68 ... 9748 	    9748        a68 0 0 0 ☔ a
+%: sif ... 9492 	    9492        sif 0 0 0 └ s
+%: pjw ... 9190 	    9190        pjw 0 0 0 ⏦ p
+%: nls ... 8912 	    8912        nls 0 0 0 ⋐ n
+%: dmr ... 8895 	    8895        dmr 0 0 0 ⊿ d
+%: cda ... 8491 	    8491        cda 0 0 0 Å c
+%: bs ... 8372 	    8372         bs 0 0 0 ₴ b
+%: llc ... 8252 	    8252        llc 0 0 0 ‼ l
+%: mb ... 7450 	    7450         mb 0 0 0 ᴚ m
+%: ava ... 7360 	    7360        ava 0 0 0 ᳀ a
+%: jrv ... 7273 	    7273        jrv 0 0 0 ᱩ j
+%: bin ... 7080 	    7080        bin 0 0 0 ᮨ b
+%: greg ... 7063 	    7063       greg 0 0 0 ᮗ g
+%: dict ... 6567 	    6567       dict 0 0 0 ᦧ d
+%: lck ... 6462 	    6462        lck 0 0 0 ᤾ l
+%: rje ... 6291 	    6291        rje 0 0 0 ᢓ r
+%: lwf ... 6211 	    6211        lwf 0 0 0 ᡃ l
+%: dave ... 5671 	    5671       dave 0 0 0 ᘧ d
+%: jhc ... 5373 	    5373        jhc 0 0 0 ᓽ j
+%: agf ... 5220 	    5220        agf 0 0 0 ᑤ a
+%: doug ... 5167 	    5167       doug 0 0 0 ᐯ d
+%: valerie ... 5007 	    5007    valerie 0 0 0 ᎏ v
+%: jca ... 3963 	    3963        jca 0 0 0 ཻ j
+%: bbs ... 3895 	    3895        bbs 0 0 0 ༷ b
+%: moh ... 3796 	    3796        moh 0 0 0 ໔ m
+%: xchar ... 3481 	    3481      xchar 0 0 0 ඙ x
+%: tbl ... 3200 	    3200        tbl 0 0 0 ಀ t
+%: s ... 2845 	    2845          s 0 0 0 ଝ s
+%: tgs ... 2774 	    2774        tgs 0 0 0 ૖ t
+%: met ... 2641 	    2641        met 0 0 0 ੑ m
+%: jck ... 2566 	    2566        jck 0 0 0 ਆ j
+%: port ... 2511 	    2511       port 0 0 0 ৏ p
+%: sue ... 2479 	    2479        sue 0 0 0 য s
+%: root ... 2127 	    2127       root 0 0 0 ࡏ r
+%: bsb ... 1989 	    1989        bsb 0 0 0 ߅ b
+%: jeg ... 1989 	    1989        jeg 0 0 0 ߅ j
+%: eag ... 1933 	    1933        eag 0 0 0 ލ e
+%: pdj ... 1801 	    1801        pdj 0 0 0 ܉ p
+%: tpc ... 1590 	    1590        tpc 0 0 0 ض t
+%: cvw ... 1385 	    1385        cvw 0 0 0 թ c
+%: rwm ... 1370 	    1370        rwm 0 0 0 ՚ r
+%: avg ... 1316 	    1316        avg 0 0 0 Ԥ a
+%: eg ... 1205 	    1205         eg 0 0 0 ҵ e
+%: jam ... 1194 	    1194        jam 0 0 0 Ҫ j
+%: dl ... 1153 	    1153         dl 0 0 0 ҁ d
+%: lgm ... 1150 	    1150        lgm 0 0 0 Ѿ l
+%: cmb ... 1031 	    1031        cmb 0 0 0 Ї c
+%: jwr ... 1018 	    1018        jwr 0 0 0 Ϻ j
+%: gdb ... 950 	     950        gdb 0 0 0 ζ g
+%: marc ... 931 	     931       marc 0 0 0 Σ m
+%: usg ... 898 	     898        usg 0 0 0 ΂ u
+%: ggr ... 865 	     865        ggr 0 0 0 ͡ g
+%: daemon ... 822 	     822     daemon 0 0 0 ̶ d
+%: mihalis ... 803 	     803    mihalis 0 0 0 ̣ m
+%: honey ... 700 	     700      honey 0 0 0 ʼ h
+%: tad ... 624 	     624        tad 0 0 0 ɰ t
+%: acs ... 559 	     559        acs 0 0 0 ȯ a
+%: uucp ... 541 	     541       uucp 0 0 0 ȝ u
+%: raf ... 523 	     523        raf 0 0 0 ȋ r
+%: adh ... 495 	     495        adh 0 0 0 ǯ a
+%: kec ... 456 	     456        kec 0 0 0 ǈ k
+%: craig ... 414 	     414      craig 0 0 0 ƞ c
+%: donmac ... 386 	     386     donmac 0 0 0 Ƃ d
+%: jj ... 375 	     375         jj 0 0 0 ŷ j
+%: ravi ... 348 	     348       ravi 0 0 0 Ŝ r
+%: drw ... 344 	     344        drw 0 0 0 Ř d
+%: stars ... 327 	     327      stars 0 0 0 Ň s
+%: mrg ... 288 	     288        mrg 0 0 0 Ġ m
+%: jcb ... 272 	     272        jcb 0 0 0 Đ j
+%: ralph ... 263 	     263      ralph 0 0 0 ć r
+%: tom ... 253 	     253        tom 0 0 0 ý t
+%: sjb ... 251 	     251        sjb 0 0 0 û s
+%: haight ... 248 	     248     haight 0 0 0 ø h
+%: sharon ... 224 	     224     sharon 0 0 0 à s
+%: chuck ... 222 	     222      chuck 0 0 0 Þ c
+%: dsj ... 213 	     213        dsj 0 0 0 Õ d
+%: bill ... 201 	     201       bill 0 0 0 É b
+%: god ... 184 	     184        god 0 0 0 ¸ g
+%: sys ... 176 	     176        sys 0 0 0 ° s
+%: meh ... 166 	     166        meh 0 0 0 ¦ m
+%: jon ... 163 	     163        jon 0 0 0 £ j
+%: dan ... 144 	     144        dan 0 0 0  d
+%: fox ... 143 	     143        fox 0 0 0  f
+%: dale ... 123 	     123       dale 0 0 0 { d
+%: kab ... 116 	     116        kab 0 0 0 t k
+%: buz ... 95 	      95        buz 0 0 0 _ b
+%: asc ... 80 	      80        asc 0 0 0 P a
+%: jas ... 79 	      79        jas 0 0 0 O j
+%: trt ... 79 	      79        trt 0 0 0 O t
+%: wsb ... 64 	      64        wsb 0 0 0 @ w
+%: dwh ... 62 	      62        dwh 0 0 0 > d
+%: ktf ... 56 	      56        ktf 0 0 0 8 k
+%: lr ... 54 	      54         lr 0 0 0 6 l
+%: dlc ... 47 	      47        dlc 0 0 0 / d
+%: dls ... 45 	      45        dls 0 0 0 - d
+%: jwf ... 45 	      45        jwf 0 0 0 - j
+%: mash ... 44 	      44       mash 0 0 0 , m
+%: ars ... 43 	      43        ars 0 0 0 + a
+%: vgl ... 43 	      43        vgl 0 0 0 + v
+%: jfo ... 37 	      37        jfo 0 0 0 % j
+%: rab ... 32 	      32        rab 0 0 0   r
+%: pd ... 31 	      31         pd 0 0 0  p
+%: jns ... 29 	      29        jns 0 0 0  j
+%: spm ... 25 	      25        spm 0 0 0  s
+%: rob ... 22 	      22        rob 0 0 0  r
+%: egb ... 15 	      15        egb 0 0 0  e
+%: hm ... 10 	      10         hm 0 0 0 
+ h
+%: mhb ... 10 	      10        mhb 0 0 0 
+ m
+%: aed ... 6 	       6        aed 0 0 0  a
+%: cpb ... 6 	       6        cpb 0 0 0  c
+%: evp ... 5 	       5        evp 0 0 0  e
+%: ber ... 4 	       4        ber 0 0 0  b
+%: men ... 4 	       4        men 0 0 0  m
+%: mitch ... 4 	       4      mitch 0 0 0  m
+%: ast ... 3 	       3        ast 0 0 0  a
+%: jfr ... 3 	       3        jfr 0 0 0  j
+%: lax ... 3 	       3        lax 0 0 0  l
+%: nel ... 3 	       3        nel 0 0 0  n
+%: blue ... 2 	       2       blue 0 0 0  b
+%: jfk ... 2 	       2        jfk 0 0 0  j
+%: njas ... 2 	       2       njas 0 0 0  n
+%: 122sec ... 1 	       1     122sec 0 0 0  1
+%: ddwar ... 1 	       1      ddwar 0 0 0  d
+%: gopi ... 1 	       1       gopi 0 0 0  g
+%: jk ... 1 	       1         jk 0 0 0  j
+%: learn ... 1 	       1      learn 0 0 0  l
+%: low ... 1 	       1        low 0 0 0  l
+%: nac ... 1 	       1        nac 0 0 0  n
+%: sidor ... 1 	       1      sidor 0 0 0  s
+%:  ... 1root:EMpNB8Zp56:0:0:Super-User,,,,,,,:/:/bin/sh 	       1            0 0 0 1 
+%: running ... 2roottcsh:*:0:0:Super-User 	       2    running 0 0 0 2 r
+%: V ... 3sysadm:*:0:0:System 	       3          V 0 0 0 3 V
+%: Diagnostics:/usr/diags:/bin/csh ... 4diag:*:0:996:Hardware 	       4 Diagnostic 0 0 0 4 D
+%:  ... 5daemon:*:1:1:daemons:/:/bin/sh 	       5            0 0 0 5 
+%: Tools ... 6bin:*:2:2:System 	       6      Tools 0 0 0 6 T
+%:  ... 7nuucp:BJnuQbAo:6:10:UUCP.Admin:/usr/spool/uucppublic:/usr/lib/uucp/uucico 	       7            0 0 0 7 
+%:  ... 8uucp:*:3:5:UUCP.Admin:/usr/lib/uucp: 	       8            0 0 0 8 
+%: Activity ... 9sys:*:4:0:System 	       9   Activity 0 0 0 9 A
+%: Files ... 10adm:*:5:3:Accounting 	      10      Files 0 0 0 1 F
+%: Spooler ... 11lp:*:9:9:Print 	      11    Spooler 0 0 0 1 S
+%: Activity ... 12auditor:*:11:0:Audit 	      12   Activity 0 0 0 1 A
+%: Database ... 13dbadmin:*:12:0:Security 	      13   Database 0 0 0 1 D
+%: Killian ... 14bootes:dcon:50:1:Tom 	      14    Killian 0 0 0 1 K
+%: Killian ... 15cdjuke:dcon:51:1:Tom 	      15    Killian 0 0 0 1 K
+%: Daemon ... 16rfindd:*:66:1:Rfind 	      16     Daemon 0 0 0 1 D
+%: Setup:/var/sysadmdesktop/EZsetup:/bin/csh ... 17EZsetup:*:992:998:System 	      17 Setup:/var 0 0 0 1 S
+%: User:/usr/demos:/bin/csh ... 18demos:*:993:997:Demonstration 	      18 User:/usr/ 0 0 0 1 U
+%: User:/usr/tutor:/bin/csh ... 19tutor:*:994:997:Tutorial 	      19 User:/usr/ 0 0 0 1 U
+%: Space ... 20tour:*:995:997:IRIS 	      20      Space 0 0 0 2 S
+%: Account:/usr/people/guest:/bin/csh ... 21guest:nfP4/Wpvio/Rw:998:998:Guest 	      21 Account:/u 0 0 0 2 A
+%: Account:/usr/people/4Dgifts:/bin/csh ... 224Dgifts:0nWRTZsOMt.:999:998:4Dgifts 	     224 Account:/u 0 0 0 2 A
+%: nobody ... 23nobody:*:60001:60001:SVR4 	      23     nobody 0 0 0 2 n
+%: no ... 24noaccess:*:60002:60002:uid 	      24         no 0 0 0 2 n
+%: nobody ... 25nobody:*:-2:-2:original 	      25     nobody 0 0 0 2 n
+%: Owner:/usr/spool/rje: ... 26rje:*:8:8:RJE 	      26 Owner:/usr 0 0 0 2 O
+%: change ... 27changes:*:11:11:system 	      27     change 0 0 0 2 c
+%: distributions:/v/adm/dist:/v/bin/sh ... 28dist:sorry:9999:4:file 	      28 distributi 0 0 0 2 d
+%: Manual ... 29man:*:99:995:On-line 	      29     Manual 0 0 0 2 M
+%: call ... 30phoneca:*:991:991:phone 	      30       call 0 0 0 3 c
+%: oot ... 1r 	       1        oot 0 0 0 1 o
+%: oottcsh ... 2r 	       2    oottcsh 0 0 0 2 o
+%: ysadm ... 3s 	       3      ysadm 0 0 0 3 y
+%: iag ... 4d 	       4        iag 0 0 0 4 i
+%: aemon ... 5d 	       5      aemon 0 0 0 5 a
+%: in ... 6b 	       6         in 0 0 0 6 i
+%: uucp ... 7n 	       7       uucp 0 0 0 7 u
+%: ucp ... 8u 	       8        ucp 0 0 0 8 u
+%: ys ... 9s 	       9         ys 0 0 0 9 y
+%: adm ... 10 	      10        adm 0 0 0 
+ a
+%: lp ... 11 	      11         lp 0 0 0  l
+%: auditor ... 12 	      12    auditor 0 0 0  a
+%: dbadmin ... 13 	      13    dbadmin 0 0 0  d
+%: bootes ... 14 	      14     bootes 0 0 0  b
+%: cdjuke ... 15 	      15     cdjuke 0 0 0  c
+%: rfindd ... 16 	      16     rfindd 0 0 0  r
+%: EZsetup ... 17 	      17    EZsetup 0 0 0  E
+%: demos ... 18 	      18      demos 0 0 0  d
+%: tutor ... 19 	      19      tutor 0 0 0  t
+%: tour ... 20 	      20       tour 0 0 0  t
+%: guest ... 21 	      21      guest 0 0 0  g
+%: 4Dgifts ... 22 	      22    4Dgifts 0 0 0  4
+%: nobody ... 23 	      23     nobody 0 0 0  n
+%: noaccess ... 24 	      24   noaccess 0 0 0  n
+%: nobody ... 25 	      25     nobody 0 0 0  n
+%: rje ... 26 	      26        rje 0 0 0  r
+%: changes ... 27 	      27    changes 0 0 0  c
+%: dist ... 28 	      28       dist 0 0 0  d
+%: man ... 29 	      29        man 0 0 0  m
+%: phoneca ... 30 	      30    phoneca 0 0 0  p
