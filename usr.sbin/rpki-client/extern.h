@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.283 2026/06/22 08:08:03 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.284 2026/06/22 21:25:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -724,8 +724,9 @@ struct cert	*ta_validate(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
-void		 cert_insert_nca(struct nca_tree *, const struct cert *);
-void		 cert_remove_nca(struct nca_tree *, int);
+
+void		 nca_tree_insert_cert(struct nca_tree *, const struct cert *);
+void		 nca_tree_remove_cert(struct nca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);

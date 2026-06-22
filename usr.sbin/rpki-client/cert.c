@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.240 2026/06/22 08:08:03 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.241 2026/06/22 21:25:44 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2108,56 +2108,3 @@ brkcmp(struct brk *a, struct brk *b)
 }
 
 RB_GENERATE(brk_tree, brk, entry, brkcmp);
-
-/*
- * Add each CA cert into the non-functional CA tree.
- */
-void
-cert_insert_nca(struct nca_tree *tree, const struct cert *cert)
-{
-	struct nonfunc_ca *nca;
-
-	if ((nca = calloc(1, sizeof(*nca))) == NULL)
-		err(1, NULL);
-	if ((nca->location = strdup(cert->path)) == NULL)
-		err(1, NULL);
-	if ((nca->carepo = strdup(cert->repo)) == NULL)
-		err(1, NULL);
-	if ((nca->mfturi = strdup(cert->mft)) == NULL)
-		err(1, NULL);
-	if ((nca->ski = strdup(cert->ski)) == NULL)
-		err(1, NULL);
-	nca->repoid = cert->repoid;
-	nca->certid = cert->certid;
-	nca->talid = cert->talid;
-
-	if (RB_INSERT(nca_tree, tree, nca) != NULL)
-		errx(1, "non-functional CA tree corrupted");
-}
-
-void
-cert_remove_nca(struct nca_tree *tree, int cid)
-{
-	struct nonfunc_ca *found, needle = { .certid = cid };
-
-	if ((found = RB_FIND(nca_tree, tree, &needle)) != NULL) {
-		RB_REMOVE(nca_tree, tree, found);
-		free(found->location);
-		free(found->carepo);
-		free(found->mfturi);
-		free(found->ski);
-		free(found);
-	}
-}
-
-static inline int
-ncacmp(const struct nonfunc_ca *a, const struct nonfunc_ca *b)
-{
-	if (a->certid < b->certid)
-		return -1;
-	if (a->certid > b->certid)
-		return 1;
-	return 0;
-}
-
-RB_GENERATE(nca_tree, nonfunc_ca, entry, ncacmp);

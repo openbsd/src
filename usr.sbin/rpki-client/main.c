@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.307 2026/06/22 08:08:03 job Exp $ */
+/*	$OpenBSD: main.c,v 1.308 2026/06/22 21:25:44 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -575,7 +575,7 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 			err(1, NULL);
 	}
 
-	cert_insert_nca(ncas, cert);
+	nca_tree_insert_cert(ncas, cert);
 
 	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
 	    cert->talid, cert->certid, NULL);
@@ -676,7 +676,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		cert_remove_nca(&vd->ncas, mft->certid);
+		nca_tree_remove_cert(&vd->ncas, mft->certid);
 		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
 		break;
