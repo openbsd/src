@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_lowlevel_new.3,v 1.4 2026/02/06 15:24:36 schwarze Exp $
+.\" $OpenBSD: fuse_lowlevel_new.3,v 1.5 2026/06/22 05:24:19 helg Exp $
 .\"
 .\" Copyright (c) 2026 Helg Bredow <helg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2026 $
+.Dd $Mdocdate: June 22 2026 $
 .Dt FUSE_LOWLEVEL_NEW 3
 .Os
 .Sh NAME
@@ -232,6 +232,10 @@ Not implemented.
 Corresponds to the
 .Xr stat 2
 system call.
+.Pp
+The
+.Fa ffi
+argument is always NULL.
 .Pp
 On success, respond with
 .Xr fuse_reply_attr 3 .
@@ -521,6 +525,10 @@ be set on
 .Dv FUSE_SET_ATTR_ATIME_NOW
 .Dv FUSE_SET_ATTR_MTIME_NOW
 .Ed
+.Pp
+The
+.Fa ffi
+argument is always NULL.
 .Pp
 On success, return the updated attributes with
 .Xr fuse_reply_attr 3 .

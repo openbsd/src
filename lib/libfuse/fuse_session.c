@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_session.c,v 1.2 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fuse_session.c,v 1.3 2026/06/22 05:24:19 helg Exp $ */
 /*
  * Copyright (c) 2025 Helg Bredow <helg@openbsd.org>
  *
@@ -216,7 +216,6 @@ iprocess_setattr(fuse_req_t req)
 {
 	struct fusebuf *fbuf = req->fbuf;
 	struct fuse_session *se = req->se;
-	struct fuse_file_info ffi;
 	struct stat stbuf;
 	const int flags = fbuf->in.setattr.valid;
 
@@ -224,10 +223,6 @@ iprocess_setattr(fuse_req_t req)
 	DPRINTF("inode: %llu\t", fbuf->fb_ino);
 
 	if (se->llops.setattr) {
-		memset(&ffi, 0, sizeof(ffi));
-		ffi.fh = fbuf->in.setattr.fh;
-		ffi.fh_old = ffi.fh;
-
 		memset(&stbuf, 0, sizeof(stbuf));
 		stbuf.st_size =  fbuf->in.setattr.size;
 		stbuf.st_atime =  fbuf->in.setattr.atime;
@@ -238,7 +233,7 @@ iprocess_setattr(fuse_req_t req)
 		stbuf.st_uid =  fbuf->in.setattr.uid;
 		stbuf.st_gid =  fbuf->in.setattr.gid;
 
-		se->llops.setattr(req, fbuf->fb_ino, &stbuf, flags, &ffi);
+		se->llops.setattr(req, fbuf->fb_ino, &stbuf, flags, NULL);
 	} else
 		fuse_reply_err(req, ENOSYS);
 }
