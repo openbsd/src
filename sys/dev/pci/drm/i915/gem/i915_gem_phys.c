@@ -18,6 +18,17 @@
 #include "i915_gem_tiling.h"
 #include "i915_scatterlist.h"
 
+/* Abuse scatterlist to store pointer instead of struct page. */
+static inline void __set_phys_vaddr(struct scatterlist *sg, void *vaddr)
+{
+	sg_assign_page(sg, (struct vm_page *)vaddr);
+}
+
+static inline void *__get_phys_vaddr(struct scatterlist *sg)
+{
+	return (void *)sg_page(sg);
+}
+
 static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 {
 #ifdef __linux__
@@ -75,9 +86,9 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	sg->length = obj->base.size;
 
 #ifdef __linux__
-	sg_assign_page(sg, (struct page *)vaddr);
+	__set_phys_vaddr(sg, vaddr);
 #else
-	sg_assign_page(sg, (struct vm_page *)dmah);
+	__set_phys_vaddr(sg, dmah);
 #endif
 	sg_dma_address(sg) = dma;
 	sg_dma_len(sg) = obj->base.size;
@@ -138,9 +149,9 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 {
 	dma_addr_t dma = sg_dma_address(pages->sgl);
 #ifdef __linux__
-	void *vaddr = sg_page(pages->sgl);
+	void *vaddr = __get_phys_vaddr(pages->sgl);
 #else
-	struct drm_dmamem *dmah = (void *)sg_page(pages->sgl);
+	struct drm_dmamem *dmah = __get_phys_vaddr(pages->sgl);
 	void *vaddr = dmah->kva;
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
 #endif
@@ -204,9 +215,9 @@ int i915_gem_object_pwrite_phys(struct drm_i915_gem_object *obj,
 				const struct drm_i915_gem_pwrite *args)
 {
 #ifdef __linux__
-	void *vaddr = sg_page(obj->mm.pages->sgl) + args->offset;
+	void *vaddr = __get_phys_vaddr(obj->mm.pages->sgl) + args->offset;
 #else
-	struct drm_dmamem *dmah = (void *)sg_page(obj->mm.pages->sgl);
+	struct drm_dmamem *dmah = __get_phys_vaddr(obj->mm.pages->sgl);
 	void *vaddr = dmah->kva + args->offset;
 #endif
 	char __user *user_data = u64_to_user_ptr(args->data_ptr);
@@ -240,9 +251,9 @@ int i915_gem_object_pread_phys(struct drm_i915_gem_object *obj,
 			       const struct drm_i915_gem_pread *args)
 {
 #ifdef __linux__
-	void *vaddr = sg_page(obj->mm.pages->sgl) + args->offset;
+	void *vaddr = __get_phys_vaddr(obj->mm.pages->sgl) + args->offset;
 #else
-	struct drm_dmamem *dmah = (void *)sg_page(obj->mm.pages->sgl);
+	struct drm_dmamem *dmah = __get_phys_vaddr(obj->mm.pages->sgl);
 	void *vaddr = dmah->kva + args->offset;
 #endif
 	char __user *user_data = u64_to_user_ptr(args->data_ptr);
