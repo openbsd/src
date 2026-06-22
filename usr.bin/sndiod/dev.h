@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.58 2026/06/22 14:17:50 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.59 2026/06/22 14:21:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -126,6 +126,7 @@ struct ctl {
 #define CTL_APP_LEVEL	3
 #define CTL_OPT_MODE	4
 #define CTL_MIDI_PORT	5
+#define CTL_MIDI_THRU	6
 	unsigned int scope;
 	union {
 		struct {

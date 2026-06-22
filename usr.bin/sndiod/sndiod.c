@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.57 2026/06/22 14:15:26 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.58 2026/06/22 14:21:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -613,6 +613,12 @@ main(int argc, char **argv)
 	} else if (!dev_round) {
 		dev_round = dev_bufsz / 2;
 	}
+
+	/*
+	 * enable midithru by default
+	 */
+	for (i = 0; i < MIDITHRU_NMAX; i++)
+		midithru_array[i].thru = 1;
 
 	if (port_list == NULL) {
 		for (i = 0; default_ports[i] != NULL; i++)

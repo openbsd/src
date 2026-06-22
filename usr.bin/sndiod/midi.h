@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.22 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.23 2026/06/22 14:21:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -101,6 +101,7 @@ struct midithru {
 	unsigned int progmask;
 	unsigned int prefportmask;
 	int refcnt;
+	int thru;
 };
 
 /*
@@ -149,6 +150,7 @@ void midithru_addport(struct midithru *, struct port *);
 void midithru_addprog(struct midithru *, struct midi *);
 void midithru_rm(struct midithru *, struct midi *);
 int  midithru_setport(struct midithru *, struct port *, int);
+int  midithru_setthru(struct midithru *, int);
 void midithru_scanports(void);
 
 #endif /* !defined(MIDI_H) */
