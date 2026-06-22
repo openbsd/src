@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.282 2026/06/15 14:30:53 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.283 2026/06/22 08:08:03 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -159,6 +159,7 @@ struct nonfunc_ca {
 	char			*mfturi;
 	char			*ski;
 	int			 certid;
+	unsigned int		 repoid;
 	int			 talid;
 };
 
@@ -601,8 +602,6 @@ enum stype {
 	STYPE_PROVIDERS,
 	STYPE_OVERFLOW,
 	STYPE_SEQNUM_GAP,
-	STYPE_FUNC,
-	STYPE_NONFUNC,
 };
 
 struct repo;
@@ -725,9 +724,8 @@ struct cert	*ta_validate(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
-void		 cert_insert_nca(struct nca_tree *, const struct cert *,
-		    struct repo *);
-void		 cert_remove_nca(struct nca_tree *, int, struct repo *);
+void		 cert_insert_nca(struct nca_tree *, const struct cert *);
+void		 cert_remove_nca(struct nca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
@@ -895,6 +893,7 @@ void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
 void		 repostats_new_files_inc(struct repo *, const char *);
 void		 repo_stat_inc(struct repo *, int, enum rtype, enum stype);
+void		 repo_stat_add_nca(struct nonfunc_ca *);
 void		 repo_tal_stats_collect(void (*)(const struct repo *,
 		    const struct repotalstats *, void *), int, void *);
 void		 repo_stats_collect(void (*)(const struct repo *,

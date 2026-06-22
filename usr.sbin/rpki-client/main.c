@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.306 2026/05/09 01:22:32 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.307 2026/06/22 08:08:03 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -575,7 +575,8 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 			err(1, NULL);
 	}
 
-	cert_insert_nca(ncas, cert, repo);
+	cert_insert_nca(ncas, cert);
+
 	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
 	    cert->talid, cert->certid, NULL);
 }
@@ -675,7 +676,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		cert_remove_nca(&vd->ncas, mft->certid, rp);
+		cert_remove_nca(&vd->ncas, mft->certid);
 		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
 		break;
@@ -1030,6 +1031,7 @@ main(int argc, char *argv[])
 	struct rusage	 ru;
 	struct timespec	 start_time, now_time;
 	struct validation_data vd = { 0 };
+	struct nonfunc_ca *nca;
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
@@ -1538,6 +1540,9 @@ main(int argc, char *argv[])
 	/* if processing in filemode the process is done, no cleanup */
 	if (filemode)
 		return rc;
+
+	RB_FOREACH(nca, nca_tree, &vd.ncas)
+		repo_stat_add_nca(nca);
 
 	logx("all files parsed: generating output");
 

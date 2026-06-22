@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.84 2026/06/15 14:45:19 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.85 2026/06/22 08:08:03 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1541,6 +1541,19 @@ repostats_new_files_inc(struct repo *rp, const char *file)
 		rp->repostats.new_files++;
 }
 
+void
+repo_stat_add_nca(struct nonfunc_ca *nca)
+{
+	struct repo *rp;
+
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (rp->id == nca->repoid) {
+			rp->stats[nca->talid].certs_nonfunc++;
+			break;
+		}
+	}
+}
+
 /*
  * Update stats object of repository depending on rtype and subtype.
  */
@@ -1556,10 +1569,6 @@ repo_stat_inc(struct repo *rp, int talid, enum rtype type, enum stype subtype)
 			rp->stats[talid].certs++;
 		if (subtype == STYPE_FAIL)
 			rp->stats[talid].certs_fail++;
-		if (subtype == STYPE_NONFUNC)
-			rp->stats[talid].certs_nonfunc++;
-		if (subtype == STYPE_FUNC)
-			rp->stats[talid].certs_nonfunc--;
 		if (subtype == STYPE_BGPSEC) {
 			rp->stats[talid].certs--;
 			rp->stats[talid].brks++;
