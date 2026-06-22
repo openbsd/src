@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.150 2026/06/22 09:27:32 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.151 2026/06/22 19:13:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1083,17 +1083,14 @@ get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
 	}
 
 	if (best_crl) {
-		if (*pcrl)
-			X509_CRL_free(*pcrl);
+		X509_CRL_free(*pcrl);
 		*pcrl = best_crl;
 		*pissuer = best_crl_issuer;
 		*pscore = best_score;
 		*preasons = best_reasons;
 		CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509_CRL);
-		if (*pdcrl) {
-			X509_CRL_free(*pdcrl);
-			*pdcrl = NULL;
-		}
+		X509_CRL_free(*pdcrl);
+		*pdcrl = NULL;
 		get_delta_sk(ctx, pdcrl, pscore, best_crl, crls);
 	}
 
