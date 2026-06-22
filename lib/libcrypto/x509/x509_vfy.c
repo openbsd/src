@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.149 2026/04/07 12:48:37 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.150 2026/06/22 09:27:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2420,9 +2420,9 @@ LCRYPTO_ALIAS(X509_STORE_get_check_issued);
 
 void
 X509_STORE_set_check_issued(X509_STORE *store,
-    X509_STORE_CTX_check_issued_fn check_issued)
+    X509_STORE_CTX_check_issued_fn check_issued_fn)
 {
-	store->check_issued = check_issued;
+	store->check_issued = check_issued_fn;
 }
 LCRYPTO_ALIAS(X509_STORE_set_check_issued);
 
