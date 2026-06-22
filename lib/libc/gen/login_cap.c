@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.49 2026/03/10 04:02:53 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.50 2026/06/22 07:38:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -585,7 +585,7 @@ setxdgenv(uid_t uid, struct passwd *pwd)
 		goto cleanup;
 	}
 
-	fd = open(rundir, O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC|O_CLOFORK);
+	fd = open(rundir, O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
 	if (fd == -1)  {
 		syslog(LOG_ERR, "could not open %s: %m", rundir);
 		goto cleanup;
