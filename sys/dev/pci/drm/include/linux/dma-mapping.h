@@ -13,7 +13,9 @@ struct device;
 
 #define DMA_MAPPING_ERROR (dma_addr_t)-1
 
-#define DMA_ATTR_SKIP_CPU_SYNC	(1 << 1)
+#define DMA_ATTR_SKIP_CPU_SYNC		(1 << 1)
+#define DMA_ATTR_NO_KERNEL_MAPPING	(1 << 2)
+#define DMA_ATTR_NO_WARN		(1 << 3)
 
 static inline int
 dma_set_coherent_mask(struct device *dev, uint64_t m)
@@ -83,6 +85,19 @@ static inline void *
 dmam_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dva, int gfp)
 {
 	return dma_alloc_coherent(dev, size, dva, gfp);
+}
+
+static inline int
+dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl, int nents,
+    enum dma_data_direction dir, unsigned long attrs)
+{
+	return nents;
+}
+
+static inline void
+dma_unmap_sg(struct device *dev, struct scatterlist *sgl, int nents,
+     enum dma_data_direction dir)
+{
 }
 
 int	dma_get_sgtable(struct device *, struct sg_table *, void *,
