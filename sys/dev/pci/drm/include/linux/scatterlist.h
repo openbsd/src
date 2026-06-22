@@ -1,4 +1,4 @@
-/*	$OpenBSD: scatterlist.h,v 1.9 2026/06/22 12:27:53 jsg Exp $	*/
+/*	$OpenBSD: scatterlist.h,v 1.10 2026/06/22 23:55:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -30,7 +30,6 @@ struct scatterlist {
 	dma_addr_t dma_address;
 	unsigned int offset;
 	unsigned int length;
-	unsigned int dma_length;
 	bool end;
 };
 
@@ -124,7 +123,7 @@ sg_set_page(struct scatterlist *sgl, struct vm_page *page,
 }
 
 #define sg_dma_address(sg)	((sg)->dma_address)
-#define sg_dma_len(sg)		((sg)->dma_length)
+#define sg_dma_len(sg)		((sg)->length)
 
 #define for_each_sg(sgl, sg, nents, i) \
   for (i = 0, sg = (sgl); i < (nents); i++, sg = sg_next(sg))
