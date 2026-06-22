@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clock_gettime.2,v 1.32 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: clock_gettime.2,v 1.33 2026/06/22 13:05:52 tb Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 22 2026 $
 .Dt CLOCK_GETTIME 2
 .Os
 .Sh NAME
@@ -236,10 +236,11 @@ y2k.tm_mday = 1;
 y2k.tm_hour = 0;
 y2k.tm_min = 0;
 y2k.tm_sec = 0;
+y2k.tm_wday = -1;	/* sentinel for error */
 
 ts.tv_nsec = 0;
 ts.tv_sec = timegm(&y2k);
-if (ts.tv_sec == -1)
+if (ts.tv_sec == -1 && y2k.tm_wday == -1)
 	err(1, "timegm");
 
 if (clock_settime(CLOCK_REALTIME, &ts) == -1)
