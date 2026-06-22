@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.9 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.10 2026/06/22 14:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -129,8 +129,8 @@ port_mio_hup(void *arg)
 {
 	struct port *p = arg;
 
-	port_migrate(p);
-	midi_abort(p->midi);
+	port_abort(p);
+
 	if (p->state != PORT_CFG)
 		port_close(p);
 }

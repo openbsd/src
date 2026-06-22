@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.36 2026/05/20 13:27:41 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.37 2026/06/22 14:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,7 +46,9 @@ struct port *port_list = NULL;
 unsigned int midi_portnum = 0;
 
 struct midithru {
-	unsigned int txmask, rxmask;
+	unsigned int portmask;
+	unsigned int progmask;
+	unsigned int prefportmask;
 	int refcnt;
 #define MIDITHRU_NMAX 32
 } midithru[MIDITHRU_NMAX];
@@ -133,8 +135,8 @@ midi_del(struct midi *ep)
 		}
 	}
 	for (i = 0; i < MIDITHRU_NMAX; i++) {
-		midithru[i].txmask &= ~ep->self;
-		midithru[i].rxmask &= ~ep->self;
+		midithru[i].progmask &= ~ep->self;
+		midithru[i].portmask &= ~ep->self;
 	}
 	ep->ops = NULL;
 	if (ep->mode & MODE_MIDIIN) {
@@ -178,57 +180,6 @@ midi_unlink(struct midi *ep, struct midi *peer)
 		ep->txmask &= ~peer->self;
 		midi_tickets(ep);
 	}
-}
-
-/*
- * return the list of endpoints the given one receives from
- */
-unsigned int
-midi_rxmask(struct midi *ep)
-{
-	int i, rxmask;
-
-	for (rxmask = 0, i = 0; i < MIDI_NEP; i++) {
-		if ((midi_ep[i].txmask & ep->self) == 0)
-			continue;
-		rxmask |= midi_ep[i].self;
-	}
-
-	return rxmask;
-}
-
-/*
- * add the midi endpoint in the ``tag'' midi thru box
- */
-void
-midi_tag(struct midi *ep, unsigned int tag)
-{
-	struct midi *peer;
-	struct midithru *t = midithru + tag;
-	int i;
-
-	if (ep->mode & MODE_MIDIOUT) {
-		ep->txmask |= t->txmask;
-		midi_tickets(ep);
-	}
-	if (ep->mode & MODE_MIDIIN) {
-#ifdef DEBUG
-		if (ep->obuf.used > 0) {
-			logx(0, "midi%u: tagged with non-empty buffer", ep->num);
-			panic();
-		}
-#endif
-		for (i = 0; i < MIDI_NEP; i++) {
-			if (!(t->rxmask & (1 << i)))
-				continue;
-			peer = midi_ep + i;
-			peer->txmask |= ep->self;
-		}
-	}
-	if (ep->mode & MODE_MIDIOUT)
-		t->rxmask |= ep->self;
-	if (ep->mode & MODE_MIDIIN)
-		t->txmask |= ep->self;
 }
 
 /*
@@ -436,45 +387,6 @@ midi_abort(struct midi *p)
 	}
 }
 
-/*
- * connect to "nep" all endpoints currently connected to "oep"
- */
-void
-midi_migrate(struct midi *oep, struct midi *nep)
-{
-	struct midithru *t;
-	struct midi *ep;
-	int i;
-
-	for (i = 0; i < MIDITHRU_NMAX; i++) {
-		t = midithru + i;
-		if (t->txmask & oep->self) {
-			t->txmask &= ~oep->self;
-			t->txmask |= nep->self;
-		}
-		if (t->rxmask & oep->self) {
-			t->rxmask &= ~oep->self;
-			t->rxmask |= nep->self;
-		}
-	}
-
-	for (i = 0; i < MIDI_NEP; i++) {
-		ep = midi_ep + i;
-		if (ep->txmask & oep->self) {
-			ep->txmask &= ~oep->self;
-			ep->txmask |= nep->self;
-		}
-	}
-
-	for (i = 0; i < MIDI_NEP; i++) {
-		ep = midi_ep + i;
-		if (oep->txmask & ep->self) {
-			oep->txmask &= ~ep->self;
-			nep->txmask |= ep->self;
-		}
-	}
-}
-
 void
 port_imsg(void *arg, unsigned char *msg, int size)
 {
@@ -524,7 +436,6 @@ port_new(char *path, unsigned int mode, int hold)
 	c->refcnt = 0;
 	c->midi = midi_new(&port_midiops, c, mode);
 	c->num = midi_portnum++;
-	c->alt_next = c;
 	c->next = port_list;
 	port_list = c;
 	return c;
@@ -573,59 +484,6 @@ port_unref(struct port *c)
 #endif
 	if (--c->refcnt == 0 && c->state == PORT_INIT)
 		port_drain(c);
-}
-
-struct port *
-port_alt_ref(int num)
-{
-	struct port *a, *p;
-
-	a = port_bynum(num);
-	if (a == NULL)
-		return NULL;
-
-	/* circulate to first alt port */
-	while (a->alt_next->num > a->num)
-		a = a->alt_next;
-
-	p = a;
-	while (1) {
-		if (port_ref(p))
-			break;
-		p = p->alt_next;
-		if (p == a)
-			return NULL;
-	}
-
-	return p;
-}
-
-struct port *
-port_migrate(struct port *op)
-{
-	struct port *np;
-
-	/* not opened */
-	if (op->state == PORT_CFG)
-		return op;
-
-	np = op;
-	while (1) {
-		/* try next one, circulating through the list */
-		np = np->alt_next;
-		if (np == op) {
-			logx(2, "midi%u: no fall-back port found", op->midi->num);
-			return op;
-		}
-
-		if (port_ref(np))
-			break;
-	}
-
-	logx(2, "midi%u: switching to midi%u", op->midi->num, np->midi->num);
-
-	midi_migrate(op->midi, np->midi);
-	return np;
 }
 
 struct port *
@@ -684,8 +542,8 @@ port_drain(struct port *c)
 int
 port_init(struct port *c)
 {
-	if (c->hold)
-		return port_open(c);
+	if (c->hold && !port_ref(c))
+		return 0;
 	return 1;
 }
 
@@ -694,4 +552,159 @@ port_done(struct port *c)
 {
 	if (c->state == PORT_INIT)
 		port_drain(c);
+}
+
+/*
+ * unlink the port from midithru's (but keep it on the prefportmask in case
+ * the port is back) and update server.port accordingly
+ */
+void
+port_abort(struct port *p)
+{
+	struct ctl *c;
+	int i;
+
+	for (i = 0; i < MIDITHRU_NMAX; i++) {
+		midithru_rm(i, p->midi);
+
+		c = ctl_find(CTL_MIDI_PORT, p, &i);
+		if (c != NULL && c->curval != 0) {
+			c->val_mask = ~0U;
+			c->curval = 0;
+		}
+	}
+	midi_abort(p->midi);
+}
+
+void
+midithru_ref(unsigned int tag)
+{
+	struct midithru *t = midithru + tag;
+	struct port *c;
+	char name[64];
+
+#ifdef DEBUG
+	logx(3, "%u: midithru requested", tag);
+#endif
+	if (t->refcnt++ > 0)
+		return;
+	for (c = port_list; c != NULL; c = c->next) {
+		c->refcnt++;
+		if (c->state == DEV_CFG)
+			port_open(c);
+		if (c->state == DEV_INIT && (t->prefportmask & c->midi->self))
+			midithru_addport(tag, c);
+		snprintf(name, sizeof(name), "%u", c->num);
+		ctl_new(CTL_MIDI_PORT, c, &tag,
+		    CTL_LIST, "", "", "server", -1, "port",
+		    name, -1, 1, !!(t->portmask & c->midi->self));
+	}
+}
+
+void
+midithru_unref(unsigned int tag)
+{
+	struct midithru *t = midithru + tag;
+	struct port *c;
+
+#ifdef DEBUG
+	logx(3, "%u: midithru released", tag);
+#endif
+	if (--t->refcnt > 0)
+		return;
+	/* delete server.port control */
+	for (c = port_list; c != NULL; c = c->next) {
+		if (ctl_del(CTL_MIDI_PORT, c, &tag)) {
+			midithru_rm(tag, c->midi);
+			port_unref(c);
+		}
+	}
+}
+
+void
+midithru_addport(unsigned int tag, struct port *c)
+{
+	struct midithru *t = midithru + tag;
+	int i;
+
+	if (c->state == DEV_INIT) {
+		for (i = 0; i < MIDI_NEP; i++) {
+			if (t->progmask & (1 << i))
+				midi_link(midi_ep + i, c->midi);
+		}
+	}
+	t->portmask |= c->midi->self;
+}
+
+void
+midithru_addprog(unsigned int tag, struct midi *ep)
+{
+	struct midithru *t = midithru + tag;
+	int i;
+
+	for (i = 0; i < MIDI_NEP; i++) {
+		if ((t->portmask | t->progmask) & (1 << i))
+			midi_link(ep, midi_ep + i);
+	}
+	t->progmask |= ep->self;
+}
+
+void
+midithru_rm(unsigned int tag, struct midi *ep)
+{
+	struct midithru *t = midithru + tag;
+	int i;
+
+	t->progmask &= ~ep->self;
+	t->portmask &= ~ep->self;
+
+	for (i = 0; i < MIDI_NEP; i++) {
+		if ((t->portmask | t->progmask) & (1 << i))
+			midi_unlink(ep, midi_ep + i);
+	}
+}
+
+int
+midithru_setport(unsigned int tag, struct port *c, int val)
+{
+	struct midithru *t = midithru + tag;
+
+	if (val) {
+		if (c->state == PORT_CFG && !port_open(c))
+			return 0;
+		midithru_addport(tag, c);
+		t->prefportmask |= c->midi->self;
+	} else {
+		midithru_rm(tag, c->midi);
+		t->prefportmask &= ~c->midi->self;
+	}
+	return 1;
+}
+
+/*
+ * Reopen failed ports.
+ */
+void
+midithru_scanports(void)
+{
+	struct port *p;
+	struct ctl *c;
+	int i;
+
+	for (p = port_list; p != NULL; p = p->next) {
+
+		if (p->refcnt == 0 || p->state != PORT_CFG || !port_open(p))
+			continue;
+
+		for (i = 0; i < MIDITHRU_NMAX; i++) {
+			if (!(midithru[i].prefportmask & p->midi->self))
+				continue;
+			midithru_addport(i, p);
+			c = ctl_find(CTL_MIDI_PORT, p, &i);
+			if (c != NULL && c->curval != 0) {
+				c->val_mask = ~0U;
+				c->curval = 1;
+			}
+		}
+	}
 }

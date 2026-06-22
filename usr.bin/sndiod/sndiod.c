@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.56 2026/06/12 07:12:12 jsg Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.57 2026/06/22 14:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -286,47 +286,6 @@ reopen_devs(void)
 	}
 }
 
-/*
- * For each port, open the alt with the highest priority and switch to it
- */
-static void
-reopen_ports(void)
-{
-	struct port *p, *a, *apri;
-	int inuse;
-
-	for (p = port_list; p != NULL; p = a->next) {
-
-		/* skip unused ports */
-		inuse = 0;
-		a = p;
-		while (1) {
-			if (midi_rxmask(a->midi) || a->midi->txmask)
-				inuse = 1;
-			if (a->alt_next == p)
-				break;
-			a = a->alt_next;
-		}
-		if (!inuse)
-			continue;
-
-		/* open the alt with the highest prio */
-		apri = port_alt_ref(p->num);
-
-		/* switch to it */
-		a = p;
-		while (1) {
-			if (a != apri) {
-				midi_migrate(a->midi, apri->midi);
-				port_unref(a);
-			}
-			if (a->alt_next == p)
-				break;
-			a = a->alt_next;
-		}
-	}
-}
-
 void
 setsig(void)
 {
@@ -504,7 +463,7 @@ main(int argc, char **argv)
 	struct opt *o;
 	struct dev *d;
 	struct opt_alt *a, **pa, *alt_list;
-	struct port *p, *port_first, *port_next;
+	struct port *p;
 	struct listen *l;
 	struct passwd *pw;
 	struct tcpaddr {
@@ -536,7 +495,6 @@ main(int argc, char **argv)
 	par.msb = 0;
 	mode = MODE_PLAY | MODE_REC;
 	alt_list = NULL;
-	port_first = port_next = NULL;
 	tcpaddr_list = NULL;
 	d = NULL;
 	p = NULL;
@@ -599,18 +557,8 @@ main(int argc, char **argv)
 				return 1;
 			break;
 		case 'q':
-			p = mkport(optarg, hold);
-			/* create new circulate list */
-			port_first = port_next = p;
-			break;
 		case 'Q':
-			if (p == NULL)
-				errx(1, "-Q %s: no ports defined", optarg);
 			p = mkport(optarg, hold);
-			/* add to circulate list */
-			p->alt_next = port_next;
-			port_first->alt_next = p;
-			port_next = p;
 			break;
 		case 'a':
 			hold = opt_onoff();
@@ -765,7 +713,7 @@ main(int argc, char **argv)
 		if (reopen_flag) {
 			reopen_flag = 0;
 			reopen_devs();
-			reopen_ports();
+			midithru_scanports();
 		}
 		if (!fdpass_peer)
 			break;

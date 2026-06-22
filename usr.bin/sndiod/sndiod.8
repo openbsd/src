@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.21 2026/05/26 14:50:52 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.22 2026/06/22 14:15:26 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2026 $
+.Dd $Mdocdate: June 22 2026 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -34,7 +34,6 @@
 .Op Fl j Ar flag
 .Op Fl L Ar addr
 .Op Fl m Ar mode
-.Op Fl Q Ar port
 .Op Fl q Ar port
 .Op Fl r Ar rate
 .Op Fl s Ar name
@@ -263,15 +262,6 @@ Multiple modes can be specified, separated by commas.
 The default is
 .Ar play , Ns Ar rec
 (i.e. full-duplex).
-.It Fl Q Ar port
-Specify an alternate MIDI port to use.
-If it doesn't work, the one given with the last
-.Fl Q
-or
-.Fl q
-options will be used.
-For instance, this allows a USB MIDI controller to be replaced without
-the need to restart programs using it.
 .It Fl q Ar port
 Expose the given MIDI port.
 This allows multiple programs to share the port.

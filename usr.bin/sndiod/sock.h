@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.11 2026/05/20 13:26:02 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.12 2026/06/22 14:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,6 +57,7 @@ struct sock {
 	unsigned int walign;		/* align written data to this */
 	unsigned int ralign;		/* read data is aligned to this */
 	int lastvol;			/* last volume */
+	unsigned int tag;		/* controlled or connected midithru */
 	struct slot *slot;		/* audio device slot number */
 	struct midi *midi;		/* midi endpoint */
 	struct port *port;		/* midi port */

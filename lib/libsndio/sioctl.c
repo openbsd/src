@@ -1,4 +1,4 @@
-/*	$OpenBSD: sioctl.c,v 1.2 2021/11/01 14:43:24 ratchov Exp $	*/
+/*	$OpenBSD: sioctl.c,v 1.3 2026/06/22 14:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,7 +45,7 @@ sioctl_open(const char *str, unsigned int mode, int nbio)
 			return hdl;
 		return _sioctl_sun_open("rsnd/0", mode, nbio);
 	}
-	if (_sndio_parsetype(str, "snd"))
+	if (_sndio_parsetype(str, "snd") || _sndio_parsetype(str, "midithru"))
 		return _sioctl_aucat_open(str, mode, nbio);
 	if (_sndio_parsetype(str, "rsnd"))
 		return _sioctl_sun_open(str, mode, nbio);
