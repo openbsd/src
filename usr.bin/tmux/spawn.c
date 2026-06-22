@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.41 2026/06/19 18:37:10 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.42 2026/06/22 08:10:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -640,7 +640,7 @@ spawn_editor(struct client *c, const char *buf, size_t len,
 	px = w->sx / 2 - sx / 2;
 	py = w->sy / 2 - sy / 2;
 	window_push_zoom(w, 1, 0);
-	lc = layout_floating_pane(w, sx, sy, px, py);
+	lc = layout_floating_pane(w, NULL, sx, sy, px, py);
 	if (lc == NULL) {
 		spawn_editor_free(es);
 		return (NULL);
