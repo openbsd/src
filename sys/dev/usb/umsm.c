@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.130 2026/06/18 01:20:17 dlg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.131 2026/06/22 05:36:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -447,7 +447,6 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (uca.bulkin == -1 || uca.bulkout == -1) {
 		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
-		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
