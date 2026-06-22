@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.283 2026/03/16 15:41:19 stu Exp $
+.\"	$OpenBSD: port-modules.5,v 1.284 2026/06/22 10:36:51 tb Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2026 $
+.Dd $Mdocdate: June 22 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -566,13 +566,13 @@ Changes
 to `test' as this is standard for CMake projects.
 Also this module has the following knobs:
 .Bl -tag -width Ds
-.It MODCMAKE_DEBUG
+.It Ev MODCMAKE_DEBUG
 If set to `Yes', CMake will produce a debug build instead of a release
 build.
 The exact effects on the build process depend on settings specified in
 the CMake config files.
 Default value is `No'.
-.It MODCMAKE_LDFLAGS
+.It Ev MODCMAKE_LDFLAGS
 If set, the value will be passed to CMake via the
 .Ev LDFLAGS
 environment variable during configuration.
@@ -582,16 +582,16 @@ CMake uses this only on the first configuration to set
 and
 .Ev CMAKE_MODULE_LINKER_FLAGS_INIT .
 Default value is empty.
-.It MODCMAKE_VERBOSE
+.It Ev MODCMAKE_VERBOSE
 If set to `Yes', CMake will print details during configure and build
 stages about exact command being run, etc.
 Should not be used in ports Makefiles.
 Default value is `Yes'.
-.It MODCMAKE_WANTCOLOR
+.It Ev MODCMAKE_WANTCOLOR
 If set to `Yes', CMake will colorize its output.
 Should not be used in ports Makefiles.
 Default value is `No'.
-.It USE_NINJA
+.It Ev USE_NINJA
 If set to `Yes', use
 .Xr ninja 1
 as the build system instead of
@@ -728,7 +728,7 @@ will be disabled by creating a link to false in ${WRKDIR}/bin/.
 .Pp
 This module supports the following knob:
 .Bl -tag -width Ds
-.It MODMESON_WANTCOLOR
+.It Ev MODMESON_WANTCOLOR
 If set to `Yes', meson will colorize its output.
 Should not be used in ports Makefiles.
 Default value is `No'.
