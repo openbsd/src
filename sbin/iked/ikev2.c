@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.399 2026/06/22 10:16:17 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.400 2026/06/22 11:19:12 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4985,7 +4985,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 		if (ikev2_sa_responder(env, nsa, sa, msg)) {
 			log_debug("%s: failed to get IKE SA keys", __func__);
-			return (ret);
+			goto done;
 		}
 
 		sa_state(env, nsa, IKEV2_STATE_AUTH_SUCCESS);
@@ -5181,6 +5181,10 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		ret = ikev2_childsa_enable(env, sa);
 
  done:
+	if (ret && nsa != NULL && nsa != sa) {
+		ikev2_ike_sa_setreason(nsa, "invalid SA for rekey");
+		sa_free(env, nsa);
+	}
 	if (ret && protoid != IKEV2_SAPROTO_IKE)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	ibuf_free(e);
