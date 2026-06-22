@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.12 2026/05/19 16:56:59 kettenis Exp $ */
+/* $OpenBSD: bus.h,v 1.13 2026/06/22 07:54:19 deraadt Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -349,8 +349,8 @@ struct uio;
 #define BUS_DMASYNC_PREREAD	0x0004
 #define BUS_DMASYNC_PREWRITE	0x0008
 
-typedef struct machine_bus_dma_tag	*bus_dma_tag_t;
-typedef struct machine_bus_dmamap	*bus_dmamap_t;
+typedef struct bus_dma_tag *bus_dma_tag_t;
+typedef struct bus_dmamap	*bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t
@@ -358,7 +358,7 @@ typedef struct machine_bus_dmamap	*bus_dmamap_t;
  *	Describes a single contiguous DMA transaction.  Values
  *	are suitable for programming into DMA registers.
  */
-struct machine_bus_dma_segment {
+struct bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 
@@ -366,7 +366,7 @@ struct machine_bus_dma_segment {
 	vaddr_t		_ds_vaddr;	/* CPU address */
 	vaddr_t		_ds_bounce_va;	/* mapped bounced data */
 };
-typedef struct machine_bus_dma_segment	bus_dma_segment_t;
+typedef struct bus_dma_segment	bus_dma_segment_t;
 
 /*
  *	bus_dma_tag_t
@@ -375,7 +375,7 @@ typedef struct machine_bus_dma_segment	bus_dma_segment_t;
  *	DMA for a given bus.
  */
 
-struct machine_bus_dma_tag {
+struct bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
 	int	_flags;			/* misc. flags */
 
@@ -486,7 +486,7 @@ int	_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
  *
  *	Describes a DMA mapping.
  */
-struct machine_bus_dmamap {
+struct bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */

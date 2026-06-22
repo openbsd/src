@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.15 2026/05/19 13:05:47 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.16 2026/06/22 07:54:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -137,7 +137,7 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct uvm_constraint_range *constraint = &no_constraint;
 	int use_bounce_buffer = 0;
-	struct machine_bus_dmamap *map;
+	struct bus_dmamap *map;
 	struct pglist mlist;
 	struct vm_page **pg, *pgnext;
 	size_t mapsize, sz, ssize;
@@ -163,7 +163,7 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct machine_bus_dmamap) +
+	mapsize = sizeof(struct bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 
 	if (use_bounce_buffer) {
@@ -179,7 +179,7 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    (M_NOWAIT | M_ZERO) : (M_WAITOK | M_ZERO))) == NULL)
 		return (ENOMEM);
 
-	map = (struct machine_bus_dmamap *)mapstore;
+	map = (struct bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
@@ -249,7 +249,7 @@ _dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 		    &kv_any, &kp_none);
 	}
 
-	mapsize = sizeof(struct machine_bus_dmamap) +
+	mapsize = sizeof(struct bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
 	mapsize += sizeof(struct vm_page *) * map->_dm_npages;
 

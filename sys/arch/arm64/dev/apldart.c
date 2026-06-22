@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.21 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.22 2026/06/22 07:54:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -149,7 +149,7 @@ struct apldart_stream {
 	struct apldart_dmamem	*as_l1;
 	struct apldart_dmamem	**as_l2;
 
-	struct machine_bus_dma_tag as_dmat;
+	struct bus_dma_tag	 as_dmat;
 };
 
 struct apldart_softc {

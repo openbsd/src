@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.19 2026/05/19 13:05:47 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.20 2026/06/22 07:54:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2020, 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -190,7 +190,7 @@ struct bcmpcie_softc {
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
 
-	struct machine_bus_dma_tag sc_dma;
+	struct bus_dma_tag	sc_dma;
 
 	struct machine_pci_chipset sc_pc;
 	struct extent		*sc_busex;
