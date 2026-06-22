@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.400 2026/06/22 11:19:12 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.401 2026/06/22 11:42:25 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5054,8 +5054,6 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 				msg->msg_error = IKEV2_N_CHILD_SA_NOT_FOUND;
 				goto fail;
 			}
-			csa->csa_rekey = 1;
-			csa->csa_peersa->csa_rekey = 1;
 		}
 
 		/* Update initiator's nonce */
@@ -5091,6 +5089,11 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 				sa->sa_simult = ibuf_dup(kex->kex_inonce);
 			else
 				sa->sa_simult = ibuf_dup(nonce);
+		}
+
+		if (rekeying && csa) {
+			csa->csa_rekey = 1;
+			csa->csa_peersa->csa_rekey = 1;
 		}
 	}
 
@@ -5184,6 +5187,11 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (ret && nsa != NULL && nsa != sa) {
 		ikev2_ike_sa_setreason(nsa, "invalid SA for rekey");
 		sa_free(env, nsa);
+	}
+	if (ret && rekeying && csa) {
+		/* rekeying failed, unmark */
+		csa->csa_rekey = 0;
+		csa->csa_peersa->csa_rekey = 0;
 	}
 	if (ret && protoid != IKEV2_SAPROTO_IKE)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
