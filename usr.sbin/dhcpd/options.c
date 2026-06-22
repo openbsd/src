@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.36 2026/06/22 13:41:24 florian Exp $	*/
+/*	$OpenBSD: options.c,v 1.37 2026/06/22 14:44:11 millert Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -241,17 +241,19 @@ create_priority_list(unsigned char *priority_list, unsigned char *prl,
 	if (!prl)
 		prl_len = 0;
 	for(i = 0; i < prl_len; i++) {
-		if (stored_list[prl[i]])
-			continue;
 		/* CLASSLESS routes always have priority, sayeth RFC 3442. */
 		if (prl[i] == DHO_CLASSLESS_STATIC_ROUTES ||
 		    prl[i] == DHO_CLASSLESS_MS_STATIC_ROUTES) {
+			if (stored_list[prl[i]] ||
+			    priority_len >= sizeof(priority_list))
+				continue;
 			priority_list[priority_len++] = prl[i];
 			stored_list[prl[i]] = 1;
 		}
 	}
 	for(i = 0; i < prl_len; i++) {
-		if (stored_list[prl[i]])
+		if (stored_list[prl[i]] ||
+		    priority_len >= sizeof(priority_list))
 			continue;
 		priority_list[priority_len++] = prl[i];
 		stored_list[prl[i]] = 1;
@@ -260,7 +262,8 @@ create_priority_list(unsigned char *priority_list, unsigned char *prl,
 	/* Default priority list. */
 	prl = dhcp_option_default_priority_list;
 	for(i = 0; i < 256; i++) {
-		if (stored_list[prl[i]])
+		if (stored_list[prl[i]] ||
+		    priority_len >= sizeof(priority_list))
 			continue;
 		priority_list[priority_len++] = prl[i];
 		stored_list[prl[i]] = 1;
