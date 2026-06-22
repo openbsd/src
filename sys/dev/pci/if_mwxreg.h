@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.21 2026/06/17 13:34:53 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.22 2026/06/22 10:35:25 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -423,17 +423,16 @@ enum mt76_rxq_id {
 	__MT_RXQ_MAX
 };
 
-#define	MT7921_MAX_INTERFACES	4
-#define	MT7921_MAX_WMM_SETS	4
-#define	MT7921_WTBL_SIZE	20
-#define	MT7921_WTBL_RESERVED	(MT7921_WTBL_SIZE - 1)
-#define	MT7921_WTBL_STA		(MT7921_WTBL_RESERVED - MT7921_MAX_INTERFACES)
+#define	MWX_MAX_INTERFACES	4
+#define	MWX_MAX_WMM_SETS	4
+#define	MWX_WTBL_SIZE	20
+#define	MWX_WTBL_RESERVED	(MWX_WTBL_SIZE - 1)
+#define	MWX_WTBL_STA		(MWX_WTBL_RESERVED - MWX_MAX_INTERFACES)
 
 #define	MT_RX_BUF_SIZE		2048
 #define	MT_MAX_SCATTER		4	/* limit of MT_HW_TXP_MAX_BUF_NUM */
 #define	MT_MAX_SIZE		MT_DMA_CTL_SD_LEN_MASK
 
-#define	MWX_WCID_MAX		288
 #define	MWX_TXWI_MAX		512	/* HW limit is 8192 */
 
 #define	MT_PACKET_ID_MASK		0x7f
@@ -1349,6 +1348,45 @@ struct sta_rec_wtbl {
 	uint8_t		wlan_idx_hi;
 	uint8_t		rsv[3];
 } __packed;
+
+#define STA_REC_KEY			0x11
+struct sta_rec_sec {
+	uint16_t	tag;
+	uint16_t	len;
+	uint8_t		add;
+	uint8_t		n_cipher;
+	uint8_t		rsv[2];
+} __packed;
+
+struct sta_rec_sec_key {
+	uint8_t		cipher_id;
+	uint8_t		cipher_len;
+	uint8_t		key_id;
+	uint8_t		key_len;
+	uint8_t		key[32];
+} __packed;
+
+enum mcu_cipher_type {
+	MCU_CIPHER_NONE = 0,
+	MCU_CIPHER_WEP40,
+	MCU_CIPHER_WEP104,
+	MCU_CIPHER_WEP128,
+	MCU_CIPHER_TKIP,
+	MCU_CIPHER_AES_CCMP,
+	MCU_CIPHER_CCMP_256,
+	MCU_CIPHER_GCMP,
+	MCU_CIPHER_GCMP_256,
+	MCU_CIPHER_WAPI,
+	MCU_CIPHER_BIP_CMAC_128,
+	MCU_CIPHER_BIP_CMAC_256,
+	MCU_CIPHER_BCN_PROT_CMAC_128,
+	MCU_CIPHER_BCN_PROT_CMAC_256,
+	MCU_CIPHER_BCN_PROT_GMAC_128,
+	MCU_CIPHER_BCN_PROT_GMAC_256,
+	MCU_CIPHER_BIP_GMAC_128,
+	MCU_CIPHER_BIP_GMAC_256,
+};
+
 
 #define	STA_REC_PHY			0x15
 struct sta_rec_phy {

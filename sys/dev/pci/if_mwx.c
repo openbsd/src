@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.36 2026/06/17 13:34:53 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.37 2026/06/22 10:35:25 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -263,11 +263,13 @@ struct mwx_hw_capa {
 struct mwx_node {
 	struct ieee80211_node	ni;
 	uint16_t		wcid;
-	uint8_t			hw_key_idx;	/* encryption key index */
-	uint8_t			hw_key_idx2;
+	uint16_t		flags;
 };
+#define	MWX_NODE_FLAG_HAVE_PAIRWISE_KEY		0x1
+#define	MWX_NODE_FLAG_HAVE_GROUP_KEY		0x2
 
 struct mwx_vif {
+	struct mwx_node		vif_mn;
 	uint8_t			idx;
 	uint8_t			omac_idx;
 	uint8_t			band_idx;
@@ -280,6 +282,12 @@ enum mwx_hw_type {
 	MWX_HW_MT7921,
 	MWX_HW_MT7922,
 	MWX_HW_MT7925,
+};
+
+struct mwx_setkey_task_arg {
+	struct ieee80211_node	*ni;
+	struct ieee80211_key	*k;
+	int			 add;
 };
 
 struct mwx_softc {
@@ -312,11 +320,14 @@ struct mwx_softc {
 	struct taskq		*sc_nswq;;
 	struct task		sc_newstate_task;
 	struct task		sc_bgscan_done_task;
+	struct task		sc_setkey_task;
 	struct task		sc_scan_task;
 	struct task		sc_reset_task;
+	struct timeout		sc_reset_to;
 	u_int			sc_flags;
 #define MWX_FLAG_SCANNING		0x01
 #define MWX_FLAG_BGSCAN			0x02
+	int			sc_coredump_cnt;
 	int8_t			sc_resetting;
 	int8_t			sc_fw_loaded;
 
@@ -325,6 +336,10 @@ struct mwx_softc {
 
 	struct ieee80211_node_switch_bss_arg	*sc_bgscan_arg;
 	size_t			sc_bgscan_arg_size;
+
+	struct mwx_setkey_task_arg	sc_setkey_arg[8];
+	int			sc_setkey_cur;
+	int			sc_setkey_tail;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
@@ -342,7 +357,10 @@ struct mwx_softc {
 #define	sc_txtap	sc_txtapu.th
 #endif
 
+	struct mwx_node		global_mn;
 	struct mwx_vif		sc_vif;
+	uint32_t		sc_wcid_mask;
+
 	uint32_t		sc_intr_mask;
 
 	/* mcu */
@@ -422,7 +440,7 @@ const struct mwx_rate {
 __unused static void
 pkt_hex_dump(struct mbuf *m)
 {
-	int len, rowsize = 16;
+	int len, rowsize = 24;
 	int i, l, linelen;
 	uint8_t *data;
 
@@ -437,6 +455,13 @@ pkt_hex_dump(struct mbuf *m)
 			linelen = rowsize;
 		for (l = 0; l < linelen; l++)
 			printf("%02X ", (uint32_t)data[l]);
+		printf("| ");
+		for (l = 0; l < linelen; l++) {
+			int c = '.';
+			if (data[l] >= 0x20 && data[l] < 0x7f)
+				c = data[l];
+			printf("%c", c);
+		}
 		data += linelen;
 		printf("\n");
 	}
@@ -477,6 +502,7 @@ void		mwx_attach(struct device *, struct device *, void *);
 int		mwx_activate(struct device *, int);
 
 void		mwx_reset(struct mwx_softc *);
+void		mwx_reset_timeo(void *);
 void		mwx_reset_task(void *);
 int		mwx_txwi_alloc(struct mwx_softc *, int);
 void		mwx_txwi_free(struct mwx_softc *);
@@ -586,8 +612,9 @@ int		mt7921_set_channel(struct mwx_softc *);
 
 uint8_t		 mt7921_get_phy_mode_v2(struct mwx_softc *,
 		    struct ieee80211_node *);
-struct mbuf	*mt7921_alloc_sta_tlv(int);
-void		*mt7921_append_tlv(struct mbuf *, uint16_t *, int, int);
+struct mbuf	*mwx_alloc_sta_req_tlv(int);
+void		*mwx_append_len(struct mbuf *, int);
+void		*mwx_append_tlv(struct mbuf *, uint16_t *, int, int);
 void		 mt7921_mcu_add_basic_tlv(struct mbuf *, uint16_t *,
 		    struct mwx_softc *, struct ieee80211_node *, int, int);
 void		 mt7921_mcu_add_sta_tlv(struct mbuf *, uint16_t *,
@@ -600,6 +627,10 @@ int		 mt7921_mcu_wtbl_ht_tlv(struct mbuf *, uint16_t *,
 		    struct mwx_softc *, struct ieee80211_node *);
 int		 mt7921_mac_sta_update(struct mwx_softc *,
 		    struct ieee80211_node *, int, int);
+void		 mt7921_mcu_add_key_tlv(struct mbuf *, uint16_t *,
+		    struct ieee80211_key *, int);
+int		 mt7921_mcu_sta_key_update(struct mwx_softc *,
+		    struct ieee80211_node *, struct ieee80211_key *, int);
 
 static inline uint32_t
 mwx_read(struct mwx_softc *sc, uint32_t reg)
@@ -733,8 +764,9 @@ mwx_init(struct ifnet *ifp)
 
 	mt7921_mac_reset_counters(sc);
 
-	mn = (void *)ic->ic_bss;
+	mn = &sc->sc_vif.vif_mn;
 
+	mwx_mac_wtbl_update(sc, mn->wcid);
 	rv = mt7921_mcu_uni_add_dev(sc, &sc->sc_vif, mn, 1);
 	if (rv)
 		return rv;
@@ -742,8 +774,6 @@ mwx_init(struct ifnet *ifp)
 	rv = mt7921_mcu_set_tx(sc, &sc->sc_vif);
 	if (rv)
 		return rv;
-
-	mwx_mac_wtbl_update(sc, mn->wcid);
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		rv = mt7921_mcu_set_chan_info(sc, MCU_EXT_CMD_SET_RX_PATH);
@@ -793,8 +823,10 @@ mwx_stop(struct ifnet *ifp)
 	/* Cancel scheduled tasks and let any stale tasks finish up. */
 	task_del(sc->sc_nswq, &sc->sc_newstate_task);
 	task_del(sc->sc_nswq, &sc->sc_bgscan_done_task);
-	task_del(sc->sc_nswq, &sc->sc_reset_task);
+	task_del(sc->sc_nswq, &sc->sc_setkey_task);
 	task_del(sc->sc_nswq, &sc->sc_scan_task);
+	task_del(sc->sc_nswq, &sc->sc_reset_task);
+	timeout_del(&sc->sc_reset_to);
 
 	/* XXX need a barrier here */
 
@@ -816,7 +848,7 @@ mwx_stop(struct ifnet *ifp)
 			sc->sc_flags &= ~MWX_FLAG_SCANNING;
 		}
 
-		mn = (void *)ic->ic_bss;
+		mn = &sc->sc_vif.vif_mn;
 		mt7921_mcu_uni_add_dev(sc, &sc->sc_vif, mn, 0);
 		mwx_mcu_set_deep_sleep(sc, 1);
 		mt7921_mcu_set_mac_enable(sc, 0, 0);
@@ -974,14 +1006,14 @@ struct ieee80211_node *
 mwx_node_alloc(struct ieee80211com *ic)
 {
 	/* XXX this is just wrong */
-	static uint32_t wcid = 1;
+	static uint32_t wcid = 0;
 	struct mwx_softc *sc = ic->ic_softc;
 	struct mwx_node *mn;
 
 	mn = malloc(sizeof(struct mwx_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (mn == NULL)
 		return NULL;
-	mn->wcid = wcid++;
+	mn->wcid = 1 + wcid++ % (MWX_WTBL_STA - 1);
 
 	/* init WCID table entry */
 	mwx_mac_wtbl_update(sc, mn->wcid);
@@ -1016,7 +1048,7 @@ mwx_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mwx_node *mn = (void *)ni;
 	uint16_t wcid = mn->wcid;
 
-	/* TODO clear WCID */
+	mwx_mac_wtbl_update(sc, wcid);
 #endif
 }
 #endif
@@ -1201,7 +1233,6 @@ mwx_bgscan_done_task(void *arg)
 		goto done;
 	}
 
-#ifdef NOTYET
 	/*
 	 * Remove installed crypto keys while we still have access to them.
 	 * Once mwx_newstate() is entered ic_bss will already contain
@@ -1210,8 +1241,10 @@ mwx_bgscan_done_task(void *arg)
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		struct ieee80211_key *k;
 
+#ifdef NOTYET
 		if (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP)
 			mwx_mfp_leave(sc);
+#endif
 
 		if (ni->ni_pairwise_key.k_cipher != IEEE80211_CIPHER_NONE)
 			(*ic->ic_delete_key)(ic, ni, &ni->ni_pairwise_key);
@@ -1220,7 +1253,7 @@ mwx_bgscan_done_task(void *arg)
 			k = &ic->ic_nw_keys[ic->ic_def_txkey];
 			if ((k->k_flags & IEEE80211_KEY_GROUP) &&
 			    k->k_cipher == IEEE80211_CIPHER_CCMP)
-				*ic->ic_delete_key)(ic, ni, k);
+				(*ic->ic_delete_key)(ic, ni, k);
 		}
 
 		if (ic->ic_igtk_kid == 4 || ic->ic_igtk_kid == 5) {
@@ -1235,9 +1268,6 @@ mwx_bgscan_done_task(void *arg)
 		ni->ni_flags &= ~IEEE80211_NODE_RXMGMTPROT;
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 	}
-#else
-	(void)ic;
-#endif
 
         /*
 	 * Tx queues have been flushed and Tx agg has been stopped.
@@ -1267,13 +1297,66 @@ int
 mwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	return 0;
+	struct mwx_softc *sc = ic->ic_softc;
+	struct mwx_setkey_task_arg *a;
+
+	DPRINTF("%s: set_key: ni %p, k_id %d, k_flags %x k_cipher %d\n",
+	    DEVNAME(sc), ni, k->k_id, k->k_flags, k->k_cipher);
+
+	if ((sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg) ==
+	    sc->sc_setkey_tail)
+		return ENOSPC;
+
+	a = &sc->sc_setkey_arg[sc->sc_setkey_cur];
+	a->ni = ni;
+	a->k = k;
+	a->add = 1;
+	sc->sc_setkey_cur = (sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg);
+	task_add(sc->sc_nswq, &sc->sc_setkey_task);
+	return EBUSY;
 }
 
 void
 mwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
+	struct mwx_softc *sc = ic->ic_softc;
+	struct mwx_setkey_task_arg *a;
+
+	DPRINTF("%s: delete_key: ni %p, k_id %d, k_flags %x k_cipher %d\n",
+	    DEVNAME(sc), ni, k->k_id, k->k_flags, k->k_cipher);
+
+	if ((sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg) ==
+	    sc->sc_setkey_tail)
+		return;
+
+	a = &sc->sc_setkey_arg[sc->sc_setkey_cur];
+	a->ni = ni;
+	a->k = k;
+	a->add = 0;
+	sc->sc_setkey_cur = (sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg);
+	task_add(sc->sc_nswq, &sc->sc_setkey_task);
+}
+
+void
+mwx_setkey_task(void *arg)
+{
+	struct mwx_softc *sc = arg;
+	struct mwx_setkey_task_arg *a;
+	int s = splnet();
+
+	while (sc->sc_setkey_tail != sc->sc_setkey_cur) {
+		a = &sc->sc_setkey_arg[sc->sc_setkey_tail];
+		mt7921_mcu_sta_key_update(sc, a->ni, a->k, a->add);
+		a->ni = NULL;
+		a->k = NULL;
+		a->add = 0;
+
+		sc->sc_setkey_tail = (sc->sc_setkey_tail + 1) %
+		    nitems(sc->sc_setkey_arg);
+	}
+
+	splx(s);
 }
 
 #if NBPFILTER > 0
@@ -1667,8 +1750,7 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[1];
 
-	/* HW supports up to 288 STAs in HostAP and IBSS modes */
-	ic->ic_max_aid = min(IEEE80211_AID_MAX, MWX_WCID_MAX);
+	ic->ic_max_aid = min(IEEE80211_AID_MAX, MWX_WTBL_STA - 1);
 
 	ic->ic_max_rssi = 0;	/* RSSI value is in dBm. */
 
@@ -1709,8 +1791,10 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 
 	task_set(&sc->sc_newstate_task, mwx_newstate_task, sc);
 	task_set(&sc->sc_bgscan_done_task, mwx_bgscan_done_task, sc);
-	task_set(&sc->sc_reset_task, mwx_reset_task, sc);
+	task_set(&sc->sc_setkey_task, mwx_setkey_task, sc);
 	task_set(&sc->sc_scan_task, mwx_end_scan_task, sc);
+	task_set(&sc->sc_reset_task, mwx_reset_task, sc);
+	timeout_set(&sc->sc_reset_to, mwx_reset_timeo, sc);
 
 	/*
 	 * We cannot read the MAC address without loading the
@@ -1796,6 +1880,12 @@ mwx_reset(struct mwx_softc *sc)
 }
 
 void
+mwx_reset_timeo(void *arg)
+{
+	mwx_reset(arg);
+}
+
+void
 mwx_reset_task(void *arg)
 {
 	struct mwx_softc *sc = arg;
@@ -1808,6 +1898,7 @@ mwx_reset_task(void *arg)
 	if (!fatal && (ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		mwx_init(ifp);
 	sc->sc_resetting = 0;
+	sc->sc_coredump_cnt = 0;
 }
 
 int
@@ -2888,10 +2979,12 @@ mwx_mcu_rx_event(struct mwx_softc *sc, struct mbuf *m)
 		break;
 #endif
 	case MCU_EVENT_COREDUMP:
-		/* it makes little sense to write the coredump down */
-		if (!sc->sc_resetting)
+		if (!sc->sc_coredump_cnt)
 			printf("%s: coredump event\n", DEVNAME(sc));
-		mwx_reset(sc);
+		/* it makes little sense to write the coredump down */
+		if (sc->sc_coredump_cnt++ <= 256)
+			pkt_hex_dump(m);
+		timeout_add_msec(&sc->sc_reset_to, 50);
 		break;
 	case MCU_EVENT_LP_INFO:
 		mt7921_mcu_low_power_event(sc, m);
@@ -3256,6 +3349,8 @@ mwx_init_hardware(struct mwx_softc *sc)
 	}
 
 	mwx_mac_init(sc);
+
+	sc->sc_vif.vif_mn.wcid = MWX_WTBL_RESERVED;
 
 	/*
 	 * mcu_uni_add_dev, mwx_mac_wtbl_update,
@@ -3636,7 +3731,7 @@ mwx_mac_init(struct mwx_softc *sc)
 		mwx_set(sc, dcr0, MT_MDP_DCR0_RX_HDR_TRANS_EN);
 	}
 
-	for (i = 0; i < MT7921_WTBL_SIZE; i++)
+	for (i = 0; i < MWX_WTBL_SIZE; i++)
 		mwx_mac_wtbl_update(sc, i);
 
 	mwx_mac_init_band(sc, 0);
@@ -5049,13 +5144,11 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 		m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK |
 		    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 	}
+#endif
 
 	if ((rxd1 & MT_RXD1_NORMAL_SEC_MODE_MASK) != 0 &&
-	    !(rxd1 & (MT_RXD1_NORMAL_CLM | MT_RXD1_NORMAL_CM))) {
-		rxi->rxi_flags |= IEEE80211_RXI_HWDEC |
-		    IEEE80211_RXI_HWDEC_IV_STRIPPED;
-	}
-#endif
+	    !(rxd1 & (MT_RXD1_NORMAL_CLM | MT_RXD1_NORMAL_CM)))
+		rxi->rxi_flags |= IEEE80211_RXI_HWDEC;
 
 	remove_pad = (rxd2 & MT_RXD2_NORMAL_HDR_OFFSET_MASK) >>
 	    MT_RXD2_NORMAL_HDR_OFFSET_SHIFT;
@@ -5326,6 +5419,19 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 #endif
 	rxi->rxi_chan = chfnum;
 
+	if (rxi->rxi_flags & IEEE80211_RXI_HWDEC) {
+		/*
+		 * XXX
+		 * MT7921 firmware decrypts and removes both CCMP IV (8B)
+		 * and MIC (8B), leaving plaintext payload.
+		 * Clear Protected bit so ieee80211_input_hwdecrypt() won't
+		 * strip the IV.
+		 */
+		struct ieee80211_frame *wh;
+		wh = mtod(m, struct ieee80211_frame *);
+		wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
+	}
+
 	return 0;
 }
 
@@ -5513,6 +5619,7 @@ mt7921_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
     struct ieee80211_node *ni, struct mt76_txwi *txp)
 {
 	struct mwx_node *mn = (void *)ni;
+	struct ieee80211_frame *wh;
 	uint32_t val, p_fmt, omac_idx;
 	uint8_t q_idx, wmm_idx, band_idx;
 	uint8_t phy_idx = 0;
@@ -5520,6 +5627,7 @@ mt7921_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 	int pid = MT_PACKET_ID_FIRST;
 	enum mt76_txq_id qid = MT_TXQ_BE;
 
+	wh = mtod(m, struct ieee80211_frame *);
 	omac_idx = sc->sc_vif.omac_idx << MT_TXD1_OWN_MAC_SHIFT;
 	wmm_idx = sc->sc_vif.wmm_idx;
 	band_idx = sc->sc_vif.band_idx;
@@ -5529,7 +5637,7 @@ mt7921_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 		q_idx = MT_LMAC_ALTX0;
 	} else {
 		p_fmt = MT_TX_TYPE_CT;
-		q_idx = wmm_idx * MT7921_MAX_WMM_SETS +
+		q_idx = wmm_idx * MWX_MAX_WMM_SETS +
 		    mt7921_lmac_mapping(/* skb_get_queue_mapping(skb) */ 0);
 
 #ifdef NOTYET
@@ -5551,9 +5659,9 @@ mt7921_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 	txp->txwi[2] = 0;
 
 	val = 15 << MT_TXD3_REM_TX_COUNT_SHIFT;
-#ifdef NOTYET
-	if (key)
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED)
 		val |= MT_TXD3_PROTECT_FRAME;
+#ifdef NOTYET
 	if (info->flags & IEEE80211_TX_CTL_NO_ACK)
 		val |= MT_TXD3_NO_ACK;
 #endif
@@ -5682,8 +5790,13 @@ mt7921_get_phy_mode_v2(struct mwx_softc *sc, struct ieee80211_node *ni)
 	return mode;
 }
 
+/*
+ * Allocate an mbuf and reserve len bytes at the start for the header.
+ * After that use mwx_append_tlv or mwx_append_len to add sub-tlv and
+ * mwx_fill_sta_req_hdr to finalize the hdr.
+ */
 struct mbuf *
-mt7921_alloc_sta_tlv(int len)
+mwx_alloc_sta_req_tlv(int len)
 {
 	struct mbuf *m;
 
@@ -5699,12 +5812,46 @@ mt7921_alloc_sta_tlv(int len)
 	return m;
 }
 
+void
+mwx_fill_sta_req_hdr(struct mbuf *m, struct mwx_vif *mvif,
+    uint8_t muar_idx, uint16_t wcid, uint16_t tlvnum)
+{
+	struct sta_req_hdr *hdr;
+
+	KASSERT(m_leadingspace(m) >= sizeof(*hdr));
+	m = m_prepend(m, sizeof(*hdr), M_DONTWAIT);
+	hdr = mtod(m, struct sta_req_hdr *);
+	memset(hdr, 0, sizeof(*hdr));
+
+	hdr->bss_idx = mvif->idx;
+	hdr->wlan_idx_lo = wcid & 0xff;
+	hdr->wlan_idx_hi = wcid >> 8;
+	hdr->muar_idx = muar_idx;
+	hdr->is_tlv_append = 1;
+	hdr->tlv_num = htole16(tlvnum);
+}
+
+void *
+mwx_append_len(struct mbuf *m, int len)
+{
+	caddr_t p;
+
+	KASSERT(m_trailingspace(m) >= len);
+	
+	p = mtod(m, caddr_t) + m->m_len;
+	m->m_len += len;
+	m->m_pkthdr.len = m->m_len;
+	memset(p, 0, len);
+
+	return p;
+}
+
 /*
  * Reserve len bytes at the end of mbuf m, return to start of that area
  * after initializing the data. It also sets the tag and len hdr.
  */
 void *
-mt7921_append_tlv(struct mbuf *m, uint16_t *tlvnum, int tag, int len)
+mwx_append_tlv(struct mbuf *m, uint16_t *tlvnum, int tag, int len)
 {
 	struct {
 		uint16_t	tag;
@@ -5715,16 +5862,10 @@ mt7921_append_tlv(struct mbuf *m, uint16_t *tlvnum, int tag, int len)
 	};
 	caddr_t p;
 
-	KASSERT(m_trailingspace(m) >= len);
-
-	p = mtod(m, caddr_t) + m->m_len;
-	m->m_len += len;
-	m->m_pkthdr.len = m->m_len;
-	memset(p, 0, len);
+	p = mwx_append_len(m, len);
 	memcpy(p, &tlv, sizeof(tlv));
 
 	*tlvnum += 1;
-
 	return p;
 }
 
@@ -5735,7 +5876,7 @@ mt7921_mcu_add_basic_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct sta_rec_basic *basic;
 
-	basic = mt7921_append_tlv(m, tlvnum, STA_REC_BASIC, sizeof(*basic));
+	basic = mwx_append_tlv(m, tlvnum, STA_REC_BASIC, sizeof(*basic));
 
 	basic->extra_info = htole16(EXTRA_INFO_VER);
 	if (add) {
@@ -5787,7 +5928,7 @@ mt7921_mcu_add_sta_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 	if (sta->deflink.ht_cap.ht_supported) {
 		struct sta_rec_ht *ht;
 
-		ht = mt7921_append_tlv(m, tlvnum, STA_REC_HT, sizeof(*ht));
+		ht = mwx_append_tlv(m, tlvnum, STA_REC_HT, sizeof(*ht));
 		ht->ht_cap = htole16(sta->deflink.ht_cap.cap);
 	}
 
@@ -5795,7 +5936,7 @@ mt7921_mcu_add_sta_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 	if (sta->deflink.vht_cap.vht_supported) {
 		struct sta_rec_vht *vht;
 
-		vht = mt7921_append_tlv(m, tlvnum, STA_REC_VHT,
+		vht = mwx_append_tlv(m, tlvnum, STA_REC_VHT,
 		    sizeof(*vht));
 		vht->vht_cap = htole32(sta->deflink.vht_cap.cap);
 		vht->vht_rx_mcs_map = sta->deflink.vht_cap.vht_mcs.rx_mcs_map;
@@ -5821,14 +5962,14 @@ mt7921_mcu_add_sta_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 		    sta_state == MT76_STA_INFO_STATE_ASSOC) {
 			struct sta_rec_he_6g_capa *he_6g_capa;
 
-			he_6g_capa = mt7921_append_tlv(m, tlvnum,
+			he_6g_capa = mwx_append_tlv(m, tlvnum,
 			    STA_REC_HE_6G, sizeof(*he_6g_capa));
 			he_6g_capa->capa = sta->deflink.he_6ghz_capa.capa;
 		}
 	}
 #endif
 
-	phy = mt7921_append_tlv(m, tlvnum, STA_REC_PHY, sizeof(*phy));
+	phy = mwx_append_tlv(m, tlvnum, STA_REC_PHY, sizeof(*phy));
 	/* XXX basic_rates: bitmap of basic rates, each bit stands for an
 	 *      index into the rate table configured by the driver in
 	 *      the current band.
@@ -5855,7 +5996,7 @@ mt7921_mcu_add_sta_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 	supp_rates = RA_LEGACY_OFDM;
 #endif
 
-	ra_info = mt7921_append_tlv(m, tlvnum, STA_REC_RA,
+	ra_info = mwx_append_tlv(m, tlvnum, STA_REC_RA,
 	    sizeof(*ra_info));
 	ra_info->legacy = htole16(supp_rates);
 #ifdef NOTYET
@@ -5865,7 +6006,7 @@ mt7921_mcu_add_sta_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 			HT_MCS_MASK_NUM);
 #endif
 
-	state = mt7921_append_tlv(m, tlvnum, STA_REC_STATE, sizeof(*state));
+	state = mwx_append_tlv(m, tlvnum, STA_REC_STATE, sizeof(*state));
 	state->state = /* XXX sta_state */ 0;
 #ifdef NOTYET
 	if (sta->deflink.vht_cap.vht_supported) {
@@ -5884,7 +6025,7 @@ mt7921_mcu_wtbl_generic_tlv(struct mbuf *m, uint16_t *tlvnum,
 	struct wtbl_generic *generic;
 	struct wtbl_rx *rx;
 
-	generic = mt7921_append_tlv(m, tlvnum, WTBL_GENERIC,
+	generic = mwx_append_tlv(m, tlvnum, WTBL_GENERIC,
 	    sizeof(*generic));
 
 	if (ni) {
@@ -5897,7 +6038,7 @@ mt7921_mcu_wtbl_generic_tlv(struct mbuf *m, uint16_t *tlvnum,
 		generic->muar_idx = 0xe;
 	}
 
-	rx = mt7921_append_tlv(m, tlvnum, WTBL_RX, sizeof(*rx));
+	rx = mwx_append_tlv(m, tlvnum, WTBL_RX, sizeof(*rx));
 	rx->rca1 = ni ? ic->ic_opmode != IEEE80211_M_HOSTAP : 1;
 	rx->rca2 = 1;
 	rx->rv = 1;
@@ -5912,7 +6053,7 @@ mt7921_mcu_wtbl_hdr_trans_tlv(struct mbuf *m, uint16_t *tlvnum,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct wtbl_hdr_trans *htr;
 
-	htr = mt7921_append_tlv(m, tlvnum, WTBL_HDR_TRANS, sizeof(*htr));
+	htr = mwx_append_tlv(m, tlvnum, WTBL_HDR_TRANS, sizeof(*htr));
 
 	/* no hdr decapsulation offload */
 	htr->no_rx_trans = 1;
@@ -5933,7 +6074,7 @@ mt7921_mcu_wtbl_ht_tlv(struct mbuf *m, uint16_t *tlvnum,
 
 	/* XXX lots missing here */
 
-	smps = mt7921_append_tlv(m, tlvnum, WTBL_SMPS, sizeof(*smps));
+	smps = mwx_append_tlv(m, tlvnum, WTBL_SMPS, sizeof(*smps));
 	/* spatial multiplexing power save mode, off for now */
 	//smps->smps = (sta->deflink.smps_mode == IEEE80211_SMPS_DYNAMIC);
 
@@ -5944,15 +6085,15 @@ int
 mt7921_mac_sta_update(struct mwx_softc *sc, struct ieee80211_node *ni,
     int add, int new)
 {
-	struct mwx_node *mw = (struct mwx_node *)ni;
+	struct mwx_node *mn = (struct mwx_node *)ni;
 	struct mwx_vif *mvif = &sc->sc_vif;
 	struct sta_req_hdr *hdr;
 	struct sta_rec_wtbl *wtbl;
-	struct mbuf *m = NULL;
+	struct mbuf *m;
 	uint16_t tlvnum = 0, wnum = 0;
 	int wlen = 0;
 
-	m = mt7921_alloc_sta_tlv(sizeof(*hdr));
+	m = mwx_alloc_sta_req_tlv(sizeof(*hdr));
 	if (m == NULL)
 		return ENOBUFS;
 
@@ -5962,10 +6103,10 @@ mt7921_mac_sta_update(struct mwx_softc *sc, struct ieee80211_node *ni,
 	if (ni != NULL && add)
 		mt7921_mcu_add_sta_tlv(m, &tlvnum, sc, ni, add, new);
 
-	wtbl = mt7921_append_tlv(m, &tlvnum, STA_REC_WTBL,
+	wtbl = mwx_append_tlv(m, &tlvnum, STA_REC_WTBL,
 	    sizeof(*wtbl));
-	wtbl->wlan_idx_lo = mw ? mw->wcid & 0xff : 0,
-	wtbl->wlan_idx_hi = mw ? mw->wcid >> 8 : 0,
+	wtbl->wlan_idx_lo = mn ? mn->wcid & 0xff : 0,
+	wtbl->wlan_idx_hi = mn ? mn->wcid >> 8 : 0,
 	wtbl->operation = WTBL_RESET_AND_SET;
 
 	if (add) {
@@ -5979,17 +6120,118 @@ mt7921_mac_sta_update(struct mwx_softc *sc, struct ieee80211_node *ni,
 	wtbl->tlv_num = htole16(wnum);
 	wtbl->len = htole16(le16toh(wtbl->len) + wlen);
 
-	KASSERT(m_leadingspace(m) >= sizeof(*hdr));
-	m = m_prepend(m, sizeof(*hdr), M_DONTWAIT);
-	hdr = mtod(m, struct sta_req_hdr *);
-	memset(hdr, 0, sizeof(*hdr));
-	hdr->bss_idx = mvif->idx,
-	hdr->wlan_idx_lo = mw ? mw->wcid & 0xff : 0,
-	hdr->wlan_idx_hi = mw ? mw->wcid >> 8 : 0,
-	hdr->muar_idx = ni ? mvif->omac_idx : 0,
-	hdr->is_tlv_append = 1,
-	hdr->tlv_num = htole16(tlvnum);
-
+	mwx_fill_sta_req_hdr(m, mvif, mn ? mvif->omac_idx : 0,
+	    mn ? mn->wcid : 0, tlvnum);
 	return mwx_mcu_send_mbuf_wait(sc, MCU_UNI_CMD_STA_REC_UPDATE, m);
 }
 
+static int
+mt7921_key_to_cipher_id(struct ieee80211_key *k)
+{
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_CCMP:
+		 return MCU_CIPHER_AES_CCMP;
+	case IEEE80211_CIPHER_TKIP:
+		return MCU_CIPHER_TKIP;
+	case IEEE80211_CIPHER_WEP40:
+		return MCU_CIPHER_WEP40;
+	case IEEE80211_CIPHER_WEP104:
+		 return MCU_CIPHER_WEP104;
+	case IEEE80211_CIPHER_BIP:
+		return MCU_CIPHER_BIP_CMAC_128;
+	default:
+		return MCU_CIPHER_NONE;
+	}
+}
+
+void
+mt7921_mcu_add_key_tlv(struct mbuf *m, uint16_t *tlvnum,
+    struct ieee80211_key *k, int add)
+{
+	struct sta_rec_sec *sec;
+	struct sta_rec_sec_key *key;
+
+	sec = mwx_append_tlv(m, tlvnum, STA_REC_KEY, sizeof(*sec));
+
+	if (add) {
+		sec->n_cipher = 1;
+		sec->add = 0;	/* connac2 has inverted logic */
+		sec->len = htole16(sizeof(*sec) + sizeof(*key));
+
+		key = mwx_append_len(m, sizeof(*key));
+		key->cipher_id = mt7921_key_to_cipher_id(k);
+		key->cipher_len = sizeof(*key);
+		key->key_id = k->k_id;
+		key->key_len = k->k_len;
+
+		CTASSERT(sizeof(k->k_key) == sizeof(key->key));
+		memcpy(key->key, k->k_key, k->k_len);
+
+		if (key->cipher_id == MCU_CIPHER_TKIP &&
+		    k->k_len == sizeof(key->key)) {
+			/* Rx/Tx MIC keys are swapped */
+			memcpy(key->key + 16, k->k_key + 24, 8);
+			memcpy(key->key + 24, k->k_key + 16, 8);
+		}
+	} else {
+		sec->add = 1;
+		sec->n_cipher = 0;
+	}
+}
+
+int
+mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
+    struct ieee80211_key *k, int add)
+{
+	struct mwx_vif *mvif = &sc->sc_vif;
+	struct mwx_node *mn = (struct mwx_node *)ni;
+	struct sta_req_hdr *hdr;
+	struct mbuf *m;
+	int want_keymask = (MWX_NODE_FLAG_HAVE_PAIRWISE_KEY |
+		    MWX_NODE_FLAG_HAVE_GROUP_KEY);
+	int rv;
+	uint16_t tlvnum = 0, wcid = 0;
+	uint8_t muar_idx = 0;
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) != 0) {
+		wcid = mvif->vif_mn.wcid;
+		muar_idx = 0x0e;
+	} else {
+		wcid = mn->wcid;
+	}
+	
+	m = mwx_alloc_sta_req_tlv(sizeof(*hdr));
+	if (m == NULL)
+		return ENOBUFS;
+
+	DPRINTF("%s: %s: ni %p, k_id %d, k_flags %x k_cipher %d wcid %d\n",
+	    DEVNAME(sc), add ? "add key": "delete key", ni, k->k_id,
+	    k->k_flags, k->k_cipher, wcid);
+
+	mt7921_mcu_add_key_tlv(m, &tlvnum, k, add);
+	mwx_fill_sta_req_hdr(m, mvif, muar_idx, wcid, tlvnum);
+
+	rv = mwx_mcu_send_mbuf_wait(sc, MCU_UNI_CMD_STA_REC_UPDATE, m);
+	if (rv != 0)
+		return rv;
+
+	if (!add)
+		return 0;
+
+	/* keep track what was added to trigger link up when all is done */
+	if ((k->k_flags & IEEE80211_KEY_GROUP) != 0)
+		mn->flags |= MWX_NODE_FLAG_HAVE_GROUP_KEY;
+	else
+		mn->flags |= MWX_NODE_FLAG_HAVE_PAIRWISE_KEY;
+
+	if ((mn->flags & want_keymask) == want_keymask) {
+		DPRINTF("marking port %s valid\n",
+		    ether_sprintf(ni->ni_macaddr));
+		if (ni->ni_flags & IEEE80211_NODE_MFP)
+			ni->ni_flags |= IEEE80211_NODE_TXMGMTPROT;
+		ni->ni_port_valid = 1;
+		ieee80211_set_link_state(&sc->sc_ic, LINK_STATE_UP);
+	}
+
+	return 0;
+}
