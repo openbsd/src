@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.37 2026/06/22 10:35:25 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.38 2026/06/22 13:20:23 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -287,7 +287,6 @@ enum mwx_hw_type {
 struct mwx_setkey_task_arg {
 	struct ieee80211_node	*ni;
 	struct ieee80211_key	*k;
-	int			 add;
 };
 
 struct mwx_softc {
@@ -630,7 +629,9 @@ int		 mt7921_mac_sta_update(struct mwx_softc *,
 void		 mt7921_mcu_add_key_tlv(struct mbuf *, uint16_t *,
 		    struct ieee80211_key *, int);
 int		 mt7921_mcu_sta_key_update(struct mwx_softc *,
-		    struct ieee80211_node *, struct ieee80211_key *, int);
+		    struct ieee80211_node *, struct ieee80211_key *);
+void		 mt7921_mcu_sta_key_delete(struct mwx_softc *,
+		    struct ieee80211_node *, struct ieee80211_key *);
 
 static inline uint32_t
 mwx_read(struct mwx_softc *sc, uint32_t reg)
@@ -1310,7 +1311,6 @@ mwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	a = &sc->sc_setkey_arg[sc->sc_setkey_cur];
 	a->ni = ni;
 	a->k = k;
-	a->add = 1;
 	sc->sc_setkey_cur = (sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg);
 	task_add(sc->sc_nswq, &sc->sc_setkey_task);
 	return EBUSY;
@@ -1321,21 +1321,11 @@ mwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct mwx_softc *sc = ic->ic_softc;
-	struct mwx_setkey_task_arg *a;
 
 	DPRINTF("%s: delete_key: ni %p, k_id %d, k_flags %x k_cipher %d\n",
 	    DEVNAME(sc), ni, k->k_id, k->k_flags, k->k_cipher);
 
-	if ((sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg) ==
-	    sc->sc_setkey_tail)
-		return;
-
-	a = &sc->sc_setkey_arg[sc->sc_setkey_cur];
-	a->ni = ni;
-	a->k = k;
-	a->add = 0;
-	sc->sc_setkey_cur = (sc->sc_setkey_cur + 1) % nitems(sc->sc_setkey_arg);
-	task_add(sc->sc_nswq, &sc->sc_setkey_task);
+	mt7921_mcu_sta_key_delete(sc, ni, k);
 }
 
 void
@@ -1347,10 +1337,9 @@ mwx_setkey_task(void *arg)
 
 	while (sc->sc_setkey_tail != sc->sc_setkey_cur) {
 		a = &sc->sc_setkey_arg[sc->sc_setkey_tail];
-		mt7921_mcu_sta_key_update(sc, a->ni, a->k, a->add);
+		mt7921_mcu_sta_key_update(sc, a->ni, a->k);
 		a->ni = NULL;
 		a->k = NULL;
-		a->add = 0;
 
 		sc->sc_setkey_tail = (sc->sc_setkey_tail + 1) %
 		    nitems(sc->sc_setkey_arg);
@@ -6181,7 +6170,7 @@ mt7921_mcu_add_key_tlv(struct mbuf *m, uint16_t *tlvnum,
 
 int
 mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
-    struct ieee80211_key *k, int add)
+    struct ieee80211_key *k)
 {
 	struct mwx_vif *mvif = &sc->sc_vif;
 	struct mwx_node *mn = (struct mwx_node *)ni;
@@ -6205,18 +6194,14 @@ mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
 		return ENOBUFS;
 
 	DPRINTF("%s: %s: ni %p, k_id %d, k_flags %x k_cipher %d wcid %d\n",
-	    DEVNAME(sc), add ? "add key": "delete key", ni, k->k_id,
-	    k->k_flags, k->k_cipher, wcid);
+	    DEVNAME(sc), "add key", ni, k->k_id, k->k_flags, k->k_cipher, wcid);
 
-	mt7921_mcu_add_key_tlv(m, &tlvnum, k, add);
+	mt7921_mcu_add_key_tlv(m, &tlvnum, k, 1);
 	mwx_fill_sta_req_hdr(m, mvif, muar_idx, wcid, tlvnum);
 
 	rv = mwx_mcu_send_mbuf_wait(sc, MCU_UNI_CMD_STA_REC_UPDATE, m);
 	if (rv != 0)
 		return rv;
-
-	if (!add)
-		return 0;
 
 	/* keep track what was added to trigger link up when all is done */
 	if ((k->k_flags & IEEE80211_KEY_GROUP) != 0)
@@ -6234,4 +6219,36 @@ mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
 	}
 
 	return 0;
+}
+
+void
+mt7921_mcu_sta_key_delete(struct mwx_softc *sc, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct mwx_vif *mvif = &sc->sc_vif;
+	struct mwx_node *mn = (struct mwx_node *)ni;
+	struct sta_req_hdr *hdr;
+	struct mbuf *m;
+	uint16_t tlvnum = 0, wcid = 0;
+	uint8_t muar_idx = 0;
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) != 0) {
+		wcid = mvif->vif_mn.wcid;
+		muar_idx = 0x0e;
+	} else {
+		wcid = mn->wcid;
+	}
+	
+	m = mwx_alloc_sta_req_tlv(sizeof(*hdr));
+	if (m == NULL)
+		return;
+
+	DPRINTF("%s: %s: ni %p, k_id %d, k_flags %x k_cipher %d wcid %d\n",
+	    DEVNAME(sc), "delete key", ni, k->k_id, k->k_flags, k->k_cipher,
+	    wcid);
+
+	mt7921_mcu_add_key_tlv(m, &tlvnum, k, 0);
+	mwx_fill_sta_req_hdr(m, mvif, muar_idx, wcid, tlvnum);
+
+	mwx_mcu_send_mbuf(sc, MCU_UNI_CMD_STA_REC_UPDATE, m, NULL);
 }
