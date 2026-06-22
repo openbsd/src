@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.398 2026/05/05 09:23:06 deraadt Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.399 2026/06/22 10:16:17 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4969,6 +4969,13 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 		/* IKE SA rekeying */
 		spi = &msg->msg_prop->prop_peerspi;
+
+		if (spi->spi == 0 ||
+		    sa_lookup(env, spi->spi, 0, 0) != NULL) {
+			log_info("%s: new IKE SA exists %s",
+			    SPI_SA(sa, __func__), print_spi(spi->spi, 8));
+			return (ret);
+		}
 
 		if ((nsa = sa_new(env, spi->spi, 0, 0,
 		    msg->msg_policy)) == NULL) {
