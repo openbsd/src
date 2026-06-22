@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.22 2026/05/28 18:42:29 mglocker Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.23 2026/06/22 21:12:12 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ void (*OF_set_callback(void (*newfunc)(void *))) ();
 int OF_getnodebyname(int, const char *);
 int OF_getnodebyphandle(uint32_t);
 int OF_getindex(int, const char *, const char *);
+int OF_translate(int, char *, uint64_t *, uint64_t *);
 
 /*
  * Generic OpenFirmware probe argument.

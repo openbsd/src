@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.15 2025/11/25 21:52:47 kettenis Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.16 2026/06/22 21:12:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -60,6 +60,7 @@ struct cfdriver mainbus_cd = {
 struct machine_bus_dma_tag mainbus_dma_tag = {
 	NULL,
 	BUS_DMA_COHERENT,
+	0, (paddr_t)-1,
 	_dmamap_create,
 	_dmamap_destroy,
 	_dmamap_load,

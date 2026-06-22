@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.39 2026/05/29 15:54:54 mglocker Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.40 2026/06/22 21:12:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1177,4 +1177,79 @@ OF_getindex(int handle, const char *entry, const char *prop)
 	}
 	free(names, M_TEMP, len);
 	return -1;
+}
+
+int
+OF_translate(int node, char *name, uint64_t *addr, uint64_t *size)
+{
+	int len = OF_getproplen(node, name);
+	int acells, pacells, scells;
+	int parent;
+
+	parent = OF_parent(node);
+	while (parent) {
+		pacells = OF_getpropint(parent, "#address-cells", 0);
+		if (pacells > 0)
+			break;
+		parent = OF_parent(parent);
+	}
+	parent = OF_parent(node);
+	while (parent) {
+		scells = OF_getpropint(parent, "#size-cells", 0);
+		if (scells > 0)
+			break;
+		parent = OF_parent(parent);
+	}
+
+	acells = OF_getpropint(node, "#address-cells", pacells);
+	scells = OF_getpropint(node, "#size-cells", scells);
+
+	if (pacells == 0 || acells == 0 || scells == 0)
+		return EINVAL;
+
+	if (len > 0) {
+		uint64_t rfrom, rto, rsize;
+		uint32_t *range, *ranges;
+		int rlen, rone;
+
+		rlen = len / sizeof(uint64_t);
+		rone = pacells + acells + scells;
+
+		ranges = malloc(len, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, name, ranges, len);
+
+		for (range = ranges; rlen >= rone;
+		     rlen -= rone, range += rone) {
+			/* Extract from and size, so we can see if we fit. */
+			rfrom = range[0];
+			if (acells == 2)
+				rfrom = (rfrom << 32) + range[1];
+
+			rsize = range[acells + pacells];
+			if (scells == 2)
+				rsize = (rsize << 32) +
+				    range[acells + pacells + 1];
+
+			/* Try next, if we're not in the range. */
+			if (*addr < rfrom || (*addr + *size) > (rfrom + rsize))
+				continue;
+
+			/* All good, extract to address and translate. */
+			rto = range[acells];
+			if (acells == 2)
+				rto = (rto << 32) + range[acells + 1];
+
+			*addr -= rfrom;
+			*addr += rto;
+			break;
+		}
+		if (rlen < rone)
+			return ERANGE;
+	}
+
+	parent = OF_parent(node);
+	if (parent)
+		return OF_translate(parent, name, addr, size);
+
+	return 0;
 }

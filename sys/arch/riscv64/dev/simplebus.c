@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplebus.c,v 1.9 2026/04/23 19:51:37 kettenis Exp $	*/
+/*	$OpenBSD: simplebus.c,v 1.10 2026/06/22 21:12:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -21,6 +21,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
@@ -29,6 +31,8 @@
 
 int simplebus_match(struct device *, void *, void *);
 void simplebus_attach(struct device *, struct device *, void *);
+
+void simplebus_check_dma(struct simplebus_softc *);
 
 void simplebus_attach_node(struct device *, int);
 int simplebus_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -101,6 +105,8 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(&sc->sc_dma, sc->sc_dmat, sizeof(sc->sc_dma));
 	sc->sc_dma._dmamap_load_buffer = simplebus_dmamap_load_buffer;
 	sc->sc_dma._cookie = sc;
+	sc->sc_dma._low = 0;
+	sc->sc_dma._high = (paddr_t)-1;
 
 	sc->sc_dmarangeslen = OF_getproplen(sc->sc_node, "dma-ranges");
 	if (sc->sc_dmarangeslen > 0 &&
@@ -109,6 +115,8 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 		    M_TEMP, M_WAITOK);
 		OF_getpropintarray(sc->sc_node, "dma-ranges",
 		    sc->sc_dmaranges, sc->sc_dmarangeslen);
+
+		simplebus_check_dma(sc);
 	}
 
 	/* Scan the whole tree. */
@@ -372,4 +380,60 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 
 	return 0;
+}
+
+void
+simplebus_check_dma(struct simplebus_softc *sc)
+{
+	struct uvm_constraint_range constraint;
+	uint64_t raddr, rsize;
+	uint64_t low = UINT64_MAX, high = 0;
+	uint32_t *range;
+	int rlen, rone;
+
+	/*
+	 * Find the lowest range of physical memory that is
+	 * DMA-reachable through this bus.  This may not cover all
+	 * DMA-reachable memory, but hopefully it will be enough for a
+	 * usable system.
+	 */
+
+	rlen = sc->sc_dmarangeslen / sizeof(uint32_t);
+	rone = sc->sc_pacells + sc->sc_acells + sc->sc_scells;
+
+	for (range = sc->sc_dmaranges; rlen >= rone;
+	    rlen -= rone, range += rone) {
+		/* Extract parent address and size. */
+		raddr = range[sc->sc_acells];
+		if (sc->sc_pacells == 2)
+			raddr = (raddr << 32) + range[sc->sc_acells + 1];
+
+		rsize = range[sc->sc_acells + sc->sc_pacells];
+		if (sc->sc_scells == 2)
+			rsize = (rsize << 32) +
+			    range[sc->sc_acells + sc->sc_pacells + 1];
+
+		if (OF_translate(OF_parent(sc->sc_node), "dma-ranges",
+		    &raddr, &rsize))
+			continue;
+
+		if (raddr < low) {
+			low = raddr;
+			high = raddr + rsize - 1;
+		}
+	}
+
+	if (high > 0) {
+		constraint.ucr_low = high + 1;
+		constraint.ucr_high = no_constraint.ucr_high;
+		if (uvm_pagecount(&constraint) > 0)
+			sc->sc_dma._high = high;
+	}
+
+	if (low > 0) {
+		constraint.ucr_low = no_constraint.ucr_low;
+		constraint.ucr_high = low - 1;
+		if (uvm_pagecount(&constraint) > 0)
+			sc->sc_dma._low = low;
+	}
 }

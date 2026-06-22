@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.9 2026/04/23 19:51:37 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.10 2026/06/22 21:12:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -135,10 +135,10 @@ int
 _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	struct uvm_constraint_range *constraint = &no_constraint;
 	int use_bounce_buffer = 0;
 	struct machine_bus_dmamap *map;
 	struct pglist mlist;
+	paddr_t low = 0, high = (paddr_t)-1;
 	struct vm_page **pg, *pgnext;
 	size_t mapsize, sz, ssize;
 	vaddr_t va, sva;
@@ -146,9 +146,19 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	int npages, error;
 	const struct kmem_dyn_mode *kd;
 
-	if (bus_dma_high_pages > 0) {
+	if ((flags & BUS_DMA_64BIT) == 0 && bus_dma_high_pages > 0) {
 		use_bounce_buffer = 1;
-		constraint = &dma_constraint;
+		low = dma_constraint.ucr_low;
+		high = dma_constraint.ucr_high;
+	}
+
+	if (t->_low != 0) {
+		use_bounce_buffer = 1;
+		low = MAX(t->_low, low);
+	}
+	if (t->_high != (paddr_t)-1) {
+		use_bounce_buffer = 1;
+		high = MIN(t->_high, high);
 	}
 
 	/*
@@ -184,10 +194,13 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
+	map->_dm_low = low;
+	map->_dm_high = high;
 	if (use_bounce_buffer) {
 		map->_dm_pages = (void *)&map->dm_segs[nsegments];
 		map->_dm_npages = npages;
 	}
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 
 	if (!use_bounce_buffer) {
 		*dmamp = map;
@@ -204,8 +217,8 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	}
 
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(sz, constraint->ucr_low,
-	    constraint->ucr_high, PAGE_SIZE, 0, &mlist, nsegments,
+	error = uvm_pglistalloc(sz, map->_dm_low, map->_dm_high,
+	    PAGE_SIZE, 0, &mlist, nsegments,
 	    (flags & BUS_DMA_NOWAIT) ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK);
 	if (error) {
 		map->_dm_npages = 0;
@@ -434,7 +447,7 @@ _dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	 * Assume the mapping is coherent until we run into a segment
 	 * that isn't.
 	 */
-	map->_dm_flags = BUS_DMA_COHERENT;
+	map->_dm_flags |= BUS_DMA_COHERENT;
 
 	for (i = 0; i < nsegs && size > 0; i++) {
 		paddr = segs[i].ds_addr;
@@ -445,7 +458,10 @@ _dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 			map->_dm_flags &= ~BUS_DMA_COHERENT;
 
 		bounce = 0;
-		if (paddr + plen - 1 > dma_constraint.ucr_high)
+		if (paddr + plen - 1 > dma_constraint.ucr_high &&
+		    (map->_dm_flags & BUS_DMA_64BIT) == 0)
+			bounce = 1;
+		if (paddr < map->_dm_low || paddr + plen - 1 > map->_dm_high)
 			bounce = 1;
 
 		while (plen > 0) {
@@ -839,6 +855,8 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		bounce = 0;
 		if (curaddr > dma_constraint.ucr_high &&
 		    (map->_dm_flags & BUS_DMA_64BIT) == 0)
+			bounce = 1;
+		if (curaddr < map->_dm_low || curaddr > map->_dm_high)
 			bounce = 1;
 
 		if (bounce) {

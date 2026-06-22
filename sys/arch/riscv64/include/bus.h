@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 2026/04/23 19:51:37 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 2026/06/22 21:12:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -386,6 +386,8 @@ typedef struct machine_bus_dma_segment	bus_dma_segment_t;
 struct machine_bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
 	int	_flags;			/* misc. flags */
+	paddr_t	_low;			/* lowest DMA-reachable address */
+	paddr_t _high;			/* highest DMA-reachable address */
 
 	/*
 	 * DMA mapping methods.
@@ -510,6 +512,8 @@ struct machine_bus_dmamap {
 	vaddr_t		_dm_pgva;	/* those above -- mapped */
 	int		_dm_npages;	/* number of pages allocated */
 	int		_dm_nused;	/* number of pages replaced */
+	paddr_t		_dm_low;	/* lowest DMA-reachable address */
+	paddr_t		_dm_high;	/* highest DMA-reachable address */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
