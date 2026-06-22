@@ -27,7 +27,6 @@
 int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 			       struct sg_table *pages)
 {
-#ifdef __linux__
 	do {
 		if (dma_map_sg_attrs(obj->base.dev->dev,
 				     pages->sgl, pages->nents,
@@ -51,9 +50,6 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 				 I915_SHRINK_UNBOUND));
 
 	return -ENOSPC;
-#else
-	return 0;
-#endif
 }
 
 void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
@@ -67,10 +63,8 @@ void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 		/* Wait a bit, in the hope it avoids the hang */
 		usleep_range(100, 250);
 
-#ifdef notyet
 	dma_unmap_sg(i915->drm.dev, pages->sgl, pages->nents,
 		     DMA_BIDIRECTIONAL);
-#endif
 }
 
 /**
