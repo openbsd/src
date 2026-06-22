@@ -40,6 +40,8 @@
 #define CONFIG_DRM_I915_PREEMPT_TIMEOUT_COMPUTE	7500	/* ms */
 #define CONFIG_DRM_I915_FORCE_PROBE		""
 
+#define CONFIG_NEED_SG_DMA_LENGTH		1
+
 #ifdef __HAVE_ACPI
 #include "acpi.h"
 #if NACPI > 0

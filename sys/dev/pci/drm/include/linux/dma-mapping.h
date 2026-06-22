@@ -91,6 +91,7 @@ static inline int
 dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl, int nents,
     enum dma_data_direction dir, unsigned long attrs)
 {
+	sg_dma_len(sgl) = sgl->length;
 	return nents;
 }
 

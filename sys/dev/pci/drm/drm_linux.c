@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.139 2026/06/21 23:30:02 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.140 2026/06/22 12:27:53 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3507,6 +3507,7 @@ iommu_map_sgtable(struct iommu_domain *domain, u_long iova,
 	    sgt->sgl->length, BUS_DMA_WAITOK | BUS_DMA_FIXED);
 	if (error)
 		return -ENOMEM;
+	sg_dma_len(sgt->sgl) = sgt->sgl->length;
 
 	return sg_dma_len(sgt->sgl);
 }
