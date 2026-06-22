@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.106 2025/11/21 04:44:26 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.107 2026/06/22 06:32:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1061,7 +1061,7 @@ vxlan_tep_up(struct vxlan_softc *sc)
 	mp->p_sc = vxlan_take(sc);
 
 	/* destination address is a multicast group we want to join */
-	error = vxlan_tep_add_addr(sc, &sc->sc_dst, up);
+	error = vxlan_tep_add_addr(sc, &sc->sc_dst, mp);
 	if (error != 0)
 		goto freemp;
 
