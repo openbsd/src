@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.401 2026/06/22 11:42:25 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.402 2026/06/22 12:51:16 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -858,6 +858,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 	struct iked_auth	 ikeauth;
 	struct ibuf		*authmsg;
 	int			 ret;
+	size_t			 msklen;
 
 	memcpy(&ikeauth, &sa->sa_policy->pol_auth,
 	    sizeof(ikeauth));
@@ -871,10 +872,17 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		ikeauth.auth_method = IKEV2_AUTH_SHARED_KEY_MIC;
 
 		/* Copy session key as PSK */
-		memcpy(ikeauth.auth_data,
-		    ibuf_data(sa->sa_eapmsk),
-		    ibuf_size(sa->sa_eapmsk));
-		ikeauth.auth_length = ibuf_size(sa->sa_eapmsk);
+		msklen = ibuf_size(sa->sa_eapmsk);
+		if (msklen > sizeof(ikeauth.auth_data) ||
+		    msklen > 255) {
+			log_warnx("%s: unexpected eap size %zu",
+			    SPI_SA(sa, __func__), msklen);
+			ikev2_send_auth_failed(env, sa);
+			explicit_bzero(&ikeauth, sizeof(ikeauth));
+			return (-1);
+		}
+		memcpy(ikeauth.auth_data, ibuf_data(sa->sa_eapmsk), msklen);
+		ikeauth.auth_length = msklen;
 	}
 
 	if (ikev2_ike_auth_compatible(sa,
