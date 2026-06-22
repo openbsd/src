@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: cpp.sh,v 1.10 2019/09/28 17:30:07 ajacoutot Exp $
+#	$OpenBSD: cpp.sh,v 1.11 2026/06/22 22:09:13 naddy Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #	doesn't search gcc-include
 #
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
-TRAD=-traditional
+TRAD=
 DGNUC="@GNUC@"
 STDINC="-I/usr/include"
 set -A OPTS
