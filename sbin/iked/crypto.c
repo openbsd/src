@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.47 2024/11/21 13:26:49 claudio Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.48 2026/06/22 13:34:40 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1188,7 +1188,7 @@ dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 	if (dsa->dsa_hmac) {
 		if (!HMAC_Final(dsa->dsa_ctx, sig, &siglen))
 			return (-1);
-		if (siglen != len || memcmp(buf, sig, siglen) != 0)
+		if (siglen != len || timingsafe_memcmp(buf, sig, siglen) != 0)
 			return (-1);
 	} else {
 		if (_dsa_verify_prepare(dsa, &ptr, &len, &freeme) < 0)
