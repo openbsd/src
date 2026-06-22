@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.429 2026/06/21 21:17:07 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.430 2026/06/22 10:58:34 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1581,7 +1581,9 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 	u_int32_t dest;
 
 	dest = 0;
-	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
+	if (m->m_flags & (M_BCAST|M_MCAST) ||
+	    in_canforward(ip->ip_dst) == 0 ||
+	    ip->ip_src.s_addr == INADDR_ANY) {
 		ipstat_inc(ips_cantforward);
 		m_freem(m);
 		goto done;
