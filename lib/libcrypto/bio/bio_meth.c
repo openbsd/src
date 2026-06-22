@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_meth.c,v 1.9 2023/07/05 21:23:37 beck Exp $	*/
+/*	$OpenBSD: bio_meth.c,v 1.10 2026/06/22 09:25:17 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -51,9 +51,9 @@ int
 LCRYPTO_ALIAS(BIO_meth_get_write);
 
 int
-BIO_meth_set_write(BIO_METHOD *biom, int (*write)(BIO *, const char *, int))
+BIO_meth_set_write(BIO_METHOD *biom, int (*bwrite)(BIO *, const char *, int))
 {
-	biom->bwrite = write;
+	biom->bwrite = bwrite;
 	return 1;
 }
 LCRYPTO_ALIAS(BIO_meth_set_write);
@@ -66,9 +66,9 @@ int
 LCRYPTO_ALIAS(BIO_meth_get_read);
 
 int
-BIO_meth_set_read(BIO_METHOD *biom, int (*read)(BIO *, char *, int))
+BIO_meth_set_read(BIO_METHOD *biom, int (*bread)(BIO *, char *, int))
 {
-	biom->bread = read;
+	biom->bread = bread;
 	return 1;
 }
 LCRYPTO_ALIAS(BIO_meth_set_read);
@@ -81,9 +81,9 @@ int
 LCRYPTO_ALIAS(BIO_meth_get_puts);
 
 int
-BIO_meth_set_puts(BIO_METHOD *biom, int (*puts)(BIO *, const char *))
+BIO_meth_set_puts(BIO_METHOD *biom, int (*bputs)(BIO *, const char *))
 {
-	biom->bputs = puts;
+	biom->bputs = bputs;
 	return 1;
 }
 LCRYPTO_ALIAS(BIO_meth_set_puts);
@@ -96,9 +96,9 @@ int
 LCRYPTO_ALIAS(BIO_meth_get_gets);
 
 int
-BIO_meth_set_gets(BIO_METHOD *biom, int (*gets)(BIO *, char *, int))
+BIO_meth_set_gets(BIO_METHOD *biom, int (*bgets)(BIO *, char *, int))
 {
-	biom->bgets = gets;
+	biom->bgets = bgets;
 	return 1;
 }
 LCRYPTO_ALIAS(BIO_meth_set_gets);
