@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.65 2026/03/10 00:06:39 deraadt Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.66 2026/06/22 08:23:47 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -678,7 +678,10 @@ addrinfo_from_pkt(struct asr_query *as, char *pkt, size_t pktlen)
 		if (as->as.ai.hints.ai_flags & AI_CANONNAME) {
 			_asr_strdname(rr.rr_dname, buf, sizeof buf);
 			buf[strlen(buf) - 1] = '\0';
-			c = res_hnok(buf) ? buf : as->as.ai.hostname;
+			if (buf[0] != '\0' && res_hnok(buf))
+				c = buf;
+			else
+				c = as->as.ai.hostname;
 		} else if (as->as.ai.hints.ai_flags & AI_FQDN)
 			c = as->as.ai.fqdn;
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.52 2026/06/21 19:28:07 florian Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.53 2026/06/22 08:23:47 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -595,7 +595,7 @@ hostent_set_cname(struct hostent_ext *h, const char *name, int isdname)
 	if (isdname) {
 		_asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf) - 1] = '\0';
-		if (!res_hnok(buf))
+		if (buf[0] == '\0' || !res_hnok(buf))
 			return (-1);
 		name = buf;
 	}
@@ -625,7 +625,7 @@ hostent_add_alias(struct hostent_ext *h, const char *name, int isdname)
 	if (isdname) {
 		_asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf)-1] = '\0';
-		if (!res_hnok(buf))
+		if (buf[0] == '\0' || !res_hnok(buf))
 			return;
 		name = buf;
 	}
