@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.103 2024/04/28 16:43:42 florian Exp $	 */
+/* $OpenBSD: policy.c,v 1.104 2026/06/23 13:31:24 hshoexer Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -374,12 +374,17 @@ policy_callback(char *name)
 				    GET_ISAKMP_GEN_LENGTH(proto->chosen->p))
 					return "";
 
+				if (len < sizeof(u_int16_t))
+					return "";
+
 				switch (type) {
 				case IPSEC_ATTR_SA_LIFE_TYPE:
 					lifetype = decode_16(value);
 					break;
 
 				case IPSEC_ATTR_SA_LIFE_DURATION:
+					if (len != 2 && len != 4)
+						return "";
 					switch (proto->proto) {
 					case IPSEC_PROTO_IPSEC_AH:
 						if (lifetype == IPSEC_DURATION_SECONDS) {

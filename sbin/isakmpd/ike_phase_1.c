@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.78 2018/09/20 11:49:55 jsg Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.79 2026/06/23 13:31:24 hshoexer Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -1268,6 +1268,12 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 	struct constant_map *map;
 	struct attr_node *node;
 	int             rv, dur = 0;
+
+	if (len < sizeof(u_int16_t)) {
+		log_print("attribute_unacceptable: too short attribute "
+		    "(type %u, len %u)", type, len);
+		return 1;
+	}
 
 	if (!tag) {
 		log_print("attribute_unacceptable: "
