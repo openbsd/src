@@ -1,3 +1,4 @@
+./usr/bin/clang-scan-deps
 ./usr/bin/llvm-addr2line
 ./usr/bin/llvm-config
 ./usr/bin/llvm-cov

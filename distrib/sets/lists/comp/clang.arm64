@@ -1,3 +1,4 @@
+./usr/bin/clang-scan-deps
 ./usr/bin/lldb
 ./usr/bin/lldb-server
 ./usr/bin/llvm-addr2line
