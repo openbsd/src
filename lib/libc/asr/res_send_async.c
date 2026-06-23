@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.43 2026/06/23 11:36:36 florian Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.44 2026/06/23 17:49:38 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -357,7 +357,7 @@ setup_query(struct asr_query *as, const char *name, const char *dom,
 		return (-1);
 	}
 
-	if (_asr_make_fqdn(name, dom, fqdn, sizeof(fqdn)) > sizeof(fqdn)) {
+	if (_asr_make_fqdn(name, dom, fqdn, sizeof(fqdn)) == 0) {
 		errno = EINVAL;
 		DPRINT("asr_make_fqdn: name too long\n");
 		return (-1);
