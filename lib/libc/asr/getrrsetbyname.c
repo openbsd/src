@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname.c,v 1.6 2015/09/14 07:38:37 guenther Exp $	*/
+/*	$OpenBSD: getrrsetbyname.c,v 1.7 2026/06/23 17:48:36 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -53,31 +53,24 @@ getrrsetbyname(const char *name, unsigned int class, unsigned int type,
 void
 freerrset(struct rrsetinfo *rrset)
 {
-	u_int16_t i;
+	unsigned int i;
 
 	if (rrset == NULL)
 		return;
 
 	if (rrset->rri_rdatas) {
-		for (i = 0; i < rrset->rri_nrdatas; i++) {
-			if (rrset->rri_rdatas[i].rdi_data == NULL)
-				break;
+		for (i = 0; i < rrset->rri_nrdatas; i++)
 			free(rrset->rri_rdatas[i].rdi_data);
-		}
 		free(rrset->rri_rdatas);
 	}
 
 	if (rrset->rri_sigs) {
-		for (i = 0; i < rrset->rri_nsigs; i++) {
-			if (rrset->rri_sigs[i].rdi_data == NULL)
-				break;
+		for (i = 0; i < rrset->rri_nsigs; i++)
 			free(rrset->rri_sigs[i].rdi_data);
-		}
 		free(rrset->rri_sigs);
 	}
 
-	if (rrset->rri_name)
-		free(rrset->rri_name);
+	free(rrset->rri_name);
 	free(rrset);
 }
 DEF_WEAK(freerrset);
