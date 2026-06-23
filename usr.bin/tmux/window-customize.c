@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.21 2026/06/22 12:39:56 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.22 2026/06/23 11:29:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -472,6 +472,7 @@ window_customize_build_keys(struct window_customize_modedata *data,
 			expanded = format_expand(ft, filter);
 			if (!format_true(expanded)) {
 				free(expanded);
+				bd = key_bindings_next(kt, bd);
 				continue;
 			}
 			free(expanded);

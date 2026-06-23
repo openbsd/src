@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1099 2026/06/23 08:35:28 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1100 2026/06/23 11:29:27 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3603,7 +3603,7 @@ The
 flag will create an empty pane and forward any output from stdin to it.
 For example:
 .Bd -literal -offset indent
-$ make 2>&1|tmux splitw \-dI &
+$ make 2>&1|tmux new\-pane \-dI &
 .Ed
 .Pp
 All other options have the same meaning as for the
