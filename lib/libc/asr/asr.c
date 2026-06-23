@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.70 2026/03/10 00:06:39 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.71 2026/06/23 17:47:38 florian Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -863,6 +863,9 @@ _asr_strdname(const char *_dname, char *buf, size_t max)
 	const unsigned char *dname = _dname;
 	char	*res;
 	size_t	 left, count;
+
+	if (max == 0)
+		return (buf);
 
 	if (_dname[0] == 0) {
 		strlcpy(buf, ".", max);
