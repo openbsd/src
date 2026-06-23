@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.147 2026/06/02 08:23:56 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.148 2026/06/23 18:30:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -488,7 +488,7 @@ static int
 aspath_domerge(struct ibuf *out, struct ibuf *in, struct ibuf *in4, int cnt)
 {
 	uint32_t	as, as4;
-	int		nseg, i, newseg = 1;
+	int		nseg = 0, i, newseg = 1;
 	uint8_t		seg_type, seg_len;
 	uint8_t		seg4_type, seg4_len;
 
