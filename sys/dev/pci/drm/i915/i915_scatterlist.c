@@ -132,7 +132,9 @@ struct i915_refct_sgt *i915_rsgt_from_mm_node(const struct drm_mm_node *node,
 
 		len = min_t(u64, block_size, max_segment - sg->length);
 		sg->length += len;
+#ifdef CONFIG_NEED_SG_DMA_LENGTH
 		sg_dma_len(sg) += len;
+#endif
 
 		offset += len;
 		block_size -= len;
@@ -222,7 +224,9 @@ struct i915_refct_sgt *i915_rsgt_from_buddy_resource(struct ttm_resource *res,
 
 			len = min_t(u64, block_size, max_segment - sg->length);
 			sg->length += len;
+#ifdef CONFIG_NEED_SG_DMA_LENGTH
 			sg_dma_len(sg) += len;
+#endif
 
 			offset += len;
 			block_size -= len;
