@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.85 2026/06/19 17:37:26 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.86 2026/06/23 08:20:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1114,6 +1114,17 @@ mode_tree_filter_free(void *data)
 }
 
 static void
+mode_tree_clear_filter(struct mode_tree_data *mtd)
+{
+	free(mtd->filter);
+	mtd->filter = NULL;
+
+	mode_tree_build(mtd);
+	mode_tree_draw(mtd);
+	mtd->wp->flags |= PANE_REDRAW;
+}
+
+static void
 mode_tree_menu_callback(__unused struct menu *menu, __unused u_int idx,
     key_code key, void *data)
 {
@@ -1476,10 +1487,14 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		mode_tree_search_set(mtd);
 		break;
 	case 'f':
+	case 'F':
 		mtd->references++;
 		status_prompt_set(c, NULL, "(filter) ", mtd->filter,
 		    mode_tree_filter_callback, mode_tree_filter_free, mtd,
 		    PROMPT_NOFORMAT, PROMPT_TYPE_SEARCH);
+		break;
+	case 'c':
+		mode_tree_clear_filter(mtd);
 		break;
 	case 'v':
 		switch (mtd->preview) {
