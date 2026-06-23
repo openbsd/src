@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.15 2026/05/09 01:54:51 tb Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.16 2026/06/23 17:49:09 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -170,7 +170,7 @@ getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 
 /* The rest of this file is taken from the original implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.15 2026/05/09 01:54:51 tb Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.16 2026/06/23 17:49:09 florian Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -228,7 +228,7 @@ struct dns_rr {
 	char			*name;
 	u_int16_t		type;
 	u_int16_t		class;
-	u_int16_t		ttl;
+	u_int32_t		ttl;
 	u_int16_t		size;
 	void			*rdata;
 	struct dns_rr		*next;
