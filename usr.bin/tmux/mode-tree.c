@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.86 2026/06/23 08:20:15 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.87 2026/06/23 20:07:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1059,7 +1059,7 @@ mode_tree_search_set(struct mode_tree_data *mtd)
 
 static int
 mode_tree_search_callback(__unused struct client *c, void *data, const char *s,
-    __unused int done)
+    __unused key_code key, __unused int flags)
 {
 	struct mode_tree_data	*mtd = data;
 
@@ -1086,7 +1086,7 @@ mode_tree_search_free(void *data)
 
 static int
 mode_tree_filter_callback(__unused struct client *c, void *data, const char *s,
-    __unused int done)
+    __unused key_code key, __unused int flags)
 {
 	struct mode_tree_data	*mtd = data;
 
