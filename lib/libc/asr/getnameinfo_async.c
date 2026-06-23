@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.15 2020/12/21 09:40:35 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.16 2026/06/23 17:48:06 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -281,7 +281,10 @@ _numerichost(struct asr_query *as)
 		if (ifname == NULL)
 			snprintf(scope + 1, sizeof(scope) - 1, "%u", ifidx);
 
-		strlcat(buf, scope, buflen);
+		if (strlcat(buf, scope, buflen) >= buflen) {
+			errno = ENOSPC;
+			return (-1);
+		}
 	}
 
 	return (0);
