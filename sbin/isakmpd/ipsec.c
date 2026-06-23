@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.157 2026/06/23 13:09:08 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.158 2026/06/23 13:18:24 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1421,6 +1421,16 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t *value, u_int16_t len,
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
 	static int      lifetype = 0;
+
+	/* LIFE_DURATION attributes are validated below, so pass them on. */
+	if (len < sizeof(u_int16_t) &&
+	    !(exchange->phase == 1 && type == IKE_ATTR_LIFE_DURATION) &&
+	    !(exchange->phase != 1 && type == IPSEC_ATTR_SA_LIFE_DURATION)) {
+		log_print("ipsec_decode_attribute: too short attribute "
+		    "(type %u, len %u)", type, len);
+		lifetype = 0;
+		return 0;
+	}
 
 	if (exchange->phase == 1) {
 		switch (type) {
