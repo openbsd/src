@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2026/05/29 11:18:30 robert Exp $
+# $OpenBSD: Makefile,v 1.31 2026/06/23 10:50:23 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -53,8 +53,11 @@ SUBDIR+=libclangExtractAPI
 SUBDIR+=libclangIndex
 SUBDIR+=libclangInstallAPI
 SUBDIR+=libclangOptions
+SUBDIR+=libclangDependencyScanning
+SUBDIR+=libclangTooling
 
 SUBDIR+=clang
+SUBDIR+=clang-scan-deps
 
 SUBDIR+=include/lld/ELF
 
