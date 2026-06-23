@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.150 2025/07/19 16:40:40 mvs Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.151 2026/06/23 18:50:43 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ get_vif_cnt(unsigned int rtableid, struct sioc_vif_req *req)
 	if ((ifp = if_lookupbyvif(vifi, rtableid)) == NULL)
 		return (EINVAL);
 
-	v = (struct vif *)ifp->if_mcast;
+	v = ifp->if_mcast;
 	req->icount = v->v_pkt_in;
 	req->ocount = v->v_pkt_out;
 	req->ibytes = v->v_bytes_in;
@@ -386,7 +386,7 @@ mrt_sysctl_vif(void *oldp, size_t *oldlenp)
 
 	TAILQ_FOREACH (ifp, &if_tmplist, if_tmplist) {
 		NET_LOCK_SHARED();
-		if ((vifp = (struct vif *)ifp->if_mcast) == NULL) {
+		if ((vifp = ifp->if_mcast) == NULL) {
 			NET_UNLOCK_SHARED();
 			continue;
 		}
@@ -465,7 +465,7 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	/* Skip route with invalid interfaces. */
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
 		return (0);
-	if ((v = (struct vif *)ifp->if_mcast) == NULL) {
+	if ((v = ifp->if_mcast) == NULL) {
 		if_put(ifp);
 		return (0);
 	}
@@ -800,7 +800,7 @@ add_vif(struct socket *so, struct mbuf *m)
 	}
 
 	vifp = malloc(sizeof(*vifp), M_MRTABLE, M_WAITOK | M_ZERO);
-	ifp->if_mcast = (caddr_t)vifp;
+	ifp->if_mcast = vifp;
 
 	vifp->v_id = vifcp->vifc_vifi;
 	vifp->v_flags = vifcp->vifc_flags;
@@ -838,7 +838,7 @@ vif_delete(struct ifnet *ifp)
 	struct vif	*v;
 	struct ifreq	 ifr;
 
-	if ((v = (struct vif *)ifp->if_mcast) == NULL)
+	if ((v = ifp->if_mcast) == NULL)
 		return;
 
 	ifp->if_mcast = NULL;
@@ -882,7 +882,7 @@ int
 mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
     struct sockaddr *group, struct mfcctl2 *mfccp, int wait)
 {
-	struct vif		*v = (struct vif *)ifp->if_mcast;
+	struct vif		*v = ifp->if_mcast;
 	struct rtentry		*rt;
 	struct mfc		*mfc;
 	unsigned int		 rtableid = ifp->if_rdomain;
@@ -1029,7 +1029,7 @@ mfc_add(struct mfcctl2 *mfcctl2, struct in_addr *origin,
 
 	ifp = if_lookupbyvif(vidx, rtableid);
 	if (ifp == NULL ||
-	    (v = (struct vif *)ifp->if_mcast) == NULL)
+	    (v = ifp->if_mcast) == NULL)
 		return (EHOSTUNREACH);
 
 	memset(&mfcctl, 0, sizeof(mfcctl));
@@ -1212,7 +1212,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 			 * this packet.
 			 * If none found, drop packet.
 			 */
-			if ((v = (struct vif *)ifp->if_mcast) == NULL)
+			if ((v = ifp->if_mcast) == NULL)
 				return (EHOSTUNREACH);
 			/*
 			 * Make a copy of the header to send to the user level
@@ -1259,7 +1259,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 {
 	struct ip  *ip = mtod(m, struct ip *);
 	struct mfc *mfc = (struct mfc *)rt->rt_llinfo;
-	struct vif *v = (struct vif *)ifp0->if_mcast;
+	struct vif *v = ifp0->if_mcast;
 	struct ifnet *ifp;
 	struct mbuf *mc;
 	struct ip_moptions imo;
@@ -1318,7 +1318,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 			continue;
 
 		/* Sanity check: did we configure this? */
-		if ((v = (struct vif *)ifp->if_mcast) == NULL) {
+		if ((v = ifp->if_mcast) == NULL) {
 			if_put(ifp);
 			continue;
 		}
@@ -1369,7 +1369,7 @@ if_lookupbyvif(vifi_t vifi, unsigned int rtableid)
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
-		if ((v = (struct vif *)ifp->if_mcast) == NULL)
+		if ((v = ifp->if_mcast) == NULL)
 			continue;
 		if (v->v_id != vifi)
 			continue;

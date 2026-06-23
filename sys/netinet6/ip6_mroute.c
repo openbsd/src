@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.156 2025/11/13 23:30:01 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.157 2026/06/23 18:50:43 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -292,7 +292,7 @@ get_mif6_cnt(struct sioc_mif_req6 *req, unsigned int rtableid)
 	if ((ifp = mrt6_iflookupbymif(req->mifi, rtableid)) == NULL)
 		return EINVAL;
 
-	m6 = (struct mif6 *)ifp->if_mcast6;
+	m6 = ifp->if_mcast6;
 	req->icount = m6->m6_pkt_in;
 	req->ocount = m6->m6_pkt_out;
 	req->ibytes = m6->m6_bytes_in;
@@ -330,7 +330,7 @@ mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 
 	TAILQ_FOREACH (ifp, &if_tmplist, if_tmplist) {
 		NET_LOCK_SHARED();
-		if ((mifp = (struct mif6 *)ifp->if_mcast6) == NULL) {
+		if ((mifp = ifp->if_mcast6) == NULL) {
 			NET_UNLOCK_SHARED();
 			continue;
 		}
@@ -409,7 +409,7 @@ mrt6_rtwalk_mf6csysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	/* Skip route with invalid interfaces. */
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
 		return 0;
-	if ((m6 = (struct mif6 *)ifp->if_mcast6) == NULL) {
+	if ((m6 = ifp->if_mcast6) == NULL) {
 		if_put(ifp);
 		return 0;
 	}
@@ -595,7 +595,7 @@ ip6_mrouter_done(struct socket *so)
 void
 ip6_mrouter_detach(struct ifnet *ifp)
 {
-	struct mif6 *m6 = (struct mif6 *)ifp->if_mcast6;
+	struct mif6 *m6 = ifp->if_mcast6;
 	struct in6_ifreq ifr;
 
 	if (m6 == NULL)
@@ -663,9 +663,10 @@ add_m6if(struct socket *so, struct mif6ctl *mifcp)
 	}
 
 	mifp = malloc(sizeof(*mifp), M_MRTABLE, M_WAITOK | M_ZERO);
-	ifp->if_mcast6	   = (caddr_t)mifp;
-	mifp->m6_mifi	   = mifcp->mif6c_mifi;
-	mifp->m6_flags     = mifcp->mif6c_flags;
+	ifp->if_mcast6 = mifp;
+
+	mifp->m6_mifi = mifcp->mif6c_mifi;
+	mifp->m6_flags = mifcp->mif6c_flags;
 #ifdef notyet
 	/* scaling up here allows division by 1024 in critical code */
 	mifp->m6_rate_limit = mifcp->mif6c_rate_limit * 1024 / 1000;
@@ -842,7 +843,7 @@ mf6c_add(struct mf6cctl *mfccp, struct in6_addr *origin,
 
 	ifp = mrt6_iflookupbymif(vidx, rtableid);
 	if (ifp == NULL ||
-	    (m6 = (struct mif6 *)ifp->if_mcast6) == NULL)
+	    (m6 = ifp->if_mcast6) == NULL)
 		return ENOENT;
 
 	memset(&mf6cc, 0, sizeof(mf6cc));
@@ -976,7 +977,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 		{
 			struct mrt6msg *im;
 
-			if ((mifp = (struct mif6 *)ifp->if_mcast6) == NULL)
+			if ((mifp = ifp->if_mcast6) == NULL)
 				return EHOSTUNREACH;
 
 			/*
@@ -1061,7 +1062,7 @@ int
 ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct mif6 *m6, *mifp = (struct mif6 *)ifp->if_mcast6;
+	struct mif6 *m6, *mifp = ifp->if_mcast6;
 	struct mf6c *mf6c = (struct mf6c *)rt->rt_llinfo;
 	struct ifnet *ifn;
 	int plen = m->m_pkthdr.len, ip6_mcast_pmtu_local;
@@ -1119,7 +1120,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 			continue;
 
 		/* Sanity check: did we configure this? */
-		if ((m6 = (struct mif6 *)ifn->if_mcast6) == NULL) {
+		if ((m6 = ifn->if_mcast6) == NULL) {
 			if_put(ifn);
 			continue;
 		}
@@ -1237,7 +1238,7 @@ mrt6_iflookupbymif(mifi_t mifi, unsigned int rtableid)
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
-		if ((m6 = (struct mif6 *)ifp->if_mcast6) == NULL)
+		if ((m6 = ifp->if_mcast6) == NULL)
 			continue;
 		if (m6->m6_mifi != mifi)
 			continue;
