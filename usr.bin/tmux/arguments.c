@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.64 2024/05/13 11:45:05 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.65 2026/06/23 09:29:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -998,7 +998,7 @@ args_string_percentage(const char *value, long long minval, long long maxval,
 		copy = xstrdup(value);
 		copy[valuelen - 1] = '\0';
 
-		ll = strtonum(copy, 0, 100, &errstr);
+		ll = strtonum(copy, 0, 1000, &errstr);
 		free(copy);
 		if (errstr != NULL) {
 			*cause = xstrdup(errstr);
@@ -1066,7 +1066,7 @@ args_string_percentage_and_expand(const char *value, long long minval,
 		copy[valuelen - 1] = '\0';
 
 		f = format_single_from_target(item, copy);
-		ll = strtonum(f, 0, 100, &errstr);
+		ll = strtonum(f, 0, 1000, &errstr);
 		free(f);
 		free(copy);
 		if (errstr != NULL) {

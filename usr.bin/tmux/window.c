@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.344 2026/06/22 08:47:46 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.345 2026/06/23 09:29:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2174,6 +2174,15 @@ window_pane_get_pane_lines(struct window_pane *wp)
 		oo = wp->window->options;
 	else
 		oo = wp->options;
+	return (options_get_number(oo, "pane-border-lines"));
+}
+
+enum pane_lines
+window_get_pane_lines(struct window *w)
+{
+	struct options	*oo;
+
+	oo = w->options;
 	return (options_get_number(oo, "pane-border-lines"));
 }
 

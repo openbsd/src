@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.80 2026/06/22 08:47:45 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.81 2026/06/23 09:29:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -660,6 +660,18 @@ options_parse_get(struct options *oo, const char *s, int *idx, int only)
 		o = options_get(oo, name);
 	free(name);
 	return (o);
+}
+
+const struct options_table_entry *
+options_search(const char *name)
+{
+	const struct options_table_entry	*oe;
+
+	for (oe = options_table; oe->name != NULL; oe++) {
+		if (strcmp(oe->name, name) == 0)
+			return (oe);
+	}
+	return (NULL);
 }
 
 char *
