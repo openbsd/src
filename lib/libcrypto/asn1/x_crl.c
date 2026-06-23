@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.52 2026/04/07 12:52:19 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.53 2026/06/23 08:28:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,7 +326,7 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 				if (nid == NID_issuing_distribution_point ||
 				    nid == NID_authority_key_identifier ||
 				    nid == NID_delta_crl)
-					break;
+					continue;
 				crl->flags |= EXFLAG_CRITICAL;
 				break;
 			}
