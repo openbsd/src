@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.68 2026/02/24 20:14:29 bluhm Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.69 2026/06/23 14:40:40 bluhm Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -30657,7 +30657,7 @@ ice_attach_hook(struct device *self)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = ice_ioctl;
 	ifp->if_qstart = ice_start;
 	ifp->if_watchdog = ice_watchdog;

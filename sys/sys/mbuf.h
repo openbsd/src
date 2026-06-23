@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.269 2026/02/05 03:26:00 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.270 2026/06/23 14:40:40 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -441,6 +441,7 @@ void	m_align(struct mbuf *, int);
 struct mbuf *m_clget(struct mbuf *, int, u_int);
 void	m_extref(struct mbuf *, struct mbuf *);
 void	m_pool_init(struct pool *, u_int, u_int, const char *);
+void	m_pool_noconstraints(void);
 u_int	m_pool_used(void);
 void	m_extfree_pool(caddr_t, u_int, void *);
 void	m_adj(struct mbuf *, int);
@@ -454,8 +455,8 @@ int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 struct mbuf *m_dup_pkt(struct mbuf *, unsigned int, int);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);
-
 void	m_microtime(const struct mbuf *, struct timeval *);
+void	mbuf_dma_64bit_enable(void);
 
 static inline struct mbuf *
 m_freemp(struct mbuf **mp)

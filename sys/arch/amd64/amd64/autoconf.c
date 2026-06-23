@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.60 2026/04/19 09:59:22 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.61 2026/06/23 14:40:40 bluhm Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -125,6 +125,8 @@ cpu_configure(void)
 		panic("configure: mainbus not configured");
 
 	intr_printconfig();
+
+	mbuf_dma_64bit_enable();
 
 #if NIOAPIC > 0
 	lapic_set_lvt();

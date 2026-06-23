@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.116 2026/02/25 23:40:49 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.117 2026/06/23 14:40:40 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1914,7 +1914,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = ixl_ioctl;
 	ifp->if_qstart = ixl_start;
 	ifp->if_watchdog = ixl_watchdog;

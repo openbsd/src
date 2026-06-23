@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.159 2025/11/13 10:55:51 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.160 2026/06/23 14:40:40 bluhm Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -743,6 +743,11 @@ const struct kmem_pa_mode kp_dma_contig = {
 const struct kmem_pa_mode kp_dma_zero = {
 	.kp_constraint = &dma_constraint,
 	.kp_zero = 1
+};
+
+const struct kmem_pa_mode kp_mbuf_contig = {
+	.kp_constraint = &no_constraint,
+	.kp_maxseg = 1
 };
 
 const struct kmem_pa_mode kp_zero = {

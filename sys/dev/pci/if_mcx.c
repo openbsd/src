@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.121 2025/11/19 04:58:04 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.122 2026/06/23 14:40:40 bluhm Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2953,7 +2953,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = mcx_ioctl;
 	ifp->if_qstart = mcx_start;
 	ifp->if_watchdog = mcx_watchdog;

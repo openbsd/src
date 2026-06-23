@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.305 2026/04/22 21:58:53 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.306 2026/06/23 14:40:40 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_var.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1480,11 +1481,39 @@ m_pool_init(struct pool *pp, u_int size, u_int align, const char *wmesg)
 	pool_set_constraints(pp, &kp_dma_contig);
 }
 
+void
+m_pool_noconstraints(void)
+{
+	int i;
+
+	pool_set_constraints(&mbpool, &kp_mbuf_contig);
+
+	for (i = 0; i < nitems(mclsizes); i++)
+		pool_set_constraints(&mclpools[i], &kp_mbuf_contig);
+}
+
 u_int
 m_pool_used(void)
 {
 	return ((atomic_load_long(&mbuf_mem_alloc) * 100) /
 	    atomic_load_long(&mbuf_mem_limit));
+}
+
+void
+mbuf_dma_64bit_enable(void)
+{
+	struct ifnet *ifp;
+
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
+		if (!ISSET(ifp->if_xflags, IFXF_MBUF_64BIT)) {
+			printf("%s: restrict all mbufs to low memory\n",
+			    ifp->if_xname);
+			return;
+		}
+	}
+
+	printf("enable mbufs in high memory\n");
+	m_pool_noconstraints();
 }
 
 #ifdef DDB

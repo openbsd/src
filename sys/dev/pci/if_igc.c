@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.31 2026/02/24 23:01:10 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.32 2026/06/23 14:40:40 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -796,7 +796,7 @@ igc_setup_interface(struct igc_softc *sc)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = igc_ioctl;
 	ifp->if_qstart = igc_start;
 	ifp->if_watchdog = igc_watchdog;

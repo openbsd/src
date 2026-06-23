@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.380 2026/03/04 14:15:36 bluhm Exp $ */
+/* $OpenBSD: if_em.c,v 1.381 2026/06/23 14:40:40 bluhm Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1994,6 +1994,8 @@ em_setup_interface(struct em_softc *sc)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
+	if (ISSET(sc->sc_dmaflags, BUS_DMA_64BIT))
+		ifp->if_xflags |= IFXF_MBUF_64BIT;
 	ifp->if_ioctl = em_ioctl;
 	ifp->if_qstart = em_start;
 	ifp->if_watchdog = em_watchdog;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixv.c,v 1.3 2026/03/13 14:22:33 bluhm Exp $	*/
+/*	$OpenBSD: if_ixv.c,v 1.4 2026/06/23 14:40:40 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -768,7 +768,7 @@ ixv_setup_interface(struct device *dev, struct ix_softc *sc)
 	strlcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = ixv_ioctl;
 	ifp->if_qstart = ixgbe_start;
 	ifp->if_timer = 0;

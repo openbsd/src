@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.226 2026/05/18 12:14:38 stsp Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.227 2026/06/23 14:40:40 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -2040,7 +2040,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	strlcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = ixgbe_ioctl;
 	ifp->if_qstart = ixgbe_start;
 	ifp->if_timer = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.28 2026/03/13 19:14:44 bluhm Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.29 2026/06/23 14:40:40 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1072,7 +1072,7 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = iavf_ioctl;
 	ifp->if_qstart = iavf_start;
 	ifp->if_watchdog = iavf_watchdog;
