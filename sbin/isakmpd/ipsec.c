@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.156 2026/06/11 09:46:59 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.157 2026/06/23 13:09:08 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1283,7 +1283,11 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
     void *vmsg)
 {
 	struct message *msg = vmsg;
-	u_int16_t dv = decode_16(value);
+	u_int16_t dv;
+
+	if (len < sizeof(dv))
+		return 1;
+	dv = decode_16(value);
 
 	if (msg->exchange->phase == 1) {
 		switch (type) {
