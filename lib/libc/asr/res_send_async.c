@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.42 2026/05/26 07:30:37 dgl Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.43 2026/06/23 11:36:36 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -74,9 +74,11 @@ res_send_async(const unsigned char *buf, int buflen, void *asr)
 	as->as.dns.obufsize = buflen;
 
 	_asr_unpack_init(&p, buf, buflen);
-	_asr_unpack_header(&p, &h);
-	_asr_unpack_query(&p, &q);
-	if (p.err) {
+	if (_asr_unpack_header(&p, &h) == -1) {
+		errno = EINVAL;
+		goto err;
+	}
+	if (_asr_unpack_query(&p, &q) == -1) {
 		errno = EINVAL;
 		goto err;
 	}
@@ -687,8 +689,7 @@ validate_packet(struct asr_query *as)
 
 	_asr_unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
 
-	_asr_unpack_header(&p, &h);
-	if (p.err)
+	if (_asr_unpack_header(&p, &h) == -1)
 		goto inval;
 
 	if (h.id != as->as.dns.reqid) {
@@ -710,8 +711,7 @@ validate_packet(struct asr_query *as)
 	as->as.dns.rcode = RCODE(h.flags);
 	as->as.dns.ancount = h.ancount;
 
-	_asr_unpack_query(&p, &q);
-	if (p.err)
+	if (_asr_unpack_query(&p, &q) == -1)
 		goto inval;
 
 	if (q.q_type != as->as.dns.type ||
@@ -730,14 +730,13 @@ validate_packet(struct asr_query *as)
 	}
 
 	/* Validate the rest of the packet */
-	for (r = h.ancount + h.nscount + h.arcount; r; r--)
-		_asr_unpack_rr(&p, &rr);
-
-	/* Report any error found when unpacking the RRs. */
-	if (p.err) {
-		DPRINT("unpack: %s\n", strerror(p.err));
-		errno = p.err;
-		return (-1);
+	for (r = h.ancount + h.nscount + h.arcount; r; r--) {
+		if (_asr_unpack_rr(&p, &rr) == -1) {
+			/* Report any error found when unpacking the RRs. */
+			DPRINT("unpack: %s\n", strerror(p.err));
+			errno = p.err;
+			return (-1);
+		}
 	}
 
 	if (p.offset != as->as.dns.ibuflen) {

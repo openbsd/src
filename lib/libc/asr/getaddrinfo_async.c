@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.66 2026/06/22 08:23:47 florian Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.67 2026/06/23 11:36:36 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -651,12 +651,18 @@ addrinfo_from_pkt(struct asr_query *as, char *pkt, size_t pktlen)
 	char		 buf[MAXDNAME], *c;
 
 	_asr_unpack_init(&p, pkt, pktlen);
-	_asr_unpack_header(&p, &h);
-	for (; h.qdcount; h.qdcount--)
-		_asr_unpack_query(&p, &q);
+	if (_asr_unpack_header(&p, &h) == -1)
+		return (-1);
+
+	for (; h.qdcount; h.qdcount--) {
+		if (_asr_unpack_query(&p, &q) == -1)
+			return (-1);
+	}
 
 	for (i = 0; i < h.ancount; i++) {
-		_asr_unpack_rr(&p, &rr);
+		if (_asr_unpack_rr(&p, &rr) == -1)
+			return (-1);
+
 		if (rr.rr_type != q.q_type ||
 		    rr.rr_class != q.q_class)
 			continue;

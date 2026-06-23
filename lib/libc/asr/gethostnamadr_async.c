@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.53 2026/06/22 08:23:47 florian Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.54 2026/06/23 11:36:36 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -503,13 +503,20 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 		return (NULL);
 
 	_asr_unpack_init(&p, pkt, pktlen);
-	_asr_unpack_header(&p, &hdr);
-	for (; hdr.qdcount; hdr.qdcount--)
-		_asr_unpack_query(&p, &q);
+	if (_asr_unpack_header(&p, &hdr) == -1)
+		goto fail;
+
+	for (; hdr.qdcount; hdr.qdcount--) {
+		if (_asr_unpack_query(&p, &q) == -1)
+			goto fail;
+	}
+
 	strlcpy(dname, q.q_dname, sizeof(dname));
 
 	for (; hdr.ancount; hdr.ancount--) {
-		_asr_unpack_rr(&p, &rr);
+		if (_asr_unpack_rr(&p, &rr) == -1)
+			goto fail;
+
 		if (rr.rr_class != C_IN)
 			continue;
 		switch (rr.rr_type) {
