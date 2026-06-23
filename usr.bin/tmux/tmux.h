@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1366 2026/06/23 20:30:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1367 2026/06/23 21:00:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1993,8 +1993,7 @@ RB_HEAD(client_windows, client_window);
 /* Client connection. */
 #define PROMPT_INPUT_DONE 0x1
 #define PROMPT_INPUT_MOVE 0x2
-typedef int (*prompt_input_cb)(struct client *, void *, const char *, key_code,
-    int);
+typedef int (*prompt_input_cb)(struct client *, void *, const char *, int);
 typedef void (*prompt_free_cb)(void *);
 typedef struct visible_ranges *(*overlay_check_cb)(struct client *, void *,
     u_int, u_int, u_int);
