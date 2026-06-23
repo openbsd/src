@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.38 2024/01/18 15:34:29 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.39 2026/06/23 08:27:37 renaud Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -318,12 +318,13 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 			char *e;
 
 			while (str < sentinel &&
-			    isspace((unsigned char)*str))
+			    (isspace((unsigned char)*str) || *str == '\0'))
 				str++;
 			if (str == sentinel)
 				break;
 			for (e = str;
-			    e < sentinel && !isspace((unsigned char)*e); e++)
+			    e < sentinel && !isspace((unsigned char)*e) &&
+			    *e != '\0'; e++)
 				continue;
 			if (toggle) {
 				a = node_lookup(h, str, e);
