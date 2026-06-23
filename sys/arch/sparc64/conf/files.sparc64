@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.156 2024/03/29 21:11:31 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.157 2026/06/23 21:28:10 kirill Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -340,6 +340,7 @@ file	arch/sparc64/sparc64/db_interface.c	ddb
 file	arch/sparc64/sparc64/db_trace.c		ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
 
+file	lib/libkern/clzdi2.c
 file	lib/libkern/ctzdi2.c
 
 #
