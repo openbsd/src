@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.43 2026/06/19 20:30:31 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.44 2026/06/23 08:36:45 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -619,7 +619,7 @@ int
 msg_copyout(struct msg *msg, char *ubuf, size_t *len)
 {
 	struct mbuf *m;
-	size_t xfer;
+	size_t total, done, xfer;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -628,18 +628,21 @@ msg_copyout(struct msg *msg, char *ubuf, size_t *len)
 #endif
 
 	/* silently truncate messages too large for user buffer */
-	xfer = min(*len, msg->msg_len);
+	total = min(*len, msg->msg_len);
 
-	if ((error = copyout(&msg->msg_type, ubuf, sizeof(long))))
+	if ((error = copyout(&msg->msg_type, ubuf, sizeof(msg->msg_type))))
 		return (error);
 
-	ubuf += sizeof(long);
-	*len = xfer;
+	ubuf += sizeof(msg->msg_type);
+	*len = total;
 
-	for (m = msg->msg_data; m; m = m->m_next) {
-		if ((error = copyout(mtod(m, void *), ubuf, m->m_len)))
+	for (done = 0, m = msg->msg_data; m; m = m->m_next) {
+		if ((xfer = min(m->m_len, total - done)) == 0)
+			break;
+		if ((error = copyout(mtod(m, void *), ubuf, xfer)))
 			return (error);
-		ubuf += m->m_len;
+		ubuf += xfer;
+		done += xfer;
 	}
 
 	return (0);
