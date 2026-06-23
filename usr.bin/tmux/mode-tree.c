@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.87 2026/06/23 20:07:58 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.88 2026/06/23 20:30:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -383,6 +383,13 @@ mode_tree_get_current_name(struct mode_tree_data *mtd)
 }
 
 void
+mode_tree_select_top(struct mode_tree_data *mtd)
+{
+	mtd->current = 0;
+	mtd->offset = 0;
+}
+
+void
 mode_tree_expand_current(struct mode_tree_data *mtd)
 {
 	if (!mtd->line_list[mtd->current].item->expanded) {
@@ -509,7 +516,9 @@ mode_tree_start(struct window_pane *wp, struct args *args,
 	mtd->modedata = modedata;
 	mtd->menu = menu;
 
-	if (args_has(args, 'N') > 1)
+	if (drawcb == NULL)
+		mtd->preview = MODE_TREE_PREVIEW_OFF;
+	else if (args_has(args, 'N') > 1)
 		mtd->preview = MODE_TREE_PREVIEW_BIG;
 	else if (args_has(args, 'N'))
 		mtd->preview = MODE_TREE_PREVIEW_OFF;
@@ -1487,7 +1496,6 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		mode_tree_search_set(mtd);
 		break;
 	case 'f':
-	case 'F':
 		mtd->references++;
 		status_prompt_set(c, NULL, "(filter) ", mtd->filter,
 		    mode_tree_filter_callback, mode_tree_filter_free, mtd,
