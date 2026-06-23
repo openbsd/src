@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.227 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.228 2026/06/23 18:13:32 jan Exp $	*/
 
 /******************************************************************************
 
@@ -2682,7 +2682,7 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 
 	if (mp->m_pkthdr.csum_flags & M_TCP_TSO) {
 		if (ext.tcp && mp->m_pkthdr.ph_mss > 0) {
-			uint32_t hdrlen, thlen, paylen, outlen;
+			uint32_t thlen, outlen;
 
 			thlen = ext.tcphlen;
 
@@ -2690,17 +2690,15 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 			*mss_l4len_idx |= outlen << IXGBE_ADVTXD_MSS_SHIFT;
 			*mss_l4len_idx |= thlen << IXGBE_ADVTXD_L4LEN_SHIFT;
 
-			hdrlen = sizeof(*ext.eh) + ext.iphlen + thlen;
-			paylen = mp->m_pkthdr.len - hdrlen;
 			CLR(*olinfo_status, IXGBE_ADVTXD_PAYLEN_MASK
 			    << IXGBE_ADVTXD_PAYLEN_SHIFT);
-			*olinfo_status |= paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
+			*olinfo_status |= ext.paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
 
 			*cmd_type_len |= IXGBE_ADVTXD_DCMD_TSE;
 			offload = 1;
 
 			tcpstat_add(tcps_outpkttso,
-			    (paylen + outlen - 1) / outlen);
+			    (ext.paylen + outlen - 1) / outlen);
 		} else
 			tcpstat_inc(tcps_outbadtso);
 	}
@@ -3497,7 +3495,6 @@ ixgbe_rx_offload(uint32_t staterr, uint16_t vtag, struct mbuf *m)
 
 	if (pkts > 1) {
 		struct ether_extracted ext;
-		uint32_t paylen;
 
 		/*
 		 * Calculate the payload size:
@@ -3508,11 +3505,7 @@ ixgbe_rx_offload(uint32_t staterr, uint16_t vtag, struct mbuf *m)
 		 * based on the total ip length field (ext.iplen).
 		 */
 		ether_extract_headers(m, &ext);
-		paylen = ext.iplen;
-		if (ext.ip4 || ext.ip6)
-			paylen -= ext.iphlen;
 		if (ext.tcp) {
-			paylen -= ext.tcphlen;
 			tcpstat_inc(tcps_inhwlro);
 			tcpstat_add(tcps_inpktlro, pkts);
 		} else {
@@ -3523,9 +3516,9 @@ ixgbe_rx_offload(uint32_t staterr, uint16_t vtag, struct mbuf *m)
 		 * If we gonna forward this packet, we have to mark it as TSO,
 		 * set a correct mss, and recalculate the TCP checksum.
 		 */
-		if (ext.tcp && paylen >= pkts) {
+		if (ext.tcp && ext.paylen >= pkts) {
 			SET(m->m_pkthdr.csum_flags, M_TCP_TSO);
-			m->m_pkthdr.ph_mss = paylen / pkts;
+			m->m_pkthdr.ph_mss = ext.paylen / pkts;
 		}
 		if (ext.tcp && ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
 			SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
