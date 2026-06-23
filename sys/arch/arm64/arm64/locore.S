@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.50 2026/05/04 20:21:02 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.51 2026/06/23 11:45:54 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 #include <machine/armreg.h>
+#include <machine/codepatch.h>
 #include <machine/hypervisor.h>
 #include <machine/param.h>
 
@@ -214,6 +215,10 @@ start_mmu:
 	dsb	ishst
 	tlbi	vmalle1is
 	dsb	ish
+	CODEPATCH_START
+	tlbi	vmalle1is
+	dsb	ish
+	CODEPATCH_END(CPTAG_REPEAT_TLBI)
 	isb
 
 	ldr	x2, mair
@@ -255,6 +260,10 @@ switch_mmu_kernel:
 	dsb	ishst
 	tlbi	vmalle1is
 	dsb	ish
+	CODEPATCH_START
+	tlbi	vmalle1is
+	dsb	ish
+	CODEPATCH_END(CPTAG_REPEAT_TLBI)
 	isb
 
 	RETGUARD_CHECK(switch_mmu_kernel, x15)

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.10 2022/12/23 17:31:30 kettenis Exp $ */
+/* $OpenBSD: locore0.S,v 1.11 2026/06/23 11:45:54 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -35,7 +35,17 @@
 
 #define	DEVICE_MEM	0
 #define	NORMAL_UNCACHED	2
-#define	NORMAL_MEM	3
+	#define	NORMAL_MEM	3
+
+	.section .codepatch,"a"
+	.globl codepatch_begin
+codepatch_begin:
+	.previous
+
+	.section .codepatchend,"a"
+	.globl codepatch_end
+codepatch_end:
+	.previous
 
 /*
  * We assume:

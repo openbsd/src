@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2026/05/19 13:05:47 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2026/06/23 11:45:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -24,6 +24,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/codepatch.h>
 
 #if defined(NFSCLIENT)
 #include <net/if.h>
@@ -51,6 +52,8 @@ unmap_startup(void)
 		pmap_kremove(p, PAGE_SIZE);
 		p += PAGE_SIZE;
 	} while (p < (vaddr_t)&endboot);
+
+	codepatch_disable();
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm.S,v 1.8 2023/07/13 08:33:36 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm.S,v 1.9 2026/06/23 11:45:54 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Robin Randhawa
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -30,6 +30,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/codepatch.h>
 #include <machine/param.h>
 
 /*
@@ -98,6 +99,10 @@ ENTRY(cpu_tlb_flush)
 	dsb	ishst
 	tlbi	vmalle1is
 	dsb	ish
+	CODEPATCH_START
+	tlbi	vmalle1is
+	dsb	ish
+	CODEPATCH_END(CPTAG_REPEAT_TLBI)
 	isb
 	RETGUARD_CHECK(cpu_tlb_flush, x15)
 	ret
@@ -108,6 +113,10 @@ ENTRY(cpu_tlb_flush_asid)
 	dsb	ishst
 	tlbi	vae1is, x0
 	dsb	ish
+	CODEPATCH_START
+	tlbi	vae1is, x0
+	dsb	ish
+	CODEPATCH_END(CPTAG_REPEAT_TLBI)
 	isb
 	RETGUARD_CHECK(cpu_tlb_flush_asid, x15)
 	ret
@@ -118,6 +127,10 @@ ENTRY(cpu_tlb_flush_all_asid)
 	dsb	ishst
 	tlbi	vaale1is, x0
 	dsb	ish
+	CODEPATCH_START
+	tlbi	vaale1is, x0
+	dsb	ish
+	CODEPATCH_END(CPTAG_REPEAT_TLBI)
 	isb
 	RETGUARD_CHECK(cpu_tlb_flush_all_asid, x15)
 	ret
@@ -128,6 +141,10 @@ ENTRY(cpu_tlb_flush_asid_all)
 	dsb	ishst
 	tlbi	aside1is, x0
 	dsb	ish
+	CODEPATCH_START
+	tlbi	aside1is, x0
+	dsb	ish
+	CODEPATCH_END(CPTAG_REPEAT_TLBI)
 	isb
 	RETGUARD_CHECK(cpu_tlb_flush_asid_all, x15)
 	ret

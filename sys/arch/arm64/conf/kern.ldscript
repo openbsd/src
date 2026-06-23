@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.11 2022/01/07 13:56:54 kevlo Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.12 2026/06/23 11:45:54 kettenis Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -25,6 +25,15 @@ SECTIONS
 		*(.text .text.*)
 		*(.stub)
 	} :text =0
+
+	. = ALIGN(__ALIGN_SIZE);
+	.cptext :
+	{
+		__cptext_start = ABSOLUTE(.);
+		*(.cptext)
+		__cptext_end = ABSOLUTE(.);
+	} :text =0
+
 	PROVIDE (_etext = .);
 	PROVIDE (etext = .);
 
@@ -34,6 +43,8 @@ SECTIONS
 	.rodata :
 	{
 		*(.rodata .rodata.*)
+		*(.codepatch)
+		*(.codepatchend)
 	} :rodata
 	.openbsd.randomdata :
 	{

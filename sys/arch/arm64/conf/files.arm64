@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.79 2025/09/17 09:32:55 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.80 2026/06/23 11:45:54 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -9,6 +9,7 @@ major	{cd = 6}
 major	{rd = 17}
 
 file	arch/arm64/arm64/autoconf.c
+file	arch/arm64/arm64/codepatch.c
 file	arch/arm64/arm64/copy.S
 file	arch/arm64/arm64/copystr.S
 file	arch/arm64/arm64/cpuswitch.S

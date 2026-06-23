@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.148 2026/04/03 22:01:46 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.149 2026/06/23 11:45:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -32,8 +32,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/fdt.h>
+#include <machine/codepatch.h>
 #include <machine/elf.h>
+#include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -60,9 +61,11 @@
 /* CPU Identification */
 #define CPU_IMPL_ARM		0x41
 #define CPU_IMPL_CAVIUM		0x43
+#define CPU_IMPL_NVIDIA		0x4e
 #define CPU_IMPL_AMCC		0x50
 #define CPU_IMPL_QCOM		0x51
 #define CPU_IMPL_APPLE		0x61
+#define CPU_IMPL_MICROSOFT	0x6d 
 #define CPU_IMPL_AMPERE		0xc0
 
 /* ARM */
@@ -115,6 +118,9 @@
 #define CPU_PART_THUNDERX_T81	0x0a2
 #define CPU_PART_THUNDERX_T83	0x0a3
 #define CPU_PART_THUNDERX2_T99	0x0af
+
+/* NVIDIA */
+#define CPU_PART_OLYMPUS	0x010
 
 /* Applied Micro */
 #define CPU_PART_X_GENE		0x000
@@ -210,6 +216,11 @@ struct cpu_cores cpu_cores_cavium[] = {
 	{ 0, NULL },
 };
 
+struct cpu_cores cpu_cores_nvidia[] = {
+	{ CPU_PART_OLYMPUS, "Olympus" },
+	{ 0, NULL },
+};
+
 struct cpu_cores cpu_cores_amcc[] = {
 	{ CPU_PART_X_GENE, "X-Gene" },
 	{ 0, NULL },
@@ -243,6 +254,11 @@ struct cpu_cores cpu_cores_ampere[] = {
 	{ 0, NULL },
 };
 
+struct cpu_cores cpu_cores_microsoft[] = {
+	{ CPU_PART_NEOVERSE_N2, "Azure Cobalt 100" },
+	{ 0, NULL },
+};
+
 /* arm cores makers */
 const struct implementers {
 	int			id;
@@ -251,10 +267,12 @@ const struct implementers {
 } cpu_implementers[] = {
 	{ CPU_IMPL_ARM,	"ARM", cpu_cores_arm },
 	{ CPU_IMPL_CAVIUM, "Cavium", cpu_cores_cavium },
+	{ CPU_IMPL_NVIDIA, "NVIDIA", cpu_cores_nvidia },
 	{ CPU_IMPL_AMCC, "Applied Micro", cpu_cores_amcc },
 	{ CPU_IMPL_QCOM, "Qualcomm", cpu_cores_qcom },
 	{ CPU_IMPL_APPLE, "Apple", cpu_cores_apple },
 	{ CPU_IMPL_AMPERE, "Ampere", cpu_cores_ampere },
+	{ CPU_IMPL_MICROSOFT, "Microsoft", cpu_cores_microsoft },
 	{ 0, NULL },
 };
 
@@ -533,6 +551,90 @@ cpu_mitigate_spectre_v4(struct cpu_info *ci)
 	smccc_enable_arch_workaround_2();
 }
 
+/*
+ * Enable mitigation for TLB invalidation vulnerabilities
+ * (CVE-2025-10263).  The workaround for this vulnerability needs to
+ * be NOP-ed out on hardware that isn't vulnerable since the cost is
+ * too high.
+ */
+void
+cpu_mitigate_cve_2025_10263(struct cpu_info *ci)
+{
+	uint64_t midr = ci->ci_midr;
+
+	switch (CPU_IMPL(midr)) {
+	case CPU_IMPL_ARM:
+		switch (CPU_PART(midr)) {
+		case CPU_PART_C1_PREMIUM:
+		case CPU_PART_C1_ULTRA:
+		case CPU_PART_CORTEX_A76:
+		case CPU_PART_CORTEX_A76AE:
+		case CPU_PART_CORTEX_A77:
+		case CPU_PART_CORTEX_A78:
+		case CPU_PART_CORTEX_A78AE:
+		case CPU_PART_CORTEX_A78C:
+		case CPU_PART_CORTEX_X1:
+		case CPU_PART_CORTEX_X1C:
+		case CPU_PART_CORTEX_X2:
+		case CPU_PART_CORTEX_X3:
+		case CPU_PART_CORTEX_X4:
+		case CPU_PART_CORTEX_X925:
+		case CPU_PART_NEOVERSE_N1:
+		case CPU_PART_NEOVERSE_N2:
+		case CPU_PART_NEOVERSE_V1:
+		case CPU_PART_NEOVERSE_V2:
+		case CPU_PART_NEOVERSE_V3:
+		case CPU_PART_NEOVERSE_V3AE:
+			/* Vulnerable. */
+			return;
+		case CPU_PART_CORTEX_A55:
+			/*
+			 * Not vulnerable, but mitigation works around
+			 * ARM erratum #2441007.
+			 */
+			return;
+		case CPU_PART_CORTEX_A510:
+			/*
+			 * Not vulnerable, but mitigation works around
+			 * ARM erratum #2441009 (fixed in r1p2).
+			 */
+			if (CPU_VAR(midr) == 0 ||
+			    (CPU_VAR(midr) == 1 && CPU_REV(midr) < 2))
+				return;
+		}
+		break;
+	case CPU_IMPL_NVIDIA:
+		switch (CPU_PART(midr)) {
+		case CPU_PART_OLYMPUS:
+			/* Vulnerable. */
+			return;
+		}
+		break;
+	case CPU_IMPL_QCOM:
+		switch (CPU_PART(midr)) {
+		case CPU_PART_KRYO400_GOLD:
+			/* Cortex-A76 derived, so probably vulnerable. */
+			return;
+		case CPU_PART_KRYO400_SILVER:
+			/*
+			 * Cortex-A55 derived, so ARM erratum #2441007
+			 * probably applies.
+			 */
+			return;
+		}
+		break;
+	case CPU_IMPL_MICROSOFT:
+		switch (CPU_PART(midr)) {
+		case CPU_PART_NEOVERSE_N2:
+			/* Vulnerable. */
+			return;
+		}
+		break;
+	}
+
+ 	codepatch_nop(CPTAG_REPEAT_TLBI);
+}		
+
 void
 cpu_identify(struct cpu_info *ci)
 {
@@ -682,6 +784,7 @@ cpu_identify(struct cpu_info *ci)
 	cpu_mitigate_spectre_v2(ci);
 	cpu_mitigate_spectre_bhb(ci);
 	cpu_mitigate_spectre_v4(ci);
+	cpu_mitigate_cve_2025_10263(ci);
 
 	/*
 	 * Apple CPUs provide detailed information for SError.
