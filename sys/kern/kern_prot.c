@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.86 2026/06/10 04:46:18 mvs Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.87 2026/06/23 20:04:50 cludwig Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -1037,7 +1037,7 @@ sys_getlogin_r(struct proc *p, void *v, register_t *retval)
 
 	if (namelen > sizeof(s->s_login))
 		namelen = sizeof(s->s_login);
-	strlcpy(buf, s->s_login, namelen);
+	strlcpy(buf, s->s_login, sizeof(buf));
 	error = copyoutstr(buf, SCARG(uap, namebuf), namelen, NULL);
 	if (error == ENAMETOOLONG)
 		error = ERANGE;
