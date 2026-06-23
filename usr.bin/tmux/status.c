@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.266 2026/06/23 21:00:20 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.267 2026/06/23 23:52:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -904,7 +904,7 @@ status_prompt_redraw(struct client *c)
 	status_prompt_area(c, &ax, &aw);
 
 	tmp = utf8_tocstr(c->prompt_buffer);
-	format_add(ft, "prompt-input", "%s", tmp);
+	format_add(ft, "prompt_input", "%s", tmp);
 	prompt = format_expand_time(ft, c->prompt_string);
 	free(tmp);
 
