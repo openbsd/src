@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.158 2026/06/23 13:18:24 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.159 2026/06/23 13:40:16 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -947,24 +947,34 @@ ipsec_validate_id_information(u_int8_t type, u_int8_t *extra, u_int8_t *buf,
 
 	switch (type) {
 	case IPSEC_ID_IPV4_ADDR:
+		if (sz != sizeof(struct in_addr))
+			return -1;
 		LOG_DBG_BUF((LOG_MESSAGE, 40,
 		    "ipsec_validate_id_information: IPv4", buf,
 		    sizeof(struct in_addr)));
 		break;
 
 	case IPSEC_ID_IPV6_ADDR:
+		if (sz != sizeof(struct in6_addr))
+			return -1;
 		LOG_DBG_BUF((LOG_MESSAGE, 40,
 		    "ipsec_validate_id_information: IPv6", buf,
 		    sizeof(struct in6_addr)));
 		break;
 
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	case IPSEC_ID_IPV4_RANGE:
+		if (sz != 2 * sizeof(struct in_addr))
+			return -1;
 		LOG_DBG_BUF((LOG_MESSAGE, 40,
 		    "ipsec_validate_id_information: IPv4 network/netmask",
 		    buf, 2 * sizeof(struct in_addr)));
 		break;
 
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	case IPSEC_ID_IPV6_RANGE:
+		if (sz != 2 * sizeof(struct in6_addr))
+			return -1;
 		LOG_DBG_BUF((LOG_MESSAGE, 40,
 		    "ipsec_validate_id_information: IPv6 network/netmask",
 		    buf, 2 * sizeof(struct in6_addr)));
