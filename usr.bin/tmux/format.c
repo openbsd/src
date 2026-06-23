@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.385 2026/06/22 19:39:01 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.386 2026/06/23 08:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4507,11 +4507,14 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 	return (list);
 }
 
-/* Fuzzy match strings. */
+/* Fuzzy match a single token (no spaces). */
 static int
-format_fuzzy_match(const char *pattern, const char *text, int icase)
+format_fuzzy_match_token(const char *pattern, size_t patternlen,
+    const char *text, int icase)
 {
-	while (*pattern != '\0') {
+	const char	*end = pattern + patternlen;
+
+	while (pattern != end) {
 		if (*text == '\0')
 			return (0);
 		if (icase) {
@@ -4522,6 +4525,31 @@ format_fuzzy_match(const char *pattern, const char *text, int icase)
 				pattern++;
 		}
 		text++;
+	}
+	return (1);
+}
+
+/*
+ * Fuzzy match strings. The pattern is split on spaces into tokens and every
+ * token must match as a sequence.
+ */
+static int
+format_fuzzy_match(const char *pattern, const char *text, int icase)
+{
+	const char	*start;
+	size_t		 len;
+
+	while (*pattern != '\0') {
+		while (*pattern == ' ')
+			pattern++;
+		if (*pattern == '\0')
+			break;
+		start = pattern;
+		while (*pattern != '\0' && *pattern != ' ')
+			pattern++;
+		len = pattern - start;
+		if (!format_fuzzy_match_token(start, len, text, icase))
+			return (0);
 	}
 	return (1);
 }

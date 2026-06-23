@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1098 2026/06/23 08:20:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1099 2026/06/23 08:35:28 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -6385,7 +6385,8 @@ means the pattern is a regular expression instead of the default
 pattern,
 .Ql z
 means the pattern is a fuzzy match, that is, it matches if its characters
-appear in the string in order but not necessarily consecutively,
+appear in the string in order but not necessarily consecutively;
+the pattern is split on spaces into separate terms which must all match,
 and
 .Ql i
 means to ignore case.
