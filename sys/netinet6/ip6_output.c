@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.304 2025/12/13 00:55:02 jsg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.305 2026/06/23 15:45:00 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;
 	struct mbuf *ip6e_hbh;
 	struct mbuf *ip6e_dest1;
-	struct mbuf *ip6e_rthdr;
 	struct mbuf *ip6e_dest2;
 };
 
@@ -203,8 +202,6 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
 		MAKE_EXTHDR(opt->ip6po_hbh, &exthdrs.ip6e_hbh);
 		/* Destination options header(1st part) */
 		MAKE_EXTHDR(opt->ip6po_dest1, &exthdrs.ip6e_dest1);
-		/* Routing header */
-		MAKE_EXTHDR(opt->ip6po_rthdr, &exthdrs.ip6e_rthdr);
 		/* Destination options header(2nd part) */
 		MAKE_EXTHDR(opt->ip6po_dest2, &exthdrs.ip6e_dest2);
 	}
@@ -233,7 +230,6 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
 	optlen = 0;
 	if (exthdrs.ip6e_hbh) optlen += exthdrs.ip6e_hbh->m_len;
 	if (exthdrs.ip6e_dest1) optlen += exthdrs.ip6e_dest1->m_len;
-	if (exthdrs.ip6e_rthdr) optlen += exthdrs.ip6e_rthdr->m_len;
 	unfragpartlen = optlen + sizeof(struct ip6_hdr);
 	/* NOTE: we don't add AH/ESP length here. do that later. */
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
@@ -329,34 +325,6 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
 		MAKE_CHAIN(exthdrs.ip6e_hbh, mprev, nexthdrp, IPPROTO_HOPOPTS);
 		MAKE_CHAIN(exthdrs.ip6e_dest1, mprev, nexthdrp,
 		    IPPROTO_DSTOPTS);
-		MAKE_CHAIN(exthdrs.ip6e_rthdr, mprev, nexthdrp,
-		    IPPROTO_ROUTING);
-	}
-
-	/*
-	 * If there is a routing header, replace the destination address field
-	 * with the first hop of the routing header.
-	 */
-	if (exthdrs.ip6e_rthdr) {
-		struct ip6_rthdr *rh;
-		struct ip6_rthdr0 *rh0;
-		struct in6_addr *addr;
-
-		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
-		    struct ip6_rthdr *));
-		switch (rh->ip6r_type) {
-		case IPV6_RTHDR_TYPE_0:
-			rh0 = (struct ip6_rthdr0 *)rh;
-			addr = (struct in6_addr *)(rh0 + 1);
-			ip6->ip6_dst = addr[0];
-			bcopy(&addr[1], &addr[0],
-			    sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
-			addr[rh0->ip6r0_segleft - 1] = finaldst;
-			break;
-		default:	/* is it possible? */
-			error = EINVAL;
-			goto bad;
-		}
 	}
 
 	/* Source address validation */
@@ -392,8 +360,6 @@ reroute:
 		ro->ro_rt = NULL;
 	}
 	ro_pmtu = ro;
-	if (opt && opt->ip6po_rthdr)
-		ro = &opt->ip6po_route;
 	dst = &ro->ro_dstsin6;
 
 	/*
@@ -429,13 +395,7 @@ reroute:
 		 * XXX what should we do if ip6_hlim == 0 and the
 		 * packet gets tunneled?
 		 */
-		/*
-		 * if we are source-routing, do not attempt to tunnel the
-		 * packet just because ip6_dst is different from what tdb has.
-		 * XXX
-		 */
-		error = ip6_output_ipsec_send(tdb, m, ro, orig_rtableid,
-		    exthdrs.ip6e_rthdr ? 1 : 0, 0);
+		error = ip6_output_ipsec_send(tdb, m, ro, orig_rtableid, 0);
 		goto done;
 	}
 #endif /* IPSEC */
@@ -740,10 +700,7 @@ reroute:
 	 * Change the next header field of the last header in the
 	 * unfragmentable part.
 	 */
-	if (exthdrs.ip6e_rthdr) {
-		nextproto = *mtod(exthdrs.ip6e_rthdr, u_char *);
-		*mtod(exthdrs.ip6e_rthdr, u_char *) = IPPROTO_FRAGMENT;
-	} else if (exthdrs.ip6e_dest1) {
+	if (exthdrs.ip6e_dest1) {
 		nextproto = *mtod(exthdrs.ip6e_dest1, u_char *);
 		*mtod(exthdrs.ip6e_dest1, u_char *) = IPPROTO_FRAGMENT;
 	} else if (exthdrs.ip6e_hbh) {
@@ -763,7 +720,6 @@ reroute:
  freehdrs:
 	m_freem(exthdrs.ip6e_hbh);	/* m_freem will check if mbuf is 0 */
 	m_freem(exthdrs.ip6e_dest1);
-	m_freem(exthdrs.ip6e_rthdr);
 	m_freem(exthdrs.ip6e_dest2);
  bad:
 	m_freem(m);
@@ -1726,13 +1682,6 @@ ip6_getpcbopt(struct ip6_pktopts *pktopt, int optname, struct mbuf *m)
 			optdatalen = (ip6e->ip6e_len + 1) << 3;
 		}
 		break;
-	case IPV6_RTHDR:
-		if (pktopt && pktopt->ip6po_rthdr) {
-			optdata = (void *)pktopt->ip6po_rthdr;
-			ip6e = (struct ip6_ext *)pktopt->ip6po_rthdr;
-			optdatalen = (ip6e->ip6e_len + 1) << 3;
-		}
-		break;
 	case IPV6_RTHDRDSTOPTS:
 		if (pktopt && pktopt->ip6po_dest1) {
 			optdata = (void *)pktopt->ip6po_dest1;
@@ -1802,15 +1751,6 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 			free(pktopt->ip6po_dest1, M_IP6OPT, 0);
 		pktopt->ip6po_dest1 = NULL;
 	}
-	if (optname == -1 || optname == IPV6_RTHDR) {
-		if (pktopt->ip6po_rhinfo.ip6po_rhi_rthdr)
-			free(pktopt->ip6po_rhinfo.ip6po_rhi_rthdr, M_IP6OPT, 0);
-		pktopt->ip6po_rhinfo.ip6po_rhi_rthdr = NULL;
-		if (pktopt->ip6po_route.ro_rt) {
-			rtfree(pktopt->ip6po_route.ro_rt);
-			pktopt->ip6po_route.ro_rt = NULL;
-		}
-	}
 	if (optname == -1 || optname == IPV6_DSTOPTS) {
 		if (pktopt->ip6po_dest2)
 			free(pktopt->ip6po_dest2, M_IP6OPT, 0);
@@ -1846,7 +1786,6 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src)
 	PKTOPT_EXTHDRCPY(ip6po_hbh);
 	PKTOPT_EXTHDRCPY(ip6po_dest1);
 	PKTOPT_EXTHDRCPY(ip6po_dest2);
-	PKTOPT_EXTHDRCPY(ip6po_rthdr); /* not copy the cached route */
 	return (0);
 
   bad:
@@ -2451,45 +2390,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		break;
 	}
 
-	case IPV6_RTHDR:
-	{
-		struct ip6_rthdr *rth;
-		int rthlen;
-
-		if (len == 0) {
-			ip6_clearpktopts(opt, IPV6_RTHDR);
-			break;	/* just remove the option */
-		}
-
-		/* message length validation */
-		if (len < sizeof(struct ip6_rthdr))
-			return (EINVAL);
-		rth = (struct ip6_rthdr *)buf;
-		rthlen = (rth->ip6r_len + 1) << 3;
-		if (len != rthlen)
-			return (EINVAL);
-
-		switch (rth->ip6r_type) {
-		case IPV6_RTHDR_TYPE_0:
-			if (rth->ip6r_len == 0)	/* must contain one addr */
-				return (EINVAL);
-			if (rth->ip6r_len % 2) /* length must be even */
-				return (EINVAL);
-			if (rth->ip6r_len / 2 != rth->ip6r_segleft)
-				return (EINVAL);
-			break;
-		default:
-			return (EINVAL);	/* not supported */
-		}
-		/* turn off the previous option */
-		ip6_clearpktopts(opt, IPV6_RTHDR);
-		opt->ip6po_rthdr = malloc(rthlen, M_IP6OPT, M_NOWAIT);
-		if (opt->ip6po_rthdr == NULL)
-			return (ENOBUFS);
-		memcpy(opt->ip6po_rthdr, rth, rthlen);
-		break;
-	}
-
 	case IPV6_USE_MIN_MTU:
 		if (len != sizeof(int))
 			return (EINVAL);
@@ -2827,7 +2727,7 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 
 int
 ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
-    u_int rtableid, int tunalready, int fwd)
+    u_int rtableid, int fwd)
 {
 	struct mbuf_list ml;
 	struct ifnet *encif = NULL;
@@ -2911,7 +2811,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	KERNEL_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/* Callee frees mbuf */
-		error = ipsp_process_packet(m, tdb, AF_INET6, tunalready,
+		error = ipsp_process_packet(m, tdb, AF_INET6, 0,
 		    IPSP_DF_INHERIT);
 		if (error)
 			break;

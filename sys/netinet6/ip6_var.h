@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.129 2025/12/31 04:10:00 jsg Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.130 2026/06/23 15:45:00 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -164,15 +164,7 @@ struct	ip6_moptions {
  * Control options for outgoing packets
  */
 
-/* Routing header related info */
-struct	ip6po_rhinfo {
-	struct	ip6_rthdr *ip6po_rhi_rthdr; /* Routing header */
-	struct	route ip6po_rhi_route; /* Route to the 1st hop */
-};
-#define ip6po_rthdr	ip6po_rhinfo.ip6po_rhi_rthdr
-#define ip6po_route	ip6po_rhinfo.ip6po_rhi_route
-
-struct	ip6_pktopts {
+struct ip6_pktopts {
 	/* Hoplimit for outgoing packets */
 	int	ip6po_hlim;
 
@@ -184,9 +176,6 @@ struct	ip6_pktopts {
 
 	/* Destination options header (before a routing header) */
 	struct	ip6_dest *ip6po_dest1;
-
-	/* Routing header related info. */
-	struct	ip6po_rhinfo ip6po_rhinfo;
 
 	/* Destination options header (after a routing header) */
 	struct	ip6_dest *ip6po_dest2;
@@ -371,7 +360,7 @@ struct tdb;
 int	ip6_output_ipsec_lookup(struct mbuf *, const struct ipsec_level *,
 	    struct tdb **);
 int	ip6_output_ipsec_send(struct tdb *, struct mbuf *, struct route *,
-	    u_int, int, int);
+	    u_int, int);
 #endif /* IPSEC */
 
 #endif /* _KERNEL */
