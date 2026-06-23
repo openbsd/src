@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.72 2022/12/27 17:10:06 jmc Exp $ */
+/*	$OpenBSD: nlist.c,v 1.73 2026/06/23 19:47:42 kettenis Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -270,8 +270,8 @@ __fdnlist(int fd, struct nlist *list)
 					p->n_type = N_FN;
 					break;
 				}
-				if (ELF_ST_BIND(s->st_info) == STB_LOCAL)
-					p->n_type = N_EXT;
+				if (ELF_ST_BIND(s->st_info) != STB_LOCAL)
+					p->n_type |= N_EXT;
 				p->n_desc = 0;
 				p->n_other = 0;
 				if (--nent <= 0)
