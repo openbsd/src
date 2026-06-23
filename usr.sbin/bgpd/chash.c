@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.13 2026/05/18 12:34:51 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.14 2026/06/23 12:13:08 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -136,6 +136,27 @@ cg_meta_set_hash(struct ch_group *g, int slot, uint64_t hash)
 }
 
 /*
+ * Set the bit in the output for every byte in lookup where its
+ * byte was zero.
+ */
+static inline uint8_t
+ch_haszero(uint64_t lookup)
+{
+	uint64_t a, b;
+
+	/* set high bit for every byte that is 0 or negative */
+	a = lookup - 0x0101010101010101ULL;
+	/* set high bit for every byte that is not negative */
+	b = ~lookup & 0x8080808080808080ULL;
+	/* and a and b which excludes all negative bytes in lookup */
+	lookup = a & b;
+
+	/* now compress lookup by multiplication into high byte */
+	lookup *= 0x0002040810204080ULL;
+	return lookup >> 56;
+}
+
+/*
  * Find possible candidates in the group where both the mask matches with
  * the hash of the slot and where the flag bit for the slot is set.
  * Additionally set CH_EVER_FULL in the return value if it is set in
@@ -145,17 +166,13 @@ static uint8_t
 ch_meta_locate(struct ch_group *g, uint64_t mask)
 {
 	uint64_t lookup;
-	uint8_t flags, i, hits;
+	uint8_t flags, hits;
 
 	lookup = g->cg_meta ^ mask;
 	flags = cg_meta_get_flags(g);
-	hits = flags & CH_EVER_FULL;
+	hits = ch_haszero(lookup);
 
-	for (i = 0; i < 7; i++) {
-		if (((lookup >> i * 8) & CH_H3_MASK) == 0)
-			hits |= flags & (1 << i);
-	}
-	return hits;
+	return flags & (CH_EVER_FULL | hits);
 }
 
 /*
@@ -212,7 +229,7 @@ ch_sub_insert(const struct ch_type *type, struct ch_group *table,
 	uint8_t empties, hits, ins_i;
 	struct ch_group *g = &table[bucket], *ins_g = NULL;
 
-	memset(&mask, CH_H3(h), sizeof(mask));
+	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		/* first check if object already present */
 		hits = ch_meta_locate(g, mask);
@@ -268,7 +285,7 @@ ch_sub_remove(const struct ch_type *type, struct ch_group *table,
 	uint8_t hits;
 	struct ch_group *g = &table[bucket];
 
-	memset(&mask, CH_H3(h), sizeof(mask));
+	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		hits = ch_meta_locate(g, mask);
 		for (i = 0; i < 7; i++) {
@@ -306,7 +323,7 @@ ch_sub_find(const struct ch_type *type, struct ch_group *table, uint64_t h,
 	uint8_t hits;
 	struct ch_group *g = &table[bucket];
 
-	memset(&mask, CH_H3(h), sizeof(mask));
+	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		hits = ch_meta_locate(g, mask);
 		for (i = 0; i < 7; i++) {
@@ -336,7 +353,7 @@ ch_sub_locate(const struct ch_type *type, struct ch_group *table, uint64_t h,
 	uint8_t hits;
 	struct ch_group *g = &table[bucket];
 
-	memset(&mask, CH_H3(h), sizeof(mask));
+	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		hits = ch_meta_locate(g, mask);
 		for (i = 0; i < 7; i++) {
