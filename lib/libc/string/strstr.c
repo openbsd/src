@@ -1,4 +1,4 @@
-/*	$OpenBSD: strstr.c,v 1.10 2026/06/23 13:09:11 tim Exp $ */
+/*	$OpenBSD: strstr.c,v 1.11 2026/06/23 13:10:40 tim Exp $ */
 
 /*
  * Copyright (c) 2005-2018 Rich Felker
@@ -129,7 +129,7 @@ twoway_strstr(const unsigned char *h, const unsigned char *n)
 	for (;;) {
 		/* Update incremental end-of-haystack pointer */
 		if (z-h < l) {
-			/* Fast estimate for MIN(l,63) */
+			/* Fast estimate for MAX(l,63) */
 			size_t grow = l | 63;
 			const unsigned char *z2 = memchr(z, 0, grow);
 			if (z2) {
