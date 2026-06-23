@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.24 2022/01/16 14:30:11 naddy Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.25 2026/06/23 13:56:58 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -347,6 +347,7 @@ static void
 udp_encap_handle_message(struct transport *t)
 {
 	struct udp_transport	*u = (struct udp_transport *)t;
+	struct transport	*newt;
 	struct sockaddr_storage	 from;
 	struct message		*msg;
 	u_int32_t	len = sizeof from;
@@ -376,8 +377,8 @@ udp_encap_handle_message(struct transport *t)
 	 * Make a specialized UDP transport structure out of the incoming
 	 * transport and the address information we got from recvfrom(2).
 	 */
-	t = t->virtual->vtbl->clone(t->virtual, (struct sockaddr *)&from);
-	if (!t)
+	newt = t->virtual->vtbl->clone(t->virtual, (struct sockaddr *)&from);
+	if (!newt)
 		return;
 
 	/* Check NULL-ESP marker.  */
@@ -385,18 +386,22 @@ udp_encap_handle_message(struct transport *t)
 		/* Should never happen.  */
 		log_print("udp_encap_handle_message: "
 		    "Null-ESP marker not NULL or short message");
+		newt->vtbl->remove(newt);
 		return;
 	}
 
 	/* NAT-Keepalive messages should not be processed further.  */
 	n -= sizeof(u_int32_t);
-	if (n == 1 && buf[sizeof(u_int32_t)] == 0xFF)
+	if (n == 1 && buf[sizeof(u_int32_t)] == 0xFF) {
+		newt->vtbl->remove(newt);
 		return;
+	}
 
-	msg = message_alloc(t, buf + sizeof (u_int32_t), n);
+	msg = message_alloc(newt, buf + sizeof (u_int32_t), n);
 	if (!msg) {
 		log_error("failed to allocate message structure, dropping "
 		    "packet received on transport %p", u);
+		newt->vtbl->remove(newt);
 		return;
 	}
 
