@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.8 2026/06/15 13:40:41 mvs Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.9 2026/06/23 08:49:48 mvs Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -182,11 +182,12 @@ main(int argc, char **argv)
 	 * Send the first message to the receiver and wait for the ACK.
 	 */
 	m.mtype = MTYPE_1;
-	strlcpy(m.mtext, m1_str, sizeof m.mtext);
-	if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
+	strlcpy(m.mtext, m1_str, sizeof(m.mtext));
+	if (msgsnd(sender_msqid, &m, sizeof(m.mtext), 0) == -1)
 		err(1, "sender: msgsnd 1");
 
-	if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_1_ACK, 0) != sizeof(m))
+	if (msgrcv(sender_msqid, &m, sizeof(m.mtext), MTYPE_1_ACK, 0) !=
+	    sizeof(m.mtext))
 		err(1, "sender: msgrcv 1 ack");
 
 	if (verbose)
@@ -196,11 +197,12 @@ main(int argc, char **argv)
 	 * Send the second message to the receiver and wait for the ACK.
 	 */
 	m.mtype = MTYPE_2;
-	strlcpy(m.mtext, m2_str, sizeof m.mtext);
-	if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
+	strlcpy(m.mtext, m2_str, sizeof(m.mtext));
+	if (msgsnd(sender_msqid, &m, sizeof(m.mtext), 0) == -1)
 		err(1, "sender: msgsnd 2");
 
-	if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_2_ACK, 0) != sizeof(m))
+	if (msgrcv(sender_msqid, &m, sizeof(m.mtext), MTYPE_2_ACK, 0) !=
+	    sizeof(m.mtext))
 		err(1, "sender: msgrcv 2 ack");
 
 	/*
@@ -317,7 +319,7 @@ receiver(void)
 	 * Receive the first message, print it, and send an ACK.
 	 */
 
-	if (msgrcv(msqid, &m, sizeof(m), MTYPE_1, 0) != sizeof(m))
+	if (msgrcv(msqid, &m, sizeof(m.mtext), MTYPE_1, 0) != sizeof(m.mtext))
 		err(1, "receiver: msgrcv 1");
 
 	if (verbose)
@@ -327,14 +329,14 @@ receiver(void)
 
 	m.mtype = MTYPE_1_ACK;
 
-	if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
+	if (msgsnd(msqid, &m, sizeof(m.mtext), 0) == -1)
 		err(1, "receiver: msgsnd ack 1");
 
 	/*
 	 * Receive the second message, print it, and send an ACK.
 	 */
 
-	if (msgrcv(msqid, &m, sizeof(m), MTYPE_2, 0) != sizeof(m))
+	if (msgrcv(msqid, &m, sizeof(m.mtext), MTYPE_2, 0) != sizeof(m.mtext))
 		err(1, "receiver: msgrcv 2");
 
 	if (verbose)
@@ -344,7 +346,7 @@ receiver(void)
 
 	m.mtype = MTYPE_2_ACK;
 
-	if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
+	if (msgsnd(msqid, &m, sizeof(m.mtext), 0) == -1)
 		err(1, "receiver: msgsnd ack 2");
 
 	exit(0);
