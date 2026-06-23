@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.151 2026/06/23 18:50:43 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.152 2026/06/23 19:09:37 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -740,8 +740,6 @@ get_api_config(struct mbuf *m)
 	return (0);
 }
 
-static struct sockaddr_in sin = { sizeof(sin), AF_INET };
-
 int
 add_vif(struct socket *so, struct mbuf *m)
 {
@@ -771,6 +769,8 @@ add_vif(struct socket *so, struct mbuf *m)
 	if (vifcp->vifc_flags & VIFF_TUNNEL)
 		return (EOPNOTSUPP);
 	{
+		struct sockaddr_in sin = { sizeof(sin), AF_INET };
+
 		sin.sin_addr = vifcp->vifc_lcl_addr;
 		ifa = ifa_ifwithaddr(sintosa(&sin), rtableid);
 		if (ifa == NULL)
@@ -1205,6 +1205,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 		mrtstat_inc(mrts_no_route);
 
 		{
+			struct sockaddr_in sin = { sizeof(sin), AF_INET };
 			struct igmpmsg *im;
 
 			/*
