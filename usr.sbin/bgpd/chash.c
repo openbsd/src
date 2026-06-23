@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.14 2026/06/23 12:13:08 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.15 2026/06/23 15:34:00 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -226,18 +226,18 @@ ch_sub_insert(const struct ch_type *type, struct ch_group *table,
 	uint64_t mask;
 	uint32_t bucket = CH_H2(h);
 	int i;
-	uint8_t empties, hits, ins_i;
+	uint8_t empties, hits, ins_i, slots;
 	struct ch_group *g = &table[bucket], *ins_g = NULL;
 
 	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		/* first check if object already present */
 		hits = ch_meta_locate(g, mask);
-		for (i = 0; i < 7; i++) {
-			if (hits & (1 << i)) {
-				if (type->t_equal(g->cg_data[i], elm))
-					return g->cg_data[i];
-			}
+		for (slots = hits & CH_SLOT_MASK; slots != 0;
+		    slots &= slots - 1) {
+			i = ffs(slots) - 1;
+			if (type->t_equal(g->cg_data[i], elm))
+				return g->cg_data[i];
 		}
 		/* at the same time remember the first empty spot */
 		empties = ~cg_meta_get_flags(g) & CH_SLOT_MASK;
@@ -282,25 +282,25 @@ ch_sub_remove(const struct ch_type *type, struct ch_group *table,
 	uint64_t mask;
 	uint32_t bucket = CH_H2(h);
 	int i;
-	uint8_t hits;
+	uint8_t hits, slots;
 	struct ch_group *g = &table[bucket];
 
 	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		hits = ch_meta_locate(g, mask);
-		for (i = 0; i < 7; i++) {
-			if (hits & (1 << i)) {
-				/* most porbably a hit */
-				if (type->t_equal(g->cg_data[i], needle)) {
-					void *elm = g->cg_data[i];
-					g->cg_data[i] = NULL;
-					cg_meta_set_hash(g, i, 0);
-					cg_meta_clear_flags(g, 1 << i);
-					if (hits & CH_EVER_FULL)
-						meta->cs_num_tomb++;
-					meta->cs_num_elm--;
-					return elm;
-				}
+		for (slots = hits & CH_SLOT_MASK; slots != 0;
+		    slots &= slots - 1) {
+			i = ffs(slots) - 1;
+			/* most probably a hit */
+			if (type->t_equal(g->cg_data[i], needle)) {
+				void *elm = g->cg_data[i];
+				g->cg_data[i] = NULL;
+				cg_meta_set_hash(g, i, 0);
+				cg_meta_clear_flags(g, 1 << i);
+				if (hits & CH_EVER_FULL)
+					meta->cs_num_tomb++;
+				meta->cs_num_elm--;
+				return elm;
 			}
 		}
 		if ((hits & CH_EVER_FULL) == 0)
@@ -320,18 +320,18 @@ ch_sub_find(const struct ch_type *type, struct ch_group *table, uint64_t h,
 	uint64_t mask;
 	uint32_t bucket = CH_H2(h);
 	int i;
-	uint8_t hits;
+	uint8_t hits, slots;
 	struct ch_group *g = &table[bucket];
 
 	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		hits = ch_meta_locate(g, mask);
-		for (i = 0; i < 7; i++) {
-			if (hits & (1 << i)) {
-				/* most porbably a hit */
-				if (type->t_equal(g->cg_data[i], needle))
-					return g->cg_data[i];
-			}
+		for (slots = hits & CH_SLOT_MASK; slots != 0;
+		    slots &= slots - 1) {
+			i = ffs(slots) - 1;
+			/* most probably a hit */
+			if (type->t_equal(g->cg_data[i], needle))
+				return g->cg_data[i];
 		}
 		if ((hits & CH_EVER_FULL) == 0)
 			return NULL;
@@ -350,18 +350,18 @@ ch_sub_locate(const struct ch_type *type, struct ch_group *table, uint64_t h,
 	uint64_t mask;
 	uint32_t bucket = CH_H2(h);
 	int i;
-	uint8_t hits;
+	uint8_t hits, slots;
 	struct ch_group *g = &table[bucket];
 
 	mask = CH_H3(h) * 0x0101010101010101ULL;
 	while (1) {
 		hits = ch_meta_locate(g, mask);
-		for (i = 0; i < 7; i++) {
-			if (hits & (1 << i)) {
-				/* most porbably a hit */
-				if (eq(g->cg_data[i], arg))
-					return g->cg_data[i];
-			}
+		for (slots = hits & CH_SLOT_MASK; slots != 0;
+		    slots &= slots - 1) {
+			i = ffs(slots) - 1;
+			/* most probably a hit */
+			if (eq(g->cg_data[i], arg))
+				return g->cg_data[i];
 		}
 		if ((hits & CH_EVER_FULL) == 0)
 			return NULL;
