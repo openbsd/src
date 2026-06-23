@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.143 2026/06/11 09:55:17 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.144 2026/06/23 11:57:58 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1281,7 +1281,8 @@ exchange_upgrade_p1(struct message *msg)
 	GET_ISAKMP_HDR_RCOOKIE(msg->iov[0].iov_base, exchange->cookies +
 	    ISAKMP_HDR_ICOOKIE_LEN);
 	exchange_enter(exchange);
-	sa_isakmp_upgrade(msg);
+	if (!TAILQ_EMPTY(&exchange->sa_list))
+		sa_isakmp_upgrade(msg);
 }
 
 static int
