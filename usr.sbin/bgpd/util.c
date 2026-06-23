@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.102 2026/05/14 11:32:52 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.103 2026/06/23 18:32:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -273,7 +273,7 @@ log_aspa(struct aspa_set *aspa)
 	uint32_t i;
 
 	/* include enough space for header and trailer */
-	if ((uint64_t)aspa->num > (SIZE_MAX / sizeof(asbuf) - 72))
+	if (aspa->num > MAX_ASPA_SPAS_COUNT)
 		goto fail;
 	needed = aspa->num * sizeof(asbuf) + 72;
 	if (needed > len) {
