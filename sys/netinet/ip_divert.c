@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.107 2025/07/08 00:47:41 jsg Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.108 2026/06/24 15:56:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -178,6 +178,7 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	struct inpcb *inp = NULL;
 	struct socket *so;
 	struct sockaddr_in sin;
+	u_int rdomain;
 
 	divstat_inc(divs_ipackets);
 
@@ -187,10 +188,13 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		goto bad;
 	}
 
+	rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 	mtx_enter(&divbtable.inpt_mtx);
 	TAILQ_FOREACH(inp, &divbtable.inpt_queue, inp_queue) {
-		if (inp->inp_lport != divert_port)
+		if (inp->inp_lport != divert_port ||
+		    rtable_l2(inp->inp_rtableid) != rdomain) {
 			continue;
+		}
 		in_pcbref(inp);
 		break;
 	}
