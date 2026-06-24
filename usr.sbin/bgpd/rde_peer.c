@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.75 2026/05/28 09:10:22 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.76 2026/06/24 18:56:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -250,8 +250,7 @@ RB_GENERATE(peer_tree, rde_peer, entry, peer_cmp);
 
 static void
 peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
-    struct prefix *newpath, uint32_t old_pathid_tx, enum eval_mode mode,
-    int force_update)
+    enum eval_mode mode, int force_update)
 {
 	uint8_t		 aid;
 
@@ -284,8 +283,7 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 		 * big of an issue right now.
 		 */
 		if (peer->eval.mode == ADDPATH_EVAL_ALL) {
-			up_generate_addpath_all(peer, re, newpath,
-			    old_pathid_tx, force_update);
+			up_generate_addpath_all(peer, re, force_update);
 			return;
 		}
 #endif
@@ -306,12 +304,12 @@ rde_enqueue_updates(struct rib_entry *re, struct prefix *newpath,
 	struct rde_peer	*peer;
 
 	switch (mode) {
-	case EVAL_RECONF:
+	case EVAL_REEVAL:
 		/* skip peers which don't need to reconfigure */
 		RB_FOREACH(peer, peer_tree, &peertable) {
 			if (peer->reconf_out == 0)
 				continue;
-			peer_generate_update(peer, re, NULL, 0, EVAL_RECONF, 0);
+			peer_generate_update(peer, re, EVAL_REEVAL, 0);
 		}
 		return;
 	case EVAL_DEFAULT:
@@ -368,7 +366,7 @@ peer_process_updates(struct rde_peer *peer, void *bula)
 	mode = re->pq_mode;
 
 	RB_FOREACH(p, peer_tree, &peertable)
-		peer_generate_update(p, re, NULL, 0, mode, 0);
+		peer_generate_update(p, re, mode, 0);
 
 	rib_dequeue(re);
 }
@@ -669,7 +667,7 @@ peer_dump_upcall(struct rib_entry *re, void *ptr)
 		/* no eligible prefix, not even for 'evaluate all' */
 		return;
 
-	peer_generate_update(peer, re, NULL, 0, EVAL_DEFAULT, 1);
+	peer_generate_update(peer, re, EVAL_REEVAL, 1);
 }
 
 static void

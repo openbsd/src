@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.353 2026/06/02 08:23:56 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.354 2026/06/24 18:56:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -358,7 +358,7 @@ struct filterstate {
 
 enum eval_mode {
 	EVAL_NONE,
-	EVAL_RECONF,
+	EVAL_REEVAL,
 	EVAL_DEFAULT,
 	EVAL_ALL,
 };
@@ -806,8 +806,7 @@ void		 adjout_attr_stats(struct ch_stats *);
 /* rde_update.c */
 void	 up_generate_updates(struct rde_peer *, struct rib_entry *, int);
 void	 up_generate_addpath(struct rde_peer *, struct rib_entry *, int);
-void	 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
-	    struct prefix *, uint32_t, int);
+void	 up_generate_addpath_all(struct rde_peer *, struct rib_entry *, int);
 void	 up_generate_default(struct rde_peer *, uint8_t);
 int	 up_is_eor(struct rde_peer *, uint8_t);
 void	 up_dump_withdraws(struct imsgbuf *, struct rde_peer *, uint8_t);

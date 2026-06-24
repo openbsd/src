@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.198 2026/05/28 14:01:46 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.199 2026/06/24 18:56:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -365,8 +365,10 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re,
  */
 void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
-    struct prefix *new, uint32_t old_pathid_tx, int force_update)
+    int force_update)
 {
+#if 0
+	/* XXX needs to be rewritten */
 	struct adjout_prefix	*p;
 
 	/*
@@ -407,6 +409,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 		if (p != NULL)
 			adjout_prefix_withdraw(peer, re->prefix, p);
 	}
+#endif
 }
 
 /* send a default route to the specified peer, always force the update out */

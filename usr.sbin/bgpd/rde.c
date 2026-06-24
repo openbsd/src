@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.706 2026/06/02 08:23:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.707 2026/06/24 18:56:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4303,7 +4303,7 @@ rde_softreconfig_out(struct rib_entry *re, void *arg)
 		/* no valid path for prefix */
 		return;
 
-	rde_enqueue_updates(re, NULL, 0, EVAL_RECONF);
+	rde_enqueue_updates(re, NULL, 0, EVAL_REEVAL);
 }
 
 static void
