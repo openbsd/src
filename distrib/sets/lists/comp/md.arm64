@@ -9,6 +9,7 @@
 ./usr/include/arm64/bootconfig.h
 ./usr/include/arm64/bus.h
 ./usr/include/arm64/cdefs.h
+./usr/include/arm64/codepatch.h
 ./usr/include/arm64/conf.h
 ./usr/include/arm64/cpu.h
 ./usr/include/arm64/cpufunc.h
