@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.36 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.37 2026/06/24 02:39:36 millert Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -49,22 +49,25 @@
 #include <unistd.h>
 #include <utmp.h>
 
-void done(int sig);
+__dead void done(int sig);
 void do_write(char *, char *, uid_t);
 void wr_fputs(char *);
-void search_utmp(char *, char *, int, char *, uid_t);
+void search_utmp(char *, char *, size_t, char *, uid_t);
 int term_chk(char *, int *, time_t *, int);
 int utmp_chk(char *, char *);
-static int isu8cont(unsigned char c);
+static int isu8cont(unsigned char);
+char *shorten_ttyname(char *);
 
 int
 main(int argc, char *argv[])
 {
-	char tty[PATH_MAX], *mytty, *cp;
+	char tty[PATH_MAX], *mytty;
 	int msgsok, myttyfd;
 	time_t atime;
 	uid_t myuid;
 
+	if (pledge("stdio rpath wpath id", NULL) == -1)
+		err(1, "pledge");
 	/* check that sender has write enabled */
 	if (isatty(fileno(stdin)))
 		myttyfd = fileno(stdin);
@@ -76,8 +79,7 @@ main(int argc, char *argv[])
 		errx(1, "can't find your tty");
 	if (!(mytty = ttyname(myttyfd)))
 		errx(1, "can't find your tty's name");
-	if ((cp = strrchr(mytty, '/')))
-		mytty = cp + 1;
+	mytty = shorten_ttyname(mytty);
 	if (term_chk(mytty, &msgsok, &atime, 1))
 		exit(1);
 	if (!msgsok)
@@ -92,8 +94,7 @@ main(int argc, char *argv[])
 		do_write(tty, mytty, myuid);
 		break;
 	case 3:
-		if (!strncmp(argv[2], _PATH_DEV, sizeof(_PATH_DEV) - 1))
-			argv[2] += sizeof(_PATH_DEV) - 1;
+		argv[2] = shorten_ttyname(argv[2]);
 		if (utmp_chk(argv[1], argv[2]))
 			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);
@@ -109,9 +110,6 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	done(0);
-
-	/* NOTREACHED */
-	return (0);
 }
 
 /*
@@ -150,7 +148,7 @@ utmp_chk(char *user, char *tty)
  * writing from, unless that's the only terminal with messages enabled.
  */
 void
-search_utmp(char *user, char *tty, int ttyl, char *mytty, uid_t myuid)
+search_utmp(char *user, char *tty, size_t ttyl, char *mytty, uid_t myuid)
 {
 	struct utmp u;
 	time_t bestatime, atime;
@@ -225,9 +223,9 @@ void
 do_write(char *tty, char *mytty, uid_t myuid)
 {
 	const char *login;
-	char *nows;
-	time_t now;
 	char path[PATH_MAX], host[HOST_NAME_MAX+1], line[512];
+	time_t now;
+	char nows[6]; /* HH:MM */
 	gid_t gid;
 	int fd;
 
@@ -263,11 +261,10 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) == -1)
 		(void)strlcpy(host, "???", sizeof host);
-	now = time(NULL);
-	nows = ctime(&now);
-	nows[16] = '\0';
+	time(&now);
+	strftime(nows, sizeof nows, "%H:%M", localtime(&now));
 	(void)printf("\r\n\007\007\007Message from %s@%s on %s at %s ...\r\n",
-	    login, host, mytty, nows + 11);
+	    login, host, mytty, nows);
 
 	while (fgets(line, sizeof(line), stdin) != NULL)
 		wr_fputs(line);
@@ -294,7 +291,7 @@ void
 wr_fputs(char *s)
 {
 
-#define	PUTC(c)	if (putchar(c) == EOF) goto err;
+#define	PUTC(c)	do { if (putchar(c) == EOF) goto err; } while (0)
 
 	for (; *s != '\0'; ++s) {
 		if (*s == '\n') {
@@ -321,4 +318,12 @@ static int
 isu8cont(unsigned char c)
 {
 	return (c & (0x80 | 0x40)) == 0x80;
+}
+
+char *
+shorten_ttyname(char *s)
+{
+	if (strncmp(s, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
+		s += sizeof(_PATH_DEV) - 1;
+	return s;
 }
