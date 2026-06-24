@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.241 2026/05/14 16:22:31 mglocker Exp $
+# $OpenBSD: RAMDISK,v 1.242 2026/06/24 10:23:01 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -123,7 +123,7 @@ apldog*		at fdt? early 1
 apliic*		at fdt?
 iic*		at apliic?
 aplintc*	at fdt? early 1
-aplmbox*	at fdt?
+aplmbox*	at fdt? early 1
 aplns*		at fdt?			# Apple NVME Storage controllers
 nvme*		at aplns?
 aplpcie*	at fdt?
