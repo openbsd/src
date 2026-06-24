@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.20 2026/06/24 14:16:27 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.21 2026/06/24 14:54:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -143,12 +143,9 @@ opt_appvol(struct opt *o, struct app *a, int vol)
 void
 opt_midi_imsg(void *arg, unsigned char *msg, int len)
 {
-#ifdef DEBUG
 	struct opt *o = arg;
 
-	logx(0, "%s: can't receive midi messages", o->name);
-	panic();
-#endif
+	midi_send(o->midi, msg, len);
 }
 
 void
@@ -269,7 +266,7 @@ opt_midi_vol(struct opt *o, struct app *a)
 	msg[0] = MIDI_CTL | (a - o->app_array);
 	msg[1] = MIDI_CTL_VOL;
 	msg[2] = a->vol;
-	midi_send(o->midi, msg, sizeof(msg));
+	midi_in(o->midi, msg, sizeof(msg));
 }
 
 /*
@@ -289,7 +286,7 @@ opt_midi_appdesc(struct opt *o, struct app *a)
 	strlcpy(x.u.slotdesc.name, a->name, SYSEX_NAMELEN);
 	x.u.slotdesc.chan = (a - o->app_array);
 	x.u.slotdesc.end = SYSEX_END;
-	midi_send(o->midi, (unsigned char *)&x, SYSEX_SIZE(slotdesc));
+	midi_in(o->midi, (unsigned char *)&x, SYSEX_SIZE(slotdesc));
 }
 
 /*
@@ -313,7 +310,7 @@ opt_midi_dump(struct opt *o)
 	x.id0 = SYSEX_AUCAT;
 	x.id1 = SYSEX_AUCAT_DUMPEND;
 	x.u.dumpend.end = SYSEX_END;
-	midi_send(o->midi, (unsigned char *)&x, SYSEX_SIZE(dumpend));
+	midi_in(o->midi, (unsigned char *)&x, SYSEX_SIZE(dumpend));
 }
 
 /*

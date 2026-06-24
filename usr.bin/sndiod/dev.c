@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.140 2026/06/22 14:21:14 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.141 2026/06/24 14:54:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -170,7 +170,7 @@ dev_midi_send(struct dev *d, void *msg, int msglen)
 	for (o = opt_list; o != NULL; o = o->next) {
 		if (o->dev != d)
 			continue;
-		midi_send(o->midi, msg, msglen);
+		midi_in(o->midi, msg, msglen);
 	}
 }
 
