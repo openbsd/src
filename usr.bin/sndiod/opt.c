@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.19 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.20 2026/06/24 14:16:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -373,6 +373,7 @@ opt_new(struct dev *d, char *name,
 	o->dev = d;
 	o->alt_list = NULL;
 	o->refcnt = 0;
+	memset(o->app_array, 0, sizeof(o->app_array));
 
 	/*
 	 * XXX: below, we allocate a midi input buffer, since we don't
