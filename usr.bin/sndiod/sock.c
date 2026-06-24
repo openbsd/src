@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.62 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.63 2026/06/24 04:29:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -744,6 +744,18 @@ sock_hello(struct sock *f)
 	default:
 #ifdef DEBUG
 		logx(1, "sock %d: %u: unsupported mode", f->fd, mode);
+#endif
+		return 0;
+	}
+	if (strnlen(p->opt, sizeof(p->opt)) >= sizeof(p->opt)) {
+#ifdef DEBUG
+		logx(1, "sock %d: malformed opt", f->fd);
+#endif
+		return 0;
+	}
+	if (strnlen(p->who, sizeof(p->who)) >= sizeof(p->who)) {
+#ifdef DEBUG
+		logx(1, "sock %d: malformed program name", f->fd);
 #endif
 		return 0;
 	}
