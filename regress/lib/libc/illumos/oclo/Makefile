@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2025/08/09 18:17:42 anton Exp $
+#	$OpenBSD: Makefile,v 1.3 2026/06/24 12:24:04 bluhm Exp $
 
 .if exists(/usr/local/share/illumos-os-tests)
+
+MAKE :=		ulimit -n 256; ${MAKE}
 
 PROGS =		oclo
 PROGS +=	oclo_errors
