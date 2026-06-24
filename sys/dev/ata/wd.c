@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.135 2025/11/17 14:27:43 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.136 2026/06/24 17:03:05 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -784,12 +784,6 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
-		goto exit;
-
-	/* XXX temporary to support the transition to more partitions */
-	case O_DIOCGDINFO:
-		/* truncate the buffer, good enough */
-		bcopy(wd->sc_dk.dk_label, addr, O_disklabel);
 		goto exit;
 
 	case DIOCGPART:

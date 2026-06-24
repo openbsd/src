@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.358 2026/05/15 00:39:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.359 2026/06/24 17:03:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1165,7 +1165,6 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	if ((pledge & PLEDGE_DISKLABEL)) {
 		switch (com) {
 		case DIOCGDINFO:
-		case O_DIOCGDINFO: /* XXX temporary transition to 52 partitions */
 		case DIOCGPDINFO:
 		case DIOCRLDINFO:
 		case DIOCWDINFO:
