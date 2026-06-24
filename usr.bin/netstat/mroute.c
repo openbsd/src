@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.29 2025/06/06 20:37:06 jan Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.30 2026/06/24 12:33:49 bluhm Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -188,4 +188,8 @@ mrt_stats(void)
 	    mrtstat.mrts_pkt2large, plural(mrtstat.mrts_pkt2large));
 	printf("\t%lu datagram%s dropped due to full socket buffer\n",
 	    mrtstat.mrts_upq_sockfull, plural(mrtstat.mrts_upq_sockfull));
+	printf("\t%lu datagram%s exceeded time-to-live not forwarded\n",
+	    mrtstat.mrts_time_to_live, plural(mrtstat.mrts_time_to_live));
+	printf("\t%lu datagram%s dropped due to source-routing\n",
+	    mrtstat.mrts_source_route, plural(mrtstat.mrts_source_route));
 }

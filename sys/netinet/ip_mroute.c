@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.152 2026/06/23 19:09:37 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.153 2026/06/24 12:33:49 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -528,6 +528,8 @@ mrt_sysctl_mrtstat(void *oldp, size_t *oldlenp, void *newp)
 	ASSIGN(mrts_q_overflow);
 	ASSIGN(mrts_pkt2large);
 	ASSIGN(mrts_upq_sockfull);
+	ASSIGN(mrts_time_to_live);
+	ASSIGN(mrts_source_route);
 
 #undef ASSIGN
 
@@ -1157,7 +1159,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 	struct ip *ip = mtod(m, struct ip *);
 	struct vif *v;
 	struct rtentry *rt;
-	static int srctun = 0;
 	struct mbuf *mm;
 	unsigned int rtableid = ifp->if_rdomain;
 
@@ -1172,9 +1173,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 		 * Packet arrived through a source-route tunnel.
 		 * Source-route tunnels are no longer supported.
 		 */
-		if ((srctun++ % 1000) == 0)
-			log(LOG_ERR, "ip_mforward: received source-routed "
-			    "packet from %x\n", ntohl(ip->ip_src.s_addr));
+		mrtstat_inc(mrts_source_route);
 		return (EOPNOTSUPP);
 	}
 
@@ -1182,6 +1181,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 	 * Don't forward a packet with time-to-live of zero or one,
 	 * or a packet destined to a local-only group.
 	 */
+	if (ip->ip_ttl <= 1)
+		mrtstat_inc(mrts_time_to_live);
 	if (ip->ip_ttl <= 1 || IN_LOCAL_GROUP(ip->ip_dst.s_addr))
 		return (0);
 

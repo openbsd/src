@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.27 2025/06/06 20:37:06 jan Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.28 2026/06/24 12:33:49 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -221,4 +221,6 @@ mrt6_stats(void)
 	    mrt6stat.mrt6s_pkt2large, plural(mrt6stat.mrt6s_pkt2large));
 	printf("\t%llu datagram%s dropped due to full socket buffer\n",
 	    mrt6stat.mrt6s_upq_sockfull, plural(mrt6stat.mrt6s_upq_sockfull));
+	printf("\t%llu datagram%s exceeded hop-limit not forwarded\n",
+	    mrt6stat.mrt6s_hop_limit, plural(mrt6stat.mrt6s_hop_limit));
 }
