@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.111 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.112 2026/06/24 01:33:18 afresh1 Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,7 @@ sub add_default($self, $state, $p)
 			$p->add($o);
 		}
 	} else {
-		$w = "./:installpath";
+		$w = "installpath";
 	}
 	if (defined $ENV{PKG_PATH}) {
 		$w = $ENV{PKG_PATH};

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.170 2025/05/22 01:40:21 kn Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.171 2026/06/24 01:33:18 afresh1 Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 22 2025 $
+.Dd $Mdocdate: June 24 2026 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -142,9 +142,9 @@ Each package name may be specified as a filename (which normally consists of the
 package name itself plus the
 .Dq .tgz
 suffix) or a URL referring to FTP, HTTP, HTTPS, or SCP locations.
-If the given package names are not found in the current working directory,
 .Nm
-will search for them in each directory (local or remote) named by the
+will search for the given package names in each directory (local or
+remote) named by the
 .Ev TRUSTED_PKG_PATH
 environment variable,
 then the
@@ -161,7 +161,7 @@ nor
 are defined,
 .Nm
 will use
-.Sq ./:installpath
+.Sq installpath
 as a default.
 .Pp
 .Nm
