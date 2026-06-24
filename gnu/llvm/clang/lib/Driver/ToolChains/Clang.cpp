@@ -2565,6 +2565,12 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           Msa = false;
           continue;
         }
+        if (Value.starts_with("-mfix-loongson2f-btb")) {
+          CmdArgs.push_back("-mllvm");
+          CmdArgs.push_back("-fix-loongson2f-btb");
+          continue;
+        }
+
         MipsTargetFeature = llvm::StringSwitch<const char *>(Value)
                                 .Case("-mips1", "+mips1")
                                 .Case("-mips2", "+mips2")
@@ -3043,11 +3049,6 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
           D.Diag(clang::diag::warn_drv_overriding_option)
               << LastFpContractOverrideOption
               << Args.MakeArgString("-ffp-contract=" + Val);
-        }
-        if (Val.starts_with("-mfix-loongson2f-btb")) {
-          CmdArgs.push_back("-mllvm");
-          CmdArgs.push_back("-fix-loongson2f-btb");
-          continue;
         }
 
         FPContract = Val;
