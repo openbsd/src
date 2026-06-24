@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.144 2026/06/23 11:57:58 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.145 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1207,11 +1207,11 @@ exchange_free_aux(void *v_exch)
 	if (exchange->in_transit &&
 	    exchange->in_transit != exchange->last_sent)
 		message_free(exchange->in_transit);
-	free(exchange->nonce_i);
-	free(exchange->nonce_r);
+	freezero(exchange->nonce_i, exchange->nonce_i_len);
+	freezero(exchange->nonce_r, exchange->nonce_r_len);
 	free(exchange->id_i);
 	free(exchange->id_r);
-	free(exchange->keystate);
+	freezero(exchange->keystate, sizeof(struct keystate));
 	if (exchange->data) {
 		if (exchange->doi && exchange->doi->free_exchange_data)
 			exchange->doi->free_exchange_data(exchange->data);
@@ -1526,13 +1526,14 @@ exchange_nonce(struct exchange *exchange, int peer, size_t nonce_sz,
 	nonce = initiator ? &exchange->nonce_i : &exchange->nonce_r;
 	nonce_len =
 	    initiator ? &exchange->nonce_i_len : &exchange->nonce_r_len;
-	*nonce_len = nonce_sz;
 	*nonce = malloc(nonce_sz);
 	if (!*nonce) {
+		*nonce_len = 0;
 		log_error("exchange_nonce: malloc (%lu) failed",
 		    (unsigned long)nonce_sz);
 		return -1;
 	}
+	*nonce_len = nonce_sz;
 	memcpy(*nonce, buf, nonce_sz);
 	snprintf(header, sizeof header, "exchange_nonce: NONCE_%c",
 	    initiator ? 'i' : 'r');

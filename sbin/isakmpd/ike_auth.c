@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.118 2020/07/07 17:33:40 tobhe Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.119 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -402,12 +402,12 @@ pre_shared_gen_skeyid(struct exchange *exchange, size_t *sz)
 	if (!exchange->recv_key) {
 		log_error("pre_shared_gen_skeyid: malloc (%lu) failed",
 		    (unsigned long)keylen);
-		free(key);
+		freezero(key, keylen);
 		return 0;
 	}
 	memcpy(exchange->recv_key, key, keylen);
 	exchange->recv_certtype = ISAKMP_CERTENC_NONE;
-	free(key);
+	freezero(key, keylen);
 
 	prf = prf_alloc(ie->prf_type, ie->hash->type, exchange->recv_key,
 	    keylen);
@@ -454,7 +454,7 @@ sig_gen_skeyid(struct exchange *exchange, size_t *sz)
 
 	prf = prf_alloc(ie->prf_type, ie->hash->type, key,
 	    exchange->nonce_i_len + exchange->nonce_r_len);
-	free(key);
+	freezero(key, exchange->nonce_i_len + exchange->nonce_r_len);
 	if (!prf)
 		return 0;
 
@@ -524,9 +524,11 @@ pre_shared_decode_hash(struct message *msg)
 	char            header[80];
 	int             initiator = exchange->initiator;
 	u_int8_t      **hash_p;
+	size_t         *hash_sz_p;
 
 	/* Choose the right fields to fill-in.  */
 	hash_p = initiator ? &ie->hash_r : &ie->hash_i;
+	hash_sz_p = initiator ? &ie->hash_r_sz : &ie->hash_i_sz;
 
 	payload = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	if (!payload) {
@@ -540,10 +542,12 @@ pre_shared_decode_hash(struct message *msg)
 	/* XXX Need this hash be in the SA?  */
 	*hash_p = malloc(hashsize);
 	if (!*hash_p) {
+		*hash_sz_p = 0;
 		log_error("pre_shared_decode_hash: malloc (%lu) failed",
 		    (unsigned long)hashsize);
 		return -1;
 	}
+	*hash_sz_p = hashsize;
 	memcpy(*hash_p, payload->p + ISAKMP_HASH_DATA_OFF, hashsize);
 	snprintf(header, sizeof header, "pre_shared_decode_hash: HASH_%c",
 	    initiator ? 'R' : 'I');
@@ -566,6 +570,7 @@ rsa_sig_decode_hash(struct message *msg)
 	u_int32_t       rawcertlen, *id_cert_len;
 	RSA            *key = 0;
 	size_t          hashsize = ie->hash->hashsize, id_len;
+	size_t         *hash_sz_p;
 	char            header[80];
 	int             len, initiator = exchange->initiator;
 	int             found = 0, n, i, id_found;
@@ -576,6 +581,7 @@ rsa_sig_decode_hash(struct message *msg)
 
 	/* Choose the right fields to fill-in.  */
 	hash_p = initiator ? &ie->hash_r : &ie->hash_i;
+	hash_sz_p = initiator ? &ie->hash_r_sz : &ie->hash_i_sz;
 	id = initiator ? exchange->id_r : exchange->id_i;
 	id_len = initiator ? exchange->id_r_len : exchange->id_i_len;
 
@@ -783,14 +789,19 @@ rsa_sig_decode_hash(struct message *msg)
 	}
 	*hash_p = malloc(len);
 	if (!*hash_p) {
+		*hash_sz_p = 0;
 		RSA_free(key);
 		log_error("rsa_sig_decode_hash: malloc (%d) failed", len);
 		return -1;
 	}
+	*hash_sz_p = len;
 	len = RSA_public_decrypt(len, p->p + ISAKMP_SIG_DATA_OFF, *hash_p, key,
 	    RSA_PKCS1_PADDING);
 	if (len == -1) {
 		RSA_free(key);
+		freezero(*hash_p, *hash_sz_p);
+		*hash_p = NULL;
+		*hash_sz_p = 0;
 		log_print("rsa_sig_decode_hash: RSA_public_decrypt () failed");
 		return -1;
 	}
@@ -799,8 +810,9 @@ rsa_sig_decode_hash(struct message *msg)
 	exchange->recv_keytype = ISAKMP_KEY_RSA;
 
 	if (len != (int)hashsize) {
-		free(*hash_p);
-		*hash_p = 0;
+		freezero(*hash_p, *hash_sz_p);
+		*hash_p = NULL;
+		*hash_sz_p = 0;
 		log_print("rsa_sig_decode_hash: len %lu != hashsize %lu",
 		    (unsigned long)len, (unsigned long)hashsize);
 		return -1;
@@ -957,6 +969,8 @@ skipcert:
 		}
 		sent_key = key_internalize(ISAKMP_KEY_RSA,
 		    ISAKMP_KEYTYPE_PRIVATE, data, datalen);
+		freezero(data, datalen);
+		data = NULL;
 		if (!sent_key) {
 			log_print("rsa_sig_encode_hash: bad RSA private key "
 			    "from dynamic SA acquisition subsystem");

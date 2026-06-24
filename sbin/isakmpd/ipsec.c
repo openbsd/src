@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.160 2026/06/24 09:36:35 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.161 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -779,13 +779,13 @@ ipsec_free_exchange_data(void *vie)
 	free(ie->id_cr);
 	free(ie->g_xi);
 	free(ie->g_xr);
-	free(ie->g_xy);
-	free(ie->skeyid);
-	free(ie->skeyid_d);
-	free(ie->skeyid_a);
-	free(ie->skeyid_e);
-	free(ie->hash_i);
-	free(ie->hash_r);
+	freezero(ie->g_xy, ie->g_xy_len);
+	freezero(ie->skeyid, ie->skeyid_len);
+	freezero(ie->skeyid_d, ie->skeyid_len);
+	freezero(ie->skeyid_a, ie->skeyid_len);
+	freezero(ie->skeyid_e, ie->skeyid_len);
+	freezero(ie->hash_i, ie->hash_i_sz);
+	freezero(ie->hash_r, ie->hash_r_sz);
 	if (ie->group)
 		group_free(ie->group);
 	for (attr = LIST_FIRST(&ie->attrs); attr;
@@ -807,8 +807,8 @@ ipsec_free_sa_data(void *visa)
 	free(isa->src_mask);
 	free(isa->dst_net);
 	free(isa->dst_mask);
-	free(isa->skeyid_a);
-	free(isa->skeyid_d);
+	freezero(isa->skeyid_a, isa->skeyid_len);
+	freezero(isa->skeyid_d, isa->skeyid_len);
 }
 
 /* Free the DOI-specific protocol data of an SA pointed to by VIPROTO.  */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.h,v 1.28 2026/06/24 09:36:35 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.h,v 1.29 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	 */
 
 /*
@@ -87,7 +87,9 @@ struct ipsec_exch {
 
 	/* HASH_I & HASH_R.  XXX Do these need to be saved here?  */
 	u_int8_t	*hash_i;
+	size_t		 hash_i_sz;
 	u_int8_t	*hash_r;
+	size_t		 hash_r_sz;
 
 	/* KEYMAT */
 	size_t		 keymat_len;

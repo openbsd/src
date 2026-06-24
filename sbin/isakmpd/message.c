@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.134 2026/06/16 11:50:53 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.135 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1469,7 +1469,7 @@ message_recv(struct message *msg)
 		msg->orig = malloc(sz);
 		if (!msg->orig) {
 			message_free(msg);
-			free(ks);
+			freezero(ks, sizeof(*ks));
 			return -1;
 		}
 		memcpy(msg->orig, buf, sz);
@@ -1487,7 +1487,7 @@ message_recv(struct message *msg)
 	 */
 	if (GET_ISAKMP_HDR_NEXT_PAYLOAD(buf) != ISAKMP_PAYLOAD_NONE &&
 	    message_sort_payloads(msg, GET_ISAKMP_HDR_NEXT_PAYLOAD(buf))) {
-		free(ks);
+		freezero(ks, sizeof(*ks));
 		return -1;
 	}
 	/*
@@ -1497,7 +1497,7 @@ message_recv(struct message *msg)
 	 * XXX Should SAs and even transports be cleaned up then too?
 	 */
 	if (message_validate_payloads(msg)) {
-		free(ks);
+		freezero(ks, sizeof(*ks));
 		return -1;
 	}
 	/*
@@ -1507,7 +1507,7 @@ message_recv(struct message *msg)
 	if (!msg->exchange) {
 		log_print("message_recv: no exchange");
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
-		free(ks);
+		freezero(ks, sizeof(*ks));
 		return -1;
 	}
 	/*
@@ -1532,7 +1532,7 @@ message_recv(struct message *msg)
 		    exch_type);
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 1,
 		    1);
-		free(ks);
+		freezero(ks, sizeof(*ks));
 		return -1;
 	}
 	/* Make sure the IV we used gets saved in the proper SA.  */
@@ -1541,7 +1541,7 @@ message_recv(struct message *msg)
 			msg->exchange->keystate = ks;
 			msg->exchange->crypto = ks->xf;
 		} else
-			free(ks);
+			freezero(ks, sizeof(*ks));
 	}
 	/* Handle the flags.  */
 	if (flags & ISAKMP_FLAGS_ENC)

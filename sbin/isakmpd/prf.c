@@ -1,4 +1,4 @@
-/* $OpenBSD: prf.c,v 1.16 2013/03/21 04:30:14 deraadt Exp $	 */
+/* $OpenBSD: prf.c,v 1.17 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	 */
 
 /*
@@ -114,7 +114,7 @@ prf_alloc(enum prfs type, int subtype, unsigned char *shared,
 		if (!prfctx->ctx2) {
 			log_error("prf_alloc: malloc (%d) failed",
 			    hash->ctxsize);
-			free(prfctx->ctx);
+			free(prfctx->ctx);	/* not used yet, thus just free */
 			goto cleanprfctx;
 		}
 		prf->type = PRF_HMAC;
@@ -150,8 +150,8 @@ prf_free(struct prf *prf)
 	struct prf_hash_ctx *prfctx = prf->prfctx;
 
 	if (prf->type == PRF_HMAC) {
-		free(prfctx->ctx2);
-		free(prfctx->ctx);
+		freezero(prfctx->ctx2, prfctx->hash->ctxsize);
+		freezero(prfctx->ctx, prfctx->hash->ctxsize);
 	}
 	free(prf->prfctx);
 	free(prf);

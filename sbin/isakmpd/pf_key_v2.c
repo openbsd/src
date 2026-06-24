@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.206 2026/05/28 09:54:05 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.207 2026/06/24 09:57:32 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -168,6 +168,10 @@ static void
 pf_key_v2_msg_free(struct pf_key_v2_msg *msg)
 {
 	struct pf_key_v2_node *np;
+
+	/* Zero all segments. */
+	TAILQ_FOREACH(np, msg, link)
+		explicit_bzero(np->seg, np->sz);
 
 	np = TAILQ_FIRST(msg);
 	while (np) {

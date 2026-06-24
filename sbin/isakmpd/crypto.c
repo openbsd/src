@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.35 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: crypto.c,v 1.36 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -254,7 +254,7 @@ crypto_init(struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
 	if (*err != EOKAY) {
 		LOG_DBG((LOG_CRYPTO, 30, "crypto_init: weak key found for %s",
 		    xf->name));
-		free(ks);
+		freezero(ks, sizeof *ks);
 		return 0;
 	}
 	return ks;

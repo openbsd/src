@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.125 2022/01/28 05:24:15 guenther Exp $	 */
+/* $OpenBSD: sa.c,v 1.126 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -45,6 +45,7 @@
 #include "conf.h"
 #include "connection.h"
 #include "cookie.h"
+#include "crypto.h"
 #include "doi.h"
 #include "dpd.h"
 #include "exchange.h"
@@ -906,7 +907,7 @@ sa_release(struct sa *sa)
 	if (sa->policy_id != -1)
 		kn_close(sa->policy_id);
 	free(sa->name);
-	free(sa->keystate);
+	freezero(sa->keystate, sizeof(struct keystate));
 	if (sa->nat_t_keepalive)
 		timer_remove_event(sa->nat_t_keepalive);
 	if (sa->dpd_event)

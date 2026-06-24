@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.80 2026/06/23 13:36:28 hshoexer Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.81 2026/06/24 09:57:32 hshoexer Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -738,7 +738,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 		exchange->keystate = crypto_init(exchange->crypto, key,
 		    exchange->key_length, &err);
 
-		free(key);
+		freezero(key, keylen);
 	} else
 		/* Setup our keystate using the raw skeyid_e.  */
 		exchange->keystate = crypto_init(exchange->crypto,
