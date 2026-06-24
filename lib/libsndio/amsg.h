@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.18 2026/03/15 10:05:09 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.19 2026/06/24 15:10:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,6 +41,13 @@
  * using the AMSG_CTLSUB_OLD request
  */
 #define AMSG_OLD_DESC_SIZE	92
+
+/*
+ * Server resource type
+ */
+#define AMSG_TYPE_SND		0	/* audio device */
+#define AMSG_TYPE_MIDITHRU	1	/* midithru port */
+#define AMSG_TYPE_MIDI		2	/* midi port */
 
 /*
  * WARNING: since the protocol may be simultaneously used by static

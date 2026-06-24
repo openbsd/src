@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.63 2026/06/24 04:29:35 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.64 2026/06/24 15:10:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -718,6 +718,8 @@ sock_hello(struct sock *f)
 	struct opt *opt;
 	struct midithru *midithru;
 	unsigned int mode;
+	unsigned int type;
+	unsigned int devnum;
 	unsigned int id;
 
 	mode = ntohs(p->mode);
@@ -759,58 +761,64 @@ sock_hello(struct sock *f)
 #endif
 		return 0;
 	}
+	if (p->devnum == AMSG_NODEV) {
+		type = AMSG_TYPE_SND;
+		devnum = p->devnum;
+	} else {
+		type = p->devnum >> 4;
+		devnum = p->devnum & 0xf;
+	}
+	switch (type) {
+	case AMSG_TYPE_SND:
+		opt = (p->devnum == AMSG_NODEV) ?
+		    opt_byname(p->opt) : legacy_opt(p->devnum, p->opt);
+		if (opt == NULL)
+			return 0;
+		midithru = midithru_array + opt->num;
+		break;
+	case AMSG_TYPE_MIDITHRU:
+		midithru = midithru_array + OPT_NMAX + devnum;
+		break;
+	case AMSG_TYPE_MIDI:
+		c = port_bynum(devnum);
+		if (c == NULL)
+			return 0;
+		break;
+	default:
+		return 0;
+	}
 	f->pstate = SOCK_INIT;
 	if (mode & MODE_MIDIMASK) {
 		f->midi = midi_new(&sock_midiops, f, mode);
 		if (f->midi == NULL)
 			return 0;
-		/* XXX: add 'devtype' to libsndio */
-		if (p->devnum == AMSG_NODEV) {
-			opt = opt_byname(p->opt);
-			if (opt == NULL)
-				return 0;
+		switch (type) {
+		case AMSG_TYPE_SND:
 			if (!opt_ref(opt))
 				return 0;
 			f->opt = opt;
-			midithru_addprog(midithru_array + opt->num, f->midi);
-		} else if (p->devnum < 16) {
-			opt = legacy_opt(p->devnum, p->opt);
-			if (opt == NULL)
-				return 0;
-			if (!opt_ref(opt))
-				return 0;
-			f->opt = opt;
-			midithru_addprog(midithru_array + opt->num, f->midi);
-		} else if (p->devnum < 32) {
-			f->midithru = midithru_array + p->devnum;
+			midithru_addprog(midithru, f->midi);
+			break;
+		case AMSG_TYPE_MIDITHRU:
+			f->midithru = midithru;
 			midithru_ref(f->midithru);
 			midithru_addprog(f->midithru, f->midi);
-		} else if (p->devnum < 48) {
-			c = port_bynum(p->devnum - 32);
-			if (c == NULL || !port_ref(c))
+			break;
+		case AMSG_TYPE_MIDI:
+			if (!port_ref(c))
 				return 0;
 			f->port = c;
 			midi_link(f->midi, c->midi);
-		} else
-			return 0;
-		return 1;
-	}
-	if (mode & MODE_CTLMASK) {
-		if (p->devnum == AMSG_NODEV) {
+		}
+	} else if (mode & MODE_CTLMASK) {
+		switch (type) {
+		case AMSG_TYPE_SND:
 			midithru = NULL;
-			opt = opt_byname(p->opt);
-			if (opt == NULL)
-				return 0;
-		} else if (p->devnum < 16) {
-			midithru = NULL;
-			opt = legacy_opt(p->devnum, p->opt);
-			if (opt == NULL)
-				return 0;
-		} else if (p->devnum < 32) {
-			midithru = midithru_array + p->devnum;
+			break;
+		case AMSG_TYPE_MIDITHRU:
 			opt = NULL;
-			logx(2, "sock %d: controlling midithru", f->fd);
-		} else {
+			break;
+		case AMSG_TYPE_MIDI:
 			logx(2, "sock %d: unhandled device", f->fd);
 			return 0;
 		}
@@ -822,16 +830,11 @@ sock_hello(struct sock *f)
 		f->ctldesc = xmalloc(SOCK_CTLDESC_SIZE);
 		f->ctlops = 0;
 		f->ctlsyncpending = 0;
-		return 1;
+	} else {
+		f->slot = slot_new(opt, id, p->who, &sock_slotops, f, mode);
+		if (f->slot == NULL)
+			return 0;
 	}
-	opt = (p->devnum == AMSG_NODEV) ?
-	    opt_byname(p->opt) : legacy_opt(p->devnum, p->opt);
-	if (opt == NULL)
-		return 0;
-	f->slot = slot_new(opt, id, p->who, &sock_slotops, f, mode);
-	if (f->slot == NULL)
-		return 0;
-	f->midi = NULL;
 	return 1;
 }
 
