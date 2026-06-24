@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.37 2026/06/24 02:39:36 millert Exp $	*/
+/*	$OpenBSD: write.c,v 1.38 2026/06/24 02:41:04 millert Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -301,7 +301,8 @@ wr_fputs(char *s)
 		}
 		if (isu8cont(*s))
 			continue;
-		if (isprint(*s) || isspace(*s) || *s == '\a') {
+		if (isprint((unsigned char)*s) || isspace((unsigned char)*s)
+		    || *s == '\a') {
 			PUTC(*s);
 		} else {
 			PUTC('?');
