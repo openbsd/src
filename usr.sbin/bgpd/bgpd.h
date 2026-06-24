@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.543 2026/05/18 18:36:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.544 2026/06/24 06:01:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -543,6 +543,69 @@ struct peer_config {
 #define PEERFLAG_EVALUATE_ALL	0x04
 #define PEERFLAG_PERMIT_AS_SET	0x08
 
+enum session_state {
+	STATE_NONE,
+	STATE_IDLE,
+	STATE_CONNECT,
+	STATE_ACTIVE,
+	STATE_OPENSENT,
+	STATE_OPENCONFIRM,
+	STATE_ESTABLISHED
+};
+
+enum Timer {
+	Timer_None,
+	Timer_ConnectRetry,
+	Timer_Keepalive,
+	Timer_Hold,
+	Timer_SendHold,
+	Timer_IdleHold,
+	Timer_IdleHoldReset,
+	Timer_CarpUndemote,
+	Timer_RestartTimeout,
+	Timer_SessionDown,
+	Timer_Rtr_Refresh,
+	Timer_Rtr_Retry,
+	Timer_Rtr_Expire,
+	Timer_Rtr_Active,
+	Timer_Mrt_Reopen,
+	Timer_Max
+};
+
+struct timer {
+	TAILQ_ENTRY(timer)	entry;
+	enum Timer		type;
+	monotime_t		val;
+};
+
+struct peer_stats {
+	unsigned long long	 msg_rcvd_open;
+	unsigned long long	 msg_rcvd_update;
+	unsigned long long	 msg_rcvd_notification;
+	unsigned long long	 msg_rcvd_keepalive;
+	unsigned long long	 msg_rcvd_rrefresh;
+	unsigned long long	 msg_sent_open;
+	unsigned long long	 msg_sent_update;
+	unsigned long long	 msg_sent_notification;
+	unsigned long long	 msg_sent_keepalive;
+	unsigned long long	 msg_sent_rrefresh;
+	unsigned long long	 refresh_rcvd_req;
+	unsigned long long	 refresh_rcvd_borr;
+	unsigned long long	 refresh_rcvd_eorr;
+	unsigned long long	 refresh_sent_req;
+	unsigned long long	 refresh_sent_borr;
+	unsigned long long	 refresh_sent_eorr;
+	monotime_t		 last_updown;
+	monotime_t		 last_read;
+	monotime_t		 last_write;
+	uint32_t		 msg_queue_len;
+	uint8_t			 last_sent_errcode;
+	uint8_t			 last_sent_suberr;
+	uint8_t			 last_rcvd_errcode;
+	uint8_t			 last_rcvd_suberr;
+	char			 last_reason[REASON_LEN];
+};
+
 struct rde_peer_stats {
 	uint64_t			 prefix_rcvd_update;
 	uint64_t			 prefix_rcvd_withdraw;
@@ -557,6 +620,32 @@ struct rde_peer_stats {
 	uint32_t			 prefix_out_cnt;
 	uint32_t			 pending_update;
 	uint32_t			 pending_withdraw;
+};
+
+struct ctl_peer {
+	struct peer_config	conf;
+	struct peer_stats	stats;
+	struct rde_peer_stats	rde_stats;
+	struct {
+		struct capabilities	ann;
+		struct capabilities	peer;
+		struct capabilities	neg;
+	}			 capa;
+	struct bgpd_addr	local;
+	struct bgpd_addr	remote;
+	uint32_t		remote_bgpid;
+	enum auth_method	auth_method;
+	enum session_state	state;
+	enum role		remote_role;
+	uint16_t		local_port;
+	uint16_t		remote_port;
+	uint16_t		holdtime;
+	uint8_t			template;
+};
+
+struct ctl_timer {
+	enum Timer	type;
+	monotime_t	val;
 };
 
 enum network_type {
@@ -1708,6 +1797,9 @@ unsigned int	 bin_of_communities(unsigned int);
 unsigned int	 bin_of_adjout_prefixes(unsigned int);
 
 /* bgpd_imsg.c */
+int	imsg_send_ctl_peer(struct imsgbuf *, struct peer *,
+	    struct rde_peer_stats *);
+int	imsg_recv_ctl_peer(struct imsg *, struct ctl_peer *);
 int	imsg_send_filterset(struct imsgbuf *, struct filter_set_head *);
 int	ibuf_recv_filterset_count(struct ibuf *, uint16_t *);
 int	ibuf_recv_one_filterset(struct ibuf *, struct filter_set *);

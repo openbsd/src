@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd_imsg.c,v 1.4 2026/03/19 15:36:44 claudio Exp $	*/
+/*	$OpenBSD: bgpd_imsg.c,v 1.5 2026/06/24 06:01:13 claudio Exp $	*/
 /*
  * Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
  *
@@ -20,7 +20,47 @@
 #include <string.h>
 
 #include "bgpd.h"
+#include "session.h"
 #include "rde.h"
+
+int
+imsg_send_ctl_peer(struct imsgbuf *imsgbuf, struct peer *p,
+    struct rde_peer_stats *rde_stats)
+{
+	struct ctl_peer peer = { 0 };
+
+	peer.conf = p->conf;
+	peer.stats = p->stats;
+	if (rde_stats != NULL)
+		peer.rde_stats = *rde_stats;
+	peer.capa.ann = p->capa.ann;
+	peer.capa.peer = p->capa.peer;
+	peer.capa.neg = p->capa.neg;
+	peer.local = p->local;
+	peer.remote = p->remote;
+	peer.remote_bgpid = p->remote_bgpid;
+	peer.auth_method = p->auth_conf.method;
+	peer.state = p->state;
+	peer.remote_role = p->remote_role;
+	peer.local_port = p->local_port;
+	peer.remote_port = p->remote_port;
+	peer.holdtime = p->holdtime;
+	peer.template = p->template != NULL;
+
+	peer.stats.msg_queue_len = msgbuf_queuelen(p->wbuf);
+
+	return imsg_compose(imsgbuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+	    &peer, sizeof(peer));
+}
+
+int
+imsg_recv_ctl_peer(struct imsg *imsg, struct ctl_peer *p)
+{
+	if (imsg_get_data(imsg, p, sizeof(*p)) == -1)
+		return -1;
+	/* nothing else to do */
+	return 0;
+}
 
 int
 imsg_send_filterset(struct imsgbuf *imsgbuf, struct filter_set_head *set)

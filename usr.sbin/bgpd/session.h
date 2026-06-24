@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.197 2026/05/12 20:27:31 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.198 2026/06/24 06:01:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,16 +40,6 @@
 #define	MSG_PROCESS_LIMIT		25
 #define	SESSION_CLEAR_DELAY		5
 #define	PAUSEACCEPT_TIMEOUT		1
-
-enum session_state {
-	STATE_NONE,
-	STATE_IDLE,
-	STATE_CONNECT,
-	STATE_ACTIVE,
-	STATE_OPENSENT,
-	STATE_OPENCONFIRM,
-	STATE_ESTABLISHED
-};
 
 enum session_events {
 	EVNT_NONE,
@@ -122,47 +112,6 @@ struct ctl_conn {
 	int			terminate;
 };
 
-struct peer_stats {
-	unsigned long long	 msg_rcvd_open;
-	unsigned long long	 msg_rcvd_update;
-	unsigned long long	 msg_rcvd_notification;
-	unsigned long long	 msg_rcvd_keepalive;
-	unsigned long long	 msg_rcvd_rrefresh;
-	unsigned long long	 msg_sent_open;
-	unsigned long long	 msg_sent_update;
-	unsigned long long	 msg_sent_notification;
-	unsigned long long	 msg_sent_keepalive;
-	unsigned long long	 msg_sent_rrefresh;
-	unsigned long long	 refresh_rcvd_req;
-	unsigned long long	 refresh_rcvd_borr;
-	unsigned long long	 refresh_rcvd_eorr;
-	unsigned long long	 refresh_sent_req;
-	unsigned long long	 refresh_sent_borr;
-	unsigned long long	 refresh_sent_eorr;
-	unsigned long long	 prefix_rcvd_update;
-	unsigned long long	 prefix_rcvd_withdraw;
-	unsigned long long	 prefix_rcvd_eor;
-	unsigned long long	 prefix_sent_update;
-	unsigned long long	 prefix_sent_withdraw;
-	unsigned long long	 prefix_sent_eor;
-	unsigned long long	 rib_entry_count;
-	unsigned long long	 ibufq_msg_count;
-	unsigned long long	 ibufq_payload_size;
-	monotime_t		 last_updown;
-	monotime_t		 last_read;
-	monotime_t		 last_write;
-	uint32_t		 msg_queue_len;
-	uint32_t		 prefix_cnt;
-	uint32_t		 prefix_out_cnt;
-	uint32_t		 pending_update;
-	uint32_t		 pending_withdraw;
-	uint8_t			 last_sent_errcode;
-	uint8_t			 last_sent_suberr;
-	uint8_t			 last_rcvd_errcode;
-	uint8_t			 last_rcvd_suberr;
-	char			 last_reason[REASON_LEN];
-};
-
 struct auth_state {
 	struct bgpd_addr	local_addr;
 	struct bgpd_addr	remote_addr;
@@ -170,31 +119,6 @@ struct auth_state {
 	uint32_t		spi_out;
 	enum auth_method	method;
 	uint8_t			established;
-};
-
-enum Timer {
-	Timer_None,
-	Timer_ConnectRetry,
-	Timer_Keepalive,
-	Timer_Hold,
-	Timer_SendHold,
-	Timer_IdleHold,
-	Timer_IdleHoldReset,
-	Timer_CarpUndemote,
-	Timer_RestartTimeout,
-	Timer_SessionDown,
-	Timer_Rtr_Refresh,
-	Timer_Rtr_Retry,
-	Timer_Rtr_Expire,
-	Timer_Rtr_Active,
-	Timer_Mrt_Reopen,
-	Timer_Max
-};
-
-struct timer {
-	TAILQ_ENTRY(timer)	entry;
-	enum Timer		type;
-	monotime_t		val;
 };
 
 struct peer {
@@ -238,11 +162,6 @@ struct peer {
 };
 
 extern monotime_t		 pauseaccept;
-
-struct ctl_timer {
-	enum Timer	type;
-	monotime_t	val;
-};
 
 /* carp.c */
 int	 carp_demote_init(char *, int);
