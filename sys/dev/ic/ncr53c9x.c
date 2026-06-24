@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.83 2026/06/24 11:41:54 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.84 2026/06/24 12:38:52 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1271,8 +1271,9 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 	}
 
 	remaining = NCR_MAX_MSG_LEN + 1 - sc->sc_imlen;
-	memcpy(sc->sc_imess + sc->sc_imlen, fifo, MIN(i, remaining));
-	sc->sc_imlen += MIN(i, remaining);
+	if (remaining > 0)
+		memcpy(sc->sc_imess + sc->sc_imlen, fifo, MIN(i, remaining));
+	sc->sc_imlen += i;      /* Allowed to be >= NCR_MAX_MSG_LEN */
 
 #ifdef NCR53C9X_DEBUG
 	{
