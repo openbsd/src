@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.82 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.83 2026/06/24 11:41:54 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1231,16 +1231,14 @@ ncr53c9x_flushfifo(struct ncr53c9x_softc *sc)
 static int
 ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 {
-	int i, n;
-	u_char *buf;
+	int i, n, remaining;
+	u_char fifo[NCRFIFO_FF * 2 + 1];
 
 	switch(how) {
 	case NCR_RDFIFO_START:
-		buf = sc->sc_imess;
 		sc->sc_imlen = 0;
 		break;
 	case NCR_RDFIFO_CONTINUE:
-		buf = sc->sc_imess + sc->sc_imlen;
 		break;
 	default:
 		panic("ncr53c9x_rdfifo: bad flag");
@@ -1248,21 +1246,20 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 	}
 
 	/*
-	 * XXX buffer (sc_imess) size for message
+	 * Drain FIFO, copy as many bytes as fit into sc->sc_imess.
 	 */
-
 	n = NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
 
 	if (sc->sc_rev == NCR_VARIANT_FAS366) {
 		n *= 2;
 
 		for (i = 0; i < n; i++)
-			buf[i] = NCR_READ_REG(sc, NCR_FIFO);
+			fifo[i] = NCR_READ_REG(sc, NCR_FIFO);
 
 		if (sc->sc_espstat2 & FAS_STAT2_ISHUTTLE) {
 
 			NCR_WRITE_REG(sc, NCR_FIFO, 0);
-			buf[i++] = NCR_READ_REG(sc, NCR_FIFO);
+			fifo[i++] = NCR_READ_REG(sc, NCR_FIFO);
 
 			NCR_READ_REG(sc, NCR_FIFO);
 
@@ -1270,10 +1267,12 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 		}
 	} else {
 		for (i = 0; i < n; i++)
-			buf[i] = NCR_READ_REG(sc, NCR_FIFO);
+			fifo[i] = NCR_READ_REG(sc, NCR_FIFO);
 	}
 
-	sc->sc_imlen += i;
+	remaining = NCR_MAX_MSG_LEN + 1 - sc->sc_imlen;
+	memcpy(sc->sc_imess + sc->sc_imlen, fifo, MIN(i, remaining));
+	sc->sc_imlen += MIN(i, remaining);
 
 #ifdef NCR53C9X_DEBUG
 	{
