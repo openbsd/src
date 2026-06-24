@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.115 2023/03/31 20:16:55 tb Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.116 2026/06/24 09:36:35 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1395,10 +1395,12 @@ post_quick_mode(struct message *msg)
 				 * blocksize as it is generated in chunks of
 				 * that blocksize.
 				 */
-				iproto->keymat[i]
-					= malloc(((ie->keymat_len + prf->blocksize - 1)
-					/ prf->blocksize) * prf->blocksize);
+				iproto->keymat_len[i]
+					= ((ie->keymat_len + prf->blocksize - 1)
+					/ prf->blocksize) * prf->blocksize;
+				iproto->keymat[i] = malloc(iproto->keymat_len[i]);
 				if (!iproto->keymat[i]) {
+					iproto->keymat_len[i] = 0;
 					log_error("post_quick_mode: "
 					    "malloc (%lu) failed",
 					    (((unsigned long)ie->keymat_len +

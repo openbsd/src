@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.h,v 1.27 2017/11/08 13:33:49 patrick Exp $	 */
+/* $OpenBSD: ipsec.h,v 1.28 2026/06/24 09:36:35 hshoexer Exp $	 */
 /* $EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	 */
 
 /*
@@ -139,6 +139,7 @@ struct ipsec_proto {
 
 	/* KEYMAT */
 	u_int8_t	*keymat[2];
+	size_t		 keymat_len[2];
 };
 
 extern u_int8_t *ipsec_add_hash_payload(struct message *, size_t);

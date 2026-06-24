@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.159 2026/06/23 13:40:16 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.160 2026/06/24 09:36:35 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -818,8 +818,12 @@ ipsec_free_proto_data(void *viproto)
 	struct ipsec_proto *iproto = viproto;
 	int             i;
 
-	for (i = 0; i < 2; i++)
-		free(iproto->keymat[i]);
+	for (i = 0; i < 2; i++) {
+		if (iproto->keymat[i] == NULL)
+			continue;
+		freezero(iproto->keymat[i], iproto->keymat_len[i]);
+		iproto->keymat[i] = NULL;
+	}
 }
 
 /* Return exchange script based on TYPE.  */
