@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.27 2026/03/17 09:30:11 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.28 2026/06/24 06:02:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -27,7 +27,6 @@
 #include <unistd.h>
 
 #include "bgpd.h"
-#include "session.h"
 #include "rde.h"
 #include "version.h"
 
@@ -187,7 +186,7 @@ ometric_head(struct parse_result *arg)
 }
 
 static void
-ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
+ometric_neighbor_stats(struct ctl_peer *p, struct parse_result *arg)
 {
 	struct olabels *ol = NULL;
 	const char *keys[5] = {
@@ -224,8 +223,9 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 		    get_rel_monotime(p->stats.last_write), ol);
 	}
 
-	ometric_set_int(peer_prefixes_transmit, p->stats.prefix_out_cnt, ol);
-	ometric_set_int(peer_prefixes_receive, p->stats.prefix_cnt, ol);
+	ometric_set_int(peer_prefixes_transmit, p->rde_stats.prefix_out_cnt,
+	    ol);
+	ometric_set_int(peer_prefixes_receive, p->rde_stats.prefix_cnt, ol);
 
 	ometric_set_int_with_labels(peer_message_transmit,
 	    p->stats.msg_sent_open, OKV("messages"), OKV("open"), ol);
@@ -253,14 +253,18 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	    p->stats.msg_rcvd_rrefresh, OKV("messages"), OKV("route_refresh"),
 	    ol);
 
-	ometric_set_int(peer_update_transmit, p->stats.prefix_sent_update, ol);
-	ometric_set_int(peer_update_pending, p->stats.pending_update, ol);
-	ometric_set_int(peer_update_receive, p->stats.prefix_rcvd_update, ol);
-	ometric_set_int(peer_withdraw_transmit, p->stats.prefix_sent_withdraw,
-	    ol);
-	ometric_set_int(peer_withdraw_pending, p->stats.pending_withdraw, ol);
-	ometric_set_int(peer_withdraw_receive, p->stats.prefix_rcvd_withdraw,
-	    ol);
+	ometric_set_int(peer_update_transmit,
+	    p->rde_stats.prefix_sent_update, ol);
+	ometric_set_int(peer_update_pending,
+	    p->rde_stats.pending_update, ol);
+	ometric_set_int(peer_update_receive,
+	    p->rde_stats.prefix_rcvd_update, ol);
+	ometric_set_int(peer_withdraw_transmit,
+	    p->rde_stats.prefix_sent_withdraw, ol);
+	ometric_set_int(peer_withdraw_pending,
+	    p->rde_stats.pending_withdraw, ol);
+	ometric_set_int(peer_withdraw_receive,
+	    p->rde_stats.prefix_rcvd_withdraw, ol);
 
 	ometric_set_int(peer_rr_req_transmit, p->stats.refresh_sent_req, ol);
 	ometric_set_int(peer_rr_req_receive, p->stats.refresh_rcvd_req, ol);
@@ -269,12 +273,13 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	ometric_set_int(peer_rr_eorr_transmit, p->stats.refresh_sent_eorr, ol);
 	ometric_set_int(peer_rr_eorr_receive, p->stats.refresh_rcvd_eorr, ol);
 
-	ometric_set_int_with_labels(peer_queue_count, p->stats.ibufq_msg_count,
-	    OKV("type"), OKV("ibuf_queue"), ol);
-	ometric_set_int_with_labels(peer_queue_count, p->stats.rib_entry_count,
-	    OKV("type"), OKV("rib_entry"), ol);
+	ometric_set_int_with_labels(peer_queue_count,
+	    p->rde_stats.ibufq_msg_count, OKV("type"), OKV("ibuf_queue"), ol);
+	ometric_set_int_with_labels(peer_queue_count,
+	    p->rde_stats.rib_entry_count, OKV("type"), OKV("rib_entry"), ol);
 	ometric_set_int_with_labels(peer_queue_size,
-	    p->stats.ibufq_payload_size, OKV("type"), OKV("ibuf_queue"), ol);
+	    p->rde_stats.ibufq_payload_size, OKV("type"), OKV("ibuf_queue"),
+	    ol);
 
 	olabels_free(ol);
 	free(descr);

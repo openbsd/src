@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.322 2026/05/21 14:48:58 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.323 2026/06/24 06:02:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -462,7 +462,7 @@ main(int argc, char *argv[])
 int
 show(struct imsg *imsg, struct parse_result *res)
 {
-	struct peer		 p;
+	struct ctl_peer		 p;
 	struct ctl_timer	 t;
 	struct ctl_show_interface iface;
 	struct ctl_show_nexthop	 nh;
@@ -480,8 +480,8 @@ show(struct imsg *imsg, struct parse_result *res)
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		if (output->neighbor == NULL)
 			break;
-		if (imsg_get_data(imsg, &p, sizeof(p)) == -1)
-			err(1, "imsg_get_data");
+		if (imsg_recv_ctl_peer(imsg, &p) == -1)
+			err(1, "imsg_recv_ctl_peer");
 		output->neighbor(&p, res);
 		break;
 	case IMSG_CTL_SHOW_TIMER:

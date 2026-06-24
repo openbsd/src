@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.64 2026/05/13 15:51:49 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.65 2026/06/24 06:02:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "session.h"
 #include "rde.h"
 
 #include "bgpctl.h"
@@ -140,7 +139,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 }
 
 static void
-json_neighbor_stats(struct peer *p)
+json_neighbor_stats(struct ctl_peer *p)
 {
 	json_do_object("stats", 0);
 	json_do_string("last_read", fmt_monotime(p->stats.last_read));
@@ -149,8 +148,8 @@ json_neighbor_stats(struct peer *p)
 	json_do_int("last_write_sec", get_rel_monotime(p->stats.last_write));
 
 	json_do_object("prefixes", 1);
-	json_do_uint("sent", p->stats.prefix_out_cnt);
-	json_do_uint("received", p->stats.prefix_cnt);
+	json_do_uint("sent", p->rde_stats.prefix_out_cnt);
+	json_do_uint("received", p->rde_stats.prefix_cnt);
 	json_do_end();
 
 	json_do_object("message", 0);
@@ -184,20 +183,20 @@ json_neighbor_stats(struct peer *p)
 	json_do_object("update", 0);
 
 	json_do_object("sent", 1);
-	json_do_uint("updates", p->stats.prefix_sent_update);
-	json_do_uint("withdraws", p->stats.prefix_sent_withdraw);
-	json_do_uint("eor", p->stats.prefix_sent_eor);
+	json_do_uint("updates", p->rde_stats.prefix_sent_update);
+	json_do_uint("withdraws", p->rde_stats.prefix_sent_withdraw);
+	json_do_uint("eor", p->rde_stats.prefix_sent_eor);
 	json_do_end();
 
 	json_do_object("received", 1);
-	json_do_uint("updates", p->stats.prefix_rcvd_update);
-	json_do_uint("withdraws", p->stats.prefix_rcvd_withdraw);
-	json_do_uint("eor", p->stats.prefix_rcvd_eor);
+	json_do_uint("updates", p->rde_stats.prefix_rcvd_update);
+	json_do_uint("withdraws", p->rde_stats.prefix_rcvd_withdraw);
+	json_do_uint("eor", p->rde_stats.prefix_rcvd_eor);
 	json_do_end();
 
 	json_do_object("pending", 1);
-	json_do_uint("updates", p->stats.pending_update);
-	json_do_uint("withdraws", p->stats.pending_withdraw);
+	json_do_uint("updates", p->rde_stats.pending_update);
+	json_do_uint("withdraws", p->rde_stats.pending_withdraw);
 	json_do_end();
 
 	json_do_end();
@@ -221,11 +220,11 @@ json_neighbor_stats(struct peer *p)
 	json_do_object("queue", 0);
 
 	json_do_object("count", 1);
-	json_do_uint("ibuf_queue", p->stats.ibufq_msg_count);
-	json_do_uint("rib_entry", p->stats.rib_entry_count);
+	json_do_uint("ibuf_queue", p->rde_stats.ibufq_msg_count);
+	json_do_uint("rib_entry", p->rde_stats.rib_entry_count);
 	json_do_end();
 	json_do_object("size", 1);
-	json_do_uint("ibuf_queue", p->stats.ibufq_payload_size);
+	json_do_uint("ibuf_queue", p->rde_stats.ibufq_payload_size);
 	json_do_end();
 
 	json_do_end();
@@ -234,14 +233,14 @@ json_neighbor_stats(struct peer *p)
 }
 
 static void
-json_neighbor_full(struct peer *p)
+json_neighbor_full(struct ctl_peer *p)
 {
 	const char *errstr;
 
 	/* config */
 	json_do_object("config", 0);
 	json_do_bool("template", p->conf.template);
-	json_do_bool("cloned", p->template != NULL);
+	json_do_bool("cloned", p->template);
 	json_do_bool("passive", p->conf.passive);
 	json_do_bool("down", p->conf.down);
 	json_do_bool("multihop", p->conf.ebgp && p->conf.distance > 1);
@@ -259,9 +258,9 @@ json_neighbor_full(struct peer *p)
 			json_do_uint("max_out_prefix_restart",
 			    p->conf.max_out_prefix_restart);
 	}
-	if (p->auth_conf.method != AUTH_NONE)
+	if (p->auth_method != AUTH_NONE)
 		json_do_string("authentication",
-		    fmt_auth_method(p->auth_conf.method));
+		    fmt_auth_method(p->auth_method));
 	json_do_bool("ttl_security", p->conf.ttlsec);
 	json_do_uint("holdtime", p->conf.holdtime);
 	json_do_uint("min_holdtime", p->conf.min_holdtime);
@@ -325,7 +324,7 @@ json_neighbor_full(struct peer *p)
 }
 
 static void
-json_neighbor(struct peer *p, struct parse_result *res)
+json_neighbor(struct ctl_peer *p, struct parse_result *res)
 {
 	json_do_array("neighbors");
 

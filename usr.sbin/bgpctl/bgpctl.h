@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.25 2025/02/20 19:48:14 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.26 2026/06/24 06:02:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -20,7 +20,7 @@ struct parse_result;
 
 struct output {
 	void	(*head)(struct parse_result *);
-	void	(*neighbor)(struct peer *, struct parse_result *);
+	void	(*neighbor)(struct ctl_peer *, struct parse_result *);
 	void	(*timer)(struct ctl_timer *);
 	void	(*fib)(struct kroute_full *);
 	void	(*fib_table)(struct ktable *);
