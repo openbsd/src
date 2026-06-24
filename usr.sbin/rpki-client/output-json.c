@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.59 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.60 2026/06/24 09:06:20 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -64,6 +64,7 @@ outputheader_json(struct validation_data *vd, struct stats *st)
 	json_do_int("certificates", st->repo_tal_stats.certs);
 	json_do_int("invalidcertificates", st->repo_tal_stats.certs_fail);
 	json_do_int("nonfunctionalcas", st->repo_tal_stats.certs_nonfunc);
+	json_do_int("deferredcas", st->repo_tal_stats.certs_nonfunc_deferred);
 	json_do_int("taks", st->repo_tal_stats.taks);
 	json_do_int("tals", st->tals);
 	json_do_int("invalidtals", talsz - st->tals);
@@ -192,7 +193,13 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 		json_do_string("ta", taldescs[nca->talid]);
 		json_do_string("caRepository", nca->carepo);
 		json_do_string("rpkiManifest", nca->mfturi);
+		if (nca->notify != NULL)
+			json_do_string("rpkiNotify", nca->notify);
+		json_do_string("aki", nca->aki);
 		json_do_string("ski", nca->ski);
+		json_do_int("since", (long long)nca->since);
+		json_do_int("last_attempt", (long long)nca->last_attempt);
+		json_do_int("total_attempts", nca->attempts);
 		json_do_end();
 	}
 	json_do_end();

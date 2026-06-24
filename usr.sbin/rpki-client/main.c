@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.308 2026/06/22 21:25:44 job Exp $ */
+/*	$OpenBSD: main.c,v 1.309 2026/06/24 09:06:20 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -73,6 +73,7 @@ int	shortlistmode;
 int	rrdpon = 1;
 int	repo_timeout;
 int	experimental;
+int	retry_all_ncas = 0;
 time_t	deadline;
 
 /* 9999-12-31 23:59:59 UTC */
@@ -83,12 +84,6 @@ time_t	deadline;
 int64_t  evaluation_time = X509_TIME_MIN;
 
 struct stats	 stats;
-
-struct fqdnlistentry {
-	LIST_ENTRY(fqdnlistentry)	 entry;
-	char				*fqdn;
-};
-LIST_HEAD(fqdns, fqdnlistentry);
 
 struct fqdns shortlist = LIST_HEAD_INITIALIZER(fqdns);
 struct fqdns skiplist = LIST_HEAD_INITIALIZER(fqdns);
@@ -546,6 +541,9 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 		return;
 	}
 
+	if (nca_skip_sync(ncas, cert))
+		return;
+
 	repo = repo_lookup(cert->talid, cert->repo,
 	    rrdpon ? cert->notify : NULL);
 	if (repo == NULL)
@@ -574,8 +572,6 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 		if ((nfile = strdup(file + 1)) == NULL)
 			err(1, NULL);
 	}
-
-	nca_tree_insert_cert(ncas, cert);
 
 	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
 	    cert->talid, cert->certid, NULL);
@@ -810,6 +806,7 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->certs += in->certs;
 	out->certs_fail += in->certs_fail;
 	out->certs_nonfunc += in->certs_nonfunc;
+	out->certs_nonfunc_deferred += in->certs_nonfunc_deferred;
 	out->roas += in->roas;
 	out->roas_fail += in->roas_fail;
 	out->roas_invalid += in->roas_invalid;
@@ -1066,7 +1063,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	while ((c =
-	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmnop:P:Rs:S:t:vVx")) != -1)
+	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmNnop:P:Rs:S:t:vVx")) != -1)
 		switch (c) {
 		case '0':
 			excludeas0 = 0;
@@ -1102,6 +1099,9 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			outformats |= FORMAT_OMETRIC;
+			break;
+		case 'N':
+			retry_all_ncas = 1;
 			break;
 		case 'n':
 			noop = 1;
@@ -1350,6 +1350,8 @@ main(int argc, char *argv[])
 	if (fchdir(cachefd) == -1)
 		err(1, "fchdir");
 
+	nca_history_load();
+
 	while (entity_queue > 0 && !killme) {
 		int polltim;
 
@@ -1566,6 +1568,9 @@ main(int argc, char *argv[])
 
 	vd.buildtime = get_current_time();
 
+	if (!noop)
+		nca_history_save(&vd.ncas, vd.buildtime);
+
 	/* change working directory to the output directory */
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
@@ -1605,9 +1610,11 @@ main(int argc, char *argv[])
 		    stats.repo_tal_stats.spls_invalid);
 	}
 	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
-	printf("Certificates: %u (%u invalid, %u non-functional)\n",
-	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail,
-	    stats.repo_tal_stats.certs_nonfunc);
+	printf("Certificates: %u (%u invalid, %u non-functional, %u sync "
+	    "deferred)\n", stats.repo_tal_stats.certs,
+	    stats.repo_tal_stats.certs_fail,
+	    stats.repo_tal_stats.certs_nonfunc,
+	    stats.repo_tal_stats.certs_nonfunc_deferred);
 	printf("Trust Anchor Locators: %u (%u invalid)\n",
 	    stats.tals, talsz - stats.tals);
 	printf("Manifests: %u (%u failed parse, %u seqnum gaps)\n",
@@ -1637,7 +1644,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-0ABcjmnoRVvx] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-0ABcjmNnoRVvx] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-H fqdn] [-P posix-seconds] [-p threads]"
 	    " [-S skiplist]\n"

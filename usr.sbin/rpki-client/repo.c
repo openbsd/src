@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.85 2026/06/22 08:08:03 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.86 2026/06/24 09:06:20 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1549,6 +1549,10 @@ repo_stat_add_nca(struct nonfunc_ca *nca)
 	SLIST_FOREACH(rp, &repos, entry) {
 		if (rp->id == nca->repoid) {
 			rp->stats[nca->talid].certs_nonfunc++;
+
+			if (nca->defer)
+				rp->stats[nca->talid].certs_nonfunc_deferred++;
+
 			break;
 		}
 	}
@@ -1867,6 +1871,9 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 	path = skip_dotslash(e->fts_path);
 	switch (e->fts_info) {
 	case FTS_NSOK:
+		if (e->fts_level == 1 && fts_state.type == BASE_DIR &&
+		    strcmp(e->fts_name, ".nca_history") == 0)
+			break;
 		if (filepath_exists(tree, path)) {
 			e->fts_parent->fts_number++;
 			break;

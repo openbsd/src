@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.284 2026/06/22 21:25:44 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.285 2026/06/24 09:06:20 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,6 +28,12 @@
 			    __attribute__((__unused__))
 
 #define MAX_MSG_SIZE	(50 * 1024 * 1024)
+
+struct fqdnlistentry {
+	LIST_ENTRY(fqdnlistentry)	entry;
+	char				*fqdn;
+};
+LIST_HEAD(fqdns, fqdnlistentry);
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
@@ -147,6 +153,19 @@ struct cert {
 	unsigned char	 mfthash[SHA256_DIGEST_LENGTH]; /* of the parent mft */
 };
 
+struct nca_hist {
+	RB_ENTRY(nca_hist)	 entry;
+	char			*aki;
+	char			*ski;
+	char			*location;
+	char			*mfturi;
+	char			*notify;
+	time_t			 since;
+	time_t			 last_attempt;
+	unsigned int		 attempts;
+	int			 defer;
+};
+
 /*
  * Non-functional CA tree element.
  * Initially all CA and TA certs are added to this tree.
@@ -154,13 +173,19 @@ struct cert {
  */
 struct nonfunc_ca {
 	RB_ENTRY(nonfunc_ca)	 entry;
+	char			*aki;
+	char			*ski;
 	char			*location;
 	char			*carepo;
 	char			*mfturi;
-	char			*ski;
+	char			*notify;
 	int			 certid;
 	unsigned int		 repoid;
 	int			 talid;
+	time_t			 since;
+	time_t			 last_attempt;
+	unsigned int		 attempts;
+	int			 defer;
 };
 
 /*
@@ -616,6 +641,7 @@ struct repotalstats {
 	uint32_t	 certs; /* certificates */
 	uint32_t	 certs_fail; /* invalid certificate */
 	uint32_t	 certs_nonfunc; /* non-functional CA certificates */
+	uint32_t	 certs_nonfunc_deferred;
 	uint32_t	 mfts; /* total number of manifests */
 	uint32_t	 mfts_gap; /* manifests with sequence gaps */
 	uint32_t	 mfts_fail; /* failing syntactic parse */
@@ -697,6 +723,7 @@ extern int filemode;
 extern int excludeaspa;
 extern int experimental;
 extern int excludeas0;
+extern int retry_all_ncas;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];
@@ -725,7 +752,9 @@ struct cert	*ta_validate(const char *, struct cert *, const unsigned char *,
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
-void		 nca_tree_insert_cert(struct nca_tree *, const struct cert *);
+void		 nca_history_load(void);
+void		 nca_history_save(struct nca_tree *, time_t);
+int		 nca_skip_sync(struct nca_tree *, const struct cert *);
 void		 nca_tree_remove_cert(struct nca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);

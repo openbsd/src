@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.140 2026/05/30 02:09:04 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.141 2026/06/24 09:06:20 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 30 2026 $
+.Dd $Mdocdate: June 24 2026 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP routing security
 .Sh SYNOPSIS
 .Nm
-.Op Fl 0ABcjmnoRVvx
+.Op Fl 0ABcjmNnoRVvx
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -153,6 +153,12 @@ for a description of the fields.
 Create output in the file
 .Pa metrics
 in the output directory in OpenMetrics format.
+.It Fl N
+Disable the backoff retry mechanism applied to non-functional CAs.
+By default
+.Nm
+progressively decreases the synchronization frequency for persistently
+non-functional CAs, eventually settling on retrying about once per day.
 .It Fl n
 Offline mode.
 Validate the contents of
