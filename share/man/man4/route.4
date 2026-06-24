@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.56 2021/11/10 20:24:22 bket Exp $
+.\"	$OpenBSD: route.4,v 1.57 2026/06/24 08:46:30 deraadt Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 10 2021 $
+.Dd $Mdocdate: June 24 2026 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -317,6 +317,11 @@ Messages include:
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
 #define RTM_DESYNC	0x10	/* route socket buffer overflow */
 #define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
+#define RTM_BFD		0x12	/* bidirectional forwarding detection */
+#define RTM_PROPOSAL	0x13	/* proposal for resolvd(8) */
+#define RTM_CHGADDRATTR	0x14	/* address attribute change */
+#define RTM_80211INFO	0x15	/* 80211 iface change */
+#define RTM_SOURCE	0x16	/* set source address */
 .Ed
 .Pp
 A message header consists of one of the following:
@@ -378,6 +383,36 @@ struct if_announcemsghdr {
 	u_short	ifan_what;	/* what type of announcement */
 	char	ifan_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 };
+
+struct bfd_msghdr {
+	uint16_t	bm_msglen;
+	uint8_t		bm_version;
+	uint8_t		bm_type;
+	uint16_t	bm_hdrlen;
+	uint16_t	bm_index;
+
+	uint16_t	bm_tableid;
+	uint8_t		bm_priority;
+	uint8_t		bm_mpls;
+	int		bm_addrs;
+	int		bm_flags;
+	/* above matches rt_msghdr */
+	uint16_t	bm_pad0;	/* for 4 byte boundary */
+
+	struct sockaddr_bfd	bm_sa;	/* bfd msg for userland */
+};
+
+struct if_ieee80211_msghdr {
+	uint16_t	ifim_msglen;
+	uint8_t		ifim_version;
+	uint8_t		ifim_type;
+	uint16_t	ifim_hdrlen;
+	uint16_t	ifim_index;
+	uint16_t	ifim_tableid;
+
+	struct if_ieee80211_data	ifim_ifie;
+};
+
 .Ed
 .Pp
 The
@@ -395,6 +430,14 @@ the
 .Dv RTM_IFANNOUNCE
 message uses an
 .Vt if_announcemsghdr
+header, the
+.Dv RTM_BFD
+message uses a
+.Vt bfd_msghdr
+header, the
+.Dv RTM_80211INFO
+message uses an
+.Vt if_ieee80211_msghdr
 header,
 .Dv RTM_INVALIDATE
 is used only internally in the kernel and should never appear in a route
@@ -453,6 +496,7 @@ Flags include the values:
 #define RTF_LOCAL     0x200000	/* route to a local address */
 #define RTF_BROADCAST 0x400000	/* route associated to a bcast addr. */
 #define RTF_CONNECTED 0x800000	/* interface route */
+#define RTF_BFD		0x1000000	/* Link state controlled by BFD */
 .Ed
 .Pp
 The following flags (defined as
@@ -502,6 +546,10 @@ Specifiers for which addresses are present in the messages are:
 #define RTA_SRC		0x100	/* source sockaddr present */
 #define RTA_SRCMASK	0x200	/* source netmask present */
 #define RTA_LABEL	0x400	/* route label present */
+#define RTA_BFD		0x800	/* bfd present */
+#define RTA_DNS		0x1000	/* DNS Servers sockaddr present */
+#define RTA_STATIC	0x2000	/* RFC 3442 encoded static routes present */
+#define RTA_SEARCH	0x4000	/* RFC 3397 encoded search path present */
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
