@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.155 2026/06/15 11:35:19 kirill Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.156 2026/06/24 19:57:11 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1252,9 +1252,19 @@ checkstatus(int node)
 	 * it will mark it with "fail" or "fail-xxx", where "xxx" is
 	 * additional human-readable information about the particular
 	 * fault-condition.
+	 *
+	 * But we will nevertheless attach failed clocks, in order to
+	 * invoke todr_attach on the right device, so as not to attach
+	 * prtc on systems where it wouldn't work (and then complain that
+	 * "unix-gettod?" is not available).
 	 */
-	if (strcmp(buf, "disabled") == 0 || strncmp(buf, "fail", 4) == 0)
+	if (strcmp(buf, "disabled") == 0)
 		return 0;
+	if (strncmp(buf, "fail", 4) == 0) {
+		if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0 ||
+		    strcmp(buf, "eeprom") != 0)
+			return 0;
+	}
 
 	return 1;
 }

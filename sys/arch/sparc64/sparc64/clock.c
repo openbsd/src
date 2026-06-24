@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.88 2025/06/28 11:34:21 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.89 2026/06/24 19:57:11 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -78,6 +78,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/idprom.h>
+#include <machine/openfirm.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
@@ -383,7 +384,7 @@ clockattach_fhc(struct device *parent, struct device *self, void *aux)
 static void
 clockattach(int node, bus_space_tag_t bt, bus_space_handle_t bh)
 {
-	char *model;
+	char *model, buf[32];
 	struct idprom *idp;
 	int h;
 
@@ -397,6 +398,16 @@ clockattach(int node, bus_space_tag_t bt, bus_space_handle_t bh)
 	/* Our TOD clock year 0 is 1968 */
 	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
 		panic("Can't attach %s tod clock", model);
+
+	/*
+	 * Do not trust the time stored in this device if it has been
+	 * flagged by the firmware.
+	 */
+	if (OF_getprop(node, "status", buf, sizeof(buf)) > 0 &&
+	    strncmp(buf, "fail", 4) == 0) {
+		todr_handle->todr_quality = INT_MIN;
+	}
+
 
 #define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
 	if (idprom == NULL) {
