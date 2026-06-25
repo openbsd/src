@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.79 2026/06/25 09:05:02 tim Exp $	*/
+/*	$OpenBSD: mount.c,v 1.80 2026/06/25 09:05:56 tim Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ main(int argc, char * const argv[])
 				if ((fs = malloc(sizeof(*fs))) == NULL)
 					err(1, NULL);
 				fs->fs_vfstype = mntbuf->f_fstypename;
-				fs->fs_spec = mntbuf->f_mntfromname;
+				fs->fs_spec = mntbuf->f_mntfromspec;
 			}
 			/*
 			 * It's an update, ignore the fstab file options.
