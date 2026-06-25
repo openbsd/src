@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.252 2025/08/10 15:17:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.253 2026/06/25 08:14:20 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -317,21 +317,23 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 			 * existence means someone is screwing up.
 			 */
 			mtx_enter(&qr->ps_mtx);
-			if (qr->ps_flags & PS_TRACED &&
-			    !(qr->ps_flags & PS_EXITING)) {
+			if (qr->ps_flags & PS_TRACED) {
 				process_untrace(qr);
 				mtx_leave(&qr->ps_mtx);
 
-				/*
-				 * If single threading is active,
-				 * direct the signal to the active
-				 * thread to avoid deadlock.
-				 */
-				if (qr->ps_single)
-					ptsignal(qr->ps_single, SIGKILL,
-					    STHREAD);
-				else
-					prsignal(qr, SIGKILL);
+				if ((pr->ps_flags & PS_EXITING) == 0) {
+					/*
+					 * If single threading is
+					 * active, direct the signal
+					 * to the active thread to
+					 * avoid deadlock.
+					 */
+					if (qr->ps_single)
+						ptsignal(qr->ps_single,
+						    SIGKILL, STHREAD);
+					else
+						prsignal(qr, SIGKILL);
+				}
 			} else {
 				process_reparent(qr, initprocess);
 				mtx_leave(&qr->ps_mtx);
