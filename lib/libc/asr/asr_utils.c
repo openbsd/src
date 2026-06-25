@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.22 2023/11/20 12:15:16 florian Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.23 2026/06/25 19:27:51 florian Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -112,7 +112,7 @@ static ssize_t
 dname_expand(const unsigned char *data, size_t len, size_t offset,
     size_t *newoffset, char *dst, size_t max)
 {
-	size_t		 n, count, end, ptr, start;
+	size_t		 n, end, ptr, start;
 	ssize_t		 res;
 
 	if (offset >= len)
@@ -140,11 +140,12 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 			return (-1);
 
 		/* copy n + at offset+1 */
-		if (dst != NULL && max != 0) {
-			count = (max < n + 1) ? (max) : (n + 1);
-			memmove(dst, data + offset, count);
-			dst += count;
-			max -= count;
+		if (dst != NULL) {
+			if (max < n + 1)
+				return (-1);
+			memmove(dst, data + offset, n + 1);
+			dst += n + 1;
+			max -= n + 1;
 		}
 		res += n + 1;
 		offset += n + 1;
@@ -154,8 +155,11 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 	if (end < offset + 1)
 		end = offset + 1;
 
-	if (dst != NULL && max != 0)
+	if (dst != NULL) {
+		if (max < 1)
+			return (-1);
 		dst[0] = 0;
+	}
 	if (newoffset)
 		*newoffset = end;
 	return (res + 1);
