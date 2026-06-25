@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.26 2026/06/25 11:39:12 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.27 2026/06/25 16:32:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -765,6 +765,15 @@ window_customize_draw_option(struct window_customize_modedata *data,
 			goto out;
 		memcpy(&gc, &grid_default_cell, sizeof gc);
 		gc.fg = options_get_number(item->oo, name);
+		if (!screen_write_text(ctx, cx, sx, sy - (s->cy - cy), 0, &gc,
+		    "EXAMPLE"))
+			goto out;
+	}
+	if (oe != NULL && (oe->flags & OPTIONS_TABLE_IS_COLOUR)) {
+		if (!screen_write_text(ctx, cx, sx, sy - (s->cy - cy), 1,
+		    &grid_default_cell, "This is a colour option: "))
+			goto out;
+		style_apply(&gc, item->oo, name, ft);
 		if (!screen_write_text(ctx, cx, sx, sy - (s->cy - cy), 0, &gc,
 		    "EXAMPLE"))
 			goto out;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1370 2026/06/25 11:39:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1371 2026/06/25 16:32:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2307,6 +2307,7 @@ enum options_table_type {
 #define OPTIONS_TABLE_IS_ARRAY 0x1
 #define OPTIONS_TABLE_IS_HOOK 0x2
 #define OPTIONS_TABLE_IS_STYLE 0x4
+#define OPTIONS_TABLE_IS_COLOUR 0x8
 
 struct options_table_entry {
 	const char		 *name;
@@ -3896,6 +3897,8 @@ int		 popup_modify(struct client *, const char *, const char *,
 /* style.c */
 int		 style_parse(struct style *,const struct grid_cell *,
 		     const char *);
+int		 style_parse_colour(struct style *,
+		     const struct grid_cell *, const char *);
 const char	*style_tostring(struct style *);
 struct style	*style_add(struct grid_cell *, struct options *,
 		     const char *, struct format_tree *);

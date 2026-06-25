@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.43 2026/06/22 13:57:33 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.44 2026/06/25 16:32:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -432,6 +432,29 @@ style_apply(struct grid_cell *gc, struct options *oo, const char *name,
 {
 	memcpy(gc, &grid_default_cell, sizeof *gc);
 	style_add(gc, oo, name, ft);
+}
+
+/* Parse a single colour into a style */
+int
+style_parse_colour(struct style *sy, const struct grid_cell *base,
+    const char *s)
+{
+	int	c;
+
+	style_set(sy, base);
+
+	if (*s == '\0') {
+		sy->gc.fg = -1;
+		return (0);
+	}
+
+	if ((c = colour_fromstring(s)) == -1)
+		return (-1);
+	if (c == 8)
+		sy->gc.fg = base->fg;
+	else
+		sy->gc.fg = c;
+	return (0);
 }
 
 /* Initialize style from cell. */

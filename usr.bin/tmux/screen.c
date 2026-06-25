@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.103 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.104 2026/06/25 16:32:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,10 +177,11 @@ screen_reset_tabs(struct screen *s)
 void
 screen_set_default_cursor(struct screen *s, struct options *oo)
 {
-	int	c;
+	struct grid_cell	gc;
+	int			c;
 
-	c = options_get_number(oo, "cursor-colour");
-	s->default_ccolour = c;
+	style_apply(&gc, oo, "cursor-colour", NULL);
+	s->default_ccolour = gc.fg;
 
 	c = options_get_number(oo, "cursor-style");
 	s->default_mode = 0;
