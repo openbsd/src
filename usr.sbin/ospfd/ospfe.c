@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.121 2025/07/22 18:39:19 jan Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.122 2026/06/25 13:19:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -436,8 +436,13 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
 			break;
 		case IMSG_RECONF_AUTHMD:
-			memcpy(&md, imsg.data, sizeof(struct auth_md));
-			md_list_add(&niface->auth_md_list, md.keyid, md.key);
+			if (imsg_get_data(&imsg, md.key, sizeof(md.key)) == -1)
+				fatalx(
+				    "%s IMSG_RECONF_AUTHMD could not get key",
+				    __func__);
+			md.keyid = imsg_get_id(&imsg);
+			md_list_add(&niface->auth_md_list,
+			    md.keyid, md.key);
 			break;
 		case IMSG_RECONF_END:
 			if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER) !=

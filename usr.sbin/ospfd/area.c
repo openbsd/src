@@ -1,4 +1,4 @@
-/*	$OpenBSD: area.c,v 1.10 2015/11/22 13:09:10 claudio Exp $ */
+/*	$OpenBSD: area.c,v 1.11 2026/06/25 13:19:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/tree.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ospf.h"
 #include "ospfd.h"
@@ -136,4 +137,25 @@ area_ospf_options(struct area *area)
 		opt |= OSPF_OPTION_E;
 
 	return (opt);
+}
+
+struct area *
+area_txsan(const struct area *area)
+{
+	static struct area tx_area;
+
+	memset(&tx_area, 0, sizeof(tx_area));
+
+	tx_area.id = area->id;
+	memcpy(tx_area.demote_group, area->demote_group,
+	    sizeof(tx_area.demote_group));
+	tx_area.stub_default_cost = area->stub_default_cost;
+	tx_area.num_spf_calc = area->num_spf_calc;
+	tx_area.active = area->active;
+	tx_area.transit = area->transit;
+	tx_area.stub = area->stub;
+	tx_area.dirty = area->dirty;
+	tx_area.demote_level = area->demote_level;
+
+	return (&tx_area);
 }

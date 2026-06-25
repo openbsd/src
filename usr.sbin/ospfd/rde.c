@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.118 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.119 2026/06/25 13:19:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -598,7 +598,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_RIB:
 			LIST_FOREACH(area, &rdeconf->area_list, entry) {
 				imsg_compose_event(iev_ospfe, IMSG_CTL_AREA,
-				    0, imsg.hdr.pid, -1, area, sizeof(*area));
+				    0, imsg.hdr.pid, -1,
+				    area_txsan(area), sizeof(*area));
 
 				rt_dump(area->id, imsg.hdr.pid, RIB_RTR);
 				rt_dump(area->id, imsg.hdr.pid, RIB_NET);
@@ -759,14 +760,13 @@ rde_dump_area(struct area *area, int imsg_type, pid_t pid)
 {
 	struct iface	*iface;
 
-	/* dump header */
-	imsg_compose_event(iev_ospfe, IMSG_CTL_AREA, 0, pid, -1,
-	    area, sizeof(*area));
+	imsg_compose_event(iev_ospfe, IMSG_CTL_AREA, 0, pid, -1, &area->id,
+	    sizeof(area->id));
 
 	/* dump link local lsa */
 	LIST_FOREACH(iface, &area->iface_list, entry) {
 		imsg_compose_event(iev_ospfe, IMSG_CTL_IFACE,
-		    0, pid, -1, iface, sizeof(*iface));
+		    0, pid, -1, iface->name, sizeof(iface->name));
 		lsa_dump(&iface->lsa_tree, imsg_type, pid);
 	}
 

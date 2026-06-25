@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.108 2021/01/19 09:37:53 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.109 2026/06/25 13:19:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -556,6 +556,7 @@ struct area	*area_find(struct ospfd_conf *, struct in_addr);
 void		 area_track(struct area *);
 int		 area_border_router(struct ospfd_conf *);
 u_int8_t	 area_ospf_options(struct area *);
+struct area 	*area_txsan(const struct area *);
 
 /* carp.c */
 int		 carp_demote_init(char *, int);
@@ -621,6 +622,8 @@ void	imsg_event_add(struct imsgev *);
 int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
 int	ifstate_is_up(struct kif *kif);
+struct iface
+	*iface_txsan(const struct iface *);
 
 /* printconf.c */
 void	print_config(struct ospfd_conf *);

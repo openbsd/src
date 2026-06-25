@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.124 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.125 2026/06/25 13:19:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -59,6 +59,9 @@ int	ospf_reload(void);
 int	ospf_sendboth(enum imsg_type, void *, u_int16_t);
 int	merge_interfaces(struct area *, struct area *);
 struct iface *iface_lookup(struct area *, struct iface *);
+
+struct ospfd_conf *ospf_conf_txsan(const struct ospfd_conf *);
+struct redistribute *ospf_redistribute_txsan(const struct redistribute *);
 
 int	pipe_parent2ospfe[2];
 int	pipe_parent2rde[2];
@@ -636,6 +639,93 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 	return (0);
 }
 
+struct ospfd_conf *
+ospf_conf_txsan(const struct ospfd_conf *xconf)
+{
+	static struct ospfd_conf tx_xconf;
+
+	memset(&tx_xconf, 0, sizeof(tx_xconf));
+
+	tx_xconf.rtr_id = xconf->rtr_id;
+	tx_xconf.opts = xconf->opts;
+	tx_xconf.spf_delay = xconf->spf_delay;
+	tx_xconf.spf_hold_time = xconf->spf_hold_time;
+	tx_xconf.uptime = xconf->uptime;
+	tx_xconf.spf_state = xconf->spf_state;
+	tx_xconf.ospf_socket = xconf->ospf_socket;
+	tx_xconf.flags = xconf->flags;
+	tx_xconf.redist_label_or_prefix = xconf->redist_label_or_prefix;
+	tx_xconf.rfc1583compat = xconf->rfc1583compat;
+	tx_xconf.border = xconf->border;
+	tx_xconf.redistribute = xconf->redistribute;
+	tx_xconf.fib_priority = xconf->fib_priority;
+	tx_xconf.rdomain = xconf->rdomain;
+
+	return (&tx_xconf);
+}
+
+struct redistribute *
+ospf_redistribute_txsan(const struct redistribute *r)
+{
+	static struct redistribute tx_r;
+
+	memset(&tx_r, 0, sizeof(tx_r));
+
+	tx_r.addr = r->addr;
+	tx_r.mask = r->mask;
+	tx_r.metric = r->metric;
+	tx_r.label = r->label;
+	tx_r.type = r->type;
+	memcpy(tx_r.dependon, r->dependon, sizeof(tx_r.dependon));
+
+	return (&tx_r);
+}
+
+struct iface *
+iface_txsan(const struct iface *iface)
+{
+	static struct iface tx_iface;
+
+	memset(&tx_iface, 0, sizeof(tx_iface));
+
+	memcpy(tx_iface.name, iface->name, sizeof(tx_iface.name));
+	memcpy(tx_iface.demote_group, iface->demote_group,
+	    sizeof(iface->demote_group));
+	memcpy(tx_iface.dependon, iface->dependon, sizeof(tx_iface.dependon));
+	memcpy(tx_iface.auth_key, iface->auth_key, sizeof(tx_iface.auth_key));
+	tx_iface.addr = iface->addr;
+	tx_iface.dst = iface->dst;
+	tx_iface.mask = iface->mask;
+	tx_iface.abr_id = iface->abr_id;
+
+	tx_iface.baudrate = iface->baudrate;
+	tx_iface.dead_interval = iface->dead_interval;
+	tx_iface.fast_hello_interval = iface->fast_hello_interval;
+	tx_iface.ls_ack_cnt = iface->ls_ack_cnt;
+	tx_iface.crypt_seq_num = iface->crypt_seq_num;
+	tx_iface.uptime = iface->uptime;
+	tx_iface.ifindex = iface->ifindex;
+	tx_iface.rdomain = iface->rdomain;
+	tx_iface.fd = iface->fd;
+	tx_iface.state = iface->state;
+	tx_iface.mtu = iface->mtu;
+	tx_iface.depend_ok = iface->depend_ok;
+	tx_iface.flags = iface->flags;
+	tx_iface.transmit_delay = iface->transmit_delay;
+	tx_iface.hello_interval = iface->hello_interval;
+	tx_iface.rxmt_interval = iface->rxmt_interval;
+	tx_iface.metric = iface->metric;
+	tx_iface.type = iface->type;
+	tx_iface.auth_type = iface->auth_type;
+	tx_iface.if_type = iface->if_type;
+	tx_iface.auth_keyid = iface->auth_keyid;
+	tx_iface.linkstate = iface->linkstate;
+	tx_iface.priority = iface->priority;
+	tx_iface.passive = iface->passive;
+
+	return (&tx_iface);
+}
+
 int
 ospf_reload(void)
 {
@@ -658,20 +748,22 @@ ospf_reload(void)
 	}
 
 	/* send config to childs */
-	if (ospf_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
+	if (ospf_sendboth(IMSG_RECONF_CONF, ospf_conf_txsan(xconf),
+	    sizeof(*xconf)) == -1)
 		return (-1);
 
 	/* send interfaces */
 	LIST_FOREACH(area, &xconf->area_list, entry) {
-		if (ospf_sendboth(IMSG_RECONF_AREA, area, sizeof(*area)) == -1)
+		if (ospf_sendboth(IMSG_RECONF_AREA, area_txsan(area),
+		    sizeof(*area)) == -1)
 			return (-1);
 
 		SIMPLEQ_FOREACH(r, &area->redist_list, entry) {
-			main_imsg_compose_rde(IMSG_RECONF_REDIST, 0, r,
-			    sizeof(*r));
+			main_imsg_compose_rde(IMSG_RECONF_REDIST, 0,
+			    ospf_redistribute_txsan(r), sizeof(*r));
 		}
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if (ospf_sendboth(IMSG_RECONF_IFACE, iface,
+			if (ospf_sendboth(IMSG_RECONF_IFACE, iface_txsan(iface),
 			    sizeof(*iface)) == -1)
 				return (-1);
 			if (iface->auth_type == AUTH_CRYPT)
