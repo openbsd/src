@@ -1054,3 +1054,8 @@ acmeIdentifier	1053
 id_ct_rpkiSignedPrefixList	1054
 tls1_prf	1055
 X25519MLKEM768	1056
+id_ct_rpkiCanonicalCacheRepresentation	1057
+id_ct_rpkiErikIndex	1058
+id_ct_rpkiErikPartition	1059
+id_ct_CDR	1060
+id_ad_communityDefinition	1061
