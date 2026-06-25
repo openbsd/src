@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.387 2026/06/23 23:53:06 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.388 2026/06/25 14:27:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1461,6 +1461,33 @@ format_cb_client_cell_width(struct format_tree *ft)
 	if (ft->c != NULL && (ft->c->tty.flags & TTY_STARTED))
 		return (format_printf("%u", ft->c->tty.xpixel));
 	return (NULL);
+}
+
+/* Callback for client_colours. */
+static void *
+format_cb_client_colours(struct format_tree *ft)
+{
+	struct tty_term	*term;
+	u_int		 colours;
+
+	if (ft->c == NULL || (~ft->c->tty.flags & TTY_STARTED))
+		return (NULL);
+	term = ft->c->tty.term;
+
+	if (term->flags & TERM_RGBCOLOURS)
+		colours = 16777216;
+	else if (term->flags & TERM_256COLOURS)
+		colours = 256;
+	else {
+		colours = tty_term_number(term, TTYC_COLORS);
+		if (colours < 8)
+			colours = 2;
+		else if (colours < 16)
+			colours = 8;
+		else
+			colours = 16;
+	}
+	return (format_printf("%u", colours));
 }
 
 /* Callback for client_control_mode. */
@@ -3195,6 +3222,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "client_cell_width", FORMAT_TABLE_STRING,
 	  format_cb_client_cell_width
+	},
+	{ "client_colours", FORMAT_TABLE_STRING,
+	  format_cb_client_colours
 	},
 	{ "client_control_mode", FORMAT_TABLE_STRING,
 	  format_cb_client_control_mode
