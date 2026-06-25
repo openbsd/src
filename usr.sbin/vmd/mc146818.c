@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.31 2025/08/02 15:16:18 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.32 2026/06/25 16:45:01 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -209,9 +209,13 @@ rtc_reschedule_per(void)
 {
 	uint16_t rate;
 	uint64_t us;
+	uint8_t period;
 
 	if (rtc.regs[MC_REGB] & MC_REGB_PIE) {
-		rate = 32768 >> ((rtc.regs[MC_REGA] & MC_RATE_MASK) - 1);
+		period = rtc.regs[MC_REGA] & MC_RATE_MASK;
+		if (period == 0)
+			return;
+		rate = 32768 >> (period - 1);
 		us = (1.0 / rate) * 1000000;
 		rtc.per_tv.tv_usec = us;
 		if (evtimer_pending(&rtc.per, NULL))
