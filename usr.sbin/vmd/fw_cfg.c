@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.14 2026/02/11 13:58:55 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.15 2026/06/25 15:40:10 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -400,4 +400,5 @@ fw_cfg_file_dir(void)
 	/* XXX should sort by name but SeaBIOS does not care */
 
 	fw_cfg_set_state(data, size);
+	free(data);
 }
