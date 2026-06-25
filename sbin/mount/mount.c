@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.78 2024/05/09 08:35:40 florian Exp $	*/
+/*	$OpenBSD: mount.c,v 1.79 2026/06/25 09:05:02 tim Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ main(int argc, char * const argv[])
 		if (typelist != NULL)
 			usage();
 
-		if (realpath(*argv, mntpath) == NULL) 
+		if (isduid(*argv, 0) || realpath(*argv, mntpath) == NULL) 
 			strlcpy(mntpath, *argv, sizeof(mntpath));
 		if (hasopt(options, "update")) {
 			if ((mntbuf = getmntpt(mntpath)) == NULL)
@@ -630,6 +630,7 @@ getmntpt(const char *name)
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	for (i = 0; i < mntsize; i++)
 		if (strcmp(mntbuf[i].f_mntfromname, name) == 0 ||
+		    strcmp(mntbuf[i].f_mntfromspec, name) == 0 ||
 		    strcmp(mntbuf[i].f_mntonname, name) == 0)
 			return (&mntbuf[i]);
 	return (NULL);
