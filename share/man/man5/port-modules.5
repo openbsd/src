@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.285 2026/06/22 17:13:46 tb Exp $
+.\"	$OpenBSD: port-modules.5,v 1.286 2026/06/25 07:30:43 jca Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 22 2026 $
+.Dd $Mdocdate: June 25 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -812,8 +812,8 @@ Sets
 .Ev MODFORTRAN_BUILD_DEPENDS .
 Set
 .Ev MODFORTRAN_COMPILER
-to `gfortran', or `flang', depending on what the port requires.
-The default is `gfortran'.
+depending on what the port requires.
+The current default and only supported value is `gfortran'.
 The dependencies are chosen according to
 .Ev MODFORTRAN_COMPILER .
 .It gcc4
