@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.285 2026/06/24 09:06:20 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.286 2026/06/25 07:51:58 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -235,6 +235,17 @@ enum location {
 	DIR_UNKNOWN,
 	DIR_TEMP,
 	DIR_VALID,
+};
+
+struct signed_obj {
+	enum rtype rtype;
+	void *(*new)(size_t, time_t);
+	void (*free)(void *);
+	int (*cert_info)(const char *, void *, const struct cert *);
+	int (*parse_econtent)(const char *, void *, const uint8_t *, size_t);
+	int (*parse_detached)(const char *, void *, BIO *, char *, size_t,
+	    uint8_t **, size_t *);
+	int (*validate)(const char *, void *, struct cert *);
 };
 
 /*
@@ -762,6 +773,7 @@ void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
 struct mft	*mft_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
+const struct signed_obj *mft_obj(void);
 struct mft	*mft_read(struct ibuf *);
 int		 mft_compare_issued(const struct mft *, const struct mft *);
 int		 mft_compare_seqnum(const struct mft *, const struct mft *);
@@ -772,6 +784,7 @@ void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
 struct roa	*roa_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
+const struct signed_obj *roa_obj(void);
 struct roa	*roa_read(struct ibuf *);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *,
 		    struct repo *);
@@ -780,6 +793,7 @@ void		 spl_buffer(struct ibuf *, const struct spl *);
 void		 spl_free(struct spl *);
 struct spl	*spl_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
+const struct signed_obj *spl_obj(void);
 struct spl	*spl_read(struct ibuf *);
 void		 spl_insert_vsps(struct vsp_tree *, struct spl *,
 		    struct repo *);
@@ -787,11 +801,13 @@ void		 spl_insert_vsps(struct vsp_tree *, struct spl *,
 void		 rsc_free(struct rsc *);
 struct rsc	*rsc_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
+const struct signed_obj *rsc_obj(void);
 
 void		 takey_free(struct takey *);
 void		 tak_free(struct tak *);
 struct tak	*tak_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
+const struct signed_obj *tak_obj(void);
 
 void		 aspa_buffer(struct ibuf *, const struct aspa *);
 void		 aspa_free(struct aspa *);
@@ -799,6 +815,7 @@ void		 aspa_insert_vaps(char *, struct vap_tree *, struct aspa *,
 		    struct repo *);
 struct aspa	*aspa_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
+const struct signed_obj *aspa_obj(void);
 struct aspa	*aspa_read(struct ibuf *);
 
 /* crl.c */

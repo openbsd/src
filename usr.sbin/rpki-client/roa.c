@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.89 2026/06/17 08:47:28 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.90 2026/06/25 07:51:58 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -236,6 +236,39 @@ roa_validate(const char *fn, void *obj, struct cert *cert)
 	return 1; /* XXX */
 }
 
+static void *
+roa_obj_new(size_t der_len, time_t signtime)
+{
+	struct roa *roa;
+
+	if ((roa = calloc(1, sizeof(*roa))) == NULL)
+		err(1, NULL);
+	roa->signtime = signtime;
+
+	return roa;
+}
+
+static void
+roa_obj_free(void *obj)
+{
+	roa_free(obj);
+}
+
+static const struct signed_obj roa_signed_obj = {
+	.rtype = RTYPE_ROA,
+	.new = roa_obj_new,
+	.free = roa_obj_free,
+	.cert_info = roa_cert_info,
+	.parse_econtent = roa_parse_econtent,
+	.validate = roa_validate,
+};
+
+const struct signed_obj *
+roa_obj(void)
+{
+	return &roa_signed_obj;
+}
+
 /*
  * Parse a full RFC 9582 file.
  * Returns the ROA or NULL if the document was malformed.
@@ -258,10 +291,7 @@ roa_parse(struct cert **out_cert, const char *fn, int talid,
 	if (cms == NULL)
 		return NULL;
 
-	if ((roa = calloc(1, sizeof(struct roa))) == NULL)
-		err(1, NULL);
-	roa->signtime = signtime;
-
+	roa = roa_obj_new(len, signtime);
 	if (!roa_cert_info(fn, roa, cert))
 		goto out;
 	if (!roa_parse_econtent(fn, roa, cms, cmsz))

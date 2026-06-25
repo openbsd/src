@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.43 2026/06/17 08:22:21 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.44 2026/06/25 07:51:58 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -179,6 +179,39 @@ aspa_validate(const char *fn, void *obj, struct cert *cert)
 	return 1; /* XXX */
 }
 
+static void *
+aspa_obj_new(size_t der_len, time_t signtime)
+{
+	struct aspa *aspa;
+
+	if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
+		err(1, NULL);
+	aspa->signtime = signtime;
+
+	return aspa;
+}
+
+static void
+aspa_obj_free(void *obj)
+{
+	aspa_free(obj);
+}
+
+static const struct signed_obj aspa_signed_obj = {
+	.rtype = RTYPE_ASPA,
+	.new = aspa_obj_new,
+	.free = aspa_obj_free,
+	.cert_info = aspa_cert_info,
+	.parse_econtent = aspa_parse_econtent,
+	.validate = aspa_validate,
+};
+
+const struct signed_obj *
+aspa_obj(void)
+{
+	return &aspa_signed_obj;
+}
+
 /*
  * Parse a full ASPA file.
  * Returns the payload or NULL if the file was malformed.
@@ -201,10 +234,7 @@ aspa_parse(struct cert **out_cert, const char *fn, int talid,
 	if (cms == NULL)
 		return NULL;
 
-	if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
-		err(1, NULL);
-	aspa->signtime = signtime;
-
+	aspa = aspa_obj_new(len, signtime);
 	if (!aspa_cert_info(fn, aspa, cert))
 		goto out;
 	if (!aspa_parse_econtent(fn, aspa, cms, cmsz))

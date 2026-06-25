@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.30 2026/06/17 08:22:21 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.31 2026/06/25 07:51:58 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -208,6 +208,39 @@ tak_validate(const char *fn, void *obj, struct cert *cert)
 	return 1;
 }
 
+static void *
+tak_obj_new(size_t der_len, time_t signtime)
+{
+	struct tak *tak;
+
+	if ((tak = calloc(1, sizeof(*tak))) == NULL)
+		err(1, NULL);
+	tak->signtime = signtime;
+
+	return tak;
+}
+
+static void
+tak_obj_free(void *obj)
+{
+	tak_free(obj);
+}
+
+static const struct signed_obj tak_signed_obj = {
+	.rtype = RTYPE_SPL,
+	.new = tak_obj_new,
+	.free = tak_obj_free,
+	.cert_info = tak_cert_info,
+	.parse_econtent = tak_parse_econtent,
+	.validate = tak_validate,
+};
+
+const struct signed_obj *
+tak_obj(void)
+{
+	return &tak_signed_obj;
+}
+
 /*
  * Parse a full RFC 9691 Trust Anchor Key file.
  * Returns the TAK or NULL if the object was malformed.
@@ -230,10 +263,7 @@ tak_parse(struct cert **out_cert, const char *fn, int talid,
 	if (cms == NULL)
 		return NULL;
 
-	if ((tak = calloc(1, sizeof(struct tak))) == NULL)
-		err(1, NULL);
-	tak->signtime = signtime;
-
+	tak = tak_obj_new(len, signtime);
 	if (!tak_cert_info(fn, tak, cert))
 		goto out;
 	if (!tak_parse_econtent(fn, tak, cms, cmsz))
