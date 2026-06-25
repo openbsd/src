@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.212 2026/06/19 18:37:10 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.213 2026/06/25 11:39:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -248,7 +248,7 @@ server_start(struct tmuxproc *client, uint64_t flags, struct event_base *base,
 	proc_loop(server_proc, server_loop);
 
 	job_kill_all();
-	status_prompt_save_history();
+	prompt_save_history();
 
 	exit(0);
 }

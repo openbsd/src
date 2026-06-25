@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1101 2026/06/23 23:53:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1102 2026/06/25 11:39:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2026 $
+.Dd $Mdocdate: June 25 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -7359,7 +7359,7 @@ See
 for possible values for
 .Ar prompt\-type .
 .It Xo Ic command\-prompt
-.Op Fl 1bCeFiklN
+.Op Fl 1bCeFiklNP
 .Op Fl I Ar inputs
 .Op Fl p Ar prompts
 .Op Fl t Ar target\-client
@@ -7439,6 +7439,8 @@ user exits the command prompt.
 makes
 .Em BSpace
 cancel an empty prompt.
+.Fl P
+opens a prompt inside a pane instead of on the status line.
 .Pp
 .Fl T
 tells

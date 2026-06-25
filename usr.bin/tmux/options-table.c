@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.218 2026/06/15 17:34:25 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.219 2026/06/25 11:39:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -764,7 +764,9 @@ const struct options_table_entry options_table[] = {
 	{ .name = "message-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "bg=yellow,fg=black,fill=yellow",
+	  .default_str = "bg=yellow,fg=black,"
+			 "#{?#{m/r:(^|#,)IS(PANE|MODE)($|#,),#{prompt_flags}},,"
+			 "fill=yellow}",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of messages and the command prompt. "

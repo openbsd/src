@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.88 2025/09/08 07:30:15 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.89 2026/06/25 11:39:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -57,7 +57,7 @@ cfg_done(__unused struct cmdq_item *item, __unused void *data)
 	if (cfg_item != NULL)
 		cmdq_continue(cfg_item);
 
-	status_prompt_load_history();
+	prompt_load_history();
 
 	return (CMD_RETURN_NORMAL);
 }
