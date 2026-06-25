@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.82 2026/06/25 16:32:42 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.83 2026/06/25 23:17:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1213,6 +1213,17 @@ options_push_changes(const char *name)
 	struct window_pane	*wp;
 
 	log_debug("%s: %s", __func__, name);
+
+	if (strcmp(name, "theme") == 0 ||
+	    strncmp(name, "dark-theme-", 11) == 0 ||
+	    strncmp(name, "light-theme-", 12) == 0) {
+		TAILQ_FOREACH(loop, &clients, entry) {
+			server_client_update_theme_colours(loop);
+			if (loop->tty.flags & TTY_OPENED)
+				tty_invalidate(&loop->tty);
+			server_redraw_client(loop);
+		}
+	}
 
 	if (strcmp(name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
