@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.21 2017/02/27 10:44:46 jca Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.22 2026/06/25 13:07:21 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -160,6 +160,8 @@ res_search_async_run(struct asr_query *as, struct asr_result *ar)
 		}
 
 		free(ar->ar_data);
+		ar->ar_datalen = -1;
+		ar->ar_data = NULL;
 
 		/*
 		 * The original resolver does something like this.
