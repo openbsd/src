@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.30 2026/05/28 17:13:17 deraadt Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.31 2026/06/25 17:56:26 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -1513,6 +1513,11 @@ vioscsi_handle_read_10(struct virtio_dev *dev,
 			chunk_len = info->len - chunk_offset;
 		} else
 			chunk_len = acct->resp_desc->len;
+
+		if (chunk_len == 0 && chunk_offset < info->len) {
+			log_warnx("%s: zero-length read_buf descriptor", __func__);
+			goto free_read_10;
+		}
 
 		if (write_mem(acct->resp_desc->addr, read_buf + chunk_offset,
 			chunk_len)) {
