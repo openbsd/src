@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.355 2026/02/22 21:53:54 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.356 2026/06/25 08:27:34 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ struct pool uvm_map_entry_kmem_pool;
  *
  * Note, this variable is locked by kernel_map's lock.
  */
-vaddr_t uvm_maxkaddr;
+vaddr_t uvm_maxkaddr = VM_MIN_KERNEL_ADDRESS;
 
 /*
  * Locking predicate.
@@ -4761,7 +4761,6 @@ uvm_map_kmem_grow(struct vm_map *map, struct uvm_map_deadq *dead,
 	 * Walk forward until a gap large enough for alloc_sz shows up.
 	 *
 	 * We assume the kernel map has no boundaries.
-	 * uvm_maxkaddr may be zero.
 	 */
 	end = MAX(uvm_maxkaddr, map->min_offset);
 	entry = uvm_map_entrybyaddr(&map->addr, end);
