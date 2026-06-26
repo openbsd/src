@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.62 2026/06/26 09:54:56 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.63 2026/06/26 10:02:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -101,9 +101,8 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_ERROR);
 		}
 		if (window_pane_is_floating(wp)) {
-			layout_resize_floating_pane_to(wp, LAYOUT_LEFTRIGHT, x,
-			    &cause);
-			if (cause != NULL) {
+			if (layout_resize_floating_pane_to(wp, LAYOUT_LEFTRIGHT,
+			    x, &cause) != 0) {
 				cmdq_error(item, "size %s", cause);
 				free(cause);
 				return (CMD_RETURN_ERROR);
@@ -130,9 +129,8 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 			break;
 		}
 		if (window_pane_is_floating(wp)) {
-			layout_resize_floating_pane_to(wp, LAYOUT_TOPBOTTOM, y,
-			    &cause);
-			if (cause != NULL) {
+			if (layout_resize_floating_pane_to(wp, LAYOUT_TOPBOTTOM,
+			    y, &cause) != 0) {
 				cmdq_error(item, "size %s", cause);
 				free(cause);
 				return (CMD_RETURN_ERROR);
@@ -168,9 +166,8 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 			if (flag == 'L' || flag == 'U')
 				opposite = 1;
 
-			layout_resize_floating_pane(wp, type, adjust, opposite,
-			    &cause);
-			if (cause != NULL) {
+			if (layout_resize_floating_pane(wp, type, adjust,
+			    opposite, &cause) != 0) {
 				cmdq_error(item, "adjustment %s", cause);
 				free(cause);
 				return (CMD_RETURN_ERROR);
