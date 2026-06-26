@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.43 2026/03/04 01:13:03 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.44 2026/06/26 13:57:08 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2025
@@ -308,7 +308,7 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = rge_ioctl;
 	ifp->if_qstart = rge_start;
 	ifp->if_watchdog = rge_watchdog;
@@ -3919,7 +3919,7 @@ rge_kstat_attach(struct rge_softc *sc)
 	if (bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct rge_stats), RGE_STATS_ALIGNMENT, 0,
 	    &rge_ks_sc->rge_ks_sc_seg, 1, &rge_ks_sc->rge_ks_sc_nsegs,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT) != 0) {
 		printf("%s: cannot allocate counter dma memory\n",
 		    sc->sc_dev.dv_xname);
 		goto destroy;
