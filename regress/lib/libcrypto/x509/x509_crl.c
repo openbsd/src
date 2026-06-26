@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_crl.c,v 1.1 2026/06/23 08:24:49 tb Exp $ */
+/*	$OpenBSD: x509_crl.c,v 1.2 2026/06/26 05:59:11 tb Exp $ */
 
 /*
  * Copyright (c) 2015, Google Inc.
@@ -305,13 +305,11 @@ main(void)
 		goto err;
 	}
 
-#if 0
 	if (verify(leaf, root, make_CRL_stack(basic_crl, revoked_crl),
 	    X509_V_FLAG_CRL_CHECK) != X509_V_ERR_CERT_REVOKED) {
 		fprintf(stderr, "Revoked CRL wasn't checked.\n");
 		goto err;
 	}
-#endif
 
 	if (verify(leaf, root, NULL,
 	    X509_V_FLAG_CRL_CHECK) != X509_V_ERR_UNABLE_TO_GET_CRL) {
