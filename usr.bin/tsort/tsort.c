@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.40 2026/06/26 19:08:36 jca Exp $ */
+/* $OpenBSD: tsort.c,v 1.41 2026/06/26 19:11:25 jca Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -314,7 +314,7 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 		char *sentinel;
 
 		if (memchr(str, '\0', size))
-			errx(1, "NUL byte detected in input");
+			errx(1, "NUL byte detected in %s", name);
 
 		sentinel = str + size;
 		for (;;) {
@@ -366,7 +366,7 @@ read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
 		char *sentinel;
 
 		if (memchr(str, '\0', size))
-			errx(1, "NUL byte detected in input");
+			errx(1, "NUL byte detected in %s", name);
 
 		sentinel = str + size;
 		for (;;) {
