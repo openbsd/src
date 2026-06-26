@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.83 2026/06/17 08:47:28 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.84 2026/06/26 08:05:22 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,9 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/types.h>
 
 #include <assert.h>
 #include <err.h>

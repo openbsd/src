@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.86 2026/06/24 09:06:20 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.87 2026/06/26 08:05:22 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,9 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <assert.h>

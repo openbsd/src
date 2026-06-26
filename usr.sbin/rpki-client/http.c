@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.104 2026/06/15 09:20:21 job Exp $ */
+/*	$OpenBSD: http.c,v 1.105 2026/06/26 08:05:22 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -44,6 +44,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>

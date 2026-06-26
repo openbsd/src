@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.181 2026/04/29 11:14:11 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.182 2026/06/26 08:05:22 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,9 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/types.h>
 
 #include <err.h>
 #include <fcntl.h>
