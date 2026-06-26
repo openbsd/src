@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2026/06/26 05:59:11 tb Exp $
+#	$OpenBSD: Makefile,v 1.29 2026/06/26 06:08:08 tb Exp $
 
 PROGS =	constraints verify x509attribute x509req_ext callback
 PROGS += expirecallback callbackfailures x509_asn1 x509_extensions_test
@@ -8,8 +8,6 @@ DPADD =	${LIBCRYPTO}
 
 LDADD_constraints = ${CRYPTO_INT}
 LDADD_verify = ${CRYPTO_INT}
-
-REGRESS_EXPECTED_FAILURES = run-regress-x509_crl
 
 WARNINGS =	Yes
 CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror
