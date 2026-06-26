@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.226 2026/06/26 12:41:08 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.227 2026/06/26 12:52:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1152,7 +1152,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "pane-status-current-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "default",
+	  .default_str = "underscore",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the current pane in the status line."
@@ -1205,7 +1205,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "session-status-current-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "default",
+	  .default_str = "underscore",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the current session in the status line."
@@ -1803,7 +1803,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "window-status-current-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "default",
+	  .default_str = "underscore",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the current window in the status line."
