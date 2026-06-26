@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.79 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.80 2026/06/26 10:32:32 gnezdo Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -1263,7 +1263,8 @@ sysctl_ucominit(void)
 
 	if (ucoms == NULL || ucom_change) {
 		free(ucoms, M_SYSCTL, ucomslen);
-		ucomslen = ucom_cd.cd_ndevs * sizeof(name);
+		/* +1 entry so the allocation is never zero-sized */
+		ucomslen = (ucom_cd.cd_ndevs + 1) * sizeof(name);
 		ucoms = malloc(ucomslen, M_SYSCTL, M_WAITOK | M_ZERO);
 		for (unit = 0; unit < ucom_cd.cd_ndevs; unit++) {
 			sc = ucom_cd.cd_devs[unit];
