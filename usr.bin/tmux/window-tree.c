@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.89 2026/06/26 19:51:40 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.90 2026/06/26 19:53:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -179,7 +179,7 @@ static const char *window_tree_window_info_lines[] = {
 	"#[fg=themelightgrey]Activity Time #[#{E:tree-mode-border-style},acs]x#[default] "
 	"#{t:window_activity} #[fg=themelightgrey](#{t/r:window_activity})#[default]",
 	"#[fg=themelightgrey]Sessions      #[#{E:tree-mode-border-style},acs]x#[default] "
-	"#{s/,/ /:window_active_sessions_list}",
+	"#{s/,/ /:window_linked_sessions_list}",
 	"#[fg=themelightgrey]Flags         #[#{E:tree-mode-border-style},acs]x#[default] "
 	WINDOW_TREE_FLAG("active", "window_active") " "
 	WINDOW_TREE_FLAG("last", "window_last_flag") " "
