@@ -1035,7 +1035,7 @@ SAN (Subject Alternative Name) DNS entry or CN (Common Name) entry equal to
 .BR auth-domain-name
 of the defined
 .BR tls-auth .
-The certificate validify is also verified with
+The certificate validity is also verified with
 .BR tls-cert-bundle .
 If authentication of the secondary, based on the specified tls-auth authentication
 information, fails the XFR zone transfer will be refused. If the connection is performed

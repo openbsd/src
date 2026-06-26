@@ -2560,7 +2560,10 @@ read_apl_rdata(struct domain_table *domains, uint16_t rdlength,
 		return MALFORMED;
 	while (rdlength - length >= 4) {
 		uint8_t afdlength = rdata[length + 3] & APL_LENGTH_MASK;
-		if (rdlength - (length + 4) < afdlength)
+		uint16_t afam = read_uint16(rdata + length);
+		if (rdlength - (length + 4) < afdlength ||
+			(afam == 1 && afdlength > 4) ||
+			(afam == 2 && afdlength > 16))
 			return MALFORMED;
 		length += 4 + afdlength;
 	}
@@ -2600,14 +2603,22 @@ print_apl(struct buffer *output, size_t rdlength, const uint8_t *rdata,
 	af = -1;
 
 	switch (address_family) {
-	case 1: af = AF_INET; break;
-	case 2: af = AF_INET6; break;
+	case 1: af = AF_INET;
+		if(length > 4)
+			return 0;
+		break;
+	case 2: af = AF_INET6;
+		if(length > 16)
+			return 0;
+		break;
 	}
 
 	if (af == -1 || size - 4 < length)
 		return 0;
 
 	memset(address, 0, sizeof(address));
+	if(length > sizeof(address))
+		return 0;
 	memmove(address, rdata + *offset + 4, length);
 
 	if (!inet_ntop(af, address, text_address, sizeof(text_address)))
@@ -3282,7 +3293,7 @@ read_svcb_rdata(struct domain_table *domains, uint16_t rdlength,
 	struct domain *domain;
 	struct dname_buffer target;
 	uint16_t length = 2, svcparams_length = 0;
-	uint16_t size;
+	size_t size;
 	const size_t mark = buffer_position(packet);
 
 	/* short + name + svc_params */

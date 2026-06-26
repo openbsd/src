@@ -641,6 +641,7 @@ const char* config_make_zonefile(struct zone_options* zone, struct nsd* nsd);
 
 /* parsing helpers */
 void c_error(const char* msg, ...) ATTR_FORMAT(printf, 1,2);
+void c_warning(const char* msg, ...) ATTR_FORMAT(printf, 1,2);
 int c_wrap(void);
 struct acl_options* parse_acl_info(region_type* region, char* ip,
 	const char* key);

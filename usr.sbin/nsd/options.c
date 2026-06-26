@@ -333,6 +333,9 @@ parse_options_file(struct nsd_options* opt, const char* file,
 			                tls_auth_options_find(opt, acl->tls_auth_name)))
 				    c_error("tls_auth %s in pattern %s could not be found",
 						acl->tls_auth_name, pat->pname);
+				else if (!opt->tls_auth_port)
+				    c_warning("provide-xfr has a tls-auth-name,"
+				         " but no tls-auth-port is configured");
 			}
 			if(acl->nokey || acl->blocked)
 				continue;
@@ -959,10 +962,11 @@ zone_list_close(struct nsd_options* opt)
 }
 
 static void
-c_error_va_list_pos(int showpos, const char* fmt, va_list args)
+c_error_va_list_pos(int showpos, int is_error, const char* fmt, va_list args)
 {
 	char* at = NULL;
-	cfg_parser->errors++;
+	if(is_error)
+		cfg_parser->errors++;
 	if(showpos && c_text && c_text[0]!=0) {
 		at = c_text;
 	}
@@ -975,7 +979,8 @@ c_error_va_list_pos(int showpos, const char* fmt, va_list args)
 			snprintf(m, sizeof(m), "at '%s': ", at);
 			(*cfg_parser->err)(cfg_parser->err_arg, m);
 		}
-		(*cfg_parser->err)(cfg_parser->err_arg, "error: ");
+		(*cfg_parser->err)(cfg_parser->err_arg,
+			is_error ? "error: " : "warning: ");
 		vsnprintf(m, sizeof(m), fmt, args);
 		(*cfg_parser->err)(cfg_parser->err_arg, m);
 		(*cfg_parser->err)(cfg_parser->err_arg, "\n");
@@ -983,7 +988,7 @@ c_error_va_list_pos(int showpos, const char* fmt, va_list args)
 	}
         fprintf(stderr, "%s:%d: ", cfg_parser->filename, cfg_parser->line);
 	if(at) fprintf(stderr, "at '%s': ", at);
-	fprintf(stderr, "error: ");
+	fprintf(stderr, is_error ? "error: " : "warning: ");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
 }
@@ -999,7 +1004,22 @@ c_error(const char *fmt, ...)
 	}
 
 	va_start(ap, fmt);
-	c_error_va_list_pos(showpos, fmt, ap);
+	c_error_va_list_pos(showpos, 1, fmt, ap);
+	va_end(ap);
+}
+
+void
+c_warning(const char *fmt, ...)
+{
+	va_list ap;
+	int showpos = 0;
+
+	if (strcmp(fmt, "syntax error") == 0 || strcmp(fmt, "parse error") == 0) {
+		showpos = 1;
+	}
+
+	va_start(ap, fmt);
+	c_error_va_list_pos(showpos, 0, fmt, ap);
 	va_end(ap);
 }
 
@@ -1994,6 +2014,16 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 			acl->ip_address_spec, acl->nokey?"NOKEY":
 			(acl->blocked?"BLOCKED":acl->key_name)));
 #endif
+#ifdef HAVE_SSL
+		if (acl->tls_auth_name && !q->tls_auth) {
+			/* the acl requires a TLS client cert with name, but
+			 * the connection did not came over a "tls-auth-port:"
+			 */
+			number++;
+			acl = acl->next;
+			continue;
+		}
+#endif
 		if(acl_addr_matches(acl, q) && acl_key_matches(acl, q)) {
 			if(!match)
 			{
@@ -2008,7 +2038,7 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 		}
 #ifdef HAVE_SSL
 		/* we are in a acl with tls_auth */
-		if (acl->tls_auth_name && q->tls_auth) {
+		if (acl->tls_auth_name) {
 			/* we have auth_domain_name in tls_auth */
 			if (acl->tls_auth_options && acl->tls_auth_options->auth_domain_name) {
 				if (!acl_tls_hostname_matches(q->tls_auth, acl->tls_auth_options->auth_domain_name)) {

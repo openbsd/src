@@ -5415,7 +5415,6 @@ handle_tls_writing(int fd, short event, void* arg)
 			data->shake_state = tls_hs_read_event;
 			tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST | EV_READ | EV_TIMEOUT);
 		} else if(want != SSL_ERROR_WANT_WRITE) {
-			cleanup_tcp_handler(data);
 			{
 				char client_ip[128], e[188];
 				if(data->query) {
@@ -5427,6 +5426,7 @@ handle_tls_writing(int fd, short event, void* arg)
 					client_ip, "SSL_write error");
 				log_crypto_err(e);
 			}
+			cleanup_tcp_handler(data);
 		}
 		return;
 	}
