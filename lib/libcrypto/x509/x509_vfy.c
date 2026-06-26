@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.152 2026/06/22 19:29:41 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.153 2026/06/26 06:03:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1074,12 +1074,24 @@ get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
 		reasons = *preasons;
 		crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x);
 
-		if (crl_score > best_score) {
-			best_crl = crl;
-			best_crl_issuer = crl_issuer;
-			best_score = crl_score;
-			best_reasons = reasons;
+		if (crl_score < best_score || crl_score == 0)
+			continue;
+
+		if (crl_score == best_score && best_crl != NULL) {
+			int day, sec;
+
+			if (!ASN1_TIME_diff(&day, &sec, best_crl->crl->lastUpdate,
+			    crl->crl->lastUpdate))
+				continue;
+
+			if (day <= 0 && sec <= 0)
+				continue;
 		}
+
+		best_crl = crl;
+		best_crl_issuer = crl_issuer;
+		best_score = crl_score;
+		best_reasons = reasons;
 	}
 
 	if (best_crl != NULL) {
