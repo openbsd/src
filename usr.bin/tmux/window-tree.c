@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.88 2026/06/26 17:43:15 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.89 2026/06/26 19:51:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -158,8 +158,6 @@ static const char *window_tree_pane_info_lines[] = {
 	"#{pane_tty}",
 	"#[fg=themelightgrey]Position      #[#{E:tree-mode-border-style},acs]x#[default] "
 	"#{pane_x},#{pane_y} #{pane_width}x#{pane_height}",
-	"#[fg=themelightgrey]Started At    #[#{E:tree-mode-border-style},acs]x#[default] "
-	"#{?pane_start_command,#{pane_start_command},none}",
 	"#[fg=themelightgrey]Mode          #[#{E:tree-mode-border-style},acs]x#[default] "
 	"#{?pane_in_mode,#{pane_mode},none}",
 	"#[fg=themelightgrey]Flags         #[#{E:tree-mode-border-style},acs]x#[default] "
