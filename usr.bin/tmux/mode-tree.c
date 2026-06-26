@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.93 2026/06/26 08:10:48 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.94 2026/06/26 11:36:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -832,6 +832,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	const char		*tag, *separator;
 	size_t			 n;
 	int			 keylen, alignlen[mtd->maxdepth + 1];
+	int			 dfg, dfg0;
 
 	if (mtd->line_size == 0)
 		return;
@@ -841,6 +842,9 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	style_apply(&gc, oo, "mode-style", NULL);
 	memcpy(&box_gc, &grid_default_cell, sizeof box_gc);
 	style_apply(&box_gc, oo, "tree-mode-border-style", NULL);
+
+	dfg = gc.fg;
+	dfg0 = gc0.fg;
 
 	w = mtd->width;
 	h = mtd->height;
@@ -927,8 +931,8 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		width = prefix_width + text_width;
 
 		if (mti->tagged) {
-			gc.attr ^= GRID_ATTR_BRIGHT;
-			gc0.attr ^= GRID_ATTR_BRIGHT;
+			gc.fg = COLOUR_THEME_CYAN|COLOUR_FLAG_THEME;
+			gc0.fg = COLOUR_THEME_CYAN|COLOUR_FLAG_THEME;
 		}
 
 		if (i != mtd->current) {
@@ -965,8 +969,8 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		free(prefix);
 
 		if (mti->tagged) {
-			gc.attr ^= GRID_ATTR_BRIGHT;
-			gc0.attr ^= GRID_ATTR_BRIGHT;
+			gc.fg = dfg;
+			gc0.fg = dfg0;
 		}
 	}
 	format_free(ft);

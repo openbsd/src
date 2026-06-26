@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1374 2026/06/26 10:02:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1375 2026/06/26 11:36:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2068,6 +2068,7 @@ struct prompt_create_data {
 	enum screen_cursor_style cstyle;
 	enum screen_cursor_style command_cstyle;
 	int			 ccolour;
+	int			 command_ccolour;
 	int			 cmode;
 	int			 command_cmode;
 	const char		*message_format;

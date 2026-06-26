@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.475 2026/06/25 23:17:25 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.476 2026/06/26 11:36:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -748,8 +748,10 @@ tty_force_cursor_colour(struct tty *tty, int c)
 	u_char	r, g, b;
 	char	s[13];
 
-	if (c != -1)
+	if (c != -1) {
+		c = tty_map_theme_colour(tty, c);
 		c = colour_force_rgb(c);
+	}
 	if (c == tty->ccolour)
 		return;
 	if (c == -1)
