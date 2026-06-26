@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.61 2026/06/23 09:29:26 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.62 2026/06/26 09:54:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -63,8 +64,7 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	const char		*errstr, *argval;
 	const char		 flags[4] = { 'U', 'D', 'L', 'R' };
 	char			*cause = NULL, flag;
-	u_int			 opposite = 0;
-	int			 adjust, x, y, status;
+	int			 adjust, x, y, status, opposite = 0;
 	long unsigned		 i;
 	struct grid		*gd = wp->base.grid;
 
@@ -147,8 +147,12 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 			continue;
 
 		argval = args_get(args, flag);
-		if (argval == NULL)
-			argval = "1";
+		if (argval == NULL) {
+			if (args_count(args) == 0)
+				argval = "1";
+			else
+				argval = args_string(args, 0);
+		}
 
 		adjust = strtonum(argval, INT_MIN, INT_MAX, &errstr);
 		if (errstr != NULL) {
