@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.2 2026/06/24 09:06:20 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.3 2026/06/26 07:37:29 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -16,14 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/limits.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"
