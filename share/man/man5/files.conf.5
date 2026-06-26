@@ -1,4 +1,4 @@
-.\"	$OpenBSD: files.conf.5,v 1.23 2016/03/02 15:04:20 naddy Exp $
+.\"	$OpenBSD: files.conf.5,v 1.24 2026/06/26 10:36:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 2 2016 $
+.Dd $Mdocdate: June 26 2026 $
 .Dt FILES.CONF 5
 .Os
 .Sh NAME
@@ -292,6 +292,21 @@ Create an attribute header file, defining how many instances of this
 attribute are to be compiled in.
 This rule is mostly used for pseudo-devices.
 .El
+.Pp
+Optionally, a
+.Ic compile-with
+keyword followed by a quoted make recipe string may appear after the
+need-rules:
+.Pp
+.Dl file dev/foo/bar.c  foobar  compile-with \&"${FOO_C}\&"
+.Pp
+When present,
+.Xr config 8
+will emit the given string as the make recipe for that file's object
+rule, overriding the default suffix rule.
+This allows per-file compiler flags to be specified without adding
+explicit rules to the architecture's
+.Pa Makefile.arch .
 .Pp
 The
 .Dq attribute header files
