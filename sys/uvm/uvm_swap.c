@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.181 2026/04/13 15:23:57 kettenis Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.182 2026/06/26 10:00:45 kettenis Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1715,7 +1715,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	result, s, mapinflags, pflag, bounce = 0, i;
+	int	result, s, mapinflags, pflag, bounce = 0;
 	boolean_t write, async;
 	vaddr_t bouncekva;
 	struct vm_page *tpps[SWCLUSTPAGES];
@@ -1771,24 +1771,11 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	}
 
 	/*
-	 * Check that we are dma capable for read (write always bounces
-	 * through the swapencrypt anyway...
+	 * Writes need to be bounced if we're going through swapencrypt.
 	 */
-	if (write && encrypt) {
-		bounce = 1; /* bounce through swapencrypt always */
-	} else {
-#else
-	{
+	if (write && encrypt)
+		bounce = 1;
 #endif
-
-		for (i = 0; i < npages; i++) {
-			if (VM_PAGE_TO_PHYS(pps[i]) < dma_constraint.ucr_low ||
-			   VM_PAGE_TO_PHYS(pps[i]) > dma_constraint.ucr_high) {
-				bounce = 1;
-				break;
-			}
-		}
-	}
 
 	if (bounce)  {
 		int swmapflags;
