@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.227 2026/06/26 12:52:36 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.228 2026/06/26 14:40:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1671,6 +1671,15 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 1,
 	  .text = "Whether the contents of the screen should be scrolled into"
 		  "history when clearing the whole screen."
+	},
+
+	{ .name = "switch-mode-match-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "bg=cyan fg=black",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of matched characters in switch mode."
 	},
 
 	{ .name = "synchronize-panes",

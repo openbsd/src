@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.95 2026/06/26 12:06:17 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.96 2026/06/26 14:40:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -794,8 +794,8 @@ mode_tree_no_tag(struct mode_tree_item *mti)
 }
 
 /*
- * Set the alignment of mti->name: -1 to align left, 0 (default) to not align,
- * or 1 to align right.
+ * Set the alignment of the item name: -1 to align left, 0 (default) to not
+ * align, or 1 to align right.
  */
 void
 mode_tree_align(struct mode_tree_item *mti, int align)
@@ -1144,6 +1144,7 @@ mode_tree_set_prompt(struct mode_tree_data *mtd, struct client *c,
 
 	mtp = xcalloc(1, sizeof *mtp);
 	mtp->mtd = mtd;
+	mtp->c = c;
 	mtp->inputcb = inputcb;
 	mtp->freecb = freecb;
 	mtp->data = data;
