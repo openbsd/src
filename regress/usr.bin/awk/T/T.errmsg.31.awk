@@ -1,0 +1,1 @@
+BEGIN { printf("%z", "foo")}

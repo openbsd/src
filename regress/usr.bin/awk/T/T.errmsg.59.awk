@@ -1,0 +1,1 @@
+BEGIN { system("date") }

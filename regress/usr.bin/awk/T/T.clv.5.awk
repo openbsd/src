@@ -1,0 +1,4 @@
+BEGIN {
+	getline
+	print x
+}

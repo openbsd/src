@@ -1,0 +1,30 @@
+# General format:
+# try program as rest of line
+# $1	$2	$3	output1  (\t for tab, \n for newline,
+# $1	$2	$3	output2  ("" for null)
+# ... terminated by blank line
+
+try  { for (i=1; i<=NF; i++) printf("[%s]", $i); printf("\n") }
+a	[a]
+  a	[  a]
+,a	[][a]
+ , a	[ ][ a]
+a,b	[a][b]
+a,b,c	[a][b][c]
+""	[]
+"abc"	[abc]
+"a""b"	[a"b]
+"a","b"	[a][b]
+a""b	[a""b]
+"a,b"	[a,b]
+""""	["]
+""""""	[""]
+"""x"""	["x"]
+""","""	[","]
+,,""	[][][]
+a""b	[a""b]
+a''b	[a''b]
+,,	[][][]
+a,	[a][]
+"",	[][]
+,	[][]
