@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.4 2026/06/26 08:02:47 tb Exp $ */
+/*	$OpenBSD: nca.c,v 1.5 2026/06/26 13:41:41 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -204,6 +204,10 @@ nca_decide_retry(const struct nca_hist *nca_hist)
 	if ((now - nca_hist->since < 24 * 60 * 60) &&
 	    (now > nca_hist->last_attempt + 90 * 60))
 		return 1;
+
+	/* Add jitter to spread the retries around in time. */
+	if (arc4random() & 0x1)
+		return 0;
 
 	/*
 	 * After 24 hours, settle on retrying only once per day (modulo any
