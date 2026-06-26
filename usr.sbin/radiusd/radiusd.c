@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.62 2025/01/29 10:12:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.63 2026/06/26 07:05:33 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1770,7 +1770,7 @@ radiusd_module_access_request(struct radiusd_module *module,
 		return;
 	}
 	if (radius_get_user_password_attr(radpkt, pass, sizeof(pass),
-	    q->client->secret) == 0) {
+	    radius_query_client_secret(q)) == 0) {
 		radius_del_attr_all(radpkt, RADIUS_TYPE_USER_PASSWORD);
 		(void)radius_put_raw_attr(radpkt, RADIUS_TYPE_USER_PASSWORD,
 		    pass, strlen(pass));
