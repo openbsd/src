@@ -1,5 +1,30 @@
 NSD RELEASE NOTES
 
+4.14.3
+================
+FEATURES:
+BUG FIXES:
+	- Fix for CVE-2026-12244: A specially crafted SVCB RR can cause a heap
+	  overflow of up to 65509 attacker controlled bytes.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-12244.txt
+	- Fix for CVE-2026-12245: If NSD is configured with DNS over TLS, a
+	  client that performs a TLS action, closing the connection early,
+	  causes a crash and restart of the server process. An attacker can
+	  keep all children in a crash-restart loop denying DoT service.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report.
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-12245.txt
+	- Fix for CVE-2026-12246: The RR type APL rdata address, if too large,
+	  causes out of bounds write on the stack, when the zonefile is written
+	  out. Thanks to Qifan Zhang from Palo Alto Networks, Haruki Oyama from
+	  Waseda University and zhangph for the report.
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-12246.txt
+	- Fix for CVE-2026-12490: Secondaries authenticated by a client
+	  certificate to transfer a zone over TLS, can bypass verification by
+	  transferring over TCP.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report.
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-12490.txt
+
 4.14.2
 ================
 FEATURES:

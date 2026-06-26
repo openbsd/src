@@ -7,7 +7,7 @@ sinclude(dnstap/dnstap.m4)
 
 # autoconf-2.70 is needed for @runstatedir@
 AC_PREREQ([2.70])
-AC_INIT([NSD],[4.14.2],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.14.3],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
