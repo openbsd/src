@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.32 2024/08/18 19:58:35 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.33 2026/06/26 12:34:45 jtt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -194,14 +194,10 @@ main(int argc, char *argv[])
 	switch(argc) {
 	case 2:
 		month = parsemonth(*argv++);
-		if (!month)
-			errx(1, "Unable to parse month");
 		/* FALLTHROUGH */
 	case 1:
 		if (argc == 1 && !isdigit((unsigned char)*argv[0])) {
 			month = parsemonth(*argv);
-			if (!month)
-				errx(1, "illegal year value: use 1-9999");
 			(void)time(&now);
 			local_time = localtime(&now);
 			year = local_time->tm_year + 1900;
