@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.348 2026/06/25 11:39:12 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.349 2026/06/26 13:58:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1601,6 +1601,12 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL) {
+		/*
+		 * No mode uses mouse motion events, so drop them here rather
+		 * than passing them on and causing a redraw on every movement.
+		 */
+		if (KEYC_IS_TYPE(key, KEYC_TYPE_MOUSEMOVE))
+			return (0);
 		if (wme->mode->key != NULL && c != NULL) {
 			key &= ~KEYC_MASK_FLAGS;
 			wme->mode->key(wme, c, s, wl, key, m);
