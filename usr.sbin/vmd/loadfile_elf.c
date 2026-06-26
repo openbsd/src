@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.54 2026/01/14 03:09:05 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.55 2026/06/26 00:34:42 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -722,6 +722,10 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 		shpp = maxp;
 		maxp += roundup(sz, sizeof(Elf64_Addr));
 
+		if (elf->e_shstrndx >= elf->e_shnum) {
+			free(shp);
+			return 1;
+		}
 		size_t shstrsz = shp[elf->e_shstrndx].sh_size;
 		char *shstr = malloc(shstrsz);
 		if (gzseek(fp, (off_t)shp[elf->e_shstrndx].sh_offset,
@@ -748,10 +752,16 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 				havesyms = 1;
 
 		for (i = 0; i < elf->e_shnum; i++) {
+			char *shname = NULL;
+
+			if (shp[i].sh_name < shstrsz &&
+			    memchr(shstr + shp[i].sh_name, '\0',
+			    shstrsz - shp[i].sh_name) != NULL)
+				shname = shstr + shp[i].sh_name;
 			if (shp[i].sh_type == SHT_SYMTAB ||
 			    shp[i].sh_type == SHT_STRTAB ||
-			    !strcmp(shstr + shp[i].sh_name, ".debug_line") ||
-			    !strcmp(shstr + shp[i].sh_name, ELF_CTF)) {
+			    (shname != NULL && !strcmp(shname, ".debug_line")) ||
+			    (shname != NULL && !strcmp(shname, ELF_CTF))) {
 				if (havesyms && (flags & LOAD_SYM)) {
 					if (gzseek(fp, (off_t)shp[i].sh_offset,
 					    SEEK_SET) == -1) {
@@ -933,6 +943,10 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 		shp = malloc(sz);
 
 		if ((size_t)gzread(fp, shp, sz) != sz) {
+			free(shp);
+			return 1;
+		}
+		if (elf->e_shstrndx >= elf->e_shnum) {
 			free(shp);
 			return 1;
 		}
