@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.94 2026/06/26 11:36:22 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.95 2026/06/26 12:06:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -839,7 +839,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 
 	memcpy(&gc0, &grid_default_cell, sizeof gc0);
 	memcpy(&gc, &grid_default_cell, sizeof gc);
-	style_apply(&gc, oo, "mode-style", NULL);
+	style_apply(&gc, oo, "tree-mode-selection-style", NULL);
 	memcpy(&box_gc, &grid_default_cell, sizeof box_gc);
 	style_apply(&box_gc, oo, "tree-mode-border-style", NULL);
 

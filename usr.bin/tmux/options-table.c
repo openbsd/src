@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.224 2026/06/26 11:36:22 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.225 2026/06/26 12:06:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1717,6 +1717,15 @@ const struct options_table_entry options_table[] = {
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of preview indicator in tree mode."
+	},
+
+	{ .name = "tree-mode-selection-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "#{E:mode-style}",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of the selected line in tree mode."
 	},
 
 	{ .name = "window-active-style",
