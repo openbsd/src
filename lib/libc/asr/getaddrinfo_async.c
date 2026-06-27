@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.69 2026/06/26 06:08:35 yasuoka Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.70 2026/06/27 16:07:42 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -248,17 +248,9 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 		ar->ar_gai_errno = 0;
 
-		if (!(ai->ai_flags & AI_NUMERICHOST)) {
+		if (!(ai->ai_flags & AI_NUMERICHOST))
 			is_localhost = _asr_is_localhost(as->as.ai.hostname);
 
-			/* make sure there are no funny characters in hostname */
-			if (as->as.ai.hostname != NULL &&
-			    !hnok_lenient(as->as.ai.hostname)) {
-				ar->ar_gai_errno = EAI_FAIL;
-				async_set_state(as, ASR_STATE_HALT);
-				break;
-			}
-		}
 		if (as->as.ai.hostname == NULL)
 			is_localhost = (ai->ai_flags & AI_PASSIVE)? 0 : 1;
 
@@ -314,6 +306,13 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
+
+		/* make sure there are no funny characters in hostname */
+		if (!hnok_lenient(as->as.ai.hostname)) {
+			ar->ar_gai_errno = EAI_FAIL;
+ 			async_set_state(as, ASR_STATE_HALT);
+ 			break;
+ 		}
 
 		async_set_state(as, ASR_STATE_NEXT_DB);
 		break;
