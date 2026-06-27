@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.5 2026/06/26 13:41:41 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.6 2026/06/27 14:00:09 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -516,6 +516,7 @@ nca_history_save(struct nca_tree *ncas, time_t buildtime)
 		f = NULL;
 		goto err;
 	}
+	f = NULL;
 
 	ts[0].tv_nsec = UTIME_OMIT;
 	ts[1].tv_sec = buildtime;
