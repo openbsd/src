@@ -1,4 +1,4 @@
-/*	$OpenBSD: gaitest.c,v 1.7 2020/02/14 19:17:33 schwarze Exp $	*/
+/*	$OpenBSD: gaitest.c,v 1.8 2026/06/27 17:29:42 jca Exp $	*/
 /*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
 
 /*
@@ -64,11 +64,7 @@ usage()
 }
 
 static void
-print1(title, res, h, s)
-	const char *title;
-	const struct addrinfo *res;
-	char *h;
-	char *s;
+print1(const char *title, const struct addrinfo *res, char *h, char *s)
 {
 	char *start, *end;
 	int error;
@@ -112,9 +108,7 @@ print1(title, res, h, s)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct addrinfo *res;
 	int error, i;
