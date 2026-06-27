@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.160 2026/01/12 04:38:15 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.161 2026/06/27 06:29:15 jan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -382,6 +382,9 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	/* Assign input handler of the physical interface. */
 	NET_ASSERT_LOCKED();
 	SMR_PTR_SET_LOCKED(&ac0->ac_trport, &tp->tp_ether_port);
+
+	/* update linkstate */
+	trunk_link_active(tr, tp);
 
 	return (error);
 }
