@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.349 2026/06/26 13:58:00 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.350 2026/06/27 10:16:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -624,6 +624,7 @@ window_redraw_active_switch(struct window *w, struct window_pane *wp)
 			TAILQ_REMOVE(&w->z_index, wp, zentry);
 			TAILQ_INSERT_HEAD(&w->z_index, wp, zentry);
 			wp->flags |= PANE_REDRAW;
+			redraw_invalidate_scene(w);
 		}
 
 		wp = w->active;
