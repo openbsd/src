@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.136 2026/06/23 09:29:26 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.137 2026/06/27 10:05:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -41,8 +41,8 @@ const struct cmd_entry cmd_new_pane_entry = {
 
 	.args = { "bB:c:de:EfF:hIkl:Lm:p:PR:s:S:t:T:vWx:X:y:Y:Z", 0, -1, NULL },
 	.usage = "[-bdefhIklPvWZ] [-B border-lines] "
-		  "[-c start-directory] [-e environment] "
-		  "[-F format] [-l size] [-m message] [-p percentage] "
+		 "[-c start-directory] [-e environment] "
+		 "[-F format] [-l size] [-m message] [-p percentage] "
 		 "[-s style] [-S active-border-style] "
 		 "[-R inactive-border-style] [-T title] [-x width] [-y height] "
 		 "[-X x-position] [-Y y-position] " CMD_TARGET_PANE_USAGE " "
