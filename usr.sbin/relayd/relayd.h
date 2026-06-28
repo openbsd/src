@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.287 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.288 2026/06/28 05:06:54 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -711,7 +711,7 @@ TAILQ_HEAD(relay_rules, relay_rule);
 	"\06\01sslv3\02tlsv1.0\03tlsv1.1\04tlsv1.2\05tlsv1.3"	\
 	"\06cipher-server-preference\07client-renegotiation"
 
-#define TLSCIPHERS_DEFAULT	"HIGH:!aNULL"
+#define TLSCIPHERS_DEFAULT	"secure"
 #define TLSECDHECURVES_DEFAULT	"default"
 #define TLSDHPARAM_DEFAULT	"none"
 

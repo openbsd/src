@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.218 2026/05/19 05:06:41 rsadowski Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.219 2026/06/28 05:06:54 rsadowski Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2026 $
+.Dd $Mdocdate: June 28 2026 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -970,14 +970,15 @@ The
 .Ic ca key
 option is specified.
 .El
-.It Ic ciphers Ar string
-Set the string defining the TLS cipher suite.
+.It Cm ciphers Ar cipherstr
+Define the list of ciphers that may be used for TLS sessions.
+Refer to the
+.Xr tls_config_set_ciphers 3
+manpage for the format of
+.Ar cipherstr .
 If not specified, the default value
-.Ql HIGH:!aNULL
-will be used (strong crypto cipher suites without anonymous DH).
-See the CIPHERS section of
-.Xr openssl 1
-for information about TLS cipher suites and preference lists.
+.Ql secure
+will be used.
 .It Ic client ca Ar path
 Require TLS client certificates that can be verified against the CA
 certificates in the specified file.
