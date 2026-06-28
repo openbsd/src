@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.218 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.219 2026/06/28 15:53:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -295,7 +295,10 @@ clean_name(const char *name, const char* forbid)
 		return (NULL);
 	copy = xstrdup(name);
 	for (cp = copy; *cp != '\0'; cp++) {
-		if (strchr(forbid, *cp) != NULL)
+		if (*cp == '#' && strchr(forbid, '#') != NULL) {
+			if (cp[1] == '(')
+				*cp = '_';
+		} else if (strchr(forbid, *cp) != NULL)
 			*cp = '_';
 	}
 	utf8_stravis(&new_name, copy, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
