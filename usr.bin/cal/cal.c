@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.34 2026/06/28 20:26:51 tb Exp $	*/
+/*	$OpenBSD: cal.c,v 1.35 2026/06/28 20:46:53 tb Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ week(int day, int month, int year)
 	int	firstday;
 	int	firstsunday;
 	int	shift;
-	
+
 	if (mflag)
 		return isoweek(day, month, year);
 
@@ -384,7 +384,7 @@ yearly(int year)
 		for (row = 0; row < 6; row++) {
 			for (which_cal = 0; which_cal < 3; which_cal++) {
 				p = lineout + which_cal * (week_len + 2);
-				
+
 				dp = &days[month + which_cal][row * 7];
 				firstday = SPACE;
 				for (col = 0; col < 7; col++, p += DAY_LEN) {
