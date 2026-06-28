@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.33 2026/06/26 12:34:45 jtt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.34 2026/06/28 20:26:51 tb Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ week(int day, int month, int year)
 int
 isoweek(int day, int month, int year)
 {
-	/* http://www.tondering.dk/claus/cal/node8.html */
+	/* https://www.tondering.dk/claus/cal/week.php#calcweekno */
 	int a, b, c, s, e, f, g, d, n;
 
 	a = month <= 2 ? year - 1 : year;
