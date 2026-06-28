@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.133 2026/06/03 06:10:06 jsg Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.134 2026/06/28 05:08:28 rsadowski Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2026 $
+.Dd $Mdocdate: June 28 2026 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -693,14 +693,15 @@ The
 should contain a PEM encoded certificate.
 The default is
 .Pa /etc/ssl/server.crt .
-.It Ic ciphers Ar string
-Specify the TLS cipher string.
+.It Cm ciphers Ar cipherstr
+Define the list of ciphers that may be used for TLS sessions.
+Refer to the
+.Xr tls_config_set_ciphers 3
+manpage for the format of
+.Ar cipherstr .
 If not specified, the default value
-.Qq HIGH:!aNULL
-will be used (strong crypto cipher suites without anonymous DH).
-See the CIPHERS section of
-.Xr openssl 1
-for information about TLS cipher suites and preference lists.
+.Ql secure
+will be used.
 .It Ic client ca Ar cafile Oo Ic crl Ar crlfile Oc Op Ic optional
 Require
 .Po
