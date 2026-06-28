@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.56 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: proc.c,v 1.57 2026/06/28 05:33:20 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -260,12 +260,14 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 		return;
 	}
 
-	if (pp->pp_pipes[dst][n] != -1) {
-		log_warnx("%s: duplicated descriptor", __func__);
-		close(fd);
-		return;
-	} else
-		pp->pp_pipes[dst][n] = fd;
+	if (fd == -1 || dst < 0 || dst >= PROC_MAX ||
+	    n >= ps->ps_instances[dst])
+		fatalx("%s: invalid descriptor target %d instance %u",
+		    __func__, dst, n);
+
+	if (pp->pp_pipes[dst][n] != -1)
+		fatalx("%s: duplicated descriptor", __func__);
+	pp->pp_pipes[dst][n] = fd;
 
 	iev = &ps->ps_ievs[dst][n];
 	if (imsgbuf_init(&iev->ibuf, fd) == -1)
@@ -664,6 +666,12 @@ proc_dispatch(int fd, short event, void *arg)
 			log_setverbose(ver);
 			break;
 		case IMSG_CTL_PROCFD:
+			if (p->p_id != PROC_PARENT) {
+				fatalx("%s: received unexpected "
+				    "IMSG_CTL_PROCFD from %s",
+				    __func__, p->p_title);
+			}
+
 			if (imsg_get_data(&imsg, &pf, sizeof(pf)) == -1)
 				fatalx("%s: imsg_get_data", __func__);
 
