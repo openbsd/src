@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidmar.c,v 1.15 2026/03/27 03:56:15 hshoexer Exp $ */
+/* $OpenBSD: acpidmar.c,v 1.16 2026/06/29 20:15:29 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -405,7 +405,8 @@ static paddr_t	dmar_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int, off_t,
     int, int);
 
 struct dmar_map_cookie {
-	int	dm_orig_flags;
+	struct extent_region 	*dm_er;
+	int			dm_orig_flags;
 };
 
 static inline int
@@ -706,7 +707,7 @@ domain_unload_map(struct domain *dom, bus_dmamap_t dmam)
 	struct iommu_softc	*iommu;
 	paddr_t			base, end, idx;
 	psize_t			alen;
-	int			i;
+	int			i, error;
 
 	iommu = dom->iommu;
 	if (iommu_bad(iommu)) {
@@ -752,13 +753,10 @@ domain_unload_map(struct domain *dom, bus_dmamap_t dmam)
 		}
 
 		mtx_enter(&dom->exlck);
-		if (extent_free(dom->iovamap, base, alen, EX_NOWAIT)) {
-			mtx_leave(&dom->exlck);
-			printf("%s: extent_free %.16llx %x failed\n",
-			    dom->exname, (uint64_t)base, (uint32_t)alen);
-			continue;
-		}
+		error = extent_free(dom->iovamap, base, alen, EX_NOWAIT);
 		mtx_leave(&dom->exlck);
+
+		KASSERT(error == 0);
 	}
 }
 
@@ -767,6 +765,7 @@ int
 domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag,
     const char *fn)
 {
+	struct dmar_map_cookie *mc = map->_dm_cookie;
 	bus_dma_segment_t	*seg;
 	bus_size_t		align, boundary;
 	struct iommu_softc	*iommu;
@@ -821,19 +820,12 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag,
 			}
 
 			mtx_enter(&dom->exlck);
-			if (extent_alloc_subregion(dom->iovamap, sgstart,
-			    sgend, alen, align, 0, boundary,
-			    EX_NOWAIT, &res)) {
-				mtx_leave(&dom->exlck);
-				error = ENOMEM;
-				goto fail;
-			}
-			if (res == (u_long)-1) {
-				mtx_leave(&dom->exlck);
-				error = EIO;
-				goto fail;
-			}
+			error = extent_alloc_subregion_with_descr(dom->iovamap,
+			    sgstart, sgend, alen, align, 0, boundary,
+			    EX_NOWAIT, &mc->dm_er[i], &res);
 			mtx_leave(&dom->exlck);
+			if (error)
+				goto fail;
 
 			/* Reassign DMA address */
 			seg->ds_addr = res | (seg->ds_addr & VTD_PAGE_MASK);
@@ -888,26 +880,32 @@ static int
 dmar_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	struct dmar_map_cookie	*mc;
-	bus_dmamap_t			dmam;
-	int				rc;
+	struct dmar_map_cookie *mc;
+	bus_dmamap_t dmam;
+	int error;
 
-	rc = _bus_dmamap_create(tag, size, nsegments, maxsegsz, boundary,
-	    flags | BUS_DMA_64BIT, dmamp);
-	if (rc)
-		return (rc);
+	error = _bus_dmamap_create(tag, size, nsegments, maxsegsz, boundary,
+	    flags | BUS_DMA_64BIT, &dmam);
+	if (error)
+		return (error);
 
-	dmam = *dmamp;
 	mc = malloc(sizeof(*mc), M_DEVBUF,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
 	if (mc == NULL) {
 		_bus_dmamap_destroy(tag, dmam);
-		*dmamp = NULL;
+		return (ENOMEM);
+	}
+	mc->dm_er = mallocarray(dmam->_dm_segcnt, sizeof(*mc->dm_er),
+	    M_DEVBUF, (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	if (mc->dm_er == NULL) {
+		free(mc, M_DEVBUF, sizeof(*mc));
+		_bus_dmamap_destroy(tag, dmam);
 		return (ENOMEM);
 	}
 	mc->dm_orig_flags = flags & ~(BUS_DMA_WAITOK | BUS_DMA_NOWAIT);
-	dmam->_dm_cookie = mc;
 
+	dmam->_dm_cookie = mc;
+	*dmamp = dmam;
 	dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs, __FUNCTION__);
 	return (0);
 }
@@ -915,13 +913,11 @@ dmar_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments,
 static void
 dmar_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam)
 {
-	struct dmar_map_cookie	*mc = dmam->_dm_cookie;
+	struct dmar_map_cookie *mc = dmam->_dm_cookie;
 
 	dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs, __FUNCTION__);
-	if (mc != NULL) {
-		free(mc, M_DEVBUF, sizeof(*mc));
-		dmam->_dm_cookie = NULL;
-	}
+	free(mc->dm_er, M_DEVBUF, dmam->_dm_segcnt * sizeof(*mc->dm_er));
+	free(mc, M_DEVBUF, sizeof(*mc));
 	_bus_dmamap_destroy(tag, dmam);
 }
 
