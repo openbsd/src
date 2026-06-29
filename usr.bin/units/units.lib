@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.147 2023/04/12 15:26:26 jmc Exp $
+/ $OpenBSD: units.lib,v 1.148 2026/06/29 08:18:12 jsg Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -307,53 +307,55 @@ cd			candela
 lumen			cd sr
 lux			cd sr/m2
 
-/ http://www.federalreserve.gov/releases/h10/current/
-/ as of April 23, 2021
+/ https://www.federalreserve.gov/releases/h10/current/
+/ as of June 18, 2026
 $			dollar
-australiadollar		.7739 $
-brazilreal		1|5.5011 $
-canadadollar		1|1.2495 $
-chinayuan		1|6.4945 $
-denmarkkrone		1|6.1609 $
-euro			1.2069 $
-hongkongdollar		1|7.7605 $
-indiarupee		1|74.9700 $
-japanyen		1|107.9400 $
-malaysiaringgit		1|4.1079 $
-mexicopeso		1|19.8520 $
-newzealanddollar	.7179 $
-norwaykrone		1|8.3125 $
-singaporedollar		1|1.3275 $
-southafricarand		1|14.2750 $
-southkoreawon		1|1115.1000 $
-srilankarupee		1|193.0000 $
-swedenkrona		1|8.4030 $
-switzerlandfranc	1|0.9152 $
-taiwandollar		1|28.0900 $
-thailandbaht		1|31.4100 $
-unitedkingdompound	1.3845 $
-venezuelabolivar	1|2500064.0890 $
+australiadollar		.7019 $
+brazilreal		1|5.1689 $
+canadadollar		1|1.4142 $
+chinayuan		1|6.7686 $
+denmarkkrone		1|6.5163 $
+euro			1.1470 $
+hongkongdollar		1|7.8375 $
+indiarupee		1|94.3300 $
+japanyen		1|161.3700 $
+malaysiaringgit		1|4.1150 $
+mexicopeso		1|17.3764 $
+newzealanddollar	.5758 $
+norwaykrone		1|9.7247 $
+singaporedollar		1|1.2898 $
+southafricarand		1|16.4330 $
+southkoreawon		1|1540.6400 $
+srilankarupee		1|333.5000 $
+swedenkrona		1|9.5709 $
+switzerlandfranc	1|0.8040 $
+taiwandollar		1|31.5800 $
+thailandbaht		1|32.7900 $
+unitedkingdompound	1.3228 $
+venezuelabolivar	1|600.8266 $
 
-/ The Economist, April 28, 2021
-/ Hungary, Iceland, Ukraine, Vietnam: no updates available since October 2018
-argentinapeso		1|93.4 $
-chilepeso		1|702 $
-colombiapeso		1|3707 $
-czechkoruna		1|21.4 $
-egyptpound		1|15.7 $
-hungaryforint		1|276 $
-icelandkrona		1|110 $
-indonesiarupiah		1|14500 $
-israelshekel		1|3.25 $
-pakistanrupee		1|154 $
-perunuevosol		1|3.82 $
-philippinespeso		1|48.5 $
-polandzloty		1|3.79 $
-russiarouble		1|74.8 $
-saudiarabiariyal	1|3.75 $
-turkeylira		1|8.23 $
-ukrainehryvnia		1|28.1 $
-vietnamdong		1|23349 $
+/ https://www.wsj.com/market-data/currencies/exchangerates
+/ as of June 26, 2026
+argentinapeso		1|1477.5113 $
+chilepeso		1|923.75 $
+colombiapeso		1|3452.87 $
+czechkoruna		1|21.309 $
+egyptpound		1|49.5037 $
+hungaryforint		1|310.91 $
+icelandkrona		1|126.49 $
+indonesiarupiah		1|17839 $
+israelshekel		1|3.0021 $
+pakistanrupee		1|278.05 $
+philippinespeso		1|61.2960 $
+polandzloty		1|3.7684 $
+saudiarabiariyal	1|3.7523 $
+turkeylira		1|46.6195 $
+ukrainehryvnia		1|44.9500 $
+vietnamdong		1|26300 $
+
+/ The Economist, June 24, 2026
+perunuevosol		1|3.40 $
+russiarouble		1|74.6 $
 
 / EMU currencies have constant exchange rate against Euro since 1.1.1999
 austriaschilling	1|13.7603 euro
