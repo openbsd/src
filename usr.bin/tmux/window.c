@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.351 2026/06/29 07:45:09 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.352 2026/06/29 18:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -422,11 +422,11 @@ window_remove_ref(struct window *w, const char *from)
 }
 
 void
-window_set_name(struct window *w, const char *new_name, const char *forbid)
+window_set_name(struct window *w, const char *new_name, int untrusted)
 {
 	char	*name;
 
-	name = clean_name(new_name, forbid);
+	name = clean_name(new_name, untrusted);
 	if (name != NULL) {
 		free(w->name);
 		w->name = name;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.37 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.38 2026/06/29 18:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -52,12 +52,12 @@ cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 	char			*newname, *tmp;
 
 	tmp = format_single_from_target(item, args_string(args, 0));
-	if (!check_name(tmp, SESSION_NAME_FORBID)) {
+	if (!check_name(tmp)) {
 		cmdq_error(item, "invalid session name: %s", tmp);
 		free(tmp);
 		return (CMD_RETURN_ERROR);
 	}
-	newname = clean_name(tmp, SESSION_NAME_FORBID);
+	newname = clean_name(tmp, 0);
 	free(tmp);
 	if (strcmp(newname, s->name) == 0) {
 		free(newname);

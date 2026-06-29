@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.100 2026/06/16 09:00:25 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.101 2026/06/29 18:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,12 +73,12 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	name = args_get(args, 'n');
 	if (name != NULL) {
 		expanded = format_single(item, name, c, s, NULL, NULL);
-		if (!check_name(expanded, WINDOW_NAME_FORBID)) {
+		if (!check_name(expanded)) {
 			cmdq_error(item, "invalid window name: %s", expanded);
 			free(expanded);
 			return (CMD_RETURN_ERROR);
 		}
-		wname = clean_name(expanded, WINDOW_NAME_FORBID);
+		wname = clean_name(expanded, 0);
 		free(expanded);
 	}
 	if (args_has(args, 'S') && wname != NULL && target->idx == -1) {

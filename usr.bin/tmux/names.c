@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.47 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.48 2026/06/29 18:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,7 +95,7 @@ check_window_name(struct window *w)
 	name = format_window_name(w);
 	if (strcmp(name, w->name) != 0) {
 		log_debug("@%u new name %s (was %s)", w->id, name, w->name);
-		window_set_name(w, name, WINDOW_NAME_FORBID_EXT);
+		window_set_name(w, name, 1);
 		server_redraw_window_borders(w);
 		server_status_window(w);
 	} else
@@ -166,7 +166,7 @@ parse_window_name(const char *in)
 
 	if (*name == '/')
 		name = basename(name);
-	name = clean_name(name, WINDOW_NAME_FORBID);
+	name = clean_name(name, 0);
 	free(copy);
 	if (name == NULL)
 		return (xstrdup(""));

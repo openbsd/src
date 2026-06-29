@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.29 2026/06/15 21:41:39 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.30 2026/06/29 18:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -51,13 +51,13 @@ cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 	char			*name;
 
 	name = format_single_from_target(item, args_string(args, 0));
-	if (!check_name(name, WINDOW_NAME_FORBID)) {
+	if (!check_name(name)) {
 		cmdq_error(item, "invalid window name: %s", name);
 		free(name);
 		return (CMD_RETURN_ERROR);
 	}
 
-	window_set_name(wl->window, name, WINDOW_NAME_FORBID);
+	window_set_name(wl->window, name, 0);
 	options_set_number(wl->window->options, "automatic-rename", 0);
 	free(name);
 
