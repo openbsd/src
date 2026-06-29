@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.37 2026/06/13 09:17:29 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.38 2026/06/29 17:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -570,6 +570,7 @@ tty_default_features(int *feat, const char *name, u_int version)
 			      "cstyle,"
 			      "extkeys,"
 			      "focus,"
+		  	      "hyperlinks,"
 			      "usstyle"
 		},
 		{ .name = "XTerm",
