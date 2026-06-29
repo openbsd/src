@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.64 2026/06/29 07:45:09 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.65 2026/06/29 19:03:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -235,7 +235,7 @@ cmd_resize_pane_mouse_resize_move_floating(struct client *c,
 	struct window_pane	*wp;
 	struct layout_cell	*lc;
 	int			 y, ly, x, lx, sx, sy, new_sx, new_sy;
-	int			 scrollbars, sb_pos, left, right;
+	int			 left, right;
 	int			 new_xoff, new_yoff, resizes = 0;
 
 	wp = cmd_mouse_pane(m, NULL, &wl);
@@ -247,15 +247,13 @@ cmd_resize_pane_mouse_resize_move_floating(struct client *c,
 	lc = wp->layout_cell;
 	sx = wp->sx;
 	sy = wp->sy;
-	scrollbars = options_get_number(w->options, "pane-scrollbars");
-	sb_pos = options_get_number(w->options, "pane-scrollbars-position");
 	left = wp->xoff - 1;
 	right = wp->xoff + sx;
-	if (window_pane_scrollbar_reserve(wp, scrollbars) &&
-	    sb_pos == PANE_SCROLLBARS_LEFT) {
+	if (window_pane_scrollbar_reserve(wp) &&
+	    w->sb_pos == PANE_SCROLLBARS_LEFT) {
 		left -= wp->scrollbar_style.width + wp->scrollbar_style.pad;
-	} else if (window_pane_scrollbar_reserve(wp, scrollbars) &&
-	    sb_pos == PANE_SCROLLBARS_RIGHT) {
+	} else if (window_pane_scrollbar_reserve(wp) &&
+	    w->sb_pos == PANE_SCROLLBARS_RIGHT) {
 		right += wp->scrollbar_style.width + wp->scrollbar_style.pad;
 	}
 

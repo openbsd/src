@@ -1,4 +1,4 @@
-/* $OpenBSD: window-visible.c,v 1.3 2026/06/29 07:45:09 nicm Exp $ */
+/* $OpenBSD: window-visible.c,v 1.4 2026/06/29 19:03:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,7 +55,7 @@ window_visible_ranges(struct window_pane *base_wp, int px, int py, u_int width,
 	struct window			*w;
 	struct visible_range		*ri;
 	static struct visible_ranges	 sr = { NULL, 0, 0 };
-	int				 found_self, sb, sb_w, sb_pos;
+	int				 found_self, sb_w, sb_pos;
 	int				 lb, rb, tb, bb, sx, ex, no_border;
 	u_int				 i, s;
 
@@ -95,8 +95,6 @@ window_visible_ranges(struct window_pane *base_wp, int px, int py, u_int width,
 		r->used = 1;
 	}
 
-	sb = options_get_number(w->options, "pane-scrollbars");
-	sb_pos = options_get_number(w->options, "pane-scrollbars-position");
 
 	found_self = 0;
 	TAILQ_FOREACH_REVERSE(wp, &w->z_index, window_panes_zindex, zentry) {
@@ -126,7 +124,9 @@ window_visible_ranges(struct window_pane *base_wp, int px, int py, u_int width,
 			continue;
 
 		sb_w = wp->scrollbar_style.width + wp->scrollbar_style.pad;
-		if (!window_pane_scrollbar_reserve(wp, sb))
+		if (window_pane_scrollbar_reserve(wp))
+			sb_pos = w->sb_pos;
+		else
 			sb_w = sb_pos = 0;
 
 		for (i = 0; i < r->used; i++) {
