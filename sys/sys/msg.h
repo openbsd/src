@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.24 2024/10/27 22:08:25 jsg Exp $	*/
+/*	$OpenBSD: msg.h,v 1.25 2026/06/29 10:55:37 mvs Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -104,9 +104,6 @@ struct msginfo {
 		msgssz,		/* size of a message segment (see notes above) */
 		msgseg;		/* number of message segments */
 };
-#ifdef SYSVMSG
-extern struct msginfo	msginfo;
-#endif
 
 int sysctl_sysvmsg(int *, u_int, void *, size_t *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.44 2026/06/23 08:36:45 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.45 2026/06/29 10:55:37 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -60,7 +60,15 @@ int msg_copyin(struct msg *, const char *, size_t);
 int msg_copyout(struct msg *, char *, size_t *);
 
 struct	pool sysvmsgpl;
-struct	msginfo msginfo;
+
+const struct msginfo msginfo = {
+	.msgmax = MSGMAX,
+	.msgmni = MSGMNI,
+	.msgmnb = MSGMNB,
+	.msgtql = MSGTQL,
+	.msgssz = MSGSSZ,
+	.msgseg = MSGSEG,
+};
 
 TAILQ_HEAD(, que) msg_queues;
 
@@ -72,13 +80,6 @@ int maxmsgs;
 void
 msginit(void)
 {
-	msginfo.msgmax = MSGMAX;
-	msginfo.msgmni = MSGMNI;
-	msginfo.msgmnb = MSGMNB;
-	msginfo.msgtql = MSGTQL;
-	msginfo.msgssz = MSGSSZ;
-	msginfo.msgseg = MSGSEG;
-
 	pool_init(&sysvmsgpl, sizeof(struct msg), 0, IPL_NONE, PR_WAITOK,
 	    "sysvmsgpl", NULL);
 
