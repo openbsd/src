@@ -1,4 +1,4 @@
-/* $OpenBSD: window-visible.c,v 1.2 2026/06/19 18:28:18 nicm Exp $ */
+/* $OpenBSD: window-visible.c,v 1.3 2026/06/29 07:45:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -126,7 +126,7 @@ window_visible_ranges(struct window_pane *base_wp, int px, int py, u_int width,
 			continue;
 
 		sb_w = wp->scrollbar_style.width + wp->scrollbar_style.pad;
-		if (!window_pane_show_scrollbar(wp, sb))
+		if (!window_pane_scrollbar_reserve(wp, sb))
 			sb_w = sb_pos = 0;
 
 		for (i = 0; i < r->used; i++) {

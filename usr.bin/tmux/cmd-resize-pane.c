@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.63 2026/06/26 10:02:01 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.64 2026/06/29 07:45:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -251,10 +251,10 @@ cmd_resize_pane_mouse_resize_move_floating(struct client *c,
 	sb_pos = options_get_number(w->options, "pane-scrollbars-position");
 	left = wp->xoff - 1;
 	right = wp->xoff + sx;
-	if (window_pane_show_scrollbar(wp, scrollbars) &&
+	if (window_pane_scrollbar_reserve(wp, scrollbars) &&
 	    sb_pos == PANE_SCROLLBARS_LEFT) {
 		left -= wp->scrollbar_style.width + wp->scrollbar_style.pad;
-	} else if (window_pane_show_scrollbar(wp, scrollbars) &&
+	} else if (window_pane_scrollbar_reserve(wp, scrollbars) &&
 	    sb_pos == PANE_SCROLLBARS_RIGHT) {
 		right += wp->scrollbar_style.width + wp->scrollbar_style.pad;
 	}

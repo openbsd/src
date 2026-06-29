@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.276 2026/06/27 10:05:38 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.277 2026/06/29 07:45:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2096,6 +2096,10 @@ screen_write_collect_flush_scrolled(struct screen_write_ctx *ctx)
 		screen_write_redraw_pane(ctx, &ttyctx);
 		return 0;
 	}
+	if (wp != NULL && window_pane_scrollbar_overlay_visible(wp)) {
+		wp->flags |= PANE_REDRAW;
+		return 0;
+	}
 
 	log_debug("%s: scrolled %u (region %u-%u)", __func__, ctx->scrolled,
 	    s->rupper, s->rlower);
@@ -2109,7 +2113,7 @@ screen_write_collect_flush_scrolled(struct screen_write_ctx *ctx)
 	tty_write(tty_cmd_scrollup, &ttyctx);
 
 	if (wp != NULL)
-		wp->flags |= PANE_REDRAWSCROLLBAR;
+		window_pane_scrollbar_redraw(wp);
 	return 1;
 }
 

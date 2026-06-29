@@ -1,4 +1,4 @@
-/* $OpenBSD: sort.c,v 1.8 2026/06/11 23:01:31 nicm Exp $ */
+/* $OpenBSD: sort.c,v 1.9 2026/06/29 07:45:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Dane Jensen <dhcjensen@gmail.com>
@@ -26,8 +26,8 @@
 static struct sort_criteria *sort_criteria;
 
 static void
-sort_qsort(void *l, u_int len, u_int size, int (*cmp)(const void *, const void *),
-    struct sort_criteria *sort_crit)
+sort_qsort(void *l, u_int len, u_int size, int (*cmp)(const void *,
+    const void *), struct sort_criteria *sort_crit)
 {
 	u_int	 i;
 	void	*tmp, **ll;

@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.81 2026/06/27 10:21:26 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.82 2026/06/29 07:45:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -462,7 +462,7 @@ layout_fix_panes(struct window *w, struct window_pane *skip)
 			sy--;
 		}
 
-		if (window_pane_show_scrollbar(wp, scrollbars)) {
+		if (window_pane_scrollbar_reserve(wp, scrollbars)) {
 			sb_w = wp->scrollbar_style.width;
 			sb_pad = wp->scrollbar_style.pad;
 			if (sb_w < 1)
@@ -535,7 +535,7 @@ layout_resize_check(struct window *w, struct layout_cell *lc,
 		/* Space available in this cell only. */
 		if (type == LAYOUT_LEFTRIGHT) {
 			available = lc->sx;
-			if (scrollbars)
+			if (scrollbars == PANE_SCROLLBARS_ALWAYS)
 				minimum = PANE_MINIMUM + sb_style->width +
 				    sb_style->pad;
 			else
@@ -1263,7 +1263,7 @@ layout_split_check_space(struct window_pane *wp, struct layout_cell *lc,
 
 	switch (type) {
 	case LAYOUT_LEFTRIGHT:
-		if (scrollbars) {
+		if (scrollbars == PANE_SCROLLBARS_ALWAYS) {
 			minimum = PANE_MINIMUM * 2 + sb_style->width +
 			    sb_style->pad;
 		} else
