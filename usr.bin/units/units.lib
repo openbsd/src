@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.148 2026/06/29 08:18:12 jsg Exp $
+/ $OpenBSD: units.lib,v 1.149 2026/06/30 03:30:32 jsg Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -436,7 +436,7 @@ TRY			turkeylira
 TWD			taiwandollar
 UAH			ukrainehryvnia
 USD			dollar
-VEF			venezuelabolivar
+VES			venezuelabolivar
 VND			vietnamdong
 ZAR			southafricarand
 
