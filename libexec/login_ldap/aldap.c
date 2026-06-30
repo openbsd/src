@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.2 2022/03/31 09:05:15 martijn Exp $ */
+/*	$OpenBSD: aldap.c,v 1.3 2026/06/30 18:55:29 jan Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -369,11 +369,11 @@ aldap_parse(struct aldap *ldap)
 			} else
 				ret = read(ldap->fd, rbuf, sizeof(rbuf));
 
-			if (ret == -1) {
+			if (ret == -1 || ret == 0)
 				goto parsefail;
-			}
 
-			evbuffer_add(ldap->buf, rbuf, ret);
+			if (evbuffer_add(ldap->buf, rbuf, ret) == -1)
+				goto parsefail;
 		}
 
 		if (EVBUFFER_LENGTH(ldap->buf) > 0) {
