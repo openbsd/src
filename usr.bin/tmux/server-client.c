@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.482 2026/06/29 19:03:34 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.483 2026/06/30 22:44:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2093,10 +2093,10 @@ server_client_reset_state(struct client *c)
 					mode |= MODE_MOUSE_ALL;
 			}
 		}
-	if (options_get_number(oo, "focus-follows-mouse") ||
-	    w->sb == PANE_SCROLLBARS_MODAL ||
-	    w->sb == PANE_SCROLLBARS_AUTOHIDE)
-		mode |= MODE_MOUSE_ALL;
+		if (options_get_number(oo, "focus-follows-mouse") ||
+		    w->sb == PANE_SCROLLBARS_MODAL ||
+		    w->sb == PANE_SCROLLBARS_AUTOHIDE)
+			mode |= MODE_MOUSE_ALL;
 		else if (~mode & MODE_MOUSE_ALL)
 			mode |= MODE_MOUSE_BUTTON;
 	}
