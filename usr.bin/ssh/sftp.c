@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.255 2026/06/29 23:00:00 djm Exp $ */
+/* $OpenBSD: sftp.c,v 1.256 2026/06/30 00:10:48 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -24,6 +24,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <glob.h>
 #include <histedit.h>
 #include <paths.h>
@@ -316,7 +317,6 @@ local_do_shell(const char *args)
 		fatal("Couldn't fork: %s", strerror(errno));
 
 	if (pid == 0) {
-		/* XXX: child has pipe fds to ssh subproc open - issue? */
 		if (args) {
 			debug3("Executing %s -c \"%s\"", shell, args);
 			execl(shell, shell, "-c", args, (char *)NULL);
@@ -2366,6 +2366,8 @@ connect_to_server(char *path, char **args, int *in, int *out)
 		fatal("socketpair: %s", strerror(errno));
 	*in = *out = inout[0];
 	c_in = c_out = inout[1];
+	FD_CLOSEONEXEC(*in);
+	FD_CLOSEONEXEC(*out);
 
 	if ((sshpid = fork()) == -1)
 		fatal("fork: %s", strerror(errno));
