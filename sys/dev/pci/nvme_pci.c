@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.14 2026/05/27 15:04:14 jcs Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.15 2026/06/30 16:24:33 jcs Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -113,6 +113,12 @@ nvme_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("%s, ", pci_intr_string(pa->pa_pc, ih));
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_NVME3)
+		/* Apple T2 requires 128-byte submission queue entries */
+		sc->sc_sqe_size = 128;
+
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
 		goto disestablish;

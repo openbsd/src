@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.18 2026/05/29 21:44:44 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.19 2026/06/30 16:24:33 jcs Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -234,7 +234,6 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ios = faa->fa_reg[0].size;
 	sc->sc_ops = &nvme_ans_ops;
 	sc->sc_openings = 1;
-	sc->sc_sqe_size = sizeof(struct nvme_sqe);
 
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
