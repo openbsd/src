@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.85 2026/05/15 04:47:23 jsg Exp $
+.\" $OpenBSD: pledge.2,v 1.86 2026/06/30 16:18:10 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 15 2026 $
+.Dd $Mdocdate: June 30 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -486,7 +486,9 @@ Allows the following process relationship operations:
 .Xr setpriority 2 ,
 .Xr setrlimit 2 ,
 .Xr setpgid 2 ,
-.Xr setsid 2
+.Xr setsid 2 .
+.Xr kill 2
+may still operate on the process group with pid 0.
 .It Cm exec
 Allows a process to call
 .Xr execve 2 .
