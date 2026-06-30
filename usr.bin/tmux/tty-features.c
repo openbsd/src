@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.38 2026/06/29 17:08:52 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.39 2026/06/30 10:07:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -572,6 +572,18 @@ tty_default_features(int *feat, const char *name, u_int version)
 			      "focus,"
 		  	      "hyperlinks,"
 			      "usstyle"
+		},
+		{ .name = "ghostty",
+		  .features = TTY_FEATURES_BASE_MODERN_XTERM ","
+			      "ccolour,"
+			      "cstyle,"
+			      "extkeys,"
+			      "focus,"
+			      "hyperlinks,"
+			      "osc7,"
+			      "sync,"
+			      "usstyle,"
+			      "progressbar"
 		},
 		{ .name = "XTerm",
 		  /*
