@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.17 2025/10/23 19:06:10 miod Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.18 2026/06/30 19:18:53 kettenis Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -85,11 +85,15 @@
 BUILTIN void	*memmove(void *, const void *, __size_t);
 BUILTIN void	*memcpy(void *__restrict, const void *__restrict, __size_t);
 BUILTIN void	*memset(void *, int, __size_t);
+BUILTIN __size_t strlen(const char *);
+BUILTIN __size_t wcslen(const __wchar_t *);
 BUILTIN void	__stack_smash_handler(const char [], int __unused);
 #if !defined(__clang__)
 PROTO_NORMAL(memmove);
 PROTO_NORMAL(memcpy);
 PROTO_NORMAL(memset);
+PROTO_NORMAL(strlen);
+PROTO_NORMAL(wcslen);
 PROTO_NORMAL(__stack_smash_handler);
 #endif
 #undef	BUILTIN

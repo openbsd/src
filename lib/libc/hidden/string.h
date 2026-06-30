@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.6 2018/01/18 08:23:44 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.7 2026/06/30 19:18:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -57,7 +57,7 @@ PROTO_DEPRECATED(strerror_l);
 PROTO_NORMAL(strerror_r);
 PROTO_NORMAL(strlcat);
 PROTO_NORMAL(strlcpy);
-PROTO_NORMAL(strlen);
+/*PROTO_NORMAL(strlen);			use declaration from namespace.h */
 PROTO_NORMAL(strmode);
 PROTO_NORMAL(strncasecmp);
 PROTO_DEPRECATED(strncasecmp_l);

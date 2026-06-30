@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.6 2025/07/16 15:33:05 yasuoka Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.7 2026/06/30 19:18:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -66,7 +66,7 @@ PROTO_NORMAL(wcsdup);
 PROTO_STD_DEPRECATED(wcsftime);
 PROTO_NORMAL(wcslcat);
 PROTO_NORMAL(wcslcpy);
-PROTO_NORMAL(wcslen);
+/*PROTO_NORMAL(wcslen);			use declaration from namespace.h */
 PROTO_NORMAL(wcsncasecmp);
 PROTO_NORMAL(wcsncat);
 PROTO_NORMAL(wcsncmp);

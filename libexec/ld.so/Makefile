@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.89 2025/05/08 13:57:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.90 2026/06/30 19:18:53 kettenis Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -67,6 +67,7 @@ CFLAGS += -fno-builtin
 CFLAGS += -Wall -Werror
 CFLAGS += -I${.CURDIR} -I${.CURDIR}/${MACHINE_CPU} \
 	-D'DEF_WEAK(x)=asm("")' -D'DEF_STRONG(x)=asm("")' \
+	-D'DEF_BUILTIN(x)=asm("")' \
 	-Dstrsep=_dl_strsep -Dstrlcat=_dl_strlcat -Dstrlen=_dl_strlen
 CDIAGFLAGS=
 INSTALL_STRIP=

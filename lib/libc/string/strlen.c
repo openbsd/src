@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.c,v 1.9 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: strlen.c,v 1.10 2026/06/30 19:18:54 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,4 +41,4 @@ strlen(const char *str)
 	return (s - str);
 }
 
-DEF_STRONG(strlen);
+DEF_BUILTIN(strlen);
