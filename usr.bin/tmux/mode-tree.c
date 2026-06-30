@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.96 2026/06/26 14:40:30 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.97 2026/06/30 06:44:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -205,8 +205,6 @@ static const char* mode_tree_help_start[] = {
 	"        C-t #[#{E:tree-mode-border-style},acs]x#[default] Tag all %1s",
 	"#[fg=themelightgrey]"
 	"        C-s #[#{E:tree-mode-border-style},acs]x#[default] Search forward",
-	"#[fg=themelightgrey]"
-	"        C-r #[#{E:tree-mode-border-style},acs]x#[default] Search backward",
 	"#[fg=themelightgrey]"
 	"          n #[#{E:tree-mode-border-style},acs]x#[default] Repeat search forward",
 	"#[fg=themelightgrey]"
