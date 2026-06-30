@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.174 2026/05/07 06:15:23 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.175 2026/06/30 13:52:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -98,7 +98,6 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmd_vm			*vm = NULL;
 	char				*str = NULL;
 	uint32_t			 peer_id, type, vm_id = 0;
-	struct control_sock		*rcs;
 
 	peer_id = imsg_get_id(imsg);
 	type = imsg_get_type(imsg);
@@ -248,8 +247,6 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_DONE:
 		control_reset(&ps->ps_csock);
-		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
-			control_reset(rcs);
 		break;
 	default:
 		return (-1);
@@ -690,7 +687,6 @@ main(int argc, char **argv)
 
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = SOCKET_NAME;
-	TAILQ_INIT(&ps->ps_rcsocks);
 
 	/* Configuration will be parsed after forking the children */
 	env->vmd_conffile = conffile;

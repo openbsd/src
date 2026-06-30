@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.30 2025/09/24 15:27:19 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.31 2026/06/30 13:52:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -93,7 +93,6 @@ struct privsep {
 	int				 ps_noaction;
 
 	struct control_sock		 ps_csock;
-	struct control_socks		 ps_rcsocks;
 
 	/* Event and signal handlers */
 	struct event			 ps_evsigint;
