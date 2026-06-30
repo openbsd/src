@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.68 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.69 2026/06/30 14:04:04 kirill Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -114,9 +114,15 @@ msdosfs_hashget(dev_t dev, uint32_t dirclust, uint32_t diroff)
 			    dev == dep->de_dev &&
 			    dep->de_refcnt != 0) {
 				struct vnode *vp = DETOV(dep);
+				u_int vpid = vp->v_id;
 
-				if (!vget(vp, LK_EXCLUSIVE))
+				if (!vget(vp, LK_EXCLUSIVE)) {
+					if (vpid != vp->v_id) {
+						vput(vp);
+						break;
+					}
 					return (dep);
+				}
 				break;
 			}
 		}

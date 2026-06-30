@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.67 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.68 2026/06/30 14:04:04 kirill Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -671,6 +671,7 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 	struct fnode *fp;
 	struct vnode *vp;
 	enum vtype f_type;
+	u_int vpid;
 
 	DPRINTF("ntfs_vgetex: ino: %u, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
 	    ino, attrtype, attrname ? attrname : "", lkflags, flags);
@@ -678,6 +679,7 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
 
+retry:
 	/* Get ntnode */
 	error = ntfs_ntlookup(ntmp, ino, &ip);
 	if (error) {
@@ -734,14 +736,21 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 	 * ntfs_fget() bumped ntnode usecount, so ntnode won't be recycled
 	 * prematurely.
 	 */
+	vp = FTOV(fp);
+	if (vp != NULL)
+		vpid = vp->v_id;
 	ntfs_ntput(ip);
 
-	if (FTOV(fp)) {
+	if (vp != NULL) {
 		/* vget() returns error if the vnode has been recycled */
-		if (vget(FTOV(fp), lkflags) == 0) {
-			*vpp = FTOV(fp);
+		if (vget(vp, lkflags) != 0)
+			goto retry;
+		if (vpid == vp->v_id) {
+			*vpp = vp;
 			return (0);
 		}
+		vput(vp);
+		goto retry;
 	}
 
 	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, &ntfs_vops, &vp);

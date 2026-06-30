@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.38 2021/10/19 06:11:45 semarie Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.39 2026/06/30 14:04:03 kirill Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -100,15 +100,21 @@ cd9660_ihashget(dev_t dev, cdino_t inum)
 {
 	struct iso_node *ip;
 	struct vnode *vp;
+	u_int vpid;
 
 loop:
 	/* XXX locking lock hash list? */
        for (ip = isohashtbl[INOHASH(dev, inum)]; ip; ip = ip->i_next) {
                if (inum == ip->i_number && dev == ip->i_dev) {
                        vp = ITOV(ip);
+			vpid = vp->v_id;
 			/* XXX locking unlock hash list? */
                        if (vget(vp, LK_EXCLUSIVE))
                                goto loop;
+			if (vpid != vp->v_id) {
+				vput(vp);
+				goto loop;
+			}
                        return (vp);
 	       }
        }

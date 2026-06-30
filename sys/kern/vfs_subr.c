@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.334 2026/06/22 17:35:50 kirill Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.335 2026/06/30 14:04:03 kirill Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -564,6 +564,7 @@ checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 	struct proc *p = curproc;
 	struct vnode *vp;
 	struct vnodechain *vchain;
+	u_int vpid;
 
 	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
 		return (NULL);
@@ -581,7 +582,12 @@ loop:
 			vgonel(vp, p);
 			goto loop;
 		}
+		vpid = vp->v_id;
 		if (vget(vp, LK_EXCLUSIVE)) {
+			goto loop;
+		}
+		if (vpid != vp->v_id) {
+			vput(vp);
 			goto loop;
 		}
 		break;

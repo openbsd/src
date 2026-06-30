@@ -1,4 +1,4 @@
-/*	$OpenBSD: fuse_ihash.c,v 1.1 2024/10/31 13:55:21 claudio Exp $	*/
+/*	$OpenBSD: fuse_ihash.c,v 1.2 2026/06/30 14:04:04 kirill Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -85,15 +85,21 @@ fuse_ihashget(dev_t dev, ino_t inum)
 	struct fuse_ihashhead *ipp;
 	struct fusefs_node *ip;
 	struct vnode *vp;
+	u_int vpid;
 loop:
 	/* XXXLOCKING lock hash list */
 	ipp = fuse_ihash(dev, inum);
 	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
+			vpid = vp->v_id;
 			/* XXXLOCKING unlock hash list? */
 			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
+			if (vpid != vp->v_id) {
+				vput(vp);
+				goto loop;
+			}
 
 			return (vp);
 		}

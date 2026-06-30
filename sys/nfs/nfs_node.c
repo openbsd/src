@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.76 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.77 2026/06/30 14:04:04 kirill Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 	struct nfsmount		*nmp;
 	struct nfsnode		*np, find, *np2;
 	struct vnode		*vp, *nvp;
+	u_int			 vpid;
 	int			 error;
 
 	nmp = VFSTONFS(mnt);
@@ -97,9 +98,14 @@ loop:
 	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
 		vp = NFSTOV(np);
+		vpid = vp->v_id;
 		error = vget(vp, LK_EXCLUSIVE);
 		if (error)
 			goto loop;
+		if (vpid != vp->v_id) {
+			vput(vp);
+			goto loop;
+		}
 		*npp = np;
 		return (0);
 	}
