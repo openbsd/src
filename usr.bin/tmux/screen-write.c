@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.277 2026/06/29 07:45:09 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.278 2026/06/30 09:20:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1010,6 +1010,8 @@ screen_write_stop_sync(struct window_pane *wp)
 	if (event_initialized(&wp->sync_timer))
 		evtimer_del(&wp->sync_timer);
 	wp->base.mode &= ~MODE_SYNC;
+
+	wp->flags |= PANE_REDRAW;
 
 	log_debug("%s: %%%u stopped sync mode", __func__, wp->id);
 }
