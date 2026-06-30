@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.151 2026/06/26 10:29:38 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.152 2026/06/30 20:27:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -308,27 +308,16 @@ grid_create(u_int sx, u_int sy, u_int hlimit)
 {
 	struct grid	*gd;
 
-	gd = xmalloc(sizeof *gd);
+	gd = xcalloc(1, sizeof *gd);
 	gd->sx = sx;
 	gd->sy = sy;
 
 	if (hlimit != 0)
 		gd->flags = GRID_HISTORY;
-	else
-		gd->flags = 0;
-
-	gd->hscrolled = 0;
-	gd->hsize = 0;
 	gd->hlimit = hlimit;
-
-	gd->scroll_added = 0;
-	gd->scroll_collected = 0;
-	gd->scroll_generation = 0;
 
 	if (gd->sy != 0)
 		gd->linedata = xcalloc(gd->sy, sizeof *gd->linedata);
-	else
-		gd->linedata = NULL;
 
 	return (gd);
 }
