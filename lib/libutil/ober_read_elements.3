@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_read_elements.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
+.\" $OpenBSD: ober_read_elements.3,v 1.6 2026/06/30 08:32:45 jan Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: June 30 2026 $
 .Dt OBER_READ_ELEMENTS 3
 .Os
 .Sh NAME
@@ -144,7 +144,9 @@ frees any dynamically allocated storage associated with
 returns a pointer to a fully populated list of one or more
 .Vt ber_element
 structures.
-Otherwise \-1 is returned and the global variable
+Otherwise
+.Dv NULL
+is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Pp
