@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.79 2026/06/03 19:25:06 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.80 2026/07/01 18:15:46 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -179,7 +179,6 @@ main(int argc, char *argv[])
 	httpd_env = env;
 	env->sc_ps = ps;
 	ps->ps_env = env;
-	TAILQ_INIT(&ps->ps_rcsocks);
 	env->sc_conffile = conffile;
 	env->sc_opts = opts;
 
@@ -191,9 +190,6 @@ main(int argc, char *argv[])
 
 	if ((ps->ps_pw =  getpwnam(HTTPD_USER)) == NULL)
 		errx(1, "unknown user %s", HTTPD_USER);
-
-	/* Configure the control socket */
-	ps->ps_csock.cs_name = NULL;
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
@@ -395,10 +391,6 @@ parent_shutdown(struct httpd *env)
 	config_purge(env, CONFIG_ALL);
 
 	proc_kill(env->sc_ps);
-	control_cleanup(&env->sc_ps->ps_csock);
-	if (env->sc_ps->ps_csock.cs_name != NULL)
-		(void)unlink(env->sc_ps->ps_csock.cs_name);
-
 	free(env->sc_ps);
 	free(env);
 

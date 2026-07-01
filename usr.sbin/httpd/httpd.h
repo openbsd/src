@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.175 2026/06/28 05:08:28 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.176 2026/07/01 18:15:46 martijn Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -153,19 +153,6 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
-/* initially control.h */
-struct control_sock {
-	const char	*cs_name;
-	struct event	 cs_ev;
-	struct event	 cs_evt;
-	int		 cs_fd;
-	int		 cs_restricted;
-	void		*cs_env;
-
-	TAILQ_ENTRY(control_sock) cs_entry;
-};
-TAILQ_HEAD(control_socks, control_sock);
-
 struct imsgev {
 	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
@@ -181,16 +168,6 @@ struct imsgev {
 } while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
 #define MAX_IMSG_DATA_SIZE	(MAX_IMSGSIZE - IMSG_HEADER_SIZE)
-
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	 entry;
-	uint8_t			 flags;
-	unsigned int		 waiting;
-#define CTL_CONN_NOTIFY		 0x01
-	struct imsgev		 iev;
-
-};
-TAILQ_HEAD(ctl_connlist, ctl_conn);
 
 enum imsg_type {
 	IMSG_NONE,
@@ -226,9 +203,6 @@ enum privsep_procid {
 };
 extern enum privsep_procid privsep_process;
 
-/* Attach the control socket to the following process */
-#define PROC_CONTROL	PROC_LOGGER
-
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];
 };
@@ -243,9 +217,6 @@ struct privsep {
 
 	unsigned int			 ps_instances[PROC_MAX];
 	unsigned int			 ps_instance;
-
-	struct control_sock		 ps_csock;
-	struct control_socks		 ps_rcsocks;
 
 	/* Event and signal handlers */
 	struct event			 ps_evsigint;
@@ -612,15 +583,6 @@ struct httpd {
 
 #define HTTPD_OPT_VERBOSE		0x01
 #define HTTPD_OPT_NOACTION		0x04
-
-/* control.c */
-int	 control_init(struct privsep *, struct control_sock *);
-int	 control_listen(struct control_sock *);
-void	 control_cleanup(struct control_sock *);
-void	 control_dispatch_imsg(int, short, void *);
-void	 control_imsg_forward(struct privsep *, struct imsg *);
-struct ctl_conn	*
-	 control_connbyfd(int);
 
 /* parse.y */
 int	 parse_config(const char *, struct httpd *);
