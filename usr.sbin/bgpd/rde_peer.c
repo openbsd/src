@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.76 2026/06/24 18:56:53 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.77 2026/07/01 09:53:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -297,56 +297,52 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 	up_generate_updates(peer, re, force_update);
 }
 
+/*
+ * Enqueue updates into the peer queue specified by peer. The meaning of
+ * mode is:
+ *	EVAL_DEFAULT is triggered when the best path changes.
+ *	EVAL_ALL is sent for any other update (needed for peers with
+ *	addpath or evaluate all set).
+ *	EVAL_REEVAL is used by config reloads (a full RIB refresh is needed)
+ *	and for single peer RIB dumps but those call peer_generate_update()
+ *	directly.
+ */
 void
-rde_enqueue_updates(struct rib_entry *re, struct prefix *newpath,
-    uint32_t old_pathid_tx, enum eval_mode mode)
+rde_enqueue_updates(struct rib_entry *re, struct rde_peer *peer,
+    struct prefix *newpath, uint32_t old_pathid_tx, enum eval_mode mode)
 {
-	struct rde_peer	*peer;
+	struct rde_peer *p;
 
 	switch (mode) {
 	case EVAL_REEVAL:
 		/* skip peers which don't need to reconfigure */
-		RB_FOREACH(peer, peer_tree, &peertable) {
-			if (peer->reconf_out == 0)
+		RB_FOREACH(p, peer_tree, &peertable) {
+			if (p->reconf_out == 0)
 				continue;
-			peer_generate_update(peer, re, EVAL_REEVAL, 0);
+			peer_generate_update(p, re, EVAL_REEVAL, 0);
 		}
 		return;
 	case EVAL_DEFAULT:
-		break;
 	case EVAL_ALL:
-		/*
-		 * EVAL_DEFAULT is triggered when a new best path is selected.
-		 * EVAL_ALL is sent for any other update (needed for peers with
-		 * addpath or evaluate all set).
-		 * There can be only one EVAL_DEFAULT queued, it replaces the
-		 * previous one. A flag is enough.
-		 * A path can only exist once in the queue (old or new).
-		 */
-		if (re->pq_mode == EVAL_DEFAULT)
-			/* already a best path update pending, nothing to do */
-			return;
-
 		break;
 	case EVAL_NONE:
 		fatalx("bad eval mode in %s", __func__);
 	}
 
-	if (re->pq_mode != EVAL_NONE) {
-		peer = peer_get(re->pq_peer_id);
-		TAILQ_REMOVE(&peer->rib_pq_head, re, rib_queue);
-		rdemem.rde_rib_entry_count--;
-		peer->stats.rib_entry_count--;
+	/*
+	 * Enqueue only once, may need some reconsideration if queue
+	 * length of individual peers becomes excessivly long.
+	 */
+	if (re->pq_mode == EVAL_NONE) {
+		re->pq_peer_id = peer->conf.id;
+		TAILQ_INSERT_TAIL(&peer->rib_pq_head, re, rib_queue);
+		rdemem.rde_rib_entry_count++;
+		peer->stats.rib_entry_count++;
 	}
-	if (newpath != NULL)
-		peer = prefix_peer(newpath);
-	else
-		peer = peerself;
-	re->pq_mode = mode;
-	re->pq_peer_id = peer->conf.id;
-	TAILQ_INSERT_TAIL(&peer->rib_pq_head, re, rib_queue);
-	rdemem.rde_rib_entry_count++;
-	peer->stats.rib_entry_count++;
+
+	/* don't downgrade pq_mode from EVAL_DEFAULT to EVAL_ALL */
+	if (re->pq_mode != EVAL_DEFAULT)
+		re->pq_mode = mode;
 }
 
 void
@@ -354,7 +350,6 @@ peer_process_updates(struct rde_peer *peer, void *bula)
 {
 	struct rib_entry *re;
 	struct rde_peer *p;
-	enum eval_mode mode;
 
 	re = TAILQ_FIRST(&peer->rib_pq_head);
 	if (re == NULL)
@@ -363,10 +358,8 @@ peer_process_updates(struct rde_peer *peer, void *bula)
 	rdemem.rde_rib_entry_count--;
 	peer->stats.rib_entry_count--;
 
-	mode = re->pq_mode;
-
 	RB_FOREACH(p, peer_tree, &peertable)
-		peer_generate_update(p, re, mode, 0);
+		peer_generate_update(p, re, re->pq_mode, 0);
 
 	rib_dequeue(re);
 }

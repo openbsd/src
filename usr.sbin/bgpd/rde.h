@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.354 2026/06/24 18:56:53 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.355 2026/07/01 09:53:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -420,8 +420,8 @@ struct rde_peer	*peer_add(uint32_t, struct peer_config *, struct filter_head *);
 struct rde_filter	*peer_apply_out_filter(struct rde_peer *,
 			    struct filter_head *);
 
-void		 rde_enqueue_updates(struct rib_entry *, struct prefix *,
-		    uint32_t, enum eval_mode);
+void		 rde_enqueue_updates(struct rib_entry *, struct rde_peer *,
+		    struct prefix *, uint32_t, enum eval_mode);
 void		 peer_process_updates(struct rde_peer *, void *);
 
 void		 peer_up(struct rde_peer *, struct session_up *);

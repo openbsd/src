@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.108 2026/05/21 15:20:27 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.109 2026/07/01 09:53:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -534,8 +534,12 @@ void
 prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 {
 	struct prefix	*newbest, *oldbest;
+	struct rde_peer	*peer = NULL;
 	struct rib	*rib;
 	uint32_t	 old_pathid_tx = 0;
+
+	if (old == NULL && new == NULL)
+		fatalx("king bula sez: nothing to evaluate");
 
 	rib = re_rib(re);
 	if (rib->flags & F_RIB_NOEVALUATE) {
@@ -553,6 +557,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	if (old != NULL) {
 		prefix_remove(old, re);
 		old_pathid_tx = old->path_id_tx;
+		peer = prefix_peer(old);
 	}
 	if (new != NULL) {
 		prefix_insert(new, NULL, re);
@@ -560,6 +565,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 			new = NULL;
 		else
 			old_pathid_tx = 0;
+		peer = prefix_peer(new);
 	}
 	newbest = prefix_best(re);
 
@@ -575,7 +581,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		 */
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
-		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
+		rde_enqueue_updates(re, peer, new, old_pathid_tx, EVAL_DEFAULT);
 		return;
 	}
 
@@ -586,9 +592,9 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 */
 	if (rde_evaluate_all()) {
 		/* no old path to remove and path is ineligible, skip rest */
-		if (old_pathid_tx == 0 && new == NULL)
+		if (old == NULL && new == NULL)
 			return;
-		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_ALL);
+		rde_enqueue_updates(re, peer, new, old_pathid_tx, EVAL_ALL);
 	}
 }
 
@@ -598,6 +604,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 {
 	struct rib_entry *re = prefix_re(p);
 	struct prefix	*newbest, *oldbest, *new, *old;
+	struct rde_peer	*peer;
 	struct rib	*rib;
 	uint32_t	 old_pathid_tx = 0;
 
@@ -631,6 +638,8 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	oldbest = prefix_best(re);
 
 	old = p;
+	peer = prefix_peer(p);
+
 	prefix_remove(old, re);
 	if (prefix_eligible(old))
 		old_pathid_tx = old->path_id_tx;
@@ -665,7 +674,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 		 */
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
-		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
+		rde_enqueue_updates(re, peer, new, old_pathid_tx, EVAL_DEFAULT);
 		return;
 	}
 
@@ -675,5 +684,5 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	 * rde_enqueue_updates() will then take care of distribution.
 	 */
 	if (rde_evaluate_all())
-		rde_enqueue_updates(re, new, old_pathid_tx, EVAL_ALL);
+		rde_enqueue_updates(re, peer, new, old_pathid_tx, EVAL_ALL);
 }

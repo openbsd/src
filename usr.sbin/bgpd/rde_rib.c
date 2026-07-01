@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.300 2026/05/28 12:53:55 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.301 2026/07/01 09:53:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1065,7 +1065,7 @@ prefix_flowspec_update(struct rde_peer *peer, struct filterstate *state,
 
 	if (old != NULL)
 		old_pathid_tx = old->path_id_tx;
-	rde_enqueue_updates(re, new, old_pathid_tx, EVAL_DEFAULT);
+	rde_enqueue_updates(re, peer, new, old_pathid_tx, EVAL_DEFAULT);
 
 	if (old != NULL) {
 		TAILQ_REMOVE(&re->prefix_h, old, rib_l);
@@ -1091,7 +1091,7 @@ prefix_flowspec_withdraw(struct rde_peer *peer, struct pt_entry *pte)
 	p = prefix_bypeer(re, peer, 0);
 	if (p == NULL)
 		return 0;
-	rde_enqueue_updates(re, NULL, p->path_id_tx, EVAL_DEFAULT);
+	rde_enqueue_updates(re, peer, NULL, p->path_id_tx, EVAL_DEFAULT);
 	TAILQ_REMOVE(&re->prefix_h, p, rib_l);
 	prefix_unlink(p);
 	prefix_free(p);
