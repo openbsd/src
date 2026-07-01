@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.147 2026/06/29 19:03:34 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.148 2026/07/01 15:44:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1655,12 +1655,14 @@ redraw_draw(struct client *c, struct window_pane *wp, int flags)
 		if (wp != NULL) {
 			if (wp->base.mode & MODE_SYNC)
 				screen_write_stop_sync(wp);
+			screen_write_clear_dirty(wp);
 		} else {
 			TAILQ_FOREACH(loop, &scene->w->panes, entry) {
 				if (!window_pane_is_visible(loop))
 					continue;
 				if (loop->base.mode & MODE_SYNC)
 					screen_write_stop_sync(loop);
+				screen_write_clear_dirty(loop);
 			}
 		}
 	}
