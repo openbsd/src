@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.6 2026/06/27 14:00:09 tb Exp $ */
+/*	$OpenBSD: nca.c,v 1.7 2026/07/01 11:09:12 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -286,10 +286,10 @@ nca_history_load(void)
 
 	now = get_current_time();
 
-	if ((f = fopen(".nca_history", "r")) == NULL) {
+	if ((f = fopen(NCA_HISTORY, "r")) == NULL) {
 		if (errno == ENOENT)
 			return;
-		err(1, "failed to open .nca_history");
+		err(1, "failed to open %s", NCA_HISTORY);
 	}
 
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
@@ -396,9 +396,9 @@ nca_history_load(void)
 	return;
 
  err:
-	warnx("error reading .nca_history");
+	warnx("error reading %s", NCA_HISTORY);
 	fclose(f);
-	unlink(".nca_history");
+	unlink(NCA_HISTORY);
 
 	free(line);
 
@@ -465,7 +465,7 @@ ncas_sorted_cmp(const void *a, const void *b)
 void
 nca_history_save(struct nca_tree *ncas, time_t buildtime)
 {
-	char temp[] = ".nca_history.XXXXXXXX";
+	char temp[] = NCA_HISTORY ".XXXXXXXX";
 	FILE *f = NULL;
 	int fd;
 	struct nonfunc_ca *nca, **ncas_sorted = NULL;
@@ -473,7 +473,7 @@ nca_history_save(struct nca_tree *ncas, time_t buildtime)
 	struct timespec ts[2];
 
 	if (RB_EMPTY(ncas)) {
-		unlink(".nca_history");
+		unlink(NCA_HISTORY);
 		return;
 	}
 
@@ -525,7 +525,7 @@ nca_history_save(struct nca_tree *ncas, time_t buildtime)
 	if (utimensat(AT_FDCWD, temp, ts, 0) == -1)
 		goto err;
 
-	if (rename(temp, ".nca_history") == -1)
+	if (rename(temp, NCA_HISTORY) == -1)
 		goto err;
 
 	free(ncas_sorted);

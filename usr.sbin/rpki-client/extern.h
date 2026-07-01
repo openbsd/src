@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.286 2026/06/25 07:51:58 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.287 2026/07/01 11:09:12 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1133,6 +1133,8 @@ int	mkpathat(int, const char *);
 #define HTTPS_PROTO_LEN		(sizeof(HTTPS_PROTO) - 1)
 #define RSYNC_PROTO		"rsync://"
 #define RSYNC_PROTO_LEN		(sizeof(RSYNC_PROTO) - 1)
+
+#define NCA_HISTORY		".nca_history"
 
 /* Compat helpers for OpenSSL < 4 and LibreSSL. */
 int	ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *, size_t *, int *);

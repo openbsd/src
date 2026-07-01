@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.87 2026/06/26 08:05:22 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.88 2026/07/01 11:09:12 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1872,7 +1872,7 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 	switch (e->fts_info) {
 	case FTS_NSOK:
 		if (e->fts_level == 1 && fts_state.type == BASE_DIR &&
-		    strcmp(e->fts_name, ".nca_history") == 0)
+		    strcmp(e->fts_name, NCA_HISTORY) == 0)
 			break;
 		if (filepath_exists(tree, path)) {
 			e->fts_parent->fts_number++;
