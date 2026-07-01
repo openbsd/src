@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.42 2026/06/22 08:10:16 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.43 2026/07/01 16:43:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -106,7 +106,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 		sc->wp0 = TAILQ_FIRST(&w->panes);
 		TAILQ_REMOVE(&w->panes, sc->wp0, entry);
 
-		layout_free(w);
+		layout_free(w, 0);
 		window_destroy_panes(w);
 
 		TAILQ_INSERT_HEAD(&w->panes, sc->wp0, entry);
