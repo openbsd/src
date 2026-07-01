@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.38 2017/08/22 00:30:16 sf Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.39 2026/07/01 00:41:33 jsg Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 			user = (pw = getpwuid(getuid())) ?
 			    pw->pw_name : "???";
 		if (dohalt) {
-			openlog("halt", 0, LOG_AUTH | LOG_CONS);
+			openlog("halt", LOG_CONS, LOG_AUTH);
 			if (pflag) {
 				syslog(LOG_CRIT,
 					"halted (with powerdown) by %s", user);
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 				syslog(LOG_CRIT, "halted by %s", user);
 			}
 		} else {
-			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
+			openlog("reboot", LOG_CONS, LOG_AUTH);
 			syslog(LOG_CRIT, "rebooted by %s", user);
 		}
 	}
