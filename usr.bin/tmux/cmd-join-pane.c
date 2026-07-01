@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.65 2026/06/24 08:52:15 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.66 2026/07/01 20:53:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -53,7 +53,7 @@ const struct cmd_entry cmd_move_pane_entry = {
 	.name = "move-pane",
 	.alias = "movep",
 
-	.args = { "bdfhMvl:L::P:R::s:t:U::X:Y:z:", 0, 0, NULL },
+	.args = { "bdD::fhMvl:L::P:R::s:t:U::X:Y:z:", 0, 0, NULL },
 	.usage = "[-bdfhMv] [-D lines] [-l size] [-L columns] [-P position] "
 	         "[-R columns] " CMD_SRCDST_PANE_USAGE " [-U lines] "
 	         "[-X x-position] [-Y y-position] [-z z-index]",
