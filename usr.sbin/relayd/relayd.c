@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.202 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.203 2026/07/01 18:11:44 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -183,7 +183,6 @@ main(int argc, char *argv[])
 	relayd_env = env;
 	env->sc_ps = ps;
 	ps->ps_env = env;
-	TAILQ_INIT(&ps->ps_rcsocks);
 	env->sc_conffile = conffile;
 	env->sc_conf.opts = opts;
 	TAILQ_INIT(&env->sc_hosts);

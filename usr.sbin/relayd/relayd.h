@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.288 2026/06/28 05:06:54 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.289 2026/07/01 18:11:44 martijn Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1036,7 +1036,6 @@ struct privsep {
 	u_int				 ps_instance;
 
 	struct control_sock		 ps_csock;
-	struct control_socks		 ps_rcsocks;
 
 	/* Event and signal handlers */
 	struct event			 ps_evsigint;
