@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1382 2026/06/29 19:03:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1383 2026/07/01 13:12:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3254,6 +3254,7 @@ void	 colour_split_rgb(int, u_char *, u_char *, u_char *);
 int	 colour_force_rgb(int);
 int	 colour_dim(int, u_int);
 const char *colour_tostring(int);
+const char *colour_toescape(struct client *, int, int);
 enum client_theme colour_totheme(int);
 int	 colour_fromstring(const char *);
 const char *colour_theme_option(u_int, enum client_theme);

@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.33 2026/06/25 23:17:25 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.34 2026/07/01 13:12:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -288,6 +288,58 @@ colour_tostring(int c)
 		return ("brightwhite");
 	}
 	return ("invalid");
+}
+
+/* Convert colour to an SGR escape sequence. */
+const char *
+colour_toescape(struct client *c, int colour, int bg)
+{
+	static char	s[32];
+	u_char		r, g, b;
+	int		n, flags = (TERM_256COLOURS|TERM_RGBCOLOURS);
+	u_int		o = (bg ? 40 : 30);
+
+	if (c != NULL && (c->tty.flags & TTY_OPENED) && c->tty.term != NULL)
+		flags = c->tty.term->flags;
+
+	if (colour & COLOUR_FLAG_THEME) {
+		n = colour & 0xff;
+		if (c != NULL && (u_int)n < COLOUR_THEME_COUNT)
+			colour = c->theme_colours[n];
+		else
+			colour = colour_theme_terminal_colour(n);
+	}
+
+	if (colour == 8 || colour == 9) {
+		xsnprintf(s, sizeof s, "\033[%dm", o + 9);
+		return (s);
+	}
+
+	if ((~flags & TERM_RGBCOLOURS) & (colour & COLOUR_FLAG_RGB)) {
+		colour_split_rgb(colour, &r, &g, &b);
+		colour = colour_find_rgb(r, g, b);
+	}
+	if ((~flags & TERM_256COLOURS) & (colour & COLOUR_FLAG_256))
+		colour = colour_256to16(colour);
+
+	if (colour & COLOUR_FLAG_RGB) {
+		colour_split_rgb(colour, &r, &g, &b);
+		xsnprintf(s, sizeof s, "\033[%d;2;%u;%u;%um", o + 8, r, g, b);
+		return (s);
+	}
+	if (colour & COLOUR_FLAG_256) {
+		xsnprintf(s, sizeof s, "\033[%d;5;%um", o + 8, colour & 0xff);
+		return (s);
+	}
+	if (colour >= 0 && colour <= 7) {
+		xsnprintf(s, sizeof s, "\033[%dm", colour + o);
+		return (s);
+	}
+	if (colour >= 90 && colour <= 97) {
+		xsnprintf(s, sizeof s, "\033[%dm", colour + o - 30);
+		return (s);
+	}
+	return (NULL);
 }
 
 /* Convert background colour to theme. */
