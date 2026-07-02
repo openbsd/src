@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.35 2026/06/28 20:46:53 tb Exp $	*/
+/*	$OpenBSD: cal.c,v 1.36 2026/07/02 20:40:53 jtt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -193,10 +193,14 @@ main(int argc, char *argv[])
 	month = 0;
 	switch(argc) {
 	case 2:
+		if (yflag)
+			errx(1, "specifying a month conflicts with -y");
 		month = parsemonth(*argv++);
 		/* FALLTHROUGH */
 	case 1:
 		if (argc == 1 && !isdigit((unsigned char)*argv[0])) {
+			if (yflag)
+				errx(1, "specifying a month conflicts with -y");
 			month = parsemonth(*argv);
 			(void)time(&now);
 			local_time = localtime(&now);
