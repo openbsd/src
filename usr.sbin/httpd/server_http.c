@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.165 2026/06/03 20:00:07 kirill Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.166 2026/07/02 04:58:40 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -55,6 +55,8 @@ char		*server_expand_http(struct client *, const char *,
 		    char *, size_t);
 char		*replace_var(char *, const char *, const char *);
 char		*read_errdoc(const char *, const char *);
+ssize_t		 server_create_builtin(struct server_config *, char **,
+		    unsigned int, const char *);
 
 static struct http_method	 http_methods[] = HTTP_METHODS;
 static struct http_error	 http_errors[] = HTTP_ERRORS;
@@ -880,11 +882,11 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct bufferevent	*bev = clt->clt_bev;
 	struct http_descriptor	*desc = clt->clt_descreq;
-	const char		*httperr = NULL, *style;
+	const char		*httperr = NULL;
 	char			*httpmsg, *body = NULL, *extraheader = NULL;
 	char			 tmbuf[32], hbuf[128], *hstsheader = NULL;
 	char			*clenheader = NULL;
-	char			*bannerheader = NULL, *bannertoken = NULL;
+	char			*bannerheader = NULL;
 	char			 buf[IBUF_READ_SIZE];
 	char			*escapedmsg = NULL;
 	char			 cstr[5];
@@ -941,6 +943,7 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 			code = 500;
 			extraheader = NULL;
 		}
+		free(escapedmsg);
 		break;
 	case 416:
 		if (msg == NULL)
@@ -962,66 +965,27 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 		break;
 	}
 
-	free(escapedmsg);
-
-	if ((srv_conf->flags & SRVFLAG_ERRDOCS) == 0)
-		goto builtin; /* errdocs not enabled */
-	if ((size_t)snprintf(cstr, sizeof(cstr), "%03u", code) >= sizeof(cstr))
-		goto builtin;
-
-	if ((body = read_errdoc(srv_conf->errdocroot, cstr)) == NULL &&
+	if ((srv_conf->flags & SRVFLAG_ERRDOCS) &&
+	    (size_t)snprintf(cstr, sizeof(cstr), "%03u", code)
+		    < sizeof(cstr) &&
+	    ((body = read_errdoc(srv_conf->errdocroot, cstr)) != NULL ||
 	    (body = read_errdoc(srv_conf->errdocroot, HTTPD_ERRDOCTEMPLATE))
-	    == NULL)
-		goto builtin;
+		    != NULL)) {
+		body = replace_var(body, "$HTTP_ERROR", httperr);
+		body = replace_var(body, "$RESPONSE_CODE", cstr);
 
-	body = replace_var(body, "$HTTP_ERROR", httperr);
-	body = replace_var(body, "$RESPONSE_CODE", cstr);
-	/* Check if server banner is suppressed */
-	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0)
-		body = replace_var(body, "$SERVER_SOFTWARE", HTTPD_SERVERNAME);
-	else
-		body = replace_var(body, "$SERVER_SOFTWARE", "");
-	bodylen = strlen(body);
-	goto send;
-
- builtin:
-	/* A CSS stylesheet allows minimal customization by the user */
-	style = "body { background-color: white; color: black; font-family: "
-	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
-	    "hr { border: 0; border-bottom: 1px dashed; }\n"
-	    "@media (prefers-color-scheme: dark) {\n"
-	    "body { background-color: #1E1F21; color: #EEEFF1; }\n"
-	    "a { color: #BAD7FF; }\n}";
-
-	/* If banner is suppressed, don't write it to the error document */
-	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0)
-		if (asprintf(&bannertoken, "<hr>\n<address>%s</address>\n",
-		    HTTPD_SERVERNAME) == -1) {
-			bannertoken = NULL;
+		if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0)
+			body = replace_var(body, "$SERVER_SOFTWARE",
+			    HTTPD_SERVERNAME);
+		else
+			body = replace_var(body, "$SERVER_SOFTWARE", "");
+		bodylen = strlen(body);
+	} else {
+		if ((bodylen = server_create_builtin(srv_conf, &body, code,
+		    httperr)) == -1)
 			goto done;
-		}
-
-	/* Generate simple HTML error document */
-	if ((bodylen = asprintf(&body,
-	    "<!DOCTYPE html>\n"
-	    "<html>\n"
-	    "<head>\n"
-	    "<meta charset=\"utf-8\">\n"
-	    "<title>%03d %s</title>\n"
-	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
-	    "</head>\n"
-	    "<body>\n"
-	    "<h1>%03d %s</h1>\n"
-	    "%s"
-	    "</body>\n"
-	    "</html>\n",
-	    code, httperr, style, code, httperr,
-	    bannertoken == NULL ? "" : bannertoken)) == -1) {
-		body = NULL;
-		goto done;
 	}
 
- send:
 	if (srv_conf->flags & SRVFLAG_SERVER_HSTS &&
 	    srv_conf->flags & SRVFLAG_TLS) {
 		if (asprintf(&hstsheader, "Strict-Transport-Security: "
@@ -1084,7 +1048,6 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	free(hstsheader);
 	free(clenheader);
 	free(bannerheader);
-	free(bannertoken);
 	if (msg == NULL)
 		msg = "\"\"";
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
@@ -1093,6 +1056,54 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 		server_close(clt, httpmsg);
 		free(httpmsg);
 	}
+}
+
+ssize_t
+server_create_builtin(struct server_config *srv_conf, char **body,
+    unsigned int code, const char *httperr)
+{
+	const char	*style;
+	char		*bannertoken = NULL;
+	ssize_t		 bodylen;
+
+	/* A CSS stylesheet allows minimal customization by the user */
+	style = "body { background-color: white; color: black; font-family: "
+	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
+	    "hr { border: 0; border-bottom: 1px dashed; }\n"
+	    "@media (prefers-color-scheme: dark) {\n"
+	    "body { background-color: #1E1F21; color: #EEEFF1; }\n"
+	    "a { color: #BAD7FF; }\n}";
+
+	/* If banner is suppressed, don't write it to the error document */
+	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0) {
+		if (asprintf(&bannertoken, "<hr>\n<address>%s</address>\n",
+		    HTTPD_SERVERNAME) == -1)
+			return (-1);
+	}
+
+	/* Generate simple HTML error document */
+	bodylen = asprintf(body,
+	    "<!DOCTYPE html>\n"
+	    "<html>\n"
+	    "<head>\n"
+	    "<meta charset=\"utf-8\">\n"
+	    "<title>%03d %s</title>\n"
+	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
+	    "</head>\n"
+	    "<body>\n"
+	    "<h1>%03d %s</h1>\n"
+	    "%s"
+	    "</body>\n"
+	    "</html>\n",
+	    code, httperr, style, code, httperr,
+	    bannertoken == NULL ? "" : bannertoken);
+
+	free(bannertoken);
+	if (bodylen == -1) {
+		*body = NULL;
+		return (-1);
+	}
+	return (bodylen);
 }
 
 void
