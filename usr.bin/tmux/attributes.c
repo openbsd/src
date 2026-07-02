@@ -1,4 +1,4 @@
-/* $OpenBSD: attributes.c,v 1.12 2025/12/01 08:14:29 nicm Exp $ */
+/* $OpenBSD: attributes.c,v 1.13 2026/07/02 08:51:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>
@@ -45,7 +45,7 @@ attributes_tostring(int attr)
 	    (attr & GRID_ATTR_UNDERSCORE_3) ? "curly-underscore," : "",
 	    (attr & GRID_ATTR_UNDERSCORE_4) ? "dotted-underscore," : "",
 	    (attr & GRID_ATTR_UNDERSCORE_5) ? "dashed-underscore," : "",
-        (attr & GRID_ATTR_OVERLINE) ? "overline," : "",
+	    (attr & GRID_ATTR_OVERLINE) ? "overline," : "",
 	    (attr & GRID_ATTR_NOATTR) ? "noattr," : "");
 	if (len > 0)
 		buf[len - 1] = '\0';
