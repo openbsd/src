@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.301 2026/07/01 09:53:47 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.302 2026/07/02 07:40:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -41,11 +41,17 @@ uint16_t rib_size;
 struct rib **ribs;
 struct rib flowrib = { .id = 1, .tree = RB_INITIALIZER(&flowrib.tree) };
 
+struct pq_entry {
+	TAILQ_ENTRY(pq_entry)	 entry;
+	struct prefix		*p;	/* NULL for withdraws */
+	uint32_t		 path_id_tx;
+};
+
 struct rib_entry *rib_add(struct rib *, struct pt_entry *);
 static inline int rib_compare(const struct rib_entry *,
 			const struct rib_entry *);
-static void rib_remove(struct rib_entry *);
 static inline int rib_empty(struct rib_entry *);
+static void rib_remove(struct rib_entry *);
 static void rib_dump_abort(uint16_t);
 
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
@@ -321,6 +327,7 @@ rib_add(struct rib *rib, struct pt_entry *pte)
 		fatal("rib_add");
 
 	TAILQ_INIT(&re->prefix_h);
+	TAILQ_INIT(&re->pq_head);
 	re->prefix = pt_ref(pte);
 	re->rib_id = rib->id;
 	re->pq_mode = EVAL_NONE;
@@ -334,6 +341,86 @@ rib_add(struct rib *rib, struct pt_entry *pte)
 	rdemem.rib_cnt++;
 
 	return (re);
+}
+
+static inline int
+rib_empty(struct rib_entry *re)
+{
+	return TAILQ_EMPTY(&re->prefix_h);
+}
+
+static void
+rib_pq_remove_entry(struct rib_entry *re, uint32_t path_id_tx)
+{
+	struct pq_entry *pq;
+
+	TAILQ_FOREACH(pq, &re->pq_head, entry) {
+		if (pq->path_id_tx == path_id_tx) {
+			TAILQ_REMOVE(&re->pq_head, pq, entry);
+			free(pq);
+			return;
+		}
+	}
+}
+
+static void
+rib_pq_add_entry(struct rib_entry *re, uint32_t path_id_tx, struct prefix *p)
+{
+	struct pq_entry *pq;
+
+	if ((pq = calloc(1, sizeof(*pq))) == NULL)
+		fatal(NULL);
+
+	pq->path_id_tx = path_id_tx;
+	pq->p = p;
+	TAILQ_INSERT_TAIL(&re->pq_head, pq, entry);
+}
+
+/*
+ * Enqueue prefix entry into the rib pending queue and enqueue the
+ * rib entry on the peer if needed. If p is NULL the entry is a withdraw.
+ */
+void
+rib_pq_enqueue(struct rib_entry *re, struct rde_peer *peer,
+    uint32_t path_id_tx, struct prefix *p)
+{
+	/* only store paths if add-path or 'rde evaluate all' is used */
+	if (rde_evaluate_all()) {
+		rib_pq_remove_entry(re, path_id_tx);
+		rib_pq_add_entry(re, path_id_tx, p);
+	}
+
+	/*
+	 * Enqueue only once, may need some reconsideration if queue
+	 * length of individual peers becomes excessively long.
+	 */
+	if (re->pq_mode == EVAL_NONE) {
+		re->pq_peer_id = peer->conf.id;
+		TAILQ_INSERT_TAIL(&peer->rib_pq_head, re, rib_queue);
+		rdemem.rde_rib_entry_count++;
+		peer->stats.rib_entry_count++;
+	}
+
+}
+
+static void
+rib_pq_free(struct rib_entry *re)
+{
+	struct pq_entry *pq;
+
+	while ((pq = TAILQ_FIRST(&re->pq_head)) != NULL) {
+		TAILQ_REMOVE(&re->pq_head, pq, entry);
+		free(pq);
+	}
+	re->pq_mode = EVAL_NONE;
+}
+
+void
+rib_pq_dequeue(struct rib_entry *re)
+{
+	rib_pq_free(re);
+	if (rib_empty(re))
+		rib_remove(re);
 }
 
 static void
@@ -350,23 +437,11 @@ rib_remove(struct rib_entry *re)
 		log_warnx("rib_remove: remove failed.");
 
 	pt_unref(re->prefix);
+	if (!TAILQ_EMPTY(&re->pq_head))
+		fatalx("rib entry removed with pending updates");
 
 	free(re);
 	rdemem.rib_cnt--;
-}
-
-static inline int
-rib_empty(struct rib_entry *re)
-{
-	return TAILQ_EMPTY(&re->prefix_h);
-}
-
-void
-rib_dequeue(struct rib_entry *re)
-{
-	re->pq_mode = EVAL_NONE;
-	if (rib_empty(re))
-		rib_remove(re);
 }
 
 static struct rib_entry *

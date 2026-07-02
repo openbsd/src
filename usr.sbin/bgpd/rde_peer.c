@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.77 2026/07/01 09:53:47 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.78 2026/07/02 07:40:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -25,12 +25,6 @@
 
 #include "bgpd.h"
 #include "rde.h"
-
-struct rib_pq {
-	LIST_ENTRY(rib_pq)	entry;
-	struct prefix		*new;
-	uint32_t		old_pathid_tx;
-};
 
 struct peer_tree	 peertable = RB_INITIALIZER(&peertable);
 struct peer_tree	 zombietable = RB_INITIALIZER(&zombietable);
@@ -306,12 +300,16 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
  *	EVAL_REEVAL is used by config reloads (a full RIB refresh is needed)
  *	and for single peer RIB dumps but those call peer_generate_update()
  *	directly.
+ * peer, newpath and old_pathid_tx are ignored if mode is EVAL_REEVAL.
+ * In the other cases either newpath or old_pathid_tx are valid but not
+ * both at the same time.
  */
 void
 rde_enqueue_updates(struct rib_entry *re, struct rde_peer *peer,
-    struct prefix *newpath, uint32_t old_pathid_tx, enum eval_mode mode)
+    struct prefix *newpath, uint32_t old_path_id_tx, enum eval_mode mode)
 {
 	struct rde_peer *p;
+	uint32_t path_id_tx;
 
 	switch (mode) {
 	case EVAL_REEVAL:
@@ -329,16 +327,12 @@ rde_enqueue_updates(struct rib_entry *re, struct rde_peer *peer,
 		fatalx("bad eval mode in %s", __func__);
 	}
 
-	/*
-	 * Enqueue only once, may need some reconsideration if queue
-	 * length of individual peers becomes excessivly long.
-	 */
-	if (re->pq_mode == EVAL_NONE) {
-		re->pq_peer_id = peer->conf.id;
-		TAILQ_INSERT_TAIL(&peer->rib_pq_head, re, rib_queue);
-		rdemem.rde_rib_entry_count++;
-		peer->stats.rib_entry_count++;
-	}
+	if (newpath != NULL)
+		path_id_tx = newpath->path_id_tx;
+	else
+		path_id_tx = old_path_id_tx;
+
+	rib_pq_enqueue(re, peer, path_id_tx, newpath);
 
 	/* don't downgrade pq_mode from EVAL_DEFAULT to EVAL_ALL */
 	if (re->pq_mode != EVAL_DEFAULT)
@@ -361,7 +355,7 @@ peer_process_updates(struct rde_peer *peer, void *bula)
 	RB_FOREACH(p, peer_tree, &peertable)
 		peer_generate_update(p, re, re->pq_mode, 0);
 
-	rib_dequeue(re);
+	rib_pq_dequeue(re);
 }
 
 /*
