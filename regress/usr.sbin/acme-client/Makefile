@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2026/02/23 10:28:23 sthen Exp $
+# $OpenBSD: Makefile,v 1.7 2026/07/02 05:02:09 jmatthew Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -25,8 +25,8 @@ regress:
 .endif
 
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog *.core y.tab.h ktrace.out pebble-config.json
-	rm -f pebble.out
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h ktrace.out
+	rm -f pebble.out pebble-config.json pebble-config-eab.json
 	rm -rf etc www
 
 etc/acme-client.conf: acme-client.conf
@@ -46,6 +46,11 @@ etc/acme-client-ipaddress.conf: acme-client-ipaddress.conf
 		${.CURDIR}/acme-client-ipaddress.conf \
 		> etc/acme-client-ipaddress.conf
 
+etc/acme-client-eab.conf: acme-client-eab.conf
+	mkdir -p etc
+	sed 's,$${.OBJDIR},${.OBJDIR},'\
+		${.CURDIR}/acme-client-eab.conf > etc/acme-client-eab.conf
+
 etc/httpd.conf: httpd.conf
 	mkdir -p etc
 	sed 's,$${.OBJDIR},${.OBJDIR},'\
@@ -64,14 +69,27 @@ pebble-config.json:
 	sed 's,$${.CURDIR},${.CURDIR},'\
 		${.CURDIR}/pebble-config.json > pebble-config.json
 
+pebble-config-eab.json:
+	sed 's,$${.CURDIR},${.CURDIR},'\
+		${.CURDIR}/pebble-config-eab.json > pebble-config-eab.json
+
 pebble-start: pebble-config.json
 	/usr/local/bin/pebble -config ${.OBJDIR}/pebble-config.json > \
 	    ${.OBJDIR}/pebble.out &
 	while ! $$(fgrep -q 'Root CA certificate available' \
 	    ${.OBJDIR}/pebble.out); do sleep .1; done
 
+pebble-eab-start: pebble-config-eab.json
+	/usr/local/bin/pebble -config ${.OBJDIR}/pebble-config-eab.json > \
+	    ${.OBJDIR}/pebble.out &
+	while ! $$(fgrep -q 'Root CA certificate available' \
+	    ${.OBJDIR}/pebble.out); do sleep .1; done
+
 pebble-stop:
 	pkill -xf "/usr/local/bin/pebble -config ${.OBJDIR}/pebble-config.json"
+
+pebble-eab-stop:
+	pkill -xf "/usr/local/bin/pebble -config ${.OBJDIR}/pebble-config-eab.json"
 
 REGRESS_TARGETS +=	run-regress-acme
 run-regress-acme: etc/acme-client.conf httpd-start pebble-start
@@ -109,11 +127,20 @@ run-regress-acme-ipaddress2: etc/acme-client-ipaddress.conf
 	    -f ${.OBJDIR}/etc/acme-client-ipaddress.conf \
 	    -r -v ::1
 
+REGRESS_TARGETS +=	run-regress-acme-eab
+run-regress-acme-eab: etc/acme-client-eab.conf pebble-eab-start
+	${SUDO} /usr/sbin/acme-client \
+	    -f ${.OBJDIR}/etc/acme-client-eab.conf \
+	    -e kid-1:zWNDZM6eQGHWpSRTPal5eIUYFTu7EajVIoguysqZ9wG44nMEtx3MUAsUDkMTQ12W \
+	    -v localhost
+
 REGRESS_TARGETS +=	run-regress-cleanup
 run-regress-cleanup:
 	${.MAKE} -C ${.CURDIR} httpd-stop
 	${.MAKE} -C ${.CURDIR} pebble-stop
+	${.MAKE} -C ${.CURDIR} pebble-eab-stop
 
-.PHONY: ${REGRESS_TARGETS} httpd-start httpd-stop pebble-start pebble-stop
+.PHONY: ${REGRESS_TARGETS} httpd-start httpd-stop pebble-start pebble-eab-start \
+	pebble-stop pebble-eab-stop
 
 .include <bsd.regress.mk>
