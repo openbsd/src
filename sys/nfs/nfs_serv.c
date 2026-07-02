@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.149 2026/06/09 03:14:22 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.150 2026/07/02 02:51:14 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1615,9 +1615,10 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	}
 
 	fvp = fromnd.ni_vp;
-	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0)
-		return 0;
-	else if (error != 0)
+	if (nfsm_srvmtofh1(nfsd, slp, mrq, &mb, &error) != 0) {
+		error = 0;
+		goto nfsmout;
+	} else if (error != 0)
 		goto nfsmout;
 	tfhp = &tnfh.fh_generic;
 	if (nfsm_srvmtofh2(nfsd, tfhp, &error) != 0)
