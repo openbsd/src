@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.58 2026/07/01 18:11:44 martijn Exp $	*/
+/*	$OpenBSD: proc.c,v 1.59 2026/07/02 12:35:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -249,6 +249,11 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 	struct privsep_pipes	*pp = ps->ps_pp;
 	struct imsgev		*iev;
 
+	if (fd == -1 || dst < 0 || dst >= PROC_MAX ||
+	    n >= ps->ps_instances[dst])
+		fatalx("%s: invalid descriptor target %d instance %u",
+		    __func__, dst, n);
+
 	if (ps->ps_ievs[dst] == NULL) {
 #if DEBUG > 1
 		log_debug("%s: %s src %d %d to dst %d %d not connected",
@@ -259,11 +264,6 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 		close(fd);
 		return;
 	}
-
-	if (fd == -1 || dst < 0 || dst >= PROC_MAX ||
-	    n >= ps->ps_instances[dst])
-		fatalx("%s: invalid descriptor target %d instance %u",
-		    __func__, dst, n);
 
 	if (pp->pp_pipes[dst][n] != -1)
 		fatalx("%s: duplicated descriptor", __func__);
