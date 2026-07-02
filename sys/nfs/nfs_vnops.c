@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.214 2026/06/10 00:04:38 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.215 2026/07/02 03:14:52 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1276,6 +1276,7 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 
 	info.nmi_v3 = NFS_ISV3(vp);
 	info.nmi_errorp = &error;
+	info.nmi_mrep = NULL;
 
 #ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
@@ -1323,7 +1324,6 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 		}
 
 		if (error) {
-			m_freem(info.nmi_mrep);
 			goto nfsmout;
 		}
 
@@ -1336,6 +1336,7 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 			rlen = fxdr_unsigned(int, *tl++);
 			if (rlen <= 0) {
 				error = NFSERR_IO;
+				/* info.nmi_mrep free'd after the loop */
 				break;
 			} else if (rlen < len) {
 				backup = len - rlen;
@@ -1375,9 +1376,11 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 		if (wccflag)
 		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime;
 		m_freem(info.nmi_mrep);
+		info.nmi_mrep = NULL;
 		tsiz -= len;
 	}
 nfsmout:
+	m_freem(info.nmi_mrep);
 	*iomode = committed;
 	if (error)
 		uiop->uio_resid = tsiz;
