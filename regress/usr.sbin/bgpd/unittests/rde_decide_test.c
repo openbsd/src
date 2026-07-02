@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.19 2026/05/22 04:29:01 anton Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.20 2026/07/02 06:21:23 anton Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -356,8 +356,8 @@ rib_byid(uint16_t id)
 }
 
 void
-rde_enqueue_updates(struct rib_entry *re, struct prefix *newpath,
-    uint32_t old_pathid_tx, enum eval_mode mode)
+rde_enqueue_updates(struct rib_entry *re, struct rde_peer *peer,
+    struct prefix *newpath, uint32_t old_pathid_tx, enum eval_mode mode)
 {
 	/* maybe we want to do something here */
 }
