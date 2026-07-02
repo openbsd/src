@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.52 2025/09/01 18:56:04 mglocker Exp $
+#	$OpenBSD: install.md,v 1.53 2026/07/02 19:30:42 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ md_congrats() {
 }
 
 md_consoleinfo() {
-	local _fw _fw2
+	local _fw _fw2 _off _part
 
 	DEFCONS=y
 	case $(scan_dmesg '/^\([^ ]*\).*: console.*std.*$/s//\1/p') in
@@ -237,7 +237,9 @@ md_consoleinfo() {
 		_fw=$(dmesgtail | sed -n '\!^bwfm0: failed!{s!^.*/\(.*\),.*$!\1!p;q;}')
 		_fw2=${COMPATIBLE##*apple,}
 		make_dev sd0
-		if mount -o ro /dev/sd0l /mnt2 2>/dev/null; then
+		_off=$(fdisk sd0 | sed -ne '/EFI Sys/s/^.* \([0-9]*\): .*/\1/p')
+		_part=$(disklabel sd0 | sed -ne "/ ${_off}   MSDOS /s/^  \(.\).*\$/\1/p")
+		if mount -o ro /dev/sd0$_part /mnt2 2>/dev/null; then
 			rm -rf /usr/mdec/rpi /etc/firmware/apple
 			rm -rf /etc/firmware/brcm /etc/firmware/apple-bwfm
 			if [[ -s /mnt2/vendorfw/firmware.tar ]]; then
