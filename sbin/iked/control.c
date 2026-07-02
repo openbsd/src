@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.45 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.46 2026/07/02 05:21:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -310,7 +310,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&v, imsg.data, sizeof(v));
 			log_setverbose(v);
 
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT, -1);
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT);
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_RESET:
@@ -318,17 +318,17 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_DECOUPLE:
 		case IMSG_CTL_ACTIVE:
 		case IMSG_CTL_PASSIVE:
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT, -1);
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT);
 			break;
 		case IMSG_CTL_RESET_ID:
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2);
 			break;
 		case IMSG_CTL_SHOW_SA:
 		case IMSG_CTL_SHOW_STATS:
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2);
 			break;
 		case IMSG_CTL_SHOW_CERTSTORE:
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_CERT, -1);
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_CERT);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

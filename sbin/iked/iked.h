@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.233 2024/11/04 02:44:28 dlg Exp $	*/
+/*	$OpenBSD: iked.h,v 1.234 2026/07/02 05:21:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1333,8 +1333,8 @@ int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
 	    uint16_t, uint32_t, int, const struct iovec *, int);
 int	 proc_composev(struct privsep *, enum privsep_procid,
 	    uint16_t, const struct iovec *, int);
-int	 proc_forward_imsg(struct privsep *, struct imsg *,
-	    enum privsep_procid, int);
+void	 proc_forward_imsg(struct privsep *, struct imsg *,
+	    enum privsep_procid);
 struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.72 2024/12/26 18:24:54 sthen Exp $	*/
+/*	$OpenBSD: iked.c,v 1.73 2026/07/02 05:21:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -434,7 +434,7 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
-		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2, -1);
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2);
 		break;
 	case IMSG_OCSP_FD:
 		ocsp_connect(env, imsg);
@@ -473,8 +473,8 @@ parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		free(str);
 		break;
 	case IMSG_CTL_VERBOSE:
-		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2, -1);
-		proc_forward_imsg(&env->sc_ps, imsg, PROC_CERT, -1);
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2);
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_CERT);
 
 		/* return 1 to let proc.c handle it locally */
 		return (1);
