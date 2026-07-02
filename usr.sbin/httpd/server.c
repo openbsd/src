@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.132 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.133 2026/07/02 04:59:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -937,6 +937,12 @@ server_write(struct bufferevent *bev, void *arg)
 	struct client		*clt = arg;
 	struct evbuffer		*dst = EVBUFFER_OUTPUT(bev);
 
+	if (EVBUFFER_LENGTH(dst) == 0 && clt->clt_close_after_write) {
+		server_close(clt, clt->clt_close_msg != NULL ?
+		    clt->clt_close_msg : "response sent");
+		return;
+	}
+
 	if (EVBUFFER_LENGTH(dst) == 0 &&
 	    clt->clt_toread == TOREAD_HTTP_NONE)
 		goto done;
@@ -955,24 +961,6 @@ server_write(struct bufferevent *bev, void *arg)
  done:
 	(*bev->errorcb)(bev, EVBUFFER_WRITE, bev->cbarg);
 	return;
-}
-
-void
-server_dump(struct client *clt, const void *buf, size_t len)
-{
-	if (!len)
-		return;
-
-	/*
-	 * This function will dump the specified message directly
-	 * to the underlying client, without waiting for success
-	 * of non-blocking events etc. This is useful to print an
-	 * error message before gracefully closing the client.
-	 */
-	if (clt->clt_tls_ctx != NULL)
-		(void)tls_write(clt->clt_tls_ctx, buf, len);
-	else
-		(void)write(clt->clt_s, buf, len);
 }
 
 void
@@ -1340,6 +1328,8 @@ server_close(struct client *clt, const char *msg)
 	if (clt->clt_log != NULL)
 		evbuffer_free(clt->clt_log);
 
+	free(clt->clt_close_msg);
+
 	free(clt);
 	server_clients--;
 }
@@ -1469,6 +1459,20 @@ server_bufferevent_write(struct client *clt, void *data, size_t size)
 {
 	if (clt->clt_bev == NULL)
 		return (evbuffer_add(clt->clt_output, data, size));
+	return (bufferevent_write(clt->clt_bev, data, size));
+}
+
+int
+server_bufferevent_write_close(struct client *clt, void *data, size_t size)
+{
+	if (clt->clt_bev == NULL)
+		return (-1);
+	if (clt->clt_close_after_write)
+		return (-1);
+
+	clt->clt_persist = 0;
+	clt->clt_close_after_write = 1;
+
 	return (bufferevent_write(clt->clt_bev, data, size));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.177 2026/07/02 04:48:55 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.178 2026/07/02 04:59:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -315,6 +315,8 @@ struct client {
 	unsigned int		 clt_pipelining;
 	int			 clt_line;
 	int			 clt_done;
+	int			 clt_close_after_write;
+	char			*clt_close_msg;
 	int			 clt_chunk;
 	int			 clt_inflight;
 	int			 clt_fcgi_count;
@@ -613,7 +615,6 @@ void	 server_log(struct client *, const char *);
 void	 server_sendlog(struct server_config *, int, const char *, ...)
 	    __attribute__((__format__ (printf, 3, 4)));
 void	 server_close(struct client *, const char *);
-void	 server_dump(struct client *, const void *, size_t);
 int	 server_client_cmp(struct client *, struct client *);
 int	 server_bufferevent_printf(struct client *, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
@@ -624,6 +625,7 @@ int	 server_bufferevent_write_chunk(struct client *,
 	    struct evbuffer *, size_t);
 int	 server_bufferevent_add(struct event *, int);
 int	 server_bufferevent_write(struct client *, void *, size_t);
+int	 server_bufferevent_write_close(struct client *, void *, size_t);
 struct server *
 	 server_byaddr(struct sockaddr *, in_port_t);
 struct server_config *
