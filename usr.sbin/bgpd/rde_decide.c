@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.109 2026/07/01 09:53:47 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.110 2026/07/02 10:01:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -561,11 +561,13 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	}
 	if (new != NULL) {
 		prefix_insert(new, NULL, re);
-		if (!prefix_eligible(new))
-			new = NULL;
-		else
+		if (prefix_eligible(new)) {
+			old = NULL;
 			old_pathid_tx = 0;
-		peer = prefix_peer(new);
+			peer = prefix_peer(new);
+		} else {
+			new = NULL;
+		}
 	}
 	newbest = prefix_best(re);
 
