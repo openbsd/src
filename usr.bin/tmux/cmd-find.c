@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.85 2026/06/10 14:06:45 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.86 2026/07/02 08:47:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1012,7 +1012,7 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 	    strcmp(target, "{active}") == 0 ||
 	    strcmp(target, "{current}") == 0) {
 		c = cmdq_get_client(item);
-		if (c == NULL) {
+		if (c == NULL || c->session == NULL) {
 			cmdq_error(item, "no current client");
 			goto error;
 		}
