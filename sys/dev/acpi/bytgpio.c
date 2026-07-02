@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.20 2025/06/16 15:44:35 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.21 2026/07/02 12:54:28 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -42,6 +42,7 @@ struct bytgpio_intrhand {
 	void *ih_arg;
 	int ih_tflags;
 	int ih_ipl;
+	int ih_wakeup;
 };
 
 struct bytgpio_softc {
@@ -246,6 +247,10 @@ bytgpio_intr_establish(void *cookie, int pin, int flags, int level,
 	sc->sc_pin_ih[pin].ih_arg = arg;
 	sc->sc_pin_ih[pin].ih_tflags = flags;
 	sc->sc_pin_ih[pin].ih_ipl = level & ~IPL_WAKEUP;
+	sc->sc_pin_ih[pin].ih_wakeup = level & IPL_WAKEUP;
+
+	if (sc->sc_pin_ih[pin].ih_wakeup)
+		intr_set_wakeup(sc->sc_ih);
 
 	bytgpio_intr_enable(cookie, pin);
 }
