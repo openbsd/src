@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.394 2026/07/03 15:10:07 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.395 2026/07/03 15:35:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5426,6 +5426,12 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 					sc->reversed = 0;
 					break;
 				}
+				if (strchr(fm->argv[0], 'i') != NULL)
+					sc->order = SORT_INDEX;
+				else if (strchr(fm->argv[0], 'z') != NULL)
+					sc->order = SORT_Z;
+				else
+					sc->order = SORT_CREATION;
 				if (strchr(fm->argv[0], 'r') != NULL)
 					sc->reversed = 1;
 				else

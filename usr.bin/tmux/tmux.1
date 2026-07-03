@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1118 2026/07/03 15:10:07 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1119 2026/07/03 15:35:51 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -6856,7 +6856,13 @@ to sort in reverse order.
 .Ql /r\&
 can also be used with
 .Ql P:\&
-to reverse the sort order by pane index.
+to reverse the sort order; by default panes are sorted by creation order.
+.Ql P:\&
+can also take
+.Ql /i\&
+to sort by pane index or
+.Ql /z\&
+to sort by z-index.
 For example,
 .Ql S/nr:\&
 to sort sessions by name in reverse order.
