@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1115 2026/07/02 08:51:05 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1116 2026/07/03 10:47:32 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2026 $
+.Dd $Mdocdate: July 3 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3247,6 +3247,15 @@ is omitted and a marked pane is present (see
 .Ic select\-pane
 .Fl m ) ,
 the marked pane is used rather than the current pane.
+.Pp
+If
+.Ar src\-pane
+is floating and
+.Ar dst\-pane
+is either unspecified or equal to
+.Ar src\-pane,
+.Ar src\-pane
+is returned to its previous position in the layout.
 .Tg killp
 .It Xo Ic kill\-pane
 .Op Fl a
