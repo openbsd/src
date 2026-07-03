@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.395 2026/07/03 15:35:51 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.396 2026/07/03 16:09:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2293,7 +2293,7 @@ format_cb_pane_path(struct format_tree *ft)
 static void *
 format_cb_pane_pid(struct format_tree *ft)
 {
-	if (ft->wp != NULL)
+	if (ft->wp != NULL && ft->wp->fd != -1)
 		return (format_printf("%ld", (long)ft->wp->pid));
 	return (NULL);
 }
