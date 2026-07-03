@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.306 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.307 2026/07/03 11:51:57 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -124,9 +124,21 @@ int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
 int max_hdr;			/* largest link+protocol header */
 
-struct	mutex m_extref_mtx = MUTEX_INITIALIZER(IPL_NET);
+struct m_ext_refs {
+	void		*arg;
+	u_int		 free_fn;
+	u_int		 zero;
+	struct refcnt	 refs;
+};
 
-void	m_extfree(struct mbuf *);
+static struct pool	m_ext_refs_pool;
+
+static void		m_extfree_refs(caddr_t, u_int, void *);
+u_int			m_extfree_refs_fn;
+
+static int		m_extref(struct mbuf *, struct mbuf *, int);
+static void		m_extfree(struct mbuf *);
+
 void	m_zero(struct mbuf *);
 
 unsigned long mbuf_mem_limit;	/* [a] how much memory can be allocated */
@@ -175,6 +187,8 @@ mbinit(void)
 
 	pool_init(&mtagpool, PACKET_TAG_MAXSIZE + sizeof(struct m_tag), 0,
 	    IPL_NET, 0, "mtagpl", NULL);
+	pool_init(&m_ext_refs_pool, sizeof(struct m_ext_refs), CACHELINESIZE,
+	    IPL_NET, 0, "mextrefs", NULL);
 
 	for (i = 0; i < nitems(mclsizes); i++) {
 		lowbits = mclsizes[i] & ((1 << 10) - 1);
@@ -194,6 +208,7 @@ mbinit(void)
 
 	(void)mextfree_register(m_extfree_pool);
 	KASSERT(num_extfree_fns == 1);
+	m_extfree_refs_fn = mextfree_register(m_extfree_refs);
 }
 
 void
@@ -205,6 +220,7 @@ mbcpuinit(void)
 
 	pool_cache_init(&mbpool);
 	pool_cache_init(&mtagpool);
+	pool_cache_init(&m_ext_refs_pool);
 
 	for (i = 0; i < nitems(mclsizes); i++)
 		pool_cache_init(&mclpools[i]);
@@ -400,6 +416,32 @@ m_extfree_pool(caddr_t buf, u_int size, void *pp)
 	pool_put(pp, buf);
 }
 
+int
+m_ext_refs_shared(struct mbuf *m)
+{
+	struct m_ext_refs *mrefs = m->m_ext.ext_arg;
+
+	return (refcnt_shared(&mrefs->refs));
+}
+
+static void
+m_extfree_refs(caddr_t buf, u_int size, void *arg)
+{
+	struct m_ext_refs *mrefs = arg;
+
+	if (refcnt_rele(&mrefs->refs)) {
+		if (mrefs->zero)
+			explicit_bzero(buf, size);
+
+		KASSERT(mrefs->free_fn < num_extfree_fns);
+		KASSERT(mrefs->free_fn != m_extfree_refs_fn);
+
+		mextfree_fns[mrefs->free_fn](buf, size, mrefs->arg);
+
+		pool_put(&m_ext_refs_pool, mrefs);
+	}
+}
+
 struct mbuf *
 m_free(struct mbuf *m)
 {
@@ -435,44 +477,33 @@ m_free(struct mbuf *m)
 	return (n);
 }
 
-void
-m_extref(struct mbuf *o, struct mbuf *n)
+static int
+m_extref(struct mbuf *m, struct mbuf *n, int how)
 {
-	int refs = MCLISREFERENCED(o);
+	struct m_ext_refs *mrefs;
 
-	n->m_flags |= o->m_flags & (M_EXT|M_EXTWR);
+	if (m->m_ext.ext_free_fn == m_extfree_refs_fn)
+		mrefs = m->m_ext.ext_arg;
+	else {
+		mrefs = pool_get(&m_ext_refs_pool, how);
+		if (mrefs == NULL)
+			return (ENOMEM);
 
-	if (refs)
-		mtx_enter(&m_extref_mtx);
-	n->m_ext.ext_nextref = o->m_ext.ext_nextref;
-	n->m_ext.ext_prevref = o;
-	o->m_ext.ext_nextref = n;
-	n->m_ext.ext_nextref->m_ext.ext_prevref = n;
-	if (refs)
-		mtx_leave(&m_extref_mtx);
+		refcnt_init(&mrefs->refs);
+		mrefs->arg = m->m_ext.ext_arg;
+		mrefs->free_fn = m->m_ext.ext_free_fn;
+		mrefs->zero = 0;
 
-	MCLREFDEBUGN((n), __FILE__, __LINE__);
-}
-
-static inline u_int
-m_extunref(struct mbuf *m)
-{
-	int refs = 0;
-
-	if (!MCLISREFERENCED(m))
-		return (0);
-
-	mtx_enter(&m_extref_mtx);
-	if (MCLISREFERENCED(m)) {
-		m->m_ext.ext_nextref->m_ext.ext_prevref =
-		    m->m_ext.ext_prevref;
-		m->m_ext.ext_prevref->m_ext.ext_nextref =
-		    m->m_ext.ext_nextref;
-		refs = 1;
+		m->m_ext.ext_arg = mrefs;
+		m->m_ext.ext_free_fn = m_extfree_refs_fn;
 	}
-	mtx_leave(&m_extref_mtx);
 
-	return (refs);
+	refcnt_take(&mrefs->refs);
+
+	MEXTADD(n, m->m_ext.ext_buf, m->m_ext.ext_size,
+	    m->m_flags & M_EXTWR, m_extfree_refs_fn, mrefs);
+
+	return (0);
 }
 
 /*
@@ -488,15 +519,13 @@ mextfree_register(void (*fn)(caddr_t, u_int, void *))
 	return num_extfree_fns++;
 }
 
-void
+static void
 m_extfree(struct mbuf *m)
 {
-	if (m_extunref(m) == 0) {
-		KASSERT(m->m_ext.ext_free_fn < num_extfree_fns);
-		mextfree_fns[m->m_ext.ext_free_fn](m->m_ext.ext_buf,
-		    m->m_ext.ext_size, m->m_ext.ext_arg);
-	}
-
+	KASSERT(m->m_ext.ext_free_fn < num_extfree_fns);
+	mextfree_fns[m->m_ext.ext_free_fn](m->m_ext.ext_buf,
+	    m->m_ext.ext_size, m->m_ext.ext_arg);
+ 
 	m->m_flags &= ~(M_EXT|M_EXTWR);
 }
 
@@ -657,9 +686,9 @@ m_copym(struct mbuf *m0, int off, int len, int wait)
 		}
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
+			if (m_extref(m, n, wait) != 0)
+				goto nospace;
 			n->m_data = m->m_data + off;
-			n->m_ext = m->m_ext;
-			MCLADDREFERENCE(m, n);
 		} else {
 			n->m_data += m->m_data -
 			    (m->m_flags & M_PKTHDR ? m->m_pktdat : m->m_dat);
@@ -1090,8 +1119,12 @@ m_split(struct mbuf *m0, int len0, int wait)
 			return (NULL);
 	}
 	if (m->m_flags & M_EXT) {
-		n->m_ext = m->m_ext;
-		MCLADDREFERENCE(m, n);
+		if (m_extref(m, n, wait) != 0) {
+			m_freem(n);
+			if (m0->m_flags & M_PKTHDR)
+				m0->m_pkthdr.len = olen;
+			return (NULL);
+		}
 		n->m_data = m->m_data + len;
 	} else {
 		m_align(n, remain);
@@ -1272,13 +1305,17 @@ m_devget(char *buf, int totlen, int off)
 void
 m_zero(struct mbuf *m)
 {
-	if (M_READONLY(m)) {
-		mtx_enter(&m_extref_mtx);
-		if ((m->m_flags & M_EXT) && MCLISREFERENCED(m)) {
-			m->m_ext.ext_nextref->m_flags |= M_ZEROIZE;
-			m->m_ext.ext_prevref->m_flags |= M_ZEROIZE;
-		}
-		mtx_leave(&m_extref_mtx);
+	if (ISSET(m->m_flags, M_EXT) &&
+	    m->m_ext.ext_free_fn == m_extfree_refs_fn) {
+		struct m_ext_refs *mrefs = m->m_ext.ext_arg;
+
+		/*
+		 * this variable only transitions in one direction,
+		 * so if there is a race it will be toward the same
+		 * result and therefore there is no loss.
+		 */
+
+		mrefs->zero = 1;
 		return;
 	}
 
@@ -1554,9 +1591,7 @@ m_print(void *v,
 		    m->m_ext.ext_buf, m->m_ext.ext_size);
 		(*pr)("m_ext.ext_free_fn: %u\tm_ext.ext_arg: %p\n",
 		    m->m_ext.ext_free_fn, m->m_ext.ext_arg);
-		(*pr)("m_ext.ext_nextref: %p\tm_ext.ext_prevref: %p\n",
-		    m->m_ext.ext_nextref, m->m_ext.ext_prevref);
-
+		/* if m_ext.ext_free_fn == m_extfree_refs_fn ? */
 	}
 }
 

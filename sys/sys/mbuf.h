@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.270 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.271 2026/07/03 11:51:57 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -145,8 +145,6 @@ struct mbuf_ext {
 	void	*ext_arg;
 	u_int	ext_free_fn;		/* index of free function */
 	u_int	ext_size;		/* size of buffer, for ext_free_fn */
-	struct mbuf *ext_nextref;
-	struct mbuf *ext_prevref;
 #ifdef DEBUG
 	const char *ext_ofile;
 	const char *ext_nfile;
@@ -282,13 +280,22 @@ struct mbuf {
 #define MCLREFDEBUGO(m, file, line)
 #endif
 
-#define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
+int	m_ext_refs_shared(struct mbuf *);
 
-#define	MCLADDREFERENCE(o, n)	m_extref((o), (n))
+static inline int
+m_extreferenced(struct mbuf *m)
+{
+	extern u_int m_extfree_refs_fn;
+
+	if (m->m_ext.ext_free_fn != m_extfree_refs_fn)
+		return (0);
+
+	return (m_ext_refs_shared(m));
+}
+
+#define	MCLISREFERENCED(m)	m_extreferenced(m)
 
 #define	MCLINITREFERENCE(m)	do {					\
-		(m)->m_ext.ext_prevref = (m);				\
-		(m)->m_ext.ext_nextref = (m);				\
 		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
 		MCLREFDEBUGN((m), NULL, 0);				\
 	} while (/* CONSTCOND */ 0)
@@ -439,7 +446,6 @@ int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
 void	m_align(struct mbuf *, int);
 struct mbuf *m_clget(struct mbuf *, int, u_int);
-void	m_extref(struct mbuf *, struct mbuf *);
 void	m_pool_init(struct pool *, u_int, u_int, const char *);
 void	m_pool_noconstraints(void);
 u_int	m_pool_used(void);
