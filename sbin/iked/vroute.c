@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.20 2024/07/14 13:13:33 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.21 2026/07/03 13:30:57 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -871,16 +871,21 @@ vroute_process(struct iked *env, int msglen, struct vroute_msg *m_rtmsg,
     struct sockaddr *dest, struct sockaddr *mask, struct sockaddr *addr, int *need_gw)
 {
 	struct sockaddr *sa;
-	char *cp;
+	char *cp, *end;
+	size_t salen, salen_round;
 	int i;
 
 #define rtm m_rtmsg->vm_rtm
+	if (msglen < (int)sizeof(rtm)) {
+		warnx("short routing message, returned %d", msglen);
+		return (-1);
+	}
 	if (rtm.rtm_version != RTM_VERSION) {
 		warnx("routing message version %u not understood",
 		    rtm.rtm_version);
 		return (-1);
 	}
-	if (rtm.rtm_msglen > msglen) {
+	if (rtm.rtm_msglen < sizeof(rtm) || rtm.rtm_msglen > msglen) {
 		warnx("message length mismatch, in packet %u, returned %d",
 		    rtm.rtm_msglen, msglen);
 		return (-1);
@@ -891,24 +896,37 @@ vroute_process(struct iked *env, int msglen, struct vroute_msg *m_rtmsg,
 		return (-1);
 	}
 	cp = m_rtmsg->vm_space;
+	end = (char *)m_rtmsg + rtm.rtm_msglen;
 	*need_gw = rtm.rtm_flags & RTF_GATEWAY;
 	if(rtm.rtm_addrs) {
 		for (i = 1; i; i <<= 1) {
-			if (i & rtm.rtm_addrs) {
-				sa = (struct sockaddr *)cp;
-				switch(i) {
-				case RTA_DST:
-					memcpy(dest, cp, sa->sa_len);
-					break;
-				case RTA_NETMASK:
-					memcpy(mask, cp, sa->sa_len);
-					break;
-				case RTA_GATEWAY:
-					memcpy(addr, cp, sa->sa_len);
-					break;
-				}
-				cp += ROUNDUP(sa->sa_len);
+			if ((i & rtm.rtm_addrs) == 0)
+				continue;
+			if ((size_t)(end - cp) < sizeof(*sa)) {
+				warnx("short sockaddr in routing message");
+				return (-1);
 			}
+			sa = (struct sockaddr *)cp;
+			salen = sa->sa_len;
+			salen_round = ROUNDUP(salen);
+			if (salen < sizeof(*sa) ||
+			    salen > sizeof(struct sockaddr_storage) ||
+			    salen_round > (size_t)(end - cp)) {
+				warnx("bad sockaddr length in routing message");
+				return (-1);
+			}
+			switch(i) {
+			case RTA_DST:
+				memcpy(dest, cp, salen);
+				break;
+			case RTA_NETMASK:
+				memcpy(mask, cp, salen);
+				break;
+			case RTA_GATEWAY:
+				memcpy(addr, cp, salen);
+				break;
+			}
+			cp += salen_round;
 		}
 	}
 #undef rtm
