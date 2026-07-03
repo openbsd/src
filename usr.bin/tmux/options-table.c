@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.229 2026/06/29 07:45:09 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.230 2026/07/03 18:14:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1539,6 +1539,9 @@ const struct options_table_entry options_table[] = {
 			 "\"#{pane_title}\""
 			 "#{?#{mouse},"
 				"#[align=right]"
+				"#[range=control|7]["
+					"#{?#{pane_floating_flag},t,f}"
+				"]#[norange]"
 				"#[range=control|8]["
 					"#{?#{window_zoomed_flag},u,z}"
 				"]#[norange]"
