@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.122 2026/06/23 14:40:40 bluhm Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.123 2026/07/03 03:28:23 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -8829,6 +8829,7 @@ mcx_kstat_attach_queues(struct mcx_softc *sc)
 		ks->ks_data = kvs;
 		ks->ks_datalen = nitems(mcx_queue_kstat_tpl) * sizeof(*kvs);
 		ks->ks_read = mcx_kstat_queue_read;
+		kstat_set_wlock(ks, &sc->sc_cmdq_kstat_lk);
 
 		sc->sc_queues[q].q_kstat = ks;
 		kstat_install(ks);
