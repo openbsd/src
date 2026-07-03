@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2140 2026/06/02 09:19:16 claudio Exp 
+ *	OpenBSD: pcidevs,v 1.2141 2026/07/03 03:40:48 jmatthew Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8400,6 +8400,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BCM5752M",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57454,
+	    "BCM57454",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709,
 	    "BCM5709",
 	},
@@ -8882,6 +8886,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57407_SFP,
 	    "BCM57407 SFP",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57452,
+	    "BCM57452",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5727,
