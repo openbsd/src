@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.50 2026/06/30 18:20:28 jan Exp $ */
+/*	$OpenBSD: aldap.c,v 1.51 2026/07/03 11:28:31 jan Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -415,11 +415,9 @@ aldap_parse(struct aldap *ldap)
 		if (EVBUFFER_LENGTH(ldap->buf) > 0) {
 			ober_set_readbuf(&ldap->ber, EVBUFFER_DATA(ldap->buf),
 			    EVBUFFER_LENGTH(ldap->buf));
-			errno = 0;
 			m->msg = ober_read_elements(&ldap->ber, NULL);
-			if (errno != 0 && errno != ECANCELED) {
+			if (m->msg == NULL && errno != ECANCELED)
 				goto parsefail;
-			}
 
 			retry = 1;
 		}
