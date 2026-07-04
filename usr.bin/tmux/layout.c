@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.85 2026/07/03 10:47:32 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.86 2026/07/04 18:54:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1730,7 +1730,7 @@ layout_floating_args_parse(struct cmdq_item *item, struct args *args,
 				ox = 4;
 		}
 		w->last_new_pane_x = ox;
-	} else
+	} else if (args_has(args, 'X'))
 		if (lines != PANE_LINES_NONE)
 			ox += 1;
 	if (oy == INT_MAX) {
@@ -1742,7 +1742,7 @@ layout_floating_args_parse(struct cmdq_item *item, struct args *args,
 				oy = 2;
 		}
 		w->last_new_pane_y = oy;
-	} else
+	} else if (args_has(args, 'Y'))
 		if (lines != PANE_LINES_NONE)
 			oy += 1;
 
