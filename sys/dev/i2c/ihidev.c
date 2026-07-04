@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.45 2026/06/07 16:29:28 deraadt Exp $ */
+/* $OpenBSD: ihidev.c,v 1.46 2026/07/04 16:22:47 kirill Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -76,7 +76,7 @@ int	ihidev_maxrepid(void *buf, int len);
 int	ihidev_print(void *aux, const char *pnp);
 int	ihidev_submatch(struct device *parent, void *cf, void *aux);
 
-#define IHIDEV_QUIRK_RE_POWER_ON	0x1
+#define IHIDEV_QUIRK_RETRY_GET_REPORT	0x1
 
 const struct ihidev_quirks {
 	uint16_t		ihq_vid;
@@ -84,7 +84,7 @@ const struct ihidev_quirks {
 	int			ihq_quirks;
 } ihidev_devs[] = {
 	/* HONOR MagicBook Art 14 Touchpad (QTEC0002) */
-	{ 0x35cc, 0x0104, IHIDEV_QUIRK_RE_POWER_ON },
+	{ 0x35cc, 0x0104, IHIDEV_QUIRK_RETRY_GET_REPORT },
 };
 
 const struct cfattach ihidev_ca = {
@@ -378,6 +378,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		int dataoff = 4;
 		int report_id = rreq->id;
 		int report_len = rreq->len + 2 + 1;
+		int attempt, ntries;
 		int d;
 		uint8_t *tmprep;
 
@@ -413,8 +414,22 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		tmprep = malloc(report_len, M_DEVBUF, M_WAITOK | M_ZERO);
 
 		/* type 3 id 8: 22 00 38 02 23 00 */
-		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, cmdlen, tmprep, report_len, 0);
+		ntries = (sc->sc_quirks & IHIDEV_QUIRK_RETRY_GET_REPORT) ?
+		    5 : 1;
+		for (attempt = 0; attempt < ntries; attempt++) {
+			memset(tmprep, 0, report_len);
+			res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, cmdlen, tmprep, report_len, 0);
+
+			d = tmprep[0] | tmprep[1] << 8;
+			if (res == 0 &&
+			    d == report_len &&
+			    tmprep[2] == rreq->id)
+				break;
+
+			if (attempt + 1 < ntries)
+				ihidev_sleep(sc, 100);
+		}
 
 		d = tmprep[0] | tmprep[1] << 8;
 		if (d != report_len)
@@ -663,23 +678,6 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 		printf("%s: failed fetching HID report\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
-	}
-
-	if (sc->sc_quirks & IHIDEV_QUIRK_RE_POWER_ON) {
-		if (ihidev_poweron(sc))
-			return (1);
-
-		/*
-		 * 7.2.8 states that a device shall not respond back
-		 * after receiving the power on command, and must ensure
-		 * that it transitions to power on state in less than 1
-		 * second. The ihidev_poweron function uses a shorter
-		 * sleep, sufficient for the ON-RESET sequence. Here,
-		 * however, it sleeps for the full second to accommodate
-		 * cold boot scenarios on affected devices.
-		 */
-
-		ihidev_sleep(sc, 1000);
 	}
 
 	return (0);
