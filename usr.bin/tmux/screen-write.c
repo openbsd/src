@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.280 2026/07/01 15:44:13 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.281 2026/07/04 08:34:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1992,7 +1992,7 @@ screen_write_clearscreen(struct screen_write_ctx *ctx, u_int bg)
 
 	screen_write_collect_clear(ctx, 0, sy);
 
-	if (!screen_write_should_draw_lines(ctx, s->cy, sy - s->cy))
+	if (!screen_write_should_draw_lines(ctx, 0, sy))
 		return;
 	if (~ttyctx.flags & TTY_CTX_PANE_OBSCURED) {
 		tty_write(tty_cmd_clearscreen, &ttyctx);
