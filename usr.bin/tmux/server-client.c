@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.484 2026/06/30 22:48:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.485 2026/07/04 22:06:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1197,6 +1197,8 @@ server_client_update_theme_colours(struct client *c)
 	format_defaults(ft, c, NULL, NULL, NULL);
 
 	theme = c->theme;
+	if (theme == THEME_UNKNOWN)
+		theme = colour_totheme(c->tty.bg);
 	if (option == 2)
 		theme = THEME_LIGHT;
 	else if (option == 3)
