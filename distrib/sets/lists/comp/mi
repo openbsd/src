@@ -1,7 +1,6 @@
 ./sys
 ./usr/bin/addr2line
 ./usr/bin/c++filt
-./usr/bin/cpp
 ./usr/bin/ctfdump
 ./usr/bin/flex
 ./usr/bin/flex++

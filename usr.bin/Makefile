@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.170 2025/07/10 14:44:27 job Exp $
+#	$OpenBSD: Makefile,v 1.171 2026/07/05 21:23:53 naddy Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR= apply arch at aucat audioctl awk banner \
 	basename bc bgplg \
 	biff cal calendar cap_mkdb cdio chpass cmp col colrm \
-	column comm compress cpp crontab csplit ctags ctfconv ctfdump \
+	column comm compress crontab csplit ctags ctfconv ctfdump \
 	cu cut cvs \
 	dc deroff diff diff3 dig dirname doas du encrypt env expand false file \
 	find fgen finger fmt fold from fstat ftp gencat getcap \

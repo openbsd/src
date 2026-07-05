@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2026/05/29 11:18:30 robert Exp $
+# $OpenBSD: Makefile,v 1.22 2026/07/05 21:23:53 naddy Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ LINKS=	${BINDIR}/clang ${BINDIR}/clang++ \
 .if ${COMPILER_VERSION:L} == "clang"
 LINKS+=	${BINDIR}/clang ${BINDIR}/cc \
 	${BINDIR}/clang ${BINDIR}/c++ \
-	${BINDIR}/clang ${LIBEXECDIR}/cpp
+	${BINDIR}/clang ${BINDIR}/cpp
 
 maninstall:
 .if !defined(NOMAN)
