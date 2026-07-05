@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1388 2026/07/05 08:24:00 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1389 2026/07/05 10:49:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -89,6 +89,9 @@ struct winlink;
 #endif
 #ifndef TMUX_TERM
 #define TMUX_TERM "screen"
+#endif
+#ifndef TMUX_MOUSE
+#define TMUX_MOUSE 0
 #endif
 
 /* Minimum and maximum layout cell size, NOT including border lines. */

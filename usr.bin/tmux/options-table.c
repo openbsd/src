@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.230 2026/07/03 18:14:45 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.231 2026/07/05 10:49:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -956,7 +956,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "mouse",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_num = 0,
+	  .default_num = TMUX_MOUSE,
 	  .text = "Whether the mouse is recognised and mouse key bindings are "
 		  "executed. "
 		  "Applications inside panes can use the mouse even when 'off'."
