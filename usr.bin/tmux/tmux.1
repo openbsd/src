@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1123 2026/07/05 08:24:00 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1124 2026/07/06 14:29:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2026 $
+.Dd $Mdocdate: July 6 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4574,6 +4574,10 @@ If
 .Fl g
 is given, the global session or window option is set.
 .Pp
+Array options may be set by giving a key in square brackets after the option
+name, for example
+.Ql command-alias[zoom] .
+.Pp
 .Fl F
 expands formats in the option value.
 The
@@ -4685,7 +4689,7 @@ it is replaced with
 .Ar value .
 For example, after:
 .Pp
-.Dl set \-s command\-alias[100] zoom=\[aq]resize\-pane \-Z\[aq]
+.Dl set \-s command\-alias[zoom] zoom=\[aq]resize\-pane \-Z\[aq]
 .Pp
 Using:
 .Pp
@@ -6286,11 +6290,11 @@ or
 .Fl H .
 The following two commands are equivalent:
 .Bd -literal -offset indent.
-set\-hook \-g pane\-mode\-changed[42] \[aq]set \-g status\-left\-style bg=red\[aq]
-set\-option \-g pane\-mode\-changed[42] \[aq]set \-g status\-left\-style bg=red\[aq]
+set\-hook \-g pane\-mode\-changed[style] \[aq]display\-message changed\[aq]
+set\-option \-g pane\-mode\-changed[style] \[aq]display\-message changed\[aq]
 .Ed
 .Pp
-Setting a hook without specifying an array index clears the hook and sets the
+Setting a hook without specifying an array key clears the hook and sets the
 first member of the array.
 .Pp
 A command's after

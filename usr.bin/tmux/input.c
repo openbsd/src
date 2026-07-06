@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.263 2026/06/29 18:17:28 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.264 2026/07/06 14:29:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2781,7 +2781,7 @@ input_exit_rename(struct input_ctx *ictx)
 	if (ictx->input_len == 0) {
 		o = options_get_only(w->options, "automatic-rename");
 		if (o != NULL)
-			options_remove_or_default(o, -1, NULL);
+			options_remove_or_default(o, NULL, NULL);
 		if (!options_get_number(w->options, "automatic-rename"))
 			window_set_name(w, "", 1);
 	} else {
