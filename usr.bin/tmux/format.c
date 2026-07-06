@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.400 2026/07/06 14:29:10 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.401 2026/07/06 14:40:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5103,6 +5103,7 @@ format_loop_add_option(struct format_expand_state *es, const char *fmt,
 	free(s);
 
 	format_add(nft, "option_is_array", "%d", is_array);
+	format_add(nft, "option_array_key", "%s", "");
 	format_add(nft, "option_array_index", "%s", "");
 	format_add(nft, "option_array_first", "%d", is_array);
 	format_add(nft, "option_array_last", "%d", is_array);
@@ -5153,6 +5154,7 @@ format_loop_add_array_item(struct format_expand_state *es, const char *fmt,
 	free(s);
 
 	format_add(nft, "option_is_array", "1");
+	format_add(nft, "option_array_key", "%s", array_key);
 	format_add(nft, "option_array_index", "%s", array_key);
 	if (a == options_array_first(o))
 		format_add(nft, "option_array_first", "1");

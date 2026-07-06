@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.29 2026/07/06 14:29:10 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.30 2026/07/06 14:40:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -712,7 +712,7 @@ window_customize_draw_option(struct window_customize_modedata *data,
 		if (array_key != NULL) {
 			if (!screen_write_text(ctx, cx, sx, sy - (s->cy - cy),
 			    0, &grid_default_cell,
-			    "This is an array option, index %s.", array_key))
+			    "This is an array option, key %s.", array_key))
 				goto out;
 		} else {
 			if (!screen_write_text(ctx, cx, sx, sy - (s->cy - cy),
@@ -896,6 +896,8 @@ static const char* window_customize_help_lines[] = {
 	"          u #[#{E:tree-mode-border-style},acs]x#[default] Unset an %1",
 	"#[fg=themelightgrey]"
 	"          U #[#{E:tree-mode-border-style},acs]x#[default] Unset tagged %1s",
+	"#[fg=themelightgrey]"
+	"          a #[#{E:tree-mode-border-style},acs]x#[default] Change array key",
 	"#[fg=themelightgrey]"
 	"          f #[#{E:tree-mode-border-style},acs]x#[default] Enter a filter",
 	"#[fg=themelightgrey]"
@@ -1178,6 +1180,84 @@ window_customize_set_option(struct client *c,
 		free(prompt);
 		free(value);
 	}
+}
+
+static enum prompt_result
+window_customize_set_array_key_callback(struct client *c, void *itemdata,
+    const char *s, __unused enum prompt_key_result key)
+{
+	struct window_customize_itemdata	*item = itemdata;
+	struct window_customize_modedata	*data;
+	struct options_entry			*o;
+	const char				*name, *array_key;
+	char					*value, *cause;
+
+	if (item == NULL)
+		return (PROMPT_CLOSE);
+	data = item->data;
+	if (s == NULL || *s == '\0' || data->dead)
+		return (PROMPT_CLOSE);
+	name = item->name;
+	array_key = item->array_key;
+	if (array_key == NULL || !window_customize_check_item(data, item, NULL))
+		return (PROMPT_CLOSE);
+
+	o = options_get(item->oo, name);
+	if (o == NULL)
+		return (PROMPT_CLOSE);
+	if (options_array_get(o, s) != NULL)
+		return (PROMPT_CLOSE);
+
+	value = options_to_string(o, array_key, 0);
+	if (options_array_set(o, s, value, 0, &cause) != 0)
+		goto fail;
+	free(value);
+
+	options_array_set(o, array_key, NULL, 0, NULL);
+	options_push_changes(item->name);
+	mode_tree_build(data->data);
+	mode_tree_draw(data->data);
+	data->wp->flags |= PANE_REDRAW;
+
+	return (PROMPT_CLOSE);
+
+fail:
+	free(value);
+	*cause = toupper((u_char)*cause);
+	status_message_set(c, -1, 1, 0, 0, "%s", cause);
+	free(cause);
+	return (PROMPT_CLOSE);
+}
+
+static void
+window_customize_set_array_key(struct client *c,
+    struct window_customize_modedata *data,
+    struct window_customize_itemdata *item)
+{
+	struct window_customize_itemdata	*new_item;
+	char				*prompt;
+
+	if (item == NULL ||
+	    item->array_key == NULL ||
+	    !window_customize_check_item(data, item, NULL))
+		return;
+
+	xasprintf(&prompt, "(%s[%s]) ", item->name, item->array_key);
+
+	new_item = xcalloc(1, sizeof *new_item);
+	new_item->data = data;
+	new_item->scope = item->scope;
+	new_item->oo = item->oo;
+	new_item->name = xstrdup(item->name);
+	new_item->array_key = xstrdup(item->array_key);
+
+	data->references++;
+	mode_tree_set_prompt(data->data, c, prompt, item->array_key,
+	    PROMPT_TYPE_COMMAND, PROMPT_NOFORMAT,
+	    window_customize_set_array_key_callback,
+	    window_customize_free_item_callback, new_item);
+
+	free(prompt);
 }
 
 static void
@@ -1470,6 +1550,11 @@ window_customize_key(struct window_mode_entry *wme, struct client *c,
 		item = new_item;
 
 	switch (key) {
+	case 'a':
+		if (item == NULL || item->scope == WINDOW_CUSTOMIZE_KEY)
+			break;
+		window_customize_set_array_key(c, data, item);
+		break;
 	case '\r':
 	case 's':
 		if (item == NULL)

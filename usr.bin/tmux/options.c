@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.87 2026/07/06 14:29:10 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.88 2026/07/06 14:40:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -539,7 +539,7 @@ options_array_set(struct options_entry *o, const char *key, const char *value,
 	new_key = options_array_correct_key(key);
 	if (new_key == NULL) {
 		if (cause != NULL)
-			xasprintf(cause, "bad array index: %s", key);
+			xasprintf(cause, "bad array key: %s", key);
 		return (-1);
 	}
 

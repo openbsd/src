@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.143 2026/07/06 14:29:10 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.144 2026/07/06 14:40:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -202,7 +202,7 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	/* Parse option name and index. */
+	/* Parse option name and array key. */
 	name = options_match(argument, &array_key, &ambiguous);
 	if (name == NULL) {
 		if (args_has(args, 'q'))
@@ -235,7 +235,7 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	o = options_get_only(oo, name);
 	parent = options_get(oo, name);
 
-	/* Check that array options and indexes match up. */
+	/* Check that array options and keys match up. */
 	if (array_key != NULL && (*name == '@' || !options_is_array(parent))) {
 		cmdq_error(item, "not an array: %s", argument);
 		goto fail;
