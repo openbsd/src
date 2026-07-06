@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.88 2026/07/06 14:40:57 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.89 2026/07/06 21:44:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -667,7 +667,7 @@ options_array_first(struct options_entry *o)
 struct options_array_item *
 options_array_next(struct options_array_item *a)
 {
-	return (RB_NEXT(options_array, &o->value.array, a));
+	return (RB_NEXT(options_array, , a));
 }
 
 const char *
