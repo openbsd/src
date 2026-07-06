@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.3 2026/07/06 11:17:28 nicm Exp $ */
+/* $OpenBSD: monitor.c,v 1.4 2026/07/06 12:10:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -100,7 +100,7 @@ monitor_create_formats(struct client *c, struct session *s, struct winlink *wl,
 {
 	struct format_tree	*ft;
 
-	ft = format_create(NULL, NULL, FORMAT_NOJOBS, 0);
+	ft = format_create(NULL, NULL, 0, FORMAT_NOJOBS);
 	format_defaults(ft, c, s, wl, wp);
 	return (ft);
 }
