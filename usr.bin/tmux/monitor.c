@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.2 2026/07/05 08:24:00 nicm Exp $ */
+/* $OpenBSD: monitor.c,v 1.3 2026/07/06 11:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,6 +91,18 @@ monitor_get_session(struct monitor_set *ms)
 	if (session_find_by_id(s->id) != s)
 		return (NULL);
 	return (s);
+}
+
+/* Create a format tree for a subscription. */
+static struct format_tree *
+monitor_create_formats(struct client *c, struct session *s, struct winlink *wl,
+    struct window_pane *wp)
+{
+	struct format_tree	*ft;
+
+	ft = format_create(NULL, NULL, FORMAT_NOJOBS, 0);
+	format_defaults(ft, c, s, wl, wp);
+	return (ft);
 }
 
 /* Compare subscriptions. */
@@ -236,7 +248,7 @@ monitor_check_pane(struct monitor_set *ms, struct monitor_item *me)
 		if (wl->session != s)
 			continue;
 
-		ft = format_create_defaults(NULL, c, s, wl, wp);
+		ft = monitor_create_formats(c, s, wl, wp);
 		value = format_expand(ft, me->format);
 		format_free(ft);
 
@@ -314,7 +326,7 @@ monitor_check_window(struct monitor_set *ms, struct monitor_item *me)
 		if (wl->session != s)
 			continue;
 
-		ft = format_create_defaults(NULL, c, s, wl, NULL);
+		ft = monitor_create_formats(c, s, wl, NULL);
 		value = format_expand(ft, me->format);
 		format_free(ft);
 
@@ -382,7 +394,7 @@ monitor_check_sessions(struct monitor_set *ms)
 	struct monitor_item	*me, *me1;
 	struct format_tree	*ft;
 
-	ft = format_create_defaults(NULL, c, s, NULL, NULL);
+	ft = monitor_create_formats(c, s, NULL, NULL);
 	RB_FOREACH_SAFE(me, monitor_items, &ms->items, me1) {
 		if (me->type == MONITOR_SESSION)
 			monitor_check_session(ms, me, ft);
@@ -427,7 +439,7 @@ monitor_check_all_panes(struct monitor_set *ms)
 		ms->generation = 1;
 	RB_FOREACH(wl, winlinks, &s->windows) {
 		TAILQ_FOREACH(wp, &wl->window->panes, entry) {
-			ft = format_create_defaults(NULL, c, s, wl, wp);
+			ft = monitor_create_formats(c, s, wl, wp);
 			RB_FOREACH_SAFE(me, monitor_items, &ms->items, me1) {
 				if (me->type != MONITOR_ALL_PANES)
 					continue;
@@ -455,7 +467,7 @@ monitor_check_all_windows(struct monitor_set *ms)
 	if (++ms->generation == 0)
 		ms->generation = 1;
 	RB_FOREACH(wl, winlinks, &s->windows) {
-		ft = format_create_defaults(NULL, c, s, wl, NULL);
+		ft = monitor_create_formats(c, s, wl, NULL);
 		RB_FOREACH_SAFE(me, monitor_items, &ms->items, me1) {
 			if (me->type != MONITOR_ALL_WINDOWS)
 				continue;
