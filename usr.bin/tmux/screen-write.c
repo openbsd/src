@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.281 2026/07/04 08:34:16 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.282 2026/07/06 15:41:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2314,6 +2314,10 @@ screen_write_collect_flush(struct screen_write_ctx *ctx, int scroll_only,
 	if (wp != NULL && (wp->flags & (PANE_REDRAW|PANE_DROP)))
 		goto discard;
 	if (s->mode & MODE_SYNC) {
+		if (ctx->scrolled != 0) {
+			screen_write_should_draw_lines(ctx, s->rupper,
+			    s->rlower + 1 - s->rupper);
+		}
 		for (y = 0; y < screen_size_y(s); y++) {
 			cl = &s->write_list[y];
 			if (!TAILQ_EMPTY(&cl->items))
