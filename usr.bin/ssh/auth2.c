@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2.c,v 1.173 2026/03/03 09:57:25 dtucker Exp $ */
+/* $OpenBSD: auth2.c,v 1.174 2026/07/06 07:44:48 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -255,6 +255,12 @@ ensure_minimum_time_since(double start, double seconds)
 	nanosleep(&ts, NULL);
 }
 
+void
+auth_failure_delay(Authctxt *authctxt, double tstart)
+{
+	ensure_minimum_time_since(tstart, user_specific_delay(authctxt->user));
+}
+
 static int
 input_userauth_request(int type, uint32_t seq, struct ssh *ssh)
 {
@@ -329,8 +335,8 @@ input_userauth_request(int type, uint32_t seq, struct ssh *ssh)
 		authenticated =	m->userauth(ssh, method);
 	}
 	if (!authctxt->authenticated && strcmp(method, "none") != 0)
-		ensure_minimum_time_since(tstart,
-		    user_specific_delay(authctxt->user));
+		auth_failure_delay(authctxt, tstart);
+
 	userauth_finish(ssh, authenticated, method, NULL);
 	r = 0;
  out:
