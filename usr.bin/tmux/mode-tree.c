@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.98 2026/07/05 10:28:02 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.99 2026/07/06 12:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -834,6 +834,11 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	if (mtd->line_size == 0)
 		return;
 
+	w = mtd->width;
+	h = mtd->height;
+	if (w == 0 || h == 0)
+		return;
+
 	memcpy(&gc0, &grid_default_cell, sizeof gc0);
 	memcpy(&gc, &grid_default_cell, sizeof gc);
 	style_apply(&gc, oo, "tree-mode-selection-style", NULL);
@@ -842,9 +847,6 @@ mode_tree_draw(struct mode_tree_data *mtd)
 
 	dfg = gc.fg;
 	dfg0 = gc0.fg;
-
-	w = mtd->width;
-	h = mtd->height;
 
 	screen_write_start(&ctx, s);
 	screen_write_clearscreen(&ctx, 8);
