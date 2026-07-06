@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.88 2026/07/06 07:57:45 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.89 2026/07/06 11:28:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -461,7 +461,8 @@ layout_fix_panes(struct window *w, struct window_pane *skip)
 		    layout_add_horizontal_border(w, lc, status)) {
 			if (status == PANE_STATUS_TOP)
 				wp->yoff++;
-			sy--;
+			if (sy > 1)
+				sy--;
 		}
 
 		if (window_pane_scrollbar_reserve(wp)) {
