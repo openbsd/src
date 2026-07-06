@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.86 2026/07/04 18:54:18 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.87 2026/07/06 07:55:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -580,6 +580,7 @@ layout_resize_adjust(struct window *w, struct layout_cell *lc,
     enum layout_type type, int change)
 {
 	struct layout_cell	*lcchild;
+	int			 changed;
 
 	/* Adjust the cell size. */
 	if (type == LAYOUT_LEFTRIGHT)
@@ -613,6 +614,7 @@ layout_resize_adjust(struct window *w, struct layout_cell *lc,
 	 * until no further change is possible.
 	 */
 	while (change != 0) {
+		changed = 0;
 		TAILQ_FOREACH(lcchild, &lc->cells, entry) {
 			if (change == 0)
 				break;
@@ -622,13 +624,17 @@ layout_resize_adjust(struct window *w, struct layout_cell *lc,
 			if (change > 0) {
 				layout_resize_adjust(w, lcchild, type, 1);
 				change--;
+				changed = 1;
 				continue;
 			}
 			if (layout_resize_check(w, lcchild, type) > 0) {
 				layout_resize_adjust(w, lcchild, type, -1);
 				change++;
+				changed = 1;
 			}
 		}
+		if (!changed)
+			break;
 	}
 }
 
