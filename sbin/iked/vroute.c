@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.21 2026/07/03 13:30:57 hshoexer Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.22 2026/07/06 12:48:11 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -239,7 +239,7 @@ vroute_setaddr(struct iked *env, int add, struct sockaddr *addr,
 
 	switch(addr->sa_family) {
 	case AF_INET:
-		bzero(&mask, sizeof(mask));
+		bzero(&mask4, sizeof(mask4));
 		mask4.sin_addr.s_addr = prefixlen2mask(mask ? mask : 32);
 		mask4.sin_family = AF_INET;
 		mask4.sin_len = sizeof(mask4);
