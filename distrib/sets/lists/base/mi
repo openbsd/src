@@ -765,7 +765,7 @@
 ./usr/lib/libcurses.so.16.0
 ./usr/lib/libedit.so.7.0
 ./usr/lib/libelf.so.3.0
-./usr/lib/libevent.so.4.1
+./usr/lib/libevent.so.5.0
 ./usr/lib/libexecinfo.so.4.0
 ./usr/lib/libexpat.so.17.1
 ./usr/lib/libfido2.so.8.0
