@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.40 2026/07/07 13:48:44 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.41 2026/07/07 14:24:22 claudio Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1469,7 +1469,7 @@ parse_routerkeys(const char *fn, struct ccr *ccr, uint32_t asid,
 	prev = NULL;
 	for (i = 0; i < rk_num; i++) {
 		unsigned char *der;
-		size_t der_len;
+		int der_len;
 
 		if ((brk = calloc(1, sizeof(*brk))) == NULL)
 			err(1, NULL);
