@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.34 2025/12/18 16:05:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.35 2026/07/07 17:32:56 kettenis Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ vaddr_t		uvm_pagermapin(struct vm_page **, int, int);
 void		uvm_pagermapout(vaddr_t, int);
 struct vm_page **uvm_mk_pcluster(struct uvm_object *, struct vm_page **,
 		    int *, struct vm_page *, int, voff_t, voff_t);
+int		uvm_pseg_reserve_available(void);
 
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */

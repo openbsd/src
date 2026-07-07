@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.97 2026/03/14 11:05:21 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.98 2026/07/07 17:32:56 kettenis Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -121,6 +121,24 @@ uvm_pseg_init(struct uvm_pseg *pseg)
 	    &kv_any, &kp_none, &kd_trylock);
 }
 
+int
+uvm_pseg_reserve_available(void)
+{
+	int count = 0;
+	int i, j;
+
+	KASSERT(curproc == uvm.pagedaemon_proc);
+
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 2; j++) {
+			if (!UVM_PSEG_INUSE(&psegs[i], j))
+				count++;
+		}
+	}
+
+	return count;
+}
+
 /*
  * Acquire a pager map segment.
  *
@@ -131,8 +149,8 @@ uvm_pseg_init(struct uvm_pseg *pseg)
 vaddr_t
 uvm_pseg_get(int flags)
 {
-	int i;
 	struct uvm_pseg *pseg;
+	int i, use_reserve = 0;
 
 	mtx_enter(&uvm_pseg_lck);
 
@@ -150,8 +168,7 @@ pager_seg_restart:
 		}
 
 		/* Keep indexes 0,1 reserved for pagedaemon. */
-		if ((pseg == &psegs[0] || pseg == &psegs[1]) &&
-		    (curproc != uvm.pagedaemon_proc))
+		if ((pseg == &psegs[0] || pseg == &psegs[1]) && !use_reserve)
 			i = 2;
 		else
 			i = 0;
@@ -163,6 +180,15 @@ pager_seg_restart:
 				return pseg->start + i * MAXBSIZE;
 			}
 		}
+	}
+
+	/*
+	 * Let the pagdeamon dig into its reserve if we couldn't get a
+	 * "normal" slot.
+	 */
+	if (curproc == uvm.pagedaemon_proc && !use_reserve) {
+		use_reserve = 1;
+		goto pager_seg_restart;
 	}
 
 pager_seg_fail:

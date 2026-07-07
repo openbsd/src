@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.158 2026/05/25 20:29:27 kirill Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.159 2026/07/07 17:32:56 kettenis Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -715,10 +715,12 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		}
 
 		/*
-		 * If no swap encrypt buffers left, leave the page on the
-		 * inactive list for future processing
+		 * If no swap encrypt buffers left, leave the page on
+		 * the inactive list for future processing.  Same if
+		 * we can't guarantee that we can map both the
+		 * encrypted and unencrypted buffers.
 		 */
-		if (seb_free == 0) {
+		if (seb_free == 0 || uvm_pseg_reserve_available() < 2) {
 			rw_exit(slock);
 			atomic_inc_int(&uvmexp.swpskip);
 			continue;
