@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.52 2025/12/06 13:18:07 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.53 2026/07/07 18:26:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -141,8 +141,7 @@
 #define AMLOP_BREAKPOINT	0xCC
 #define AMLOP_ONES		0xFF
 
-#define AMLOP_FIELDUNIT		0xFE00
-#define AML_ANYINT		0xFF00
+#define AMLOP_INVALID		-1
 
 /*
  * Comparison types for Match()

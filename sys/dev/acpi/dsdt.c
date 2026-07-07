@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.279 2026/02/10 01:03:33 jsg Exp $ */
+/* $OpenBSD: dsdt.c,v 1.280 2026/07/07 18:26:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1294,8 +1294,11 @@ int	aml_parseopcode(struct aml_scope *);
 int
 aml_parseopcode(struct aml_scope *scope)
 {
-	int opcode = (scope->pos[0]);
-	int twocode = (scope->pos[0]<<8) + scope->pos[1];
+	int opcode, twocode;
+
+	if (scope->pos >= scope->end)
+		return AMLOP_INVALID;
+	opcode = scope->pos[0];
 
 	/* Check if this is an embedded name */
 	switch (opcode) {
@@ -1308,13 +1311,32 @@ aml_parseopcode(struct aml_scope *scope)
 	}
 	if (opcode >= 'A' && opcode <= 'Z')
 		return AMLOP_NAMECHAR;
-	if (twocode == AMLOP_LNOTEQUAL || twocode == AMLOP_LLESSEQUAL ||
-	    twocode == AMLOP_LGREATEREQUAL || opcode == AMLOP_EXTPREFIX) {
-		scope->pos += 2;
-		return twocode;
+
+	/*
+	 * Treat AMLOP_LNOT special.  It might be a single-byte
+	 * opcode, but it can also be the start of a dual-byte opcode.
+	 * Since AMLOP_LNOT has fixed-list arguments, it needs to be
+	 * followed by at least some additonal bytes.  So we can
+	 * safely handle it together with the other dual-byte opcodes.
+	 */
+	if (opcode != AMLOP_LNOT && opcode != AMLOP_EXTPREFIX) {
+		scope->pos += 1;
+		return opcode;
 	}
-	scope->pos += 1;
-	return opcode;
+
+	if (scope->pos + 1 >= scope->end)
+		return AMLOP_INVALID;
+	twocode = (scope->pos[0] << 8) + scope->pos[1];
+
+	/* Check for single-byte AMLOP_LNOT. */
+	if (opcode == AMLOP_LNOT && twocode != AMLOP_LNOTEQUAL &&
+	    twocode != AMLOP_LLESSEQUAL && twocode != AMLOP_LGREATEREQUAL) {
+		scope->pos += 1;
+		return opcode;
+	}
+
+	scope->pos += 2;
+	return twocode;
 }
 
 /* Decode embedded AML Namestring */
