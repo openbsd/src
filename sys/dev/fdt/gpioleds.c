@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioleds.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: gpioleds.c,v 1.5 2026/07/07 12:12:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -32,7 +32,9 @@
 
 struct gpioleds_softc {
 	struct device	 sc_dev;
-	int		 sc_node;
+
+	struct blink_led sc_blink;
+	uint32_t	 *sc_blink_gpios;
 };
 
 int	gpioleds_match(struct device *, void *, void *);
@@ -46,6 +48,8 @@ struct cfdriver gpioleds_cd = {
 	NULL, "gpioleds", DV_DULL
 };
 
+void	gpioleds_blink(void *, int);
+
 int
 gpioleds_match(struct device *parent, void *match, void *aux)
 {
@@ -57,11 +61,13 @@ gpioleds_match(struct device *parent, void *match, void *aux)
 void
 gpioleds_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct gpioleds_softc	*sc = (struct gpioleds_softc *)self;
 	struct fdt_attach_args	*faa = aux;
 	uint32_t		*led_pin;
-	char			*function, *default_state;
+	char			*function, *default_state, *trigger;
 	char			*function_prop = "function";
 	int			 function_len, default_state_len, gpios_len;
+	int			 trigger_len;
 	int			 node, leds = 0;
 
 	pinctrl_byname(faa->fa_node, "default");
@@ -74,6 +80,7 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 			if (function_len <= 0)
 				continue;
 		}
+
 		default_state_len = OF_getproplen(node, "default-state");
 		if (default_state_len <= 0)
 			continue;
@@ -85,7 +92,7 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 		OF_getprop(node, function_prop, function, function_len);
 		default_state = malloc(default_state_len, M_TEMP, M_WAITOK);
 		OF_getprop(node, "default-state", default_state, default_state_len);
-		led_pin = malloc(gpios_len, M_TEMP, M_WAITOK);
+		led_pin = malloc(gpios_len, M_DEVBUF, M_WAITOK);
 		OF_getpropintarray(node, "gpios", led_pin, gpios_len);
 		gpio_controller_config_pin(led_pin, GPIO_CONFIG_OUTPUT);
 		if (strcmp(default_state, "on") == 0)
@@ -94,12 +101,37 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 			gpio_controller_set_pin(led_pin, 0);
 
 		printf("%s \"%s\"", leds++ ? "," : ":", function);
+
+		trigger_len = OF_getproplen(node, "linux,default-trigger");
+		if (trigger_len > 0) {
+			trigger = malloc(function_len, M_TEMP, M_WAITOK);
+			OF_getprop(node, "linux,default-trigger", trigger,
+			    trigger_len);
+			if (strcmp(trigger, "heartbeat") == 0 &&
+			    sc->sc_blink.bl_func == NULL) {
+				printf(" (trigger)");
+				sc->sc_blink.bl_func = gpioleds_blink;
+				sc->sc_blink.bl_arg = led_pin;
+				blink_led_register(&sc->sc_blink);
+				led_pin = NULL;
+			}
+		}
+
 		free(function, M_TEMP, function_len);
 		free(default_state, M_TEMP, default_state_len);
-		free(led_pin, M_TEMP, gpios_len);
+		free(led_pin, M_DEVBUF, gpios_len);
+		free(trigger, M_TEMP, trigger_len);
 	}
 
 	if (leds == 0)
 		printf(": no LEDs");
 	printf("\n");
+}
+
+void
+gpioleds_blink(void *arg, int on)
+{
+	uint32_t *led_pin = arg;
+
+	gpio_controller_set_pin(led_pin, on);
 }
