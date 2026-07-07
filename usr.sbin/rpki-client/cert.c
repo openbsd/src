@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.241 2026/06/22 21:25:44 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.242 2026/07/07 20:40:20 claudio Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -843,7 +843,7 @@ cert_ca_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 			if (strncasecmp(notify, HTTPS_PROTO,
 			    HTTPS_PROTO_LEN) != 0) {
 				warnx("%s: non-https uri in rpkiNotify: %s",
-				    fn, cert->notify);
+				    fn, notify);
 				free(notify);
 				goto out;
 			}
