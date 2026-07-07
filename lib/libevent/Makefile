@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.43 2016/03/30 06:38:42 jmc Exp $
+#	$OpenBSD: Makefile,v 1.44 2026/07/07 15:38:39 bluhm Exp $
 
 .include <bsd.own.mk>
 
 LIB=	event
-SRCS=	buffer.c evbuffer.c event.c event_tagging.c evutil.c kqueue.c \
+SRCS=	buffer.c evbuffer.c event.c evutil.c kqueue.c \
 	log.c poll.c select.c signal.c
 HDRS=	event.h evutil.h
 MAN=	event.3 evbuffer_new.3

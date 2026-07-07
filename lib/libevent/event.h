@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.31 2019/04/29 17:11:51 tobias Exp $	*/
+/*	$OpenBSD: event.h,v 1.32 2026/07/07 15:38:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -1155,57 +1155,6 @@ u_char *evbuffer_find(struct evbuffer *, const u_char *, size_t);
   @param cbarg an argument to be provided to the callback function
  */
 void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
-
-/*
- * Marshaling tagged data - We assume that all tags are inserted in their
- * numeric order - so that unknown tags will always be higher than the
- * known ones - and we can just ignore the end of an event buffer.
- */
-
-void evtag_init(void);
-
-void evtag_marshal(struct evbuffer *evbuf, ev_uint32_t tag, const void *data,
-    ev_uint32_t len);
-
-/**
-  Encode an integer and store it in an evbuffer.
-
-  We encode integer's by nibbles; the first nibble contains the number
-  of significant nibbles - 1;  this allows us to encode up to 64-bit
-  integers.  This function is byte-order independent.
-
-  @param evbuf evbuffer to store the encoded number
-  @param number a 32-bit integer
- */
-void encode_int(struct evbuffer *evbuf, ev_uint32_t number);
-
-void evtag_marshal_int(struct evbuffer *evbuf, ev_uint32_t tag,
-    ev_uint32_t integer);
-
-void evtag_marshal_string(struct evbuffer *buf, ev_uint32_t tag,
-    const char *string);
-
-void evtag_marshal_timeval(struct evbuffer *evbuf, ev_uint32_t tag,
-    struct timeval *tv);
-
-int evtag_unmarshal(struct evbuffer *src, ev_uint32_t *ptag,
-    struct evbuffer *dst);
-int evtag_peek(struct evbuffer *evbuf, ev_uint32_t *ptag);
-int evtag_peek_length(struct evbuffer *evbuf, ev_uint32_t *plength);
-int evtag_payload_length(struct evbuffer *evbuf, ev_uint32_t *plength);
-int evtag_consume(struct evbuffer *evbuf);
-
-int evtag_unmarshal_int(struct evbuffer *evbuf, ev_uint32_t need_tag,
-    ev_uint32_t *pinteger);
-
-int evtag_unmarshal_fixed(struct evbuffer *src, ev_uint32_t need_tag,
-    void *data, size_t len);
-
-int evtag_unmarshal_string(struct evbuffer *evbuf, ev_uint32_t need_tag,
-    char **pstring);
-
-int evtag_unmarshal_timeval(struct evbuffer *evbuf, ev_uint32_t need_tag,
-    struct timeval *ptv);
 
 #define _EVENT_VERSION "1.4.15-stable"
 
