@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.39 2026/06/13 19:16:14 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.40 2026/07/07 13:48:44 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1106,7 +1106,7 @@ parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
 }
 
 static int
-parse_roa_addresses(const char *fn, struct ccr *ccr, int asid, enum afi afi,
+parse_roa_addresses(const char *fn, struct ccr *ccr, uint32_t asid, enum afi afi,
     const STACK_OF(ROAIPAddress) *addrs)
 {
 	const ROAIPAddress *r;
@@ -1174,7 +1174,7 @@ parse_roa_addresses(const char *fn, struct ccr *ccr, int asid, enum afi afi,
 }
 
 static int
-parse_roa_ipaddrb(const char *fn, struct ccr *ccr, int asid,
+parse_roa_ipaddrb(const char *fn, struct ccr *ccr, uint32_t asid,
     const STACK_OF(ROAIPAddressFamily) *ipaddrblocks)
 {
 	const ROAIPAddressFamily *ripaf;
@@ -1184,7 +1184,7 @@ parse_roa_ipaddrb(const char *fn, struct ccr *ccr, int asid,
 
 	ipb_num = sk_ROAIPAddressFamily_num(ipaddrblocks);
 	if (ipb_num != 1 && ipb_num != 2) {
-		warnx("%s: unexpected ipAddrBlocks count for AS %d", fn, asid);
+		warnx("%s: unexpected ipAddrBlocks count for AS %u", fn, asid);
 		goto out;
 	}
 
@@ -1192,7 +1192,7 @@ parse_roa_ipaddrb(const char *fn, struct ccr *ccr, int asid,
 		ripaf = sk_ROAIPAddressFamily_value(ipaddrblocks, i);
 
 		if (!ip_addr_afi_parse(fn, ripaf->addressFamily, &afi)) {
-			warnx("%s: invalid afi for AS %d", fn, asid);
+			warnx("%s: invalid afi for AS %u", fn, asid);
 			goto out;
 		}
 
@@ -1200,19 +1200,19 @@ parse_roa_ipaddrb(const char *fn, struct ccr *ccr, int asid,
 		case AFI_IPV4:
 			if (ipv6_seen > 0) {
 				warnx("%s: misordered IPv4 addressFamily for AS"
-				    " %d", fn, asid);
+				    " %u", fn, asid);
 				goto out;
 			}
 			if (ipv4_seen++ > 0) {
 				warnx("%s: IPv4 addressFamily duplicate for AS"
-				    " %d", fn, asid);
+				    " %u", fn, asid);
 				goto out;
 			}
 			break;
 		case AFI_IPV6:
 			if (ipv6_seen++ > 0) {
 				warnx("%s: IPv6 addressFamily duplicate for AS"
-				    " %d", fn, asid);
+				    " %u", fn, asid);
 				goto out;
 			}
 			break;
@@ -1239,7 +1239,7 @@ parse_roa_payloads(const char *fn, struct ccr *ccr,
 	RB_INIT(&ccr->vrps);
 
 	for (i = 0; i < rps_num; i++) {
-		int asid;
+		uint32_t asid;
 
 		rp = sk_ROAPayloadSet_value(rps, i);
 
@@ -1285,7 +1285,7 @@ parse_aspa_providers(const char *fn, struct ccr *ccr, int asid,
 	int i, p_num, rc = 0;
 
 	if ((p_num = sk_ASN1_INTEGER_num(providers)) <= 0) {
-		warnx("%s: AS %d ASPAPayloadSet providers missing", fn, asid);
+		warnx("%s: AS %u ASPAPayloadSet providers missing", fn, asid);
 		goto out;
 	}
 
@@ -1302,13 +1302,13 @@ parse_aspa_providers(const char *fn, struct ccr *ccr, int asid,
 		aint = sk_ASN1_INTEGER_value(providers, i);
 
 		if (!as_id_parse(aint, &provider)) {
-			warnx("%s: AS %d malformed ASPA provider", fn, asid);
+			warnx("%s: AS %u malformed ASPA provider", fn, asid);
 			goto out;
 		}
 
 		if (i > 0) {
 			if (provider <= prev) {
-				warnx("%s: AS %d misordered providers", fn,
+				warnx("%s: AS %u misordered providers", fn,
 				    asid);
 				goto out;
 			}
@@ -1479,7 +1479,7 @@ parse_routerkeys(const char *fn, struct ccr *ccr, uint32_t asid,
 		rk = sk_RouterKey_value(routerkeys, i);
 
 		if (ASN1_STRING_length(rk->ski) != SHA_DIGEST_LENGTH) {
-			warnx("%s: AS%d RouterKey SKI corrupted", fn, asid);
+			warnx("%s: AS %u RouterKey SKI corrupted", fn, asid);
 			goto out;
 		}
 
@@ -1487,7 +1487,7 @@ parse_routerkeys(const char *fn, struct ccr *ccr, uint32_t asid,
 
 		der = NULL;
 		if ((der_len = i2d_X509_PUBKEY(rk->spki, &der)) <= 0) {
-			warnx("%s: AS%d RouterKey SPKI corrupted", fn, asid);
+			warnx("%s: AS %u RouterKey SPKI corrupted", fn, asid);
 			goto out;
 		}
 
@@ -1539,7 +1539,7 @@ parse_rksets(const char *fn, struct ccr *ccr, STACK_OF(RouterKeySet) *rksets)
 
 		if (i > 0) {
 			if (asid <= prev) {
-				warnx("%s: AS %d misordered routerkeyset", fn,
+				warnx("%s: AS %u misordered routerkeyset", fn,
 				    asid);
 				goto out;
 			}
