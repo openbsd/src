@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.60 2026/06/24 09:06:20 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.61 2026/07/07 13:38:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -103,12 +103,12 @@ print_vap(struct vap *v)
 		return;
 
 	json_do_object("aspa", 1);
-	json_do_int("customer_asid", v->custasid);
+	json_do_uint("customer_asid", v->custasid);
 	json_do_int("expires", v->expires);
 
 	json_do_array("providers");
 	for (i = 0; i < v->num_providers; i++)
-		json_do_int("provider", v->providers[i]);
+		json_do_uint("provider", v->providers[i]);
 
 	json_do_end();
 }
@@ -134,7 +134,7 @@ output_spl(struct vsp_tree *vsps)
 	json_do_array("signedprefixlists");
 	RB_FOREACH(vsp, vsp_tree, vsps) {
 		json_do_object("vsp", 1);
-		json_do_int("origin_as", vsp->asid);
+		json_do_uint("origin_as", vsp->asid);
 		json_do_array("prefixes");
 		for (i = 0; i < vsp->num_prefixes; i++) {
 			ip_addr_print(&vsp->prefixes[i].prefix,
@@ -165,7 +165,7 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 
 		json_do_object("roa", 1);
-		json_do_int("asn", v->asid);
+		json_do_uint("asn", v->asid);
 		json_do_string("prefix", buf);
 		json_do_int("maxLength", v->maxlength);
 		json_do_string("ta", taldescs[v->talid]);
@@ -177,7 +177,7 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 	json_do_array("bgpsec_keys");
 	RB_FOREACH(b, brk_tree, &vd->brks) {
 		json_do_object("brks", 0);
-		json_do_int("asn", b->asid);
+		json_do_uint("asn", b->asid);
 		json_do_string("ski", b->ski);
 		json_do_string("pubkey", b->pubkey);
 		json_do_string("ta", taldescs[b->talid]);

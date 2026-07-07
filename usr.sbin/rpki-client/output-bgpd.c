@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.35 2025/08/23 09:13:14 job Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.36 2026/07/07 13:38:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,7 +59,7 @@ output_bgpd(FILE *out, struct validation_data *vd, struct stats *st)
 	RB_FOREACH(vap, vap_tree, &vd->vaps) {
 		if (vap->overflowed)
 			continue;
-		if (fprintf(out, "\tcustomer-as %d expires %lld "
+		if (fprintf(out, "\tcustomer-as %u expires %lld "
 		    "provider-as { ", vap->custasid,
 		    (long long)vap->expires) < 0)
 			return -1;

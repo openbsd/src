@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.78 2026/05/18 16:26:41 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.79 2026/07/07 13:38:54 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -579,7 +579,7 @@ spl_print(const struct cert *c, const struct spl *s)
 		json_do_int("valid_until", c->notafter);
 		if (s->expires)
 			json_do_int("expires", s->expires);
-		json_do_int("asid", s->asid);
+		json_do_uint("asid", s->asid);
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(c->ski));
 		x509_print(c->x509);
@@ -933,7 +933,7 @@ print_ccr_roastate(struct ccr *ccr)
 		if (outformats & FORMAT_JSON) {
 			json_do_object("vrp", 1);
 			json_do_string("prefix", buf);
-			json_do_int("asn", vrp->asid);
+			json_do_uint("asn", vrp->asid);
 			if (vrp->maxlength)
 				json_do_int("maxlen", vrp->maxlength);
 			json_do_end();
@@ -973,7 +973,7 @@ print_ccr_aspastate(struct ccr *ccr)
 			json_do_array("providers");
 		} else {
 			printf("%26s", "");
-			printf("customer: %d providers: ", vap->custasid);
+			printf("customer: %u providers: ", vap->custasid);
 		}
 
 		for (i = 0; i < vap->num_providers; i++) {
@@ -1047,7 +1047,7 @@ print_ccr_rkstate(struct ccr *ccr)
 		json_do_array("routerkeys");
 		RB_FOREACH(brk, brk_tree, &ccr->brks) {
 			json_do_object("brk", 0);
-			json_do_int("asn", brk->asid);
+			json_do_uint("asn", brk->asid);
 			json_do_string("ski", brk->ski);
 			json_do_string("pubkey", brk->pubkey);
 			json_do_end(); /* brk */
@@ -1059,7 +1059,7 @@ print_ccr_rkstate(struct ccr *ccr)
 		printf("Router keys:\n");
 		RB_FOREACH(brk, brk_tree, &ccr->brks) {
 			printf("%26s", "");
-			printf("asid:%d ", brk->asid);
+			printf("asid:%u ", brk->asid);
 			printf("ski:%s ", brk->ski);
 			printf("pubkey:%s\n", brk->pubkey);
 		}

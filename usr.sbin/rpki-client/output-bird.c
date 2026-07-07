@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.26 2025/10/30 23:18:06 job Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.27 2026/07/07 13:38:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -86,7 +86,7 @@ output_bird(FILE *out, struct validation_data *vd, struct stats *st)
 	RB_FOREACH(vap, vap_tree, &vd->vaps) {
 		if (vap->overflowed)
 			continue;
-		if (fprintf(out, "\troute aspa %d providers ",
+		if (fprintf(out, "\troute aspa %u providers ",
 		    vap->custasid) < 0)
 			return -1;
 		for (i = 0; i < vap->num_providers; i++) {
