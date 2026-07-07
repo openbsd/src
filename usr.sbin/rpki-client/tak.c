@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.31 2026/06/25 07:51:58 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.32 2026/07/07 13:45:59 claudio Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -227,7 +227,7 @@ tak_obj_free(void *obj)
 }
 
 static const struct signed_obj tak_signed_obj = {
-	.rtype = RTYPE_SPL,
+	.rtype = RTYPE_TAK,
 	.new = tak_obj_new,
 	.free = tak_obj_free,
 	.cert_info = tak_cert_info,
