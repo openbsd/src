@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1392 2026/07/07 08:07:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1393 2026/07/07 09:45:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2267,6 +2267,9 @@ struct client {
 	overlay_resize_cb	 overlay_resize;
 	void			*overlay_data;
 	struct event		 overlay_timer;
+
+	u_int			 menu_last_px;
+	u_int			 menu_last_py;
 
 	struct client_files	 files;
 	u_int			 source_file_depth;
