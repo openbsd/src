@@ -1507,10 +1507,6 @@ test_multiple_events_for_same_fd(void)
    cleanup_test();
 }
 
-int evtag_decode_int(uint32_t *pnumber, struct evbuffer *evbuf);
-int evtag_encode_tag(struct evbuffer *evbuf, uint32_t number);
-int evtag_decode_tag(uint32_t *pnumber, struct evbuffer *evbuf);
-
 static void
 read_once_cb(int fd, short event, void *arg)
 {
@@ -1555,233 +1551,6 @@ test_want_only_once(void)
 }
 
 #define TEST_MAX_INT	6
-
-static void
-evtag_int_test(void)
-{
-	struct evbuffer *tmp = evbuffer_new();
-	uint32_t integers[TEST_MAX_INT] = {
-		0xaf0, 0x1000, 0x1, 0xdeadbeef, 0x00, 0xbef000
-	};
-	uint32_t integer;
-	int i;
-
-	for (i = 0; i < TEST_MAX_INT; i++) {
-		int oldlen, newlen;
-		oldlen = EVBUFFER_LENGTH(tmp);
-		encode_int(tmp, integers[i]);
-		newlen = EVBUFFER_LENGTH(tmp);
-		fprintf(stdout, "\t\tencoded 0x%08x with %d bytes\n",
-		    integers[i], newlen - oldlen);
-	}
-
-	for (i = 0; i < TEST_MAX_INT; i++) {
-		if (evtag_decode_int(&integer, tmp) == -1) {
-			fprintf(stderr, "decode %d failed", i);
-			exit(1);
-		}
-		if (integer != integers[i]) {
-			fprintf(stderr, "got %x, wanted %x",
-			    integer, integers[i]);
-			exit(1);
-		}
-	}
-
-	if (EVBUFFER_LENGTH(tmp) != 0) {
-		fprintf(stderr, "trailing data");
-		exit(1);
-	}
-	evbuffer_free(tmp);
-
-	fprintf(stdout, "\t%s: OK\n", __func__);
-}
-
-static void
-evtag_fuzz(void)
-{
-	u_char buffer[4096];
-	struct evbuffer *tmp = evbuffer_new();
-	struct timeval tv;
-	int i, j;
-
-	int not_failed = 0;
-	for (j = 0; j < 100; j++) {
-		for (i = 0; i < sizeof(buffer); i++)
-			buffer[i] = rand();
-		evbuffer_drain(tmp, -1);
-		evbuffer_add(tmp, buffer, sizeof(buffer));
-
-		if (evtag_unmarshal_timeval(tmp, 0, &tv) != -1)
-			not_failed++;
-	}
-
-	/* The majority of decodes should fail */
-	if (not_failed >= 10) {
-		fprintf(stderr, "evtag_unmarshal should have failed");
-		exit(1);
-	}
-
-	/* Now insert some corruption into the tag length field */
-	evbuffer_drain(tmp, -1);
-	evutil_timerclear(&tv);
-	tv.tv_sec = 1;
-	evtag_marshal_timeval(tmp, 0, &tv);
-	evbuffer_add(tmp, buffer, sizeof(buffer));
-
-	EVBUFFER_DATA(tmp)[1] = 0xff;
-	if (evtag_unmarshal_timeval(tmp, 0, &tv) != -1) {
-		fprintf(stderr, "evtag_unmarshal_timeval should have failed");
-		exit(1);
-	}
-
-	evbuffer_free(tmp);
-
-	fprintf(stdout, "\t%s: OK\n", __func__);
-}
-
-static void
-evtag_tag_encoding(void)
-{
-	struct evbuffer *tmp = evbuffer_new();
-	uint32_t integers[TEST_MAX_INT] = {
-		0xaf0, 0x1000, 0x1, 0xdeadbeef, 0x00, 0xbef000
-	};
-	uint32_t integer;
-	int i;
-
-	for (i = 0; i < TEST_MAX_INT; i++) {
-		int oldlen, newlen;
-		oldlen = EVBUFFER_LENGTH(tmp);
-		evtag_encode_tag(tmp, integers[i]);
-		newlen = EVBUFFER_LENGTH(tmp);
-		fprintf(stdout, "\t\tencoded 0x%08x with %d bytes\n",
-		    integers[i], newlen - oldlen);
-	}
-
-	for (i = 0; i < TEST_MAX_INT; i++) {
-		if (evtag_decode_tag(&integer, tmp) == -1) {
-			fprintf(stderr, "decode %d failed", i);
-			exit(1);
-		}
-		if (integer != integers[i]) {
-			fprintf(stderr, "got %x, wanted %x",
-			    integer, integers[i]);
-			exit(1);
-		}
-	}
-
-	if (EVBUFFER_LENGTH(tmp) != 0) {
-		fprintf(stderr, "trailing data");
-		exit(1);
-	}
-	evbuffer_free(tmp);
-
-	fprintf(stdout, "\t%s: OK\n", __func__);
-}
-
-static void
-evtag_test(void)
-{
-	fprintf(stdout, "Testing Tagging:\n");
-
-	evtag_init();
-	evtag_int_test();
-	evtag_fuzz();
-
-	evtag_tag_encoding();
-
-	fprintf(stdout, "OK\n");
-}
-
-#if 0
-#ifndef WIN32
-static void
-rpc_test(void)
-{
-	struct msg *msg, *msg2;
-	struct kill *attack;
-	struct run *run;
-	struct evbuffer *tmp = evbuffer_new();
-	struct timeval tv_start, tv_end;
-	uint32_t tag;
-	int i;
-
-	fprintf(stdout, "Testing RPC: ");
-
-	msg = msg_new();
-	EVTAG_ASSIGN(msg, from_name, "niels");
-	EVTAG_ASSIGN(msg, to_name, "phoenix");
-
-	if (EVTAG_GET(msg, attack, &attack) == -1) {
-		fprintf(stderr, "Failed to set kill message.\n");
-		exit(1);
-	}
-
-	EVTAG_ASSIGN(attack, weapon, "feather");
-	EVTAG_ASSIGN(attack, action, "tickle");
-
-	evutil_gettimeofday(&tv_start, NULL);
-	for (i = 0; i < 1000; ++i) {
-		run = EVTAG_ADD(msg, run);
-		if (run == NULL) {
-			fprintf(stderr, "Failed to add run message.\n");
-			exit(1);
-		}
-		EVTAG_ASSIGN(run, how, "very fast but with some data in it");
-		EVTAG_ASSIGN(run, fixed_bytes,
-		    (unsigned char*)"012345678901234567890123");
-	}
-
-	if (msg_complete(msg) == -1) {
-		fprintf(stderr, "Failed to make complete message.\n");
-		exit(1);
-	}
-
-	evtag_marshal_msg(tmp, 0xdeaf, msg);
-
-	if (evtag_peek(tmp, &tag) == -1) {
-		fprintf(stderr, "Failed to peak tag.\n");
-		exit (1);
-	}
-
-	if (tag != 0xdeaf) {
-		fprintf(stderr, "Got incorrect tag: %0x.\n", tag);
-		exit (1);
-	}
-
-	msg2 = msg_new();
-	if (evtag_unmarshal_msg(tmp, 0xdeaf, msg2) == -1) {
-		fprintf(stderr, "Failed to unmarshal message.\n");
-		exit(1);
-	}
-
-	evutil_gettimeofday(&tv_end, NULL);
-	evutil_timersub(&tv_end, &tv_start, &tv_end);
-	fprintf(stderr, "(%.1f us/add) ",
-	    (float)tv_end.tv_sec/(float)i * 1000000.0 +
-	    tv_end.tv_usec / (float)i);
-
-	if (!EVTAG_HAS(msg2, from_name) ||
-	    !EVTAG_HAS(msg2, to_name) ||
-	    !EVTAG_HAS(msg2, attack)) {
-		fprintf(stderr, "Missing data structures.\n");
-		exit(1);
-	}
-
-	if (EVTAG_LEN(msg2, run) != i) {
-		fprintf(stderr, "Wrong number of run messages.\n");
-		exit(1);
-	}
-
-	msg_free(msg);
-	msg_free(msg2);
-
-	evbuffer_free(tmp);
-
-	fprintf(stdout, "OK\n");
-}
-#endif
-#endif
 
 static void
 test_evutil_strtoll(void)
@@ -1852,21 +1621,6 @@ main (int argc, char **argv)
 
 	test_event_base_new();
 
-
-#if 0
-	http_suite();
-#endif
-
-#if 0
-#ifndef WIN32
-	rpc_suite();
-#endif
-#endif
-
-#if 0
-	dns_suite();
-#endif
-	
 #ifndef WIN32
 	test_fork();
 #endif
@@ -1895,12 +1649,6 @@ main (int argc, char **argv)
 	test_multiple_events_for_same_fd();
 
 	test_want_only_once();
-
-	evtag_test();
-
-#if 0
-	rpc_test();
-#endif
 
 	test_signal_dealloc();
 	test_signal_pipeloss();
