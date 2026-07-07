@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.356 2026/07/05 18:37:57 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.357 2026/07/07 07:47:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -334,6 +334,8 @@ window_create(u_int sx, u_int sy, u_int xpixel, u_int ypixel)
 	w->ypixel = ypixel;
 
 	w->options = options_create(global_w_options);
+	w->sb = options_get_number(w->options, "pane-scrollbars");
+	w->sb_pos = options_get_number(w->options, "pane-scrollbars-position");
 
 	w->references = 0;
 	TAILQ_INIT(&w->winlinks);
