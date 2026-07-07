@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.69 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.70 2026/07/07 19:01:10 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -24125,7 +24125,7 @@ ice_update_link_status(struct ice_softc *sc, bool update_media)
 				ice_set_default_local_lldp_mib(sc);
 
 			ifp->if_baudrate = baudrate;
-			ifp->if_link_state = LINK_STATE_UP;
+			ifp->if_link_state = LINK_STATE_FULL_DUPLEX;
 			if_link_state_change(ifp);
 #if 0
 			ice_rdma_link_change(sc, LINK_STATE_UP, baudrate);
