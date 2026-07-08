@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.88 2026/07/01 11:09:12 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.89 2026/07/08 13:53:16 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -203,7 +203,7 @@ static void
 filepath_put(struct filepath_tree *tree, struct filepath *fp)
 {
 	RB_REMOVE(filepath_tree, tree, fp);
-	free((void *)fp->file);
+	free(fp->file);
 	free(fp);
 }
 
