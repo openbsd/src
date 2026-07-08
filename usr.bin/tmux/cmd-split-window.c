@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.139 2026/07/02 21:40:05 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.140 2026/07/08 08:07:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -105,7 +105,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		flags |= SPAWN_FULLSIZE;
 
 	input = args_has(args, 'I');
-	if (input)
+	if (input || (count == 1 && *args_string(args, 0) == '\0'))
 		empty = 1;
 	else
 		empty = args_has(args, 'E');

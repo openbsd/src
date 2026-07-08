@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.102 2026/07/03 16:09:49 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.103 2026/07/08 08:07:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -141,7 +141,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	sc.cwd = args_get(args, 'c');
 
 	sc.flags = 0;
-	if (args_has(args, 'E'))
+	if (args_has(args, 'E') || (count == 1 && *args_string(args, 0) == '\0'))
 		sc.flags |= SPAWN_EMPTY;
 	if (args_has(args, 'd'))
 		sc.flags |= SPAWN_DETACHED;

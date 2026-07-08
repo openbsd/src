@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1127 2026/07/07 12:30:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1128 2026/07/08 08:07:42 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2026 $
+.Dd $Mdocdate: July 8 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2585,7 +2585,7 @@ The synopsis for the
 command is:
 .Bl -tag -width Ds
 .It Xo Ic copy\-mode
-.Op Fl deHMqSu
+.Op Fl dekHMqSu
 .Op Fl s Ar src\-pane
 .Op Fl t Ar target\-pane
 .Xc
@@ -2625,6 +2625,9 @@ example with:
 bind PageUp copy\-mode \-eu
 bind PageDown copy\-mode \-ed
 .Ed
+.Pp
+.Fl k
+kills the pane when the mode is exited.
 .El
 .Pp
 A number of preset arrangements of panes are available, these are called
