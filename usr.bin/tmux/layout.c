@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.91 2026/07/07 08:07:26 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.92 2026/07/08 07:55:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1310,7 +1310,7 @@ layout_split_sizes(struct layout_cell *lc, int size, int before,
 		s2 = size;
 	if (s2 < PANE_MINIMUM)
 		s2 = PANE_MINIMUM;
-	else if (s2 > sx - 2)
+	else if (s2 > ss - 2)
 		s2 = ss - 2;
 	s1 = ss - 1 - s2;
 
