@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.310 2026/07/08 11:42:45 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.311 2026/07/08 17:49:04 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -85,8 +85,38 @@ int64_t  evaluation_time = X509_TIME_MIN;
 
 struct stats	 stats;
 
-struct fqdns shortlist = LIST_HEAD_INITIALIZER(fqdns);
-struct fqdns skiplist = LIST_HEAD_INITIALIZER(fqdns);
+static struct strlist shortlist = LIST_HEAD_INITIALIZER(shortlist);
+static struct strlist skiplist = LIST_HEAD_INITIALIZER(skiplist);
+
+/* XXX - pass in length of str? */
+void
+strlist_insert(struct strlist *strlist, const char *str)
+{
+	struct strlistentry *sle;
+
+	if ((sle = calloc(1, sizeof(*sle))) == NULL)
+		err(1, NULL);
+
+	if ((sle->str = strdup(str)) == NULL)
+		err(1, NULL);
+
+	sle->str_len = strlen(sle->str);
+
+	LIST_INSERT_HEAD(strlist, sle, entry);
+}
+
+int
+strlist_find(const struct strlist *strlist, const char *str, size_t len)
+{
+	struct strlistentry *sle;
+
+	LIST_FOREACH(sle, strlist, entry) {
+		if (sle->str_len == len && strncasecmp(str, sle->str, len) == 0)
+			return 1;
+	}
+
+	return 0;
+}
 
 /*
  * Log a message to stderr if and only if "verbose" is non-zero.
@@ -509,33 +539,21 @@ static void
 queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 {
 	struct repo		*repo;
-	struct fqdnlistentry	*le;
 	char			*nfile, *npath, *host;
 	const char		*uri, *repouri, *file;
 	size_t			 hostsz, repourisz;
-	int			 shortlisted = 0;
 
 	if (strncmp(cert->repo, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
 		errx(1, "unexpected protocol");
 	host = cert->repo + RSYNC_PROTO_LEN;
 	hostsz = strcspn(host, "/");
 
-	LIST_FOREACH(le, &skiplist, entry) {
-		if (strlen(le->fqdn) == hostsz &&
-		    strncasecmp(host, le->fqdn, hostsz) == 0) {
-			warnx("skipping %s (listed in skiplist)", cert->repo);
-			return;
-		}
+	if (strlist_find(&skiplist, host, hostsz)) {
+		warnx("skipping %s (listed in skiplist)", cert->repo);
+		return;
 	}
 
-	LIST_FOREACH(le, &shortlist, entry) {
-		if (strlen(le->fqdn) == hostsz &&
-		    strncasecmp(host, le->fqdn, hostsz) == 0) {
-			shortlisted = 1;
-			break;
-		}
-	}
-	if (shortlistmode && shortlisted == 0) {
+	if (shortlistmode && !strlist_find(&shortlist, host, hostsz)) {
 		if (verbose)
 			warnx("skipping %s (not shortlisted)", cert->repo);
 		return;
@@ -882,7 +900,6 @@ tal_load_default(void)
 static void
 load_skiplist(const char *slf)
 {
-	struct fqdnlistentry	*le;
 	FILE			*fp;
 	char			*line = NULL;
 	size_t			 linesize = 0, linelen;
@@ -911,12 +928,7 @@ load_skiplist(const char *slf)
 		if (!valid_uri(line, linelen, NULL))
 			errx(1, "invalid entry in skiplist: %s", line);
 
-		if ((le = malloc(sizeof(struct fqdnlistentry))) == NULL)
-			err(1, NULL);
-		if ((le->fqdn = strdup(line)) == NULL)
-			err(1, NULL);
-
-		LIST_INSERT_HEAD(&skiplist, le, entry);
+		strlist_insert(&skiplist, line);
 		stats.skiplistentries++;
 	}
 	if (ferror(fp))
@@ -932,18 +944,10 @@ load_skiplist(const char *slf)
 static void
 load_shortlist(const char *fqdn)
 {
-	struct fqdnlistentry	*le;
-
 	if (!valid_uri(fqdn, strlen(fqdn), NULL))
 		errx(1, "invalid fqdn passed to -q: %s", fqdn);
 
-	if ((le = malloc(sizeof(struct fqdnlistentry))) == NULL)
-		err(1, NULL);
-
-	if ((le->fqdn = strdup(fqdn)) == NULL)
-		err(1, NULL);
-
-	LIST_INSERT_HEAD(&shortlist, le, entry);
+	strlist_insert(&shortlist, fqdn);
 }
 
 static void

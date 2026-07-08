@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.287 2026/07/01 11:09:12 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.288 2026/07/08 17:49:04 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,11 +29,15 @@
 
 #define MAX_MSG_SIZE	(50 * 1024 * 1024)
 
-struct fqdnlistentry {
-	LIST_ENTRY(fqdnlistentry)	entry;
-	char				*fqdn;
+struct strlistentry {
+	LIST_ENTRY(strlistentry) entry;
+	char *str;
+	size_t str_len;
 };
-LIST_HEAD(fqdns, fqdnlistentry);
+LIST_HEAD(strlist, strlistentry);
+
+void strlist_insert(struct strlist *, const char *);
+int strlist_find(const struct strlist *, const char *, size_t);
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */

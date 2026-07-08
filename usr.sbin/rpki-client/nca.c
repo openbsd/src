@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.8 2026/07/08 05:33:28 tb Exp $ */
+/*	$OpenBSD: nca.c,v 1.9 2026/07/08 17:49:04 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -123,7 +123,7 @@ certidcmp(const struct nonfunc_ca *a, const struct nonfunc_ca *b)
 
 RB_GENERATE(nca_tree, nonfunc_ca, entry, certidcmp);
 
-static LIST_HEAD(, fqdnlistentry) notifys = LIST_HEAD_INITIALIZER(notifys);
+static struct strlist batchlist = LIST_HEAD_INITIALIZER(batchlist);
 
 static RB_HEAD(nca_hist_tree, nca_hist) ncas_hist = RB_INITIALIZER(&ncas_hist);
 
@@ -229,8 +229,7 @@ static void
 ncas_plan_retries(void)
 {
 	struct nca_hist *nca_hist;
-	struct fqdnlistentry *fle, *fle_tmp;
-	size_t notify_len;
+	struct strlistentry *sle, *sle_tmp;
 
 	RB_FOREACH(nca_hist, nca_hist_tree, &ncas_hist) {
 		if (nca_decide_retry(nca_hist) == 0) {
@@ -238,38 +237,25 @@ ncas_plan_retries(void)
 			continue;
 		}
 
-		if (nca_hist->notify == NULL)
-			continue;
-
-		if ((fle = malloc(sizeof(*fle))) == NULL)
-			err(1, NULL);
-
-		if ((fle->fqdn = strdup(nca_hist->notify)) == NULL)
-			err(1, NULL);
-
-		LIST_INSERT_HEAD(&notifys, fle, entry);
+		if (nca_hist->notify != NULL)
+			strlist_insert(&batchlist, nca_hist->notify);
 	}
 
 	RB_FOREACH(nca_hist, nca_hist_tree, &ncas_hist) {
 		if (nca_hist->notify == NULL)
 			continue;
 
-		notify_len = strlen(nca_hist->notify);
-
-		LIST_FOREACH(fle, &notifys, entry) {
-			if (strlen(fle->fqdn) == notify_len &&
-			    strncasecmp(nca_hist->notify, fle->fqdn,
-			    notify_len) == 0) {
-				nca_hist->defer = 0;
-				break;
-			}
+		if (strlist_find(&batchlist, nca_hist->notify,
+		    strlen(nca_hist->notify))) {
+			nca_hist->defer = 0;
+			break;
 		}
 	}
 
-	LIST_FOREACH_SAFE(fle, &notifys, entry, fle_tmp) {
-		LIST_REMOVE(fle, entry);
-		free(fle->fqdn);
-		free(fle);
+	LIST_FOREACH_SAFE(sle, &batchlist, entry, sle_tmp) {
+		LIST_REMOVE(sle, entry);
+		free(sle->str);
+		free(sle);
 	}
 }
 
