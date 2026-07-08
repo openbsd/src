@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.9 2026/07/08 17:49:04 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.10 2026/07/08 18:27:02 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -248,7 +248,6 @@ ncas_plan_retries(void)
 		if (strlist_find(&batchlist, nca_hist->notify,
 		    strlen(nca_hist->notify))) {
 			nca_hist->defer = 0;
-			break;
 		}
 	}
 
