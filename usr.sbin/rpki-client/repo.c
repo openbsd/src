@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.89 2026/07/08 13:53:16 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.90 2026/07/08 13:59:26 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1816,21 +1816,25 @@ repo_move_valid(struct filepath_tree *tree)
 		if ((fp->file = strdup(fn)) == NULL)
 			err(1, NULL);
 
- again:
 		if ((ofp = RB_INSERT(filepath_tree, tree, fp)) != NULL) {
-			if (ofp->talmask == 0) {
-				/* conflicting path is not valid, drop it */
-				filepath_put(tree, ofp);
-				goto again;
+			if (ofp->talmask != 0) {
+				/* conflicting filepath is valid, keep it */
+				if (fp->talmask != 0) {
+					warnx("%s: file already present in "
+					    "validated cache", fp->file);
+				}
+				free(fp->file);
+				free(fp);
+				free(base);
+				continue;
 			}
-			if (fp->talmask != 0) {
-				warnx("%s: file already present in "
-				    "validated cache", fp->file);
-			}
+
+			/* conflicting filepath is not valid, replace it */
+			ofp->talmask = fp->talmask;
+			ofp->mtime = fp->mtime;
 			free(fp->file);
 			free(fp);
-			free(base);
-			continue;
+			fp = ofp;
 		}
 
 		if (rename(base, fp->file) == -1)
