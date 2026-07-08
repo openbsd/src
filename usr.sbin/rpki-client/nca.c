@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.7 2026/07/01 11:09:12 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.8 2026/07/08 05:33:28 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -281,7 +281,7 @@ nca_history_load(void)
 	size_t linesize = 0;
 	ssize_t linelen;
 	const char *errstr;
-	struct nca_hist *nca_hist;
+	struct nca_hist *nca_hist = NULL;
 	time_t now;
 
 	now = get_current_time();
