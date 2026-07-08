@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.15 2026/06/26 05:33:11 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.16 2026/07/08 10:57:33 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -549,7 +549,8 @@ iked_radius_config(struct iked_radserver_req *req, const RADIUS_PACKET *pkt,
 	for (i = 0; i < sa->sa_policy->pol_ncfg; i++) {
 		ikecfg = &sa->sa_policy->pol_cfg[i];
 		if (ikecfg->cfg_type == cfg_type &&
-		    ikecfg->cfg_type != IKEV2_CFG_INTERNAL_IP4_ADDRESS)
+		    ikecfg->cfg_type != IKEV2_CFG_INTERNAL_IP4_ADDRESS &&
+		    ikecfg->cfg_type != IKEV2_CFG_INTERNAL_IP6_ADDRESS)
 			return;	/* use config rather than radius */
 	}
 	switch (cfg_type) {
@@ -627,11 +628,11 @@ iked_radius_config(struct iked_radserver_req *req, const RADIUS_PACKET *pkt,
 				log_warn("%s: calloc", __func__);
 				return;
 			}
-			sa->sa_rad_addr = addr;
+			sa->sa_rad_addr6 = addr;
 		} else if ((addr = iked_radius_req_cfgaddr(req, cfg_type)) ==
 		    NULL)
 			return;
-		addr->addr_af = AF_INET;
+		addr->addr_af = AF_INET6;
 		sin6 = (struct sockaddr_in6 *)&addr->addr;
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
