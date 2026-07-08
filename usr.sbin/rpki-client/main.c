@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.309 2026/06/24 09:06:20 job Exp $ */
+/*	$OpenBSD: main.c,v 1.310 2026/07/08 11:42:45 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -677,8 +677,6 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
-		/* CRLs are sent together with MFT and not accounted for */
-		entity_queue++;
 		break;
 	case RTYPE_ROA:
 		io_read_buf(b, &ok, sizeof(ok));
@@ -735,6 +733,9 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 
 done:
 	free(file);
+	/* CRLs are sent together with the MFT and not accounted for */
+	if (type == RTYPE_CRL)
+		return;
 	entity_queue--;
 }
 
