@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.47 2026/07/08 17:33:19 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.48 2026/07/08 19:39:33 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -327,24 +327,44 @@ sys_msgrcv(struct proc *p, void *v, register_t *retval)
 
 	QREF(que);
 
+again:
 	/* msg_lookup handles matching; sleeping gets handled here */
 	while ((msg = msg_lookup(que, msgtyp)) == NULL) {
 
 		if (SCARG(uap, msgflg) & IPC_NOWAIT) {
 			error = ENOMSG;
-			goto out;
+			goto rele;
 		}
 
 		que->que_flags |= MSGQ_READERS;
 		if ((error = tsleep_nsec(que, PZERO|PCATCH, "msgwait", INFSLP)))
-			goto out;
+			goto rele;
 
 		/* make sure the queue still alive */
 		if (que->que_flags & MSGQ_DYING) {
 			error = EIDRM;
-			goto out;
+			goto rele;
 		}
 	}
+
+	/* acquired message could be delivering by concurrent thread */
+	if (que->que_flags & MSGQ_RCVWAIT) {
+		que->que_flags |= MSGQ_RCVWAITING;
+		error = tsleep_nsec(&que->que_flags, PZERO | PCATCH,
+		    "msgrcv", INFSLP);
+		if (error)
+			goto rele;
+
+		/* make sure the queue still alive */
+		if (que->que_flags & MSGQ_DYING) {
+			error = EIDRM;
+			goto rele;
+		}
+
+		goto again;
+	}
+
+	que->que_flags |= MSGQ_RCVWAIT;
 
 	/* if msg_copyout fails, keep the message around so it isn't lost */
 	if ((error = msg_copyout(msg, msgp, &msgsz, SCARG(uap, msgflg))))
@@ -366,6 +386,16 @@ sys_msgrcv(struct proc *p, void *v, register_t *retval)
 
 	*retval = msgsz;
 out:
+	que->que_flags &= ~MSGQ_RCVWAIT;
+
+	if (que->que_flags & MSGQ_RCVWAITING) {
+		que->que_flags &= ~MSGQ_RCVWAITING;
+		if (que->que_flags & MSGQ_DYING)
+			wakeup(&que->que_flags);
+		else
+			wakeup_one(&que->que_flags);
+	}
+rele:
 	QRELE(que);
 
 	return (error);

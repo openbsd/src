@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.25 2026/06/29 10:55:37 mvs Exp $	*/
+/*	$OpenBSD: msg.h,v 1.26 2026/07/08 19:39:33 mvs Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -77,7 +77,9 @@ struct que {
 /* for que_flags */
 #define	MSGQ_READERS	0x01
 #define	MSGQ_WRITERS	0x02
-#define	MSGQ_DYING	0x04
+#define	MSGQ_RCVWAIT	0x04
+#define	MSGQ_RCVWAITING	0x08
+#define	MSGQ_DYING	0x10
 
 #define	QREF(q)	(q)->que_references++
 
