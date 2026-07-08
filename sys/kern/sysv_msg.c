@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.46 2026/06/30 13:49:06 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.47 2026/07/08 17:33:19 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -57,7 +57,7 @@ void msg_enqueue(struct que *, struct msg *, struct proc *);
 void msg_dequeue(struct que *, struct msg *, struct proc *);
 struct msg *msg_lookup(struct que *, int);
 int msg_copyin(struct msg *, const char *, size_t);
-int msg_copyout(struct msg *, char *, size_t *);
+int msg_copyout(struct msg *, char *, size_t *, int);
 
 struct	pool sysvmsgpl;
 
@@ -347,7 +347,7 @@ sys_msgrcv(struct proc *p, void *v, register_t *retval)
 	}
 
 	/* if msg_copyout fails, keep the message around so it isn't lost */
-	if ((error = msg_copyout(msg, msgp, &msgsz)))
+	if ((error = msg_copyout(msg, msgp, &msgsz, SCARG(uap, msgflg))))
 		goto out;
 
 	msg_dequeue(que, msg, p);
@@ -617,7 +617,7 @@ msg_copyin(struct msg *msg, const char *ubuf, size_t len)
 }
 
 int
-msg_copyout(struct msg *msg, char *ubuf, size_t *len)
+msg_copyout(struct msg *msg, char *ubuf, size_t *len, int msgflg)
 {
 	struct mbuf *m;
 	size_t total, done, xfer;
@@ -628,8 +628,10 @@ msg_copyout(struct msg *msg, char *ubuf, size_t *len)
 		panic("SysV message longer than MSGMAX");
 #endif
 
-	/* silently truncate messages too large for user buffer */
-	total = min(*len, msg->msg_len);
+	if ((total = min(*len, msg->msg_len)) < msg->msg_len) {
+		if ((msgflg & MSG_NOERROR) == 0)
+			return (E2BIG);
+	}
 
 	if ((error = copyout(&msg->msg_type, ubuf, sizeof(msg->msg_type))))
 		return (error);
