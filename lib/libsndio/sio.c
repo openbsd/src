@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.30 2026/03/10 06:47:41 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.31 2026/07/09 06:55:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -598,6 +598,11 @@ _sio_xrun(struct sio_hdl *hdl)
 
 	if (hdl->mode & SIO_PLAY)
 		hdl->wsil = hdl->wused + cmove * hdl->par.bps * hdl->par.pchan;
+
+	/*
+	 * Discard any unreported clock ticks
+	 */
+	hdl->cpending = 0;
 
 	DPRINTFN(1, "%s: cmove = %d, wsil = %d, rdrop = %d\n", __func__,
 	    cmove, hdl->wsil, hdl->rdrop);
