@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.44 2026/06/26 13:57:08 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.45 2026/07/09 05:12:34 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2025
@@ -161,6 +161,7 @@ struct cfdriver rge_cd = {
 
 const struct pci_matchid rge_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000 },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E5000 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8125 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8126 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8127 }
