@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidmar.c,v 1.16 2026/06/29 20:15:29 kettenis Exp $ */
+/* $OpenBSD: acpidmar.c,v 1.17 2026/07/09 09:45:24 hshoexer Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -915,7 +915,7 @@ dmar_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam)
 {
 	struct dmar_map_cookie *mc = dmam->_dm_cookie;
 
-	dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs, __FUNCTION__);
+	dmar_dmamap_unload(tag, dmam);
 	free(mc->dm_er, M_DEVBUF, dmam->_dm_segcnt * sizeof(*mc->dm_er));
 	free(mc, M_DEVBUF, sizeof(*mc));
 	_bus_dmamap_destroy(tag, dmam);
@@ -2092,7 +2092,7 @@ domain_create(struct iommu_softc *iommu, int did)
 	/* Setup DMA */
 	dom->dmat._cookie = dom;
 	dom->dmat._dmamap_create = dmar_dmamap_create;		/* nop */
-	dom->dmat._dmamap_destroy = dmar_dmamap_destroy;	/* nop */
+	dom->dmat._dmamap_destroy = dmar_dmamap_destroy;	/* um */
 	dom->dmat._dmamap_load = dmar_dmamap_load;		/* lm */
 	dom->dmat._dmamap_load_mbuf = dmar_dmamap_load_mbuf;	/* lm */
 	dom->dmat._dmamap_load_uio = dmar_dmamap_load_uio;	/* lm */
