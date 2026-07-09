@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.74 2026/06/22 08:47:45 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.75 2026/07/09 07:32:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -245,7 +245,7 @@ popup_check_cb(struct client* c, void *data, u_int px, u_int py, u_int nx)
 		*/
 		for (i = 0; i < mr->used; i++) {
 			server_client_overlay_range(pd->px, pd->py, pd->sx,
-			    pd->sy, r->ranges[i].px, py, r->ranges[i].nx,
+			    pd->sy, mr->ranges[i].px, py, mr->ranges[i].nx,
 			    &pd->or[i]);
 		}
 
