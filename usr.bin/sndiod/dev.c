@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.143 2026/07/09 06:58:57 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.144 2026/07/09 09:25:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1614,6 +1614,7 @@ slot_detach(struct slot *s)
 			s->sub.encbuf = NULL;
 		}
 		if (s->sub.resampbuf) {
+			resamp_done(&s->sub.resamp);
 			xfree(s->sub.resampbuf);
 			s->sub.resampbuf = NULL;
 		}
@@ -1625,6 +1626,7 @@ slot_detach(struct slot *s)
 			s->mix.decbuf = NULL;
 		}
 		if (s->mix.resampbuf) {
+			resamp_done(&s->mix.resamp);
 			xfree(s->mix.resampbuf);
 			s->mix.resampbuf = NULL;
 		}

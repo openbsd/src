@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.23 2026/03/15 14:05:25 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.24 2026/07/09 09:25:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -435,6 +435,7 @@ resamp_init(struct resamp *p, unsigned int iblksz,
     unsigned int oblksz, int nch)
 {
 	unsigned int g;
+	size_t ctx_size;
 
 	/*
 	 * reduce iblksz/oblksz fraction
@@ -456,7 +457,9 @@ resamp_init(struct resamp *p, unsigned int iblksz,
 	p->diff = 0;
 	p->nch = nch;
 	p->ctx_start = 0;
-	memset(p->ctx, 0, sizeof(p->ctx));
+	ctx_size = p->nch * RESAMP_NCTX * sizeof(adata_t);
+	p->ctx = xmalloc(ctx_size);
+	memset(p->ctx, 0, ctx_size);
 	if (p->iblksz < p->oblksz) {
 		p->filt_cutoff = RESAMP_UNIT;
 		p->filt_step = RESAMP_UNIT / p->oblksz;
@@ -467,6 +470,15 @@ resamp_init(struct resamp *p, unsigned int iblksz,
 #ifdef DEBUG
 	logx(3, "resamp_init: %u/%u", iblksz, oblksz);
 #endif
+}
+
+void
+resamp_done(struct resamp *p)
+{
+#ifdef DEBUG
+	logx(3, "resamp_done");
+#endif
+	xfree(p->ctx);
 }
 
 /*
