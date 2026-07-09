@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.141 2026/06/24 14:54:50 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.142 2026/07/09 06:58:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -607,14 +607,14 @@ dev_cycle(struct dev *d)
 			 * layer, so s->mix.buf.used == 0 and we can
 			 * destroy the buffer
 			 */
-			*ps = s->next;
-			s->pstate = SLOT_INIT;
-			s->ops->eof(s->arg);
-			slot_freebufs(s);
-			dev_mix_adjvol(d);
+
 #ifdef DEBUG
 			logx(3, "slot%zu: drained", s - slot_array);
 #endif
+			slot_detach(s);
+			s->pstate = SLOT_INIT;
+			s->ops->eof(s->arg);
+			slot_freebufs(s);
 			continue;
 		}
 
