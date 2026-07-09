@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.431 2026/04/23 01:33:01 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.432 2026/07/09 06:51:17 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4039,6 +4039,15 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 		return (EINVAL);
 
 	/* XXX union skip[] */
+
+	from->label[sizeof(from->label) - 1] = '\0';
+	from->ifname[sizeof(from->ifname) - 1] = '\0';
+	from->rcv_ifname[sizeof(from->rcv_ifname) - 1] = '\0';
+	from->qname[sizeof(from->qname) - 1] = '\0';
+	from->pqname[sizeof(from->pqname) - 1] = '\0';
+	from->tagname[sizeof(from->tagname) - 1] = '\0';
+	from->match_tagname[sizeof(from->match_tagname) - 1] = '\0';
+	from->overload_tblname[sizeof(from->overload_tblname) - 1] = '\0';
 
 	strlcpy(to->label, from->label, sizeof(to->label));
 	strlcpy(to->ifname, from->ifname, sizeof(to->ifname));
