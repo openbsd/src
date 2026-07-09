@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.21 2026/06/24 14:54:50 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.22 2026/07/09 09:29:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -505,6 +505,9 @@ opt_done(struct opt *o)
 		// XXX: all clients are already kicked, so this never happens
 		logx(0, "%s: still has refs", o->name);
 	}
+
+	for (i = 0; i < OPT_NAPP; i++)
+		ctl_del(CTL_APP_LEVEL, o, o->app_array + i);
 
 	for (i = 0; i < sizeof(opt_modes) / sizeof(opt_modes[0]); i++)
 		ctl_del(CTL_OPT_MODE, o, &i);
