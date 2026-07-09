@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.h,v 1.5 2015/10/02 09:48:22 ratchov Exp $	*/
+/*	$OpenBSD: debug.h,v 1.6 2026/07/09 06:53:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,17 +19,18 @@
 
 #ifdef DEBUG
 #include <stdio.h>
+#include <unistd.h>
 
 #define DPRINTFN(n, ...)					\
 	do {							\
 		if (_sndio_debug >= (n))			\
-			fprintf(stderr, __VA_ARGS__);		\
+			dprintf(STDERR_FILENO, __VA_ARGS__);	\
 	} while(0)
 
 #define DPRINTF(...)						\
 	do {							\
 		if (_sndio_debug > 0)				\
-			fprintf(stderr, __VA_ARGS__);		\
+			dprintf(STDERR_FILENO, __VA_ARGS__);	\
 	} while(0)
 
 #define DPERROR(s)						\
