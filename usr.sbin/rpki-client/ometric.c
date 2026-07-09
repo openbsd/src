@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.3 2026/07/09 09:25:17 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.4 2026/07/09 09:32:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -547,6 +547,17 @@ ometric_set_int_with_labels(struct ometric *om, uint64_t val,
 
 	extra = olabels_add_extras(ol, keys, values);
 	ometric_set_int(om, val, extra);
+	olabels_free(extra);
+}
+
+void
+ometric_set_float_with_labels(struct ometric *om, double val,
+    const char **keys, const char **values, struct olabels *ol)
+{
+	struct olabels *extra;
+
+	extra = olabels_add_extras(ol, keys, values);
+	ometric_set_float(om, val, extra);
 	olabels_free(extra);
 }
 

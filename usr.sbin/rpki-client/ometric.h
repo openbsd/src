@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.h,v 1.2 2023/01/06 13:22:00 deraadt Exp $ */
+/*	$OpenBSD: ometric.h,v 1.3 2026/07/09 09:32:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -47,6 +47,8 @@ void	ometric_set_info(struct ometric *, const char **, const char **,
 	    struct olabels *);
 void	ometric_set_state(struct ometric *, const char *, struct olabels *);
 void	ometric_set_int_with_labels(struct ometric *, uint64_t, const char **,
+	    const char **, struct olabels *);
+void	ometric_set_float_with_labels(struct ometric *, double, const char **,
 	    const char **, struct olabels *);
 void	ometric_set_timespec_with_labels(struct ometric *, struct timespec *,
 	    const char **, const char **, struct olabels *);
