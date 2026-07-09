@@ -37,9 +37,6 @@
 
 #define DEGREE 256
 
-#define MLDSA65_RANK 6
-#define MLDSA87_RANK 8
-
 #define kRhoBytes 32
 #define kSigmaBytes 64
 #define kKBytes 32

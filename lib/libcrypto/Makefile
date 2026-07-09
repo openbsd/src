@@ -44,6 +44,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/hidden
 CFLAGS+= -I${LCRYPTO_SRC}/hmac
 CFLAGS+= -I${LCRYPTO_SRC}/kdf
 CFLAGS+= -I${LCRYPTO_SRC}/lhash
+CFLAGS+= -I${LCRYPTO_SRC}/mldsa
 CFLAGS+= -I${LCRYPTO_SRC}/mlkem
 CFLAGS+= -I${LCRYPTO_SRC}/modes
 CFLAGS+= -I${LCRYPTO_SRC}/ocsp
@@ -373,6 +374,11 @@ SRCS+= md4.c
 # md5/
 SRCS+= md5.c
 
+# mldsa/
+SRCS+= mldsa.c
+SRCS+= mldsa_internal.c
+SRCS+= mldsa_key.c
+
 # mlkem/
 SRCS+= mlkem.c
 SRCS+= mlkem_internal.c
@@ -610,6 +616,7 @@ SRCS+= x_all.c
 	${LCRYPTO_SRC}/lhash \
 	${LCRYPTO_SRC}/md4 \
 	${LCRYPTO_SRC}/md5 \
+	${LCRYPTO_SRC}/mldsa \
 	${LCRYPTO_SRC}/mlkem \
 	${LCRYPTO_SRC}/modes \
 	${LCRYPTO_SRC}/objects \
@@ -669,6 +676,7 @@ HDRS=\
 	${LCRYPTO_SRC}/lhash/lhash.h \
 	${LCRYPTO_SRC}/md4/md4.h \
 	${LCRYPTO_SRC}/md5/md5.h \
+	${LCRYPTO_SRC}/mldsa/mldsa.h \
 	${LCRYPTO_SRC}/mlkem/mlkem.h \
 	${LCRYPTO_SRC}/modes/modes.h \
 	${LCRYPTO_SRC}/objects/objects.h \
