@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.385 2026/06/02 21:46:21 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.386 2026/07/09 10:43:19 helg Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	}
 	if (vp->v_type != VDIR) {
 		vput(vp);
+		error = ENOTDIR;
 		goto fail;
 	}
 	error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN, NULL);
