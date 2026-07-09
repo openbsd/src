@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.41 2026/07/07 14:24:22 claudio Exp $ */
+/*	$OpenBSD: ccr.c,v 1.42 2026/07/09 14:07:07 claudio Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1276,7 +1276,7 @@ parse_roastate(const char *fn, struct ccr *ccr, const ROAPayloadState *state)
 }
 
 static int
-parse_aspa_providers(const char *fn, struct ccr *ccr, int asid,
+parse_aspa_providers(const char *fn, struct ccr *ccr, uint32_t asid,
     STACK_OF(ASN1_INTEGER) *providers)
 {
 	struct vap *vap = NULL;

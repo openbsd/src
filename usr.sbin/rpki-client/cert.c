@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.242 2026/07/07 20:40:20 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.243 2026/07/09 14:07:07 claudio Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2033,7 +2033,7 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 }
 
 static void
-insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
+insert_brk(struct brk_tree *tree, struct cert *cert, uint32_t asid)
 {
 	struct brk	*b, *found;
 
