@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2141 2026/07/03 03:40:48 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.2142 2026/07/09 05:12:34 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -9236,6 +9236,7 @@
 #define	PCI_PRODUCT_REALTEK_E2500V2	0x2502		/* E2500 */
 #define	PCI_PRODUCT_REALTEK_E2600	0x2600		/* E2600 */
 #define	PCI_PRODUCT_REALTEK_E3000	0x3000		/* Killer E3000 */
+#define	PCI_PRODUCT_REALTEK_E5000	0x5000		/* Killer E5000 */
 #define	PCI_PRODUCT_REALTEK_RTS5208	0x5208		/* RTS5208 Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5227	0x5227		/* RTS5227 Card Reader */
