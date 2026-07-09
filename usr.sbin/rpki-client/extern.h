@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.288 2026/07/08 17:49:04 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.289 2026/07/09 12:02:23 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -163,6 +163,7 @@ struct nca_hist {
 	char			*ski;
 	char			*location;
 	char			*mfturi;
+	char			*baseuri;
 	char			*notify;
 	time_t			 since;
 	time_t			 last_attempt;

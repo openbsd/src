@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.10 2026/07/08 18:27:02 tb Exp $ */
+/*	$OpenBSD: nca.c,v 1.11 2026/07/09 12:02:23 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -30,6 +30,8 @@
 #include <unistd.h>
 
 #include "extern.h"
+
+extern int rrdpon;
 
 /*
  * Add a given CA cert into the non-functional CA tree.
@@ -171,6 +173,7 @@ nca_hist_free(struct nca_hist *nca_hist)
 	free(nca_hist->ski);
 	free(nca_hist->location);
 	free(nca_hist->mfturi);
+	free(nca_hist->baseuri);
 	free(nca_hist->notify);
 	free(nca_hist);
 }
@@ -222,8 +225,8 @@ nca_decide_retry(const struct nca_hist *nca_hist)
 
 /*
  * Determine which non-functioncal CAs are eligible for retry.
- * If multiple NCAs point to the same RRDP repo and at least one NCA is eligible
- * for retry, batch all of those together.
+ * If an NCA is eligible for retry, batch it together with all NCAs sharing
+ * its rsync baseURI or RRDP rpkiNotify URI.
  */
 static void
 ncas_plan_retries(void)
@@ -237,17 +240,24 @@ ncas_plan_retries(void)
 			continue;
 		}
 
-		if (nca_hist->notify != NULL)
+		strlist_insert(&batchlist, nca_hist->baseuri);
+
+		if (nca_hist->notify != NULL && rrdpon)
 			strlist_insert(&batchlist, nca_hist->notify);
 	}
 
 	RB_FOREACH(nca_hist, nca_hist_tree, &ncas_hist) {
-		if (nca_hist->notify == NULL)
-			continue;
-
-		if (strlist_find(&batchlist, nca_hist->notify,
-		    strlen(nca_hist->notify))) {
+		if (strlist_find(&batchlist, nca_hist->baseuri,
+		    strlen(nca_hist->baseuri))) {
 			nca_hist->defer = 0;
+			continue;
+		}
+
+		if (nca_hist->notify != NULL && rrdpon) {
+			if (strlist_find(&batchlist, nca_hist->notify,
+			    strlen(nca_hist->notify))) {
+				nca_hist->defer = 0;
+			}
 		}
 	}
 
@@ -346,6 +356,8 @@ nca_history_load(void)
 		if (strcmp(mfturi + mfturi_len - 4, ".mft") != 0)
 			goto err;
 		if (!valid_uri(mfturi, strlen(mfturi), RSYNC_PROTO))
+			goto err;
+		if (!rsync_base_uri(mfturi, &nca_hist->baseuri))
 			goto err;
 		if ((nca_hist->mfturi = strdup(mfturi)) == NULL)
 			err(1, NULL);
