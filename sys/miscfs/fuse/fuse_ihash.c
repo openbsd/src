@@ -1,4 +1,4 @@
-/*	$OpenBSD: fuse_ihash.c,v 1.2 2026/06/30 14:04:04 kirill Exp $	*/
+/*	$OpenBSD: fuse_ihash.c,v 1.3 2026/07/09 09:10:40 helg Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -38,8 +38,10 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/lock.h>
+#include <sys/fusebuf.h>
 
 #include "fusefs_node.h"
+#include "fusefs.h"
 
 #include <crypto/siphash.h>
 
@@ -50,15 +52,19 @@ LIST_HEAD(fuse_ihashhead, fusefs_node) *fuse_ihashtbl;
 u_long	fuse_ihashsz;		/* size of hash table - 1 */
 SIPHASH_KEY fuse_ihashkey;
 
-struct fuse_ihashhead *fuse_ihash(dev_t, ino_t);
+struct fuse_ihashhead *fuse_ihash(const struct fusefs_mnt *, ino_t);
 
+/*
+ * Create a hash for the inode using the mounted file system id. These are
+ * guaranteed to be unique for all mounted file systems by vfs_getnewfsid.
+ */
 struct fuse_ihashhead *
-fuse_ihash(dev_t dev, ino_t inum)
+fuse_ihash(const struct fusefs_mnt *fmp, ino_t inum)
 {
 	SIPHASH_CTX ctx;
 
 	SipHash24_Init(&ctx, &fuse_ihashkey);
-	SipHash24_Update(&ctx, &dev, sizeof(dev));
+	SipHash24_Update(&ctx, &fmp, sizeof(fmp));
 	SipHash24_Update(&ctx, &inum, sizeof(inum));
 
 	return (&fuse_ihashtbl[SipHash24_End(&ctx) & fuse_ihashsz]);
@@ -76,11 +82,11 @@ fuse_ihashinit(void)
 }
 
 /*
- * Use the device/inum pair to find the incore inode, and return a pointer
+ * Use the fsid/inum pair to find the incore inode, and return a pointer
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-fuse_ihashget(dev_t dev, ino_t inum)
+fuse_ihashget(const struct fusefs_mnt *fmp, ino_t inum)
 {
 	struct fuse_ihashhead *ipp;
 	struct fusefs_node *ip;
@@ -88,9 +94,9 @@ fuse_ihashget(dev_t dev, ino_t inum)
 	u_int vpid;
 loop:
 	/* XXXLOCKING lock hash list */
-	ipp = fuse_ihash(dev, inum);
+	ipp = fuse_ihash(fmp, inum);
 	LIST_FOREACH(ip, ipp, i_hash) {
-		if (inum == ip->i_number && dev == ip->i_dev) {
+		if (inum == ip->i_number && fmp == ip->i_ump) {
 			vp = ITOV(ip);
 			vpid = vp->v_id;
 			/* XXXLOCKING unlock hash list? */
@@ -116,7 +122,7 @@ fuse_ihashins(struct fusefs_node *ip)
 {
 	struct   fusefs_node *curip;
 	struct   fuse_ihashhead *ipp;
-	dev_t    dev = ip->i_dev;
+	struct   fusefs_mnt *fmp = ip->i_ump;
 	ino_t	 inum = ip->i_number;
 
 	/* lock the inode, then put it on the appropriate hash list */
@@ -124,9 +130,9 @@ fuse_ihashins(struct fusefs_node *ip)
 
 	/* XXXLOCKING lock hash list */
 
-	ipp = fuse_ihash(dev, inum);
+	ipp = fuse_ihash(fmp, inum);
 	LIST_FOREACH(curip, ipp, i_hash) {
-		if (inum == curip->i_number && dev == curip->i_dev) {
+		if (inum == curip->i_number && fmp == curip->i_ump) {
 			/* XXXLOCKING unlock hash list? */
 			VOP_UNLOCK(ITOV(ip));
 			return (EEXIST);

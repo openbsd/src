@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.51 2026/06/20 13:45:13 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.52 2026/07/09 09:10:41 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -296,7 +296,7 @@ retry:
 	/*
 	 * check if vnode is in hash.
 	 */
-	if ((*vpp = fuse_ihashget(fmp->dev, ino)) != NULL) {
+	if ((*vpp = fuse_ihashget(fmp, ino)) != NULL) {
 		VTOI(*vpp)->nlookup++;
 		return (0);
 	}
@@ -315,7 +315,7 @@ retry:
 	    RWL_DUPOK | RWL_IS_VNODE);
 	nvp->v_data = ip;
 	ip->i_vnode = nvp;
-	ip->i_dev = fmp->dev;
+	ip->i_ump = fmp;
 	ip->i_number = ino;
 	ip->nlookup = 1;
 
@@ -331,8 +331,6 @@ retry:
 
 		return (error);
 	}
-
-	ip->i_ump = fmp;
 
 	if (ino == FUSE_ROOT_ID)
 		nvp->v_flag |= VROOT;

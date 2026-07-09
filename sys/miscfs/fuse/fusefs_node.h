@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs_node.h,v 1.7 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fusefs_node.h,v 1.8 2026/07/09 09:10:41 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -38,7 +38,6 @@ struct fusefs_node {
 	LIST_ENTRY(fusefs_node)	 i_hash; /* Hash chain */
 	struct	vnode		*i_vnode;/* Vnode associated with this inode. */
 	struct	fusefs_mnt	*i_ump;
-	dev_t			 i_dev;	 /* Device associated with the inode. */
 	ino_t			 i_number;	/* The identity of the inode. */
 	ino_t			 i_parent_cache;/* Parent inode (only dirs). */
 	struct	lockf_state	*i_lockf;	/* Byte-level lock state. */
@@ -65,7 +64,7 @@ struct fusefs_node {
 #define VTOI(vp) ((struct fusefs_node *)(vp)->v_data)
 
 void		 fuse_ihashinit(void);
-struct vnode	*fuse_ihashget(dev_t, ino_t);
+struct vnode	*fuse_ihashget(const struct fusefs_mnt *, ino_t);
 int		 fuse_ihashins(struct fusefs_node *);
 void		 fuse_ihashrem(struct fusefs_node *);
 
