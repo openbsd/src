@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.73 2026/07/09 20:02:14 kirill Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.74 2026/07/09 20:02:45 kirill Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -328,7 +328,7 @@ resolve_failed:
 
 			/* Write it back out. */
 			for (i=0; i<size; i++)
-				ptr[i] = ((tmp >> (8*i)) & 0xff);
+				ptr[i] = ((tmp >> (8*(size - i - 1))) & 0xff);
 		} else if (RELOC_TARGET_SIZE(type) > 32) {
 			*where &= ~mask;
 			*where |= value;
