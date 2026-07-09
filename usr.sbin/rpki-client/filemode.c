@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.85 2026/07/07 13:56:10 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.86 2026/07/09 11:39:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -609,8 +609,12 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 			}
 		}
 		if (status) {
+			int cvs;
+
 			cert->talid = a->cert->talid;
-			constraints_validate(file, cert);
+			cvs = constraints_validate(file, cert);
+			if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER)
+				status = cvs;
 		}
 	} else if (is_ta) {
 		expires = NULL;
