@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2023/10/31 08:00:33 claudio Exp $
+#	$OpenBSD: Makefile,v 1.19 2026/07/09 05:30:32 anton Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -77,7 +77,6 @@ PROGS +=	t_write
 # failing tests
 REGRESS_EXPECTED_FAILURES =
 REGRESS_EXPECTED_FAILURES +=	run-t_mlock-4
-REGRESS_EXPECTED_FAILURES +=	run-t_msgrcv-3
 
 . for t in run-t_fork-{3,4,5}
 ${t}:
