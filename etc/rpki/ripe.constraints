@@ -1,4 +1,4 @@
-#	$OpenBSD: ripe.constraints,v 1.5 2024/04/17 14:31:59 job Exp $
+#	$OpenBSD: ripe.constraints,v 1.6 2026/07/09 12:29:52 job Exp $
 
 # From https://www.iana.org/assignments/ipv6-unicast-address-assignments
 allow 2001:600::/23
@@ -22,7 +22,7 @@ deny 27648 - 28671
 deny 52224 - 53247
 deny 61440 - 61951
 deny 64099 - 64197
-deny 262144 - 273820
+deny 262144 - 275868
 
 # LACNIC ASNs cannot be transferred to RIPE NCC
 # From nro-delegated-stats 20240417
@@ -699,8 +699,7 @@ deny 26426
 deny 26434
 deny 26473
 deny 26505
-deny 26592 - 26596
-deny 26598 - 26623
+deny 26592 - 26623
 
 # AFRINIC IPv4 resources cannot be transferred to RIPE NCC
 # From https://www.iana.org/assignments/ipv4-address-space/
@@ -751,8 +750,7 @@ deny 196.216.2.0 - 197.255.255.255
 # AFRINIC ASNs cannot be transferred to RIPE NCC
 # From https://www.iana.org/assignments/as-numbers/
 deny 36864 - 37887
-deny 327680 - 328703
-deny 328704 - 329727
+deny 327680 - 330751
 
 # AFRINIC ASNs cannot be transferred to RIPE NCC
 # From nro-delegated-stats 20240417
