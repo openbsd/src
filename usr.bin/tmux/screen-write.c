@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.282 2026/07/06 15:41:31 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.283 2026/07/09 07:35:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2962,7 +2962,13 @@ screen_write_alternateon(struct screen_write_ctx *ctx, struct grid_cell *gc,
 
 	if (wp != NULL) {
 		window_pane_clear_resizes(wp, NULL);
+		if (event_initialized(&wp->resize_timer))
+			evtimer_del(&wp->resize_timer);
 		layout_fix_panes(wp->window, NULL);
+		if (!TAILQ_EMPTY(&wp->resize_queue)) {
+			window_pane_send_resize(wp, wp->sx, wp->sy);
+			window_pane_clear_resizes(wp, NULL);
+		}
 		server_redraw_window_borders(wp->window);
 	}
 
