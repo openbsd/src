@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.78 2026/06/20 13:45:13 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.79 2026/07/10 14:43:48 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -248,7 +248,7 @@ fusefs_open(void *v)
 	ap = v;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -299,7 +299,7 @@ fusefs_close(void *v)
 
 	ap = v;
 	ip = VTOI(ap->a_vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init)
 		return (0);
@@ -359,7 +359,7 @@ fusefs_access(void *v)
 	p = ap->a_p;
 	cred = p->p_ucred;
 	ip = VTOI(ap->a_vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/* 
 	 * Only user that mounted the file system can access it unless
@@ -410,7 +410,7 @@ fusefs_getattr(void *v)
 	int error = 0;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/*
 	 * Only user that mounted the file system can access it unless
@@ -498,7 +498,7 @@ fusefs_setattr(void *v)
 	struct fusebuf *fbuf;
 	int error = 0;
 
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/*
 	 * Setting of flags is not supported.
@@ -655,7 +655,7 @@ fusefs_link(void *v)
 
 	ip = VTOI(vp);
 	dip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init) {
 		VOP_ABORTOP(dvp, cnp);
@@ -719,7 +719,7 @@ fusefs_symlink(void *v)
 	int len;
 
 	dp = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)dp->i_ump;
+	fmp = dp->i_fmp;
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
@@ -797,7 +797,7 @@ fusefs_readdir(void *v)
 	foffset = uio->uio_offset;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -930,7 +930,7 @@ fusefs_inactive(void *v)
 	struct fusefs_mnt *fmp;
 	int type, flags;
 
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/* Close all open file handles. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
@@ -977,7 +977,7 @@ fusefs_readlink(void *v)
 	int error;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 	uio = ap->a_uio;
 	p = uio->uio_procp;
 
@@ -1028,7 +1028,7 @@ fusefs_reclaim(void *v)
 	struct fusebuf *fbuf;
 	int type;
 
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/* Close opened files. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
@@ -1094,7 +1094,7 @@ fusefs_create(void *v)
 	mode_t mode;
 
 	ip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
 	if (!fmp->sess_init) {
@@ -1160,7 +1160,7 @@ fusefs_mknod(void *v)
 	int error = 0;
 
 	ip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init) {
 		VOP_ABORTOP(dvp, cnp);
@@ -1238,7 +1238,7 @@ fusefs_read(void *v)
 	int error;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -1292,7 +1292,7 @@ fusefs_write(void *v)
 	int error;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/*
 	 * XXX
@@ -1409,7 +1409,7 @@ abortit:
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	/*
 	 * Be sure we are not renaming ".", "..", or an alias of ".". This
@@ -1498,7 +1498,7 @@ fusefs_mkdir(void *v)
 	int error = 0;
 
 	ip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 
 	if (!fmp->sess_init) {
@@ -1566,7 +1566,7 @@ fusefs_rmdir(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
@@ -1633,7 +1633,7 @@ fusefs_remove(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
@@ -1730,7 +1730,7 @@ fusefs_fsync(void *v)
 		return (0);
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->i_ump;
+	fmp = ip->i_fmp;
 
 	if (!fmp->sess_init)
 		return (ENXIO);

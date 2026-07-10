@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs_node.h,v 1.8 2026/07/09 09:10:41 helg Exp $ */
+/* $OpenBSD: fusefs_node.h,v 1.9 2026/07/10 14:43:48 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -37,7 +37,7 @@ struct fusefs_mnt;
 struct fusefs_node {
 	LIST_ENTRY(fusefs_node)	 i_hash; /* Hash chain */
 	struct	vnode		*i_vnode;/* Vnode associated with this inode. */
-	struct	fusefs_mnt	*i_ump;
+	struct	fusefs_mnt	*i_fmp;
 	ino_t			 i_number;	/* The identity of the inode. */
 	ino_t			 i_parent_cache;/* Parent inode (only dirs). */
 	struct	lockf_state	*i_lockf;	/* Byte-level lock state. */

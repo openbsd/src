@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.26 2026/06/20 13:45:13 helg Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.27 2026/07/10 14:43:48 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -55,7 +55,7 @@ fusefs_lookup(void *v)
 	*vpp = NULL;
 	vdp = ap->a_dvp;
 	dp = VTOI(vdp);
-	fmp = (struct fusefs_mnt *)dp->i_ump;
+	fmp = dp->i_fmp;
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
 

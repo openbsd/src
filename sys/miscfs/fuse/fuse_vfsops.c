@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.52 2026/07/09 09:10:41 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.53 2026/07/10 14:43:48 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -315,7 +315,7 @@ retry:
 	    RWL_DUPOK | RWL_IS_VNODE);
 	nvp->v_data = ip;
 	ip->i_vnode = nvp;
-	ip->i_ump = fmp;
+	ip->i_fmp = fmp;
 	ip->i_number = ino;
 	ip->nlookup = 1;
 

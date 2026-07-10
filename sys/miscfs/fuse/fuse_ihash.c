@@ -1,4 +1,4 @@
-/*	$OpenBSD: fuse_ihash.c,v 1.3 2026/07/09 09:10:40 helg Exp $	*/
+/*	$OpenBSD: fuse_ihash.c,v 1.4 2026/07/10 14:43:48 helg Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ loop:
 	/* XXXLOCKING lock hash list */
 	ipp = fuse_ihash(fmp, inum);
 	LIST_FOREACH(ip, ipp, i_hash) {
-		if (inum == ip->i_number && fmp == ip->i_ump) {
+		if (inum == ip->i_number && fmp == ip->i_fmp) {
 			vp = ITOV(ip);
 			vpid = vp->v_id;
 			/* XXXLOCKING unlock hash list? */
@@ -122,7 +122,7 @@ fuse_ihashins(struct fusefs_node *ip)
 {
 	struct   fusefs_node *curip;
 	struct   fuse_ihashhead *ipp;
-	struct   fusefs_mnt *fmp = ip->i_ump;
+	struct   fusefs_mnt *fmp = ip->i_fmp;
 	ino_t	 inum = ip->i_number;
 
 	/* lock the inode, then put it on the appropriate hash list */
@@ -132,7 +132,7 @@ fuse_ihashins(struct fusefs_node *ip)
 
 	ipp = fuse_ihash(fmp, inum);
 	LIST_FOREACH(curip, ipp, i_hash) {
-		if (inum == curip->i_number && fmp == curip->i_ump) {
+		if (inum == curip->i_number && fmp == curip->i_fmp) {
 			/* XXXLOCKING unlock hash list? */
 			VOP_UNLOCK(ITOV(ip));
 			return (EEXIST);
