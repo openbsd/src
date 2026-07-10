@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.59 2026/07/05 08:24:00 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.60 2026/07/10 07:25:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -376,7 +376,7 @@ control_write_output(struct client *c, struct window_pane *wp)
 	if (winlink_find_by_window(&c->session->windows, wp->window) == NULL)
 		return;
 
-	if (c->flags & CONTROL_IGNORE_FLAGS) {
+	if (c->flags & (CONTROL_IGNORE_FLAGS|CLIENT_EXIT)) {
 		cp = control_get_pane(c, wp);
 		if (cp != NULL)
 			goto ignore;

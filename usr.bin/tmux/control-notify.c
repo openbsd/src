@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.35 2026/06/19 08:21:55 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.36 2026/07/10 07:25:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -25,6 +25,7 @@
 
 #define CONTROL_SHOULD_NOTIFY_CLIENT(c) \
 	((c) != NULL && ((c)->flags & CLIENT_CONTROL) && \
+	 (~(c)->flags & CLIENT_EXIT) && \
 	 (c)->control_state != NULL)
 
 void
