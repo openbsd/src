@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.4 2026/07/03 11:28:31 jan Exp $ */
+/*	$OpenBSD: aldap.c,v 1.5 2026/07/10 06:42:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -416,9 +416,15 @@ aldap_parse(struct aldap *ldap)
 		if (m->msg->be_sub) {
 			for (ep = m->msg->be_sub; ep != NULL; ep = ep->be_next) {
 				ober_scanf_elements(ep, "t", &class, &type);
-				if (class == 2 && type == 0)
-					m->page = aldap_parse_page_control(ep->be_sub->be_sub,
+				if (class == 2 && type == 0) {
+					if (ep->be_sub == NULL ||
+					    ep->be_sub->be_sub == NULL)
+						goto parsefail;
+
+					m->page = aldap_parse_page_control(
+					    ep->be_sub->be_sub,
 					    ep->be_sub->be_sub->be_len);
+				}
 			}
 		} else
 			m->page = NULL;
@@ -454,36 +460,39 @@ aldap_parse_page_control(struct ber_element *control, size_t len)
 	char *oid, *s;
 	char *encoded;
 	struct ber b;
-	struct ber_element *elm;
-	struct aldap_page_control *page;
+	struct ber_element *elm = NULL;
+	struct aldap_page_control *page = NULL;
 
 	b.br_wbuf = NULL;
-	ober_scanf_elements(control, "ss", &oid, &encoded);
+	if (ober_scanf_elements(control, "ss", &oid, &encoded) == -1)
+		goto failed;
+
 	ober_set_readbuf(&b, encoded, control->be_next->be_len);
 	elm = ober_read_elements(&b, NULL);
+	if (elm == NULL)
+		goto failed;
 
-	if ((page = malloc(sizeof(struct aldap_page_control))) == NULL) {
-		if (elm != NULL)
-			ober_free_elements(elm);
-		ober_free(&b);
-		return NULL;
-	}
+	if ((page = malloc(sizeof(struct aldap_page_control))) == NULL)
+		goto failed;
 
-	ober_scanf_elements(elm->be_sub, "is", &page->size, &s);
+	if (ober_scanf_elements(elm->be_sub, "is", &page->size, &s) == -1)
+		goto failed;
+
 	page->cookie_len = elm->be_sub->be_next->be_len;
+	if ((page->cookie = malloc(page->cookie_len)) == NULL)
+		goto failed;
 
-	if ((page->cookie = malloc(page->cookie_len)) == NULL) {
-		if (elm != NULL)
-			ober_free_elements(elm);
-		ober_free(&b);
-		free(page);
-		return NULL;
-	}
 	memcpy(page->cookie, s, page->cookie_len);
 
 	ober_free_elements(elm);
 	ober_free(&b);
 	return page;
+ failed:
+	LDAP_DEBUG("couldn't parse paging control", control);
+	ober_free_elements(elm);
+	ober_free(&b);
+	free(page);
+	return NULL;
 }
 
 void
