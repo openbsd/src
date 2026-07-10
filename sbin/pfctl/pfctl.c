@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.404 2026/05/17 14:11:57 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.405 2026/07/10 06:28:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3339,6 +3339,7 @@ main(int argc, char *argv[])
 		pfctl_show_limits(dev, opts);
 		break;
 	case SHOWOPT_ALL:
+		opts |= PF_OPT_SHOWALL;
 		pfctl_init_show_rules(&show_rules_pf, dev, opts);
 		pfctl_load_fingerprints(dev, opts);
 		pfctl_show_rules(&show_rules_pf, path, PFCTL_SHOW_RULES,
