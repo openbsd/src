@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.189 2026/06/10 00:04:38 beck Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.190 2026/07/11 13:13:16 kettenis Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1007,7 +1007,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		if (pg->pg_flags & PG_RELEASED) {
 			KASSERT(pg->uobject != NULL ||
 			    (pg->uanon != NULL && pg->uanon->an_ref > 0));
-			atomic_clearbits_int(&pg->pg_flags, PG_RELEASED);
+			atomic_clearbits_int(&pg->pg_flags, PG_WANTED);
 			pmap_page_protect(pg, PROT_NONE);
 			uvm_pagefree(pg);
 		} else {

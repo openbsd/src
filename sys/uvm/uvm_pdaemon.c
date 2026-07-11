@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.159 2026/07/07 17:32:56 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.160 2026/07/11 13:13:16 kettenis Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ swapcluster_flush(struct swapcluster *swc)
 	result = uvm_swap_put(slot, swc->swc_pages, nused, 0);
 	if (result != VM_PAGER_PEND) {
 		KASSERT(result == VM_PAGER_AGAIN);
-		uvm_swap_dropcluster(swc->swc_pages, nused, ENOMEM);
+		uvm_swap_dropcluster(swc->swc_pages, nused, ENOMEM, 0);
 		/*  for transient failures, free all the swslots */
 		/* XXX daddr_t -> int */
 		uvm_swap_free(slot, nused);
@@ -715,12 +715,10 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		}
 
 		/*
-		 * If no swap encrypt buffers left, leave the page on
-		 * the inactive list for future processing.  Same if
-		 * we can't guarantee that we can map both the
-		 * encrypted and unencrypted buffers.
+		 * If none of our reserved psegs is available we can't
+		 * guarantee that we're able to map a swap cluster. 
 		 */
-		if (seb_free == 0 || uvm_pseg_reserve_available() < 2) {
+		if (uvm_pseg_reserve_available() < 1) {
 			rw_exit(slock);
 			atomic_inc_int(&uvmexp.swpskip);
 			continue;
@@ -755,12 +753,17 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		 * first mark the page busy so that no one else will
 		 * touch the page.   we write protect all the mappings
 		 * of the page so that no one touches it while it is
-		 * in I/O.
+		 * in I/O.  if the page is swap-backed we remove the
+		 * mappings completely to prevent reading pages that
+		 * are being encrypted.
 		 */
 		swap_backed = ((p->pg_flags & PQ_SWAPBACKED) != 0);
 		atomic_setbits_int(&p->pg_flags, PG_BUSY);
 		UVM_PAGE_OWN(p, "scan_inactive");
-		pmap_page_protect(p, PROT_READ);
+		if (swap_backed)
+			pmap_page_protect(p, PROT_NONE);
+		else
+			pmap_page_protect(p, PROT_READ);
 		atomic_inc_int(&uvmexp.pgswapout);
 
 		/*
