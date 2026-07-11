@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.27 2026/03/28 16:22:04 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.28 2026/07/11 18:24:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -621,6 +621,7 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
 		buf = htobe64(l2cluster);
 		if (pwrite(disk->fd, &buf, sizeof(buf), l1off) != 8)
 			fatal("%s: failed to write ref block", __func__);
+		inc_refs(disk, l2cluster, 1);
 	}
 
 	refs = 1;
