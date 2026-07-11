@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.1 2001/08/29 01:34:56 art Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.2 2026/07/11 15:54:36 tb Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -8,8 +8,7 @@
 #include <ieeefp.h>
 
 fp_except
-fpsetmask(mask)
-	fp_except mask;
+fpsetmask(fp_except mask)
 {
 	fp_except old;
 	fp_except new;

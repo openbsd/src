@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.1 2001/08/29 01:34:56 art Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.2 2026/07/11 15:54:36 tb Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -8,8 +8,7 @@
 #include <ieeefp.h>
 
 fp_rnd
-fpsetround(rnd_dir)
-	fp_rnd rnd_dir;
+fpsetround(fp_rnd rnd_dir)
 {
 	fp_rnd old;
 	fp_rnd new;
