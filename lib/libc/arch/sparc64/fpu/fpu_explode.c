@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.12 2024/03/29 21:02:11 miod Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.13 2026/07/11 15:53:32 tb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,9 +84,7 @@
  * int -> fpn.
  */
 int
-__fpu_itof(fp, i)
-	struct fpn *fp;
-	u_int i;
+__fpu_itof(struct fpn *fp, u_int i)
 {
 
 	if (i == 0)
@@ -110,9 +108,7 @@ __fpu_itof(fp, i)
  * uint -> fpn.
  */
 int
-__fpu_uitof(fp, i)
-	struct fpn *fp;
-	u_int i;
+__fpu_uitof(struct fpn *fp, u_int i)
 {
 
 	if (i == 0)
@@ -136,9 +132,7 @@ __fpu_uitof(fp, i)
  * 64-bit int -> fpn.
  */
 int
-__fpu_xtof(fp, i)
-	struct fpn *fp;
-	u_int64_t i;
+__fpu_xtof(struct fpn *fp, u_int64_t i)
 {
 
 	if (i == 0)
@@ -163,9 +157,7 @@ __fpu_xtof(fp, i)
  * 64-bit uint -> fpn.
  */
 int
-__fpu_uxtof(fp, i)
-	struct fpn *fp;
-	u_int64_t i;
+__fpu_uxtof(struct fpn *fp, u_int64_t i)
 {
 
 	if (i == 0)
@@ -225,9 +217,7 @@ __fpu_uxtof(fp, i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 int
-__fpu_stof(fp, i)
-	struct fpn *fp;
-	u_int i;
+__fpu_stof(struct fpn *fp, u_int i)
 {
 	int exp;
 	u_int frac, f0, f1;
@@ -245,9 +235,7 @@ __fpu_stof(fp, i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 int
-__fpu_dtof(fp, i, j)
-	struct fpn *fp;
-	u_int i, j;
+__fpu_dtof(struct fpn *fp, u_int i, u_int j)
 {
 	int exp;
 	u_int frac, f0, f1, f2;
@@ -266,9 +254,7 @@ __fpu_dtof(fp, i, j)
  * 128-bit extended -> fpn.
  */
 int
-__fpu_qtof(fp, i, j, k, l)
-	struct fpn *fp;
-	u_int i, j, k, l;
+__fpu_qtof(struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
 {
 	int exp;
 	u_int frac, f0, f1, f2, f3;
@@ -295,10 +281,7 @@ __fpu_qtof(fp, i, j, k, l)
  * operations are performed.)
  */
 void
-__fpu_explode(fe, fp, type, reg)
-	struct fpemu *fe;
-	struct fpn *fp;
-	int type, reg;
+__fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 {
 	u_int32_t s = 0/* XXX gcc */, *sp;
 	u_int64_t l[2];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_mul.c,v 1.4 2024/03/29 21:02:11 miod Exp $	*/
+/*	$OpenBSD: fpu_mul.c,v 1.5 2026/07/11 15:53:32 tb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,8 +100,7 @@
  * until we reach a nonzero word.
  */
 struct fpn *
-__fpu_mul(fe)
-	struct fpemu *fe;
+__fpu_mul(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 	u_int a3, a2, a1, a0, x3, x2, x1, x0, bit, m;

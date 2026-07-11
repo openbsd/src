@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_sqrt.c,v 1.7 2024/03/29 21:02:11 miod Exp $	*/
+/*	$OpenBSD: fpu_sqrt.c,v 1.8 2026/07/11 15:53:32 tb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,8 +187,7 @@
  * this, so we have some justification in assuming it.
  */
 struct fpn *
-__fpu_sqrt(fe)
-	struct fpemu *fe;
+__fpu_sqrt(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1;
 	u_int bit, q, tt;

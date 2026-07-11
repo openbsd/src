@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.5 2024/03/29 21:02:11 miod Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.6 2026/07/11 15:53:32 tb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,8 +153,7 @@
  */
 
 struct fpn *
-__fpu_div(fe)
-	struct fpemu *fe;
+__fpu_div(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 	u_int q, bit;

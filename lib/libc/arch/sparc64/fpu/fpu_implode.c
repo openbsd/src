@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.8 2024/03/29 21:02:11 miod Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.9 2026/07/11 15:53:32 tb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,9 +191,7 @@ toinf(struct fpemu *fe, int sign)
  * of the SPARC instruction set).
  */
 u_int
-__fpu_ftoi(fe, fp)
-	struct fpemu *fe;
-	struct fpn *fp;
+__fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 {
 	u_int i;
 	int sign, exp;
@@ -240,10 +238,7 @@ __fpu_ftoi(fe, fp)
  * of the SPARC instruction set).
  */
 u_int
-__fpu_ftox(fe, fp, res)
-	struct fpemu *fe;
-	struct fpn *fp;
-	u_int *res;
+__fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
 	u_int64_t i;
 	int sign, exp;
@@ -292,9 +287,7 @@ __fpu_ftox(fe, fp, res)
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
 u_int
-__fpu_ftos(fe, fp)
-	struct fpemu *fe;
-	struct fpn *fp;
+__fpu_ftos(struct fpemu *fe, struct fpn *fp)
 {
 	u_int sign = fp->fp_sign << 31;
 	int exp;
@@ -376,10 +369,7 @@ done:
  * This code mimics fpu_ftos; see it for comments.
  */
 u_int
-__fpu_ftod(fe, fp, res)
-	struct fpemu *fe;
-	struct fpn *fp;
-	u_int *res;
+__fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
 	u_int sign = fp->fp_sign << 31;
 	int exp;
@@ -437,10 +427,7 @@ done:
  * so we can avoid a small bit of work.
  */
 u_int
-__fpu_ftoq(fe, fp, res)
-	struct fpemu *fe;
-	struct fpn *fp;
-	u_int *res;
+__fpu_ftoq(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
 	u_int sign = fp->fp_sign << 31;
 	int exp;
@@ -497,11 +484,7 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-__fpu_implode(fe, fp, type, space)
-	struct fpemu *fe;
-	struct fpn *fp;
-	int type;
-	u_int *space;
+__fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 {
 
 	switch (type) {
