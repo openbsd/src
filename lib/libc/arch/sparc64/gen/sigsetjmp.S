@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.6 2026/07/11 16:04:58 tb Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.5 2000/08/28 00:45:59 eeh Exp $	*/
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #include "SYS.h"
 
-ENTRY(sigsetjmp)
+ENTRY_NB(sigsetjmp)
 	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
 	brz,pt	%o1, 1f
 	 st	%o1, [%o0 + 8*14]	! jmpbuf[JBLEN]
@@ -53,7 +53,7 @@ ENTRY(sigsetjmp)
 	 clr	%o0			/* return 0 */
 END_WEAK(sigsetjmp)
 
-ENTRY(siglongjmp)
+ENTRY_NB(siglongjmp)
 	save	%sp, -CC64FSZ, %sp
 	flushw
 	ld	[%i0 + 8*14], %g1
