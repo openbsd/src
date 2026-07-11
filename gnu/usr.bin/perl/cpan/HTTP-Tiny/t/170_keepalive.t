@@ -57,6 +57,17 @@ $h->default_headers({ 'X-Foo' => 'Bar' });
 test_ht( "Default headers change", 1, 'http://foo.com' );
 
 new_ht();
+$h->{handle}->{last_used} = time - 3600;
+test_ht( "Unlimited keep_alive_timeout", 1, 'http://foo.com' );
+
+new_ht(keep_alive_timeout => 2);
+test_ht( "Less than than keep_alive_timeout", 1, 'http://foo.com' );
+
+new_ht(keep_alive_timeout => 2);
+$h->{handle}->{last_used} = time - 3;
+test_ht( "Longer than than keep_alive_timeout", 0, 'http://foo.com' );
+
+new_ht();
 $h->{handle}->close;
 test_ht( "Socket closed", 0, 'http://foo.com' );
 

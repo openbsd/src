@@ -8,7 +8,7 @@ use lib 't';
 use HTTP::Tiny;
 
 plan 'skip_all' => "Only run if HTTP::Tiny->can_ssl()"
-  unless HTTP::Tiny->can_ssl(); # also requires IO::Socket:SSL
+  unless $ENV{RELEASE_TESTING} || HTTP::Tiny->can_ssl(); # also requires IO::Socket:SSL
 
 
 delete $ENV{SSL_CERT_FILE};
@@ -19,6 +19,11 @@ $ENV{SSL_CERT_FILE} = "corpus/snake-oil.crt";
 
 
 my $handle = HTTP::Tiny::Handle->new();
+
+# RELEASE_TESTING may skip this call, so ensure it is done again. _find_CA
+# relies on IO::Socket::SSL being loaded, which would always be done if we
+# weren't bypassing the public API.
+HTTP::Tiny->can_ssl;
 
 my %ret = $handle->_find_CA();
 

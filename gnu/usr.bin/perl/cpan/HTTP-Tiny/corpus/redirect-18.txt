@@ -1,0 +1,38 @@
+url
+  http://example.com:8080/foo
+expected
+  ok
+expected_url
+  http://example.com:8081/bar
+headers
+  Authorization: Bearer SECRET-TOKEN
+----------
+GET /foo HTTP/1.1
+Host: example.com:8080
+Authorization: Bearer SECRET-TOKEN
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 302 Found
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 8
+Location: http://example.com:8081/bar
+
+redirect
+
+----------
+GET /bar HTTP/1.1
+Host: example.com:8081
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 2
+
+ok
+

@@ -1,0 +1,41 @@
+url
+  http://victim.example/submit
+method
+  POST
+expected
+  ok
+expected_url
+  http://attacker.example/loot
+headers
+  Authorization: Bearer SECRET-TOKEN
+----------
+POST /submit HTTP/1.1
+Host: victim.example
+Authorization: Bearer SECRET-TOKEN
+Connection: close
+Content-Length: 0
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 303 See Other
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 8
+Location: http://attacker.example/loot
+
+redirect
+
+----------
+GET /loot HTTP/1.1
+Host: attacker.example
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 2
+
+ok
+

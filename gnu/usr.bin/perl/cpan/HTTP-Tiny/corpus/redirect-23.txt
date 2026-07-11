@@ -1,0 +1,36 @@
+url
+  https://user:pass@victim.example/secret
+expected
+  ok
+expected_url
+  https://attacker.example/loot
+----------
+GET /secret HTTP/1.1
+Host: victim.example
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+Authorization: Basic dXNlcjpwYXNz
+
+----------
+HTTP/1.1 302 Found
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 8
+Location: https://attacker.example/loot
+
+redirect
+
+----------
+GET /loot HTTP/1.1
+Host: attacker.example
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 2
+
+ok
+

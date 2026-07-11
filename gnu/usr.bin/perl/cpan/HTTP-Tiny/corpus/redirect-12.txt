@@ -1,0 +1,36 @@
+url
+  https://victim.example/secret
+expected
+  success
+expected_url
+  http://victim.example/secret
+new_args
+  allow_downgrade: 1
+----------
+GET /secret HTTP/1.1
+Host: victim.example
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 302 Found
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 8
+Location: http://victim.example/secret
+
+redirect
+
+----------
+GET /secret HTTP/1.1
+Host: victim.example
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 7
+
+success

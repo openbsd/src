@@ -1,0 +1,21 @@
+url
+  https://victim.example/secret
+expected
+  refused-redirect-body
+expected_url
+  https://victim.example/secret
+----------
+GET /secret HTTP/1.1
+Host: victim.example
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+
+----------
+HTTP/1.1 302 Found
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 21
+Location: http://victim.example/secret
+
+refused-redirect-body
+
