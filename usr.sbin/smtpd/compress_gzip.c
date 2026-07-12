@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_gzip.c,v 1.13 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: compress_gzip.c,v 1.14 2026/07/12 23:17:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -100,7 +100,7 @@ uncompress_gzip_chunk(void *ib, size_t ibsz, void *ob, size_t obsz)
 	ret = strm->total_out;
 
 end:
-	deflateEnd(strm);
+	inflateEnd(strm);
 	free(strm);
 	return ret;
 }
