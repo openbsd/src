@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.49 2026/07/12 15:49:45 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.50 2026/07/12 22:05:32 kirill Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -409,7 +409,7 @@ struct que *
 que_create(key_t key, struct ucred *cred, int mode)
 {
 	struct que *que, *que2;
-	int nextix = 1;
+	int nextix = 0;
 
 	que = malloc(sizeof(*que), M_TEMP, M_WAIT|M_ZERO);
 
