@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.91 2021/10/24 10:26:22 patrick Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.92 2026/07/12 21:41:08 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -691,6 +691,12 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			/* Compression was useless, we lost time */
 			free(out, M_CRYPTO_DATA, result);
 			return 0;
+		}
+	} else {
+		/* Decompressed IP packet must fit into mbuf cluster. */
+		if (outtype == CRYPTO_BUF_MBUF && result > MAXMCLBYTES) {
+			free(out, M_CRYPTO_DATA, result);
+			return EMSGSIZE;
 		}
 	}
 
