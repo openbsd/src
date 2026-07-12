@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.126 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.127 2026/07/12 23:24:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -24,6 +24,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -272,6 +273,25 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		argv++;
 		argc--;
 	}
+
+	/*
+	 * Values taken from argv are interpolated into SMTP command lines
+	 * (MAIL FROM, RCPT TO and their DSN options).  An embedded CR or LF
+	 * would split the intended command boundary and inject additional
+	 * SMTP commands, so reject any such field before starting the
+	 * dialogue.
+	 */
+	if (msg.from != NULL && strpbrk(msg.from, "\r\n") != NULL)
+		errx(EX_USAGE, "sender address contains a line break");
+	for (i = 0; i < msg.rcpt_cnt; i++)
+		if (strpbrk(msg.rcpts[i], "\r\n") != NULL)
+			errx(EX_USAGE, "recipient address contains a line break");
+	if (msg.dsn_notify != NULL && strpbrk(msg.dsn_notify, "\r\n") != NULL)
+		errx(EX_USAGE, "DSN NOTIFY value contains a line break");
+	if (msg.dsn_ret != NULL && strpbrk(msg.dsn_ret, "\r\n") != NULL)
+		errx(EX_USAGE, "DSN RET value contains a line break");
+	if (msg.dsn_envid != NULL && strpbrk(msg.dsn_envid, "\r\n") != NULL)
+		errx(EX_USAGE, "DSN ENVID value contains a line break");
 
 	if ((fp = tmpfile()) == NULL)
 		err(EX_UNAVAILABLE, "tmpfile");
