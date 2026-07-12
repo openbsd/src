@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.248 2024/04/23 13:34:51 jsg Exp $	*/
+/*	$OpenBSD: mta.c,v 1.249 2026/07/12 23:19:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1135,6 +1135,7 @@ mta_on_smarthost(struct envelope *evp, const char *smarthost)
 		m_add_string(p_queue, "Cannot retrieve smarthost");
 		m_add_int(p_queue, ESC_OTHER_STATUS);
 		m_close(p_queue);
+		free(evp);
 		return;
 	}
 
