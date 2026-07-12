@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.69 2026/05/22 23:10:05 mvs Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.70 2026/07/12 15:49:45 mvs Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -46,6 +46,8 @@
 #endif
 
 #define SEMOP_MAX (MALLOC_MAX / sizeof(struct sembuf))
+
+struct	rwlock sysvsem_lock = RWLOCK_INITIALIZER("semlk");
 
 int	semtot = 0;
 int	semutot = 0;
@@ -935,13 +937,10 @@ const struct sysctl_bounded_args sysvsem_vars[] = {
  * Userland access to struct seminfo.
  */
 int
-sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+sysctl_sysvsem_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	void *newp, size_t newlen)
 {
 	int error, val;
-
-	if (namelen != 1)
-                        return (ENOTDIR);       /* leaf-only */
 
 	switch (name[0]) {
 	case KERN_SEMINFO_SEMMNI:
@@ -970,4 +969,23 @@ sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
+}
+
+int
+sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+	void *newp, size_t newlen)
+{
+	int error;
+
+	if (namelen != 1)
+		return (ENOTDIR);       /* leaf-only */
+
+	rw_enter_write(&sysvsem_lock);
+	KERNEL_LOCK();
+	error = sysctl_sysvsem_locked(name, namelen, oldp, oldlenp,
+	    newp, newlen);
+	KERNEL_UNLOCK();
+	rw_exit_write(&sysvsem_lock);
+
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.48 2026/07/08 19:39:33 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.49 2026/07/12 15:49:45 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -726,6 +726,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 
 		memcpy(&info->msginfo, &msginfo, sizeof(struct msginfo));
 
+		KERNEL_LOCK();
 		/*
 		 * Special case #3: the previous array-based implementation
 		 * exported the array indices and userland has come to rely
@@ -734,6 +735,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 		TAILQ_FOREACH(que, &msg_queues, que_next)
 			memcpy(&info->msgids[que->que_ix], &que->msqid_ds,
 			    sizeof(struct msqid_ds));
+		KERNEL_UNLOCK();
 
 		error = copyout(info, where, infolen);
 

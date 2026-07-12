@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.31 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: shm.h,v 1.32 2026/07/12 15:49:45 mvs Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ struct shm_sysctl_info {
 #endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
+extern struct rwlock	sysvshm_lock;
 extern struct shminfo shminfo;
 extern struct shmid_ds **shmsegs;
 

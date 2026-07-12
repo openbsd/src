@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.29 2026/05/23 07:24:42 jca Exp $	*/
+/*	$OpenBSD: sem.h,v 1.30 2026/07/12 15:49:45 mvs Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ struct sem_sysctl_info {
 	struct	semid_ds semids[1];
 };
 
+extern struct rwlock	sysvsem_lock;
 extern struct seminfo	seminfo;
 
 /*

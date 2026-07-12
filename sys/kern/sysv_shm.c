@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.85 2026/06/24 11:25:23 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.86 2026/07/12 15:49:45 mvs Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+struct rwlock sysvshm_lock = RWLOCK_INITIALIZER("shmlk");
 
 extern struct shminfo shminfo;
 struct shmid_ds **shmsegs;	/* linear mapping of shmid -> shmseg */
@@ -595,20 +597,26 @@ shm_reallocate(int val)
  * Userland access to struct shminfo.
  */
 int
-sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+sysctl_sysvshm_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	void *newp, size_t newlen)
 {
 	int error, val;
 
-	if (namelen != 1)
-                        return (ENOTDIR);       /* leaf-only */
-
 	switch (name[0]) {
 	case KERN_SHMINFO_SHMMAX:
-		if ((error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &shminfo.shmmax, 0, INT_MAX)) || newp == NULL)
+		/*
+		 * Do not pass shminfo.shmmax directly. If `oldp'
+		 * contains unmapped address sysctl_int_bounded()
+		 * will fail, but value will be updated.
+		 */
+		val = shminfo.shmmax;
+
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &val, 0, INT_MAX);
+		if (error || val == shminfo.shmmax)
 			return (error);
 
+		shminfo.shmmax = val;
 		/* If new shmmax > shmall, crank shmall */
 		if (atop(round_page(shminfo.shmmax)) > shminfo.shmall)
 			shminfo.shmall = atop(round_page(shminfo.shmmax));
@@ -637,4 +645,23 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+int
+sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+	void *newp, size_t newlen)
+{
+	int error;
+
+	if (namelen != 1)
+		return (ENOTDIR);       /* leaf-only */
+
+	rw_enter_write(&sysvshm_lock);
+	KERNEL_LOCK();
+	error = sysctl_sysvshm_locked(name, namelen, oldp, oldlenp,
+	    newp, newlen);
+	KERNEL_UNLOCK();
+	rw_exit_write(&sysvshm_lock);
+
+	return (error);
 }
