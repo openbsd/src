@@ -1,4 +1,4 @@
-#	$OpenBSD: cfgparse.sh,v 1.9 2025/09/26 04:40:45 dtucker Exp $
+#	$OpenBSD: cfgparse.sh,v 1.10 2026/07/12 08:40:00 djm Exp $
 #	Placed in the Public Domain.
 
 tid="sshd config parse"
@@ -40,8 +40,8 @@ listenaddress 1.2.3.4
 listenaddress ::1
 EOD
 ($SUDO ${SSHD} -T -f $OBJ/sshd_config.1 | \
- grep '^listenaddress ' >$OBJ/sshd_config.2 &&
- diff $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
+ grep -i '^listenaddress ' >$OBJ/sshd_config.2 &&
+ diff -i $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
  fail "listenaddress order 1"
 # test 2: listenaddress first
 cat > $OBJ/sshd_config.1 <<EOD
@@ -53,8 +53,8 @@ port 5678
 addressfamily any
 EOD
 ($SUDO ${SSHD} -T -f $OBJ/sshd_config.1 | \
- grep '^listenaddress ' >$OBJ/sshd_config.2 &&
- diff $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
+ grep -i '^ListenAddress ' >$OBJ/sshd_config.2 &&
+ diff -i $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
  fail "listenaddress order 2"
 
 # Check idempotence of MaxStartups
@@ -66,8 +66,8 @@ MaxStartups 1:2:3
 MaxStartups 8:16:32
 EOD
 ($SUDO ${SSHD} -T -f $OBJ/sshd_config.1 | \
- grep '^maxstartups ' >$OBJ/sshd_config.2 &&
- diff $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
+ grep -i '^maxstartups ' >$OBJ/sshd_config.2 &&
+ diff -i $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
  fail "maxstartups idempotence"
 
 # cleanup
