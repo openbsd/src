@@ -151,8 +151,8 @@ dispatch_record(struct asr_result *ar, void *arg)
 	unpack_query(&pack, &q);
 
 	for (; h.ancount; h.ancount--) {
-		unpack_rr(&pack, &rr);
-		/**/
+		if (unpack_rr(&pack, &rr) == -1)
+			break;
 		tgt->dispatch(&rr, tgt);
 	}
 end:

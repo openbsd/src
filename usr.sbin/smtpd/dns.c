@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.92 2023/11/16 10:23:21 op Exp $	*/
+/*	$OpenBSD: dns.c,v 1.93 2026/07/12 23:00:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -256,7 +256,8 @@ dns_dispatch_mx(struct asr_result *ar, void *arg)
 
 	found = 0;
 	for (; h.ancount; h.ancount--) {
-		unpack_rr(&pack, &rr);
+		if (unpack_rr(&pack, &rr) == -1)
+			break;
 		if (rr.rr_type != T_MX)
 			continue;
 
@@ -314,7 +315,8 @@ dns_dispatch_mx_preference(struct asr_result *ar, void *arg)
 		unpack_header(&pack, &h);
 		unpack_query(&pack, &q);
 		for (; h.ancount; h.ancount--) {
-			unpack_rr(&pack, &rr);
+			if (unpack_rr(&pack, &rr) == -1)
+				break;
 			if (rr.rr_type != T_MX)
 				continue;
 			print_dname(rr.rr.mx.exchange, buf, sizeof(buf));
