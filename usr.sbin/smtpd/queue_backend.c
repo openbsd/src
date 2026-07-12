@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.70 2026/05/26 22:44:17 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.71 2026/07/12 23:32:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -231,10 +231,9 @@ queue_message_commit(uint32_t msgid)
 		ofp = NULL;
 
 		if (rename(tmppath, msgpath) == -1) {
-			if (errno == ENOSPC)
-				return (0);
+			if (errno != ENOSPC)
+				log_warn("rename");
 			unlink(tmppath);
-			log_warn("rename");
 			return (0);
 		}
 	}
@@ -253,10 +252,9 @@ queue_message_commit(uint32_t msgid)
 		ofp = NULL;
 
 		if (rename(tmppath, msgpath) == -1) {
-			if (errno == ENOSPC)
-				return (0);
+			if (errno != ENOSPC)
+				log_warn("rename");
 			unlink(tmppath);
-			log_warn("rename");
 			return (0);
 		}
 	}
@@ -278,6 +276,7 @@ err:
 		fclose(ifp);
 	if (ofp)
 		fclose(ofp);
+	unlink(tmppath);
 	return 0;
 }
 
