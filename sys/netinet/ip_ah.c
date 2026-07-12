@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.179 2025/12/11 05:06:02 dlg Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.180 2026/07/12 21:29:51 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -545,6 +545,10 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
 	uint8_t calc[AH_ALEN_MAX];
 
 	rplen = AH_FLENGTH + sizeof(u_int32_t);
+	if (m->m_pkthdr.len < skip + rplen) {
+		ahstat_inc(ahs_hdrops);
+		goto drop;
+	}
 
 	/* Save the AH header, we use it throughout. */
 	m_copydata(m, skip + offsetof(struct ah, ah_hl), sizeof(u_int8_t), &hl);
