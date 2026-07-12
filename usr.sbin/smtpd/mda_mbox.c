@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_mbox.c,v 1.3 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: mda_mbox.c,v 1.4 2026/07/12 23:30:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "smtpd.h"
@@ -60,9 +61,13 @@ mda_mbox_init(struct deliver *deliver)
 	int	fd;
 	int	ret;
 	char	buffer[LINE_MAX];
+	const char *username = deliver->userinfo.username;
+
+	if (username[0] == '\0' || strchr(username, '/') != NULL)
+		errx(EX_TEMPFAIL, "invalid username for mbox delivery");
 
 	ret = snprintf(buffer, sizeof buffer, "%s/%s",
-	    _PATH_MAILDIR, deliver->userinfo.username);
+	    _PATH_MAILDIR, username);
 	if (ret < 0 || (size_t)ret >= sizeof buffer)
 		errx(EX_TEMPFAIL, "mailbox pathname too long");
 
