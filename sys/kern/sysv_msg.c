@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.50 2026/07/12 22:05:32 kirill Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.51 2026/07/12 22:06:01 kirill Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -414,7 +414,7 @@ que_create(key_t key, struct ucred *cred, int mode)
 	que = malloc(sizeof(*que), M_TEMP, M_WAIT|M_ZERO);
 
 	/* if malloc slept, a queue with the same key may have been created */
-	if (que_key_lookup(key)) {
+	if (num_ques >= msginfo.msgmni || que_key_lookup(key)) {
 		free(que, M_TEMP, sizeof *que);
 		return (NULL);
 	}
