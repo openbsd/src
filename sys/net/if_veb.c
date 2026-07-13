@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.71 2026/03/23 10:31:56 jsg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.72 2026/07/13 05:28:03 jsg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -2816,6 +2816,7 @@ veb_rule_list_get(struct veb_softc *sc, struct ifbrlconf *ifbrl)
 	    M_WAITOK|M_CANFAIL|M_ZERO);
 	if (ifbrs == NULL) {
 		rw_exit(&sc->sc_rule_lock);
+		error = ENOMEM;
 		goto port_put;
 	}
 	len = p->p_nvrl * sizeof(*ifbrs);
