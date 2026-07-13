@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.92 2026/07/12 21:41:08 bluhm Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.93 2026/07/13 16:04:23 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -659,6 +659,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	const struct comp_algo *cxf;
 	int adj;
 	u_int32_t result;
+	int error = 0;
 
 	cxf = sw->sw_cxf;
 
@@ -689,18 +690,23 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP) {
 		if (result > crd->crd_len) {
 			/* Compression was useless, we lost time */
-			free(out, M_CRYPTO_DATA, result);
-			return 0;
+			goto out;
 		}
 	} else {
 		/* Decompressed IP packet must fit into mbuf cluster. */
 		if (outtype == CRYPTO_BUF_MBUF && result > MAXMCLBYTES) {
-			free(out, M_CRYPTO_DATA, result);
-			return EMSGSIZE;
+			error = EMSGSIZE;
+			goto out;
 		}
 	}
 
-	COPYBACK(outtype, buf, crd->crd_skip, result, out);
+	if (outtype == CRYPTO_BUF_MBUF) {
+		error = m_copyback((struct mbuf *)buf, crd->crd_skip, result,
+		    out, M_NOWAIT);
+		if (error)
+			goto out;
+	} else
+		cuio_copyback((struct uio *)buf, crd->crd_skip, result, out);
 	if (result < crd->crd_len) {
 		adj = result - crd->crd_len;
 		if (outtype == CRYPTO_BUF_MBUF) {
@@ -726,8 +732,9 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			}
 		}
 	}
+ out:
 	free(out, M_CRYPTO_DATA, result);
-	return 0;
+	return error;
 }
 
 /*
