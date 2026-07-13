@@ -48,7 +48,6 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main(int, char *[]);
 void	print_shmid_ds(struct shmid_ds *, mode_t);
 void	sigsys_handler(int);
 void	sigchld_handler(int);
@@ -69,9 +68,7 @@ int verbose;
 size_t	pgsize;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 	struct shmid_ds s_ds;
@@ -191,16 +188,14 @@ main(argc, argv)
 }
 
 void
-sigsys_handler(signo)
-	int signo;
+sigsys_handler(int signo)
 {
 
 	errx(1, "System V Shared Memory support is not present in the kernel");
 }
 
 void
-sigchld_handler(signo)
-	int signo;
+sigchld_handler(int signo)
 {
 	struct shmid_ds s_ds;
 	int cstatus;
@@ -234,7 +229,7 @@ sigchld_handler(signo)
 }
 
 void
-cleanup()
+cleanup(void)
 {
 
 	/*
@@ -249,9 +244,7 @@ cleanup()
 }
 
 void
-print_shmid_ds(sp, mode)
-	struct shmid_ds *sp;
-	mode_t mode;
+print_shmid_ds(struct shmid_ds *sp, mode_t mode)
 {
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
@@ -284,7 +277,7 @@ print_shmid_ds(sp, mode)
 }
 
 void
-receiver()
+receiver(void)
 {
 	int shmid;
 	void *shm_buf;

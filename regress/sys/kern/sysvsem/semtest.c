@@ -48,7 +48,6 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main(int, char *[]);
 void	print_semid_ds(struct semid_ds *, mode_t);
 void	sigsys_handler(int);
 void	sigchld_handler(int);
@@ -73,9 +72,7 @@ union mysemun {
 };
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 	union mysemun sun;
@@ -140,7 +137,6 @@ main(argc, argv)
 	if (sender_semid == -1)
 		err(1, "semget");
 
-	
 	sun.buf = &s_ds;
 	if (semctl(sender_semid, 0, IPC_STAT, sun) == -1)
 		err(1, "semctl IPC_STAT");
@@ -220,16 +216,14 @@ main(argc, argv)
 }
 
 void
-sigsys_handler(signo)
-	int signo;
+sigsys_handler(int signo)
 {
 
 	errx(1, "System V Semaphore support is not present in the kernel");
 }
 
 void
-sigchld_handler(signo)
-	int signo;
+sigchld_handler(int signo)
 {
 	union mysemun sun;
 	struct semid_ds s_ds;
@@ -271,7 +265,7 @@ sigchld_handler(signo)
 }
 
 void
-cleanup()
+cleanup(void)
 {
 
 	/*
@@ -285,9 +279,7 @@ cleanup()
 }
 
 void
-print_semid_ds(sp, mode)
-	struct semid_ds *sp;
-	mode_t mode;
+print_semid_ds(struct semid_ds *sp, mode_t mode)
 {
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
@@ -318,7 +310,7 @@ print_semid_ds(sp, mode)
 }
 
 void
-waiter()
+waiter(void)
 {
 	struct sembuf s;
 	int semid;

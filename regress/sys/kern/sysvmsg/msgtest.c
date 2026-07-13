@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.9 2026/06/23 08:49:48 mvs Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.10 2026/07/13 16:22:43 bluhm Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main(int, char *[]);
 void	print_msqid_ds(struct msqid_ds *, mode_t);
 void	sigsys_handler(int);
 void	sigchld_handler(int);
@@ -81,7 +80,7 @@ char keyname[] = "/tmp/msgtestXXXXXXXX";
 int verbose;
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 	struct msqid_ds m_ds;
