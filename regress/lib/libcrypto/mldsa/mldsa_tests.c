@@ -305,11 +305,15 @@ mldsa_siggen_tests(const char *fn, int rank)
 static int
 run_mldsa_test(const char *test, const char *fn)
 {
+	if (strcmp(test, "mldsa44_nist_keygen_tests") == 0)
+		return mldsa_keygen_tests(fn, MLDSA44_RANK);
 	if (strcmp(test, "mldsa65_nist_keygen_tests") == 0)
 		return mldsa_keygen_tests(fn, MLDSA65_RANK);
 	if (strcmp(test, "mldsa87_nist_keygen_tests") == 0)
 		return mldsa_keygen_tests(fn, MLDSA87_RANK);
 
+	if (strcmp(test, "mldsa44_nist_siggen_tests") == 0)
+		return mldsa_siggen_tests(fn, MLDSA44_RANK);
 	if (strcmp(test, "mldsa65_nist_siggen_tests") == 0)
 		return mldsa_siggen_tests(fn, MLDSA65_RANK);
 	if (strcmp(test, "mldsa87_nist_siggen_tests") == 0)

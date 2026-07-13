@@ -265,6 +265,7 @@ main(void)
 {
 	int failed = 0;
 
+	failed |= MldsaUnitTest(MLDSA44_RANK);
 	failed |= MldsaUnitTest(MLDSA65_RANK);
 	failed |= MldsaUnitTest(MLDSA87_RANK);
 

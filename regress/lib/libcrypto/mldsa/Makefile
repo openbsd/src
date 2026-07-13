@@ -3,8 +3,10 @@
 PROGS +=	mldsa_tests
 PROGS +=	mldsa_unittest
 
+FILE_TEST +=	mldsa44_nist_keygen_tests
 FILE_TEST +=	mldsa65_nist_keygen_tests
 FILE_TEST +=	mldsa87_nist_keygen_tests
+FILE_TEST +=	mldsa44_nist_siggen_tests
 FILE_TEST +=	mldsa65_nist_siggen_tests
 FILE_TEST +=	mldsa87_nist_siggen_tests
 

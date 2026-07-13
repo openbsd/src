@@ -50,7 +50,6 @@ static const uint32_t kPrime = 8380417;
 static const uint32_t kPrimeNegInverse = 4236238847;
 static const int kDroppedBits = 13;
 static const uint32_t kHalfPrime = (/*kPrime=*/8380417 - 1) / 2;
-static const uint32_t kGamma2 = (/*kPrime=*/8380417 - 1) / 32;
 /* 256^-1 mod kPrime, in Montgomery form. */
 static const uint32_t kInverseDegreeMontgomery = 41978;
 
@@ -65,6 +64,8 @@ static const uint32_t kInverseDegreeMontgomery = 41978;
 static int
 mldsa_l(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return 4;
 	if (rank == MLDSA65_RANK)
 		return 5;
 	return 7;
@@ -73,6 +74,8 @@ mldsa_l(int rank)
 static size_t
 mldsa_public_key_bytes(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return MLDSA44_PUBLIC_KEY_BYTES;
 	if (rank == MLDSA65_RANK)
 		return MLDSA65_PUBLIC_KEY_BYTES;
 	return MLDSA87_PUBLIC_KEY_BYTES;
@@ -81,6 +84,8 @@ mldsa_public_key_bytes(int rank)
 static size_t
 mldsa_signature_bytes(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return MLDSA44_SIGNATURE_BYTES;
 	if (rank == MLDSA65_RANK)
 		return MLDSA65_SIGNATURE_BYTES;
 	return MLDSA87_SIGNATURE_BYTES;
@@ -89,6 +94,8 @@ mldsa_signature_bytes(int rank)
 static size_t
 mldsa_private_key_bytes(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return MLDSA44_PRIVATE_KEY_BYTES;
 	if (rank == MLDSA65_RANK)
 		return MLDSA65_PRIVATE_KEY_BYTES;
 	return MLDSA87_PRIVATE_KEY_BYTES;
@@ -97,6 +104,8 @@ mldsa_private_key_bytes(int rank)
 static int
 mldsa_tau(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return 39;
 	if (rank == MLDSA65_RANK)
 		return 49;
 	return 60;
@@ -105,20 +114,50 @@ mldsa_tau(int rank)
 static int
 mldsa_lambda_bytes(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return 128 / 8;
 	if (rank == MLDSA65_RANK)
 		return 192 / 8;
 	return 256 / 8;
 }
 
+/* The bit length of gamma1, i.e. the number of bits dropped when encoding z. */
 static int
-mldsa_gamma1(void)
+mldsa_gamma1_bits(int rank)
 {
-	return 1 << 19;
+	if (rank == MLDSA44_RANK)
+		return 17;
+	return 19;
+}
+
+static int
+mldsa_gamma1(int rank)
+{
+	return 1 << mldsa_gamma1_bits(rank);
+}
+
+static uint32_t
+mldsa_gamma2(int rank)
+{
+	if (rank == MLDSA44_RANK)
+		return (kPrime - 1) / 88;
+	return (kPrime - 1) / 32;
+}
+
+/* The number of bits used to encode a w1 coefficient. */
+static int
+mldsa_w1_bits(int rank)
+{
+	if (rank == MLDSA44_RANK)
+		return 6;
+	return 4;
 }
 
 static int
 mldsa_beta(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return 78;
 	if (rank == MLDSA65_RANK)
 		return 196;
 	return 120;
@@ -127,6 +166,8 @@ mldsa_beta(int rank)
 static int
 mldsa_omega(int rank)
 {
+	if (rank == MLDSA44_RANK)
+		return 80;
 	if (rank == MLDSA65_RANK)
 		return 55;
 	return 75;
@@ -437,49 +478,60 @@ scale_power2_round(uint32_t *out, uint32_t r1)
 
 /* FIPS 204, Algorithm 37 (`HighBits`). */
 static uint32_t
-high_bits(uint32_t x)
+high_bits(uint32_t x, int rank)
 {
 	uint32_t r1;
 
 	/*
 	 * Reference description (given 0 <= x < q):
 	 *
-	 *   int32_t r0 = x mod+- (2 * kGamma2);
+	 *   int32_t r0 = x mod+- (2 * gamma2);
 	 *   if (x - r0 == q - 1)
 	 *           return 0;
 	 *   else
-	 *           return (x - r0) / (2 * kGamma2);
+	 *           return (x - r0) / (2 * gamma2);
 	 *
-	 * Below is the formula taken from the reference implementation.
-	 *
-	 * Here, kGamma2 == 2^18 - 2^8
-	 * This returns ((ceil(x / 2^7) * (2^10 + 1) + 2^21) / 2^22) mod 2^4
+	 * Below are the formulas taken from the reference implementation.
 	 */
 	r1 = (x + 127) >> 7;
-	r1 = (r1 * 1025 + (1 << 21)) >> 22;
-	r1 &= 15;
+	if (rank == MLDSA44_RANK) {
+		/*
+		 * gamma2 == (q - 1) / 88. 11275/2^24 is close enough to
+		 * 1/1488 that r1 becomes x / (2 * gamma2) rounded down.
+		 */
+		r1 = (r1 * 11275 + (1 << 23)) >> 24;
+		/* For the corner case r1 = (q - 1) / (2 * gamma2) = 44 set r1 = 0. */
+		r1 ^= ((uint32_t)((int32_t)(43 - r1) >> 31)) & r1;
+	} else {
+		/*
+		 * gamma2 == 2^18 - 2^8. This returns
+		 * ((ceil(x / 2^7) * (2^10 + 1) + 2^21) / 2^22) mod 2^4
+		 */
+		r1 = (r1 * 1025 + (1 << 21)) >> 22;
+		r1 &= 15;
+	}
 	return r1;
 }
 
 /* FIPS 204, Algorithm 36 (`Decompose`). */
 static void
-decompose(uint32_t *r1, int32_t *r0, uint32_t r)
+decompose(uint32_t *r1, int32_t *r0, uint32_t r, int rank)
 {
-	*r1 = high_bits(r);
+	*r1 = high_bits(r, rank);
 
 	*r0 = r;
-	*r0 -= *r1 * 2 * (int32_t)kGamma2;
+	*r0 -= *r1 * 2 * (int32_t)mldsa_gamma2(rank);
 	*r0 -= (((int32_t)kHalfPrime - *r0) >> 31) & (int32_t)kPrime;
 }
 
 /* FIPS 204, Algorithm 38 (`LowBits`). */
 static int32_t
-low_bits(uint32_t x)
+low_bits(uint32_t x, int rank)
 {
 	uint32_t r1;
 	int32_t r0;
 
-	decompose(&r1, &r0, x);
+	decompose(&r1, &r0, x, rank);
 	return r0;
 }
 
@@ -494,25 +546,32 @@ low_bits(uint32_t x)
  * cs2, so this takes three arguments and saves an addition.
  */
 static int32_t
-make_hint(uint32_t ct0, uint32_t cs2, uint32_t w)
+make_hint(uint32_t ct0, uint32_t cs2, uint32_t w, int rank)
 {
 	uint32_t r, r_plus_z;
 
 	r_plus_z = mod_sub(w, cs2);
 	r = reduce_once(r_plus_z + ct0);
-	return high_bits(r) != high_bits(r_plus_z);
+	return high_bits(r, rank) != high_bits(r_plus_z, rank);
 }
 
 /* FIPS 204, Algorithm 40 (`UseHint`). */
 static uint32_t
-use_hint_vartime(uint32_t h, uint32_t r)
+use_hint_vartime(uint32_t h, uint32_t r, int rank)
 {
 	uint32_t r1;
 	int32_t r0;
 
-	decompose(&r1, &r0, r);
+	decompose(&r1, &r0, r, rank);
 
 	if (h) {
+		if (rank == MLDSA44_RANK) {
+			/* m = (q - 1) / (2 * gamma2) = 44. */
+			if (r0 > 0)
+				return r1 == 43 ? 0 : r1 + 1;
+			else
+				return r1 == 0 ? 43 : r1 - 1;
+		}
 		/* m = 16, thus |mod m| in the spec turns into |& 15|. */
 		if (r0 > 0)
 			return (r1 + 1) & 15;
@@ -541,21 +600,21 @@ scalar_scale_power2_round(scalar *out, const scalar *in)
 }
 
 static void
-scalar_high_bits(scalar *out, const scalar *in)
+scalar_high_bits(scalar *out, const scalar *in, int rank)
 {
 	int i;
 
 	for (i = 0; i < DEGREE; i++)
-		out->c[i] = high_bits(in->c[i]);
+		out->c[i] = high_bits(in->c[i], rank);
 }
 
 static void
-scalar_low_bits(scalar *out, const scalar *in)
+scalar_low_bits(scalar *out, const scalar *in, int rank)
 {
 	int i;
 
 	for (i = 0; i < DEGREE; i++)
-		out->c[i] = low_bits(in->c[i]);
+		out->c[i] = low_bits(in->c[i], rank);
 }
 
 static void
@@ -584,21 +643,21 @@ scalar_max_signed(uint32_t *max, const scalar *s)
 
 static void
 scalar_make_hint(scalar *out, const scalar *ct0, const scalar *cs2,
-    const scalar *w)
+    const scalar *w, int rank)
 {
 	int i;
 
 	for (i = 0; i < DEGREE; i++)
-		out->c[i] = make_hint(ct0->c[i], cs2->c[i], w->c[i]);
+		out->c[i] = make_hint(ct0->c[i], cs2->c[i], w->c[i], rank);
 }
 
 static void
-scalar_use_hint_vartime(scalar *out, const scalar *h, const scalar *r)
+scalar_use_hint_vartime(scalar *out, const scalar *h, const scalar *r, int rank)
 {
 	int i;
 
 	for (i = 0; i < DEGREE; i++)
-		out->c[i] = use_hint_vartime(h->c[i], r->c[i]);
+		out->c[i] = use_hint_vartime(h->c[i], r->c[i], rank);
 }
 
 /*
@@ -898,14 +957,19 @@ scalar_uniform(int eta, scalar *out,
 /* FIPS 204, Algorithm 34 (`ExpandMask`), but just a single step. */
 static void
 scalar_sample_mask(scalar *out,
-    const uint8_t derived_seed[kRhoPrimeBytes + 2])
+    const uint8_t derived_seed[kRhoPrimeBytes + 2], int rank)
 {
 	uint8_t buf[640];
+	int bits = mldsa_gamma1_bits(rank) + 1;
+	size_t len = (size_t)bits * DEGREE / 8;
 
-	shake256(buf, sizeof(buf), derived_seed, kRhoPrimeBytes + 2);
+	shake256(buf, len, derived_seed, kRhoPrimeBytes + 2);
 
-	/* Decoding 20 bits into (-2^19, 2^19] cannot fail. */
-	scalar_decode_signed(out, buf, 20, 1 << 19);
+	/*
+	 * Decoding gamma1_bits + 1 bits into (-gamma1, gamma1] cannot fail.
+	 * That is 20 bits for ML-DSA-65/87 and 18 bits for ML-DSA-44.
+	 */
+	scalar_decode_signed(out, buf, bits, mldsa_gamma1(rank));
 }
 
 /* FIPS 204, Algorithm 29 (`SampleInBall`). */
@@ -1043,21 +1107,21 @@ vector_scale_power2_round(scalar *out, const scalar *in, size_t len)
 }
 
 static void
-vector_high_bits(scalar *out, const scalar *in, size_t len)
+vector_high_bits(scalar *out, const scalar *in, size_t len, int rank)
 {
 	size_t i;
 
 	for (i = 0; i < len; i++)
-		scalar_high_bits(&out[i], &in[i]);
+		scalar_high_bits(&out[i], &in[i], rank);
 }
 
 static void
-vector_low_bits(scalar *out, const scalar *in, size_t len)
+vector_low_bits(scalar *out, const scalar *in, size_t len, int rank)
 {
 	size_t i;
 
 	for (i = 0; i < len; i++)
-		scalar_low_bits(&out[i], &in[i]);
+		scalar_low_bits(&out[i], &in[i], rank);
 }
 
 static uint32_t
@@ -1098,22 +1162,22 @@ vector_count_ones(const scalar *a, size_t len)
 
 static void
 vector_make_hint(scalar *out, const scalar *ct0, const scalar *cs2,
-    const scalar *w, size_t len)
+    const scalar *w, size_t len, int rank)
 {
 	size_t i;
 
 	for (i = 0; i < len; i++)
-		scalar_make_hint(&out[i], &ct0[i], &cs2[i], &w[i]);
+		scalar_make_hint(&out[i], &ct0[i], &cs2[i], &w[i], rank);
 }
 
 static void
 vector_use_hint_vartime(scalar *out, const scalar *h, const scalar *r,
-    size_t len)
+    size_t len, int rank)
 {
 	size_t i;
 
 	for (i = 0; i < len; i++)
-		scalar_use_hint_vartime(&out[i], &h[i], &r[i]);
+		scalar_use_hint_vartime(&out[i], &h[i], &r[i], rank);
 }
 
 /* FIPS 204, Algorithm 32 (`ExpandA`). Fills the K*L matrix |out|. */
@@ -1161,7 +1225,7 @@ vector_expand_short(int rank, scalar *s1, scalar *s2,
 /* FIPS 204, Algorithm 34 (`ExpandMask`). Fills the length-L vector |out|. */
 static void
 vector_expand_mask(scalar *out, const uint8_t seed[kRhoPrimeBytes],
-    size_t kappa, size_t l)
+    size_t kappa, size_t l, int rank)
 {
 	uint8_t derived_seed[kRhoPrimeBytes + 2];
 	size_t i, index;
@@ -1171,7 +1235,7 @@ vector_expand_mask(scalar *out, const uint8_t seed[kRhoPrimeBytes],
 		index = kappa + i;
 		derived_seed[kRhoPrimeBytes] = index & 0xff;
 		derived_seed[kRhoPrimeBytes + 1] = (index >> 8) & 0xff;
-		scalar_sample_mask(&out[i], derived_seed);
+		scalar_sample_mask(&out[i], derived_seed, rank);
 	}
 }
 
@@ -1226,11 +1290,11 @@ vector_decode_signed(scalar *out, const uint8_t *in, int bits, uint32_t max,
 	return 1;
 }
 
-/* FIPS 204, Algorithm 28 (`w1Encode`). */
+/* FIPS 204, Algorithm 28 (`w1Encode`). Writes mldsa_w1_bits(rank) * k * 32 bytes. */
 static void
-w1_encode(uint8_t *out, const scalar *w1, size_t k)
+w1_encode(uint8_t *out, const scalar *w1, int rank)
 {
-	vector_encode(out, w1, 4, k);
+	vector_encode(out, w1, mldsa_w1_bits(rank), rank);
 }
 
 /* FIPS 204, Algorithm 20 (`HintBitPack`). Writes omega(rank) + k bytes. */
@@ -1326,7 +1390,9 @@ public_key_from_external(const MLDSA_public_key *external,
 {
 	uint8_t *bytes;
 
-	if (external->rank == MLDSA65_RANK)
+	if (external->rank == MLDSA44_RANK)
+		bytes = external->key_44->bytes;
+	else if (external->rank == MLDSA65_RANK)
 		bytes = external->key_65->bytes;
 	else
 		bytes = external->key_87->bytes;
@@ -1346,7 +1412,9 @@ private_key_from_external(const MLDSA_private_key *external,
 
 	k = external->rank;
 	l = mldsa_l(external->rank);
-	if (external->rank == MLDSA65_RANK)
+	if (external->rank == MLDSA44_RANK)
+		bytes = external->key_44->bytes;
+	else if (external->rank == MLDSA65_RANK)
 		bytes = external->key_65->bytes;
 	else
 		bytes = external->key_87->bytes;
@@ -1492,18 +1560,20 @@ static int
 mldsa_marshal_signature(CBB *out, const struct signature *sign, int rank)
 {
 	uint8_t *encoded;
-	int k, l, lambda;
+	int k, l, lambda, z_bits;
 
 	k = rank;
 	l = mldsa_l(rank);
 	lambda = mldsa_lambda_bytes(rank);
+	z_bits = mldsa_gamma1_bits(rank) + 1;
 
 	if (!CBB_add_bytes(out, sign->c_tilde, 2 * (size_t)lambda))
 		return 0;
 
-	if (!CBB_add_space(out, &encoded, 640 * (size_t)l))
+	if (!CBB_add_space(out, &encoded,
+	    (size_t)z_bits * (DEGREE / 8) * (size_t)l))
 		return 0;
-	vector_encode_signed(encoded, sign->z, 20, 1 << 19, l);
+	vector_encode_signed(encoded, sign->z, z_bits, mldsa_gamma1(rank), l);
 
 	if (!CBB_add_space(out, &encoded, (size_t)mldsa_omega(rank) + k))
 		return 0;
@@ -1517,18 +1587,21 @@ static int
 mldsa_parse_signature_internal(struct signature *sign, CBS *in, int rank)
 {
 	CBS z_bytes, hint_bytes;
-	int k, l, lambda;
+	int k, l, lambda, z_bits;
 
 	k = rank;
 	l = mldsa_l(rank);
 	lambda = mldsa_lambda_bytes(rank);
+	z_bits = mldsa_gamma1_bits(rank) + 1;
 
 	if (!cbs_copy_bytes(in, sign->c_tilde, 2 * (size_t)lambda))
 		return 0;
-	if (!CBS_get_bytes(in, &z_bytes, 640 * (size_t)l))
+	if (!CBS_get_bytes(in, &z_bytes,
+	    (size_t)z_bits * (DEGREE / 8) * (size_t)l))
 		return 0;
-	/* Decoding 20 bits into (-2^19, 2^19] cannot fail. */
-	if (!vector_decode_signed(sign->z, CBS_data(&z_bytes), 20, 1 << 19, l))
+	/* Decoding gamma1_bits + 1 bits into (-gamma1, gamma1] cannot fail. */
+	if (!vector_decode_signed(sign->z, CBS_data(&z_bytes), z_bits,
+	    mldsa_gamma1(rank), l))
 		return 0;
 	if (!CBS_get_bytes(in, &hint_bytes, (size_t)mldsa_omega(rank) + k))
 		return 0;
@@ -1707,7 +1780,7 @@ mldsa_sign_internal(const MLDSA_private_key *private_key, const uint8_t *msg,
 	uint8_t w1_encoded[128 * MLDSA87_RANK];
 	scalar *scratch = NULL;
 	scalar *z, *h, *s1_ntt, *s2_ntt, *t0_ntt, *a_ntt, *y, *w, *w1, *cs1, *cs2;
-	size_t kappa, scratch_len;
+	size_t kappa, scratch_len, w1_len;
 	CBB cbb;
 	int beta, gamma1, k, l, lambda, rank, tau, ret = 0;
 
@@ -1721,7 +1794,8 @@ mldsa_sign_internal(const MLDSA_private_key *private_key, const uint8_t *msg,
 	lambda = mldsa_lambda_bytes(rank);
 	tau = mldsa_tau(rank);
 	beta = mldsa_beta(rank);
-	gamma1 = mldsa_gamma1();
+	gamma1 = mldsa_gamma1(rank);
+	w1_len = (size_t)mldsa_w1_bits(rank) * (DEGREE / 8) * (size_t)k;
 	scratch_len = ((size_t)k * l + 4 * l + 6 * k) * sizeof(scalar);
 
 	private_key_from_external(private_key, &priv);
@@ -1782,7 +1856,7 @@ mldsa_sign_internal(const MLDSA_private_key *private_key, const uint8_t *msg,
 		uint32_t ct0_max, r0_max, z_max;
 		size_t h_ones;
 
-		vector_expand_mask(y, rho_prime, kappa, l);
+		vector_expand_mask(y, rho_prime, kappa, l, rank);
 
 		memcpy(y_ntt, y, sizeof(scalar) * (size_t)l);
 		vector_ntt(y_ntt, l);
@@ -1790,12 +1864,12 @@ mldsa_sign_internal(const MLDSA_private_key *private_key, const uint8_t *msg,
 		matrix_mult(w, a_ntt, y_ntt, k, l);
 		vector_inverse_ntt(w, k);
 
-		vector_high_bits(w1, w, k);
-		w1_encode(w1_encoded, w1, k);
+		vector_high_bits(w1, w, k, rank);
+		w1_encode(w1_encoded, w1, rank);
 
 		shake256_init(&keccak_ctx);
 		shake_update(&keccak_ctx, mu, kMuBytes);
-		shake_update(&keccak_ctx, w1_encoded, 128 * (size_t)k);
+		shake_update(&keccak_ctx, w1_encoded, w1_len);
 		shake_xof(&keccak_ctx);
 		shake_out(&keccak_ctx, sign.c_tilde, 2 * (size_t)lambda);
 
@@ -1811,7 +1885,7 @@ mldsa_sign_internal(const MLDSA_private_key *private_key, const uint8_t *msg,
 		vector_add(sign.z, y, cs1, l);
 
 		vector_sub(r0, w, cs2, k);
-		vector_low_bits(r0, r0, k);
+		vector_low_bits(r0, r0, k, rank);
 
 		/*
 		 * Leaking the fact that a signature was rejected is fine as the
@@ -1821,16 +1895,16 @@ mldsa_sign_internal(const MLDSA_private_key *private_key, const uint8_t *msg,
 		z_max = vector_max(sign.z, l);
 		r0_max = vector_max_signed(r0, k);
 		if (constant_time_ge(z_max, (uint32_t)(gamma1 - beta)) |
-		    constant_time_ge(r0_max, kGamma2 - beta))
+		    constant_time_ge(r0_max, mldsa_gamma2(rank) - beta))
 			continue;
 
 		vector_mult_scalar(ct0, t0_ntt, &c_ntt, k);
 		vector_inverse_ntt(ct0, k);
-		vector_make_hint(sign.h, ct0, cs2, w, k);
+		vector_make_hint(sign.h, ct0, cs2, w, k, rank);
 
 		ct0_max = vector_max(ct0, k);
 		h_ones = vector_count_ones(sign.h, k);
-		if (constant_time_ge(ct0_max, kGamma2) |
+		if (constant_time_ge(ct0_max, mldsa_gamma2(rank)) |
 		    constant_time_lt((unsigned int)mldsa_omega(rank),
 		    (unsigned int)h_ones))
 			continue;
@@ -1906,7 +1980,7 @@ mldsa_verify_internal(const MLDSA_public_key *public_key,
 	uint8_t sig_c_tilde[2 * 32];
 	uint8_t w1_encoded[128 * MLDSA87_RANK];
 	uint32_t z_max;
-	size_t scratch_len;
+	size_t scratch_len, w1_len;
 	CBS cbs;
 	int k, l, lambda, rank, ret = 0;
 
@@ -1914,6 +1988,7 @@ mldsa_verify_internal(const MLDSA_public_key *public_key,
 	k = rank;
 	l = mldsa_l(rank);
 	lambda = mldsa_lambda_bytes(rank);
+	w1_len = (size_t)mldsa_w1_bits(rank) * (DEGREE / 8) * (size_t)k;
 	scratch_len = ((size_t)k * l + 2 * l + 3 * k) * sizeof(scalar);
 
 	public_key_from_external(public_key, &pub);
@@ -1966,17 +2041,17 @@ mldsa_verify_internal(const MLDSA_public_key *public_key,
 	vector_sub(w1, az_ntt, ct1_ntt, k);
 	vector_inverse_ntt(w1, k);
 
-	vector_use_hint_vartime(w1, sign.h, w1, k);
-	w1_encode(w1_encoded, w1, k);
+	vector_use_hint_vartime(w1, sign.h, w1, k, rank);
+	w1_encode(w1_encoded, w1, rank);
 
 	shake256_init(&keccak_ctx);
 	shake_update(&keccak_ctx, mu, kMuBytes);
-	shake_update(&keccak_ctx, w1_encoded, 128 * (size_t)k);
+	shake_update(&keccak_ctx, w1_encoded, w1_len);
 	shake_xof(&keccak_ctx);
 	shake_out(&keccak_ctx, c_tilde, 2 * (size_t)lambda);
 
 	z_max = vector_max(sign.z, l);
-	if (z_max < (uint32_t)(mldsa_gamma1() - mldsa_beta(rank)) &&
+	if (z_max < (uint32_t)(mldsa_gamma1(rank) - mldsa_beta(rank)) &&
 	    memcmp(c_tilde, sign.c_tilde, 2 * lambda) == 0)
 		ret = 1;
 

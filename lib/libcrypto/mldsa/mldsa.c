@@ -27,7 +27,8 @@ private_key_is_new(const MLDSA_private_key *key)
 {
 	return key != NULL &&
 	    key->state == MLDSA_PRIVATE_KEY_UNINITIALIZED &&
-	    (key->rank == MLDSA65_RANK || key->rank == MLDSA87_RANK);
+	    (key->rank == MLDSA44_RANK || key->rank == MLDSA65_RANK ||
+	    key->rank == MLDSA87_RANK);
 }
 
 static inline int
@@ -35,7 +36,8 @@ private_key_is_valid(const MLDSA_private_key *key)
 {
 	return key != NULL &&
 	    key->state == MLDSA_PRIVATE_KEY_INITIALIZED &&
-	    (key->rank == MLDSA65_RANK || key->rank == MLDSA87_RANK);
+	    (key->rank == MLDSA44_RANK || key->rank == MLDSA65_RANK ||
+	    key->rank == MLDSA87_RANK);
 }
 
 static inline int
@@ -43,7 +45,8 @@ public_key_is_new(const MLDSA_public_key *key)
 {
 	return key != NULL &&
 	    key->state == MLDSA_PUBLIC_KEY_UNINITIALIZED &&
-	    (key->rank == MLDSA65_RANK || key->rank == MLDSA87_RANK);
+	    (key->rank == MLDSA44_RANK || key->rank == MLDSA65_RANK ||
+	    key->rank == MLDSA87_RANK);
 }
 
 static inline int
@@ -51,7 +54,8 @@ public_key_is_valid(const MLDSA_public_key *key)
 {
 	return key != NULL &&
 	    key->state == MLDSA_PUBLIC_KEY_INITIALIZED &&
-	    (key->rank == MLDSA65_RANK || key->rank == MLDSA87_RANK);
+	    (key->rank == MLDSA44_RANK || key->rank == MLDSA65_RANK ||
+	    key->rank == MLDSA87_RANK);
 }
 
 int

@@ -30,6 +30,7 @@ extern "C" {
  * ML-DSA constants
  */
 
+#define MLDSA44_RANK	4
 #define MLDSA65_RANK	6
 #define MLDSA87_RANK	8
 
@@ -42,10 +43,11 @@ typedef struct MLDSA_public_key_st MLDSA_public_key;
 
 /*
  * MLDSA_private_key_new allocates a new uninitialized ML-DSA private key for
- * |rank|, which must be MLDSA65_RANK or MLDSA87_RANK. It returns a pointer to
- * an allocated structure suitable for holding a generated private key of the
- * corresponding rank on success, NULL is returned on failure. The caller is
- * responsible for deallocating the resulting key with |MLDSA_private_key_free|.
+ * |rank|, which must be MLDSA44_RANK, MLDSA65_RANK or MLDSA87_RANK. It returns
+ * a pointer to an allocated structure suitable for holding a generated private
+ * key of the corresponding rank on success, NULL is returned on failure. The
+ * caller is responsible for deallocating the resulting key with
+ * |MLDSA_private_key_free|.
  */
 MLDSA_private_key *MLDSA_private_key_new(int rank);
 
@@ -57,10 +59,11 @@ void MLDSA_private_key_free(MLDSA_private_key *key);
 
 /*
  * MLDSA_public_key_new allocates a new uninitialized ML-DSA public key for
- * |rank|, which must be MLDSA65_RANK or MLDSA87_RANK. It returns a pointer to
- * an allocated structure suitable for holding a generated public key of the
- * corresponding rank on success, NULL is returned on failure. The caller is
- * responsible for deallocating the resulting key with |MLDSA_public_key_free|.
+ * |rank|, which must be MLDSA44_RANK, MLDSA65_RANK or MLDSA87_RANK. It returns
+ * a pointer to an allocated structure suitable for holding a generated public
+ * key of the corresponding rank on success, NULL is returned on failure. The
+ * caller is responsible for deallocating the resulting key with
+ * |MLDSA_public_key_free|.
  */
 MLDSA_public_key *MLDSA_public_key_new(int rank);
 

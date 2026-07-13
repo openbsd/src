@@ -37,6 +37,7 @@ __BEGIN_HIDDEN_DECLS
 struct MLDSA_public_key_st {
 	uint16_t rank;
 	int state;
+	struct MLDSA44_public_key *key_44;
 	struct MLDSA65_public_key *key_65;
 	struct MLDSA87_public_key *key_87;
 };
@@ -44,6 +45,7 @@ struct MLDSA_public_key_st {
 struct MLDSA_private_key_st {
 	uint16_t rank;
 	int state;
+	struct MLDSA44_private_key *key_44;
 	struct MLDSA65_private_key *key_65;
 	struct MLDSA87_private_key *key_87;
 };
@@ -57,6 +59,24 @@ struct MLDSA_private_key_st {
  * You should prefer ML-DSA-65 where possible. ML-DSA-87 is larger and exists
  * for those with a requirement for a higher security category.
  */
+
+/*
+ * MLDSA44_public_key contains an ML-DSA-44 public key. The contents of this
+ * object should never leave the address space since the format is unstable.
+ */
+struct MLDSA44_public_key {
+	uint8_t bytes[32 + 64 + 256 * 4 * 4];
+	uint32_t alignment;
+};
+
+/*
+ * MLDSA44_private_key contains an ML-DSA-44 private key. The contents of this
+ * object should never leave the address space since the format is unstable.
+ */
+struct MLDSA44_private_key {
+	uint8_t bytes[32 + 32 + 64 + 256 * 4 * (4 + 4 + 4)];
+	uint32_t alignment;
+};
 
 /*
  * MLDSA65_public_key contains an ML-DSA-65 public key. The contents of this
@@ -105,6 +125,24 @@ struct MLDSA87_private_key {
  * when signing in the (default) randomized mode.
  */
 #define MLDSA_SIGNATURE_RANDOMIZER_LENGTH 32
+
+/*
+ * MLDSA44_PUBLIC_KEY_BYTES is the number of bytes in an encoded ML-DSA-44
+ * public key.
+ */
+#define MLDSA44_PUBLIC_KEY_BYTES 1312
+
+/*
+ * MLDSA44_PRIVATE_KEY_BYTES is the number of bytes in an encoded ML-DSA-44
+ * private key.
+ */
+#define MLDSA44_PRIVATE_KEY_BYTES 2560
+
+/*
+ * MLDSA44_SIGNATURE_BYTES is the number of bytes in an encoded ML-DSA-44
+ * signature.
+ */
+#define MLDSA44_SIGNATURE_BYTES 2420
 
 /*
  * MLDSA65_PUBLIC_KEY_BYTES is the number of bytes in an encoded ML-DSA-65
