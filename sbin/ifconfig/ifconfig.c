@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.481 2026/05/08 03:36:04 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.482 2026/07/13 01:08:59 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ const struct	cmd {
 	{ "untagged",	NEXTARG2,	0,		NULL, bridge_pvid },
 	{ "-untagged",	NEXTARG,	0,		bridge_unpvid },
 	{ "tagged",	NEXTARG2,	0,		NULL, bridge_set_vidmap },
-	{ "-tagged",	NEXTARG2,	0,		bridge_unset_vidmap },
+	{ "-tagged",	NEXTARG,	0,		bridge_unset_vidmap },
 	{ "pvlan",	NEXTARG,	0,		bridge_pvlan_primary },
 	{ "-pvlan",	NEXTARG,	0,		bridge_unpvlan_primary },
 	{ "pvlan-isolated",
