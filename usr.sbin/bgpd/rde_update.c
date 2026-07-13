@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.199 2026/06/24 18:56:53 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.200 2026/07/13 12:27:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -457,6 +457,7 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	p = adjout_prefix_first(pte, peer->adjout_bid);
 	adjout_prefix_update(p, peer, &state, pte, 0, 1);
 	rde_filterstate_clean(&state);
+	adjout_prefix_collect(pte);
 
 	/* max prefix checker outbound */
 	if (peer->conf.max_out_prefix &&

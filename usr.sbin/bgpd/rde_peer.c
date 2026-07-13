@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.78 2026/07/02 07:40:12 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.79 2026/07/13 12:27:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -319,6 +319,7 @@ rde_enqueue_updates(struct rib_entry *re, struct rde_peer *peer,
 				continue;
 			peer_generate_update(p, re, EVAL_REEVAL, 0);
 		}
+		adjout_prefix_collect(re->prefix);
 		return;
 	case EVAL_DEFAULT:
 	case EVAL_ALL:
@@ -355,6 +356,7 @@ peer_process_updates(struct rde_peer *peer, void *bula)
 	RB_FOREACH(p, peer_tree, &peertable)
 		peer_generate_update(p, re, re->pq_mode, 0);
 
+	adjout_prefix_collect(re->prefix);
 	rib_pq_dequeue(re);
 }
 
@@ -655,6 +657,7 @@ peer_dump_upcall(struct rib_entry *re, void *ptr)
 		return;
 
 	peer_generate_update(peer, re, EVAL_REEVAL, 1);
+	adjout_prefix_collect(re->prefix);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.20 2026/05/28 09:10:22 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.21 2026/07/13 12:27:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -412,8 +412,6 @@ static void	 adjout_prefix_unlink(struct adjout_prefix *,
 
 static struct adjout_prefix	*adjout_prefix_alloc(struct pt_entry *,
 				    uint32_t);
-static void			 adjout_prefix_free(struct pt_entry *,
-				    struct adjout_prefix *);
 
 static inline uint32_t
 adjout_prefix_index(struct pt_entry *pte, struct adjout_prefix *p)
@@ -644,10 +642,11 @@ adjout_prefix_dump_r(struct rib_context *ctx)
 			ctx->ctx_pt = pt_ref(pte);
 			return;
 		}
-		p = adjout_prefix_first(pte, adjout_bid);
-		if (p == NULL)
-			continue;
-		ctx->ctx_prefix_call(pte, p, adjout_bid, ctx->ctx_arg);
+		for (p = adjout_prefix_first(pte, adjout_bid);
+		    p != NULL;
+		    p = adjout_prefix_next(pte, adjout_bid, p))
+			ctx->ctx_prefix_call(pte, p, adjout_bid, ctx->ctx_arg);
+		adjout_prefix_collect(pte);
 	}
 
  done:
@@ -756,8 +755,35 @@ adjout_prefix_unlink(struct adjout_prefix *p, struct pt_entry *pte,
 		adjout_attr_unref(p->attrs);
 		p->attrs = NULL;
 
-		adjout_prefix_free(pte, p);
+		bitmap_reset(&p->peermap);
 	}
+}
+
+/* remove all tombstone entries from the pte adjout array */
+void
+adjout_prefix_collect(struct pt_entry *pte)
+{
+	uint32_t i, j;
+
+	/* collect all tombstones and shift array forward */
+	for (i = 0, j = 0; i + j < pte->adjoutlen; i++) {
+		for (; i + j < pte->adjoutlen; j++) {
+			if (pte->adjout[i + j].attrs != NULL)
+				break;
+			/* reset bitmap just to be sure */
+			bitmap_reset(&pte->adjout[i + j].peermap);
+		}
+		if (i + j == pte->adjoutlen)
+			break;
+		pte->adjout[i] = pte->adjout[i + j];
+	}
+
+	/* TODO shrink array if X% empty */
+	if (i < pte->adjoutlen)
+		memset(&pte->adjout[i], 0, sizeof(pte->adjout[0]) * j);
+	pte->adjoutlen = i;
+
+	rdemem.adjout_prefix_cnt -= j;
 }
 
 static void
@@ -809,27 +835,6 @@ adjout_prefix_alloc(struct pt_entry *pte, uint32_t path_id_tx)
 	pte->adjoutlen++;
 	rdemem.adjout_prefix_cnt++;
 	return p;
-}
-
-/* remove an entry from the pte adjout array */
-static void
-adjout_prefix_free(struct pt_entry *pte, struct adjout_prefix *p)
-{
-	uint32_t i, idx;
-
-	bitmap_reset(&p->peermap);
-
-	idx = adjout_prefix_index(pte, p);
-	for (i = idx + 1; i < pte->adjoutlen; i++)
-		pte->adjout[i - 1] = pte->adjout[i];
-
-	p = &pte->adjout[pte->adjoutlen - 1];
-	memset(p, 0, sizeof(*p));
-	pte->adjoutlen--;
-
-	/* TODO shrink array if X% empty */
-
-	rdemem.adjout_prefix_cnt--;
 }
 
 void
