@@ -444,6 +444,8 @@ struct drm_driver {
 	 * some examples.
 	 */
 	const struct file_operations *fops;
+
+	void (*file_close)(struct drm_file *);
 };
 
 void *__devm_drm_dev_alloc(struct device *parent,

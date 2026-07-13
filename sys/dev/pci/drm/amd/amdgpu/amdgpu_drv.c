@@ -2989,6 +2989,20 @@ static int amdgpu_drm_release(struct inode *inode, struct file *filp)
 	return drm_release(inode, filp);
 }
 #endif /* notyet */
+void
+amdgpu_file_close(struct drm_file *file_priv)
+{
+	struct amdgpu_fpriv *fpriv = file_priv->driver_priv;
+	struct drm_device *dev = file_priv->minor->dev;
+	int idx;
+
+	if (fpriv && drm_dev_enter(dev, &idx)) {
+		fpriv->evf_mgr.fd_closing = true;
+		amdgpu_eviction_fence_destroy(&fpriv->evf_mgr);
+		amdgpu_userq_mgr_fini(&fpriv->userq_mgr);
+		drm_dev_exit(idx);
+	}
+}
 
 #ifdef __linux__
 long amdgpu_drm_ioctl(struct file *filp,
@@ -3119,6 +3133,8 @@ static const struct drm_driver amdgpu_kms_driver = {
 	DRM_FBDEV_TTM_DRIVER_OPS,
 #ifdef __linux__
 	.fops = &amdgpu_driver_kms_fops,
+#else
+	.file_close = amdgpu_file_close,
 #endif
 	.release = &amdgpu_driver_release_kms,
 #ifdef CONFIG_PROC_FS
@@ -3147,6 +3163,8 @@ const struct drm_driver amdgpu_partition_driver = {
 	DRM_FBDEV_TTM_DRIVER_OPS,
 #ifdef __linux__
 	.fops = &amdgpu_driver_kms_fops,
+#else
+	.file_close = amdgpu_file_close,
 #endif
 	.release = &amdgpu_driver_release_kms,
 

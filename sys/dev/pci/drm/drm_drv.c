@@ -1993,6 +1993,9 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 		goto done;
 	}
 
+	if (dev->driver->file_close)
+		dev->driver->file_close(file_priv);
+
 	SPLAY_REMOVE(drm_file_tree, &dev->files, file_priv);
 	mutex_unlock(&dev->filelist_mutex);
 	drm_file_free(file_priv);
