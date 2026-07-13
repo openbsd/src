@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.243 2026/07/09 14:07:07 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.244 2026/07/13 10:53:12 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1398,18 +1398,16 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 
 	if (sia == 0) {
 		/*
-		 * Allow one special snowflake to omit the SIA in EE certs
-		 * even though this extension is mandated by RFC 6487, 4.8.8.2.
-		 * RFC 9323, 2 clarifies: it is because RSCs are not distributed
-		 * through the RPKI repository system.
+		 * Allow missing SIA for BGPsec certs (RFC 8209, 3.1.3.3) and
+		 * in filemode for the EE cert of an RSC (RFC 9323, section 2).
+		 * Absence of the RSC SIA is enforced in rsc_cert_info().
 		 */
-		if (filemode && cert->purpose == CERT_PURPOSE_EE) {
-			if (rtype_from_file_extension(fn) != RTYPE_RSC) {
-				warnx("%s: RFC 6487, 4.8.8: cert without SIA",
-				    fn);
-				goto out;
-			}
-		} else if (cert->purpose != CERT_PURPOSE_BGPSEC_ROUTER) {
+		if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+			;
+		} else if (filemode && cert->purpose == CERT_PURPOSE_EE &&
+		    rtype_from_file_extension(fn) == RTYPE_RSC) {
+			;
+		} else {
 			warnx("%s: RFC 6487, 4.8.8: cert without SIA", fn);
 			goto out;
 		}
