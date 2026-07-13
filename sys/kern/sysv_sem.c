@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.70 2026/07/12 15:49:45 mvs Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.71 2026/07/13 15:17:47 cludwig Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ again:
 		sema[ix] = NULL;
 		sem_rele(semaptr);
 		semundo_clear(ix, -1);
-		wakeup(&sema[ix]);
+		wakeup(semaptr);
 		break;
 
 	case IPC_SET:
@@ -386,7 +386,7 @@ again:
 			return (ERANGE);
 		semaptr->sem_base[semnum].semval = arg.val;
 		semundo_clear(ix, semnum);
-		wakeup(&sema[ix]);
+		wakeup(semaptr);
 		break;
 
 	case SETALL:
@@ -420,7 +420,7 @@ again:
 		for (i = 0; i < nsems; i++)
 			semaptr->sem_base[i].semval = semval[i];
 		semundo_clear(ix, -1);
-		wakeup(&sema[ix]);
+		wakeup(semaptr);
 		break;
 
 	default:
@@ -712,7 +712,7 @@ skipcopy:
 		sem_ref(semaptr);
 
 		DPRINTF(("semop:  good night!\n"));
-		error = tsleep_nsec(&sema[semid], PLOCK | PCATCH,
+		error = tsleep_nsec(semaptr, PLOCK | PCATCH,
 		    "semwait", INFSLP);
 		DPRINTF(("semop:  good morning (error=%d)!\n", error));
 
@@ -816,7 +816,7 @@ done:
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {
 		DPRINTF(("semop:  doing wakeup\n"));
-		wakeup(&sema[semid]);
+		wakeup(semaptr);
 		DPRINTF(("semop:  back from wakeup\n"));
 	}
 	DPRINTF(("semop:  done\n"));
@@ -890,7 +890,7 @@ semexit(struct process *pr)
 			else
 				semaptr->sem_base[semnum].semval += adjval;
 
-			wakeup(&sema[semid]);
+			wakeup(semaptr);
 			DPRINTF(("semexit:  back from wakeup\n"));
 		}
 	}
