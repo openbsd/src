@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.55 2025/12/30 22:55:07 jsg Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.56 2026/07/13 13:41:25 kirill Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ struct octeon_config {
 
 #define	OCTEON_POOL_NELEMS_PKT		4096
 #define	OCTEON_POOL_NELEMS_WQE		4096
-#define	OCTEON_POOL_NELEMS_CMD		32
+#define	OCTEON_POOL_NELEMS_CMD		256
 #define	OCTEON_POOL_NELEMS_SG		4096
 #define	OCTEON_POOL_NELEMS_XXX_4	0
 #define	OCTEON_POOL_NELEMS_XXX_5	0
