@@ -36,6 +36,7 @@ SUBDIR += ige
 SUBDIR += init
 SUBDIR += lhash
 SUBDIR += md
+SUBDIR += mldsa
 SUBDIR += mlkem
 SUBDIR += objects
 SUBDIR += pbkdf2

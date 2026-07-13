@@ -1,0 +1,30 @@
+#	$OpenBSD$
+
+PROGS +=	mldsa_tests
+
+FILE_TEST +=	mldsa65_nist_keygen_tests
+FILE_TEST +=	mldsa87_nist_keygen_tests
+FILE_TEST +=	mldsa65_nist_siggen_tests
+FILE_TEST +=	mldsa87_nist_siggen_tests
+
+run-regress-mldsa_tests: mldsa_tests
+.for f in ${FILE_TEST}
+	./mldsa_tests $f ${.CURDIR}/$f.txt
+.endfor
+
+.PATH:		${.CURDIR}/../mlkem
+
+SRCS_mldsa_tests =	mldsa_tests.c parse_test_file.c
+
+LDADD =		${CRYPTO_INT}
+DPADD =		${LIBCRYPTO}
+
+CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror
+CFLAGS +=	-I${.CURDIR}/../mlkem
+CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
+CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/mldsa
+CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/sha
+
+WARNINGS = Yes
+
+.include <bsd.regress.mk>
