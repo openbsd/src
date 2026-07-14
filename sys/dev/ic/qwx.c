@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.127 2026/07/07 18:20:58 kettenis Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.128 2026/07/14 12:12:03 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -20962,7 +20962,7 @@ err_firmware_stop:
 	return ret;
 }
 
-void
+int
 qwx_qmi_fw_init_done(struct qwx_softc *sc)
 {
 	int ret = 0;
@@ -20977,9 +20977,10 @@ qwx_qmi_fw_init_done(struct qwx_softc *sc)
 		ret = qwx_core_qmi_firmware_ready(sc);
 		if (ret) {
 			set_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags);
-			return;
 		}
 	}
+
+	return ret;
 }
 
 int
@@ -21039,8 +21040,7 @@ qwx_qmi_event_server_arrive(struct qwx_softc *sc)
 		}
 	}
 
-	qwx_qmi_fw_init_done(sc);
-	return 0;
+	return qwx_qmi_fw_init_done(sc);
 }
 
 int
