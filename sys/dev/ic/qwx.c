@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.132 2026/07/14 12:22:10 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.133 2026/07/14 12:23:57 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -309,7 +309,7 @@ qwx_init(struct ifnet *ifp)
 			    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr),
 			    error);
 
-		ieee80211_media_init(ifp, qwx_media_change,
+		ieee80211_media_init(ifp, ieee80211_media_change,
 		    ieee80211_media_status);
 	}
 
@@ -678,24 +678,6 @@ qwx_watchdog(struct ifnet *ifp)
 	}
 
 	ieee80211_watchdog(ifp);
-}
-
-int
-qwx_media_change(struct ifnet *ifp)
-{
-	int err;
-
-	err = ieee80211_media_change(ifp);
-	if (err != ENETRESET)
-		return err;
-
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-	    (IFF_UP | IFF_RUNNING)) {
-		qwx_stop(ifp);
-		err = qwx_init(ifp);
-	}
-
-	return err;
 }
 
 int

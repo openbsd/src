@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.36 2026/06/03 06:59:51 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.37 2026/07/14 12:23:57 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1113,7 +1113,8 @@ unsupported_wcn6855_soc:
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
-	ieee80211_media_init(ifp, qwx_media_change, ieee80211_media_status);
+	ieee80211_media_init(ifp, ieee80211_media_change,
+	    ieee80211_media_status);
 
 	ic->ic_node_alloc = qwx_node_alloc;
 
