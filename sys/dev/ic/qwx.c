@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.130 2026/07/14 12:18:28 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.131 2026/07/14 12:20:11 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -27440,11 +27440,11 @@ qwx_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
+		rw_enter_write(&sc->ioctl_rwl);
 		if (ifp->if_flags & IFF_RUNNING) {
-			rw_enter_write(&sc->ioctl_rwl);
 			qwx_stop(ifp);
-			rw_exit(&sc->ioctl_rwl);
 		}
+		rw_exit(&sc->ioctl_rwl);
 		break;
 	case DVACT_RESUME:
 		err = qwx_hal_srng_init(sc);
@@ -27453,12 +27453,14 @@ qwx_activate(struct device *self, int act)
 			    sc->sc_dev.dv_xname);
 		break;
 	case DVACT_WAKEUP:
+		rw_enter_write(&sc->ioctl_rwl);
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP) {
 			err = qwx_init(ifp);
 			if (err)
 				printf("%s: could not initialize hardware\n",
 				    sc->sc_dev.dv_xname);
 		}
+		rw_exit(&sc->ioctl_rwl);
 		break;
 	}
 
