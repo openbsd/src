@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.135 2026/07/14 12:27:07 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.136 2026/07/14 12:29:22 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21575,10 +21575,7 @@ qwx_hal_free_cont_wrp(struct qwx_softc *sc)
 int
 qwx_hal_srng_init(struct qwx_softc *sc)
 {
-	struct ath11k_hal *hal = &sc->hal;
 	int ret;
-
-	memset(hal, 0, sizeof(*hal));
 
 	ret = qwx_hal_srng_create_config(sc);
 	if (ret)
