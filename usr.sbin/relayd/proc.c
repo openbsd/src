@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.59 2026/07/02 12:35:52 jsg Exp $	*/
+/*	$OpenBSD: proc.c,v 1.60 2026/07/14 08:30:09 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -158,7 +158,7 @@ proc_connect(struct privsep *ps)
 			iev = &ps->ps_ievs[dst][inst];
 			if (imsgbuf_init(&iev->ibuf,
 			    ps->ps_pp->pp_pipes[dst][inst]) == -1)
-				fatal("imsgbuf_init");
+				fatal("%s: imsgbuf_init", __func__);
 			imsgbuf_allow_fdpass(&iev->ibuf);
 			event_set(&iev->ev, iev->ibuf.fd, iev->events,
 			    iev->handler, iev->data);
@@ -271,7 +271,7 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 
 	iev = &ps->ps_ievs[dst][n];
 	if (imsgbuf_init(&iev->ibuf, fd) == -1)
-		fatal("imsgbuf_init");
+		fatal("%s: imsgbuf_init", __func__);
 	imsgbuf_allow_fdpass(&iev->ibuf);
 	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
 	event_add(&iev->ev, NULL);
@@ -616,8 +616,7 @@ proc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_WRITE) {
 		if (imsgbuf_write(ibuf) == -1) {
-			if (errno == EPIPE) {
-				/* this pipe is dead, remove the handler */
+			if (errno == EPIPE) {	/* Connection closed. */
 				event_del(&iev->ev);
 				event_loopexit(NULL);
 				return;
