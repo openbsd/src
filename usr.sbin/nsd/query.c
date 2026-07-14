@@ -497,6 +497,7 @@ answer_notify(struct nsd* nsd, struct query *query)
 	{
 		int s = nsd->serve2xfrd_fd_send[nsd->this_child->child_num];
 		uint16_t sz;
+		uint32_t sz32;
 		uint32_t acl_send = htonl(acl_num);
 		uint32_t acl_xfr;
 		size_t pos;
@@ -517,8 +518,11 @@ answer_notify(struct nsd* nsd, struct query *query)
 			return query_error(query, NSD_RC_SERVFAIL);
 		/* forward to xfrd for processing
 		   Note. Blocking IPC I/O, but acl is OK. */
-		sz = buffer_limit(query->packet)
+		sz32 = buffer_limit(query->packet)
 		   + sizeof(acl_send) + sizeof(acl_xfr);
+		if(sz32 > 0xFFFF)
+			return query_error(query, NSD_RC_SERVFAIL);
+		sz = (uint16_t)sz32;
 		sz = htons(sz);
 		if(!write_socket(s, &sz, sizeof(sz)) ||
 			!write_socket(s, buffer_begin(query->packet),

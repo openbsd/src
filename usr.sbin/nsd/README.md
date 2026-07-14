@@ -11,8 +11,7 @@ It has been developed for operations in environments where speed,
 reliability, stability and security are of high importance.  If you
 have any feedback, we would love to hear from you. Don’t hesitate to
 [create an issue on Github](https://github.com/NLnetLabs/nsd/issues/new)
-or post a message on the
-[NSD mailing list](https://lists.nlnetlabs.nl/mailman/listinfo/nsd-users).
+or post a message on our [community forum](https://community.nlnetlabs.nl/).
 You can learn more about NSD by reading our
 [documentation](https://nsd.docs.nlnetlabs.nl/).
 

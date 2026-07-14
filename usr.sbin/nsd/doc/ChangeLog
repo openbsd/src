@@ -1,3 +1,48 @@
+29 June 2026: Jannik
+	- Merge #483 from ruuda: Improve Prometheus metrics: Move zonestats from
+	  metric name to label
+
+26 June 2026: Willem
+	- Fix nsd-control assoc_tsig, if that interrupts a zone transfer in
+	  progress, to not crash. It restarts the transfer from the primary.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix nsd-control del_tsig, if that interrupts a zone transfer in
+	  progress, to not crash. It does not delete the key, if in use.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix catalog producer zone with long name, so that it does not crash
+	  on that. Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix catalog consumer zone with long name for member unique label that
+	  is long, so that it does not crash on that.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix that non-IN-class records cause a zone transfer to be rejected.
+	  Also such records are not added from a transfer. This stops an
+	  assertion failure.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to disallow a SOA record in the middle of an AXFR. This stops an
+	  assertion failure.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to set zone is_secure to false when IXFR removes RRSIG DNSKEY.
+	  This stops an assertion failure. Also fix soa and ns rrset change in
+	  IXFR when packed rrsets are disabled.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to handle NSEC3 zones without space for hashes. Zones with a apex
+	  domain name length >= 223 bytes, that have a NSEC3PARAM must not be
+	  prehashed, since the hashed owner name would not fit.
+	  Thanks Qifan Zhang, Palo Alto Networks, for the report
+	- Fix to add hardening to zone_ixfr_remove_oldest, for IXFR processing.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix for xfrd crash with too short response to a UDP SOA query
+	  Only for release builds and only when configured for XFR over UDP
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix that out-of-zone records are skipped from zone transfers.
+	  Otherwise such records could stick around after zone deletion and
+	  cause failures for DS queries.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+25 June 2026: Willem
+	- Merge the NSD version 4.14.3 security release branch into master.
+	- Continue with 4.14.4 for development
+
 24 June 2026: Willem
 	- Fix for CVE-2026-12244: A specially crafted SVCB RR can cause a heap
 	  overflow of up to 65509 attacker controlled bytes.
@@ -19,6 +64,72 @@
 	  transferring over TCP.
 	  Thanks to Qifan Zhang, Palo Alto Networks for the report.
 	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-12490.txt
+
+22 Jun 2026: Willem
+	- More robust removing of RRs from an IXFR processing.
+	  Thanks zhangph for reporting this issue
+
+22 Jun 2026: Wouter
+	- Fix unit test for stopmany for process role logs.
+
+22 Jun 2026: Willem
+	- Fix that wrong buffer position in IXFR for the first SOA causes the
+	  storage to retrieve wrong information. Later data would overwrite it
+	  so it did not cause observable trouble. Thanks to Tristan Madani
+	  (@TristanInSec) from Talence Security for the report.
+
+22 Jun 2026: Willem
+	- Fix notify and zone transfer processing for malformed SOA records,
+	  with a short rdata content. It stops an assertion failure. Thanks to
+	  Tristan Madani (@TristanInSec) from Talence Security for the report.
+
+19 Jun 2026: Wouter
+	- Fix to update github ci actions/checkout to v7.
+
+18 Jun 2026: Willem
+	- Fix overflow for NSEC3 zones with 255-octet name
+	  Thanks to Haruki Oyama (Waseda University) for the report, and
+	  Qifan Zhang, Palo Alto Networks, for also reporting this issue.
+
+15 Jun 2026: Willem
+	- Fix print of NXT RR without bitmap
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+15 Jun 2026: Willem
+	- Fix to not fail on NSEC3 records with a bad owner name.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+15 Jun 2026: Willem
+	- Fix print of malformed HIP records.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report, and
+	  Haruki Oyama (Waseda University) for also reporting this issue.
+
+15 Jun 2026: Willem
+	- Fix notify relay ipc to check for large size.
+	  This stops desync of the internal notify pipe.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report.
+
+15 Jun 2026: Willem
+	- Fix PROXYv2 header read and consume, it checks the header size.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report.
+
+12 May 2026: Jannik
+	- Merge #484 from orlitzky: OpenRC: fix network deps and support both
+	  supervisors
+
+24 April 2026: Jannik
+	- Merge #481 from jaredmauch: Fix pedantic/CodeQL warning in sources
+
+14 April 2026: Jannik
+	- Fix XDP cleanup code being executed even if xdp is not configured
+
+25 March 2026: Wouter
+	- Fix #478: Feature request: reduce syslog noise from frequent
+	  read-only control commands (e.g. stats_noreset). It logs the
+	  verbosity command always, and others at 2 and higher.
+
+19 March 2026: Jannik
+	- Continue with 4.14.3 for development
 
 11 March 2026: Wouter
 	- Fix in IXFR processing, to commit the collected RRs before

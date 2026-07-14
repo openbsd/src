@@ -104,6 +104,12 @@ void nsec3_precompile_nsec3rr(struct namedb* db, struct domain* domain,
 	struct zone* zone);
 /* precompile entire zone, assumes all is null at start */
 void nsec3_precompile_newparam(struct namedb* db, struct zone* zone);
+/* clear super zone of apex, for names subdomain of apex. */
+void nsec3_superzone_clear_for_apex(struct namedb* db,
+	const struct dname* apex);
+/* precompile super zone of apex, for names subdomain of apex. */
+void nsec3_superzone_precompile_for_apex(struct namedb* db,
+	const struct dname* apex);
 /* create b32.zone for a hash, allocated in the region */
 const struct dname* nsec3_b32_create(struct region* region, struct zone* zone,
 	unsigned char* hash);

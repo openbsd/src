@@ -215,7 +215,8 @@ void zone_ixfr_make_space(struct zone_ixfr* ixfr, struct zone* zone,
 void zone_ixfr_remove(struct zone_ixfr* ixfr, struct ixfr_data* data);
 
 /* add ixfr data to the zone_ixfr */
-void zone_ixfr_add(struct zone_ixfr* ixfr, struct ixfr_data* data, int isnew);
+void zone_ixfr_add(struct zone_ixfr* ixfr, struct ixfr_data* data, int isnew,
+	const char* zname);
 
 /* find serial number in ixfr list, or NULL if not found */
 struct ixfr_data* zone_ixfr_find_serial(struct zone_ixfr* ixfr,

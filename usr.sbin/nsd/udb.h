@@ -213,7 +213,6 @@ struct udb_base {
 	int useful_compact;
 };
 
-typedef enum udb_chunk_type udb_chunk_type;
 /** chunk type enum, setting these types help recovery and debug */
 enum udb_chunk_type {
 	udb_chunk_type_free = 0,
@@ -221,6 +220,7 @@ enum udb_chunk_type {
 	udb_chunk_type_task,
 	udb_chunk_type_internal
 };
+typedef enum udb_chunk_type udb_chunk_type;
 
 typedef struct udb_chunk_d udb_chunk_d;
 /**
@@ -242,7 +242,7 @@ struct udb_chunk_d {
 	 * In the free chunk this is the previous pointer. */
 	udb_void ptrlist;
 	/* user data space starts here, 64-bit aligned */
-	uint8_t data[0];
+	uint8_t data[];
 	/* last octet: exp of chunk */
 };
 
@@ -287,7 +287,7 @@ struct udb_xl_chunk_d {
 	/** size of this chunk in bytes */
 	uint64_t size;
 	/** data of the XL chunk */
-	uint8_t data[0];
+	uint8_t data[];
 	/* uint64_t endsize: before last octet the size again. */
 	/* uint8_t pad[7]: padding to make last octet last. */
 	/* last octet: exp of chunk: special XL value */

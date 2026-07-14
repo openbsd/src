@@ -470,7 +470,8 @@ dname_concatenate(region_type *region,
 {
 	uint8_t temp[MAXDOMAINLEN];
 
-	assert(left->name_size + right->name_size - 1 <= MAXDOMAINLEN);
+	if(left->name_size + right->name_size - 1 > MAXDOMAINLEN)
+		return NULL;
 
 	memcpy(temp, dname_name(left), left->name_size - 1);
 	memcpy(temp + left->name_size - 1, dname_name(right), right->name_size);

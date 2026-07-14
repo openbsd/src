@@ -226,20 +226,36 @@ do_deldomain(namedb_type* db, domain_type* domain)
 
 	/* see if nsec3-nodes are used */
 	if(domain->nsec3) {
-		if(domain->nsec3->nsec3_node.key)
-			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-				->nsec3tree, &domain->nsec3->nsec3_node);
-		if(domain->nsec3->hash_wc) {
-			if(domain->nsec3->hash_wc->hash.node.key)
-				zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-					->hashtree, &domain->nsec3->hash_wc->hash.node);
-			if(domain->nsec3->hash_wc->wc.node.key)
-				zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-					->wchashtree, &domain->nsec3->hash_wc->wc.node);
+		if(domain->nsec3->nsec3_node.key) {
+			zone_type* nsec3zone = nsec3_tree_zone(db, domain);
+			if(nsec3zone)
+				zone_del_domain_in_hash_tree(
+					nsec3zone->nsec3tree,
+					&domain->nsec3->nsec3_node);
 		}
-		if(domain->nsec3->ds_parent_hash && domain->nsec3->ds_parent_hash->node.key)
-			zone_del_domain_in_hash_tree(nsec3_tree_dszone(db, domain)
-				->dshashtree, &domain->nsec3->ds_parent_hash->node);
+		if(domain->nsec3->hash_wc) {
+			if(domain->nsec3->hash_wc->hash.node.key) {
+				zone_type* hzone = nsec3_tree_zone(db, domain);
+				if(hzone)
+					zone_del_domain_in_hash_tree(
+						hzone->hashtree,
+						&domain->nsec3->hash_wc->hash.node);
+			}
+			if(domain->nsec3->hash_wc->wc.node.key) {
+				zone_type* wczone = nsec3_tree_zone(db, domain);
+				if(wczone)
+					zone_del_domain_in_hash_tree(
+						wczone->wchashtree,
+						&domain->nsec3->hash_wc->wc.node);
+			}
+		}
+		if(domain->nsec3->ds_parent_hash && domain->nsec3->ds_parent_hash->node.key) {
+			zone_type* dszone = nsec3_tree_dszone(db, domain);
+			if(dszone)
+				zone_del_domain_in_hash_tree(
+					dszone->dshashtree,
+					&domain->nsec3->ds_parent_hash->node);
+		}
 		if(domain->nsec3->hash_wc) {
 			region_recycle(db->domains->region,
 				domain->nsec3->hash_wc,

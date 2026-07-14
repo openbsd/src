@@ -321,7 +321,7 @@ void pick_id_values(uint16_t* array, int num, int max)
 	for(j = max-num; j<max; j++) {
 		/* random generate creates from 0..arg-1 */
 		int t;
-		if(j+1 <= 1)
+		if(j < 1)
 			t = 0;
 		else	t = random_generate(j+1);
 		if(!inserted[t]) {

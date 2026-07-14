@@ -125,7 +125,7 @@ struct task_list_d {
 	uint32_t oldserial, newserial;
 	/** general variable.  for some used to see if zname is present. */
 	uint64_t yesno;
-	struct dname zname[0];
+	struct dname zname[];
 };
 #define TASKLIST(ptr) ((struct task_list_d*)UDB_PTR(ptr))
 /** create udb for tasks */

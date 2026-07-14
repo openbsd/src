@@ -488,4 +488,8 @@ xfrd_xfr_type *xfrd_prepare_zone_xfr(xfrd_zone_type *zone, uint16_t query_type);
 
 void xfrd_delete_zone_xfr(xfrd_zone_type *zone, xfrd_xfr_type *xfr);
 
+/* Find zone by name. */
+struct xfrd_zone* xfrd_find_zone(xfrd_state_type* xfrd,
+	const dname_type* dname);
+
 #endif /* XFRD_H */

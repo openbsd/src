@@ -1,4 +1,4 @@
-.TH "nsd\-checkconf" "8" "jun 24, 2026" "NLnet Labs" "nsd 4.14.3"
+.TH "nsd\-checkconf" "8" "jul  7, 2026" "NLnet Labs" "nsd 4.15.0"
 .\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"

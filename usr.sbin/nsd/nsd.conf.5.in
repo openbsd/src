@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "jun 24, 2026" "NLnet Labs" "nsd 4.14.3"
+.TH "nsd.conf" "5" "jul  7, 2026" "NLnet Labs" "nsd 4.15.0"
 .\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -690,14 +690,21 @@ can help with drivers with broken AF_XDP support. Default is no.
 .TP
 .B metrics\-enable:\fR <yes or no>
 Enable the prometheus metrics HTTP endpoint. It exposes the same statistics as
-the \fInsd\-control\fR(8) stats_noreset command, but with metric names
+the \fInsd\-control stats_noreset\fR command, but with metric names
 following the prometheus specification. (Requires libevent2)
 
-To generate per zone metrics, specify the \fBzonestats\fR option on the desired
-zones.
-
-Beware, that when using \fInsd\-control\fR(8) stats (instead of stats_noreset),
-the statistics will be reset for the HTTP metrics endpoint as well.
+To generate metrics per zone (or more accurately, per zonestats group),
+specify the \fBzonestats\fR option on the desired zones. This will expose the
+zonestats metrics with the zonestats name as a label called "zone", for
+example with \fBzonestats: examplezone\fR:
+.sp
+.nf
+	nsd_zonestats_queries_total{zone="examplezone"}
+.fi
+.sp
+Beware, that when using \fInsd\-control stats\fR (instead of \fInsd\-control
+stats_noreset\fR), the statistics will be reset for the HTTP metrics endpoint
+as well.
 .TP
 .B metrics\-interface:\fR <ip4 or ip6 | interface name>
 NSD will bind to the listed addresses or interfaces to serve the prometheus

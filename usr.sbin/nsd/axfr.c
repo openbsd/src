@@ -79,7 +79,12 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 
 		query_add_compression_domain(query, qdomain, QHEADERSZ);
 
-		assert(query->axfr_zone->soa_rrset->rr_count == 1);
+		if(query->axfr_zone->soa_rrset->rr_count != 1) {
+			VERBOSITY(2, (LOG_INFO, "axfr: zone %s soa rr count %u (expected 1), servfail for AXFR-out", domain_to_string(query->axfr_zone->apex),
+			(unsigned)query->axfr_zone->soa_rrset->rr_count));
+			RCODE_SET(query->packet, RCODE_SERVFAIL);
+			return QUERY_PROCESSED;
+		}
 		added = packet_encode_rr(query,
 					 query->axfr_zone->apex,
 					 query->axfr_zone->soa_rrset->rrs[0],
@@ -151,7 +156,6 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 	}
 
 	/* Add terminating SOA RR.  */
-	assert(query->axfr_zone->soa_rrset->rr_count == 1);
 	added = packet_encode_rr(query,
 				 query->axfr_zone->apex,
 				 query->axfr_zone->soa_rrset->rrs[0],

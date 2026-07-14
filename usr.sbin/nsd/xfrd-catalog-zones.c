@@ -582,6 +582,7 @@ retry_adding:
 		int valid_group_values;
 		struct pattern_options *pattern = NULL;
 		struct catalog_member_zone* to_add;
+		const dname_type* group_dname;
 
 		if (domain_dname(member_id)->label_count > dname->label_count+2
 		||  !(rrset = domain_find_rrset(member_id, zone, TYPE_PTR)))
@@ -610,8 +611,12 @@ retry_adding:
 
 		valid_group_values = 0;
 		/* Lookup group.<member_id> TXT for matching patterns  */
-		if(!namedb_lookup(xfrd->nsd->db, label_plus_dname("group",
-						domain_dname(member_id)),
+		group_dname = label_plus_dname("group",
+			domain_dname(member_id));
+		/* If group_dname is NULL, then the group name is too long,
+		 * and group properties are skipped for this member. */
+		if(!group_dname
+		|| !namedb_lookup(xfrd->nsd->db, group_dname,
 					&group, &closest_encloser)
 		|| !(rrset = domain_find_rrset(group, zone, TYPE_TXT))) {
 			; /* pass */
@@ -973,13 +978,26 @@ xfrd_add_catalog_producer_member(struct catalog_member_zone* cmz)
 	producer_name = producer_zone->node.key;
 	while(!cmz->member_id) {
 		/* Make new member_id with this catalog producer */
+		const dname_type* zones_name;
 		char id_label[sizeof(uint32_t)*2+1];
 		uint32_t new_id = (uint32_t)random_generate(0x7fffffff);
 
 		hex_ntop((void*)&new_id, sizeof(uint32_t), id_label, sizeof(id_label));
 		id_label[sizeof(uint32_t)*2] = 0;
-		cmz->member_id = label_plus_dname(id_label,
-				label_plus_dname("zones", producer_name));
+		zones_name = label_plus_dname("zones", producer_name);
+		if(!zones_name) {
+			log_msg(LOG_ERR, "catalog producer: producer zone name "
+				"is too long, to add zones label. "
+				"Skipping addition of member zone");
+			return;
+		}
+		cmz->member_id = label_plus_dname(id_label, zones_name);
+		if(!cmz->member_id) {
+			log_msg(LOG_ERR, "catalog producer: producer zone name "
+				"is too long, for member_id.zones labels. "
+				"Skipping addition of member zone");
+			return;
+		}
 		DEBUG(DEBUG_XFRD, 1, (LOG_INFO, "does member_id %s exist?",
 			dname_to_string(cmz->member_id, NULL)));
 		if (!rbtree_search(&producer_zone->member_ids, cmz)) {
@@ -1185,6 +1203,19 @@ xfrd_process_catalog_producer_zone(
 		return; /* No changes */
 
 	producer_name = (dname_type*)producer_zone->node.key;
+	if (producer_name->name_size > 234) {
+		/* For "group".<8char member id>."zones".apex.
+		 * that is (1+5)+(1+8)+(1+5)+apex.
+		 * 255 - (6+9+6) = 234 */
+		log_msg(LOG_ERR, "catalog producer: name too long of "
+			"producer zone %s", dname_to_string(producer_name,0));
+		return;
+	}
+	if (producer_name->label_count > 124) {
+		log_msg(LOG_ERR, "catalog producer: too many labels in name of "
+			"producer zone %s", dname_to_string(producer_name,0));
+		return;
+	}
 	xfr_writer_init(&xw, producer_zone);
 	xfr_writer_add_SOA(&xw, producer_name, xw.new_serial);
 
@@ -1201,6 +1232,7 @@ xfrd_process_catalog_producer_zone(
 	/* IXFR */
 	xfr_writer_add_SOA(&xw, producer_name, xw.old_serial);
 	while(producer_zone->to_delete) {
+		const dname_type* group_owner;
 		struct xfrd_producer_member* to_delete =
 			producer_zone->to_delete;
 
@@ -1208,14 +1240,45 @@ xfrd_process_catalog_producer_zone(
 		producer_zone->to_delete = to_delete->next;
 		to_delete->next = NULL;
 
+		if((size_t)to_delete->member_id->name_size > 249) {
+			log_msg(LOG_ERR, "catalog producer: member_id "
+				"name_size %d too long for group property "
+				"owner; skipping delete of member zone %s",
+				(int)to_delete->member_id->name_size,
+				dname_to_string(to_delete->member_zone_name,0));
+			region_recycle( xfrd->nsd->options->region
+				      , (void *)to_delete->member_id
+				      , dname_total_size(to_delete->member_id));
+			region_recycle( xfrd->region /* allocated in perform_delzone */
+				      , (void *)to_delete->member_zone_name
+				      , dname_total_size(to_delete->member_zone_name));
+			region_recycle( xfrd->region, to_delete, sizeof(*to_delete));
+			continue;
+		}
+
 		/* Write <member_id> PTR <member_name> */
 		xfr_writer_add_PTR(&xw, to_delete->member_id
 				      , to_delete->member_zone_name);
 
 		/* Write group.<member_id> TXT <pattern> */
+		group_owner = label_plus_dname("group", to_delete->member_id);
+		if(!group_owner) {
+			log_msg(LOG_ERR, "catalog producer: member_id "
+				"name_size %d too long for group property "
+				"owner; skipping delete of member zone %s",
+				(int)to_delete->member_id->name_size,
+				dname_to_string(to_delete->member_zone_name,0));
+			region_recycle( xfrd->nsd->options->region
+				      , (void *)to_delete->member_id
+				      , dname_total_size(to_delete->member_id));
+			region_recycle( xfrd->region /* allocated in perform_delzone */
+				      , (void *)to_delete->member_zone_name
+				      , dname_total_size(to_delete->member_zone_name));
+			region_recycle( xfrd->region, to_delete, sizeof(*to_delete));
+			continue;
+		}
 		xfr_writer_add_TXT( &xw
-				  , label_plus_dname("group"
-						    , to_delete->member_id)
+				  , group_owner
 				  , to_delete->group_name);
 
 		region_recycle( xfrd->nsd->options->region
@@ -1232,19 +1295,38 @@ xfrd_process_catalog_producer_zone(
 add_member_zones:
 	while(producer_zone->to_add) {
 		struct xfrd_producer_member* to_add = producer_zone->to_add;
+		const dname_type* group_owner;
 
 		/* Pop to_add from stack */
 		producer_zone->to_add = to_add->next;
 		to_add->next = NULL;
+
+		if((size_t)to_add->member_id->name_size > 249) {
+			log_msg(LOG_ERR, "catalog producer: member_id "
+				"name_size %d too long for group property "
+				"owner; skipping member zone %s",
+				(int)to_add->member_id->name_size,
+				dname_to_string(to_add->member_zone_name,0));
+			region_recycle(xfrd->region, to_add, sizeof(*to_add));
+			continue;
+		}
 
 		/* Write <member_id> PTR <member_name> */
 		xfr_writer_add_PTR(&xw, to_add->member_id,
 				to_add->member_zone_name);
 
 		/* Write group.<member_id> TXT <pattern> */
+		group_owner = label_plus_dname("group", to_add->member_id);
+		if(!group_owner) {
+			log_msg(LOG_ERR, "catalog producer: member_id too long "
+				"to construct group owner (name_size=%d); "
+				"skipping group property for member zone",
+				(int)to_add->member_id->name_size);
+			region_recycle(xfrd->region, to_add, sizeof(*to_add));
+			continue;
+		}
 		xfr_writer_add_TXT( &xw
-				  , label_plus_dname("group"
-						    , to_add->member_id)
+				  , group_owner
 				  , to_add->group_name);
 
 		/* Don't recycle any of the struct attributes as they come

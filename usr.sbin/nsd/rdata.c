@@ -137,7 +137,7 @@ print_name_literal(struct buffer *output, uint16_t rdlength,
 {
 	const uint8_t *name, *label, *limit;
 	assert(rdlength >= *offset);
-	if (rdlength - *offset == 0)
+	if (rdlength < *offset || rdlength - *offset == 0)
 		return 0;
 
 	name = rdata + *offset;
@@ -181,7 +181,7 @@ print_domain(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 {
 	const struct dname *dname;
 	struct domain *domain;
-	if(rdlength - *offset < (uint16_t)sizeof(void*))
+	if(rdlength < *offset || rdlength - *offset < (uint16_t)sizeof(void*))
 		return 0;
 	memcpy(&domain, rdata+*offset, sizeof(void*));
 	dname = domain_dname(domain);
@@ -195,7 +195,7 @@ static inline int32_t
 skip_string(struct buffer* output, uint16_t rdlength, uint16_t* offset)
 {
 	int32_t length;
-	if (rdlength - *offset < 1)
+	if (rdlength < *offset || rdlength - *offset < 1)
 		return -1;
 	length = buffer_read_u8(output);
 	if (length + 1 > rdlength - *offset)
@@ -236,7 +236,7 @@ print_string(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	if(rdlength - *offset < 1)
 		return 0;
 	n = rdata[*offset];
-	if((size_t)rdlength - *offset < 1 + n)
+	if(rdlength < *offset || (size_t)rdlength - *offset < 1 + n)
 		return 0;
 	buffer_printf(output, "\"");
 	for (size_t i = 1; i <= n; i++) {
@@ -285,7 +285,7 @@ print_unquoted(buffer_type *output, uint16_t rdlength,
 	uint8_t len;
 	size_t i;
 
-	if(rdlength - *offset < 1)
+	if(rdlength < *offset || rdlength - *offset < 1)
 		return 0;
 	len = rdata[*offset];
 	if(((size_t)len) + 1 > (size_t)rdlength - *offset)
@@ -336,7 +336,6 @@ print_ip4(struct buffer *output, size_t rdlength, const uint8_t *rdata,
 	uint16_t *offset)
 {
 	char str[INET_ADDRSTRLEN + 1];
-	assert(rdlength >= *offset);
 	if(((size_t)*offset) + 4 > rdlength)
 		return 0;
 	if(!inet_ntop(AF_INET, rdata + *offset, str, sizeof(str)))
@@ -360,8 +359,7 @@ print_ip6(struct buffer *output, size_t rdlength, const uint8_t *rdata,
 	uint16_t *offset)
 {
 	char str[INET6_ADDRSTRLEN + 1];
-	assert(rdlength >= *offset);
-	if (rdlength - *offset < 16)
+	if (rdlength < *offset || rdlength - *offset < 16)
 		return 0;
 	if (!inet_ntop(AF_INET6, rdata + *offset, str, sizeof(str)))
 		return 0;
@@ -384,8 +382,7 @@ print_ilnp64(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	uint16_t *offset)
 {
 	uint16_t a1, a2, a3, a4;
-	assert(rdlength >= *offset);
-	if (rdlength - *offset < 8)
+	if (rdlength < *offset || rdlength - *offset < 8)
 		return 0;
 	a1 = read_uint16(rdata + *offset);
 	a2 = read_uint16(rdata + *offset + 2);
@@ -442,8 +439,7 @@ print_time(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	struct tm* tm;
 	char buf[15];
 
-	assert(rdlength >= *offset);
-	if (rdlength - *offset < 4)
+	if (rdlength < *offset || rdlength - *offset < 4)
 		return 0;
 	time = (time_t)read_uint32(rdata + *offset);
 	tm = gmtime_r(&time, &tmbuf);
@@ -469,7 +465,7 @@ print_base32(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 {
 	size_t size;
 	int length;
-	if(rdlength - *offset == 0)
+	if(rdlength < *offset || rdlength - *offset == 0)
 		return 0;
 	size = rdata[*offset];
 	if (rdlength - ((size_t)*offset) < 1 + size)
@@ -506,6 +502,8 @@ print_base64(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 {
 	int length;
 	size_t size = rdlength - *offset;
+	if(rdlength < *offset)
+		return 0;
 	if(size == 0) {
 		/* single zero represents empty buffer */
 		buffer_write(output, "0", 1);
@@ -552,6 +550,8 @@ print_base16(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	uint16_t *offset)
 {
 	size_t size = rdlength - *offset;
+	if(rdlength < *offset)
+		return 0;
 	if(size == 0) {
 		/* single zero represents empty buffer, such as CDS deletes */
 		buffer_write(output, "0", 1);
@@ -577,8 +577,7 @@ print_salt(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	uint16_t *offset)
 {
 	uint8_t length;
-	assert(rdlength >= *offset);
-	if (rdlength - *offset == 0)
+	if (rdlength < *offset || rdlength - *offset == 0)
 		return 0;
 
 	length = rdata[*offset];
@@ -637,6 +636,8 @@ print_nsec_bitmap(struct buffer *output, uint16_t rdlength,
 {
 	int insert_space = 0;
 
+	if(rdlength < *offset)
+		return 0;
 	rdata += *offset;
 	while(rdlength - *offset > 0) {
 		uint8_t window, bitmap_size;
@@ -701,7 +702,7 @@ svcparam_must_not_have_value(uint16_t svcparamkey)
 		break;
 	}
 	return 0;
-};
+}
 
 /*
  * Skip over the svcparams in the packet. Moves position.
@@ -967,8 +968,7 @@ print_svcparam(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	const uint8_t* dp;
 	unsigned i;
 
-	assert(rdlength >= *offset);
-	if (rdlength - *offset < 4)
+	if (rdlength < *offset || rdlength - *offset < 4)
 		return 0;
 
 	key = read_uint16(rdata + *offset);
@@ -2266,7 +2266,7 @@ print_nxt_rdata(struct buffer *output, const struct rr *rr)
 	int bitmap_size;
 	const uint8_t* bitmap;
 
-	assert(rr->rdlength > sizeof(void*));
+	assert(rr->rdlength >= sizeof(void*));
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 
@@ -2593,7 +2593,7 @@ print_apl(struct buffer *output, size_t rdlength, const uint8_t *rdata,
 	char text_address[INET6_ADDRSTRLEN + 1];
 	uint8_t address[16];
 
-	if (size < 4)
+	if (rdlength < *offset || size < 4)
 		return 0;
 
 	address_family = read_uint16(rdata + *offset);
@@ -3134,6 +3134,8 @@ print_hip_rdata(struct buffer *output, const struct rr *rr)
 	hit_length = rr->rdata[0];
 	pk_algorithm = rr->rdata[1];
 	pk_length = read_uint16(rr->rdata+2);
+	if(4 + (uint32_t)hit_length + (uint32_t)pk_length > (uint32_t)rr->rdlength)
+		return 0;
 	buffer_printf(output, "%" PRIu8 " ", pk_algorithm);
 	if(!print_base16(output, length+hit_length, rr->rdata, &length))
 		return 0;

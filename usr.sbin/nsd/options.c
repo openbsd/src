@@ -29,6 +29,7 @@
 #include "rrl.h"
 #include "bitset.h"
 #include "xfrd.h"
+#include "metrics.h"
 
 #include "configparser.h"
 config_parser_state_type* cfg_parser = 0;
@@ -2971,12 +2972,30 @@ unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 {
 #ifdef USE_ZONE_STATS
 	const char* statname;
+	char* statname_valid;
+	int name_was_modified;
 	struct zonestatname* n;
 	rbnode_type* res;
 	/* try to find the instantiated zonestat name */
 	if(!zopt->pattern->zonestats || zopt->pattern->zonestats[0]==0)
 		return 0; /* no zone stats */
 	statname = config_cook_string(zopt, zopt->pattern->zonestats);
+
+	#ifdef USE_METRICS
+	/* warn when we will lossily change the zonestat name in metrics */
+	statname_valid = strdup(statname);
+	if(!statname_valid) {
+		log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
+		exit(1);
+	}
+	name_was_modified = metrics_make_label_value_valid(statname_valid);
+	if (name_was_modified) {
+		log_msg(LOG_WARNING, "zonestats name \"%s\" contains disallowed characters, using \"%s\" in metrics",
+			statname, statname_valid);
+	}
+	free(statname_valid);
+	#endif /* USE_METRICS */
+
 	res = rbtree_search(opt->zonestatnames, statname);
 	if(res)
 		return ((struct zonestatname*)res)->id;
