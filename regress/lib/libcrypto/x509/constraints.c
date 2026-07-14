@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.20 2026/05/26 09:35:53 jsing Exp $	*/
+/*	$OpenBSD: constraints.c,v 1.21 2026/07/14 15:54:14 jsing Exp $	*/
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -160,6 +160,10 @@ unsigned char *invaliduri[] = {
 	"https://192.168..1.1/",
 	"https://.2001:0DB8:AC10:FE01::/",
 	"https://.2001:0DB8:AC10:FE01::|/",
+	"https://2001:0DB8:AC10:FE01::1/",
+	"https://beck@openbsd.org@example.com",
+	"https://beck:password@openbsd.org:4433:example.com/",
+	"//:/",
 	"///",
 	"//",
 	"/",
@@ -167,13 +171,47 @@ unsigned char *invaliduri[] = {
 	NULL,
 };
 
-unsigned char *validuri[] = {
-	"https://www.openbsd.org/meep/meep/meep/",
-	"https://192.168.1.1/",
-	"https://2001:0DB8:AC10:FE01::/",
-	"https://192.168.1/",  /* Not an IP, but valid component */
-	"https://999.999.999.999/", /* Not an IP, but valid component */
-	NULL,
+struct uri_test {
+	unsigned char *uri;
+	unsigned char *hostpart;
+};
+
+static const struct uri_test validuri[] = {
+	{
+		.uri = "https://www.openbsd.org/meep/meep/meep/",
+		.hostpart = "www.openbsd.org",
+	},
+	{
+		.uri = "https://beck:password@openbsd.org:4433/",
+		.hostpart = "openbsd.org",
+	},
+	{
+		.uri = "https://192.168.1.1/",
+		.hostpart = "192.168.1.1",
+	},
+	{
+		.uri = "https://[2001:0DB8:AC10:FE01::1]/",
+		.hostpart = "[2001:0DB8:AC10:FE01::1]",
+	},
+	{
+		.uri = "https://[2001:0DB8:AC10:FE01::1]:443/",
+		.hostpart = "[2001:0DB8:AC10:FE01::1]",
+	},
+	{
+		.uri = "https://beck:password@[2001:0DB8:AC10:FE01::1]:443/",
+		.hostpart = "[2001:0DB8:AC10:FE01::1]",
+	},
+	{
+		.uri = "https://192.168.1/",  /* Not an IP, but valid component */
+		.hostpart = "192.168.1",
+	},
+	{
+		.uri = "https://999.999.999.999/", /* Not an IP, but valid component */
+		.hostpart = "999.999.999.999",
+	},
+	{
+		.uri = NULL,
+	},
 };
 
 static int
@@ -395,11 +433,17 @@ test_valid_uri(void)
 	int j, failure = 0;
 	char *hostpart = NULL;
 
-	for (j = 0; validuri[j] != NULL; j++) {
-		if (x509_constraints_uri_host(validuri[j],
-		    strlen(validuri[j]), &hostpart) == 0) {
+	for (j = 0; validuri[j].uri != NULL; j++) {
+		if (x509_constraints_uri_host(validuri[j].uri,
+		    strlen(validuri[j].uri), &hostpart) == 0) {
 			FAIL("Valid URI '%s' NOT accepted\n",
-			    validuri[j]);
+			    validuri[j].uri);
+			failure = 1;
+			goto done;
+		}
+		if (strcmp(hostpart, validuri[j].hostpart) != 0) {
+			FAIL("Valid URI hostpart '%s' != '%s'\n",
+			    hostpart, validuri[j].hostpart);
 			failure = 1;
 			goto done;
 		}
@@ -452,6 +496,7 @@ test_constraints1(void)
 		"https://www.openbsd.net?",
 		"https://org#",
 		"herp://beck@org:",
+		"https://openbsd.org:password@example.com/path",
 		"///",
 		"//",
 		"/",
