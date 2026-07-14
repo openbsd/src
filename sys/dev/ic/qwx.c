@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.134 2026/07/14 12:25:43 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.135 2026/07/14 12:27:07 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -22654,7 +22654,8 @@ qwx_ce_cleanup_pipes(struct qwx_softc *sc)
 		qwx_ce_rx_pipe_cleanup(pipe);
 
 		/* Cleanup any src CE's which have interrupts disabled */
-		qwx_ce_poll_send_completed(sc, pipe_num);
+		if (!test_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags))
+			qwx_ce_poll_send_completed(sc, pipe_num);
 	}
 }
 
