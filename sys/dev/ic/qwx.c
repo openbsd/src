@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.136 2026/07/14 12:29:22 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.137 2026/07/14 12:35:14 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -239,6 +239,7 @@ qwx_init(struct ifnet *ifp)
 	int error;
 	struct qwx_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s = splnet();
 
 	sc->fw_mode = ATH11K_FIRMWARE_MODE_NORMAL;
 	/*
@@ -278,8 +279,10 @@ qwx_init(struct ifnet *ifp)
 	set_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags);
 
 	error = qwx_core_init(sc);
-	if (error)
+	if (error) {
+		splx(s);
 		return error;
+	}
 
 	/* wait for QRTR init to be done */
 	while (sc->qrtr_server.node == QRTR_NODE_BCAST) {
@@ -287,13 +290,16 @@ qwx_init(struct ifnet *ifp)
 		    SEC_TO_NSEC(5));
 		if (error) {
 			printf("%s: qrtr init timeout\n", sc->sc_dev.dv_xname);
+			splx(s);
 			return error;
 		}
 	}
 
 	error = qwx_qmi_event_server_arrive(sc);
-	if (error)
+	if (error) {
+		splx(s);
 		return error;
+	}
 
 	if (sc->attached) {
 		/* Update MAC in case the upper layers changed it. */
@@ -318,8 +324,10 @@ qwx_init(struct ifnet *ifp)
 
 	if (ifp->if_flags & IFF_UP) {
 		error = qwx_mac_start(sc);
-		if (error)
+		if (error) {
+			splx(s);
 			return error;
+		}
 
 		refcnt_init(&sc->task_refs);
 		ifq_clr_oactive(&ifp->if_snd);
@@ -329,6 +337,7 @@ qwx_init(struct ifnet *ifp)
 		ieee80211_begin_scan(ifp);
 	}
 
+	splx(s);
 	return 0;
 }
 
