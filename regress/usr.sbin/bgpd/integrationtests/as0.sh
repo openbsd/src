@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: as0.sh,v 1.2 2021/01/12 08:59:03 claudio Exp $
+#	$OpenBSD: as0.sh,v 1.3 2026/07/14 12:34:26 claudio Exp $
 
 set -e
 
@@ -16,6 +16,7 @@ PAIR1IP=10.12.57.1
 PAIR2IP=10.12.57.2
 PAIR2IP2=10.12.57.3
 PAIR2IP3=10.12.57.4
+PAIR2IP4=10.12.57.5
 
 error_notify() {
 	echo cleanup
@@ -82,6 +83,7 @@ ifconfig ${PAIR1} rdomain ${RDOMAIN1} ${PAIR1IP}/29 up
 ifconfig ${PAIR2} rdomain ${RDOMAIN2} ${PAIR2IP}/29 up
 ifconfig ${PAIR2} alias ${PAIR2IP2}/32
 ifconfig ${PAIR2} alias ${PAIR2IP3}/32
+ifconfig ${PAIR2} alias ${PAIR2IP4}/32
 ifconfig ${PAIR1} patch ${PAIR2}
 ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8

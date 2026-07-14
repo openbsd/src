@@ -4,8 +4,8 @@ process reader {
 }
 
 neighbor 10.12.57.1 {
-	router-id 10.12.57.2;
-	local-address 10.12.57.2;
+	router-id 10.12.57.5;
+	local-address 10.12.57.5;
 	local-as 64501;
 	peer-as 64500;
 	group-updates;
