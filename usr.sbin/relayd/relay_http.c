@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.101 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.102 2026/07/14 08:56:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -402,8 +402,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			goto abort;
 		}
 
-		/* The "Host" header must only occur once. */
-		unique = strcasecmp("Host", key) == 0;
+		/* The following headers must only occur once. */
+		unique = strcasecmp("Host", key) == 0 ||
+		    strcasecmp("Content-Length", key) == 0;
 
 		if ((hdr = kv_add(&desc->http_headers, key,
 		    value, unique)) == NULL) {
