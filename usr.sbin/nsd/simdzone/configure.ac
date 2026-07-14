@@ -10,7 +10,7 @@
 # platform not supported by NSD here is undesirable. Builds for standalone use
 # or development/testing are required to use CMake.
 
-AC_INIT([simdzone],[0.2.4],[https://github.com/NLnetLabs/simdzone/issues])
+AC_INIT([simdzone],[0.2.5],[https://github.com/NLnetLabs/simdzone/issues])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])

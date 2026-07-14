@@ -107,6 +107,12 @@ static inline uint32_t detect_supported_architectures(void) {
 
 #endif
 
+#elif defined(__riscv)
+
+static inline uint32_t detect_supported_architectures(void) {
+  return DEFAULT;
+}
+
 #elif defined(__x86_64__) || defined(_M_AMD64) // x64
 
 // Can be found on Intel ISA Reference for CPUID

@@ -48,11 +48,6 @@ error_too_many_args() {
 }
 
 extract_release_notes() {
-    # Find latest version if VERSION was not specified
-    if [[ -z "$VERSION" ]]; then
-        VERSION=$(grep -E -m1 -B1 "^=====+$" <"$RELNOTES_FILE" | head -n1)
-    fi
-
     sed -E -e "/^$VERSION/{ n; n; bfound }; d; bend" \
         -e ':found; /\n=====+$/bstrip_trailer; N; bfound' \
         -e ':strip_trailer; s/\n+([0-9]+\.[0-9]+\.[0-9]+)\n=====+$//' \
@@ -191,6 +186,11 @@ if ! [[ -f "$RELNOTES_FILE" ]]; then
 fi
 
 #### Generate text ####
+
+# Find latest version if VERSION was not specified
+if [[ -z "$VERSION" ]]; then
+    VERSION=$(grep -E -m1 -B1 "^=====+$" <"$RELNOTES_FILE" | head -n1)
+fi
 
 if [[ "$PRINT_EMAIL" == true ]]; then
     SHA256=""

@@ -239,6 +239,10 @@ static int32_t parse_ech(
   (void)key;
   (void)param;
 
+  if(token->length == 1 && token->data[0] == '0') {
+	  /* single 0 represents empty buffer */
+	  return 0;
+  }
   if (token->length / 4 > size / 3)
     SYNTAX_ERROR(parser, "maximum size exceeded");
 

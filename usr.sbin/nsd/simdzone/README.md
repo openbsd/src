@@ -1,6 +1,7 @@
 ![Build Status](https://github.com/NLnetLabs/simdzone/actions/workflows/build-test.yml/badge.svg)
 [![Coverity Status](https://scan.coverity.com/projects/27509/badge.svg)](https://scan.coverity.com/projects/nlnetlabs-simdzone)
-[![Mastodon Follow](https://img.shields.io/mastodon/follow/109262826617293067?domain=https%3A%2F%2Ffosstodon.org&style=social)](https://fosstodon.org/@nlnetlabs)
+[![Discuss on Discourse](https://img.shields.io/badge/Discourse-NLnet_Labs-orange?logo=Discourse)](https://community.nlnetlabs.nl/c/dns-libraries-tools/12)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/114692612288811644?domain=social.nlnetlabs.nl&style=social)](https://social.nlnetlabs.nl/@nlnetlabs)
 
 # simdzone: Parsing zone files really fast
 
@@ -33,7 +34,7 @@ instructions for parsing structured text can significantly boost performance.
 simdzone, whose name is a play on [simdjson][simdjson], aims to achieve a
 similar performance boost for parsing zone data.
 
-> Currently SSE4.2 and AVX2 are supported, a fallback is used otherwise.
+> Currently SSE4.2 and AVX2 are supported. RISC-V and other non-x86_64 targets use the fallback kernel until a dedicated SIMD backend is added.
 
 > simdzone copies some code from the [simdjson][simdjson] project, with
 > permission to use and distribute it under the terms of

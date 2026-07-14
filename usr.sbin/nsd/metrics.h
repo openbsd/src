@@ -60,6 +60,7 @@ int daemon_metrics_open_ports(struct daemon_metrics* m,
 void daemon_metrics_attach(struct daemon_metrics* m, struct xfrd_state* xfrd);
 
 #ifdef BIND8_STATS
+
 /**
  * Print stats as prometheus metrics to HTTP buffer
  * @param buf: the HTTP buffer to write to
@@ -77,6 +78,35 @@ void metrics_print_stats(struct evbuffer *buf, struct xfrd_state *xfrd,
                          struct timeval *rc_stats_time);
 
 #ifdef USE_ZONE_STATS
+
+/**
+ * Replace characters disallowed in Prometheus label values with '_'.
+ *
+ * According to [1], label values can be any UTF-8 characters, but backslash,
+ * double-quote, and line feed must be escaped. We could escape them but that
+ * changes the length of the string, and in practice for zonestats names you
+ * don't need these characters anyway so we just replace them.
+ * [1]: https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information>
+ *
+ * @param value: the label value to edit.
+ * @return 1 if any changes were needed, 0 if the value was already valid.
+ */
+static inline int metrics_make_label_value_valid(char* value) {
+	int made_changes = 0;
+	char* s = value;
+	while(*s) {
+		switch (*s) {
+			case '\\':
+			case '"':
+			case '\n':
+				*s = '_';
+				made_changes = 1;
+		}
+		s++;
+	}
+	return made_changes;
+}
+
 /**
  * Print zonestat metrics for a single zonestats object
  * @param buf: the HTTP buffer to write to
