@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.148 2026/07/12 23:18:36 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.149 2026/07/14 00:45:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -821,6 +821,7 @@ mda_envelope_free(struct mda_envelope *e)
 	free(e->dest);
 	free(e->rcpt);
 	free(e->user);
+	free(e->dispatcher);
 	free(e->mda_exec);
 	free(e->mda_subaddress);
 	free(e);
