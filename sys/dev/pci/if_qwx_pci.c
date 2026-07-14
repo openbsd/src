@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.38 2026/07/14 12:31:16 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.39 2026/07/14 12:33:50 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -463,11 +463,11 @@ void	qwx_pci_intr_ctrl_event_ee(struct qwx_pci_softc *, uint32_t);
 void	qwx_pci_intr_ctrl_event_cmd_complete(struct qwx_pci_softc *,
 	    uint64_t, uint32_t);
 int	qwx_pci_intr_ctrl_event(struct qwx_pci_softc *,
-	    struct qwx_pci_event_ring *);
+	    struct qwx_pci_event_ring *, int);
 void	qwx_pci_intr_data_event_tx(struct qwx_pci_softc *,
 	    struct qwx_mhi_ring_element *);
 int	qwx_pci_intr_data_event(struct qwx_pci_softc *,
-	    struct qwx_pci_event_ring *);
+	    struct qwx_pci_event_ring *, int);
 int	qwx_pci_intr_mhi_ctrl(void *);
 int	qwx_pci_intr_mhi_data(void *);
 int	qwx_pci_intr(void *);
@@ -2401,9 +2401,70 @@ struct qwx_dma_vec_entry {
 	uint64_t size;
 };
 
+int
+qwx_mhi_stop_channel(struct qwx_pci_softc *psc, struct qwx_pci_xfer_ring *ring)
+{
+	struct qwx_softc *sc = &psc->sc_sc;
+	int ret = 0;
+
+	if (ring->mhi_chan_state != MHI_CH_STATE_ENABLED)
+		return 0;
+
+	DNPRINTF(QWX_D_MHI, "%s: stop MHI channel %d in state %d\n", __func__,
+	    ring->mhi_chan_id, ring->mhi_chan_state);
+
+	bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(psc->chan_ctxt), 0,
+	    QWX_DMA_LEN(psc->chan_ctxt), BUS_DMASYNC_PREWRITE);
+
+	ring->cmd_status = MHI_EV_CC_INVALID;
+	if (qwx_mhi_send_cmd(psc, MHI_CMD_STOP_CHAN, ring->mhi_chan_id))
+		return 1;
+
+	while (ring->cmd_status != MHI_EV_CC_SUCCESS) {
+		ret = tsleep_nsec(&ring->cmd_status, 0, "qwxcmd",
+		    SEC_TO_NSEC(5));
+		if (ret)
+			break;
+	}
+
+	if (ret) {
+		printf("%s: could not stop MHI channel %d in state %d: status 0x%x\n",
+		    sc->sc_dev.dv_xname, ring->mhi_chan_id,
+		    ring->mhi_chan_state, ring->cmd_status);
+		return 1;
+	}
+
+	ring->mhi_chan_state = MHI_CH_STATE_DISABLED;
+	return 0;
+}
+
+void
+qwx_mhi_stop_channels(struct qwx_pci_softc *psc)
+{
+	struct qwx_pci_xfer_ring *ring;
+
+	qwx_mhi_device_wake(&psc->sc_sc);
+
+	ring = &psc->xfer_rings[QWX_PCI_XFER_RING_IPCR_OUTBOUND];
+	qwx_mhi_stop_channel(psc, ring);
+
+	ring = &psc->xfer_rings[QWX_PCI_XFER_RING_IPCR_INBOUND];
+	qwx_mhi_stop_channel(psc, ring);
+
+	qwx_mhi_device_zzz(&psc->sc_sc);
+}
+
+void
+qwx_mhi_flush_mhi_event_rings(struct qwx_pci_softc *psc)
+{
+	qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0], 1);
+	qwx_pci_intr_data_event(psc, &psc->event_rings[1], 1);
+}
+
 void
 qwx_pci_power_down(struct qwx_softc *sc)
 {
+	struct qwx_pci_softc *psc = (struct qwx_pci_softc *)sc;
 	uint32_t state;
 	int i;
 
@@ -2411,6 +2472,9 @@ qwx_pci_power_down(struct qwx_softc *sc)
 	qwx_pci_aspm_restore(sc);
 
 	qwx_pci_force_wake(sc);
+
+	qwx_mhi_stop_channels(psc);
+	qwx_mhi_flush_mhi_event_rings(psc);
 
 	/*
 	 * Ask firmware to transition to M3 before resetting the device
@@ -2851,6 +2915,7 @@ qwx_mhi_start_channel(struct qwx_pci_softc *psc,
 		qwx_mhi_ring_doorbell(sc, ring->db_addr, ring->wp);
 	}
 
+	ring->mhi_chan_state = MHI_CH_STATE_ENABLED;
 	return 0;
 }
 
@@ -3787,7 +3852,8 @@ qwx_pci_intr_ctrl_event_cmd_complete(struct qwx_pci_softc *psc,
 }
 
 int
-qwx_pci_intr_ctrl_event(struct qwx_pci_softc *psc, struct qwx_pci_event_ring *ring)
+qwx_pci_intr_ctrl_event(struct qwx_pci_softc *psc,
+    struct qwx_pci_event_ring *ring, int flush)
 {
 	struct qwx_softc *sc = &psc->sc_sc;
 	struct qwx_mhi_event_ctxt *c;
@@ -3839,21 +3905,23 @@ qwx_pci_intr_ctrl_event(struct qwx_pci_softc *psc, struct qwx_pci_event_ring *ri
 		DNPRINTF(QWX_D_MHI, "%s: len=%u code=0x%x type=0x%x chid=%d\n",
 		    __func__, len, code, type, chid);
 
-		switch (type) {
-		case MHI_PKT_TYPE_STATE_CHANGE_EVENT:
-			qwx_pci_intr_ctrl_event_mhi(psc, code);
-			break;
-		case MHI_PKT_TYPE_EE_EVENT:
-			qwx_pci_intr_ctrl_event_ee(psc, code);
-			break;
-		case MHI_PKT_TYPE_CMD_COMPLETION_EVENT:
-			qwx_pci_intr_ctrl_event_cmd_complete(psc,
-			    le64toh(e->ptr), code);
-			break;
-		default:
-			printf("%s: unhandled event type 0x%x\n",
-			    __func__, type);
-			break;
+		if (!flush) {
+			switch (type) {
+			case MHI_PKT_TYPE_STATE_CHANGE_EVENT:
+				qwx_pci_intr_ctrl_event_mhi(psc, code);
+				break;
+			case MHI_PKT_TYPE_EE_EVENT:
+				qwx_pci_intr_ctrl_event_ee(psc, code);
+				break;
+			case MHI_PKT_TYPE_CMD_COMPLETION_EVENT:
+				qwx_pci_intr_ctrl_event_cmd_complete(psc,
+				    le64toh(e->ptr), code);
+				break;
+			default:
+				printf("%s: unhandled event type 0x%x\n",
+				    __func__, type);
+				break;
+			}
 		}
 
 		if (ring->rp + sizeof(*e) >= base + ring->size)
@@ -4010,7 +4078,8 @@ qwx_pci_intr_data_event_tx(struct qwx_pci_softc *psc, struct qwx_mhi_ring_elemen
 }
 
 int
-qwx_pci_intr_data_event(struct qwx_pci_softc *psc, struct qwx_pci_event_ring *ring)
+qwx_pci_intr_data_event(struct qwx_pci_softc *psc,
+    struct qwx_pci_event_ring *ring, int flush)
 {
 	struct qwx_softc *sc = &psc->sc_sc;
 	struct qwx_mhi_event_ctxt *c;
@@ -4060,14 +4129,16 @@ qwx_pci_intr_data_event(struct qwx_pci_softc *psc, struct qwx_pci_event_ring *ri
 		DNPRINTF(QWX_D_MHI, "%s: len=%u code=0x%x type=0x%x chid=%d\n",
 		    __func__, len, code, type, chid);
 
-		switch (type) {
-		case MHI_PKT_TYPE_TX_EVENT:
-			qwx_pci_intr_data_event_tx(psc, e);
-			break;
-		default:
-			printf("%s: unhandled event type 0x%x\n",
-			    __func__, type);
-			break;
+		if (!flush) {
+			switch (type) {
+			case MHI_PKT_TYPE_TX_EVENT:
+				qwx_pci_intr_data_event_tx(psc, e);
+				break;
+			default:
+				printf("%s: unhandled event type 0x%x\n",
+				    __func__, type);
+				break;
+			}
 		}
 
 		if (ring->rp + sizeof(*e) >= base + ring->size)
@@ -4095,7 +4166,7 @@ qwx_pci_intr_mhi_ctrl(void *arg)
 {
 	struct qwx_pci_softc *psc = arg;
 
-	if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
+	if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0], 0))
 		return 1;
 
 	return 0;
@@ -4106,7 +4177,7 @@ qwx_pci_intr_mhi_data(void *arg)
 {
 	struct qwx_pci_softc *psc = arg;
 
-	if (qwx_pci_intr_data_event(psc, &psc->event_rings[1]))
+	if (qwx_pci_intr_data_event(psc, &psc->event_rings[1], 0))
 		return 1;
 
 	return 0;
@@ -4175,9 +4246,9 @@ qwx_pci_intr(void *arg)
 	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags)) {
 		int i;
 
-		if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
+		if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0], 0))
 			ret = 1;
-		if (qwx_pci_intr_data_event(psc, &psc->event_rings[1]))
+		if (qwx_pci_intr_data_event(psc, &psc->event_rings[1], 0))
 			ret = 1;
 
 		for (i = 0; i < sc->hw_params.ce_count; i++) {
