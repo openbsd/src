@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.129 2026/07/14 12:15:52 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.130 2026/07/14 12:18:28 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15343,6 +15343,9 @@ qwx_dp_rxdma_ring_buf_setup(struct qwx_softc *sc,
 	rx_ring->rx_data = mallocarray(num_entries, sizeof(rx_ring->rx_data[0]),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
+	rx_ring->bufs_max = num_entries;
+	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
+
 	for (i = 0; i < num_entries; i++) {
 		struct qwx_rx_data *rx_data = &rx_ring->rx_data[i];
 
@@ -15352,9 +15355,6 @@ qwx_dp_rxdma_ring_buf_setup(struct qwx_softc *sc,
 		if (ret)
 			return ret;
 	}
-
-	rx_ring->bufs_max = num_entries;
-	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
 
 	return qwx_dp_rxbufs_replenish(sc, dp->mac_id, rx_ring, num_entries,
 	    sc->hw_params.hal_params->rx_buf_rbm);
