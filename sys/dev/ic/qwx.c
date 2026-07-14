@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.133 2026/07/14 12:23:57 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.134 2026/07/14 12:25:43 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -274,6 +274,9 @@ qwx_init(struct ifnet *ifp)
 	memset(&sc->qrtr_server, 0, sizeof(sc->qrtr_server));
 	sc->qrtr_server.node = QRTR_NODE_BCAST;
 
+	/* This flag will be cleared if firmware starts up successfully. */
+	set_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags);
+
 	error = qwx_core_init(sc);
 	if (error)
 		return error;
@@ -314,13 +317,12 @@ qwx_init(struct ifnet *ifp)
 	}
 
 	if (ifp->if_flags & IFF_UP) {
-		refcnt_init(&sc->task_refs);
-
-		ifq_clr_oactive(&ifp->if_snd);
-
 		error = qwx_mac_start(sc);
 		if (error)
 			return error;
+
+		refcnt_init(&sc->task_refs);
+		ifq_clr_oactive(&ifp->if_snd);
 
 		ifp->if_flags |= IFF_RUNNING;
 		sc->ops.irq_enable(sc);
@@ -414,10 +416,12 @@ qwx_stop(struct ifnet *ifp)
 	struct qwx_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s = splnet();
+	int was_running;
 
 	rw_assert_wrlock(&sc->ioctl_rwl);
 
-	if (ic->ic_opmode == IEEE80211_M_STA &&
+	was_running = (ifp->if_flags & IFF_RUNNING) != 0;
+	if (was_running && ic->ic_opmode == IEEE80211_M_STA &&
 	    ic->ic_state == IEEE80211_S_RUN &&
 	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP) &&
 	    ic->ic_bss->ni_port_valid)
@@ -433,7 +437,8 @@ qwx_stop(struct ifnet *ifp)
 	/* Cancel scheduled tasks and let any stale tasks finish up. */
 	task_del(systq, &sc->init_task);
 	qwx_del_task_all(sc);
-	refcnt_finalize(&sc->task_refs, "qwxstop");
+	if (was_running)
+		refcnt_finalize(&sc->task_refs, "qwxstop");
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
@@ -444,20 +449,21 @@ qwx_stop(struct ifnet *ifp)
 	sc->bgscan_unref_arg = NULL;
 	sc->bgscan_unref_arg_size = 0;
 
-	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
-
 	/*
 	 * Manually run the newstate task's code for switching to INIT state.
 	 * This reconfigures firmware state to stop scanning, or disassociate
 	 * from our current AP, and/or stop the VIF, etc.
 	 */
-	if (ic->ic_state != IEEE80211_S_INIT) {
+	if (was_running && ic->ic_state != IEEE80211_S_INIT) {
 		sc->ns_nstate = IEEE80211_S_INIT;
 		sc->ns_arg = -1; /* do not send management frames */
 		refcnt_init(&sc->task_refs);
 		refcnt_take(&sc->task_refs);
+		clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 		qwx_newstate_task(sc);
-		if (ic->ic_state != IEEE80211_S_INIT) { /* task code failed */
+		set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+		if (ic->ic_state != IEEE80211_S_INIT) {
+			/* task code failed */
 			task_del(systq, &sc->init_task);
 			sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 		}
@@ -472,7 +478,14 @@ qwx_stop(struct ifnet *ifp)
 	sc->vdev_id_11d_scan = QWX_11D_INVALID_VDEV_ID;
 	sc->pdevs_active = 0;
 
-	/* power off hardware */
+	/*
+	 * If we were running then allow commands to be sent to
+	 * firmware during core_deinit().
+	 */
+	if (was_running)
+		clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+
+	/* free some DMA allocations and power off hardware */
 	qwx_core_deinit(sc);
 
 	qwx_vif_free_all(sc);
@@ -517,6 +530,10 @@ qwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				/* Force reload of firmware image from disk. */
 				qwx_free_firmware(sc);
 				err = qwx_init(ifp);
+				if (err) {
+					KASSERT(!(ifp->if_flags & IFF_RUNNING));
+					qwx_stop(ifp);
+				}
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -20760,10 +20777,12 @@ qwx_flush_rx_rings(struct qwx_softc *sc)
 void
 qwx_core_stop(struct qwx_softc *sc)
 {
-	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags))
+	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags) &&
+	    !test_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags))
 		qwx_qmi_firmware_stop(sc);
-	
-	qwx_flush_rx_rings(sc);
+
+	if (!test_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags))
+		qwx_flush_rx_rings(sc);
 
 	sc->ops.stop(sc);
 	qwx_wmi_detach(sc);
@@ -20895,7 +20914,8 @@ qwx_core_qmi_firmware_ready(struct qwx_softc *sc)
 	default:
 		printf("%s: invalid crypto_mode: %d\n",
 		    sc->sc_dev.dv_xname, sc->crypto_mode);
-		return EINVAL;
+		ret = EINVAL;
+		goto err_dp_free;
 	}
 
 	if (sc->frame_mode == ATH11K_HW_TXRX_RAW)
@@ -20958,6 +20978,10 @@ qwx_qmi_fw_init_done(struct qwx_softc *sc)
 		clear_bit(ATH11K_FLAG_RECOVERY, sc->sc_flags);
 		ret = qwx_core_qmi_firmware_ready(sc);
 		if (ret) {
+			/*
+			 * This flags tells qwx_stop() that core is stopped
+			 * and ATH11K_FIRMWARE_MODE_OFF was already sent.
+			 */
 			set_bit(ATH11K_FLAG_QMI_FAIL, sc->sc_flags);
 		}
 	}
