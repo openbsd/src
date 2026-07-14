@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.397 2025/08/18 04:15:35 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.398 2026/07/14 14:54:24 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -321,7 +321,6 @@ struct process {
 #define	PS_CHROOT	0x01000000	/* Process is chrooted */
 #define	PS_avail1	0x02000000
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
-#define	PS_avail0	0x08000000
 #define	PS_WAITEVENT	0x10000000	/* wait(2) event pending */
 #define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
 #define	PS_STOPPED	0x40000000	/* Stopped process */
