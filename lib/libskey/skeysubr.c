@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.36 2023/03/08 04:43:05 guenther Exp $
+ * $OpenBSD: skeysubr.c,v 1.37 2026/07/14 16:31:02 jsing Exp $
  */
 
 #include <stdio.h>
@@ -107,29 +107,27 @@ static void
 keycrunch_sha1(char *result, char *buf, size_t buflen)
 {
 	SHA1_CTX sha;
+	u_int32_t results[5];
 	int i, j;
 
 	/* Crunch the key through SHA1 */
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)buf, buflen);
-	SHA1Pad(&sha);
+	SHA1Final((unsigned char *)results, &sha);
 
 	/* Fold 160 to 64 bits */
-	sha.state[0] ^= sha.state[2];
-	sha.state[1] ^= sha.state[3];
-	sha.state[0] ^= sha.state[4];
+	results[0] ^= results[2];
+	results[1] ^= results[3];
+	results[0] ^= results[4];
 
 	/*
 	 * SHA1 is a big endian algorithm but RFC2289 mandates that
-	 * the result be in little endian form, so we copy to the
-	 * result buffer manually.
+	 * the result be in little endian form.
 	 */
-	for (i = 0, j = 0; j < 8; i++, j += 4) {
-		result[j]   = (u_char)(sha.state[i] & 0xff);
-		result[j+1] = (u_char)((sha.state[i] >> 8)  & 0xff);
-		result[j+2] = (u_char)((sha.state[i] >> 16) & 0xff);
-		result[j+3] = (u_char)((sha.state[i] >> 24) & 0xff);
-	}
+	results[0] = htole32(be32toh(results[0]));
+	results[1] = htole32(be32toh(results[1]));
+
+	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 }
 
 static void
