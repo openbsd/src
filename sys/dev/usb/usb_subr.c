@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.165 2025/12/28 14:50:57 kettenis Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.166 2026/07/14 21:14:09 kettenis Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -117,7 +117,7 @@ usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
 {
 	usb_device_request_t req;
 	usbd_status err;
-	int actlen;
+	int len, actlen;
 
 	req.bmRequestType = UT_READ_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
@@ -132,7 +132,8 @@ usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
 	if (actlen < 2)
 		return (USBD_SHORT_XFER);
 
-	USETW(req.wLength, sdesc->bLength);	/* the whole string */
+	len = MIN(sdesc->bLength, sizeof(*sdesc));
+	USETW(req.wLength, len);	/* the whole string */
 	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
 	    &actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)
