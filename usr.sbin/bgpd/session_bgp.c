@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.9 2026/05/08 12:03:50 tb Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.10 2026/07/14 07:58:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -512,6 +512,7 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 
 	session_sendmsg(buf, p, BGP_NOTIFICATION);
 	p->stats.msg_sent_notification++;
+	p->errcnt++;
 	p->stats.last_sent_errcode = errcode;
 	p->stats.last_sent_suberr = subcode;
 }
