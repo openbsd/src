@@ -1333,8 +1333,7 @@ dump_vifs(FILE *fp)
 	}
 	v_req.vifi = vifi;
 	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) == -1) {
-	    logit(LOG_WARNING, 0,
-		"SIOCGETVIFCNT fails");
+	    logit(LOG_WARNING, errno, "SIOCGETVIFCNT fails for vif %u", vifi);
 	}
 	else {
 	    fprintf(fp, "                         pkts in : %ld\n",
