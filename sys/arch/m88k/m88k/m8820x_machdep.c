@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.67 2026/07/15 18:44:50 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.68 2026/07/15 18:49:57 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -150,9 +150,32 @@ const struct cmmu_p cmmu8820x = {
  * the gory details.
  */
 
+/*
+ * These values do not depend on MAX_CPUS, for we may want to gather
+ * information about all the CMMUs present in the system, even for
+ * non-MULTIPROCESSOR kernels.
+ */
+#if defined(M88200_HAS_SPLIT_ADDRESS)
+/*
+ * 4:1 configurations, up to 4 CPUs, or 6:1 or 8:1 configurations, but only
+ * up to 2 CPUs, due to P-Bus impedance limitations.
+ */
+#define	MAX_CMMUS		16
+#else
+/*
+ * 2:1 configuration, up to 4 CPUs.
+ */
+#define	MAX_CMMUS		8
+#endif
+
 const struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
 const u_int max_cmmus;
 const u_int cmmu_shift;
+
+/* Optimize away cmmu_shift whenever possible */
+#if !defined(M88200_HAS_SPLIT_ADDRESS)
+#define	cmmu_shift		1
+#endif
 
 /* local prototypes */
 void	m8820x_cmmu_configuration_print(int, int);
@@ -203,7 +226,10 @@ void
 m8820x_cmmu_set_reg_same_mode(const struct m8820x_cmmu *cmmu, int reg,
     u_int val)
 {
+/* only case where cmmu_next_same_mode may be non-NULL */
+#if defined(M88200_HAS_SPLIT_ADDRESS)
 	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode)
+#endif
 		cmmu->cmmu_regs[reg] = val;
 }
 
@@ -222,7 +248,11 @@ void
 m8820x_cmmu_set_cmd_same_mode(const struct m8820x_cmmu *cmmu, u_int cmd,
     vaddr_t addr)
 {
-	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode) {
+/* only case where cmmu_next_same_mode may be non-NULL */
+#if defined(M88200_HAS_SPLIT_ADDRESS)
+	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode)
+#endif
+	{
 		cmmu->cmmu_regs[CMMU_SAR] = addr;
 		cmmu->cmmu_regs[CMMU_SCR] = cmd;
 	}
@@ -545,10 +575,12 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	default:
 		/* exception code may not use ci_pfsr fields, compute anyway */
 		/* FALLTHROUGH */
+#if defined(M88200_HAS_SPLIT_ADDRESS)
 	case 2:
 		ci->ci_pfsr_d1 = (u_int)cmmu[3].cmmu_regs + CMMU_PFSR * 4;
 		ci->ci_pfsr_i1 = (u_int)cmmu[2].cmmu_regs + CMMU_PFSR * 4;
 		/* FALLTHROUGH */
+#endif
 	case 1:
 		ci->ci_pfsr_d0 = (u_int)cmmu[1].cmmu_regs + CMMU_PFSR * 4;
 		ci->ci_pfsr_i0 = (u_int)cmmu[0].cmmu_regs + CMMU_PFSR * 4;

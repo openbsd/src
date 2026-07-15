@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.12 2026/07/15 18:44:50 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.13 2026/07/15 18:49:57 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -207,12 +207,7 @@ struct m8820x_cmmu {
 #define	DATA_CMMU	0x01	/* odd number */
 #define	CMMU_MODE(num)	((num) & 1)
 
-#ifdef	M88200_HAS_ASYMMETRICAL_ASSOCIATION
-#define MAX_CMMUS	16		/* maximum cmmus on the board */
-#else
-#define MAX_CMMUS	8		/* maximum cmmus on the board */
-#endif
-extern const struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
+extern const struct m8820x_cmmu m8820x_cmmu[];
 extern const u_int cmmu_shift;
 extern const u_int max_cmmus;
 
