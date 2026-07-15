@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.37 2026/07/15 18:23:41 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.38 2026/07/15 18:24:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -732,6 +732,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	size_t			 rem;
 	uint32_t		 t1, t2, lease_time;
 	int			 serverid_len, rapid_commit = 0;
+	int			 found_client_id = 0;
 	uint8_t			 serverid[SERVERID_SIZE];
 	uint8_t			*p;
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
@@ -793,6 +794,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 				log_debug("%s: message not for us", __func__);
 				goto out;
 			}
+			found_client_id = 1;
 			break;
 		case DHO_SERVERID:
 			/*
@@ -867,6 +869,11 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	/* check that we got all the information we need */
 	if (serverid_len == 0) {
 		log_warnx("%s: Did not receive server identifier", __func__);
+		goto out;
+	}
+
+	if (!found_client_id) {
+		log_warnx("%s: Did not receive client identifier", __func__);
 		goto out;
 	}
 
