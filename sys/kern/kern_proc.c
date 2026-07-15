@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.105 2026/06/12 11:00:30 mvs Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.106 2026/07/15 19:46:34 kettenis Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -583,8 +583,9 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
-		db_printf("   PID  %6s  %5s  %5s  S  %10s  %-12s  %-15s\n",
-		    "TID", "PPID", "UID", "FLAGS", "WAIT", "COMMAND");
+		db_printf("   PID  %6s  %5s %5s  S  %10s %10s %-9s %-15s\n",
+		    "TID", "PPID", "UID", "PRLAGS", "PFLAGS", "WAIT",
+		    "COMMAND");
 		break;
 	case 'w':
 		db_printf("    TID  %-15s  %-5s  %18s  %s\n",
@@ -633,11 +634,11 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 					break;
 
 				case 'n':
-					db_printf("%6d  %5d  %5d  %d  %#10x  "
-					    "%-12.12s  %-15s\n",
+					db_printf("%6d  %5d %5d  %d  "
+					    "%#10x %#10x %-9.9s %-15s\n",
 					    p->p_tid, ppr ? ppr->ps_pid : -1,
 					    pr->ps_ucred->cr_ruid, p->p_stat,
-					    p->p_flag | pr->ps_flags,
+					    pr->ps_flags, p->p_flag,
 					    (p->p_wchan && p->p_wmesg) ?
 						p->p_wmesg : "", pr->ps_comm);
 					break;
