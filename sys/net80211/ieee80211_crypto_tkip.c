@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.33 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.34 2026/07/15 09:47:51 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -559,7 +559,7 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	 * 60 seconds have passed since the most recent previous MIC failure.
 	 */
 	now = getuptime();
-	if (ic->ic_tkip_micfail == 0 || ic->ic_tkip_micfail + 60 >= now) {
+	if (ic->ic_tkip_micfail == 0 || ic->ic_tkip_micfail + 60 < now) {
 		ic->ic_tkip_micfail = now;
 		ic->ic_tkip_micfail_last_tsc = tsc;
 		return;
