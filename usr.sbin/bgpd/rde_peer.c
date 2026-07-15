@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.79 2026/07/13 12:27:34 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.80 2026/07/15 11:59:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -244,7 +244,7 @@ RB_GENERATE(peer_tree, rde_peer, entry, peer_cmp);
 
 static void
 peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
-    enum eval_mode mode, int force_update)
+    enum eval_mode mode)
 {
 	uint8_t		 aid;
 
@@ -269,26 +269,17 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 
 	/* handle peers with add-path */
 	if (peer_has_add_path(peer, aid, CAPA_AP_SEND)) {
-#if NOTYET
-		/* XXX skip addpath all optimisation for now until the queue
-		 * is extended to allow this mode to work again.
-		 * This mode is not very common and so taking the slow path
-		 * here like for all other addpath send modes is not that
-		 * big of an issue right now.
-		 */
-		if (peer->eval.mode == ADDPATH_EVAL_ALL) {
-			up_generate_addpath_all(peer, re, force_update);
-			return;
-		}
-#endif
-		up_generate_addpath(peer, re, force_update);
+		if (peer->eval.mode == ADDPATH_EVAL_ALL)
+			up_generate_addpath_all(peer, re, mode);
+		else
+			up_generate_addpath(peer, re, mode);
 		return;
 	}
 
 	/* skip regular peers if the best path didn't change */
 	if (mode == EVAL_ALL && (peer->flags & PEERFLAG_EVALUATE_ALL) == 0)
 		return;
-	up_generate_updates(peer, re, force_update);
+	up_generate_updates(peer, re, mode);
 }
 
 /*
@@ -298,8 +289,8 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
  *	EVAL_ALL is sent for any other update (needed for peers with
  *	addpath or evaluate all set).
  *	EVAL_REEVAL is used by config reloads (a full RIB refresh is needed)
- *	and for single peer RIB dumps but those call peer_generate_update()
- *	directly.
+ *	EVAL_SYNC is used for single peer RIB dumps but those call
+ *	peer_generate_update() directly.
  * peer, newpath and old_pathid_tx are ignored if mode is EVAL_REEVAL.
  * In the other cases either newpath or old_pathid_tx are valid but not
  * both at the same time.
@@ -317,13 +308,14 @@ rde_enqueue_updates(struct rib_entry *re, struct rde_peer *peer,
 		RB_FOREACH(p, peer_tree, &peertable) {
 			if (p->reconf_out == 0)
 				continue;
-			peer_generate_update(p, re, EVAL_REEVAL, 0);
+			peer_generate_update(p, re, mode);
 		}
 		adjout_prefix_collect(re->prefix);
 		return;
 	case EVAL_DEFAULT:
 	case EVAL_ALL:
 		break;
+	case EVAL_SYNC:
 	case EVAL_NONE:
 		fatalx("bad eval mode in %s", __func__);
 	}
@@ -354,7 +346,7 @@ peer_process_updates(struct rde_peer *peer, void *bula)
 	peer->stats.rib_entry_count--;
 
 	RB_FOREACH(p, peer_tree, &peertable)
-		peer_generate_update(p, re, re->pq_mode, 0);
+		peer_generate_update(p, re, re->pq_mode);
 
 	adjout_prefix_collect(re->prefix);
 	rib_pq_dequeue(re);
@@ -505,7 +497,7 @@ peer_reaper_upcall(struct pt_entry *pte, struct adjout_prefix *p,
 {
 	struct rde_peer		*peer = ptr;
 
-	adjout_prefix_withdraw(peer, pte, p);
+	adjout_prefix_withdraw(peer, pte, p, 1);
 }
 
 /*
@@ -656,7 +648,7 @@ peer_dump_upcall(struct rib_entry *re, void *ptr)
 		/* no eligible prefix, not even for 'evaluate all' */
 		return;
 
-	peer_generate_update(peer, re, EVAL_REEVAL, 1);
+	peer_generate_update(peer, re, EVAL_SYNC);
 	adjout_prefix_collect(re->prefix);
 }
 

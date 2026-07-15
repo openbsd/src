@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.21 2026/07/13 12:27:34 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.22 2026/07/15 11:59:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -516,11 +516,12 @@ adjout_prefix_next(struct pt_entry *pte, uint32_t bid,
 
 /*
  * Put a prefix from the Adj-RIB-Out onto the update queue.
+ * If force_send is set, ensure an UPDATE is sent in any case to the peer.
  */
 void
 adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
     struct filterstate *state, struct pt_entry *pte, uint32_t path_id_tx,
-    int force_update)
+    int force_send)
 {
 	struct adjout_attr *attrs;
 
@@ -542,7 +543,7 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 		    attrs->communities) &&
 		    path_equal(&state->aspath, attrs->aspath)) {
 			/* nothing changed */
-			if (force_update && peer_is_up(peer))
+			if (force_send && peer_is_up(peer))
 				pend_prefix_add(peer, attrs, pte, path_id_tx);
 			return;
 		}
@@ -563,15 +564,16 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 /*
  * Withdraw a prefix from the Adj-RIB-Out, this unlinks the aspath but leaves
  * the prefix in the RIB linked to the peer withdraw list.
+ * If skip_send is set there is no need to send a withdraw to the peer.
  */
 void
 adjout_prefix_withdraw(struct rde_peer *peer, struct pt_entry *pte,
-    struct adjout_prefix *p)
+    struct adjout_prefix *p, int skip_send)
 {
 	if (bitmap_test(&p->peermap, peer->adjout_bid) == 0)
 		fatalx("%s: king bula is unhappy", __func__);
 
-	if (peer_is_up(peer))
+	if (peer_is_up(peer) && !skip_send)
 		pend_prefix_add(peer, NULL, pte, p->path_id_tx);
 
 	adjout_prefix_unlink(p, pte, peer);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.708 2026/07/01 09:53:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.709 2026/07/15 11:59:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3671,7 +3671,7 @@ rde_up_flush_upcall(struct pt_entry *pte, struct adjout_prefix *p,
 {
 	struct rde_peer *peer = ptr;
 
-	adjout_prefix_withdraw(peer, pte, p);
+	adjout_prefix_withdraw(peer, pte, p, 0);
 }
 
 int
