@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.36 2026/05/22 10:12:40 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.37 2026/07/15 18:23:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -917,6 +917,11 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 			    dhcp_message_type2str(hdr.msg_type));
 			goto out;
 		}
+		if (memcmp(hdr.xid, iface->xid, XID_SIZE) != 0) {
+			log_debug("%s: ignoring %s with wrong transaction id",
+			    __func__, dhcp_message_type2str(hdr.msg_type));
+			goto out;
+		}
 		iface->serverid_len = serverid_len;
 		memcpy(iface->serverid, serverid, SERVERID_SIZE);
 		memcpy(iface->pds, iface->new_pds, sizeof(iface->pds));
@@ -936,6 +941,11 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		default:
 			log_debug("%s: ignoring unexpected %s", __func__,
 			    dhcp_message_type2str(hdr.msg_type));
+			goto out;
+		}
+		if (memcmp(hdr.xid, iface->xid, XID_SIZE) != 0) {
+			log_debug("%s: ignoring %s with wrong transaction id",
+			    __func__, dhcp_message_type2str(hdr.msg_type));
 			goto out;
 		}
 		iface->serverid_len = serverid_len;
