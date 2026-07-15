@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.11 2025/08/12 16:17:10 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.12 2026/07/15 18:44:50 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -212,9 +212,9 @@ struct m8820x_cmmu {
 #else
 #define MAX_CMMUS	8		/* maximum cmmus on the board */
 #endif
-extern struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
-extern u_int cmmu_shift;
-extern u_int max_cmmus;
+extern const struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
+extern const u_int cmmu_shift;
+extern const u_int max_cmmus;
 
 void	m8820x_setup_board_config(void);
 cpuid_t	m8820x_cpu_number(void);

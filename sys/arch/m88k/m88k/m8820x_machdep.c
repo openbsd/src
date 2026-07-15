@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.66 2026/07/15 18:43:09 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.67 2026/07/15 18:44:50 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -150,31 +150,29 @@ const struct cmmu_p cmmu8820x = {
  * the gory details.
  */
 
-struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS]
-    __attribute__ ((__section__(".rodata")));
-u_int max_cmmus
-    __attribute__ ((__section__(".rodata")));
-u_int cmmu_shift
-    __attribute__ ((__section__(".rodata")));
+const struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
+const u_int max_cmmus;
+const u_int cmmu_shift;
 
 /* local prototypes */
 void	m8820x_cmmu_configuration_print(int, int);
 static inline
-void	m8820x_cmmu_set_reg(struct m8820x_cmmu *, int, u_int);
+void	m8820x_cmmu_set_reg(const struct m8820x_cmmu *, int, u_int);
 static inline
-void	m8820x_cmmu_set_reg_same_mode(struct m8820x_cmmu *, int, u_int);
+void	m8820x_cmmu_set_reg_same_mode(const struct m8820x_cmmu *, int, u_int);
 static inline
-void	m8820x_cmmu_set_cmd(struct m8820x_cmmu *, u_int, vaddr_t);
-void	m8820x_cmmu_set_cmd_if_addr(struct m8820x_cmmu *, u_int, vaddr_t);
+void	m8820x_cmmu_set_cmd(const struct m8820x_cmmu *, u_int, vaddr_t);
+void	m8820x_cmmu_set_cmd_if_addr(const struct m8820x_cmmu *, u_int, vaddr_t);
 static inline
-void	m8820x_cmmu_set_cmd_same_mode(struct m8820x_cmmu *, u_int, vaddr_t);
+void	m8820x_cmmu_set_cmd_same_mode(const struct m8820x_cmmu *, u_int,
+	    vaddr_t);
 static inline
-void	m8820x_cmmu_wait(struct m8820x_cmmu *);
+void	m8820x_cmmu_wait(const struct m8820x_cmmu *);
 static inline
-void	m8820x_cmmu_wait_same_mode(struct m8820x_cmmu *);
-void	m8820x_cmmu_wb_locked(struct m8820x_cmmu *, paddr_t, psize_t);
-void	m8820x_cmmu_wbinv_locked(struct m8820x_cmmu *, paddr_t, psize_t);
-void	m8820x_cmmu_inv_locked(struct m8820x_cmmu *, paddr_t, psize_t);
+void	m8820x_cmmu_wait_same_mode(const struct m8820x_cmmu *);
+void	m8820x_cmmu_wb_locked(const struct m8820x_cmmu *, paddr_t, psize_t);
+void	m8820x_cmmu_wbinv_locked(const struct m8820x_cmmu *, paddr_t, psize_t);
+void	m8820x_cmmu_inv_locked(const struct m8820x_cmmu *, paddr_t, psize_t);
 #if defined(__luna88k__) && !defined(MULTIPROCESSOR)
 void	m8820x_enable_other_cmmu_cache(void);
 #endif
@@ -194,16 +192,16 @@ void	m8820x_ibatc_set(cpuid_t, uint, batc_t);
 
 static inline
 void
-m8820x_cmmu_set_reg(struct m8820x_cmmu *cmmu, int reg, u_int val)
+m8820x_cmmu_set_reg(const struct m8820x_cmmu *cmmu, int reg, u_int val)
 {
-	for (; cmmu != NULL; cmmu = cmmu->cmmu_next) {
+	for (; cmmu != NULL; cmmu = cmmu->cmmu_next)
 		cmmu->cmmu_regs[reg] = val;
-	}
 }
 
 static inline
 void
-m8820x_cmmu_set_reg_same_mode(struct m8820x_cmmu *cmmu, int reg, u_int val)
+m8820x_cmmu_set_reg_same_mode(const struct m8820x_cmmu *cmmu, int reg,
+    u_int val)
 {
 	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode)
 		cmmu->cmmu_regs[reg] = val;
@@ -211,7 +209,7 @@ m8820x_cmmu_set_reg_same_mode(struct m8820x_cmmu *cmmu, int reg, u_int val)
 
 static inline
 void
-m8820x_cmmu_set_cmd(struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
+m8820x_cmmu_set_cmd(const struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
 {
 	for (; cmmu != NULL; cmmu = cmmu->cmmu_next) {
 		cmmu->cmmu_regs[CMMU_SAR] = addr;
@@ -221,7 +219,8 @@ m8820x_cmmu_set_cmd(struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
 
 static inline
 void
-m8820x_cmmu_set_cmd_same_mode(struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
+m8820x_cmmu_set_cmd_same_mode(const struct m8820x_cmmu *cmmu, u_int cmd,
+    vaddr_t addr)
 {
 	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode) {
 		cmmu->cmmu_regs[CMMU_SAR] = addr;
@@ -231,7 +230,8 @@ m8820x_cmmu_set_cmd_same_mode(struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
 
 #ifdef M88200_HAS_SPLIT_ADDRESS
 void
-m8820x_cmmu_set_cmd_if_addr(struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
+m8820x_cmmu_set_cmd_if_addr(const struct m8820x_cmmu *cmmu, u_int cmd,
+    vaddr_t addr)
 {
 	for (; cmmu != NULL; cmmu = cmmu->cmmu_next) {
 		if (cmmu->cmmu_addr_mask != 0) {
@@ -253,20 +253,18 @@ m8820x_cmmu_set_cmd_if_addr(struct m8820x_cmmu *cmmu, u_int cmd, vaddr_t addr)
  */
 static inline
 void
-m8820x_cmmu_wait(struct m8820x_cmmu *cmmu)
+m8820x_cmmu_wait(const struct m8820x_cmmu *cmmu)
 {
-	for (; cmmu != NULL; cmmu = cmmu->cmmu_next) {
+	for (; cmmu != NULL; cmmu = cmmu->cmmu_next)
 		(void)cmmu->cmmu_regs[CMMU_SSR];
-	}
 }
 
 static inline
 void
-m8820x_cmmu_wait_same_mode(struct m8820x_cmmu *cmmu)
+m8820x_cmmu_wait_same_mode(const struct m8820x_cmmu *cmmu)
 {
-	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode) {
+	for (; cmmu != NULL; cmmu = cmmu->cmmu_next_same_mode)
 		(void)cmmu->cmmu_regs[CMMU_SSR];
-	}
 }
 
 /*
@@ -277,7 +275,7 @@ static inline
 void
 m8820x_dbatc_set(cpuid_t cpu, uint batcno, batc_t batc)
 {
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -289,7 +287,7 @@ static inline
 void
 m8820x_ibatc_set(cpuid_t cpu, uint batcno, batc_t batc)
 {
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -376,7 +374,7 @@ void
 m8820x_cpu_configuration_print(int main)
 {
 #ifdef M88200_HAS_ASYMMETRICAL_ASSOCIATION
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 #endif
 	int pid = get_cpu_pid();
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
@@ -430,7 +428,7 @@ m8820x_cpu_configuration_print(int main)
 void
 m8820x_cmmu_configuration_print(int cpu, int mmuno)
 {
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmuid, cssp;
 	u_int line;
 	uint32_t linestatus;
@@ -531,7 +529,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 
 	apr = ((0x00000 << PG_BITS) | CACHE_GLOBAL | CACHE_INH) & ~APR_V;
 
-	cmmu = m8820x_cmmu + (cpu << cmmu_shift);
+	cmmu = (struct m8820x_cmmu *)(m8820x_cmmu + (cpu << cmmu_shift));
 
 	/*
 	 * Setup CMMU pointers for faster exception processing.
@@ -623,7 +621,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	 * Enable instruction cache.
 	 */
 	apr &= ~CACHE_INH;
-	cmmu = m8820x_cmmu + (cpu << cmmu_shift);
+	cmmu = (struct m8820x_cmmu *)(m8820x_cmmu + (cpu << cmmu_shift));
 	m8820x_cmmu_set_reg_same_mode(cmmu + INST_CMMU, CMMU_SAPR, apr);
 
 	/*
@@ -649,7 +647,7 @@ void
 m8820x_shutdown()
 {
 	u_int cmmu_num;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 
 	CMMU_LOCK;
 
@@ -679,7 +677,7 @@ apr_t
 m8820x_apr_cmode()
 {
 	u_int cmmu_num;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 
 	cmmu = m8820x_cmmu;
 	for (cmmu_num = max_cmmus; cmmu_num != 0; cmmu_num--, cmmu++) {
@@ -715,7 +713,7 @@ apr_t
 m8820x_pte_cmode()
 {
 	u_int cmmu_num;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 
 	cmmu = m8820x_cmmu;
 	for (cmmu_num = max_cmmus; cmmu_num != 0; cmmu_num--, cmmu++) {
@@ -739,7 +737,7 @@ void
 m8820x_set_sapr(apr_t ap)
 {
 	int cpu = cpu_number();
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -755,7 +753,7 @@ m8820x_set_uapr(apr_t ap)
 {
 	u_int32_t psr;
 	int cpu = cpu_number();
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -777,7 +775,7 @@ void
 m8820x_tlbis(cpuid_t cpu, vaddr_t va, pt_entry_t pte)
 {
 	u_int32_t psr;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -795,7 +793,7 @@ void
 m8820x_tlbiu(cpuid_t cpu, vaddr_t va, pt_entry_t pte)
 {
 	u_int32_t psr;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -813,7 +811,7 @@ void
 m8820x_tlbia(cpuid_t cpu)
 {
 	u_int32_t psr;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -851,7 +849,7 @@ m8820x_cache_wbinv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 	psize_t count;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -891,7 +889,7 @@ m8820x_dcache_wb(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 	psize_t count;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -931,7 +929,7 @@ m8820x_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)
 {
 	u_int32_t psr;
 	psize_t count;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	mmu = cpu << cmmu_shift;
@@ -967,7 +965,7 @@ m8820x_icache_inv(cpuid_t cpu, paddr_t pa, psize_t size)
  * writeback D$
  */
 void
-m8820x_cmmu_wb_locked(struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
+m8820x_cmmu_wb_locked(const struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
 {
 	/* cmmu points to a DATA_CMMU */
 	if (size <= MC88200_CACHE_LINE) {
@@ -983,7 +981,7 @@ m8820x_cmmu_wb_locked(struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
  * invalidate I$, writeback and invalidate D$
  */
 void
-m8820x_cmmu_wbinv_locked(struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
+m8820x_cmmu_wbinv_locked(const struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE)
 		m8820x_cmmu_set_cmd(cmmu, CMMU_FLUSH_CACHE_CBI_LINE, pa);
@@ -995,7 +993,7 @@ m8820x_cmmu_wbinv_locked(struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
  * invalidate I$ and D$
  */
 void
-m8820x_cmmu_inv_locked(struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
+m8820x_cmmu_inv_locked(const struct m8820x_cmmu *cmmu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE)
 		m8820x_cmmu_set_cmd(cmmu, CMMU_FLUSH_CACHE_INV_LINE, pa);
@@ -1016,15 +1014,15 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 {
 	u_int32_t psr;
 	int cpu;
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu, cmmudelta;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 #endif
 	paddr_t pa;
 	psize_t size, count;
-	void (*flusher)(struct m8820x_cmmu *, paddr_t, psize_t);
-	void (*waiter)(struct m8820x_cmmu *);
+	void (*flusher)(const struct m8820x_cmmu *, paddr_t, psize_t);
+	void (*waiter)(const struct m8820x_cmmu *);
 	uint8_t lines[2 * MC88200_CACHE_LINE];
 	paddr_t pa1, pa2;
 	psize_t sz1, sz2;
@@ -1169,7 +1167,7 @@ void
 m8820x_enable_other_cmmu_cache()
 {
 	int cpu, master_cpu = cpu_number();
-	struct m8820x_cmmu *cmmu;
+	const struct m8820x_cmmu *cmmu;
 	int mmu;
 
 	for (cpu = 0; cpu < ncpusfound; cpu++) {
