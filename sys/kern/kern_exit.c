@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.253 2026/06/25 08:14:20 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.254 2026/07/15 14:25:31 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 				process_untrace(qr);
 				mtx_leave(&qr->ps_mtx);
 
-				if ((pr->ps_flags & PS_EXITING) == 0) {
+				if ((qr->ps_flags & PS_EXITING) == 0) {
 					/*
 					 * If single threading is
 					 * active, direct the signal
