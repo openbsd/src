@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.14 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.15 2026/07/15 18:42:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -149,7 +149,7 @@ m88110_fpu_exception(struct trapframe *frame)
 			else if (frame->tf_fpecr & FPECR_FROP)
 				fault_type = FPE_FLTINV;
 			else if (frame->tf_fpecr & FPECR_FDVZ)
-				fault_type = FPE_INTDIV;
+				fault_type = FPE_FLTDIV;
 			else if (frame->tf_fpecr & FPECR_FUNF) {
 				if (frame->tf_fpsr & FPSR_EFUNF)
 					fault_type = FPE_FLTUND;

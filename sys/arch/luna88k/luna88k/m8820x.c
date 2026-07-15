@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.19 2025/08/12 16:17:10 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.20 2026/07/15 18:42:37 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -192,19 +192,16 @@ m8820x_cpu_number()
 	CMMU_LOCK;
 
 	for (i = 0; i < 10; i++) {
-		/* clear CMMU P-bus status registers */
-		for (cmmu = 0; cmmu < max_cmmus; cmmu++) {
-			if (CMMU_MODE(cmmu) != INST_CMMU)
-				m8820x_cmmu[cmmu].cmmu_regs[CMMU_PFSR] = 0;
-		}
+		/* clear data CMMU P-bus status registers */
+		for (cmmu = DATA_CMMU; cmmu < max_cmmus; cmmu += 2)
+			m8820x_cmmu[cmmu].cmmu_regs[CMMU_PFSR] = 0;
 
 		/* access faulting address */
 		badaddr((vaddr_t)ILLADDRESS, 4);
 
-		/* check which CMMU is reporting the fault  */
-		for (cmmu = 0; cmmu < max_cmmus; cmmu++) {
-			if (CMMU_MODE(cmmu) != INST_CMMU &&
-			    CMMU_PFSR_FAULT(m8820x_cmmu[cmmu].
+		/* check which data CMMU is reporting the fault  */
+		for (cmmu = DATA_CMMU; cmmu < max_cmmus; cmmu += 2) {
+			if (CMMU_PFSR_FAULT(m8820x_cmmu[cmmu].
 			      cmmu_regs[CMMU_PFSR]) != CMMU_PFSR_SUCCESS) {
 				/* clean register, just in case... */
 				m8820x_cmmu[cmmu].cmmu_regs[CMMU_PFSR] = 0;

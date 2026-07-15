@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.9 2025/07/16 07:15:42 jsg Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.10 2026/07/15 18:42:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -473,7 +473,7 @@ m88100_fpu_checksig(struct trapframe *frame, int sig, int fault_type)
 			else if (frame->tf_fpecr & FPECR_FROP)
 				fault_type = FPE_FLTINV;
 			else if (frame->tf_fpecr & FPECR_FDVZ)
-				fault_type = FPE_INTDIV;
+				fault_type = FPE_FLTDIV;
 			else if (frame->tf_fpecr & FPECR_FUNF) {
 				if (frame->tf_fpsr & FPSR_EFUNF)
 					fault_type = FPE_FLTUND;
