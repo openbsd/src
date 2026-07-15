@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.38 2026/07/15 18:24:15 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.39 2026/07/15 18:24:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -754,6 +754,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	    iface_conf->ia_count);
 
 	serverid_len = t1 = t2 = lease_time = 0;
+	memset(serverid, 0, SERVERID_SIZE);
 	memset(iface->new_pds, 0, sizeof(iface->new_pds));
 
 	p = dhcp->packet;
@@ -938,6 +939,15 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		switch (iface->state) {
 		case IF_REQUESTING:
 		case IF_RENEWING:
+			if (serverid_len == 0 || serverid_len !=
+			    iface->serverid_len || memcmp(serverid,
+			    iface->serverid, serverid_len) != 0) {
+				log_debug("%s: ignoring %s from wrong server",
+				    __func__, dhcp_message_type2str(
+				    hdr.msg_type));
+				goto out;
+			}
+			break;
 		case IF_REBINDING:
 		case IF_REBOOTING:
 			break;
