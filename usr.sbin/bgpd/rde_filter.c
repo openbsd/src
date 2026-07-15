@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.149 2026/04/30 15:20:15 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.150 2026/07/15 11:12:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -218,7 +218,7 @@ rde_l3vpn_import(struct rde_community *comm, struct l3vpn *rd)
 		return (0);
 	for (i = 0; i < rd->rde_import->len; i++) {
 		struct rde_filter_set_elm *s = &rd->rde_import->set[i];
-		if (community_match(comm, &s->action.community, 0))
+		if (community_match(comm, &s->action.community, NULL))
 			return (1);
 	}
 	return (0);
