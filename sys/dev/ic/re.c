@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.222 2026/02/26 18:57:35 brynet Exp $	*/
+/*	$OpenBSD: re.c,v 1.223 2026/07/15 23:55:16 krw Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1015,6 +1015,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
+	if (bus_dma64)
+		ifp->if_xflags |= IFXF_MBUF_64BIT;
 	ifp->if_ioctl = re_ioctl;
 	ifp->if_qstart = re_start;
 	ifp->if_watchdog = re_watchdog;
