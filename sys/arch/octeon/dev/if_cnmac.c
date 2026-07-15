@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.91 2026/06/19 15:12:10 kirill Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.92 2026/07/15 11:48:03 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -868,8 +868,9 @@ int
 cnmac_send_makecmd(struct cnmac_softc *sc, struct mbuf *m,
     uint64_t *gbuf, uint64_t *rpko_cmd_w0, uint64_t *rpko_cmd_w1)
 {
+	struct ether_extracted ext;
 	uint64_t pko_cmd_w0, pko_cmd_w1;
-	int ipoffp1;
+	int ipoffp1 = 0;
 	int segs;
 	int result = 0;
 
@@ -881,8 +882,16 @@ cnmac_send_makecmd(struct cnmac_softc *sc, struct mbuf *m,
 	}
 
 	/* Get the IP packet offset for TCP/UDP checksum offloading. */
-	ipoffp1 = (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
-	    ? (ETHER_HDR_LEN + 1) : 0;
+	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) {
+		ether_extract_headers(m, &ext);
+
+		if (ext.tcp || ext.udp) {
+			if (ext.evh)
+				ipoffp1 = sizeof(*ext.evh) + 1;
+			else
+				ipoffp1 = sizeof(*ext.eh) + 1;
+		}
+	}
 
 	/*
 	 * segs == 1	-> link mode (single continuous buffer)
