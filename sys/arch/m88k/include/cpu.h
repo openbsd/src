@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.84 2025/12/10 19:09:17 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.85 2026/07/15 18:44:08 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -73,15 +73,9 @@
 #include <uvm/uvm_percpu.h>
 
 #if defined(MULTIPROCESSOR)
-#if !defined(MAX_CPUS) || MAX_CPUS > 4
-#undef	MAX_CPUS
 #define	MAX_CPUS	4
-#endif
 #else
-#if !defined(MAX_CPUS)
-#undef	MAX_CPUS
 #define	MAX_CPUS	1
-#endif
 #endif
 
 #ifndef _LOCORE

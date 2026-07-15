@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2024/11/28 13:13:03 aoyama Exp $
+#	$OpenBSD: GENERIC,v 1.26 2026/07/15 18:44:08 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,9 +15,6 @@ maxusers	64			# estimated number of users
 
 # Processor type
 option		M88100		# 88100 support; mandatory
-
-# Number of maximum processors
-option		MAX_CPUS=4	# may have up to 4 processors 
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
