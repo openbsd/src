@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.311 2026/07/08 17:49:04 job Exp $ */
+/*	$OpenBSD: main.c,v 1.312 2026/07/15 07:53:06 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1588,7 +1588,7 @@ main(int argc, char *argv[])
 
 	serialize_ccr_content(&vd);
 
-	if (outputfiles(&vd, &stats))
+	if (outputfiles(&vd, &stats, rc))
 		rc = 1;
 
 	printf("Processing time %lld seconds "

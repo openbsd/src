@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.289 2026/07/09 12:02:23 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.290 2026/07/15 07:53:06 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1045,7 +1045,7 @@ extern int	 outformats;
 #define FORMAT_OMETRIC	0x10
 #define FORMAT_CCR	0x20
 
-int		 outputfiles(struct validation_data *, struct stats *);
+int		 outputfiles(struct validation_data *, struct stats *, int);
 int		 outputheader(FILE *, struct validation_data *, struct stats *);
 int		 output_bgpd(FILE *, struct validation_data *, struct stats *);
 int		 output_bird(FILE *, struct validation_data *, struct stats *);
