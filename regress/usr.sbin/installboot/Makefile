@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2025/01/03 02:23:20 kn Exp $
+#	$OpenBSD: Makefile,v 1.42 2026/07/15 19:00:24 miod Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -37,7 +37,7 @@ FORMAT_DISK =		true	# NOOP
 STAGENAMES =		bootblk ofwboot
 USE_SOFTRAID ?=		Yes
 .else
-# missing: alpha, hppa, landisk, loongson, luna88k
+# missing: alpha, hppa, landisk, luna88k
 regress:
 	@echo SKIPPED
 .endif

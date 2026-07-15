@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2025/02/19 21:30:46 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.29 2026/07/15 19:00:24 miod Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -26,8 +26,6 @@ CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
 .elif ${MACHINE} == "landisk"
 SRCS += landisk_installboot.c
-.elif ${MACHINE} == "loongson"
-SRCS += loongson_installboot.c
 .elif ${MACHINE} == "macppc"
 SRCS += macppc_installboot.c
 .elif ${MACHINE} == "powerpc64"

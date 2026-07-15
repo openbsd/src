@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.15 2021/05/20 00:46:34 jsg Exp $
+#	$OpenBSD: Makefile,v 1.16 2026/07/15 19:00:24 miod Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
+    ${MACHINE} == "landisk" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "octeon" || \
     ${MACHINE} == "powerpc64" || ${MACHINE} == "riscv64" || \
     ${MACHINE} == "sparc64"

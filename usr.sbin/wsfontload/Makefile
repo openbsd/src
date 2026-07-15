@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.17 2020/05/28 20:33:50 fcambus Exp $
+#	$OpenBSD: Makefile,v 1.18 2026/07/15 19:00:24 miod Exp $
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
-    ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
-    ${MACHINE} == "loongson"
+    ${MACHINE} == "arm64" || ${MACHINE} == "armv7"
 
 PROG=	wsfontload
 SRCS=	wsfontload.c

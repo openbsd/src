@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.38 2021/09/27 18:27:14 bluhm Exp $
+# $OpenBSD: Makefile,v 1.39 2026/07/15 19:00:24 miod Exp $
 
 ARCHS =
 ARCHS +=	alpha amd64 arm64 armv7
 ARCHS +=	hppa
 ARCHS +=	i386
-ARCHS +=	landisk loongson luna88k
+ARCHS +=	landisk luna88k
 ARCHS +=	macppc
 ARCHS +=	octeon
 ARCHS +=	powerpc64

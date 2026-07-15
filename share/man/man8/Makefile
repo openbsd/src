@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.104 2021/11/08 16:12:10 kn Exp $
+#	$OpenBSD: Makefile,v 1.105 2026/07/15 19:00:24 miod Exp $
 #	$NetBSD: Makefile,v 1.13 1996/03/28 21:36:40 mark Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
@@ -10,7 +10,7 @@ MAN=	afterboot.8 autoinstall.8 boot_config.8 bulk.8 \
 
 SUBDIR=	man8.alpha man8.amd64 man8.arm64 man8.armv7 \
 	man8.hppa man8.i386 man8.landisk \
-	man8.loongson man8.luna88k man8.macppc \
+	man8.luna88k man8.macppc \
 	man8.octeon man8.powerpc64 man8.riscv64 man8.sparc64
 
 .include <bsd.prog.mk>
