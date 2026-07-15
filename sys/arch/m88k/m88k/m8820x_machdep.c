@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.65 2025/10/03 19:27:31 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.66 2026/07/15 18:43:09 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -538,7 +538,11 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	 * This relies on the board-dependent code putting instruction
 	 * CMMUs and data CMMUs interleaved with instruction CMMUs first.
 	 */
+#ifdef MULTIPROCESSOR
 	ci = &m88k_cpus[cpu];
+#else
+	ci = &m88k_cpus[0];
+#endif
 	switch (cmmu_shift) {
 	default:
 		/* exception code may not use ci_pfsr fields, compute anyway */
