@@ -1,4 +1,4 @@
-# $OpenBSD: australasia,v 1.82 2025/12/14 16:10:38 millert Exp $
+# $OpenBSD: australasia,v 1.83 2026/07/16 21:08:07 millert Exp $
 # tzdb data for Australasia and environs, and for much of the Pacific
 
 # This file is in the public domain, so clarified as of
@@ -1784,7 +1784,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # to Japanese rule was right before 1970, ... per the current tz database
 # rule, the information doesn't warrant creation of a new timezone for Bonin
 # Islands itself and is thus as an anecdotal note for interest purpose only.
-# ... [The abovementioned link] described some special timekeeping phenomenon
+# ... [The link mentioned above] described some special timekeeping phenomenon
 # regarding Marcus island, another remote island currently owned by Japanese
 # in the same administrative unit as Bonin Islands.  Many reports claim that
 # the American coastal guard on the American quarter of the island use its own

@@ -1,4 +1,4 @@
-#	$OpenBSD: leap-seconds.list,v 1.7 2026/03/05 17:40:24 millert Exp $
+#	$OpenBSD: leap-seconds.list,v 1.8 2026/07/16 21:08:07 millert Exp $
 #	ATOMIC TIME
 #	Coordinated Universal Time (UTC) is the reference time scale derived
 #	from The "Temps Atomique International" (TAI) calculated by the Bureau
@@ -61,15 +61,15 @@
 #
 #	The following line shows the last update of this file in NTP timestamp:
 #
-#$	3976686858
+#$	3992312697
 #
 #	2) Expiration date of the file given on a semi-annual basis: last June or last December
 #
-#	File expires on 28 December 2026
+#	File expires on 28 June 2027
 #
 #	Expire date in NTP timestamp:
 #
-#@	4007404800
+#@	4023129600
 #
 #
 #	LIST OF LEAP SECONDS
@@ -118,4 +118,4 @@
 #	please see the readme file in the 'source' directory :
 #	https://hpiers.obspm.fr/iers/bul/bulc/ntp/sources/README
 #
-#h	2e101270 4e6749f8 2f1792b7 14a0c188 36bb19d6
+#h	a9bad145 84c31c70 758402aa b37bfd54 5923836a
