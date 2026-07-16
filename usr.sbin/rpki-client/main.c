@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.312 2026/07/15 07:53:06 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.313 2026/07/16 03:53:28 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1573,7 +1573,7 @@ main(int argc, char *argv[])
 
 	vd.buildtime = get_current_time();
 
-	if (!noop)
+	if (!noop && rc == 0)
 		nca_history_save(&vd.ncas, vd.buildtime);
 
 	/* change working directory to the output directory */
