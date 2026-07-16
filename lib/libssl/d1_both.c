@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.98 2026/07/16 14:37:21 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.99 2026/07/16 14:43:22 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -354,18 +354,19 @@ dtls1_do_write_handshake_message(SSL *s)
 static int
 dtls1_do_write_ccs(SSL *s)
 {
+	const uint8_t ccs[] = { SSL3_MT_CCS };
 	int ret;
 
 	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu());
 
 	if ((ret = dtls1_write_bytes(s, SSL3_RT_CHANGE_CIPHER_SPEC,
-	    &s->init_buf->data[s->init_off], s->init_num)) < 0)
+	    ccs, sizeof(ccs))) < 0)
 		return -1;
 
-	OPENSSL_assert(s->init_num == ret);
+	OPENSSL_assert(sizeof(ccs) == ret);
 
 	ssl_msg_callback(s, 1, SSL3_RT_CHANGE_CIPHER_SPEC,
-	    s->init_buf->data, s->init_num);
+	    ccs, sizeof(ccs));
 
 	s->init_off = 0;
 	s->init_num = 0;
