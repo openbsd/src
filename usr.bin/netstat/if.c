@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.81 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: if.c,v 1.82 2026/07/16 08:16:36 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -113,9 +113,11 @@ intpr(int interval, int repeatcount)
 
 	printf("%-7.7s %-5.5s %-11.11s %-17.17s ",
 	    "Name", "Mtu", "Network", "Address");
-	if (bflag)
+	if (bflag) {
 		printf("%10.10s %10.10s", "Ibytes", "Obytes");
-	else {
+	} else if (gflag) {
+		printf("%10.10s %10.10s", "Imcastpkts", "Omcastpkts");
+	} else {
 		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
 		    "Ipkts", if_errs->iname,
 		    "Opkts", if_errs->oname, "Colls");
@@ -155,14 +157,22 @@ intpr(int interval, int repeatcount)
 			*cp = '\0';
 
 			if (qflag) {
-				total = ifd->ifi_ibytes + ifd->ifi_obytes +
-				    ifd->ifi_ipackets +
-				    ifd->ifi_opackets +
-				    ifd->ifi_collisions;
-				total += if_errs->count(ifd->ifi_ierrors,
-				    ifd->ifi_iqdrops);
-				total += if_errs->count(ifd->ifi_oerrors,
-				    ifd->ifi_oqdrops);
+				if (bflag) {
+					total =
+					    ifd->ifi_ibytes + ifd->ifi_obytes;
+				} else if (gflag) {
+					total =
+					    ifd->ifi_imcasts + ifd->ifi_omcasts;
+				} else {
+					total =
+					    ifd->ifi_ipackets +
+					    if_errs->count(ifd->ifi_ierrors,
+					    ifd->ifi_iqdrops) +
+					    ifd->ifi_opackets +
+					    if_errs->count(ifd->ifi_oerrors,
+					    ifd->ifi_oqdrops) +
+					    ifd->ifi_collisions;
+				}
 				if (total == 0)
 					continue;
 			}
@@ -255,10 +265,10 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 		if (sdl->sdl_type == IFT_ETHER ||
 		    sdl->sdl_type == IFT_CARP ||
 		    sdl->sdl_type == IFT_FDDI ||
-		    sdl->sdl_type == IFT_ISO88025)
+		    sdl->sdl_type == IFT_ISO88025) {
 			printf("%-17.17s ",
 			    ether_ntoa((struct ether_addr *)LLADDR(sdl)));
-		else {
+		} else {
 			cp = (char *)LLADDR(sdl);
 			n = sdl->sdl_alen;
 			goto hexprint;
@@ -286,16 +296,21 @@ hexprint:
 			fmt_scaled(ifd->ifi_ibytes, ibytes);
 			fmt_scaled(ifd->ifi_obytes, obytes);
 			printf("%10s %10s", ibytes, obytes);
-		} else
+		} else {
 			printf("%10llu %10llu",
 			    ifd->ifi_ibytes, ifd->ifi_obytes);
-	} else
+		}
+	} else if (gflag) {
+		printf("%10llu %10llu",
+		    ifd->ifi_imcasts, ifd->ifi_omcasts);
+	} else {
 		printf("%8llu %5llu %8llu %5llu %5llu",
 		    ifd->ifi_ipackets,
 		    if_errs->count(ifd->ifi_ierrors, ifd->ifi_iqdrops),
 		    ifd->ifi_opackets,
 		    if_errs->count(ifd->ifi_oerrors, ifd->ifi_oqdrops),
 		    ifd->ifi_collisions);
+	}
 	putchar('\n');
 }
 
@@ -303,10 +318,12 @@ struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
 	u_int64_t ift_ip;		/* input packets */
 	u_int64_t ift_ib;		/* input bytes */
+	u_int64_t ift_im;		/* input multicast */
 	u_int64_t ift_ie;		/* input errors */
 	u_int64_t ift_iq;		/* input qdrops */
 	u_int64_t ift_op;		/* output packets */
 	u_int64_t ift_ob;		/* output bytes */
+	u_int64_t ift_om;		/* output multicast */
 	u_int64_t ift_oe;		/* output errors */
 	u_int64_t ift_oq;		/* output qdrops */
 	u_int64_t ift_co;		/* collisions */
@@ -339,36 +356,46 @@ sidewaysintpr(unsigned int interval, int repeatcount)
 	signalled = 0;
 	(void)alarm(interval);
 banner:
-	if (bflag)
+	if (bflag || gflag) {
 		printf("%7.7s in %8.8s %6.6s out %5.5s",
 		    ip_cur.ift_name, " ",
 		    ip_cur.ift_name, " ");
-	else
+	} else {
 		printf("%5.5s in %5.5s%5.5s out %5.5s %5.5s",
 		    ip_cur.ift_name, " ",
 		    ip_cur.ift_name, " ", " ");
+	}
 
-	if (bflag)
+	if (bflag || gflag) {
 		printf("  %7.7s in %8.8s %6.6s out %5.5s",
 		    "total", " ", "total", " ");
-	else
+	} else {
 		printf("  %5.5s in %5.5s%5.5s out %5.5s %5.5s",
 		    "total", " ", "total", " ", " ");
+	}
 	putchar('\n');
-	if (bflag)
+	if (bflag) {
 		printf("%10.10s %8.8s %10.10s %5.5s",
 		    "bytes", " ", "bytes", " ");
-	else
+	} else if (gflag) {
+		printf("%10.10s %8.8s %10.10s %5.5s",
+		    "mcast pkts", " ", "mcast pkts", " ");
+	} else {
 		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
 		    "packets", if_errs->name,
 		    "packets", if_errs->name, "colls");
+	}
 
-	if (bflag)
+	if (bflag) {
 		printf("%10.10s %8.8s %10.10s %5.5s",
 		    "bytes", " ", "bytes", " ");
-	else
+	} else if (gflag) {
+		printf("%10.10s %8.8s %10.10s %5.5s",
+		    "mcast pkts", " ", "mcast pkts", " ");
+	} else {
 		printf("  %8.8s %5.5s %8.8s %5.5s %5.5s",
 		    "packets", "errs", "packets", "errs", "colls");
+	}
 	putchar('\n');
 	fflush(stdout);
 	line = 0;
@@ -385,11 +412,16 @@ loop:
 			fmt_scaled(ip_cur.ift_ob - ip_old.ift_ob, obytes);
 			printf("%10s %8.8s %10s %5.5s",
 			    ibytes, " ", obytes, " ");
-		} else
+		} else {
 			printf("%10llu %8.8s %10llu %5.5s",
 			    ip_cur.ift_ib - ip_old.ift_ib, " ",
 			    ip_cur.ift_ob - ip_old.ift_ob, " ");
-	} else
+		}
+	} else if (gflag) {
+		printf("%10llu %8.8s %10llu %5.5s",
+		    ip_cur.ift_im - ip_old.ift_im, " ",
+		    ip_cur.ift_om - ip_old.ift_om, " ");
+	} else {
 		printf("%8llu %5llu %8llu %5llu %5llu",
 		    ip_cur.ift_ip - ip_old.ift_ip,
 		    if_errs->count(ip_cur.ift_ie - ip_old.ift_ie,
@@ -398,6 +430,7 @@ loop:
 		    if_errs->count(ip_cur.ift_oe - ip_old.ift_oe,
 		     ip_cur.ift_oq - ip_old.ift_oq),
 		    ip_cur.ift_co - ip_old.ift_co);
+	}
 
 	ip_old = ip_cur;
 
@@ -407,11 +440,16 @@ loop:
 			fmt_scaled(sum_cur.ift_ob - sum_old.ift_ob, obytes);
 			printf("%10s %8.8s %10s %5.5s",
 			    ibytes, " ", obytes, " ");
-		} else
+		} else {
 			printf("%10llu %8.8s %10llu %5.5s",
 			    sum_cur.ift_ib - sum_old.ift_ib, " ",
 			    sum_cur.ift_ob - sum_old.ift_ob, " ");
-	} else
+		}
+	} else if (gflag) {
+		printf("%10llu %8.8s %10llu %5.5s",
+		    sum_cur.ift_im - sum_old.ift_im, " ",
+		    sum_cur.ift_om - sum_old.ift_om, " ");
+	} else {
 		printf("%8llu %5llu %8llu %5llu %5llu",
 		    sum_cur.ift_ip - sum_old.ift_ip,
 		    if_errs->count(sum_cur.ift_ie - sum_old.ift_ie,
@@ -420,6 +458,7 @@ loop:
 		    if_errs->count(sum_cur.ift_oe - sum_old.ift_oe,
 		     sum_cur.ift_oq - sum_old.ift_oq),
 		    sum_cur.ift_co - sum_old.ift_co);
+	}
 
 	sum_old = sum_cur;
 
@@ -556,10 +595,12 @@ fetchifs(void)
 				    sizeof(ip_cur.ift_name));
 				ip_cur.ift_ip = ifd->ifi_ipackets;
 				ip_cur.ift_ib = ifd->ifi_ibytes;
+				ip_cur.ift_im = ifd->ifi_imcasts;
 				ip_cur.ift_ie = ifd->ifi_ierrors;
 				ip_cur.ift_iq = ifd->ifi_iqdrops;
 				ip_cur.ift_op = ifd->ifi_opackets;
 				ip_cur.ift_ob = ifd->ifi_obytes;
+				ip_cur.ift_om = ifd->ifi_omcasts;
 				ip_cur.ift_oe = ifd->ifi_oerrors;
 				ip_cur.ift_oq = ifd->ifi_oqdrops;
 				ip_cur.ift_co = ifd->ifi_collisions;
@@ -567,10 +608,12 @@ fetchifs(void)
 
 			sum_cur.ift_ip += ifd->ifi_ipackets;
 			sum_cur.ift_ib += ifd->ifi_ibytes;
+			sum_cur.ift_im += ifd->ifi_imcasts;
 			sum_cur.ift_ie += ifd->ifi_ierrors;
 			sum_cur.ift_iq += ifd->ifi_iqdrops;
 			sum_cur.ift_op += ifd->ifi_opackets;
 			sum_cur.ift_ob += ifd->ifi_obytes;
+			sum_cur.ift_om += ifd->ifi_omcasts;
 			sum_cur.ift_oe += ifd->ifi_oerrors;
 			sum_cur.ift_oq += ifd->ifi_oqdrops;
 			sum_cur.ift_co += ifd->ifi_collisions;
@@ -582,10 +625,12 @@ fetchifs(void)
 		    sizeof(ip_cur.ift_name));
 		ip_cur.ift_ip = ifd->ifi_ipackets;
 		ip_cur.ift_ib = ifd->ifi_ibytes;
+		ip_cur.ift_im = ifd->ifi_imcasts;
 		ip_cur.ift_ie = ifd->ifi_ierrors;
 		ip_cur.ift_iq = ifd->ifi_iqdrops;
 		ip_cur.ift_op = ifd->ifi_opackets;
 		ip_cur.ift_ob = ifd->ifi_obytes;
+		ip_cur.ift_om = ifd->ifi_omcasts;
 		ip_cur.ift_oe = ifd->ifi_oerrors;
 		ip_cur.ift_oq = ifd->ifi_oqdrops;
 		ip_cur.ift_co = ifd->ifi_collisions;
