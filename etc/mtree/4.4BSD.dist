@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.325 2024/06/02 12:32:33 florian Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.326 2026/07/16 15:46:43 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -407,8 +407,6 @@ usr
 
             # ./usr/share/man/man3
             man3
-                loongson
-                ..
                 octeon
                 ..
             ..
@@ -432,8 +430,6 @@ usr
                 i386
                 ..
                 landisk
-                ..
-                loongson
                 ..
                 luna88k
                 ..
@@ -474,8 +470,6 @@ usr
                 i386
                 ..
                 landisk
-                ..
-                loongson
                 ..
                 luna88k
                 ..
