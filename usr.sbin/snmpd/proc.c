@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.43 2026/07/02 12:35:52 jsg Exp $	*/
+/*	$OpenBSD: proc.c,v 1.44 2026/07/16 09:35:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -40,11 +40,11 @@
 enum privsep_procid privsep_process;
 
 void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
-	    char **);
+    char **);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_open(struct privsep *, int, int);
 void	 proc_accept(struct privsep *, int, enum privsep_procid,
-	    unsigned int);
+    unsigned int);
 void	 proc_close(struct privsep *);
 void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
@@ -73,11 +73,11 @@ void
 proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
     int argc, char **argv)
 {
-	unsigned int		 proc, nargc, i, proc_i;
+	unsigned int		  proc, nargc, i, proc_i;
 	char			**nargv;
-	struct privsep_proc	*p;
-	char			 num[32];
-	int			 fd;
+	struct privsep_proc	 *p;
+	char			  num[32];
+	int			  fd;
 
 	/* Prepare the new process argv. */
 	nargv = calloc(argc + 5, sizeof(char *));
@@ -96,7 +96,7 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 	/* Point process instance arg to stack and copy the original args. */
 	nargv[nargc++] = "-I";
 	nargv[nargc++] = num;
-	for (i = 1; i < (unsigned int) argc; i++)
+	for (i = 1; i < (unsigned int)argc; i++)
 		nargv[nargc++] = argv[i];
 
 	nargv[nargc] = NULL;
@@ -122,8 +122,8 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 			case 0:
 				/* Prepare parent socket. */
 				if (fd != PROC_PARENT_SOCK_FILENO) {
-					if (dup2(fd, PROC_PARENT_SOCK_FILENO)
-					    == -1)
+					if (dup2(fd, PROC_PARENT_SOCK_FILENO) ==
+					    -1)
 						fatal("dup2");
 				} else if (fcntl(fd, F_SETFD, 0) == -1)
 					fatal("fcntl");
@@ -196,10 +196,8 @@ proc_connect(struct privsep *ps, void (*connected)(struct privsep *))
 			    -1, -1, NULL, 0) == -1)
 				fatal("%s: proc_compose_imsg", __func__);
 			ps->ps_connecting++;
-#if DEBUG
-			log_debug("%s: #%d %s %d", __func__,
+			DPRINTF("%s: #%d %s %d", __func__,
 			    ps->ps_connecting, ps->ps_title[dst], inst + 1);
-#endif
 		}
 	}
 }
@@ -584,10 +582,8 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	proc_setup(ps, procs, nproc);
 	proc_accept(ps, PROC_PARENT_SOCK_FILENO, PROC_PARENT, 0);
 
-#if DEBUG
-	log_debug("%s: %s %d/%d, pid %d", __func__, p->p_title,
+	DPRINTF("%s: %s %d/%d, pid %d", __func__, p->p_title,
 	    ps->ps_instance + 1, ps->ps_instances[p->p_id], getpid());
-#endif
 
 	ps->ps_run = run;
 	ps->ps_arg = arg;
@@ -632,8 +628,8 @@ proc_dispatch(int fd, short event, void *arg)
 				event_del(&iev->ev);
 				event_loopexit(NULL);
 				return;
-			} else
-				fatal("imsgbuf_write");
+			}
+			fatal("%s: imsgbuf_write", __func__);
 		}
 	}
 
@@ -665,7 +661,7 @@ proc_dispatch(int fd, short event, void *arg)
 		switch (imsg_get_type(&imsg)) {
 		case IMSG_CTL_VERBOSE:
 			if (imsg_get_data(&imsg, &ver, sizeof(ver)) == -1)
-			       fatalx("%s: imsg_get_data", __func__);
+				fatalx("%s: imsg_get_data", __func__);
 
 			log_setverbose(ver);
 			break;
@@ -683,12 +679,10 @@ proc_dispatch(int fd, short event, void *arg)
 			    pf.pf_instance);
 			break;
 		case IMSG_CTL_PROCREADY:
-#if DEBUG
-			log_debug("%s: ready-%s: #%d %s %d -> %s %d", __func__,
+			DPRINTF("%s: ready-%s: #%d %s %d -> %s %d", __func__,
 			    p->p_id == PROC_PARENT ? "req" : "ack",
-			    ps->ps_connecting, p->p_title, imsg.hdr.pid,
+			    ps->ps_connecting, p->p_title, imsg_get_pid(&imsg),
 			    title, ps->ps_instance + 1);
-#endif
 			if (p->p_id == PROC_PARENT) {
 				if (ps->ps_run != NULL) {
 					ps->ps_run(ps, p, ps->ps_arg);
@@ -697,7 +691,8 @@ proc_dispatch(int fd, short event, void *arg)
 				/* ack that we are ready */
 				if (proc_compose_imsg(ps, PROC_PARENT, 0,
 				    IMSG_CTL_PROCREADY, -1, -1, NULL, 0) == -1)
-					fatal("%s: proc_compose_imsg", __func__);
+					fatal("%s: proc_compose_imsg",
+					    __func__);
 			} else {
 				/* parent received ack */
 				if (ps->ps_connecting == 0)
@@ -706,7 +701,8 @@ proc_dispatch(int fd, short event, void *arg)
 					fatalx("%s: wrong instance %d",
 					    __func__, ps->ps_instance);
 				if (--ps->ps_connecting == 0) {
-					log_debug("%s: all connected", __func__);
+					log_debug("%s: all connected",
+					    __func__);
 					if (ps->ps_connected != NULL)
 						ps->ps_connected(ps);
 				}
@@ -716,8 +712,8 @@ proc_dispatch(int fd, short event, void *arg)
 			fatalx("%s: %s %d got invalid imsg %d peerid %d "
 			    "from %s %d",
 			    __func__, title, ps->ps_instance + 1,
-			    imsg.hdr.type, imsg.hdr.peerid,
-			    p->p_title, imsg.hdr.pid);
+			    imsg_get_type(&imsg), imsg_get_id(&imsg),
+			    p->p_title, imsg_get_pid(&imsg));
 		}
 		imsg_free(&imsg);
 	}

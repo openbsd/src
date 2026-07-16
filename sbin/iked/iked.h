@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.234 2026/07/02 05:21:48 martijn Exp $	*/
+/*	$OpenBSD: iked.h,v 1.235 2026/07/16 09:35:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -840,6 +840,12 @@ struct privsep_fd {
 
 #define PROC_PARENT_SOCK_FILENO 3
 #define PROC_MAX_INSTANCES      32
+
+#if DEBUG
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif
 
 struct iked_ocsp_entry {
 	TAILQ_ENTRY(iked_ocsp_entry) ioe_entry;	/* next request */
