@@ -2734,8 +2734,6 @@
 ./usr/share/man/man3/login.3
 ./usr/share/man/man3/login_cap.3
 ./usr/share/man/man3/login_fbtab.3
-./usr/share/man/man3/loongson/cacheflush.3
-./usr/share/man/man3/loongson/get_fpc_csr.3
 ./usr/share/man/man3/lrint.3
 ./usr/share/man/man3/lround.3
 ./usr/share/man/man3/lsearch.3

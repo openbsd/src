@@ -3156,7 +3156,6 @@
 ./usr/share/man/man2/armv7
 ./usr/share/man/man2/i386
 ./usr/share/man/man3
-./usr/share/man/man3/loongson
 ./usr/share/man/man3/octeon
 ./usr/share/man/man3p
 ./usr/share/man/man3p/OpenBSD::BaseState.3p
@@ -3167,7 +3166,6 @@
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/landisk
-./usr/share/man/man4/loongson
 ./usr/share/man/man4/luna88k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/octeon
@@ -3189,7 +3187,6 @@
 ./usr/share/man/man8/hppa
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/landisk
-./usr/share/man/man8/loongson
 ./usr/share/man/man8/luna88k
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/octeon
