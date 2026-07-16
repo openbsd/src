@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.124 2026/06/21 21:17:07 mvs Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.125 2026/07/16 12:21:40 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -247,6 +247,7 @@ int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf *);
 void	 ip_init(void);
 struct mbuf*
 	 ip_insertoptions(struct mbuf *, struct mbuf *, int *);
+int	 ip_mrouter_active(u_int);
 int	 ip_mforward(struct mbuf *, struct ifnet *, int);
 int	 ip_optcopy(struct ip *, struct ip *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
@@ -282,9 +283,6 @@ int	 rip_disconnect(struct socket *);
 int	 rip_shutdown(struct socket *);
 int	 rip_send(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);
-#ifdef MROUTING
-extern struct socket *ip_mrouter[];	/* multicast routing daemon */
-#endif
 
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_VAR_H_ */

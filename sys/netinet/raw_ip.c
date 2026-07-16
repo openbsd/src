@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.167 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.168 2026/07/16 12:21:40 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -504,8 +504,7 @@ rip_detach(struct socket *so)
 		return (EINVAL);
 
 #ifdef MROUTING
-	if (so == ip_mrouter[inp->inp_rtableid])
-		ip_mrouter_done(so);
+	ip_mrouter_done(so);
 #endif
 	in_pcbdetach(inp);
 

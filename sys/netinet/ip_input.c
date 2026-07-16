@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.430 2026/06/22 10:58:34 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.431 2026/07/16 12:21:40 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -532,7 +532,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 
 #ifdef MROUTING
 		if (atomic_load_int(&ipmforwarding) &&
-		    ip_mrouter[ifp->if_rdomain]) {
+		    ip_mrouter_active(ifp->if_rdomain)) {
 			int error;
 
 			if (m->m_flags & M_EXT) {
