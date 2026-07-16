@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.8 2026/06/06 15:24:26 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.9 2026/07/16 14:37:21 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -186,9 +186,7 @@ struct dtls1_state_st {
 
 int dtls1_do_write(SSL *s, int type);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
-void dtls1_set_message_header(SSL *s, unsigned char mt, unsigned long len,
-    unsigned long frag_off, unsigned long frag_len);
-void dtls1_set_message_header_int(SSL *s, unsigned char mt,
+void dtls1_set_message_header(SSL *s, unsigned char mt,
     unsigned long len, unsigned short seq_num, unsigned long frag_off,
     unsigned long frag_len);
 
