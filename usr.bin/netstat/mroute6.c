@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.28 2026/06/24 12:33:49 bluhm Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.29 2026/07/16 12:35:32 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -79,8 +79,8 @@
 #include <util.h>
 #include "netstat.h"
 
-#define	WID_ORG	(lflag ? 39 : (nflag ? 29 : 18)) /* width of origin column */
-#define	WID_GRP	(lflag ? 18 : (nflag ? 16 : 18)) /* width of group column */
+#define	WID_ORG	(vflag ? 39 : (nflag ? 29 : 18)) /* width of origin column */
+#define	WID_GRP	(vflag ? 18 : (nflag ? 16 : 18)) /* width of group column */
 
 void
 mroute6pr(void)

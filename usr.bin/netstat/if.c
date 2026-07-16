@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.82 2026/07/16 08:16:36 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.83 2026/07/16 12:35:32 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ intpr(int interval, int repeatcount)
 			else if (sdl->sdl_nlen > 0) 
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
-			if (interface != 0 && strcmp(name, interface) != 0)
+			if (interface != NULL && strcmp(name, interface) != 0)
 				continue;
 
 			/* mark inactive interfaces with a '*' */
@@ -167,10 +167,10 @@ intpr(int interval, int repeatcount)
 					total =
 					    ifd->ifi_ipackets +
 					    if_errs->count(ifd->ifi_ierrors,
-					    ifd->ifi_iqdrops) +
+					     ifd->ifi_iqdrops) +
 					    ifd->ifi_opackets +
 					    if_errs->count(ifd->ifi_oerrors,
-					    ifd->ifi_oqdrops) +
+					     ifd->ifi_oqdrops) +
 					    ifd->ifi_collisions;
 				}
 				if (total == 0)
@@ -183,7 +183,7 @@ intpr(int interval, int repeatcount)
 		case RTM_NEWADDR:
 			if (qflag && total == 0)
 				continue;
-			if (interface != 0 && strcmp(name, interface) != 0)
+			if (interface != NULL && strcmp(name, interface) != 0)
 				continue;
 
 			ifam = (struct ifa_msghdr *)next;

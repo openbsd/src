@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.99 2026/07/16 08:16:36 bluhm Exp $
+.\"	$OpenBSD: netstat.1,v 1.100 2026/07/16 12:35:32 bluhm Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -38,7 +38,7 @@
 .Nd show network status
 .Sh SYNOPSIS
 .Nm
-.Op Fl AaBln
+.Op Fl AaBlnv
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl p Ar protocol
@@ -49,10 +49,10 @@
 .Fl m
 .Nm
 .Fl I Ar interface | Fl i
-.Op Fl bdehnq
+.Op Fl bdeghnqv
 .Nm
 .Fl w Ar wait
-.Op Fl bdehnq
+.Op Fl bdeghnq
 .Op Fl c Ar count
 .Op Fl I Ar interface
 .Nm
@@ -62,13 +62,13 @@
 .Op Fl p Ar protocol
 .Nm
 .Fl g
-.Op Fl lnu
+.Op Fl nuv
 .Op Fl f Ar address_family
 .Nm
 .Fl R
 .Nm
 .Fl r
-.Op Fl AFu
+.Op Fl AFuv
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -200,22 +200,13 @@ With the
 .Fl g
 option, display multicast interface counter.
 .It Fl i
-Show the state of interfaces which have been auto-configured
-(interfaces statically configured into a system but not
-located at boot-time are not shown).
+Show the state of interfaces which have been auto-configured.
 With the
 .Fl g
 option, display multicast interface counter.
 .It Fl l
 With the default display,
 show only listening sockets.
-With the
-.Fl g
-option, display wider fields for the IPv6 multicast routing table
-.Qq Origin
-and
-.Qq Group
-columns.
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the running kernel.
@@ -380,9 +371,9 @@ interval argument, it displays a running count of statistics related to
 network interfaces
 (an obsolescent version of this option used a numeric parameter
 with no option, and is currently supported for backward compatibility).
-The display consists of a column for the primary interface (the first
-interface found during autoconfiguration) and a column summarizing
-information for all interfaces.
+The display consists of a column for the primary interface (the
+first egress interface found during auto-configuration) and a column
+summarizing information for all interfaces.
 The primary interface may be replaced with another interface with the
 .Fl I
 option.
