@@ -341,6 +341,9 @@
 ./etc/signify/openbsd-80-fw.pub
 ./etc/signify/openbsd-80-pkg.pub
 ./etc/signify/openbsd-80-syspatch.pub
+./etc/signify/openbsd-81-fw.pub
+./etc/signify/openbsd-81-pkg.pub
+./etc/signify/openbsd-81-syspatch.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
