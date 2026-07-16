@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.42 2023/01/29 20:30:21 gnezdo Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.43 2026/07/16 11:21:37 tb Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -329,7 +329,7 @@ _dl_bind(elf_object_t *object, int index)
 	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
 	    sym, object);
 	if (sr.sym == NULL)
-		_dl_die("lazy binding failed!");
+		_dl_die("lazy binding failed for %s", symn);
 
 	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
