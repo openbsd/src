@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.147 2026/04/17 21:08:42 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.148 2026/07/17 13:09:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -408,10 +408,11 @@ struct vmd {
 	uint32_t		 vmd_nswitches;
 	struct switchlist	*vmd_switches;
 
-	int			 vmd_fd;
-	int			 vmd_fd6;
-	int			 vmd_ptmfd;
+	int			 vmd_ptm_fd;
 	int			 vmd_psp_fd;
+	int			 vmd_sock_fd;
+	int			 vmd_sock_fd6;
+	int			 vmd_vmm_fd;
 };
 
 struct vm_dev_pipe {

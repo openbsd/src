@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.175 2026/06/30 13:52:34 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.176 2026/07/17 13:09:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -549,8 +549,12 @@ main(int argc, char **argv)
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
-	env->vmd_fd = -1;
-	env->vmd_fd6 = -1;
+
+	env->vmd_ptm_fd = -1;
+	env->vmd_psp_fd = -1;
+	env->vmd_sock_fd = -1;
+	env->vmd_sock_fd6 = -1;
+	env->vmd_vmm_fd = -1;
 
 	while ((ch = getopt(argc, argv, "D:P:V:X:df:i:j:nt:vp:")) != -1) {
 		switch (ch) {
@@ -680,8 +684,8 @@ main(int argc, char **argv)
 
 	/* Open /dev/vmm early. */
 	if (env->vmd_noaction == 0 && proc_id == PROC_PARENT) {
-		env->vmd_fd = open(VMM_NODE, O_RDWR | O_CLOEXEC);
-		if (env->vmd_fd == -1)
+		env->vmd_vmm_fd = open(VMM_NODE, O_RDWR | O_CLOEXEC);
+		if (env->vmd_vmm_fd == -1)
 			fatal("%s", VMM_NODE);
 	}
 
@@ -785,7 +789,7 @@ vmd_configure(void)
 	    " chown fattr flock", NULL) == -1)
 		fatal("pledge");
 
-	if ((env->vmd_ptmfd = getptmfd()) == -1)
+	if ((env->vmd_ptm_fd = getptmfd()) == -1)
 		fatal("getptmfd %s", PATH_PTMDEV);
 
 	if (parse_config(env->vmd_conffile) == -1) {
@@ -801,7 +805,7 @@ vmd_configure(void)
 
 	/* Send VMM device fd to vmm proc. */
 	proc_compose_imsg(&env->vmd_ps, PROC_VMM,
-	    IMSG_VMDOP_RECEIVE_VMM_FD, -1, env->vmd_fd, NULL, 0);
+	    IMSG_VMDOP_RECEIVE_VMM_FD, -1, env->vmd_vmm_fd, NULL, 0);
 
 	/* Send PSP device fd to vmm proc. */
 	if (env->vmd_psp_fd != -1) {
@@ -1607,7 +1611,7 @@ vm_opentty(struct vmd_vm *vm)
 	/*
 	 * Open tty with pre-opened PTM fd
 	 */
-	if (fdopenpty(env->vmd_ptmfd, &vm->vm_tty, &tty_slave, vm->vm_ttyname,
+	if (fdopenpty(env->vmd_ptm_fd, &vm->vm_tty, &tty_slave, vm->vm_ttyname,
 	    NULL, NULL) == -1) {
 		log_warn("fdopenpty");
 		return (-1);

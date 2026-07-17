@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.140 2026/05/31 20:28:51 bluhm Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.141 2026/07/17 13:09:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1657,7 +1657,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", sync_fds[1]);
 		memset(vmm_fd, 0, sizeof(vmm_fd));
-		snprintf(vmm_fd, sizeof(vmm_fd), "%d", env->vmd_fd);
+		snprintf(vmm_fd, sizeof(vmm_fd), "%d", env->vmd_vmm_fd);
 		memset(vm_name, 0, sizeof(vm_name));
 		snprintf(vm_name, sizeof(vm_name), "%s",
 		    vm->vm_params.vmc_name);
