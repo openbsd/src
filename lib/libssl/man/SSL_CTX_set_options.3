@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.18 2026/06/14 14:30:52 jsing Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.19 2026/07/17 12:34:25 kenjiro Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2026 $
+.Dd $Mdocdate: July 17 2026 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -174,9 +174,7 @@ Turn on Cookie Exchange as described in RFC 4347 Section 4.2.1.
 Only affects DTLS connections.
 .It Dv SSL_OP_LEGACY_SERVER_CONNECT
 Allow connections to legacy servers that do not support secure renegotiation.
-See the
-.Sx SECURE RENEGOTIATION
-section for more details.
+This option is not set by default.
 .It Dv SSL_OP_NO_DTLSv1
 Do not use the DTLSv1 protocol.
 Deprecated; use
