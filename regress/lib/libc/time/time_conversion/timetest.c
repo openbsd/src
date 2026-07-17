@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetest.c,v 1.5 2025/08/17 08:43:03 phessler Exp $ */
+/*	$OpenBSD: timetest.c,v 1.6 2026/07/17 18:56:42 millert Exp $ */
 
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
@@ -462,14 +462,14 @@ struct timetest timetests[] = {
 			.tm_year=138,
 			.tm_mon=0,
 			.tm_mday=18,
-			.tm_hour=20,
+			.tm_hour=21,
 			.tm_min=14,
 			.tm_sec=7,
 			.tm_wday=1,
 			.tm_yday=17,
 			.tm_isdst=0,
-			.tm_gmtoff=-25200,
-			.tm_zone="MST"
+			.tm_gmtoff=-21600,
+			.tm_zone="CST"
 		},
 		.gmt_tm=		{
 			.tm_year=138,
@@ -524,14 +524,14 @@ struct timetest timetests[] = {
 			.tm_year=138,
 			.tm_mon=0,
 			.tm_mday=18,
-			.tm_hour=20,
+			.tm_hour=21,
 			.tm_min=14,
 			.tm_sec=8,
 			.tm_wday=1,
 			.tm_yday=17,
 			.tm_isdst=0,
-			.tm_gmtoff=-25200,
-			.tm_zone="MST"
+			.tm_gmtoff=-21600,
+			.tm_zone="CST"
 		},
 		.gmt_tm=		{
 			.tm_year=138,
@@ -772,14 +772,14 @@ struct timetest timetests[] = {
                         .tm_year=2147481747,
 			.tm_mon=0,
 			.tm_mday=31,
-			.tm_hour=16,
+			.tm_hour=17,
 			.tm_min=59,
 			.tm_sec=32,
 			.tm_wday=4,
 			.tm_yday=30,
 			.tm_isdst=0,
-			.tm_gmtoff=-25200,
-			.tm_zone="MST"
+			.tm_gmtoff=-21600,
+			.tm_zone="CST"
 		},
 		.gmt_tm=		{
                         .tm_year=2147481747,
@@ -989,14 +989,14 @@ struct timetest timetests[] = {
 			.tm_year=8099,
 			.tm_mon=11,
 			.tm_mday=31,
-			.tm_hour=16,
+			.tm_hour=17,
 			.tm_min=59,
 			.tm_sec=59,
 			.tm_wday=5,
 			.tm_yday=364,
 			.tm_isdst=0,
-			.tm_gmtoff=-25200,
-			.tm_zone="MST"
+			.tm_gmtoff=-21600,
+			.tm_zone="CST"
 		},
 		.gmt_tm=		{
 			.tm_year=8099,
@@ -1051,14 +1051,14 @@ struct timetest timetests[] = {
 			.tm_year=8099,
 			.tm_mon=11,
 			.tm_mday=31,
-			.tm_hour=16,
+			.tm_hour=17,
 			.tm_min=59,
 			.tm_sec=32,
 			.tm_wday=5,
 			.tm_yday=364,
 			.tm_isdst=0,
-			.tm_gmtoff=-25200,
-			.tm_zone="MST"
+			.tm_gmtoff=-21600,
+			.tm_zone="CST"
 		},
 		.gmt_tm=		{
 			.tm_year=8099,
@@ -1830,7 +1830,7 @@ int main() {
 	if (stat("/usr/share/zoneinfo/posix", &sb) == -1 ||
 	    stat("/usr/share/zoneinfo/right", &sb) == -1) {
 		fprintf(stderr, "POSIX time zones missing, run the following command:\n\n"
-		    "\tmake -C ../../../../../share/zoneinfo other_two\n\n"
+		    "\tmake -C ../../../../share/zoneinfo other_two\n\n"
 		    "SKIPPED\n");
 		exit(0);
 	}
