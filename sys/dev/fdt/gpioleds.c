@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioleds.c,v 1.5 2026/07/07 12:12:44 kettenis Exp $	*/
+/*	$OpenBSD: gpioleds.c,v 1.6 2026/07/17 11:02:30 jsg Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -115,12 +115,12 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 				blink_led_register(&sc->sc_blink);
 				led_pin = NULL;
 			}
+			free(trigger, M_TEMP, trigger_len);
 		}
 
 		free(function, M_TEMP, function_len);
 		free(default_state, M_TEMP, default_state_len);
 		free(led_pin, M_DEVBUF, gpios_len);
-		free(trigger, M_TEMP, trigger_len);
 	}
 
 	if (leds == 0)
