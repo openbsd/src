@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn3xxx.dts,v 1.4 2019/09/15 06:48:29 visa Exp $	*/
+/*	$OpenBSD: cn3xxx.dts,v 1.5 2026/07/17 13:11:40 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -26,9 +26,9 @@
  *
  * $ dtc -V 17 -O asm -o cn3xxx_dts.S cn3xxx.dts
  *
- * To avoid invalid 8-bit relocations in the object file, certain sequences
- * of .byte values have to be folded manually into .word values
- * in the generated header.
+ * The .byte sequences that dtc uses to express offsets and sizes
+ * in the device tree header have to be folded into .word statements.
+ * Otherwise the header will be wrong in the blob.
  */
 
 /dts-v1/;
