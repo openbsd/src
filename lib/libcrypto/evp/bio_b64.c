@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_b64.c,v 1.29 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: bio_b64.c,v 1.30 2026/07/17 12:41:52 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -380,7 +380,6 @@ b64_write(BIO *b, const char *in, int inl)
 			BIO_copy_next_retry(b);
 			return (i);
 		}
-		OPENSSL_assert(i <= n);
 		ctx->buf_off += i;
 		OPENSSL_assert(ctx->buf_off <= (int)sizeof(ctx->buf));
 		OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
@@ -453,7 +452,6 @@ b64_write(BIO *b, const char *in, int inl)
 				BIO_copy_next_retry(b);
 				return ((ret == 0) ? i : ret);
 			}
-			OPENSSL_assert(i <= n);
 			n -= i;
 			ctx->buf_off += i;
 			OPENSSL_assert(ctx->buf_off <= (int)sizeof(ctx->buf));
