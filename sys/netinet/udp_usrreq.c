@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.350 2025/10/24 15:09:56 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.351 2026/07/17 18:51:29 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ struct	cpumem *udpcounters;
 
 void	udp_sbappend(struct inpcb *, struct mbuf *, struct ip *,
 	    struct ip6_hdr *, int, struct udphdr *, struct sockaddr *,
-	    u_int32_t, struct netstack *);
+	    uint32_t, struct netstack *);
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_notify(struct inpcb *, int);
 int	udp_sysctl_udpstat(void *, size_t *, void *);
@@ -209,7 +209,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 #endif /* INET6 */
 	} srcsa, dstsa;
 	struct ip6_hdr *ip6 = NULL;
-	u_int32_t ipsecflowinfo = 0;
+	uint32_t ipsecflowinfo = 0;
 #ifdef IPSEC
 	int udpencap_port_local = atomic_load_int(&udpencap_port);
 #endif /* IPSEC */
@@ -648,7 +648,7 @@ bad:
 void
 udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
     struct ip6_hdr *ip6, int hlen, struct udphdr *uh,
-    struct sockaddr *srcaddr, u_int32_t ipsecflowinfo,
+    struct sockaddr *srcaddr, uint32_t ipsecflowinfo,
     struct netstack *ns)
 {
 	struct socket *so = inp->inp_socket;
@@ -943,7 +943,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 {
 	struct sockaddr_in *sin = NULL;
 	struct udpiphdr *ui;
-	u_int32_t ipsecflowinfo = 0;
+	uint32_t ipsecflowinfo = 0;
 	struct sockaddr_in src_sin;
 	int len = m->m_pkthdr.len;
 	struct in_addr laddr;
@@ -997,7 +997,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 			    cm->cmsg_len == CMSG_LEN(sizeof(ipsecflowinfo)) &&
 			    cm->cmsg_level == IPPROTO_IP &&
 			    cm->cmsg_type == IP_IPSECFLOWINFO) {
-				ipsecflowinfo = *(u_int32_t *)CMSG_DATA(cm);
+				ipsecflowinfo = *(uint32_t *)CMSG_DATA(cm);
 			} else
 #endif
 			if (cm->cmsg_len == CMSG_LEN(sizeof(struct in_addr)) &&

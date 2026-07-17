@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.418 2026/07/16 12:21:40 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.419 2026/07/17 18:51:29 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ static u_int16_t in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
 int ip_output_ipsec_lookup(struct mbuf *m, int hlen,
-    const struct ipsec_level *seclevel, struct tdb **, int ipsecflowinfo);
+    const struct ipsec_level *seclevel, struct tdb **, uint32_t ipsecflowinfo);
 void ip_output_ipsec_pmtu_update(struct tdb *, struct route *, struct in_addr,
     int);
 int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, u_int,
@@ -98,7 +98,7 @@ int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, u_int,
 int
 ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
     struct ip_moptions *imo, const struct ipsec_level *seclevel,
-    u_int32_t ipsecflowinfo)
+    uint32_t ipsecflowinfo)
 {
 	struct ip *ip;
 	struct ifnet *ifp = NULL;
@@ -501,7 +501,8 @@ bad:
 #ifdef IPSEC
 int
 ip_output_ipsec_lookup(struct mbuf *m, int hlen,
-    const struct ipsec_level *seclevel, struct tdb **tdbout, int ipsecflowinfo)
+    const struct ipsec_level *seclevel, struct tdb **tdbout,
+    uint32_t ipsecflowinfo)
 {
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;

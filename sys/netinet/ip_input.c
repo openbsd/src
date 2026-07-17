@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.431 2026/07/16 12:21:40 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.432 2026/07/17 18:51:29 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1954,11 +1954,11 @@ ip_send_do_dispatch(void *xmq, int flags)
 
 	NET_LOCK_SHARED();
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		u_int32_t ipsecflowinfo = 0;
+		uint32_t ipsecflowinfo = 0;
 
 		if ((mtag = m_tag_find(m, PACKET_TAG_IPSEC_FLOWINFO, NULL))
 		    != NULL) {
-			ipsecflowinfo = *(u_int32_t *)(mtag + 1);
+			ipsecflowinfo = *(uint32_t *)(mtag + 1);
 			m_tag_delete(m, mtag);
 		}
 		ip_output(m, NULL, NULL, flags, NULL, NULL, ipsecflowinfo);

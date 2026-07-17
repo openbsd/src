@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.163 2026/07/07 05:39:05 dlg Exp $ */
+/*	$OpenBSD: pipex.c,v 1.164 2026/07/17 18:51:29 bluhm Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1941,12 +1941,12 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		mtx_enter(&session->pxs_mtx);
 		if (session->proto.l2tp.ipsecflowinfo > 0) {
 			if ((mtag = m_tag_get(PACKET_TAG_IPSEC_FLOWINFO,
-			    sizeof(u_int32_t), M_NOWAIT)) == NULL) {
+			    sizeof(uint32_t), M_NOWAIT)) == NULL) {
 				mtx_leave(&session->pxs_mtx);
 				goto drop;
 			}
 
-			*(u_int32_t *)(mtag + 1) =
+			*(uint32_t *)(mtag + 1) =
 			    session->proto.l2tp.ipsecflowinfo;
 			m_tag_prepend(m0, mtag);
 		}
