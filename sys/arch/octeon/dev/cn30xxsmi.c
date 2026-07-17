@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.13 2024/07/06 06:15:17 landry Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.14 2026/07/17 13:26:11 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -175,6 +175,8 @@ cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
 			return ENOENT;
 
 		parent = OF_parent(phynode);
+		if (OF_is_compatible(parent, "ethernet-phy-nexus"))
+			parent = OF_parent(parent);
 		SLIST_FOREACH(smi, &smi_list, sc_link) {
 			if (smi->sc_node == parent)
 				goto found;
