@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.37 2026/06/03 06:59:51 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.38 2026/07/18 09:28:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1668,11 +1668,8 @@ struct qwx_vif {
 	uint8_t hal_addr_search_flags;
 	uint8_t search_type;
 
-	struct qwx_softc *sc;
-
 	uint16_t tx_seq_no;
 	struct wmi_wmm_params_all_arg wmm_params;
-	TAILQ_ENTRY(qwx_vif) entry;
 	union {
 		struct {
 			uint32_t uapsd;
@@ -1719,8 +1716,6 @@ struct qwx_vif {
 
 	struct qwx_txmgmt_queue txmgmt;
 };
-
-TAILQ_HEAD(qwx_vif_list, qwx_vif);
 
 struct qwx_survey_info {
 	int8_t noise;
@@ -1953,7 +1948,7 @@ struct qwx_softc {
 
 	uint32_t pktlog_defs_checksum;
 
-	struct qwx_vif_list vif_list;
+	struct qwx_vif	sc_vif;
 	struct qwx_pdev pdevs[MAX_RADIOS];
 	struct {
 		enum WMI_HOST_WLAN_BAND supported_bands;

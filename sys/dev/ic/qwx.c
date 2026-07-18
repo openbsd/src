@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.137 2026/07/14 12:35:14 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.138 2026/07/18 09:28:21 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -168,7 +168,6 @@ int qwx_wmi_vdev_install_key(struct qwx_softc *,
 int qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *, struct qwx_vif *,
     struct ieee80211_node *, struct ieee80211_key *, int);
 void qwx_setkey_clear(struct qwx_softc *);
-void qwx_vif_free_all(struct qwx_softc *);
 void qwx_dp_stop_shadow_timers(struct qwx_softc *);
 void qwx_ce_stop_shadow_timers(struct qwx_softc *);
 int qwx_wmi_vdev_set_param_cmd(struct qwx_softc *, uint32_t, uint8_t,
@@ -420,6 +419,24 @@ qwx_del_task_all(struct qwx_softc *sc)
 }
 
 void
+qwx_vif_purge(struct qwx_softc *sc)
+{
+	struct qwx_vif *arvif = &sc->sc_vif;
+	struct qwx_txmgmt_queue *txmgmt;
+	int i;
+
+	txmgmt = &arvif->txmgmt;
+	for (i = 0; i < nitems(txmgmt->data); i++) {
+		struct qwx_tx_data *tx_data = &txmgmt->data[i];
+
+		if (tx_data->m) {
+			m_freem(tx_data->m);
+			tx_data->m = NULL;
+		}
+	}
+}
+
+void
 qwx_stop(struct ifnet *ifp)
 {
 	struct qwx_softc *sc = ifp->if_softc;
@@ -497,7 +514,7 @@ qwx_stop(struct ifnet *ifp)
 	/* free some DMA allocations and power off hardware */
 	qwx_core_deinit(sc);
 
-	qwx_vif_free_all(sc);
+	qwx_vif_purge(sc);
 
 	splx(s);
 }
@@ -574,7 +591,7 @@ qwx_tx(struct qwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	uint8_t frame_type;
 
@@ -884,7 +901,7 @@ qwx_add_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_node *nq = (struct qwx_node *)ni;
 	struct ath11k_peer *peer;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	int ret = 0;
 	uint32_t flags = 0;
@@ -949,7 +966,7 @@ qwx_del_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	int ret = 0;
 
 	ret = qwx_wmi_install_key_cmd(sc, arvif, ni->ni_macaddr, k, 0, 1);
@@ -1008,7 +1025,7 @@ qwx_setkey_task(void *arg)
 void
 qwx_clear_hwkeys(struct qwx_softc *sc, struct ath11k_peer *peer)
 {
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct wmi_vdev_install_key_arg arg =  {
 		.vdev_id = arvif->vdev_id,
@@ -13257,7 +13274,6 @@ void
 qwx_scan_event(struct qwx_softc *sc, struct mbuf *m)
 {
 	struct wmi_scan_event scan_ev = { 0 };
-	struct qwx_vif *arvif;
 
 	if (qwx_pull_scan_ev(sc, m, &scan_ev) != 0) {
 		printf("%s: failed to extract scan event",
@@ -13267,19 +13283,6 @@ qwx_scan_event(struct qwx_softc *sc, struct mbuf *m)
 #ifdef notyet
 	rcu_read_lock();
 #endif
-	TAILQ_FOREACH(arvif, &sc->vif_list, entry) {
-		if (arvif->vdev_id == scan_ev.vdev_id)
-			break;
-	}
-
-	if (!arvif) {
-		printf("%s: received scan event for unknown vdev\n",
-		    sc->sc_dev.dv_xname);
-#if 0
-		rcu_read_unlock();
-#endif
-		return;
-	}
 #if 0
 	spin_lock_bh(&ar->data_lock);
 #endif
@@ -13366,7 +13369,6 @@ qwx_pull_chan_info_ev(struct qwx_softc *sc, uint8_t *evt_buf, uint32_t len,
 void
 qwx_chan_info_event(struct qwx_softc *sc, struct mbuf *m)
 {
-	struct qwx_vif *arvif;
 	struct wmi_chan_info_event ch_info_ev = {0};
 	struct qwx_survey_info *survey;
 	int idx;
@@ -13394,20 +13396,6 @@ qwx_chan_info_event(struct qwx_softc *sc, struct mbuf *m)
 	}
 #ifdef notyet
 	rcu_read_lock();
-#endif
-	TAILQ_FOREACH(arvif, &sc->vif_list, entry) {
-		if (arvif->vdev_id == ch_info_ev.vdev_id)
-			break;
-	}
-	if (!arvif) {
-		printf("%s: invalid vdev id in chan info ev %d\n",
-		   sc->sc_dev.dv_xname, ch_info_ev.vdev_id);
-#ifdef notyet
-		rcu_read_unlock();
-#endif
-		return;
-	}
-#ifdef notyet
 	spin_lock_bh(&ar->data_lock);
 #endif
 	switch (sc->scan.state) {
@@ -13696,7 +13684,7 @@ qwx_wmi_process_mgmt_tx_comp(struct qwx_softc *sc,
     struct wmi_mgmt_tx_compl_event *tx_compl_param)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct ifnet *ifp = &ic->ic_if;
 	struct qwx_tx_data *tx_data;
 
@@ -13882,7 +13870,6 @@ void
 qwx_vdev_install_key_compl_event(struct qwx_softc *sc, struct mbuf *m)
 {
 	struct wmi_vdev_install_key_complete_arg install_key_compl = { 0 };
-	struct qwx_vif *arvif;
 
 	if (qwx_pull_vdev_install_key_compl_ev(sc, m,
 	    &install_key_compl) != 0) {
@@ -13896,16 +13883,6 @@ qwx_vdev_install_key_compl_event(struct qwx_softc *sc, struct mbuf *m)
 	    install_key_compl.key_flags,
 	    ether_sprintf((u_char *)install_key_compl.macaddr),
 	    install_key_compl.status);
-
-	TAILQ_FOREACH(arvif, &sc->vif_list, entry) {
-		if (arvif->vdev_id == install_key_compl.vdev_id)
-			break;
-	}
-	if (!arvif) {
-		printf("%s: invalid vdev id in install key compl ev %d\n",
-		    sc->sc_dev.dv_xname, install_key_compl.vdev_id);
-		return;
-	}
 
 	sc->install_key_status = 0;
 
@@ -23462,7 +23439,7 @@ qwx_mac_config_mon_status_default(struct qwx_softc *sc, int enable)
 int
 qwx_mac_txpower_recalc(struct qwx_softc *sc, struct qwx_pdev *pdev)
 {
-	struct qwx_vif *arvif;
+	struct qwx_vif *arvif = &sc->sc_vif;
 	int ret, txpower = -1;
 	uint32_t param;
 	uint32_t min_tx_power = sc->target_caps.hw_min_tx_power;
@@ -23470,15 +23447,10 @@ qwx_mac_txpower_recalc(struct qwx_softc *sc, struct qwx_pdev *pdev)
 #ifdef notyet
 	lockdep_assert_held(&ar->conf_mutex);
 #endif
-	TAILQ_FOREACH(arvif, &sc->vif_list, entry) {
-		if (arvif->txpower <= 0)
-			continue;
+	if (arvif->txpower <= 0)
+		return 0;
 
-		if (txpower == -1)
-			txpower = arvif->txpower;
-		else
-			txpower = MIN(txpower, arvif->txpower);
-	}
+	txpower = MIN(txpower, arvif->txpower);
 
 	if (txpower == -1)
 		return 0;
@@ -23651,10 +23623,9 @@ qwx_mac_setup_vdev_params_mbssid(struct qwx_vif *arvif,
 }
 
 int
-qwx_mac_setup_vdev_create_params(struct qwx_vif *arvif, struct qwx_pdev *pdev,
-    struct vdev_create_params *params)
+qwx_mac_setup_vdev_create_params(struct qwx_softc *sc, struct qwx_vif *arvif,
+    struct qwx_pdev *pdev, struct vdev_create_params *params)
 {
-	struct qwx_softc *sc = arvif->sc;
 	int ret;
 
 	params->if_id = arvif->vdev_id;
@@ -23956,70 +23927,45 @@ qwx_mac_vdev_start(struct qwx_softc *sc, struct qwx_vif *arvif, int pdev_id)
 }
 
 void
-qwx_vif_free(struct qwx_softc *sc, struct qwx_vif *arvif)
+qwx_vif_free(struct qwx_softc *sc)
 {
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct qwx_txmgmt_queue *txmgmt;
 	int i;
-
-	if (arvif == NULL)
-		return;
 
 	txmgmt = &arvif->txmgmt;
 	for (i = 0; i < nitems(txmgmt->data); i++) {
 		struct qwx_tx_data *tx_data = &txmgmt->data[i];
 
-		if (tx_data->m) {
-			m_freem(tx_data->m);
-			tx_data->m = NULL;
-		}
 		if (tx_data->map) {
 			bus_dmamap_destroy(sc->sc_dmat, tx_data->map);
 			tx_data->map = NULL;
 		}
 	}
-
-	free(arvif, M_DEVBUF, sizeof(*arvif));
 }
 
-void
-qwx_vif_free_all(struct qwx_softc *sc)
-{
-	struct qwx_vif *arvif;
-
-	while (!TAILQ_EMPTY(&sc->vif_list)) {
-		arvif = TAILQ_FIRST(&sc->vif_list);
-		TAILQ_REMOVE(&sc->vif_list, arvif, entry);
-		qwx_vif_free(sc, arvif);
-	}
-}
-
-struct qwx_vif *
+int 
 qwx_vif_alloc(struct qwx_softc *sc)
 {
-	struct qwx_vif *arvif;
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct qwx_txmgmt_queue *txmgmt; 
 	int i, ret = 0;
 	const bus_size_t size = IEEE80211_MAX_LEN;
 
-	arvif = malloc(sizeof(*arvif), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (arvif == NULL)
-		return NULL;
-
+	/* Allocate DMA maps used when sending management frames. */
 	txmgmt = &arvif->txmgmt;
 	for (i = 0; i < nitems(txmgmt->data); i++) {
 		struct qwx_tx_data *tx_data = &txmgmt->data[i];
 
 		ret = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &tx_data->map);
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &tx_data->map);
 		if (ret) {
-			qwx_vif_free(sc, arvif);
-			return NULL;
+			qwx_vif_free(sc);
+			return ENOMEM;
 		}
 	}
 
-	arvif->sc = sc;
-
-	return arvif;
+	return 0;
 }
 
 int
@@ -24027,7 +23973,7 @@ qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 {
 	struct qwx_softc *sc = pdev->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct qwx_vif *arvif = NULL;
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct vdev_create_params vdev_param = { 0 };
 #if 0
 	struct peer_create_params peer_param;
@@ -24058,11 +24004,6 @@ qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 		goto err;
 	}
 
-	arvif = qwx_vif_alloc(sc);
-	if (arvif == NULL) {
-		ret = ENOMEM;
-		goto err;
-	}
 #if 0
 	INIT_DELAYED_WORK(&arvif->connection_loss_work,
 			  ath11k_mac_vif_sta_connection_loss_work);
@@ -24117,7 +24058,7 @@ qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 	    __func__, arvif->vdev_id, arvif->vdev_type,
 	    arvif->vdev_subtype, sc->free_vdev_map);
 
-	ret = qwx_mac_setup_vdev_create_params(arvif, pdev, &vdev_param);
+	ret = qwx_mac_setup_vdev_create_params(sc, arvif, pdev, &vdev_param);
 	if (ret) {
 		printf("%s: failed to create vdev parameters %d: %d\n",
 		    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
@@ -24137,13 +24078,7 @@ qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 	    ether_sprintf(ic->ic_myaddr), arvif->vdev_id);
 	sc->allocated_vdev_map |= 1U << arvif->vdev_id;
 	sc->free_vdev_map &= ~(1U << arvif->vdev_id);
-#ifdef notyet
-	spin_lock_bh(&ar->data_lock);
-#endif
-	TAILQ_INSERT_TAIL(&sc->vif_list, arvif, entry);
-#ifdef notyet
-	spin_unlock_bh(&ar->data_lock);
-#endif
+
 	ret = qwx_mac_op_update_vif_offload(sc, pdev, arvif);
 	if (ret)
 		goto err_vdev_del;
@@ -24281,19 +24216,10 @@ err_peer_del:
 #endif
 err_vdev_del:
 	qwx_mac_vdev_delete(sc, arvif);
-#ifdef notyet
-	spin_lock_bh(&ar->data_lock);
-#endif
-	TAILQ_REMOVE(&sc->vif_list, arvif, entry);
-#ifdef notyet
-	spin_unlock_bh(&ar->data_lock);
-#endif
-
 err:
 #ifdef notyet
 	mutex_unlock(&ar->conf_mutex);
 #endif
-	qwx_vif_free(sc, arvif);
 	return ret;
 }
 
@@ -26081,17 +26007,12 @@ int
 qwx_scan(struct qwx_softc *sc, int bgscan)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list);
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct scan_req_params *arg = NULL;
 	struct ieee80211_channel *chan, *lastc;
 	int ret = 0, num_channels, i;
 	uint32_t scan_timeout;
 	int scan_2ghz = 1, scan_5ghz = 1;
-
-	if (arvif == NULL) {
-		printf("%s: no vdev found\n", sc->sc_dev.dv_xname);
-		return EINVAL;
-	}
 
 	/*
 	 * TODO Will we need separate scan iterations on devices with
@@ -26341,7 +26262,7 @@ qwx_bgscan_done_task(void *arg)
 {
 	struct qwx_softc *sc = arg;
 	struct qwx_dp *dp = &sc->dp;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni = ic->ic_bss;
@@ -26574,15 +26495,9 @@ qwx_auth(struct qwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	uint32_t param_id;
-	struct qwx_vif *arvif;
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct qwx_pdev *pdev;
 	int ret;
-
-	arvif = TAILQ_FIRST(&sc->vif_list);
-	if (arvif == NULL) {
-		printf("%s: no vdev found\n", sc->sc_dev.dv_xname);
-		return EINVAL;
-	}
 
 	pdev = qwx_get_pdev_for_chan(sc, ni->ni_chan);
 	if (pdev == NULL) {
@@ -26626,7 +26541,7 @@ qwx_deauth(struct qwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct ath11k_peer *peer;
 	int ret;
@@ -26931,7 +26846,7 @@ qwx_updatechan(struct ieee80211com *ic)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct qwx_softc *sc = ifp->if_softc;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list);
+	struct qwx_vif *arvif = &sc->sc_vif;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_node *nq = (struct qwx_node *)ic->ic_bss;
 	int pdev_id = 0; /* TODO: derive pdev ID somehow? */
@@ -27019,7 +26934,7 @@ qwx_rx_agg_start(struct qwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
     uint16_t ssn, uint16_t winsize)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	enum hal_pn_type pn_type;
 
@@ -27040,7 +26955,7 @@ void
 qwx_rx_agg_stop(struct qwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
     uint16_t ssn, uint16_t winsize, int timeout_val, int start)
 {
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct qwx_node *nq = (struct qwx_node *)ni;
 	struct ath11k_peer *peer;
@@ -27159,7 +27074,7 @@ qwx_assoc(struct qwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct peer_assoc_params peer_arg;
 	int ret;
@@ -27217,7 +27132,7 @@ qwx_run(struct qwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct peer_assoc_params peer_arg;
 	int ret;
@@ -27294,7 +27209,7 @@ int
 qwx_run_stop(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct qwx_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_node *nq = (void *)ni;
@@ -27362,8 +27277,11 @@ qwx_attach(struct qwx_softc *sc)
 	for (i = 0; i < nitems(sc->pdevs); i++)
 		sc->pdevs[i].sc = sc;
 
-	TAILQ_INIT(&sc->vif_list);
 	TAILQ_INIT(&sc->peers);
+
+	error = qwx_vif_alloc(sc);
+	if (error)
+		return error;
 
 	error = qwx_init(ifp);
 	if (error)
@@ -27379,6 +27297,9 @@ void
 qwx_detach(struct qwx_softc *sc)
 {
 	qwx_free_peers(sc);
+
+	qwx_vif_purge(sc);
+	qwx_vif_free(sc);
 
 	if (sc->fwmem) {
 		qwx_dmamem_free(sc->sc_dmat, sc->fwmem);
