@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2025/08/21 00:10:21 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.67 2026/07/18 10:14:40 kirill Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -124,7 +124,7 @@ uint64_t pmap_ptab_mask;
 struct pate *pmap_pat;
 
 #define PATMEMSZ	(64 * 1024)
-#define PATSIZE		(ffs(PATMEMSZ) - 12)
+#define PATSIZE		(ffs(PATMEMSZ) - 1 - 12)
 
 struct pte_desc {
 	/* Linked list of phys -> virt entries */
