@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.138 2026/07/18 09:28:21 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.139 2026/07/18 09:47:52 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -27256,7 +27256,7 @@ qwx_radiotap_attach(struct qwx_softc *sc)
 }
 #endif
 
-int
+void
 qwx_attach(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -27279,18 +27279,12 @@ qwx_attach(struct qwx_softc *sc)
 
 	TAILQ_INIT(&sc->peers);
 
-	error = qwx_vif_alloc(sc);
-	if (error)
-		return error;
-
 	error = qwx_init(ifp);
 	if (error)
-		return error;
+		return;
 
 	/* Turn device off until interface comes up. */
 	qwx_core_deinit(sc);
-
-	return 0;
 }
 
 void
@@ -27299,7 +27293,6 @@ qwx_detach(struct qwx_softc *sc)
 	qwx_free_peers(sc);
 
 	qwx_vif_purge(sc);
-	qwx_vif_free(sc);
 
 	if (sc->fwmem) {
 		qwx_dmamem_free(sc->sc_dmat, sc->fwmem);

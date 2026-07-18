@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.39 2026/07/14 12:33:50 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.40 2026/07/18 09:47:52 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -977,6 +977,10 @@ unsupported_wcn6855_soc:
 	if (error)
 		goto err_pci_disable_msi;
 
+	error = qwx_vif_alloc(sc);
+	if (error)
+		goto err_pci_disable_msi;
+
 	psc->chan_ctxt = qwx_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct qwx_mhi_chan_ctxt) * psc->max_chan, 0);
 	if (psc->chan_ctxt == NULL) {
@@ -1181,6 +1185,7 @@ qwx_pci_detach(struct device *self, int flags)
 	}
 
 	qwx_detach(sc);
+	qwx_vif_free(sc);
 
 	qwx_pci_free_event_rings(psc);
 	qwx_pci_free_xfer_rings(psc);

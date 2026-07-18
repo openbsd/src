@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.38 2026/07/18 09:28:21 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.39 2026/07/18 09:47:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2017,7 +2017,9 @@ int	qwx_ext_intr(void *);
 int	qwx_dp_service_srng(struct qwx_softc *, int);
 
 int	qwx_init_hw_params(struct qwx_softc *);
-int	qwx_attach(struct qwx_softc *);
+int	qwx_vif_alloc(struct qwx_softc *);
+void	qwx_vif_free(struct qwx_softc *);
+void	qwx_attach(struct qwx_softc *);
 void	qwx_detach(struct qwx_softc *);
 int	qwx_activate(struct device *, int);
 
