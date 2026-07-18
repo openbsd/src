@@ -202,7 +202,7 @@ SKIP: {
     $skip{pid}{$^O} = $skip{uid}{$^O} = "not set for kill()"
         if (($^O.$Config{osvers}) =~ /^darwin[0-8]\./
             ||
-            ($^O.$Config{osvers}) =~ /^openbsd[0-7]\./
+            ($^O.$Config{osvers}) =~ /^openbsd[0-8]\./
             ||
             ($^O eq 'gnu')
             ||
