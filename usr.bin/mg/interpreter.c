@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.37 2026/02/22 10:31:28 op Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.38 2026/07/19 13:14:55 op Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -399,7 +399,8 @@ parsexp(char *begp, const char *par1, const char *par2, int blkid, int expctr,
 	int		 numparams, ret;
 
 	cmdp = begp;
-	fendp = strchr(cmdp, ' ');
+	if ((fendp = strchr(cmdp, ' ')) == NULL)
+		return (dobeep_msgs("Unknown command:", cmdp));
 	*fendp = '\0';
 
 	/*
