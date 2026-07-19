@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.70 2026/02/24 21:15:36 op Exp $	*/
+/*	$OpenBSD: echo.c,v 1.71 2026/07/19 13:31:28 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -571,7 +571,7 @@ complt(int flags, int c, char *buf, size_t nbuf, int cpos, int *nx)
 	nxtra = HUGE;
 
 	for (; lh != NULL; lh = lh->l_next) {
-		if (memcmp(buf, lh->l_name, cpos) != 0)
+		if (strncmp(buf, lh->l_name, cpos) != 0)
 			continue;
 		if (nhits == 0)
 			lh2 = lh;
