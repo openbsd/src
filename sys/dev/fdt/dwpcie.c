@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.62 2026/06/04 10:07:22 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.63 2026/07/19 22:00:50 dlg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1512,8 +1512,7 @@ dwpcie_rk3568_link_up(struct dwpcie_softc *sc)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_glue_ioh,
 	    PCIE_CLIENT_LTSSM_STATUS);
 	if ((reg & PCIE_CLIENT_SMLH_LINK_UP) &&
-	    (reg & PCIE_CLIENT_RDLH_LINK_UP) &&
-	    (reg & PCIE_CLIENT_LTSSM_MASK) == PCIE_CLIENT_LTSSM_UP)
+	    (reg & PCIE_CLIENT_RDLH_LINK_UP))
 		return 1;
 	return 0;
 }
