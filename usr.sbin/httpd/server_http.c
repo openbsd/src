@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.167 2026/07/02 04:59:50 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.168 2026/07/19 09:09:25 kirill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -724,7 +724,7 @@ server_read_httprange(struct bufferevent *bev, void *arg)
 			if (server_bufferevent_printf(clt,
 			    "\r\n--%llu\r\n"
 			    "Content-Type: %s/%s\r\n"
-			    "Content-Range: bytes %lld-%lld/%zu\r\n\r\n",
+			    "Content-Range: bytes %lld-%lld/%lld\r\n\r\n",
 			    clt->clt_boundary,
 			    media->media_type, media->media_subtype,
 			    range->start, range->end, r->range_total) == -1)

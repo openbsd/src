@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.82 2026/06/21 19:23:56 tb Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.83 2026/07/19 09:09:25 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -52,8 +52,8 @@ int		 server_file_index(struct httpd *, struct client *, int,
 int		 server_file_modified_since(struct http_descriptor *,
 		    const struct timespec *);
 int		 server_file_method(struct client *);
-int		 parse_range_spec(char *, size_t, struct range *);
-int		 parse_ranges(struct client *, char *, size_t);
+int		 parse_range_spec(char *, off_t, struct range *);
+int		 parse_ranges(struct client *, char *, off_t);
 static int	 select_visible(const struct dirent *);
 
 int
@@ -351,7 +351,8 @@ server_partial_file_request(struct httpd *env, struct client *clt,
 	struct media_type	 multipart_media;
 	struct range_data	*r = &clt->clt_ranges;
 	struct range		*range;
-	size_t			 content_length = 0, bufsiz;
+	off_t			 content_length = 0, range_length;
+	size_t			 bufsiz;
 	int			 code = 500, i, nranges, ret;
 	char			 content_range[64];
 	const char		*errstr = NULL;
@@ -396,12 +397,22 @@ server_partial_file_request(struct httpd *env, struct client *clt,
 				goto abort;
 
 			/* Add data length */
-			content_length += ret + range->end - range->start + 1;
+			range_length = range->end - range->start + 1;
+			if (content_length > LLONG_MAX - ret ||
+			    range_length > LLONG_MAX - content_length - ret) {
+				errno = EOVERFLOW;
+				goto abort;
+			}
+			content_length += ret + range_length;
 
 		}
 		if ((ret = snprintf(NULL, 0, "\r\n--%llu--\r\n",
 		    clt->clt_boundary)) < 0)
 			goto abort;
+		if (content_length > LLONG_MAX - ret) {
+			errno = EOVERFLOW;
+			goto abort;
+		}
 		content_length += ret;
 
 		/* prepare multipart/byteranges media type */
@@ -743,7 +754,7 @@ server_file_modified_since(struct http_descriptor *desc, const struct timespec
 }
 
 int
-parse_ranges(struct client *clt, char *str, size_t file_sz)
+parse_ranges(struct client *clt, char *str, off_t file_sz)
 {
 	int			 i = 0;
 	char			*p, *q;
@@ -783,9 +794,10 @@ parse_ranges(struct client *clt, char *str, size_t file_sz)
 }
 
 int
-parse_range_spec(char *str, size_t size, struct range *r)
+parse_range_spec(char *str, off_t size, struct range *r)
 {
 	size_t		 start_str_len, end_str_len;
+	off_t		 value;
 	char		*p, *start_str, *end_str;
 	const char	*errstr;
 
@@ -802,27 +814,41 @@ parse_range_spec(char *str, size_t size, struct range *r)
 	if ((start_str_len == 0) && (end_str_len == 0))
 		return (0);
 
-	if (end_str_len) {
-		r->end = strtonum(end_str, 0, LLONG_MAX, &errstr);
-		if (errstr)
-			return (0);
+	if (size == 0)
+		return (0);
 
-		if ((size_t)r->end >= size)
+	if (start_str_len == 0) {
+		if (*end_str < '0' || *end_str > '9')
+			return (0);
+		value = strtonum(end_str, 0, size, &errstr);
+		if (errstr != NULL && errno != ERANGE)
+			return (0);
+		if (errstr != NULL)
+			r->start = 0;
+		else if (value == 0)
+			return (0);
+		else
+			r->start = size - value;
+		r->end = size - 1;
+		return (1);
+	}
+
+	if (*start_str < '0' || *start_str > '9')
+		return (0);
+	r->start = strtonum(start_str, 0, size - 1, &errstr);
+	if (errstr != NULL)
+		return (0);
+
+	if (end_str_len) {
+		if (*end_str < '0' || *end_str > '9')
+			return (0);
+		r->end = strtonum(end_str, 0, size - 1, &errstr);
+		if (errstr != NULL && errno != ERANGE)
+			return (0);
+		if (errstr != NULL)
 			r->end = size - 1;
 	} else
 		r->end = size - 1;
-
-	if (start_str_len) {
-		r->start = strtonum(start_str, 0, LLONG_MAX, &errstr);
-		if (errstr)
-			return (0);
-
-		if ((size_t)r->start >= size)
-			return (0);
-	} else {
-		r->start = size - r->end;
-		r->end = size - 1;
-	}
 
 	if (r->end < r->start)
 		return (0);

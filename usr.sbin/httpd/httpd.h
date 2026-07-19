@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.178 2026/07/02 04:59:16 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.179 2026/07/19 09:09:25 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -280,7 +280,7 @@ struct range_data {
 
 	/* For the Content headers in each part */
 	struct media_type	*range_media;
-	size_t			 range_total;
+	off_t			 range_total;
 };
 
 struct client {
