@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.15 2026/07/13 17:48:19 jca Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.16 2026/07/19 12:04:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -994,6 +994,8 @@ struct fdt_dtb {
 	  "spacemit/k1-bananapi-f3.dtb" },
 	{ "spacemit k1-x evb board",
 	  "spacemit/k1-milkv-jupiter.dtb" },
+	{ "spacemit k3-pico-itx board",
+	  "spacemit/k3-pico-itx.dtb" },
 };
 
 void *
