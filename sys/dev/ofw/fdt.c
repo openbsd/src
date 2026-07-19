@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.40 2026/06/22 21:12:12 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.41 2026/07/19 03:15:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1243,6 +1243,7 @@ OF_translate(int node, char *name, uint64_t *addr, uint64_t *size)
 			*addr += rto;
 			break;
 		}
+		free(ranges, M_TEMP, len);
 		if (rlen < rone)
 			return ERANGE;
 	}
