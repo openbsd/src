@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.133 2026/07/02 04:59:16 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.134 2026/07/19 04:19:37 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,7 @@ int		 server_dispatch_logger(int, struct privsep_proc *,
 void		 server_shutdown(void);
 
 void		 server_init(struct privsep *, struct privsep_proc *p, void *);
-void		 server_launch(void);
+int		 server_launch(void);
 int		 server_socket(struct sockaddr_storage *, in_port_t,
 		    struct server_config *, int, int);
 int		 server_socket_listen(struct sockaddr_storage *, in_port_t,
@@ -406,7 +406,7 @@ server_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 #endif
 }
 
-void
+int
 server_launch(void)
 {
 	struct server		*srv;
@@ -415,7 +415,8 @@ server_launch(void)
 		log_debug("%s: configuring server %s", __func__,
 		    srv->srv_conf.name);
 
-		server_tls_init(srv);
+		if (server_tls_init(srv) != 0)
+			return (-1);
 
 		log_debug("%s: running server %s", __func__,
 		    srv->srv_conf.name);
@@ -425,6 +426,7 @@ server_launch(void)
 		event_add(&srv->srv_ev, NULL);
 		evtimer_set(&srv->srv_evt, server_accept, srv);
 	}
+	return (0);
 }
 
 void
@@ -1342,37 +1344,49 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_MEDIA:
-		config_getmedia(httpd_env, imsg);
+		if (config_getmedia(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_AUTH:
-		config_getauth(httpd_env, imsg);
+		if (config_getauth(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_SERVER:
-		config_getserver(httpd_env, imsg);
+		if (config_getserver(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_TLS:
-		config_getserver_tls(httpd_env, imsg);
+		if (config_getserver_tls(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_FCGI:
-		config_getserver_fcgiparams(httpd_env, imsg);
+		if (config_getserver_fcgiparams(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(httpd_env, imsg);
+		if (config_getcfg(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CTL_START:
-		server_launch();
+		if (server_launch() != 0)
+			return (-1);
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(httpd_env, imsg);
+		if (config_getreset(httpd_env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_TLSTICKET_REKEY:
 		IMSG_SIZE_CHECK(imsg, (&key));
 		memcpy(&key, imsg->data, sizeof(key));
 		/* apply to the right server */
-		srv = server_byid(key.tt_id);
-		if (srv) {
-			tls_config_add_ticket_key(srv->srv_tls_config,
-			    key.tt_keyrev, key.tt_key, sizeof(key.tt_key));
+		if ((srv = server_byid(key.tt_id)) == NULL) {
+			log_debug("%s: invalid sever id", __func__);
+			return (-1);
+		}
+		if (tls_config_add_ticket_key(srv->srv_tls_config,
+		    key.tt_keyrev, key.tt_key, sizeof(key.tt_key)) == -1) {
+			log_debug("%s: tls_config_add_ticket_key", __func__);
+			return (-1);
 		}
 		break;
 	default:
