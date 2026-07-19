@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.66 2025/12/26 18:19:46 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.67 2026/07/19 23:33:16 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -514,6 +514,8 @@ set_fw_paths() {
 	
 	[ "${FWURL:-}" ] ||
 	     FWURL=http://firmware.openbsd.org/firmware/${_fwdir:-$_version}
+
+	FWURL=${FWURL%%+(/)}
 
 	# TODO: Would it be better to use the untrusted comment in CFILE?
 	_version=${_version%.*}${_version#*.}
