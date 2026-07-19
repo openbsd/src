@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.203 2026/07/01 18:11:44 martijn Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.204 2026/07/19 09:14:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -414,7 +414,8 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (-1);
 		}
 		demote.group[sizeof(demote.group) - 1] = '\0';
-		carp_demote_set(demote.group, demote.level);
+		if (carp_demote_set(demote.group, demote.level) != 0)
+			return (-1);
 		break;
 	case IMSG_RTMSG:
 		if (imsg_get_data(imsg, &crt, sizeof(crt)) == -1) {
@@ -424,7 +425,8 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		crt.host.name[sizeof(crt.host.name) - 1] = '\0';
 		crt.rt.name[sizeof(crt.rt.name) - 1] = '\0';
 		crt.rt.label[sizeof(crt.rt.label) - 1] = '\0';
-		pfe_route(env, &crt);
+		if (pfe_route(env, &crt) != 0)
+			return (-1);
 		break;
 	case IMSG_CTL_RESET:
 		if (imsg_get_data(imsg, &v, sizeof(v)) == -1) {

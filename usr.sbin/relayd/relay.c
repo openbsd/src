@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.265 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.266 2026/07/19 09:14:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2014,34 +2014,43 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		evtimer_add(&con->se_ev, &tv);
 		break;
 	case IMSG_CFG_TABLE:
-		config_gettable(env, imsg);
+		if (config_gettable(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_HOST:
-		config_gethost(env, imsg);
+		if (config_gethost(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_PROTO:
-		config_getproto(env, imsg);
+		if (config_getproto(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RULE:
-		config_getrule(env, imsg);
+		if (config_getrule(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RELAY:
-		config_getrelay(env, imsg);
+		if (config_getrelay(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RELAY_TABLE:
-		config_getrelaytable(env, imsg);
+		if (config_getrelaytable(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RELAY_FD:
-		config_getrelayfd(env, imsg);
+		if (config_getrelayfd(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(env, imsg);
+		if (config_getcfg(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CTL_START:
 		relay_launch();
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		if (config_getreset(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_TLSTICKET_REKEY:
 		if (imsg_get_data(imsg, &env->sc_ticket,

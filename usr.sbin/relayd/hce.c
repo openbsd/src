@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.85 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: hce.c,v 1.86 2026/07/19 09:14:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -349,19 +349,23 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		script_done(env, &scr);
 		break;
 	case IMSG_CFG_TABLE:
-		config_gettable(env, imsg);
+		if (config_gettable(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_HOST:
-		config_gethost(env, imsg);
+		if (config_gethost(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(env, imsg);
+		if (config_getcfg(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CTL_START:
 		hce_setup_events();
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		if (config_getreset(env, imsg) != 0)
+			return (-1);
 		break;
 	default:
 		return (-1);

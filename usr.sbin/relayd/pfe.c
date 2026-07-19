@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.95 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.96 2026/07/19 09:14:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -201,34 +201,44 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_TABLE:
-		config_gettable(env, imsg);
+		if (config_gettable(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_HOST:
-		config_gethost(env, imsg);
+		if (config_gethost(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RDR:
-		config_getrdr(env, imsg);
+		if (config_getrdr(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_VIRT:
-		config_getvirt(env, imsg);
+		if (config_getvirt(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_ROUTER:
-		config_getrt(env, imsg);
+		if (config_getrt(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_ROUTE:
-		config_getroute(env, imsg);
+		if (config_getroute(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_PROTO:
-		config_getproto(env, imsg);
+		if (config_getproto(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RELAY:
-		config_getrelay(env, imsg);
+		if (config_getrelay(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RELAY_TABLE:
-		config_getrelaytable(env, imsg);
+		if (config_getrelaytable(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(env, imsg);
+		if (config_getcfg(env, imsg) != 0)
+			return (-1);
 		init_tables(env);
 		agentx_init(env);
 		break;
@@ -237,7 +247,8 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		pfe_sync();
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		if (config_getreset(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_AGENTXSOCK:
 		agentx_getsock(imsg);

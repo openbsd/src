@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.55 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.56 2026/07/19 09:14:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -195,19 +195,23 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_RELAY:
-		config_getrelay(env, imsg);
+		if (config_getrelay(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_RELAY_FD:
-		config_getrelayfd(env, imsg);
+		if (config_getrelayfd(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CFG_DONE:
-		config_getcfg(env, imsg);
+		if (config_getcfg(env, imsg) != 0)
+			return (-1);
 		break;
 	case IMSG_CTL_START:
 		ca_launch();
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		if (config_getreset(env, imsg) != 0)
+			return (-1);
 		break;
 	default:
 		return -1;
