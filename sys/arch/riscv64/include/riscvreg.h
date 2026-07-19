@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscvreg.h,v 1.6 2026/05/09 17:38:50 jsing Exp $	*/
+/*	$OpenBSD: riscvreg.h,v 1.7 2026/07/19 09:45:08 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -212,13 +212,14 @@
 	(__builtin_constant_p(val) && ((u_long)(val) < 32))
 
 #define csr_swap(csr, val)						\
-({	if (CSR_ZIMM(val))						\
+({	u_long ret;							\
+	if (CSR_ZIMM(val))						\
 		__asm volatile("csrrwi %0, " #csr ", %1"		\
-				: "=r" (val) : "i" (val));		\
+				: "=r" (ret) : "i" (val));		\
 	else								\
-		__asm volatile("csrrw %0, " #csr ", %1"		\
-				: "=r" (val) : "r" (val));		\
-	val;								\
+		__asm volatile("csrrw %0, " #csr ", %1"			\
+				: "=r" (ret) : "r" (val));		\
+	ret;								\
 })
 
 #define csr_write(csr, val)						\
