@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.42 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.43 2026/07/20 17:41:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -189,6 +189,7 @@ ssl_load_pkey(char *buf, off_t len, X509 **x509ptr, EVP_PKEY **pkeyptr)
 	X509		*x509 = NULL;
 	EVP_PKEY	*pkey = NULL;
 	RSA		*rsa = NULL;
+	EC_KEY		*eckey = NULL;
 	char		*hash = NULL;
 
 	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
@@ -204,21 +205,47 @@ ssl_load_pkey(char *buf, off_t len, X509 **x509ptr, EVP_PKEY **pkeyptr)
 		log_warnx("%s: X509_get_pubkey failed", __func__);
 		goto fail;
 	}
-	if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
-		log_warnx("%s: failed to extract RSA", __func__);
-		goto fail;
-	}
 	if ((hash = malloc(TLS_CERT_HASH_SIZE)) == NULL) {
 		log_warn("%s: allocate hash failed", __func__);
 		goto fail;
 	}
 	hash_x509(x509, hash, TLS_CERT_HASH_SIZE);
-	if (RSA_set_ex_data(rsa, 0, hash) != 1) {
-		log_warnx("%s: failed to set hash as exdata", __func__);
+
+	switch (EVP_PKEY_id(pkey)) {
+	case EVP_PKEY_RSA:
+		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
+			log_warnx("%s: failed to extract RSA", __func__);
+			goto fail;
+		}
+		if (RSA_set_ex_data(rsa, 0, hash) != 1) {
+			log_warnx("%s: failed to set hash as exdata", __func__);
+			goto fail;
+		}
+		break;
+	case EVP_PKEY_EC:
+		if ((eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL) {
+			log_warnx("%s: failed to set extract EC key", __func__);
+			goto fail;
+		}
+		if (EC_KEY_set_ex_data(eckey, 0, hash) == 0) {
+			log_warnx("%s: failed to set hash as exdata", __func__);
+			goto fail;
+		}
+
+		/* Reset the key to work around caching in OpenSSL 3. */
+		if (EVP_PKEY_set1_EC_KEY(pkey, eckey) == 0) {
+			log_warnx("%s: failed to set EC key", __func__);
+			goto fail;
+		}
+		break;
+	default:
+		log_warnx("%s: incorrect key type", __func__);
 		goto fail;
 	}
 
-	RSA_free(rsa); /* dereference, will be cleaned up with pkey */
+	/* dereference, will be cleaned up with pkey */
+	RSA_free(rsa);
+	EC_KEY_free(eckey);
 	*pkeyptr = pkey;
 	if (x509ptr != NULL)
 		*x509ptr = x509;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.289 2026/07/01 18:11:44 martijn Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.290 2026/07/20 17:41:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1001,6 +1001,7 @@ enum imsg_type {
 	IMSG_CFG_DONE,
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC,
+	IMSG_CA_ECDSA_SIGN,
 	IMSG_SESS_PUBLISH,	/* from relay to pfe */
 	IMSG_SESS_UNPUBLISH,
 	IMSG_TLSTICKET_REKEY

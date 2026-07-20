@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.56 2026/07/19 09:14:57 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.57 2026/07/20 17:41:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -227,9 +227,11 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ctl_keyop	 cko;
 	EVP_PKEY		*pkey;
 	RSA			*rsa;
+	EC_KEY			*ecdsa;
 	u_char			*to = NULL;
 	struct iovec		 iov[2];
-	int			 c = 0;
+	int			 ret = 0, c = 0;
+	unsigned int		 len;
 
 	switch (imsg_get_type(imsg)) {
 	case IMSG_CA_PRIVENC:
@@ -303,6 +305,64 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		free(to);
 		RSA_free(rsa);
 		break;
+
+	case IMSG_CA_ECDSA_SIGN:
+		if (imsg_get_ibuf(imsg, &ibuf) == -1) {
+			log_warn("%s: imsg_get_ibuf", __func__);
+			return (-1);
+		}
+
+		if (ibuf_get(&ibuf, &cko, sizeof(cko)) == -1) {
+			log_warn("%s: ibuf_get", __func__);
+			return (-1);
+		}
+
+		if (cko.cko_proc > env->sc_conf.prefork_relay)
+			fatalx("%s: invalid relay proc", __func__);
+		if (ibuf_size(&ibuf) != (size_t)cko.cko_flen)
+			fatalx("%s: invalid key operation", __func__);
+
+		if ((pkey = pkey_find(env, cko.cko_hash)) == NULL) {
+			log_warnx("%s: invalid relay hash '%s'",
+			    __func__, cko.cko_hash);
+			/* Signal failure to the waiting relay worker. */
+			cko.cko_tlen = -1;
+			iov[c].iov_base = &cko;
+			iov[c++].iov_len = sizeof(cko);
+			if (proc_composev_imsg(env->sc_ps, PROC_RELAY,
+			    cko.cko_proc, imsg_get_type(imsg), -1, -1, iov,
+			    c) == -1)
+				log_warn("%s: proc_composev_imsg", __func__);
+			break;
+		}
+
+		if ((ecdsa = EVP_PKEY_get1_EC_KEY(pkey)) == NULL)
+			fatalx("%s: invalid relay key", __func__);
+
+		len = ECDSA_size(ecdsa);
+
+		if ((to = calloc(1, len)) == NULL)
+			fatalx("%s: calloc", __func__);
+
+		ret = ECDSA_sign(0, ibuf_data(&ibuf), ibuf_size(&ibuf), to,
+		    &len, ecdsa);
+
+		cko.cko_tlen = (ret > 0) ? len : -1;
+		iov[c].iov_base = &cko;
+		iov[c++].iov_len = sizeof(cko);
+		if (ret > 0) {
+			iov[c].iov_base = to;
+			iov[c++].iov_len = len;
+		}
+
+		if (proc_composev_imsg(env->sc_ps, PROC_RELAY, cko.cko_proc,
+		    imsg_get_type(imsg), -1, -1, iov, c) == -1)
+			log_warn("%s: proc_composev_imsg", __func__);
+
+		free(to);
+		EC_KEY_free(ecdsa);
+		break;
+
 	default:
 		return -1;
 	}
@@ -393,7 +453,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 
 		while (!done) {
 			if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
-				fatalx("imsg_get error");
+				fatalx("imsgbuf_get error");
 			if (n == 0)
 				break;
 
@@ -459,13 +519,10 @@ rsae_priv_dec(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 	return rsae_send_imsg(flen, from, to, rsa, padding, IMSG_CA_PRIVDEC);
 }
 
-void
-ca_engine_init(struct relayd *x_env)
+static void
+rsa_engine_init(void)
 {
 	const char	*errstr;
-
-	if (env == NULL)
-		env = x_env;
 
 	if (rsa_default != NULL)
 		return;
@@ -497,4 +554,197 @@ ca_engine_init(struct relayd *x_env)
  fail:
 	ssl_error(errstr);
 	fatalx("%s: %s", __func__, errstr);
+}
+
+/*
+ * ECDSA privsep engine (called from unprivileged processes)
+ */
+
+const EC_KEY_METHOD *ecdsa_default = NULL;
+
+static EC_KEY_METHOD *ecdsae_method = NULL;
+
+static ECDSA_SIG *
+ecdsae_send_enc_imsg(const unsigned char *dgst, int dgst_len,
+    const BIGNUM *inv, const BIGNUM *rp, EC_KEY *eckey)
+{
+	struct ibuf	 ibuf;
+	struct privsep	*ps = env->sc_ps;
+	struct pollfd	 pfd[1];
+	struct ctl_keyop cko;
+	struct iovec	 iov[2];
+	struct imsgbuf	*imsgbuf;
+	struct imsgev	*iev;
+	struct imsg	 imsg;
+	int		 n, done = 0, cnt = 0;
+	const u_char	*toptr;
+	static u_int	 seq = 0;
+
+	char		*hash;
+	ECDSA_SIG	*sig = NULL;
+
+	if ((hash = EC_KEY_get_ex_data(eckey, 0)) == NULL)
+		return (NULL);
+
+	iev = proc_iev(ps, PROC_CA, ps->ps_instance);
+	imsgbuf = &iev->ibuf;
+
+	/*
+	 * XXX this could be nicer...
+	 */
+
+	memset(&cko, 0, sizeof(cko));
+	(void)strlcpy(cko.cko_hash, hash, sizeof(cko.cko_hash));
+	cko.cko_proc = ps->ps_instance;
+	cko.cko_flen = dgst_len;
+	cko.cko_cookie = seq++;
+
+	iov[cnt].iov_base = &cko;
+	iov[cnt++].iov_len = sizeof(cko);
+	iov[cnt].iov_base = (void *)(uintptr_t)dgst;
+	iov[cnt++].iov_len = dgst_len;
+
+	/*
+	 * Send a synchronous imsg because we cannot defer the ECDSA
+	 * operation in OpenSSL's engine layer.
+	 */
+	if (imsg_composev(imsgbuf, IMSG_CA_ECDSA_SIGN, 0, 0, -1, iov, cnt) ==
+	    -1) {
+		log_warn("%s: imsg_composev", __func__);
+		return (NULL);
+	}
+	if (imsgbuf_flush(imsgbuf) == -1) {
+		log_warn("%s: imsgbuf_flush", __func__);
+		return (NULL);
+	}
+
+	pfd[0].fd = imsgbuf->fd;
+	pfd[0].events = POLLIN;
+
+	while (!done) {
+		switch (poll(pfd, 1, RELAY_TLS_PRIV_TIMEOUT)) {
+		case -1:
+			if (errno != EINTR)
+				fatal("%s: poll", __func__);
+			continue;
+		case 0:
+			log_warnx("%s: priv ecdsa poll timeout, keyop #%x",
+			    __func__,
+			    cko.cko_cookie);
+			return (NULL);
+		default:
+			break;
+		}
+
+		if ((n = imsgbuf_read(imsgbuf)) == -1)
+			fatalx("imsgbuf_read");
+		if (n == 0)
+			fatalx("pipe closed");
+
+		while (!done) {
+			if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+				fatalx("imsgbuf_get error");
+			if (n == 0)
+				break;
+
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1) {
+				log_warn("%s: imsg_get_ibuf", __func__);
+				imsg_free(&imsg);
+				return (NULL);
+			}
+
+			if (ibuf_get(&ibuf, &cko, sizeof(cko)) == -1) {
+				log_warn("%s: ibuf_get", __func__);
+				imsg_free(&imsg);
+				return (NULL);
+			}
+
+			/*
+			 * Due to earlier timed out requests, there may be
+			 * responses that need to be skipped.
+			 */
+			if (cko.cko_cookie != seq - 1) {
+				log_warnx(
+				    "%s: priv ecdsa obsolete keyop #%x",
+				    __func__,
+				    cko.cko_cookie);
+				imsg_free(&imsg);
+				continue;
+			}
+
+			if (imsg_get_type(&imsg) != IMSG_CA_ECDSA_SIGN)
+				fatalx("invalid response");
+
+			if (cko.cko_tlen == -1) {
+				log_warnx("%s: priv ecdsa failed for key %s",
+				    __func__, cko.cko_hash);
+			} else if (cko.cko_tlen > 0) {
+				if (ibuf_size(&ibuf) != (size_t)cko.cko_tlen)
+					fatalx("data size");
+				toptr = ibuf_data(&ibuf);
+				d2i_ECDSA_SIG(&sig, &toptr, cko.cko_tlen);
+			}
+			done = 1;
+
+			imsg_free(&imsg);
+		}
+	}
+	imsg_event_add(iev);
+
+	return (sig);
+}
+
+static ECDSA_SIG *
+ecdsae_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
+    const BIGNUM *rp, EC_KEY *eckey)
+{
+	ECDSA_SIG *(*psign_sig)(const unsigned char *, int, const BIGNUM *,
+	    const BIGNUM *, EC_KEY *);
+
+	DPRINTF("%s:%d", __func__, __LINE__);
+	if (EC_KEY_get_ex_data(eckey, 0) != NULL)
+		return (ecdsae_send_enc_imsg(dgst, dgst_len, inv, rp, eckey));
+	EC_KEY_METHOD_get_sign(ecdsa_default, NULL, NULL, &psign_sig);
+	return (psign_sig(dgst, dgst_len, inv, rp, eckey));
+}
+
+static void
+ecdsa_engine_init(void)
+{
+	int (*sign)(int, const unsigned char *, int, unsigned char *,
+	    unsigned int *, const BIGNUM *, const BIGNUM *, EC_KEY *);
+	int (*sign_setup)(EC_KEY *, BN_CTX *, BIGNUM **, BIGNUM **);
+	const char *errstr;
+
+	if ((ecdsa_default = EC_KEY_get_default_method()) == NULL) {
+		errstr = "EC_KEY_get_default_method";
+		goto fail;
+	}
+
+	if ((ecdsae_method = EC_KEY_METHOD_new(ecdsa_default)) == NULL) {
+		errstr = "EC_KEY_METHOD_new";
+		goto fail;
+	}
+
+	EC_KEY_METHOD_get_sign(ecdsa_default, &sign, &sign_setup, NULL);
+	EC_KEY_METHOD_set_sign(ecdsae_method, sign, sign_setup,
+	    ecdsae_do_sign);
+
+	EC_KEY_set_default_method(ecdsae_method);
+
+	return;
+
+ fail:
+	ssl_error(errstr);
+	fatalx("%s", errstr);
+}
+
+void
+ca_engine_init(struct relayd *x_env)
+{
+	if (env == NULL)
+		env = x_env;
+
+	rsa_engine_init();
+	ecdsa_engine_init();
 }

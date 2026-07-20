@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.266 2026/07/19 09:14:57 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.267 2026/07/20 17:41:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1978,6 +1978,9 @@ int
 relay_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg_get_type(imsg)) {
+	case IMSG_CA_ECDSA_SIGN:
+		log_warnx("%s: priv result after timeout", __func__);
+		return (0);
 	case IMSG_CA_PRIVENC:
 	case IMSG_CA_PRIVDEC:
 		log_warnx("%s: priv%s result after timeout", __func__,
