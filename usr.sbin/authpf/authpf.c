@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.130 2024/11/04 21:59:15 jca Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.131 2026/07/20 16:00:35 sashan Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -396,8 +396,8 @@ read_config(FILE *f)
 		if (ap != &pair[2])
 			goto parse_error;
 
-		tp = pair[1] + strlen(pair[1]);
-		while ((*tp == ' ' || *tp == '\t') && tp >= pair[1])
+		tp = pair[1] + strlen(pair[1]) - 1;
+		while (tp >= pair[1] && (*tp == ' ' || *tp == '\t'))
 			*tp-- = '\0';
 
 		if (strcasecmp(pair[0], "anchor") == 0) {
