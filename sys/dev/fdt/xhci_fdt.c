@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.29 2026/04/09 15:13:45 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.30 2026/07/20 17:57:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -81,7 +81,8 @@ xhci_fdt_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "cdns,usb3") ||
 	    OF_is_compatible(faa->fa_node, "qcom,snps-dwc3") ||
 	    OF_is_compatible(faa->fa_node, "snps,dwc3") ||
-	    OF_is_compatible(faa->fa_node, "spacemit,k1-dwc3");
+	    OF_is_compatible(faa->fa_node, "spacemit,k1-dwc3") ||
+	    OF_is_compatible(faa->fa_node, "spacemit,k3-dwc3");
 }
 
 void
@@ -151,7 +152,8 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(sc->sc_node, "apple,t8103-dwc3") ||
 	    OF_is_compatible(sc->sc_node, "qcom,snps-dwc3") ||
 	    OF_is_compatible(sc->sc_node, "snps,dwc3") ||
-	    OF_is_compatible(sc->sc_node, "spacemit,k1-dwc3"))
+	    OF_is_compatible(sc->sc_node, "spacemit,k1-dwc3") ||
+	    OF_is_compatible(sc->sc_node, "spacemit,k3-dwc3"))
 		error = xhci_snps_attach(sc);
 	if (error) {
 		printf(": can't initialize hardware\n");
