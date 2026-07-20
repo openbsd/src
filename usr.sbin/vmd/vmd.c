@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.176 2026/07/17 13:09:18 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.177 2026/07/20 17:37:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1173,6 +1173,9 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		vmc->vmc_memranges[0].vmr_size = VM_DEFAULT_MEMORY;
 	if (vmc->vmc_ncpus > VMM_MAX_VCPUS_PER_VM) {
 		log_warnx("invalid number of CPUs");
+		goto fail;
+	} else if (vmc->vmc_nmemranges > VMM_MAX_MEM_RANGES) {
+		log_warnx("invalid number of memory ranges");
 		goto fail;
 	} else if (vmc->vmc_ndisks > VM_MAX_DISKS_PER_VM) {
 		log_warnx("invalid number of disks");
