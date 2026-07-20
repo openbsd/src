@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.201 2026/07/15 11:59:27 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.202 2026/07/20 13:25:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -367,51 +367,44 @@ void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
     enum eval_mode mode)
 {
-#if 0
-	/* XXX needs to be rewritten */
 	struct adjout_prefix	*p;
+	struct pt_entry		*pte;
+	struct pq_entry		*pq;
 
 	/*
-	 * If old and new are NULL then re-insert all prefixes from re,
-	 * use up_generate_addpath() for that.
+	 * If this is a sync or reeval of all prefixes from re,
+	 * then use up_generate_addpath().
 	 */
-	if (old_pathid_tx == 0 && new == NULL) {
+	if (mode == EVAL_SYNC || mode == EVAL_REEVAL) {
 		up_generate_addpath(peer, re, mode);
 		return;
 	}
 
-	if (new != NULL && !prefix_eligible(new)) {
-		/* only allow valid prefixes */
-		new = NULL;
-	}
-
-	if (new != NULL) {
-		/* add new path */
-		switch (up_process_prefix(peer, new, (void *)-1, mode)) {
-		case UP_OK:
-			/* don't remove old if an existing prefix was updated */
-			if (old_pathid_tx == new->path_id_tx)
-				old_pathid_tx = 0;
-			break;
-		case UP_FILTERED:
-		case UP_EXCLUDED:
-			break;
-		case UP_ERR_LIMIT:
-			/* just give up */
-			return;
+	pte = re->prefix;
+	TAILQ_FOREACH(pq, &re->pq_head, entry) {
+		if (pq->p != NULL && prefix_eligible(pq->p)) {
+			/* add new path */
+			switch (up_process_prefix(peer, pq->p, (void *)-1,
+			    mode)) {
+			case UP_OK:
+				/* update processed, go to next */
+				continue;
+			case UP_FILTERED:
+			case UP_EXCLUDED:
+				/* update needs to be withdrawn */
+				break;
+			case UP_ERR_LIMIT:
+				/* just give up */
+				return;
+			}
 		}
-	}
 
-	if (old_pathid_tx != 0) {
-		/* withdraw old path */
-		p = adjout_prefix_get(peer, old_pathid_tx, re->prefix);
+		/* prefix was withdrawn or got filtered, withdraw from adjout */
+		p = adjout_prefix_get(peer, pq->path_id_tx, pte);
 		if (p != NULL)
 			adjout_prefix_withdraw(peer, re->prefix, p,
 			    mode == EVAL_SYNC);
 	}
-#else
-	up_generate_addpath(peer, re, mode);
-#endif
 }
 
 /* send a default route to the specified peer, always force the update out */

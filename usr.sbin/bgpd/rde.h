@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.358 2026/07/15 11:59:27 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.359 2026/07/20 13:25:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -320,6 +320,12 @@ struct prefix {
 #define	NEXTHOP_NOMODIFY	0x08
 #define	NEXTHOP_MASK		0x0f
 #define	NEXTHOP_VALID		0x80
+
+struct pq_entry {
+	TAILQ_ENTRY(pq_entry)	 entry;
+	struct prefix		*p;	/* NULL for withdraws */
+	uint32_t		 path_id_tx;
+};
 
 struct adjout_attr {
 	uint64_t		 hash;

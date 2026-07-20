@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.302 2026/07/02 07:40:12 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.303 2026/07/20 13:25:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -40,12 +40,6 @@
 uint16_t rib_size;
 struct rib **ribs;
 struct rib flowrib = { .id = 1, .tree = RB_INITIALIZER(&flowrib.tree) };
-
-struct pq_entry {
-	TAILQ_ENTRY(pq_entry)	 entry;
-	struct prefix		*p;	/* NULL for withdraws */
-	uint32_t		 path_id_tx;
-};
 
 struct rib_entry *rib_add(struct rib *, struct pt_entry *);
 static inline int rib_compare(const struct rib_entry *,
