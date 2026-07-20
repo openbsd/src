@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.42 2026/07/09 14:07:07 claudio Exp $ */
+/*	$OpenBSD: ccr.c,v 1.43 2026/07/20 10:02:55 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1008,16 +1008,19 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 
 		if (!copy_asn1_string(mi->aki,
 		    ccr_mft->aki, sizeof(ccr_mft->aki))) {
-			warnx("%s: manifest instance #%d corrupted", fn, i);
+			warnx("%s: manifest instance #%d corrupted: aki",
+			    fn, i);
 			goto out;
 		}
 
 		if (!ASN1_INTEGER_get_uint64(&size, mi->size)) {
-			warnx("%s: manifest instance #%d corrupted", fn, i);
+			warnx("%s: manifest instance #%d corrupted: size parse",
+			    fn, i);
 			goto out;
 		}
 		if (size < 1000 || size > MAX_FILE_SIZE) {
-			warnx("%s: manifest instance #%d corrupted", fn, i);
+			warnx("%s: manifest instance #%d corrupted: size",
+			    fn, i);
 			goto out;
 		}
 		ccr_mft->size = size;
@@ -1032,7 +1035,8 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 			goto out;
 
 		if (sk_ACCESS_DESCRIPTION_num(mi->locations) != 1) {
-			warnx("%s: unexpected number of locations", fn);
+			warnx("%s: manifest instance #%d corrupted: unexpected"
+			    " number of locations", fn, i);
 			goto out;
 		}
 
@@ -1052,8 +1056,8 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 
 			s = sk_SubjectKeyIdentifier_value(mi->subordinates, j);
 			if (!copy_asn1_string(s, sub->ski, sizeof(sub->ski))) {
-				warnx("%s: manifest instance #%d corrupted",
-				    fn, i);
+				warnx("%s: manifest instance #%d corrupted: "
+				    "subordinates ski", fn, i);
 				goto out;
 			}
 			SIMPLEQ_INSERT_TAIL(&ccr_mft->subordinates, sub, entry);
