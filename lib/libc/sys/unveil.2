@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.24 2026/04/11 17:04:55 deraadt Exp $
+.\" $OpenBSD: unveil.2,v 1.25 2026/07/20 01:26:11 dgl Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2026 $
+.Dd $Mdocdate: July 20 2026 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -80,8 +80,14 @@ Make
 .Fa path
 available for write operations, corresponding to the
 .Xr pledge 2
-promise
+promises
+.Qq chown ,
+.Qq fattr
+and
 .Qq wpath .
+In addition
+.Xr connect 2
+to AF_UNIX sockets in the filesystem is permitted.
 .It Cm x
 Make
 .Fa path
@@ -94,8 +100,11 @@ Allow
 .Fa path
 to be created and removed, corresponding to the
 .Xr pledge 2
-promise
-.Qq cpath .
+promises
+.Qq cpath ,
+.Qq dpath
+and
+.Qq unix .
 .El
 .Pp
 A

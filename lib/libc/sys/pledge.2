@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.86 2026/06/30 16:18:10 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.87 2026/07/20 01:26:11 dgl Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 30 2026 $
+.Dd $Mdocdate: July 20 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -392,7 +392,7 @@ domain:
 The
 .Xr bind 2
 call can create AF_UNIX sockets at any path even without
-.Cm wpath ,
+.Cm cpath ,
 and
 .Xr connect 2
 can connect at any path
