@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.80 2026/07/15 11:59:27 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.81 2026/07/21 08:04:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -670,10 +670,10 @@ peer_dump(struct rde_peer *peer, uint8_t aid)
 	peer->throttled = 1;
 
 	if (peer->export_type == EXPORT_NONE) {
-		peer_blast(peer, aid);
+		peer_dump_done(peer, aid);
 	} else if (peer->export_type == EXPORT_DEFAULT_ROUTE) {
 		up_generate_default(peer, aid);
-		peer_blast_done(peer, aid);
+		peer_dump_done(peer, aid);
 	} else if (aid == AID_FLOWSPECv4 || aid == AID_FLOWSPECv6) {
 		prefix_flowspec_dump(aid, peer, peer_dump_upcall,
 		    peer_dump_done);
