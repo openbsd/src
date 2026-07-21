@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.125 2025/11/13 23:30:01 bluhm Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.126 2026/07/21 14:20:37 bket Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -244,8 +244,12 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 		ifra.ifra_addr.sin6_addr.s6_addr16[0] = htons(0xfe80);
 		ifra.ifra_addr.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 		ifra.ifra_addr.sin6_addr.s6_addr32[1] = 0;
-		ifra.ifra_addr.sin6_addr.s6_addr[8] &= ~EUI64_GBIT;
-		ifra.ifra_addr.sin6_addr.s6_addr[8] |= EUI64_UBIT;
+
+		/* RFC5072: Use negotiated P2P ifid as-is. */
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
+			ifra.ifra_addr.sin6_addr.s6_addr[8] &= ~EUI64_GBIT;
+			ifra.ifra_addr.sin6_addr.s6_addr[8] |= EUI64_UBIT;
+		}
 	} else
 		in6_get_ifid(ifp, &ifra.ifra_addr.sin6_addr);
 
