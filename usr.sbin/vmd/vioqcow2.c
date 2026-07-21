@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.28 2026/07/11 18:24:02 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.29 2026/07/21 20:20:11 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -583,16 +583,23 @@ static void
 copy_cluster(struct qcdisk *disk, struct qcdisk *base, off_t dst, off_t src)
 {
 	char *scratch;
+	ssize_t n;
 
 	scratch = malloc(disk->clustersz);
 	if (!scratch)
 		fatal("out of memory");
 	src &= ~(disk->clustersz - 1);
 	dst &= ~(disk->clustersz - 1);
-	if (pread(base->fd, scratch, disk->clustersz, src) == -1)
+	n = pread(base->fd, scratch, disk->clustersz, src);
+	if (n == -1)
 		fatal("%s: could not read cluster", __func__);
-	if (pwrite(disk->fd, scratch, disk->clustersz, dst) == -1)
+	else if (n != (ssize_t)disk->clustersz)
+		fatalx("%s: short read of cluster", __func__);
+	n = pwrite(disk->fd, scratch, disk->clustersz, dst);
+	if (n == -1)
 		fatal("%s: could not write cluster", __func__);
+	else if (n != (ssize_t)disk->clustersz)
+		fatalx("%s: short write of cluster", __func__);
 	free(scratch);
 }
 

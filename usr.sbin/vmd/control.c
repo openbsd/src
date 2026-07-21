@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.52 2025/08/13 10:26:31 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.53 2026/07/21 20:20:11 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -380,7 +380,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
 	struct ctl_notify		*notify;
-	int				 n, v, wait = 0, ret = 0;
+	int				 kernfd, n, v, wait = 0, ret = 0;
 	uint32_t			 peer_id = fd, type;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
@@ -450,9 +450,11 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			vmc.vmc_owner.gid = -1;
 
 			/* imsg passed fd may contain kernel image fd. */
+			kernfd = imsg_get_fd(&imsg);
 			if (proc_compose_imsg(ps, PROC_PARENT, type,
-			    peer_id, imsg_get_fd(&imsg), &vmc,
+			    peer_id, kernfd, &vmc,
 			    sizeof(vmc)) == -1) {
+				close_fd(kernfd);
 				control_close(fd, cs);
 				return;
 			}

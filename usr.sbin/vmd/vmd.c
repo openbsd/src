@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.177 2026/07/20 17:37:10 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.178 2026/07/21 20:20:11 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -90,7 +90,8 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
-	int				 res = 0, cmd = IMSG_NONE, verbose;
+	int				 kernfd = -1, res = 0;
+	int				 cmd = IMSG_NONE, verbose;
 	unsigned int			 v = 0, flags;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
@@ -105,7 +106,8 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
 		vmop_create_params_read(imsg, &vmc);
-		vmc.vmc_kernel = imsg_get_fd(imsg);
+		kernfd = imsg_get_fd(imsg);
+		vmc.vmc_kernel = kernfd;
 
 		/* Try registering our VM in our list of known VMs. */
 		if (vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid)) {
@@ -114,7 +116,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			/* Did we have a failure during lookup of a parent? */
 			if (vm == NULL) {
 				cmd = IMSG_VMDOP_START_VM_RESPONSE;
-				break;
+				goto start_failed;
 			}
 
 			/* Does the VM already exist? */
@@ -122,24 +124,33 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 				/* Is it already running? */
 				if (vm->vm_state & VM_STATE_RUNNING) {
 					cmd = IMSG_VMDOP_START_VM_RESPONSE;
-					break;
+					goto start_failed;
 				}
 
 				/* If not running, are our flags ok? */
 				if (vmc.vmc_flags &&
 				    vmc.vmc_flags != VMOP_CREATE_KERNEL) {
 					cmd = IMSG_VMDOP_START_VM_RESPONSE;
-					break;
+					goto start_failed;
 				}
+
+				close_fd(vm->vm_kernel);
+				vm->vm_kernel = kernfd;
+				kernfd = -1;
 			}
 			res = 0;
-		}
+		} else
+			kernfd = -1;
 
 		/* Try to start the launch of the VM. */
 		res = config_setvm(ps, vm, peer_id,
 		    vm->vm_params.vmc_owner.uid);
 		if (res)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		break;
+	start_failed:
+		close_fd(kernfd);
+		kernfd = -1;
 		break;
 	case IMSG_VMDOP_WAIT_VM_REQUEST:
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
@@ -1147,7 +1158,6 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 			errno = EPERM;
 			goto fail;
 		}
-		vm->vm_kernel = vmc->vmc_kernel;
 		*ret_vm = vm;
 		errno = EALREADY;
 		goto fail;
