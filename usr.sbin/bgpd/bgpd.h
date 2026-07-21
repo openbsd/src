@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.544 2026/06/24 06:01:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.545 2026/07/21 07:26:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -607,15 +607,15 @@ struct peer_stats {
 };
 
 struct rde_peer_stats {
-	uint64_t			 prefix_rcvd_update;
-	uint64_t			 prefix_rcvd_withdraw;
-	uint64_t			 prefix_rcvd_eor;
-	uint64_t			 prefix_sent_update;
-	uint64_t			 prefix_sent_withdraw;
-	uint64_t			 prefix_sent_eor;
-	uint64_t			 rib_entry_count;
-	uint64_t			 ibufq_msg_count;
-	uint64_t			 ibufq_payload_size;
+	unsigned long long		 prefix_rcvd_update;
+	unsigned long long		 prefix_rcvd_withdraw;
+	unsigned long long		 prefix_rcvd_eor;
+	unsigned long long		 prefix_sent_update;
+	unsigned long long		 prefix_sent_withdraw;
+	unsigned long long		 prefix_sent_eor;
+	unsigned long long		 rib_entry_count;
+	unsigned long long		 ibufq_msg_count;
+	unsigned long long		 ibufq_payload_size;
 	uint32_t			 prefix_cnt;
 	uint32_t			 prefix_out_cnt;
 	uint32_t			 pending_update;
