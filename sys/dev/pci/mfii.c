@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.91 2024/05/24 06:02:58 jsg Exp $ */
+/* $OpenBSD: mfii.c,v 1.92 2026/07/21 01:35:17 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -3581,7 +3581,7 @@ mfii_ioctl_patrol(struct mfii_softc *sc, struct bioc_patrol *bp)
 			opc = MR_DCMD_PR_START;
 		else
 			opc = MR_DCMD_PR_STOP;
-		if (mfii_mgmt(sc, opc, NULL, NULL, 0, SCSI_DATA_IN))
+		if (mfii_mgmt(sc, opc, NULL, NULL, 0, 0))
 			return (EINVAL);
 		break;
 
