@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.30 2024/11/28 18:54:36 gkoehler Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.31 2026/07/21 19:37:06 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -224,9 +224,11 @@ cpu_init_features(void)
 {
 	uint32_t pvr = mfpvr();
 
-	hwcap = PPC_FEATURE_32 | PPC_FEATURE_64 | PPC_FEATURE_HAS_FPU |
-	    PPC_FEATURE_HAS_MMU | PPC_FEATURE_HAS_ALTIVEC |
-	    PPC_FEATURE_HAS_VSX;
+	hwcap = PPC_FEATURE_32 | PPC_FEATURE_64 | PPC_FEATURE_HAS_ALTIVEC |
+	    PPC_FEATURE_HAS_FPU | PPC_FEATURE_HAS_MMU |
+	    PPC_FEATURE_ARCH_2_06 | PPC_FEATURE_HAS_VSX;
+	hwcap2 = PPC_FEATURE2_ARCH_2_07 | PPC_FEATURE2_ISEL |
+	    PPC_FEATURE2_VEC_CRYPTO;
 
 	switch (CPU_VERSION(pvr)) {
 	case CPU_IBMPOWER9:
