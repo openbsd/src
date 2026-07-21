@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.545 2026/07/21 07:26:37 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.546 2026/07/21 08:02:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -507,8 +507,8 @@ struct peer_config {
 	uint32_t		 groupid;
 	uint32_t		 remote_as;
 	uint32_t		 local_as;
-	uint32_t		 max_prefix;
-	uint32_t		 max_out_prefix;
+	unsigned int		 max_prefix;
+	unsigned int		 max_out_prefix;
 	enum export_type	 export_type;
 	enum enforce_as		 enforce_as;
 	enum enforce_as		 enforce_local_as;
@@ -598,7 +598,7 @@ struct peer_stats {
 	monotime_t		 last_updown;
 	monotime_t		 last_read;
 	monotime_t		 last_write;
-	uint32_t		 msg_queue_len;
+	unsigned int		 msg_queue_len;
 	uint8_t			 last_sent_errcode;
 	uint8_t			 last_sent_suberr;
 	uint8_t			 last_rcvd_errcode;
@@ -616,10 +616,10 @@ struct rde_peer_stats {
 	unsigned long long		 rib_entry_count;
 	unsigned long long		 ibufq_msg_count;
 	unsigned long long		 ibufq_payload_size;
-	uint32_t			 prefix_cnt;
-	uint32_t			 prefix_out_cnt;
-	uint32_t			 pending_update;
-	uint32_t			 pending_withdraw;
+	unsigned int			 prefix_cnt;
+	unsigned int			 prefix_out_cnt;
+	unsigned int			 pending_update;
+	unsigned int			 pending_withdraw;
 };
 
 struct ctl_peer {
