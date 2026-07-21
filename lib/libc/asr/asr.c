@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.71 2026/06/23 17:47:38 florian Exp $	*/
+/*	$OpenBSD: asr.c,v 1.72 2026/07/21 09:49:56 florian Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -860,9 +860,10 @@ asr_parse_nameserver(struct sockaddr *sa, const char *s)
 char *
 _asr_strdname(const char *_dname, char *buf, size_t max)
 {
-	const unsigned char *dname = _dname;
-	char	*res;
-	size_t	 left, count;
+	const unsigned char	*dname = _dname;
+	unsigned char		 c;
+	char			*res;
+	size_t			 left, count;
 
 	if (max == 0)
 		return (buf);
@@ -876,10 +877,29 @@ _asr_strdname(const char *_dname, char *buf, size_t max)
 	left = max - 1;
 	while (dname[0] && left) {
 		count = (dname[0] < (left - 1)) ? dname[0] : (left - 1);
-		memmove(buf, dname + 1, count);
-		dname += dname[0] + 1;
-		left -= count;
-		buf += count;
+		if (left < 4 * count) {
+			*res = '\0';
+			return res;
+		}
+		dname++;
+		while (count > 0) {
+			c = *dname++;
+			count--;
+			if ( c == '\\') {
+				*buf++ = '\\';
+				*buf++ = '\\';
+				left -= 2;
+			} else if (c > 0x20 && c < 0x7f) {
+				*buf++ = c;
+				left--;
+			} else {
+				*buf++ = '\\';
+				*buf++ = '0' + ((c / 100) % 10);
+				*buf++ = '0' + ((c / 10) % 10);
+				*buf++ = '0' + (c % 10);
+				left -= 4;
+			}
+		}
 		if (left) {
 			left -= 1;
 			*buf++ = '.';
