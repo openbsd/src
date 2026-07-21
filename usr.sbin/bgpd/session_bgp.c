@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.10 2026/07/14 07:58:05 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.11 2026/07/21 08:23:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -512,7 +512,6 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 
 	session_sendmsg(buf, p, BGP_NOTIFICATION);
 	p->stats.msg_sent_notification++;
-	p->errcnt++;
 	p->stats.last_sent_errcode = errcode;
 	p->stats.last_sent_suberr = subcode;
 }
@@ -1187,7 +1186,6 @@ parse_notification(struct peer *peer, struct ibuf *msg)
 		}
 	}
 
-	peer->errcnt++;
 	peer->stats.last_rcvd_errcode = errcode;
 	peer->stats.last_rcvd_suberr = subcode;
 
@@ -1558,17 +1556,20 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 
 			if (!peer->depend_ok)
 				timer_stop(&peer->timers, Timer_ConnectRetry);
-			else if (peer->passive || peer->conf.passive ||
-			    peer->conf.template) {
+			else if (peer->conf.passive || peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
 				timer_stop(&peer->timers, Timer_ConnectRetry);
+			} else if (peer->IdleHoldTime ==
+			    INTERVAL_IDLE_HOLD_INITIAL) {
+				change_state(peer, STATE_ACTIVE, event);
+				timer_set(&peer->timers, Timer_ConnectRetry,
+				    INTERVAL_IDLE_HOLD_INITIAL);
 			} else {
 				change_state(peer, STATE_CONNECT, event);
 				timer_set(&peer->timers, Timer_ConnectRetry,
 				    peer->conf.connectretry);
 				session_connect(peer);
 			}
-			peer->passive = 0;
 			break;
 		case EVNT_STOP:
 			timer_stop(&peer->timers, Timer_IdleHold);
@@ -1610,7 +1611,12 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 	case STATE_ACTIVE:
 		switch (event) {
 		case EVNT_START:
-			/* ignore */
+			if (!peer->depend_ok || peer->conf.template)
+				break;
+			timer_set(&peer->timers, Timer_ConnectRetry,
+			    peer->holdtime);
+			change_state(peer, STATE_CONNECT, event);
+			session_connect(peer);
 			break;
 		case EVNT_CON_OPEN:
 			session_tcp_established(peer);
@@ -1830,8 +1836,6 @@ change_state(struct peer *peer, enum session_state state,
 		 * session was not established successfully before, the
 		 * starttimerinterval needs to be exponentially increased
 		 */
-		if (peer->IdleHoldTime == 0)
-			peer->IdleHoldTime = INTERVAL_IDLE_HOLD_INITIAL;
 		peer->holdtime = INTERVAL_HOLD_INITIAL;
 		timer_stop(&peer->timers, Timer_ConnectRetry);
 		timer_stop(&peer->timers, Timer_Keepalive);
@@ -1845,7 +1849,22 @@ change_state(struct peer *peer, enum session_state state,
 		memset(&peer->capa.peer, 0, sizeof(peer->capa.peer));
 		session_md5_reload(peer);
 
+		if (peer->prev_state == STATE_NONE ||
+		    peer->prev_state == STATE_ESTABLISHED) {
+			/* initialize capability negotiation structures */
+			memcpy(&peer->capa.ann, &peer->conf.capabilities,
+			    sizeof(peer->capa.ann));
+		}
+
+		/* called from init_peer for basic setup. */
+		if (peer->prev_state == STATE_NONE)
+			break;
+
 		if (peer->prev_state == STATE_ESTABLISHED) {
+			if (event == EVNT_STOP) {
+				session_down(peer);
+				break;
+			}
 			if (peer->capa.neg.grestart.restart == 2 &&
 			    (event == EVNT_CON_CLOSED ||
 			    event == EVNT_CON_FATAL ||
@@ -1856,30 +1875,22 @@ change_state(struct peer *peer, enum session_state state,
 				/* don't punish graceful restart */
 				timer_set(&peer->timers, Timer_IdleHold, 0);
 				session_graceful_restart(peer);
-			} else if (event != EVNT_STOP) {
+				break;
+			} else {
 				timer_set(&peer->timers, Timer_IdleHold,
 				    peer->IdleHoldTime);
-				if (event != EVNT_NONE &&
-				    peer->IdleHoldTime < MAX_IDLE_HOLD / 2)
-					peer->IdleHoldTime *= 2;
-				session_down(peer);
-			} else {
 				session_down(peer);
 			}
 		} else if (event != EVNT_STOP) {
 			timer_set(&peer->timers, Timer_IdleHold,
 			    peer->IdleHoldTime);
-			if (event != EVNT_NONE &&
-			    peer->IdleHoldTime < MAX_IDLE_HOLD / 2)
-				peer->IdleHoldTime *= 2;
 		}
 
-		if (peer->prev_state == STATE_NONE ||
-		    peer->prev_state == STATE_ESTABLISHED) {
-			/* initialize capability negotiation structures */
-			memcpy(&peer->capa.ann, &peer->conf.capabilities,
-			    sizeof(peer->capa.ann));
-		}
+		peer->IdleHoldTime *= 2;
+		if (peer->IdleHoldTime == 0)
+			peer->IdleHoldTime = INTERVAL_IDLE_HOLD_INITIAL;
+		if (peer->IdleHoldTime > MAX_IDLE_HOLD)
+			peer->IdleHoldTime = MAX_IDLE_HOLD;
 		break;
 	case STATE_CONNECT:
 		if (peer->prev_state == STATE_ESTABLISHED &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.198 2026/06/24 06:01:13 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.199 2026/07/21 08:23:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -140,7 +140,6 @@ struct peer {
 	struct peer		*template;
 	int			 fd;
 	int			 lasterr;
-	u_int			 errcnt;
 	u_int			 IdleHoldTime;
 	unsigned int		 if_scope;	/* interface scope for IPv6 */
 	uint32_t		 local_bgpid;
@@ -155,7 +154,6 @@ struct peer {
 	uint16_t		 remote_port;
 	uint8_t			 depend_ok;
 	uint8_t			 demoted;
-	uint8_t			 passive;
 	uint8_t			 throttled;
 	uint8_t			 rpending;
 	uint8_t			 rdesession;

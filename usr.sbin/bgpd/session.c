@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.537 2026/05/14 12:26:44 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.538 2026/07/21 08:23:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -362,9 +362,7 @@ session_main(int debug, int verbose)
 					bgp_fsm(p, EVNT_START, NULL);
 					break;
 				case Timer_IdleHoldReset:
-					p->IdleHoldTime =
-					    INTERVAL_IDLE_HOLD_INITIAL;
-					p->errcnt = 0;
+					p->IdleHoldTime = 0;
 					timer_stop(&p->timers,
 					    Timer_IdleHoldReset);
 					break;
@@ -714,15 +712,6 @@ session_accept(int listenfd)
 	}
 
 	p = getpeerbyip(conf, (struct sockaddr *)&cliaddr);
-
-	if (p != NULL && p->state == STATE_IDLE && p->errcnt < 2) {
-		if (timer_running(&p->timers, Timer_IdleHold, NULL)) {
-			/* fast reconnect after clear */
-			p->passive = 1;
-			bgp_fsm(p, EVNT_START, NULL);
-		}
-	}
-
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
 		if (p->fd != -1) {
