@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.202 2026/07/20 13:25:49 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.203 2026/07/21 21:02:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -227,6 +227,18 @@ up_generate_updates(struct rde_peer *peer, struct rib_entry *re,
 	struct adjout_prefix	*p;
 
 	p = adjout_prefix_first(re->prefix, peer->adjout_bid);
+
+	/*
+	 * In case the peer switched from add-path send to no add-path,
+	 * flush all the cached prefixes during initial sync.
+	 */
+	if (mode == EVAL_SYNC && p != NULL && p->path_id_tx != 0) {
+		do {
+			adjout_prefix_withdraw(peer, re->prefix, p, 1);
+			p = adjout_prefix_next(re->prefix,
+			    peer->adjout_bid, p);
+		} while(p != NULL);
+	}
 
 	new = prefix_best(re);
 	while (new != NULL) {
