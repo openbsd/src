@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.54 2026/06/23 11:36:36 florian Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.55 2026/07/21 09:50:31 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -497,7 +497,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 	struct asr_dns_header	 hdr;
 	struct asr_dns_query	 q;
 	struct asr_dns_rr	 rr;
-	char			 dname[MAXDNAME];
+	char			 dname[MAXDNAME], rr_dname[MAXDNAME];
 
 	if ((h = hostent_alloc(family)) == NULL)
 		return (NULL);
@@ -511,7 +511,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 			goto fail;
 	}
 
-	strlcpy(dname, q.q_dname, sizeof(dname));
+	_asr_strdname(q.q_dname, dname, sizeof(dname));
 
 	for (; hdr.ancount; hdr.ancount--) {
 		if (_asr_unpack_rr(&p, &rr) == -1)
@@ -525,8 +525,10 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 			if (reqtype == ASR_GETHOSTBYNAME) {
 				hostent_add_alias(h, rr.rr_dname, 1);
 			} else {
-				if (strcasecmp(rr.rr_dname, dname) == 0)
-					strlcpy(dname, rr.rr.cname.cname,
+				_asr_strdname(rr.rr_dname, rr_dname,
+				    sizeof(rr_dname));
+				if (strcasecmp(rr_dname, dname) == 0)
+					_asr_strdname(rr.rr.cname.cname, dname,
 					    sizeof(dname));
 			}
 			break;
@@ -534,7 +536,8 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 		case T_PTR:
 			if (reqtype != ASR_GETHOSTBYADDR)
 				break;
-			if (strcasecmp(rr.rr_dname, dname) != 0)
+			_asr_strdname(rr.rr_dname, rr_dname, sizeof(rr_dname));
+			if (strcasecmp(rr_dname, dname) != 0)
 				continue;
 			if (hostent_set_cname(h, rr.rr.ptr.ptrname, 1) == -1)
 				hostent_add_alias(h, rr.rr.ptr.ptrname, 1);

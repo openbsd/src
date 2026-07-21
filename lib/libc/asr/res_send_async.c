@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.44 2026/06/23 17:49:38 florian Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.45 2026/07/21 09:50:31 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -686,6 +686,7 @@ validate_packet(struct asr_query *as)
 	struct asr_dns_query	 q;
 	struct asr_dns_rr	 rr;
 	int			 r;
+	char			 q_dname[MAXDNAME], as_dname[MAXDNAME];
 
 	_asr_unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
 
@@ -714,11 +715,14 @@ validate_packet(struct asr_query *as)
 	if (_asr_unpack_query(&p, &q) == -1)
 		goto inval;
 
+	_asr_strdname(q.q_dname, q_dname, sizeof(q_dname));
+	_asr_strdname(as->as.dns.dname, as_dname, sizeof(as_dname));
+
 	if (q.q_type != as->as.dns.type ||
 	    q.q_class != as->as.dns.class ||
-	    strcasecmp(q.q_dname, as->as.dns.dname)) {
+	    strcasecmp(q_dname, as_dname)) {
 		DPRINT("incorrect type/class/dname '%s' != '%s'\n",
-		    q.q_dname, as->as.dns.dname);
+		    q_dname, as_dname);
 		goto inval;
 	}
 
