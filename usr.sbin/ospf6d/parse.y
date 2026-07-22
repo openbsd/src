@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2024/08/21 15:18:47 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.54 2026/07/22 16:37:46 bket Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -554,8 +554,10 @@ interface	: INTERFACE STRING	{
 			iface->metric = defs->metric;
 			iface->priority = defs->priority;
 			iface->cflags |= F_IFACE_CONFIGURED;
-			if (defs->p2p == 1)
+			if (defs->p2p == 1) {
 				iface->type = IF_TYPE_POINTOPOINT;
+				iface->cflags |= F_IFACE_TYPE;
+			}
 			iface = NULL;
 			/* interface is always part of an area */
 			defs = &areadefs;

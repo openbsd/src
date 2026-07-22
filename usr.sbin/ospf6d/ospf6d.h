@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.52 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.53 2026/07/22 16:37:46 bket Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -331,6 +331,7 @@ struct iface {
 	u_int8_t		 cflags;
 #define F_IFACE_PASSIVE		0x01
 #define F_IFACE_CONFIGURED	0x02
+#define F_IFACE_TYPE		0x04
 };
 
 struct ifaddrchange {

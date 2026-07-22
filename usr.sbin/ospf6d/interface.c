@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.30 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: interface.c,v 1.31 2026/07/22 16:37:46 bket Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -244,11 +244,13 @@ if_update(struct iface *iface, int mtu, int flags, u_int8_t type,
 	iface->baudrate = rate;
 	iface->rdomain = rdomain;
 
-	/* set type */
-	if (flags & IFF_POINTOPOINT)
-		iface->type = IF_TYPE_POINTOPOINT;
-	if (flags & IFF_BROADCAST && flags & IFF_MULTICAST)
-		iface->type = IF_TYPE_BROADCAST;
+	/* derive type from interface flags if not explicitly configured */
+	if ((iface->cflags & F_IFACE_TYPE) == 0) {
+		if (flags & IFF_POINTOPOINT)
+			iface->type = IF_TYPE_POINTOPOINT;
+		if (flags & IFF_BROADCAST && flags & IFF_MULTICAST)
+			iface->type = IF_TYPE_BROADCAST;
+	}
 	if (flags & IFF_LOOPBACK) {
 		iface->type = IF_TYPE_POINTOPOINT;
 		iface->cflags |= F_IFACE_PASSIVE;
