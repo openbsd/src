@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.28 2017/05/27 09:31:13 deraadt Exp $
+.\"	$OpenBSD: gettytab.5,v 1.29 2026/07/22 02:08:51 daniel Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 27 2017 $
+.Dd $Mdocdate: July 22 2026 $
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -307,15 +307,6 @@ terminal driver limitations prevent a more complete implementation.
 does not check parity of input characters in
 .Dv RAW
 mode.
-.Pp
-If a
-.Em \&pp
-string is specified and a PPP link bring-up sequence is recognized,
-.Xr getty 8
-will invoke the program referenced by the
-.Em \&pp
-option.
-This can be used to handle incoming PPP calls.
 .Sh FILES
 .Bl -tag -width "/etc/gettytab" -compact
 .It Pa /etc/gettytab
