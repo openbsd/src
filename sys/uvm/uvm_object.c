@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.28 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.29 2026/07/22 20:58:23 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ uvm_obj_wire(struct uvm_object *uobj, voff_t start, voff_t end,
 			if (pgs[i]->pg_flags & PQ_AOBJ) {
 				atomic_clearbits_int(&pgs[i]->pg_flags,
 				    PG_CLEAN);
-				uao_dropswap(uobj, i);
+				uao_dropswap(uobj, pgs[i]->offset >> PAGE_SHIFT);
 			}
 		}
 
