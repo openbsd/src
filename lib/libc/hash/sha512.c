@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512.c,v 1.1 2026/07/15 13:39:15 jsing Exp $	*/
+/*	$OpenBSD: sha512.c,v 1.2 2026/07/22 14:29:56 jsing Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -364,12 +364,16 @@ void
 SHA512Update(SHA2_CTX *ctx, const uint8_t *data, size_t len)
 {
 	size_t blocks, m, n;
+	uint64_t bits;
 
 	if (len == 0)
 		return;
 
 	n = (ctx->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
-	ctx->bitcount[0] += (uint64_t)len << 3;
+	bits = (uint64_t)len << 3;
+	ctx->bitcount[0] += bits;
+	if (ctx->bitcount[0] < bits)
+		ctx->bitcount[1]++;
 
 	if (n > 0) {
 		if ((m = SHA512_BLOCK_LENGTH - n) > len)
