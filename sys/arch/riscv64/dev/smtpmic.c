@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpmic.c,v 1.1 2026/04/06 19:48:07 kettenis Exp $	*/
+/*	$OpenBSD: smtpmic.c,v 1.2 2026/07/22 20:33:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -109,10 +109,8 @@ smtpmic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_quality = 0;
 	todr_attach(&sc->sc_todr);
 
-	if (cpuresetfn == NULL)
-		cpuresetfn = smtpmic_reset;
-	if (powerdownfn == NULL)
-		powerdownfn = smtpmic_powerdown;
+	cpuresetfn = smtpmic_reset;
+	powerdownfn = smtpmic_powerdown;
 
 	printf("\n");
 }
