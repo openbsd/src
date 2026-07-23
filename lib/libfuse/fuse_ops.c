@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.43 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.44 2026/07/23 08:46:56 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,8 +82,10 @@ ifuse_ops_init(void *userdata, struct fuse_conn_info *fci)
 {
 	struct fuse *f = (struct fuse *)userdata;
 
-	if (f->op.init)
-		f->op.init(fci);
+	if (f->op.init) {
+		f->private_data = f->op.init(fci);
+		fuse_get_context()->private_data = f->private_data;
+	}
 }
 
 static void
