@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.709 2026/07/15 11:59:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.710 2026/07/23 14:04:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -850,13 +850,11 @@ badnetdel:
 			    -1, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by SE */
 			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
-			    -1) {
+			    -1)
 				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			log_setverbose(verbose);
+			else
+				log_setverbose(verbose);
 			break;
 		case IMSG_CTL_END:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, pid,
