@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.16 2026/06/22 07:54:16 deraadt Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.17 2026/07/23 12:19:37 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -488,7 +488,7 @@ _dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 				    (map->_dm_boundary == 0 ||
 				     (map->dm_segs[seg].ds_addr & bmask) ==
 				     (paddr & bmask)) &&
-				    (t->_flags & BUS_DMA_COHERENT || !bounce ||
+				    (t->_flags & BUS_DMA_COHERENT || bounce ||
 				     (map->dm_segs[seg]._ds_vaddr +
 				     map->dm_segs[seg].ds_len == vaddr)))
 					map->dm_segs[seg].ds_len += sgsize;
@@ -880,7 +880,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     ((bus_addr_t)curaddr & bmask)) &&
-			    (t->_flags & BUS_DMA_COHERENT || !bounce ||
+			    (t->_flags & BUS_DMA_COHERENT || bounce ||
 			     (map->dm_segs[seg]._ds_vaddr +
 			     map->dm_segs[seg].ds_len == vaddr)))
 				map->dm_segs[seg].ds_len += sgsize;
