@@ -1841,6 +1841,16 @@ Perl_study_chunk(pTHX_
                             tail = regnext( tail );
                         }
 
+                        /* The code below currently saves the difference from
+                         * start to finish in a 16-bit field, causing
+                         * GH #23388.  This defeats the design of batching
+                         * tries into chunks that each fit.  khw thinks it is
+                         * too late in the 5.44 cycle to relook at the design,
+                         * so for now anyway, don't make a trie that would
+                         * overflow */
+                        if (tail - startbranch >= U16_MAX) {
+                            continue;
+                        }
 
                         DEBUG_TRIE_COMPILE_r({
                             regprop(RExC_rx, RExC_mysv, tail, NULL, pRExC_state);
