@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2024/07/19 15:28:51 bluhm Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2026/07/23 11:13:36 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -314,6 +314,8 @@ main(int argc, char *argv[])
 			oflush();
 			alarm(0);
 			signal(SIGALRM, SIG_DFL);
+			if (name[0] == '\0')
+				continue;
 			if (name[0] == '-') {
 				xputs("user names may not start with '-'.");
 				continue;
