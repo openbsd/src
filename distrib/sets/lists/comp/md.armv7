@@ -19,7 +19,6 @@
 ./usr/include/arm/exec.h
 ./usr/include/arm/fdt.h
 ./usr/include/arm/fenv.h
-./usr/include/arm/fiq.h
 ./usr/include/arm/frame.h
 ./usr/include/arm/ieee.h
 ./usr/include/arm/ieeefp.h
