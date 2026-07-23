@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.11 2026/07/21 08:23:44 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.12 2026/07/23 11:29:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -1554,16 +1554,20 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 			timer_stop(&peer->timers, Timer_Keepalive);
 			timer_stop(&peer->timers, Timer_IdleHold);
 
-			if (!peer->depend_ok)
+			if (!peer->depend_ok) {
 				timer_stop(&peer->timers, Timer_ConnectRetry);
-			else if (peer->conf.passive || peer->conf.template) {
+			} else if (peer->conf.passive || peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
 				timer_stop(&peer->timers, Timer_ConnectRetry);
-			} else if (peer->IdleHoldTime ==
-			    INTERVAL_IDLE_HOLD_INITIAL) {
+			} else if (peer->prev_state == STATE_NONE ||
+			    peer->IdleHoldTime == INTERVAL_IDLE_HOLD_INITIAL) {
+				u_int holdtime = INTERVAL_IDLE_HOLD_INITIAL;
+
+				if (peer->prev_state == STATE_NONE)
+					holdtime = SESSION_CLEAR_DELAY;
 				change_state(peer, STATE_ACTIVE, event);
 				timer_set(&peer->timers, Timer_ConnectRetry,
-				    INTERVAL_IDLE_HOLD_INITIAL);
+				    holdtime);
 			} else {
 				change_state(peer, STATE_CONNECT, event);
 				timer_set(&peer->timers, Timer_ConnectRetry,

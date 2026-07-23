@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.538 2026/07/21 08:23:44 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.539 2026/07/23 11:29:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -593,10 +593,8 @@ init_peer(struct peer *p, struct bgpd_config *c)
 	peer_cnt++;
 
 	change_state(p, STATE_IDLE, EVNT_NONE);
-	if (p->conf.down)
-		timer_stop(&p->timers, Timer_IdleHold); /* no autostart */
-	else
-		timer_set(&p->timers, Timer_IdleHold, SESSION_CLEAR_DELAY);
+	if (!p->conf.down)
+		bgp_fsm(p, EVNT_START, NULL);
 
 	p->stats.last_updown = getmonotime();
 
