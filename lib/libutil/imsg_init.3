@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.46 2025/06/13 18:34:00 schwarze Exp $
+.\" $OpenBSD: imsg_init.3,v 1.47 2026/07/23 14:13:33 tb Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: July 23 2026 $
 .Dt IMSG_ADD 3
 .Os
 .Sh NAME
@@ -48,6 +48,8 @@
 .Nm imsgbuf_read ,
 .Nm imsgbuf_set_maxsize ,
 .Nm imsgbuf_write
+.\" .Nm imsg_get is intentionally undocumented
+.\" because imsgbuf_get should be used instead.
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .Lb libutil
