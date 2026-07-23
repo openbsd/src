@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: l3vpn.sh,v 1.9 2026/05/21 18:51:06 claudio Exp $
+#	$OpenBSD: l3vpn.sh,v 1.10 2026/07/23 10:05:37 claudio Exp $
 
 set -e
 
@@ -82,6 +82,8 @@ ifconfig mpe${RDOMAIN3} inet6 2001:db8:242::242/64
 ifconfig mpe${RDOMAIN4} inet6 2001:db8:244::244/64
 ifconfig lo${RDOMAIN3} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN4} inet 127.0.0.1/8
+
+ping6 -q -V ${RDOMAIN1} -c 2 ${PAIR2IP6}
 
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
