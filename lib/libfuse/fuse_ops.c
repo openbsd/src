@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.44 2026/07/23 08:46:56 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.45 2026/07/23 08:48:50 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -776,7 +776,7 @@ ifuse_ops_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
 		if (f->op.chmod)
 			err = f->op.chmod(realname, attr->st_mode);
 		else
-			err = ENOSYS;
+			err = -ENOSYS;
 	}
 
 	if (!err && (flags & FUSE_SET_ATTR_UID || flags & FUSE_SET_ATTR_GID)) {
@@ -785,7 +785,7 @@ ifuse_ops_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
 		if (f->op.chown)
 			err = f->op.chown(realname, uid, gid);
 		else
-			err = ENOSYS;
+			err = -ENOSYS;
 	}
 
 	if (!err && (flags & FUSE_SET_ATTR_MTIME || flags & FUSE_SET_ATTR_ATIME)) {
@@ -798,14 +798,14 @@ ifuse_ops_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
 			tbuf.modtime = attr->st_mtim.tv_sec;
 			err = f->op.utime(realname, &tbuf);
 		} else
-			err = ENOSYS;
+			err = -ENOSYS;
 	}
 
 	if (!err && (flags & FUSE_SET_ATTR_SIZE)) {
 		if (f->op.truncate)
 			err = f->op.truncate(realname, attr->st_size);
 		else
-			err = ENOSYS;
+			err = -ENOSYS;
 	}
 
 	ictx_destroy();
