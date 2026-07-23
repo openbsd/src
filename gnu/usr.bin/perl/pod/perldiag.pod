@@ -5027,6 +5027,12 @@ mixed-case attribute name, instead.  See L<attributes>.
 (F) You can't specify a repeat count so large that it overflows your
 signed integers.  See L<perlfunc/pack>.
 
+=item Pack template structure size is too large
+
+(F) You called C<pack> or C<unpack> to operate on a structure, whose
+computed size is too large to fit in memory.  This usually happens as a
+result of embedding a large number as the repeat count for an item.
+
 =item page overflow
 
 (W io) A single call to write() produced more lines than can fit on a

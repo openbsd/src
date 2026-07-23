@@ -513,12 +513,12 @@ S_measure_struct(pTHX_ tempsym_t* symptr)
                 break;
             case 'B':
             case 'b':
-                len = (len + 7)/8;
+                len = (len / 8) + !!(len % 8);
                 size = 1;
                 break;
             case 'H':
             case 'h':
-                len = (len + 1)/2;
+                len = (len / 2) + !!(len % 2);
                 size = 1;
                 break;
 
@@ -528,6 +528,10 @@ S_measure_struct(pTHX_ tempsym_t* symptr)
                 break;
             }
         }
+        if ((size > 0) &&
+                ((len > SSize_t_MAX / size) ||         /* detect overflow of len * size */
+                 (len * size > SSize_t_MAX - total)))  /* detect overflow of total + len * size */
+            croak("Pack template structure size is too large");
         total += len * size;
     }
     return total;
