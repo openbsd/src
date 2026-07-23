@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: pftable.sh,v 1.1 2022/10/31 18:34:11 claudio Exp $
+#	$OpenBSD: pftable.sh,v 1.2 2026/07/23 09:22:19 claudio Exp $
 
 set -e
 
@@ -74,13 +74,14 @@ pfctl -q -t bgpd_integ_test -T del 1.1.1.1
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.pftable.rdomain1.conf
-sleep 2
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.pftable.rdomain2_1.conf
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.pftable.rdomain2_2.conf
-
-sleep 3
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2_1 up
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2_2 up
+sleep 1
 
 echo Check default prefixes
 route -T ${RDOMAIN1} exec bgpctl show 
