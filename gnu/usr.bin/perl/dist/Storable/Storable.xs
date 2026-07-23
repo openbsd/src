@@ -5035,7 +5035,10 @@ static SV *retrieve_hook_common(pTHX_ stcxt_t *cxt, const char *cname, int large
         }
         else
             GETMARK(len3);
-        if (len3) {
+        if (len3 == I32_MAX)
+            /* If len3 is exactly I32_MAX it will upset av_extend below */
+            CROAK(("Invalid count of hook data items"));
+        else if (len3) {
             av = newAV();
             av_extend(av, len3 + 1);    /* Leave room for [0] */
             AvFILLp(av) = len3;         /* About to be filled anyway */
