@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.53 2026/07/21 20:20:11 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.54 2026/07/24 13:44:03 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -414,11 +414,19 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 		switch (type) {
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+			if (imsg_get_len(&imsg) != 0)
+				goto fail_imsg;
+			break;
 		case IMSG_VMDOP_WAIT_VM_REQUEST:
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-		case IMSG_VMDOP_START_VM_REQUEST:
 		case IMSG_VMDOP_PAUSE_VM:
 		case IMSG_VMDOP_UNPAUSE_VM:
+			if (imsg_get_len(&imsg) != sizeof(vid))
+				goto fail_imsg;
+			break;
+		case IMSG_VMDOP_START_VM_REQUEST:
+			if (imsg_get_len(&imsg) != sizeof(vmc))
+				goto fail_imsg;
 			break;
 		default:
 			if (c->peercred.uid != 0) {
@@ -515,6 +523,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	imsg_event_add(&c->iev);
 	return;
 
+ fail_imsg:
+	imsg_free(&imsg);
  fail:
 	if (ret == 0)
 		ret = EINVAL;
