@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.189 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.190 2026/07/24 15:03:50 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -139,7 +139,6 @@ typedef int		vm_prot_t;
 #define UVM_PLA_NOWAIT		0x0002	/* can't sleep (need one of the two) */
 #define UVM_PLA_ZERO		0x0004	/* zero all pages before returning */
 #define UVM_PLA_TRYCONTIG	0x0008	/* try to allocate contig physmem */
-#define UVM_PLA_FAILOK		0x0010	/* caller can handle failure */
 #define UVM_PLA_NOWAKE		0x0020	/* don't wake page daemon on failure */
 #define UVM_PLA_USERESERVE	0x0040	/* can allocate from kernel reserve */
 

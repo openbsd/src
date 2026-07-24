@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.142 2026/06/23 06:13:48 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.143 2026/07/24 15:03:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -570,8 +570,6 @@ alloc_pages(unsigned int gfp_mask, unsigned int order)
 	struct uvm_constraint_range *constraint = &no_constraint;
 	struct pglist mlist;
 
-	if (gfp_mask & M_CANFAIL)
-		flags |= UVM_PLA_FAILOK;
 	if (gfp_mask & M_ZERO)
 		flags |= UVM_PLA_ZERO;
 	if (gfp_mask & __GFP_DMA32)

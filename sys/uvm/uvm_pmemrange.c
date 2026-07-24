@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.82 2026/02/11 22:34:41 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.83 2026/07/24 15:03:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -1179,22 +1179,13 @@ fail:
 		uvm_pmr_remove_1strange(result, 0, NULL, 0);
 
 	if (flags & UVM_PLA_WAITOK) {
-		if (uvm_wait_pla(ptoa(start), ptoa(end) - 1, ptoa(count),
-		    flags & UVM_PLA_FAILOK) == 0)
-			goto retry;
-		KASSERT(flags & UVM_PLA_FAILOK);
-	} else if (!(flags & UVM_PLA_NOWAKE)) {
-		struct uvm_pmalloc *pma = &nowait_pma;
-
-		if (!(nowait_pma.pm_flags & UVM_PMA_LINKED)) {
-			nowait_pma.pm_flags = UVM_PMA_LINKED;
-			/*
-			 * Ensure this is processed first by the page daemon
-			 * to avoid starvation behind non-constrained requests.
-			 */
-			TAILQ_INSERT_HEAD(&uvm.pmr_control.allocs, pma, pmq);
-			wakeup(&uvm.pagedaemon);
-		}
+		uvm_unlock_fpageq();
+		uvm_wait("pmrwait");
+		uvm_lock_fpageq();
+		goto retry;
+	}
+	if (!(flags & UVM_PLA_NOWAKE)) {
+		wakeup(&uvm.pagedaemon);
 	}
 	uvm_unlock_fpageq();
 
@@ -1306,7 +1297,6 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 {
 	struct uvm_pmemrange *pmr;
 	psize_t i, pmr_count;
-	struct vm_page *firstpg = pg;
 
 	for (i = 0; i < count; i++) {
 		KASSERT(pg->uobject == NULL);
@@ -1342,8 +1332,6 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 	wakeup(&uvmexp.free);
 	if (atomic_load_sint(&uvmexp.zeropages) < UVM_PAGEZERO_TARGET)
 		wakeup(&uvmexp.zeropages);
-
-	uvm_wakeup_pla(VM_PAGE_TO_PHYS(firstpg), ptoa(count));
 
 	uvm_unlock_fpageq();
 }
@@ -1388,8 +1376,6 @@ uvm_pmr_freepageq(struct pglist *pgl)
 			plen = uvm_pmr_remove_1strange(pgl, 0, NULL, 0);
 		}
 		atomic_add_int(&uvmexp.free, plen);
-
-		uvm_wakeup_pla(pstart, ptoa(plen));
 	}
 	wakeup(&uvmexp.free);
 	if (atomic_load_sint(&uvmexp.zeropages) < UVM_PAGEZERO_TARGET)
@@ -1716,7 +1702,6 @@ uvm_pmr_init(void)
 
 	TAILQ_INIT(&uvm.pmr_control.use);
 	RBT_INIT(uvm_pmemrange_addr, &uvm.pmr_control.addr);
-	TAILQ_INIT(&uvm.pmr_control.allocs);
 
 	/* By default, one range for the entire address space. */
 	new_pmr = uvm_pmr_allocpmr();
@@ -2099,101 +2084,6 @@ uvm_pmr_print(void)
 	printf("#ranges = %d\n", useq_len);
 }
 #endif
-
-/*
- * uvm_wait_pla: wait (sleep) for the page daemon to free some pages
- * in a specific physmem area.
- *
- * Returns ENOMEM if the pagedaemon failed to free any pages.
- * If not failok, failure will lead to panic.
- *
- * Must be called with fpageq locked.
- */
-int
-uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
-{
-	struct uvm_pmalloc pma;
-	const char *wmsg = "pmrwait";
-
-	KASSERT(curcpu()->ci_idepth == 0);
-
-	if (curproc == uvm.pagedaemon_proc) {
-		/*
-		 * This is not that uncommon when the pagedaemon is trying
-		 * to flush out a large mmapped file. VOP_WRITE will circle
-		 * back through the buffer cache and try to get more memory.
-		 * The pagedaemon starts by calling bufbackoff, but we can
-		 * easily use up that reserve in a single scan iteration.
-		 */
-		uvm_unlock_fpageq();
-		if (bufbackoff(NULL, atop(size)) >= atop(size)) {
-			uvm_lock_fpageq();
-			return 0;
-		}
-		uvm_lock_fpageq();
-
-		/*
-		 * XXX detect pagedaemon deadlock - see comment in
-		 * uvm_wait(), as this is exactly the same issue.
-		 */
-		printf("pagedaemon: wait_pla deadlock detected!\n");
-		msleep_nsec(&uvmexp.free, &uvm.fpageqlock, PVM, wmsg,
-		    MSEC_TO_NSEC(125));
-#if defined(DEBUG)
-		/* DEBUG: panic so we can debug it */
-		panic("wait_pla pagedaemon deadlock");
-#endif
-		return 0;
-	}
-
-	for (;;) {
-		pma.pm_constraint.ucr_low = low;
-		pma.pm_constraint.ucr_high = high;
-		pma.pm_size = size;
-		pma.pm_flags = UVM_PMA_LINKED;
-		TAILQ_INSERT_TAIL(&uvm.pmr_control.allocs, &pma, pmq);
-
-		wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-		while (pma.pm_flags & UVM_PMA_LINKED)
-			msleep_nsec(&pma, &uvm.fpageqlock, PVM, wmsg, INFSLP);
-
-		if (!(pma.pm_flags & UVM_PMA_FREED) &&
-		    pma.pm_flags & UVM_PMA_FAIL) {
-			if (failok)
-				return ENOMEM;
-			printf("uvm_wait: failed to free %ld pages between "
-			    "0x%lx-0x%lx\n", atop(size), low, high);
-		} else
-			return 0;
-	}
-	/* UNREACHABLE */
-}
-
-/*
- * Wake up uvm_pmalloc sleepers.
- */
-void
-uvm_wakeup_pla(paddr_t low, psize_t len)
-{
-	struct uvm_pmalloc *pma, *pma_next;
-	paddr_t high;
-
-	high = low + len;
-
-	/* Wake specific allocations waiting for this memory. */
-	for (pma = TAILQ_FIRST(&uvm.pmr_control.allocs); pma != NULL;
-	    pma = pma_next) {
-		pma_next = TAILQ_NEXT(pma, pmq);
-
-		if (low < pma->pm_constraint.ucr_high &&
-		    high > pma->pm_constraint.ucr_low) {
-			pma->pm_flags |= UVM_PMA_FREED;
-			pma->pm_flags &= ~UVM_PMA_LINKED;
-			TAILQ_REMOVE(&uvm.pmr_control.allocs, pma, pmq);
-			wakeup(pma);
-		}
-	}
-}
 
 void
 uvm_pagezero_thread(void *arg)
