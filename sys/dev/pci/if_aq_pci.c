@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.36 2026/06/05 05:06:10 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.37 2026/07/24 02:31:43 bcook Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1377,7 +1377,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = aq_ioctl;
 	ifp->if_qstart = aq_start;
 	ifp->if_watchdog = aq_watchdog;
