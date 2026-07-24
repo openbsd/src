@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2142 2026/07/09 05:12:34 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2143 2026/07/24 13:58:18 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -9685,6 +9685,7 @@
 
 /* SpacemiT products */
 #define	PCI_PRODUCT_SPACEMIT_K1	0x0001		/* K1 */
+#define	PCI_PRODUCT_SPACEMIT_K3	0x0002		/* K3 */
 
 /* Solid State Storage Technology Corporation products */
 #define	PCI_PRODUCT_SSSTC_CL1	0x9100		/* CL1 */
