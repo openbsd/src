@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.19 2026/04/13 12:20:13 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.20 2026/07/24 11:06:28 kettenis Exp $
 
-MAN=	intro.4 mpfclock.4 mpfgpio.4 mpfiic.4 plic.4 \
+MAN=	intro.4 aplic.4 imsic.4 mpfclock.4 mpfgpio.4 mpfiic.4 plic.4 \
 	sfcc.4 sfclock.4 sfgpio.4 sfuart.4 sgmsi.4 \
 	smtclock.4 smtcomphy.4 smte.4 smtgpio.4 smtiic.4 smtpinctrl.4 \
 	smtpmic.4 \
