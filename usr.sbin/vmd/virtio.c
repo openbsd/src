@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.142 2026/07/22 16:03:35 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.143 2026/07/24 13:56:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -65,6 +65,9 @@ struct virtio_dev vmmci;
  * process synchronous PCI IO messages.
  */
 pthread_mutex_t vcpu_sync_mtx;
+
+/* Guards the in-process entropy device state. */
+static pthread_mutex_t viornd_mtx;
 
 /* Devices emulated in subprocesses are inserted into this list. */
 SLIST_HEAD(virtio_dev_head, virtio_dev) virtio_devs;
@@ -365,8 +368,10 @@ virtio_io_dispatch(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
     void *arg, uint8_t sz)
 {
 	struct virtio_dev *dev = (struct virtio_dev *)arg;
+	int ret = 0;
 	uint8_t actual = (uint8_t)reg;
 
+	mutex_lock(&viornd_mtx);
 	switch (reg & 0xFF00) {
 	case VIO1_CFG_BAR_OFFSET:
 		*data = virtio_io_cfg(dev, dir, actual, *data, sz);
@@ -378,15 +383,18 @@ virtio_io_dispatch(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		}
 		break;
 	case VIO1_NOTIFY_BAR_OFFSET:
-		return virtio_io_notify(dir, actual, data, intr, arg, sz);
+		ret = virtio_io_notify(dir, actual, data, intr, arg, sz);
+		break;
 	case VIO1_ISR_BAR_OFFSET:
-		return virtio_io_isr(dir, actual, data, intr, arg, sz);
+		ret = virtio_io_isr(dir, actual, data, intr, arg, sz);
+		break;
 	default:
 		DPRINTF("%s: no handler for reg 0x%04x", __func__, reg);
 		if (dir == VEI_DIR_IN)
 			*data = (uint32_t)(-1);
 	}
-	return (0);
+	mutex_unlock(&viornd_mtx);
+	return (ret);
 }
 
 /*
@@ -1036,6 +1044,13 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 
 	if (pthread_mutex_init(&vcpu_sync_mtx, NULL) != 0)
 		fatalx("%s: could not initialize sync io mutex", __func__);
+
+	ret = pthread_mutex_init(&viornd_mtx, NULL);
+	if (ret) {
+		errno = ret;
+		log_warn("could not initialize entropy device mutex");
+		return (1);
+	}
 
 	/* Virtio 1.x Entropy Device */
 	if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
