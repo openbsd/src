@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.291 2026/07/23 14:04:44 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.292 2026/07/24 05:01:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -853,9 +853,8 @@ dispatch_imsg(struct imsgbuf *imsgbuf, int idx, struct bgpd_config *conf)
 
 	rv = 0;
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
 			return (-1);
-
 		if (n == 0)
 			break;
 

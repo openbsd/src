@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.710 2026/07/23 14:04:44 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.711 2026/07/24 05:01:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -471,8 +471,8 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 	u_int			 aid;
 
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg_session: imsg_get error");
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg_session: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -919,8 +919,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	uint16_t		 rid;
 
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg_parent: imsg_get error");
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg_parent: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -1336,8 +1336,8 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 	int			 n;
 
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg_parent: imsg_get error");
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg_parent: imsgbuf_get error");
 		if (n == 0)
 			break;
 

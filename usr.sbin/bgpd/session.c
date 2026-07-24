@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.539 2026/07/23 11:29:55 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.540 2026/07/24 05:01:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1193,9 +1193,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	uint8_t			 errcode, subcode;
 
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-			fatal("session_dispatch_imsg: imsg_get error");
-
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+			fatal("session_dispatch_imsg: imsgbuf_get error");
 		if (n == 0)
 			break;
 

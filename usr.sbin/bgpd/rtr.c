@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.35 2026/05/11 18:46:43 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.36 2026/07/24 05:01:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -323,8 +323,8 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	int			 n, fd;
 
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get error", __func__);
 		if (n == 0)
 			break;
 
@@ -466,8 +466,8 @@ rtr_dispatch_imsg_rde(struct imsgbuf *imsgbuf)
 	int		n;
 
 	while (imsgbuf) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get error", __func__);
 		if (n == 0)
 			break;
 
