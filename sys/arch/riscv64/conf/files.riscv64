@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.39 2026/05/09 17:38:50 jsing Exp $
+#	$OpenBSD: files.riscv64,v 1.40 2026/07/24 10:51:01 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -80,6 +80,16 @@ file	arch/riscv64/dev/simplebus.c		simplebus
 device	plic
 attach	plic at fdt
 file	arch/riscv64/dev/plic.c			plic
+
+# APLIC
+device	aplic
+attach	aplic at fdt
+file	arch/riscv64/dev/aplic.c		aplic
+
+# IMSIC
+device	imsic
+attach	imsic at fdt
+file	arch/riscv64/dev/imsic.c		imsic
 
 # Allwinner timer
 device	sxitimer

@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscvreg.h,v 1.7 2026/07/19 09:45:08 kettenis Exp $	*/
+/*	$OpenBSD: riscvreg.h,v 1.8 2026/07/24 10:51:00 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -161,6 +161,9 @@
 #define UIP_USIP	(1 << 0)
 #define UIP_UTIP	(1 << 4)
 #define UIP_UEIP	(1 << 8)
+
+#define STOPEI_ID_MASK	(0x7ff << STOPEI_ID_SHIFT)
+#define STOPEI_ID_SHIFT	16
 
 #define PPN(pa)			((pa) >> PAGE_SHIFT)
 #define SATP_PPN_SHIFT		0

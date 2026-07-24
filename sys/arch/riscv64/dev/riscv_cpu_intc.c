@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscv_cpu_intc.c,v 1.11 2024/04/19 14:39:34 jca Exp $	*/
+/*	$OpenBSD: riscv_cpu_intc.c,v 1.12 2026/07/24 10:51:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -119,7 +119,7 @@ riscv_intc_irq_handler(void *frame)
 #endif
 
 	ih = intc_handler[irq];
-	if (ih->ih_func(frame) == 0)
+	if (ih->ih_func(ih->ih_arg ? ih->ih_arg : frame) == 0)
 #ifdef DEBUG_INTC
 		printf("fail in handling irq %d %s\n", irq, ih->ih_name);
 #else
