@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.15 2026/06/25 15:40:10 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.16 2026/07/24 14:24:49 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -61,6 +61,8 @@ static struct fw_cfg_state {
 	uint8_t *data;
 } fw_cfg_state;
 
+/* Guards fw_cfg_state and fw_cfg_dma_addr. */
+static pthread_mutex_t fw_cfg_mtx;
 static uint64_t	fw_cfg_dma_addr;
 
 static bios_memmap_t e820[VMM_MAX_MEM_RANGES];
@@ -76,6 +78,9 @@ fw_cfg_init(struct vmop_create_params *vmc)
 	char bootorder[64];
 	const char *bootfmt;
 	int bootidx = -1;
+
+	if (pthread_mutex_init(&fw_cfg_mtx, NULL) != 0)
+		fatalx("unable to create fw_cfg mutex");
 
 	/* Define e820 memory ranges. */
 	memset(&e820, 0, sizeof(e820));
@@ -218,6 +223,7 @@ vcpu_exit_fw_cfg(struct vm_run_params *vrp)
 
 	get_input_data(vei, &data);
 
+	mutex_lock(&fw_cfg_mtx);
 	switch (vei->vei.vei_port) {
 	case FW_CFG_IO_SELECT:
 		if (vei->vei.vei_dir == VEI_DIR_IN) {
@@ -245,6 +251,7 @@ vcpu_exit_fw_cfg(struct vm_run_params *vrp)
 			set_return_data(vei, 0);
 		break;
 	}
+	mutex_unlock(&fw_cfg_mtx);
 
 	return 0xFF;
 }
@@ -256,12 +263,14 @@ vcpu_exit_fw_cfg_dma(struct vm_run_params *vrp)
 	uint32_t data = 0;
 	struct vm_exit *vei = vrp->vrp_exit;
 
+	mutex_lock(&fw_cfg_mtx);
+
 	if (vei->vei.vei_size != 4) {
 		log_debug("fw_cfg_dma: discarding data written to "
 		    "dma addr");
 		if (vei->vei.vei_dir == VEI_DIR_OUT)
 			fw_cfg_dma_addr = 0;
-		return 0xFF;
+		goto unlock;
 	}
 
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
@@ -303,6 +312,8 @@ vcpu_exit_fw_cfg_dma(struct vm_run_params *vrp)
 			break;
 		}
 	}
+unlock:
+	mutex_unlock(&fw_cfg_mtx);
 	return 0xFF;
 }
 
