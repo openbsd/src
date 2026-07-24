@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.323 2026/06/24 06:02:48 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.324 2026/07/24 05:01:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -427,8 +427,8 @@ main(int argc, char *argv[])
 
 	while (!done) {
 		while (!done) {
-			if ((n = imsg_get(imsgbuf, &imsg)) == -1)
-				err(1, "imsg_get error");
+			if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
+				err(1, "imsgbuf_get error");
 			if (n == 0)
 				break;
 
