@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.55 2026/06/26 00:34:42 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.56 2026/07/24 13:48:17 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -321,7 +321,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
 {
 	uint32_t memmap_sz, consdev_sz, bootmac_sz, i;
 	bios_consdev_t consdev;
-	uint32_t ba[1024];
+	uint32_t ba[1024] = { 0 };
 
 	memmap_sz = 3 * sizeof(uint32_t) + n * sizeof(bios_memmap_t);
 	ba[0] = BOOTARG_MEMMAP;
