@@ -2038,6 +2038,8 @@
 ./usr/share/man/man4/rge.4
 ./usr/share/man/man4/rgephy.4
 ./usr/share/man/man4/ricohrtc.4
+./usr/share/man/man4/riscv64/aplic.4
+./usr/share/man/man4/riscv64/imsic.4
 ./usr/share/man/man4/riscv64/intro.4
 ./usr/share/man/man4/riscv64/mpfclock.4
 ./usr/share/man/man4/riscv64/mpfgpio.4
