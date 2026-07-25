@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.179 2026/07/19 09:09:25 kirill Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.180 2026/07/25 05:48:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,6 +67,8 @@
 #define HTTPD_TLS_ECDHE_CURVES	"default"
 #define HTTPD_FCGI_NAME_MAX	511
 #define HTTPD_FCGI_VAL_MAX	511
+#define HTTPD_HEADER_NAME_MAX	256
+#define HTTPD_HEADER_VAL_MAX	8192
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -187,6 +189,7 @@ enum imsg_type {
 	IMSG_CFG_MEDIA,
 	IMSG_CFG_AUTH,
 	IMSG_CFG_FCGI,
+	IMSG_CFG_HEADERS,
 	IMSG_CFG_DONE,
 	IMSG_LOG_ACCESS,
 	IMSG_LOG_ERROR,
@@ -410,6 +413,18 @@ enum log_format {
 	LOG_FORMAT_FORWARDED
 };
 
+#define HEADER_REMOVE		0x01
+#define HEADER_ADD		0x02
+#define HEADER_SET		0x04
+#define HEADER_ALWAYS		0x08
+
+struct header_imsg {
+	uint32_t	id;		/* server conf id */
+	uint32_t	flags;
+	uint16_t	namelen;
+	uint16_t	vallen;
+};
+
 struct log_file {
 	char			log_name[PATH_MAX];
 	int			log_fd;
@@ -447,6 +462,15 @@ struct fastcgi_param {
 	TAILQ_ENTRY(fastcgi_param) entry;
 };
 TAILQ_HEAD(server_fcgiparams, fastcgi_param);
+
+struct custom_header {
+	char			*name;
+	char			*value;
+	uint32_t		flags;
+
+	TAILQ_ENTRY(custom_header) entry;
+};
+TAILQ_HEAD(server_headers, custom_header);
 
 struct server_config {
 	uint32_t		 id;
@@ -519,6 +543,7 @@ struct server_config {
 	struct server_fcgiparams fcgiparams;
 	int			 fcgistrip;
 	int			 fcgiallowchunked;
+	struct server_headers	 headers;
 	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
 
 	TAILQ_ENTRY(server_config) entry;
@@ -602,6 +627,7 @@ void	 server_generate_ticket_key(struct server_config *);
 int	 server_privinit(struct server *);
 void	 server_purge(struct server *);
 void	 serverconfig_free(struct server_config *);
+void	 server_headers_free(struct server_headers *);
 void	 serverconfig_reset(struct server_config *);
 int	 server_socket_af(struct sockaddr_storage *, in_port_t);
 in_port_t
@@ -642,6 +668,8 @@ void	 server_http(void);
 int	 server_httpdesc_init(struct client *);
 void	 server_read_http(struct bufferevent *, void *);
 void	 server_abort_http(struct client *, unsigned int, const char *);
+int	 server_custom_headers(struct server_config *, struct kvtree *,
+	    unsigned int);
 unsigned int
 	 server_httpmethod_byname(const char *);
 const char
@@ -698,7 +726,7 @@ struct in6_addr *prefixlen2mask6(uint8_t, uint32_t *);
 uint32_t	 prefixlen2mask(uint8_t);
 int		 accept_reserve(int, struct sockaddr *, socklen_t *, int,
 		    volatile int *);
-struct kv	*kv_add(struct kvtree *, char *, char *);
+struct kv	*kv_add(struct kvtree *, const char *, const char *);
 int		 kv_set(struct kv *, char *, ...)
 		    __attribute__((__format__ (printf, 2, 3)));
 int		 kv_setkey(struct kv *, char *, ...)
@@ -726,6 +754,12 @@ void		 auth_free(struct serverauth *, struct auth *);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
 const char	*printb_flags(const uint64_t, const char *);
 void		 getmonotime(struct timeval *);
+
+void		 print_custom_header(const char *,
+		    const struct custom_header *);
+int		 header_exists(struct server_config *, const char *);
+struct custom_header
+		*header_dup(const struct custom_header *);
 
 extern struct httpd *httpd_env;
 
@@ -771,9 +805,12 @@ int	 config_getcfg(struct httpd *, struct imsg *);
 int	 config_setserver(struct httpd *, struct server *);
 int	 config_setserver_tls(struct httpd *, struct server *);
 int	 config_setserver_fcgiparams(struct httpd *, struct server *);
+int	 config_setserver_headers(struct httpd *, struct server *);
+void	 config_inherit_headers(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
 int	 config_getserver_tls(struct httpd *, struct imsg *);
 int	 config_getserver_fcgiparams(struct httpd *, struct imsg *);
+int	 config_getserver_headers(struct httpd *, struct imsg *);
 int	 config_setmedia(struct httpd *, struct media_type *);
 int	 config_getmedia(struct httpd *, struct imsg *);
 int	 config_setauth(struct httpd *, struct auth *);

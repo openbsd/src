@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.101 2026/06/01 09:28:42 claudio Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.102 2026/07/25 05:48:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -723,6 +723,9 @@ server_fcgi_header(struct client *clt, unsigned int code)
 		    "; preload" : "") == -1)
 			return (-1);
 	}
+
+	if (server_custom_headers(srv_conf, &resp->http_headers, code) == -1)
+		return (-1);
 
 	/* Date header is mandatory and should be added as late as possible */
 	key.kv_key = "Date";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.136 2026/07/14 08:53:42 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.137 2026/07/25 05:48:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -121,6 +121,7 @@ int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
 int		 get_fastcgi_dest(struct server_config *, const char *, char *);
 void		 remove_locations(struct server_config *);
+int		 header_name_forbidden(const char *);
 
 typedef struct {
 	union {
@@ -135,14 +136,14 @@ typedef struct {
 
 %}
 
-%token	ACCESS ALIAS AUTHENTICATE AUTO
+%token	ACCESS ADD ALIAS ALWAYS AUTHENTICATE AUTO
 %token	BACKLOG BANNER BLOCK BODY BUFFER
 %token	CA CERTIFICATE CHROOT CIPHERS CLIENT COMBINED COMMON CONNECTION CRL
 %token	DEFAULT DHE DIRECTORY DROP
 %token	ECDHE ERR ERRDOCS ERROR
 %token	FCGI FORWARDED FOUND
 %token	GZIPSTATIC
-%token	HSTS
+%token	HEADER HSTS
 %token	INCLUDE INDEX IP
 %token	KEY
 %token	LIFETIME LISTEN LOCATION LOG LOGDIR
@@ -150,15 +151,16 @@ typedef struct {
 %token	NO NODELAY NOT
 %token	OCSP ON OPTIONAL
 %token	PARAM PASS PORT PREFORK PRELOAD PROTOCOLS
-%token	REQUEST REQUESTS RETURN REWRITE ROOT
-%token	SACK SERVER SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS SYSLOG
+%token	REMOVE REQUEST REQUESTS RETURN REWRITE ROOT
+%token	SACK SERVER SET SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS
+%token	SYSLOG
 %token	TCP TICKET TIMEOUT TLS TYPE TYPES
 %token	WITH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
 %type	<v.string>	fcgiport
-%type	<v.number>	opttls optmatch optfound
+%type	<v.number>	optalways opttls optmatch optfound
 %type	<v.tv>		timeout
 %type	<v.string>	numberstring optstring
 %type	<v.auth>	authopts
@@ -336,6 +338,7 @@ server		: SERVER optmatch STRING	{
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INIT(&srv->srv_hosts);
 			TAILQ_INIT(&srv_conf->fcgiparams);
+			TAILQ_INIT(&srv_conf->headers);
 
 			TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 		} '{' optnl serveropts_l '}'	{
@@ -570,6 +573,7 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 		| root
 		| directory
 		| banner
+		| header
 		| static_cache_control
 		| logformat
 		| fastcgi
@@ -657,6 +661,7 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			srv = s;
 			srv_conf = &srv->srv_conf;
 			SPLAY_INIT(&srv->srv_clients);
+			TAILQ_INIT(&srv_conf->headers);
 		} '{' optnl serveropts_l '}'	{
 			struct server	*s = NULL;
 			uint64_t	 f;
@@ -721,6 +726,108 @@ banner		: BANNER		{
 				YYERROR;
 			}
 			srv->srv_conf.flags |= SRVFLAG_NO_BANNER;
+		}
+		;
+
+optalways	:
+		/* empty */ { $$ = 0; }
+		| ALWAYS    { $$ = 1; }
+		;
+
+header		: HEADER REMOVE STRING optalways	{
+			struct custom_header	*hdr;
+
+			if (strlen($3) > HTTPD_HEADER_NAME_MAX - 1) {
+				yyerror("header name too long (max %d)",
+				    HTTPD_HEADER_NAME_MAX - 1);
+				free($3);
+				YYERROR;
+			}
+
+			if (header_name_forbidden($3)) {
+				free($3);
+				YYERROR;
+			}
+
+			if ((hdr = calloc(1, sizeof(*hdr))) == NULL)
+				fatal("out of memory");
+
+			hdr->name = $3;
+			if ((hdr->value = strdup("")) == NULL)	/* never NULL */
+				fatal("out of memory");
+
+			hdr->flags = HEADER_REMOVE;
+			if ($4)
+				hdr->flags |= HEADER_ALWAYS;
+			TAILQ_INSERT_TAIL(&srv->srv_conf.headers, hdr, entry);
+		}
+		| HEADER ADD STRING STRING optalways	{
+			struct custom_header	*hdr;
+
+			if (strlen($3) > HTTPD_HEADER_NAME_MAX - 1) {
+				yyerror("header name too long (max %d)",
+				    HTTPD_HEADER_NAME_MAX - 1);
+				free($3);
+				free($4);
+				YYERROR;
+			}
+			if (header_name_forbidden($3)) {
+				free($3);
+				free($4);
+				YYERROR;
+			}
+			if (strlen($4) > HTTPD_HEADER_VAL_MAX - 1) {
+				yyerror("header value too long (max %d)",
+				    HTTPD_HEADER_VAL_MAX - 1);
+				free($3);
+				free($4);
+				YYERROR;
+			}
+
+			if ((hdr = calloc(1, sizeof(*hdr))) == NULL)
+				fatal("out of memory");
+
+			hdr->name = $3;
+			hdr->value = $4;
+
+			hdr->flags = HEADER_ADD;
+			if ($5)
+				hdr->flags |= HEADER_ALWAYS;
+			TAILQ_INSERT_TAIL(&srv->srv_conf.headers, hdr, entry);
+		}
+		| HEADER SET STRING STRING optalways {
+			struct custom_header	*hdr;
+
+			if (strlen($3) > HTTPD_HEADER_NAME_MAX - 1) {
+				yyerror("header name too long (max %d)",
+				    HTTPD_HEADER_NAME_MAX - 1);
+				free($3);
+				free($4);
+				YYERROR;
+			}
+			if (header_name_forbidden($3)) {
+				free($3);
+				free($4);
+				YYERROR;
+			}
+			if (strlen($4) > HTTPD_HEADER_VAL_MAX - 1) {
+				yyerror("header value too long (max %d)",
+				    HTTPD_HEADER_VAL_MAX - 1);
+				free($3);
+				free($4);
+				YYERROR;
+			}
+
+			if ((hdr = calloc(1, sizeof(*hdr))) == NULL)
+				fatal("out of memory");
+
+			hdr->name = $3;
+			hdr->value = $4;
+
+			hdr->flags = HEADER_SET;
+			if ($5)
+				hdr->flags |= HEADER_ALWAYS;
+			TAILQ_INSERT_TAIL(&srv->srv_conf.headers, hdr, entry);
 		}
 		;
 
@@ -1483,7 +1590,9 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "access",		ACCESS },
+		{ "add",		ADD },
 		{ "alias",		ALIAS },
+		{ "always",		ALWAYS },
 		{ "authenticate",	AUTHENTICATE},
 		{ "auto",		AUTO },
 		{ "backlog",		BACKLOG },
@@ -1511,6 +1620,7 @@ lookup(char *s)
 		{ "forwarded",		FORWARDED },
 		{ "found",		FOUND },
 		{ "gzip-static",	GZIPSTATIC },
+		{ "header",		HEADER },
 		{ "hsts",		HSTS },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
@@ -1536,6 +1646,7 @@ lookup(char *s)
 		{ "prefork",		PREFORK },
 		{ "preload",		PRELOAD },
 		{ "protocols",		PROTOCOLS },
+		{ "remove",		REMOVE },
 		{ "request",		REQUEST },
 		{ "requests",		REQUESTS },
 		{ "return",		RETURN },
@@ -1543,6 +1654,7 @@ lookup(char *s)
 		{ "root",		ROOT },
 		{ "sack",		SACK },
 		{ "server",		SERVER },
+		{ "set",		SET },
 		{ "socket",		SOCKET },
 		{ "static-cache-control",	STATIC_CACHE_CONTROL },
 		{ "strip",		STRIP },
@@ -2330,17 +2442,49 @@ host(const char *s, struct addresslist *al, int max,
 	return (host_dns(s, al, max, port, ifname, ipproto));
 }
 
+int
+header_name_forbidden(const char *name)
+{
+	if (*name == '\0') {
+		yyerror("empty header name");
+		return (1);
+	}
+
+	if (strcasecmp(name, "Content-Length") == 0 ||
+	    strcasecmp(name, "Transfer-Encoding") == 0 ||
+	    strcasecmp(name, "Connection") == 0 ||
+	    strcasecmp(name, "Date") == 0) {
+		yyerror("header \"%s\" is reserved and cannot be used", name);
+		return (1);
+	}
+
+	if (strcasecmp(name, "Server") == 0) {
+		yyerror("header \"Server\" cannot be configured here, "
+		    "use 'no banner' instead");
+		return (1);
+	}
+	return (0);
+}
+
 struct server *
 server_inherit(struct server *src, struct server_config *alias,
     struct server_config *addr)
 {
 	struct server	*dst, *s, *dstl;
+	struct custom_header	*hdr, *nhdr;
 
 	if ((dst = calloc(1, sizeof(*dst))) == NULL)
 		fatal("out of memory");
 
 	/* Copy the source server and assign a new Id */
 	memcpy(&dst->srv_conf, &src->srv_conf, sizeof(dst->srv_conf));
+
+	TAILQ_INIT(&dst->srv_conf.headers);
+	TAILQ_FOREACH(hdr, &src->srv_conf.headers, entry) {
+		nhdr = header_dup(hdr);
+		TAILQ_INSERT_TAIL(&dst->srv_conf.headers, nhdr, entry);
+	}
+
 	if ((dst->srv_conf.tls_cert_file =
 	    strdup(src->srv_conf.tls_cert_file)) == NULL)
 		fatal("out of memory");
@@ -2430,6 +2574,14 @@ server_inherit(struct server *src, struct server_config *alias,
 			fatal("out of memory");
 
 		memcpy(&dstl->srv_conf, &s->srv_conf, sizeof(dstl->srv_conf));
+
+		/* Copy custom headers from source location */
+		TAILQ_INIT(&dstl->srv_conf.headers);
+		TAILQ_FOREACH(hdr, &s->srv_conf.headers, entry) {
+			nhdr = header_dup(hdr);
+			TAILQ_INSERT_TAIL(&dstl->srv_conf.headers, nhdr, entry);
+		}
+
 		strlcpy(dstl->srv_conf.name, alias->name,
 		    sizeof(dstl->srv_conf.name));
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.134 2026/06/28 05:08:28 rsadowski Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.135 2026/07/25 05:48:39 rsadowski Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 28 2026 $
+.Dd $Mdocdate: July 25 2026 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -485,6 +485,56 @@ Enable static gzip compression to save bandwidth.
 If gzip encoding is accepted and if the requested file exists with
 an additional .gz suffix, use the compressed file instead and deliver
 it with content encoding gzip.
+.It Ic header Ar option
+Manipulate HTTP response headers.
+Multiple
+.Ic header
+statements may be specified.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic set Ar name Ar value Op Ic always
+Set a custom HTTP response header with the specified
+.Ar name
+and
+.Ar value .
+If a header with the same
+.Ar name
+is already present in the response, its value will be replaced.
+The header is added to successful responses
+(2xx and 3xx status codes) by default.
+.It Ic add Ar name Ar value Op Ic always
+Add a custom HTTP response header with the specified
+.Ar name
+and
+.Ar value .
+Unlike
+.Ic set ,
+this option appends the header even if one with the same
+.Ar name
+already exists, allowing for multiple headers with the same name.
+The header is added to successful responses
+(2xx and 3xx status codes) by default.
+.It Ic remove Ar name Op Ic always
+Suppress the HTTP response header with the specified
+.Ar name .
+This can be used to remove headers added by default, such as
+.Qq Last-Modified ,
+as well as headers inherited from a parent server configuration.
+.El
+.Pp
+If
+.Ic always
+is specified, the header is also added to error responses (4xx and
+5xx).
+.Pp
+Header names are limited to 256 characters and values to 8192 characters.
+Headers defined in a
+.Ic location
+block are inherited from the
+.Ic server
+context and override defined headers with the same name.
+If you do not wish to inherit these, you can remove them again with
+.Ic remove .
 .It Ic hsts Oo Ar option Oc
 Enable HTTP Strict Transport Security.
 Valid options are:
@@ -914,6 +964,32 @@ server "example.com" {
 	listen on * port 80
 	location match "/old/(.*)" {
 		request rewrite "/new/%1"
+	}
+}
+.Ed
+.Pp
+Custom HTTP headers can be added to responses for security or compatibility:
+.Bd -literal -offset indent
+server "example.com" {
+	listen on * tls port 443
+
+	header set "X-Powered-By" "OpenBSD httpd"
+
+	header set "X-Content-Type-Options" "nosniff" always
+	header set "X-Frame-Options" "DENY" always
+
+	header add "Set-Cookie" "id=23; HttpOnly; Secure"
+
+	# Remove default Last-Modified header
+	header remove "Last-Modified"
+
+	location "/api/*" {
+		# This location defines its own headers
+		header add "Access-Control-Allow-Origin" "*"
+		# Override from server context
+		header set "Set-Cookie" "id=5; HttpOnly; Secure"
+		# Remove from server context
+		header remove "X-Frame-Options"
 	}
 }
 .Ed
