@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.135 2026/07/25 05:48:39 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.136 2026/07/25 08:58:14 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -498,9 +498,11 @@ serverconfig_free(struct server_config *srv_conf)
 	freezero(srv_conf->tls_cert, srv_conf->tls_cert_len);
 	freezero(srv_conf->tls_key, srv_conf->tls_key_len);
 
-	TAILQ_FOREACH_SAFE(param, &srv_conf->fcgiparams, entry, tparam)
+	TAILQ_FOREACH_SAFE(param, &srv_conf->fcgiparams, entry, tparam) {
+		free(param->name);
+		free(param->value);
 		free(param);
-
+	}
 	server_headers_free(&srv_conf->headers);
 }
 

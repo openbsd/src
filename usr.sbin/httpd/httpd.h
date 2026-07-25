@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.180 2026/07/25 05:48:39 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.181 2026/07/25 08:58:14 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,8 +65,8 @@
 #define HTTPD_TLS_CIPHERS	"secure"
 #define HTTPD_TLS_DHE_PARAMS	"none"
 #define HTTPD_TLS_ECDHE_CURVES	"default"
-#define HTTPD_FCGI_NAME_MAX	511
-#define HTTPD_FCGI_VAL_MAX	511
+#define HTTPD_FCGI_NAME_MAX	512
+#define HTTPD_FCGI_VAL_MAX	8192
 #define HTTPD_HEADER_NAME_MAX	256
 #define HTTPD_HEADER_VAL_MAX	8192
 #define FD_RESERVE		5
@@ -455,9 +455,15 @@ struct server_tls_ticket {
 	unsigned char	tt_key[TLS_TICKET_KEY_SIZE];
 };
 
+struct fastcgi_param_imsg {
+	uint32_t	id;	/* server conf id */
+	uint16_t	namelen;
+	uint16_t	vallen;
+};
+
 struct fastcgi_param {
-	char			name[HTTPD_FCGI_NAME_MAX];
-	char			value[HTTPD_FCGI_VAL_MAX];
+	char			*name;
+	char			*value;
 
 	TAILQ_ENTRY(fastcgi_param) entry;
 };
