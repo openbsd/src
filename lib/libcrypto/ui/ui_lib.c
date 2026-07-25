@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.54 2026/05/19 09:23:36 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.55 2026/07/25 07:33:43 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -461,8 +461,10 @@ UI_process(UI *ui)
 {
 	int i, ok = 0;
 
-	if (ui->meth->ui_open_session && !ui->meth->ui_open_session(ui))
-		return -1;
+	if (ui->meth->ui_open_session && !ui->meth->ui_open_session(ui)) {
+		ok = -1;
+		goto err;
+	}
 
 	if (ui->flags & UI_FLAG_PRINT_ERRORS)
 		ERR_print_errors_cb(print_error, ui);
