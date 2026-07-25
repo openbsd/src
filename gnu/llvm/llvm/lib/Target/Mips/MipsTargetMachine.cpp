@@ -48,7 +48,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "mips"
 
-extern cl::opt<bool> FixLoongson2FBTB;
 static cl::opt<bool>
     EnableMulMulFix("mfix4300", cl::init(false),
                     cl::desc("Enable the VR4300 mulmul bug fix."), cl::Hidden);
@@ -254,9 +253,6 @@ bool MipsPassConfig::addInstSelector() {
 
 void MipsPassConfig::addPreRegAlloc() {
   addPass(createMipsOptimizePICCallPass());
-
-  if (FixLoongson2FBTB)
-    addPass(createMipsLoongson2FBTBFix());
 }
 
 TargetTransformInfo

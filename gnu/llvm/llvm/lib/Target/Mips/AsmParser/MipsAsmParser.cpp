@@ -69,7 +69,6 @@ class MCInstrInfo;
 
 extern cl::opt<bool> EmitJalrReloc;
 extern cl::opt<bool> NoZeroDivCheck;
-extern cl::opt<bool> FixLoongson2FBTB;
 
 namespace {
 
@@ -236,9 +235,6 @@ class MipsAsmParser : public MCTargetAsmParser {
                                MCStreamer &Out, const MCSubtargetInfo *STI);
 
   bool emitPartialAddress(MipsTargetStreamer &TOut, SMLoc IDLoc, MCSymbol *Sym);
-
-  bool emitLoongson2FBTBFlush(MCInst &Inst, MipsTargetStreamer &TOut,
-                              SMLoc IDLoc, const MCSubtargetInfo *STI);
 
   bool expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                      MCStreamer &Out, const MCSubtargetInfo *STI);
@@ -2064,20 +2060,6 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     Inst = BInst;
   }
 
-  if (FixLoongson2FBTB) {
-    switch (Inst.getOpcode()) {
-    case Mips::JALR:
-    case Mips::JR:
-    case Mips::JalOneReg:
-    case Mips::JalTwoReg:
-      if (emitLoongson2FBTBFlush(Inst, TOut, IDLoc, STI))
-        return true;
-      LLVM_FALLTHROUGH;
-    default:
-      break;
-    }
-  }
-
   // This expansion is not in a function called by tryExpandInstruction()
   // because the pseudo-instruction doesn't have a distinct opcode.
   if ((Opcode == Mips::JAL || Opcode == Mips::JAL_MM) && inPicMode()) {
@@ -3374,39 +3356,6 @@ bool MipsAsmParser::emitPartialAddress(MipsTargetStreamer &TOut, SMLoc IDLoc,
       TOut.emitRRI(Mips::DSLL, ATReg, ATReg, 16, IDLoc, STI);
     }
   }
-  return false;
-}
-
-bool MipsAsmParser::emitLoongson2FBTBFlush(MCInst &Inst,
-                                           MipsTargetStreamer &TOut,
-                                           SMLoc IDLoc,
-                                           const MCSubtargetInfo *STI) {
-  unsigned SReg = Inst.getOperand(0).getReg();
-  if (SReg == Mips::ZERO || SReg == Mips::ZERO_64 ||
-      SReg == Mips::K0 || SReg == Mips::K0_64 ||
-      SReg == Mips::K1 || SReg == Mips::K1_64)
-    return false;
-
-  unsigned ATReg = getATReg(IDLoc);
-  if (ATReg == 0)
-    return true;
-
-  // Direct comparison of SReg and ATReg is not reliable because
-  // the register classes may differ.
-  unsigned ATRegIndex = AssemblerOptions.back()->getATRegIndex();
-  if (ATRegIndex == 0)
-    return true;
-  if (SReg == getReg(Mips::GPR32RegClassID, ATRegIndex) ||
-      SReg == getReg(Mips::GPR64RegClassID, ATRegIndex))
-    return false;
-
-  warnIfNoMacro(IDLoc);
-
-  // li $at, COP_0_BTB_CLEAR | COP_0_RAS_DISABLE
-  TOut.emitRRI(Mips::ORi, ATReg, Mips::ZERO, 3, IDLoc, STI);
-  // dmtc0 $at, COP_0_DIAG
-  TOut.emitRRI(Mips::DMTC0, Mips::COP022, ATReg, 0, IDLoc, STI);
-
   return false;
 }
 

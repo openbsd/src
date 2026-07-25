@@ -25,11 +25,6 @@ cl::opt<bool>
                    cl::desc("MIPS: Don't trap on integer division by zero."),
                    cl::init(false));
 
-cl::opt<bool>
-FixLoongson2FBTB("fix-loongson2f-btb", cl::Hidden,
-                 cl::desc("MIPS: Enable Loongson 2F BTB workaround"),
-                 cl::init(false));
-
 namespace {
 static const MCPhysReg O32IntRegs[4] = {Mips::A0, Mips::A1, Mips::A2, Mips::A3};
 
