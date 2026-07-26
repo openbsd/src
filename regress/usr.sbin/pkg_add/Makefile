@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.91 2026/06/24 11:35:47 tb Exp $
+# $OpenBSD: Makefile,v 1.92 2026/07/26 09:41:33 tb Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -20,7 +20,7 @@ REGRESS_ROOT_TARGETS = temp-error2-as-root
 # lots of tests that really require a vstat overhaul
 REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 	collision-check5 collision-check6 collision-check7 \
-	exotest tying-2 gcc15
+	exotest tying-2
 
 PERLSCRIPT = perl -I ${.CURDIR} ${.CURDIR}
 
