@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.32 2025/09/30 14:29:54 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.33 2026/07/26 10:25:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -467,6 +467,7 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 				       sc->sc_dev.dv_xname, data);
 				break;
 			}
+			break;
 		case 1:
 #ifdef SUSPEND
 			request_sleep(SLEEP_SUSPEND);
