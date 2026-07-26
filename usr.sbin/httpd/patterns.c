@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.5 2016/02/14 18:20:59 semarie Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.6 2026/07/26 14:46:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,7 @@
 
 /*
  * Derived from Lua 5.3.1:
- * $Id: patterns.c,v 1.5 2016/02/14 18:20:59 semarie Exp $
+ * $Id: patterns.c,v 1.6 2026/07/26 14:46:32 rsadowski Exp $
  * Standard library for string operations and pattern-matching
  */
 
@@ -309,7 +309,7 @@ match_capture(struct match_state *ms, const char *s, int l)
 	if (l == -1)
 		return NULL;
 	len = ms->capture[l].len;
-	if ((size_t) (ms->src_end - s) >= len &&
+	if ((size_t)(ms->src_end - s) >= len &&
 	    memcmp(ms->capture[l].init, s, len) == 0)
 		return s + len;
 	else
@@ -413,9 +413,8 @@ match(struct match_state *ms, const char *s, const char *p)
 			}
 			break;
 		default:
-
 			/* pattern class plus optional suffix */
-	dflt:
+ dflt:
 			/* points to optional suffix */
 			ep = classend(ms, p);
 			if (ms->error != NULL)
@@ -427,11 +426,11 @@ match(struct match_state *ms, const char *s, const char *p)
 					match_error(ms, "max repetition items");
 					s = NULL; /* fail */
 				/* accept empty? */
-				} else if
-				    (*ep == '*' || *ep == '?' || *ep == '-') {
-					 p = ep + 1;
+				} else if (*ep == '*' || *ep == '?' ||
+				    *ep == '-') {
+					p = ep + 1;
 					/* return match(ms, s, ep + 1); */
-					 goto init;
+					goto init;
 				} else {
 					/* '+' or no suffix */
 					s = NULL; /* fail */
@@ -446,7 +445,7 @@ match(struct match_state *ms, const char *s, const char *p)
 					    match(ms, s + 1, ep + 1)) != NULL)
 						s = res;
 					else {
-						/* 
+						/*
 						 * else return
 						 *     match(ms, s, ep + 1);
 						 */
@@ -628,7 +627,6 @@ str_find_aux(struct match_state *ms, const char *pattern, const char *string,
 			sm->sm_so = 0;
 			sm->sm_eo = ls;
 			return push_captures(ms, s1, res, sm + 1, nsm - 1) + 1;
-
 		} else if (ms->error != NULL) {
 			return 0;
 		}

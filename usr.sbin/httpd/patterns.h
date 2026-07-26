@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.h,v 1.3 2015/12/12 19:59:43 mmcc Exp $	*/
+/*	$OpenBSD: patterns.h,v 1.4 2026/07/26 14:46:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -32,14 +32,14 @@ struct str_find {
 
 struct str_match {
 	char		**sm_match; /* allocated array of matched strings */
-	unsigned int	 sm_nmatch; /* number of elements in array */
+	unsigned int	  sm_nmatch; /* number of elements in array */
 };
 
 __BEGIN_DECLS
 int	 str_find(const char *, const char *, struct str_find *, size_t,
-	    const char **);
+    const char **);
 int	 str_match(const char *, const char *, struct str_match *,
-	    const char **);
+    const char **);
 void	 str_match_free(struct str_match *);
 __END_DECLS
 

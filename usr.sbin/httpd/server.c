@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.136 2026/07/25 08:58:14 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.137 2026/07/26 14:46:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -48,17 +48,17 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 int		 server_dispatch_parent(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 server_dispatch_logger(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 void		 server_shutdown(void);
 
 void		 server_init(struct privsep *, struct privsep_proc *p, void *);
 int		 server_launch(void);
 int		 server_socket(struct sockaddr_storage *, in_port_t,
-		    struct server_config *, int, int);
+    struct server_config *, int, int);
 int		 server_socket_listen(struct sockaddr_storage *, in_port_t,
-		    struct server_config *);
+    struct server_config *);
 struct server	*server_byid(uint32_t);
 
 int		 server_tls_init(struct server *);
@@ -71,7 +71,7 @@ void		 server_input(struct client *);
 void		 server_inflight_dec(struct client *, const char *);
 
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
-		    size_t, void *);
+    size_t, void *);
 
 volatile int server_clients;
 volatile int server_inflight = 0;
@@ -572,7 +572,7 @@ server_byid(uint32_t id)
 
 int
 server_foreach(int (*srv_cb)(struct server *,
-    struct server_config *, void *), void *arg)
+	struct server_config *, void *), void *arg)
 {
 	struct server		*srv;
 	struct server_config	*srv_conf;
@@ -1258,7 +1258,8 @@ server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 void
 server_log(struct client *clt, const char *msg)
 {
-	char			 ibuf[HOST_NAME_MAX+1], obuf[HOST_NAME_MAX+1];
+	char			 ibuf[HOST_NAME_MAX + 1],
+				 obuf[HOST_NAME_MAX + 1];
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			*ptr = NULL, *vmsg = NULL;
 	int			 debug_cmd = -1;

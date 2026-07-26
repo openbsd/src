@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.76 2026/07/25 08:58:14 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.77 2026/07/26 14:46:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -34,7 +34,7 @@
 #include "log.h"
 
 int	 config_getserver_config(struct httpd *, struct server *,
-	    struct imsg *);
+    struct imsg *);
 int	 config_getserver_auth(struct httpd *, struct server_config *);
 
 int
@@ -233,7 +233,7 @@ config_setserver(struct httpd *env, struct server *srv)
 		memcpy(&s, &srv->srv_conf, sizeof(s));
 
 		/* since s is a local, it is safe to clear its pointers directly */
-		clear_config_server_ptrs(&s); 
+		clear_config_server_ptrs(&s);
 
 		c = 0;
 		iov[c].iov_base = &s;
@@ -402,8 +402,8 @@ config_setserver_fcgiparams(struct httpd *env, struct server *srv)
 	struct privsep			*ps = env->sc_ps;
 	struct server_config		*srv_conf = &srv->srv_conf;
 	struct fastcgi_param		*fp;
-	struct fastcgi_param_imsg	fpmsg;
-	struct iovec			iov[3];
+	struct fastcgi_param_imsg	 fpmsg;
+	struct iovec			 iov[3];
 
 	DPRINTF("%s: sending fcgiparam for \"%s[%u]\" to %s fd %d", __func__,
 	    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
@@ -424,8 +424,8 @@ config_setserver_fcgiparams(struct httpd *env, struct server *srv)
 		iov[2].iov_base = fp->value;
 		iov[2].iov_len = fpmsg.vallen;
 
-		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_FCGI, iov, 3)
-		    != 0) {
+		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_FCGI, iov, 3) !=
+		    0) {
 			log_warn("%s: failed to compose IMSG_CFG_FCGI "
 			    "for `%s'", __func__, srv_conf->name);
 			return (-1);
@@ -729,7 +729,7 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			srv_conf->return_uri_len = parent->return_uri_len;
 			if (srv_conf->return_uri_len &&
 			    (srv_conf->return_uri =
-			    strdup(parent->return_uri)) == NULL)
+			     strdup(parent->return_uri)) == NULL)
 				goto fail;
 		}
 
@@ -984,7 +984,7 @@ config_getserver_tls(struct httpd *env, struct imsg *imsg)
 
 	default:
 		log_debug("%s: unknown tls config type %i\n",
-		     __func__, tls_conf.tls_type);
+		    __func__, tls_conf.tls_type);
 		goto fail;
 	}
 
@@ -1012,7 +1012,7 @@ config_setmedia(struct httpd *env, struct media_type *media)
 		    media->media_name, ps->ps_title[id]);
 
 		/* Send a cleaned-up copy */
-		memcpy(&mt, media, sizeof(*media)); 
+		memcpy(&mt, media, sizeof(*media));
 		mt.media_encoding = NULL;
 		memset(&mt.media_entry, 0, sizeof(mt.media_entry));
 
@@ -1064,14 +1064,15 @@ config_setauth(struct httpd *env, struct auth *auth)
 		DPRINTF("%s: sending auth \"%s[%u]\" to %s", __func__,
 		    auth->auth_htpasswd, auth->auth_id, ps->ps_title[id]);
 
-
 		/* memcpy to avoid modifying auth directly */
-		memcpy(&auth_payload, auth, sizeof(*auth)); 
+		memcpy(&auth_payload, auth, sizeof(*auth));
 
 		/* clear pointers */
-		memset(&auth_payload.auth_entry, 0, sizeof(auth_payload.auth_entry)); 
+		memset(&auth_payload.auth_entry, 0,
+		    sizeof(auth_payload.auth_entry));
 
-		proc_compose(ps, id, IMSG_CFG_AUTH, &auth_payload, sizeof(auth_payload));
+		proc_compose(ps, id, IMSG_CFG_AUTH, &auth_payload,
+		    sizeof(auth_payload));
 	}
 
 	return (0);

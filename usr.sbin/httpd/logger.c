@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.26 2026/03/02 19:24:58 rsadowski Exp $	*/
+/*	$OpenBSD: logger.c,v 1.27 2026/07/26 14:46:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -32,12 +32,12 @@
 #include "log.h"
 
 int		 logger_dispatch_parent(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 int		 logger_dispatch_server(int, struct privsep_proc *,
-		    struct imsg *);
+    struct imsg *);
 void		 logger_shutdown(void);
 void		 logger_close(void);
-struct log_file *logger_open_file(const char *);
+struct log_file	*logger_open_file(const char *);
 int		 logger_open_fd(struct imsg *);
 int		 logger_open(struct server *, struct server_config *, void *);
 void		 logger_init(struct privsep *, struct privsep_proc *p, void *);
@@ -171,8 +171,8 @@ logger_open_priv(struct imsg *imsg)
 
 	if ((size_t)snprintf(name, sizeof(name), "/%s", p) >= sizeof(name))
 		return (-1);
-	if ((len = strlcpy(path, httpd_env->sc_logdir, sizeof(path)))
-	    >= sizeof(path))
+	if ((len = strlcpy(path, httpd_env->sc_logdir, sizeof(path))) >=
+	    sizeof(path))
 		return (-1);
 
 	p = path + len;
