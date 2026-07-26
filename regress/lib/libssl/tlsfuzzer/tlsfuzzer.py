@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.58 2026/07/26 12:43:39 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.59 2026/07/26 12:53:11 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -53,7 +53,8 @@ class Test:
             )
 
 class TestGroup:
-    """ A group of Test objects to be run by TestRunner."""
+    """A group of Test objects to be run by TestRunner."""
+
     def __init__(self, title="Tests", tests=[]):
         self.title = title
         self.tests = tests
@@ -649,7 +650,7 @@ failing_groups = [
 ]
 
 class TestRunner:
-    """ Runs the given tests against a server and displays stats. """
+    """Runs the given tests against a server and displays stats."""
 
     def __init__(
         self, timing=False, verbose=False, host="localhost", port=4433,
@@ -743,7 +744,7 @@ class TestRunner:
             print('\n'.join(self.missing))
 
 class TlsServer:
-    """ Spawns an s_server listening on localhost:port if necessary. """
+    """Spawns an s_server listening on localhost:port if necessary."""
 
     def __init__(self, host="localhost", port=4433):
         self.spawn = True
