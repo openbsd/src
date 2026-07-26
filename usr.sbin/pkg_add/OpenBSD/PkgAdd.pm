@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.152 2025/05/06 18:36:20 tb Exp $
+# $OpenBSD: PkgAdd.pm,v 1.153 2026/07/26 09:34:12 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -831,8 +831,12 @@ sub really_add($set, $state)
 			    $set, $state));
 		}
 	});
-	$set->setup_header($state);
-	$state->progress->next($state->ntogo(-1));
+	my $shown = $set->setup_header($state);
+	my $todo = $state->ntogo(-1);
+	$state->progress->next($todo);
+	if ($state->{not} && !$shown) {
+		$state->say("#1: #2", $state->{setheader}, $todo);
+	}
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
 		my $plist = $handle->plist;
@@ -953,8 +957,14 @@ sub process_set($self, $set, $state)
 	}
 	if (@deps > 0) {
 		$state->build_deptree($set, @deps);
-		$set->solver->check_for_loops($state);
-		return (@deps, $set);
+		if ($set->solver->check_for_loops($state)) {
+			return (@deps, $set);
+		} else {
+			$state->{bad}++;
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+			$state->tracker->cant($set);
+			return ();
+		}
 	}
 
 	$set->figure_out_kept($state);

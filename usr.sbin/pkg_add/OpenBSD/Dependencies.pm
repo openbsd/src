@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.175 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.176 2026/07/26 09:34:12 sthen Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -149,6 +149,7 @@ sub check_for_loops($self, $state)
 		}
 	}
 	if (@to_merge > 0) {
+		my $merge = 0;
 		my $merged = {};
 		my @real = ();
 		$state->say("Detected loop, merging sets #1", $state->ntogo);
@@ -156,6 +157,7 @@ sub check_for_loops($self, $state)
 		for my $set (@to_merge) {
 			my $k = $set;
 			while ($k ne $initial && !$merged->{$k}) {
+				$merge++;
 				unless ($k->{finished}) {
 					$state->say("| #1", $k->print);
 					delete $k->solver->{deplist};
@@ -168,8 +170,14 @@ sub check_for_loops($self, $state)
 		}
 		delete $initial->solver->{deplist};
 		delete $initial->solver->{to_register};
-		$initial->merge($state->tracker, @real);
+		if ($merge) {
+			$initial->merge($state->tracker, @real);
+			return 1;
+		} else {
+			return 0;
+		}
 	}
+	return 1;
 }
 
 sub find_dep_in_repositories($self, $state, $dep)
