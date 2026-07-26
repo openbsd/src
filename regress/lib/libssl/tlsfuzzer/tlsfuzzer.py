@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.59 2026/07/26 12:53:11 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.60 2026/07/26 13:05:49 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -822,11 +822,11 @@ def list_or_missing(missing=True):
         missing = scripts - set(tests)
         if missing:
             print('\n'.join(sorted(missing)))
-        exit(0)
+        sys.exit(0)
 
     tests.sort()
     print('\n'.join(tests))
-    exit(0)
+    sys.exit(0)
 
 def usage():
     print("Usage: python3 tlsfuzzer.py [-flmnstv] [-p port] [script [test...]]")
@@ -839,7 +839,7 @@ def usage():
     print(" -s          run slow tests")
     print(" -t          show timing stats at end")
     print(" -v          verbose output")
-    exit(0)
+    sys.exit(0)
 
 def main():
     failing = False
@@ -880,13 +880,13 @@ def main():
 
     if not os.path.exists(tlsfuzzer_scriptdir):
         print("package py3-tlsfuzzer is required for this regress")
-        exit(1)
+        sys.exit(1)
 
     if list and failing:
         failing = [test.name for group in failing_groups for test in group]
         failing.sort()
         print('\n'.join(failing))
-        exit(0)
+        sys.exit(0)
 
     if list or missing:
         list_or_missing(missing)
@@ -905,7 +905,7 @@ def main():
         tests.verbose = True
         tests.add("test from command line", [Test(script, testargs + args[1:])])
 
-        exit(not tests.run())
+        sys.exit(not tests.run())
 
     if failing:
         if tls_server.has_tls1_3:
@@ -930,7 +930,7 @@ def main():
 
     if not success:
         print("FAILED")
-        exit(1)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
