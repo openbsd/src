@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.57 2025/06/15 09:44:57 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.58 2026/07/26 12:43:39 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -77,7 +77,7 @@ def substitute_alert(want, got):
 # Both alerts appear to be reasonable in this context, so work around this
 # in the test instead of the library.
 def generate_test_tls13_finished_args():
-    assertion = substitute_alert("decode_error", "decrypt_error");
+    assertion = substitute_alert("decode_error", "decrypt_error")
     paddings = [
         ("TLS_AES_128_GCM_SHA256", 0, 1),
         ("TLS_AES_128_GCM_SHA256", 0, 2),
