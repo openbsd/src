@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.28 2024/11/21 13:38:15 claudio Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.29 2026/07/27 13:30:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -147,8 +147,8 @@ main(int argc, char *argv[])
 			errx(1, "pipe closed");
 
 		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				errx(1, "imsg_get error");
+			if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+				errx(1, "imsgbuf_get error");
 			if (n == 0)
 				break;
 
