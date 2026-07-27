@@ -72,7 +72,7 @@
 #define HAVE_ATTR_FORMAT 1
 
 /* Whether the C compiler accepts the "nonstring" attribute */
-/* #undef HAVE_ATTR_NONSTRING */
+#define HAVE_ATTR_NONSTRING 1
 
 /* Whether the C compiler accepts the "noreturn" attribute */
 #define HAVE_ATTR_NORETURN 1
@@ -919,7 +919,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.25.1"
+#define PACKAGE_STRING "unbound 1.25.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -928,7 +928,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.25.1"
+#define PACKAGE_VERSION "1.25.2"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -951,7 +951,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,25,1,0
+#define RSRC_PACKAGE_VERSION 1,25,2,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"

@@ -307,8 +307,8 @@ log_vmsg(int pri, const char* type,
 #endif /* HAVE_STRFTIME && HAVE_LOCALTIME_R */
 	now = (time_t)time(NULL);
 #if defined(HAVE_STRFTIME) && defined(HAVE_LOCALTIME_R) 
-	if(log_time_asc && strftime(tmbuf, sizeof(tmbuf), "%b %d %H:%M:%S",
-		localtime_r(&now, &tm))%(sizeof(tmbuf)) != 0) {
+	if(log_time_asc && localtime_r(&now, &tm) && strftime(tmbuf,
+	    sizeof(tmbuf), "%b %d %H:%M:%S", &tm)%(sizeof(tmbuf)) != 0) {
 		/* %sizeof buf!=0 because old strftime returned max on error */
 		fprintf(logfile, "%s %s[%d:%d] %s: %s\n", tmbuf,
 			ident, (int)getpid(), tid, type, message);
