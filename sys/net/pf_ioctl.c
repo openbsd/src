@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.432 2026/07/09 06:51:17 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.433 2026/07/27 19:02:48 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2218,6 +2218,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			goto fail;
 		}
 		memcpy(qs, &q->queue, sizeof(*qs));
+		qs->qname[sizeof(qs->qname) - 1] = '\0';
+		qs->parent[sizeof(qs->parent) - 1] = '\0';
+		qs->ifname[sizeof(qs->ifname) - 1] = '\0';
 		qs->qid = pf_qname2qid(qs->qname, 1);
 		if (qs->qid == 0) {
 			error = EBUSY;
