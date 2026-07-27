@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.82 2025/10/15 11:25:45 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.83 2026/07/27 13:29:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -416,8 +416,8 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("imsg_get");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("imsgbuf_get");
 		if (n == 0)	/* No more messages. */
 			break;
 
@@ -496,8 +496,8 @@ main_dispatch_engine(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("imsg_get");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("imsgbuf_get");
 		if (n == 0)	/* No more messages. */
 			break;
 

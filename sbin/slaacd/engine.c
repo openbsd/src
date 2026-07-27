@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.102 2026/05/22 10:12:40 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.103 2026/07/27 13:29:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -482,8 +482,8 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get error", __func__);
 		if (n == 0)	/* No more messages. */
 			break;
 
@@ -650,8 +650,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get error", __func__);
 		if (n == 0)	/* No more messages. */
 			break;
 

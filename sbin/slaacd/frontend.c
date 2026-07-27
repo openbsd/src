@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.74 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.75 2026/07/27 13:29:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -303,8 +303,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get error", __func__);
 		if (n == 0)	/* No more messages. */
 			break;
 
@@ -416,8 +416,8 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get error", __func__);
 		if (n == 0)	/* No more messages. */
 			break;
 
