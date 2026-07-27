@@ -9,7 +9,7 @@ our %args = (
 	nocheck => 1,
     },
     relay => {
-	funcs => sub { sleep 3; relay(@_); },
+	func => sub { sleep 3; relay(@_); },
 	max => 4,
 	big => 0,
     },
