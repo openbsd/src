@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleasectl.c,v 1.14 2026/06/15 17:09:29 florian Exp $	*/
+/*	$OpenBSD: dhcpleasectl.c,v 1.15 2026/07/27 13:30:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -179,8 +179,8 @@ main(int argc, char *argv[])
 		if (n == 0)
 			errx(1, "pipe closed");
 
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			errx(1, "imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			errx(1, "imsgbuf_get error");
 		if (n == 0)
 			break;
 
