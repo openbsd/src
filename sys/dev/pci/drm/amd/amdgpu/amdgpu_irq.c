@@ -280,8 +280,6 @@ int amdgpu_irq_init(struct amdgpu_device *adev)
 	unsigned int irq, flags;
 	int r;
 
-	mtx_init(&adev->irq.lock, IPL_TTY);
-
 #ifdef notyet
 	/* Enable MSI if not disabled by module parameter */
 	adev->irq.msi_enabled = false;
