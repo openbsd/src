@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.13 2020/04/02 19:27:51 gkoehler Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.14 2026/07/27 13:45:10 kirill Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 		ret = -1;
 	else {
 		if (args.size > 0)
-			ofbcopy(OF_buf, buf, args.size);
+			ofbcopy(OF_buf, buf, MIN(args.size, buflen));
 		ret = args.size;
 	}
 	ppc_mtmsr(s);
