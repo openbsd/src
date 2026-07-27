@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.14 2024/01/27 12:05:40 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.15 2026/07/27 11:39:45 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/stdint.h>
 #include <sys/timetc.h>
 
+#include <machine/elf.h>
 #include <machine/cpufunc.h>
 #include <machine/sbi.h>
 
@@ -60,6 +61,15 @@ static struct timecounter tb_timecounter = {
 void	(*cpu_startclock_fcn)(void) = timer_startclock;
 int	clock_intr(void *);
 
+static inline void
+timer_set(uint64_t nsecs)
+{
+	if (riscv_hwcap & HWCAP_ISA_SSTC)
+		csr_write(stimecmp, nsecs);
+	else
+		sbi_set_timer(nsecs);
+}
+
 void
 timer_rearm(void *unused, uint64_t nsecs)
 {
@@ -68,13 +78,13 @@ timer_rearm(void *unused, uint64_t nsecs)
 	if (nsecs > timer_nsec_max)
 		nsecs = timer_nsec_max;
 	cycles = (nsecs * timer_nsec_cycle_ratio) >> 32;
-	sbi_set_timer(rdtime() + cycles);
+	timer_set(rdtime() + cycles);
 }
 
 void
 timer_trigger(void *unused)
 {
-	sbi_set_timer(0);
+	timer_set(0);
 }
 
 u_int
@@ -125,7 +135,7 @@ clock_intr(void *frame)
 	struct cpu_info *ci = curcpu();
 	int s;
 
-	sbi_set_timer(UINT64_MAX);	/* clear timer interrupt */
+	timer_set(UINT64_MAX); /* clear timer interrupt */
 
 	/*
 	 * If the clock interrupt is masked, defer all clock interrupt
