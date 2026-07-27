@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.695 2026/06/18 10:50:47 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.696 2026/07/27 06:57:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1271,7 +1271,6 @@ void bounce_fd(int);
 
 /* ca.c */
 int	 ca(void);
-int	 ca_X509_verify(void *, void *, const char *, const char *, const char **);
 void	 ca_imsg(struct mproc *, struct imsg *);
 void	 ca_init(void);
 void	 ca_engine_init(void);

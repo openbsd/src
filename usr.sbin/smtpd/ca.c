@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.49 2024/11/21 13:22:21 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.50 2026/07/27 06:57:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,49 +125,6 @@ ca_init(void)
 			dict_xset(&pkeys, hash, pkey);
 		free(hash);
 	}
-}
-
-int
-ca_X509_verify(void *certificate, void *chain, const char *CAfile,
-    const char *CRLfile, const char **errstr)
-{
-	X509_STORE     *store = NULL;
-	X509_STORE_CTX *xsc = NULL;
-	int		ret = 0;
-	long		error = 0;
-
-	if ((store = X509_STORE_new()) == NULL)
-		goto end;
-
-	if (!X509_STORE_load_locations(store, CAfile, NULL)) {
-		log_warn("warn: unable to load CA file %s", CAfile);
-		goto end;
-	}
-	X509_STORE_set_default_paths(store);
-
-	if ((xsc = X509_STORE_CTX_new()) == NULL)
-		goto end;
-
-	if (X509_STORE_CTX_init(xsc, store, certificate, chain) != 1)
-		goto end;
-
-	ret = X509_verify_cert(xsc);
-
-end:
-	*errstr = NULL;
-	if (ret != 1) {
-		if (xsc) {
-			error = X509_STORE_CTX_get_error(xsc);
-			*errstr = X509_verify_cert_error_string(error);
-		}
-		else if (ERR_peek_last_error())
-			*errstr = ERR_error_string(ERR_peek_last_error(), NULL);
-	}
-
-	X509_STORE_CTX_free(xsc);
-	X509_STORE_free(store);
-
-	return ret > 0 ? 1 : 0;
 }
 
 void
