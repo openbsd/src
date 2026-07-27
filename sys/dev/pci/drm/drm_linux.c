@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.143 2026/07/24 15:03:50 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.144 2026/07/27 02:24:44 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3014,7 +3014,7 @@ drm_linux_exit(void)
 
 /* size in MB is 1 << nsize */
 int
-pci_resize_resource(struct pci_dev *pdev, int bar, int nsize)
+pci_resize_resource(struct pci_dev *pdev, int bar, int nsize, int skip_bars)
 {
 	pcireg_t	reg;
 	uint32_t	offset, capid;

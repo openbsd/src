@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.21 2026/03/13 02:44:52 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.22 2026/07/27 02:24:44 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -434,7 +434,7 @@ typedef unsigned int pci_channel_state_t;
 
 enum pci_bus_speed pcie_get_speed_cap(struct pci_dev *);
 enum pcie_link_width pcie_get_width_cap(struct pci_dev *);
-int pci_resize_resource(struct pci_dev *, int, int);
+int pci_resize_resource(struct pci_dev *, int, int, int);
 
 static inline void
 pcie_bandwidth_available(struct pci_dev *pdev, struct pci_dev **ldev,
