@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.92 2026/07/21 01:35:17 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.93 2026/07/27 04:12:50 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1879,14 +1879,12 @@ mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
 
 	io->function = MFII_FUNCTION_PASSTHRU_IO;
 
-	if (len) {
-		io->sgl_offset0 = ((u_int8_t *)sge - (u_int8_t *)io) / 4;
-		io->chain_offset = ((u_int8_t *)sge - (u_int8_t *)io) / 16;
-		htolem64(&sge->sg_addr, ccb->ccb_mfi_dva);
-		htolem32(&sge->sg_len, MFI_FRAME_SIZE);
-		sge->sg_flags =
-		    MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA;
-	}
+	io->sgl_offset0 = ((u_int8_t *)sge - (u_int8_t *)io) / 4;
+	io->chain_offset = ((u_int8_t *)sge - (u_int8_t *)io) / 16;
+	htolem64(&sge->sg_addr, ccb->ccb_mfi_dva);
+	htolem32(&sge->sg_len, MFI_FRAME_SIZE);
+	sge->sg_flags =
+	    MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA;
 
 	ccb->ccb_req.flags = MFII_REQ_TYPE_SCSI;
 	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
