@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.64 2026/06/19 12:50:39 rsadowski Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.65 2026/07/27 13:48:14 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -232,8 +232,8 @@ main(int argc, char *argv[])
 			errx(1, "pipe closed");
 
 		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				errx(1, "imsg_get error");
+			if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+				errx(1, "imsgbuf_get error");
 			if (n == 0)
 				break;
 			switch (res->action) {
