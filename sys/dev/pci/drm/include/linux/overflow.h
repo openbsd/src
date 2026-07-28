@@ -15,6 +15,14 @@
 #define check_sub_overflow(x, y, z)	__builtin_sub_overflow(x, y, z)
 #define check_mul_overflow(x, y, z)	__builtin_mul_overflow(x, y, z)
 #else
+#define check_add_overflow(x, y, sum) ({	\
+	*(sum) = (x) + (y);			\
+	0;					\
+})
+#define check_sub_overflow(x, y, z) ({		\
+	*(z) = (x) - (y);			\
+	0;					\
+})
 #define check_mul_overflow(x, y, z) ({		\
 	*(z) = (x) * (y);			\
 	0;					\
