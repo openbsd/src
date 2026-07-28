@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.47 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.48 2026/07/28 11:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -243,8 +243,8 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("eigrpe_dispatch_main: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("eigrpe_dispatch_main: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -416,8 +416,8 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("eigrpe_dispatch_rde: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("eigrpe_dispatch_rde: imsgbuf_get error");
 		if (n == 0)
 			break;
 
