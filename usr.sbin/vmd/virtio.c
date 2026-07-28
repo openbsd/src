@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.143 2026/07/24 13:56:02 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.144 2026/07/28 00:37:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1086,6 +1086,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 				PCI_SUBCLASS_SYSTEM_MISC, PCI_VENDOR_OPENBSD,
 				PCI_PRODUCT_VIRTIO_NETWORK, 1, 1, NULL)) {
 				log_warnx("can't add PCI virtio net device");
+				free(dev);
 				return (1);
 			}
 			virtio_dev_init(vm, dev, id, VIONET_QUEUE_SIZE_DEFAULT,
@@ -1096,6 +1097,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    dev) == -1) {
 				log_warnx("can't add bar for virtio net "
 				    "device");
+				free(dev);
 				return (1);
 			}
 			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG,
@@ -1152,6 +1154,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    PCI_PRODUCT_VIRTIO_BLOCK, 1, 1, NULL)) {
 				log_warnx("can't add PCI virtio block "
 				    "device");
+				free(dev);
 				return (1);
 			}
 			virtio_dev_init(vm, dev, id, VIOBLK_QUEUE_SIZE_DEFAULT,
@@ -1163,6 +1166,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			if (bar_id == -1 || bar_id > 0xff) {
 				log_warnx("can't add bar for virtio block "
 				    "device");
+				free(dev);
 				return (1);
 			}
 			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG,
@@ -1206,6 +1210,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		    PCI_SUBCLASS_MASS_STORAGE_SCSI, PCI_VENDOR_OPENBSD,
 		    PCI_PRODUCT_VIRTIO_SCSI, 1, 1, NULL)) {
 			log_warnx("can't add PCI vioscsi device");
+			free(dev);
 			return (1);
 		}
 		virtio_dev_init(vm, dev, id, VIOSCSI_QUEUE_SIZE_DEFAULT,
@@ -1213,6 +1218,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io, dev)
 		    == -1) {
 			log_warnx("can't add bar for vioscsi device");
+			free(dev);
 			return (1);
 		}
 		virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG, bar_id, 0);
