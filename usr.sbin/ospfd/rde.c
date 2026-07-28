@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.119 2026/06/25 13:19:06 sashan Exp $ */
+/*	$OpenBSD: rde.c,v 1.120 2026/07/28 11:48:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -286,8 +286,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	now = tp.tv_sec;
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -669,8 +669,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_parent: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_parent: imsgbuf_get error");
 		if (n == 0)
 			break;
 
