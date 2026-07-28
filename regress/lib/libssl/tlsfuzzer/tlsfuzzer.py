@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.60 2026/07/26 13:05:49 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.61 2026/07/28 10:21:34 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -897,7 +897,7 @@ def main():
 
     if args:
         (dir, script) = os.path.split(args[0])
-        if dir and not dir == '.':
+        if dir and dir != '.':
             tests.scriptdir = dir
 
         testargs = defaultargs(script, tls_server.has_tls1_3)
