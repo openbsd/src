@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.106 2026/07/28 14:16:57 job Exp $ */
+/*	$OpenBSD: http.c,v 1.107 2026/07/28 14:33:41 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1397,7 +1397,8 @@ http_parse_header(struct http_connection *conn, char *buf)
 	if (*cp == '\0') {
 		/* check consistency of header fields */
 		if (http_isredirect(conn) && conn->redir_uri == NULL) {
-			warnx("%s: redirect with no location", conn->req->uri);
+			warnx("%s: redirect with no location",
+			    http_info(conn->req->uri));
 			return -1;
 		}
 		if (conn->iosz != 0 && conn->chunked) {
@@ -1468,8 +1469,12 @@ http_parse_header(struct http_connection *conn, char *buf)
 			*loctail = '\0';
 		conn->redir_uri = redirurl;
 		if (!valid_origin(redirurl, conn->req->uri)) {
-			warnx("%s: cross origin redirect to %s", conn->req->uri,
-			    http_info(redirurl));
+			char redirbuf[200];
+
+			(void)strlcpy(redirbuf, http_info(redirurl),
+			    sizeof(redirbuf));
+			warnx("%s: cross origin redirect to %s",
+			    http_info(conn->req->uri), redirbuf);
 			return -1;
 		}
 	} else if (strncasecmp(cp, TRANSFER_ENCODING,
