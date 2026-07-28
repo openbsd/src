@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2143 2026/07/24 13:58:18 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2144 2026/07/28 12:36:55 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -29152,6 +29152,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA Marvel G200 SD",
 	},
 	{
+	    PCI_VENDOR_MAXIO, PCI_PRODUCT_MAXIO_MAP1202,
+	    "MAP1202",
+	},
+	{
+	    PCI_VENDOR_MAXIO, PCI_PRODUCT_MAXIO_MAP1602,
+	    "MAP1602",
+	},
+	{
 	    PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921K,
 	    "MT7921K",
 	},
@@ -34130,6 +34138,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM9C1A_NVME,
 	    "PM9C1a",
+	},
+	{
+	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM9E1_NVME,
+	    "PM9E1",
 	},
 	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_NVME_171X,
@@ -39338,6 +39350,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_YMTC,
 	    "YMTC",
+	},
+	{
+	    PCI_VENDOR_MAXIO,
+	    "Maxio",
 	},
 	{
 	    PCI_VENDOR_SSSTC,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2143 2026/07/24 13:58:18 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2144 2026/07/28 12:36:55 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -361,6 +361,7 @@
 #define	PCI_VENDOR_AMPERE	0x1def		/* Ampere */
 #define	PCI_VENDOR_KIOXIA	0x1e0f		/* Kioxia */
 #define	PCI_VENDOR_YMTC	0x1e49		/* YMTC */
+#define	PCI_VENDOR_MAXIO	0x1e4b		/* Maxio */
 #define	PCI_VENDOR_SSSTC	0x1e95		/* SSSTC */
 #define	PCI_VENDOR_QUECTEL	0x1eac		/* Quectel */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
@@ -8015,6 +8016,10 @@
 #define	PCI_PRODUCT_MATROX_MILL_G200_SG	0xff03		/* MGA Millennium G200 SG */
 #define	PCI_PRODUCT_MATROX_MARV_G200_SD	0xff04		/* MGA Marvel G200 SD */
 
+/* Maxio */
+#define	PCI_PRODUCT_MAXIO_MAP1202	0x1202		/* MAP1202 */
+#define	PCI_PRODUCT_MAXIO_MAP1602	0x1602		/* MAP1602 */
+
 /* MediaTek products */
 #define	PCI_PRODUCT_MEDIATEK_MT7921K	0x0608		/* MT7921K */
 #define	PCI_PRODUCT_MEDIATEK_RZ616	0x0616		/* RZ616 */
@@ -9423,6 +9428,7 @@
 #define	PCI_PRODUCT_SAMSUNG2_PM9B1_NVME	0xa80b		/* PM9B1 */
 #define	PCI_PRODUCT_SAMSUNG2_PM9C1_NVME	0xa80c		/* PM9C1 */
 #define	PCI_PRODUCT_SAMSUNG2_PM9C1A_NVME	0xa80d		/* PM9C1a */
+#define	PCI_PRODUCT_SAMSUNG2_PM9E1_NVME	0xa810		/* PM9E1 */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_171X	0xa820		/* NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_172X	0xa821		/* NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_172X_A_B	0xa822		/* NVMe */
