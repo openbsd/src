@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.34 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.35 2026/07/28 11:49:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -333,9 +333,8 @@ main_dispatch_dvmrpe(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("imsg_get");
-
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("imsg_buf_get");
 		if (n == 0)
 			break;
 
@@ -397,9 +396,8 @@ main_dispatch_rde(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("imsg_get");
-
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("imsgbuf_get");
 		if (n == 0)
 			break;
 
