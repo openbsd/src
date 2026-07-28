@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.79 2025/07/22 18:39:19 jan Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.80 2026/07/28 11:48:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -276,8 +276,8 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ospfe_dispatch_main: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("ospfe_dispatch_main: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -469,8 +469,8 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ospfe_dispatch_rde: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("ospfe_dispatch_rde: imsgbuf_get error");
 		if (n == 0)
 			break;
 
