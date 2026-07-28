@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.84 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.85 2026/07/28 11:50:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -215,8 +215,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lde_dispatch_imsg: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("lde_dispatch_imsg: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -412,8 +412,8 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lde_dispatch_parent: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("lde_dispatch_parent: imsgbuf_get error");
 		if (n == 0)
 			break;
 

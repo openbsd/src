@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.79 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.80 2026/07/28 11:50:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -398,9 +398,8 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("imsg_get");
-
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("imsgbuf_get");
 		if (n == 0)
 			break;
 
@@ -479,9 +478,8 @@ main_dispatch_lde(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("imsg_get");
-
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("imsgbuf_get");
 		if (n == 0)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.88 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.89 2026/07/28 11:50:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -248,8 +248,8 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ldpe_dispatch_main: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("ldpe_dispatch_main: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -515,8 +515,8 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ldpe_dispatch_lde: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("ldpe_dispatch_lde: imsgbuf_get error");
 		if (n == 0)
 			break;
 
