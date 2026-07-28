@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.37 2024/11/21 13:38:15 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.38 2026/07/28 11:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -248,8 +248,8 @@ ripe_dispatch_main(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ripe_dispatch_main: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("ripe_dispatch_main: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -329,8 +329,8 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ripe_dispatch_rde: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("ripe_dispatch_rde: imsgbuf_get error");
 		if (n == 0)
 			break;
 

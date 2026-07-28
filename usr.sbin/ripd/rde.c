@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.31 2024/11/21 13:38:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.32 2026/07/28 11:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -214,8 +214,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -317,8 +317,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_parent: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_parent: imsgbuf_get error");
 		if (n == 0)
 			break;
 
