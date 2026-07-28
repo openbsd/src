@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.64 2026/06/15 14:45:19 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.65 2026/07/28 11:25:50 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -162,13 +162,14 @@ exec_rsync(const char *prog, const char *bind_addr, char *uri, char *dst,
 		args[i++] = "--timeout=" STRINGIFY(MAX_IO_TIMEOUT);
 		args[i++] = "--exclude=.*";
 		args[i++] = "--include=*/";
+		args[i++] = "--include=*.asa";
 		args[i++] = "--include=*.cer";
 		args[i++] = "--include=*.crl";
+		args[i++] = "--include=*.gbr";
 		args[i++] = "--include=*.mft";
 		args[i++] = "--include=*.roa";
-		args[i++] = "--include=*.asa";
-		args[i++] = "--include=*.tak";
 		args[i++] = "--include=*.spl";
+		args[i++] = "--include=*.tak";
 		args[i++] = "--exclude=*";
 		if (bind_addr != NULL) {
 			args[i++] = "--address";
