@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2143 2026/07/24 13:58:18 kettenis Exp $
+$OpenBSD: pcidevs,v 1.2144 2026/07/28 12:36:55 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -356,6 +356,7 @@ vendor	RPI		0x1de4	Raspberry Pi
 vendor	AMPERE		0x1def	Ampere
 vendor	KIOXIA		0x1e0f	Kioxia
 vendor	YMTC		0x1e49	YMTC
+vendor	MAXIO		0x1e4b	Maxio
 vendor	SSSTC		0x1e95	SSSTC
 vendor	QUECTEL		0x1eac	Quectel
 vendor	TEHUTI		0x1fc9	Tehuti Networks
@@ -8010,6 +8011,10 @@ product MATROX MYST_G200_SD	0xff02	MGA Mystique G200 SD
 product MATROX MILL_G200_SG	0xff03	MGA Millennium G200 SG
 product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 
+/* Maxio */
+product MAXIO MAP1202		0x1202	MAP1202
+product MAXIO MAP1602		0x1602	MAP1602
+
 /* MediaTek products */
 product MEDIATEK MT7921K	0x0608	MT7921K
 product MEDIATEK RZ616		0x0616	RZ616
@@ -9418,6 +9423,7 @@ product SAMSUNG2 PM9A1_NVME	0xa80a	PM9A1
 product SAMSUNG2 PM9B1_NVME	0xa80b	PM9B1
 product SAMSUNG2 PM9C1_NVME	0xa80c	PM9C1
 product SAMSUNG2 PM9C1A_NVME	0xa80d	PM9C1a
+product SAMSUNG2 PM9E1_NVME	0xa810	PM9E1
 product SAMSUNG2 NVME_171X	0xa820	NVMe
 product SAMSUNG2 NVME_172X	0xa821	NVMe
 product SAMSUNG2 NVME_172X_A_B	0xa822	NVMe
