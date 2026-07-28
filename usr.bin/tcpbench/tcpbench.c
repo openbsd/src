@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.76 2025/12/06 09:48:30 phessler Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.77 2026/07/28 08:26:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -20,22 +20,13 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/resource.h>
 #include <sys/queue.h>
 #include <sys/un.h>
 
-#include <net/route.h>
-
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_fsm.h>
-#include <netinet/in_pcb.h>
-#include <netinet/tcp_var.h>
-
-#include <arpa/inet.h>
 
 #include <unistd.h>
 #include <limits.h>
@@ -49,14 +40,8 @@
 #include <err.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <paths.h>
 #include <math.h>
 #include <tls.h>
-
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
 
 #define DEFAULT_PORT "12345"
 #define DEFAULT_STATS_INTERVAL 1000 /* ms */
