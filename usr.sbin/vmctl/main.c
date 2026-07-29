@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2026/04/16 21:34:47 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2026/07/29 13:32:50 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -274,8 +274,8 @@ vmmaction(struct parse_result *res)
 			errx(1, "pipe closed");
 
 		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				errx(1, "imsg_get error");
+			if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+				errx(1, "imsgbuf_get error");
 			if (n == 0)
 				break;
 
