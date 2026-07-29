@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.267 2026/07/20 17:41:07 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.268 2026/07/29 12:47:24 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1870,7 +1870,8 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg_get_type(imsg)) {
 	case IMSG_HOST_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((host = host_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		if ((table = table_find(env, host->conf.tableid)) ==
@@ -1882,14 +1883,16 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		host->up = HOST_UNKNOWN;
 		break;
 	case IMSG_HOST_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((host = host_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		host->flags &= ~(F_DISABLE);
 		host->up = HOST_UNKNOWN;
 		break;
 	case IMSG_TABLE_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((table = table_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		table->conf.flags |= F_DISABLE;
@@ -1898,7 +1901,8 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			host->up = HOST_UNKNOWN;
 		break;
 	case IMSG_TABLE_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((table = table_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		table->conf.flags &= ~(F_DISABLE);
@@ -1908,7 +1912,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_HOST_STATUS:
 		if (imsg_get_data(imsg, &st, sizeof(st)) == -1)
-			return (-1);
+			fatalx("%s: imsg_get_data", __func__);
 		if ((host = host_find(env, st.id)) == NULL)
 			fatalx("%s: invalid host id", __func__);
 		if (host->flags & F_DISABLE)
@@ -1939,7 +1943,8 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		host->up = st.up;
 		break;
 	case IMSG_NATLOOK:
-		bcopy(imsg->data, &cnl, sizeof(cnl));
+		if (imsg_get_data(imsg, &cnl, sizeof(cnl)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((con = session_find(env, cnl.id)) == NULL ||
 		    con->se_cnl == NULL) {
 			log_debug("%s: session %d: expired",
@@ -1954,7 +1959,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CTL_SESSION:
 		if (imsg_get_data(imsg, &cid, sizeof(cid)) == -1)
-			return (-1);
+			fatalx("%s: imsg_get_data", __func__);
 		TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 			SPLAY_FOREACH(con, session_tree,
 			    &rlay->rl_sessions) {
@@ -2001,7 +2006,8 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg_get_type(imsg)) {
 	case IMSG_BINDANY:
-		bcopy(imsg->data, &id, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((con = session_find(env, id)) == NULL) {
 			log_debug("%s: session %d: expired",
 			    __func__, id);
@@ -2058,7 +2064,7 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_TLSTICKET_REKEY:
 		if (imsg_get_data(imsg, &env->sc_ticket,
 		    sizeof(env->sc_ticket)) == -1)
-			return (-1);
+			fatalx("%s: imsg_get_data", __func__);
 		TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 			if (rlay->rl_conf.flags & F_TLS)
 				tls_config_add_ticket_key(rlay->rl_tls_cfg,

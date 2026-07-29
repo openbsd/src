@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.86 2026/07/19 09:14:57 rsadowski Exp $	*/
+/*	$OpenBSD: hce.c,v 1.87 2026/07/29 12:47:24 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -291,7 +291,8 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg_get_type(imsg)) {
 	case IMSG_HOST_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((host = host_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		host->flags |= F_DISABLE;
@@ -301,7 +302,8 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		host->he = HCE_NONE;
 		break;
 	case IMSG_HOST_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((host = host_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		host->flags &= ~(F_DISABLE);
@@ -309,7 +311,8 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		host->he = HCE_NONE;
 		break;
 	case IMSG_TABLE_DISABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((table = table_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		table->conf.flags |= F_DISABLE;
@@ -317,7 +320,8 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			host->up = HOST_UNKNOWN;
 		break;
 	case IMSG_TABLE_ENABLE:
-		memcpy(&id, imsg->data, sizeof(id));
+		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
 		if ((table = table_find(env, id)) == NULL)
 			fatalx("%s: desynchronized", __func__);
 		table->conf.flags &= ~(F_DISABLE);
@@ -345,7 +349,7 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg_get_type(imsg)) {
 	case IMSG_SCRIPT:
 		if (imsg_get_data(imsg, &scr, sizeof(scr)) == -1)
-			return (-1);
+			fatalx("%s: imsg_get_data", __func__);
 		script_done(env, &scr);
 		break;
 	case IMSG_CFG_TABLE:
