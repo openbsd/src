@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.56 2026/07/24 13:48:17 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.57 2026/07/29 16:57:06 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -980,9 +980,15 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 				havesyms = 1;
 
 		for (i = 0; i < elf->e_shnum; i++) {
+			char *shname = NULL;
+
+			if (shp[i].sh_name < shstrsz &&
+			    memchr(shstr + shp[i].sh_name, '\0',
+			    shstrsz - shp[i].sh_name) != NULL)
+				shname = shstr + shp[i].sh_name;
 			if (shp[i].sh_type == SHT_SYMTAB ||
 			    shp[i].sh_type == SHT_STRTAB ||
-			    !strcmp(shstr + shp[i].sh_name, ".debug_line")) {
+			    (shname != NULL && !strcmp(shname, ".debug_line"))) {
 				if (havesyms && (flags & LOAD_SYM)) {
 					if (gzseek(fp, (off_t)shp[i].sh_offset,
 					    SEEK_SET) == -1) {
