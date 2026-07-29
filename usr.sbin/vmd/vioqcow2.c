@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.29 2026/07/21 20:20:11 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.30 2026/07/29 19:42:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -491,7 +491,9 @@ xlate(struct qcdisk *disk, off_t off, int *inplace)
 	if (l2tab == 0)
 		return 0;
 	l2off = (off / disk->clustersz) % l2sz;
-	pread(disk->fd, &buf, sizeof(buf), l2tab + l2off * 8);
+	if (pread(disk->fd, &buf, sizeof(buf), l2tab + l2off * 8) !=
+	    (ssize_t)sizeof(buf))
+		fatalx("%s: unable to read qcow2 L2 entry", __func__);
 	cluster = be64toh(buf);
 	/*
 	 * cluster may be 0, but all future operations don't affect
