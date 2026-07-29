@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.31 2026/07/29 19:52:49 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.32 2026/07/29 20:01:46 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -208,7 +209,7 @@ qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 	char basepath[PATH_MAX];
 	struct stat st;
 	struct qcheader header;
-	uint64_t backingoff;
+	uint64_t backingoff, l1bytes;
 	uint32_t backingsz;
 	off_t i;
 	int version, fd;
@@ -254,12 +255,19 @@ qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 		    disk->incompatfeatures & ~(QCOW2_DIRTY|QCOW2_CORRUPT));
 	if (be32toh(header.reforder) != 4)
 		fatalx("unsupported refcount size\n");
+	if (fstat(fd, &st) == -1)
+		fatal("%s: unable to stat disk", __func__);
+	l1bytes = (uint64_t)disk->l1sz * sizeof(*disk->l1);
+	if (l1bytes > SSIZE_MAX || disk->l1off < 0 || st.st_size < 0 ||
+	    (uint64_t)disk->l1off > (uint64_t)st.st_size ||
+	    l1bytes > (uint64_t)st.st_size - (uint64_t)disk->l1off)
+		fatalx("%s: invalid qcow2 L1 table extent", __func__);
 
 	disk->l1 = calloc(disk->l1sz, sizeof(*disk->l1));
 	if (!disk->l1)
 		fatal("%s: could not allocate l1 table", __func__);
-	if (pread(disk->fd, disk->l1, 8 * disk->l1sz, disk->l1off)
-	    != 8 * disk->l1sz)
+	if (pread(disk->fd, disk->l1, (size_t)l1bytes, disk->l1off)
+	    != (ssize_t)l1bytes)
 		fatalx("%s: unable to read qcow2 L1 table", __func__);
 	for (i = 0; i < disk->l1sz; i++)
 		disk->l1[i] = be64toh(disk->l1[i]);
@@ -293,9 +301,6 @@ qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 			fatalx("%s: all disk parts must share clustersize",
 			    __func__);
 	}
-	if (fstat(fd, &st) == -1)
-		fatal("%s: unable to stat disk", __func__);
-
 	disk->end = st.st_size;
 
 	log_debug("%s: qcow2 disk version %d size %lld end %lld snap %d",
