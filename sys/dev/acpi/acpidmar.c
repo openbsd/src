@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidmar.c,v 1.18 2026/07/25 22:57:22 chris Exp $ */
+/* $OpenBSD: acpidmar.c,v 1.19 2026/07/29 09:30:56 hshoexer Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -841,14 +841,14 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag,
 			if (error)
 				goto fail;
 
+			if (debugme(dom)) {
+				printf("  LOADMAP: %.16llx %x => %.16llx\n",
+				    (uint64_t)seg->ds_addr,
+				    (uint32_t)seg->ds_len, (uint64_t)res);
+			}
+
 			/* Reassign DMA address */
 			seg->ds_addr = res | (seg->ds_addr & VTD_PAGE_MASK);
-		}
-
-		if (debugme(dom)) {
-			printf("  LOADMAP: %.16llx %x => %.16llx\n",
-			    (uint64_t)seg->ds_addr, (uint32_t)seg->ds_len,
-			    (uint64_t)res);
 		}
 
 		mapped_nsegs = i + 1;
