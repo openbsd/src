@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.34 2024/12/04 07:58:51 tb Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.35 2026/07/29 02:27:31 tb Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -399,8 +399,7 @@ ocsp_request_new_from_cert(const char *cadir, char *file, int nonce)
 	return NULL;
 }
 
-
-int
+static int
 validate_response(char *buf, size_t size, ocsp_request *request,
     X509_STORE *store, char *host, char *file)
 {
