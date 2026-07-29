@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.204 2026/07/19 09:14:57 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.205 2026/07/29 12:38:44 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -407,7 +407,7 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	char			*str = NULL;
 	size_t			 s;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_DEMOTE:
 		if (imsg_get_data(imsg, &demote, sizeof(demote)) == -1) {
 			log_warn("%s: imsg_get_data", __func__);
@@ -469,7 +469,7 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct relayd		*env = ps->ps_env;
 	struct ctl_script	 scr;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_SCRIPT:
 		if (imsg_get_data(imsg, &scr, sizeof(scr)) == -1) {
 			log_warn("%s: imsg_get_data", __func__);
@@ -498,7 +498,7 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ctl_bindany	 bnd;
 	int			 s;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_BINDANY:
 		if (imsg_get_data(imsg, &bnd, sizeof(bnd)) == -1) {
 			log_warn("%s: imsg_get_data", __func__);
@@ -537,7 +537,7 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct privsep		*ps = p->p_ps;
 	struct relayd		*env = ps->ps_env;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
 		break;
