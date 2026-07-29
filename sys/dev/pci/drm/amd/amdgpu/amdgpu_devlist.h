@@ -280,7 +280,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x1902 },	/* Radeon 820M / 840M */
 
 	/* GC 12.0.0, DCN 4.0.1, dGPU, "Navi 44" */
-	{0x1002, 0x7590 },	/* Radeon RX 9060, 9060 XT */
+	{0x1002, 0x7590 },	/* Radeon RX 9050, 9060, 9060 XT */
 
 	/* GC 12.0.1, DCN 4.0.1, dGPU, "Navi 48" */
 	{0x1002, 0x7550 },	/* Radeon RX 9070, 9070 XT, 9070 GRE */
