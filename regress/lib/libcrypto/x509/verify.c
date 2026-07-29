@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.16 2026/05/04 13:52:39 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.17 2026/07/29 02:08:31 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -257,7 +257,7 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains,
 	}
 
 	if ((*chains = x509_verify(ctx, leaf, NULL)) == 0) {
-		fprintf(stderr, "failed to verify at %lu: %s\n",
+		fprintf(stderr, "failed to verify at %zu: %s\n",
 		    x509_verify_ctx_error_depth(ctx),
 		    x509_verify_ctx_error_string(ctx));
 	} else {
