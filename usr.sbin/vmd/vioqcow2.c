@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.30 2026/07/29 19:42:21 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.31 2026/07/29 19:52:49 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -222,6 +222,9 @@ qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 		fatalx("short read on header");
 	if (strncmp(header.magic, VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW)) != 0)
 		fatalx("invalid magic numbers");
+	if (be32toh(header.clustershift) < 9 ||
+	    be32toh(header.clustershift) > 21)
+		fatalx("unsupported cluster shift");
 
 	disk->clustersz		= (1ull << be32toh(header.clustershift));
 	disk->disksz		= be64toh(header.disksz);
