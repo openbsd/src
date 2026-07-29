@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.30 2026/04/17 21:08:42 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.31 2026/07/29 13:32:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -874,8 +874,8 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get", __func__);
 		if (n == 0)
 			break;
 
@@ -946,8 +946,8 @@ handle_sync_io(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("%s: imsg_get (n=%ld)", __func__, n);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get", __func__);
 		if (n == 0)
 			break;
 

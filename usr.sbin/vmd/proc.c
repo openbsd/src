@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.37 2026/06/30 13:52:34 dv Exp $	*/
+/*	$OpenBSD: proc.c,v 1.38 2026/07/29 13:32:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -469,8 +469,8 @@ proc_dispatch(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get", __func__);
 		if (n == 0)
 			break;
 

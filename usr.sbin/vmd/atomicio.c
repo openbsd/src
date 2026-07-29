@@ -1,4 +1,4 @@
-/* $OpenBSD: atomicio.c,v 1.2 2024/11/21 13:25:30 claudio Exp $ */
+/* $OpenBSD: atomicio.c,v 1.3 2026/07/29 13:32:18 claudio Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.
  * Copyright (c) 2005 Anil Madhavapeddy. All rights reserved.
@@ -164,7 +164,7 @@ imsgbuf_read_one(struct imsgbuf *imsgbuf, struct imsg *imsg)
 	pfd.fd = imsgbuf->fd;
 	pfd.events = POLLIN;
 	while (1) {
-		switch (imsg_get(imsgbuf, imsg)) {
+		switch (imsgbuf_get(imsgbuf, imsg)) {
 		case -1:
 			return (-1);
 		case 0:

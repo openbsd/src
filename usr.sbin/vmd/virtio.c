@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.144 2026/07/28 00:37:14 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.145 2026/07/29 13:32:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1796,8 +1796,8 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get", __func__);
 		if (n == 0)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.138 2026/07/17 13:09:18 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.139 2026/07/29 13:32:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -481,8 +481,8 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get", __func__);
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsgbuf_get", __func__);
 		if (n == 0)
 			break;
 
