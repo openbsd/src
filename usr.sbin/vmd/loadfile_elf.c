@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.57 2026/07/29 16:57:06 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.58 2026/07/29 19:08:54 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,6 +103,9 @@
 #include "vmd.h"
 
 #define LOADADDR(a)            ((((u_long)(a)) + offset)&0xfffffff)
+
+/* Cap section name tables to prevent excessive ELF loader allocations. */
+#define MAX_SHSTRTAB_SIZE      (16 * 1024 * 1024)
 
 union {
 	Elf32_Ehdr elf32;
@@ -727,7 +730,15 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 			return 1;
 		}
 		size_t shstrsz = shp[elf->e_shstrndx].sh_size;
+		if (shstrsz > MAX_SHSTRTAB_SIZE) {
+			free(shp);
+			return 1;
+		}
 		char *shstr = malloc(shstrsz);
+		if (shstr == NULL) {
+			free(shp);
+			return 1;
+		}
 		if (gzseek(fp, (off_t)shp[elf->e_shstrndx].sh_offset,
 		    SEEK_SET) == -1) {
 			free(shstr);
@@ -955,7 +966,15 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 		maxp += roundup(sz, sizeof(Elf32_Addr));
 
 		size_t shstrsz = shp[elf->e_shstrndx].sh_size;
+		if (shstrsz > MAX_SHSTRTAB_SIZE) {
+			free(shp);
+			return 1;
+		}
 		char *shstr = malloc(shstrsz);
+		if (shstr == NULL) {
+			free(shp);
+			return 1;
+		}
 		if (gzseek(fp, (off_t)shp[elf->e_shstrndx].sh_offset,
 		    SEEK_SET) == -1) {
 			free(shstr);
