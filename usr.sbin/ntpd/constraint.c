@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.62 2026/06/21 19:23:56 tb Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.63 2026/07/29 14:06:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -290,7 +290,7 @@ static int
 imsgbuf_read_one(struct imsgbuf *imsgbuf, struct imsg *imsg)
 {
 	while (1) {
-		switch (imsg_get(imsgbuf, imsg)) {
+		switch (imsgbuf_get(imsgbuf, imsg)) {
 		case -1:
 			return (-1);
 		case 0:
@@ -646,7 +646,7 @@ priv_constraint_dispatch(struct pollfd *pfd)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&cstr->ibuf, &imsg)) == -1) {
+		if ((n = imsgbuf_get(&cstr->ibuf, &imsg)) == -1) {
 			priv_constraint_close(pfd->fd, 1);
 			return (1);
 		}

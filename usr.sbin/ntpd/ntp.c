@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.183 2026/06/08 12:41:51 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.184 2026/07/29 14:06:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -483,7 +483,7 @@ ntp_dispatch_imsg(void)
 		return (-1);
 
 	for (;;) {
-		if ((n = imsg_get(ibuf_main, &imsg)) == -1)
+		if ((n = imsgbuf_get(ibuf_main, &imsg)) == -1)
 			return (-1);
 
 		if (n == 0)
@@ -491,7 +491,8 @@ ntp_dispatch_imsg(void)
 
 		switch (imsg.hdr.type) {
 		case IMSG_ADJTIME:
-			memcpy(&n, imsg.data, sizeof(n));
+			if (imsg_get_data(&imsg, &n, sizeof(n)) == -1)
+				fatal("IMSG_ADJTIME");
 			if (n == 1 && !conf->status.synced) {
 				log_info("clock is now synced");
 				conf->status.synced = 1;
@@ -557,9 +558,8 @@ ntp_dispatch_imsg_dns(void)
 		return (-1);
 
 	for (;;) {
-		if ((n = imsg_get(ibuf_dns, &imsg)) == -1)
+		if ((n = imsgbuf_get(ibuf_dns, &imsg)) == -1)
 			return (-1);
-
 		if (n == 0)
 			break;
 
@@ -665,10 +665,8 @@ ntp_dispatch_imsg_dns(void)
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_PROBE_ROOT:
-			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
-			if (dlen != sizeof(int))
-				fatalx("IMSG_PROBE_ROOT");
-			memcpy(&n, imsg.data, sizeof(int));
+			if (imsg_get_data(&imsg, &n, sizeof(n)) == -1)
+				fatal("IMSG_PROBE_ROOT");
 			if (n < 0)
 				priv_settime(0, "dns probe failed");
 			break;

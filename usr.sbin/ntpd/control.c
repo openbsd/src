@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.28 2026/04/21 14:20:00 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.29 2026/07/29 14:06:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -226,7 +226,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&c->ibuf, &imsg)) == -1) {
+		if ((n = imsgbuf_get(&c->ibuf, &imsg)) == -1) {
 			*ctl_cnt -= control_close(pfd->fd);
 			return (1);
 		}

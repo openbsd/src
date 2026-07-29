@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.37 2026/04/21 12:35:45 henning Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.38 2026/07/29 14:06:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -151,7 +151,7 @@ dns_dispatch_imsg(struct ntpd_conf *nconf)
 		return (-1);
 
 	for (;;) {
-		if ((n = imsg_get(ibuf_dns, &imsg)) == -1)
+		if ((n = imsgbuf_get(ibuf_dns, &imsg)) == -1)
 			return (-1);
 
 		if (n == 0)

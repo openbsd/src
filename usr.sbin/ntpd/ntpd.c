@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.145 2026/04/22 13:54:50 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.146 2026/07/29 14:06:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -398,7 +398,7 @@ dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 		return (-1);
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
 			return (-1);
 
 		if (n == 0)
@@ -713,8 +713,8 @@ ctl_main(int argc, char *argv[])
 			errx(1, "pipe closed");
 
 		while (!done) {
-			if ((n = imsg_get(ibuf_ctl, &imsg)) == -1)
-				err(1, "ibuf_ctl: imsg_get error");
+			if ((n = imsgbuf_get(ibuf_ctl, &imsg)) == -1)
+				err(1, "ibuf_ctl: imsgbuf_get error");
 			if (n == 0)
 				break;
 
