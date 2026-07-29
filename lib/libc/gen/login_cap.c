@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.50 2026/06/22 07:38:49 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.51 2026/07/29 11:01:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -652,10 +652,10 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 
 	/*
 	 * Without the pwd entry being passed we cannot set either
-	 * the group or the login.  We could complain about it.
+	 * the group, the login or the xdgenv.  We could complain about it.
 	 */
 	if (pwd == NULL)
-		flags &= ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
+		flags &= ~(LOGIN_SETGROUP|LOGIN_SETLOGIN|LOGIN_SETXDGENV);
 
 	/*
 	 * Verify that we haven't been given invalid values.
