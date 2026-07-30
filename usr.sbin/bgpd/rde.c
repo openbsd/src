@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.711 2026/07/24 05:01:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.712 2026/07/30 13:56:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -464,7 +464,7 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 	struct rde_aspath	*asp;
 	struct as_set		*aset;
 	struct rde_prefixset	*pset;
-	ssize_t			 n;
+	int			 n;
 	uint32_t		 peerid;
 	pid_t			 pid;
 	int			 verbose;

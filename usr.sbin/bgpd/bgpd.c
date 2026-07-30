@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.292 2026/07/24 05:01:01 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.293 2026/07/30 13:56:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -847,7 +847,7 @@ dispatch_imsg(struct imsgbuf *imsgbuf, int idx, struct bgpd_config *conf)
 	struct pftable_msg	 pfmsg;
 	struct demote_msg	 demote;
 	char			 reason[REASON_LEN], ifname[IFNAMSIZ];
-	ssize_t			 n;
+	int			 n;
 	u_int			 rtableid;
 	int			 rv, verbose;
 
@@ -1256,7 +1256,7 @@ set_pollfd(struct pollfd *pfd, struct imsgbuf *i)
 int
 handle_pollfd(struct pollfd *pfd, struct imsgbuf *i)
 {
-	ssize_t n;
+	int n;
 
 	if (i == NULL)
 		return (0);

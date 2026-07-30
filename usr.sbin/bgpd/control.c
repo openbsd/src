@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.142 2026/07/24 05:01:01 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.143 2026/07/30 13:56:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,7 +246,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	struct ctl_show_rib_request	ribreq;
 	struct ctl_conn		*c;
 	struct peer		*p;
-	ssize_t			 n;
+	int			 n;
 	uint32_t		 type;
 	pid_t			 pid;
 	int			 verbose, matched;
