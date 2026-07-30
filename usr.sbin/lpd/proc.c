@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.7 2024/11/21 13:34:51 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.8 2026/07/30 12:48:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -277,7 +277,7 @@ proc_dispatch(int fd, short event, void *arg)
 {
 	struct imsgproc	*p = arg;
 	struct imsg	 imsg;
-	ssize_t		 n;
+	int		 n;
 
 	p->events = 0;
 
@@ -307,8 +307,8 @@ proc_dispatch(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&p->imsgbuf, &imsg)) == -1) {
-			log_warn("%s: imsg_get", __func__);
+		if ((n = imsgbuf_get(&p->imsgbuf, &imsg)) == -1) {
+			log_warn("%s: imsgbuf_get", __func__);
 			proc_callback(p, NULL);
 			return;
 		}
