@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.14 2022/03/28 10:29:44 bentley Exp $
+#	$OpenBSD: zipcodes,v 1.15 2026/07/30 09:03:34 jsg Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -6898,6 +6898,7 @@
 17047:Loysville, PA
 17048:Lykens, PA
 17049:Mc Alisterville, PA
+17050:Mechanicsburg, PA
 17051:Mc Veytown, PA
 17052:Mapleton Depot, PA
 17053:Marysville, PA
@@ -32948,7 +32949,10 @@
 75029:Lewisville, TX
 75031:Farmersville, TX
 75032:Fate, TX
+75033:Frisco, TX
 75034:Frisco, TX
+75035:Frisco, TX
+75036:Frisco, TX
 75038:Irving, TX
 75039:Irving, TX
 75040:Garland, TX
