@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.37 2026/05/12 16:01:15 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.38 2026/07/30 11:46:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -558,6 +558,8 @@ ibuf_get_string(struct ibuf *buf, size_t len)
 int
 ibuf_get_strbuf(struct ibuf *buf, char *str, size_t len)
 {
+	size_t n;
+
 	if (len == 0) {
 		errno = EINVAL;
 		return (-1);
@@ -565,11 +567,14 @@ ibuf_get_strbuf(struct ibuf *buf, char *str, size_t len)
 
 	if (ibuf_get(buf, str, len) == -1)
 		return -1;
-	if (str[len - 1] != '\0') {
-		str[len - 1] = '\0';
+	if ((n = strnlen(str, len)) == len) {
+		str[len - 1] = '\0';	/* just to be save */
 		errno = EOVERFLOW;
 		return -1;
 	}
+	/* clear rest of the buffer */
+	memset(str + n, 0, len - n);
+
 	return 0;
 }
 
