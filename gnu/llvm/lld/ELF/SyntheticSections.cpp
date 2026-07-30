@@ -1505,6 +1505,7 @@ DynamicSection<ELFT>::computeContents() {
         addInt(DT_RISCV_VARIANT_CC, 0);
       [[fallthrough]];
     default:
+      assert(ctx.target->usesGotPlt);
       addInSec(DT_PLTGOT, *ctx.in.gotPlt);
       break;
     }
@@ -1720,14 +1721,20 @@ void RelocationBaseSection::finalizeContents() {
   else
     getParent()->link = 0;
 
-  if (ctx.in.relaPlt.get() == this && ctx.in.gotPlt->getParent()) {
-    getParent()->flags |= ELF::SHF_INFO_LINK;
-    getParent()->info = ctx.in.gotPlt->getParent()->sectionIndex;
+  if (ctx.in.relaPlt.get() == this) {
+    if (ctx.target->usesGotPlt && ctx.in.gotPlt->getParent()) {
+      getParent()->flags |= ELF::SHF_INFO_LINK;
+      getParent()->info = ctx.in.gotPlt->getParent()->sectionIndex;
+    } else if (ctx.in.plt->getParent()) {
+      getParent()->flags |= ELF::SHF_INFO_LINK;
+      getParent()->info = ctx.in.plt->getParent()->sectionIndex;
+    }
   }
 }
 
 void DynamicReloc::finalize(Ctx &ctx, SymbolTableBaseSection *symt) {
   r_offset = getOffset();
+  ctx.target->finalizeDynamicReloc(*this);
   r_sym = getSymIndex(symt);
   addend = computeAddend(ctx);
   isFinal = true; // Catch errors
@@ -2176,12 +2183,12 @@ void SymbolTableBaseSection::finalizeContents() {
     return;
   }
 
-  // If it is a .dynsym, there should be no local symbols, but we need
-  // to do a few things for the dynamic linker.
+  // If it is a .dynsym, we need to do a few things for the dynamic linker.
 
   // Section's Info field has the index of the first non-local symbol.
-  // Because the first symbol entry is a null entry, 1 is the first.
-  getParent()->info = 1;
+  // Because the first symbol entry is a null entry, add one to the number of
+  // local symbols.
+  getParent()->info = numLocalDynamicSymbols + 1;
 
   if (getPartition(ctx).gnuHashTab) {
     // NB: It also sorts Symbols to meet the GNU hash table requirements.
@@ -2201,7 +2208,7 @@ void SymbolTableBaseSection::finalizeContents() {
 
 // The ELF spec requires that all local symbols precede global symbols, so we
 // sort symbol entries in this function. (For .dynsym, we don't do that because
-// symbols for dynamic linking are inherently all globals.)
+// local symbols are inserted before global symbols.)
 //
 // Aside from above, we put local symbols in groups starting with the STT_FILE
 // symbol. That is convenient for purpose of identifying where are local symbols
@@ -2233,6 +2240,13 @@ void SymbolTableBaseSection::addSymbol(Symbol *b) {
   // Adding a local symbol to a .dynsym is a bug.
   assert(this->type != SHT_DYNSYM || !b->isLocal());
   symbols.push_back({b, strTabSec.addString(b->getName(), false)});
+}
+
+void SymbolTableBaseSection::addLocalSectionSymbol(Symbol *b) {
+  assert(this->type == SHT_DYNSYM && b->isLocal() && b->isSection());
+  symbols.insert(symbols.begin() + numLocalDynamicSymbols,
+                 {b, strTabSec.addString(b->getName(), false)});
+  ++numLocalDynamicSymbols;
 }
 
 size_t SymbolTableBaseSection::getSymbolIndex(const Symbol &sym) {
@@ -2508,7 +2522,8 @@ void GnuHashTableSection::addSymbols(SmallVectorImpl<SymbolTableEntry> &v) {
   // its type correctly.
   auto mid =
       std::stable_partition(v.begin(), v.end(), [&](const SymbolTableEntry &s) {
-        return !s.sym->isDefined() || s.sym->partition != partition;
+        return s.sym->isLocal() || !s.sym->isDefined() ||
+               s.sym->partition != partition;
       });
 
   // We chose load factor 4 for the on-disk hash table. For each hash
@@ -2574,6 +2589,8 @@ void HashTableSection::writeTo(uint8_t *buf) {
 
   for (const SymbolTableEntry &s : symTab->getSymbols()) {
     Symbol *sym = s.sym;
+    if (sym->isLocal())
+      continue;
     StringRef name = sym->getName();
     unsigned i = sym->dynsymIndex;
     uint32_t hash = hashSysV(name) % numSymbols;
@@ -2609,20 +2626,22 @@ PltSection::PltSection(Ctx &ctx)
 
   // The PLT needs to be writable on SPARC as the dynamic linker will
   // modify the instructions in the PLT entries.
-  if (ctx.arg.emachine == EM_SPARCV9)
+  if (ctx.arg.emachine == EM_SPARCV9) {
     this->flags |= SHF_WRITE;
+    addralign = 256;
+  }
 }
 
 void PltSection::writeTo(uint8_t *buf) {
   // At beginning of PLT, we have code to call the dynamic
   // linker to resolve dynsyms at runtime. Write such code.
   ctx.target->writePltHeader(buf);
-  size_t off = headerSize;
 
   for (const Symbol *sym : entries) {
+    size_t off = sym->getPltOffset(ctx);
     ctx.target->writePlt(buf + off, *sym, getVA() + off);
-    off += ctx.target->pltEntrySize;
   }
+  ctx.target->finalizePlt(buf);
 }
 
 void PltSection::addEntry(Symbol &sym) {
@@ -2645,11 +2664,8 @@ bool PltSection::isNeeded() const {
 void PltSection::addSymbols() {
   ctx.target->addPltHeaderSymbols(*this);
 
-  size_t off = headerSize;
-  for (size_t i = 0; i < entries.size(); ++i) {
-    ctx.target->addPltSymbols(*this, off);
-    off += ctx.target->pltEntrySize;
-  }
+  for (const Symbol *sym : entries)
+    ctx.target->addPltSymbols(*this, sym->getPltOffset(ctx));
 }
 
 IpltSection::IpltSection(Ctx &ctx)
@@ -4882,10 +4898,12 @@ template <class ELFT> void elf::createSyntheticSections(Ctx &ctx) {
   // _GLOBAL_OFFSET_TABLE_ is defined relative to either .got.plt or .got. Treat
   // it as a relocation and ensure the referenced section is created.
   if (ctx.sym.globalOffsetTable && ctx.arg.emachine != EM_MIPS) {
-    if (ctx.target->gotBaseSymInGotPlt)
+    if (ctx.target->gotBaseSymInGotPlt) {
+      assert(ctx.target->usesGotPlt);
       ctx.in.gotPlt->hasGotPltOffRel = true;
-    else
+    } else {
       ctx.in.got->hasGotOffRel = true;
+    }
   }
 
   // We always need to add rel[a].plt to output if it has entries.

@@ -39,6 +39,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <string>
 
 using namespace llvm;
 
@@ -81,6 +82,7 @@ class SparcAsmParser : public MCTargetAsmParser {
   bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
   ParseStatus parseDirective(AsmToken DirectiveID) override;
+  bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) override;
 
   unsigned validateTargetOperandClass(MCParsedAsmOperand &Op,
                                       unsigned Kind) override;
@@ -1044,6 +1046,27 @@ ParseStatus SparcAsmParser::parseDirective(AsmToken DirectiveID) {
     Parser.eatToEndOfStatement();
     return ParseStatus::Success;
   }
+  if (IDVal == ".seg") {
+    std::string Name;
+    if (Parser.parseEscapedString(Name) || Parser.parseEOL())
+      return ParseStatus::Failure;
+
+    MCSection *Section;
+    uint32_t Subsection = 0;
+    const MCObjectFileInfo *MCOFI = getContext().getObjectFileInfo();
+    if (Name == "text") {
+      Section = MCOFI->getTextSection();
+    } else if (Name == "data" || Name == "data1") {
+      Section = MCOFI->getDataSection();
+      Subsection = Name == "data1" ? 1 : 0;
+    } else if (Name == "bss") {
+      Section = MCOFI->getBSSSection();
+    } else {
+      return Error(DirectiveID.getLoc(), "unknown segment type");
+    }
+    getStreamer().switchSection(Section, Subsection);
+    return ParseStatus::Success;
+  }
 
   // Let the MC layer to handle other directives.
   return ParseStatus::NoMatch;
@@ -1686,7 +1709,9 @@ SparcAsmParser::adjustPICRelocation(uint16_t RelType, const MCExpr *subExpr) {
   // actually a %pc10 or %pc22 relocation. Otherwise, they are interpreted
   // as %got10 or %got22 relocation.
 
-  if (getContext().getObjectFileInfo()->isPositionIndependent()) {
+  int64_t AbsoluteValue;
+  if (getContext().getObjectFileInfo()->isPositionIndependent() &&
+      !subExpr->evaluateAsAbsolute(AbsoluteValue)) {
     switch (RelType) {
     default: break;
     case ELF::R_SPARC_LO10:
@@ -1744,6 +1769,16 @@ bool SparcAsmParser::matchSparcAsmModifiers(const MCExpr *&EVal,
 
   EVal = adjustPICRelocation(VK, subExpr);
   return true;
+}
+
+bool SparcAsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
+  if (Parser.getTok().is(AsmToken::Percent)) {
+    Parser.Lex();
+    if (matchSparcAsmModifiers(Res, EndLoc))
+      return false;
+    return true;
+  }
+  return Parser.parsePrimaryExpr(Res, EndLoc, nullptr);
 }
 
 bool SparcAsmParser::isPossibleExpression(const AsmToken &Token) {

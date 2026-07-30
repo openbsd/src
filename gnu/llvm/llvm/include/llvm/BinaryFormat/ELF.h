@@ -1426,6 +1426,9 @@ enum {
   STT_LOPROC = 13,    // Lowest processor-specific symbol type
   STT_HIPROC = 15,    // Highest processor-specific symbol type
 
+  // SPARC symbol types
+  STT_SPARC_REGISTER = 13,
+
   // AMDGPU symbol types
   STT_AMDGPU_HSA_KERNEL = 10
 };

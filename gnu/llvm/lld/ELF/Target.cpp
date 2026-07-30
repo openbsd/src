@@ -158,6 +158,12 @@ RelExpr TargetInfo::adjustGotPcExpr(RelType type, int64_t addend,
   return R_GOT_PC;
 }
 
+RelExpr TargetInfo::adjustGotOffExpr(RelType type, const Symbol &sym,
+                                     int64_t addend,
+                                     const uint8_t *data) const {
+  return R_GOT_OFF;
+}
+
 static void relocateImpl(const TargetInfo &target, InputSectionBase &sec,
                          uint64_t secAddr, uint8_t *buf) {
   auto &ctx = target.ctx;

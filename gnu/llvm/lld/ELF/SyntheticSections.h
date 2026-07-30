@@ -433,6 +433,11 @@ public:
   uint64_t getOffset() const;
   uint32_t getSymIndex(SymbolTableBaseSection *symTab) const;
   bool needsDynSymIndex() const { return isAgainstSymbol; }
+  void convertToRelative(RelType relativeRel) {
+    type = relativeRel;
+    isAgainstSymbol = false;
+    expr = R_ABS;
+  }
 
   /// Computes the addend of the dynamic relocation. Note that this is not the
   /// same as the #addend member variable as it may also include the symbol
@@ -661,6 +666,7 @@ public:
   void finalizeContents() override;
   size_t getSize() const override { return getNumSymbols() * entsize; }
   void addSymbol(Symbol *sym);
+  void addLocalSectionSymbol(Symbol *sym);
   unsigned getNumSymbols() const { return symbols.size() + 1; }
   size_t getSymbolIndex(const Symbol &sym);
   ArrayRef<SymbolTableEntry> getSymbols() const { return symbols; }
@@ -670,6 +676,7 @@ protected:
 
   // A vector of symbols and their string table offsets.
   SmallVector<SymbolTableEntry, 0> symbols;
+  size_t numLocalDynamicSymbols = 0;
 
   StringTableSection &strTabSec;
 

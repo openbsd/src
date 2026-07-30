@@ -22,6 +22,7 @@
 namespace lld {
 namespace elf {
 class Defined;
+class DynamicReloc;
 class InputFile;
 class Symbol;
 template <class RelTy> struct Relocs;
@@ -35,6 +36,9 @@ public:
   virtual RelExpr getRelExpr(RelType type, const Symbol &s,
                              const uint8_t *loc) const = 0;
   virtual RelType getDynRel(RelType type) const { return 0; }
+  virtual void prepareDynamicReloc(RelType type, const Symbol &sym,
+                                   InputSectionBase &sec) {}
+  virtual void finalizeDynamicReloc(DynamicReloc &rel) const {}
   virtual void writeGotPltHeader(uint8_t *buf) const {}
   virtual void writeGotHeader(uint8_t *buf) const {}
   virtual void writeGotPlt(uint8_t *buf, const Symbol &s) const {}
@@ -47,8 +51,13 @@ public:
   // they are called. This function writes that code.
   virtual void writePltHeader(uint8_t *buf) const {}
 
+  virtual uint64_t getPltEntryOffset(uint32_t pltIdx,
+                                     uint64_t headerSize) const {
+    return headerSize + uint64_t{pltIdx} * pltEntrySize;
+  }
   virtual void writePlt(uint8_t *buf, const Symbol &sym,
                         uint64_t pltEntryAddr) const {}
+  virtual void finalizePlt(uint8_t *buf) const {}
   virtual void writeIplt(uint8_t *buf, const Symbol &sym,
                          uint64_t pltEntryAddr) const {
     // All but PPC32 and PPC64 use the same format for .plt and .iplt entries.
@@ -135,7 +144,8 @@ public:
 
   uint64_t getImageBase() const;
 
-  // True if _GLOBAL_OFFSET_TABLE_ is relative to .got.plt, false if .got.
+  // True if _GLOBAL_OFFSET_TABLE_ is relative to .got.plt, false if .got. If
+  // true, usesGotPlt must also be true.
   bool gotBaseSymInGotPlt = false;
 
   static constexpr RelType noneRel = 0;
@@ -162,6 +172,8 @@ public:
   // On PPC ELF V2 abi, the first entry in the .got is the .TOC.
   unsigned gotHeaderEntriesNum = 0;
 
+  bool usesGotPlt = true;
+
   // On PPC ELF V2 abi, the dynamic section needs DT_PPC64_OPT (DT_LOPROC + 3)
   // to be set to 0x2 if there can be multiple TOC's. Although we do not emit
   // multiple TOC's, there can be a mix of TOC and NOTOC addressing which
@@ -186,6 +198,8 @@ public:
   virtual RelExpr adjustTlsExpr(RelType type, RelExpr expr) const;
   virtual RelExpr adjustGotPcExpr(RelType type, int64_t addend,
                                   const uint8_t *loc) const;
+  virtual RelExpr adjustGotOffExpr(RelType type, const Symbol &sym,
+                                   int64_t addend, const uint8_t *loc) const;
 
 protected:
   // On FreeBSD x86_64 the first page cannot be mmaped.

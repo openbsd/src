@@ -61,6 +61,7 @@ enum RelExpr {
   R_PLT_GOTPLT,
   R_PLT_GOTREL,
   R_RELAX_HINT,
+  R_RELAX_GOT_OFF,
   R_RELAX_GOT_PC,
   R_RELAX_GOT_PC_NOPIC,
   R_RELAX_TLS_GD_TO_IE,
@@ -171,8 +172,8 @@ bool maybeReportUndefined(Ctx &, Undefined &sym, InputSectionBase &sec,
 void postScanRelocations(Ctx &ctx);
 void addGotEntry(Ctx &ctx, Symbol &sym);
 
-void hexagonTLSSymbolUpdate(Ctx &ctx);
-bool hexagonNeedsTLSSymbol(ArrayRef<OutputSection *> outputSections);
+void tlsSymbolUpdate(Ctx &ctx);
+bool needsTLSSymbol(ArrayRef<OutputSection *> outputSections);
 
 bool isAbsolute(const Symbol &sym);
 

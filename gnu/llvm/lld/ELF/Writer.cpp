@@ -625,7 +625,7 @@ static bool isRelroSection(Ctx &ctx, const OutputSection *sec) {
   // by default resolved lazily, so we usually cannot put it into RELRO.
   // However, if "-z now" is given, the lazy symbol resolution is
   // disabled, which enables us to put it into RELRO.
-  if (sec == ctx.in.gotPlt->getParent())
+  if (ctx.target->usesGotPlt && sec == ctx.in.gotPlt->getParent())
 #ifndef __OpenBSD__
     return ctx.arg.zNow;
 #else
@@ -863,10 +863,14 @@ template <class ELFT> void Writer<ELFT>::setReservedSymbolSections() {
   if (ctx.sym.globalOffsetTable) {
     // The _GLOBAL_OFFSET_TABLE_ symbol is defined by target convention usually
     // to the start of the .got or .got.plt section.
-    InputSection *sec = ctx.in.gotPlt.get();
-    if (!ctx.target->gotBaseSymInGotPlt)
+    InputSection *sec;
+    if (ctx.target->gotBaseSymInGotPlt) {
+      assert(ctx.target->usesGotPlt);
+      sec = ctx.in.gotPlt.get();
+    } else {
       sec = ctx.in.mipsGot ? cast<InputSection>(ctx.in.mipsGot.get())
                            : cast<InputSection>(ctx.in.got.get());
+    }
     ctx.sym.globalOffsetTable->section = sec;
   }
 
@@ -1544,9 +1548,9 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
   };
   finalizeOrderDependentContent();
 
-  // Converts call x@GDPLT to call __tls_get_addr
-  if (ctx.arg.emachine == EM_HEXAGON)
-    hexagonTLSSymbolUpdate(ctx);
+  // Converts call x@GDPLT/x@TLSPLT to call __tls_get_addr.
+  if (ctx.arg.emachine == EM_HEXAGON || ctx.arg.emachine == EM_SPARCV9)
+    tlsSymbolUpdate(ctx);
 
   if (ctx.arg.randomizeSectionPadding)
     randomizeSectionPadding(ctx);
@@ -2042,10 +2046,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       sec->addrExpr = [=] { return i->second; };
   }
 
-  // With the ctx.outputSections available check for GDPLT relocations
+  // With the ctx.outputSections available check for GDPLT/TLSPLT relocations
   // and add __tls_get_addr symbol if needed.
-  if (ctx.arg.emachine == EM_HEXAGON &&
-      hexagonNeedsTLSSymbol(ctx.outputSections)) {
+  if ((ctx.arg.emachine == EM_HEXAGON || ctx.arg.emachine == EM_SPARCV9) &&
+      needsTLSSymbol(ctx.outputSections)) {
     Symbol *sym =
         ctx.symtab->addSymbol(Undefined{ctx.internalFile, "__tls_get_addr",
                                         STB_GLOBAL, STV_DEFAULT, STT_NOTYPE});
@@ -2311,6 +2315,15 @@ static bool needsPtLoad(OutputSection *sec) {
 static uint64_t computeFlags(Ctx &ctx, uint64_t flags) {
   if (ctx.arg.omagic)
     return PF_R | PF_W | PF_X;
+#ifdef __OpenBSD__
+  // The sparc64 static PIE startup code reads an instruction from .text to
+  // locate _DYNAMIC before applying relocations.
+  if (ctx.arg.emachine == EM_SPARCV9 && ctx.arg.pie && !ctx.arg.shared &&
+      ctx.sharedFiles.empty() && (flags & PF_X))
+    return flags | PF_R;
+  if (ctx.arg.emachine == EM_SPARCV9 && (flags & PF_X) && (flags & PF_W))
+    return flags;
+#endif
   if (ctx.arg.executeOnly && (flags & PF_X))
     return flags & ~PF_R;
   return flags;

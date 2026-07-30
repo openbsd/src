@@ -1213,6 +1213,19 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(uint32_t idx,
 
 // Initialize symbols. symbols is a parallel array to the corresponding ELF
 // symbol table.
+//
+// LLVM's SPARC assembler and OpenBSD ld.so do not implement application
+// register metadata. Accept GCC scratch declarations, but keep them out of
+// ordinary symbol resolution.
+template <class ELFT>
+static bool isSparcRegister(const Ctx &ctx, const typename ELFT::Sym &sym) {
+  return ctx.arg.emachine == EM_SPARCV9 && sym.getType() == STT_SPARC_REGISTER;
+}
+
+static bool isSparcScratchRegister(uint64_t value) {
+  return value == 2 || value == 3 || value == 6 || value == 7;
+}
+
 template <class ELFT>
 void ObjFile<ELFT>::initializeSymbols(const object::ELFFile<ELFT> &obj) {
   ArrayRef<Elf_Sym> eSyms = this->getELFSyms<ELFT>();
@@ -1221,14 +1234,25 @@ void ObjFile<ELFT>::initializeSymbols(const object::ELFFile<ELFT> &obj) {
 
   // Some entries have been filled by LazyObjFile.
   auto *symtab = ctx.symtab.get();
-  for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i)
-    if (!symbols[i])
-      symbols[i] = symtab->insert(CHECK2(eSyms[i].getName(stringTable), this));
+  for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i) {
+    const Elf_Sym &eSym = eSyms[i];
+    if (isSparcRegister<ELFT>(ctx, eSym)) {
+      StringRef name = CHECK2(eSym.getName(stringTable), this);
+      if (eSym.getBinding() != STB_GLOBAL || eSym.st_shndx != SHN_UNDEF ||
+          !name.empty() || !isSparcScratchRegister(eSym.st_value))
+        Err(ctx) << this << ": unsupported SPARC register declaration";
+      symbols[i] = ctx.dummySym;
+    } else if (!symbols[i]) {
+      symbols[i] = symtab->insert(CHECK2(eSym.getName(stringTable), this));
+    }
+  }
 
   // Perform symbol resolution on non-local symbols.
   SmallVector<unsigned, 32> undefineds;
   for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i) {
     const Elf_Sym &eSym = eSyms[i];
+    if (isSparcRegister<ELFT>(ctx, eSym))
+      continue;
     uint32_t secIdx = eSym.st_shndx;
     if (secIdx == SHN_UNDEF) {
       undefineds.push_back(i);
@@ -1330,6 +1354,8 @@ template <class ELFT> void ObjFile<ELFT>::postParse() {
   ArrayRef<Elf_Sym> eSyms = this->getELFSyms<ELFT>();
   for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i) {
     const Elf_Sym &eSym = eSyms[i];
+    if (isSparcRegister<ELFT>(ctx, eSym))
+      continue;
     Symbol &sym = *symbols[i];
     uint32_t secIdx = eSym.st_shndx;
     uint8_t binding = eSym.getBinding();
@@ -1692,6 +1718,9 @@ template <class ELFT> void SharedFile::parse() {
   ArrayRef<Elf_Sym> syms = this->getGlobalELFSyms<ELFT>();
   for (size_t i = 0, e = syms.size(); i != e; ++i) {
     const Elf_Sym &sym = syms[i];
+    // A SPARC register declaration is DSO metadata, not a symbol dependency.
+    if (isSparcRegister<ELFT>(ctx, sym))
+      continue;
 
     // ELF spec requires that all local symbols precede weak or global
     // symbols in each symbol table, and the index of first non-local symbol
