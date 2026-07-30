@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.40 2026/07/30 11:51:51 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.41 2026/07/30 17:55:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -568,7 +568,7 @@ ibuf_get_strbuf(struct ibuf *buf, char *str, size_t len)
 	if (ibuf_get(buf, str, len) == -1)
 		return -1;
 	if ((n = strnlen(str, len)) == len) {
-		str[len - 1] = '\0';	/* just to be save */
+		str[len - 1] = '\0';	/* just to be safe */
 		errno = EOVERFLOW;
 		return -1;
 	}
