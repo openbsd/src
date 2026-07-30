@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.38 2026/07/30 11:46:49 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.39 2026/07/30 11:49:39 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -938,16 +938,20 @@ again:
 	if ((n = recvmsg(fd, &msg, 0)) == -1) {
 		if (errno == EINTR)
 			goto again;
-		if (errno == EMSGSIZE)
+		if (errno == EMSGSIZE) {
 			/*
 			 * Not enough fd slots: fd passing failed, retry
 			 * to receive the message without fd.
 			 * imsg_get_fd() will return -1 in that case.
 			 */
+			msg.msg_control = NULL;
+			msg.msg_controllen = 0;
 			goto again;
-		if (errno == EAGAIN)
-			/* lets retry later again */
+		}
+		if (errno == EAGAIN) {
+			/* let's retry later again */
 			return (1);
+		}
 		return (-1);
 	}
 	if (n == 0)	/* connection closed */
