@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine_lpr.c,v 1.2 2019/04/04 19:25:45 eric Exp $	*/
+/*	$OpenBSD: engine_lpr.c,v 1.3 2026/07/30 12:48:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -199,7 +199,7 @@ lpr_allowedhost(uint32_t connid, const struct sockaddr *sa)
 	ssize_t linelen;
 	char host[NI_MAXHOST], addr[NI_MAXHOST], serv[NI_MAXSERV];
 	char dom[NI_MAXHOST], *lp, *ep, *line = NULL;
-	int e, rev = 0, ok = 0;
+	int e, ok = 0;
 
 	/* Always accept local connections. */
 	if (sa->sa_family == AF_UNIX) {
@@ -262,7 +262,6 @@ lpr_allowedhost(uint32_t connid, const struct sockaddr *sa)
 				break;
 			}
 
-		rev = 0;
 		switch (lp[0]) {
 		case '-':
 		case '+':
@@ -681,9 +680,7 @@ static void
 lpr_recvjob_commit(uint32_t connid)
 {
 	struct lpr_recvjob *j;
-	int ack;
 
-	ack = LPR_NACK;
 	TAILQ_FOREACH(j, &recvjobs, entry)
 		if (j->connid == connid)
 			break;
