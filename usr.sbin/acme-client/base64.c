@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.10 2026/05/22 01:53:10 jmatthew Exp $ */
+/*	$Id: base64.c,v 1.11 2026/07/30 06:17:45 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -113,6 +113,8 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
                 if ((p + 2) >= data + len)
                         break;
 
+                if (*(p + 2) == '=')
+                        break;
                 c3 = CHAR64(*(p + 2));
                 if (c3 == 255)
                         return -1;
@@ -121,6 +123,8 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
                 if ((p + 3) >= data + len)
                         break;
 
+                if (*(p + 3) == '=')
+                        break;
                 c4 = CHAR64(*(p + 3));
                 if (c4 == 255)
                         return -1;
