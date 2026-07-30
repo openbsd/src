@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.310 2026/06/04 05:22:04 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.311 2026/07/30 14:04:04 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -575,7 +575,9 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdquad(oldp, oldlenp, newp, tsc_frequency));
 	case CPU_VMMODE:
 		if (ISSET(cpu_ecxfeature, CPUIDECX_HV)) {
-			if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+			if (ISSET(cpu_sev_guestmode, SEV_STAT_SNP_ACTIVE))
+				strlcpy(vmmode, "SEV-SNP", sizeof(vmmode));
+			else if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
 				strlcpy(vmmode, "SEV-ES", sizeof(vmmode));
 			else if (ISSET(cpu_sev_guestmode, SEV_STAT_ENABLED))
 				strlcpy(vmmode, "SEV", sizeof(vmmode));
