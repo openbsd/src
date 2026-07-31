@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.33 2025/07/16 15:59:26 tb Exp $ */
+/* $OpenBSD: pem_info.c,v 1.34 2026/07/31 03:59:50 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,7 @@
 #include "err_local.h"
 #include "evp_local.h"
 
-X509_PKEY *
+static X509_PKEY *
 X509_PKEY_new(void)
 {
 	X509_PKEY *x_pkey;
@@ -90,7 +90,7 @@ X509_PKEY_new(void)
 	return x_pkey;
 }
 
-void
+static void
 X509_PKEY_free(X509_PKEY *x_pkey)
 {
 	if (x_pkey == NULL)

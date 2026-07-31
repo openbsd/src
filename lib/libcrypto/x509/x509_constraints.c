@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.34 2026/07/14 15:52:52 jsing Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.35 2026/07/31 03:59:50 kenjiro Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -76,7 +76,7 @@ host_is_ip_address(CBS *cbs, int *is_ip)
 	return 1;
 }
 
-struct x509_constraints_name *
+static struct x509_constraints_name *
 x509_constraints_name_new(void)
 {
 	return (calloc(1, sizeof(struct x509_constraints_name)));
@@ -100,7 +100,7 @@ x509_constraints_name_free(struct x509_constraints_name *name)
 	free(name);
 }
 
-struct x509_constraints_name *
+static struct x509_constraints_name *
 x509_constraints_name_dup(struct x509_constraints_name *name)
 {
 	struct x509_constraints_name *new;
@@ -724,7 +724,7 @@ x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
  * respectively for ipv4 addresses and constraints, and a length of
  * 16 and 32 respectively for ipv6 address constraints by the caller.
  */
-int
+static int
 x509_constraints_ipaddr(uint8_t *address, size_t alen, uint8_t *constraint,
     size_t len)
 {
@@ -746,7 +746,7 @@ x509_constraints_ipaddr(uint8_t *address, size_t alen, uint8_t *constraint,
  * Verify a canonicalized der encoded constraint dirname
  * a canonicalized der encoded constraint.
  */
-int
+static int
 x509_constraints_dirname(uint8_t *dirname, size_t dlen,
     uint8_t *constraint, size_t len)
 {
@@ -1194,7 +1194,7 @@ x509_constraints_extract_constraints(X509 *cert,
  * Match a validated name in "name" against a validated constraint in
  * "constraint" return 1 if then name matches, 0 otherwise.
  */
-int
+static int
 x509_constraints_match(struct x509_constraints_name *name,
     struct x509_constraints_name *constraint)
 {

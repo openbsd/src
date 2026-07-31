@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.260 2026/06/06 15:22:25 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.261 2026/07/31 03:59:50 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1379,7 +1379,7 @@ ssl3_clear(SSL *s)
 	s->s3->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 }
 
-long
+static long
 _SSL_get_shared_group(SSL *s, long n)
 {
 	size_t count;
@@ -1412,7 +1412,7 @@ _SSL_get_shared_group(SSL *s, long n)
 	return nid;
 }
 
-long
+static long
 _SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 {
 	EVP_PKEY *pkey = NULL;

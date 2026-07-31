@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.77 2026/06/10 04:26:58 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.78 2026/07/31 03:59:50 kenjiro Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -83,7 +83,7 @@ x509_verify_asn1_time_to_time_t(const ASN1_TIME *atime, int notAfter,
 	return asn1_time_tm_to_time_t(&tm, out);
 }
 
-struct x509_verify_chain *
+static struct x509_verify_chain *
 x509_verify_chain_new(void)
 {
 	struct x509_verify_chain *chain;
@@ -199,7 +199,7 @@ x509_verify_chain_last(struct x509_verify_chain *chain)
 	return sk_X509_value(chain->certs, last);
 }
 
-X509 *
+static X509 *
 x509_verify_chain_leaf(struct x509_verify_chain *chain)
 {
 	if (chain->certs == NULL)

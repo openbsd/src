@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.163 2026/06/14 15:47:49 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.164 2026/07/31 03:59:50 kenjiro Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2567,7 +2567,7 @@ tlsext_build(SSL *s, int is_server, uint16_t msg_type, CBB *cbb)
 	return 1;
 }
 
-int
+static int
 tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
 {
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.33 2025/08/10 06:36:45 beck Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.34 2026/07/31 03:59:50 kenjiro Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -158,7 +158,7 @@ DECLARE_STACK_OF(X509_POLICY_LEVEL)
  * this the OpenSSL way either, and we are not using this boringsslism
  * anywhere else. Callers should ensure that the stack in data is sorted.
  */
-void
+static void
 sk_X509_POLICY_NODE_delete_if(STACK_OF(X509_POLICY_NODE) *nodes,
     int (*delete_if)(X509_POLICY_NODE *, void *), void *data)
 {

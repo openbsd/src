@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.112 2025/12/04 21:03:42 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.113 2026/07/31 03:59:50 kenjiro Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -96,7 +96,7 @@ tls13_client_hello_is_legacy(CBS *cbs)
 	return (max_version < TLS1_3_VERSION);
 }
 
-int
+static int
 tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
