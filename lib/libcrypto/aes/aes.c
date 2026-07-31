@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.17 2025/09/15 07:36:12 tb Exp $ */
+/* $OpenBSD: aes.c,v 1.18 2026/07/31 00:50:52 kenjiro Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -55,6 +55,7 @@
 #include <openssl/crypto.h>
 #include <openssl/modes.h>
 
+#include "aes_local.h"
 #include "crypto_arch.h"
 #include "crypto_internal.h"
 #include "modes_local.h"

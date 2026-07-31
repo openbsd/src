@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12_local.h,v 1.6 2025/03/09 15:45:52 tb Exp $ */
+/* $OpenBSD: pkcs12_local.h,v 1.7 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,6 +58,8 @@
 
 #ifndef HEADER_PKCS12_LOCAL_H
 #define HEADER_PKCS12_LOCAL_H
+
+#include <openssl/pkcs12.h>
 
 __BEGIN_HIDDEN_DECLS
 

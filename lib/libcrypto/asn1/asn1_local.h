@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.11 2025/11/26 10:19:57 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.12 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -58,6 +58,8 @@
 
 #ifndef HEADER_ASN1_LOCAL_H
 #define HEADER_ASN1_LOCAL_H
+
+#include <openssl/asn1.h>
 
 #include "bytestring.h"
 

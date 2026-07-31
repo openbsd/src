@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.41 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.42 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -65,6 +65,7 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 
+#include "conf_local.h"
 #include "err_local.h"
 
 /* This structure contains data about supported modules. */

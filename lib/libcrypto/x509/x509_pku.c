@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pku.c,v 1.5 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_pku.c,v 1.6 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,6 +61,8 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
+
+#include "x509_local.h"
 
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
     PKEY_USAGE_PERIOD *usage, BIO *out, int indent);

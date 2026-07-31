@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.21 2025/08/22 14:07:34 tb Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.22 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -58,6 +58,8 @@
 #include <stdio.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+
+#include "asn1_local.h"
 
 /* Declarations for string types */
 

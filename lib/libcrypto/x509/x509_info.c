@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_info.c,v 1.6 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_info.c,v 1.7 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,6 +65,7 @@
 #include <openssl/x509v3.h>
 
 #include "err_local.h"
+#include "x509_local.h"
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
     X509V3_EXT_METHOD *method, AUTHORITY_INFO_ACCESS *ainfo,

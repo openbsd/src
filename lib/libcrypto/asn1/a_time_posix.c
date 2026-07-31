@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_posix.c,v 1.5 2024/02/18 16:28:38 tb Exp $ */
+/* $OpenBSD: a_time_posix.c,v 1.6 2026/07/31 00:50:52 kenjiro Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  * Copyright (c) 2022, Bob Beck <beck@obtuse.com>
@@ -30,6 +30,7 @@
 #include <openssl/asn1.h>
 #include <openssl/posix_time.h>
 
+#include "asn1_local.h"
 #include "crypto_internal.h"
 
 #define SECS_PER_HOUR (int64_t)(60 * 60)

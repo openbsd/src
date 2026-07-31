@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.54 2022/05/05 19:18:56 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.55 2026/07/31 00:50:52 kenjiro Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#include "asn1_local.h"
 #include "bytestring.h"
 
 int

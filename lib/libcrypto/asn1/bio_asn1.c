@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.23 2023/07/28 09:58:30 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.24 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -67,6 +67,7 @@
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 
+#include "asn1_local.h"
 #include "bio_local.h"
 
 #define BIO_C_SET_PREFIX			149

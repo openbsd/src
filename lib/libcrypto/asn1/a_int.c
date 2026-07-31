@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.49 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: a_int.c,v 1.50 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,7 @@
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 
+#include "asn1_local.h"
 #include "bytestring.h"
 #include "err_local.h"
 

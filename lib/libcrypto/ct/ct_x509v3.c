@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_x509v3.c,v 1.7 2024/07/13 15:08:58 tb Exp $ */
+/*	$OpenBSD: ct_x509v3.c,v 1.8 2026/07/31 00:50:52 kenjiro Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -64,6 +64,7 @@
 #include <string.h>
 
 #include "ct_local.h"
+#include "x509_local.h"
 
 static char *
 i2s_poison(const X509V3_EXT_METHOD *method, void *val)

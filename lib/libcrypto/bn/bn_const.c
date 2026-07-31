@@ -1,7 +1,9 @@
-/* $OpenBSD: bn_const.c,v 1.9 2026/01/23 08:29:04 tb Exp $ */
+/* $OpenBSD: bn_const.c,v 1.10 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Insert boilerplate */
 
 #include <openssl/bn.h>
+
+#include "bn_local.h"
 
 /*
  * "First Oakley Default Group" from RFC2409, section 6.1.

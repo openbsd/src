@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.78 2025/06/10 08:53:37 tb Exp $ */
+/* $OpenBSD: err.c,v 1.79 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,6 +121,9 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/lhash.h>
+
+#include "constant_time.h"
+#include "err_local.h"
 
 DECLARE_LHASH_OF(ERR_STRING_DATA);
 DECLARE_LHASH_OF(ERR_STATE);

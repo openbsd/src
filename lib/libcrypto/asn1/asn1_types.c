@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_types.c,v 1.3 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: asn1_types.c,v 1.4 2026/07/31 00:50:52 kenjiro Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <stddef.h>
 
 #include <openssl/asn1.h>
+
+#include "asn1_local.h"
 
 #define ASN1_ENCODING_CONSTRUCTED_ONLY	1
 #define ASN1_ENCODING_PRIMITIVE_ONLY	2

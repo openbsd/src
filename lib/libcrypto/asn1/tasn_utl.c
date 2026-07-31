@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_utl.c,v 1.19 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: tasn_utl.c,v 1.20 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -64,6 +64,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
+#include "asn1_local.h"
 #include "bytestring.h"
 #include "err_local.h"
 

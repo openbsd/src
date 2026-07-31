@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_int.c,v 1.2 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_int.c,v 1.3 2026/07/31 00:50:52 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -59,6 +59,8 @@
 #include <stdio.h>
 
 #include <openssl/x509v3.h>
+
+#include "x509_local.h"
 
 static const X509V3_EXT_METHOD x509v3_ext_crl_number = {
 	.ext_nid = NID_crl_number,
