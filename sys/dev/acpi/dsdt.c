@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.280 2026/07/07 18:26:28 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.281 2026/07/31 05:13:46 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1316,7 +1316,7 @@ aml_parseopcode(struct aml_scope *scope)
 	 * Treat AMLOP_LNOT special.  It might be a single-byte
 	 * opcode, but it can also be the start of a dual-byte opcode.
 	 * Since AMLOP_LNOT has fixed-list arguments, it needs to be
-	 * followed by at least some additonal bytes.  So we can
+	 * followed by at least some additional bytes.  So we can
 	 * safely handle it together with the other dual-byte opcodes.
 	 */
 	if (opcode != AMLOP_LNOT && opcode != AMLOP_EXTPREFIX) {
