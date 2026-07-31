@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: buffer.c,v 1.30 2026/07/31 01:05:27 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,24 +133,3 @@ BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 	return (len);
 }
 LCRYPTO_ALIAS(BUF_MEM_grow_clean);
-
-void
-BUF_reverse(unsigned char *out, const unsigned char *in, size_t size)
-{
-	size_t i;
-
-	if (in) {
-		out += size - 1;
-		for (i = 0; i < size; i++)
-			*out-- = *in++;
-	} else {
-		unsigned char *q;
-		char c;
-		q = out + size - 1;
-		for (i = 0; i < size / 2; i++) {
-			c = *q;
-			*q-- = *out;
-			*out++ = c;
-		}
-	}
-}
