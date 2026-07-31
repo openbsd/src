@@ -1,4 +1,4 @@
-/* $OpenBSD: callbackfailures.c,v 1.3 2024/08/23 12:56:26 anton Exp $ */
+/* $OpenBSD: callbackfailures.c,v 1.4 2026/07/31 06:32:34 kenjiro Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -214,9 +214,9 @@ struct verify_cert_test verify_cert_tests[] = {
     (sizeof(verify_cert_tests) / sizeof(*verify_cert_tests))
 
 static int
-verify_cert_test(const char *certs_path, int mode)
+verify_cert_test(const char *certs_path, const char *roots_file, int mode)
 {
-	char *roots_file, *bundle_file, *bundle_file2, *roots_dir;
+	char *bundle_file, *bundle_file2, *roots_dir;
 	struct verify_cert_test *vct;
 	int failed = 0;
 	int chains;
@@ -225,8 +225,6 @@ verify_cert_test(const char *certs_path, int mode)
 	for (i = 0; i < N_VERIFY_CERT_TESTS; i++) {
 		vct = &verify_cert_tests[i];
 
-		if (asprintf(&roots_file, "/etc/ssl/cert.pem") == -1)
-			errx(1, "asprintf");
 		if (asprintf(&bundle_file, "%s/%s/bundle.pem", certs_path,
 		    vct->id) == -1)
 			errx(1, "asprintf");
@@ -270,7 +268,6 @@ verify_cert_test(const char *certs_path, int mode)
 		}
 		fprintf(stderr, "\n");
 
-		free(roots_file);
 		free(bundle_file);
 		free(bundle_file2);
 		free(roots_dir);
@@ -282,17 +279,21 @@ verify_cert_test(const char *certs_path, int mode)
 int
 main(int argc, char **argv)
 {
+	const char *roots_file = "/etc/ssl/cert.pem";
 	int failed = 0;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: %s <certs_path>\n", argv[0]);
+	if (argc < 2 || argc > 3) {
+		fprintf(stderr, "usage: %s <certs_path> [roots_file]\n",
+		    argv[0]);
 		exit(1);
 	}
+	if (argc == 3)
+		roots_file = argv[2];
 
 	fprintf(stderr, "\n\nTesting legacy x509_vfy\n");
-	failed |= verify_cert_test(argv[1], MODE_LEGACY_VFY);
+	failed |= verify_cert_test(argv[1], roots_file, MODE_LEGACY_VFY);
 	fprintf(stderr, "\n\nTesting modern x509_vfy\n");
-	failed |= verify_cert_test(argv[1], MODE_MODERN_VFY);
+	failed |= verify_cert_test(argv[1], roots_file, MODE_MODERN_VFY);
 
 	return (failed);
 }
