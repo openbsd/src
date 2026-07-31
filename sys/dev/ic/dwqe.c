@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.23 2025/12/29 22:53:32 patrick Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.24 2026/07/31 19:32:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -161,6 +161,18 @@ dwqe_attach(struct dwqe_softc *sc)
 	for (i = 0; i < 4; i++)
 		sc->sc_hw_feature[i] = dwqe_read(sc, GMAC_MAC_HW_FEATURE(i));
 
+	switch (sc->sc_hw_feature[1] & GMAC_MAC_HW_FEATURE1_ADDR64_MASK) {
+	case GMAC_MAC_HW_FEATURE1_ADDR64_40:
+		sc->sc_dma_bits = 40;
+		break;
+	case GMAC_MAC_HW_FEATURE1_ADDR64_48:
+		sc->sc_dma_bits = 48;
+		break;
+	default:
+		sc->sc_dma_bits = 32;
+		break;
+	}
+
 	timeout_set(&sc->sc_phy_tick, dwqe_tick, sc);
 	timeout_set(&sc->sc_rxto, dwqe_rxtick, sc);
 
@@ -200,6 +212,8 @@ dwqe_attach(struct dwqe_softc *sc)
 		mode |= GMAC_SYS_BUS_MODE_MB;
 	if (sc->sc_aal)
 		mode |= GMAC_SYS_BUS_MODE_AAL;
+	if (sc->sc_dma_bits > 32)
+		mode |= GMAC_SYS_BUS_MODE_EAME;
 	dwqe_write(sc, GMAC_SYS_BUS_MODE, mode);
 
 	/* Configure channel 0. */
@@ -1234,8 +1248,7 @@ dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 
 	txd = txd_start = &sc->sc_txdesc[frag];
 	for (i = 0; i < map->dm_nsegs; i++) {
-		/* TODO: check for 32-bit vs 64-bit support */
-		KASSERT((map->dm_segs[i].ds_addr >> 32) == 0);
+		KASSERT((map->dm_segs[i].ds_addr >> sc->sc_dma_bits) == 0);
 
 		txd->sd_tdes0 = (uint32_t)map->dm_segs[i].ds_addr;
 		txd->sd_tdes1 = (uint32_t)(map->dm_segs[i].ds_addr >> 32);
@@ -1379,21 +1392,22 @@ dwqe_fill_rx_ring(struct dwqe_softc *sc)
 {
 	struct dwqe_desc *rxd;
 	struct dwqe_buf *rxb;
+	bus_dmamap_t map;
 	u_int slots;
 
 	for (slots = if_rxr_get(&sc->sc_rx_ring, DWQE_NRXDESC);
 	    slots > 0; slots--) {
 		rxb = &sc->sc_rxbuf[sc->sc_rx_prod];
-		rxb->tb_m = dwqe_alloc_mbuf(sc, rxb->tb_map);
+		map = rxb->tb_map;
+		rxb->tb_m = dwqe_alloc_mbuf(sc, map);
 		if (rxb->tb_m == NULL)
 			break;
 
-		/* TODO: check for 32-bit vs 64-bit support */
-		KASSERT((rxb->tb_map->dm_segs[0].ds_addr >> 32) == 0);
+		KASSERT((map->dm_segs[0].ds_addr >> sc->sc_dma_bits) == 0);
 
 		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
-		rxd->sd_tdes0 = (uint32_t)rxb->tb_map->dm_segs[0].ds_addr;
-		rxd->sd_tdes1 = (uint32_t)(rxb->tb_map->dm_segs[0].ds_addr >> 32);
+		rxd->sd_tdes0 = (uint32_t)map->dm_segs[0].ds_addr;
+		rxd->sd_tdes1 = (uint32_t)(map->dm_segs[0].ds_addr >> 32);
 		rxd->sd_tdes2 = 0;
 		rxd->sd_tdes3 = RDES3_OWN | RDES3_IC | RDES3_BUF1V;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqevar.h,v 1.11 2024/02/26 18:57:50 kettenis Exp $	*/
+/*	$OpenBSD: dwqevar.h,v 1.12 2026/07/31 19:32:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -95,6 +95,7 @@ struct dwqe_softc {
 	int			sc_fixed_burst;
 	int			sc_mixed_burst;
 	int			sc_aal;
+	int			sc_dma_bits;
 	int			sc_8xpbl;
 	int			sc_pbl;
 	int			sc_txpbl;

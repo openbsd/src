@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.20 2026/03/15 19:52:53 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.21 2026/07/31 19:32:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -71,6 +71,7 @@ int	dwqe_fdt_match(struct device *, void *, void *);
 void	dwqe_fdt_attach(struct device *, struct device *, void *);
 void	dwqe_setup_jh7110(struct dwqe_softc *);
 void	dwqe_mii_statchg_jh7110(struct device *);
+void	dwqe_setup_k3(struct dwqe_softc *);
 void	dwqe_setup_rk3528(struct dwqe_fdt_softc *);
 void	dwqe_mii_statchg_rk3528(struct device *);
 void	dwqe_setup_rk3568(struct dwqe_fdt_softc *);
@@ -92,7 +93,8 @@ dwqe_fdt_match(struct device *parent, void *cfdata, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "snps,dwmac-4.20a") ||
-	    OF_is_compatible(faa->fa_node, "snps,dwmac-5.20");
+	    OF_is_compatible(faa->fa_node, "snps,dwmac-5.20") ||
+	    OF_is_compatible(faa->fa_node, "snps,dwmac-5.40a");
 }
 
 void
@@ -123,6 +125,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	case 0x2a220000:	/* RK3576 */
 	case 0xfe1b0000:	/* RK3588 */
 	case 0x16030000:	/* JH7110 */
+	case 0xcac80000:	/* K3 */
 		fsc->sc_gmac_id = 0;
 		break;
 	case 0xffbe0000:	/* RK3528 */
@@ -130,6 +133,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	case 0x2a230000:	/* RK3576 */
 	case 0xfe1c0000:	/* RK3588 */
 	case 0x16040000:	/* JH7110 */
+	case 0xcac82000:	/* K3 */
 		fsc->sc_gmac_id = 1;
 		break;
 	default:
@@ -194,6 +198,8 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	/* Do hardware specific initializations. */
 	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-dwmac"))
 		dwqe_setup_jh7110(sc);
+	else if (OF_is_compatible(faa->fa_node, "spacemit,k3-dwmac"))
+		dwqe_setup_k3(sc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3528-gmac"))
 		dwqe_setup_rk3528(fsc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
@@ -255,6 +261,8 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pbl = OF_getpropint(faa->fa_node, "snps,pbl", 8);
 	sc->sc_txpbl = OF_getpropint(faa->fa_node, "snps,txpbl", sc->sc_pbl);
 	sc->sc_rxpbl = OF_getpropint(faa->fa_node, "snps,rxpbl", sc->sc_pbl);
+	sc->sc_txfifo_size = OF_getpropint(faa->fa_node, "tx-fifo-depth", 0);
+	sc->sc_rxfifo_size = OF_getpropint(faa->fa_node, "rx-fifo-depth", 0);
 
 	/* Configure AXI master. */
 	axi_config = OF_getpropint(faa->fa_node, "snps,axi-config", 0);
@@ -349,6 +357,20 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 /* JH7110 registers */
 #define JH7110_PHY_INTF_RGMII		1
 #define JH7110_PHY_INTF_RMII		4
+
+/* K3 registers */
+#define K3_CTRL_EMACX_PHY_SELECT_MASK			(0x3 << 3)
+#define K3_CTRL_EMACX_PHY_SELECT_RGMII			(0x1 << 3)
+#define K3_DLINE_EMACX_RGMII_RXC_DLINE_PU		(1U << 0)
+#define K3_DLINE_EMACX_RGMII_RXC_DLINE_STEP_MASK	(0x3 << 4)
+#define K3_DLINE_EMACX_RGMII_RXC_DLINE_STEP_SHIFT	4
+#define K3_DLINE_EMACX_RGMII_RXC_DLINE_ADJ_MASK		(0xff << 8)
+#define K3_DLINE_EMACX_RGMII_RXC_DLINE_ADJ_SHIFT	8
+#define K3_DLINE_EMACX_RGMII_TXC_DLINE_PU		(1U << 16)
+#define K3_DLINE_EMACX_RGMII_TXC_DLINE_STEP_MASK	(0x3 << 20)
+#define K3_DLINE_EMACX_RGMII_TXC_DLINE_STEP_SHIFT	20
+#define K3_DLINE_EMACX_RGMII_TXC_DLINE_ADJ_MASK		(0xff << 24)
+#define K3_DLINE_EMACX_RGMII_TXC_DLINE_ADJ_SHIFT	24
 
 /* RK3528 registers */
 #define RK3528_VO_GRF_GMAC_CON		0x0018
@@ -490,6 +512,55 @@ dwqe_mii_statchg_jh7110(struct device *self)
 	struct dwqe_softc *sc = (void *)self;
 
 	task_add(systq, &sc->sc_statchg_task);
+}
+
+void
+dwqe_setup_k3(struct dwqe_softc *sc)
+{
+	struct regmap *rm;
+	uint32_t cells[3];
+	uint32_t rx_delay, tx_delay, rx_code, tx_code;
+	uint32_t phandle, ctrl_offset, dline_offset;
+	uint32_t ctrl, dline;
+
+	if (OF_getpropintarray(sc->sc_node, "spacemit,apmu", cells,
+	    sizeof(cells)) != sizeof(cells)) {
+		printf("%s: failed to get spacemit,apmu\n", __func__);
+		return;
+	}
+	phandle = cells[0];
+	ctrl_offset = cells[1];
+	dline_offset = cells[2];
+
+	rm = regmap_byphandle(phandle);
+	if (rm == NULL) {
+		printf("%s: failed to get regmap\n", __func__);
+		return;
+	}
+
+	clock_enable(sc->sc_node, "tx");
+
+	/* Select RGMII interface. */
+	ctrl = regmap_read_4(rm, ctrl_offset);
+	ctrl &= ~K3_CTRL_EMACX_PHY_SELECT_MASK;
+	ctrl |= K3_CTRL_EMACX_PHY_SELECT_RGMII;
+	regmap_write_4(rm, ctrl_offset, ctrl);
+
+	/* Configure delays. */
+	rx_delay = OF_getpropint(sc->sc_node, "rx-internal-delay-ps", 0);
+	tx_delay = OF_getpropint(sc->sc_node, "tx-internal-delay-ps", 0);
+	rx_code = (rx_delay * 100) / (367 * 9);
+	tx_code = (tx_delay * 100) / (367 * 9);
+	dline =	regmap_read_4(rm, dline_offset);
+	dline &= ~K3_DLINE_EMACX_RGMII_RXC_DLINE_ADJ_MASK;
+	dline &= ~K3_DLINE_EMACX_RGMII_RXC_DLINE_STEP_MASK;
+	dline &= ~K3_DLINE_EMACX_RGMII_TXC_DLINE_ADJ_MASK;
+	dline &= ~K3_DLINE_EMACX_RGMII_TXC_DLINE_STEP_MASK;
+	dline |= K3_DLINE_EMACX_RGMII_RXC_DLINE_PU;
+	dline |= (rx_code << K3_DLINE_EMACX_RGMII_RXC_DLINE_ADJ_SHIFT);
+	dline |= K3_DLINE_EMACX_RGMII_TXC_DLINE_PU;
+	dline |= (tx_code << K3_DLINE_EMACX_RGMII_TXC_DLINE_ADJ_SHIFT);
+	regmap_write_4(rm, dline_offset, dline);
 }
 
 void
