@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.457 2026/03/11 16:18:42 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.458 2026/07/31 18:17:22 jan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2569,7 +2569,7 @@ acpi_init_states(struct acpi_softc *sc)
 		sc->sc_sleeptype[i].slp_typb = -1;
 		if (aml_evalname(sc, sc->sc_root, name, 0, NULL, &res) != 0)
 			continue;
-		if (res.type != AML_OBJTYPE_PACKAGE) {
+		if (res.type != AML_OBJTYPE_PACKAGE || res.length < 2) {
 			aml_freevalue(&res);
 			continue;
 		}
