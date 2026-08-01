@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.69 2026/07/27 13:48:14 tb Exp $	*/
+/*	$OpenBSD: control.c,v 1.70 2026/08/01 06:53:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -398,6 +398,21 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	}
 
 	imsg_event_add(&c->iev);
+}
+
+void
+control_imsg_notify(uint32_t type, void *data, uint16_t len)
+{
+	struct ctl_conn *c;
+
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (c->flags & CTL_CONN_NOTIFY) {
+			if (imsg_compose(&c->iev.ibuf, type, 0, 0, -1, data,
+			    len) == -1)
+				fatal("%s: imsg_compose", __func__);
+			imsg_event_add(&c->iev);
+		}
+	}
 }
 
 void
