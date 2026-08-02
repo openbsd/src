@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.7 2022/12/27 17:10:07 jmc Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.8 2026/08/02 22:27:34 naddy Exp $	*/
 /*	$NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $	*/
 
 /*-
@@ -29,7 +29,6 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/npx.h>
 
@@ -63,30 +62,10 @@ fenv_t __fe_dfl_env = {
 };
 
 /*
- * Test for SSE support on this processor.
- *
  * We need to use ldmxcsr/stmxcsr to get correct results if any part
  * of the program was compiled to use SSE floating-point, but we can't
  * use SSE on older processors.
- *
- * In order to do so, we need to query the processor capabilities via the CPUID
- * instruction. We can make it even simpler though, by querying the machdep.sse
- * sysctl.
  */
-static int __HAS_SSE = 0;
-
-static void __test_sse(void) __attribute__ ((constructor));
-
-static void __test_sse(void)
-{
-	size_t oldlen = sizeof(__HAS_SSE);
-	int mib[2] = { CTL_MACHDEP, CPU_SSE };
-	int rv;
-
-	rv = sysctl(mib, 2, &__HAS_SSE, &oldlen, NULL, 0);
-	if (rv == -1)
-		__HAS_SSE = 0;
-}
 
 /*
  * The feclearexcept() function clears the supported floating-point exceptions
@@ -110,7 +89,7 @@ feclearexcept(int excepts)
 	__asm__ volatile ("fldenv %0" : : "m" (fenv));
 
 	/* Same for SSE environment */
-	if (__HAS_SSE) {
+	if (__builtin_cpu_supports("sse")) {
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 		mxcsr &= ~excepts;
 		__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
@@ -137,7 +116,7 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 	__asm__ volatile ("fnstsw %0" : "=am" (status));
 
 	/* Store the MXCSR register */
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	/* Store the results in flagp */
@@ -192,7 +171,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	__asm__ volatile ("fldenv %0" : : "m" (fenv));
 
 	/* Same for SSE environment */
-	if (__HAS_SSE) {
+	if (__builtin_cpu_supports("sse")) {
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 		mxcsr &= ~excepts;
 		mxcsr |= *flagp & excepts;
@@ -220,7 +199,7 @@ fetestexcept(int excepts)
 	__asm__ volatile ("fnstsw %0" : "=am" (status));
 
 	/* Store the MXCSR register state */
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	return ((status | mxcsr) & excepts);
@@ -273,7 +252,7 @@ fesetround(int round)
 	__asm__ volatile ("fldcw %0" : : "m" (control));
 
 	/* Same for the SSE environment */
-	if (__HAS_SSE) {
+	if (__builtin_cpu_supports("sse")) {
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 		mxcsr &= ~(_X87_ROUND_MASK << _SSE_ROUND_SHIFT);
 		mxcsr |= round << _SSE_ROUND_SHIFT;
@@ -295,7 +274,7 @@ fegetenv(fenv_t *envp)
 	__asm__ volatile ("fnstenv %0" : "=m" (*envp));
 
 	/* Store the MXCSR register state */
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("stmxcsr %0" : "=m" (envp->__mxcsr));
 
 	/*
@@ -329,7 +308,7 @@ feholdexcept(fenv_t *envp)
 	/* Clear all exception flags in FPU */
 	__asm__ volatile ("fnclex");
 
-	if (__HAS_SSE) {
+	if (__builtin_cpu_supports("sse")) {
 		/* Store the MXCSR register state */
 		__asm__ volatile ("stmxcsr %0" : "=m" (envp->__mxcsr));
 
@@ -363,7 +342,7 @@ fesetenv(const fenv_t *envp)
 	__asm__ volatile ("fldenv %0" : : "m" (*envp));
 
 	/* Store the MXCSR register */
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("ldmxcsr %0" : : "m" (envp->__mxcsr));
 
 	return (0);
@@ -388,7 +367,7 @@ feupdateenv(const fenv_t *envp)
 	__asm__ volatile ("fnstsw %0" : "=am" (status));
 
 	/* Store the MXCSR register */
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	/* Install new floating-point environment */
@@ -413,14 +392,14 @@ feenableexcept(int mask)
 	mask &= FE_ALL_EXCEPT;
 
 	__asm__ volatile ("fnstcw %0" : "=m" (control));
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	omask = ~(control | (mxcsr >> _SSE_MASK_SHIFT)) & FE_ALL_EXCEPT;
 	control &= ~mask;
 	__asm__ volatile ("fldcw %0" : : "m" (control));
 
-	if (__HAS_SSE) {
+	if (__builtin_cpu_supports("sse")) {
 		mxcsr &= ~(mask << _SSE_MASK_SHIFT);
 		__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 	}
@@ -437,14 +416,14 @@ fedisableexcept(int mask)
 	mask &= FE_ALL_EXCEPT;
 
 	__asm__ volatile ("fnstcw %0" : "=m" (control));
-	if (__HAS_SSE)
+	if (__builtin_cpu_supports("sse"))
 		__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	omask = ~(control | (mxcsr >> _SSE_MASK_SHIFT)) & FE_ALL_EXCEPT;
 	control |= mask;
 	__asm__ volatile ("fldcw %0" : : "m" (control));
 
-	if (__HAS_SSE) {
+	if (__builtin_cpu_supports("sse")) {
 		mxcsr |= mask << _SSE_MASK_SHIFT;
 		__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 	}
