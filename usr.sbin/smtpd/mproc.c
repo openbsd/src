@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.49 2026/05/26 22:48:13 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.50 2026/08/03 06:58:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -134,7 +134,7 @@ mproc_dispatch(int fd, short event, void *arg)
 {
 	struct mproc	*p = arg;
 	struct imsg	 imsg;
-	ssize_t		 n;
+	int		 n;
 
 	p->events = 0;
 
@@ -178,7 +178,7 @@ mproc_dispatch(int fd, short event, void *arg)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&p->imsgbuf, &imsg)) == -1) {
+		if ((n = imsgbuf_get(&p->imsgbuf, &imsg)) == -1) {
 
 			if (smtpd_process == PROC_CONTROL &&
 			    p->proc == PROC_CLIENT) {
@@ -187,7 +187,7 @@ mproc_dispatch(int fd, short event, void *arg)
 				p->handler(p, NULL);
 				return;
 			}
-			log_warn("fatal: %s: error in imsg_get for %s",
+			log_warn("fatal: %s: error in imsgbuf_get for %s",
 			    proc_name(smtpd_process),  p->name);
 			fatalx(NULL);
 		}

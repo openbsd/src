@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.177 2026/02/18 08:54:46 deraadt Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.178 2026/08/03 06:58:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -175,13 +175,13 @@ srv_send(int msg, const void *data, size_t len)
 static void
 srv_recv(int type)
 {
-	ssize_t	n;
+	int	n;
 
 	srv_flush();
 
 	while (1) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			errx(1, "imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			errx(1, "imsgbuf_get error");
 		if (n) {
 			if (imsg.hdr.type == IMSG_CTL_FAIL &&
 			    imsg.hdr.peerid != 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.14 2024/11/21 13:42:22 claudio Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.15 2026/08/03 06:58:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -31,7 +31,7 @@ static char		*rdata;
 static void
 queue_proc_call(void)
 {
-	ssize_t	n;
+	int	n;
 
 	if (imsgbuf_flush(&ibuf) == -1) {
 		log_warn("warn: queue-proc: imsgbuf_flush");
@@ -39,8 +39,8 @@ queue_proc_call(void)
 	}
 
 	while (1) {
-		if ((n = imsg_get(&ibuf, &imsg)) == -1) {
-			log_warn("warn: queue-proc: imsg_get");
+		if ((n = imsgbuf_get(&ibuf, &imsg)) == -1) {
+			log_warn("warn: queue-proc: imsgbuf_get");
 			break;
 		}
 		if (n) {

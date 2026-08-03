@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.127 2026/07/12 23:24:47 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.128 2026/08/03 06:58:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -813,8 +813,8 @@ open_connection(void)
 		if (n == 0)
 			errx(1, "pipe closed");
 
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			errx(1, "imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			errx(1, "imsgbuf_get error");
 		if (n == 0)
 			continue;
 

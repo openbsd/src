@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.50 2026/07/27 06:57:33 jsg Exp $	*/
+/*	$OpenBSD: ca.c,v 1.51 2026/08/03 06:58:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -286,8 +286,8 @@ rsae_send_imsg(int flen, const unsigned char *from, unsigned char *to,
 			fatalx("pipe closed");
 
 		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				fatalx("imsg_get error");
+			if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+				fatalx("imsgbuf_get error");
 			if (n == 0)
 				break;
 
@@ -393,8 +393,8 @@ ecdsae_send_enc_imsg(const unsigned char *dgst, int dgst_len,
 		if (n == 0)
 			fatalx("pipe closed");
 		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				fatalx("imsg_get error");
+			if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+				fatalx("imsgbuf_get error");
 			if (n == 0)
 				break;
 

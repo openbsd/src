@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.361 2026/06/18 10:50:47 martijn Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.362 2026/08/03 06:58:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1008,13 +1008,13 @@ static int
 imsg_wait(struct imsgbuf *ibuf, struct imsg *imsg, int timeout)
 {
 	struct pollfd pfd[1];
-	ssize_t n;
+	int n;
 
 	pfd[0].fd = ibuf->fd;
 	pfd[0].events = POLLIN;
 
 	while (1) {
-		if ((n = imsg_get(ibuf, imsg)) == -1)
+		if ((n = imsgbuf_get(ibuf, imsg)) == -1)
 			return -1;
 		if (n)
 			return 1;
