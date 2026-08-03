@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.85 2026/07/28 11:50:30 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.86 2026/08/03 18:48:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -196,8 +196,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct map		 map;
 	struct lde_addr		 lde_addr;
 	struct notify_msg	 nm;
-	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -392,8 +391,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	struct kroute		 kr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
-	ssize_t			 n;
-	int			 shut = 0;
+	int			 n, shut = 0;
 	struct fec		 fec;
 
 	if (event & EV_READ) {
