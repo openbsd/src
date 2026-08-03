@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.40 2025/11/18 00:33:16 kevlo Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.41 2026/08/03 05:57:28 miod Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -672,12 +672,18 @@ uchcom_set_dte_rate(struct uchcom_softc *sc, uint32_t rate, uint16_t val)
 	uchcom_calc_baudrate(sc, rate, &div, &factor);
 
 	if (sc->sc_type != UCHCOM_TYPE_CH343) {
-		if ((err = uchcom_write_reg(sc,
-		    UCHCOM_REG_BPS_PRE, div | 0x80,
-		    UCHCOM_REG_BPS_DIV, factor)) ||
-		    (err = uchcom_write_reg(sc, UCHCOM_REG_LCR, val >> 8,
-		    UCHCOM_REG_LCR2, 0)))
-			goto failed;
+		if (sc->sc_release == UCHCOM_REV_CH340) {
+			if ((err = uchcom_write_reg(sc, UCHCOM_REG_BPS_PRE, div,
+			    UCHCOM_REG_BPS_DIV, factor)))
+				goto failed;
+		} else {
+			if ((err = uchcom_write_reg(sc,
+			    UCHCOM_REG_BPS_PRE, div | 0x80,
+			    UCHCOM_REG_BPS_DIV, factor)) ||
+			    (err = uchcom_write_reg(sc,
+			    UCHCOM_REG_LCR, val >> 8, UCHCOM_REG_LCR2, 0)))
+				goto failed;
+		}
 	} else {
 		idx = (factor << 8) | div;
 		if ((err = uchcom_generic_control_out(sc,
