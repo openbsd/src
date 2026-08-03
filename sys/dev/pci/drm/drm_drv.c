@@ -1491,8 +1491,8 @@ drm_probe(struct device *parent, void *match, void *aux)
 	return (1);
 }
 
-int drm_buddy_module_init(void);
-void drm_buddy_module_exit(void);
+int gpu_buddy_module_init(void);
+void gpu_buddy_module_exit(void);
 
 void
 drm_attach(struct device *parent, struct device *self, void *aux)
@@ -1505,7 +1505,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	if (drm_refcnt == 0) {
 		drm_linux_init();
 		drm_core_init();
-		drm_buddy_module_init();
+		gpu_buddy_module_init();
 	}
 	drm_refcnt++;
 
@@ -1649,7 +1649,7 @@ drm_detach(struct device *self, int flags)
 
 	drm_refcnt--;
 	if (drm_refcnt == 0) {
-		drm_buddy_module_exit();
+		gpu_buddy_module_exit();
 		drm_core_exit();
 		drm_linux_exit();
 	}
