@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.40 2026/07/28 11:49:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.41 2026/08/03 18:47:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -203,8 +203,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct route_report	 rr;
 	struct nbr_msg		 nm;
-	int			 i, connected = 0, shut = 0, verbose;
-	ssize_t			 n;
+	int			 i, n, connected = 0, shut = 0, verbose;
 	struct iface		*iface;
 
 	if (event & EV_READ) {

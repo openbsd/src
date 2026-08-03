@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.35 2026/07/28 11:49:25 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.36 2026/08/03 18:47:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -314,8 +314,7 @@ main_dispatch_dvmrpe(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf = &iev->ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0, verbose;
+	int		 n, shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -377,8 +376,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf = &iev->ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0;
+	int		 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
