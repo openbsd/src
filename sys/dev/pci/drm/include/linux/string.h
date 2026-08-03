@@ -11,6 +11,7 @@
 
 #include <linux/compiler.h>
 #include <linux/err.h>
+#include <linux/overflow.h>
 
 void *memchr_inv(const void *, int, size_t);
 
