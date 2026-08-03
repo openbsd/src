@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.7 2025/06/16 09:27:38 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.8 2026/08/03 18:43:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -109,7 +109,8 @@ qcgpio_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm") ||
+	return (OF_is_compatible(faa->fa_node, "qcom,sc7280-pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm") ||
 	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-tlmm"));
 }
 
@@ -126,7 +127,9 @@ qcgpio_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm"))
+	if (OF_is_compatible(faa->fa_node, "qcom,sc7280-pinctrl"))
+		sc->sc_npins = 175;
+	else if (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm"))
 		sc->sc_npins = 230;
 	else
 		sc->sc_npins = 239;
