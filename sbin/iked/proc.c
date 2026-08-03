@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.55 2026/07/16 09:35:40 martijn Exp $	*/
+/*	$OpenBSD: proc.c,v 1.56 2026/08/03 11:26:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -610,7 +610,7 @@ proc_dispatch(int fd, short event, void *arg)
 	struct privsep		*ps = p->p_ps;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
-	ssize_t			 n;
+	int			 n;
 	int			 ver;
 	const char		*title;
 	struct privsep_fd	 pf;
