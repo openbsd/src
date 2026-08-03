@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.34 2026/07/28 11:49:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.35 2026/08/03 18:48:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -171,8 +171,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct rde_nbr		*nbr;
 	struct rde_nbr		 new;
 	struct rinfo		 rinfo;
-	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
 
@@ -310,8 +309,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct kif		*kif;
-	ssize_t			 n;
-	int			 shut = 0;
+	int			 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 

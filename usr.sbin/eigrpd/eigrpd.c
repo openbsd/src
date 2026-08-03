@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.38 2026/07/28 11:49:57 claudio Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.39 2026/08/03 18:48:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -371,8 +371,7 @@ main_dispatch_eigrpe(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
-	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
 
@@ -450,8 +449,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0;
+	int		 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2026/07/28 11:49:57 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.18 2026/08/03 18:48:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,9 +215,8 @@ control_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct ctl_conn	*c;
 	struct imsg	 imsg;
-	ssize_t		 n;
 	unsigned int	 ifidx;
-	int		 verbose;
+	int		 n, verbose;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warnx("%s: fd %d: not found", __func__, fd);
