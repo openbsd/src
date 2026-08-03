@@ -5068,8 +5068,6 @@ static void amdgpu_device_unmap_mmio(struct amdgpu_device *adev)
 #ifdef __linux__
 	iounmap(adev->rmmio);
 	adev->rmmio = NULL;
-	if (adev->mman.aper_base_kaddr)
-		iounmap(adev->mman.aper_base_kaddr);
 	adev->mman.aper_base_kaddr = NULL;
 #else
 	if (adev->rmmio_size > 0)
