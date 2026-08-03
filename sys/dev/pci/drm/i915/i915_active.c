@@ -326,7 +326,7 @@ active_instance(struct i915_active *ref, u64 idx)
 	node = pool_get(&slab_cache, PR_NOWAIT);
 #endif
 	if (!node)
-		goto out;
+		goto err;
 
 	__i915_active_fence_init(&node->base, NULL, node_retire);
 	node->ref = ref;
@@ -340,6 +340,11 @@ out:
 	spin_unlock_irq(&ref->tree_lock);
 
 	return &node->base;
+
+err:
+	spin_unlock_irq(&ref->tree_lock);
+
+	return NULL;
 }
 
 void __i915_active_init(struct i915_active *ref,
