@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.32 2026/07/28 11:51:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.33 2026/08/03 18:49:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -195,8 +195,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct rip_route	 rr;
 	struct imsg		 imsg;
-	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -228,7 +227,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			if (rde_check_route(&rr) == -1)
 				log_debug("rde_dispatch_imsg: "
-				    "packet malformed\n");
+				    "packet malformed");
 			break;
 		case IMSG_FULL_REQUEST:
 			bzero(&rr, sizeof(rr));
@@ -298,8 +297,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct kroute		 kr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
-	ssize_t			 n;
-	int			 shut = 0;
+	int			 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
