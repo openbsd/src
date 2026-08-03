@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.98 2026/07/28 11:48:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.99 2026/08/03 18:48:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -272,9 +272,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct area		*area;
 	struct vertex		*v;
 	char			*buf;
-	ssize_t			 n;
 	time_t			 now;
-	int			 r, state, self, shut = 0, verbose;
+	int			 n, r, state, self, shut = 0, verbose;
 	u_int16_t		 l;
 
 	if (event & EV_READ) {
@@ -650,8 +649,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct kroute		 kr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
-	ssize_t			 n;
-	int			 shut = 0, link_ok, prev_link_ok, orig_lsa;
+	int			 n, shut = 0, link_ok, prev_link_ok, orig_lsa;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
