@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.126 2026/07/28 11:48:14 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.127 2026/08/03 18:48:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -358,8 +358,7 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	struct demote_msg	 dmsg;
-	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
 
@@ -445,8 +444,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 count, shut = 0;
+	int		 n, count, shut = 0;
 
 	ibuf = &iev->ibuf;
 
