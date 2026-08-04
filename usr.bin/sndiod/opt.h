@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.13 2026/08/04 09:40:31 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.14 2026/08/04 09:43:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,8 +23,7 @@
 struct dev;
 
 struct app {
-#define APP_NAMEMAX	12
-	char name[APP_NAMEMAX];		/* name matching [a-z]+ */
+	char name[CTL_NAMEMAX];		/* name matching [a-z]+ */
 	unsigned int serial;		/* global unique number */
 	int vol;
 };
@@ -45,8 +44,7 @@ struct opt {
 	unsigned int app_serial;
 
 	int num;
-#define OPT_NAMEMAX 12
-	char name[OPT_NAMEMAX];
+	char name[CTL_NAMEMAX];
 	int maxweight;		/* max dynamic range for clients */
 	int pmin, pmax;		/* play channels */
 	int rmin, rmax;		/* recording channels */

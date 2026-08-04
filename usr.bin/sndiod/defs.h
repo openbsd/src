@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.5 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: defs.h,v 1.6 2026/08/04 09:43:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,5 +59,11 @@
 #define RATE_MAX	192000		/* max sample rate */
 #define BITS_MIN	1		/* min bits per sample */
 #define BITS_MAX	32		/* max bits per sample */
+
+/*
+ * Max control names lengths (\0 included)
+ */
+#define CTL_NAMEMAX	12
+#define CTL_DISPLAYMAX	24
 
 #endif /* !defined(DEFS_H) */
