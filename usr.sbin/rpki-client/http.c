@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.107 2026/07/28 14:33:41 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.108 2026/08/04 18:45:34 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1331,7 +1331,6 @@ http_isbodyless(struct http_connection *conn)
 		return 1;
 	return 0;
 }
-
 
 /*
  * Returns true if the connection status is any of the redirect codes.
