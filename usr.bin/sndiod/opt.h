@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.12 2026/05/20 13:02:04 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.13 2026/08/04 09:40:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,8 +45,8 @@ struct opt {
 	unsigned int app_serial;
 
 	int num;
-#define OPT_NAMEMAX 11
-	char name[OPT_NAMEMAX + 1];
+#define OPT_NAMEMAX 12
+	char name[OPT_NAMEMAX];
 	int maxweight;		/* max dynamic range for clients */
 	int pmin, pmax;		/* play channels */
 	int rmin, rmax;		/* recording channels */

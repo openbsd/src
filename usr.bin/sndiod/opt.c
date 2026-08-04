@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.22 2026/07/09 09:29:52 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.23 2026/08/04 09:40:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -331,7 +331,7 @@ opt_new(struct dev *d, char *name,
 		len = strlen(name);
 	} else {
 		for (len = 0; name[len] != '\0'; len++) {
-			if (len == OPT_NAMEMAX) {
+			if (len == OPT_NAMEMAX - 1) {
 				logx(0, "%s: too long", name);
 				return NULL;
 			}
