@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.26 2024/11/21 13:43:10 claudio Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.27 2026/08/04 13:24:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -356,7 +356,7 @@ module_common_radpkt(struct module_base *base, uint32_t imsg_type, u_int q_id,
 static int
 module_recv_imsg(struct module_base *base)
 {
-	ssize_t		 n;
+	int		 n;
 	struct imsg	 imsg;
 
 	if ((n = imsgbuf_read(&base->ibuf)) != 1) {
@@ -366,8 +366,8 @@ module_recv_imsg(struct module_base *base)
 		return (-1);
 	}
 	for (;;) {
-		if ((n = imsg_get(&base->ibuf, &imsg)) == -1) {
-			syslog(LOG_ERR, "%s: imsg_get(): %m", __func__);
+		if ((n = imsgbuf_get(&base->ibuf, &imsg)) == -1) {
+			syslog(LOG_ERR, "%s: imsgbuf_get(): %m", __func__);
 			module_stop(base);
 			return (-1);
 		}

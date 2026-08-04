@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2024/11/21 13:43:10 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.8 2026/08/04 13:24:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -248,7 +248,8 @@ control_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct ctl_conn	*c;
 	struct imsg	 imsg;
-	ssize_t		 n, datalen;
+	int		 n;
+	size_t		 datalen;
 	char		 modulename[RADIUSD_MODULE_NAME_LEN + 1], msg[128];
 
 	if ((c = control_connbyfd(fd)) == NULL) {
@@ -270,15 +271,14 @@ control_dispatch_imsg(int fd, short event, void *bula)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
+		if ((n = imsgbuf_get(&c->iev.ibuf, &imsg)) == -1) {
 			control_close(fd);
 			return;
 		}
-
 		if (n == 0)
 			break;
 
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
+		datalen = imsg_get_len(&imsg);
 		switch (imsg.hdr.type) {
 		default:
 			if (imsg.hdr.type >= IMSG_RADIUSD_MODULE_MIN) {

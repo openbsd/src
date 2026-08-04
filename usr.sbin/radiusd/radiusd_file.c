@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.8 2024/11/21 13:43:10 claudio Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.9 2026/08/04 13:24:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -99,7 +99,6 @@ main(int argc, char *argv[])
 	char				*saved_argv0;
 	struct imsgbuf			 ibuf;
 	struct imsg			 imsg;
-	ssize_t				 n;
 	size_t				 datalen;
 	struct module_file_params	*paramsp, params;
 	char				 pathdb[PATH_MAX];
@@ -133,7 +132,7 @@ main(int argc, char *argv[])
 
 	/* Receive parameters from the main process. */
 	if (imsg_sync_read(&ibuf, 2000) <= 0 ||
-	    (n = imsg_get(&ibuf, &imsg)) <= 0)
+	    imsgbuf_get(&ibuf, &imsg) <= 0)
 		exit(EXIT_FAILURE);
 	if (imsg.hdr.type != IMSG_RADIUSD_FILE_PARAMS)
 		err(EXIT_FAILURE, "Receieved unknown message type %d",
@@ -162,7 +161,9 @@ main(int argc, char *argv[])
 		if (imsgbuf_read(&ibuf) != 1)
 			break;
 		for (;;) {
-			if ((n = imsg_get(&ibuf, &imsg)) == -1)
+			int	n;
+
+			if ((n = imsgbuf_get(&ibuf, &imsg)) == -1)
 				break;
 			if (n == 0)
 				break;
@@ -346,7 +347,6 @@ module_file_access_request(void *ctx, u_int query_id, const u_char *pkt,
 	struct module_file		*self = ctx;
 	RADIUS_PACKET			*radpkt = NULL;
 	char				 username[256];
-	ssize_t				 n;
 	struct imsg			 imsg;
 	struct module_file_userinfo	*ent;
 
@@ -366,12 +366,12 @@ module_file_access_request(void *ctx, u_int query_id, const u_char *pkt,
 		log_warn("%s: imsgbuf_read()", __func__);
 		goto out;
 	}
-	if ((n = imsg_get(&self->ibuf, &imsg)) <= 0) {
-		log_warn("%s: imsg_get()", __func__);
+	if (imsgbuf_get(&self->ibuf, &imsg) <= 0) {
+		log_warn("%s: imsgbuf_get()", __func__);
 		goto out;
 	}
 
-	datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
+	datalen = imsg_get_len(&imsg);
 	if (imsg.hdr.type == IMSG_RADIUSD_FILE_USERINFO) {
 		if (datalen <= offsetof(struct module_file_userinfo,
 		    password[0])) {

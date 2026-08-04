@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.20 2025/04/25 00:06:52 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.21 2026/08/04 13:24:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -80,10 +80,9 @@ static struct module_handlers module_bsdauth_handlers = {
 int
 main(int argc, char *argv[])
 {
-	int		 ch, pairsock[2], status;
+	int		 n, ch, pairsock[2], status;
 	struct imsgbuf	 ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
 	size_t		 datalen;
 	pid_t		 pid;
 	char		*saved_argv0;
@@ -123,7 +122,7 @@ main(int argc, char *argv[])
 		if (imsgbuf_read(&ibuf) != 1)
 			break;
 		for (;;) {
-			if ((n = imsg_get(&ibuf, &imsg)) == -1)
+			if ((n = imsgbuf_get(&ibuf, &imsg)) == -1)
 				break;
 			if (n == 0)
 				break;
@@ -340,7 +339,6 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 	u_int			 i;
 	const char		*reason;
 	struct imsg		 imsg;
-	ssize_t			 n;
 
 	memset(&imsg, 0, sizeof(imsg));
 	if (pass == NULL)
@@ -359,8 +357,8 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 	imsgbuf_flush(&module->ibuf);
 	if (imsgbuf_read(&module->ibuf) != 1)
 		fatal("imsgbuf_read() failed in module_bsdauth_userpass()");
-	if ((n = imsg_get(&module->ibuf, &imsg)) <= 0)
-		fatal("imsg_get() failed in module_bsdauth_userpass()");
+	if (imsgbuf_get(&module->ibuf, &imsg) <= 0)
+		fatal("imsgbuf_get() failed in module_bsdauth_userpass()");
 
 	if (imsg.hdr.type != IMSG_BSDAUTH_OK) {
 		reason = "Authentication failed";
@@ -385,8 +383,8 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 			if (imsgbuf_read(&module->ibuf) != 1)
 				fatal("imsgbuf_read() failed in "
 				    "module_bsdauth_userpass()");
-			if ((n = imsg_get(&module->ibuf, &imsg)) <= 0)
-				fatal("imsg_get() failed in "
+			if (imsgbuf_get(&module->ibuf, &imsg) <= 0)
+				fatal("imsgbuf_get() failed in "
 				    "module_bsdauth_userpass()");
 			if (imsg.hdr.type == IMSG_BSDAUTH_OK)
 				goto group_ok;

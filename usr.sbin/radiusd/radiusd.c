@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.63 2026/06/26 07:05:33 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.64 2026/08/04 13:24:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1152,7 +1152,6 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	pid_t				 pid;
 	int				 ival, pairsock[] = { -1, -1 };
 	const char			*av[3];
-	ssize_t				 n;
 	struct imsg			 imsg;
 
 	module = calloc(1, sizeof(struct radiusd_module));
@@ -1206,7 +1205,7 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	}
 
 	if (imsg_sync_read(&module->ibuf, MODULE_IO_TIMEOUT) <= 0 ||
-	    (n = imsg_get(&module->ibuf, &imsg)) <= 0) {
+	    imsgbuf_get(&module->ibuf, &imsg) <= 0) {
 		log_warnx("Could not load module `%s': module didn't "
 		    "respond", name);
 		goto on_error;
@@ -1249,7 +1248,7 @@ radiusd_module_start(struct radiusd_module *module)
 	    NULL, 0);
 	imsg_sync_flush(&module->ibuf, MODULE_IO_TIMEOUT);
 	if (imsg_sync_read(&module->ibuf, MODULE_IO_TIMEOUT) <= 0 ||
-	    imsg_get(&module->ibuf, &imsg) <= 0) {
+	    imsgbuf_get(&module->ibuf, &imsg) <= 0) {
 		log_warnx("Module `%s' could not start: no response",
 		    module->name);
 		goto on_fail;
@@ -1393,9 +1392,9 @@ radiusd_module_imsg_read(struct radiusd_module *module)
 		return (-1);
 	}
 	for (;;) {
-		if ((n = imsg_get(&module->ibuf, &imsg)) == -1) {
+		if ((n = imsgbuf_get(&module->ibuf, &imsg)) == -1) {
 			log_warn("Receiving a message from module `%s' failed: "
-			    "imsg_get", module->name);
+			    "imsgbuf_get", module->name);
 			return (-1);
 		}
 		if (n == 0)
@@ -1644,9 +1643,8 @@ radiusd_module_set(struct radiusd_module *module, const char *name,
 {
 	struct radiusd_module_set_arg	 arg;
 	struct radiusd_module_object	*val;
-	int				 i, niov = 0;
+	int				 n, i, niov = 0;
 	u_char				*buf = NULL, *buf0;
-	ssize_t				 n;
 	size_t				 bufsiz = 0, bufoff = 0, bufsiz0;
 	size_t				 vallen, valsiz;
 	struct iovec			 iov[2];
@@ -1701,11 +1699,11 @@ radiusd_module_set(struct radiusd_module *module, const char *name,
 			    "imsg_sync_read", module->name);
 			goto on_error;
 		}
-		if ((n = imsg_get(&module->ibuf, &imsg)) > 0)
+		if ((n = imsgbuf_get(&module->ibuf, &imsg)) > 0)
 			break;
 		if (n < 0) {
 			log_warn("Failed to get reply from module `%s': "
-			    "imsg_get", module->name);
+			    "imsgbuf_get", module->name);
 			goto on_error;
 		}
 	}
