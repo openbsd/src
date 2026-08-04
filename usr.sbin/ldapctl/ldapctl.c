@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.21 2024/11/21 13:38:14 claudio Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.22 2026/08/04 06:57:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -242,8 +242,7 @@ main(int argc, char *argv[])
 {
 	int			 ctl_sock;
 	int			 done = 0, verbose = 0, vlog = 0;
-	ssize_t			 n;
-	int			 ch;
+	int			 n, ch;
 	enum action		 action = NONE;
 	const char		*datadir = DATADIR;
 	struct stat		 sb;
@@ -366,8 +365,8 @@ main(int argc, char *argv[])
 			errx(1, "pipe closed");
 
 		while (!done) {
-			if ((n = imsg_get(&ibuf, &imsg)) == -1)
-				errx(1, "imsg_get error");
+			if ((n = imsgbuf_get(&ibuf, &imsg)) == -1)
+				errx(1, "imsgbuf_get error");
 			if (n == 0)
 				break;
 			switch (imsg.hdr.type) {
@@ -394,19 +393,20 @@ main(int argc, char *argv[])
 void
 show_stats(struct imsg *imsg)
 {
-	struct ldapd_stats	*st;
+	struct ldapd_stats	st;
 
-	st = imsg->data;
+	if (imsg_get_data(imsg, &st, sizeof(st)) == -1)
+		return;
 
-	printf("start time: %s", ctime(&st->started_at));
-	printf("requests: %llu\n", st->requests);
-	printf("search requests: %llu\n", st->req_search);
-	printf("bind requests: %llu\n", st->req_bind);
-	printf("modify requests: %llu\n", st->req_mod);
-	printf("timeouts: %llu\n", st->timeouts);
-	printf("unindexed searches: %llu\n", st->unindexed);
-	printf("active connections: %u\n", st->conns);
-	printf("active searches: %u\n", st->searches);
+	printf("start time: %s", ctime(&st.started_at));
+	printf("requests: %llu\n", st.requests);
+	printf("search requests: %llu\n", st.req_search);
+	printf("bind requests: %llu\n", st.req_bind);
+	printf("modify requests: %llu\n", st.req_mod);
+	printf("timeouts: %llu\n", st.timeouts);
+	printf("unindexed searches: %llu\n", st.unindexed);
+	printf("active connections: %u\n", st.conns);
+	printf("active searches: %u\n", st.searches);
 }
 
 #define ZDIV(t,n)	((n) == 0 ? 0 : (float)(t) / (n))
@@ -433,12 +433,13 @@ show_dbstats(const char *prefix, struct btree_stat *st)
 void
 show_nsstats(struct imsg *imsg)
 {
-	struct ns_stat		*nss;
+	struct ns_stat	nss;
 
-	nss = imsg->data;
+	if (imsg_get_data(imsg, &nss, sizeof(nss)) == -1)
+		return;
 
-	printf("\nsuffix: %s\n", nss->suffix);
-	show_dbstats("data", &nss->data_stat);
-	show_dbstats("indx", &nss->indx_stat);
+	printf("\nsuffix: %s\n", nss.suffix);
+	show_dbstats("data", &nss.data_stat);
+	show_dbstats("indx", &nss.indx_stat);
 }
 
