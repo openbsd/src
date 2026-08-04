@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent_globs.h,v 1.16 2022/12/26 19:16:01 jmc Exp $ */
+/*	$OpenBSD: indent_globs.h,v 1.17 2026/08/04 15:17:05 deraadt Exp $ */
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -206,7 +206,7 @@ extern int  use_tabs;			/* set true to use tabs for spacing,
 struct fstate {
     char        font[4];
     char        size;
-    int         allcaps:1;
+    unsigned char allcaps;
 };
 
 extern struct fstate
