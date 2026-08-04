@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.103 2026/07/27 13:29:00 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.104 2026/08/04 12:46:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1496,7 +1496,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 			prf = (struct nd_opt_prefix_info*) nd_opt_hdr;
 
 			if (prf->nd_opt_pi_prefix_len > 128) {
-				log_debug("%s: invalid prefix length(%d)\n",
+				log_debug("%s: invalid prefix length(%d)",
 				    __func__, prf->nd_opt_pi_prefix_len);
 				goto err;
 			}
@@ -1655,7 +1655,7 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 	int bytelen, bitlen, i;
 
 	if (0 > len || len > 128) {
-		log_debug("%s: invalid prefix length(%d)\n", __func__, len);
+		log_debug("%s: invalid prefix length(%d)", __func__, len);
 		len = 128;
 	}
 
