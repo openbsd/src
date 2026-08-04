@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.40 2026/07/27 13:28:08 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.41 2026/08/04 12:50:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1751,7 +1751,7 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 	int bytelen, bitlen, i;
 
 	if (0 > len || len > 128) {
-		log_debug("%s: invalid prefix length(%d)\n", __func__, len);
+		log_debug("%s: invalid prefix length(%d)", __func__, len);
 		len = 128;
 	}
 
