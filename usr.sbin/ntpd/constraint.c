@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.63 2026/07/29 14:06:55 claudio Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.64 2026/08/04 19:05:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -628,7 +628,7 @@ priv_constraint_dispatch(struct pollfd *pfd)
 {
 	struct imsg		 imsg;
 	struct constraint	*cstr;
-	ssize_t			 n;
+	int			 n;
 	struct timeval		 tv[2];
 
 	if ((cstr = constraint_byfd(pfd->fd)) == NULL)

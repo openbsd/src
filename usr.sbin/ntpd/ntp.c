@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.184 2026/07/29 14:06:55 claudio Exp $ */
+/*	$OpenBSD: ntp.c,v 1.185 2026/08/04 19:05:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -477,7 +477,7 @@ int
 ntp_dispatch_imsg(void)
 {
 	struct imsg		 imsg;
-	int			 n;
+	int			 n, synced;
 
 	if (imsgbuf_read(ibuf_main) != 1)
 		return (-1);
@@ -485,20 +485,19 @@ ntp_dispatch_imsg(void)
 	for (;;) {
 		if ((n = imsgbuf_get(ibuf_main, &imsg)) == -1)
 			return (-1);
-
 		if (n == 0)
 			break;
 
 		switch (imsg.hdr.type) {
 		case IMSG_ADJTIME:
-			if (imsg_get_data(&imsg, &n, sizeof(n)) == -1)
+			if (imsg_get_data(&imsg, &synced, sizeof(synced)) == -1)
 				fatal("IMSG_ADJTIME");
-			if (n == 1 && !conf->status.synced) {
+			if (synced == 1 && !conf->status.synced) {
 				log_info("clock is now synced");
 				conf->status.synced = 1;
 				priv_dns(IMSG_SYNCED, NULL, 0);
 				constraint_reset();
-			} else if (n == 0 && conf->status.synced) {
+			} else if (synced == 0 && conf->status.synced) {
 				log_info("clock is now unsynced");
 				conf->status.synced = 0;
 				priv_dns(IMSG_UNSYNCED, NULL, 0);
@@ -522,11 +521,11 @@ ntp_dispatch_imsg(void)
 
 int
 inpool(struct sockaddr_storage *a,
-    struct sockaddr_storage old[MAX_SERVERS_DNS], size_t n)
+    struct sockaddr_storage old[MAX_SERVERS_DNS], size_t oldcnt)
 {
 	size_t i;
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < oldcnt; i++) {
 		if (a->ss_family != old[i].ss_family)
 			continue;
 		if (a->ss_family == AF_INET) {
@@ -551,8 +550,8 @@ ntp_dispatch_imsg_dns(void)
 	u_int16_t		 dlen;
 	u_char			*p;
 	struct ntp_addr		*h;
-	size_t			 addrcount, peercount;
-	int			 n;
+	size_t			 addrcount, peercount, excount;
+	int			 n, probe;
 
 	if (imsgbuf_read(ibuf_dns) != 1)
 		return (-1);
@@ -578,8 +577,8 @@ ntp_dispatch_imsg_dns(void)
 			}
 
 			peercount = 0;
+			excount = 0;
 			if (peer->addr_head.pool) {
-				n = 0;
 
 				TAILQ_FOREACH_SAFE(npeer, &conf->ntp_peers,
 				    entry, tmp) {
@@ -590,7 +589,8 @@ ntp_dispatch_imsg_dns(void)
 					if (npeer->id == peer->id)
 						continue;
 					if (npeer->addr != NULL)
-						existing[n++] = npeer->addr->ss;
+						existing[excount++] =
+						    npeer->addr->ss;
 				}
 			}
 
@@ -623,8 +623,7 @@ ntp_dispatch_imsg_dns(void)
 						free(h);
 						continue;
 					}
-					if (inpool(&h->ss, existing,
-					    n)) {
+					if (inpool(&h->ss, existing, excount)) {
 						free(h);
 						continue;
 					}
@@ -665,9 +664,9 @@ ntp_dispatch_imsg_dns(void)
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_PROBE_ROOT:
-			if (imsg_get_data(&imsg, &n, sizeof(n)) == -1)
+			if (imsg_get_data(&imsg, &probe, sizeof(probe)) == -1)
 				fatal("IMSG_PROBE_ROOT");
-			if (n < 0)
+			if (probe < 0)
 				priv_settime(0, "dns probe failed");
 			break;
 		default:
