@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.29 2024/11/21 13:43:10 claudio Exp $ */
+/*	$OpenBSD: privsep.c,v 1.30 2026/08/04 13:18:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -956,12 +956,12 @@ on_broken_entry:
 int
 imsg_read_and_get(struct imsgbuf *ibuf, struct imsg *imsg)
 {
-	ssize_t	 n;
+	int	 n;
 
 	for (;;) {
 		if (imsgbuf_read(ibuf) != 1)
 			return (-1);
-		if ((n = imsg_get(ibuf, imsg)) < 0)
+		if ((n = imsgbuf_get(ibuf, imsg)) < 0)
 			return (-1);
 		if (n == 0)
 			continue;
