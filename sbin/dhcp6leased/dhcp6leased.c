@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.22 2026/07/27 13:28:08 claudio Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.23 2026/08/04 12:50:43 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -423,8 +423,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	struct imsg_ifinfo	 imsg_ifinfo;
-	ssize_t			 n;
-	int			 shut = 0;
+	int			 n, shut = 0;
 	uint32_t		 if_index;
 	int			 verbose;
 
@@ -503,8 +502,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf;
 	struct imsg			 imsg;
-	ssize_t				 n;
-	int				 shut = 0;
+	int				 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 
