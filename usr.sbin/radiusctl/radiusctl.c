@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.17 2024/11/21 13:43:10 claudio Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.18 2026/08/04 13:19:56 claudio Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -94,8 +94,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int			 ch, sock, done = 0;
-	ssize_t			 n;
+	int			 n, ch, sock, done = 0;
 	struct parse_result	*res;
 	struct sockaddr_un	 sun;
 	struct imsgbuf		 ibuf;
@@ -192,7 +191,7 @@ main(int argc, char *argv[])
 		if (imsgbuf_read(&ibuf) != 1)
 			break;
 		for (;;) {
-			if ((n = imsg_get(&ibuf, &imsg)) <= 0) {
+			if ((n = imsgbuf_get(&ibuf, &imsg)) <= 0) {
 				if (n != 0)
 					done = 1;
 				break;
