@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.74 2024/11/21 13:35:20 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.75 2026/08/04 13:15:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -297,9 +297,9 @@ static int
 read_message(struct imsgbuf *ibuf, struct imsg *imsg, pid_t from)
 {
 	while (1) {
-		switch (imsg_get(ibuf, imsg)) {
+		switch (imsgbuf_get(ibuf, imsg)) {
 		case -1:
-			err(1, "imsg_get");
+			err(1, "imsgbuf_get");
 		case 0:
 			break;
 		default:
