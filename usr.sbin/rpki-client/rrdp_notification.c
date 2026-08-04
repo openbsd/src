@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.23 2025/06/14 09:12:04 tb Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.24 2026/08/04 18:46:18 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -163,7 +163,7 @@ start_notification_elem(struct notification_xml *nxml, const char **attr)
 
 	if (nxml->scope != NOTIFICATION_SCOPE_START)
 		PARSE_FAIL(p,
-		    "parse failed - entered notification elem unexpectedely");
+		    "parse failed - entered notification elem unexpectedly");
 	for (i = 0; attr[i]; i += 2) {
 		const char *errstr;
 		if (strcmp("xmlns", attr[i]) == 0 &&
@@ -207,7 +207,7 @@ end_notification_elem(struct notification_xml *nxml)
 
 	if (nxml->scope != NOTIFICATION_SCOPE_NOTIFICATION_POST_SNAPSHOT)
 		PARSE_FAIL(p, "parse failed - exited notification "
-		    "elem unexpectedely");
+		    "elem unexpectedly");
 	nxml->scope = NOTIFICATION_SCOPE_END;
 
 	if (!check_delta(nxml))
@@ -222,7 +222,7 @@ start_snapshot_elem(struct notification_xml *nxml, const char **attr)
 
 	if (nxml->scope != NOTIFICATION_SCOPE_NOTIFICATION)
 		PARSE_FAIL(p,
-		    "parse failed - entered snapshot elem unexpectedely");
+		    "parse failed - entered snapshot elem unexpectedly");
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
@@ -253,7 +253,7 @@ end_snapshot_elem(struct notification_xml *nxml)
 
 	if (nxml->scope != NOTIFICATION_SCOPE_SNAPSHOT)
 		PARSE_FAIL(p, "parse failed - exited snapshot "
-		    "elem unexpectedely");
+		    "elem unexpectedly");
 	nxml->scope = NOTIFICATION_SCOPE_NOTIFICATION_POST_SNAPSHOT;
 }
 
@@ -268,7 +268,7 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 
 	if (nxml->scope != NOTIFICATION_SCOPE_NOTIFICATION_POST_SNAPSHOT)
 		PARSE_FAIL(p, "parse failed - entered delta "
-		    "elem unexpectedely");
+		    "elem unexpectedly");
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
@@ -317,7 +317,7 @@ end_delta_elem(struct notification_xml *nxml)
 	XML_Parser p = nxml->parser;
 
 	if (nxml->scope != NOTIFICATION_SCOPE_DELTA)
-		PARSE_FAIL(p, "parse failed - exited delta elem unexpectedely");
+		PARSE_FAIL(p, "parse failed - exited delta elem unexpectedly");
 	nxml->scope = NOTIFICATION_SCOPE_NOTIFICATION_POST_SNAPSHOT;
 }
 

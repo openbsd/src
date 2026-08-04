@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.12 2025/06/13 12:34:14 tb Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.13 2026/08/04 18:46:18 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -55,7 +55,7 @@ start_snapshot_elem(struct snapshot_xml *sxml, const char **attr)
 
 	if (sxml->scope != SNAPSHOT_SCOPE_NONE)
 		PARSE_FAIL(p,
-		    "parse failed - entered snapshot elem unexpectedely");
+		    "parse failed - entered snapshot elem unexpectedly");
 	for (i = 0; attr[i]; i += 2) {
 		const char *errstr;
 		if (strcmp("xmlns", attr[i]) == 0 &&
@@ -100,7 +100,7 @@ end_snapshot_elem(struct snapshot_xml *sxml)
 
 	if (sxml->scope != SNAPSHOT_SCOPE_SNAPSHOT)
 		PARSE_FAIL(p, "parse failed - exited snapshot "
-		    "elem unexpectedely");
+		    "elem unexpectedly");
 	sxml->scope = SNAPSHOT_SCOPE_END;
 }
 
@@ -113,7 +113,7 @@ start_publish_elem(struct snapshot_xml *sxml, const char **attr)
 
 	if (sxml->scope != SNAPSHOT_SCOPE_SNAPSHOT)
 		PARSE_FAIL(p,
-		    "parse failed - entered publish elem unexpectedely");
+		    "parse failed - entered publish elem unexpectedly");
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
@@ -147,7 +147,7 @@ end_publish_elem(struct snapshot_xml *sxml)
 
 	if (sxml->scope != SNAPSHOT_SCOPE_PUBLISH)
 		PARSE_FAIL(p, "parse failed - exited publish "
-		    "elem unexpectedely");
+		    "elem unexpectedly");
 
 	if (publish_done(sxml->rrdp, sxml->pxml) != 0)
 		PARSE_FAIL(p, "parse failed - bad publish elem");
