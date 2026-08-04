@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.48 2026/07/27 13:28:28 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.49 2026/08/04 12:49:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -242,7 +242,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf = &iev->ibuf;
 	struct iface			*iface;
-	ssize_t				 n;
+	int				 n;
 	uint32_t			 type;
 	int				 shut = 0, bpfsock, if_index, udpsock;
 
@@ -493,9 +493,8 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	struct iface		*iface;
-	ssize_t			 n;
 	uint32_t		 type;
-	int			 shut = 0;
+	int			 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
