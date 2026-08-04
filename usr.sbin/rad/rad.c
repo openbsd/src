@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.40 2026/07/29 11:06:18 claudio Exp $	*/
+/*	$OpenBSD: rad.c,v 1.41 2026/08/04 19:06:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -378,8 +378,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
-	ssize_t			 n;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 	int			 rdomain;
 
 	ibuf = &iev->ibuf;
@@ -449,8 +448,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0;
+	int		 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 

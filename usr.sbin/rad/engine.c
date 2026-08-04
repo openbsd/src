@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.31 2026/07/29 11:06:18 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.32 2026/08/04 19:06:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -189,9 +189,8 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	struct imsg_ra_rs	 ra_rs;
-	ssize_t			 n;
 	uint32_t		 if_index;
-	int			 shut = 0, verbose;
+	int			 n, shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
 
@@ -274,8 +273,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct ra_rdnss_conf		*ra_rdnss_conf;
 	struct ra_dnssl_conf		*ra_dnssl_conf;
 	struct ra_pref64_conf		*pref64;
-	ssize_t				 n;
-	int				 shut = 0;
+	int				 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 
