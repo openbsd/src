@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.104 2026/08/04 12:46:38 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.105 2026/08/04 12:48:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -459,8 +459,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg_del_addr		 del_addr;
 	struct imsg_del_route		 del_route;
 	struct imsg_dup_addr		 dup_addr;
-	ssize_t				 n;
-	int				 shut = 0;
+	int				 n, shut = 0;
 #ifndef	SMALL
 	int				 verbose;
 #endif	/* SMALL */
@@ -630,9 +629,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg_ifinfo	 imsg_ifinfo;
-	ssize_t			 n;
 	uint32_t		 type;
-	int			 shut = 0;
+	int			 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
