@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.31 2026/07/29 13:32:18 claudio Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.32 2026/08/04 19:12:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -399,8 +399,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	struct imsgev		*iev = &dev->async_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg	 	 imsg;
-	ssize_t			 n = 0;
-	int			 verbose;
+	int			 n, verbose;
 	uint32_t		 type;
 
 	if (event & EV_READ) {
@@ -467,8 +466,7 @@ handle_sync_io(int fd, short event, void *arg)
 	struct imsgbuf *ibuf = &iev->ibuf;
 	struct viodev_msg msg;
 	struct imsg imsg;
-	ssize_t n;
-	int deassert = 0;
+	int n, deassert = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)

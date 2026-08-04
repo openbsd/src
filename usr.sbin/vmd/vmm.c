@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.139 2026/07/29 13:32:18 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.140 2026/08/04 19:12:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -455,7 +455,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	struct imsgev		*iev = &vm->vm_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
-	ssize_t			 n;
+	int			 n;
 	unsigned int		 i;
 	uint32_t		 type;
 

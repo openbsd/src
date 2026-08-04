@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.146 2026/08/04 19:09:54 claudio Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.147 2026/08/04 19:12:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1767,7 +1767,7 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	struct viodev_msg	 msg;
-	ssize_t			 n = 0;
+	int			 n;
 	uint32_t		 type;
 
 	if (event & EV_READ) {

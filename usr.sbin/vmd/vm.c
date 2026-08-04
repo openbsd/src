@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.126 2026/07/29 13:32:18 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.127 2026/08/04 19:12:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -312,8 +312,7 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 	struct imsg		 imsg;
 	uint32_t		 id, type;
 	pid_t			 pid;
-	ssize_t			 n;
-	int			 verbose;
+	int			 n, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -1059,7 +1058,7 @@ vm_pipe_init2(struct vm_dev_pipe *p, void (*cb)(int, short, void *), void *arg)
 void
 vm_pipe_send(struct vm_dev_pipe *p, enum pipe_msg_type msg)
 {
-	size_t n;
+	ssize_t n;
 	n = write(p->write, &msg, sizeof(msg));
 	if (n != sizeof(msg))
 		fatal("failed to write to device pipe");
