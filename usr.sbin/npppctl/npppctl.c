@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.15 2024/11/21 13:43:10 claudio Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.16 2026/08/04 13:19:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -513,7 +513,7 @@ imsg_wait_command_completion(void)
 	if (imsgbuf_flush(&ctl_ibuf) == -1)
 		return (-1);
 	do {
-		if ((n = imsg_get(&ctl_ibuf, &ctl_imsg)) == -1)
+		if ((n = imsgbuf_get(&ctl_ibuf, &ctl_imsg)) == -1)
 			return (-1);
 		if (n != 0)
 			break;
