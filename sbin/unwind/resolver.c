@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.176 2026/07/27 13:28:43 claudio Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.177 2026/08/04 12:44:47 claudio Exp $	*/
 
 
 /*
@@ -490,8 +490,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	struct query_imsg	*query_imsg;
-	ssize_t			 n;
-	int			 shut = 0, verbose, i, new_available_afs;
+	int			 n, shut = 0, verbose, i, new_available_afs;
 	char			*ta;
 
 	ibuf = &iev->ibuf;
@@ -632,8 +631,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
-	ssize_t			 n;
-	int			 shut = 0, i, *restart;
+	int			 n, shut = 0, i, *restart;
 
 	ibuf = &iev->ibuf;
 

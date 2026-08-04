@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.24 2026/07/27 13:28:43 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.25 2026/08/04 12:44:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -227,8 +227,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct ctl_conn	*c;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 verbose;
+	int		 n, verbose;
 	uid_t		 euid;
 	gid_t		 egid;
 

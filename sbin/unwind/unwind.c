@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.78 2026/07/27 13:28:43 claudio Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.79 2026/08/04 12:44:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -396,8 +396,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf	*ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0, verbose;
+	int		 n, shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
 
@@ -461,8 +460,7 @@ main_dispatch_resolver(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
-	ssize_t			 n;
-	int			 shut = 0;
+	int			 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 
@@ -648,7 +646,7 @@ main_sendall(enum imsg_type type, void *buf, uint16_t len)
 void
 merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 {
-	struct uw_forwarder		*uw_forwarder;
+	struct uw_forwarder	*uw_forwarder;
 	struct force_tree_entry	*n, *nxt;
 
 	/* Remove & discard existing forwarders. */
