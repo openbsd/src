@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.45 2026/07/23 08:48:50 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.46 2026/08/04 15:20:28 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "fuse_private.h"
@@ -26,6 +27,8 @@
 					err = -ENOSYS;			\
 					goto out;			\
 				}
+
+static int ifuse_fill_readdir(void *, const char *, const struct stat *, off_t);
 
 /*
  * Store the current request so that it is available on demand for
@@ -170,6 +173,7 @@ static void
 ifuse_ops_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 {
 	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_dirhandle *fd;
 	char *realname;
 	int err = 0;
 
@@ -185,7 +189,28 @@ ifuse_ops_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 		err = f->op.opendir(realname, ffi);
 		ictx_destroy();
 		free(realname);
+
+		if (err)
+			goto out;
 	}
+
+	/* Create a dirhandle to maintain state. */
+	fd = calloc(1, sizeof(*fd));
+	if (fd == NULL) {
+		err = -errno;
+		goto out;
+	}
+
+	fd->filler = ifuse_fill_readdir;
+	fd->fuse = f;
+	fd->ino = ino;
+	fd->fh = ffi->fh;
+
+	/*
+	 * use the address of the dirhandle as the file handle so we can
+	 * retrieve it in readdir and releasedir
+	 */
+	ffi->fh = (uint64_t)(uintptr_t)fd;
 
 out:
 	if (!err)
@@ -202,12 +227,6 @@ out:
  *    will always be 0 and this filler function always returns 0.
  * 2. The file system keeps track of the directory entry offsets and
  *    this filler function returns 1 when the buffer is full.
- *
- * OpenBSD currently supports 1. but will still call the file system's
- * readdir function multiple times if either the kernel buffer or the
- * buffer supplied by the calling application is too small to fit all
- * entries. Each call to the file system's readdir function will fill
- * the buffer with the next set of entries.
  */
 static int
 ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
@@ -219,22 +238,35 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	struct stat attr;
 	char *buf;
 	uint32_t len, resid;
+	size_t new_size;
+	char *new_buf;
+
+	/* may have run out of memory resizing buffer */
+	if (fd->err)
+		return (1);
 
 	f = fd->fuse;
 
 	/* calculate the size needed for the entry */
 	len = fuse_add_direntry(NULL, NULL, 0, name, stbuf, off);
 
-	/* buffer is full so ignore the remaining entries */
-	if (fd->full || (fd->len + len > fd->size)) {
-		fd->full = 1;
-		return (0);
-	}
+	/*
+	 * buffer is full
+	 *   mode 1: grow the buffer
+	 *   mode 2: stop
+	 */
+	if (fd->len + len > fd->size) {
+		if (off > 0)
+			return (1);
 
-	/* already returned these entries in a previous call so skip */
-	if (fd->start != 0 && fd->idx < fd->start) {
-		fd->idx += len;
-		return (0);
+		new_size = fd->size * 2;
+		new_buf = realloc(fd->buf, new_size);
+		if (new_buf == NULL) {
+			fd->err = errno;
+			return (1);
+		}
+		fd->buf = new_buf;
+		fd->size = new_size;
 	}
 
 	/* set the inode number for the entry */
@@ -265,13 +297,20 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	buf = (char *) fd->buf + fd->len;
 	resid = fd->size - fd->len;
 	fd->len += len;
-	fd->idx += len;
 
 	if (off)
 		fuse_add_direntry(ifuse_req(), buf, resid, name, &attr, off);
-	else
+	else {
 		fuse_add_direntry(ifuse_req(), buf, resid, name, &attr,
-		    fd->idx);
+		    fd->len);
+
+		/*
+		 * There is no way to determine whether this is the last entry
+		 * but unless something goes wrong, the buffer will have all
+		 * entries at the end, so just flag it each time.
+		 */
+		fd->full = 1;
+	}
 
 	return (0);
 }
@@ -296,24 +335,77 @@ ifuse_ops_readdir(struct fuse_req *req, fuse_ino_t ino, size_t size,
     off_t offset, struct fuse_file_info *ffi)
 {
 	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
-	struct fuse_dirhandle fd;
+	struct fuse_dirhandle *fd;
+	struct fuse_dirent *dent;
 	char *realname;
+	off_t next;
 	int err;
 
-	fd.buf = calloc(1, size);
-	if (fd.buf == NULL) {
-		err = -errno;
+	/*
+	 * We stored a pointer to our own struct fuse_dirhandle in
+	 * ifuse_ops_opendir so we can retrieve it here.
+	 */
+	fd = (struct fuse_dirhandle *)(uintptr_t)ffi->fh;
+
+	if (fd->ino != ino) {
+		DPRINTF("%s: invalid ino %llu != %llu\n", __func__, ino,
+		    fd->ino);
+		err = -EBADF;
 		goto out;
 	}
 
-	fd.filler = ifuse_fill_readdir;
-	fd.full = 0;
-	fd.len = 0;
-	fd.size = size;
-	fd.idx = 0;
-	fd.fuse = f;
-	fd.start = offset;
-	fd.ino = ino;
+	/*
+	 * Refresh cache on rewinddir(3).
+	 */
+	if (offset == 0)
+		fd->full = 0;
+
+	/*
+	 * Allocate buf here rather than opendir since the size is only known
+	 * here. The size is not important in mode 1 since the buffer can grow
+	 * but in mode 2 it doesn't.
+	 */
+	if (fd->buf == NULL) {
+		fd->buf = calloc(1, size);
+		if (fd->buf == NULL) {
+			err = -errno;
+			goto out;
+		}
+
+		fd->size = size;
+	}
+
+	/*
+	 * If the file system has already filled our buffer, return the
+	 * cached entries.
+	 */
+	if (fd->full) {
+		if (offset >= 0 && (uint64_t)offset > (uint64_t)fd->len) {
+			err = -EINVAL;
+			goto out;
+		}
+
+		/* seek along dirents to confirm offset is valid */
+		dent = (struct fuse_dirent *)fd->buf;
+		for (next = 0; next < offset;) {
+			next += FUSE_DIRENT_SIZE(dent);
+			dent = (struct fuse_dirent *)((char *)fd->buf + next);
+		}
+
+		if (next != offset) {
+			err = -EINVAL;
+			goto out;
+		}
+
+		if (fd->len - offset < size)
+			size = fd->len - offset;
+
+		fuse_reply_buf(req, fd->buf + offset, size);
+		return;
+	}
+
+	/* always fill from the start of the buffer */
+	fd->len = 0;
 
 	realname = build_realname(f, ino);
 	if (realname == NULL) {
@@ -322,31 +414,46 @@ ifuse_ops_readdir(struct fuse_req *req, fuse_ino_t ino, size_t size,
 	}
 
 	ictx_init(req);
-	if (f->op.readdir)
-		err = f->op.readdir(realname, &fd, ifuse_fill_readdir,
+	if (f->op.readdir) {
+		ffi->fh = fd->fh;
+		err = f->op.readdir(realname, fd, ifuse_fill_readdir,
 		    offset, ffi);
-	else if (f->op.getdir)
-		err = f->op.getdir(realname, &fd, ifuse_fill_getdir);
+		ffi->fh = (uint64_t)(uintptr_t)fd;
+	} else if (f->op.getdir)
+		err = f->op.getdir(realname, fd, ifuse_fill_getdir);
 	else
 		err = -ENOSYS;
 	ictx_destroy();
 	free(realname);
 
 out:
-	if (!err)
-		fuse_reply_buf(req, fd.buf, fd.len);
-	else
+	if (!err) {
+		/*
+		 * File system may not have returned an error but check there
+		 * were no errors in our filler function.
+		 */
+		if (fd->err)
+			fuse_reply_err(req, fd->err);
+		else
+			fuse_reply_buf(req, fd->buf, fd->len > size ? size :
+			    fd->len);
+	} else
 		fuse_reply_err(req, -err);
-
-	free(fd.buf);
 }
 
 static void
 ifuse_ops_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 {
 	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_dirhandle *fd;
 	char *realname;
 	int err = 0;
+
+	/*
+	 * We stored a pointer to our own struct fuse_dirhandle in
+	 * ifuse_ops_opendir so we can retrieve it here.
+	 */
+	fd = (struct fuse_dirhandle *)(uintptr_t)ffi->fh;
 
 	/* releasedir is optional */
 	if (f->op.releasedir) {
@@ -357,12 +464,15 @@ ifuse_ops_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 		}
 
 		ictx_init(req);
+		ffi->fh = fd->fh;
 		err = f->op.releasedir(realname, ffi);
 		ictx_destroy();
 		free(realname);
 	}
 
 out:
+	free(fd->buf);
+	free(fd);
 	fuse_reply_err(req, -err);
 }
 

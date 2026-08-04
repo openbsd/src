@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.29 2026/06/17 13:29:01 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.30 2026/08/04 15:20:28 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -44,12 +44,12 @@ struct fuse_dirhandle {
 	struct fuse *fuse;
 	fuse_fill_dir_t filler; /* needed by getdir */
 	void *buf;		/* buffer for dirents */
-	int full;		/* whether the buffer is full*/
-	uint32_t size;		/* buffer size */
-	uint32_t start;		/* start offset */
-	uint32_t idx;		/* current offset */
-	uint32_t len;		/* buffer space used */
+	int full;		/* whether the buffer is full */
+	size_t size;		/* buffer size */
+	size_t len;		/* buffer space used */
 	fuse_ino_t ino;		/* directory inode */
+	uint64_t fh;		/* file handle returned by opendir */
+	int err;		/* error while filling buffer */
 };
 
 SIMPLEQ_HEAD(fuse_vn_head, fuse_vnode);
