@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.546 2026/07/21 08:02:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.547 2026/08/04 08:11:05 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -704,6 +704,11 @@ enum rtr_error {
 	UNK_REC_WDRAWL,
 	DUP_REC_RECV,
 	UNEXP_PROTOCOL_VERS,
+	ASPA_LIST_ERR,
+	TRANSPORT_ERR,
+	ORDERING_ERR,
+	CACHE_RESTART,
+	CACHE_SHUTDOWN,
 };
 
 struct rtr_config {

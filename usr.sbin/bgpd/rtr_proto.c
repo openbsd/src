@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.54 2026/05/20 13:53:17 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.55 2026/08/04 08:11:05 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -843,6 +843,12 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 				free_aspa(aspa);
 				goto badlen;
 			}
+			if (i > 0 && aspa->tas[i] <= aspa->tas[i - 1]) {
+				rtr_send_error(rs, NULL, ASPA_LIST_ERR,
+				    "incorrect ASPA providers list");
+				free_aspa(aspa);
+				return -1;
+			}
 		}
 	}
 
@@ -1024,14 +1030,23 @@ rtr_parse_error(struct rtr_session *rs, struct ibuf *pdu)
 	log_warnx("rtr %s: received error: %s%s%s", log_rtr(rs),
 	    log_rtr_error(errcode), str ? ": " : "", str ? str : "");
 
-	if (errcode == NO_DATA_AVAILABLE) {
+	switch (errcode) {
+	case CACHE_RESTART:
+		rv = 0;
+		break;
+	case NO_DATA_AVAILABLE:
 		rtr_fsm(rs, RTR_EVNT_NO_DATA);
 		rv = 0;
-	} else if (errcode == UNSUPP_PROTOCOL_VERS) {
+		break;
+	case UNSUPP_PROTOCOL_VERS:
 		rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
 		rv = 0;
-	} else
+		break;
+	case CACHE_SHUTDOWN:
+	default:
 		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
+		break;
+	}
 
 	rs->last_recv_error = errcode;
 	if (str)

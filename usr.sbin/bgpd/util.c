@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.103 2026/06/23 18:32:36 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.104 2026/08/04 08:11:05 job Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -354,6 +354,16 @@ log_rtr_error(enum rtr_error err)
 		return "Duplicate Announcement Received";
 	case UNEXP_PROTOCOL_VERS:
 		return "Unexpected Protocol Version";
+	case ASPA_LIST_ERR:
+		return "ASPA Provider List Error";
+	case TRANSPORT_ERR:
+		return "Transport Error";
+	case ORDERING_ERR:
+		return "Ordering Error";
+	case CACHE_RESTART:
+		return "Cache Restart";
+	case CACHE_SHUTDOWN:
+		return "Cache Shutdown";
 	default:
 		snprintf(buf, sizeof(buf), "unknown %u", err);
 		return buf;
