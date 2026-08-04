@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsgev.c,v 1.13 2024/11/21 13:39:07 claudio Exp $ */
+/*	$OpenBSD: imsgev.c,v 1.14 2026/08/04 06:56:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Eric Faurot <eric@openbsd.org>
@@ -107,7 +107,7 @@ imsgev_dispatch(int fd, short ev, void *humppa)
 	struct imsgev	*iev = humppa;
 	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct imsg	 imsg;
-	ssize_t		 n;
+	int		 n;
 
 	iev->events = 0;
 
@@ -147,7 +147,7 @@ imsgev_dispatch(int fd, short ev, void *humppa)
 	}
 
 	while (iev->terminate == 0) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1) {
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1) {
 			imsgev_disconnect(iev, IMSGEV_EIMSG);
 			return;
 		}
