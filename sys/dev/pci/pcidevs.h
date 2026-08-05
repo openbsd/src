@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2145 2026/07/29 02:40:09 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2146 2026/08/05 01:28:51 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6195,6 +6195,8 @@
 #define	PCI_PRODUCT_INTEL_E610_SGMII	0x57b2		/* E610-SGMII */
 #define	PCI_PRODUCT_INTEL_I219_LM25	0x57b3		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V25	0x57b4		/* I219-V */
+#define	PCI_PRODUCT_INTEL_I219_LM27	0x57b7		/* I219-LM */
+#define	PCI_PRODUCT_INTEL_I219_V27	0x57b8		/* I219-V */
 #define	PCI_PRODUCT_INTEL_QEMU_NVME	0x5845		/* QEMU NVM Express Controller */
 #define	PCI_PRODUCT_INTEL_KBL_D_GT1	0x5902		/* HD Graphics 610 */
 #define	PCI_PRODUCT_INTEL_CORE7G_U_HB	0x5904		/* Core 7G Host */
