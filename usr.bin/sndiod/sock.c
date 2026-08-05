@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.64 2026/06/24 15:10:20 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.65 2026/08/05 14:44:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -713,6 +713,7 @@ sock_auth(struct sock *f)
 int
 sock_hello(struct sock *f)
 {
+	char name[CTL_NAMEMAX];
 	struct amsg_hello *p = &f->rmsg.u.hello;
 	struct port *c;
 	struct opt *opt;
@@ -774,10 +775,12 @@ sock_hello(struct sock *f)
 		    opt_byname(p->opt) : legacy_opt(p->devnum, p->opt);
 		if (opt == NULL)
 			return 0;
-		midithru = midithru_array + opt->num;
 		break;
 	case AMSG_TYPE_MIDITHRU:
-		midithru = midithru_array + OPT_NMAX + devnum;
+		snprintf(name, sizeof(name), "%d", devnum);
+		midithru = midithru_byname(name);
+		if (midithru == NULL)
+			return 0;
 		break;
 	case AMSG_TYPE_MIDI:
 		c = port_bynum(devnum);
@@ -797,7 +800,7 @@ sock_hello(struct sock *f)
 			if (!opt_ref(opt))
 				return 0;
 			f->opt = opt;
-			midithru_addprog(midithru, f->midi);
+			midithru_addprog(f->opt->midithru, f->midi);
 			break;
 		case AMSG_TYPE_MIDITHRU:
 			f->midithru = midithru;

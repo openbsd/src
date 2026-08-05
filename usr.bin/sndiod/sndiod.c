@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.58 2026/06/22 14:21:14 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.59 2026/08/05 14:44:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -615,10 +615,14 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * enable midithru by default
+	 * initialize midithru/N
 	 */
-	for (i = 0; i < MIDITHRU_NMAX; i++)
-		midithru_array[i].thru = 1;
+	for (i = 0; i < MIDITHRU_NMAX; i++) {
+		char name[CTL_NAMEMAX];
+
+		snprintf(name, sizeof(name), "%d", i);
+		midithru_new(name);
+	}
 
 	if (port_list == NULL) {
 		for (i = 0; default_ports[i] != NULL; i++)
@@ -747,6 +751,8 @@ main(int argc, char **argv)
 		dev_del(dev_list);
 	while (port_list)
 		port_del(port_list);
+	while (midithru_list)
+		midithru_del(midithru_list);
 	while (tcpaddr_list) {
 		ta = tcpaddr_list;
 		tcpaddr_list = ta->next;

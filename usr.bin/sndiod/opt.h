@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.14 2026/08/04 09:43:23 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.15 2026/08/05 14:44:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,6 +38,7 @@ struct opt {
 	struct dev *dev;
 	struct opt_alt *alt_list;
 	struct midi *midi;
+	struct midithru *midithru;
 	struct mtc *mtc;	/* if set, MMC-controlled MTC source */
 
 	struct app app_array[OPT_NAPP];

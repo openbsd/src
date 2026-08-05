@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.24 2026/08/04 09:43:23 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.25 2026/08/05 14:44:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -380,7 +380,8 @@ opt_new(struct dev *d, char *name,
 	 *	allocated
 	 */
 	o->midi = midi_new(&opt_midiops, o, MODE_MIDIIN | MODE_MIDIOUT);
-	midithru_addprog(midithru_array + o->num, o->midi);
+	o->midithru = midithru_new("");
+	midithru_addprog(o->midithru, o->midi);
 
 	o->pmin = pmin;
 	o->pmax = pmax;
@@ -474,6 +475,7 @@ opt_del(struct opt *o)
 		}
 #endif
 	}
+	midithru_del(o->midithru);
 	midi_del(o->midi);
 	while ((a = o->alt_list) != NULL) {
 		o->alt_list = a->next;
