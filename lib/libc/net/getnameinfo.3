@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.49 2022/09/11 06:38:10 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.50 2026/08/05 08:23:13 claudio Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: August 5 2026 $
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -99,9 +99,9 @@ If the host name cannot be found in DNS and this flag is set,
 a non-zero error code is returned.
 If the host name is not found and the flag is not set, the
 address is returned in numeric form.
-.It NI_NUMERICSERV
+.It Dv NI_NUMERICSERV
 The service name is returned as a digit string representing the port number.
-.It NI_DGRAM
+.It Dv NI_DGRAM
 Specifies that the service being looked up is a datagram
 service, and causes
 .Xr getservbyport 3
