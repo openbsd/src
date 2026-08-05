@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.307 2026/08/05 09:33:27 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.308 2026/08/05 09:43:19 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -511,10 +511,8 @@ reroute:
 		 * destination group on the loopback interface.
 		 */
 		if (ip6->ip6_hlim == 0 || (ifp->if_flags & IFF_LOOPBACK) ||
-		    IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst)) {
-			m_freem(m);
-			goto done;
-		}
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst))
+			goto bad;
 	}
 
 	/*
@@ -583,8 +581,7 @@ reroute:
 #if NPF > 0
 	if (pf_test(AF_INET6, PF_OUT, ifp, &m) != PF_PASS) {
 		error = EACCES;
-		m_freem(m);
-		goto done;
+		goto bad;
 	}
 	if (m == NULL)
 		goto done;

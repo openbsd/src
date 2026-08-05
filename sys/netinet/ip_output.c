@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.419 2026/07/17 18:51:29 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.420 2026/08/05 09:43:19 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -483,8 +483,11 @@ reroute:
 	    (error = if_output_ml(ifp, &ml, sintosa(dst), ro->ro_rt)))
 		goto done;
 	ipstat_inc(ips_fragmented);
+	goto done;
 
-done:
+ bad:
+	m_freem(m);
+ done:
 	if (ro == &iproute)
 		rtfree(ro->ro_rt);
 	if_put(ifp);
@@ -492,10 +495,6 @@ done:
 	tdb_unref(tdb);
 #endif /* IPSEC */
 	return (error);
-
-bad:
-	m_freem(m);
-	goto done;
 }
 
 #ifdef IPSEC
