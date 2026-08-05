@@ -1,4 +1,4 @@
-.\" $OpenBSD: OBJ_create.3,v 1.11 2025/06/08 22:37:23 schwarze Exp $
+.\" $OpenBSD: OBJ_create.3,v 1.12 2026/08/05 08:31:06 tb Exp $
 .\" full merge up to:
 .\" OpenSSL OBJ_nid2obj.pod 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to:
@@ -69,12 +69,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: August 5 2026 $
 .Dt OBJ_CREATE 3
 .Os
 .Sh NAME
 .Nm OBJ_new_nid ,
-.Nm OBJ_add_object ,
 .Nm OBJ_create ,
 .Nm OBJ_create_objects ,
 .Nm OBJ_cleanup
@@ -84,8 +83,6 @@
 .In openssl/objects.h
 .Ft int
 .Fn OBJ_new_nid "int increment"
-.Ft int
-.Fn OBJ_add_object "const ASN1_OBJECT *object"
 .Ft int
 .Fo OBJ_create
 .Fa "const char *oid"
@@ -106,19 +103,14 @@ Passing an argument of 1 is usually recommended.
 The return value can be assigned to a new object by passing it as the
 .Fa nid
 argument to
-.Xr ASN1_OBJECT_create 3
-and by passing the resulting object to
-.Fn OBJ_add_object .
+.Xr ASN1_OBJECT_create 3 .
 .Pp
-.Fn OBJ_add_object
-adds a copy of the
-.Fa object
+.Fn OBJ_create
+adds an
+.Vt ASN1_OBJECT
 to the internal table of ASN.1 object identifiers for use by
 .Xr OBJ_nid2obj 3
 and related functions.
-.Pp
-.Fn OBJ_create
-provides a simpler way to add a new object to the internal table.
 .Fa oid
 is the numerical form of the object,
 .Fa sn
@@ -141,8 +133,11 @@ for every line read.
 The three fields of the input lines
 are separated by one or more whitespace characters.
 .Pp
-For all three functions, the objects added to the internal table and
-all the data contained in them is marked as not dynamically allocated.
+For the objects added to the internal table by
+.Fn OBJ_create
+and
+.Fn OBJ_add_objects ,
+all the data contained is marked as not dynamically allocated.
 Consequently, retrieving them with
 .Xr OBJ_nid2obj 3
 or a similar function and then calling
@@ -152,24 +147,12 @@ on the returned pointer will have no effect.
 .Fn OBJ_cleanup
 resets the internal object table to its default state,
 removing and freeing all objects that were added with
-.Fn OBJ_add_object ,
 .Fn OBJ_create ,
 or
 .Fn OBJ_create_objects .
 .Sh RETURN VALUES
 .Fn OBJ_new_nid
 returns the new NID.
-.Pp
-.Fn OBJ_add_object
-returns the NID of the added
-.Fa object
-or
-.Dv NID_undef
-if no object was added because the
-.Fa object
-argument was
-.Dv NULL ,
-did not contain an NID, or memory allocation failed.
 .Pp
 .Fn OBJ_create
 returns the new NID or
@@ -183,8 +166,7 @@ or if memory allocation fails.
 returns the number of objects added.
 .Pp
 In some cases of failure of
-.Fn OBJ_add_object ,
-.Fn OBJ_create ,
+.Fn OBJ_create
 and
 .Fn OBJ_create_objects ,
 the reason can be determined with
@@ -203,7 +185,6 @@ obj = OBJ_nid2obj(new_nid);
 .Xr OBJ_nid2obj 3
 .Sh HISTORY
 .Fn OBJ_new_nid ,
-.Fn OBJ_add_object ,
 and
 .Fn OBJ_cleanup
 first appeared in SSLeay 0.8.0 and
@@ -212,12 +193,6 @@ in SSLeay 0.9.0.
 These functions have been available since
 .Ox 2.4 .
 .Sh CAVEATS
-.Fn OBJ_add_object
-indicates success even after adding an incomplete object that was created with
-.Xr ASN1_OBJECT_create 3
-but lacks a short name, a long name, or an OID.
-.Pp
-Even
 .Fn OBJ_create
 tolerates
 .Dv NULL
@@ -229,11 +204,11 @@ arguments, in which case
 .Xr OBJ_nid2sn 3
 and
 .Xr OBJ_sn2nid 3
-or
+and/or
 .Xr OBJ_nid2ln 3
 and
 .Xr OBJ_ln2nid 3
-will not work on the added object, respectively.
+will not work on the added object.
 .Sh BUGS
 .Fn OBJ_new_nid
 does not reserve any return value to indicate an error.
