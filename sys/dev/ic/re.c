@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.223 2026/07/15 23:55:16 krw Exp $	*/
+/*	$OpenBSD: re.c,v 1.224 2026/08/05 08:05:43 bluhm Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2562,6 +2562,7 @@ re_kstat_attach(struct rl_softc *sc)
 {
 	struct re_kstat_softc *re_ks_sc;
 	struct kstat *ks;
+	int bus_dma64 = (sc->rl_flags & RL_FLAG_PCIE) ? BUS_DMA_64BIT : 0;
 
 	re_ks_sc = malloc(sizeof(*re_ks_sc), M_DEVBUF, M_NOWAIT);
 	if (re_ks_sc == NULL) {
@@ -2572,7 +2573,7 @@ re_kstat_attach(struct rl_softc *sc)
 
 	if (bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct re_stats), 1, sizeof(struct re_stats), 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | bus_dma64,
 	    &re_ks_sc->re_ks_sc_map) != 0) {
 		printf("%s: cannot create counter dma memory map\n",
 		    sc->sc_dev.dv_xname);
@@ -2582,7 +2583,7 @@ re_kstat_attach(struct rl_softc *sc)
 	if (bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct re_stats), RE_STATS_ALIGNMENT, 0,
 	    &re_ks_sc->re_ks_sc_seg, 1, &re_ks_sc->re_ks_sc_nsegs,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | bus_dma64) != 0) {
 		printf("%s: cannot allocate counter dma memory\n",
 		    sc->sc_dev.dv_xname);
 		goto destroy;
