@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2145 2026/07/29 02:40:09 jsg Exp $
+$OpenBSD: pcidevs,v 1.2146 2026/08/05 01:28:51 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6190,6 +6190,8 @@ product INTEL E610_2_5G		0x57b1	E610-2.5G
 product INTEL E610_SGMII	0x57b2	E610-SGMII
 product INTEL I219_LM25		0x57b3	I219-LM
 product INTEL I219_V25		0x57b4	I219-V
+product INTEL I219_LM27		0x57b7	I219-LM
+product INTEL I219_V27		0x57b8	I219-V
 product INTEL QEMU_NVME		0x5845	QEMU NVM Express Controller
 product INTEL KBL_D_GT1		0x5902	HD Graphics 610
 product INTEL CORE7G_U_HB	0x5904	Core 7G Host
