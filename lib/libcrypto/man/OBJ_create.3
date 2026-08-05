@@ -1,4 +1,4 @@
-.\" $OpenBSD: OBJ_create.3,v 1.12 2026/08/05 08:31:06 tb Exp $
+.\" $OpenBSD: OBJ_create.3,v 1.13 2026/08/05 08:45:43 tb Exp $
 .\" full merge up to:
 .\" OpenSSL OBJ_nid2obj.pod 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to:
@@ -136,7 +136,7 @@ are separated by one or more whitespace characters.
 For the objects added to the internal table by
 .Fn OBJ_create
 and
-.Fn OBJ_add_objects ,
+.Fn OBJ_create_objects ,
 all the data contained is marked as not dynamically allocated.
 Consequently, retrieving them with
 .Xr OBJ_nid2obj 3
