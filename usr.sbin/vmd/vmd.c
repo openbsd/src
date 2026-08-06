@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.178 2026/07/21 20:20:11 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.179 2026/08/06 14:20:39 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -200,6 +200,11 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_LOAD:
 		str = imsg_string_read(imsg, PATH_MAX);
+		if (str == NULL || *str == '\0') {
+			free(str);
+			cmd = IMSG_CTL_FAIL;
+			break;
+		}
 		/* fallthrough */
 	case IMSG_VMDOP_RELOAD:
 		if (vmd_reload(0, str) == -1)
