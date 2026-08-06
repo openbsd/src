@@ -11,7 +11,6 @@
 #include <dev/acpi/acpivar.h>
 #endif
 
-#include <linux/irqdomain.h>
 #include <linux/module.h>
 #include <linux/property.h>
 

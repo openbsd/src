@@ -6,6 +6,7 @@
 #include <linux/workqueue.h>
 #include <linux/completion.h>
 #include <linux/rwsem.h>
+#include <linux/seqlock.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.5 2024/01/06 09:33:08 kettenis Exp $	*/
+/*	$OpenBSD: time.h,v 1.6 2026/08/06 10:25:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -20,7 +20,6 @@
 
 #include <sys/time.h>
 #include <linux/math64.h>
-#include <linux/seqlock.h>
 
 #define NSEC_PER_USEC	1000L
 #define NSEC_PER_MSEC	1000000L

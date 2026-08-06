@@ -3262,6 +3262,8 @@ MODULE_LICENSE("GPL and additional rights");
 #include <drm/drm_utils.h>
 #include <drm/drm_fb_helper.h>
 
+#include <linux/backlight.h>
+
 #include "vga.h"
 
 #if NVGA > 0

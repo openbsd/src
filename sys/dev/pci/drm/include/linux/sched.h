@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.5 2023/03/21 09:44:35 jsg Exp $	*/
+/*	$OpenBSD: sched.h,v 1.6 2026/08/06 10:25:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -25,6 +25,7 @@
 #include <sys/mutex.h>
 #include <linux/hrtimer.h>
 #include <linux/sem.h>
+#include <linux/preempt.h>
 
 #define TASK_NORMAL		1
 #define TASK_UNINTERRUPTIBLE	0

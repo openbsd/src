@@ -9,6 +9,8 @@
 #include <sys/limits.h>
 #include <sys/kernel.h>
 
+#include <linux/cache.h>
+
 extern volatile unsigned long jiffies;
 #define jiffies_64 jiffies /* XXX */
 #undef HZ

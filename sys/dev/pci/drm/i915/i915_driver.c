@@ -1872,6 +1872,8 @@ static const struct drm_driver i915_drm_driver = {
 #include "display/intel_display_types.h"
 #include "display/intel_display_core.h"
 
+#include <linux/backlight.h>
+
 #ifdef __amd64__
 #include "efifb.h"
 #include <machine/biosvar.h>

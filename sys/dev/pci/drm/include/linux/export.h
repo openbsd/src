@@ -4,6 +4,7 @@
 #define _LINUX_EXPORT_H
 
 #include <linux/kconfig.h>
+#include <linux/compiler.h>
 
 #define EXPORT_SYMBOL(x)
 #define EXPORT_SYMBOL_GPL(x)
