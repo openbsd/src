@@ -25,6 +25,7 @@
 #include <linux/array_size.h>
 #include <linux/sprintf.h>
 #include <linux/minmax.h>
+#include <linux/panic.h>
 
 #define might_sleep()		assertwaitok()
 #define might_sleep_if(x)	do {	\
@@ -32,11 +33,6 @@
 		assertwaitok();		\
 } while (0)
 #define might_fault()
-
-#define add_taint(x, y)
-#define TAINT_MACHINE_CHECK	0
-#define TAINT_WARN		1
-#define LOCKDEP_STILL_OK	0
 
 #define u64_to_user_ptr(x)	((void *)(uintptr_t)(x))
 
