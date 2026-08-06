@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.27 2021/11/03 13:48:46 deraadt Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.28 2026/08/06 13:06:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -479,7 +479,7 @@ int		 eigrp_prefixcmp(int, const union eigrpd_addr *,
 		    const union eigrpd_addr *, uint8_t);
 int		 bad_addr_v4(struct in_addr);
 int		 bad_addr_v6(struct in6_addr *);
-int		 bad_addr(int, union eigrpd_addr *);
+int		 bad_addr(int, union eigrpd_addr *, u_int);
 void		 embedscope(struct sockaddr_in6 *);
 void		 recoverscope(struct sockaddr_in6 *);
 void		 addscope(struct sockaddr_in6 *, uint32_t);

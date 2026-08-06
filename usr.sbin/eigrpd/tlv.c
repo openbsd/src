@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.17 2023/06/26 14:07:19 claudio Exp $ */
+/*	$OpenBSD: tlv.c,v 1.18 2026/08/06 13:06:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -458,10 +458,10 @@ tlv_decode_route(int af, struct tlv *tlv, char *buf, struct rinfo *ri)
 	}
 
 	/* check if the network is valid */
-	if (bad_addr(af, &ri->prefix) ||
-	   (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&ri->prefix.v6))) {
-		log_debug("%s: malformed tlv (invalid prefix): %s", __func__,
-		    log_addr(af, &ri->prefix));
+	if (bad_addr(af, &ri->prefix, ri->prefixlen) ||
+	    (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&ri->prefix.v6))) {
+		log_debug("%s: malformed tlv (invalid prefix): %s/%d",
+		    __func__, log_addr(af, &ri->prefix), ri->prefixlen);
 		return (-1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.20 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: kroute.c,v 1.21 2026/08/06 13:06:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -394,7 +394,7 @@ kr_redist_eval(struct kroute *kr)
 		goto dont_redistribute;
 
 	/* filter-out non-redistributable addresses */
-	if (bad_addr(kr->af, &kr->prefix) ||
+	if (bad_addr(kr->af, &kr->prefix, kr->prefixlen) ||
 	    (kr->af == AF_INET6 && IN6_IS_SCOPE_EMBED(&kr->prefix.v6)))
 		goto dont_redistribute;
 

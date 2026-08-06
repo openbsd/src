@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.25 2026/05/17 06:07:51 jsg Exp $ */
+/*	$OpenBSD: packet.c,v 1.26 2026/08/06 13:06:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -523,7 +523,7 @@ recv_packet(int fd, short event, void *bula)
 	len = (uint16_t)r;
 
 	sa2addr((struct sockaddr *)&from, &af, &src);
-	if (bad_addr(af, &src)) {
+	if (bad_addr(af, &src, 0)) {
 		log_debug("%s: invalid source address: %s", __func__,
 		    log_addr(af, &src));
 		return;

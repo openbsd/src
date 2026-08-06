@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: util.c,v 1.13 2026/08/06 13:06:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -245,12 +245,16 @@ bad_addr_v6(struct in6_addr *addr)
 }
 
 int
-bad_addr(int af, union eigrpd_addr *addr)
+bad_addr(int af, union eigrpd_addr *addr, u_int prefixlen)
 {
 	switch (af) {
 	case AF_INET:
+		if (prefixlen > 32)
+			return (1);
 		return (bad_addr_v4(addr->v4));
 	case AF_INET6:
+		if (prefixlen > 128)
+			return (1);
 		return (bad_addr_v6(&addr->v6));
 	default:
 		fatalx("bad_addr: unknown af");
