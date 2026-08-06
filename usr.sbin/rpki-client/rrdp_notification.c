@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.24 2026/08/04 18:46:18 tb Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.25 2026/08/06 13:18:22 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -107,9 +107,17 @@ static int
 check_delta(struct notification_xml *nxml)
 {
 	struct delta_item *d;
-	long long serial = 0;
+	long long serial = 0, min_serial;
+
+	/* Limit deltas to the ones which matter for us. */
+	if (nxml->serial > MAX_RRDP_DELTAS)
+		min_serial = nxml->serial - MAX_RRDP_DELTAS - 1;
+	else
+		min_serial = 0;
 
 	TAILQ_FOREACH(d, &nxml->delta_q, q) {
+		if (d->serial <= min_serial)
+			continue;
 		if (serial != 0 && serial + 1 != d->serial)
 			return 0;
 		serial = d->serial;
@@ -193,10 +201,6 @@ start_notification_elem(struct notification_xml *nxml, const char **attr)
 		PARSE_FAIL(p, "parse failed - incomplete "
 		    "notification attributes");
 
-	/* Limit deltas to the ones which matter for us. */
-	if (nxml->min_serial == 0 && nxml->serial > MAX_RRDP_DELTAS)
-		nxml->min_serial = nxml->serial - MAX_RRDP_DELTAS;
-
 	nxml->scope = NOTIFICATION_SCOPE_NOTIFICATION;
 }
 
@@ -264,7 +268,7 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 	int i, hasUri = 0, hasHash = 0;
 	const char *delta_uri = NULL;
 	char delta_hash[SHA256_DIGEST_LENGTH];
-	long long delta_serial = 0;
+	long long delta_serial = 0, new_min_serial = 0;
 
 	if (nxml->scope != NOTIFICATION_SCOPE_NOTIFICATION_POST_SNAPSHOT)
 		PARSE_FAIL(p, "parse failed - entered delta "
@@ -302,8 +306,16 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 	if (nxml->serial < delta_serial)
 		PARSE_FAIL(p, "parse failed - bad delta serial");
 
-	/* optimisation, add only deltas that could be interesting */
-	if (nxml->min_serial < delta_serial) {
+	/* Limit deltas to the ones which matter for us. */
+	if (nxml->serial > MAX_RRDP_DELTAS)
+		new_min_serial = nxml->serial - MAX_RRDP_DELTAS;
+	else
+		new_min_serial = 0;
+
+	if ((nxml->min_serial != 0 && nxml->min_serial < delta_serial &&
+	    delta_serial <= nxml->min_serial + MAX_RRDP_DELTAS) ||
+	    (new_min_serial < delta_serial &&
+	    delta_serial <= new_min_serial + MAX_RRDP_DELTAS)) {
 		if (add_delta(nxml, delta_uri, delta_hash, delta_serial) == 0)
 			PARSE_FAIL(p, "parse failed - adding delta failed");
 	}
