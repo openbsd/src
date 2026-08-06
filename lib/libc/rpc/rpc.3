@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.50 2025/06/13 18:34:00 schwarze Exp $
+.\"	$OpenBSD: rpc.3,v 1.51 2026/08/06 10:58:09 tb Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: August 6 2026 $
 .Dt CALLRPC 3
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@
 .Ft int
 .Fn svc_getreq "int rdfds"
 .Ft int
-.Fn svc_register "SVCXPRT *xprt" "u_long prognum" "u_long versnum" "void (*dispatch)()" "u_long protocol"
+.Fn svc_register "SVCXPRT *xprt" "u_long prognum" "u_long versnum" "void (*dispatch)(struct svc_req *, SVCXPRT *)" "u_long protocol"
 .Ft int
 .Fn svc_run "void"
 .Ft int
@@ -979,7 +979,7 @@ or
 The procedure
 .Fa dispatch
 has the following form:
-.Ft int
+.Ft void
 .Fn dispatch "struct svc_req *request" "SVCXPRT *xprt"
 The
 .Fn svc_register

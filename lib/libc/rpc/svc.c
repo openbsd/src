@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.29 2015/10/05 01:23:17 deraadt Exp $ */
+/*	$OpenBSD: svc.c,v 1.30 2026/08/06 10:58:09 tb Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -63,7 +63,7 @@ static struct svc_callout {
 	struct svc_callout *sc_next;
 	u_long		    sc_prog;
 	u_long		    sc_vers;
-	void		    (*sc_dispatch)();
+	void		    (*sc_dispatch)(struct svc_req *, SVCXPRT *);
 } *svc_head;
 
 static struct svc_callout *svc_find(u_long, u_long, struct svc_callout **);
@@ -289,8 +289,8 @@ DEF_WEAK(xprt_unregister);
  * program number comes in.
  */
 bool_t
-svc_register(SVCXPRT *xprt, u_long prog, u_long vers, void (*dispatch)(),
-    int protocol)
+svc_register(SVCXPRT *xprt, u_long prog, u_long vers,
+    void (*dispatch)(struct svc_req *, SVCXPRT *), int protocol)
 {
 	struct svc_callout *prev;
 	struct svc_callout *s;
