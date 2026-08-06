@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.45 2025/09/25 08:46:50 mvs Exp $	*/
+/*	$OpenBSD: tty.h,v 1.46 2026/08/06 20:38:02 claudio Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@ struct itty {
 	short t_lowat;
 	short t_column;
 	int t_state;
-	struct session *t_session;
+	pid_t t_session_id;
 	pid_t t_pgrp_pg_id;
 	u_char t_line;
 };
