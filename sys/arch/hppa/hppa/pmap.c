@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.181 2023/01/24 16:51:05 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.182 2026/08/06 01:53:57 daniel Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -912,9 +912,9 @@ pmap_page_write_protect(struct vm_page *pg)
 
 		if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
 			opte = pte = pmap_pte_get(pde, va);
-			if (pte & TLB_GATEWAY)
+			if (pte & PTE_PROT(TLB_GATEWAY))
 				continue;
-			pte &= ~TLB_WRITE;
+			pte &= ~PTE_PROT(TLB_WRITE);
 			attrs |= pmap_pvh_attrs(pte);
 
 			if (opte != pte) {
