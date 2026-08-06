@@ -22,11 +22,10 @@
 #include <linux/limits.h>
 #include <asm/byteorder.h>
 #include <linux/wordpart.h>
+#include <linux/array_size.h>
 
 #define swap(a, b) \
 	do { __typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while(0)
-
-#define ARRAY_SIZE nitems
 
 #define scnprintf(str, size, fmt, arg...) snprintf(str, size, fmt, ## arg)
 
