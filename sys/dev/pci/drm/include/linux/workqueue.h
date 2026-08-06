@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.12 2025/02/07 03:03:31 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.13 2026/08/06 05:31:03 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -27,6 +27,7 @@
 #include <linux/rcupdate.h>
 #include <linux/lockdep.h>
 #include <linux/timer.h>
+#include <linux/workqueue_types.h>
 
 struct workqueue_struct;
 
@@ -68,13 +69,6 @@ destroy_workqueue(struct workqueue_struct *wq)
 {
 	taskq_destroy((struct taskq *)wq);
 }
-
-struct work_struct {
-	struct task task;
-	struct taskq *tq;
-};
-
-typedef void (*work_func_t)(struct work_struct *);
 
 static inline void
 INIT_WORK(struct work_struct *work, work_func_t func)
