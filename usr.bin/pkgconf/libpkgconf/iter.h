@@ -2,6 +2,8 @@
  * iter.h
  * Linked lists and iterators.
  *
+ * SPDX-License-Identifier: pkgconf
+ *
  * Copyright (c) 2013 pkgconf authors (see AUTHORS).
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,6 +17,8 @@
 
 #ifndef LIBPKGCONF_ITER_H
 #define LIBPKGCONF_ITER_H
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,6 +44,26 @@ pkgconf_list_zero(pkgconf_list_t *list)
 	list->head = NULL;
 	list->tail = NULL;
 	list->length = 0;
+}
+
+static inline void
+pkgconf_list_splice(pkgconf_list_t *dest, pkgconf_list_t *src)
+{
+	if (dest == src || src->head == NULL)
+		return;
+
+	if (dest->head == NULL)
+		dest->head = src->head;
+	else
+	{
+		dest->tail->next = src->head;
+		src->head->prev = dest->tail;
+	}
+
+	dest->tail = src->tail;
+	dest->length += src->length;
+
+	pkgconf_list_zero(src);
 }
 
 static inline void

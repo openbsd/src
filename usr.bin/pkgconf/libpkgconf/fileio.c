@@ -2,6 +2,8 @@
  * fileio.c
  * File reading utilities
  *
+ * SPDX-License-Identifier: pkgconf
+ *
  * Copyright (c) 2012, 2025 pkgconf authors (see AUTHORS).
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -13,101 +15,81 @@
  * from the use of this software.
  */
 
+#include <libpkgconf/config.h>
 #include <libpkgconf/stdinc.h>
 #include <libpkgconf/libpkgconf.h>
+
+#if HAVE_DECL_GETC_UNLOCKED
+# define pkgconf_getc(stream) getc_unlocked(stream)
+#else
+# define pkgconf_getc(stream) getc(stream)
+#endif
 
 bool
 pkgconf_fgetline(pkgconf_buffer_t *buffer, FILE *stream)
 {
 	bool quoted = false;
-	int c = '\0', c2;
+	bool got_data = false;
+	char run[256];
+	size_t runlen = 0;
+	int c;
 
-	while ((c = getc(stream)) != EOF)
+	while ((c = pkgconf_getc(stream)) != EOF)
 	{
+		got_data = true;
+
 		if (c == '\\' && !quoted)
 		{
 			quoted = true;
 			continue;
 		}
-		else if (c == '#')
-		{
-			if (!quoted) {
-				/* Skip the rest of the line */
-				do {
-					c = getc(stream);
-				} while (c != '\n' && c != EOF);
-				pkgconf_buffer_push_byte(buffer, c);
-				break;
-			}
-			else
-				pkgconf_buffer_push_byte(buffer, c);
 
+		if (c == '\n')
+		{
+			if (quoted)
+			{
+				quoted = false;
+				continue;
+			}
+
+			break;
+		}
+
+		if (c == '\r')
+		{
+			int next = pkgconf_getc(stream);
+
+			if (next != '\n' && next != EOF && ungetc(next, stream) == EOF)
+				return false;
+
+			if (quoted)
+			{
+				quoted = false;
+				continue;
+			}
+
+			break;
+		}
+
+		if (runlen > sizeof run - 2)
+		{
+			if (!pkgconf_buffer_append_slice(buffer, run, runlen))
+				return false;
+
+			runlen = 0;
+		}
+
+		if (quoted)
+		{
+			run[runlen++] = '\\';
 			quoted = false;
-			continue;
-		}
-		else if (c == '\n')
-		{
-			if (quoted)
-			{
-				/* Trim spaces */
-				do {
-					c2 = getc(stream);
-				} while (c2 == '\t' || c2 == ' ');
-
-				ungetc(c2, stream);
-
-				quoted = false;
-				continue;
-			}
-			else
-			{
-				pkgconf_buffer_push_byte(buffer, c);
-			}
-
-			break;
-		}
-		else if (c == '\r')
-		{
-			pkgconf_buffer_push_byte(buffer, '\n');
-
-			if ((c2 = getc(stream)) == '\n')
-			{
-				if (quoted)
-				{
-					quoted = false;
-					continue;
-				}
-
-				break;
-			}
-
-			ungetc(c2, stream);
-
-			if (quoted)
-			{
-				quoted = false;
-				continue;
-			}
-
-			break;
-		}
-		else
-		{
-			if (quoted) {
-				pkgconf_buffer_push_byte(buffer, '\\');
-				quoted = false;
-			}
-			pkgconf_buffer_push_byte(buffer, c);
 		}
 
+		run[runlen++] = (char) c;
 	}
 
-	/* Remove newline character. */
-	if (pkgconf_buffer_lastc(buffer) == '\n')
-		pkgconf_buffer_trim_byte(buffer);
+	if (runlen != 0 && !pkgconf_buffer_append_slice(buffer, run, runlen))
+		return false;
 
-	if (pkgconf_buffer_lastc(buffer) == '\r')
-		pkgconf_buffer_trim_byte(buffer);
-
-	return !(c == EOF || ferror(stream));
+	return got_data && !ferror(stream);
 }

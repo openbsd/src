@@ -73,7 +73,7 @@ pkgconf_tuple_find_global(pkgconf_client_t *client, const char *key)
 
 	v = pkgconf_variable_find(&client->global_vars, key);
 
-	pkgconf_buffer_rewind(&client->_scratch_buffer);
+	pkgconf_buffer_reset(&client->_scratch_buffer);
 	(void) pkgconf_variable_eval(client, &client->global_vars, v, &client->_scratch_buffer, &saw_sysroot);
 
 	return pkgconf_buffer_str_or_empty(&client->_scratch_buffer);
@@ -146,7 +146,22 @@ dequote(const char *value)
 
 	for (i = value; *i != '\0'; i++)
 	{
-		if (*i == '\\' && quote && *(i + 1) == quote)
+		/* An escaped whitespace denotes a literal whitespace, e.g. a path
+		 * component containing a space produced by `printf %q`.  Store the
+		 * canonical (unescaped) text so it is not left escaped in memory:
+		 * otherwise it would be escaped a second time when rendered into a
+		 * fragment ("a\ dir" would come out as "a\\\ dir").  Other backslash
+		 * sequences are preserved verbatim so variable-expansion escapes such
+		 * as "\${var}" keep working.
+		 *
+		 * See <https://github.com/pkgconf/pkgconf/issues/575>.
+		 */
+		if (*i == '\\' && isspace((unsigned char) *(i + 1)))
+		{
+			i++;
+			*bptr++ = *i;
+		}
+		else if (*i == '\\' && quote && *(i + 1) == quote)
 		{
 			i++;
 			*bptr++ = *i;
@@ -288,7 +303,7 @@ pkgconf_tuple_find(pkgconf_client_t *client, pkgconf_list_t *list, const char *k
 	if (v == NULL)
 		v = pkgconf_variable_find(&client->global_vars, key);
 
-	pkgconf_buffer_rewind(&client->_scratch_buffer);
+	pkgconf_buffer_reset(&client->_scratch_buffer);
 
 	(void) pkgconf_variable_eval(client, list, v, &client->_scratch_buffer, NULL);
 

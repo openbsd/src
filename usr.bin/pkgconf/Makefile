@@ -14,17 +14,24 @@ SRCS = argvsplit.c	\
 	audit.c		\
 	bsdstubs.c	\
 	buffer.c	\
+	bufferset.c	\
+	bytecode.c	\
 	cache.c		\
 	client.c	\
+	core.c		\
 	dependency.c	\
 	fileio.c	\
 	fragment.c	\
+	license.c	\
+	output.c	\
 	parser.c	\
 	path.c		\
 	personality.c	\
 	pkg.c		\
 	queue.c		\
 	tuple.c		\
+	variable.c	\
+	version.c	\
 	getopt_long.c	\
 	main.c
 
