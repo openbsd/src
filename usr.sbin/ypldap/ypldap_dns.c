@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.21 2024/11/21 13:38:15 claudio Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.22 2026/08/07 21:06:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -132,16 +132,14 @@ void
 dns_dispatch_imsg(int fd, short events, void *p)
 {
 	struct imsg		 imsg;
-	int			 n, cnt;
-	char			*name;
+	int			 n, cnt, shut = 0;
+	char			 name[NI_MAXHOST];
 	struct ypldap_addr_list	 hn = TAILQ_HEAD_INITIALIZER(hn);
 	struct ypldap_addr	*h;
 	struct ibuf		*buf;
 	struct env		*env = p;
 	struct imsgev		*iev = env->sc_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
-	int			 shut = 0;
-	size_t			 len;
 
 	if ((events & (EV_READ | EV_WRITE)) == 0)
 		fatalx("unknown event");
@@ -162,24 +160,19 @@ dns_dispatch_imsg(int fd, short events, void *p)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("client_dispatch_imsg: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("client_dispatch_imsg: imsgbuf_get error");
 		if (n == 0)
 			break;
 
 		switch (imsg.hdr.type) {
 		case IMSG_HOST_DNS:
-			name = imsg.data;
-			if (imsg.hdr.len < 1 + IMSG_HEADER_SIZE)
-				fatalx("invalid IMSG_HOST_DNS received");
-			len = imsg.hdr.len - 1 - IMSG_HEADER_SIZE;
-			if (name[len] != '\0' ||
-			    strlen(name) != len)
-				fatalx("invalid IMSG_HOST_DNS received");
+			if (imsg_get_strbuf(&imsg, name, sizeof(name)) == -1)
+				fatal("invalid IMSG_HOST_DNS received");
 			if ((cnt = host_dns(name, &hn)) == -1)
 				break;
 			buf = imsg_create(ibuf, IMSG_HOST_DNS,
-			    imsg.hdr.peerid, 0,
+			    imsg_get_id(&imsg), 0,
 			    cnt * sizeof(struct sockaddr_storage));
 			if (buf == NULL)
 				break;

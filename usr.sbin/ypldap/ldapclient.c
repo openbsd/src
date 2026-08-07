@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.55 2024/11/21 13:38:15 claudio Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.56 2026/08/07 21:06:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -126,8 +126,6 @@ void
 client_dispatch_dns(int fd, short events, void *p)
 {
 	struct imsg		 imsg;
-	u_int16_t		 dlen;
-	u_char			*data;
 	struct ypldap_addr	*h;
 	int			 n, wait_cnt = 0;
 	struct idm		*idm;
@@ -156,8 +154,8 @@ client_dispatch_dns(int fd, short events, void *p)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("client_dispatch_dns: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("client_dispatch_dns: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -175,24 +173,21 @@ client_dispatch_dns(int fd, short events, void *p)
 				break;
 			}
 
-			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
-			if (dlen == 0) {	/* no data -> temp error */
+			if (imsg_get_len(&imsg) == 0) {
+				/* no data -> temp error */
 				idm->idm_state = STATE_DNS_TEMPFAIL;
 				break;
 			}
 
-			data = (u_char *)imsg.data;
-			while (dlen >= sizeof(struct sockaddr_storage)) {
+			while (imsg_get_len(&imsg) > 0) {
 				if ((h = calloc(1, sizeof(*h))) == NULL)
 					fatal(NULL);
-				memcpy(&h->ss, data, sizeof(h->ss));
-				TAILQ_INSERT_HEAD(&idm->idm_addr, h, next);
+				if (imsg_get_buf(&imsg, &h->ss, sizeof(h->ss))
+				    == -1)
+					fatalx("IMSG_HOST_DNS: bad message");
 
-				data += sizeof(h->ss);
-				dlen -= sizeof(h->ss);
+				TAILQ_INSERT_HEAD(&idm->idm_addr, h, next);
 			}
-			if (dlen != 0)
-				fatalx("IMSG_HOST_DNS: dlen != 0");
 
 			client_addr_init(idm);
 
@@ -230,8 +225,7 @@ client_dispatch_dns(int fd, short events, void *p)
 void
 client_dispatch_parent(int fd, short events, void *p)
 {
-	int			 n;
-	int			 shut = 0;
+	int			 n, shut = 0;
 	struct imsg		 imsg;
 	struct env		*env = p;
 	struct imsgev		*iev = env->sc_iev;
@@ -256,8 +250,8 @@ client_dispatch_parent(int fd, short events, void *p)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("client_dispatch_parent: imsg_get error");
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+			fatal("client_dispatch_parent: imsgbuf_get error");
 		if (n == 0)
 			break;
 
@@ -269,7 +263,8 @@ client_dispatch_parent(int fd, short events, void *p)
 				log_warnx("configuration already in progress");
 				break;
 			}
-			memcpy(&params, imsg.data, sizeof(params));
+			if (imsg_get_data(&imsg, &params, sizeof(params)) == -1)
+				fatal("IMSG_CONF_START");
 			log_debug("configuration starting");
 			env->sc_flags |= F_CONFIGURING;
 			purge_config(env);
@@ -285,7 +280,8 @@ client_dispatch_parent(int fd, short events, void *p)
 				break;
 			if ((idm = calloc(1, sizeof(*idm))) == NULL)
 				fatal(NULL);
-			memcpy(idm, imsg.data, sizeof(*idm));
+			if (imsg_get_data(&imsg, idm, sizeof(*idm)) == -1)
+				fatal("IMSG_CONF_IDM");
 			idm->idm_env = env;
 			TAILQ_INSERT_TAIL(&env->sc_idms, idm, idm_entry);
 			break;
@@ -731,7 +727,6 @@ client_configure(struct env *env)
 {
 	struct timeval	 tv;
 	struct idm	*idm;
-        u_int16_t        dlen;
 
 	log_debug("connecting to directories");
 
@@ -739,9 +734,16 @@ client_configure(struct env *env)
 
 	/* Start the DNS lookups */
 	TAILQ_FOREACH(idm, &env->sc_idms, idm_entry) {
-		dlen = strlen(idm->idm_name) + 1;
-		imsg_compose_event(env->sc_iev_dns, IMSG_HOST_DNS, idm->idm_id,
-		    0, -1, idm->idm_name, dlen);
+		struct ibuf *msg;
+
+		if ((msg = imsg_create(&env->sc_iev_dns->ibuf, IMSG_HOST_DNS,
+		    idm->idm_id, 0, sizeof(idm->idm_name))) == NULL)
+			err(1, NULL);
+		if (ibuf_add_strbuf(msg, idm->idm_name,
+		    sizeof(idm->idm_name)) == -1)
+			err(1, NULL);
+		imsg_close(&env->sc_iev_dns->ibuf, msg);
+		imsg_event_add(env->sc_iev_dns);
 	}
 
 	tv.tv_sec = env->sc_conf_tv.tv_sec;
