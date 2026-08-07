@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tls.c,v 1.5 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: check_tls.c,v 1.6 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2017 Claudio Jeker <claudio@openbsd.org>
@@ -206,8 +206,6 @@ check_tls_cleanup(struct ctl_tcp_event *cte)
 void
 check_tls_error(struct ctl_tcp_event *cte, const char *where, const char *what)
 {
-	if (log_getverbose() < 2)
-		return;
 	log_debug("TLS error: %s: %s: %s", where, what, tls_error(cte->tls));
 }
 

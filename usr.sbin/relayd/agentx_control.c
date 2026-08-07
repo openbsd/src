@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.9 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.10 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -1003,7 +1003,7 @@ snmp_element(const char *oidstr, enum snmp_type type, void *buf, int64_t val,
 	u_int64_t		 l;
 	struct snmp_oid		 oid;
 
-	DPRINTF("%s: oid %s type %d buf %p val %lld", __func__,
+	log_debug("%s: oid %s type %d buf %p val %lld", __func__,
 	    oidstr, type, buf, val);
 
 	if (snmp_string2oid(oidstr, &oid) == -1)

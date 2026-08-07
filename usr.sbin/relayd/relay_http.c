@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.102 2026/07/14 08:56:00 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.103 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -123,8 +123,7 @@ relay_http_priv_init(struct rsession *con)
 	if ((hs = calloc(1, sizeof(*hs))) == NULL)
 		return (-1);
 	SIMPLEQ_INIT(&hs->hs_methods);
-	DPRINTF("%s: session %d http_session %p", __func__,
-	    con->se_id, hs);
+	log_debug("%s: session %d http_session %p", __func__, con->se_id, hs);
 	con->se_priv = hs;
 	return (relay_httpdesc_init(&con->se_in));
 }
@@ -203,7 +202,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	cre->timedout = 0;
 
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: session %d: size %lu, to read %lld",
+	log_debug("%s: session %d: size %lu, to read %lld",
 	    __func__, con->se_id, size, cre->toread);
 	if (size == 0) {
 		if (cre->dir == RELAY_DIR_RESPONSE)
@@ -280,7 +279,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			key = desc->http_lastheader->kv_key;
 			value = desc->http_lastheader->kv_value;
 
-			DPRINTF("%s: session %d: header '%s: %s'", __func__,
+			log_debug("%s: session %d: header '%s: %s'", __func__,
 			    con->se_id, key, value);
 
 			if (desc->http_method != HTTP_METHOD_NONE &&
@@ -644,7 +643,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	cre->timedout = 0;
 
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: session %d: size %lu, to read %lld", __func__,
+	log_debug("%s: session %d: size %lu, to read %lld", __func__,
 	    con->se_id, size, cre->toread);
 	if (!size)
 		return;
@@ -664,7 +663,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 				goto fail;
 			cre->toread -= size;
 		}
-		DPRINTF("%s: done, size %lu, to read %lld", __func__,
+		log_debug("%s: done, size %lu, to read %lld", __func__,
 		    size, cre->toread);
 	}
 	if (cre->toread == 0) {
@@ -705,7 +704,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	cre->timedout = 0;
 
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: session %d: size %lu, to read %lld", __func__,
+	log_debug("%s: session %d: size %lu, to read %lld", __func__,
 	    con->se_id, size, cre->toread);
 	if (!size)
 		return;
@@ -725,7 +724,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 				goto fail;
 			cre->toread -= size;
 		}
-		DPRINTF("%s: done, size %lu, to read %lld", __func__,
+		log_debug("%s: done, size %lu, to read %lld", __func__,
 		    size, cre->toread);
 	}
 	switch (cre->toread) {
@@ -768,7 +767,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		free(line);
 
 		if ((cre->toread = llval) == 0) {
-			DPRINTF("%s: last chunk", __func__);
+			log_debug("%s: last chunk", __func__);
 			cre->toread = TOREAD_HTTP_CHUNK_TRAILER;
 		}
 		break;
@@ -870,7 +869,7 @@ _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
 		break;
 	}
 
-	DPRINTF("%s: session %d: %s, %s: %d", __func__, con->se_id,
+	log_debug("%s: session %d: %s, %s: %d", __func__, con->se_id,
 	    str, kv->kv_key, strcasecmp(kv->kv_key, str));
 
 	if (strcasecmp(kv->kv_key, str) == 0) {
@@ -903,7 +902,7 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *host, struct kv *kv)
 	 *     developers_guide.html#PerformingLookups
 	 */
 
-	DPRINTF("%s: host '%s', path '%s', query '%s'",
+	log_debug("%s: host '%s', path '%s', query '%s'",
 	    __func__, host, desc->http_path,
 	    desc->http_query == NULL ? "" : desc->http_query);
 
@@ -995,7 +994,7 @@ relay_lookup_cookie(struct ctl_relay_event *cre, const char *str,
 		if (value[strlen(value) - 1] == '"')
 			value[strlen(value) - 1] = '\0';
 
-		DPRINTF("%s: key %s = %s, %s = %s : %d",
+		log_debug("%s: key %s = %s, %s = %s : %d",
 		    __func__, key, value, kv->kv_key, kv->kv_value,
 		    strcasecmp(kv->kv_key, key));
 
@@ -1178,13 +1177,13 @@ relay_close_http(struct rsession *con)
 	struct http_session	*hs = con->se_priv;
 	struct http_method_node	*hmn;
 
-	DPRINTF("%s: session %d http_session %p", __func__,
+	log_debug("%s: session %d http_session %p", __func__,
 	    con->se_id, hs);
 	if (hs != NULL)
 		while (!SIMPLEQ_EMPTY(&hs->hs_methods)) {
 			hmn = SIMPLEQ_FIRST(&hs->hs_methods);
 			SIMPLEQ_REMOVE_HEAD(&hs->hs_methods, hmn_entry);
-			DPRINTF("%s: session %d freeing %s", __func__,
+			log_debug("%s: session %d freeing %s", __func__,
 			    con->se_id, relay_httpmethod_byid(hmn->hmn_method));
 			free(hmn);
 		}
@@ -1298,7 +1297,7 @@ relay_writeresponse_http(struct ctl_relay_event *dst,
 {
 	struct http_descriptor	*desc = (struct http_descriptor *)cre->desc;
 
-	DPRINTF("version: %s rescode: %s resmsg: %s", desc->http_version,
+	log_debug("version: %s rescode: %s resmsg: %s", desc->http_version,
 	    desc->http_rescode, desc->http_resmesg);
 
 	if (relay_bufferevent_print(dst, desc->http_version) == -1 ||
@@ -1852,12 +1851,12 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
 #define	RELAY_GET_SKIP_STEP(i)						\
 	do {								\
 		r = r->rule_skip[i];					\
-		DPRINTF("%s:%d: skip %d rules", __func__, __LINE__, i);	\
+		log_debug("%s:%d: skip %d rules", __func__, __LINE__, i);\
 	} while (0)
 
 #define	RELAY_GET_NEXT_STEP						\
 	do {								\
-		DPRINTF("%s:%d: next rule", __func__, __LINE__);	\
+		log_debug("%s:%d: next rule", __func__, __LINE__);	\
 		goto nextrule;						\
 	} while (0)
 
@@ -1909,7 +1908,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 		else if ((res = relay_httpcookie_test(cre, r, &matches)) != 0)
 			RELAY_GET_NEXT_STEP;
 		else {
-			DPRINTF("%s: session %d: matched rule %d",
+			log_debug("%s: session %d: matched rule %d",
 			    __func__, con->se_id, r->rule_id);
 
 			if (r->rule_action == RULE_ACTION_MATCH) {
@@ -1939,7 +1938,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 
  nextrule:
 			/* Continue to find last matching policy */
-			DPRINTF("%s: session %d, res %d", __func__,
+			log_debug("%s: session %d, res %d", __func__,
 			    con->se_id, res);
 			if (res == RES_BAD || res == RES_INTERNAL)
 				return (res);
@@ -1959,7 +1958,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 		action = RES_DROP;
 	}
 
-	DPRINTF("%s: session %d: action %d", __func__,
+	log_debug("%s: session %d: action %d", __func__,
 	    con->se_id, action);
 
 	return (action);
@@ -2045,7 +2044,7 @@ relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
 	char			*key, *value;
 	const char		*errstr;
 
-	DPRINTF("%s: session %d http_session %p", __func__, con->se_id, hs);
+	log_debug("%s: session %d http_session %p", __func__, con->se_id, hs);
 
 	key = line;
 	if ((value = strchr(key, ' ')) == NULL) {
@@ -2064,12 +2063,12 @@ relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
 		 */
 		if (hmn == NULL) {
 			*request_method = HTTP_METHOD_NONE;
-			DPRINTF("%s: session %d unbalanced response",
+			log_debug("%s: session %d unbalanced response",
 			    __func__, con->se_id);
 		} else {
 			SIMPLEQ_REMOVE_HEAD(&hs->hs_methods, hmn_entry);
 			*request_method = hmn->hmn_method;
-			DPRINTF("%s: session %d dequeuing %s",
+			log_debug("%s: session %d dequeuing %s",
 			    __func__, con->se_id,
 			    relay_httpmethod_byid(*request_method));
 			free(hmn);
@@ -2098,13 +2097,13 @@ relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
 		desc->http_status = strtonum(desc->http_rescode, 100, 599,
 		    &errstr);
 		if (errstr) {
-			DPRINTF(
+			log_debug(
 			    "%s: http_status %s: errno %d, %s",
 			    __func__, desc->http_rescode, errno,
 			    errstr);
 			goto fail;
 		}
-		DPRINTF("http_version %s http_rescode %s http_resmesg %s",
+		log_debug("http_version %s http_rescode %s http_resmesg %s",
 		    desc->http_version, desc->http_rescode,
 		    desc->http_resmesg);
 	} else if (cre->dir == RELAY_DIR_REQUEST) {
@@ -2116,7 +2115,7 @@ relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
 		if ((hmn = calloc(1, sizeof *hmn)) == NULL)
 			goto fail;
 		hmn->hmn_method = desc->http_method;
-		DPRINTF("%s: session %d enqueuing %s", __func__, con->se_id,
+		log_debug("%s: session %d enqueuing %s", __func__, con->se_id,
 		    relay_httpmethod_byid(hmn->hmn_method));
 		SIMPLEQ_INSERT_TAIL(&hs->hs_methods, hmn, hmn_entry);
 		/*

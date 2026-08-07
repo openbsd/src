@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.57 2026/07/20 17:41:07 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.58 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -268,7 +268,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL)
 			fatalx("%s: invalid relay key", __func__);
 
-		DPRINTF("%s:%d: key hash %s proc %d",
+		log_debug("%s:%d: key hash %s proc %d",
 		    __func__, __LINE__, cko.cko_hash, cko.cko_proc);
 
 		if ((to = calloc(1, cko.cko_tlen)) == NULL)
@@ -508,14 +508,18 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 int
 rsae_priv_enc(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 {
-	DPRINTF("%s:%d", __func__, __LINE__);
+#if DEBUG_CERT
+	log_debug("%s:%d", __func__, __LINE__);
+#endif
 	return rsae_send_imsg(flen, from, to, rsa, padding, IMSG_CA_PRIVENC);
 }
 
 int
 rsae_priv_dec(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 {
-	DPRINTF("%s:%d", __func__, __LINE__);
+#if DEBUG_CERT
+	log_debug("%s:%d", __func__, __LINE__);
+#endif
 	return rsae_send_imsg(flen, from, to, rsa, padding, IMSG_CA_PRIVDEC);
 }
 
@@ -701,7 +705,9 @@ ecdsae_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 	ECDSA_SIG *(*psign_sig)(const unsigned char *, int, const BIGNUM *,
 	    const BIGNUM *, EC_KEY *);
 
-	DPRINTF("%s:%d", __func__, __LINE__);
+#if DEBUG_CERT
+	log_debug("%s:%d", __func__, __LINE__);
+#endif
 	if (EC_KEY_get_ex_data(eckey, 0) != NULL)
 		return (ecdsae_send_enc_imsg(dgst, dgst_len, inv, rp, eckey));
 	EC_KEY_METHOD_get_sign(ecdsa_default, NULL, NULL, &psign_sig);

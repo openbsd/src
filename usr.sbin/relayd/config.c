@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.54 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.55 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -273,6 +273,8 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 		return (-1);
 	}
 
+	log_setverbose((env->sc_conf.opts & RELAYD_OPT_VERBOSE) ? 2 : 0);
+
 	what = ps->ps_what[privsep_process];
 
 	if (what & CONFIG_TABLES) {
@@ -316,7 +318,7 @@ config_settable(struct relayd *env, struct table *tb)
 		if (id == PROC_HCE && tb->conf.check == CHECK_NOCHECK)
 			continue;
 
-		DPRINTF("%s: sending table %s %d to %s", __func__,
+		log_debug("%s: sending table %s %d to %s", __func__,
 		    tb->conf.name, tb->conf.id, env->sc_ps->ps_title[id]);
 
 		c = 0;
@@ -379,7 +381,7 @@ config_gettable(struct relayd *env, struct imsg *imsg)
 
 	env->sc_tablecount++;
 
-	DPRINTF("%s: %s %d received table %d (%s)", __func__,
+	log_debug("%s: %s %d received table %d (%s)", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    tb->conf.id, tb->conf.name);
 
@@ -423,7 +425,7 @@ config_gethost(struct relayd *env, struct imsg *imsg)
 	TAILQ_INSERT_TAIL(&tb->hosts, host, entry);
 	TAILQ_INSERT_TAIL(&env->sc_hosts, host, globalentry);
 
-	DPRINTF("%s: %s %d received host %s for table %s", __func__,
+	log_debug("%s: %s %d received host %s for table %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    host->conf.name, tb->conf.name);
 
@@ -442,7 +444,7 @@ config_setrdr(struct relayd *env, struct rdr *rdr)
 		    id == privsep_process)
 			continue;
 
-		DPRINTF("%s: sending rdr %s to %s", __func__,
+		log_debug("%s: sending rdr %s to %s", __func__,
 		    rdr->conf.name, ps->ps_title[id]);
 
 		proc_compose(ps, id, IMSG_CFG_RDR,
@@ -487,7 +489,7 @@ config_getrdr(struct relayd *env, struct imsg *imsg)
 
 	env->sc_rdrcount++;
 
-	DPRINTF("%s: %s %d received rdr %s", __func__,
+	log_debug("%s: %s %d received rdr %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    rdr->conf.name);
 
@@ -517,7 +519,7 @@ config_getvirt(struct relayd *env, struct imsg *imsg)
 
 	TAILQ_INSERT_TAIL(&rdr->virts, virt, entry);
 
-	DPRINTF("%s: %s %d received address for rdr %s", __func__,
+	log_debug("%s: %s %d received address for rdr %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    rdr->conf.name);
 
@@ -536,7 +538,7 @@ config_setrt(struct relayd *env, struct router *rt)
 		    id == privsep_process)
 			continue;
 
-		DPRINTF("%s: sending router %s to %s tbl %d", __func__,
+		log_debug("%s: sending router %s to %s tbl %d", __func__,
 		    rt->rt_conf.name, ps->ps_title[id], rt->rt_conf.gwtable);
 
 		proc_compose(ps, id, IMSG_CFG_ROUTER,
@@ -576,7 +578,7 @@ config_getrt(struct relayd *env, struct imsg *imsg)
 
 	env->sc_routercount++;
 
-	DPRINTF("%s: %s %d received router %s", __func__,
+	log_debug("%s: %s %d received router %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    rt->rt_conf.name);
 
@@ -618,7 +620,7 @@ config_getroute(struct relayd *env, struct imsg *imsg)
 
 	env->sc_routecount++;
 
-	DPRINTF("%s: %s %d received route %d for router %s", __func__,
+	log_debug("%s: %s %d received route %d for router %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    nr->nr_conf.id, rt->rt_conf.name);
 
@@ -638,7 +640,7 @@ config_setproto(struct relayd *env, struct protocol *proto)
 		    id == privsep_process)
 			continue;
 
-		DPRINTF("%s: sending protocol %s to %s", __func__,
+		log_debug("%s: sending protocol %s to %s", __func__,
 		    proto->name, ps->ps_title[id]);
 
 		c = 0;
@@ -670,7 +672,7 @@ config_setrule(struct relayd *env, struct protocol *proto)
 		    id == privsep_process)
 			continue;
 
-		DPRINTF("%s: sending rules %s to %s", __func__,
+		log_debug("%s: sending rules %s to %s", __func__,
 		    proto->name, ps->ps_title[id]);
 
 		/* Now send all the rules */
@@ -746,7 +748,7 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 
 	env->sc_protocount++;
 
-	DPRINTF("%s: %s %d received protocol %s", __func__,
+	log_debug("%s: %s %d received protocol %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    proto->name);
 
@@ -791,7 +793,7 @@ config_getrule(struct relayd *env, struct imsg *imsg)
 			free(rule);					\
 			return (-1);					\
 		}							\
-		DPRINTF("%s: %s %s (len %ld, option %d): %s", __func__,	\
+		log_debug("%s: %s %s (len %ld, option %d): %s", __func__,\
 		    #_n, #_f, len,					\
 		    rule->rule_kv[_n].kv_option,			\
 		    rule->rule_kv[_n].kv_##_f);				\
@@ -818,7 +820,7 @@ config_getrule(struct relayd *env, struct imsg *imsg)
 
 	TAILQ_INSERT_TAIL(&proto->rules, rule, rule_entry);
 
-	DPRINTF("%s: %s %d received rule %u for protocol %s", __func__,
+	log_debug("%s: %s %d received rule %u for protocol %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    rule->rule_id, proto->name);
 
@@ -869,7 +871,7 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 		if ((what & CONFIG_RELAYS) == 0 || id == privsep_process)
 			continue;
 
-		DPRINTF("%s: sending relay %s to %s fd %d", __func__,
+		log_debug("%s: sending relay %s to %s fd %d", __func__,
 		    rlay->rl_conf.name, ps->ps_title[id], rlay->rl_s);
 
 		memcpy(&rl, &rlay->rl_conf, sizeof(rl));
@@ -1106,7 +1108,7 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 
 	env->sc_relaycount++;
 
-	DPRINTF("%s: %s %d received relay %s", __func__,
+	log_debug("%s: %s %d received relay %s", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
 	    rlay->rl_conf.name);
 
@@ -1151,7 +1153,7 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 
 	TAILQ_INSERT_TAIL(&rlay->rl_tables, rlt, rlt_entry);
 
-	DPRINTF("%s: %s %d received relay table %s for relay %s", __func__,
+	log_debug("%s: %s %d received relay table %s for relay %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    table->conf.name, rlay->rl_conf.name);
 
@@ -1213,7 +1215,7 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 		break;
 	}
 
-	DPRINTF("%s: %s %d received relay type %d for relay %s", __func__,
+	log_debug("%s: %s %d received relay type %d for relay %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    crfd.type, rlay->rl_conf.name);
 

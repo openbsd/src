@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.24 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.25 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -106,7 +106,7 @@ script_exec(struct relayd *env, struct ctl_script *scr)
 		return (-1);
 	}
 
-	DPRINTF("%s: running script %s, host %s",
+	log_debug("%s: running script %s, host %s",
 	    __func__, scr->path, scr->name);
 
 	arg = scr->name;

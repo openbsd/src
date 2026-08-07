@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.70 2026/08/01 06:53:10 rsadowski Exp $	*/
+/*	$OpenBSD: control.c,v 1.71 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -265,7 +265,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 
 		if (c->waiting) {
-			log_debug("%s: unexpected imsg %d",
+			log_warn("%s: unexpected imsg %d",
 			    __func__, imsg_get_type(&imsg));
 			imsg_free(&imsg);
 			control_close(fd, cs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.268 2026/07/29 12:47:24 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.269 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -724,7 +724,7 @@ relay_connected(int fd, short sig, void *arg)
 		return;
 	}
 
-	DPRINTF("%s: session %d: successful", __func__, con->se_id);
+	log_debug("%s: session %d: successful", __func__, con->se_id);
 
 	/* Log destination if it was changed in a keep-alive connection */
 	if ((con->se_table != con->se_table0) &&
@@ -951,7 +951,7 @@ relay_splice(struct ctl_relay_event *cre)
 		return (0);
 
 	if (!(cre->toread == TOREAD_UNLIMITED || cre->toread > 0)) {
-		DPRINTF("%s: session %d: splice dir %d, nothing to read %lld",
+		log_debug("%s: session %d: splice dir %d, nothing to read %lld",
 		    __func__, con->se_id, cre->dir, cre->toread);
 		return (0);
 	}
@@ -959,7 +959,7 @@ relay_splice(struct ctl_relay_event *cre)
 	/* do not splice before buffers have not been completely flushed */
 	if (EVBUFFER_LENGTH(cre->bev->input) ||
 	    EVBUFFER_LENGTH(cre->dst->bev->output)) {
-		DPRINTF("%s: session %d: splice dir %d, dirty buffer",
+		log_debug("%s: session %d: splice dir %d, dirty buffer",
 		    __func__, con->se_id, cre->dir);
 		bufferevent_disable(cre->bev, EV_READ);
 		return (0);
@@ -977,7 +977,7 @@ relay_splice(struct ctl_relay_event *cre)
 	cre->splicelen = 0;
 	bufferevent_enable(cre->bev, EV_READ);
 
-	DPRINTF("%s: session %d: splice dir %d, maximum %lld, successful",
+	log_debug("%s: session %d: splice dir %d, maximum %lld, successful",
 	    __func__, con->se_id, cre->dir, cre->toread);
 
 	return (1);
@@ -1000,7 +1000,7 @@ relay_splicelen(struct ctl_relay_event *cre)
 		return (-1);
 	}
 
-	DPRINTF("%s: session %d: splice dir %d, length %lld",
+	log_debug("%s: session %d: splice dir %d, length %lld",
 	    __func__, con->se_id, cre->dir, len);
 
 	if (len > cre->splicelen) {
@@ -1034,7 +1034,7 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 	struct rsession		*con = cre->con;
 	struct evbuffer		*dst;
 
-	DPRINTF("%s: session %d: dir %d state %d to read %lld event error %x",
+	log_debug("%s: session %d: dir %d state %d to read %lld event error %x",
 	    __func__, con->se_id, cre->dir, cre->state, cre->toread, error);
 	if (error & EVBUFFER_TIMEOUT) {
 		if (cre->splicelen >= 0) {
@@ -1132,7 +1132,7 @@ relay_accept(int fd, short event, void *arg)
 
 			event_del(&rlay->rl_ev);
 			evtimer_add(&rlay->rl_evt, &evtpause);
-			log_debug("%s: deferring connections", __func__);
+			DPRINTF("%s: deferring connections", __func__);
 		}
 		return;
 	}
@@ -1367,7 +1367,7 @@ relay_from_table(struct rsession *con)
 
 			host = rlt->rlt_host[idx];
 
-			DPRINTF("%s: session %d: table %s host %s, "
+			log_debug("%s: session %d: table %s host %s, "
 			    "p 0x%016llx, idx %d, cnt %d, max %d",
 			    __func__, con->se_id, table->conf.name,
 			    host->conf.name, p, idx, cnt, maxtries);
@@ -1379,20 +1379,20 @@ relay_from_table(struct rsession *con)
 	} else {
 		/* handle all non-hashing algorithms */
 		host = rlt->rlt_host[idx];
-		DPRINTF("%s: session %d: table %s host %s, p 0x%016llx, idx %d",
+		log_debug("%s: session %d: table %s host %s, p 0x%016llx, idx %d",
 		    __func__, con->se_id, table->conf.name, host->conf.name,
 		    p, idx);
 	}
 
 	while (host != NULL) {
-		DPRINTF("%s: session %d: host %s", __func__,
+		log_debug("%s: session %d: host %s", __func__,
 		    con->se_id, host->conf.name);
 		if (!table->conf.check || host->up == HOST_UP)
 			goto found;
 		host = TAILQ_NEXT(host, entry);
 	}
 	TAILQ_FOREACH(host, &table->hosts, entry) {
-		DPRINTF("%s: session %d: next host %s",
+		log_debug("%s: session %d: next host %s",
 		    __func__, con->se_id, host->conf.name);
 		if (!table->conf.check || host->up == HOST_UP)
 			goto found;
@@ -1518,7 +1518,7 @@ void
 relay_connect_state(struct rsession *con, struct ctl_relay_event *cre,
     enum relay_state new)
 {
-	DPRINTF("%s: session %d: %s state %s -> %s",
+	log_debug("%s: session %d: %s state %s -> %s",
 	    __func__, con->se_id,
 	    cre->dir == RELAY_DIR_REQUEST ? "accept" : "connect",
 	    relay_state(cre->state), relay_state(new));
@@ -1538,7 +1538,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 		relay_inflight = 1;
 	}
 
-	DPRINTF("%s: retry %d of %d, inflight: %d", __func__,
+	log_debug("%s: retry %d of %d, inflight: %d", __func__,
 	    con->se_retrycount, con->se_retry, relay_inflight);
 
 	if (sig != EV_TIMEOUT)
@@ -1551,7 +1551,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 	 * available: client could have closed it while we were waiting?
 	 */
 
-	DPRINTF("%s: got EV_TIMEOUT", __func__);
+	log_debug("%s: got EV_TIMEOUT", __func__);
 
 	if (getdtablecount() + FD_RESERVE +
 	    relay_inflight > getdtablesize()) {
@@ -1598,7 +1598,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 	else
 		relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 	relay_inflight--;
-	DPRINTF("%s: inflight decremented, now %d", __func__, relay_inflight);
+	log_debug("%s: inflight decremented, now %d", __func__, relay_inflight);
 
 	event_add(&rlay->rl_ev, NULL);
 
@@ -1724,7 +1724,7 @@ relay_connect(struct rsession *con)
 
 	relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 	relay_inflight--;
-	DPRINTF("%s: inflight decremented, now %d", __func__,
+	log_debug("%s: inflight decremented, now %d", __func__,
 	    relay_inflight);
 
 	if (errno == EINPROGRESS)
@@ -1927,7 +1927,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    NULL)
 			fatalx("%s: invalid table id", __func__);
 
-		DPRINTF("%s: [%d] state %d for "
+		log_debug("%s: [%d] state %d for "
 		    "host %u %s", __func__, p->p_ps->ps_instance, st.up,
 		    host->conf.id, host->conf.name);
 
@@ -2445,11 +2445,7 @@ relay_tls_handshake(int fd, short event, void *arg)
 
 	ret = tls_handshake(cre->tls);
 	if (ret == 0) {
-#ifdef DEBUG
-		log_info(
-#else
 		log_debug(
-#endif
 		    "relay %s, tls session %d %s (%d active)",
 		    rlay->rl_conf.name, con->se_id,
 		    cre->dir == RELAY_DIR_REQUEST ? "established" : "connected",
@@ -2498,7 +2494,7 @@ relay_tls_handshake(int fd, short event, void *arg)
 		return;
 	}
 
-	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
+	log_debug("%s: session %d: scheduling on %s", __func__, con->se_id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_tls_handshake,
 	    &con->se_tv_start, &rlay->rl_conf.timeout, cre);

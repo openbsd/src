@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.265 2026/05/31 12:44:06 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.266 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -183,7 +183,7 @@ typedef struct {
 %token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
-%token	WEBSOCKETS PFLOG CLIENT PROXYPROTO V1 V2
+%token	WEBSOCKETS PFLOG CLIENT PROXYPROTO V1 V2 VERBOSE BRIEF LEVEL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	context hostname interface table value path
@@ -411,6 +411,12 @@ main		: INTERVAL NUMBER	{
 		}
 		| LOG loglevel		{
 			conf->sc_conf.opts |= $2;
+		}
+		| LOG LEVEL VERBOSE	{
+			conf->sc_conf.opts |= RELAYD_OPT_VERBOSE;
+		}
+		| LOG LEVEL BRIEF	{
+			conf->sc_conf.opts &= ~RELAYD_OPT_VERBOSE;
 		}
 		| TIMEOUT timeout	{
 			bcopy(&$2, &conf->sc_conf.timeout,
@@ -2524,6 +2530,7 @@ lookup(char *s)
 		{ "backup",		BACKUP },
 		{ "binary",		BINARY },
 		{ "block",		BLOCK },
+		{ "brief",		BRIEF },
 		{ "buffer",		BUFFER },
 		{ "ca",			CA },
 		{ "cache",		CACHE },
@@ -2566,6 +2573,7 @@ lookup(char *s)
 		{ "keypair",		KEYPAIR },
 		{ "label",		LABEL },
 		{ "least-states",	LEASTSTATES },
+		{ "level",		LEVEL },
 		{ "listen",		LISTEN },
 		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },
@@ -2632,6 +2640,7 @@ lookup(char *s)
 		{ "v1",			V1 },
 		{ "v2",			V2 },
 		{ "value",		VALUE },
+		{ "verbose",		VERBOSE },
 		{ "websockets",		WEBSOCKETS },
 		{ "with",		WITH }
 	};

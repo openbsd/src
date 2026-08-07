@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2026/08/07 10:21:39 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -179,7 +179,6 @@ table_check(enum table_check check)
 	return ("invalid");
 }
 
-#ifdef DEBUG
 const char *
 relay_state(enum relay_state state)
 {
@@ -200,7 +199,6 @@ relay_state(enum relay_state state)
 	/* NOTREACHED */
 	return ("invalid");
 }
-#endif
 
 const char *
 print_availability(u_long cnt, u_long up)

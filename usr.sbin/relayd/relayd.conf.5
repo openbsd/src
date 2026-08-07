@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.221 2026/07/26 11:03:26 rsadowski Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.222 2026/08/07 10:21:39 rsadowski Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 26 2026 $
+.Dd $Mdocdate: August 7 2026 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -165,6 +165,18 @@ or
 When using relays, log all TCP connections.
 Optionally log only
 .Ic connection errors .
+.It Xo
+.Ic log level
+.Pq Ic brief Ns | Ns Ic verbose
+.Xc
+Set the log verbosity.
+.Ic brief
+is the default;
+.Ic verbose
+enables debug logging, equivalent to starting
+.Xr relayd 8
+with
+.Fl v .
 .It Ic prefork Ar number
 When using relays, run the specified number of processes to handle
 relayed connections.
