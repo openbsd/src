@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.39 2025/10/10 11:31:13 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.40 2026/08/07 23:58:20 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -472,6 +472,7 @@ const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_CrlID(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_Nonce(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_acceptableResponses(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_archiveCutoff(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_noCheck(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_serviceLocator(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_info_access(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_inhibit_any_policy(void);
