@@ -10,8 +10,6 @@
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
 
-#define DMA_FENCE_TRACE(fence, fmt, args...) do {} while(0)
-
 struct dma_fence {
 	struct kref refcount;
 	const struct dma_fence_ops *ops;
