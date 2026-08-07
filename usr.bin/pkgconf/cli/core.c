@@ -939,20 +939,7 @@ unveil_search_paths(pkgconf_client_t *client, const pkgconf_cross_personality_t 
 	pkgconf_node_t *n;
 
 	client->unveil_handler(client, "/dev/null", "rwc");
-
-	PKGCONF_FOREACH_LIST_ENTRY(client->dir_list.head, n)
-	{
-		pkgconf_path_t *pn = n->data;
-
-		client->unveil_handler(client, pn->path, "r");
-	}
-
-	PKGCONF_FOREACH_LIST_ENTRY(personality->dir_list.head, n)
-	{
-		pkgconf_path_t *pn = n->data;
-
-		client->unveil_handler(client, pn->path, "r");
-	}
+	client->unveil_handler(client, "/", "r");
 }
 
 static bool
