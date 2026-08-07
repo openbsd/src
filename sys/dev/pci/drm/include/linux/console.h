@@ -21,10 +21,4 @@ console_unlock(void)
 {
 }
 
-static inline bool
-vgacon_text_force(void)
-{
-	return false;
-}
-
 #endif
