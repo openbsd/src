@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.7 2017/07/27 15:12:30 deraadt Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.8 2026/08/07 16:24:38 naddy Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -39,7 +39,7 @@
 
 struct stub {
 	char	*name;
-	int	(*f)();
+	int	(*f)(int, char **, char **);
 };
 
 extern struct stub entry_points[];
