@@ -30,22 +30,6 @@ mutex_lock_interruptible(struct rwlock *rwl)
 	return 0;
 }
 
-enum mutex_trylock_recursive_result {
-	MUTEX_TRYLOCK_FAILED,
-	MUTEX_TRYLOCK_SUCCESS,
-	MUTEX_TRYLOCK_RECURSIVE
-};
-
-static inline enum mutex_trylock_recursive_result
-mutex_trylock_recursive(struct rwlock *rwl)
-{
-	if (rw_status(rwl) == RW_WRITE)
-		return MUTEX_TRYLOCK_RECURSIVE;
-	if (mutex_trylock(rwl))
-		return MUTEX_TRYLOCK_SUCCESS;
-	return MUTEX_TRYLOCK_FAILED;
-}
-
 int atomic_dec_and_mutex_lock(volatile int *, struct rwlock *);
 
 static inline struct rwlock *
