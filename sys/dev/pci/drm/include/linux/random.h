@@ -37,7 +37,7 @@ get_random_long(void)
 }
 
 static inline void
-get_random_bytes(void *buf, int nbytes)
+get_random_bytes(void *buf, size_t nbytes)
 {
 	arc4random_buf(buf, nbytes);
 }
