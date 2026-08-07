@@ -21,11 +21,6 @@ struct shrinker {
 
 #define DEFAULT_SEEKS	2
 
-static inline void
-synchronize_shrinkers(void)
-{
-}
-
 struct shrinker *shrinker_alloc(u_int, const char *, ...);
 void shrinker_free(struct shrinker *);
 
