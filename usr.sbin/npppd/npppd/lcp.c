@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.18 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: lcp.c,v 1.19 2026/08/07 00:38:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.18 2019/02/27 04:52:19 denis Exp $ */
+/* $Id: lcp.c,v 1.19 2026/08/07 00:38:11 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -471,10 +471,8 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 				if (lrej > 0) {
 				/* if there is a reject, will send Rej, not send Nak. */
 				} else {
-					inp -= 2;
-					memcpy(nakbuf, inp, len);
-					nakbuf += len;
-					inp += 2;
+					PUTCHAR(type, nakbuf);
+					PUTCHAR(len, nakbuf);
 					PUTSHORT(f->ppp->mru, nakbuf);
 
 					rcode = CONFNAK;
