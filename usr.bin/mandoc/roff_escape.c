@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.15 2024/05/16 21:21:08 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.16 2026/08/08 14:15:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -262,6 +262,13 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			break;
 		}
 		iendarg = iend = iarg;
+	}
+
+	/* Mandatory argument is missing. */
+
+	if (buf[iarg] == '\0' && (term != '\0' || maxl != INT_MAX)) {
+		err = MANDOCERR_ESC_INCOMPLETE;
+		goto out;
 	}
 
 	/* Decide how to end the argument. */
