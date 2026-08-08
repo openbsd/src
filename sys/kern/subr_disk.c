@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.285 2026/05/13 15:14:51 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.286 2026/08/08 03:54:40 gnezdo Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -881,8 +881,11 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int64_t openmask)
 		return (0);
 	}
 
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
+	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC)
+		return (ENOENT);
+	else if (nlp->d_npartitions > MAXPARTITIONS)
+		return (E2BIG);
+	else if (dkcksum(nlp) != 0)
 		return (EINVAL);
 
 	/* XXX missing check if other dos partitions will be overwritten */
