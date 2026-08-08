@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_cpu_caps.c,v 1.4 2026/08/07 12:17:33 naddy Exp $ */
+/* $OpenBSD: crypto_cpu_caps.c,v 1.5 2026/08/08 21:37:19 naddy Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -15,10 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/sysctl.h>
-
-#include <machine/cpu.h>
+#include <sys/auxv.h>
 
 #include <stddef.h>
 #include <stdio.h>
@@ -28,70 +25,29 @@
 /* Machine dependent CPU capabilities. */
 uint64_t crypto_cpu_caps_aarch64;
 
-static inline uint64_t
-extract_bits(uint64_t val, int start, int end)
-{
-	return (val >> end) & (1ULL << (1 + start - end)) - 1;
-}
-
-static uint64_t
-parse_isar0(uint64_t isar0)
-{
-	uint64_t caps = 0;
-	uint64_t feature;
-
-	/* AES - bits [7:4] */
-	feature = extract_bits(isar0, 7, 4);
-	if (feature >= 1)
-		caps |= CRYPTO_CPU_CAPS_AARCH64_AES;
-	if (feature >= 2)
-		caps |= CRYPTO_CPU_CAPS_AARCH64_PMULL;
-
-	/* SHA1 - bits [11:8] */
-	feature = extract_bits(isar0, 11, 8);
-	if (feature >= 1)
-		caps |= CRYPTO_CPU_CAPS_AARCH64_SHA1;
-
-	/* SHA2 - bits [15:12] */
-	feature = extract_bits(isar0, 15, 12);
-	if (feature >= 1)
-		caps |= CRYPTO_CPU_CAPS_AARCH64_SHA2;
-	if (feature >= 2)
-		caps |= CRYPTO_CPU_CAPS_AARCH64_SHA512;
-
-	/* SHA3 - bits [35:32] */
-	feature = extract_bits(isar0, 35, 32);
-	if (feature >= 1)
-		caps |= CRYPTO_CPU_CAPS_AARCH64_SHA3;
-
-	return caps;
-}
-
-static int
-read_isar0(uint64_t *isar0)
-{
-	uint64_t isar;
-	int mib[2];
-	size_t len;
-
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_ID_AA64ISAR0;
-	len = sizeof(isar);
-	if (sysctl(mib, 2, &isar, &len, NULL, 0) == -1)
-		return 0;
-
-	*isar0 = isar;
-
-	return 1;
-}
-
 void
 crypto_cpu_caps_init(void)
 {
-	uint64_t isar = 0;
+	unsigned long hwcap;
 
-	if (!read_isar0(&isar))
+	if (elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap)) != 0)
 		return;
 
-	crypto_cpu_caps_aarch64 = parse_isar0(isar);
+	if (hwcap & HWCAP_AES)
+		crypto_cpu_caps_aarch64 |= CRYPTO_CPU_CAPS_AARCH64_AES;
+
+	if (hwcap & HWCAP_PMULL)
+		crypto_cpu_caps_aarch64 |= CRYPTO_CPU_CAPS_AARCH64_PMULL;
+
+	if (hwcap & HWCAP_SHA1)
+		crypto_cpu_caps_aarch64 |= CRYPTO_CPU_CAPS_AARCH64_SHA1;
+
+	if (hwcap & HWCAP_SHA2)
+		crypto_cpu_caps_aarch64 |= CRYPTO_CPU_CAPS_AARCH64_SHA2;
+
+	if (hwcap & HWCAP_SHA512)
+		crypto_cpu_caps_aarch64 |= CRYPTO_CPU_CAPS_AARCH64_SHA512;
+
+	if (hwcap & HWCAP_SHA3)
+		crypto_cpu_caps_aarch64 |= CRYPTO_CPU_CAPS_AARCH64_SHA3;
 }
