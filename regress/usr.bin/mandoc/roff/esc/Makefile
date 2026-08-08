@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.25 2025/07/29 14:53:09 schwarze Exp $
+# $OpenBSD: Makefile,v 1.26 2026/08/08 14:21:31 schwarze Exp $
 
 REGRESS_TARGETS	 = one two multi comment
 REGRESS_TARGETS	+= A1 B bs_man bs_mdoc c c_man E1 e f h hneg
 REGRESS_TARGETS	+= l O1 o p r V1 w z
-REGRESS_TARGETS	+= ignore invalid unsupp
+REGRESS_TARGETS	+= argmiss ignore invalid unsupp
 HTML_TARGETS	 = f
-LINT_TARGETS	 = comment A1 B h l O1 o r V1 w ignore invalid unsupp
+LINT_TARGETS	 = comment A1 B h l O1 o r V1 w argmiss ignore invalid unsupp
 
 # mandoc defects:
 # - \h with a negative argument replaces output characters
@@ -14,9 +14,10 @@ LINT_TARGETS	 = comment A1 B h l O1 o r V1 w ignore invalid unsupp
 
 SKIP_GROFF	 = hneg r
 
-# intentional difference:
+# intentional differences:
 # - mandoc does not inspect the environment
+# - mandoc does not disregard the newline after a missing argument
 
-SKIP_GROFF	+= V1
+SKIP_GROFF	+= V1 argmiss
 
 .include <bsd.regress.mk>

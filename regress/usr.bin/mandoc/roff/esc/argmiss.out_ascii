@@ -1,0 +1,30 @@
+ESC-ARGMISS(1)              General Commands Manual             ESC-ARGMISS(1)
+
+NNAAMMEE
+     eesscc--aarrggmmiissss - mandatory argument missing from roff escape sequences
+
+DDEESSCCRRIIPPTTIIOONN
+     valid identifier: 0
+     numerical expression syntax: 0
+     bracket building:
+     named special character:
+     draw graphics:
+     font height:
+     horizontal motion:
+     vertical line drawing:
+     horizontal line drawing:
+     numbered character:
+     overstrike
+     set number register:
+     slant output:
+     point size:
+     point size expecting two digits:
+     point size with square brackets
+     point size with quotes:
+     vertical motion:
+     string width: 0
+     device control:
+     extra line space:
+     print with zero width and height:
+
+OpenBSD                         August 8, 2026                  ESC-ARGMISS(1)

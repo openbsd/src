@@ -1,0 +1,51 @@
+.\" $OpenBSD: argmiss.in,v 1.1 2026/08/08 14:21:31 schwarze Exp $
+.Dd $Mdocdate: August 8 2026 $
+.Dt ESC-ARGMISS 1
+.Os
+.Sh NAME
+.Nm esc-argmiss
+.Nd mandatory argument missing from roff escape sequences
+.Sh DESCRIPTION
+valid identifier: \A
+.br
+numerical expression syntax: \B
+.br
+bracket building: \b
+.br
+named special character: \C
+.br
+draw graphics: \D
+.br
+font height: \H
+.br
+horizontal motion: \h
+.br
+vertical line drawing: \L
+.br
+horizontal line drawing: \l
+.br
+numbered character: \N
+.br
+overstrike: \o
+.br
+set number register: \R
+.br
+slant output: \S
+.br
+point size: \s
+.br
+point size expecting two digits: \s(
+.br
+point size with square brackets \s[
+.br
+point size with quotes: \s'
+.br
+vertical motion: \v
+.br
+string width: \w
+.br
+device control: \X
+.br
+extra line space: \x
+.br
+print with zero width and height: \Z
