@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.99 2026/06/18 13:14:26 kirill Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.100 2026/08/08 17:38:45 kirill Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -640,10 +640,9 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 
 		chunk = amap_chunk_get(amap, lcv, 1, PR_NOWAIT);
 		if (chunk == NULL) {
-			amap_unlock(srcamap);
-			/* Destroy the new amap. */
+			/* amap_wipeout() releases the shared lock. */
 			amap->am_ref--;
-			amap_free(amap);
+			amap_wipeout(amap);
 			return;
 		}
 
