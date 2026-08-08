@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.267 2026/08/08 04:54:57 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.268 2026/08/08 12:01:30 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -173,7 +173,7 @@ typedef struct {
 %}
 
 %token	AGENTX APPEND
-%token	BACKLOG BACKUP BINARY BLOCK BUFFER
+%token	BACKLOG BACKUP BINARY BLOCK BUFFER BRIEF
 %token	CA CACHE CERTIFICATE CHANGES CHECK CHECKS CIPHERS CLIENT CODE CONNECTION
 %token	CONNECTIONS CONTEXT COOKIE
 %token	DEMOTE DESTINATION DIGEST DISABLE
