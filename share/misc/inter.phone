@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.46 2023/04/12 09:07:42 jsg Exp $
+#	$OpenBSD: inter.phone,v 1.47 2026/08/09 23:32:23 daniel Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1912,7 +1912,7 @@
 94:1:Colombo Central:Sri Lanka, Dem. Soc. Rep. of
 94:8:Kandy:Sri Lanka, Dem. Soc. Rep. of
 95:::Myanmar
-98:21:Teheran:Iran
+98:21:Tehran:Iran
 98:31:Esfahan:Iran
 98:41:Tabriz:Iran
 98:51:Mashad:Iran
@@ -2898,9 +2898,8 @@
 380:6569:Evpatoriya:Ukraine
 380:690:Sevastopol:Ukraine
 380:6997:Pershotravne:Ukraine
-381:11:Belgrade:Yugoslavia
 381:11:Belgrade:Serbia
-381:81:Titograd:Montenegro
+382:20:Podgorica:Montenegro
 385:1:Zagreb:Croatia
 385:20:Dubrovnik:Croatia
 386:61:Ljubliana:Slovenia
@@ -3193,11 +3192,11 @@
 966:1:Riyadh:Saudi Arabia
 966:2:Jeddah:Saudi Arabia
 966:2:Makkah:Saudi Arabia
-966:3:Damman:Saudi Arabia
-967:2:Sanaa:Yemen Arab Republic
+966:3:Dammam:Saudi Arabia
+967:2:Sanaa:Yemen
 968:::Oman
 970:::Palestine
-971:2:Abu Dahabi:United Arab Emirates
+971:2:Abu Dhabi:United Arab Emirates
 971:3:Al Ain:United Arab Emirates
 971:4:Dubai:United Arab Emirates
 971:52:Jebel Dhana:United Arab Emirates
