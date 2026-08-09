@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.286 2026/08/08 03:54:40 gnezdo Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.287 2026/08/09 19:22:49 gnezdo Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -140,6 +140,8 @@ initdisklabel(struct disklabel *lp)
 	int i;
 
 	/* minimal requirements for archetypal disk label */
+	if (lp->d_secsize > MAXPHYS)
+		return (ERANGE);
 	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
 	if (DL_GETDSIZE(lp) == 0)
@@ -872,7 +874,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int64_t openmask)
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
-	    (nlp->d_secsize % DEV_BSIZE) != 0)
+	    nlp->d_secsize > MAXPHYS || (nlp->d_secsize % DEV_BSIZE) != 0)
 		return (EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
