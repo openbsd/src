@@ -1,6 +1,6 @@
-.\" $OpenBSD: man.7,v 1.67 2025/11/03 09:59:05 bentley Exp $
+.\" $OpenBSD: man.7,v 1.68 2026/08/09 16:22:40 schwarze Exp $
 .\"
-.\" Copyright (c) 2011-2015, 2017-2020, 2023, 2025
+.\" Copyright (c) 2011-2015, 2017-2020, 2023, 2025, 2026
 .\"               Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2017 Anthony J. Bentley <bentley@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2025 $
+.Dd $Mdocdate: August 9 2026 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -27,14 +27,17 @@
 .Sh DESCRIPTION
 The
 .Nm man
-language was the standard formatting language for
-.At
-manual pages from 1979 to 1989.
-Do not use it to write new manual pages: it is a purely presentational
-language and lacks support for semantic markup.
-Use the
+language was used universally for Unix manual pages from 1979 to 1989.
+It remains popular in Linux and keeps being actively maintained and
+extended by the GNU roff project.
+All the same, do not use it to write new manual pages.
+Instead, use the
 .Xr mdoc 7
-language, instead.
+language, which provides both significantly better semantic markup
+facilities and is easier to use correctly.
+Consequently, this document does not provide advice on how to use the
+.Nm
+language; for such advice, refer to the GNU roff project instead.
 .Pp
 In a
 .Nm
