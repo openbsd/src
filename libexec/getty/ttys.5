@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttys.5,v 1.14 2022/07/29 13:56:36 millert Exp $
+.\"	$OpenBSD: ttys.5,v 1.15 2026/08/09 15:16:53 daniel Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)ttys.5	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 29 2022 $
+.Dd $Mdocdate: August 9 2026 $
 .Dt TTYS 5
 .Os
 .Sh NAME
@@ -38,9 +38,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-file contains information that is used by various routines to initialize
-and control the use of terminal special files.
-This information is read with the
+file contains information used primarily by
+.Xr init 8
+to initialize and control terminal special files.
+It is also used by other programs, such as
+.Xr login 1
+and
+.Xr ttyflags 8 ,
+through the
 .Xr getttyent 3
 library routines.
 .Pp
@@ -62,7 +67,7 @@ is of the format:
 .Dl tty command type flags
 .Pp
 The first field is the
-name of the terminal special file as it is found in
+name of the terminal special file as found in
 .Pa /dev .
 .Pp
 The second field is the command to execute for the line,
@@ -72,7 +77,7 @@ which initializes and opens the line, setting the speed, waiting for
 a user name and executing the
 .Xr login 1
 utility.
-It can be, however, any desired command, for example
+It can, however, be any desired command, for example
 the start up for a window system terminal emulator or some other
 daemon process, and can contain multiple words if quoted.
 .Pp
@@ -97,15 +102,15 @@ will maintain for the terminal line.
 The following is a list of permitted flags for each tty:
 .Bl -tag -width xxxxxxx
 .It Ar on
-Specify that
+Have
 .Xr init 8
-should execute the command given in the second field.
+execute the command in the second field.
 .It Ar off
-The opposite of on.
+Do not have
+.Xr init 8
+execute the command in the second field.
 .It Ar secure
-If
-.Ar on
-is also specified, allows users with a user ID of 0 to log in on this line.
+Allows users with a user ID of 0 to log in on this line.
 If set for the
 .Ar console
 entry, then
@@ -158,19 +163,12 @@ utility can be used to set those flags.
 .El
 .Sh EXAMPLES
 .Bd -literal
-# root login on console at 1200 baud
-console	"/usr/libexec/getty std.1200"	vt100	on secure
-# dialup at 1200 baud, no root logins
-ttyd0	"/usr/libexec/getty d1200"	dialup	on	# 555-1234
-# Mike's terminal: hp2621
-ttyh0	"/usr/libexec/getty std.9600"	hp2621-nl	on	# 457 Evans
-# John's terminal: vt100
-ttyh1	"/usr/libexec/getty std.9600"	vt100	on		# 459 Evans
-# terminal emulate/window system
-ttyv0	"/usr/new/xterm -L :0"		vs100	on window="/usr/new/Xvs100 0"
-# Network pseudo ttys -- don't enable getty
-ttyp0	none	network
-ttyp1	none	network	off
+# console
+console	"/usr/libexec/getty std.9600"	vt220	off secure
+# wscons virtual terminals
+ttyC0	"/usr/libexec/getty std.9600"	vt220	on secure
+# serial terminal
+tty00	"/usr/libexec/getty std.9600"	unknown	off
 .Ed
 .Sh SEE ALSO
 .Xr login 1 ,
@@ -178,6 +176,7 @@ ttyp1	none	network	off
 .Xr ttyslot 3 ,
 .Xr gettytab 5 ,
 .Xr termcap 5 ,
+.Xr terminfo 5 ,
 .Xr getty 8 ,
 .Xr init 8 ,
 .Xr ttyflags 8
