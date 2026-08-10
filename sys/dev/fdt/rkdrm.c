@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.24 2026/03/09 23:57:53 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.25 2026/08/10 06:11:43 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -479,9 +479,9 @@ rkdrm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *
 	struct rkdrm_framebuffer *sfb = to_rkdrm_framebuffer(helper->fb);
 	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
 	struct drm_framebuffer *fb = helper->fb;
+	struct fb_info *info = helper->info;
 	const struct drm_format_info *format_info;
 	unsigned int bytes_per_pixel;
-	struct fb_info *info;
 	size_t size;
 	int error;
 
@@ -510,12 +510,6 @@ rkdrm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *
 	if (error != 0) {
 		DRM_ERROR("failed to initialize framebuffer\n");
 		return error;
-	}
-
-	info = drm_fb_helper_alloc_info(helper);
-	if (IS_ERR(info)) {
-		DRM_ERROR("Failed to allocate fb_info\n");
-		return PTR_ERR(info);
 	}
 	info->par = helper;
 	return 0;
