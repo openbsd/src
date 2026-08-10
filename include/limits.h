@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.19 2015/01/20 22:09:50 tedu Exp $	*/
+/*	$OpenBSD: limits.h,v 1.20 2026/08/10 20:10:19 daniel Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #define _POSIX_SYMLOOP_MAX	8
 #define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
 #define	_POSIX_THREAD_KEYS_MAX			128
-#define	_POSIX_THREAD_THREADS_MAX		4
+#define	_POSIX_THREAD_THREADS_MAX		64
 
 #if __POSIX_VISIBLE >= 200112
 #define	_POSIX_CLOCKRES_MIN	20000000
