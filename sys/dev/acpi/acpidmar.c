@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidmar.c,v 1.19 2026/07/29 09:30:56 hshoexer Exp $ */
+/* $OpenBSD: acpidmar.c,v 1.20 2026/08/10 15:14:57 hshoexer Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -2556,11 +2556,7 @@ acpidmar_pci_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 	reg = pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG);
 
 	segment = acpipci_domain_to_seg(pa->pa_domain);
-	if (segment < 0) {
-		DPRINTF(1, "acpidmar: no ACPI segment for pci domain %d\n",
-		    pa->pa_domain);
-		return;
-	}
+	KASSERT(segment >= 0);
 
 	/* Record PCI-PCI bridge forwarding windows */
 	bhlc = pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG);
@@ -2584,7 +2580,7 @@ acpidmar_pci_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 	    PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_ISA) {
 		/* For ISA Bridges, map 0-16Mb as 1:1 */
 		printf("dmar: %.4x:%.2x:%.2x.%x mapping ISA\n",
-		    pa->pa_domain, bus, dev, fun);
+		    segment, bus, dev, fun);
 		domain_map_pthru(dom, 0x00, 16*1024*1024);
 
 		/* Keep the identity mapped IOVA range out of the allocator */
@@ -2893,7 +2889,7 @@ ivhd_showpage(struct iommu_softc *iommu, int sid, paddr_t paddr)
 	if (show > 10)
 		return;
 	show++;
-	dom = acpidmar_pci_attach(acpidmar_sc, 0, sid, 0);
+	dom = acpidmar_pci_attach(acpidmar_sc, iommu->segment, sid, 0);
 	if (!dom)
 		return;
 	printf("DTE: %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n",
