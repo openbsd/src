@@ -65,4 +65,21 @@ atomic_dec_and_lock(volatile int *v, struct mutex *mtxp)
 #define write_lock(mtxp)		mtx_enter(mtxp)
 #define write_unlock(mtxp)		mtx_leave(mtxp)
 
+static inline struct mutex *
+class_spinlock_irqsave_constructor(struct mutex *mtxp)
+{
+	unsigned long irqflags;
+	spin_lock_irqsave(mtxp, irqflags);
+	return mtxp;
+}
+
+static inline void
+class_spinlock_irqsave_destructor(struct mutex **p)
+{
+	unsigned long irqflags;
+	spin_unlock_irqrestore(*p, irqflags);
+}
+
+typedef struct mutex * class_spinlock_irqsave_t;
+
 #endif
