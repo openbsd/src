@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1287 2026/08/09 21:55:52 kettenis Exp $
+#	$OpenBSD: install.sub,v 1.1288 2026/08/10 21:22:35 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1796,6 +1796,7 @@ install_files() {
 			rm -rf /mnt/usr/share/relink/*
 			rm -rf /mnt/usr/lib/libLLVM.so.[0-9].0
 			rm -rf /mnt/usr/libdata/perl5
+			rm -f /mnt/usr/libexec/cpp
 		fi
 		if isin comp$VERSION.tgz $_get_sets; then
 			rm -rf /mnt/usr/lib/{gcc-lib,clang}
