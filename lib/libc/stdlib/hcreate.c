@@ -1,4 +1,4 @@
-/*	$OpenBSD: hcreate.c,v 1.7 2016/05/29 20:47:49 guenther Exp $	*/
+/*	$OpenBSD: hcreate.c,v 1.8 2026/08/10 22:02:41 daniel Exp $	*/
 /*	$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ hdestroy(void)
 		while (!SLIST_EMPTY(&htable[idx])) {
 			ie = SLIST_FIRST(&htable[idx]);
 			SLIST_REMOVE_HEAD(&htable[idx], link);
-			free(ie->ent.key);
 			free(ie);
 		}
 	}

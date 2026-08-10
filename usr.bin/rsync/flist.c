@@ -1,4 +1,4 @@
-/*	$OpenBSD: flist.c,v 1.38 2023/12/27 17:22:25 claudio Exp $ */
+/*	$OpenBSD: flist.c,v 1.39 2026/08/10 22:02:41 daniel Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -1256,16 +1256,12 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 
 	for (i = 0; i < wflsz; i++) {
 		memset(&hent, 0, sizeof(ENTRY));
-		if ((hent.key = strdup(wfl[i].wpath)) == NULL) {
-			ERR("strdup");
-			goto out;
-		}
+		hent.key = (char *)wfl[i].wpath;
 		if ((hentp = hsearch(hent, ENTER)) == NULL) {
 			ERR("hsearch");
 			goto out;
 		} else if (hentp->key != hent.key) {
 			ERRX("%s: duplicate", wfl[i].wpath);
-			free(hent.key);
 			goto out;
 		}
 	}
