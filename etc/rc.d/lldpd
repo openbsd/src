@@ -1,0 +1,9 @@
+#!/bin/ksh
+#
+# $OpenBSD: lldpd,v 1.1 2026/08/10 00:51:59 job Exp $
+
+daemon="/usr/sbin/lldpd"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
