@@ -245,6 +245,7 @@
 ./etc/rc.d/ldattach
 ./etc/rc.d/ldomd
 ./etc/rc.d/ldpd
+./etc/rc.d/lldpd
 ./etc/rc.d/lockd
 ./etc/rc.d/lpd
 ./etc/rc.d/mopd
