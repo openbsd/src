@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.193 2026/08/11 13:09:24 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.194 2026/08/11 13:39:44 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2021, 2024-2026 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -3271,8 +3271,7 @@ can only be called by other macros, but not at the beginning of a line.
 and
 .Sq \eF
 .Pq font family face
-.Sx Text Decoration
-escapes behave irregularly when specified within line-macro scopes.
+escape sequences behave irregularly when specified within line-macro scopes.
 .It
 Negative scaling units return to prior lines.
 Instead, mandoc truncates them to zero.
