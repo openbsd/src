@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.19 2023/11/15 23:57:45 dlg Exp $	*/
+/*	$OpenBSD: bio.c,v 1.20 2026/08/11 16:25:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -105,15 +105,24 @@ bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (ENOENT);
 		locate->bl_bio.bio_cookie = (void *)bm->bm_cookie;
 		break;
-
-	default:
+	case BIOCINQ:
+	case BIOCDISK:
+	case BIOCVOL:
+	case BIOCALARM:
+	case BIOCBLINK:
+	case BIOCSETSTATE:
+	case BIOCCREATERAID:
+	case BIOCDELETERAID:
+	case BIOCDISCIPLINE:
+	case BIOCINSTALLBOOT:
+	case BIOCPATROL:
 		bio = (struct bio *)addr;
 		bm = bio_validate(bio->bio_cookie);
 		if (bm == NULL)
 			return (ENOENT);
-
-		error = bio_delegate_ioctl(bm, cmd, addr);
-		break;
+		return bio_delegate_ioctl(bm, cmd, addr);
+	default:
+		return (ENOTTY);
 	}
 
 	return (0);
