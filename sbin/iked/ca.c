@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.106 2026/08/10 10:50:41 hshoexer Exp $	*/
+/*	$OpenBSD: ca.c,v 1.107 2026/08/11 13:14:30 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1895,12 +1895,6 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 			goto done;
 		if ((cert = d2i_X509_bio(rawcert, NULL)) == NULL)
 			goto done;
-	}
-
-	/* Certificate needs a valid subjectName */
-	if (X509_get_subject_name(cert) == NULL) {
-		errstr = "invalid subject";
-		goto done;
 	}
 
 	if (id != NULL) {
