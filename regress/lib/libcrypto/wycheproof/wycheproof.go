@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.204 2026/05/04 19:15:45 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.205 2026/08/11 18:25:42 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -3085,6 +3085,8 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 		return nil, Skip
 	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
 		return &wycheproofTestGroupChaCha{}, variant
+	case "Cobblestone-128", "Cobblestone-256":
+		return nil, Skip
 	case "DSA":
 		if wtv.Schema == "dsa_p1363_verify_schema_v1.json" {
 			variant = P1363
