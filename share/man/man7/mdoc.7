@@ -1,6 +1,6 @@
-.\" $OpenBSD: mdoc.7,v 1.192 2025/08/19 14:08:41 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.193 2026/08/11 13:09:24 schwarze Exp $
 .\"
-.\" Copyright (c) 2010-2021, 2024, 2025 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010-2021, 2024-2026 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2025 $
+.Dd $Mdocdate: August 11 2026 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -799,9 +799,9 @@ justification than the one used by the surrounding text.
 They may contain both macro lines and text lines.
 By default, a display block is preceded by a vertical space.
 .Pp
-The
+The display
 .Ar type
-must be one of the following:
+is mandatory and must be specified first:
 .Bl -tag -width 13n -offset indent
 .It Fl centered
 Produce one output line from each input line, and center-justify each line.
@@ -827,46 +827,20 @@ but using the same font as for normal text, which is a variable width font
 if supported by the output device.
 .El
 .Pp
-The
-.Ar type
-must be provided first.
 Additional arguments may follow:
 .Bl -tag -width 13n -offset indent
 .It Fl offset Ar width
 Indent the display by the
-.Ar width ,
-which may be one of the following:
-.Bl -item
-.It
-One of the pre-defined strings
-.Cm indent ,
-the width of a standard indentation (six constant width characters);
-.Cm indent-two ,
-twice
-.Cm indent ;
-.Cm left ,
-which has no effect;
-.Cm right ,
-which justifies to the right margin; or
-.Cm center ,
-which aligns around an imagined center axis.
-.It
-A macro invocation, which selects a predefined width
-associated with that macro.
-The most popular is the imaginary macro
-.Ar \&Ds ,
-which resolves to
-.Sy 6n .
-.It
-A scaling width as described in
-.Xr roff 7 .
-.It
-An arbitrary string, which indents by the length of this string.
-.El
-.Pp
-When the argument is missing,
-.Fl offset
-is ignored.
+.Ar width .
+The default is
+.Cm 0n ,
+i.e. no indentation.
+If an indentation is desired, the form
+.Fl offset Cm indent
+is recommended for most use cases.
+For details, see
+.Sx WIDTH SPECIFICATINS
+below.
 .It Fl compact
 Do not assert vertical space before the display.
 .El
@@ -944,34 +918,11 @@ Doing so will clobber the right margin.
 Begin a list.
 Lists consist of items specified using the
 .Ic \&It
-macro, containing a head or a body or both.
+macro, each containing a head or a body or both.
 .Pp
 The list
 .Ar type
 is mandatory and must be specified first.
-The
-.Fl width
-and
-.Fl offset
-arguments accept macro names as described for
-.Ic \&Bd
-.Fl offset ,
-scaling widths as described in
-.Xr roff 7 ,
-or use the length of the given string.
-The
-.Fl offset
-is a global indentation for the whole list, affecting both item heads
-and bodies.
-For those list types supporting it, the
-.Fl width
-argument requests an additional indentation of item bodies,
-to be added to the
-.Fl offset .
-Unless the
-.Fl compact
-argument is specified, list entries are separated by vertical space.
-.Pp
 The following list types are commonly used:
 .Bl -tag -width 12n -offset indent
 .It Fl bullet
@@ -980,7 +931,8 @@ of each item.
 Item bodies start on the same output line as the bullet
 and are indented according to the
 .Fl width
-argument.
+argument, which defaults to
+.Cm 2n .
 .It Fl column
 A columnated list.
 The
@@ -1027,10 +979,17 @@ starting at 1.
 .It Fl tag
 Item bodies are indented according to the
 .Fl width
-argument.
+argument, which defaults to
+.Cm 6n .
 When an item head fits inside the indentation, the item body follows
 this head on the same output line.
 Otherwise, the body starts on the output line following the head.
+By convention and to achieve a consistent layout, using
+.Fl tag Fl width Cm \&Ds
+is recommended unless there are specific reasons to use a different width.
+In ERRORS sections,
+.Fl tag Fl width Cm \&Er
+is conventionally used.
 .El
 .Pp
 The following list types are rarely useful:
@@ -1061,6 +1020,34 @@ Item bodies start on the line following item heads and are not indented.
 The
 .Fl width
 argument is ignored.
+.El
+.Pp
+Additional arguments may follow:
+.Bl -tag -width 12n -offset indent
+.It Fl offset Ar val
+A global indentation for the whole list, affecting both item heads and bodies.
+The default is
+.Cm 0n ,
+i.e. no indentation.
+For most cases where a global indentation is desired,
+.Fl offset Cm indent
+is recommended.
+For details, see
+.Sx WIDTH SPECIFACTIONS
+below.
+.It Fl width Ar val
+An additional indentation of item bodies,
+to be added to the
+.Fl offset .
+The default value depends on the list
+.Ar type ,
+and some types ignore this argument.
+For details, see
+.Sx WIDTH SPECIFACTIONS
+below.
+.It Fl compact
+Unless this argument is specified,
+list entries are preceded by vertical space.
 .El
 .Pp
 Lists may be nested within lists and displays.
@@ -2803,6 +2790,68 @@ Examples:
 .Dl \&.Xr mandoc 1
 .Dl \&.Xr mandoc 1 \&;
 .Dl \&.Xr mandoc 1 \&Ns s behaviour
+.El
+.Sh WIDTH SPECIFICATIONS
+On
+.Ic \&Bd
+and
+.Ic \&Bl
+macro lines,
+.Fl offset
+and
+.Fl width
+accept arguments of the following forms:
+.Bl -bullet
+.It
+The string
+.Cm \&Ds ,
+which has the same effect as
+.Cm 6n .
+.It
+The name of any
+.Nm
+macro, which selects a default width associated with that macro.
+Using this form is not recommended outside the ERRORS section.
+.It
+A scaling width as documented in the
+.Xr roff 7
+manual.
+Use this sparingly; relying on the default widths usually results in
+a more uniform appearance of the document, but occasionally, reducing
+widths can make sense, for example in nested lists and in lists
+with very long item bodies.
+.El
+.Pp
+In addition,
+.Fl offset
+supports the following forms:
+.Bl -bullet
+.It
+The string
+.Cm left ,
+which has the same effect as
+.Cm 0n .
+This is the default.
+.It
+The string
+.Cm indent ,
+which has the same effect as
+.Cm 6n ,
+or if the
+.Xr mandoc 1
+.Fl O Cm indent
+command line option is used, the argument of that option plus one.
+Using
+.Fl offset Cm indent
+is recommended for most cases where global indentation is desired.
+.It
+The string
+.Cm indent-two ,
+which produces two times the indentation of
+.Cm indent .
+Using this form is not recommended because it usually wastes too much space.
+.It
+For any other string, the string length of that string is used.
 .El
 .Sh MACRO SYNTAX
 The syntax of a macro depends on its classification.
