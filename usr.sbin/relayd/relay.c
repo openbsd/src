@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.270 2026/08/12 18:38:17 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.271 2026/08/12 19:24:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1136,7 +1136,7 @@ relay_accept(int fd, short event, void *arg)
 
 			event_del(&rlay->rl_ev);
 			evtimer_add(&rlay->rl_evt, &evtpause);
-			DPRINTF("%s: deferring connections", __func__);
+			log_warn("%s: deferring connections", __func__);
 		}
 		return;
 	}
@@ -1579,6 +1579,9 @@ relay_connect_retry(int fd, short sig, void *arg)
  retry:
 	if ((con->se_out.s = relay_socket_connect(&con->se_out.ss,
 	    con->se_out.port, rlay->rl_proto, bnds)) == -1) {
+		if (errno == ENFILE || errno == EMFILE)
+			log_warn("%s: session %d: deferring forward",
+			    __func__, con->se_id);
 		log_debug("%s: session %d: "
 		    "forward failed: %s, %s", __func__,
 		    con->se_id, strerror(errno),
@@ -1701,8 +1704,8 @@ relay_connect(struct rsession *con)
 	if ((con->se_out.s = relay_socket_connect(&con->se_out.ss,
 	    con->se_out.port, rlay->rl_proto, bnds)) == -1) {
 		if (errno == ENFILE || errno == EMFILE) {
-			log_debug("%s: session %d: forward failed: %s",
-			    __func__, con->se_id, strerror(errno));
+			log_warn("%s: session %d: deferring forward",
+			    __func__, con->se_id);
 			evtimer_set(&con->se_inflightevt, relay_connect_retry,
 			    con);
 			event_del(&rlay->rl_ev);

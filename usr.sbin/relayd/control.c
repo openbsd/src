@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.73 2026/08/12 18:39:42 rsadowski Exp $	*/
+/*	$OpenBSD: control.c,v 1.74 2026/08/12 19:24:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,6 +153,7 @@ control_accept(int listenfd, short event, void *arg)
 
 			event_del(&cs->cs_ev);
 			evtimer_add(&cs->cs_evt, &evtpause);
+			log_warn("%s: deferring connections", __func__);
 		} else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
 			log_warn("%s: accept", __func__);
