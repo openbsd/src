@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.292 2026/08/07 10:21:39 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.293 2026/08/12 18:39:42 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1331,9 +1331,6 @@ int			 map6to4(struct sockaddr_storage *);
 int			 map4to6(struct sockaddr_storage *,
     struct sockaddr_storage *);
 void			 imsg_event_add(struct imsgev *);
-int			 imsg_compose_event(struct imsgev *, u_int16_t,
-    u_int32_t,
-    pid_t, int, void *, u_int16_t);
 void			 socket_rlimit(int);
 void			*get_data(struct ibuf *, size_t);
 int			 sockaddr_cmp(struct sockaddr *, struct sockaddr *,
@@ -1341,8 +1338,7 @@ int			 sockaddr_cmp(struct sockaddr *, struct sockaddr *,
 struct in6_addr		*prefixlen2mask6(u_int8_t, u_int32_t *);
 u_int32_t		 prefixlen2mask(u_int8_t);
 int			 accept_reserve(int, struct sockaddr *, socklen_t *,
-    int,
-    volatile int *);
+    int, volatile int *);
 struct kv		*kv_add(struct kvtree *, char *, char *, int);
 int			 kv_set(struct kv *, char *, ...)
 	__attribute__((__format__(printf, 2, 3)));
@@ -1429,8 +1425,7 @@ void			 imsg_event_add(struct imsgev *);
 int			 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
     pid_t, int, void *, uint16_t);
 int			 imsg_composev_event(struct imsgev *, uint16_t,
-    uint32_t,
-    pid_t, int, const struct iovec *, int);
+    uint32_t, pid_t, int, const struct iovec *, int);
 
 /* config.c */
 int	 config_init(struct relayd *);

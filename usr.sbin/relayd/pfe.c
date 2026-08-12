@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.99 2026/08/12 18:38:17 rsadowski Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.100 2026/08/12 18:39:42 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -303,9 +303,9 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    __func__, con.se_cid);
 			return (0);
 		}
-		imsg_compose_event(&c->iev,
-		    IMSG_CTL_SESSION, 0, 0, -1,
-		    &con, sizeof(con));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_SESSION, 0, 0, -1,
+		    &con, sizeof(con)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
 		break;
 	case IMSG_CTL_END:
 		if (imsg_get_data(imsg, &cid, sizeof(cid)) == -1)
@@ -320,8 +320,9 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (0);
 		} else if (--c->waiting == 0) {
 			/* Last ack for a previous request */
-			imsg_compose_event(&c->iev, IMSG_CTL_END,
-			    0, 0, -1, NULL, 0);
+			if (imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1,
+			    NULL, 0) == -1)
+				log_warn("%s: imsg_compose_event", __func__);
 		}
 		break;
 	case IMSG_SESS_PUBLISH:
@@ -376,49 +377,64 @@ show(struct ctl_conn *c)
 	if (env->sc_rdrs == NULL)
 		goto relays;
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
-		imsg_compose_event(&c->iev, IMSG_CTL_RDR, 0, 0, -1,
-		    rdr, sizeof(*rdr));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_RDR, 0, 0, -1,
+		    rdr, sizeof(*rdr)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
 		if (rdr->conf.flags & F_DISABLE)
 			continue;
 
-		imsg_compose_event(&c->iev, IMSG_CTL_RDR_STATS, 0, 0, -1,
-		    &rdr->stats, sizeof(rdr->stats));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_RDR_STATS, 0, 0, -1,
+		    &rdr->stats, sizeof(rdr->stats)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
 
-		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
-		    rdr->table, sizeof(*rdr->table));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
+		    rdr->table, sizeof(*rdr->table)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
+
 		if (!(rdr->table->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rdr->table->hosts, entry)
-				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
-				    0, 0, -1, host, sizeof(*host));
+				if (imsg_compose_event(&c->iev, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host)) == -1)
+					log_warn("%s: imsg_compose_event",
+					    __func__);
 
 		if (rdr->backup->conf.id == EMPTY_TABLE)
 			continue;
-		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
-		    rdr->backup, sizeof(*rdr->backup));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
+		    rdr->backup, sizeof(*rdr->backup)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
 		if (!(rdr->backup->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rdr->backup->hosts, entry)
-				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
-				    0, 0, -1, host, sizeof(*host));
+				if (imsg_compose_event(&c->iev, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host)) == -1)
+					log_warn("%s: imsg_compose_event",
+					    __func__);
 	}
 relays:
 	if (env->sc_relays == NULL)
 		goto routers;
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		rlay->rl_stats[env->sc_conf.prefork_relay].id = EMPTY_ID;
-		imsg_compose_event(&c->iev, IMSG_CTL_RELAY, 0, 0, -1,
-		    rlay, sizeof(*rlay));
-		imsg_compose_event(&c->iev, IMSG_CTL_RELAY_STATS, 0, 0, -1,
-		    &rlay->rl_stats, sizeof(rlay->rl_stats));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_RELAY, 0, 0, -1,
+		    rlay, sizeof(*rlay)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
+
+		if (imsg_compose_event(&c->iev, IMSG_CTL_RELAY_STATS, 0, 0, -1,
+		    &rlay->rl_stats, sizeof(rlay->rl_stats)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
 
 		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
-			imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
-			    rlt->rlt_table, sizeof(*rlt->rlt_table));
+			if (imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0,
+			    -1, rlt->rlt_table, sizeof(*rlt->rlt_table)) == -1)
+				log_warn("%s: imsg_compose_event", __func__);
 			if (!(rlt->rlt_table->conf.flags & F_DISABLE))
 				TAILQ_FOREACH(host,
 				    &rlt->rlt_table->hosts, entry)
-					imsg_compose_event(&c->iev,
+					if (imsg_compose_event(&c->iev,
 					    IMSG_CTL_HOST, 0, 0, -1,
-					    host, sizeof(*host));
+					    host, sizeof(*host)) == -1)
+						log_warn("%s: imsg_compose_event",
+						    __func__);
 		}
 	}
 
@@ -426,24 +442,31 @@ routers:
 	if (env->sc_rts == NULL)
 		goto end;
 	TAILQ_FOREACH(rt, env->sc_rts, rt_entry) {
-		imsg_compose_event(&c->iev, IMSG_CTL_ROUTER, 0, 0, -1,
-		    rt, sizeof(*rt));
+		if (imsg_compose_event(&c->iev, IMSG_CTL_ROUTER, 0, 0, -1,
+		    rt, sizeof(*rt)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
 		if (rt->rt_conf.flags & F_DISABLE)
 			continue;
 
 		TAILQ_FOREACH(nr, &rt->rt_netroutes, nr_entry)
-			imsg_compose_event(&c->iev, IMSG_CTL_NETROUTE,
-			    0, 0, -1, nr, sizeof(*nr));
-		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
-		    rt->rt_gwtable, sizeof(*rt->rt_gwtable));
+			if (imsg_compose_event(&c->iev, IMSG_CTL_NETROUTE,
+			    0, 0, -1, nr, sizeof(*nr)) == -1)
+				log_warn("%s: imsg_compose_event", __func__);
+		if (imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
+		    rt->rt_gwtable, sizeof(*rt->rt_gwtable)) == -1)
+			log_warn("%s: imsg_compose_event", __func__);
+
 		if (!(rt->rt_gwtable->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rt->rt_gwtable->hosts, entry)
-				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
-				    0, 0, -1, host, sizeof(*host));
+				if (imsg_compose_event(&c->iev, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host)) == -1)
+					log_warn("%s: imsg_compose_event",
+					    __func__);
 	}
 
 end:
-	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+	if (imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0) == -1)
+		log_warn("%s: imsg_compose_event", __func__);
 }
 
 void
