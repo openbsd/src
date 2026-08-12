@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.25 2026/08/12 08:04:16 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.26 2026/08/12 08:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -99,6 +99,7 @@ struct port {
 	int hold;			/* hold the port open ? */
 	int refcnt;
 	struct midi *midi;
+	struct midithru *midithru;
 };
 
 struct midithru {
@@ -109,6 +110,7 @@ struct midithru {
 	unsigned int prefportmask;
 	int refcnt;
 	int thru;
+	int fixed;
 };
 
 /*

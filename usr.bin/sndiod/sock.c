@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.66 2026/08/12 08:04:16 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.67 2026/08/12 08:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -168,11 +168,6 @@ sock_close(struct sock *f)
 		slot_del(f->slot);
 		f->slot = NULL;
 	}
-	if (f->port) {
-		midi_unlink(f->midi, f->port->midi);
-		port_unref(f->port);
-		f->port = NULL;
-	}
 	if (f->midi) {
 		midi_del(f->midi);
 		f->midi = NULL;
@@ -317,7 +312,6 @@ sock_new(int fd)
 	f->pstate = SOCK_AUTH;
 	f->midithru = NULL;
 	f->slot = NULL;
-	f->port = NULL;
 	f->midi = NULL;
 	f->ctlslot = NULL;
 	f->opt = NULL;
@@ -715,7 +709,6 @@ sock_hello(struct sock *f)
 {
 	char name[CTL_NAMEMAX];
 	struct amsg_hello *p = &f->rmsg.u.hello;
-	struct port *c;
 	struct opt *opt;
 	struct midithru *midithru;
 	unsigned int mode;
@@ -777,14 +770,15 @@ sock_hello(struct sock *f)
 			return 0;
 		break;
 	case AMSG_TYPE_MIDITHRU:
-		snprintf(name, sizeof(name), "%d", devnum);
+		snprintf(name, sizeof(name), "default-%d", devnum);
 		midithru = midithru_byname(name);
 		if (midithru == NULL)
 			return 0;
 		break;
 	case AMSG_TYPE_MIDI:
-		c = port_bynum(devnum);
-		if (c == NULL)
+		snprintf(name, sizeof(name), "%d", devnum);
+		midithru = midithru_byname(name);
+		if (midithru == NULL)
 			return 0;
 		break;
 	default:
@@ -803,16 +797,12 @@ sock_hello(struct sock *f)
 			midithru_addprog(f->opt->midithru, f->midi);
 			break;
 		case AMSG_TYPE_MIDITHRU:
+		case AMSG_TYPE_MIDI:
 			if (!midithru_ref(midithru))
 				return 0;
 			f->midithru = midithru;
 			midithru_addprog(f->midithru, f->midi);
 			break;
-		case AMSG_TYPE_MIDI:
-			if (!port_ref(c))
-				return 0;
-			f->port = c;
-			midi_link(f->midi, c->midi);
 		}
 	} else if (mode & MODE_CTLMASK) {
 		switch (type) {
@@ -820,11 +810,9 @@ sock_hello(struct sock *f)
 			midithru = NULL;
 			break;
 		case AMSG_TYPE_MIDITHRU:
+		case AMSG_TYPE_MIDI:
 			opt = NULL;
 			break;
-		case AMSG_TYPE_MIDI:
-			logx(2, "sock %d: unhandled device", f->fd);
-			return 0;
 		}
 		f->ctlslot = ctlslot_new(opt, midithru, &sock_ctlops, f);
 		if (f->ctlslot == NULL) {

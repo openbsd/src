@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.13 2026/06/22 14:16:49 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.14 2026/08/12 08:30:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -60,7 +60,6 @@ struct sock {
 	struct midithru *midithru;	/* controlled or connected midithru */
 	struct slot *slot;		/* audio device slot number */
 	struct midi *midi;		/* midi endpoint */
-	struct port *port;		/* midi port */
 	struct opt *opt;		/* midi-controlled opt */
 	struct ctlslot *ctlslot;
 	unsigned char *ctldesc;		/* temporary buffer */
