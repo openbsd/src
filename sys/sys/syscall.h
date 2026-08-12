@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.285 2026/06/02 21:46:41 deraadt Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.286 2026/08/12 15:05:21 naddy Exp $	*/
 
 /*
  * System call numbers.
@@ -426,7 +426,7 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "char *" */
+/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
 #define	SYS_quotactl	148
 
 				/* 149 is obsolete oquota */

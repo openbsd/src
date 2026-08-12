@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.288 2026/06/02 21:46:41 deraadt Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.289 2026/08/12 15:05:21 naddy Exp $	*/
 
 /*
  * System call argument lists.
@@ -726,7 +726,7 @@ struct sys_quotactl_args {
 	syscallarg(const char *) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
-	syscallarg(char *) arg;
+	syscallarg(void *) arg;
 };
 
 struct sys_ypconnect_args {
