@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.145 2026/08/05 14:44:47 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.146 2026/08/12 08:04:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1744,8 +1744,8 @@ ctlslot_new(struct opt *o, struct midithru *t, struct ctlops *ops, void *arg)
 	s->self = 1 << i;
 	if (s->opt != NULL && !opt_ref(s->opt))
 		return NULL;
-	if (s->midithru)
-		midithru_ref(t);
+	if (s->midithru != NULL && !midithru_ref(s->midithru))
+		return NULL;
 	s->ops = ops;
 	s->arg = arg;
 	for (c = ctl_list; c != NULL; c = c->next) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.41 2026/08/05 14:44:47 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.42 2026/08/12 08:04:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -617,7 +617,7 @@ midithru_byname(const char *name)
 	return NULL;
 }
 
-void
+int
 midithru_ref(struct midithru *t)
 {
 	struct port *c;
@@ -626,22 +626,24 @@ midithru_ref(struct midithru *t)
 #ifdef DEBUG
 	logx(3, "%s: midithru requested", t->name);
 #endif
-	if (t->refcnt++ > 0)
-		return;
-	for (c = port_list; c != NULL; c = c->next) {
-		c->refcnt++;
-		if (c->state == DEV_CFG)
-			port_open(c);
-		if (c->state == DEV_INIT && (t->prefportmask & c->midi->self))
-			midithru_addport(t, c);
-		snprintf(name, sizeof(name), "%u", c->num);
-		ctl_new(CTL_MIDI_PORT, t, c,
-		    CTL_LIST, "", "", "server", -1, "port",
-		    name, -1, 1, !!(t->portmask & c->midi->self));
+	if (t->refcnt == 0) {
+		for (c = port_list; c != NULL; c = c->next) {
+			c->refcnt++;
+			if (c->state == DEV_CFG)
+				port_open(c);
+			if (c->state == DEV_INIT && (t->prefportmask & c->midi->self))
+				midithru_addport(t, c);
+			snprintf(name, sizeof(name), "%u", c->num);
+			ctl_new(CTL_MIDI_PORT, t, c,
+			    CTL_LIST, "", "", "server", -1, "port",
+			    name, -1, 1, !!(t->portmask & c->midi->self));
+		}
+		ctl_new(CTL_MIDI_THRU, t, c,
+		    CTL_SW, "", "", "server", -1, "thru",
+		    "", -1, 1, t->thru);
 	}
-	ctl_new(CTL_MIDI_THRU, t, c,
-	    CTL_SW, "", "", "server", -1, "thru",
-	    "", -1, 1, t->thru);
+	t->refcnt++;
+	return 1;
 }
 
 void

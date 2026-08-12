@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.65 2026/08/05 14:44:47 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.66 2026/08/12 08:04:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -803,8 +803,9 @@ sock_hello(struct sock *f)
 			midithru_addprog(f->opt->midithru, f->midi);
 			break;
 		case AMSG_TYPE_MIDITHRU:
+			if (!midithru_ref(midithru))
+				return 0;
 			f->midithru = midithru;
-			midithru_ref(f->midithru);
 			midithru_addprog(f->midithru, f->midi);
 			break;
 		case AMSG_TYPE_MIDI:

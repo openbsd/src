@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.24 2026/08/05 14:44:47 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.25 2026/08/12 08:04:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -153,7 +153,7 @@ void port_abort(struct port *p);
 struct midithru *midithru_new(const char *);
 struct midithru *midithru_byname(const char *);
 void midithru_del(struct midithru *);
-void midithru_ref(struct midithru *);
+int  midithru_ref(struct midithru *);
 void midithru_unref(struct midithru *);
 void midithru_addport(struct midithru *, struct port *);
 void midithru_addprog(struct midithru *, struct midi *);
