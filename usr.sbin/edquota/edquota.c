@@ -253,7 +253,7 @@ getprivs(u_int id, int quotatype)
 		qupsize = sizeof(*qup) + qfpathnamelen;
 		if ((qup = malloc(qupsize)) == NULL)
 			errx(2, "out of memory");
-		if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
+		if (quotactl(fs->fs_file, qcmd, id, &qup->dqblk) != 0) {
 	    		if (errno == EOPNOTSUPP && !warned) {
 				warned++;
 				(void)fprintf(stderr, "Warning: %s\n",
@@ -325,7 +325,7 @@ putprivs(long id, int quotatype, struct quotause *quplist)
 
 	qcmd = QCMD(Q_SETQUOTA, quotatype);
 	for (qup = quplist; qup; qup = qup->next) {
-		if (quotactl(qup->fsname, qcmd, id, (char *)&qup->dqblk) == 0)
+		if (quotactl(qup->fsname, qcmd, id, &qup->dqblk) == 0)
 			continue;
 		if ((fd = open(qup->qfname, O_WRONLY)) == -1) {
 			perror(qup->qfname);

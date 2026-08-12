@@ -168,7 +168,7 @@ repquota(struct fstab *fs, int type, char *qfpathname)
 	static int warned = 0;
 	static int multiple = 0;
 
-	if (quotactl(fs->fs_file, QCMD(Q_SYNC, type), 0, 0) < 0 &&
+	if (quotactl(fs->fs_file, QCMD(Q_SYNC, type), 0, NULL) < 0 &&
 	    errno == EOPNOTSUPP && !warned && vflag) {
 		warned++;
 		fprintf(stdout,

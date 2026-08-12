@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.44 2025/04/20 17:15:57 kn Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.45 2026/08/12 15:07:40 naddy Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ update(const char *fsname, const char *quotafile, int type)
 		(void) fclose(qfo);
 		return (1);
 	}
-	if (quotactl(fsname, QCMD(Q_SYNC, type), 0, (caddr_t)0) == -1 &&
+	if (quotactl(fsname, QCMD(Q_SYNC, type), 0, NULL) == -1 &&
 	    errno == EOPNOTSUPP && !warned &&
 	    (flags&(CHECK_DEBUG|CHECK_VERBOSE))) {
 		warned++;
@@ -451,7 +451,7 @@ update(const char *fsname, const char *quotafile, int type)
 		if (!(flags & CHECK_DEBUG)) {
 			fwrite((char *)&dqbuf, sizeof(struct dqblk), 1, qfo);
 			(void) quotactl(fsname, QCMD(Q_SETUSE, type), id,
-			    (caddr_t)&dqbuf);
+			    &dqbuf);
 		}
 		fup->fu_curinodes = 0;
 		fup->fu_curblocks = 0;

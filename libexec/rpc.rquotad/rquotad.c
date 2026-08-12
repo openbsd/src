@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.26 2024/05/21 05:00:47 jsg Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.27 2026/08/12 15:07:40 naddy Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -240,7 +240,7 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 			continue;
 
 		/* find the specified filesystem. get and return quota */
-		if (quotactl(fs->fs_file, qcmd, id, (char *)dqblk) == 0)
+		if (quotactl(fs->fs_file, qcmd, id, dqblk) == 0)
 			return (1);
 
 		if ((fd = open(fs->qfpathname, O_RDONLY)) == -1) {

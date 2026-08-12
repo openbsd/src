@@ -154,7 +154,7 @@ quotaonoff(struct fstab *fs, int offmode, int type, char *qfpathname)
 	if (strcmp(fs->fs_file, "/") && readonly(fs))
 		return (1);
 	if (offmode) {
-		if (quotactl(fs->fs_file, QCMD(Q_QUOTAOFF, type), 0, 0) < 0) {
+		if (quotactl(fs->fs_file, QCMD(Q_QUOTAOFF, type), 0, NULL) < 0) {
 			fprintf(stderr, "quotaoff: ");
 			perror(fs->fs_file);
 			return (1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.39 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: quota.c,v 1.40 2026/08/12 15:07:40 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -532,7 +532,7 @@ getufsquota(struct statfs *fst, struct fstab *fs, struct quotause *qup,
 	if (!ufshasquota(fs, quotatype, &qfpathname))
 		return (0);
 
-	if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
+	if (quotactl(fs->fs_file, qcmd, id, &qup->dqblk) != 0) {
 		if ((fd = open(qfpathname, O_RDONLY)) < 0) {
 			warn("%s", qfpathname);
 			return (0);
