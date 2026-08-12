@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.16 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: quotactl.2,v 1.17 2026/08/12 15:04:45 naddy Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)quotactl.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: August 12 2026 $
 .Dt QUOTACTL 2
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .In ufs/ufs/quota.h
 .In unistd.h
 .Ft int
-.Fn quotactl "const char *path" "int cmd" "int id" "char *addr"
+.Fn quotactl "const char *path" "int cmd" "int id" "void *addr"
 .Sh DESCRIPTION
 The
 .Fn quotactl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.386 2026/07/09 10:43:19 helg Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.387 2026/08/12 15:04:45 naddy Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ sys_quotactl(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
-		syscallarg(char *) arg;
+		syscallarg(void *) arg;
 	} */ *uap = v;
 	struct mount *mp;
 	int error;
