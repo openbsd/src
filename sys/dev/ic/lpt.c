@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.17 2025/06/25 20:28:09 miod Exp $ */
+/*	$OpenBSD: lpt.c,v 1.18 2026/08/12 00:53:40 mvs Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 	sc->sc_control = control;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, control);
 
-	sc->sc_inbuf = malloc(LPT_BSIZE, M_DEVBUF, M_WAITOK);
+	sc->sc_inbuf = malloc(LPT_BSIZE, M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 
@@ -309,6 +309,8 @@ lptpushbytes(struct lpt_softc *sc)
 						error = EIO;
 					if (error != EWOULDBLOCK)
 						return error;
+					if (sc->sc_count == 0)
+						return 0;
 				}
 				break;
 			}
@@ -360,10 +362,10 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
 	int error = 0;
 
 	while ((n = ulmin(LPT_BSIZE, uio->uio_resid)) != 0) {
-		sc->sc_cp = sc->sc_inbuf;
-		error = uiomove(sc->sc_cp, n, uio);
+		error = uiomove(sc->sc_inbuf, n, uio);
 		if (error != 0)
 			return error;
+		sc->sc_cp = sc->sc_inbuf;
 		sc->sc_count = n;
 		error = lptpushbytes(sc);
 		if (error) {
