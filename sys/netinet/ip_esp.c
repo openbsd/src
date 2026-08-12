@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.200 2025/12/11 05:06:02 dlg Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.201 2026/08/12 18:23:14 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -381,11 +381,16 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
 
 	/* Replay window checking, if appropriate -- no value commitment. */
 	if (tdb->tdb_wnd > 0) {
+		int chk_rpl;
+
 		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
 		    &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 0)) {
+		mtx_enter(&tdb->tdb_mtx);
+		chk_rpl = checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 0);
+		mtx_leave(&tdb->tdb_mtx);
+		switch (chk_rpl) {
 		case 0: /* All's well */
 			break;
 		case 1:
@@ -537,11 +542,16 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
 
 	/* Replay window checking, if appropriate */
 	if (tdb->tdb_wnd > 0) {
+		int chk_rpl;
+
 		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
 		    &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 1)) {
+		mtx_enter(&tdb->tdb_mtx);
+		chk_rpl = checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 1);
+		mtx_leave(&tdb->tdb_mtx);
+		switch (chk_rpl) {
 		case 0: /* All's well */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
@@ -836,7 +846,9 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Initialize ESP header. */
 	memcpy(mtod(mo, caddr_t) + roff, (caddr_t) &tdb->tdb_spi,
 	    sizeof(u_int32_t));
+	mtx_enter(&tdb->tdb_mtx);
 	replay64 = tdb->tdb_rpl++;	/* used for both header and ESN */
+	mtx_leave(&tdb->tdb_mtx);
 	replay = htonl((u_int32_t)replay64);
 	memcpy(mtod(mo, caddr_t) + roff + sizeof(u_int32_t), (caddr_t) &replay,
 	    sizeof(u_int32_t));
@@ -984,6 +996,8 @@ checkreplaywindow(struct tdb *tdb, u_int64_t t, u_int32_t seq, u_int32_t *seqh,
 	u_int32_t	tl, th, wl;
 	u_int32_t	packet, window = TDB_REPLAYMAX - TDB_REPLAYWASTE;
 	int		idx, esn = tdb->tdb_flags & TDBF_ESN;
+
+	MUTEX_ASSERT_LOCKED(&tdb->tdb_mtx);
 
 	tl = (u_int32_t)t;
 	th = (u_int32_t)(t >> 32);

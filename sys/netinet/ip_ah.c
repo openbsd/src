@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.180 2026/07/12 21:29:51 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.181 2026/08/12 18:23:14 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -555,11 +555,16 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
 
 	/* Replay window checking, if applicable. */
 	if (tdb->tdb_wnd > 0) {
+		int chk_rpl;
+
 		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
 		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 0)) {
+		mtx_enter(&tdb->tdb_mtx);
+		chk_rpl = checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 0);
+		mtx_leave(&tdb->tdb_mtx);
+		switch (chk_rpl) {
 		case 0: /* All's well. */
 			break;
 		case 1:
@@ -729,11 +734,16 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
 
 	/* Replay window checking, if applicable. */
 	if (tdb->tdb_wnd > 0) {
+		int chk_rpl;
+
 		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
 		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 1)) {
+		mtx_enter(&tdb->tdb_mtx);
+		chk_rpl = checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 1);
+		mtx_leave(&tdb->tdb_mtx);
+		switch (chk_rpl) {
 		case 0: /* All's well. */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
@@ -896,19 +906,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	ahstat_inc(ahs_output);
 
-	/*
-	 * Check for replay counter wrap-around in automatic (not
-	 * manual) keying.
-	 */
-	if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0)) {
-		DPRINTF("SA %s/%08x should have expired",
-		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
-		    ntohl(tdb->tdb_spi));
-		ahstat_inc(ahs_wrap);
-		error = EINVAL;
-		goto drop;
-	}
-
 	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
 	switch (tdb->tdb_dst.sa.sa_family) {
@@ -1020,7 +1017,9 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Zeroize authenticator. */
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
+	mtx_enter(&tdb->tdb_mtx);
 	replay64 = tdb->tdb_rpl++;
+	mtx_leave(&tdb->tdb_mtx);
 	ah->ah_rpl = htonl((u_int32_t)replay64);
 #if NPFSYNC > 0
 	pfsync_update_tdb(tdb,1);

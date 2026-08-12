@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.334 2026/04/22 23:06:01 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.335 2026/08/12 18:23:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2380,6 +2380,8 @@ static void
 pfsync_out_tdb(struct tdb *tdb, void *buf)
 {
 	struct pfsync_tdb *ut = buf;
+
+	MUTEX_ASSERT_LOCKED(&tdb->tdb_mtx);
 
 	memset(ut, 0, sizeof(*ut));
 	ut->spi = tdb->tdb_spi;

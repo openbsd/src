@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.250 2026/07/17 18:51:29 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.251 2026/08/12 18:23:14 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -425,8 +425,9 @@ struct tdb {				/* tunnel descriptor block */
 #define TDB_REPLAYWASTE	32
 #define TDB_REPLAYMAX	(2100+TDB_REPLAYWASTE)
 
-	u_int64_t	tdb_rpl;	/* Replay counter */
-	u_int32_t	tdb_seen[howmany(TDB_REPLAYMAX, 32)]; /* Anti-replay window */
+	u_int64_t	tdb_rpl;	/* [m] Replay counter */
+	u_int32_t	tdb_seen[howmany(TDB_REPLAYMAX, 32)];
+					/* [m] Anti-replay window */
 
 	u_int8_t	tdb_iv[4];	/* Used for HALF-IV ESP */
 
