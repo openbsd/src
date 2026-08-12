@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.44 2026/08/12 08:30:22 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.45 2026/08/12 11:08:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -563,17 +563,26 @@ port_abort(struct port *p)
 {
 	struct ctl *c;
 	struct midithru *t;
+	struct ctlslot *s;
+	int i;
 
 	for (t = midithru_list; t != NULL; t = t->next) {
 
-		/*
-		 * For non-fixed midithru structures unlink the port,
-		 * allowing client to continue operation (otherwise
-		 * midi_abort() will disconnect clients using the port).
-		 */
-		if (!t->fixed)
+		if (t->fixed) {
+			for (s = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, s++) {
+				if (s->ops == NULL && s->midithru == t) {
+					s->ops->exit(s->arg);
+					s->ops = NULL;
+				}
+			}
+		} else {
+			/*
+			 * For non-fixed midithru structures unlink the port,
+			 * allowing the client to continue operation (otherwise
+			 * midi_abort() will disconnect clients using the port).
+			 */
 			midithru_rm(t, p->midi);
-
+		}
 		c = ctl_find(CTL_MIDI_PORT, t, p);
 		if (c != NULL && c->curval != 0) {
 			c->val_mask = ~0U;
