@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.87 2026/08/03 06:17:48 gnezdo Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.88 2026/08/12 00:52:40 mvs Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -294,9 +294,9 @@ allocated:
 	if (error) {
 		if ((--shmseg->shm_nattch <= 0) &&
 		    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
-			shm_deallocate_segment(shmseg);
 			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
 			shmsegs[shm_last_free] = NULL;
+			shm_deallocate_segment(shmseg);
 		} else {
 			uao_detach(shm_handle->shm_object);
 		}
@@ -361,9 +361,9 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 		shmseg->shm_perm.key = IPC_PRIVATE;
 		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
 		if (shmseg->shm_nattch <= 0) {
-			shm_deallocate_segment(shmseg);
 			shm_last_free = IPCID_TO_IX(shmid);
 			shmsegs[shm_last_free] = NULL;
+			shm_deallocate_segment(shmseg);
 		}
 		break;
 	case SHM_LOCK:
