@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.16 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.17 2026/08/12 18:38:17 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -82,8 +82,10 @@ sync_routes(struct relayd *env, struct router *rt)
 			memcpy(&crt.host, &host->conf, sizeof(host->conf));
 			memcpy(&crt.rt, &rt->rt_conf, sizeof(rt->rt_conf));
 
-			proc_compose(env->sc_ps, PROC_PARENT,
-			    IMSG_RTMSG, &crt, sizeof(crt));
+			if (proc_compose(env->sc_ps, PROC_PARENT, IMSG_RTMSG,
+			    &crt, sizeof(crt)) == -1) {
+				log_warn("%s: proc_compose", __func__);
+			}
 		}
 	}
 }

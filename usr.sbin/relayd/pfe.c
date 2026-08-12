@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.98 2026/08/07 10:21:39 rsadowski Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.99 2026/08/12 18:38:17 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -151,8 +151,9 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 
 		/* Forward to relay engine(s) */
-		proc_compose(env->sc_ps, PROC_RELAY,
-		    IMSG_HOST_STATUS, &st, sizeof(st));
+		if (proc_compose(env->sc_ps, PROC_RELAY, IMSG_HOST_STATUS, &st,
+		    sizeof(st)) == -1)
+			log_warn("%s: proc_compose", __func__);
 
 		if ((table = table_find(env, host->conf.tableid)) ==
 		    NULL)
@@ -279,8 +280,9 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("%s: invalid relay proc", __func__);
 		if (natlook(env, &cnl) != 0)
 			cnl.in = -1;
-		proc_compose_imsg(env->sc_ps, PROC_RELAY, cnl.proc,
-		    IMSG_NATLOOK, -1, -1, &cnl, sizeof(cnl));
+		if (proc_compose_imsg(env->sc_ps, PROC_RELAY, cnl.proc,
+		    IMSG_NATLOOK, -1, -1, &cnl, sizeof(cnl)) == -1)
+			log_warn("%s: proc_compose_imsg", __func__);
 		break;
 	case IMSG_STATISTICS:
 		if (imsg_get_data(imsg, &crs, sizeof(crs)) == -1)
@@ -455,8 +457,9 @@ show_sessions(struct ctl_conn *c)
 		/*
 		 * Request all the running sessions from the process
 		 */
-		proc_compose_imsg(env->sc_ps, PROC_RELAY, proc,
-		    IMSG_CTL_SESSION, -1, -1, &cid, sizeof(cid));
+		if (proc_compose_imsg(env->sc_ps, PROC_RELAY, proc,
+		    IMSG_CTL_SESSION, -1, -1, &cid, sizeof(cid)) == -1)
+			log_warn("%s: proc_compose_imsg", __func__);
 		c->waiting++;
 	}
 }
@@ -544,12 +547,14 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
-	proc_compose(env->sc_ps, PROC_HCE, IMSG_TABLE_DISABLE,
-	    &table->conf.id, sizeof(table->conf.id));
+	if (proc_compose(env->sc_ps, PROC_HCE, IMSG_TABLE_DISABLE,
+	    &table->conf.id, sizeof(table->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	/* Forward to relay engine(s) */
-	proc_compose(env->sc_ps, PROC_RELAY, IMSG_TABLE_DISABLE,
-	    &table->conf.id, sizeof(table->conf.id));
+	if (proc_compose(env->sc_ps, PROC_RELAY, IMSG_TABLE_DISABLE,
+	    &table->conf.id, sizeof(table->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	log_debug("%s: table %d", __func__, table->conf.id);
 	pfe_sync();
@@ -580,12 +585,14 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
-	proc_compose(env->sc_ps, PROC_HCE, IMSG_TABLE_ENABLE,
-	    &table->conf.id, sizeof(table->conf.id));
+	if (proc_compose(env->sc_ps, PROC_HCE, IMSG_TABLE_ENABLE,
+	    &table->conf.id, sizeof(table->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	/* Forward to relay engine(s) */
-	proc_compose(env->sc_ps, PROC_RELAY, IMSG_TABLE_ENABLE,
-	    &table->conf.id, sizeof(table->conf.id));
+	if (proc_compose(env->sc_ps, PROC_RELAY, IMSG_TABLE_ENABLE,
+	    &table->conf.id, sizeof(table->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	log_debug("%s: table %d", __func__, table->conf.id);
 	pfe_sync();
@@ -627,12 +634,15 @@ disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 	host->check_cnt = 0;
 	host->up_cnt = 0;
 
-	proc_compose(env->sc_ps, PROC_HCE, IMSG_HOST_DISABLE,
-	    &host->conf.id, sizeof(host->conf.id));
+	if (proc_compose(env->sc_ps, PROC_HCE, IMSG_HOST_DISABLE,
+	    &host->conf.id, sizeof(host->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	/* Forward to relay engine(s) */
-	proc_compose(env->sc_ps, PROC_RELAY, IMSG_HOST_DISABLE,
-	    &host->conf.id, sizeof(host->conf.id));
+	if (proc_compose(env->sc_ps, PROC_RELAY, IMSG_HOST_DISABLE,
+	    &host->conf.id, sizeof(host->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
+
 	log_debug("%s: host %d", __func__, host->conf.id);
 
 	if (!host->conf.parentid) {
@@ -680,12 +690,14 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 	host->flags &= ~(F_DEL);
 	host->flags &= ~(F_ADD);
 
-	proc_compose(env->sc_ps, PROC_HCE, IMSG_HOST_ENABLE,
-	    &host->conf.id, sizeof(host->conf.id));
+	if (proc_compose(env->sc_ps, PROC_HCE, IMSG_HOST_ENABLE,
+	    &host->conf.id, sizeof(host->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	/* Forward to relay engine(s) */
-	proc_compose(env->sc_ps, PROC_RELAY, IMSG_HOST_ENABLE,
-	    &host->conf.id, sizeof(host->conf.id));
+	if (proc_compose(env->sc_ps, PROC_RELAY, IMSG_HOST_ENABLE,
+	    &host->conf.id, sizeof(host->conf.id)) == -1)
+		log_warn("%s: proc_compose", __func__);
 
 	log_debug("%s: host %d", __func__, host->conf.id);
 
@@ -800,8 +812,9 @@ pfe_sync(void)
 		    demote.level, table->conf.name, table->conf.demote_group);
 		(void)strlcpy(demote.group, table->conf.demote_group,
 		    sizeof(demote.group));
-		proc_compose(env->sc_ps, PROC_PARENT, IMSG_DEMOTE,
-		    &demote, sizeof(demote));
+		if (proc_compose(env->sc_ps, PROC_PARENT, IMSG_DEMOTE,
+		    &demote, sizeof(demote)) == -1)
+			log_warn("%s: proc_compose", __func__);
 	}
 }
 

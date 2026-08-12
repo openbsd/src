@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.54 2026/08/07 10:21:39 rsadowski Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.55 2026/08/12 18:38:17 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -316,8 +316,9 @@ relay_udp_server(int fd, short sig, void *arg)
 		cnl->proto = IPPROTO_UDP;
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
-		proc_compose(env->sc_ps, PROC_PFE,
-		    IMSG_NATLOOK, cnl, sizeof(*cnl));
+		if (proc_compose(env->sc_ps, PROC_PFE, IMSG_NATLOOK, cnl,
+		    sizeof(*cnl)) == -1)
+			log_warn("%s: proc_compose", __func__);
 
 		/* Schedule timeout */
 		evtimer_set(&con->se_ev, relay_natlook, con);

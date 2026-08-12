@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.206 2026/08/07 10:21:39 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.207 2026/08/12 18:38:17 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -324,8 +324,9 @@ parent_configure(struct relayd *env)
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
 			continue;
-		proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, -1,
-		    -1, &env->sc_conf, sizeof(env->sc_conf));
+		if (proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, -1,
+		    -1, &env->sc_conf, sizeof(env->sc_conf)) == -1)
+			fatal("%s: proc_compose_imsg", __func__);
 	}
 
 	ret = 0;
@@ -383,7 +384,9 @@ parent_configure_done(struct relayd *env)
 			if (id == privsep_process)
 				continue;
 
-			proc_compose(env->sc_ps, id, IMSG_CTL_START, NULL, 0);
+			if (proc_compose(env->sc_ps, id, IMSG_CTL_START, NULL,
+			    0) == -1)
+				fatal("%s: proc_compose", __func__);
 		}
 	}
 }
@@ -488,7 +491,9 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		scr.name[sizeof(scr.name) - 1] = '\0';
 		scr.path[sizeof(scr.path) - 1] = '\0';
 		scr.retval = script_exec(env, &scr);
-		proc_compose(ps, PROC_HCE, IMSG_SCRIPT, &scr, sizeof(scr));
+		if (proc_compose(ps, PROC_HCE, IMSG_SCRIPT, &scr,
+		    sizeof(scr)) == -1)
+			log_warn("%s: proc_compose", __func__);
 		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
@@ -528,8 +533,9 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			/* NOTREACHED */
 		}
 		s = bindany(&bnd);
-		proc_compose_imsg(ps, PROC_RELAY, bnd.bnd_proc,
-		    IMSG_BINDANY, -1, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
+		if (proc_compose_imsg(ps, PROC_RELAY, bnd.bnd_proc,
+		    IMSG_BINDANY, -1, s, &bnd.bnd_id, sizeof(bnd.bnd_id)) == -1)
+			log_warn("%s: proc_compose_imsg", __func__);
 		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
@@ -1939,8 +1945,9 @@ parent_tls_ticket_rekey(int fd, short events, void *arg)
 	key.tt_keyrev = arc4random();
 	arc4random_buf(key.tt_key, sizeof(key.tt_key));
 
-	proc_compose_imsg(env->sc_ps, PROC_RELAY, -1, IMSG_TLSTICKET_REKEY,
-	    -1, -1, &key, sizeof(key));
+	if (proc_compose_imsg(env->sc_ps, PROC_RELAY, -1, IMSG_TLSTICKET_REKEY,
+	    -1, -1, &key, sizeof(key)) == -1)
+		log_warn("%s: proc_compose_imsg", __func__);
 
 	evtimer_set(&rekeyev, parent_tls_ticket_rekey, env);
 	timerclear(&tv);
