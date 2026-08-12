@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.68 2026/08/12 10:36:03 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.69 2026/08/12 10:58:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -688,7 +688,6 @@ sock_hello(struct sock *f)
 	struct midithru *midithru;
 	unsigned int mode;
 	unsigned int type;
-	unsigned int devnum;
 	unsigned int id;
 
 	mode = ntohs(p->mode);
@@ -730,14 +729,29 @@ sock_hello(struct sock *f)
 #endif
 		return 0;
 	}
-	if (AMSG_ISSET(p->devnum)) {
-		type = p->devnum >> 4;
-		devnum = p->devnum & 0xf;
-		snprintf(name, sizeof(name), "%d", devnum);
+
+	/*
+	 * Old audio clients don't set p->type.
+	 */
+	type = AMSG_ISSET(p->type) ? p->type : AMSG_TYPE_MAGIC | AMSG_TYPE_SND;
+
+	/*
+	 * New clients set the AMSG_TYPE_MAGIC bit. Older ones encode
+	 * the (type, device number) pair in the type field, in the MSB
+	 * and LSB nibbles respectively.
+	 */
+	if (type & AMSG_TYPE_MAGIC) {
+		type = type & ~AMSG_TYPE_MAGIC;
+		snprintf(name, sizeof(name), "%s%s",
+		    type == AMSG_TYPE_MIDITHRU ? "default-" : "",
+		    p->opt);
 	} else {
-		type = AMSG_TYPE_SND;
-		snprintf(name, sizeof(name), "%s", p->opt);
+		type = type >> 4;
+		snprintf(name, sizeof(name), "%s%d",
+		    type == AMSG_TYPE_MIDITHRU ? "default-" : "",
+		    type & 0xf);
 	}
+
 	switch (type) {
 	case AMSG_TYPE_SND:
 		opt = opt_byname(name);
@@ -745,13 +759,7 @@ sock_hello(struct sock *f)
 			return 0;
 		break;
 	case AMSG_TYPE_MIDITHRU:
-		snprintf(name, sizeof(name), "default-%d", devnum);
-		midithru = midithru_byname(name);
-		if (midithru == NULL)
-			return 0;
-		break;
 	case AMSG_TYPE_MIDI:
-		snprintf(name, sizeof(name), "%d", devnum);
 		midithru = midithru_byname(name);
 		if (midithru == NULL)
 			return 0;
