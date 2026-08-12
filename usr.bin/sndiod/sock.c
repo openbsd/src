@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.67 2026/08/12 08:30:22 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.68 2026/08/12 10:36:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -101,31 +101,6 @@ struct ctlops sock_ctlops = {
 struct sock *sock_list = NULL;
 unsigned int sock_sesrefs = 0;		/* connections to the session */
 uint8_t sock_sescookie[AMSG_COOKIELEN];	/* owner of the session */
-
-/*
- * Old clients used to send dev number and opt name. This routine
- * finds proper opt pointer for the given device.
- */
-static struct opt *
-legacy_opt(int devnum, char *optname)
-{
-	struct dev *d;
-	struct opt *o;
-
-	d = dev_bynum(devnum);
-	if (d == NULL)
-		return NULL;
-	if (strcmp(optname, "default") == 0) {
-		for (o = opt_list; o != NULL; o = o->next) {
-			if (strcmp(o->name, d->name) == 0)
-				return o;
-		}
-		return NULL;
-	} else {
-		o = opt_byname(optname);
-		return (o != NULL && o->dev == d) ? o : NULL;
-	}
-}
 
 /*
  * If control slot is associated to a particular opt, then
@@ -755,17 +730,17 @@ sock_hello(struct sock *f)
 #endif
 		return 0;
 	}
-	if (p->devnum == AMSG_NODEV) {
-		type = AMSG_TYPE_SND;
-		devnum = p->devnum;
-	} else {
+	if (AMSG_ISSET(p->devnum)) {
 		type = p->devnum >> 4;
 		devnum = p->devnum & 0xf;
+		snprintf(name, sizeof(name), "%d", devnum);
+	} else {
+		type = AMSG_TYPE_SND;
+		snprintf(name, sizeof(name), "%s", p->opt);
 	}
 	switch (type) {
 	case AMSG_TYPE_SND:
-		opt = (p->devnum == AMSG_NODEV) ?
-		    opt_byname(p->opt) : legacy_opt(p->devnum, p->opt);
+		opt = opt_byname(name);
 		if (opt == NULL)
 			return 0;
 		break;
