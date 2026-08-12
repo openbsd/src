@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.15 2026/08/05 14:44:47 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.16 2026/08/12 11:03:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,7 +17,6 @@
 #ifndef OPT_H
 #define OPT_H
 
-#define OPT_NMAX		16
 #define OPT_NAPP		8
 
 struct dev;
@@ -44,7 +43,6 @@ struct opt {
 	struct app app_array[OPT_NAPP];
 	unsigned int app_serial;
 
-	int num;
 	char name[CTL_NAMEMAX];
 	int maxweight;		/* max dynamic range for clients */
 	int pmin, pmax;		/* play channels */
@@ -73,7 +71,6 @@ struct opt *opt_new(struct dev *, char *, int, int, int, int,
 void opt_del(struct opt *);
 void opt_setalt(struct opt *, struct dev *);
 struct opt *opt_byname(char *);
-struct opt *opt_bynum(int);
 void opt_init(struct opt *);
 void opt_done(struct opt *);
 void opt_setmode(struct opt *, int, int);
