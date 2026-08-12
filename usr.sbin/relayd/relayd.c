@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.207 2026/08/12 18:38:17 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.208 2026/08/12 19:29:34 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1194,12 +1194,12 @@ table_findbyconf(struct relayd *env, struct table *tb)
 
 	bcopy(&tb->conf, &a, sizeof(a));
 	a.id = a.rdrid = 0;
-	a.flags &= ~(F_USED|F_BACKUP);
+	a.flags &= ~F_USED;
 
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		bcopy(&table->conf, &b, sizeof(b));
 		b.id = b.rdrid = 0;
-		b.flags &= ~(F_USED|F_BACKUP);
+		b.flags &= ~F_USED;
 
 		/*
 		 * Compare two tables and return the existing table if

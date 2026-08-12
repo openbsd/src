@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.293 2026/08/12 18:39:42 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.294 2026/08/12 19:29:34 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -373,7 +373,7 @@ union hashkey {
 };
 
 #define F_DISABLE		0x00000001
-#define F_BACKUP		0x00000002
+#define F_BACKUP		0x00000002 /* unused */
 #define F_USED			0x00000004
 #define F_DOWN			0x00000008
 #define F_ADD			0x00000010

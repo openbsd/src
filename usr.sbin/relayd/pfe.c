@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.100 2026/08/12 18:39:42 rsadowski Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.101 2026/08/12 19:29:34 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -755,7 +755,6 @@ pfe_sync(void)
 
 	bzero(&id, sizeof(id));
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
-		rdr->conf.flags &= ~(F_BACKUP);
 		rdr->conf.flags &= ~(F_DOWN);
 
 		if (rdr->conf.flags & F_DISABLE ||
@@ -763,7 +762,6 @@ pfe_sync(void)
 			rdr->conf.flags |= F_DOWN;
 			active = NULL;
 		} else if (rdr->table->up == 0 && rdr->backup->up > 0) {
-			rdr->conf.flags |= F_BACKUP;
 			active = rdr->backup;
 			active->conf.flags |=
 			    rdr->table->conf.flags & F_CHANGED;
@@ -800,7 +798,6 @@ pfe_sync(void)
 	}
 
 	TAILQ_FOREACH(rt, env->sc_rts, rt_entry) {
-		rt->rt_conf.flags &= ~(F_BACKUP);
 		rt->rt_conf.flags &= ~(F_DOWN);
 
 		if ((rt->rt_gwtable->conf.flags & F_CHANGED))

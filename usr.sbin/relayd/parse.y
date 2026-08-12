@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.268 2026/08/08 12:01:30 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.269 2026/08/12 19:29:34 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -173,7 +173,7 @@ typedef struct {
 %}
 
 %token	AGENTX APPEND
-%token	BACKLOG BACKUP BINARY BLOCK BUFFER BRIEF
+%token	BACKLOG BINARY BLOCK BUFFER BRIEF
 %token	CA CACHE CERTIFICATE CHANGES CHECK CHECKS CIPHERS CLIENT CODE CONNECTION
 %token	CONNECTIONS CONTEXT COOKIE
 %token	DEMOTE DESTINATION DIGEST DISABLE
@@ -2172,8 +2172,6 @@ forwardspec	: STRING port retry	{
 			rlt->rlt_table->conf.flags |= F_USED;
 			rlt->rlt_mode = dstmode;
 			rlt->rlt_flags = F_USED;
-			if (!TAILQ_EMPTY(&rlay->rl_tables))
-				rlt->rlt_flags |= F_BACKUP;
 
 			if (hashkey != NULL &&
 			    (rlay->rl_conf.flags & F_HASHKEY) == 0) {
@@ -2539,7 +2537,6 @@ lookup(char *s)
 		{ "agentx",		AGENTX },
 		{ "append",		APPEND },
 		{ "backlog",		BACKLOG },
-		{ "backup",		BACKUP },
 		{ "binary",		BINARY },
 		{ "block",		BLOCK },
 		{ "brief",		BRIEF },

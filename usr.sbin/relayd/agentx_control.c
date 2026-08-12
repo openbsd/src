@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.11 2026/08/12 18:38:17 rsadowski Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.12 2026/08/12 19:29:34 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -568,8 +568,6 @@ agentxctl_redirect(struct agentx_varbind *sav)
 			agentx_varbind_integer(sav, 1);
 		else if (rdr->conf.flags & F_DOWN)
 			agentx_varbind_integer(sav, 2);
-		else if (rdr->conf.flags & F_BACKUP)
-			agentx_varbind_integer(sav, 3);
 		else
 			agentx_varbind_integer(sav, 0);
 	} else if (agentx_varbind_get_object(sav) == relaydRedirectName)
