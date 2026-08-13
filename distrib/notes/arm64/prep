@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.22 2024/09/28 17:09:52 sthen Exp $
+dnl	$OpenBSD: prep,v 1.23 2026/08/13 08:21:31 sthen Exp $
 To perform an installation you must be able to interact with the
 console of the machine.  In some cases this can be done by an attached
 monitor and keyboard.  In others a serial console is required.
@@ -80,35 +80,43 @@ Install on Apple Silicon:
 	"Install an OS into free space"
   option, choose
 	"UEFI environment only (m1n1 + U-Boot + ESP)"
-  and follow the steps presented to you.  
+  and follow the steps presented to you.
 
   Now you can copy the miniroot or install image
   ("miniroot{:--:}OSrev.img" or "install{:--:}OSrev.img") to a USB
   drive, plug it into one of the ports on the machine and reset
   the machine to boot into the OpenBSD installer.
 
-Install on Raspberry Pi:
+Install on Raspberry Pi 3 and 4:
 
-  The standard miniroot supports at least the Raspberry Pi 3 and 4 with
-  no additional firmware.  Some devices may not be functional with Pi 3+.
-  It is recommended that you install to a USB storage device.
+  The standard miniroot supports these with the included U-Boot version.
 
   The default system console is on the TTL serial interface on the
   TXD/RXD/GND pins of the https://pinout.xyz/ header on the board.
   It will be helpful to obtain an adapter (e.g. CP2102 USB-UART).
-  If you have one, attach it to the pins and a computer; a command
-  such as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial
-  port device) should connect you to the board's console.
+  If you have one, attach it to the pins and a computer; a command such
+  as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
+  should connect you to the board's console.
 
   If not, note that once the kernel has started running, by default you
   will only see output on the serial console.  To switch to displaying on
   the monitor instead, watch for the OpenBSD BOOTAA64 "boot>" prompt,
   and type "set tty fb0".
 
-  Alternatively the system can be booted using UEFI firmware found at
-  https://github.com/pftf/RPi4. Follow their instructions to install to an
-  SD card and run the OpenBSD installer from USB. v1.21 is known to work;
-  some newer versions may have problems.
+  While it is possible to install OpenBSD on SD card, for Pi 3/4 we
+  generally recommend USB storage (or boot from SD card but store the
+  OS on USB), or NVMe on the Compute Module 4.
+
+Install on Raspberry Pi 5:
+
+  Also supported by U-Boot included on the standard miniroot.
+
+  The default system console is on the dedicated 3-pin debug interface
+  (a JST connector between the micro-HDMI ports).  Use the "Raspberry Pi
+  Debug Probe".  From another OpenBSD system, use cu(1) to connect to the
+  serial port it provides, for example "cu -l cuaU0 -s 115200".
+
+  Generally NVMe storage is preferred on the Pi 5.
 
 Install on systems without a supported miniroot:
 
