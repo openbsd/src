@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.h,v 1.14 2024/11/07 09:04:55 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.h,v 1.15 2026/08/13 21:08:17 kettenis Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -50,6 +50,11 @@ struct swap_key {
 	u_int32_t key[SWAP_KEY_SIZE];	/* secret key for swap range */
 	u_int16_t refcount;		/* pages that still need it */
 };
+
+extern int (*swap_key_prepare_fcn)(struct swap_key *, int);
+extern void (*swap_key_cleanup_fcn)(void);
+extern void (*swap_encrypt_fcn)(caddr_t, caddr_t, u_int64_t, size_t);
+extern void (*swap_decrypt_fcn)(caddr_t, caddr_t, u_int64_t, size_t);
 
 int swap_encrypt_ctl(int *, u_int, void *, size_t *, void *, size_t,
 			  struct proc *);

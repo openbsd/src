@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.24 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.25 2026/08/13 21:08:17 kettenis Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -41,8 +41,22 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap_encrypt.h>
 
+int	swap_key_prepare_rijndael(struct swap_key *, int);
+void	swap_key_cleanup_rijndael(void);
+void	swap_encrypt_rijndael(caddr_t, caddr_t, u_int64_t, size_t);
+void	swap_decrypt_rijndael(caddr_t, caddr_t, u_int64_t, size_t);
+
+int	(*swap_key_prepare_fcn)(struct swap_key *, int) =
+	    swap_key_prepare_rijndael;
+void	(*swap_key_cleanup_fcn)(void) =
+	    swap_key_cleanup_rijndael;
+void	(*swap_encrypt_fcn)(caddr_t, caddr_t, u_int64_t, size_t) =
+	    swap_encrypt_rijndael;
+void	(*swap_decrypt_fcn)(caddr_t, caddr_t, u_int64_t, size_t) =
+	    swap_decrypt_rijndael;
+
 struct swap_key *kcur = NULL;
-rijndael_ctx swap_ctxt;
+int kencrypt;
 
 int uvm_doswapencrypt = 1;
 u_int uvm_swpkeyscreated = 0;
@@ -114,40 +128,11 @@ void
 swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst, u_int64_t block,
     size_t count)
 {
-	u_int32_t *dsrc = (u_int32_t *)src;
-	u_int32_t *ddst = (u_int32_t *)dst;
-	u_int32_t iv[4];
-	u_int32_t iv1, iv2, iv3, iv4;
-
 	if (!swap_encrypt_initialized)
 		swap_encrypt_initialized = 1;
 
 	swap_key_prepare(key, 1);
-
-	count /= sizeof(u_int32_t);
-
-	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
-	rijndael_encrypt(&swap_ctxt, (u_char *)iv, (u_char *)iv); 
-	iv1 = iv[0]; iv2 = iv[1]; iv3 = iv[2]; iv4 = iv[3];
-
-	for (; count > 0; count -= 4) {
-		ddst[0] = dsrc[0] ^ iv1;
-		ddst[1] = dsrc[1] ^ iv2;
-		ddst[2] = dsrc[2] ^ iv3;
-		ddst[3] = dsrc[3] ^ iv4;
-		/*
-		 * Do not worry about endianness, it only needs to decrypt
-		 * on this machine.
-		 */
-		rijndael_encrypt(&swap_ctxt, (u_char *)ddst, (u_char *)ddst);
-		iv1 = ddst[0];
-		iv2 = ddst[1];
-		iv3 = ddst[2];
-		iv4 = ddst[3];
-
-		dsrc += 4;
-		ddst += 4;
-	}
+	swap_encrypt_fcn(src, dst, block, count);
 }
 
 /*
@@ -159,41 +144,11 @@ void
 swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst, u_int64_t block,
     size_t count)
 {
-	u_int32_t *dsrc = (u_int32_t *)src;
-	u_int32_t *ddst = (u_int32_t *)dst;
-	u_int32_t iv[4];
-	u_int32_t iv1, iv2, iv3, iv4, niv1, niv2, niv3, niv4;
-
 	if (!swap_encrypt_initialized)
 		panic("swap_decrypt: key not initialized");
 
 	swap_key_prepare(key, 0);
-
-	count /= sizeof(u_int32_t);
-
-	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
-	rijndael_encrypt(&swap_ctxt, (u_char *)iv, (u_char *)iv); 
-	iv1 = iv[0]; iv2 = iv[1]; iv3 = iv[2]; iv4 = iv[3];
-
-	for (; count > 0; count -= 4) {
-		ddst[0] = niv1 = dsrc[0];
-		ddst[1] = niv2 = dsrc[1];
-		ddst[2] = niv3 = dsrc[2];
-		ddst[3] = niv4 = dsrc[3];
-		rijndael_decrypt(&swap_ctxt, (u_char *)ddst, (u_char *)ddst);
-		ddst[0] ^= iv1;
-		ddst[1] ^= iv2;
-		ddst[2] ^= iv3;
-		ddst[3] ^= iv4;
-
-		iv1 = niv1;
-		iv2 = niv2;
-		iv3 = niv3;
-		iv4 = niv4;
-
-		dsrc += 4;
-		ddst += 4;
-	}
+	swap_decrypt_fcn(src, dst, block, count);
 }
 
 void
@@ -204,16 +159,10 @@ swap_key_prepare(struct swap_key *key, int encrypt)
 	 * if we only have the encryption schedule, we have
 	 * to recompute and get the decryption schedule also.
 	 */
-	if (kcur == key && (encrypt || !swap_ctxt.enc_only))
+	if (kcur == key && (encrypt || !kencrypt))
 		return;
 
-	if (encrypt)
-		rijndael_set_key_enc_only(&swap_ctxt, (u_char *)key->key,
-		    sizeof(key->key) * 8);
-	else
-		rijndael_set_key(&swap_ctxt, (u_char *)key->key,
-		    sizeof(key->key) * 8);
-
+	kencrypt = swap_key_prepare_fcn(key, encrypt);
 	kcur = key;
 }
 
@@ -228,8 +177,102 @@ swap_key_cleanup(struct swap_key *key)
 	if (kcur == NULL || kcur != key)
 		return;
 
-	/* Zero out the subkeys */
-	explicit_bzero(&swap_ctxt, sizeof(swap_ctxt));
+	swap_key_cleanup_fcn();
 
 	kcur = NULL;
+}
+
+/*
+ * Software implementation based on the original Rijndael implementation.
+ */
+
+rijndael_ctx rijndael_ctxt;
+
+int
+swap_key_prepare_rijndael(struct swap_key *key, int encrypt)
+{
+	if (encrypt)
+		rijndael_set_key_enc_only(&rijndael_ctxt, (u_char *)key->key,
+		    sizeof(key->key) * 8);
+	else
+		rijndael_set_key(&rijndael_ctxt, (u_char *)key->key,
+		    sizeof(key->key) * 8);
+
+	return encrypt;
+}
+
+void
+swap_key_cleanup_rijndael(void)
+{
+	/* Zero out the subkeys */
+	explicit_bzero(&rijndael_ctxt, sizeof(rijndael_ctxt));
+}
+
+void
+swap_encrypt_rijndael(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
+{
+	u_int32_t *dsrc = (u_int32_t *)src;
+	u_int32_t *ddst = (u_int32_t *)dst;
+	u_int32_t iv[4];
+	u_int32_t iv1, iv2, iv3, iv4;
+
+	count /= sizeof(u_int32_t);
+
+	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
+	rijndael_encrypt(&rijndael_ctxt, (u_char *)iv, (u_char *)iv);
+	iv1 = iv[0]; iv2 = iv[1]; iv3 = iv[2]; iv4 = iv[3];
+
+	for (; count > 0; count -= 4) {
+		ddst[0] = dsrc[0] ^ iv1;
+		ddst[1] = dsrc[1] ^ iv2;
+		ddst[2] = dsrc[2] ^ iv3;
+		ddst[3] = dsrc[3] ^ iv4;
+		/*
+		 * Do not worry about endianness, it only needs to decrypt
+		 * on this machine.
+		 */
+		rijndael_encrypt(&rijndael_ctxt, (u_char *)ddst, (u_char *)ddst);
+		iv1 = ddst[0];
+		iv2 = ddst[1];
+		iv3 = ddst[2];
+		iv4 = ddst[3];
+
+		dsrc += 4;
+		ddst += 4;
+	}
+}
+
+void
+swap_decrypt_rijndael(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
+{
+	u_int32_t *dsrc = (u_int32_t *)src;
+	u_int32_t *ddst = (u_int32_t *)dst;
+	u_int32_t iv[4];
+	u_int32_t iv1, iv2, iv3, iv4, niv1, niv2, niv3, niv4;
+
+	count /= sizeof(u_int32_t);
+
+	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
+	rijndael_encrypt(&rijndael_ctxt, (u_char *)iv, (u_char *)iv); 
+	iv1 = iv[0]; iv2 = iv[1]; iv3 = iv[2]; iv4 = iv[3];
+
+	for (; count > 0; count -= 4) {
+		ddst[0] = niv1 = dsrc[0];
+		ddst[1] = niv2 = dsrc[1];
+		ddst[2] = niv3 = dsrc[2];
+		ddst[3] = niv4 = dsrc[3];
+		rijndael_decrypt(&rijndael_ctxt, (u_char *)ddst, (u_char *)ddst);
+		ddst[0] ^= iv1;
+		ddst[1] ^= iv2;
+		ddst[2] ^= iv3;
+		ddst[3] ^= iv4;
+
+		iv1 = niv1;
+		iv2 = niv2;
+		iv3 = niv3;
+		iv4 = niv4;
+
+		dsrc += 4;
+		ddst += 4;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptox.c,v 1.6 2022/01/01 18:52:36 kettenis Exp $	*/
+/*	$OpenBSD: cryptox.c,v 1.7 2026/08/13 21:08:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -96,6 +96,10 @@ int	cryptox_swauth(struct cryptop *, struct cryptodesc *, struct swcr_data *,
 int	cryptox_encdec(struct cryptop *, struct cryptodesc *,
 	    struct cryptox_session *);
 
+#ifdef UVM_SWAP_ENCRYPT
+void	cryptox_swap_setup(void);
+#endif
+
 void
 cryptox_setup(void)
 {
@@ -136,6 +140,10 @@ cryptox_setup(void)
 
 	crypto_register(cryptox_sc->sc_cid, algs, cryptox_newsession,
 	    cryptox_freesession, cryptox_process);
+
+#ifdef UVM_SWAP_ENCRYPT
+	cryptox_swap_setup();
+#endif
 }
 
 int
@@ -487,3 +495,71 @@ out:
 	smr_read_leave();
 	return (err);
 }
+
+#ifdef UVM_SWAP_ENCRYPT
+
+#include <uvm/uvm_swap_encrypt.h>
+
+struct cryptox_aes_key cryptox_swap_ekey;
+struct cryptox_aes_key cryptox_swap_dkey;
+
+int
+cryptox_swap_key_prepare(struct swap_key *key, int encrypt)
+{
+	fpu_kernel_enter();
+	aes_v8_set_encrypt_key((uint8_t *)key->key, sizeof(key->key) * 8,
+	    &cryptox_swap_ekey);
+	if (!encrypt) {
+		aes_v8_set_decrypt_key((uint8_t *)key->key,
+		    sizeof(key->key) * 8, &cryptox_swap_dkey);
+	}
+	fpu_kernel_exit();
+
+	return encrypt;
+}
+
+void
+cryptox_swap_key_cleanup(void)
+{
+	explicit_bzero(&cryptox_swap_ekey, sizeof(cryptox_swap_ekey));
+	explicit_bzero(&cryptox_swap_dkey, sizeof(cryptox_swap_dkey));
+}
+
+void
+cryptox_swap_encrypt(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
+{
+	uint32_t iv[4];
+
+	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
+
+	fpu_kernel_enter();
+	aes_v8_encrypt((uint8_t *)iv, (uint8_t *)iv, &cryptox_swap_ekey);
+	aes_v8_cbc_encrypt(src, dst, count, &cryptox_swap_ekey,
+	    (uint8_t *)iv, 1);
+	fpu_kernel_exit();
+}
+
+void
+cryptox_swap_decrypt(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
+{
+	uint32_t iv[4];
+	
+	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
+
+	fpu_kernel_enter();
+	aes_v8_encrypt((uint8_t *)iv, (uint8_t *)iv, &cryptox_swap_ekey);
+	aes_v8_cbc_encrypt(src, dst, count, &cryptox_swap_dkey,
+	    (uint8_t *)iv, 0);
+	fpu_kernel_exit();
+}
+
+void
+cryptox_swap_setup(void)
+{
+	swap_key_prepare_fcn = cryptox_swap_key_prepare;
+	swap_key_cleanup_fcn = cryptox_swap_key_cleanup;
+	swap_encrypt_fcn = cryptox_swap_encrypt;
+	swap_decrypt_fcn = cryptox_swap_decrypt;
+}
+
+#endif /* UVM_SWAP_ENCRYPT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.53 2021/10/24 10:26:22 patrick Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.54 2026/08/13 21:08:17 kettenis Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -121,6 +121,10 @@ int	aesni_encdec(struct cryptop *, struct cryptodesc *,
 void	pclmul_setup(void);
 void	ghash_update_pclmul(GHASH_CTX *, uint8_t *, size_t);
 
+#ifdef UVM_SWAP_ENCRYPT
+void	aesni_swap_setup(void);
+#endif
+
 void
 aesni_setup(void)
 {
@@ -170,6 +174,10 @@ aesni_setup(void)
 
 	crypto_register(aesni_sc->sc_cid, algs, aesni_newsession,
 	    aesni_freesession, aesni_process);
+
+#ifdef UVM_SWAP_ENCRYPT
+	aesni_swap_setup();
+#endif
 }
 
 int
@@ -714,3 +722,65 @@ ghash_update_pclmul(GHASH_CTX *ghash, uint8_t *src, size_t len)
 	aesni_gmac_update(ghash, src, len);
 	fpu_kernel_exit();
 }
+
+#ifdef UVM_SWAP_ENCRYPT
+
+#include <uvm/uvm_swap_encrypt.h>
+
+struct aesni_session aesni_swap_ses __aligned(16);
+
+int
+aesni_swap_key_prepare(struct swap_key *key, int encrypt)
+{
+	fpu_kernel_enter();
+	aesni_set_key(&aesni_swap_ses, (uint8_t *)key->key, sizeof(key->key));
+	fpu_kernel_exit();
+
+	return 0;
+}
+
+void
+aesni_swap_key_cleanup(void)
+{
+	explicit_bzero(&aesni_swap_ses.ses_ekey,
+	    sizeof(aesni_swap_ses.ses_ekey));
+	explicit_bzero(&aesni_swap_ses.ses_dkey,
+	    sizeof(aesni_swap_ses.ses_dkey));
+}
+
+void
+aesni_swap_encrypt(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
+{
+	uint32_t iv[4];
+
+	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
+
+	fpu_kernel_enter();
+	aesni_enc(&aesni_swap_ses, (uint8_t *)iv, (uint8_t *)iv);
+	aesni_cbc_enc(&aesni_swap_ses, dst, src, count, (uint8_t *)iv);
+	fpu_kernel_exit();
+}
+
+void
+aesni_swap_decrypt(caddr_t src, caddr_t dst, u_int64_t block, size_t count)
+{
+	uint32_t iv[4];
+	
+	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
+
+	fpu_kernel_enter();
+	aesni_enc(&aesni_swap_ses, (uint8_t *)iv, (uint8_t *)iv);
+	aesni_cbc_dec(&aesni_swap_ses, dst, src, count, (uint8_t *)iv);
+	fpu_kernel_exit();
+}
+
+void
+aesni_swap_setup(void)
+{
+	swap_key_prepare_fcn = aesni_swap_key_prepare;
+	swap_key_cleanup_fcn = aesni_swap_key_cleanup;
+	swap_encrypt_fcn = aesni_swap_encrypt;
+	swap_decrypt_fcn = aesni_swap_decrypt;
+}
+
+#endif /* UVM_SWAP_ENCRYPT */
