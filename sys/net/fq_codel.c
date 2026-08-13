@@ -1,4 +1,4 @@
-/* $OpenBSD: fq_codel.c,v 1.20 2026/03/14 00:10:38 dlg Exp $ */
+/* $OpenBSD: fq_codel.c,v 1.21 2026/08/13 09:01:49 bket Exp $ */
 
 /*
  * Copyright (c) 2017 Mike Belopuhov
@@ -334,7 +334,8 @@ control_law(struct codel *cd, struct codel_params *cp, int64_t rts)
 {
 	unsigned int idx;
 
-	idx = min(cd->drops, nitems(codel_intervals) - 1);
+	KASSERT(cd->drops > 0);
+	idx = min(cd->drops - 1, nitems(codel_intervals) - 1);
 	cd->next = rts + cp->intervals[idx];
 }
 
@@ -366,8 +367,9 @@ codel_next_packet(struct codel *cd, struct codel_params *cp, int64_t now,
 		return (NULL);
 	}
 
+	KASSERT(cd->backlog >= m->m_pkthdr.len);
 	if (now - m->m_pkthdr.ph_timestamp < cp->target ||
-	    cd->backlog <= cp->quantum) {
+	    cd->backlog - m->m_pkthdr.len <= cp->quantum) {
 		/*
 		 * The minimum delay decreased below the target, reset
 		 * the current observation interval.
@@ -385,7 +387,7 @@ codel_next_packet(struct codel *cd, struct codel_params *cp, int64_t now,
 		 * next packet.
 		 */
 		cd->start = now + cp->interval;
-	} else if (now > cd->start) {
+	} else if (now >= cd->start) {
 		*drop = 1;
 	}
 	return (m);
