@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.127 2026/08/14 06:40:24 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.128 2026/08/14 07:07:12 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1557,6 +1557,36 @@ out:
 		DEBUGOUT1("Error in ULP disable flow: %d\n", ret_val);
 
 	return ret_val;
+}
+
+/*
+ * Reconfigure K1 exit timeout as a workaround to the PHY synchronization issue
+ * on MTL, LNL, PTL and WCL.
+ */
+int
+em_reconfigure_k1_exit_timeout(struct em_hw *hw)
+{
+	uint32_t fextnvm12;
+	uint16_t phy_timeout;
+	int r;
+
+	if (hw->mac_type < em_pch_mtp)
+		return E1000_SUCCESS;
+
+	fextnvm12 = E1000_READ_REG(hw, FEXTNVM12);
+	fextnvm12 &= ~E1000_FEXTNVM12_PHYPD_CTRL_MASK;
+	fextnvm12 |= E1000_FEXTNVM12_PHYPD_CTRL_P1;
+	E1000_WRITE_REG(hw, FEXTNVM12, fextnvm12);
+
+	DELAY(1000);
+
+	r = em_read_phy_reg(hw, E1000_PHY_TIMEOUTS_REG, &phy_timeout);
+	if (r)
+		return r;
+	phy_timeout &= ~E1000_PHY_TIMEOUTS_K1_EXIT_TO_MASK;
+	phy_timeout |= 0xF00;
+
+	return em_write_phy_reg(hw, E1000_PHY_TIMEOUTS_REG, phy_timeout);
 }
 
 /******************************************************************************
@@ -5897,6 +5927,10 @@ em_phy_reset(struct em_hw *hw)
 			return ret_val;
 	} else if (hw->mac_type == em_pch2lan) {
 		ret_val = em_lv_phy_workarounds_ich8lan(hw);
+		if (ret_val)
+			return ret_val;
+	} else if (hw->mac_type >= em_pch_mtp) {
+		ret_val = em_reconfigure_k1_exit_timeout(hw);
 		if (ret_val)
 			return ret_val;
 	}
