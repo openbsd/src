@@ -1,4 +1,4 @@
-/* $OpenBSD: log.h,v 1.25 2008/12/22 14:30:04 hshoexer Exp $	 */
+/* $OpenBSD: log.h,v 1.26 2026/08/14 14:57:42 hshoexer Exp $	 */
 /* $EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	 */
 
 /*
@@ -85,7 +85,7 @@ extern void	log_errorx(const char *,...)
 extern void     log_fatal(const char *,...)
 		    __attribute__((__format__(__printf__, 1, 2))) __dead;
 extern void     log_fatalx(const char *,...)
-		    __attribute__((__format__(__printf__, 1, 2)));
+		    __attribute__((__format__(__printf__, 1, 2))) __dead;
 extern void     log_print(const char *,...)
 		    __attribute__((__format__(__printf__, 1, 2)));
 extern void     log_verbose(const char *,...)

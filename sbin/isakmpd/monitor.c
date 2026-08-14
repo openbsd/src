@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.83 2023/02/08 08:03:11 tb Exp $	 */
+/* $OpenBSD: monitor.c,v 1.84 2026/08/14 14:57:42 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -593,7 +593,7 @@ static void
 m_priv_bind(void)
 {
 	int		 sock, v, err = 0;
-	struct sockaddr *name = 0;
+	struct sockaddr_storage name;
 	socklen_t        namelen;
 
 	sock = mm_receive_fd(m_state.s);
@@ -603,22 +603,18 @@ m_priv_bind(void)
 	}
 
 	must_read(&namelen, sizeof namelen);
-	name = malloc(namelen);
-	if (!name) {
-		log_print("m_priv_bind: malloc failed");
-		close(sock);
-		return;
-	}
-	must_read((char *)name, namelen);
+	if (namelen < sizeof(struct sockaddr) || namelen > sizeof name)
+		log_fatalx("m_priv_bind: invalid address length");
+	bzero(&name, sizeof name);
+	must_read(&name, namelen);
 
-	if (m_priv_check_bind(name, namelen) != 0) {
+	if (m_priv_check_bind((struct sockaddr *)&name, namelen) != 0) {
 		err = EACCES;
 		v = -1;
 	} else {
-		v = bind(sock, name, namelen);
+		v = bind(sock, (struct sockaddr *)&name, namelen);
 		if (v == -1) {
-			log_error("m_priv_bind: bind(%d,%p,%d) returned %d",
-			    sock, name, namelen, v);
+			log_error("m_priv_bind: bind(%d)", sock);
 			err = errno;
 		}
 	}
@@ -628,9 +624,6 @@ m_priv_bind(void)
 
 	must_write(&err, sizeof err);
 	must_write(&v, sizeof v);
-
-	free(name);
-	return;
 }
 
 /*
