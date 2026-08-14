@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.382 2026/08/14 05:17:26 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.383 2026/08/14 05:29:58 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -513,6 +513,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_pch_cnp:
 		case em_pch_tgp:
 		case em_pch_adp:
+		case em_pch_mtp:
 		case em_80003es2lan:
 			/* 9K Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
@@ -929,6 +930,7 @@ em_init(void *arg)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		pba = E1000_PBA_26K;
 		break;
 	default:

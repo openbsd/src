@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.125 2026/08/14 05:17:26 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.126 2026/08/14 05:29:58 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -665,7 +665,7 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_PCH_LNP_I219_V21:
 	case E1000_DEV_ID_PCH_ARL_I219_LM24:
 	case E1000_DEV_ID_PCH_ARL_I219_V24:
-		hw->mac_type = em_pch_adp;	/* pch_mtp */
+		hw->mac_type = em_pch_mtp;
 		break;
 	case E1000_DEV_ID_EP80579_LAN_1:
 		hw->mac_type = em_icp_xxxx;
@@ -701,6 +701,7 @@ em_set_mac_type(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		hw->swfwhw_semaphore_present = TRUE;
 		hw->asf_firmware_present = TRUE;
 		break;
@@ -896,6 +897,7 @@ em_set_media_type(struct em_hw *hw)
 		case em_pch_cnp:
 		case em_pch_tgp:
 		case em_pch_adp:
+		case em_pch_mtp:
 		case em_82573:
 		case em_82574:
 			/*
@@ -1058,6 +1060,7 @@ em_reset_hw(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		if (!hw->phy_reset_disable &&
 		    em_check_phy_reset_block(hw) == E1000_SUCCESS) {
 			/*
@@ -1322,6 +1325,7 @@ em_initialize_hardware_bits(struct em_softc *sc)
 		case em_pch_cnp:
 		case em_pch_tgp:
 		case em_pch_adp:
+		case em_pch_mtp:
 			if (hw->mac_type == em_ich8lan)
 				/* Set TARC0 bits 29 and 28 */
 				reg_tarc0 |= 0x30000000;
@@ -1803,6 +1807,7 @@ em_init_hw(struct em_softc *sc)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		/*
 		 * Old code always initialized queue 1,
 		 * even when unused, keep behaviour
@@ -1951,6 +1956,7 @@ em_setup_link(struct em_hw *hw)
 		case em_pch_cnp:
 		case em_pch_tgp:
 		case em_pch_adp:
+		case em_pch_mtp:
 		case em_82573:
 		case em_82574:
 			hw->fc = E1000_FC_FULL;
@@ -3167,6 +3173,7 @@ em_setup_copper_link(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		/*
 		 * Set the mac to wait the maximum time between each
 		 * iteration and increase the max iterations when polling the
@@ -6085,6 +6092,7 @@ em_match_gig_phy(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		if (hw->phy_id == I217_E_PHY_ID)
 			match = TRUE;
 		break;
@@ -6423,6 +6431,7 @@ em_init_eeprom_params(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		{
 			int32_t         i = 0;
 			uint32_t        flash_size = EM_READ_REG(hw, 0xc /* STRAP */);
@@ -7140,6 +7149,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
 		case em_pch_cnp:
 		case em_pch_tgp:
 		case em_pch_adp:
+		case em_pch_mtp:
 			word = EEPROM_COMPAT;
 			valid_csum_mask = EEPROM_COMPAT_VALID_CSUM;
 			break;
@@ -8383,6 +8393,7 @@ em_get_bus_info(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		hw->bus_type = em_bus_type_pci_express;
 		hw->bus_speed = em_bus_speed_2500;
 		hw->bus_width = em_bus_width_pciex_1;
@@ -9580,6 +9591,7 @@ em_get_auto_rd_done(struct em_hw *hw)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		while (timeout) {
 			if (E1000_READ_REG(hw, EECD) & E1000_EECD_AUTO_RD)
 				break;
@@ -9983,6 +9995,7 @@ em_valid_nvm_bank_detect_ich8lan(struct em_hw *hw, uint32_t *bank)
 	case em_pch_cnp:
 	case em_pch_tgp:
 	case em_pch_adp:
+	case em_pch_mtp:
 		bank1_offset = hw->flash_bank_size * 2;
 		act_offset = E1000_ICH_NVM_SIG_WORD * 2;
 
