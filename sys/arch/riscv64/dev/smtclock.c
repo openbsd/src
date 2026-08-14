@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtclock.c,v 1.6 2026/07/26 18:12:10 kettenis Exp $	*/
+/*	$OpenBSD: smtclock.c,v 1.7 2026/08/14 19:49:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -491,6 +491,9 @@ static struct smtreset k3_apmu_resets[] = {
 	{ -1 },
 };
 
+static struct smtclock k3_pll_clocks[] = { { -1 } };
+static struct smtreset k3_pll_resets[] = { { -1 } };
+
 struct smtclock_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -528,7 +531,8 @@ smtclock_match(struct device *parent, void *match, void *aux)
 	return OF_is_compatible(faa->fa_node, "spacemit,k1-syscon-apbc") ||
 	    OF_is_compatible(faa->fa_node, "spacemit,k1-syscon-apmu") ||
 	    OF_is_compatible(faa->fa_node, "spacemit,k3-syscon-apbc") ||
-	    OF_is_compatible(faa->fa_node, "spacemit,k3-syscon-apmu");
+	    OF_is_compatible(faa->fa_node, "spacemit,k3-syscon-apmu") ||
+	    OF_is_compatible(faa->fa_node, "spacemit,k3-pll");
 }
 
 void
@@ -565,6 +569,9 @@ smtclock_attach(struct device *parent, struct device *self, void *aux)
 	} else if (OF_is_compatible(faa->fa_node, "spacemit,k3-syscon-apmu")) {
 		sc->sc_clocks = k3_apmu_clocks;
 		sc->sc_resets = k3_apmu_resets;
+	} else if (OF_is_compatible(faa->fa_node, "spacemit,k3-pll")) {
+		sc->sc_clocks = k3_pll_clocks;
+		sc->sc_resets = k3_pll_resets;
 	}
 	KASSERT(sc->sc_clocks);
 	KASSERT(sc->sc_resets);
