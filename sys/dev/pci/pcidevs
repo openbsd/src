@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2146 2026/08/05 01:28:51 jsg Exp $
+$OpenBSD: pcidevs,v 1.2147 2026/08/14 03:32:01 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5962,6 +5962,60 @@ product INTEL RKL_GT_3		0x4c8b	UHD Graphics
 product INTEL RKL_GT_4		0x4c8c	UHD Graphics
 product INTEL RKL_GT_5		0x4c90	UHD Graphics
 product INTEL RKL_GT_6		0x4c9a	UHD Graphics
+product INTEL WCL_P2SB_8B	0x4d20	Core Series 3 P2SB
+product INTEL WCL_PMC		0x4d21	Core Series 3 PMC
+product INTEL WCL_SMB		0x4d22	Core Series 3 SMBus
+product INTEL WCL_SPI		0x4d23	Core Series 3 SPI
+product INTEL WCL_TH		0x4d24	Core Series 3 TH
+product INTEL WCL_UART_0	0x4d25	Core Series 3 UART
+product INTEL WCL_UART_1	0x4d26	Core Series 3 UART
+product INTEL WCL_GSPI_0	0x4d27	Core Series 3 GSPI
+product INTEL WCL_HDA		0x4d28	Core Series 3 HDA
+product INTEL WCL_GSPI_1	0x4d30	Core Series 3 GSPI
+product INTEL WCL_TC_XHCI	0x4d31	Core Series 3 xHCI
+product INTEL WCL_TBT_DMA0	0x4d33	Core Series 3 TBT
+product INTEL WCL_PCIE_1	0x4d3c	Core Series 3 PCIE
+product INTEL WCL_PCIE_2	0x4d3d	Core Series 3 PCIE
+product INTEL WCL_PCIE_3	0x4d3e	Core Series 3 PCIE
+product INTEL WCL_PCIE_4	0x4d3f	Core Series 3 PCIE
+product INTEL WCL_IEH_0		0x4d44	Core Series 3 IEH
+product INTEL WCL_ISH		0x4d45	Core Series 3 ISH
+product INTEL WCL_GSPI_2	0x4d46	Core Series 3 GSPI
+product INTEL WCL_UFS		0x4d47	Core Series 3 UFS
+product INTEL WCL_THC_0_1	0x4d48	Core Series 3 THC
+product INTEL WCL_THC_0_2	0x4d49	Core Series 3 THC
+product INTEL WCL_THC_1_1	0x4d4a	Core Series 3 THC
+product INTEL WCL_THC_1_2	0x4d4b	Core Series 3 THC
+product INTEL WCL_P2SB_16B	0x4d4c	Core Series 3 P2SB
+product INTEL WCL_TC_PCIE_21	0x4d4e	Core Series 3 PCIE
+product INTEL WCL_TC_PCIE_22	0x4d4f	Core Series 3 PCIE
+product INTEL WCL_I2C_4		0x4d50	Core Series 3 I2C
+product INTEL WCL_I2C_5		0x4d51	Core Series 3 I2C
+product INTEL WCL_UART_2	0x4d52	Core Series 3 UART
+product INTEL WCL_IEH_1		0x4d53	Core Series 3 IEH
+product INTEL WCL_PCIE_6	0x4d5c	Core Series 3 PCIE
+product INTEL WCL_HECI_4	0x4d5d	Core Series 3 HECI
+product INTEL WCL_HECI_5	0x4d5e	Core Series 3 HECI
+product INTEL WCL_HECI_6	0x4d5f	Core Series 3 HECI
+product INTEL WCL_PCIE_5	0x4d61	Core Series 3 PCIE
+product INTEL WCL_HECI_1	0x4d62	Core Series 3 HECI
+product INTEL WCL_HECI_2	0x4d63	Core Series 3 HECI
+product INTEL WCL_HECI_3	0x4d64	Core Series 3 HECI
+product INTEL WCL_I3C_2		0x4d6f	Core Series 3 I3C
+product INTEL WCL_HECI_CSE_1	0x4d70	Core Series 3 HECI
+product INTEL WCL_HECI_CSE_2	0x4d71	Core Series 3 HECI
+product INTEL WCL_IDER		0x4d72	Core Series 3 IDE-R
+product INTEL WCL_KT		0x4d73	Core Series 3 KT
+product INTEL WCL_HECI_CSE_3	0x4d74	Core Series 3 HECI
+product INTEL WCL_HECI_CSE_4	0x4d75	Core Series 3 HECI
+product INTEL WCL_I2C_0		0x4d78	Core Series 3 I2C
+product INTEL WCL_I2C_1		0x4d79	Core Series 3 I2C
+product INTEL WCL_I2C_2		0x4d7a	Core Series 3 I2C
+product INTEL WCL_I2C_3		0x4d7b	Core Series 3 I2C
+product INTEL WCL_I3C_1		0x4d7c	Core Series 3 I3C
+product INTEL WCL_XHCI		0x4d7d	Core Series 3 xHCI
+product INTEL WCL_XDCI		0x4d7e	Core Series 3 xDCI
+product INTEL WCL_SRAM		0x4d7f	Core Series 3 SRAM
 product INTEL JSL_ESPI		0x4d87	Jasper Lake eSPI
 product INTEL JSL_P2SB		0x4da0	Jasper Lake P2SB
 product INTEL JSL_PMC		0x4da1	Jasper Lake PMC
@@ -7723,6 +7777,14 @@ product INTEL 500SERIES_HDA_2	0xf0c8	500 Series HD Audio
 product INTEL NVME_2		0xf1a5	NVMe
 product INTEL NVME_3		0xf1a6	NVMe
 product INTEL NVME_4		0xf1a8	NVMe
+product INTEL WCL_HB_6C		0xfd00	Core Series 3 Host
+product INTEL WCL_HB_5C		0xfd03	Core Series 3 Host
+product INTEL WCL_DTT		0xfd1d	Core Series 3 DTT
+product INTEL WCL_IAA		0xfd2d	Core Series 3 IAA
+product INTEL WCL_NPU		0xfd3e	Core Series 3 NPU
+product INTEL WCL_CT		0xfd7d	Core Series 3 CT
+product INTEL WCL_GT_1		0xfd80	Graphics
+product INTEL WCL_GT_2		0xfd81	Graphics
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
