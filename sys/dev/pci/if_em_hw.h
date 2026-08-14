@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.102 2026/08/14 07:07:12 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.103 2026/08/14 07:21:33 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1531,6 +1531,7 @@ struct em_hw {
 #define E1000_CTRL_FORCE_PHY_RESET 0x00008000 /* Reset both PHY ports, through PHYRST_N pin */
 #define E1000_CTRL_LANPHYPC_OVERRIDE 0x00010000 /* SW control of LANPHYPC */
 #define E1000_CTRL_LANPHYPC_VALUE    0x00020000 /* SW value of LANPHYPC */
+#define E1000_CTRL_EXT_DPG_EN        0x00000008 /* Dynamic Power Gating Enable */
 #define E1000_CTRL_EXT_FORCE_SMBUS   0x00000800 /* Force SMBus mode */
 #define E1000_CTRL_EXT_PHYPDEN       0x00100000
 #define E1000_I2CCMD_REG_ADDR_SHIFT	16

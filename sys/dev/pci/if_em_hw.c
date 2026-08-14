@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.128 2026/08/14 07:07:12 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.129 2026/08/14 07:21:33 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1204,9 +1204,15 @@ em_reset_hw(struct em_hw *hw)
 			em_pci_set_mwi(hw);
 	}
 	if (IS_ICH8(hw->mac_type)) {
-		uint32_t kab = E1000_READ_REG(hw, KABGTXD);
-		kab |= E1000_KABGTXD_BGSQLBIAS;
-		E1000_WRITE_REG(hw, KABGTXD, kab);
+		uint32_t reg = E1000_READ_REG(hw, KABGTXD);
+		reg |= E1000_KABGTXD_BGSQLBIAS;
+		E1000_WRITE_REG(hw, KABGTXD, reg);
+
+		if (hw->mac_type >= em_pch_ptp) {
+			reg = E1000_READ_REG(hw, CTRL_EXT);
+			reg &= ~E1000_CTRL_EXT_DPG_EN;
+			E1000_WRITE_REG(hw, CTRL_EXT, reg);
+		}
 	}
 
 	if (hw->mac_type == em_82580 || hw->mac_type == em_i350) {
