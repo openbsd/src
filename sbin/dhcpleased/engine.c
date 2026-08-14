@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.67 2026/08/04 12:49:04 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.68 2026/08/14 15:57:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1040,13 +1040,16 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			memcpy(&nameservers, p, MINIMUM(sizeof(nameservers),
 			    dho_len));
 			if (log_getverbose() > 1) {
-				for (i = 0; i < MINIMUM(sizeof(nameservers),
-				    dho_len / sizeof(nameservers[0])); i++) {
+				size_t num_lease_nameservers = dho_len /
+				    sizeof(nameservers[0]);
+
+				for (i = 0; i < MINIMUM(MAX_RDNS_COUNT,
+				    num_lease_nameservers); i++) {
 					log_debug("DHO_DOMAIN_NAME_SERVERS: %s "
 					    "(%lu/%lu)", inet_ntop(AF_INET,
 					    &nameservers[i], hbuf,
 					    sizeof(hbuf)), i + 1,
-					    dho_len / sizeof(nameservers[0]));
+					    num_lease_nameservers);
 				}
 			}
 			p += dho_len;
