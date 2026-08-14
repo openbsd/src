@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.383 2026/08/14 05:29:58 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.384 2026/08/14 06:40:24 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -171,6 +171,8 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM22 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM23 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM24 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM25 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM27 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V4 },
@@ -194,6 +196,8 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V22 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V23 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V24 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V25 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V27 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES },
@@ -514,6 +518,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_pch_tgp:
 		case em_pch_adp:
 		case em_pch_mtp:
+		case em_pch_ptp:
 		case em_80003es2lan:
 			/* 9K Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
@@ -931,6 +936,7 @@ em_init(void *arg)
 	case em_pch_tgp:
 	case em_pch_adp:
 	case em_pch_mtp:
+	case em_pch_ptp:
 		pba = E1000_PBA_26K;
 		break;
 	default:

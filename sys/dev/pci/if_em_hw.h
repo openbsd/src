@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.100 2026/08/14 05:29:58 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.101 2026/08/14 06:40:25 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -86,6 +86,7 @@ typedef enum {
     em_pch_tgp,
     em_pch_adp,
     em_pch_mtp,
+    em_pch_ptp,
     em_num_macs
 } em_mac_type;
 
@@ -593,6 +594,11 @@ uint32_t em_translate_82542_register(uint32_t);
 #define E1000_DEV_ID_PCH_RPL_I219_V23    0x0DC6
 #define E1000_DEV_ID_PCH_ARL_I219_LM24   0x57A0
 #define E1000_DEV_ID_PCH_ARL_I219_V24    0x57A1
+#define E1000_DEV_ID_PCH_PTP_I219_LM25   0x57B3
+#define E1000_DEV_ID_PCH_PTP_I219_V25    0x57B4
+#define E1000_DEV_ID_PCH_WCL_I219_LM27   0x57B7
+#define E1000_DEV_ID_PCH_WCL_I219_V27    0x57B8
+
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
