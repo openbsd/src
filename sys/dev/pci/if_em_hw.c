@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.124 2025/07/14 23:49:08 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.125 2026/08/14 05:17:26 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1582,13 +1582,7 @@ em_init_hw(struct em_softc *sc)
 		E1000_WRITE_REG(hw, STATUS, reg_data);
 	}
 
-	if (hw->mac_type == em_pchlan ||
-		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt ||
-		hw->mac_type == em_pch_spt ||
-		hw->mac_type == em_pch_cnp ||
-		hw->mac_type == em_pch_tgp ||
-		hw->mac_type == em_pch_adp) {
+	if (hw->mac_type >= em_pchlan) {
 		/*
 		 * The MAC-PHY interconnect may still be in SMBus mode
 		 * after Sx->S0.  Toggle the LANPHYPC Value bit to force
@@ -2428,13 +2422,7 @@ em_copper_link_igp_setup(struct em_hw *hw)
 		}
 	}
 	/* disable lplu d0 during driver init */
-	if (hw->mac_type == em_pchlan ||
-		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt ||
-		hw->mac_type == em_pch_spt ||
-		hw->mac_type == em_pch_cnp ||
-		hw->mac_type == em_pch_tgp ||
-		hw->mac_type == em_pch_adp)
+	if (hw->mac_type >= em_pchlan)
 		ret_val = em_set_lplu_state_pchlan(hw, FALSE);
 	else
 		ret_val = em_set_d0_lplu_state(hw, FALSE);
@@ -2704,13 +2692,7 @@ em_copper_link_mgp_setup(struct em_hw *hw)
 		return E1000_SUCCESS;
 
 	/* disable lplu d0 during driver init */
-	if (hw->mac_type == em_pchlan ||
-		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt ||
-		hw->mac_type == em_pch_spt ||
-		hw->mac_type == em_pch_cnp ||
-		hw->mac_type == em_pch_tgp ||
-		hw->mac_type == em_pch_adp)
+	if (hw->mac_type >= em_pchlan)
 		ret_val = em_set_lplu_state_pchlan(hw, FALSE);
 
 	/* Enable CRS on TX. This must be set for half-duplex operation. */
@@ -4351,12 +4333,7 @@ em_check_for_link(struct em_hw *hw)
 			em_check_downshift(hw);
 
 			/* Enable/Disable EEE after link up */
-			if (hw->mac_type == em_pch2lan ||
-			    hw->mac_type == em_pch_lpt ||
-			    hw->mac_type == em_pch_spt ||
-			    hw->mac_type == em_pch_cnp ||
-			    hw->mac_type == em_pch_tgp ||
-			    hw->mac_type == em_pch_adp) {
+			if (hw->mac_type >= em_pch2lan) {
 				ret_val = em_set_eee_pchlan(hw);
 				if (ret_val)
 					return ret_val;
@@ -5139,13 +5116,7 @@ em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 	uint16_t swfw;
 	DEBUGFUNC("em_read_phy_reg");
 
-	if (hw->mac_type == em_pchlan ||
-		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt ||
-		hw->mac_type == em_pch_spt ||
-		hw->mac_type == em_pch_cnp ||
-		hw->mac_type == em_pch_tgp ||
-		hw->mac_type == em_pch_adp)
+	if (hw->mac_type >= em_pchlan)
 		return (em_access_phy_reg_hv(hw, reg_addr, phy_data, TRUE));
 
 	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575) ||
@@ -5267,9 +5238,7 @@ em_read_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 		}
 		*phy_data = (uint16_t) mdic;
 
-		if (hw->mac_type == em_pch2lan || hw->mac_type == em_pch_lpt ||
-		    hw->mac_type == em_pch_spt || hw->mac_type == em_pch_cnp ||
-		    hw->mac_type == em_pch_tgp || hw->mac_type == em_pch_adp)
+		if (hw->mac_type >= em_pch2lan)
 			usec_delay(100);
 	} else {
 		/*
@@ -5318,13 +5287,7 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 	uint32_t ret_val;
 	DEBUGFUNC("em_write_phy_reg");
 
-	if (hw->mac_type == em_pchlan ||
-		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt ||
-		hw->mac_type == em_pch_spt ||
-		hw->mac_type == em_pch_cnp ||
-		hw->mac_type == em_pch_tgp ||
-		hw->mac_type == em_pch_adp)
+	if (hw->mac_type >= em_pchlan)
 		return (em_access_phy_reg_hv(hw, reg_addr, &phy_data, FALSE));
 
 	if (em_swfw_sync_acquire(hw, hw->swfw))
@@ -5432,9 +5395,7 @@ em_write_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 			return -E1000_ERR_PHY;
 		}
 
-		if (hw->mac_type == em_pch2lan || hw->mac_type == em_pch_lpt ||
-		    hw->mac_type == em_pch_spt || hw->mac_type == em_pch_cnp ||
-		    hw->mac_type == em_pch_tgp || hw->mac_type == em_pch_adp)
+		if (hw->mac_type >= em_pch2lan)
 			usec_delay(100);
 	} else {
 		/*
@@ -7841,9 +7802,7 @@ em_init_rx_addrs(struct em_hw *hw)
 	uint32_t rar_num;
 	DEBUGFUNC("em_init_rx_addrs");
 
-	if (hw->mac_type == em_pch_lpt || hw->mac_type == em_pch_spt ||
-	    hw->mac_type == em_pch_cnp || hw->mac_type == em_pch_tgp ||
-	    hw->mac_type == em_pch_adp || hw->mac_type == em_pch2lan)
+	if (hw->mac_type >= em_pch2lan)
 		if (em_phy_no_cable_workaround(hw))
 			printf(" ...failed to apply em_phy_no_cable_"
 			    "workaround.\n");
@@ -8359,13 +8318,7 @@ em_clear_hw_cntrs(struct em_hw *hw)
 		em_read_phy_reg(hw, HV_TNCRS_LOWER, &phy_data);
 	}
 
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    (hw->mac_type != em_pch2lan && hw->mac_type != em_pch_lpt &&
-	     hw->mac_type != em_pch_spt && hw->mac_type != em_pch_cnp &&
-	     hw->mac_type != em_pch_tgp && hw->mac_type != em_pch_adp))
+	if (hw->mac_type >= em_ich8lan)
 		return;
 
 	temp = E1000_READ_REG(hw, ICRXPTC);
@@ -11127,13 +11080,7 @@ em_init_lcd_from_nvm(struct em_hw *hw)
 	/* Check if SW needs configure the PHY */
 	if (hw->device_id == E1000_DEV_ID_ICH8_IGP_M_AMT ||
 	    hw->device_id == E1000_DEV_ID_ICH8_IGP_M ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt ||
-	    hw->mac_type == em_pch_spt ||
-	    hw->mac_type == em_pch_cnp ||
-	    hw->mac_type == em_pch_tgp ||
-	    hw->mac_type == em_pch_adp)
+	    hw->mac_type >= em_pchlan)
 		sw_cfg_mask = FEXTNVM_SW_CONFIG_ICH8M;
 	else
 		sw_cfg_mask = FEXTNVM_SW_CONFIG;

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.381 2026/06/23 14:40:40 bluhm Exp $ */
+/* $OpenBSD: if_em.c,v 1.382 2026/08/14 05:17:26 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1684,8 +1684,7 @@ em_legacy_irq_quirk_spt(struct em_softc *sc)
 	uint32_t	reg;
 
 	/* Legacy interrupt: SPT needs a quirk. */
-	if (sc->hw.mac_type != em_pch_spt && sc->hw.mac_type != em_pch_cnp &&
-	    sc->hw.mac_type != em_pch_tgp && sc->hw.mac_type != em_pch_adp) 
+	if (sc->hw.mac_type < em_pch_spt)
 		return;
 	if (sc->legacy_irq == 0)
 		return;
