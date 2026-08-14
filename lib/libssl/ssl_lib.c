@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.335 2026/06/14 14:25:55 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.336 2026/08/14 06:44:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2167,7 +2167,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-	ret->tlsext_servername_callback = 0;
+	ret->tlsext_servername_callback = NULL;
 	ret->tlsext_servername_arg = NULL;
 
 	/* Setup RFC4507 ticket keys */
@@ -2175,7 +2175,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	arc4random_buf(ret->tlsext_tick_hmac_key, 16);
 	arc4random_buf(ret->tlsext_tick_aes_key, 16);
 
-	ret->tlsext_status_cb = 0;
+	ret->tlsext_status_cb = NULL;
 	ret->tlsext_status_arg = NULL;
 
 	ret->options = 0;
