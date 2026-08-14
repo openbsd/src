@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtcomphy.c,v 1.3 2026/04/15 21:16:13 kettenis Exp $	*/
+/*	$OpenBSD: smtcomphy.c,v 1.4 2026/08/14 19:50:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -91,6 +91,7 @@ struct smtcomphy_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct regmap		*sc_apmu;
+	struct regmap		*sc_apb_spare;
 
 	int			sc_node;
 	int			sc_num_lanes;
@@ -112,6 +113,8 @@ struct cfdriver smtcomphy_cd = {
 int	smtcomphy_combo_init(struct smtcomphy_softc *sc);
 int	smtcomphy_combo_enable(void *, uint32_t *);
 int	smtcomphy_pcie_enable(void *, uint32_t *);
+int	smtcomphy_k3_combo_init(struct smtcomphy_softc *sc);
+int	smtcomphy_k3_combo_enable(void *, uint32_t *);
 
 int
 smtcomphy_match(struct device *parent, void *match, void *aux)
@@ -119,7 +122,8 @@ smtcomphy_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "spacemit,k1-combo-phy") ||
-	    OF_is_compatible(faa->fa_node, "spacemit,k1-pcie-phy");
+	    OF_is_compatible(faa->fa_node, "spacemit,k1-pcie-phy") ||
+	    OF_is_compatible(faa->fa_node, "spacemit,k3-combo-phy");
 }
 
 void
@@ -149,7 +153,11 @@ smtcomphy_attach(struct device *parent, struct device *self, void *aux)
 		if (smtcomphy_combo_init(sc))
 			return;
 		sc->sc_num_lanes = 1;
-	} else {
+	} else if (OF_is_compatible(sc->sc_node, "spacemit,k3-combo-phy")) {
+		if (smtcomphy_k3_combo_init(sc))
+			return;
+		sc->sc_num_lanes = 0;
+	} else if (OF_is_compatible(sc->sc_node, "spacemit,k1-pcie-phy")) {
 		sc->sc_num_lanes = OF_getpropint(sc->sc_node, "num-lanes", 2);
 	}
 
@@ -157,7 +165,9 @@ smtcomphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pd.pd_cookie = sc;
 	if (OF_is_compatible(faa->fa_node, "spacemit,k1-combo-phy"))
 		sc->sc_pd.pd_enable = smtcomphy_combo_enable;
-	else
+	else if (OF_is_compatible(sc->sc_node, "spacemit,k3-combo-phy"))
+		sc->sc_pd.pd_enable = smtcomphy_k3_combo_enable;
+	else if (OF_is_compatible(sc->sc_node, "spacemit,k1-pcie-phy"))
 		sc->sc_pd.pd_enable = smtcomphy_pcie_enable;
 	phy_register(&sc->sc_pd);
 }
@@ -372,6 +382,164 @@ smtcomphy_pcie_enable(void *cookie, uint32_t *cells)
 	}
 
 	smtcomphy_pll_init_pcie(sc);
+
+	return 0;
+}
+
+/* Additional PHY registers for K3.  And some bits that moved around? */
+#define PHY_RESET_CFG(_lane)	(0x0004 + (_lane) * 0x0400)
+#define PHY_MODE_CFG(_lane)	(0x000c + (_lane) * 0x0400)
+#define PHY_PU_SEL(_lane)	(0x0040 + (_lane) * 0x0400)
+/* PCIE_RX_REG1 */
+#define  REFCLK_MODE_MASK	(0x3 << 0)
+#define  REFCLK_MODE_DRIVER	(0x1 << 0)
+#define  SEL_TRI_CODE		(1U << 2)
+#define  LEGACY_MASK		(0xff << 8)
+#define  LEGACY_DEFAULT		(0x65 << 8)
+#define PHY_PLL_REG1		0x0058
+#define PHY_PLL_REG2		0x005c
+#define PHY_RX_REG_A(_lane)	(0x0060 + (_lane) * 0x0400)
+#define PHY_RX_REG_B(_lane)	(0x0064 + (_lane) * 0x0400)
+
+/* Additional APMU and APB_SPARE registers for K3. */
+#define APMU_PCIE_SUBSYS_MGMT		0x01d8
+#define  APMU_PCIE_SUBSYS_MGTM_PCI_USB_COMBO_MODE_MASK (0x1f << 0)
+#define APB_SPARE31			0x0178
+#define  APB_SPARE31_PU_CAL		(1U << 17)
+
+int
+smtcomphy_k3_combo_init(struct smtcomphy_softc *sc)
+{
+	uint32_t apmu[2] = {};
+	uint32_t apb_spare, val;
+	int len;
+
+	len = OF_getpropintarray(sc->sc_node, "spacemit,apmu",
+	    apmu, sizeof(apmu));
+	sc->sc_apmu = regmap_byphandle(apmu[0]);
+	if (len != sizeof(apmu) || sc->sc_apmu == NULL) {
+		printf("%s: can't get apmu\n", sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	apb_spare = OF_getpropint(sc->sc_node, "spacemit,apb-spare", 0);
+	sc->sc_apb_spare = regmap_byphandle(apb_spare);
+	if (sc->sc_apb_spare == NULL) {
+		printf("%s: can't get abp-spare\n", sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	if (apmu[1] & ~APMU_PCIE_SUBSYS_MGTM_PCI_USB_COMBO_MODE_MASK) {
+		printf("%s: invalid PHY matrix config\n", sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	val = regmap_read_4(sc->sc_apmu, APMU_PCIE_SUBSYS_MGMT);
+	val &= ~APMU_PCIE_SUBSYS_MGTM_PCI_USB_COMBO_MODE_MASK;
+	val |= apmu[1];
+	regmap_write_4(sc->sc_apmu, APMU_PCIE_SUBSYS_MGMT, val);
+
+	val = regmap_read_4(sc->sc_apb_spare, APB_SPARE31);
+	if ((val & APB_SPARE31_PU_CAL) == 0)
+		printf("%s: not calibrated\n", sc->sc_dev.dv_xname);
+
+	switch (apmu[1]) {
+	case 0x11:
+		break;
+	default:
+		printf("%s: unsupported PHY matrix config\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	return 0;
+}
+
+
+int
+smtcomphy_k3_combo_enable(void *cookie, uint32_t *cells)
+{
+	struct smtcomphy_softc *sc = cookie;
+	uint32_t group = cells[0];
+	uint32_t type = cells[1];
+	bus_size_t offset;
+	uint32_t val;
+	int num_lanes;
+	int lane, timo;
+
+	/* We only support PCIE for now. */
+	if (type != PHY_TYPE_PCIE)
+		return EINVAL;
+
+	/* There are five lane groups. */
+	if (group > 5)
+		return EINVAL;
+
+	/* Lane group 0 and 1 have two lanes; all others just one. */
+	num_lanes = (group < 2) ? 2 : 1;
+	offset = group * 0x100000;
+
+	val = HREAD4(sc, offset + PHY_PLL_REG1);
+	val &= ~(0xf << 12);
+	val |= (0x2 << 12);
+	HWRITE4(sc, offset + PHY_PLL_REG1, val);
+
+	val = HREAD4(sc, offset + PHY_PLL_REG2);
+	val &= ~(1U << 21);
+	HWRITE4(sc, offset + PHY_PLL_REG2, val);
+
+	for (lane = 0; lane < num_lanes; lane++) {
+		val = HREAD4(sc, offset + PCIE_RX_REG1(lane));
+		val &= ~REFCLK_MODE_MASK;
+		HWRITE4(sc, offset + PCIE_RX_REG1(lane), val);
+	}
+
+	val = HREAD4(sc, offset + PHY_PLL_REG2);
+	val |= (1U << 20);
+	HWRITE4(sc, offset + PHY_PLL_REG2, val);
+
+	val = HREAD4(sc, offset + PCIE_RX_REG1(0));
+	val = REFCLK_MODE_DRIVER | SEL_TRI_CODE | LEGACY_DEFAULT;
+	HWRITE4(sc, offset + PCIE_RX_REG1(0), val);
+
+	val = HREAD4(sc, offset + PHY_PLL_REG1);
+	val &= ~(0xf << 24);
+	HWRITE4(sc, offset + PHY_PLL_REG1, val);
+
+	for (lane = 0; lane < num_lanes; lane++) {
+		val = HREAD4(sc, offset + PHY_PU_SEL(lane));
+		val |= (1U << 13);
+		HWRITE4(sc, offset + PHY_PU_SEL(lane), val);
+
+		val = HREAD4(sc, offset + PHY_RESET_CFG(lane));
+		val &= ~(1U << 6);
+		HWRITE4(sc, offset + PHY_RESET_CFG(lane), val);
+
+		val = HREAD4(sc, offset + PHY_MODE_CFG(lane));
+		val |= (1U << 2);
+		HWRITE4(sc, offset + PHY_MODE_CFG(lane), val);
+
+		val = HREAD4(sc, offset + PHY_RX_REG_A(lane));
+		val = 0xdf987810;
+		HWRITE4(sc, offset + PHY_RX_REG_A(lane), val);
+
+		val = HREAD4(sc, offset + PHY_RX_REG_B(lane));
+		val &= ~0x00ffffff;
+		val |= 0x002888b4;
+		HWRITE4(sc, offset + PHY_RX_REG_B(lane), val);
+
+		val = HREAD4(sc, offset + PCIE_PU_ADDR_CLK_CFG(lane));
+		val |= CFG_SW_PHY_INIT_DONE;
+		HWRITE4(sc, offset + PCIE_PU_ADDR_CLK_CFG(lane), val);
+	}
+
+	for (timo = 1000; timo > 0; timo--) {
+		if (HREAD4(sc, offset + PCIE_PU_ADDR_CLK_CFG(0)) & PLL_READY)
+			break;
+		delay(500);
+	}
+	if (timo == 0)
+		printf("%s: PLL lock timeout\n", sc->sc_dev.dv_xname);
 
 	return 0;
 }
