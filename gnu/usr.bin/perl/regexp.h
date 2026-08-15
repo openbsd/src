@@ -829,8 +829,8 @@ typedef struct {
     char *cutpoint;      /* (*COMMIT) position (if any) */
     regmatch_info_aux      *info_aux; /* extra fields that need cleanup */
     regmatch_info_aux_eval *info_aux_eval; /* extra saved state for (?{}) */
-    I32  poscache_maxiter; /* how many whilems todo before S-L cache kicks in */
-    I32  poscache_iter;    /* current countdown from _maxiter to zero */
+    STRLEN poscache_maxiter; /* how many whilems todo before S-L cache kicks in */
+    STRLEN poscache_iter;    /* current countdown from _maxiter to zero */
     STRLEN poscache_size;  /* size of regmatch_info_aux.poscache */
     bool intuit;    /* re_intuit_start() is the top-level caller */
     bool is_utf8_pat;    /* regex is utf8 */
