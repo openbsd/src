@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.166 2026/07/14 21:14:09 kettenis Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.167 2026/08/15 22:06:40 gnezdo Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -197,16 +197,18 @@ usbd_get_string(struct usbd_device *dev, int si, char *buf, size_t buflen)
 static void
 usbd_trim_spaces(char *p)
 {
-	char *q, *e;
+	char *q, *e, c;
 
 	if (p == NULL)
 		return;
 	q = e = p;
 	while (*q == ' ')	/* skip leading spaces */
 		q++;
-	while ((*p = *q++))	/* copy string */
-		if (*p++ != ' ') /* remember last non-space */
+	while ((*p = *q++)) {	/* copy string */
+		c = *p++;
+		if (c != ' ' && c != '\n') /* remember last non-space */
 			e = p;
+	}
 	*e = 0;			/* kill trailing spaces */
 }
 
