@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.23 2026/05/19 16:56:59 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.24 2026/08/15 11:30:02 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,6 +21,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/fdt.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -30,6 +32,8 @@
 
 int simplebus_match(struct device *, void *, void *);
 void simplebus_attach(struct device *, struct device *, void *);
+
+void simplebus_check_dma(struct simplebus_softc *);
 
 void simplebus_attach_node(struct device *, int);
 int simplebus_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -119,6 +123,8 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 		    M_TEMP, M_WAITOK);
 		OF_getpropintarray(sc->sc_node, "dma-ranges",
 		    sc->sc_dmaranges, sc->sc_dmarangeslen);
+
+		simplebus_check_dma(sc);
 	}
 
 	/*
@@ -514,4 +520,56 @@ simplebus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	}
 
 	return 0;
+}
+
+void
+simplebus_check_dma(struct simplebus_softc *sc)
+{
+	struct uvm_constraint_range constraint;
+	uint64_t rfrom, rsize;
+	uint64_t low = -1, high = 0;
+	uint32_t *range;
+	int rlen, rone;
+
+	rlen = sc->sc_dmarangeslen / sizeof(uint32_t);
+	rone = sc->sc_pacells + sc->sc_acells + sc->sc_scells;
+
+	for (range = sc->sc_dmaranges; rlen >= rone;
+	    rlen -= rone, range += rone) {
+
+		/* Extract from and size. */
+		rfrom = range[sc->sc_acells];
+		if (sc->sc_pacells == 2)
+			rfrom = (rfrom << 32) + range[sc->sc_acells + 1];
+
+		rsize = range[sc->sc_acells + sc->sc_pacells];
+		if (sc->sc_scells == 2)
+			rsize = (rsize << 32) +
+			    range[sc->sc_acells + sc->sc_pacells + 1];
+
+		if (OF_translate(OF_parent(sc->sc_node), "dma-ranges",
+		    &rfrom, &rsize))
+			continue;
+
+		if (rfrom < low) {
+			low = rfrom;
+			high = rfrom + rsize - 1;
+		}
+	}
+
+	printf("%llx-%llx\n", low, high);
+
+	if (high > 0) {
+		constraint.ucr_low = high + 1;
+		constraint.ucr_high = no_constraint.ucr_high;
+		if (uvm_pagecount(&constraint) > 0)
+			printf("!BUS_DMA_64BIT (high)\n");
+	}
+
+	if (low > 0) {
+		constraint.ucr_low = no_constraint.ucr_low;
+		constraint.ucr_high = low - 1;
+		if (uvm_pagecount(&constraint) > 0)
+			printf("!BUS_DMA_64BIT (low)\n");
+	}
 }

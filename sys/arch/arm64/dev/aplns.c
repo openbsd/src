@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.19 2026/06/30 16:24:33 jcs Exp $ */
+/*	$OpenBSD: aplns.c,v 1.20 2026/08/15 11:30:02 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -51,8 +51,6 @@
 #define ANS_BOOT_STATUS		0x01300
 #define  ANS_BOOT_STATUS_OK	0xde71ce55
 #define ANS_MODESEL_REG		0x01304
-#define ANS_UNKNOWN_CTRL	0x24008
-#define  ANS_PRP_NULL_CHECK	(1 << 11)
 #define ANS_LINEAR_SQ_CTRL	0x24908
 #define  ANS_LINEAR_SQ_CTRL_EN	(1 << 0)
 #define ANS_LINEAR_ASQ_DB	0x2490c
@@ -306,10 +304,6 @@ nvme_ans_init(struct nvme_ans_softc *asc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_MAX_PEND_CMDS_CTRL,
 	    (ANS_MAX_QUEUE_DEPTH << 16) | ANS_MAX_QUEUE_DEPTH);
 
-	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL,
-	    ctrl & ~ANS_PRP_NULL_CHECK);
-
 	return 0;
 }
 
@@ -429,8 +423,10 @@ nvme_ans_sq_leave(struct nvme_softc *sc,
 	    ANS_NVMMU_TCB_PITCH * id, sizeof(*tcb), BUS_DMASYNC_POSTWRITE);
 
 	memset(tcb, 0, sizeof(*tcb));
-	tcb->tcb_opcode = sqe->opcode;
-	tcb->tcb_flags = ANS_NVMMU_TCB_WRITE | ANS_NVMMU_TCB_READ;
+	if (sqe->opcode & NVM_CMD_WRITE)
+		tcb->tcb_flags |= ANS_NVMMU_TCB_READ;
+	if (sqe->opcode & NVM_CMD_READ)
+		tcb->tcb_flags |= ANS_NVMMU_TCB_WRITE;
 	tcb->tcb_cid = id;
 	tcb->tcb_prpl_len = sqe->nlb;
 	tcb->tcb_prp[0] = sqe->entry.prp[0];
