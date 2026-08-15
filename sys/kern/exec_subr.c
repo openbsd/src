@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.71 2025/11/08 17:23:22 mpi Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.72 2026/08/15 18:52:28 kettenis Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -234,10 +234,11 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 
 	if (cmd->ev_len == 0)
 		return (0);
+	if (cmd->ev_addr & PAGE_MASK)
+		return (EINVAL);
 
 	prot = cmd->ev_prot;
 
-	KASSERT((cmd->ev_addr & PAGE_MASK) == 0);
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(prot | PROT_WRITE, PROT_MASK, MAP_INHERIT_COPY,
