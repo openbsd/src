@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.184 2026/08/06 20:38:02 claudio Exp $	*/
+/*	$OpenBSD: tty.c,v 1.185 2026/08/15 16:24:25 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -844,6 +844,8 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case TIOCGSID:			/* get sid of tty */
 		if (!isctty(pr, tp))
+			return (ENOTTY);
+		if (tp->t_session->s_leader == NULL)	/* XXX session stored wrong */
 			return (ENOTTY);
 		*(int *)data = tp->t_session->s_leader->ps_pid;
 		break;
