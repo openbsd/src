@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.70 2026/05/22 18:11:08 kirill Exp $	*/
+/*	$OpenBSD: vi.c,v 1.71 2026/08/15 11:54:18 jtt Exp $	*/
 
 /*
  *	vi command editing
@@ -964,8 +964,6 @@ vi_cmd(int argcnt, const char *cmd)
 			break;
 
 		case 'v':
-			if (es->linelen == 0 && argcnt == 0)
-				return -1;
 			if (!argcnt) {
 				if (modified) {
 					es->cbuf[es->linelen] = '\0';
