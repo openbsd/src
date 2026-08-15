@@ -256,7 +256,12 @@ static reloc_howto_type _bfd_sparc_elf_howto_table[] =
   HOWTO(R_SPARC_TLS_DTPOFF32,0,2,32,FALSE,0,complain_overflow_bitfield,bfd_elf_generic_reloc,"R_SPARC_TLS_DTPOFF32",FALSE,0,0xffffffff,TRUE),
   HOWTO(R_SPARC_TLS_DTPOFF64,0,4,64,FALSE,0,complain_overflow_bitfield,bfd_elf_generic_reloc,"R_SPARC_TLS_DTPOFF64",FALSE,0,MINUS_ONE,TRUE),
   HOWTO(R_SPARC_TLS_TPOFF32,0,0, 0,FALSE,0,complain_overflow_dont,   bfd_elf_generic_reloc,  "R_SPARC_TLS_TPOFF32",FALSE,0,0x00000000,TRUE),
-  HOWTO(R_SPARC_TLS_TPOFF64,0,0, 0,FALSE,0,complain_overflow_dont,   bfd_elf_generic_reloc,  "R_SPARC_TLS_TPOFF64",FALSE,0,0x00000000,TRUE)
+  HOWTO(R_SPARC_TLS_TPOFF64,0,0, 0,FALSE,0,complain_overflow_dont,   bfd_elf_generic_reloc,  "R_SPARC_TLS_TPOFF64",FALSE,0,0x00000000,TRUE),
+  HOWTO(R_SPARC_GOTDATA_HIX22,0,2,0,FALSE,0,complain_overflow_dont,  sparc_elf_hix22_reloc,"R_SPARC_GOTDATA_HIX22",FALSE,0,0x003fffff,FALSE),
+  HOWTO(R_SPARC_GOTDATA_LOX10,0,2,0,FALSE,0,complain_overflow_dont,  sparc_elf_lox10_reloc,  "R_SPARC_GOTDATA_LOX10",FALSE,0,0x000003ff,FALSE),
+  HOWTO(R_SPARC_GOTDATA_OP_HIX22,0,2,0,FALSE,0,complain_overflow_dont,sparc_elf_hix22_reloc,"R_SPARC_GOTDATA_OP_HIX22",FALSE,0,0x003fffff,FALSE),
+  HOWTO(R_SPARC_GOTDATA_OP_LOX10,0,2,0,FALSE,0,complain_overflow_dont,sparc_elf_lox10_reloc,"R_SPARC_GOTDATA_OP_LOX10",FALSE,0,0x000003ff,FALSE),
+  HOWTO(R_SPARC_GOTDATA_OP,0,0,0,FALSE,0,complain_overflow_dont,     bfd_elf_generic_reloc,  "R_SPARC_GOTDATA_OP",FALSE,0,0x00000000,TRUE)
 };
 static reloc_howto_type sparc_vtinherit_howto =
   HOWTO (R_SPARC_GNU_VTINHERIT, 0,2,0,FALSE,0,complain_overflow_dont, NULL, "R_SPARC_GNU_VTINHERIT", FALSE,0, 0, FALSE);
@@ -340,6 +345,11 @@ static const struct elf_reloc_map sparc_reloc_map[] =
   { BFD_RELOC_SPARC_TLS_DTPOFF64, R_SPARC_TLS_DTPOFF64 },
   { BFD_RELOC_SPARC_TLS_TPOFF32, R_SPARC_TLS_TPOFF32 },
   { BFD_RELOC_SPARC_TLS_TPOFF64, R_SPARC_TLS_TPOFF64 },
+  { BFD_RELOC_SPARC_GOTDATA_HIX22, R_SPARC_GOTDATA_HIX22 },
+  { BFD_RELOC_SPARC_GOTDATA_LOX10, R_SPARC_GOTDATA_LOX10 },
+  { BFD_RELOC_SPARC_GOTDATA_OP_HIX22, R_SPARC_GOTDATA_OP_HIX22 },
+  { BFD_RELOC_SPARC_GOTDATA_OP_LOX10, R_SPARC_GOTDATA_OP_LOX10 },
+  { BFD_RELOC_SPARC_GOTDATA_OP, R_SPARC_GOTDATA_OP },
   { BFD_RELOC_SPARC_PLT32, R_SPARC_PLT32 },
   { BFD_RELOC_SPARC_PLT64, R_SPARC_PLT64 },
   { BFD_RELOC_SPARC_HIX22, R_SPARC_HIX22 },
@@ -1147,6 +1157,10 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_SPARC_GOT10:
 	case R_SPARC_GOT13:
 	case R_SPARC_GOT22:
+	case R_SPARC_GOTDATA_HIX22:
+	case R_SPARC_GOTDATA_LOX10:
+	case R_SPARC_GOTDATA_OP_HIX22:
+	case R_SPARC_GOTDATA_OP_LOX10:
 	case R_SPARC_TLS_GD_HI22:
 	case R_SPARC_TLS_GD_LO10:
 	  /* This symbol requires a global offset table entry.  */
@@ -1607,6 +1621,10 @@ _bfd_sparc_elf_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info,
 	case R_SPARC_GOT10:
 	case R_SPARC_GOT13:
 	case R_SPARC_GOT22:
+	case R_SPARC_GOTDATA_HIX22:
+	case R_SPARC_GOTDATA_LOX10:
+	case R_SPARC_GOTDATA_OP_HIX22:
+	case R_SPARC_GOTDATA_OP_LOX10:
 	  if (h != NULL)
 	    {
 	      if (h->got.refcount > 0)
@@ -2563,6 +2581,19 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
       switch (r_type)
 	{
+	case R_SPARC_GOTDATA_HIX22:
+	case R_SPARC_GOTDATA_LOX10:
+	  if (htab->sgot == NULL)
+	    abort ();
+	  relocation -= (htab->sgot->output_section->vma
+			 + htab->sgot->output_offset + got_base);
+	  break;
+
+	case R_SPARC_GOTDATA_OP:
+	  continue;
+
+	case R_SPARC_GOTDATA_OP_HIX22:
+	case R_SPARC_GOTDATA_OP_LOX10:
 	case R_SPARC_GOT10:
 	case R_SPARC_GOT13:
 	case R_SPARC_GOT22:
@@ -3332,28 +3363,41 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	  r = bfd_reloc_ok;
 	}
-      else if (r_type == R_SPARC_HIX22)
+      else if (r_type == R_SPARC_HIX22
+	       || r_type == R_SPARC_GOTDATA_HIX22
+	       || r_type == R_SPARC_GOTDATA_OP_HIX22)
 	{
 	  bfd_vma x;
 
 	  relocation += rel->r_addend;
-	  relocation = relocation ^ MINUS_ONE;
+	  if (r_type == R_SPARC_HIX22
+	      || (bfd_signed_vma) relocation < 0)
+	    relocation = relocation ^ MINUS_ONE;
 
 	  x = bfd_get_32 (input_bfd, contents + rel->r_offset);
 	  x = (x & ~(bfd_vma) 0x3fffff) | ((relocation >> 10) & 0x3fffff);
 	  bfd_put_32 (input_bfd, x, contents + rel->r_offset);
 
-	  r = bfd_check_overflow (howto->complain_on_overflow,
-				  howto->bitsize, howto->rightshift,
-				  bfd_arch_bits_per_address (input_bfd),
-				  relocation);
+	  if (howto->complain_on_overflow != complain_overflow_dont)
+	    r = bfd_check_overflow (howto->complain_on_overflow,
+				    howto->bitsize, howto->rightshift,
+				    bfd_arch_bits_per_address (input_bfd),
+				    relocation);
+	  else
+	    r = bfd_reloc_ok;
 	}
-      else if (r_type == R_SPARC_LOX10)
+      else if (r_type == R_SPARC_LOX10
+	       || r_type == R_SPARC_GOTDATA_LOX10
+	       || r_type == R_SPARC_GOTDATA_OP_LOX10)
 	{
 	  bfd_vma x;
 
 	  relocation += rel->r_addend;
-	  relocation = (relocation & 0x3ff) | 0x1c00;
+	  if (r_type == R_SPARC_LOX10
+	      || (bfd_signed_vma) relocation < 0)
+	    relocation = (relocation & 0x3ff) | 0x1c00;
+	  else
+	    relocation &= 0x3ff;
 
 	  x = bfd_get_32 (input_bfd, contents + rel->r_offset);
 	  x = (x & ~(bfd_vma) 0x1fff) | relocation;
