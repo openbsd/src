@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.278 2026/08/16 16:22:47 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.279 2026/08/16 19:00:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -285,6 +285,7 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"fzoom",	"gcolor",	"hc",		"hcode",
 	"hidechar",	"hla",		"hlm",		"hpf",
 	"hpfa",		"hpfcode",	"hw",		"hy",
+	"hydefault",
 	"hylang",	"hylen",	"hym",		"hypp",
 	"hys",		"ie",		"if",		"ig",
 	"index",	"it",		"itc",		"IX",
@@ -292,23 +293,25 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"lc",		"lc_ctype",	"lds",		"length",
 	"letadj",	"lf",		"lg",		"lhang",
 	"linetabs",	"lnr",		"lnrf",		"lpfx",
-	"ls",		"lsm",		"lt",
-	"mediasize",	"minss",	"mk",		"mso",
+	"ls",		"lsm",		"lt",		"mediasize",
+	"minss",	"mk",		"mso",		"msoquiet",
 	"na",		"ne",		"nh",		"nhychar",
 	"nm",		"nn",		"nop",		"nr",
 	"nrf",		"nroff",	"ns",		"nx",
 	"open",		"opena",	"os",		"output",
-	"padj",		"papersize",	"pc",		"pev",
-	"pi",		"PI",		"pl",		"pm",
-	"pn",		"pnr",		"ps",
-	"psbb",		"pshape",	"pso",		"ptr",
-	"pvs",		"rchar",	"rd",		"recursionlimit",
+	"padj",		"papersize",	"pc",		"pchar",
+	"pcolor",	"pcomposite",	"pev",		"phw",
+	"pi",		"PI",		"pl",		"pline",
+	"pm",		"pn",		"pnr",		"ps",
+	"psbb",		"pshape",	"pso",		"pstream",
+	"ptr",		"pvs",		"pwh",
+	"rchar",	"rd",		"recursionlimit",
 	"return",	"rfschar",	"rhang",
 	"rm",		"rn",		"rnn",		"rr",
 	"rs",		"rt",		"schar",	"sentchar",
 	"shc",		"shift",	"sizes",	"so",
-	"spacewidth",	"special",	"spreadwarn",	"ss",
-	"stringdown",	"stringup",
+	"soquiet",	"spacewidth",	"special",	"spreadwarn",
+	"ss",		"stringdown",	"stringup",
 	"sty",		"substring",	"sv",		"sy",
 	"T&",		"tc",		"TE",
 	"TH",		"tkf",		"tl",
@@ -480,6 +483,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* hpfcode */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* hw */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* hy */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* hydefault */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* hylang */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* hylen */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* hym */
@@ -515,6 +519,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* minss */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* mk */
 	{ roff_insec, NULL, NULL, 0 },  /* mso */
+	{ roff_insec, NULL, NULL, 0 },  /* msoquiet */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* na */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ne */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* nh */
@@ -534,10 +539,15 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* padj */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* papersize */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pc */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* pchar */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* pcolor */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* pcomposite */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pev */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* phw */
 	{ roff_insec, NULL, NULL, 0 },  /* pi */
 	{ roff_unsupp, NULL, NULL, 0 },  /* PI */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pl */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* pline */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pm */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pn */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pnr */
@@ -545,8 +555,10 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_unsupp, NULL, NULL, 0 },  /* psbb */
 	{ roff_unsupp, NULL, NULL, 0 },  /* pshape */
 	{ roff_insec, NULL, NULL, 0 },  /* pso */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* pstream */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ptr */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* pvs */
+	{ roff_line_ignore, NULL, NULL, 0 },  /* pwh */
 	{ roff_unsupp, NULL, NULL, 0 },  /* rchar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* rd */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* recursionlimit */
@@ -565,6 +577,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_shift, NULL, NULL, 0 },  /* shift */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* sizes */
 	{ roff_so, NULL, NULL, 0 },  /* so */
+	{ roff_so, NULL, NULL, 0 },  /* soquiet */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* spacewidth */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* special */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* spreadwarn */

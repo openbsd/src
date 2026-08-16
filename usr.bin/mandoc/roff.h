@@ -1,6 +1,7 @@
-/* $OpenBSD: roff.h,v 1.59 2026/08/16 16:22:47 schwarze Exp $	*/
+/* $OpenBSD: roff.h,v 1.60 2026/08/16 19:00:17 schwarze Exp $	*/
 /*
- * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2020, 2022, 2026
+ *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -183,6 +184,7 @@ enum	roff_tok {
 	ROFF_hpfcode,
 	ROFF_hw,
 	ROFF_hy,
+	ROFF_hydefault,
 	ROFF_hylang,
 	ROFF_hylen,
 	ROFF_hym,
@@ -219,6 +221,7 @@ enum	roff_tok {
 	ROFF_minss,
 	ROFF_mk,
 	ROFF_mso,
+	ROFF_msoquiet,
 	ROFF_na,
 	ROFF_ne,
 	ROFF_nh,
@@ -238,10 +241,15 @@ enum	roff_tok {
 	ROFF_padj,
 	ROFF_papersize,
 	ROFF_pc,
+	ROFF_pchar,
+	ROFF_pcolor,
+	ROFF_pcomposite,
 	ROFF_pev,
+	ROFF_phw,
 	ROFF_pi,
 	ROFF_PI,
 	ROFF_pl,
+	ROFF_pline,
 	ROFF_pm,
 	ROFF_pn,
 	ROFF_pnr,
@@ -249,8 +257,10 @@ enum	roff_tok {
 	ROFF_psbb,
 	ROFF_pshape,
 	ROFF_pso,
+	ROFF_pstream,
 	ROFF_ptr,
 	ROFF_pvs,
+	ROFF_pwh,
 	ROFF_rchar,
 	ROFF_rd,
 	ROFF_recursionlimit,
@@ -269,6 +279,7 @@ enum	roff_tok {
 	ROFF_shift,
 	ROFF_sizes,
 	ROFF_so,
+	ROFF_soquiet,
 	ROFF_spacewidth,
 	ROFF_special,
 	ROFF_spreadwarn,

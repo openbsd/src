@@ -1,4 +1,4 @@
-.\" $OpenBSD: roff.7,v 1.105 2026/08/16 16:22:47 schwarze Exp $
+.\" $OpenBSD: roff.7,v 1.106 2026/08/16 19:00:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2019, 2022-2023, 2025, 2026
 .\"               Ingo Schwarze <schwarze@openbsd.org>
@@ -1003,6 +1003,9 @@ Currently ignored.
 .It Ic \&hy Op Ar mode
 Set automatic hyphenation mode.
 Currently ignored.
+.It Ic \&hydefault Op Ar mode
+Set default hyphenation mode.
+This is a groff-1.24 extension and currently ignored.
 .It Ic \&hylang Ar language
 Set hyphenation language.
 This is a Heirloom extension and currently ignored.
@@ -1365,6 +1368,12 @@ Currently ignored.
 .It Ic \&mso Ar filename
 Load a macro file using the search path.
 Ignored because insecure.
+.It Ic \&msoquiet Ar filename
+A groff-1.23 extension that
+.Xr mandoc 1
+treats as an alias for
+.Ic \&mso ,
+without suppressing any diagnostic messages.
 .It Ic \&na
 Disable adjusting without changing the adjustment mode.
 Currently ignored.
@@ -1474,9 +1483,23 @@ This is a Heirloom extension and currently ignored.
 .It Ic \&pc Op Ar char
 Change the page number character.
 Currently ignored.
+.It Ic \&pchar Ar char ...
+Print information about each of the listed characters
+to standard error ourput.
+This is a groff-1.24 extension and currently ignored.
+.It Ic \&pcolor Op Ar colorname ...
+Print information about the named colors to standard error output.
+This is a groff-1.24 extension and currently ignored.
+.It Ic \&pcomposite
+Print the list of configured composite character mappings
+to standard error output.
+This is a groff-1.24 extension and currently ignored.
 .It Ic \&pev
 Print environments.
 This is a groff extension and currently ignored.
+.It Ic \&phw
+Print a list of hyphenation exception words to standard error output.
+This is a groff-1.24 extension and currently ignored.
 .It Ic \&pi Ar command
 Pipe output to a shell command.
 Ignored because insecure.
@@ -1487,6 +1510,10 @@ This is a Heirloom extension and currently unsupported.
 .It Ic \&pl Op Oo Cm + Ns | Ns Cm - Oc Ns Ar height
 Change page length.
 Currently ignored.
+.It Ic \&pline
+Print the list of output nodes corresponding to the pending output line
+to standard error output.
+This is a groff-1.24 extension and currently ignored.
 .It Ic \&pm
 Print names and sizes of macros, strings, and diversions
 to standard error output.
@@ -1519,12 +1546,21 @@ This is a Heirloom extension and currently unsupported.
 .It Ic \&pso Ar command
 Include output of a shell command.
 Ignored because insecure.
+.It Ic \&pstream
+Print the list of open streams to standard error output.
+This is a groff-1.24 extension and currently ignored.
 .It Ic \&ptr
-Print the names and positions of all traps on standard error output.
-This is a groff extension and currently ignored.
+Print the names and positions of all page location traps
+to standard error output.
+This was a groff extension, it was deleted from groff-1.24,
+and it is currently ignored.
 .It Ic \&pvs Op Oo Cm + Ns | Ns Cm - Oc Ns Ar height
 Change post-vertical spacing.
 This is a groff extension and currently ignored.
+.It Ic \&pwh
+Print the names and positions of all page location traps
+to standard error output.
+This is a groff-1.24 extension and currently ignored.
 .It Ic \&rchar Ar glyph ...
 Remove glyph definitions.
 Currently unsupported.
@@ -1620,6 +1656,12 @@ is discouraged.
 Use
 .Xr ln 1
 instead.
+.It Ic \&soquiet Ar filename
+A groff-1.23 extension that
+.Xr mandoc 1
+treats as an alias for
+.Ic \&so ,
+without suppressing any diagnostic messages.
 .It Ic \&sp Op Ar height
 Break the output line and emit vertical space.
 The argument follows the syntax of
