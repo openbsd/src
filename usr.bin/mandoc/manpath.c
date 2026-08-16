@@ -1,4 +1,4 @@
-/* $OpenBSD: manpath.c,v 1.33 2026/04/17 15:30:27 schwarze Exp $ */
+/* $OpenBSD: manpath.c,v 1.34 2026/08/16 12:02:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014, 2015, 2017-2021, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -43,34 +43,37 @@ static	void	 manpath_parseline(struct manpaths *, char *, char);
 void
 manconf_parse(struct manconf *conf, const char *file, char *pend, char *pbeg)
 {
-	int use_path_from_file = 1;
+	const char	*penv;
+	size_t		 len;
+	int		 use_path_from_file = 1;
 
 	/* Always prepend -m. */
 	manpath_parseline(&conf->manpath, pbeg, 'm');
+	pbeg = NULL;
 
 	if (pend != NULL && *pend != '\0') {
 		/* If -M is given, it overrides everything else. */
 		manpath_parseline(&conf->manpath, pend, 'M');
 		use_path_from_file = 0;
-		pbeg = pend = NULL;
-	} else if ((pbeg = getenv("MANPATH")) == NULL || *pbeg == '\0') {
+		pend = NULL;
+	} else if ((penv = getenv("MANPATH")) == NULL || *penv == '\0') {
 		/* No MANPATH; use man.conf(5) only. */
-		pbeg = pend = NULL;
-	} else if (*pbeg == ':') {
+		pend = NULL;
+	} else if (*penv == ':') {
 		/* Prepend man.conf(5) to MANPATH. */
-		pend = pbeg + 1;
-		pbeg = NULL;
-	} else if ((pend = strstr(pbeg, "::")) != NULL) {
+		pend = mandoc_strdup(penv + 1);
+	} else if ((pend = strstr(penv, "::")) != NULL) {
 		/* Insert man.conf(5) into MANPATH. */
-		*pend = '\0';
-		pend += 2;
-	} else if (pbeg[strlen(pbeg) - 1] == ':') {
-		/* Append man.conf(5) to MANPATH. */
-		pend = NULL;
+		pbeg = mandoc_strndup(penv, pend - penv);
+		pend = mandoc_strdup(pend + 2);
 	} else {
-		/* MANPATH overrides man.conf(5) completely. */
-		use_path_from_file = 0;
+		len = strlen(penv);
+		pbeg = mandoc_strdup(penv);
 		pend = NULL;
+		if (pbeg[len - 1] == ':') /* Append man.conf(5) to MANPATH. */
+			pbeg[len - 1] = '\0';
+		else	/* MANPATH overrides man.conf(5) completely. */
+			use_path_from_file = 0;
 	}
 
 	manpath_parseline(&conf->manpath, pbeg, '\0');
@@ -80,6 +83,9 @@ manconf_parse(struct manconf *conf, const char *file, char *pend, char *pbeg)
 	manconf_file(conf, file, use_path_from_file);
 
 	manpath_parseline(&conf->manpath, pend, '\0');
+
+	free(pbeg);
+	free(pend);
 }
 
 void
