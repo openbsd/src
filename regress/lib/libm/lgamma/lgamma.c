@@ -1,15 +1,12 @@
-/*	$OpenBSD: lgamma.c,v 1.3 2016/10/23 18:46:03 otto Exp $	*/
+/*	$OpenBSD: lgamma.c,v 1.4 2026/08/16 16:41:35 daniel Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
  */
 
-#define __POSIX_VISIBLE 201403
-
 #include <assert.h>
 #include <math.h>
 #include <float.h>
-
 
 int
 main(int argc, char *argv[])
