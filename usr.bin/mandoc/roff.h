@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.h,v 1.58 2023/10/24 20:30:49 schwarze Exp $	*/
+/* $OpenBSD: roff.h,v 1.59 2026/08/16 16:22:47 schwarze Exp $	*/
 /*
  * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -273,6 +273,8 @@ enum	roff_tok {
 	ROFF_special,
 	ROFF_spreadwarn,
 	ROFF_ss,
+	ROFF_stringdown,
+	ROFF_stringup,
 	ROFF_sty,
 	ROFF_substring,
 	ROFF_sv,

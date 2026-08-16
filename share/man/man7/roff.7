@@ -1,6 +1,7 @@
-.\" $OpenBSD: roff.7,v 1.104 2025/08/04 23:11:52 schwarze Exp $
+.\" $OpenBSD: roff.7,v 1.105 2026/08/16 16:22:47 schwarze Exp $
 .\"
-.\" Copyright (c) 2010-2019,2022-2023,2025 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010-2019, 2022-2023, 2025, 2026
+.\"               Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2025 $
+.Dd $Mdocdate: August 16 2026 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1637,6 +1638,18 @@ Currently ignored.
 .It Ic \&ss Ar wordspace Op Ar sentencespace
 Set space character size.
 Currently ignored.
+.It Ic \&stringdown Ar stringname
+Convert each byte of the user-defined string with the given
+.Ar stringname
+to lower case.
+If the strings contains escape sequences, for example special character
+escapes, each byte of the names and arguments of the sequences is
+converted rather than attempting wide character case conversion.
+This is a groff-1.23 extension.
+.It Ic \&stringup Ar stringname
+Like
+.Ic \&stringdown ,
+but converts to upper case instead of to lower case.
 .It Ic \&sty Ar position style
 Associate style with a font position.
 This is a groff extension and currently ignored.
