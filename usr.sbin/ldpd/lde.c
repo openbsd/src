@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.86 2026/08/03 18:48:26 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.87 2026/08/17 09:00:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -357,9 +357,11 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			    imsg.hdr.pid, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by ldpe */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1)
+				log_warn("wrong imsg len");
+			else
+				log_verbose(verbose);
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,

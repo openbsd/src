@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.81 2026/08/03 18:48:26 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.82 2026/08/17 09:00:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -432,9 +432,11 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 				log_warnx("IFINFO request with wrong len");
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by ldpe */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1)
+				log_warn("wrong imsg len");
+			else
+				log_verbose(verbose);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
