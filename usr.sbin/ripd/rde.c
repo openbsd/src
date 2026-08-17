@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.33 2026/08/03 18:49:10 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.34 2026/08/17 08:59:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -269,9 +269,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by ripe */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1)
+				log_warn("wrong imsg len");
+			else
+				log_verbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",

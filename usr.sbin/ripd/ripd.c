@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.46 2026/08/03 18:49:10 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.47 2026/08/17 08:59:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -364,9 +364,11 @@ main_dispatch_ripe(int fd, short event, void *bula)
 			carp_demote_set(dmsg.demote_group, dmsg.level);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by ripe */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1)
+				log_warn("wrong imsg len");
+			else
+				log_verbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_ripe: error handling imsg %d",
