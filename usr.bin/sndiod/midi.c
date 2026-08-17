@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.45 2026/08/12 11:08:53 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.46 2026/08/17 00:26:21 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -570,7 +570,7 @@ port_abort(struct port *p)
 
 		if (t->fixed) {
 			for (s = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, s++) {
-				if (s->ops == NULL && s->midithru == t) {
+				if (s->ops != NULL && s->midithru == t) {
 					s->ops->exit(s->arg);
 					s->ops = NULL;
 				}
