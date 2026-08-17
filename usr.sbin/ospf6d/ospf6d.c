@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.63 2026/08/03 18:48:58 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.64 2026/08/17 08:59:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -389,9 +389,11 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			carp_demote_set(dmsg.demote_group, dmsg.level);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by ospfe */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_setverbose(verbose);
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1)
+				log_warn("wrong imsg len");
+			else
+				log_setverbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_ospfe: error handling imsg %d",
