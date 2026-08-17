@@ -2316,22 +2316,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	/* Set up device info and initial runtime info. */
 	intel_device_info_driver_create(dev_priv, dev->pdev->device, info);
 
-	display = intel_display_device_probe(dev->pdev);
-	if (IS_ERR(display)) {
-		printf("%s: display probe failed\n", dev_priv->sc_dev.dv_xname);
-		return;
-	}
-
-	dev_priv->display = display;
-
-	/*
-	 * with GuC submission, init sometimes fails on Alder Lake-P
-	 * and Raptor Lake-S, too early for IS_ALDERLAKE
-	 */
-	if (info->platform == INTEL_ALDERLAKE_P ||
-	    info->platform == INTEL_ALDERLAKE_S)
-		dev_priv->params.enable_guc = ENABLE_GUC_LOAD_HUC;
-
 	mmio_bar = (GRAPHICS_VER(dev_priv) == 2) ? 0x14 : 0x10;
 
 	/* from intel_uncore_setup_mmio() */
@@ -2368,6 +2352,22 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		    dev_priv->sc_dev.dv_xname);
 		return;
 	}
+
+	display = intel_display_device_probe(dev->pdev);
+	if (IS_ERR(display)) {
+		printf("%s: display probe failed\n", dev_priv->sc_dev.dv_xname);
+		return;
+	}
+
+	dev_priv->display = display;
+
+	/*
+	 * with GuC submission, init sometimes fails on Alder Lake-P
+	 * and Raptor Lake-S, too early for IS_ALDERLAKE
+	 */
+	if (info->platform == INTEL_ALDERLAKE_P ||
+	    info->platform == INTEL_ALDERLAKE_S)
+		dev_priv->params.enable_guc = ENABLE_GUC_LOAD_HUC;
 
 #if NINTAGP > 0
 	if (GRAPHICS_VER(dev_priv) <= 5) {

@@ -1519,10 +1519,6 @@ probe_gmdid_display(struct intel_display *display, struct intel_display_ip_ver *
 	void __iomem *addr;
 	u32 val;
 	int i;
-	int mmio_bar, mmio_size, mmio_type;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t memsize;
 
 #ifdef __linux__
 	addr = pci_iomap_range(pdev, 0, i915_mmio_reg_offset(GMD_ID_DISPLAY), sizeof(u32));
@@ -1535,18 +1531,8 @@ probe_gmdid_display(struct intel_display *display, struct intel_display_ip_ver *
 	val = ioread32(addr);
 	pci_iounmap(pdev, addr);
 #else
-	mmio_bar = 0x10;
-	mmio_type = pci_mapreg_type(pdev->pc, pdev->tag, mmio_bar);
-	if (pci_mapreg_map(i915->pa, mmio_bar, mmio_type, 0,
-	    &bst, &bsh, NULL, &memsize, 0)) {
-		drm_err(display->drm,
-			"Cannot map MMIO BAR to read display GMD_ID\n");
-		return NULL;
-	}
-
-	val = bus_space_read_4(bst, bsh, i915_mmio_reg_offset(GMD_ID_DISPLAY));
-
-	bus_space_unmap(bst, bsh, memsize);
+	val = bus_space_read_4(i915->vga_regs->bst, i915->vga_regs->bsh,
+	    i915_mmio_reg_offset(GMD_ID_DISPLAY));
 #endif
 
 	if (val == 0) {
