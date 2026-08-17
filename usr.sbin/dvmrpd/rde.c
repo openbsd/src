@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.41 2026/08/03 18:47:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.42 2026/08/17 08:58:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -322,9 +322,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			mfc_recv_prune(&p);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* already checked by dvmrpe */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1)
+				log_warn("wrong imsg len");
+			else
+				log_verbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
