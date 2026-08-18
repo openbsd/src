@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.37 2026/04/20 10:30:02 tb Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.38 2026/08/18 02:00:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -476,6 +476,8 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	 * line and there's no reason to enter explicit characters to continue.
 	 */
 	if (filec_redraw && !F_ISSET(sp, SC_SCR_EXWROTE)) {
+		int stinput;
+
 		filec_redraw = 0;
 
 		fc.e_event = E_REPAINT;
@@ -483,8 +485,13 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 		    sp->rows ? 1 : sp->rows - vip->totalcount;
 		fc.e_tlno = sp->rows;
 		vip->linecount = vip->lcontinue = vip->totalcount = 0;
+		stinput = F_ISSET(sp, SC_TINPUT_INFO);
+		if (stinput)
+		    F_CLR(sp, SC_TINPUT_INFO);
 		(void)vs_repaint(sp, &fc);
 		(void)vs_refresh(sp, 1);
+		if (stinput)
+		    F_SET(sp, SC_TINPUT_INFO);
 	}
 
 	/* Deal with all non-character events. */
