@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.164 2026/07/31 03:59:50 kenjiro Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.165 2026/08/18 04:40:17 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1517,7 +1517,7 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	 */
 
 	if (!tlsext_extension_seen(s, TLSEXT_TYPE_supported_groups)) {
-		*alert = SSL_AD_ILLEGAL_PARAMETER;
+		*alert = SSL_AD_MISSING_EXTENSION;
 		return 0;
 	}
 	if (!tlsext_extension_processed(s, TLSEXT_TYPE_supported_groups)) {
