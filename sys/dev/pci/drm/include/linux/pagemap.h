@@ -5,6 +5,7 @@
 
 #include <linux/uaccess.h>
 #include <linux/highmem.h>
+#include <linux/mm.h>
 
 struct address_space;
 

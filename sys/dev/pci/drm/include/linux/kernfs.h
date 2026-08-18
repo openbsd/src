@@ -5,5 +5,6 @@
 
 #include <linux/err.h>
 #include <linux/idr.h>
+#include <linux/mutex.h>
 
 #endif

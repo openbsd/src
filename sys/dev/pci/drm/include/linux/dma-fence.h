@@ -9,6 +9,7 @@
 #include <linux/list.h>
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
+#include <linux/wait.h>
 
 struct dma_fence {
 	struct kref refcount;

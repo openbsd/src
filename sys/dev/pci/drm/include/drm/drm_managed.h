@@ -4,6 +4,7 @@
 #define _DRM_MANAGED_H_
 
 #include <linux/types.h>
+#include <linux/gfp.h>
 
 struct drm_device;
 struct rwlock;

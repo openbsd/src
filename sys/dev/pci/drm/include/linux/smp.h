@@ -4,6 +4,7 @@
 #define _LINUX_SMP_H
 
 #include <linux/cpumask.h>
+#include <linux/llist.h> /* via smp_types.h */
 
 /* sparc64 cpu.h needs time.h and siginfo.h (indirect via param.h) */
 #include <sys/param.h>

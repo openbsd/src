@@ -3,6 +3,8 @@
 #ifndef _LINUX_SHRINKER_H
 #define _LINUX_SHRINKER_H
 
+#include <linux/types.h>
+
 struct shrink_control {
 	u_long	nr_to_scan;
 	u_long	nr_scanned;

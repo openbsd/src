@@ -15,6 +15,7 @@
 #include <linux/shrinker.h>
 #include <linux/overflow.h>
 #include <linux/pgtable.h>
+#include <linux/gfp.h>
 
 #define PageHighMem(x)	0
 

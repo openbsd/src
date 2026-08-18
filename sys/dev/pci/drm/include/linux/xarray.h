@@ -4,6 +4,7 @@
 #define _LINUX_XARRAY_H
 
 #include <linux/gfp.h>
+#include <linux/sched/mm.h>
 
 #include <sys/tree.h>
 

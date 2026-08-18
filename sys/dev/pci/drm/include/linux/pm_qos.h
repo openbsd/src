@@ -3,6 +3,8 @@
 #ifndef _LINUX_PM_QOS_H
 #define _LINUX_PM_QOS_H
 
+#include <sys/types.h>
+
 struct pm_qos_request {
 };
 

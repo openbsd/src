@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaccess.h,v 1.8 2026/04/23 01:16:55 jsg Exp $	*/
+/*	$OpenBSD: uaccess.h,v 1.9 2026/08/18 00:53:37 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -23,6 +23,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <linux/sched.h>
+#include <linux/nospec.h>
 
 static inline unsigned long
 __copy_to_user(void *to, const void *from, unsigned long len)

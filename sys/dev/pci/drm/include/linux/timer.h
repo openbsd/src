@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.h,v 1.10 2026/03/09 23:58:03 jsg Exp $	*/
+/*	$OpenBSD: timer.h,v 1.11 2026/08/18 00:53:37 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -23,6 +23,7 @@
 #include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <linux/ktime.h>
+#include <linux/debugobjects.h>
 
 #define timer_delete_sync(x)	timeout_del_barrier((x))
 #define timer_shutdown_sync(x)	timeout_del_barrier((x))

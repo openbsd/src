@@ -5,6 +5,7 @@
 
 #include <linux/mm_types.h>
 #include <linux/nodemask.h>
+#include <linux/notifier.h> /* via memory_hotplug.h */
 
 #define MAX_PAGE_ORDER	10
 #define NR_PAGE_ORDERS	(MAX_PAGE_ORDER + 1)

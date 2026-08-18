@@ -3,6 +3,8 @@
 #ifndef _LINUX_NUMA_H
 #define _LINUX_NUMA_H
 
+#include <linux/nodemask.h>
+
 #define NUMA_NO_NODE	(-1)
 
 static inline int
