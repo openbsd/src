@@ -6,6 +6,7 @@
 #include <linux/export.h>
 #include <linux/moduleparam.h>
 #include <linux/kobject.h>
+#include <linux/error-injection.h>
 
 struct module;
 
