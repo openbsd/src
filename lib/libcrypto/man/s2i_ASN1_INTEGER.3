@@ -1,4 +1,4 @@
-.\" $OpenBSD: s2i_ASN1_INTEGER.3,v 1.11 2025/06/13 18:34:00 schwarze Exp $
+.\" $OpenBSD: s2i_ASN1_INTEGER.3,v 1.12 2026/08/18 11:27:46 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: August 18 2026 $
 .Dt S2I_ASN1_INTEGER 3
 .Os
 .Sh NAME
@@ -162,7 +162,9 @@ The default
 .Fa methods
 corresponding to the following
 .Fa nid
-arguments have strings configured in their usr_data field:
+arguments have strings configured in their
+.Fa usr_data
+field:
 .Pp
 .Bl -column NID_netscape_cert_type "Netscape certificate type (obsolete)" -compact
 .It Dv NID_crl_reason           Ta reason codes, RFC 5280, 5.3.1
