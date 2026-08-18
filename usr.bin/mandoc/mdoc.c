@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc.c,v 1.164 2020/04/06 09:55:49 schwarze Exp $ */
+/* $OpenBSD: mdoc.c,v 1.165 2026/08/18 13:51:51 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -163,8 +163,7 @@ static int
 mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 {
 	struct roff_node *n;
-	const char	 *cp, *sp;
-	char		 *c, *ws, *end;
+	char		 *c, *cp, *end, *sp, *ws;
 
 	n = mdoc->last;
 
