@@ -1,6 +1,6 @@
-/* $OpenBSD: read.c,v 1.192 2022/05/19 14:47:47 schwarze Exp $ */
+/* $OpenBSD: read.c,v 1.193 2026/08/18 14:02:11 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2022, 2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Joerg Sonnenberger <joerg@netbsd.org>
  *
@@ -626,11 +626,12 @@ mparse_readfd(struct mparse *curp, int fd, const char *filename)
 int
 mparse_open(struct mparse *curp, const char *file)
 {
-	char		 *cp;
+	const char	 *suffix;
+	char		 *gzfile;
 	int		  fd, save_errno;
 
-	cp = strrchr(file, '.');
-	curp->gzip = (cp != NULL && ! strcmp(cp + 1, "gz"));
+	suffix = strrchr(file, '.');
+	curp->gzip = suffix != NULL && strcmp(suffix + 1, "gz") == 0;
 
 	/* First try to use the filename as it is. */
 
@@ -642,11 +643,11 @@ mparse_open(struct mparse *curp, const char *file)
 	 * already  end in .gz, try appending .gz.
 	 */
 
-	if ( ! curp->gzip) {
+	if (curp->gzip == 0) {
 		save_errno = errno;
-		mandoc_asprintf(&cp, "%s.gz", file);
-		fd = open(cp, O_RDONLY);
-		free(cp);
+		mandoc_asprintf(&gzfile, "%s.gz", file);
+		fd = open(gzfile, O_RDONLY);
+		free(gzfile);
 		errno = save_errno;
 		if (fd != -1) {
 			curp->gzip = 1;
