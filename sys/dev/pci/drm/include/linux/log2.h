@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#define ilog2(x) ((sizeof(x) <= 4) ? (fls(x) - 1) : (flsl(x) - 1))
+#define ilog2(x)	(((x) <= 0) ? 0 : (63 - __builtin_clzll(x)))
 
 int	drm_order(unsigned long);
 
