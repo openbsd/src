@@ -80,7 +80,7 @@ struct drm_pagemap_ops {
 	 */
 	struct drm_pagemap_addr (*device_map)(struct drm_pagemap *dpagemap,
 					      struct device *dev,
-					      struct page *page,
+					      struct vm_page *page,
 					      unsigned int order,
 					      enum dma_data_direction dir);
 
@@ -120,10 +120,12 @@ struct drm_pagemap_ops {
 	 *
 	 * Return: 0 if successful. Negative error code on error.
 	 */
+#ifdef notyet
 	int (*populate_mm)(struct drm_pagemap *dpagemap,
 			   unsigned long start, unsigned long end,
 			   struct mm_struct *mm,
 			   unsigned long timeslice_ms);
+#endif
 };
 
 /**
@@ -184,7 +186,7 @@ struct drm_pagemap_devmem_ops {
 	 *
 	 * Return: 0 on success, a negative error code on failure.
 	 */
-	int (*copy_to_devmem)(struct page **pages,
+	int (*copy_to_devmem)(struct vm_page **pages,
 			      struct drm_pagemap_addr *pagemap_addr,
 			      unsigned long npages,
 			      struct dma_fence *pre_migrate_fence);
@@ -203,7 +205,7 @@ struct drm_pagemap_devmem_ops {
 	 *
 	 * Return: 0 on success, a negative error code on failure.
 	 */
-	int (*copy_to_ram)(struct page **pages,
+	int (*copy_to_ram)(struct vm_page **pages,
 			   struct drm_pagemap_addr *pagemap_addr,
 			   unsigned long npages,
 			   struct dma_fence *pre_migrate_fence);
@@ -211,11 +213,11 @@ struct drm_pagemap_devmem_ops {
 
 #if IS_ENABLED(CONFIG_ZONE_DEVICE)
 
-struct drm_pagemap *drm_pagemap_page_to_dpagemap(struct page *page);
+struct drm_pagemap *drm_pagemap_page_to_dpagemap(struct vm_page *page);
 
 #else
 
-static inline struct drm_pagemap *drm_pagemap_page_to_dpagemap(struct page *page)
+static inline struct drm_pagemap *drm_pagemap_page_to_dpagemap(struct vm_page *page)
 {
 	return NULL;
 }

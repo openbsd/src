@@ -209,7 +209,7 @@ struct drm_gpusvm {
 	const struct drm_gpusvm_ops *ops;
 	const unsigned long *chunk_sizes;
 	int num_chunks;
-	struct rw_semaphore notifier_lock;
+	struct rwlock notifier_lock;
 	struct rb_root_cached root;
 	struct list_head notifier_list;
 #ifdef CONFIG_LOCKDEP
