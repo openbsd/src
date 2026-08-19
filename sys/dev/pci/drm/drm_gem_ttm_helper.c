@@ -22,6 +22,14 @@ drm_gem_ttm_mmap(struct drm_gem_object *obj,
 }
 
 int
+drm_gem_ttm_dumb_map_offset(struct drm_file *filp, struct drm_device *dev,
+    uint32_t handle, uint64_t *offset_p)
+{
+	STUB();
+	return -ENOSYS;
+}
+
+int
 drm_gem_ttm_vmap(struct drm_gem_object *obj, struct iosys_map *ism)
 {
 	struct ttm_buffer_object *tbo =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.144 2026/07/27 02:24:44 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.145 2026/08/19 01:34:09 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3480,6 +3480,13 @@ dma_map_resource(struct device *dev, phys_addr_t phys_addr, size_t size,
 	return map->dm_segs[0].ds_addr;
 }
 
+void
+dma_unmap_resource(struct device *dev, dma_addr_t addr, size_t size,
+    enum dma_data_direction dir, u_long attr)
+{
+	STUB();
+}
+
 #ifdef BUS_DMA_FIXED
 
 #include <linux/iommu.h>
@@ -3659,6 +3666,12 @@ hrtimer_forward_now(struct timeout *to, ktime_t val)
 	timeout_abs_ts(to, &ts);
 
 	return 0;
+}
+
+int
+string_get_size(uint64_t size, uint64_t bsize, int units, char *buf, int blen)
+{
+	return snprintf(buf, blen, "%llu", size);
 }
 
 #ifdef __HAVE_FDT

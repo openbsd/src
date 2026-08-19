@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma-buf.h,v 1.5 2025/02/07 03:03:31 jsg Exp $	*/
+/*	$OpenBSD: dma-buf.h,v 1.6 2026/08/19 01:34:10 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -39,6 +39,7 @@ struct dma_buf {
 struct dma_buf_attachment {
 	struct dma_buf *dmabuf;
 	void *importer_priv;
+	bool peer2peer;
 };
 
 struct dma_buf_attach_ops {

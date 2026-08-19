@@ -14,4 +14,14 @@ might_alloc(const unsigned int flags)
 		assertwaitok();
 }
 
+static inline void
+fs_reclaim_acquire(const unsigned int flags)
+{
+}
+
+static inline void
+fs_reclaim_release(const unsigned int flags)
+{
+}
+
 #endif

@@ -32,6 +32,10 @@ class_##_name##_destructor(_type *p)				\
 	_exit;							\
 }
 
+#define CLASS(_type, _var) \
+	class_##_type##_t _var __cleanup(class_##_type##_destructor) = \
+	    class_##_type##_constructor
+
 #define _guard(_type) \
 	class_##_type##_t _guard_p __cleanup(class_##_type##_destructor) = \
 	    class_##_type##_constructor

@@ -42,8 +42,14 @@ void	dev_set_drvdata(struct device *, void *);
 
 #define dev_pm_set_driver_flags(x, y)
 
-#define devm_kzalloc(x, y, z)	kzalloc(y, z)
-#define devm_kfree(x, y)	kfree(y)
+#define devm_kzalloc(dev, size, flags)		kzalloc(size, flags)
+#define devm_kcalloc(dev, n, size, flags)	kcalloc(n, size, flags)
+#define devm_kfree(dev, p)			kfree(p)
+
+/* XXX run callback on detach/shutdown */
+#define devm_add_action(x, y, z)		0
+#define devm_add_action_or_reset(x, y, z)	0
+#define devm_remove_action(x, y, z)
 
 static inline int
 devm_device_add_group(struct device *dev, const struct attribute_group *g)

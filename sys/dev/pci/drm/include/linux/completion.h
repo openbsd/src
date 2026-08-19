@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.10 2024/01/06 09:33:08 kettenis Exp $	*/
+/*	$OpenBSD: completion.h,v 1.11 2026/08/19 01:34:10 jsg Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -162,4 +162,13 @@ try_wait_for_completion(struct completion *x)
 	return true;
 }
 
+static inline bool
+completion_done(struct completion *x)
+{
+	bool r;
+	mtx_enter(&x->lock);
+	r = x->done != 0;
+	mtx_leave(&x->lock);
+	return r;
+}
 #endif

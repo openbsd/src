@@ -18,6 +18,12 @@ ktime_get_real(void)
 }
 
 static inline uint64_t
+ktime_get_real_ns(void)
+{
+	return ktime_get_real();
+}
+
+static inline uint64_t
 ktime_get_ns(void)
 {
 	return ktime_get();

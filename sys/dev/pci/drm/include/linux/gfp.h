@@ -21,6 +21,7 @@
 #define __GFP_RECLAIMABLE	0
 #define __GFP_NOMEMALLOC	0
 #define __GFP_HIGH		0
+#define __GFP_ACCOUNT		0
 
 #define GFP_ATOMIC		M_NOWAIT
 #define GFP_NOWAIT		M_NOWAIT
@@ -30,6 +31,7 @@
 #define GFP_HIGHUSER		0
 #define GFP_DMA32		__GFP_DMA32
 #define GFP_TRANSHUGE_LIGHT	0
+#define GFP_NOFS		(M_WAITOK | M_CANFAIL)
 
 static inline bool
 gfpflags_allow_blocking(const unsigned int flags)

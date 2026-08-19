@@ -48,4 +48,11 @@ struct i915_hdcp_arbiter {
 	const struct i915_hdcp_ops *ops;
 };
 
+struct hdcp_cmd_header {
+	uint32_t	ver;
+	uint32_t	cmd;
+	uint32_t	status;
+	uint32_t	len;
+} __packed;
+
 #endif

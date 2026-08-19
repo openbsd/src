@@ -11,7 +11,12 @@
 #define FIELD_GET(_m, _v) \
     ((typeof(_m))(((_v) & (_m)) >> __bf_shf(_m)))
 
+#define FIELD_MAX(_m) \
+    ((typeof(_m))((_m) >> __bf_shf(_m)))
+
 #define FIELD_PREP(_m, _v) \
     (((typeof(_m))(_v) << __bf_shf(_m)) & (_m))
+
+#define FIELD_PREP_CONST(_m, _v)	FIELD_PREP((_m), (_v))
 
 #endif

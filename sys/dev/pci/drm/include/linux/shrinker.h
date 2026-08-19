@@ -20,6 +20,7 @@ struct shrinker {
 };
 
 #define SHRINK_STOP	~0UL
+#define SHRINK_EMPTY	(~0UL - 1)
 
 #define DEFAULT_SEEKS	2
 

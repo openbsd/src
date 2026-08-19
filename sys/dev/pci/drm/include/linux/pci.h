@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.22 2026/07/27 02:24:44 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.23 2026/08/19 01:34:10 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -397,6 +397,12 @@ pci_disable_msi(struct pci_dev *pdev)
 {
 }
 
+static inline bool
+pci_dev_msi_enabled(struct pci_dev *pdev)
+{
+	return pdev->msi_enabled;
+}
+
 typedef enum {
 	PCI_D0,
 	PCI_D1,
@@ -568,5 +574,53 @@ static inline bool
 dev_is_pci(struct device *dev)
 {
 	return true;
+}
+
+static inline bus_addr_t
+pci_resource_start(struct pci_dev *pdev, int bn)
+{
+	pcireg_t mtype;
+	bus_addr_t start;
+	bus_size_t size;
+	int bar = 0x10 + (bn * 4);
+
+	mtype = pci_mapreg_type(pdev->pc, pdev->tag, bar);
+	if (pci_mapreg_info(pdev->pc, pdev->tag, bar,
+	    mtype, &start, &size, NULL))
+		return 0;
+	return start;
+}
+
+static inline bus_size_t
+pci_resource_len(struct pci_dev *pdev, int bn)
+{
+	pcireg_t mtype;
+	bus_addr_t start;
+	bus_size_t size;
+	int bar = 0x10 + (bn * 4);
+
+	mtype = pci_mapreg_type(pdev->pc, pdev->tag, bar);
+	if (pci_mapreg_info(pdev->pc, pdev->tag, bar,
+	    mtype, &start, &size, NULL))
+		return 0;
+	return size;
+}
+
+static inline int
+pci_sriov_get_totalvfs(struct pci_dev *pdev)
+{
+	return 0;
+}
+
+static inline int
+pci_sriov_set_totalvfs(struct pci_dev *pdev, uint16_t n)
+{
+	return -ENOSYS;
+}
+
+static inline int
+pcim_enable_device(struct pci_dev *pdev)
+{
+	return 0;
 }
 #endif /* _LINUX_PCI_H_ */

@@ -4,6 +4,9 @@
 #define _LINUX_SIZES_H
 
 #define SZ_4	4
+#define SZ_16	16
+#define SZ_64	64
+#define SZ_512	512
 
 #define SZ_1K	(1 << 10)
 #define SZ_2K	(2 << 10)
@@ -20,8 +23,11 @@
 #define SZ_4M	(4 << 20)
 #define SZ_8M	(8 << 20)
 #define SZ_16M	(16 << 20)
+#define SZ_64M	(64 << 20)
+#define SZ_128M	(128 << 20)
 #define SZ_256M	(256 << 20)
 #define SZ_1G	(1 << 30)
+#define SZ_2G	(2 << 30)
 #define SZ_4G	(4ULL << 30)
 
 #endif

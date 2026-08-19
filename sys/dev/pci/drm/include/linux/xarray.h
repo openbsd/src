@@ -203,7 +203,7 @@ xa_init(struct xarray *xa)
 }
 
 static inline int
-xa_alloc_cyclic_irq(struct xarray *xa, u32 *id, void *entry,
+xa_alloc_cyclic(struct xarray *xa, u32 *id, void *entry,
     struct xarray_range xr, u32 *next, gfp_t gfp)    
 {
 	int r;
@@ -211,5 +211,12 @@ xa_alloc_cyclic_irq(struct xarray *xa, u32 *id, void *entry,
 	r = __xa_alloc_cyclic(xa, id, entry, xr, next, gfp);
 	mtx_leave(&xa->xa_lock);
 	return r;
+}
+
+static inline int
+xa_alloc_cyclic_irq(struct xarray *xa, u32 *id, void *entry,
+    struct xarray_range xr, u32 *next, gfp_t gfp)    
+{
+	return xa_alloc_cyclic(xa, id, entry, xr, next, gfp);
 }
 #endif

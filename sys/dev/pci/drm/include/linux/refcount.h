@@ -15,6 +15,12 @@ refcount_dec_and_test(uint32_t *p)
 }
 
 static inline bool
+refcount_inc(uint32_t *p)
+{
+	return atomic_inc(p);
+}
+
+static inline bool
 refcount_inc_not_zero(uint32_t *p)
 {
 	return atomic_inc_not_zero(p);

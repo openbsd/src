@@ -26,6 +26,16 @@ iosys_map_incr(struct iosys_map *ism, size_t n)
 }
 
 static inline void
+iosys_map_memcpy_from(void *dst, const struct iosys_map *ism, size_t off,
+    size_t len)
+{
+	if (ism->is_iomem)
+		memcpy_fromio(dst, ism->vaddr_iomem + off, len);
+	else
+		memcpy(dst, ism->vaddr_iomem + off, len);
+}
+
+static inline void
 iosys_map_memcpy_to(struct iosys_map *ism, size_t off, const void *src,
     size_t len)
 {

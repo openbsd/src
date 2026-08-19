@@ -27,6 +27,9 @@ wake_up_var(void *var)
 #define wait_var_event_interruptible(var, condition)		\
 	wait_event_interruptible(var_waitq, condition)
 
+#define wait_var_event_timeout(var, condition, timo)		\
+	wait_event_timeout(var_waitq, (condition), (timo))
+
 #define wait_var_event_killable(var, condition)			\
 	wait_event_killable(var_waitq, (condition))
 

@@ -108,5 +108,7 @@ void	dma_unmap_sgtable(struct device *, struct sg_table *,
 
 dma_addr_t dma_map_resource(struct device *, phys_addr_t, size_t,
     enum dma_data_direction, u_long);
+void	dma_unmap_resource(struct device *, dma_addr_t, size_t,
+    enum dma_data_direction, u_long);
 
 #endif

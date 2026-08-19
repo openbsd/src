@@ -8,4 +8,7 @@
 struct mmu_interval_notifier {
 };
 
+struct mmu_notifier_range {
+};
+
 #endif

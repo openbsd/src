@@ -86,4 +86,15 @@ pm_runtime_suspended(struct device *dev)
 	return 0;
 }
 
+static inline int
+pm_runtime_resume(struct device *dev)
+{
+	return 1;
+}
+
+static inline int
+pm_runtime_resume_and_get(struct device *dev)
+{
+	return 1;
+}
 #endif

@@ -16,6 +16,27 @@ struct drmm_node {
 };
 
 void *
+drmm_kmalloc(struct drm_device *dev, size_t size, int flags)
+{
+	void *p;
+	struct drmm_node *node = malloc(sizeof(*node), M_DRM, flags | M_ZERO);
+	if (node == NULL)
+		return NULL;
+	p = kmalloc(size, flags);
+	if (p == NULL) {
+		free(node, M_DRM, sizeof(*node));
+		return NULL;
+	}
+	INIT_LIST_HEAD(&node->list);
+	node->p = p;
+	node->size = size;
+	mtx_enter(&dev->managed.lock);
+	list_add(&node->list, &dev->managed.resources);
+	mtx_leave(&dev->managed.lock);
+	return p;
+}
+
+void *
 drmm_kzalloc(struct drm_device *dev, size_t size, int flags)
 {
 	void *p;
@@ -157,8 +178,38 @@ drmm_add_final_kfree(struct drm_device *dev, void *p)
 }
 
 /* rwlocks have nothing to cleanup on exit */
-void
+int
 drmm_mutex_init(struct drm_device *dev, struct rwlock *rwl)
 {
 	rw_init(rwl, "drm_mm");
+	return 0;
+}
+
+void
+__drmm_workqueue_release(struct drm_device *dev, void *p)
+{
+	struct workqueue_struct *wq = p;
+	destroy_workqueue(wq);
+}
+
+struct workqueue_struct *
+drmm_alloc_ordered_workqueue(struct drm_device *dev, const char *fmt, int flags,
+   ...)
+{
+	struct workqueue_struct *wq;
+	char buf[128];
+	va_list ap;
+	int r;
+
+	va_start(ap, flags);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	wq = alloc_ordered_workqueue(buf, flags);
+	if (wq == NULL)
+		return ERR_PTR(-ENOMEM);
+	r = drmm_add_action_or_reset(dev, __drmm_workqueue_release, wq);
+	if (r)
+		return ERR_PTR(r);
+	return wq;
 }

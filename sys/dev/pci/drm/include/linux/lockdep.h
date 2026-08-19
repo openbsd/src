@@ -16,6 +16,7 @@ struct pin_cookie {
 #define lockdep_assert(c)		do {} while(0)
 #define lockdep_assert_held(lock)	do { (void)(lock); } while(0)
 #define lockdep_assert_held_once(lock)	do { (void)(lock); } while(0)
+#define lockdep_assert_held_write(lock)	do { (void)(lock); } while(0)
 #define lockdep_assert_once(lock)	do { (void)(lock); } while(0)
 #define lockdep_assert_not_held(lock)	do { (void)(lock); } while(0)
 #define lockdep_assert_none_held_once()	do {} while(0)
@@ -28,6 +29,9 @@ struct pin_cookie {
 #define lockdep_init_map(a, b, c, d)
 #define lockdep_set_class_and_name(a, b, c)
 #define lockdep_is_held(lock)		0
+
+#define lock_map_acquire(a)
+#define lock_map_release(b)
 
 #define mutex_acquire(a, b, c, d)
 #define mutex_release(a, b)

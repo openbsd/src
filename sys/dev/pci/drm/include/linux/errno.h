@@ -18,5 +18,7 @@
 #define ENOKEY		ENOENT
 #define EPROBE_DEFER	EAGAIN
 #define ENOLINK		EIO
+#define EREMCHG		EPROTO
+#define EBADRQC		EINVAL
 
 #endif

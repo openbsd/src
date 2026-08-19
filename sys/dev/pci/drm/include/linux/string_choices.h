@@ -37,12 +37,20 @@ str_enable_disable(bool x)
 	return "disable";
 }
 
-static inline char *
+static inline const char *
 str_read_write(bool x)
 {
 	if (x)
 		return "read";
 	return "write";
+}
+
+static inline const char *
+str_plural(size_t n)
+{
+	if (n == 1)
+		return "";
+	return "s";
 }
 
 #endif
