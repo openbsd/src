@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.539 2026/05/14 16:20:27 mglocker Exp $
+#	$OpenBSD: GENERIC,v 1.540 2026/08/19 08:56:28 hshoexer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,6 +21,7 @@ option		MTRR		# CPU memory range attributes control
 option		NTFS		# NTFS support
 option		SUSPEND
 option		HIBERNATE
+option		AMDSEV
 
 config		bsd	swap generic
 

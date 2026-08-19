@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.311 2026/07/30 14:04:04 hshoexer Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.312 2026/08/19 08:56:28 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1335,6 +1335,7 @@ cpu_init_idt(void)
 	lidt(&region);
 }
 
+#ifdef AMDSEV
 uint64_t early_gdt[GDT_SIZE / 8];
 
 void
@@ -1366,6 +1367,7 @@ cpu_init_early_vctrap(paddr_t addr)
 	memset((void *)ghcb_vaddr, 0, 2 * PAGE_SIZE);
 	wrmsr(MSR_SEV_GHCB, ghcb_paddr);
 }
+#endif	/* AMDSEV */
 
 void
 cpu_init_extents(void)
@@ -1494,6 +1496,7 @@ init_x86_64(paddr_t first_avail)
 	    ((pmap_direct_rand & DIRECT_MAP_START_MASK) * NBPD_L4))));
 	pmap_direct_end = pmap_direct_base + DIRECT_MAP_SIZE;
 
+#ifdef AMDSEV
 	/*
 	 * locore0 mapped 2 pages for use as GHCB before pmap is initialized.
 	 */
@@ -1503,6 +1506,7 @@ init_x86_64(paddr_t first_avail)
 	}
 	if (ISSET(cpu_sev_guestmode, SEV_STAT_ENABLED))
 		boothowto |= RB_COCOVM;
+#endif
 
 	/*
 	 * locore0 mapped 3 pages for use before the pmap is initialized

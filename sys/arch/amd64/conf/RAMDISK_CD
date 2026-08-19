@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.215 2026/05/14 16:22:31 mglocker Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.216 2026/08/19 08:56:28 hshoexer Exp $
 
 machine		amd64
 maxusers	4
@@ -19,6 +19,7 @@ option		UDF
 option		MSDOSFS
 option		INET6
 option		CRYPTO
+option		AMDSEV
 
 option		FONT_SPLEEN8x16
 option		FONT_SPLEEN12x24

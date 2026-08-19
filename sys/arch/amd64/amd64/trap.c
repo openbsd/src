@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.118 2026/03/08 17:07:31 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.119 2026/08/19 08:56:28 hshoexer Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -97,7 +97,9 @@
 
 int	upageflttrap(struct trapframe *, uint64_t);
 int	kpageflttrap(struct trapframe *, uint64_t);
+#ifdef AMDSEV
 int	vctrap(struct trapframe *, int, int *, int *);
+#endif
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
@@ -301,6 +303,7 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 	return 1;
 }
 
+#ifdef AMDSEV
 int
 vctrap(struct trapframe *frame, int user, int *sig, int *code)
 {
@@ -492,6 +495,7 @@ vctrap(struct trapframe *frame, int user, int *sig, int *code)
 
 	return 1;
 }
+#endif	/* AMDSEV */
 
 
 /*
@@ -545,10 +549,12 @@ kerntrap(struct trapframe *frame)
 			return;
 #endif /* NISA > 0 */
 
+#ifdef AMDSEV
 	case T_VC:
 		if (vctrap(frame, 0, NULL, NULL))
 			return;
 		goto we_re_toast;
+#endif
 	}
 }
 
@@ -628,10 +634,12 @@ usertrap(struct trapframe *frame)
 		code = (frame->tf_err & 0x7fff) < 4 ? ILL_BTCFI
 		    : ILL_BADSTK;
 		break;
+#ifdef AMDSEV
 	case T_VC:
 		if (vctrap(frame, 1, &sig, &code))
 			goto out;
 		break;
+#endif
 	case T_PAGEFLT:			/* page fault */
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",

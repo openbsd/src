@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.107 2026/01/14 20:43:56 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.108 2026/08/19 08:56:28 hshoexer Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -375,6 +375,7 @@ IDTVEC(trap14)
 IDTVEC(trap15)
 	TRAP(T_CP)
 
+#ifdef AMDSEV
 IDTVEC(trap1d)
 	/*
 	 * #VC is AMD CPU specific, thus we don't use any Intel Meltdown
@@ -408,6 +409,9 @@ vctrap_kern:
 	SMAP_CLAC
 	/* shortcut to regular path, but with interrupts disabled */
 	jmp	.Lreal_kern_trap
+#else
+IDTVEC_ALIAS(trap1d, trap1f)
+#endif	/* AMDSEV */
 
 IDTVEC(trap1f)
 IDTVEC_ALIAS(trap16, trap1f)
@@ -548,6 +552,7 @@ END(alltraps_kern)
 END(alltraps_kern_meltdown)
 KTEXT_PAGE_END
 
+#ifdef AMDSEV
 /* #VC trap entry for early bootstrap */
 IDTVEC(vctrap_early)
 	pushq	$T_VC
@@ -558,6 +563,7 @@ IDTVEC(vctrap_early)
 	call	vctrap
 	movq	$0,-8(%rsp)
 	INTRFASTEXIT
+#endif
 
 /*
  * Macros for interrupt entry, call to handler, and exit.

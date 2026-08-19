@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.h,v 1.7 2026/02/16 15:06:03 hshoexer Exp $	*/
+/*	$OpenBSD: ghcb.h,v 1.8 2026/08/19 08:56:28 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -18,6 +18,8 @@
 
 #ifndef _MACHINE_GHCB_H_
 #define _MACHINE_GHCB_H_
+
+#ifdef AMDSEV
 
 #ifndef _LOCORE
 
@@ -41,6 +43,19 @@
 #define GHCB_XCR0			0x3E8
 
 #define GHCB_MAX			0xFFF
+
+#endif	/* !_LOCORE */
+
+/* Definitions used with the MSR protocol */
+#define MSR_PROTO_CPUID_REQ			0x4
+#define MSR_PROTO_CPUID_RESP			0x5
+#define MSR_PROTO_PREFERRED_GHCB_PA_REQ		0x10
+#define MSR_PROTO_PREFERRED_GHCB_PA_RESP	0x11
+#define MSR_PROTO_REGISTER_GHCB_PA_REQ		0x12
+#define MSR_PROTO_REGISTER_GHCB_PA_RESP		0x13
+#define MSR_PROTO_TERMINATION_REQ		0x100
+
+#ifndef _LOCORE
 
 struct ghcb_sa {
 	uint8_t			v_pad0[0xcb];		/* 000h-0CAh */
@@ -102,14 +117,6 @@ struct ghcb_sync {
 	int			sz_c;
 	int			sz_d;
 };
-#endif /* !_LOCORE */
-
-/* Definitions used with the MSR protocol */
-#define MSR_PROTO_CPUID_REQ	0x4
-#define MSR_PROTO_CPUID_RESP	0x5
-#define MSR_PROTO_TERMINATE	0x100
-
-#ifndef _LOCORE
 
 extern vaddr_t ghcb_vaddr;
 extern paddr_t ghcb_paddr;
@@ -248,5 +255,12 @@ ghcb_io_write_4(uint16_t port, uint32_t v)
 }
 
 #endif /* !_LOCORE */
+
+#else	/* !AMDSEV */
+
+/* Definitions used with the MSR protocol */
+#define MSR_PROTO_TERMINATION_REQ		0x100
+
+#endif	/* AMDSEV */
 
 #endif /* !_MACHINE_GHCB_H_ */

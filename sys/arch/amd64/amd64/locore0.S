@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.35 2026/06/04 05:22:04 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.36 2026/08/19 08:56:28 hshoexer Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -810,19 +810,9 @@ longmode_hi:
 	call	main
 
 	.code32
-vc_cpuid32:
-	shll	$30, %eax		/* requested register */
-	orl	$MSR_PROTO_CPUID_REQ, %eax
-	movl	%ebx, %edx		/* CPUID function */
-	movl	$MSR_SEV_GHCB, %ecx
-	wrmsr
-	rep vmmcall
-	rdmsr
-	ret
-	lfence
-
 	.globl	locore_vc_trap32
 locore_vc_trap32:
+#ifdef AMDSEV
 	pushl	%eax
 	pushl	%ebx
 	pushl	%ecx
@@ -871,8 +861,21 @@ locore_vc_trap32:
 	addl	$3, (%esp)		/* skip mov,%db */
 	iret
 
+vc_cpuid32:
+	shll	$30, %eax		/* requested register */
+	orl	$MSR_PROTO_CPUID_REQ, %eax
+	movl	%ebx, %edx		/* CPUID function */
+	movl	$MSR_SEV_GHCB, %ecx
+	wrmsr
+	rep vmmcall
+	rdmsr
+	ret
+	lfence
+#endif	/* AMDSEV */
+	/* !AMDSEV: FALLTHROUGH and graceful termination */
+
 .Lterminate32:
-	movl	$MSR_PROTO_TERMINATE, %eax
+	movl	$MSR_PROTO_TERMINATION_REQ, %eax
 	movl	$MSR_SEV_GHCB, %ecx
 	wrmsr
 	rep vmmcall
