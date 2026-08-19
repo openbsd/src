@@ -2713,6 +2713,14 @@ EOF_DEBUG_OUT
         $x =~ s/^[\x{0301}\x{030C}]+//;
     }
 
+    { # GH #23388
+        fresh_perl_is(<<~'PROG', , "", {}, "Avoid trie overflow");
+            my $x = join "|", "aaa".."mzz";
+            my $y = join "|", "naa".."zzz";
+            use re 'Debug';
+            "fnord" =~ m/(?:$x)|(?:$y)/;
+            PROG
+    }
 
     # !!! NOTE that tests that aren't at all likely to crash perl should go
     # a ways above, above these last ones.  There's a comment there that, like

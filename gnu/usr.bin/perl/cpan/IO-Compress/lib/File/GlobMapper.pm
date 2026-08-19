@@ -315,7 +315,6 @@ sub _parseOutputGlob
     }
 
     my $noPreBS = '(?<!\\\)' ; # no preceding backslash
-    my $noPreESC = '(?<![${BEGIN_DELIM}])' ; # no preceding backslash
 
     # escape any use of the delimiter symbols
     # $string =~ s/(${BEGIN_DELIM}|${END_DELIM}|${BACKSLASH_ESC})/$1$1/g;
@@ -325,7 +324,7 @@ sub _parseOutputGlob
     $string =~ s/\\\*/${STAR_ESC}/g;
 
     # Transform "#3" to BEGIN_DELIM 3 END_DELIM
-    $string =~ s/${noPreESC}#(\d)/${BEGIN_DELIM}${1}${END_DELIM}/g;
+    $string =~ s/#(\d)/${BEGIN_DELIM}${1}${END_DELIM}/g;
 
     $string =~ s#\*#${BEGIN_DELIM}${END_DELIM}#g;
 
@@ -351,20 +350,18 @@ sub _getFiles
         my $outFile = $inFile ;
         my @matches ;
 
-        my $noPreESC = '(?<![${BEGIN_DELIM}])' ; # no preceding backslash
-
         if (@matches = ($inFile =~ m/$self->{InputPattern}/ ))
         {
             $outFile = $self->{OutputPattern};
             my $ix = 1;
 
             # get the filename glob
-            $outFile =~ s/${noPreESC}${BEGIN_DELIM}${END_DELIM}/$inFile/g;
+            $outFile =~ s/${BEGIN_DELIM}${END_DELIM}/$inFile/g;
 
             # now each of the #1, #2,...
             for my $pattern (@matches)
             {
-                $outFile =~ s/${noPreESC}${BEGIN_DELIM}${ix}${END_DELIM}/$pattern/g;
+                $outFile =~ s/${BEGIN_DELIM}${ix}${END_DELIM}/$pattern/g;
 
                 ++ $ix;
             }

@@ -189,8 +189,10 @@ Yes. Zip64 allows this. See previous question.
 The primary reference for zip files is the "appnote" document available at
 L<http://www.pkware.com/documents/casestudies/APPNOTE.TXT>
 
-An alternatively is the Info-Zip appnote. This is available from
-L<ftp://ftp.info-zip.org/pub/infozip/doc/>
+If you need to investigate the extra fields that are used in zip
+files the "appnote" document covers a lot of them.
+The Info-ZIP zip distribution, available at L<https://infozip.sourceforge.net/>,
+contains additional extra field definitions. Look for the file "extrafld.txt".
 
 =head1 GZIP
 
@@ -682,8 +684,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
-

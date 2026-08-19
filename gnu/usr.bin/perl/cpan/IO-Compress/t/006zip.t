@@ -19,7 +19,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  Test::NoWarnings->import; 1 };
 
-    plan tests => 108 + $extra ;
+    plan tests => 138 + $extra ;
 
     use_ok('IO::Compress::Zip', qw(:all)) ;
     use_ok('IO::Uncompress::Unzip', qw(unzip $UnzipError)) ;
@@ -401,4 +401,101 @@ EOM
     my $line = <$u>;
 
     is $line, qq["key","value"\n], "got line 1 from second member";
+}
+
+
+{
+    title "bad datetime";
+    # https://github.com/pmqs/IO-Compress/issues/65
+
+    {
+        # files/time-zero.zip has the modification time set to zero
+        my $file1 = "t/files/time-zero.zip";
+        my $u = IO::Uncompress::Unzip->new( $file1)
+            or die "Cannot open $file1: $UnzipError";
+
+        isa_ok $u, "IO::Uncompress::Unzip";
+
+        my $name = $u->getHeaderInfo()->{Name};
+
+        my $hdr = $u->getHeaderInfo();
+        is $hdr->{Time}, 0, "Time is zero";
+    }
+
+
+    {
+        # files/time-invalid.zip has the modification time set to an invalid date
+        my $file1 = "t/files/time-invalid.zip";
+        my $u = IO::Uncompress::Unzip->new( $file1)
+            or die "Cannot open $file1: $UnzipError";
+
+        isa_ok $u, "IO::Uncompress::Unzip";
+
+        my $name = $u->getHeaderInfo()->{Name};
+
+        my $hdr = $u->getHeaderInfo();
+        is $hdr->{Time}, 0, "Time is zero";
+    }
+
+}
+
+
+
+{
+
+    title "Tag :constants no longer exports all constants";
+    # https://github.com/pmqs/IO-Compress/issues/78
+    # https://github.com/pmqs/IO-Compress/issues/64
+
+    {
+        package t1;
+
+        use IO::Compress::Zip qw( ZIP_CM_STORE ZIP_CM_DEFLATE ZIP_CM_BZIP2 ZIP_CM_LZMA ZIP_CM_ZSTD ZIP_CM_XZ  );
+
+        ::is ZIP_CM_STORE, 0, "ZIP_CM_STORE is 0";
+        ::is ZIP_CM_DEFLATE, 8, "ZIP_CM_DEFLATE is 9";
+        ::is ZIP_CM_BZIP2, 12, "ZIP_CM_BZIP2 is 12";
+        ::is ZIP_CM_LZMA, 14, "ZIP_CM_LZMA is 14";
+        ::is ZIP_CM_ZSTD, 93, "ZIP_CM_ZSTD is 93";
+        ::is ZIP_CM_XZ, 95, "ZIP_CM_XZ is 95";
+    }
+
+    {
+        package t2;
+
+        use IO::Compress::Zip qw( :zip_method ) ;
+
+        ::is ZIP_CM_STORE, 0, "ZIP_CM_STORE is 0";
+        ::is ZIP_CM_DEFLATE, 8, "ZIP_CM_DEFLATE is 9";
+        ::is ZIP_CM_BZIP2, 12, "ZIP_CM_BZIP2 is 12";
+        ::is ZIP_CM_LZMA, 14, "ZIP_CM_LZMA is 14";
+        ::is ZIP_CM_ZSTD, 93, "ZIP_CM_ZSTD is 93";
+        ::is ZIP_CM_XZ, 95, "ZIP_CM_XZ is 95";
+    }
+
+    {
+        package t3;
+
+        use IO::Compress::Zip qw( :constants ) ;
+
+        ::is ZIP_CM_STORE, 0, "ZIP_CM_STORE is 0";
+        ::is ZIP_CM_DEFLATE, 8, "ZIP_CM_DEFLATE is 9";
+        ::is ZIP_CM_BZIP2, 12, "ZIP_CM_BZIP2 is 12";
+        ::is ZIP_CM_LZMA, 14, "ZIP_CM_LZMA is 14";
+        ::is ZIP_CM_ZSTD, 93, "ZIP_CM_ZSTD is 93";
+        ::is ZIP_CM_XZ, 95, "ZIP_CM_XZ is 95";
+    }
+
+    {
+        package t4;
+
+        use IO::Compress::Zip qw( :all ) ;
+
+        ::is ZIP_CM_STORE, 0, "ZIP_CM_STORE is 0";
+        ::is ZIP_CM_DEFLATE, 8, "ZIP_CM_DEFLATE is 9";
+        ::is ZIP_CM_BZIP2, 12, "ZIP_CM_BZIP2 is 12";
+        ::is ZIP_CM_LZMA, 14, "ZIP_CM_LZMA is 14";
+        ::is ZIP_CM_ZSTD, 93, "ZIP_CM_ZSTD is 93";
+        ::is ZIP_CM_XZ, 95, "ZIP_CM_XZ is 95";
+    }
 }

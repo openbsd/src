@@ -5,22 +5,22 @@ use warnings;
 use bytes;
 require Exporter ;
 
-use IO::Compress::Base 2.213 ;
+use IO::Compress::Base 2.223 ;
 
-use IO::Compress::Base::Common  2.213 qw();
-use IO::Compress::Adapter::Bzip2 2.213 ;
+use IO::Compress::Base::Common  2.223 qw();
+use IO::Compress::Adapter::Bzip2 2.223 ;
 
 
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $Bzip2Error);
 
-$VERSION = '2.213';
+$VERSION = '2.223';
 $Bzip2Error = '';
 
 @ISA    = qw(IO::Compress::Base Exporter);
 @EXPORT_OK = qw( $Bzip2Error bzip2 ) ;
 %EXPORT_TAGS = %IO::Compress::Base::EXPORT_TAGS ;
-push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
+$EXPORT_TAGS{all} = [ defined $EXPORT_TAGS{all} ? @{ $EXPORT_TAGS{all} } : (), @EXPORT_OK ] ;
 Exporter::export_ok_tags('all');
 
 
@@ -51,7 +51,7 @@ sub getExtraParams
 {
     my $self = shift ;
 
-    use IO::Compress::Base::Common  2.213 qw(:Parse);
+    use IO::Compress::Base::Common  2.223 qw(:Parse);
 
     return (
             'blocksize100k' => [IO::Compress::Base::Common::Parse_unsigned,  1],
@@ -878,7 +878,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

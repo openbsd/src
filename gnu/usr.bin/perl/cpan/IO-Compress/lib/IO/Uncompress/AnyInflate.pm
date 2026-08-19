@@ -6,28 +6,28 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.213 qw(:Parse);
+use IO::Compress::Base::Common 2.223 qw(:Parse);
 
-use IO::Uncompress::Adapter::Inflate  2.213 ();
+use IO::Uncompress::Adapter::Inflate  2.223 ();
 
 
-use IO::Uncompress::Base  2.213 ;
-use IO::Uncompress::Gunzip  2.213 ;
-use IO::Uncompress::Inflate  2.213 ;
-use IO::Uncompress::RawInflate  2.213 ;
-use IO::Uncompress::Unzip  2.213 ;
+use IO::Uncompress::Base  2.223 ;
+use IO::Uncompress::Gunzip  2.223 ;
+use IO::Uncompress::Inflate  2.223 ;
+use IO::Uncompress::RawInflate  2.223 ;
+use IO::Uncompress::Unzip  2.223 ;
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyInflateError);
 
-$VERSION = '2.213';
+$VERSION = '2.223';
 $AnyInflateError = '';
 
 @ISA = qw(IO::Uncompress::Base Exporter);
 @EXPORT_OK = qw( $AnyInflateError anyinflate ) ;
 %EXPORT_TAGS = %IO::Uncompress::Base::DEFLATE_CONSTANTS if keys %IO::Uncompress::Base::DEFLATE_CONSTANTS;
-push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
+$EXPORT_TAGS{all} = [ defined $EXPORT_TAGS{all} ? @{ $EXPORT_TAGS{all} } : (), @EXPORT_OK ] ;
 Exporter::export_ok_tags('all');
 
 # TODO - allow the user to pick a set of the three formats to allow
@@ -77,7 +77,7 @@ sub mkUncomp
 
      my @possible = qw( Inflate Gunzip Unzip );
      unshift @possible, 'RawInflate'
-        if 1 || $got->getValue('rawinflate');
+        if $got->getValue('rawinflate');
 
      my $magic = $self->ckMagic( @possible );
 
@@ -1014,7 +1014,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

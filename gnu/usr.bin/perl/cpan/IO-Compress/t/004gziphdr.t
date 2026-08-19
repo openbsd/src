@@ -304,7 +304,7 @@ for my $value ( "0D", "0A", "0A0D", "0D0A", "0A0A", "0D0D")
         ok my $x = IO::Compress::Gzip->new( $name,
                                 -ExtraField  => $input,
                                 -HeaderCRC   => 1 )
-            or diag "GzipError is $GzipError" ;                            ;
+            or diag "GzipError is $GzipError" ;
         my $string = "abcd" ;
         ok $x->write($string) ;
         ok $x->close ;
@@ -313,7 +313,7 @@ for my $value ( "0D", "0A", "0A0D", "0D0A", "0A0A", "0D0D")
         ok $x = IO::Uncompress::Gunzip->new( $name,
                               #-Strict     => 1,
                                -ParseExtra => 1 )
-            or diag "GunzipError is $GunzipError" ;                            ;
+            or diag "GunzipError is $GunzipError" ;
         my $hdr = $x->getHeaderInfo();
         ok $hdr;
         ok ! defined $hdr->{Name};
@@ -832,7 +832,7 @@ EOM
     1 while  $gunz->read($uncomp) > 0 ;
     ok $gunz->close() ;
     ok $uncomp eq $string
-	or print "# got [$uncomp] wanted [$string]\n";;
+	or print "# got [$uncomp] wanted [$string]\n";
 
     foreach my $trim (-8 .. -1)
     {
@@ -987,6 +987,3 @@ EOM
         ok ! $x ;
     }
 }
-
-
-

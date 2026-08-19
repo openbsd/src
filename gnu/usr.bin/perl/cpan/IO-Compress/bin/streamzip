@@ -129,14 +129,14 @@ OPTIONS
   -method=M       Compress using method 'M'.
                   Valid methods are
                     store    Store without compression
-                    deflate  Use Deflate compression [Deflault]
+                    deflate  Use Deflate compression [Default]
                     bzip2    Use Bzip2 compression
                     lzma     Use LZMA compression [needs IO::Compress::Lzma]
                     xz       Use LZMA compression [needs IO::Compress::Xz]
                     zstd     Use LZMA compression [needs IO::Compress::Zstd]
   -version        Display version number [$VERSION]
 
-Copyright (c) 2019-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2019-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -207,7 +207,7 @@ Compress using method C<M>.
 Valid method names are
 
     * store    Store without compression
-    * deflate  Use Deflate compression [Deflault]
+    * deflate  Use Deflate compression [Default]
     * bzip2    Use Bzip2 compression
     * lzma     Use LZMA compression
     * xz       Use xz compression
@@ -253,7 +253,7 @@ Check the contents of C<abcd,zip> with the standard C<unzip> utility
            22                     1 file
 
 Notice how the C<Name> is set to C<->.
-That is the default for a few zip utilities whwre the member name is not given.
+That is the default for a few zip utilities where the member name is not given.
 
 If you want to explicitly name the file, use the C<-member-name> option as follows
 
@@ -275,9 +275,9 @@ backwards/forwards in the file.
 
 A good examples is when you are serving dynamic content from a Web Server
 straight into a socket without needing to create a temporary zip file in
-the filesystsm.
+the filesystem.
 
-Similarly if your workfow uses a Linux pipelined commands.
+Similarly if your workflow uses a Linux pipelined commands.
 
 =head1 SUPPORT
 
@@ -292,7 +292,7 @@ Paul Marquess F<pmqs@cpan.org>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2019-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2019-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -2,34 +2,41 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.42.2
+perldelta - what is new for perl v5.42.3
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.42.1 release and the 5.42.2
+This document describes differences between the 5.42.2 release and the 5.42.3
 release.
 
-If you are upgrading from an earlier release such as 5.42.0, first read
-L<perl5421delta>, which describes differences between 5.42.0 and 5.42.1.
+If you are upgrading from an earlier release such as 5.42.1, first read
+L<perl5422delta>, which describes differences between 5.42.1 and 5.42.2.
 
 =head1 Security
 
-=head2 [CVE-2026-4176] Vulnerability in Compress::Raw::Zlib
+=head2 CVE-2026-8376 - Buffer overflow in Perl_study_chunk
 
-L<Compress::Raw::Zlib> is included in Perl as a dual-life core module, and was
-vulnerable to [L<CVE-2026-3381|https://www.cve.org/CVERecord?id=CVE-2026-3381>]
-due to a vendored version of zlib which had several vulnerabilities, including
-[L<CVE-2026-27171|https://www.cve.org/CVERecord?id=CVE-2026-27171>].
+Perl_study_chunk in regcomp_study.c checked the size of the joined substring
+buffer in characters rather than bytes.  On 32-bit builds, this can lead to an
+integer overflow of the size of the buffer leading to out-of-bounds writes.
 
-This problem was assigned
-[L<CVE-2026-4176|https://www.cve.org/CVERecord?id=CVE-2026-4176>] by the
-L<CPAN Security Group|https://security.metacpan.org/>.
+=head2 CVE-2026-57432 - Buffer overflow in S_measure_struct
 
+If you call C<pack> or C<unpack> to operate on a structure whose computed size
+is too large to fit in memory, an integer overflow could happen that would
+result in a buffer overflow.  This usually happens as a result of embedding a
+large number as the repeat count for an item.
+
+=head2 CVE-2026-13221 - Regex trie 16-bit field overflow
+
+The trie optimization in the regex engine could overflow in an alternation with
+more than ~65k branches.  This could cause both false positives and false
+negatives on such regular expressions.
 
 =head1 Incompatible Changes
 
-There are no changes intentionally incompatible with 5.42.1.  If any exist,
-they are bugs, and we request that you submit a report.  See L</Reporting Bugs>
+There are no changes intentionally incompatible with 5.42.2.  If any exist,
+they are bugs, and we request that you submit a report. See L</Reporting Bugs>
 below.
 
 =head1 Modules and Pragmata
@@ -40,11 +47,41 @@ below.
 
 =item *
 
-L<Compress::Raw::Zlib> has been upgraded from version 2.213 to 2.222.
+L<Archive::Tar> has been upgraded from version 3.04 to 3.12.
+
+This fixes CVE-2026-9538, CVE-2026-42496, and CVE-2026-42497.
 
 =item *
 
-L<Module::CoreList> has been upgraded from version 5.20260308 to 5.20260329_42.
+L<Compress::Raw::Bzip2> has been upgraded from version 2.213 to 2.218.
+
+=item *
+
+L<HTTP::Tiny> has been upgraded from version 0.090 to 0.096.
+
+This fixes CVE-2026-7010 and CVE-2026-7017.
+
+=item *
+
+L<IO::Compress> has been upgraded from version 2.213 to 2.223.
+
+This fixes CVE-2025-15649, CVE-2026-48961, CVE-2026-48962, and CVE-2026-48959.
+
+=item *
+
+L<Module::CoreList> has been upgraded from version 5.20260329_42 to 5.20260802_42.
+
+=item *
+
+L<Socket> has been upgraded from version 2.038 to 2.041.
+
+This fixes CVE-2026-12087.
+
+=item *
+
+L<Storable> has been upgraded from version 3.37 to 3.37_01.
+
+This fixes CVE-2026-57433.
 
 =back
 
@@ -56,6 +93,28 @@ We have attempted to update the documentation to reflect the changes listed in
 this document.  If you find any we have missed, open an issue at
 L<https://github.com/Perl/perl5/issues>.
 
+=head1 Diagnostics
+
+The following additions or changes have been made to diagnostic output,
+including warnings and fatal error messages.  For the complete list of
+diagnostic messages, see L<perldiag>.
+
+=head2 New Diagnostics
+
+=head3 New Errors
+
+=over 4
+
+=item *
+
+L<Pack template structure size is too large|perldiag/"Pack template structure size is too large">
+
+(F) You called C<pack> or C<unpack> to operate on a structure, whose computed
+size is too large to fit in memory.  This usually happens as a result of
+embedding a large number as the repeat count for an item.
+
+=back
+
 =head1 Testing
 
 Tests were added and changed to reflect the other additions and changes in this
@@ -63,19 +122,21 @@ release.
 
 =head1 Acknowledgements
 
-Perl 5.42.2 represents approximately 3 weeks of development since Perl 5.42.1
-and contains approximately 2,900 lines of changes across 57 files from 6
+Perl 5.42.3 represents approximately 4 months of development since Perl 5.42.2
+and contains approximately 4,000 lines of changes across 120 files from 14
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 1,900 lines of changes to 23 .pm, .t, .c and .h files.
+approximately 1,700 lines of changes to 59 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its fourth decade thanks to a vibrant community
 of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.42.2:
+the improvements that became Perl 5.42.3:
 
-Eric Herman, James E Keenan, Olaf Alders, Paul Marquess, Richard Leach, Steve
-Hay.
+Aristotle Pagaltzis, Chris 'BinGOs' Williams, E. Choroba, Eric Herman, Karen
+Etheridge, Karl Williamson, Leon Timmermans, Paul Evans, Paul Marquess,
+Philippe Bruhat (BooK), Richard Leach, Steve Hay, Thibault Duponchelle, Tony
+Cook.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history.  In particular, it does not include the names of
@@ -100,8 +161,9 @@ L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a
 tiny but sufficient test case.
 
 If the bug you are reporting has security implications which make it
-inappropriate to send to a public issue tracker, then see L<perlsec/SECURITY
-VULNERABILITY CONTACT INFORMATION> for details of how to report the issue.
+inappropriate to send to a public issue tracker, then see
+L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION> for details of how to
+report the issue.
 
 =head1 Give Thanks
 

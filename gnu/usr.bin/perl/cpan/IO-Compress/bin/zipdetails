@@ -29,7 +29,7 @@ use Encode;
 use Getopt::Long;
 use List::Util qw(min max);
 
-my $VERSION = '4.004' ;
+my $VERSION = '4.008' ;
 
 sub fatal_tryWalk;
 sub fatal_truncated ;
@@ -53,7 +53,9 @@ use constant ZIP_CM_IMPLODE                    => 6 ;
 use constant ZIP_CM_DEFLATE                    => 8 ;
 use constant ZIP_CM_BZIP2                      => 12 ;
 use constant ZIP_CM_LZMA                       => 14 ;
+use constant ZIP_CM_REFERENCE                  => 92 ;
 use constant ZIP_CM_PPMD                       => 98 ;
+use constant ZIP_CM_AES                        => 99 ; # Not really c compression method
 
 # General Purpose Flag
 use constant ZIP_GP_FLAG_ENCRYPTED_MASK        => (1 << 0) ;
@@ -81,6 +83,29 @@ use constant ZIP64_END_CENTRAL_LOC_HDR_SIG     => 0x07064b50;
 use constant ZIP_DIGITAL_SIGNATURE_SIG         => 0x05054b50;
 use constant ZIP_ARCHIVE_EXTRA_DATA_RECORD_SIG => 0x08064b50;
 use constant ZIP_SINGLE_SEGMENT_MARKER         => 0x30304b50; # APPNOTE 6.3.10, sec 8.5.4
+
+# Windows file attributes -- see https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
+use constant WIN_FILE_ATTRIBUTE_READONLY                => 0x0001;
+use constant WIN_FILE_ATTRIBUTE_HIDDEN                  => 0x0002;
+use constant WIN_FILE_ATTRIBUTE_SYSTEM                  => 0x0004;
+use constant WIN_FILE_ATTRIBUTE_LABEL                   => 0x0008; # Unused?
+use constant WIN_FILE_ATTRIBUTE_DIRECTORY               => 0x0010;
+use constant WIN_FILE_ATTRIBUTE_ARCHIVE                 => 0x0020;
+use constant WIN_FILE_ATTRIBUTE_DEVICE_OR_SYMBOLIC_LINK => 0x0040; # Not clear if this is used for a symbolic link. Needs a real use case to verify.
+use constant WIN_FILE_ATTRIBUTE_NORMAL_OR_EXECUTABLE    => 0x0080; # Not clear if this is used for a executable. Needs a real use case to verify.
+use constant WIN_FILE_ATTRIBUTE_TEMPORARY               => 0x0100;
+use constant WIN_FILE_ATTRIBUTE_SPARSE_FILE             => 0x0200;
+use constant WIN_FILE_ATTRIBUTE_REPARSE_POINT           => 0x0400;
+use constant WIN_FILE_ATTRIBUTE_COMPRESSED              => 0x0800;
+use constant WIN_FILE_ATTRIBUTE_OFFLINE                 => 0x1000;
+use constant WIN_FILE_ATTRIBUTE_NOT_CONTENT_INDEXED     => 0x2000;
+use constant WIN_FILE_ATTRIBUTE_ENCRYPTED               => 0x4000;
+
+# Windows symlink covers multiple bits
+use constant WIN_FILE_ATTRIBUTE_SYMBOLIC_LINK_MASK  => WIN_FILE_ATTRIBUTE_REPARSE_POINT;
+
+# The Symbolic Link Mask may become this if I can find a real use case.
+# use constant WIN_FILE_ATTRIBUTE_SYMBOLIC_LINK_MASK  => WIN_FILE_ATTRIBUTE_DEVICE_OR_SYMBOLIC_LINK | WIN_FILE_ATTRIBUTE_REPARSE_POINT;
 
 # Extra sizes
 use constant ZIP_EXTRA_HEADER_SIZE          => 2 ;
@@ -304,6 +329,7 @@ my %Extras = (
       0x4690,  ['POSZIP 4690',                                              undef],
       0x4704,  ['VM/CMS',                                                   undef],
       0x470f,  ['MVS',                                                      undef],
+      0x4850,  ['Info-ZIP PHold [PH]',                                      undef],
       0x4854,  ['Theos [TH]',                                               undef],
       0x4b46,  ['FWKCS MD5 [FK]',                                           undef],
       0x4c41,  ['OS/2 access control list [AL]',                            undef],
@@ -320,6 +346,7 @@ my %Extras = (
       0x6375,  ['Unicode Comment [uc]',                                     \&decode_uc,                    5, undef,  5, undef],
       0x6542,  ['BeOS/Haiku [Be]',                                          undef], # TODO
       0x6854,  ['Theos [Th]',                                               undef],
+      0x6C78,  ['Extended Local File Header [xl]',                          undef], # TODO
       0x7075,  ['Unicode Path [up]',                                        \&decode_up,                    5, undef,   5, undef],
       0x756e,  ['ASi Unix [un]',                                            \&decode_ASi_Unix], # TODO
       0x7441,  ['AtheOS [At]',                                              undef],
@@ -459,7 +486,7 @@ sub setupFormat
     my $rightColumn = "^" . ("<" x 132);
 
     # Fill mode can split on space or newline chars
-    # Spliting on hyphen works differently from Perl 5.20 onwards
+    # Splitting on hyphen works differently from Perl 5.20 onwards
     $: = " \n";
 
     my $fmt ;
@@ -989,9 +1016,9 @@ my $opt_scan = 0;
 my $opt_walk = 0;
 my $opt_Redact = 0;
 my $opt_utc = 0;
-my $opt_want_info_mesages = 1;
-my $opt_want_warning_mesages = 1;
-my $opt_want_error_mesages = 1;
+my $opt_want_info_messages = 1;
+my $opt_want_warning_messages = 1;
+my $opt_want_error_messages = 1;
 my $opt_want_message_exit_status = 0;
 my $exit_status_code = 0;
 my $opt_help =0;
@@ -1019,9 +1046,9 @@ GetOptions("h|help"     => \$opt_help,
            "exit-bitmask!"      => \$opt_want_message_exit_status,
            "messages!"          => sub {
                                             my ($opt_name, $opt_value) = @_;
-                                            $opt_want_info_mesages =
-                                            $opt_want_warning_mesages =
-                                            $opt_want_error_mesages = $opt_value;
+                                            $opt_want_info_messages =
+                                            $opt_want_warning_messages =
+                                            $opt_want_error_messages = $opt_value;
                                        },
     )
   or exit 255 ;
@@ -1112,7 +1139,7 @@ if ($opt_scan || $opt_walk)
             }
             elsif ($lastSignature == ZIP_LOCAL_HDR_SIG && $lastHeader->{'streamed'} )
             {
-                # Check for size of possibe malformed Data Descriptor before outputting payload
+                # Check for size of possible malformed Data Descriptor before outputting payload
                 if (! $lastHeader->{'gotDataDescriptorSize'})
                 {
                     my $hdrSize = checkForBadlyFormedDataDescriptor($lastHeader, $delta) ;
@@ -1141,7 +1168,7 @@ if ($opt_scan || $opt_walk)
             }
             elsif (Signatures::isCentralHeader($s) && $foundCentralHeader == 0)
             {
-                # check for an APK header directly before the first central header
+                # check for an APK header directly before the first Central Header
                 $foundCentralHeader = 1;
 
                 ($START_APK, $APK, $APK_LEN) = chckForAPKSigningBlock($FH, $here, 0) ;
@@ -1309,7 +1336,7 @@ else
             # If get here then $here is less than $expectedOffset
 
 
-            # check for an APK header directly before the first central header
+            # check for an APK header directly before the first Central Header
             # Make sure not to miss a streaming data descriptor
             if ($signature != ZIP_DATA_HDR_SIG && Signatures::isCentralHeader($expectedSignature) && $START_APK && ! $processedAPK )
             {
@@ -1416,15 +1443,15 @@ else
 }
 
 
-dislayMessages()
-    if $opt_want_error_mesages ;
+displayMessages()
+    if $opt_want_error_messages ;
 
 exit $exit_status_code ;
 
-sub dislayMessages
+sub displayMessages
 {
 
-    # Compare Central & Local for discrepencies
+    # Compare Central & Local for discrepancies
 
     if ($CentralDirectory->isMiniZipEncrypted)
     {
@@ -1525,7 +1552,7 @@ sub dislayMessages
                               grep {
                                       $_->entryType == ZIP_CENTRAL_HDR_SIG &&
                                     ! $_->encapsulated && # not encapsulated
-                                      $_->ldEntry && # central header has a local sibling
+                                      $_->ldEntry && # Central Header has a local sibling
                                       $_->ldEntry->childrenCount && # local entry has embedded entries
                                     ! Nesting::childrenInCentralDir($_->ldEntry)
                                    }
@@ -1683,13 +1710,13 @@ sub dislayMessages
             }
         }
 
-        # Check if contents of local headers match with central headers
+        # Check if contents of local headers match with Central Headers
         #
-        # When central header encryption is used the local header values are masked (see APPNOTE 6.3.10, sec 4)
-        # In this usecase the central header will appear to be absent
+        # When Central Header encryption is used the local header values are masked (see APPNOTE 6.3.10, sec 4)
+        # In this usecase the Central Header will appear to be absent
         #
         # key fields
-        #    filename, compressed/uncompessed lengths, crc, compression method
+        #    filename, compressed/uncompressed lengths, crc, compression method
         {
             for my $centralEntry ( sort { $a->centralHeaderOffset() <=> $b->centralHeaderOffset() } values %cleanCentralEntries )
             {
@@ -1863,7 +1890,7 @@ sub BadlyFormedDataDescriptor
             print "\n";
             out1 "Missing $sigName Signature", Value_V(ZIP_DATA_HDR_SIG);
 
-            error $FH->tell(), "Missimg $sigName Signature";
+            error $FH->tell(), "Missing $sigName Signature";
             $localEntry->crc32(              out_V "CRC");
             $localEntry->compressedSize(   out_V "Compressed Size");
             $localEntry->uncompressedSize( out_V "Uncompressed Size");
@@ -1885,7 +1912,7 @@ sub BadlyFormedDataDescriptor
             print "\n";
             out1 "Missing $sigName Signature", Value_V(ZIP_DATA_HDR_SIG);
 
-            error $FH->tell(), "Missimg $sigName Signature";
+            error $FH->tell(), "Missing $sigName Signature";
             $localEntry->crc32(              out_V "CRC");
             $localEntry->compressedSize(   out_Q "Compressed Size");
             $localEntry->uncompressedSize( out_Q "Uncompressed Size");
@@ -1916,7 +1943,7 @@ sub BadlyFormedDataDescriptor
             print "\n";
             out1 "Missing $sigName Signature", Value_V(ZIP_DATA_HDR_SIG);
 
-            error $FH->tell(), "Missimg $sigName Signature";
+            error $FH->tell(), "Missing $sigName Signature";
             $localEntry->crc32(              out_V "CRC");
             $localEntry->compressedSize(   out_V "Compressed Size");
             $localEntry->uncompressedSize( out_V "Uncompressed Size");
@@ -1941,7 +1968,7 @@ sub BadlyFormedDataDescriptor
             print "\n";
             out1 "Missing $sigName Signature", Value_V(ZIP_DATA_HDR_SIG);
 
-            error $FH->tell(), "Missimg $sigName Signature";
+            error $FH->tell(), "Missing $sigName Signature";
             $localEntry->crc32(              out_V "CRC");
             $localEntry->compressedSize(   out_Q "Compressed Size");
             $localEntry->uncompressedSize( out_Q "Uncompressed Size");
@@ -2036,8 +2063,17 @@ sub LocalHeader
     my $lastMod = out_V "Modification Time", sub { LastModTime($_[0]) };
 
     my $crc              = out_V "CRC";
+
+    # Weak encryption if
+    # * encrypt flag (bit 0) set in General Purpose Flags
+    # * strong encrypt (bit ) not set in General Purpose Flags
+    # * not using AES encryption (compression method 99)
+    my $weakEncryption = ($gpFlag & ZIP_GP_FLAG_ALL_ENCRYPT) == ZIP_GP_FLAG_ENCRYPTED_MASK &&
+                         $compressedMethod != ZIP_CM_AES;
+    # Weak encryption uses the CRC value even when streaming is in play.
+    # This conflicts with appnote 6.3.10 section 4.4.4
     warning $FH->tell() - 4, "CRC field should be zero when streaming is enabled"
-        if $streaming && $crc != 0 ;
+        if $streaming && $crc != 0 && ! $weakEncryption;
 
     my $compressedSize   = out_V "Compressed Size";
     # warning $FH->tell(), "Compressed Size should be zero when streaming is enabled";
@@ -2090,9 +2126,11 @@ sub LocalHeader
         walkExtra($extraLength, $localEntry);
     }
 
-    # APPNOTE 6.3.10, sec 4.3.8
-    warning $FH->tell - $filenameLength, "Directory '$filename' must not have a payload"
-        if ! $streaming && $filename =~ m#/$# && $localEntry->uncompressedSize ;
+    # Defer test for directory payload until Central Header processing.
+    # Need to have external file attributes to deal with some edge conditions.
+    # # APPNOTE 6.3.10, sec 4.3.8
+    # warning $FH->tell - $filenameLength, "Directory '$filename' must not have a payload"
+    #     if ! $streaming && $filename =~ m#/$# && $localEntry->uncompressedSize ;
 
     my @msg ;
     # if ($cdZip64 && ! $ZIP64)
@@ -2116,14 +2154,14 @@ sub LocalHeader
 
 
     my $minizip_encrypted = $localEntry->minizip_secure;
-    my $pk_encrypted      = ($gpFlag & ZIP_GP_FLAG_STRONG_ENCRYPTED_MASK) && $compressedMethod != 99 && ! $minizip_encrypted;
+    my $pk_encrypted      = ($gpFlag & ZIP_GP_FLAG_STRONG_ENCRYPTED_MASK) && $compressedMethod != ZIP_CM_AES && ! $minizip_encrypted;
 
     # Detecting PK strong encryption from a local header is a bit convoluted.
     # Cannot just use ZIP_GP_FLAG_ENCRYPTED_CD because minizip also uses this bit.
     # so jump through some hoops
     #     extract ver is >= 5.0'
     #     all the encryption flags are set in gpflags
-    #     TODO - add zero lengths for crc, compresssed & uncompressed
+    #     TODO - add zero lengths for crc, compressed & uncompressed
 
     if (($gpFlag & ZIP_GP_FLAG_ALL_ENCRYPT) == ZIP_GP_FLAG_ALL_ENCRYPT  && $extractVer >= 0x32  )
     {
@@ -2171,11 +2209,11 @@ sub LocalHeader
     }
 
     # Next block can decrement the CDcompressedSize
-    # possiblty to zero. Need to remember if it started out
+    # possibly to zero. Need to remember if it started out
     # as a non-zero value
     my $haveCDcompressedSize = $CDcompressedSize;
 
-    if ($compressedMethod == 99 && $localEntry->aesValid) # AES Encryption
+    if ($compressedMethod == ZIP_CM_AES && $localEntry->aesValid) # AES Encryption
     {
         $CDcompressedSize -= printAes($localEntry)
     }
@@ -2196,12 +2234,12 @@ sub LocalHeader
 
     if ($haveCDcompressedSize) {
 
-        if ($compressedMethod == 92 && $CDcompressedSize == 20) {
+        if ($compressedMethod == ZIP_CM_REFERENCE && $CDcompressedSize == 20) {
             # Payload for a Reference is the SHA-1 hash of the uncompressed content
             myRead(my $sha1, 20);
             out $sha1, "PAYLOAD",  "SHA-1 Hash: " . hexDump($sha1);
         }
-        elsif ($compressedMethod == 99 && $localEntry->aesValid ) {
+        elsif ($compressedMethod == ZIP_CM_AES && $localEntry->aesValid ) {
             outSomeData($CDcompressedSize, "PAYLOAD", $opt_Redact) ;
             my $auth ;
             myRead($auth, 10);
@@ -2247,7 +2285,7 @@ sub findDigitalSignature
     my $ix = index($data, Pack_ZIP_DIGITAL_SIGNATURE_SIG);
     if ($ix > -1)
     {
-        # check size of signature meaans it is directly after the encrypted CD
+        # check size of signature means it is directly after the encrypted CD
         my $sigSize = unpack "v", substr($data, $ix+4, 2);
         if ($ix + 4 + 2 + $sigSize == $cdSize)
         {
@@ -2366,7 +2404,7 @@ sub redactData
 {
     my $data = shift;
 
-    # Redact everything apart from directory seperators
+    # Redact everything apart from directory separators
     $data =~ s(.)(X)g
         if $opt_Redact;
 
@@ -2377,24 +2415,28 @@ sub redactFilename
 {
     my $filename = shift;
 
-    # Redact everything apart from directory seperators
+    # Redact everything apart from directory separators
     $filename =~ s(.)(X)g
         if $opt_Redact;
 
-    return $filename;
+    return wantarray ? ($filename, $filename, 0)  : $filename;
 }
 
 sub validateDirectory
 {
-    # Check that Directries are stored correctly
+    # Check that Directories are stored correctly
     #
     # 1. Filename MUST end with a "/"
     #    see APPNOTE 6.3.10, sec 4.3.8
     # 2. Uncompressed size == 0
     #    see APPNOTE 6.3.10, sec 4.3.8
-    # 3. warn if compressed size > 0 and Uncompressed size == 0
-    # 4. check for presence of DOS directory attrib in External Attributes
-    # 5. Check for Unix  extrnal attribute S_IFDIR
+    # 3. Warn if compressed size > 0 and Uncompressed size == 0
+    # 4. Check for presence of DOS directory attrib in External Attributes
+    # 5. Check for Unix  external attribute S_IFDIR
+    #
+    # Edge condition is a Windows directory symlink
+    # In this case a payload is expected.
+    # TODO - decode the payload to get the target of the symlink
 
     my $offset = shift ;
     my $filename = shift ;
@@ -2409,9 +2451,8 @@ sub validateDirectory
 
     my $probablyDirectory = 0;
     my $filenameOK = 0;
-    my $attributesSet = 0;
-    my $dosAttributeSet = 0;
-    my $unixAttributeSet = 0;
+    my $dosDirectoryAttributeSet = 0;
+    my $unixDirectoryAttributeSet = 0;
 
     if ($filename =~ m#/$#)
     {
@@ -2420,22 +2461,22 @@ sub validateDirectory
         $filenameOK = 1;
     }
 
-    if ($dosAttributes & 0x0010) # ATTR_DIRECTORY
+    if ($dosAttributes & WIN_FILE_ATTRIBUTE_DIRECTORY) # ATTR_DIRECTORY
     {
         $probablyDirectory = 1;
-        $attributesSet = 1 ;
-        $dosAttributeSet = 1 ;
+        $dosDirectoryAttributeSet = 1 ;
     }
 
     if ($versionMadeBy == 3 && $otherAttributes & 0x4000) # Unix & S_IFDIR
     {
         $probablyDirectory = 1;
-        $attributesSet = 1;
-        $unixAttributeSet = 1;
+        $unixDirectoryAttributeSet = 1;
     }
 
     return
         unless $probablyDirectory ;
+
+    # Probably dealing with a directory from here on
 
     error $offset + CentralDirectoryEntry::Offset_Filename(),
             "Directory '$filename' must end in a '/'",
@@ -2444,23 +2485,28 @@ sub validateDirectory
 
     info $offset + CentralDirectoryEntry::Offset_ExternalAttributes(),
             "DOS Directory flag not set in 'External Attributes' for Directory '$filename'"
-        if $filenameOK && ! $dosAttributeSet;
+        if $filenameOK && ! $dosDirectoryAttributeSet;
 
     info $offset + CentralDirectoryEntry::Offset_ExternalAttributes(),
             "Unix Directory flag not set in 'External Attributes' for Directory '$filename'"
-        if $filenameOK && $versionMadeBy == 3 && ! $unixAttributeSet;
+        if $filenameOK && $versionMadeBy == 3 && ! $unixDirectoryAttributeSet;
 
-    if ($uncompressedSize != 0)
+    # Windows symlink directories will have a payload, so check for that now.
+    # Windows attributes can sometimes be missing so check for unix directory bit + symlink bit
+    use constant UNIX_SYMLINK_DIRECTORY => 0x4000 | 0xA0000;
+    if (! ($dosAttributes & WIN_FILE_ATTRIBUTE_SYMBOLIC_LINK_MASK || $otherAttributes & UNIX_SYMLINK_DIRECTORY == UNIX_SYMLINK_DIRECTORY))
     {
-        # APPNOTE 6.3.10, sec 4.3.8
-        error $offset + CentralDirectoryEntry::Offset_UncompressedSize(),
-                "Directory '$filename' must not have a payload"
-    }
-    elsif ($compressedSize != 0)
-    {
-
-        info $offset + CentralDirectoryEntry::Offset_CompressedSize(),
-                "Directory '$filename' has compressed payload that uncompresses to nothing"
+        if ($uncompressedSize != 0)
+        {
+            # APPNOTE 6.3.10, sec 4.3.8
+            error $offset + CentralDirectoryEntry::Offset_UncompressedSize(),
+                    "Directory '$filename' must not have a payload. Uncompressed size is " . decimalHex0x($uncompressedSize)
+        }
+        elsif ($compressedSize != 0)
+        {
+            info $offset + CentralDirectoryEntry::Offset_CompressedSize(),
+                    "Directory '$filename' has compressed payload that uncompress to nothing"
+        }
     }
 
     if ($extractVersion < 20)
@@ -2488,7 +2534,7 @@ sub validateFilename
     # APPNOTE 6.3.10, sec 4.4.17.1
     #
     # No absolute path
-    # No backslash delimeters
+    # No backslash delimiters
     # No drive letters
 
     return "Filename must not be an absolute path"
@@ -2607,26 +2653,26 @@ sub outputFilename
             if $modified ;
 
         # use Unicode::Normalize;
-        # my $NormaizedForm ;
+        # my $NormalizedForm ;
         # if (defined $decoded_filename)
         # {
-        #     $NormaizedForm .= Unicode::Normalize::checkNFD  $decoded_filename ? 'NFD ' : '';
-        #     $NormaizedForm .= Unicode::Normalize::checkNFC  $decoded_filename ? 'NFC ' : '';
-        #     $NormaizedForm .= Unicode::Normalize::checkNFKD $decoded_filename ? 'NFKD ' : '';
-        #     $NormaizedForm .= Unicode::Normalize::checkNFKC $decoded_filename ? 'NFKC ' : '';
-        #     $NormaizedForm .= Unicode::Normalize::checkFCD  $decoded_filename ? 'FCD ' : '';
-        #     $NormaizedForm .= Unicode::Normalize::checkFCC  $decoded_filename ? 'FCC ' : '';
+        #     $NormalizedForm .= Unicode::Normalize::checkNFD  $decoded_filename ? 'NFD ' : '';
+        #     $NormalizedForm .= Unicode::Normalize::checkNFC  $decoded_filename ? 'NFC ' : '';
+        #     $NormalizedForm .= Unicode::Normalize::checkNFKD $decoded_filename ? 'NFKD ' : '';
+        #     $NormalizedForm .= Unicode::Normalize::checkNFKC $decoded_filename ? 'NFKC ' : '';
+        #     $NormalizedForm .= Unicode::Normalize::checkFCD  $decoded_filename ? 'FCD ' : '';
+        #     $NormalizedForm .= Unicode::Normalize::checkFCC  $decoded_filename ? 'FCC ' : '';
         # }
 
         debug $FH->tell() - length($raw_filename),
                     "Encoding Debug for $message",
                     "Octets Read from File  [$raw_filename][" . length($raw_filename). "] [" . charDump2($raw_filename) . "]",
                     "Via Unicode Codepoints [$decoded_filename][" . length($decoded_filename) . "] [" . charDump($decoded_filename) . "]",
-                    # "Unicode Normalization  $NormaizedForm",
+                    # "Unicode Normalization  $NormalizedForm",
                     "Octets Written         [$filename][" . length($filename). "] [" . charDump2($filename) . "]";
     }
 
-    if ($message eq 'Filename' && $opt_want_warning_mesages)
+    if ($message eq 'Filename' && $opt_want_warning_messages)
     {
         # Check for bad, unsafe & not portable filenames
         my $v = validateFilename($decoded_filename);
@@ -2712,24 +2758,23 @@ sub CentralHeader
         # See https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
         # and https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb/65e0c225-5925-44b0-8104-6b91339c709f
 
-        out1 "[Bit 0]",  "Read-Only"     if $dos_attrib & 0x0001 ;
-        out1 "[Bit 1]",  "Hidden"        if $dos_attrib & 0x0002 ;
-        out1 "[Bit 2]",  "System"        if $dos_attrib & 0x0004 ;
-        out1 "[Bit 3]",  "Label"         if $dos_attrib & 0x0008 ;
-        out1 "[Bit 4]",  "Directory"     if $dos_attrib & 0x0010 ;
-        out1 "[Bit 5]",  "Archive"       if $dos_attrib & 0x0020 ;
-        out1 "[Bit 6]",  "Device"        if $dos_attrib & 0x0040 ;
-        out1 "[Bit 7]",  "Normal"        if $dos_attrib & 0x0080 ;
-        out1 "[Bit 8]",  "Temporary"     if $dos_attrib & 0x0100 ;
-        out1 "[Bit 9]",  "Sparse"        if $dos_attrib & 0x0200 ;
-        out1 "[Bit 10]", "Reparse Point" if $dos_attrib & 0x0400 ;
-        out1 "[Bit 11]", "Compressed"    if $dos_attrib & 0x0800 ;
+        out1 "[Bit 0]",  "Read-Only"     if $dos_attrib & WIN_FILE_ATTRIBUTE_READONLY ;
+        out1 "[Bit 1]",  "Hidden"        if $dos_attrib & WIN_FILE_ATTRIBUTE_HIDDEN ;
+        out1 "[Bit 2]",  "System"        if $dos_attrib & WIN_FILE_ATTRIBUTE_SYSTEM ;
+        out1 "[Bit 3]",  "Unused"        if $dos_attrib & WIN_FILE_ATTRIBUTE_LABEL ; # bit not used
+        out1 "[Bit 4]",  "Directory"     if $dos_attrib & WIN_FILE_ATTRIBUTE_DIRECTORY ;
+        out1 "[Bit 5]",  "Archive"       if $dos_attrib & WIN_FILE_ATTRIBUTE_ARCHIVE ;
+        out1 "[Bit 6]",  "Device/Symbolic Link" if $dos_attrib & WIN_FILE_ATTRIBUTE_DEVICE_OR_SYMBOLIC_LINK ; # Tentative use of Symbolic Link.
+        out1 "[Bit 7]",  "Normal/Executable"    if $dos_attrib & WIN_FILE_ATTRIBUTE_NORMAL_OR_EXECUTABLE ; # Tentative use of Executable
+        out1 "[Bit 8]",  "Temporary"     if $dos_attrib & WIN_FILE_ATTRIBUTE_TEMPORARY ;
+        out1 "[Bit 9]",  "Sparse"        if $dos_attrib & WIN_FILE_ATTRIBUTE_SPARSE_FILE ;
+        out1 "[Bit 10]", "Reparse Point" if $dos_attrib & WIN_FILE_ATTRIBUTE_REPARSE_POINT ;
+        out1 "[Bit 11]", "Compressed"    if $dos_attrib & WIN_FILE_ATTRIBUTE_COMPRESSED ;
+        out1 "[Bit 12]", "Offline"       if $dos_attrib & WIN_FILE_ATTRIBUTE_OFFLINE ;
+        out1 "[Bit 13]", "Not Indexed"   if $dos_attrib & WIN_FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ;
 
-        out1 "[Bit 12]", "Offline"       if $dos_attrib & 0x1000 ;
-        out1 "[Bit 13]", "Not Indexed"   if $dos_attrib & 0x2000 ;
-
-        # Zip files created on Mac seem to set this bit. Not clear why.
-        out1 "[Bit 14]", "Possible Mac Flag"   if $dos_attrib & 0x4000 ;
+        # Zip files created on Mac seem to set this bit. Not reason why found yet.
+        out1 "[Bit 14]", "Encrypted"     if $dos_attrib & WIN_FILE_ATTRIBUTE_ENCRYPTED ;
 
         # p7Zip & 7z set this bit to flag that the high 16-bits are Unix attributes
         out1 "[Bit 15]", "Possible p7zip/7z Unix Flag"   if $dos_attrib & 0x8000 ;
@@ -2738,9 +2783,9 @@ sub CentralHeader
 
     my $native_attrib = ($ext_file_attrib >> 16 ) &  0xFFFF;
 
-    if ($made_by == 3) # Unix
+    # Some Windows zip file (created OS  == 0), have th eUnix attributes populated.
+    if ($made_by == 3 || $made_by == 0) # Unix
     {
-
         state $mask = {
                 0   => '---',
                 1   => '--x',
@@ -3247,7 +3292,7 @@ sub DataDescriptor
         $uncompressedSize = out_V "Uncompressed Size" ;
     }
 
-    # Try matching juast payload lengths
+    # Try matching just payload lengths
     elsif ($cl32 == $payloadLength)
     {
         if ($localEntry->zip64)
@@ -3301,7 +3346,7 @@ sub DataDescriptor
         $uncompressedSize = out_V "Uncompressed Size" ;
     }
 
-    # no payoad or delta match at all, so likely a false positive or data corruption
+    # no payload or delta match at all, so likely a false positive or data corruption
     else
     {
         warning $here, "Cannot determine size of Data Descriptor record";
@@ -3317,10 +3362,12 @@ sub DataDescriptor
         $localEntry->uncompressedSize($uncompressedSize) ;
     }
 
-    # APPNOTE 6.3.10, sec 4.3.8
-    my $filename = $localEntry->filename;
-    warning undef, "Directory '$filename' must not have a payload"
-        if  $filename =~ m#/$# && $uncompressedSize ;
+    # Defer test for directory payload until central header processing.
+    # Need to have external file attributes to deal with some edge conditions.
+    # # APPNOTE 6.3.10, sec 4.3.8
+    # my $filename = $localEntry->filename;
+    # warning undef, "Directory '$filename' must not have a payload"
+    #     if  $filename =~ m#/$# && $uncompressedSize ;
 
     return {
         crc => $crc,
@@ -3753,7 +3800,7 @@ sub warning
     no warnings 'utf8';
 
     return
-        unless $opt_want_warning_mesages ;
+        unless $opt_want_warning_messages ;
 
     say "#"
         unless $lastWasMessage ++ ;
@@ -3784,7 +3831,7 @@ sub error
     no warnings 'utf8';
 
     return
-        unless $opt_want_error_mesages ;
+        unless $opt_want_error_messages ;
 
     say "#"
         unless $lastWasMessage ++ ;
@@ -3865,7 +3912,7 @@ sub info
     no warnings 'utf8';
 
     return
-        unless $opt_want_info_mesages ;
+        unless $opt_want_info_messages ;
 
     say "#"
         unless $lastWasMessage ++ ;
@@ -4059,7 +4106,7 @@ sub testExtraLimits
         {
             if ($size < $min || $size > $max)
             {
-                error $FH->tell() -2, sprintf "%s: 'Length' field invalid: value must be betweem %s and %s, got %s", extraFieldIdentifier($lookID), decimalHex0x($min), decimalHex0x($max), decimalHex0x($size);
+                error $FH->tell() -2, sprintf "%s: 'Length' field invalid: value must be between %s and %s, got %s", extraFieldIdentifier($lookID), decimalHex0x($min), decimalHex0x($max), decimalHex0x($size);
                 outSomeData $size, "  Extra Payload" if $size ;
                 return 0;
             }
@@ -4133,26 +4180,35 @@ sub walk_Zip64_in_LD
     if ($assumeLengthsPresent || $assumeAllFieldsPresent || full32 $entry->std_uncompressedSize )
     {
         # TODO defer a warning if in local header & central/local don't have std_uncompressedSize set to 0xffffffff
+        my $fieldName = 'Uncompressed Size';
         if (length $zip64Extended < 8)
         {
-            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for 'Uncompressed Size': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
+            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for '$fieldName': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
             error $fieldOffset, $message;
             out2 $zip64Extended, $message;
             return;
         }
 
         $fieldOffset += 8;
+
         my $data = substr($zip64Extended, 0, 8, "") ;
-        $entry->uncompressedSize(unpack "Q<", $data);
-        out2 $data, "Uncompressed Size", Value_Q($entry->uncompressedSize)
+        my $value = unpack "Q<", $data;
+        out2 $data, "$fieldName", Value_Q($value)
             if $display;
+        if ($display && !$entry->streamed && ! full32 $entry->std_uncompressedSize)
+        {
+            info $FH->tell() - 8, "'$fieldName' should not be present in the ZIP64 extra field.",
+                                  "Corresponding field from Central Header is not set to 0xFFFFFFFF, value is " . decimalHex0x($entry->std_uncompressedSize)
+        }
+        $entry->uncompressedSize($value);
     }
 
     if ($assumeLengthsPresent || $assumeAllFieldsPresent || full32 $entry->std_compressedSize)
     {
+        my $fieldName = 'Compressed Size';
         if (length $zip64Extended < 8)
         {
-            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for 'Compressed Size': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
+            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for '$fieldName': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
             error $fieldOffset, $message;
             out2 $zip64Extended, $message;
             return;
@@ -4161,9 +4217,15 @@ sub walk_Zip64_in_LD
         $fieldOffset += 8;
 
         my $data = substr($zip64Extended, 0, 8, "") ;
-        $entry->compressedSize( unpack "Q<", $data);
-        out2 $data, "Compressed Size", Value_Q($entry->compressedSize)
+        my $value = unpack "Q<", $data;
+        out2 $data, "$fieldName", Value_Q($value)
             if $display;
+        if ($display && !$entry->streamed && ! full32 $entry->std_compressedSize)
+        {
+            info $FH->tell() - 8, "'$fieldName' should not be present in the ZIP64 extra field.",
+                                  "Corresponding field from Central Header is not set to 0xFFFFFFFF, value is " . decimalHex0x($entry->std_compressedSize)
+        }
+        $entry->compressedSize($value);
     }
 
     # Zip64 in local header should not have localHeaderOffset or disk number
@@ -4173,20 +4235,31 @@ sub walk_Zip64_in_LD
     {
         $fieldOffset += 8;
 
+        my $fieldName = 'Offset to Local Dir';
         my $data = substr($zip64Extended, 0, 8, "") ;
-        my $localHeaderOffset = unpack "Q<", $data;
-        out2 $data, "Offset to Local Dir", Value_Q($localHeaderOffset)
+        my $value = unpack "Q<", $data;
+        out2 $data, "$fieldName", Value_Q($value)
             if $display;
+        if ($display && !$entry->streamed && ! full32 $entry->std_localHeaderOffset)
+        {
+            info $FH->tell() - 8, "$fieldName should not be present in the ZIP64 extra field for the Local Header."
+        }
     }
 
     if ($assumeAllFieldsPresent)
     {
         $fieldOffset += 4;
 
+        my $fieldName = 'Disk Number';
         my $data = substr($zip64Extended, 0, 4, "") ;
-        my $diskNumber = unpack "v", $data;
-        out2 $data, "Disk Number", Value_V($diskNumber)
+        my $value = unpack "V", $data;
+        my $diskNumber = $value;
+        out2 $data, "$fieldName", Value_V($diskNumber)
             if $display;
+        if ($display && !$entry->streamed && ! full16 $entry->std_diskNumber)
+        {
+            info $FH->tell() - 4, "$fieldName should not be present in the ZIP64 extra field for the Local Header."
+        }
     }
 
     if (length $zip64Extended)
@@ -4219,30 +4292,43 @@ sub walk_Zip64_in_CD
         return;
     }
 
-    my $assumeAllFieldsPresent = (length($zip64Extended) == 28) ;
+    # The order of the fields in the zip64 extended
+    # information record is fixed, but the fields MUST
+    # only appear if the corresponding Local or Central
+    # directory record field is set to 0xFFFF or 0xFFFFFFFF.
+    my $assumeAllFieldsPresent = (length($zip64Extended) == 28);
 
-    if ($assumeAllFieldsPresent || full32 $entry->std_uncompressedSize )
+    if ($assumeAllFieldsPresent || full32 $entry->std_uncompressedSize)
     {
+        my $fieldName ="Uncompressed Size" ;
         if (length $zip64Extended < 8)
         {
-            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for 'Uncompressed Size': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
+            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for '$fieldName': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
             error $fieldOffset, $message;
             out2 $zip64Extended, $message;
             return;
         }
 
         $fieldOffset += 8;
+
         my $data = substr($zip64Extended, 0, 8, "") ;
-        $entry->uncompressedSize(unpack "Q<", $data);
-        out2 $data, "Uncompressed Size", Value_Q($entry->uncompressedSize)
+        my $value = unpack "Q<", $data;
+        out2 $data, "$fieldName", Value_Q($value)
             if $display;
+        if ($display && !$entry->streamed && ! full32 $entry->std_uncompressedSize)
+        {
+            info $FH->tell() - 8,  "'$fieldName' should not be present in the ZIP64 extra field.",
+                                   "Corresponding field from Central Header is not set to 0xFFFFFFFF, value is " . decimalHex0x($entry->uncompressedSize);
+        }
+        $entry->uncompressedSize($value);
     }
 
     if ($assumeAllFieldsPresent || full32 $entry->std_compressedSize)
     {
+        my $fieldName ="Compressed Size" ;
         if (length $zip64Extended < 8)
         {
-            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for 'Compressed Size': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
+            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for '$fieldName': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
             error $fieldOffset, $message;
             out2 $zip64Extended, $message;
             return;
@@ -4251,16 +4337,23 @@ sub walk_Zip64_in_CD
         $fieldOffset += 8;
 
         my $data = substr($zip64Extended, 0, 8, "") ;
-        $entry->compressedSize(unpack "Q<", $data);
-        out2 $data, "Compressed Size", Value_Q($entry->compressedSize)
+        my $value = unpack "Q<", $data;
+        out2 $data, "$fieldName", Value_Q($value)
             if $display;
+        if ($display && !$entry->streamed && ! full32 $entry->std_compressedSize)
+        {
+            info $FH->tell() - 8, "'$fieldName' should not be present in the ZIP64 extra field.",
+                                  "Corresponding field from Central Header is not set to 0xFFFFFFFF, value is " . decimalHex0x($entry->compressedSize);
+        }
+        $entry->compressedSize($value);
     }
 
     if ($assumeAllFieldsPresent || full32 $entry->std_localHeaderOffset)
     {
+        my $fieldName = "Offset to Local Dir";
         if (length $zip64Extended < 8)
         {
-            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for 'Offset to Local Dir': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
+            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(8) . " bytes for '$fieldName': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
             error $fieldOffset, $message;
             out2 $zip64Extended, $message;
             return;
@@ -4268,21 +4361,28 @@ sub walk_Zip64_in_CD
 
         $fieldOffset += 8;
 
-        my $here = $FH->tell();
         my $data = substr($zip64Extended, 0, 8, "") ;
-        $entry->localHeaderOffset(unpack "Q<", $data);
-        out2 $data, "Offset to Local Dir", Value_Q($entry->localHeaderOffset)
+        my $value = unpack("Q<", $data);
+        out2 $data, $fieldName, Value_Q($value)
             if $display;
 
-        my $commonMessage = "'Offset to Local Dir' field in 'Zip64 Extra Field' is invalid";
-        $entry->localHeaderOffset(checkOffsetValue($entry->localHeaderOffset, $fieldStart, 0, $commonMessage, $fieldStart, ZIP_LOCAL_HDR_SIG, 0) );
+        my $commonMessage = "'$fieldName' field in 'Zip64 Extra Field' is invalid";
+        $value = checkOffsetValue($value, $fieldStart, 0, $commonMessage, $fieldStart, ZIP_LOCAL_HDR_SIG, 0) ;
+
+        if ($display && !$entry->streamed && ! full32 $entry->std_localHeaderOffset)
+        {
+            info $FH->tell() - 8, "'$fieldName' should not be present in the ZIP64 extra field.",
+                                  "Corresponding field from Central Header is not set to 0xFFFFFFFF, value is " . decimalHex0x($value);
+        }
+        $entry->localHeaderOffset($value);
     }
 
     if ($assumeAllFieldsPresent || full16 $entry->std_diskNumber)
     {
+        my $fieldName = 'Disk Number';
         if (length $zip64Extended < 4)
         {
-            my $message = extraFieldIdentifier($extraID) .  ": Expected " . decimalHex0x(4) . " bytes for 'Disk Number': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
+            my $message = extraFieldIdentifier($extraID) . ": Expected " . decimalHex0x(4) . " bytes for '$fieldName': only " . decimalHex0x(length $zip64Extended)  . " bytes present";
             error $fieldOffset, $message;
             out2 $zip64Extended, $message;
             return;
@@ -4290,12 +4390,17 @@ sub walk_Zip64_in_CD
 
         $fieldOffset += 4;
 
-        my $here = $FH->tell();
         my $data = substr($zip64Extended, 0, 4, "") ;
-        $entry->diskNumber(unpack "v", $data);
-        out2 $data, "Disk Number", Value_V($entry->diskNumber)
+        my $value = unpack "V", $data;
+        out2 $data, "$fieldName", Value_V($value)
             if $display;
+        if ($display && !$entry->streamed && ! full16 $entry->std_diskNumber)
+        {
+            info $FH->tell() - 4, "'$fieldName' should not be present in the ZIP64 extra field.",
+                                  "Corresponding field from Central Header is not set to 0xFFFF, value is " . decimalHex0x($entry->diskNumber);
+        }
         $entry->zip64_diskNumberPresent(1);
+        $entry->diskNumber($value);
     }
 
     if (length $zip64Extended)
@@ -4606,7 +4711,7 @@ sub decode_UT
     push @f, "Modification"    if $flags & 1;
     push @f, "Access" if $flags & 2;
     push @f, "Creation" if $flags & 4;
-    $v .= " '" . join(' ', @f) . "'"
+    $v .= " '" . join(' & ', @f) . "'"
         if @f;
 
     out $data, "  Flags", $v;
@@ -7555,7 +7660,7 @@ OPTIONS
                 Warning 2
                 Error   4
 
-Copyright (c) 2011-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2011-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -8146,8 +8251,10 @@ L<https://github.com/pmqs/zipdetails/issues>.
 The primary reference for Zip files is
 L<APPNOTE.TXT|https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT>.
 
-An alternative reference is the Info-Zip appnote. This is available from
-L<ftp://ftp.info-zip.org/pub/infozip/doc/>
+If you need to investigate the extra fields that are used in zip
+files the "appnote" document covers a lot of them.
+The Info-ZIP zip distribution, available at L<https://infozip.sourceforge.net/>,
+contains additional extra field definitions. Look for the file "extrafld.txt".
 
 For details of WinZip AES encryption see L<AES Encryption Information:
 Encryption Specification AE-1 and
@@ -8164,7 +8271,7 @@ Paul Marquess F<pmqs@cpan.org>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2011-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2011-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

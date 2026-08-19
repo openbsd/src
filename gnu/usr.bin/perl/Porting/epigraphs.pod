@@ -17,6 +17,51 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.45.1 - Mike Oldfield - Far Above The Clouds
+
+L<Announced on 2026-07-22 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2026/07/msg271102.html>
+
+  And the man in the rain picked up his bag of secrets, and journeyed
+  up the mountainside, far above the clouds, and nothing was ever heard
+  from him again...
+  ...except for the sound of Tubular Bells.
+
+=head2 v5.44.0 - Frank Herbert - Dune
+
+L<Announced on 2026-07-15 by Leon Timmermans|https://www.nntp.perl.org/group/perl.perl5.porters/2026/07/msg271063.html>
+
+Once men turned their thinking over to machines in the hope that this would set them free.
+But that only permitted other men with machines to enslave them.
+
+=head2 v5.44.0-RC2 - Frank Herbert - Dune Messiah
+
+L<Announced on 2026-07-08 by Leon Timmermans|https://www.nntp.perl.org/group/perl.perl5.porters/2026/07/msg271044.html>
+
+Here lies a toppled god—
+His fall was not a small one.
+We did but build his pedestal,
+A narrow and a tall one.
+
+=head2 v5.44.0-RC1 - Frank Herbert - Dune Messiah
+
+L<Announced on 2026-07-22 by Leon Timmermans|https://www.nntp.perl.org/group/perl.perl5.porters/2026/06/msg271001.html>
+
+Empires do not suffer emptiness of purpose at the time of their creation.
+It is when they have become established that aims are lost and replaced by
+vague ritual.
+
+=head2 v5.43.11 - Isaac Asimov, Foundation
+
+L<Announced on 2026-06-01 by Paul Evans|https://nntp.perl.org/group/perl.perl5.porters/2026/06/msg270960.html>
+
+To succeed, planning alone is insufficient. One must improvise as well.
+
+=head2 v5.43.10 - Jasper Fforde, "One of Our Thursdays Is Missing"
+
+L<Announced on 2026-04-20 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/group/perl.perl5.porters/2026/04/msg270871.html>
+
+The people to listen to are the ones who don't say very much.
+
 =head2 v5.43.9 - Mary Ann Evans (under pen name George Eliot), "Middlemarch", 1872
 
 L<Announced on 2026-03-20 by Eric Herman|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270813.html>
@@ -88,6 +133,24 @@ L<Announced on 2025-07-20 by Richard Leach|https://www.nntp.perl.org/group/perl.
   pure crystals of salt. I run my hands through the grains as
   they emerge, surprised for a moment by how hot they are to touch.
     'This is ultra fine,' says Joe. 'It goes into Wotsits.'
+
+=head2 v5.42.3-RC1 - Grayson Perry, "The Descent of Man"
+
+L<Announced on 2026-07-22 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/07/msg271107.html>
+
+The Default Male gaze does not just dominate cinema, it looks down on
+society like the Eye of Sauron in The Lord of the Rings.  Every other
+identity group is 'othered' by it.
+
+=head2 v5.42.2 - Edgar Allan Poe, "The Pit and the Pendulum" (in "Tales of Mystery and Imagination")
+
+L<Announced on 2026-03-29 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270839.html>
+
+I had swooned; but still will not say that all of consciousness was
+lost.  What of it there remained I will not attempt to define, or even
+to describe; yet all was not lost.  In the deepest slumber--no!  In
+delirium--no!  In a swoon--no!  In death--no! even in the grave all is
+not lost.  Else there is no immortality for man.
 
 =head2 v5.42.2-RC1 - Edgar Allan Poe, "The Murders in the Rue Morgue" (in "Tales of Mystery and Imagination")
 
@@ -266,6 +329,25 @@ L<Announced on 2024-07-02 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/gr
   We find that in research a certain amount of intelligent ignorance
   is essential to progress; for, if you know too much, you won't try
   the thing.
+
+=head2 v5.40.5-RC1 - Grayson Perry, "The Descent of Man"
+
+L<Announced on 2026-07-22 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/07/msg271106.html>
+
+Default Man feels he is the reference point from which all other values
+and cultures are judged.  He might not be aware of it, but Default Man
+thinks he is the zero longitude of identities.
+
+=head2 v5.40.4 - Edgar Allan Poe, "The Masque of the Red Death" (in "Tales of Mystery and Imagination")
+
+L<Announced on 2026-03-29 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2026/03/msg270838.html>
+
+In an assembly of phantasms such as I have painted, it may well be
+supposed that no ordinary appearance could have excited such sensation.
+In truth the masquerade licence of the night was nearly unlimited; but
+the figure in question had out-Heroded Herod, and gone beyond the bounds
+of even the prince's infinite decorum.  There are chords in the hearts
+of the most reckless which cannot be touched without emotion.
 
 =head2 v5.40.4-RC1 - Edgar Allan Poe, "The Fall of the House of Usher" (in "Tales of Mystery and Imagination")
 

@@ -1,6 +1,6 @@
 package IO::Compress;
 
-our $VERSION = '2.213' ;
+our $VERSION = '2.223' ;
 
 =head1 NAME
 
@@ -16,7 +16,7 @@ Paul Marquess F<pmqs@cpan.org>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2011-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2011-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -4,41 +4,41 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.213 qw(:Status );
-use IO::Compress::RawDeflate 2.213 ();
-use IO::Compress::Adapter::Deflate 2.213 ;
-use IO::Compress::Adapter::Identity 2.213 ;
-use IO::Compress::Zlib::Extra 2.213 ;
-use IO::Compress::Zip::Constants 2.213 ;
+use IO::Compress::Base::Common  2.223 qw(:Status );
+use IO::Compress::RawDeflate 2.223 ();
+use IO::Compress::Adapter::Deflate 2.223 ;
+use IO::Compress::Adapter::Identity 2.223 ;
+use IO::Compress::Zlib::Extra 2.223 ;
+use IO::Compress::Zip::Constants 2.223 ;
 
 use File::Spec();
 use Config;
 
-use Compress::Raw::Zlib  2.213 ();
+use Compress::Raw::Zlib 2.222 ();
 
 BEGIN
 {
     eval { require IO::Compress::Adapter::Bzip2 ;
-           IO::Compress::Adapter::Bzip2->VERSION( 2.213 );
+           IO::Compress::Adapter::Bzip2->VERSION( 2.218 );
            require IO::Compress::Bzip2 ;
-           IO::Compress::Bzip2->VERSION( 2.213 );
+           IO::Compress::Bzip2->VERSION( 2.218 );
          } ;
 
     eval { require IO::Compress::Adapter::Lzma ;
-           IO::Compress::Adapter::Lzma->VERSION( 2.213 );
+           IO::Compress::Adapter::Lzma->VERSION( 2.217 );
            require IO::Compress::Lzma ;
-           IO::Compress::Lzma->VERSION( 2.213 );
+           IO::Compress::Lzma->VERSION( 2.217 );
          } ;
 
     eval { require IO::Compress::Adapter::Xz ;
-           IO::Compress::Adapter::Xz->VERSION( 2.213 );
+           IO::Compress::Adapter::Xz->VERSION( 2.217 );
            require IO::Compress::Xz ;
-           IO::Compress::Xz->VERSION( 2.213 );
+           IO::Compress::Xz->VERSION( 2.217 );
          } ;
     eval { require IO::Compress::Adapter::Zstd ;
-           IO::Compress::Adapter::Zstd->VERSION( 2.213 );
+           IO::Compress::Adapter::Zstd->VERSION( 2.217 );
            require IO::Compress::Zstd ;
-           IO::Compress::Zstd->VERSION( 2.213 );
+           IO::Compress::Zstd->VERSION( 2.217 );
          } ;
 }
 
@@ -47,17 +47,18 @@ require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $ZipError);
 
-$VERSION = '2.213';
+$VERSION = '2.223';
 $ZipError = '';
 
 @ISA = qw(IO::Compress::RawDeflate Exporter);
 @EXPORT_OK = qw( $ZipError zip ) ;
 %EXPORT_TAGS = %IO::Compress::RawDeflate::DEFLATE_CONSTANTS ;
 
-push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
+my @zip_methods = qw( ZIP_CM_STORE ZIP_CM_DEFLATE ZIP_CM_BZIP2 ZIP_CM_LZMA ZIP_CM_XZ ZIP_CM_ZSTD ) ;
+$EXPORT_TAGS{all} = [ defined $EXPORT_TAGS{all} ? @{ $EXPORT_TAGS{all} } : (), @EXPORT_OK, @zip_methods ] ;
 
-$EXPORT_TAGS{zip_method} = [qw( ZIP_CM_STORE ZIP_CM_DEFLATE ZIP_CM_BZIP2 ZIP_CM_LZMA ZIP_CM_XZ ZIP_CM_ZSTD)];
-push @{ $EXPORT_TAGS{all} }, @{ $EXPORT_TAGS{zip_method} };
+$EXPORT_TAGS{zip_method} = [ @zip_methods ];
+push @{ $EXPORT_TAGS{constants} }, @zip_methods ;
 
 Exporter::export_ok_tags('all');
 
@@ -570,7 +571,7 @@ sub mkFinalTrailer
         $z64e .= U64::pack_V64 $entries   ; # entries in central dir
         $z64e .= U64::pack_V64 $cd_len    ; # size of central dir
         $z64e .= *$self->{ZipData}{Offset}->getPacked_V64() ; # offset to start central dir
-        $z64e .= *$self->{ZipData}{extrafieldzip64}  # otional extra field
+        $z64e .= *$self->{ZipData}{extrafieldzip64}  # optional extra field
             if defined *$self->{ZipData}{extrafieldzip64} ;
 
         $z64e  = pack("V", ZIP64_END_CENTRAL_REC_HDR_SIG) # signature
@@ -810,7 +811,7 @@ sub getFileInfo
         $params->setValue('mtime' => $mtime) ;
         $params->setValue('atime' => $atime) ;
         $params->setValue('ctime' => undef) ; # No Creation time
-        # TODO - see if can fillout creation time on non-Unix
+        # TODO - see if can fill out creation time on non-Unix
     }
 
     # NOTE - Unix specific code alert
@@ -2285,7 +2286,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2026 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

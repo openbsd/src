@@ -233,7 +233,7 @@ sub hexDump
         }
         print "   " x (16 - @array)
             if @array < 16 ;
-        $data =~ tr/\0-\37\177-\377/./;
+        $data =~ s/[[:^print:]]/./g;
         print "  $data\n";
     }
 
@@ -719,7 +719,7 @@ sub dumpObj
         print "#\n# dumpOBJ from $file line $line \n" ;
     }
 
-    my $max = 0 ;;
+    my $max = 0 ;
     foreach my $k (keys %{ *$obj })
     {
         $max = length $k if length $k > $max ;

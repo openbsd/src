@@ -465,7 +465,7 @@ foreach my $stdio ( ['-', '-'], [*STDIN, *STDOUT])
     my $lex = LexFile->new( my $name );
     my $fil;
     ok $fil = gzopen($name, "wb"), '  gzopen for writing' ;
-    ok !$fil->gzeof(), '    !eof'; ;
+    ok !$fil->gzeof(), '    !eof';
     is $fil->gzread(), Z_STREAM_ERROR, "    gzread returns Z_STREAM_ERROR" ;
     ok ! $fil->gzclose, "  gzclose ok" ;
 }

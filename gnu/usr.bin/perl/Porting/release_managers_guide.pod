@@ -48,6 +48,31 @@ last component is 0, it subtracts 2 from the middle component:
     5.40.0  ->  5.38.0
     5.41.0  ->  5.39.0
 
+=item C<5.NEXT>
+
+The "next" perl version. Normally, this is just C<5.X.(Y+1)>, but if the
+last component is 0, and the middle component is even, it adds 1 to the
+middle component:
+
+    5.X.Y       5.NEXT
+    ======      ======
+    5.41.9  ->  5.41.10
+    5.40.1  ->  5.40.2
+    5.40.0  ->  5.41.0
+    5.41.0  ->  5.41.1
+
+=item C<5.OLDSUPPORT>
+
+The oldest release series that is officially eligible for support, as per
+F<pod/perlpolicy.pod>. A lookup isn't actually performed, instead the
+assumption is baked in that only the most recent two series are supported.
+
+The current middle component is taken and a fixed value subtracted:
+
+* 2 if this is a MAINT release
+* 3 if this is a BLEAD-POINT release
+* 4 for all other release types
+
 =back
 
 =head1 SYNOPSIS
@@ -231,6 +256,16 @@ but all I<must> be done in the run up to a release.
 
 =head3 Dual-life CPAN module synchronisation
 
+The Perl core ships with so-called "dual-life" modules, which are also
+available via CPAN. Some of them are "core-first", others are "CPAN-first".
+The goal of the synchronisation step is to ensure they don't drift too
+far apart from each other between their respective releases.
+
+Synchronisation can happen at any point during the development phase
+(except feature freeze).
+
+=head4 Find which modules are currently not synchronised
+
 To see which core distro versions differ from the current CPAN versions:
 
  $ ./perl -Ilib Porting/core-cpan-diff -x -a
@@ -285,13 +320,22 @@ F<Porting/Maintainers.pl>, as well as checksums updated via:
 
  $ cd t; ../perl -I../lib porting/customized.t --regen
 
-=head4 Sync CPAN modules with the corresponding cpanE<sol> distro
+=head4 Sync CPAN modules with the corresponding F<cpan/> distributions
+
+Before synchronising a distribution, you should check if a Pull Request
+exists for it.  If such a PR exists, the synchronisation will happen when
+the PR is merged.  If it's tagged as C<defer-next-dev> (meaning next dev
+I<cycle>), do not merge the request or synchronise the module manually.
 
 In most cases, once a new version of a distribution shipped with core has been
-uploaded to CPAN, the core version thereof can be synchronized automatically
+uploaded to CPAN, the core version thereof can be synchronised automatically
 with the program F<Porting/sync-with-cpan>. For example:
 
  $ perl Porting/sync-with-cpan Archive::Tar
+
+Note that for blead-first dual-life modules, the F<Porting/sync-with-cpan>
+script will need the C<--type dist> option, to look for the module in
+the correct directory.
 
 (But see the comments at the beginning of that program.  In particular, it has
 not yet been exercised on Windows as much as it has on Unix-like platforms.)
@@ -325,9 +369,18 @@ hash.
 =item *
 
 Restore any files mentioned in the C<CUSTOMIZED> section, using
-C<git checkout>. Make any new customizations if necessary. Also,
+C<git checkout>, if necessary. (Customization is supposed to be temporary
+until upstream accepts our patches, so check whether it is still needed.)
+Add any customizations that may newly be needed now. Also,
 restore any files that are mentioned in C<@IGNORE>, but were checked
 into the repository anyway.
+
+For example, F<version.pm> is a case of C<CUSTOMIZED> distribution
+where the blead version of the file is preferred over the CPAN version.
+This means that F<cpan/version/lib/version.pm> is not modified by the
+sync, and you'll have to apply the relevant changes manually.
+(Though F<version.pm> is special in that this will I<always> be the case,
+not just temporarily.)
 
 =item *
 
@@ -439,7 +492,7 @@ release.  To see what it is ignoring, run
 
  $ ./perl -Ilib t/porting/podcheck.t --counts
 
-Any problems listed as pedantic aren't worth your time investigating.
+B<Any problems listed as pedantic aren't worth your time investigating.>
 These have a C<?> at the beginning of the text, or are for the too-long
 verbatim lines.
 
@@ -483,26 +536,36 @@ merged into a new summary.
 
 =head3 Update perldelta
 
-Get perldelta in a mostly finished state.
+Be sure you are familiar with F<Porting/how_to_write_a_perldelta.pod>.
+
+The pull request template encourages contributors to include perldelta
+updates when appropriate, thus there tends to be few updates left to the
+release manager to write.
 
 It is usual to send a call out to the Perl5-Porters mailing list a few days
 ahead of the release to ask for recent committers to add their own notes
-relating to their recent work.  Getting other people to write it ahead of
-time can save you from having to work out the details during the actual
-release process.
+relating to their recent work.
 
-Read F<Porting/how_to_write_a_perldelta.pod>, and try to make sure that
-every section it lists is, if necessary, populated and complete.
+To identify possible remaining work, it is useful to review merged PRs:
+L<https://github.com/perl/perl5/pulls>. It may be useful to add the
+parameters merged requests since last release, for example:
+C<< is:pr is:merged merged:>2026-03-20 >>
 
-You won't be able to automatically fill in the "Updated Modules" section until
-after L<Module::CoreList> is updated (as described below in
-L</"Update Module::CoreList">).
+With this, you have enough to decide if the perldelta content is in a
+satisfactory state.  Make sure that every section is, if necessary,
+populated and complete.  Keep in mind that some mostly mechanical steps
+will happen later, for example, removing the C<XXX> entries and updating
+acknowledgements.  You won't be able to automatically fill in the
+"Updated Modules" section until after L<Module::CoreList> is updated (as
+described below in L</"Update Module::CoreList">).
 
 =for checklist skip BLEAD-POINT
 
 =head3 Bump the version number
 
-Increase the version number (e.g. from 5.12.0 to 5.12.1).
+(Note: the example version numbers are incorrect for a MAINT release.)
+
+Increase the version number (e.g. from 5.41.13 to 5.42.0).
 
 For a release candidate for a stable perl, this should happen a week or two
 before the first release candidate to allow sufficient time for testing and
@@ -512,31 +575,26 @@ bump the version further.
 
 There is a tool to semi-automate this process:
 
- $ ./perl -Ilib Porting/bump-perl-version -i 5.10.0 5.10.1
+ $ ./perl -Ilib Porting/bump-perl-version -i 5.41.13 5.42.0
 
-Remember that this tool is largely just grepping for '5.10.0' or whatever,
+Remember that this tool is largely just grepping for '5.41.13' or whatever,
 so it will generate false positives. Be careful not change text like
-"this was fixed in 5.10.0"!
+"this was fixed in 5.41.13"!
 
 Use git status and git diff to select changes you want to keep.
 
 Be particularly careful with F<INSTALL>, which contains a mixture of
-C<5.10.0>-type strings, some of which need bumping on every release, and
+C<5.41.13>-type strings, some of which need bumping on every release, and
 some of which need to be left unchanged.
 See below in L</"Update INSTALL"> for more details.
 
-For the first RC release leading up to a BLEAD-FINAL release, update
-F<pod/perlpolicy.pod>: both the version support status table and the
-description of which releases are now "officially" supported.
-
-When doing a BLEAD-POINT or BLEAD-FINAL release, also make sure the
-C<PERL_API_*> constants in F<patchlevel.h> are in sync with the version
-you're releasing, unless you're absolutely sure the release you're about to
-make is 100% binary compatible to an earlier release. Note: for BLEAD-POINT
-releases the bump should have already occurred at the end of the previous
-release and this is something you would have to do at the very end.
 When releasing a MAINT perl version, the C<PERL_API_*> constants C<MUST NOT>
 be changed as we aim to guarantee binary compatibility in maint branches.
+
+When doing a BLEAD-FINAL release, make sure the C<PERL_API_*> constants
+in F<patchlevel.h> are in sync with the version you're releasing,
+unless you're absolutely sure the release you're about to make is 100%
+binary compatible to an earlier release.
 
 After editing, you may need to regen opcodes:
 
@@ -560,13 +618,22 @@ Commit your changes:
 
  $ git commit -a -m 'Bump the perl version in various places for 5.X.Y'
 
-At this point you may want to compare the commit with a previous bump to
-see if they look similar.  See commit L<f7cf42bb69|https://github.com/Perl/perl5/commit/f7cf42bb69> for an example of a
-previous version bump.
+At this point you may want to compare the commit with
+a previous bump to see if they look similar.  See commit
+L<f7cf42bb69|https://github.com/Perl/perl5/commit/f7cf42bb69> for an
+example of a previous version bump.
 
 When the version number is bumped, you should also update Module::CoreList
 (as described below in L</"Update Module::CoreList">) to reflect the new
 version number.
+
+=for checklist skip BLEAD-POINT
+
+=head3 Update the "Version Support Status" section in perlpolicy
+
+For the first RC release leading up to a BLEAD-FINAL release, update
+F<pod/perlpolicy.pod>: both the version support status table and the
+description of which releases are now "officially" supported.
 
 =head3 Update INSTALL
 
@@ -950,7 +1017,7 @@ F<Porting/perlhist_calculate.pl>.
 
 Be sure to commit your changes:
 
- $ git commit -m 'Add new release to perlhist' pod/perlhist.pod
+ $ git commit -m 'Add 5.X.Y to perlhist' pod/perlhist.pod
 
 =for checklist skip BLEAD-POINT
 
@@ -1351,9 +1418,50 @@ Be sure to commit your change:
 =head3 Announce to p5p
 
 Mail perl5-porters@perl.org to announce your new release, with a quote you prepared earlier.
+
+=head4 Prepare the announcement email
+
 Get the SHA256 digests from the PAUSE email responses.
 
-Use the template at Porting/release_announcement_template.txt
+Use the template at F<Porting/release_announcement_template.txt>.
+
+=for checklist skip RC BLEAD-FINAL MAINT
+
+=head4 Add an end of support note (if necessary)
+
+For the I<final> BLEAD-POINT release in a development cycle, the
+release announcement email should note the upcoming end of support
+for the oldest of the currently supported release series.
+
+Replace the C<END OF SUPPORT NOTE> placeholder with this text:
+
+    Support for the 5.OLDSUPPORT.x release series will end shortly.
+    Please refer to L<perlpolicy> for version support information.
+
+Check F<pod/perlpolicy.pod> to confirm the affected VERSION before sending!
+
+For all other BLEAD-POINT releases, there is no need for an
+C<END OF SUPPORT NOTE>.
+
+=for checklist skip BLEAD-POINT MAINT
+
+=head4 Add an end of support note
+
+For the BLEAD-FINAL (and corresponding RC) release in a development cycle,
+the release announcement email should note the end of support
+for the oldest of the currently supported release series.
+
+For a BLEAD-FINAL RC release:
+
+    Support for the 5.OLDSUPPORT.x release series will end shortly.
+    Please refer to L<perlpolicy> for version support information.
+
+For a BLEAD-FINAL release:
+
+    Support for the 5.OLDSUPPORT.x release series has now ended.
+    Please refer to L<perlpolicy> for version support information.
+
+=head4 Finalize and send the email
 
 Send a carbon copy to C<noc@metacpan.org>
 
@@ -1509,24 +1617,74 @@ reports to arise. (The opposite problem -- trying to figure out why there
 introduced later -- shouldn't arise for MAINT releases since they should,
 in theory, only contain bug fixes but never regressions.))
 
-=for checklist skip RC MAINT
+=for checklist skip RC MAINT BLEAD-FINAL
 
-=head3 Bump the version number
+=head3 Bump the point version number
 
-Increase the version number (e.g. from 5.12.0 to 5.12.1).
+Increase the minor version number (e.g. from 5.X.Y to 5.NEXT).
 
 There is a tool to semi-automate this process:
 
- $ ./perl -Ilib Porting/bump-perl-version -i 5.10.0 5.10.1
+ $ ./perl -Ilib Porting/bump-perl-version -i 5.X.Y 5.NEXT
 
-Remember that this tool is largely just grepping for '5.10.0' or whatever,
+Remember that this tool is largely just grepping for '5.X.Y' or whatever,
 so it will generate false positives. Be careful not change text like
-"this was fixed in 5.10.0"!
+"this was fixed in 5.X.Y"!
 
 Use git status and git diff to select changes you want to keep.
 
 Be particularly careful with F<INSTALL>, which contains a mixture of
-C<5.10.0>-type strings, some of which need bumping on every release, and
+C<5.X.Y>-type strings, some of which need bumping on every release, and
+some of which need to be left unchanged.
+See below in L</"Update INSTALL"> for more details.
+
+After editing, you may need to regen opcodes:
+
+ $ ./perl -Ilib regen/opcode.pl
+
+Test your changes:
+
+ $ git clean -xdf   # careful if you don't have local files to keep!
+ $ ./Configure -des -Dusedevel
+ $ make
+ $ make test_harness
+
+Do note that at this stage, porting tests will fail. They will continue
+to fail until you've updated Module::CoreList, as described below.
+
+Commit your changes:
+
+ $ git status
+ $ git diff
+ # Review the delta carefully
+ $ git commit -a -m 'Bump the perl version in various places for 5.X.Y'
+
+At this point you may want to compare the commit with a previous bump to
+see if they look similar.  See commit L<48b1717bed|https://github.com/Perl/perl5/commit/48b1717bed> for an example of a
+previous version bump.
+
+When the version number is bumped, you should also update Module::CoreList
+(as described in L</"Update Module::CoreList">) to reflect the new
+version number.
+
+=for checklist skip RC MAINT BLEAD-POINT
+
+=head3 Bump the version number for the new dev cycle
+
+Increase the version number (e.g. from 5.X.Y to 5.NEXT).
+
+There is a tool to semi-automate this process:
+
+ $ ./perl -Ilib Porting/bump-perl-version -i 5.X.Y 5.NEXT
+
+Remember that this tool is largely just grepping for '5.X.Y' or whatever,
+so it will generate false positives. Be careful not change text like
+"this was fixed in 5.X.Y"!
+
+Use git status and git diff to select changes you want to keep.
+
+Be particularly careful with F<INSTALL>, which contains a mixture of
+C<5.X.Y>-type strings, some of which need bumping on every release, and
 some of which need to be left unchanged.
 See below in L</"Update INSTALL"> for more details.
 

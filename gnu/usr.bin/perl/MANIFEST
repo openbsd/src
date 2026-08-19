@@ -1242,6 +1242,20 @@ cpan/HTTP-Tiny/corpus/redirect-07.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/redirect-08.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/redirect-09.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/redirect-10.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-11.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-12.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-13.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-14.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-15.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-16.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-17.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-18.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-19.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-20.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-21.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-22.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-23.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/redirect-24.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/snake-oil.crt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/lib/HTTP/Tiny.pm		Module related to HTTP::Tiny
 cpan/HTTP-Tiny/t/000_load.t		Test file related to HTTP::Tiny
@@ -1415,6 +1429,8 @@ cpan/IO-Compress/t/files/jar.zip			IO-Compress
 cpan/IO-Compress/t/files/meta.xml			IO-Compress
 cpan/IO-Compress/t/files/test.ods			IO-Compress
 cpan/IO-Compress/t/files/testfile1.odt			IO-Compress
+cpan/IO-Compress/t/files/time-invalid.zip		IO-Compress
+cpan/IO-Compress/t/files/time-zero.zip			IO-Compress
 cpan/IO-Compress/t/globmapper.t				IO::Compress
 cpan/IO-Socket-IP/.editorconfig				IO-Socket-IP
 cpan/IO-Socket-IP/lib/IO/Socket/IP.pm			IO::Socket::IP
@@ -6378,8 +6394,10 @@ pod/perl5400delta.pod			Perl changes in version 5.40.0
 pod/perl5401delta.pod			Perl changes in version 5.40.1
 pod/perl5402delta.pod			Perl changes in version 5.40.2
 pod/perl5403delta.pod			Perl changes in version 5.40.3
+pod/perl5404delta.pod			Perl changes in version 5.40.4
 pod/perl5420delta.pod			Perl changes in version 5.42.0
 pod/perl5421delta.pod			Perl changes in version 5.42.1
+pod/perl5422delta.pod			Perl changes in version 5.42.2
 pod/perl561delta.pod			Perl changes in version 5.6.1
 pod/perl56delta.pod			Perl changes in version 5.6
 pod/perl581delta.pod			Perl changes in version 5.8.1

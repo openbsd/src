@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 use 5.010;
-
+use Config;
 
 sub run_tests;
 
@@ -31,7 +31,7 @@ BEGIN {
 
 skip_all('$PERL_SKIP_PSYCHO_TEST set') if $ENV{PERL_SKIP_PSYCHO_TEST};
 
-plan tests => 15;  # Update this when adding/deleting tests.
+plan tests => 17;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -210,6 +210,19 @@ print "ok\n";
 EOF
 
 
+    }
+
+  SKIP:
+    { # sec #147
+        $Config{ptrsize} == 4
+          or skip "these only fail on x32 and use too much memory on x64", 2;
+        # original case
+        fresh_perl_like('/\x{10000}{1073741824}/',
+                        qr/Regexp out of space/, {}, "ssize_t overflow");
+
+        # synthesized but similar case
+        fresh_perl_like('/(?:\x{10001}\x{10000}){536870912}/',
+                        qr/Regexp out of space/, {}, "ssize_t overflow again");
     }
 } # End of sub run_tests
 

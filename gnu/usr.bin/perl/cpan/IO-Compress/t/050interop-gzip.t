@@ -118,6 +118,13 @@ BEGIN {
 
 }
 
+{
+    # Delete environment variables used by gzip that could impact the running of the test
+    for my $var (qw( GZIP ))
+    {
+        delete $ENV{$var};
+    }
+}
 
 {
     title "Test interop with $GZIP" ;

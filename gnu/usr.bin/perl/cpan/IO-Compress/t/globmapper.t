@@ -24,7 +24,7 @@ Perl $]" )
     $extra = 1
         if eval { require Test::NoWarnings ;  Test::NoWarnings->import; 1 };
 
-    plan tests => 76 + $extra ;
+    plan tests => 80 + $extra ;
 
     use_ok('File::GlobMapper') ;
 }
@@ -337,6 +337,24 @@ Perl $]" )
         [ [map { "$tmpDir/$_" } ("abc1.tmp", "X-c1-#1*-X")],
           [map { "$tmpDir/$_" } ("abc2.tmp", "X-c2-#1*-X")],
           [map { "$tmpDir/$_" } ("abc3.tmp", "X-c3-#1*-X")],
+        ], "  got mapping";
+}
+
+{
+    title "check wildcard references after ordinary letters";
+
+    my $tmpDir ;#= 'td';
+    my $lex = LexDir->new( $tmpDir );
+
+    touch map { "$tmpDir/$_.tmp" } qw( abc ) ;
+
+    my $map = File::GlobMapper::globmap("$tmpDir/a*.tmp", "$tmpDir/B#1.out");
+    ok $map, "  got map"
+        or diag $File::GlobMapper::Error ;
+
+    is @{ $map }, 1, "  returned 1 map";
+    is_deeply $map,
+        [ [map { "$tmpDir/$_" } ("abc.tmp", "Bbc.out")],
         ], "  got mapping";
 }
 

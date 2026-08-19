@@ -69,11 +69,11 @@ my $fil;
 
 eval { compress([1]); };
 ok $@ =~ m#not a scalar reference#
-    or print "# $@\n" ;;
+    or print "# $@\n" ;
 
 eval { uncompress([1]); };
 ok $@ =~ m#not a scalar reference#
-    or print "# $@\n" ;;
+    or print "# $@\n" ;
 
 $hello = "hello mum" ;
 my $keep_hello = $hello ;

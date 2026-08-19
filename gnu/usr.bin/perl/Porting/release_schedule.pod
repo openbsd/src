@@ -13,13 +13,14 @@ deemed necessary by the Steering Council.
 
 =head2 Perl 5.44
 
-  2026-??-??  5.44.0
+  2026-07-15  5.44.0  ✓       Leon Timmermans
 
 =head2 Perl 5.42
 
   2025-07-02  5.42.0  ✓       Philippe Bruhat
   2026-03-08  5.42.1  ✓       Steve Hay
-  2026-03-29  5.42.2          Steve Hay
+  2026-03-29  5.42.2  ✓       Steve Hay
+  2026-08-02  5.42.3          Steve Hay
 
 =head2 Perl 5.40
 
@@ -27,7 +28,8 @@ deemed necessary by the Steering Council.
   2025-01-18  5.40.1  ✓       Steve Hay
   2025-04-13  5.40.2  ✓       Steve Hay
   2025-08-03  5.40.3  ✓       Steve Hay
-  2026-03-29  5.40.4          Steve Hay
+  2026-03-29  5.40.4  ✓       Steve Hay
+  2026-08-02  5.40.5          Steve Hay
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -43,22 +45,21 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.43
+=head2 Perl 5.45
 
-  2025-07-04  5.43.0  ✓       Philippe Bruhat   (tag only)
-  2025-07-20  5.43.1  ✓       Richard Leach
-  2025-08-20  5.43.2  ✓       Karen Etheridge
-  2025-09-20  5.43.3  ✓       Thibault Duponchelle
-  2025-10-22  5.43.4  ✓       Eric Herman
-  2025-11-20  5.43.5  ✓       Thibault Duponchelle
-  2025-12-20  5.43.6  ✓       Steve Hay
-  2026-01-19  5.43.7  ✓       Max Maischein
-  2026-02-20  5.43.8  ✓       Richard Leach     Contentious changes freeze
-  2026-03-20  5.43.9  ✓       Eric Herman       User-visible changes to
-                                                correctly functioning
-                                                programs freeze
-  2026-04-20  5.43.10         Philippe Bruhat   Full program freeze
-  2026-05-20  5.44.0                            New perl!
+  2026-07-15  5.45.0  ✓       Leon Timmermans   (tag only)
+  2026-07-21  5.45.1  ✓       Paul Evans
+  2026-08-20  5.45.2          
+  2026-09-20  5.45.3          
+  2026-10-20  5.45.4          
+  2026-11-20  5.45.5          
+  2026-12-20  5.45.6          
+  2027-01-20  5.45.7          
+  2027-02-20  5.45.8                            Contentious changes freeze
+  2027-03-20  5.45.9                            User-visible changes
+                                                freeze
+  2027-04-20  5.46.0-RC1                        Full program freeze
+  2027-05-20  5.46.0                            New perl!
 
 =head1 VICTIMS
 
@@ -72,14 +73,14 @@ consent of the Steering Council.)
   Abigail <abigail@abigail.be>
   Aristotle Pagaltzis <pagaltzis@gmx.de>
   Ask Bjørn Hansen <ask@perl.org>
-  Chris Williams <bingos@cpan.org>
+  Chris Williams <chris@bingosnet.co.uk>
   Dave Cross <dave@perlhacks.com>
   Dave Rolsky <autarch@urth.org>
   David Golden <dagolden@cpan.org>
   Florian Ragwitz <rafl@debian.org>
   Jesse Luehrs <doy@cpan.org>
   Jesse Vincent <jesse@cpan.org>
-  Karen Etheridge <ether@cpan.org>
+  Karen Etheridge <perl@froods.org>
   Leon Brocard <acme@astray.com>
   Matt Trout <mst@shadowcat.co.uk>
   Matthew Horsfall <wolfsage@gmail.com>
