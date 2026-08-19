@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.185 2026/08/15 16:24:25 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.186 2026/08/19 22:56:24 daniel Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2417,7 +2417,7 @@ ttystats_init(struct itty **ttystats, int *ttycp, size_t *ttystatssiz)
 	    M_SYSCTL, M_WAITOK|M_ZERO);
 
 	rw_enter_write(&ttylist_lock);
-	for (tp = TAILQ_FIRST(&ttylist), itp = *ttystats; tp && ntty++ < ttyc;
+	for (tp = TAILQ_FIRST(&ttylist), itp = *ttystats; tp && ntty < ttyc;
 	    tp = TAILQ_NEXT(tp, tty_link), itp++) {
 		itp->t_dev = tp->t_dev;
 		itp->t_rawq_c_cc = tp->t_rawq.c_cc;
@@ -2435,6 +2435,7 @@ ttystats_init(struct itty **ttystats, int *ttycp, size_t *ttystatssiz)
 		else
 			itp->t_pgrp_pg_id = 0;
 		itp->t_line = tp->t_line;
+		ntty++;
 	}
 	rw_exit_write(&ttylist_lock);
 	*ttycp = ntty;
