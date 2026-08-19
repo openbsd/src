@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.286 2026/06/25 07:30:43 jca Exp $
+.\"	$OpenBSD: port-modules.5,v 1.287 2026/08/19 12:12:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 25 2026 $
+.Dd $Mdocdate: August 19 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -51,18 +51,18 @@ always needed, such as GNU autoconf, or perl5.
 For convenience, setting
 .Ev CONFIGURE_STYLE
 in a port's main Makefile is enough to get perl5 or autoconf support, but
-.Ar gnu ,
-.Ar imake
+.Cm gnu ,
+.Cm imake
 and
-.Ar perl5
+.Cm perl5
 are actually modules, and there is some glue in
 .Xr bsd.port.mk 5
 that magically adds the required module in that case.
 This doesn't work when parsing modules.
 For instance, if you set
-.Li CONFIGURE_STYLE=gnu
-in a module, you also need to
-.Li MODULES += gnu .
+.Ev CONFIGURE_STYLE Ns = Ns Cm gnu
+in a module, you also need to set
+.Ev MODULES No += Cm gnu .
 .Pp
 Other modules correspond to shortcuts for using some other ports as
 dependencies without needing to hardcode too much, such as
@@ -87,7 +87,7 @@ is deprecated for new modules.
 Modules may refer to each other.
 The modules mechanism has specific recursion handling such that
 adding
-.Li MODULES += foo/bar
+.Ev MODULES No += Ar foo/bar
 to a module will work as expected.
 .Sh NAMING CONVENTIONS
 Since there is no actual scope in makefiles, everything defined within
@@ -99,7 +99,7 @@ As far as possible, all variables and targets belonging to a module named
 should be named
 .Ev MODFOO_*
 and
-.Ar modfoo_* .
+.Cm modfoo_* .
 .Pp
 Following the same conventions as
 .Xr bsd.port.mk 5 ,
@@ -107,7 +107,7 @@ internal variables and targets not intended for user consumption should be
 named
 .Ev _MODFOO_*
 and
-.Ar _modfoo_* .
+.Cm _modfoo_* .
 .Pp
 For instance, if a module wants some value to be available for the rest
 of the world, it should define
@@ -141,7 +141,7 @@ and
 Normal client ports will use
 .Ev MODQT_LIB_DEPENDS ,
 but a port may exceptionally import both modules with
-.Li MODULES += x11/qt5 x11/qt6
+.Ev MODULES No += Cm x11/qt5 x11/qt6
 and differentiate between qt5 and qt6 needs with
 .Ev MODQT5_LIB_DEPENDS
 and
@@ -200,7 +200,12 @@ will do nothing.
 .Pp
 Some
 .Ev CONFIGURE_STYLE
-values, namely perl, gnu, imake, and autoconf,
+values, namely
+.Cm perl ,
+.Cm gnu ,
+.Cm imake ,
+and
+.Cm autoconf ,
 will automatically import the correct module.
 User-defined modules must both add to
 .Ev CONFIGURE_STYLE
@@ -266,6 +271,7 @@ do-build:
 \&.endif
 .Ed
 .El
+.Pp
 That way, if several modules require specific actions for those targets,
 the end user can choose the appropriate order in which to run the actions:
 .Bd -literal -offset indent
@@ -376,7 +382,10 @@ Modules are imported during
 .Dl .include <bsd.port.mk>
 .Pp
 Thus they can be affected by user choices such as setting a variable
-to Yes or No.
+to
+.Cm Yes
+or
+.Cm \&No .
 Modules may make decisions based on documented
 .Ev MODFOO_BEHAVIOR
 values.
@@ -407,7 +416,7 @@ performs lazy evaluation.
 .Sh CORE MODULES DOCUMENTATION
 The following modules are available.
 .Bl -tag -width do-configure
-.It cpan
+.It Cm cpan
 For perl ports coming from CPAN.
 Wrapper around the normal perl module that fetches the file from
 the correct location depending on
@@ -422,7 +431,7 @@ and
 .Ev CATEGORIES .
 .Pp
 Some CPAN modules are only indexed by author, set
-.Li Ev CPAN_AUTHOR Ns = Ns Ar ID
+.Ev CPAN_AUTHOR Ns = Ns Ar ID
 to locate the right directory.
 .Pp
 If no
@@ -432,7 +441,8 @@ is defined, it will default to
 .Pp
 User settings: set
 .Ev CPAN_REPORT
-to Yes,
+to
+.Cm Yes ,
 .Ev CPAN_REPORT_DB
 to a valid directory,
 and
@@ -460,7 +470,7 @@ post-install:
 	...
 	${MODCPAN_POST_INSTALL}
 .Ed
-.It databases/mariadb
+.It Cm databases/mariadb
 Adds small framework for testing ports that require running MariaDB.
 Defines
 .Ev MODMARIADB_TEST_TARGET
@@ -505,7 +515,7 @@ and
 .Xr mysqladmin 1 ,
 respectively; those argument lists could be used in test scripts
 for connecting to test server, if they aren't satisfied by environment.
-.It databases/postgresql
+.It Cm databases/postgresql
 Adds small framework for testing ports that require running Postgres.
 Defines
 .Ev MODPOSTGRESQL_TEST_TARGET
@@ -542,7 +552,7 @@ will get added to
 .Ev TEST_DEPENDS ,
 but not to any other
 .Ev *_DEPENDS .
-.It devel/cmake
+.It Cm devel/cmake
 Adds
 .Pa devel/cmake
 to
@@ -560,18 +570,24 @@ If
 was not set before, sets its value to `cmake'.
 Changes default value of
 .Ev SEPARATE_BUILD
-to `Yes' because modern CMake requires out-of-source build anyway.
+to
+.Cm Yes
+because modern CMake requires out-of-source build anyway.
 Changes
 .Ev TEST_TARGET
-to `test' as this is standard for CMake projects.
+to
+.Cm test
+as this is standard for CMake projects.
 Also this module has the following knobs:
 .Bl -tag -width Ds
 .It Ev MODCMAKE_DEBUG
-If set to `Yes', CMake will produce a debug build instead of a release
-build.
+If set to
+.Cm Yes ,
+CMake will produce a debug build instead of a release build.
 The exact effects on the build process depend on settings specified in
 the CMake config files.
-Default value is `No'.
+Default value is
+.Cm \&No .
 .It Ev MODCMAKE_LDFLAGS
 If set, the value will be passed to CMake via the
 .Ev LDFLAGS
@@ -583,16 +599,24 @@ and
 .Ev CMAKE_MODULE_LINKER_FLAGS_INIT .
 Default value is empty.
 .It Ev MODCMAKE_VERBOSE
-If set to `Yes', CMake will print details during configure and build
+If set to
+.Cm Yes ,
+CMake will print details during configure and build
 stages about exact command being run, etc.
 Should not be used in ports Makefiles.
-Default value is `Yes'.
+Default value is
+.Cm Yes .
 .It Ev MODCMAKE_WANTCOLOR
-If set to `Yes', CMake will colorize its output.
+If set to
+.Cm Yes ,
+CMake will colorize its output.
 Should not be used in ports Makefiles.
-Default value is `No'.
+Default value is
+.Cm \&No .
 .It Ev USE_NINJA
-If set to `Yes', use
+If set to
+.Cm Yes ,
+use
 .Xr ninja 1
 as the build system instead of
 .Xr make 1 .
@@ -600,40 +624,45 @@ Adds
 .Pa devel/ninja
 to
 .Ev BUILD_DEPENDS .
-If set to `No', uses Unix Makefiles generator and adds
+If set to
+.Cm \&No ,
+uses Unix Makefiles generator and adds
 .Sq nojunk
 to
 .Ev DPB_PROPERTIES .
-Default value is `Yes'.
+Default value is
+.Cm Yes .
 .El
 .Pp
 When used together with other modules, appropriate variables are
 automatically passed to CMake:
 .Bl -tag -width "lang/python" -compact
-.It java
+.It Cm java
 .Ev JAVA_HOME
 is set in
 .Ev CONFIGURE_ENV
 and
 .Ev MAKE_ENV .
-.It lang/python
+.It Cm lang/python
 Python executable, library, and include paths are set for FindPython,
 FindPython3, and FindPythonN modules.
-.It lang/lua
+.It Cm lang/lua
 Lua include directory and library path are set for FindLua.
-.It lang/ruby
+.It Cm lang/ruby
 Ruby executable is set for FindRuby.
-.It lang/tcl
+.It Cm lang/tcl
 Tcl version, include, library directories and library name are set in
 .Ev CONFIGURE_ENV .
-.It x11/tk
+.It Cm x11/tk
 Tk version, include, library directories and library name are set in
 .Ev CONFIGURE_ENV .
 .El
 .Pp
 The environment variable
 .Ev MODCMAKE_PORT_BUILD
-is automatically set to `yes' in
+is automatically set to
+.Cm yes
+in
 .Ev CONFIGURE_ENV
 and
 .Ev MAKE_ENV .
@@ -641,14 +670,14 @@ This disables CMake's default optimization flags, putting them under
 ports control, and prevents network operations
 .Pq file DOWNLOAD/UPLOAD
 during the build.
-.It devel/cabal
+.It Cm devel/cabal
 See
 .Xr cabal-module 5
 for porting Haskell applications.
-.It devel/cargo
+.It Cm devel/cargo
 See
 .Xr cargo-module 5 .
-.It devel/dconf
+.It Cm devel/dconf
 Sets
 .Ev CONFIGURE_ARGS ,
 .Ev BUILD_DEPENDS
@@ -660,7 +689,7 @@ PLIST must contain:
 .Bd -literal -offset indent
 @tag glib-compile-schemas
 .Ed
-.It devel/gconf2
+.It Cm devel/gconf2
 A link from
 .Xr gconftool-2 1
 to
@@ -669,7 +698,7 @@ will be put at the front of the
 .Ev PATH .
 Sets
 .Ev CONFIGURE_ARGS ,
-.Ev BUILD_DEPENDS
+.Ev BUILD_DEPENDS ,
 and
 .Ev RUN_DEPENDS .
 According to the values of
@@ -681,7 +710,7 @@ User settings: set
 to the directory name under
 .Pa ${LOCALBASE}/share/schemas/
 where schemas files will be installed.
-.It devel/meson
+.It Cm devel/meson
 Adds
 .Pa devel/meson
 and
@@ -693,13 +722,17 @@ Sets up
 target.
 If
 .Ev CONFIGURE_STYLE
-was not set before, sets its value to `meson'.
+was not set before, sets its value to
+.Cm meson .
 Changes default value of
 .Ev SEPARATE_BUILD
-to `Yes' because meson requires out-of-source build.
+to
+.Cm Yes
+because meson requires out-of-source build.
 If
 .Ev CONFIGURE_STYLE
-is 'meson',
+is
+.Cm meson ,
 .Ev MODMESON_CONFIGURE_ARGS
 and
 .Ev MODMESON_CONFIGURE_ENV
@@ -729,14 +762,17 @@ will be disabled by creating a link to false in ${WRKDIR}/bin/.
 This module supports the following knob:
 .Bl -tag -width Ds
 .It Ev MODMESON_WANTCOLOR
-If set to `Yes', meson will colorize its output.
+If set to
+.Cm Yes ,
+meson will colorize its output.
 Should not be used in ports Makefiles.
-Default value is `No'.
+Default value is
+.Cm \&No .
 .El
-.It devel/qmake
+.It Cm devel/qmake
 See
 .Xr qmake-module 5 .
-.It devel/scons
+.It Cm devel/scons
 Adds
 .Pa devel/scons
 to
@@ -752,7 +788,7 @@ It provides a
 and
 .Cm do-install
 targets that can be overridden in the port Makefile.
-.It font
+.It Cm font
 Used for ports which primarily install fonts.
 Affects
 .Ev PKG_ARCH
@@ -805,7 +841,7 @@ ports that set
 .Ev MODFONT_WEBFILES
 must also declare a -web subpackage in
 .Ev MULTI_PACKAGES .
-.It fortran
+.It Cm fortran
 Sets
 .Ev MODFORTRAN_LIB_DEPENDS ,
 .Ev MODFORTRAN_WANTLIB ,
@@ -813,10 +849,11 @@ Sets
 Set
 .Ev MODFORTRAN_COMPILER
 depending on what the port requires.
-The current default and only supported value is `gfortran'.
+The current default and only supported value is
+.Cm gfortran .
 The dependencies are chosen according to
 .Ev MODFORTRAN_COMPILER .
-.It gcc4
+.It Cm gcc4
 If
 .Ev COMPILER_VERSION
 is not gcc4 (defined by
@@ -838,22 +875,22 @@ contains c++, this module provides
 .Ev MODGCC4_CPPLIBDEP
 and
 .Ev MODGCC4_CPPWANTLIB .
-.It gnu
+.It Cm gnu
 This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
-.It imake
+.It Cm imake
 This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
-.It java
+.It Cm java
 Set
-.Li MODJAVA_VER=x.y
+.Ev MODJAVA_VER Ns = Ns Ar x.y
 to use exactly the JDK x.y,
-.Li MODJAVA_VER=x.y+
+.Ev MODJAVA_VER Ns = Ns Ar x.y Ns Cm \&+
 to use any x.y or higher version.
 Set
-.Li MODJAVA_JRERUN=Yes
+.Ev MODJAVA_JRERUN Ns = Ns Cm Yes
 if the port only needs the JRE at runtime.
 The module sets
 .Ev JAVA_HOME ,
@@ -861,20 +898,20 @@ The module sets
 .Ev MODJAVA_RUN_DEPENDS ,
 .Ev MODJAVA_SHARE_DIR ,
 .Ev MODJAVA_JAR_DIR ,
-.Ev MODJAVA_EXAMPLE_DIR
+.Ev MODJAVA_EXAMPLE_DIR ,
 and
 .Ev MODJAVA_DOC_DIR .
 It appends to
 .Ev BUILD_DEPENDS ,
 .Ev RUN_DEPENDS ,
-.Ev CATEGORIES
+.Ev CATEGORIES ,
 and
 .Ev SUBST_VARS .
 If
-.Li MODJAVA_BUILD=ant
+.Ev MODJAVA_BUILD Ns = Ns Cm ant ,
 then this module provides
 .Ev MODJAVA_BUILD_DIR ,
-.Ev MODJAVA_BUILD_FILE
+.Ev MODJAVA_BUILD_FILE ,
 and
 .Ev MODJAVA_BUILD_TARGET_NAME ,
 as well as a
@@ -882,7 +919,7 @@ as well as a
 target (if not already defined).
 It heeds
 .Ev NO_BUILD .
-.It lang/clang
+.It Cm lang/clang
 Similar to gcc4 module.
 If architecture is in MODCLANG_ARCHS, the Clang compilers will be
 put at the front of the path.
@@ -894,11 +931,11 @@ Sets
 .Ev MODCLANG_VERSION
 which is also appended to
 .Ev SUBST_VARS .
-.It lang/erlang
-.It lang/go
+.It Cm lang/erlang
+.It Cm lang/go
 See
 .Xr go-module 5 .
-.It lang/lua
+.It Cm lang/lua
 Sets
 .Ev MODLUA_BIN ,
 .Ev MODLUA_DATADIR ,
@@ -917,12 +954,14 @@ Also appends to
 .Ev BUILD_DEPENDS ,
 unless
 .Ev NO_BUILD
-has been set to Yes.
+has been set to
+.Cm Yes .
 Also appends to
 .Ev RUN_DEPENDS ,
 unless
 .Ev MODLUA_RUNDEP
-is set to No.
+is set to
+.Cm \&No .
 Appends
 .Ev MODLUA_VERSION ,
 .Ev MODLUA_LIB ,
@@ -942,24 +981,32 @@ is set to 5.1.
 .Ev MODLUA_DEFAULT_VERSION
 by default.
 Ports can be built with several lua versions.
-If no FLAVOR is set, it defaults to MODLUA_DEFAULT_VERSION.
-Otherwise the FULLPKGNAME is adjusted, if MODLUA_SA is not set.
+If no
+.Ev FLAVOR
+is set, it defaults to
+.Ev MODLUA_DEFAULT_VERSION .
+Otherwise the
+.Ev FULLPKGNAME
+is adjusted, if
+.Ev MODLUA_SA
+is not set.
 In order to set a build, run or test dependency on a lua port,
 use the following, which will propagate the currently used flavor:
 .Ev MODLUA_BUILD_DEPENDS ,
 .Ev MODLUA_TEST_DEPENDS ,
 .Ev MODLUA_RUN_DEPENDS .
-.It lang/mono
+.It Cm lang/mono
 Sets
 .Ev MODMONO_ONLY_FOR_ARCHS ,
 .Ev CONFIGURE_ENV ,
 .Ev MAKE_FLAGS ,
-.Ev MODMONO_BUILD_DEPENDS
+.Ev MODMONO_BUILD_DEPENDS ,
 and
 .Ev MODMONO_RUN_DEPENDS .
 If
 .Ev MODMONO_DEPS
-is set to Yes,
+is set to
+.Cm Yes ,
 .Pa lang/mono
 is appended to
 .Ev BUILD_DEPENDS
@@ -970,7 +1017,7 @@ defines in which files the module will substitute hardcoded
 shared library versions using a
 .Cm post-configure
 target.
-.It lang/ocaml
+.It Cm lang/ocaml
 Appends to
 .Ev BUILD_DEPENDS
 and
@@ -979,7 +1026,9 @@ Appends to
 .Ev RUN_DEPENDS
 unless
 .Ev MODOCAML_RUNDEP
-is set to No, or set to if-not-native and native compilation
+is set to
+.Cm \&No ,
+or set to if-not-native and native compilation
 is supported on this architecture.
 Including this module selects a %%native%% plist fragment and
 .Ev ocaml_native
@@ -991,14 +1040,15 @@ the %%dynlink%% plist fragment and
 property is set.
 When
 .Ev CONFIGURE_STYLE
-is set to `oasis',
+is set to
+.Cm oasis ,
 overrides for the
 .Cm do-build ,
 .Cm do-install ,
 and
 .Cm do-test
 targets are added.
-.It lang/php
+.It Cm lang/php
 Used for ports using PHP in some way:
 either extensions to PHP, or software written in PHP.
 Sets
@@ -1008,19 +1058,21 @@ Sets
 .Ev MODPHP_BIN ,
 .Ev MODPHP_PHPIZE ,
 .Ev MODPHP_PHP_CONFIG ,
-.Ev MODPHP_INCDIR
+.Ev MODPHP_INCDIR ,
 and
 .Ev MODPHP_LIBDIR .
 Adds to
 .Ev RUN_DEPENDS
 unless
 .Ev MODPHP_RUNDEP
-is set to No.
+is set to
+.Cm \&No .
 Adds to
 .Ev BUILD_DEPENDS
 if
 .Ev MODPHP_BUILDDEP
-is set to Yes.
+is set to
+.Cm Yes .
 If
 .Ev MODPHP_DO_PHPIZE
 is set, prepares a build environment for extensions that use phpize.
@@ -1037,7 +1089,7 @@ This can be added to
 and allows any of these PDO packages to satisfy the dependency, with
 .Ev MODPHP_PDO_PREF
 (sqlite by default) chosen if none are installed.
-.It lang/php/pecl
+.It Cm lang/php/pecl
 Used for ports for PHP PECL extensions.
 Sets default
 .Ev SITES ,
@@ -1066,13 +1118,13 @@ Sets a default
 .Ev PKGNAME
 and appends to
 .Ev CATEGORIES .
-.It lang/python
+.It Cm lang/python
 See
 .Xr python-module 5 .
-.It lang/ruby
+.It Cm lang/ruby
 See
 .Xr ruby-module 5 .
-.It lang/rust
+.It Cm lang/rust
 Ports using Rust must use this module so a rebuild can be triggered via
 .Ev SYSTEM_VERSION-rust
 on updates of the lang/rust port or changes to the Rust standard library.
@@ -1080,13 +1132,15 @@ Sets
 .Ev MODRUST_WANTLIB
 as appropriate for the architecture so it can be added to
 .Ev WANTLIB .
-It adds lang/rust to the
+It adds
+.Pa lang/rust
+to the
 .Ev BUILD_DEPENDS
 unless
 .Ev MODRUST_BUILDDEP
 is set to anything but
-.Dq yes .
-.It lang/tcl
+.Cm Yes .
+.It Cm lang/tcl
 Sets
 .Ev MODTCL_VERSION ,
 .Ev MODTCL_BIN ,
@@ -1106,11 +1160,11 @@ and
 shell fragments to patch the interpreter path in executable scripts.
 Also affects
 .Ev CATEGORIES .
-.It perl
+.It Cm perl
 This module is documented in the main
 .Xr bsd.port.mk 5
 manpage.
-.It security/heimdal
+.It Cm security/heimdal
 A link from ${LOCALBASE}/heimdal/bin/krb5-config
 to
 .Xr krb5-config 1
@@ -1123,7 +1177,7 @@ according to the values of
 .Ev MODHEIMDAL_LIB_DEPENDS ,
 and
 .Ev MODHEIMDAL_WANTLIB .
-.It textproc/intltool
+.It Cm textproc/intltool
 Sets
 .Ev MODINTLTOOL_OVERRIDE .
 .Pa textproc/intltool
@@ -1146,7 +1200,7 @@ and
 by appending
 .Ev MODINTLTOOL_OVERRIDE
 to them.
-.It www/mozilla
+.It Cm www/mozilla
 Sets
 .Ev PKGNAME ,
 .Ev HOMEPAGE ,
@@ -1161,12 +1215,12 @@ defaults to .tar.bz2.
 Adds common dependencies to
 .Ev LIB_DEPENDS ,
 .Ev WANTLIB ,
-.Ev RUN_DEPENDS
+.Ev RUN_DEPENDS ,
 and
 .Ev BUILD_DEPENDS .
 Sets common
 .Ev CONFIGURE_ARGS ,
-.Ev MAKE_ENV
+.Ev MAKE_ENV ,
 and
 .Ev CONFIGURE_ENV .
 Sets
@@ -1182,7 +1236,7 @@ Individual port Makefile must set
 .Ev MOZILLA_CODENAME ,
 .Ev MOZILLA_VERSION ,
 .Ev MOZILLA_BRANCH ,
-.Ev MOZILLA_LIBS
+.Ev MOZILLA_LIBS ,
 and
 .Ev MOZILLA_DATADIRS
 variables.
@@ -1200,11 +1254,11 @@ contains the list of dirs where
 .Ev AUTOCONF
 will be run during
 .Cm pre-configure .
-.It wayland/wlroots
+.It Cm wayland/wlroots
 Used for Wayland ports using the wlroots library.
 Sets
 .Ev MODWLROOTS_LIB_DEPENDS ,
-.Ev MODWLROOTS_WANTLIB
+.Ev MODWLROOTS_WANTLIB ,
 and
 .Ev MODWLROOTS_VERSION .
 Appends the corresponding values to
@@ -1212,9 +1266,10 @@ Appends the corresponding values to
 and
 .Ev WANTLIB ,
 unless
-. Ev MODWLROOTS_LIBDEP
-is set to No.
-.It www/pear
+.Ev MODWLROOTS_LIBDEP
+is set to
+.Cm \&No .
+.It Cm www/pear
 Used for PHP PEAR ports.
 Sets default
 .Ev SITES ,
@@ -1247,11 +1302,11 @@ Sets a default
 .Ev PKGNAME
 and appends to
 .Ev CATEGORIES .
-.It x11/gnome
+.It Cm x11/gnome
 See
 .Xr gnome-module 5 .
-.It x11/gnustep
-.It x11/qt5 and x11/qt6
+.It Cm x11/gnustep
+.It Cm x11/qt5 No and Cm x11/qt6
 All qt* modules share a common
 .Ev MODQT_*
 namespace for simple ports.
@@ -1273,15 +1328,15 @@ as the global qt directory location,
 as standard GNU configure-style parameters to locate the include and libraries.
 .Pp
 The location of Qt-specific tools
-.Nm lrelease ,
-.Nm moc ,
-.Nm qmake
+.Sy lrelease ,
+.Sy moc ,
+.Sy qmake ,
 and
-.Nm uic
+.Sy uic
 is available through
 .Ev MODQT*_LRELEASE ,
 .Ev MODQT*_MOC ,
-.Ev MODQT*_QMAKE
+.Ev MODQT*_QMAKE ,
 and
 .Ev MODQT*_UIC .
 .Ev MODQT*_OVERRIDE_UIC
@@ -1293,13 +1348,14 @@ The value of
 is always forced to ${MODQT*_MOC}.
 .Pp
 In most cases the
-.Pa devel/qmake
+.Cm devel/qmake
 module should be used instead of using
 .Ev MODQT*_QMAKE
 directly.
 .Pp
 The modules add to
-.Ev CONFIGURE_ENV , MAKE_ENV
+.Ev CONFIGURE_ENV ,
+.Ev MAKE_ENV ,
 and
 .Ev MAKE_FLAGS .
 They define appropriate
@@ -1314,11 +1370,11 @@ at all.
 Qt5 and Qt6 consist of many so called Qt modules, these Qt modules should be
 added to
 .Ev LIB_DEPENDS ,
-.Ev BUILD_DEPENDS
+.Ev BUILD_DEPENDS ,
 or
 .Ev RUN_DEPENDS
 manually.
-.It x11/tk
+.It Cm x11/tk
 Sets
 .Ev MODTK_VERSION ,
 .Ev MODTK_BIN ,
@@ -1333,7 +1389,7 @@ and
 is the default version used by all Tk ports and
 may be overridden.
 Automatically adds the
-.Pa lang/tcl
+.Cm lang/tcl
 module, provides a default
 .Ev MODTCL_VERSION
 to match
@@ -1343,19 +1399,21 @@ and affects
 Note the
 .Ev MODTCL_WISH_ADJ
 shell fragment in the
-.Pa lang/tcl
+.Cm lang/tcl
 module.
-.It x11/xfce4
+.It Cm x11/xfce4
 Sets
 .Ev DIST_SUBDIR ,
 .Ev EXTRACT_SUFX ,
 .Ev CONFIGURE_STYLE ,
-.Ev CONFIGURE_ENV
+.Ev CONFIGURE_ENV ,
 and
 .Ev USE_GMAKE .
 If
 .Ev MODXFCE_ICON_CACHE
-is set to yes, it adds
+is set to
+.Cm Yes ,
+it adds
 .Pa x11/gtk+4,-guic
 to
 .Ev RUN_DEPENDS .
@@ -1371,7 +1429,7 @@ Also affects
 Xfce ports can be divided into five categories: core libraries and
 applications, goodies, artwork, thunar plugins, and panel plugins.
 .Ev HOMEPAGE ,
-.Ev SITES
+.Ev SITES ,
 and
 .Ev DISTNAME
 are built using
@@ -1382,7 +1440,7 @@ if not set) and either
 .Ev XFCE_PROJECT ,
 .Ev XFCE_GOODIE ,
 .Ev XFCE_ARTWORK ,
-.Ev THUNAR_PLUGIN
+.Ev THUNAR_PLUGIN ,
 or
 .Ev XFCE_PLUGIN .
 One of the latter has to be provided by the port Makefile.
