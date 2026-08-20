@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.30 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.31 2026/08/20 02:11:18 dgl Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 		return(EIO);
 
 	if (baseva >= VM_MAXUSER_ADDRESS)
-		return(0);
+		return (EIO);
 	if (endva >= VM_MAXUSER_ADDRESS)
 		/* EOF truncate */
 		togo = togo - (endva - VM_MAXUSER_ADDRESS + 1);
