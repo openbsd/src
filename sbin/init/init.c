@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.72 2022/09/10 00:49:47 cheloha Exp $	*/
+/*	$OpenBSD: init.c,v 1.73 2026/08/20 21:35:32 daniel Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -69,7 +69,6 @@
  */
 #define	GETTY_SPACING		 5	/* N secs minimum getty spacing */
 #define	GETTY_SLEEP		30	/* sleep N secs after spacing problem */
-#define	WINDOW_WAIT		 3	/* wait N secs after starting window */
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
 
@@ -77,7 +76,6 @@
  * User-based resource limits.
  */
 #define RESOURCE_RC		"daemon"
-#define RESOURCE_WINDOW		"default"
 #define RESOURCE_GETTY		"default"
 
 #ifndef DEFAULT_STATE
@@ -150,8 +148,6 @@ typedef struct init_session {
 	char	*se_device;		/* filename of port */
 	char	*se_getty;		/* what to run on that port */
 	char	**se_getty_argv;	/* pre-parsed argument array */
-	char	*se_window;		/* window system (started only once) */
-	char	**se_window_argv;	/* pre-parsed argument array */
 	struct	init_session *se_prev;
 	struct	init_session *se_next;
 	RB_ENTRY(init_session) se_entry;
@@ -167,7 +163,6 @@ session_t *new_session(session_t *, int, struct ttyent *);
 session_t *sessions;
 
 char **construct_argv(char *);
-void start_window_system(session_t *);
 void collect_child(pid_t);
 pid_t start_getty(session_t *);
 void transition_handler(int);
@@ -822,10 +817,6 @@ free_session(session_t *sp)
 		free(sp->se_getty);
 		free(sp->se_getty_argv);
 	}
-	if (sp->se_window) {
-		free(sp->se_window);
-		free(sp->se_window_argv);
-	}
 	free(sp);
 }
 
@@ -870,7 +861,7 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 }
 
 /*
- * Calculate getty and if useful window argv vectors.
+ * Calculate getty argv vectors.
  */
 int
 setupargv(session_t *sp, struct ttyent *typ)
@@ -887,22 +878,6 @@ setupargv(session_t *sp, struct ttyent *typ)
 		free(sp->se_getty);
 		sp->se_getty = NULL;
 		return (0);
-	}
-	if (typ->ty_window) {
-		free(sp->se_window);
-		sp->se_window = strdup(typ->ty_window);
-		if (sp->se_window == NULL) {
-			warning("can't allocate window");
-			return (0);
-		}
-		sp->se_window_argv = construct_argv(sp->se_window);
-		if (sp->se_window_argv == NULL) {
-			warning("can't parse window for port %s",
-			    sp->se_device);
-			free(sp->se_window);
-			sp->se_window = NULL;
-			return (0);
-		}
 	}
 	return (1);
 }
@@ -940,39 +915,6 @@ f_read_ttys(void)
 	endttyent();
 
 	return multi_user;
-}
-
-/*
- * Start a window system running.
- */
-void
-start_window_system(session_t *sp)
-{
-	pid_t pid;
-	sigset_t mask;
-
-	if ((pid = fork()) == -1) {
-		emergency("can't fork for window system on port %s: %m",
-		    sp->se_device);
-		/* hope that getty fails and we can try again */
-		return;
-	}
-
-	if (pid)
-		return;
-
-	sigemptyset(&mask);
-	sigprocmask(SIG_SETMASK, &mask, NULL);
-
-	if (setsid() == -1)
-		emergency("setsid failed (window) %m");
-
-	setprocresources(RESOURCE_WINDOW);
-
-	execv(sp->se_window_argv[0], sp->se_window_argv);
-	stall("can't exec window system '%s' for port %s: %m",
-	    sp->se_window_argv[0], sp->se_device);
-	_exit(1);
 }
 
 /*
@@ -1048,11 +990,6 @@ start_getty(session_t *sp)
 			    sp->se_device);
 			sleep(GETTY_SLEEP);
 		}
-	}
-
-	if (sp->se_window) {
-		start_window_system(sp);
-		sleep(WINDOW_WAIT);
 	}
 
 	sigemptyset(&mask);
