@@ -2025,23 +2025,18 @@ int amdgpu_ttm_init(struct amdgpu_device *adev)
 	/* Change the size here instead of the init above so only lpfn is affected */
 	amdgpu_ttm_set_buffer_funcs_status(adev, false);
 #if defined(CONFIG_64BIT) && defined(__linux__)
-	if (adev->gmc.xgmi.connected_to_cpu) {
-		void *kaddr = devm_memremap(adev->dev, adev->gmc.aper_base,
-					    adev->gmc.visible_vram_size,
-					    MEMREMAP_WB);
-		if (IS_ERR(kaddr))
-			return PTR_ERR(kaddr);
-		adev->mman.aper_base_kaddr = (__force void __iomem *)kaddr;
-	} else if (adev->gmc.is_app_apu) {
+#ifdef CONFIG_X86
+	if (adev->gmc.xgmi.connected_to_cpu)
+		adev->mman.aper_base_kaddr = ioremap_cache(adev->gmc.aper_base,
+				adev->gmc.visible_vram_size);
+
+	else if (adev->gmc.is_app_apu)
 		DRM_DEBUG_DRIVER(
 			"No need to ioremap when real vram size is 0\n");
-	} else {
-		adev->mman.aper_base_kaddr = devm_ioremap_wc(adev->dev,
-							     adev->gmc.aper_base,
-							     adev->gmc.visible_vram_size);
-		if (!adev->mman.aper_base_kaddr)
-			return -ENOMEM;
-	}
+	else
+#endif
+		adev->mman.aper_base_kaddr = ioremap_wc(adev->gmc.aper_base,
+				adev->gmc.visible_vram_size);
 #endif
 #ifdef __OpenBSD__
 	flags = BUS_SPACE_MAP_LINEAR;
@@ -2235,6 +2230,8 @@ int amdgpu_ttm_init(struct amdgpu_device *adev)
  */
 void amdgpu_ttm_fini(struct amdgpu_device *adev)
 {
+	int idx;
+
 	if (!adev->mman.initialized)
 		return;
 
@@ -2261,12 +2258,20 @@ void amdgpu_ttm_fini(struct amdgpu_device *adev)
 	amdgpu_ttm_fw_reserve_vram_fini(adev);
 	amdgpu_ttm_drv_reserve_vram_fini(adev);
 
-#ifdef __OpenBSD__
-	if (adev->mman.aper_base_kaddr)
-		bus_space_unmap(adev->memt, adev->mman.aper_bsh,
-		    adev->gmc.visible_vram_size);
+	if (drm_dev_enter(adev_to_drm(adev), &idx)) {
+
+#ifdef __linux__
+		if (adev->mman.aper_base_kaddr)
+			iounmap(adev->mman.aper_base_kaddr);
+#else
+		if (adev->mman.aper_base_kaddr)
+			bus_space_unmap(adev->memt, adev->mman.aper_bsh,
+			    adev->gmc.visible_vram_size);
 #endif
-	adev->mman.aper_base_kaddr = NULL;
+		adev->mman.aper_base_kaddr = NULL;
+
+		drm_dev_exit(idx);
+	}
 
 	if (!adev->gmc.is_app_apu)
 		amdgpu_vram_mgr_fini(adev);
