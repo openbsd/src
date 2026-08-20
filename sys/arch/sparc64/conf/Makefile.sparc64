@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.113 2025/05/05 20:43:32 tedu Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.114 2026/08/20 21:23:47 kirill Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -40,6 +40,7 @@ SORTR=		cat
 COPTIMIZE?=	-Oz
 .endif
 .if ${COMPILER_VERSION:Mclang}
+CMACHFLAGS+=	-mcmodel=medlow
 NO_INTEGR_AS=	-no-integrated-as
 CWARNFLAGS+=	-Wno-unused-command-line-argument
 CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
@@ -122,12 +123,16 @@ ioconf.o: ioconf.c
 ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
+gapdummy.o:
+	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
+
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-MAKE_GAP = LD="${LD}" sh makegap.sh 0x00000000
+MAKE_GAP = LD="${LD}" sh makegap.sh 0x00000000 gapdummy.o
 
-gap.o:	Makefile makegap.sh vers.o
+gap.o:	Makefile makegap.sh gapdummy.o vers.o
 	${MAKE_GAP}
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
@@ -136,7 +141,7 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
-	    gap.link ld.script lorder makegap.sh param.c
+	    gap.link gapdummy.c ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c

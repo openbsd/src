@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.216 2025/11/17 16:06:09 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.217 2026/08/20 21:23:47 kirill Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -16,8 +16,8 @@ SKEY?=		yes
 YP?=		yes
 
 CLANG_ARCH=aarch64 amd64 arm i386 mips64 mips64el powerpc powerpc64 riscv64 sparc64
-GCC4_ARCH=alpha hppa m88k sh sparc64
-LLD_ARCH=aarch64 amd64 arm i386 powerpc powerpc64 riscv64
+GCC4_ARCH=alpha hppa m88k sh
+LLD_ARCH=aarch64 amd64 arm i386 powerpc powerpc64 riscv64 sparc64
 LLDB_ARCH=aarch64 amd64
 
 # Can't use ${CLANG_ARCH} ${GCC4_ARCH} below because of sparc64

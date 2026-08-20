@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: genassym.sh,v 1.4 2020/04/02 06:06:22 otto Exp $
+#	$OpenBSD: genassym.sh,v 1.5 2026/08/20 21:23:47 kirill Exp $
 #	$NetBSD: genassym.sh,v 1.8 2014/01/06 22:43:15 christos Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -164,9 +164,9 @@ $0 ~ /^endif/ {
 		printf("printf(\"#define " $2 " %%ld\\n\", (%s)" value ");\n", type);
 	else if (fcode) {
 		if (doing_member)
-			printf("__asm(\"XYZZY : %s d# %%%s0 + ;\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
+			printf("__asm(\".ascii \\\"XYZZY : %s d# %%%s0 + ;\\\"\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
 		else
-			printf("__asm(\"XYZZY d# %%%s0 constant %s\" : : \"%s\" (%s));\n", asmprint, $2, asmtype, value);
+			printf("__asm(\".ascii \\\"XYZZY d# %%%s0 constant %s\\\"\" : : \"%s\" (%s));\n", asmprint, $2, asmtype, value);
 	} else
 		printf("__asm(\"XYZZY %s %%%s0\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
 	next;
@@ -204,7 +204,7 @@ elif [ "$fcode" = 1 ]; then
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
 	"$@" -S "${genassym_temp}/assym.c" -o - | sed -e 's/\$//g' | \
-	    sed -n 's/.*XYZZY//gp'
+	    sed -n 's/.*\.ascii[[:space:]]*"XYZZY\([^"]*\)".*/\1/p'
 else
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
