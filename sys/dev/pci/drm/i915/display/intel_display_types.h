@@ -1731,11 +1731,10 @@ struct intel_dp {
 		/* common rate,lane_count configs in bw order */
 		int num_configs;
 #define INTEL_DP_MAX_LANE_COUNT			4
-#ifdef notyet
 #define INTEL_DP_MAX_SUPPORTED_LANE_CONFIGS	(ilog2(INTEL_DP_MAX_LANE_COUNT) + 1)
+#ifdef notyet
 #define INTEL_DP_LANE_COUNT_EXP_BITS		order_base_2(INTEL_DP_MAX_SUPPORTED_LANE_CONFIGS)
 #else
-#define INTEL_DP_MAX_SUPPORTED_LANE_CONFIGS	3
 #define INTEL_DP_LANE_COUNT_EXP_BITS		2
 #endif
 #define INTEL_DP_LINK_RATE_IDX_BITS		(BITS_PER_TYPE(u8) - INTEL_DP_LANE_COUNT_EXP_BITS)

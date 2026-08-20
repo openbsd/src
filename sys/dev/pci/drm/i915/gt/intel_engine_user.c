@@ -91,7 +91,6 @@ static void sort_engines(struct drm_i915_private *i915,
 	list_sort(NULL, engines, engine_cmp);
 }
 
-#ifdef __linux__
 static void set_scheduler_caps(struct drm_i915_private *i915)
 {
 	static const struct {
@@ -134,51 +133,6 @@ static void set_scheduler_caps(struct drm_i915_private *i915)
 	if (!(i915->caps.scheduler & I915_SCHEDULER_CAP_ENABLED))
 		i915->caps.scheduler = 0;
 }
-#else
-/* without the pointless ilog2 -> BIT() */
-static void set_scheduler_caps(struct drm_i915_private *i915)
-{
-	static const struct {
-		u8 engine;
-		u8 sched;
-	} map[] = {
-#define MAP(x, y) { I915_ENGINE_##x, I915_SCHEDULER_CAP_##y }
-		MAP(HAS_PREEMPTION, PREEMPTION),
-		MAP(HAS_SEMAPHORES, SEMAPHORES),
-		MAP(SUPPORTS_STATS, ENGINE_BUSY_STATS),
-#undef MAP
-	};
-	struct intel_engine_cs *engine;
-	u32 enabled, disabled;
-
-	enabled = 0;
-	disabled = 0;
-	for_each_uabi_engine(engine, i915) { /* all engines must agree! */
-		int i;
-
-		if (engine->sched_engine->schedule)
-			enabled |= (I915_SCHEDULER_CAP_ENABLED |
-				    I915_SCHEDULER_CAP_PRIORITY);
-		else
-			disabled |= (I915_SCHEDULER_CAP_ENABLED |
-				     I915_SCHEDULER_CAP_PRIORITY);
-
-		if (intel_uc_uses_guc_submission(&engine->gt->uc))
-			enabled |= I915_SCHEDULER_CAP_STATIC_PRIORITY_MAP;
-
-		for (i = 0; i < ARRAY_SIZE(map); i++) {
-			if (engine->flags & map[i].engine)
-				enabled |= map[i].sched;
-			else
-				disabled |= map[i].sched;
-		}
-	}
-
-	i915->caps.scheduler = enabled & ~disabled;
-	if (!(i915->caps.scheduler & I915_SCHEDULER_CAP_ENABLED))
-		i915->caps.scheduler = 0;
-}
-#endif
 
 const char *intel_engine_class_repr(u8 class)
 {
