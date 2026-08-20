@@ -1,4 +1,4 @@
-/* $OpenBSD: tbl_html.c,v 1.36 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: tbl_html.c,v 1.37 2026/08/20 12:29:15 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017, 2018, 2021, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "mandoc.h"
-#include "roff.h"
 #include "tbl.h"
 #include "out.h"
 #include "html.h"
