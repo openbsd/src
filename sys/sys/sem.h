@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.30 2026/07/12 15:49:45 mvs Exp $	*/
+/*	$OpenBSD: sem.h,v 1.31 2026/08/20 16:14:20 sthen Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -166,10 +166,10 @@ extern struct seminfo	seminfo;
  * Configuration parameters
  */
 #ifndef SEMMNI
-#define SEMMNI	10		/* # of semaphore identifiers */
+#define SEMMNI	25		/* # of semaphore identifiers */
 #endif
 #ifndef SEMMNS
-#define SEMMNS	60		/* # of semaphores in system */
+#define SEMMNS	350		/* # of semaphores in system */
 #endif
 #ifndef SEMUME
 #define SEMUME	10		/* max # of undo entries per process */
