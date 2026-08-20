@@ -1,6 +1,6 @@
-/* $OpenBSD: tbl.h,v 1.8 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: tbl.h,v 1.9 2026/08/20 12:56:15 schwarze Exp $ */
 /*
- * Copyright (c) 2014-2018, 2021, 2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2018,2021,2025,2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,6 +26,7 @@ struct	tbl_opts {
 #define	TBL_OPT_NOKEEP	 (1 << 5)  /* Option "nokeep". */
 #define	TBL_OPT_NOSPACE	 (1 << 6)  /* Option "nospaces". */
 #define	TBL_OPT_NOWARN	 (1 << 7)  /* Option "nowarn". */
+#define	TBL_OPT_VSPACE	 (1 << 8)  /* Vertical space before the table. */
 	int		  cols;    /* Number of columns. */
 	int		  lvert;   /* Width of left vertical line in EN. */
 	int		  rvert;   /* Width of right vertical line in EN. */

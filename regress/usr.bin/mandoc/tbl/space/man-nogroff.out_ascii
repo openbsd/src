@@ -1,0 +1,34 @@
+TBL-SPACE-MAN-NOGROFF(1)    General Commands Manual   TBL-SPACE-MAN-NOGROFF(1)
+
+NNAAMMEE
+     tbl-space-man-nogroff - spacing before table in man broken in groff
+
+DDEESSCCRRIIPPTTIIOONN
+     no paragraph but left data line:
+
+     | -----   text
+     | table   text
+     paragraph but left data line:
+
+     | -----   text
+     | table   text
+     space request but left data line:
+
+
+     | -----   text
+     | table   text
+     no paragraph but right data line:
+
+     | table   ----
+     | table   text
+     paragraph but right data line:
+
+     | table   ----
+     | table   text
+     space request but right data line:
+
+
+     | table   ----
+     | table   text
+
+OpenBSD                         August 20, 2026       TBL-SPACE-MAN-NOGROFF(1)

@@ -1,0 +1,62 @@
+TBL-SPACE-MAN(1)            General Commands Manual           TBL-SPACE-MAN(1)
+
+NNAAMMEE
+     tbl-space-man - spacing before table in man
+
+DDEESSCCRRIIPPTTIIOONN
+     no paragraph:
+     table text
+     paragraph:
+
+     table text
+     space request:
+
+     table text
+     no paragraph but vertical line:
+
+     | table line 1
+     | table line 2
+     paragraph and vertical line:
+
+     | table line 1
+     | table line 2
+     space request and vertical line:
+
+
+     | table line 1
+     | table line 2
+     no paragraph but horizontal line:
+     +-------- line 1
+     | table   line 2
+     paragraph but horizontal line:
+
+     +-------- line 1
+     | table   line 2
+     space request but horizontal line:
+
+     +-------- line 1
+     | table   line 2
+     no paragraph but right line:
+     | table ---------
+     | table   line 2
+     paragraph but right line:
+
+     | table ---------
+     | table   line 2
+     space request but right line:
+
+     | table ---------
+     | table   line 2
+     no paragraph but full data line:
+     +------------
+     | table text
+     paragraph but full data line:
+
+     +------------
+     | table text
+     space request but full data line:
+
+     +------------
+     | table text
+
+OpenBSD                         August 20, 2026               TBL-SPACE-MAN(1)

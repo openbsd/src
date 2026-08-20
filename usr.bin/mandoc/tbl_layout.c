@@ -1,6 +1,6 @@
-/* $OpenBSD: tbl_layout.c,v 1.39 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: tbl_layout.c,v 1.40 2026/08/20 12:56:15 schwarze Exp $ */
 /*
- * Copyright (c) 2012, 2014, 2015, 2017, 2020, 2021, 2025
+ * Copyright (c) 2012, 2014, 2015, 2017, 2020, 2021, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -165,9 +165,19 @@ mod:
 		cp->flags |= TBL_CELL_WIGN;
 		goto mod;
 	case '|':
-		if (cp->vert < 2)
+		if (cp->vert < 2) {
 			cp->vert++;
-		else
+			/*
+			 * GNU tbl(1) compatibility:
+			 * Vertical lines in the first layout row
+			 * trigger vertical spacing before the table,
+			 * unless the table starts with a horizontal line.
+			 */
+			if (tbl->first_row == tbl->last_row &&
+			    (tbl->opts.opts &
+			     (TBL_OPT_DBOX | TBL_OPT_BOX)) == 0)
+				tbl->opts.opts |= TBL_OPT_VSPACE;
+		} else
 			mandoc_msg(MANDOCERR_TBLLAYOUT_VERT,
 			    ln, *pos - 1, NULL);
 		goto mod;
@@ -218,9 +228,20 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 
 	while (p[*pos] == ' ' || p[*pos] == '\t' || p[*pos] == '|') {
 		if (p[*pos] == '|') {
-			if (rp->vert < 2)
+			if (rp->vert < 2) {
 				rp->vert++;
-			else
+				/*
+				 * GNU tbl(1) compatibility:
+				 * Trigger vertical space before the table
+				 * even if this table row turns out to
+				 * contain no cells.
+				 * Does not take effect if the table
+				 * starts with a horizontal line.
+				 */
+				if ((tbl->opts.opts &
+				    (TBL_OPT_DBOX | TBL_OPT_BOX)) == 0)
+					tbl->opts.opts |= TBL_OPT_VSPACE;
+			} else
 				mandoc_msg(MANDOCERR_TBLLAYOUT_VERT,
 				    ln, *pos, NULL);
 		}
@@ -270,6 +291,7 @@ void
 tbl_layout(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
 	struct tbl_row	*rp;
+	struct tbl_cell	*cp;
 
 	rp = NULL;
 	for (;;) {
@@ -330,6 +352,18 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p, int pos)
 					tbl->last_row = rp;
 				}
 			}
+
+			/*
+			 * GNU tbl(1) compatibility:
+			 * A horizontal line on the first table row
+			 * suppresses vertical space before the table.
+			 */
+
+			for (cp = tbl->first_row->first; cp; cp = cp->next)
+				if (cp->pos == TBL_CELL_HORIZ ||
+				    cp->pos == TBL_CELL_DHORIZ)
+					tbl->opts.opts &= ~TBL_OPT_VSPACE;
+
 			return;
 		default:  /* Cell. */
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_parse.h,v 1.2 2018/12/14 06:33:03 schwarze Exp $ */
+/*	$OpenBSD: tbl_parse.h,v 1.3 2026/08/20 12:56:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,7 +23,7 @@ struct tbl_node;
 struct tbl_span;
 
 struct tbl_node	*tbl_alloc(int, int, struct tbl_node *);
-int		 tbl_end(struct tbl_node *, int);
+int		 tbl_end(struct tbl_node *, int, int);
 void		 tbl_free(struct tbl_node *);
 void		 tbl_read(struct tbl_node *, int, const char *, int);
 void		 tbl_restart(int, int, struct tbl_node *);

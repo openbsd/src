@@ -1,0 +1,119 @@
+.\" $OpenBSD: man.in,v 1.1 2026/08/20 12:56:15 schwarze Exp $
+.TH TBL-SPACE-MAN 1 "August 20, 2026"
+.SH NAME
+tbl-space-man \- spacing before table in man
+.SH DESCRIPTION
+no paragraph:
+.TS
+l.
+table text
+.TE
+paragraph:
+.PP
+.TS
+l.
+table text
+.TE
+space request:
+.sp
+.TS
+l.
+table text
+.TE
+no paragraph but vertical line:
+.TS
+l,|l.
+table line 1
+table line 2
+.TE
+paragraph and vertical line:
+.PP
+.TS
+l,|l.
+table line 1
+table line 2
+.TE
+space request and vertical line:
+.sp
+.TS
+l,|l.
+table line 1
+table line 2
+.TE
+no paragraph but horizontal line:
+.TS
+tab(:);
+_l,|ll.
+:line 1
+table:line 2
+.TE
+paragraph but horizontal line:
+.PP
+.TS
+tab(:);
+_l,|ll.
+:line 1
+table:line 2
+.TE
+space request but horizontal line:
+.sp
+.TS
+tab(:);
+_l,|ll.
+:line 1
+table:line 2
+.TE
+no paragraph but right line:
+.TS
+tab(:);
+l_,|ll.
+table:
+table:line 2
+.TE
+paragraph but right line:
+.PP
+.TS
+tab(:);
+l_,|ll.
+table:
+table:line 2
+.TE
+space request but right line:
+.sp
+.TS
+tab(:);
+l_,|ll.
+table:
+table:line 2
+.TE
+no paragraph but full data line:
+.TS
+|l.
+_
+table text
+.TE
+paragraph but full data line:
+.PP
+.TS
+|l.
+_
+table text
+.TE
+space request but full data line:
+.sp
+.TS
+|l.
+_
+table text
+.TE
+.\"   tot  net
+.\"   n v  n v
+.\" 0 0 1  0 1
+.\" p 1 1  0 0
+.\" s 1 2  0 1
+.\" .sp and .PP always prints space
+.\" additional space for v && !h(all three cases) && !p
+.\" set v in layout
+.\" clear v in data
+.\"
+.\"

@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.279 2026/08/16 19:00:17 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.280 2026/08/20 12:56:15 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -187,6 +187,7 @@ static	int		 roff_cond_text(ROFF_ARGS);
 static	int		 roff_cond_sub(ROFF_ARGS);
 static	int		 roff_ds(ROFF_ARGS);
 static	int		 roff_ec(ROFF_ARGS);
+static	int		 roff_endtbl(struct roff *, int);
 static	int		 roff_eo(ROFF_ARGS);
 static	int		 roff_eqndelim(struct roff *, struct buf *, int);
 static	int		 roff_evalcond(struct roff *, int, char *, int *);
@@ -1057,6 +1058,33 @@ roff_addtbl(struct roff_man *man, int line, struct tbl_node *tbl)
 		n->flags |= NODE_VALID | NODE_ENDED;
 		man->next = ROFF_NEXT_SIBLING;
 	}
+}
+
+static int
+roff_endtbl(struct roff *r, int still_open)
+{
+	struct roff_node	 *n;
+	int			  irc, space_allowed;
+
+	n = r->man->last;
+	while (n->prev != NULL && n->prev->span != NULL)
+		n = n->prev;
+
+	space_allowed = 1;
+	if (n->prev == NULL) {
+		switch (n->parent->tok) {
+		case MAN_LP:
+		case MAN_PP:
+		case MAN_P:
+			space_allowed = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	irc = tbl_end(r->tbl, space_allowed, still_open);
+	r->tbl = NULL;
+	return irc;
 }
 
 void
@@ -1985,10 +2013,8 @@ roff_endparse(struct roff *r)
 		r->eqn = NULL;
 	}
 
-	if (r->tbl != NULL) {
-		tbl_end(r->tbl, 1);
-		r->tbl = NULL;
-	}
+	if (r->tbl != NULL)
+		roff_endtbl(r, 1);
 }
 
 /*
@@ -3308,19 +3334,15 @@ static int
 roff_TE(ROFF_ARGS)
 {
 	r->man->flags &= ~ROFF_NONOFILL;
-	if (r->tbl == NULL) {
+	if (r->tbl == NULL)
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, ln, ppos, "TE");
-		return ROFF_IGN;
-	}
-	if (tbl_end(r->tbl, 0) == 0) {
-		r->tbl = NULL;
+	else if (roff_endtbl(r, 0) == 0) {
 		free(buf->buf);
 		buf->buf = mandoc_strdup(".sp");
 		buf->sz = 4;
 		*offs = 0;
 		return ROFF_REPARSE;
 	}
-	r->tbl = NULL;
 	return ROFF_IGN;
 }
 
@@ -3450,7 +3472,7 @@ roff_TS(ROFF_ARGS)
 {
 	if (r->tbl != NULL) {
 		mandoc_msg(MANDOCERR_BLK_BROKEN, ln, ppos, "TS breaks TS");
-		tbl_end(r->tbl, 0);
+		roff_endtbl(r, 0);
 	}
 	r->man->flags |= ROFF_NONOFILL;
 	r->tbl = tbl_alloc(ppos, ln, r->last_tbl);

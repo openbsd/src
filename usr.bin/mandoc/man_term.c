@@ -1,4 +1,4 @@
-/* $OpenBSD: man_term.c,v 1.202 2026/01/07 08:22:24 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.203 2026/08/20 12:56:15 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020, 2022-23, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -193,24 +193,16 @@ terminal_man(void *arg, const struct roff_meta *man)
 }
 
 /*
- * Print leading vertical space before a paragraph, unless
- * it is the first paragraph in a section or subsection.
+ * Print leading vertical space before a paragraph.
  * If it is the first paragraph in an .RS block, consider
  * that .RS block instead of the paragraph, recursively.
  */
 static void
 print_bvspace(struct termp *p, struct roff_node *n, int pardist)
 {
-	struct roff_node	*nch;
 	int			 i;
 
 	term_newln(p);
-
-	if (n->body != NULL &&
-	    (nch = roff_node_child(n->body)) != NULL &&
-	    nch->type == ROFFT_TBL)
-		return;
-
 	while (roff_node_prev(n) == NULL) {
 		n = n->parent;
 		if (n->tok != MAN_RS)

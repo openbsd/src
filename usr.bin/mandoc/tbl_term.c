@@ -1,6 +1,6 @@
-/* $OpenBSD: tbl_term.c,v 1.68 2025/07/24 17:51:00 schwarze Exp $ */
+/* $OpenBSD: tbl_term.c,v 1.69 2026/08/20 12:56:15 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2022, 2025, 2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -227,6 +227,16 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			    enw : 0;
 			tp->tcol->offset = offset;
 		}
+
+		/*
+		 * GNU tbl(1) compatibility:
+		 * If any row of the table starts with a vertical line
+		 * but the table does not start with a horizontal line,
+		 * insert a blank line before the table.
+		 */
+
+		if (sp->opts->opts & TBL_OPT_VSPACE)
+			term_vspace(tp);
 
 		/* Horizontal frame at the start of boxed tables. */
 

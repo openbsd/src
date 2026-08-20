@@ -21,6 +21,7 @@ DDEESSCCRRIIPPTTIIOONN
      ---- 22
      31   32
      vline in front:
+
        11   12
      | 21   22
      | 31   32
@@ -31,6 +32,7 @@ DDEESSCCRRIIPPTTIIOONN
      ---+ 32
      41   42
      vline and hline in front:
+
        11   12
      | 21   22
      +----- 32
@@ -86,6 +88,7 @@ DDEESSCCRRIIPPTTIIOONN
      11   12
      ---- 22
      vline bottom left:
+
        11   12
      | 21   22
      | 31   32
@@ -94,6 +97,7 @@ DDEESSCCRRIIPPTTIIOONN
      21 | 22
      ---+ 32
      vline and hline bottom left:
+
        11   12
      | 21   22
      +----- 32
@@ -120,6 +124,7 @@ DDEESSCCRRIIPPTTIIOONN
      21   22 |
      31 -----+
      double vline in front:
+
        11   12
      | 21   22
      | 31   32
@@ -130,6 +135,7 @@ DDEESSCCRRIIPPTTIIOONN
      ---+|32
      41   42
      double vline and hline in front:
+
        11   12
      | 21   22
      +----- 32
@@ -170,6 +176,7 @@ DDEESSCCRRIIPPTTIIOONN
      31 -----+
      41   42
      double vline bottom left:
+
        11   12
      | 21   22
      | 31   32
@@ -178,6 +185,7 @@ DDEESSCCRRIIPPTTIIOONN
      21 ||22
      ---+|32
      double vline and hline bottom left:
+
        11   12
      | 21   22
      +----- 32
@@ -226,11 +234,13 @@ DDEESSCCRRIIPPTTIIOONN
      21   22 |
      31   32
      vline left below hline in front:
+
        11   12
      +----- 22
      | 31   32
        41   42
      vline left above hline in front:
+
        11   12
      | 21   22
      | 31   32
@@ -303,6 +313,7 @@ DDEESSCCRRIIPPTTIIOONN
      41 -----+
      51   52
      vline left above hline bottom left:
+
        11   12
      | 21   22
      | 31   32
@@ -366,11 +377,13 @@ DDEESSCCRRIIPPTTIIOONN
      21   22 |
      31   32
      double vline left below hline in front:
+
        11   12
      +----- 22
      | 31   32
        41   42
      double vline left above hline in front:
+
        11   12
      | 21   22
      | 31   32
@@ -443,6 +456,7 @@ DDEESSCCRRIIPPTTIIOONN
      41 -----+
      51   52
      double vline left above hline bottom left:
+
        11   12
      | 21   22
      | 31   32

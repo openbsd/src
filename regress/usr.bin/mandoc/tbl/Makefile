@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.13 2015/01/29 23:34:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.14 2026/08/20 12:56:15 schwarze Exp $
 
-SUBDIR	= opt layout mod data macro
+SUBDIR	= opt layout mod data macro space
 
 .include "../Makefile.sub"
 .include <bsd.subdir.mk>

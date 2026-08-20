@@ -1,7 +1,8 @@
-/*	$OpenBSD: tbl_data.c,v 1.46 2021/09/10 13:23:44 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.47 2026/08/20 12:56:15 schwarze Exp $ */
 /*
+ * Copyright (c) 2011, 2015, 2017-2019, 2021, 2026
+ *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011,2015,2017-2019,2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -280,12 +281,19 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 			 */
 			return;
 		case '_':
-			sp = newspan(tbl, ln, rp);
-			sp->pos = TBL_SPAN_HORIZ;
-			return;
 		case '=':
+			/*
+			 * Suppress vertical space before the table
+			 * if it starts with a horizontal line.
+			 */
+			if (sp == NULL)
+				tbl->opts.opts &= ~TBL_OPT_VSPACE;
+
 			sp = newspan(tbl, ln, rp);
-			sp->pos = TBL_SPAN_DHORIZ;
+			if (p[0] == '_')
+				sp->pos = TBL_SPAN_HORIZ;
+			else
+				sp->pos = TBL_SPAN_DHORIZ;
 			return;
 		default:
 			break;

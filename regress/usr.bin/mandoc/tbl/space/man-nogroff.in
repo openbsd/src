@@ -1,0 +1,51 @@
+.\" $OpenBSD: man-nogroff.in,v 1.1 2026/08/20 12:56:15 schwarze Exp $
+.TH TBL-SPACE-MAN-NOGROFF 1 "August 20, 2026"
+.SH NAME
+tbl-space-man-nogroff \- spacing before table in man broken in groff
+.SH DESCRIPTION
+no paragraph but left data line:
+.TS
+tab(:);
+|ll.
+\_:text
+table:text
+.TE
+paragraph but left data line:
+.PP
+.TS
+tab(:);
+|ll.
+\_:text
+table:text
+.TE
+space request but left data line:
+.sp
+.TS
+tab(:);
+|ll.
+\_:text
+table:text
+.TE
+no paragraph but right data line:
+.TS
+tab(:);
+|ll.
+table:\_
+table:text
+.TE
+paragraph but right data line:
+.PP
+.TS
+tab(:);
+|ll.
+table:\_
+table:text
+.TE
+space request but right data line:
+.sp
+.TS
+tab(:);
+|ll.
+table:\_
+table:text
+.TE
