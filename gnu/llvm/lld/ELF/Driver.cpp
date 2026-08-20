@@ -3496,6 +3496,12 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   // sections are non-aligned (maxPageSize set to 1) but text sections are aligned
   // to the target page size.
   ctx.arg.textAlignPageSize = ctx.arg.omagic ? getRealMaxPageSize(ctx, args) : ctx.arg.maxPageSize;
+#ifdef __OpenBSD__
+  // Match BFD -N semantics for SPARCV9: use the maximum contained section
+  // alignment for PT_LOAD segments instead of the 1 MiB page alignment.
+  if (ctx.arg.omagic && ctx.arg.emachine == EM_SPARCV9)
+    ctx.arg.textAlignPageSize = ctx.arg.maxPageSize;
+#endif
 
   ctx.arg.imageBase = getImageBase(ctx, args);
 

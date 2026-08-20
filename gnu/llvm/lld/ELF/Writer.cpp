@@ -2701,6 +2701,16 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
   ctx.out.programHeaders->offset = ctx.out.elfHeader->size;
   uint64_t off = ctx.out.elfHeader->size + ctx.out.programHeaders->size;
 
+#ifdef __OpenBSD__
+  // BFD's implicit script reserves 0x200 bytes before fixed-address SPARCV9
+  // -N payloads consumed by OpenFirmware.
+  if (!ctx.arg.relocatable && ctx.arg.omagic &&
+      ctx.arg.emachine == EM_SPARCV9 &&
+      ctx.arg.sectionStartMap.count(".text") &&
+      !ctx.script->hasSectionsCommand && !ctx.script->hasPhdrsCommands())
+    off = std::max<uint64_t>(off, 0x200);
+#endif
+
   PhdrEntry *lastRX = nullptr;
   for (Partition &part : ctx.partitions)
     for (auto &p : part.phdrs)
