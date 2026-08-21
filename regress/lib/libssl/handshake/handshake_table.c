@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.18 2022/12/01 13:49:12 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.19 2026/08/21 17:16:29 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -26,7 +26,7 @@
 #define MAX_FLAGS (UINT8_MAX + 1)
 
 /*
- * From RFC 8446:
+ * From RFC 9846:
  *
  * Appendix A.  State Machine
  *
