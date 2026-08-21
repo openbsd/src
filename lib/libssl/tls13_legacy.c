@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.45 2026/04/03 07:17:36 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.46 2026/08/21 08:50:34 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -317,51 +317,34 @@ static int
 tls13_use_legacy_stack(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
-	CBB cbb, fragment;
 	CBS cbs;
 
-	memset(&cbb, 0, sizeof(cbb));
-
 	if (!ssl3_setup_init_buffer(s))
-		goto err;
+		return 0;
 	if (!ssl3_setup_buffers(s))
-		goto err;
+		return 0;
 	if (!ssl_init_wbio_buffer(s, 1))
-		goto err;
+		return 0;
 
 	/* Stash any unprocessed data from the last record. */
 	tls13_record_layer_rcontent(ctx->rl, &cbs);
 	if (CBS_len(&cbs) > 0) {
-		if (!CBB_init_fixed(&cbb, s->s3->rbuf.buf,
-		    s->s3->rbuf.len))
-			goto err;
-		if (!CBB_add_u8(&cbb, SSL3_RT_HANDSHAKE))
-			goto err;
-		if (!CBB_add_u16(&cbb, TLS1_2_VERSION))
-			goto err;
-		if (!CBB_add_u16_length_prefixed(&cbb, &fragment))
-			goto err;
-		if (!CBB_add_bytes(&fragment, CBS_data(&cbs), CBS_len(&cbs)))
-			goto err;
-		if (!CBB_finish(&cbb, NULL, NULL))
-			goto err;
-
-		s->s3->rbuf.offset = SSL3_RT_HEADER_LENGTH;
-		s->s3->rbuf.left = CBS_len(&cbs);
-		s->s3->rrec.type = SSL3_RT_HANDSHAKE;
-		s->s3->rrec.length = CBS_len(&cbs);
-		s->rstate = SSL_ST_READ_BODY;
-		s->packet = s->s3->rbuf.buf;
-		s->packet_length = SSL3_RT_HEADER_LENGTH;
+		if (s->s3->rcontent != NULL)
+			return 0;
+		if ((s->s3->rcontent = tls_content_new()) == NULL)
+			return 0;
+		if (!tls_content_dup_data(s->s3->rcontent, 
+		    SSL3_RT_HANDSHAKE, CBS_data(&cbs), CBS_len(&cbs)))
+			return 0;
 	}
 
 	/* Stash the current handshake message. */
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
 	if (!BUF_MEM_grow_clean(s->init_buf, CBS_len(&cbs)))
-		goto err;
+		return 0;
 	if (!CBS_write_bytes(&cbs, s->init_buf->data,
 	    s->init_buf->length, NULL))
-		goto err;
+		return 0;
 
 	s->s3->hs.tls12.reuse_message = 1;
 	s->s3->hs.tls12.message_type = tls13_handshake_msg_type(ctx->hs_msg);
@@ -374,11 +357,6 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 	s->method = tls_legacy_method();
 
 	return 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return 0;
 }
 
 int
