@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512.c,v 1.2 2026/07/22 14:29:56 jsing Exp $	*/
+/*	$OpenBSD: sha512.c,v 1.3 2026/08/21 15:33:23 jsing Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -23,6 +23,13 @@
 #include <string.h>
 
 #include <sha2.h>
+
+#ifndef SHA512_SMALL
+#if defined(__amd64__)
+#define HAVE_SHA512_BLOCK
+#define HAVE_SHA512_BLOCK_GENERIC
+#endif
+#endif
 
 static inline void
 crypto_store_htobe64(uint8_t *dst, uint64_t v)
