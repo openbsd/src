@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512.c,v 1.3 2026/08/21 15:33:23 jsing Exp $	*/
+/*	$OpenBSD: sha512.c,v 1.4 2026/08/21 16:28:25 jsing Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -25,7 +25,9 @@
 #include <sha2.h>
 
 #ifndef SHA512_SMALL
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#define HAVE_SHA512_BLOCK
+#elif defined(__amd64__)
 #define HAVE_SHA512_BLOCK
 #define HAVE_SHA512_BLOCK_GENERIC
 #endif
