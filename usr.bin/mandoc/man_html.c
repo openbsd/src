@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.141 2025/06/26 16:59:35 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.142 2026/08/21 11:15:21 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2020,2022-2023,2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -183,7 +183,7 @@ print_man_node(MAN_ARGS)
 			return;
 		}
 		if (*n->string == ' ' && n->flags & NODE_LINE &&
-		    (h->flags & HTML_NONEWLINE) == 0)
+		    (h->flags & HTML_NONEWLINE) == 0 && h->noindent == 0)
 			print_otag(h, TAG_BR, "");
 		else if (n->flags & NODE_DELIMC)
 			h->flags |= HTML_NOSPACE;
