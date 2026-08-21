@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.c,v 1.10 2022/07/22 19:33:53 jsing Exp $ */
+/* $OpenBSD: tls13_record.c,v 1.11 2026/08/21 02:23:33 kenjiro Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -32,19 +32,7 @@ struct tls13_record {
 struct tls13_record *
 tls13_record_new(void)
 {
-	struct tls13_record *rec = NULL;
-
-	if ((rec = calloc(1, sizeof(struct tls13_record))) == NULL)
-		goto err;
-	if ((rec->buf = tls_buffer_new(TLS13_RECORD_MAX_LEN)) == NULL)
-		goto err;
-
-	return rec;
-
- err:
-	tls13_record_free(rec);
-
-	return NULL;
+	return calloc(1, sizeof(struct tls13_record));
 }
 
 void
@@ -127,6 +115,11 @@ tls13_record_recv(struct tls13_record *rec, tls_read_cb wire_read,
 	CBS cbs;
 
 	if (rec->data != NULL)
+		return TLS13_IO_FAILURE;
+
+	if (rec->buf == NULL)
+		rec->buf = tls_buffer_new(TLS13_RECORD_HEADER_LEN);
+	if (rec->buf == NULL)
 		return TLS13_IO_FAILURE;
 
 	if (rec->content_type == 0) {
