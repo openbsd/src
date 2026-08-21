@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.261 2026/07/31 03:59:50 kenjiro Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.262 2026/08/21 17:15:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -722,7 +722,7 @@ const SSL_CIPHER ssl3_ciphers[] = {
 
 #ifdef LIBRESSL_HAS_TLS1_3
 	/*
-	 * TLSv1.3 cipher suites (RFC 8446).
+	 * TLSv1.3 cipher suites (RFC 9846).
 	 */
 	{
 		.value = 0x1301,

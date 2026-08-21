@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.34 2024/03/26 03:44:11 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.35 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -20,7 +20,7 @@
 #ifndef HEADER_SSL_TLSEXT_H
 #define HEADER_SSL_TLSEXT_H
 
-/* TLSv1.3 - RFC 8446 Section 4.2. */
+/* TLSv1.3 - RFC 9846 section 4.3. */
 #define SSL_TLSEXT_MSG_CH	0x0001	/* ClientHello */
 #define SSL_TLSEXT_MSG_SH	0x0002	/* ServerHello */
 #define SSL_TLSEXT_MSG_EE	0x0004	/* EncryptedExtension */

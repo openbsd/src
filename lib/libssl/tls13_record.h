@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.h,v 1.5 2021/10/23 13:12:14 jsing Exp $ */
+/* $OpenBSD: tls13_record.h,v 1.6 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -23,7 +23,7 @@
 __BEGIN_HIDDEN_DECLS
 
 /*
- * TLSv1.3 Record Protocol - RFC 8446 section 5.
+ * TLSv1.3 Record Protocol - RFC 9846 section 5.
  *
  * The maximum plaintext is 2^14, however for inner plaintext an additional
  * byte is allowed for the content type. A maximum AEAD overhead of 255-bytes
@@ -41,7 +41,7 @@ __BEGIN_HIDDEN_DECLS
 	(TLS13_RECORD_HEADER_LEN + TLS13_RECORD_MAX_CIPHERTEXT_LEN)
 
 /*
- * TLSv1.3 Per-Record Nonces and Sequence Numbers - RFC 8446 section 5.3.
+ * TLSv1.3 Per-Record Nonces and Sequence Numbers - RFC 9846 section 5.3.
  */
 #define TLS13_RECORD_SEQ_NUM_LEN 8
 

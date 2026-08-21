@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.75 2026/07/31 03:59:50 kenjiro Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.76 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -95,7 +95,7 @@ struct tls13_record_layer {
 	uint8_t alert_level;
 	uint8_t alert_desc;
 
-	/* Pending post-handshake handshake messages (RFC 8446, section 4.6). */
+	/* Pending post-handshake handshake messages (RFC 9846, section 4.7). */
 	CBS phh_cbs;
 	uint8_t *phh_data;
 	size_t phh_len;
@@ -200,7 +200,7 @@ tls13_record_layer_inc_seq_num(uint8_t *seq_num)
 {
 	int i;
 
-	/* RFC 8446 section 5.3 - sequence numbers must not wrap. */
+	/* RFC 9846 section 5.3 - sequence numbers must not wrap. */
 	if (memcmp(seq_num, tls13_max_seq_num, TLS13_RECORD_SEQ_NUM_LEN) == 0)
 		return 0;
 
@@ -222,7 +222,7 @@ tls13_record_layer_update_nonce(struct tls13_secret *nonce,
 		return 0;
 
 	/*
-	 * RFC 8446 section 5.3 - sequence number is zero padded and XOR'd
+	 * RFC 9846 section 5.3 - sequence number is zero padded and XOR'd
 	 * with the IV to produce a per-record nonce. The IV will also be
 	 * at least 8-bytes in length.
 	 */
@@ -284,7 +284,7 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 	ssize_t ret = TLS13_IO_FAILURE;
 
 	/*
-	 * RFC 8446 - sections 5.1 and 6.
+	 * RFC 9846 - sections 5.1 and 6.
 	 *
 	 * A TLSv1.3 alert record can only contain a single alert - this means
 	 * that processing the alert must consume all of the record. The alert
@@ -305,8 +305,8 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 	tls_content_clear(rl->rcontent);
 
 	/*
-	 * Alert level is ignored for closure alerts (RFC 8446 section 6.1),
-	 * however for error alerts (RFC 8446 section 6.2), the alert level
+	 * Alert level is ignored for closure alerts (RFC 9846 section 6.1),
+	 * however for error alerts (RFC 9846 section 6.2), the alert level
 	 * must be specified as fatal.
 	 */
 	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
@@ -344,7 +344,7 @@ tls13_record_layer_send_alert(struct tls13_record_layer *rl)
 {
 	ssize_t ret;
 
-	/* This has to fit into a single record, per RFC 8446 section 5.1. */
+	/* This has to fit into a single record, per RFC 9846 section 5.1. */
 	if ((ret = tls13_record_layer_write_record(rl, SSL3_RT_ALERT,
 	    rl->alert_data, rl->alert_len)) != rl->alert_len) {
 		if (ret == TLS13_IO_EOF)
@@ -604,7 +604,7 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 			break;
 	}
 	if (content_type == 0) {
-		/* Unexpected message per RFC 8446 section 5.4. */
+		/* Unexpected message per RFC 9846 section 5.4. */
 		rl->alert = TLS13_ALERT_UNEXPECTED_MESSAGE;
 		goto err;
 	}
@@ -835,7 +835,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	/*
 	 * In response to a client hello we may receive an alert in a
 	 * record with a legacy version. Otherwise enforce that the
-	 * legacy record version is 0x0303 per RFC 8446, section 5.1.
+	 * legacy record version is 0x0303 per RFC 9846, section 5.1.
 	 */
 	if (rl->legacy_version == TLS1_2_VERSION &&
 	    tls13_record_version(rl->rrec) != TLS1_2_VERSION &&
@@ -846,7 +846,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	 * Bag of hacks ahead... after the first ClientHello message has been
 	 * sent or received and before the peer's Finished message has been
 	 * received, we may receive an unencrypted ChangeCipherSpec record
-	 * (see RFC 8446 section 5 and appendix D.4). This record must be
+	 * (see RFC 9846 section 5 and appendix E.4). This record must be
 	 * ignored.
 	 */
 	if (content_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
@@ -881,7 +881,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	/*
 	 * On receiving a handshake or alert record with empty inner plaintext,
 	 * we must terminate the connection with an unexpected_message alert.
-	 * See RFC 8446 section 5.4.
+	 * See RFC 9846 section 5.4.
 	 */
 	if (tls_content_remaining(rl->rcontent) == 0 &&
 	    (tls_content_type(rl->rcontent) == SSL3_RT_ALERT ||

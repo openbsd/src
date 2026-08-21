@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.73 2024/02/03 19:57:14 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.74 2026/08/21 17:15:22 tb Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -22,7 +22,7 @@
 #include "tls13_handshake.h"
 #include "tls13_internal.h"
 
-/* Based on RFC 8446 and inspired by s2n's TLS 1.2 state machine. */
+/* Based on RFC 9846 and inspired by s2n's TLS 1.2 state machine. */
 
 struct tls13_handshake_action {
 	uint8_t	handshake_type;

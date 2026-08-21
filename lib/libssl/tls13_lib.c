@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.78 2025/06/07 10:25:12 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.79 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -25,14 +25,14 @@
 #include "tls13_internal.h"
 
 /*
- * RFC 8446, section 4.6.1. Servers must not indicate a lifetime longer than
+ * RFC 9846 section 4.7.1. Servers must not indicate a lifetime longer than
  * 7 days and clients must not cache tickets for longer than 7 days.
  */
 
 #define TLS13_MAX_TICKET_LIFETIME	(7 * 24 * 3600)
 
 /*
- * Downgrade sentinels - RFC 8446 section 4.1.3, magic values which must be set
+ * Downgrade sentinels - RFC 9846 section 4.2.3, magic values which must be set
  * by the server in server random if it is willing to downgrade but supports
  * TLSv1.3
  */
@@ -44,7 +44,7 @@ const uint8_t tls13_downgrade_11[8] = {
 };
 
 /*
- * HelloRetryRequest hash - RFC 8446 section 4.1.3.
+ * HelloRetryRequest hash - RFC 9846 section 4.2.3.
  */
 const uint8_t tls13_hello_retry_request_hash[32] = {
 	0xcf, 0x21, 0xad, 0x74, 0xe5, 0x9a, 0x61, 0x11,
@@ -54,7 +54,7 @@ const uint8_t tls13_hello_retry_request_hash[32] = {
 };
 
 /*
- * Certificate Verify padding - RFC 8446 section 4.4.3.
+ * Certificate Verify padding - RFC 9846 section 4.5.2.
  */
 const uint8_t tls13_cert_verify_pad[64] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
@@ -156,7 +156,7 @@ tls13_alert_received_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
 	if (alert_desc == TLS13_ALERT_USER_CANCELED) {
 		/*
 		 * We treat this as advisory, since a close_notify alert
-		 * SHOULD follow this alert (RFC 8446 section 6.1).
+		 * MUST follow this alert (RFC 9846 section 6.1).
 		 */
 		return;
 	}
@@ -369,7 +369,7 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return tls13_send_alert(ctx->rl, alert);
 }
 
-/* RFC 8446 section 4.6.1 */
+/* RFC 9846 section 4.7.1 */
 static ssize_t
 tls13_new_session_ticket_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
@@ -628,7 +628,7 @@ tls13_synthetic_handshake_message(struct tls13_ctx *ctx)
 
 	/*
 	 * Replace ClientHello with synthetic handshake message - see
-	 * RFC 8446 section 4.4.1.
+	 * RFC 9846 section 4.1.
 	 */
 	if (!tls1_transcript_hash_init(s))
 		goto err;

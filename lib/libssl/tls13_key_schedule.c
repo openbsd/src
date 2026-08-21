@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.18 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.19 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -47,7 +47,7 @@ tls13_secret_cleanup(struct tls13_secret *secret)
 
 /*
  * Allocate a set of secrets for a key schedule using
- * a size of hash_length from RFC 8446 section 7.1.
+ * a size of hash_length from RFC 9846 section 7.1.
  */
 struct tls13_secrets *
 tls13_secrets_create(const EVP_MD *digest, int resumption)
@@ -256,7 +256,7 @@ tls13_derive_early_secrets(struct tls13_secrets *secrets,
 	    &secrets->empty_hash))
 		return 0;
 
-	/* RFC 8446 recommends */
+	/* RFC 9846 recommends */
 	if (!secrets->insecure)
 		explicit_bzero(secrets->extracted_early.data,
 		    secrets->extracted_early.len);
@@ -300,7 +300,7 @@ tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
 	    &secrets->empty_hash))
 		return 0;
 
-	/* RFC 8446 recommends */
+	/* RFC 9846 recommends */
 	if (!secrets->insecure)
 		explicit_bzero(secrets->extracted_handshake.data,
 		    secrets->extracted_handshake.len);
@@ -349,7 +349,7 @@ tls13_derive_application_secrets(struct tls13_secrets *secrets,
 	    context))
 		return 0;
 
-	/* RFC 8446 recommends */
+	/* RFC 9846 recommends */
 	if (!secrets->insecure)
 		explicit_bzero(secrets->extracted_master.data,
 		    secrets->extracted_master.len);
@@ -400,7 +400,7 @@ tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
 	int ret = 0;
 
 	/*
-	 * RFC 8446 Section 7.5.
+	 * RFC 9846 section 7.5.
 	 */
 
 	memset(&context, 0, sizeof(context));

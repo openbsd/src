@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.42 2026/06/08 11:38:04 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.43 2026/08/21 17:15:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -428,7 +428,7 @@ struct ssl_session_st {
 
 	char *tlsext_hostname;
 
-	/* Session resumption - RFC 5077 and RFC 8446. */
+	/* Session resumption - RFC 5077 and RFC 9846. */
 	unsigned char *tlsext_tick;		/* Session ticket */
 	size_t tlsext_ticklen;			/* Session ticket length */
 	uint32_t tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */

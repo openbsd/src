@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.113 2026/07/31 03:59:50 kenjiro Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.114 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -102,13 +102,13 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 	SSL *s = ctx->ssl;
 
 	/*
-	 * RFC 8446, section 9.2. If the ClientHello has supported_versions
+	 * RFC 9846 section 9.2. If the ClientHello has supported_versions
 	 * containing TLSv1.3, presence or absence of some extensions requires
 	 * presence or absence of others.
 	 */
 
 	/*
-	 * RFC 8446 section 4.2.9 - if we received a pre_shared_key, then we
+	 * RFC 9846 section 4.3.9 - if we received a pre_shared_key, then we
 	 * also need psk_key_exchange_modes. Otherwise, section 9.2 specifies
 	 * that we need both signature_algorithms and supported_groups.
 	 */
@@ -133,7 +133,7 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 
 	/*
 	 * XXX - Require server_name from client? If so, we SHOULD enforce
-	 * this here - RFC 8446, 9.2.
+	 * this here - RFC 9846, 9.2.
 	 */
 
 	return 1;
@@ -246,7 +246,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	/*
 	 * The legacy session identifier must either be zero length or a 32 byte
 	 * value (in which case the client is requesting middlebox compatibility
-	 * mode), as per RFC 8446 section 4.1.2. If it is valid, store the value
+	 * mode), as per RFC 9846 section 4.2.2. If it is valid, store the value
 	 * so that we can echo it back to the client.
 	 */
 	if (CBS_len(&session_id) != 0 &&
@@ -459,7 +459,7 @@ tls13_server_hello_retry_request_sent(struct tls13_ctx *ctx)
 	/*
 	 * If the client has requested middlebox compatibility mode,
 	 * we MUST send a dummy CCS following our first handshake message.
-	 * See RFC 8446 Appendix D.4.
+	 * See RFC 9846 Appendix E.4.
 	 */
 	if (ctx->hs->tls13.legacy_session_id_len > 0)
 		ctx->send_dummy_ccs_after = 1;
@@ -519,7 +519,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 	/*
 	 * If the client has requested middlebox compatibility mode,
 	 * we MUST send a dummy CCS following our first handshake message.
-	 * See RFC 8446 Appendix D.4.
+	 * See RFC 9846 Appendix E.4.
 	 */
 	if ((ctx->handshake_stage.hs_type & WITHOUT_HRR) &&
 	    ctx->hs->tls13.legacy_session_id_len > 0)
@@ -572,7 +572,7 @@ tls13_server_check_certificate(struct tls13_ctx *ctx, SSL_CERT_PKEY *cpk,
 
 	/*
 	 * The digitalSignature bit MUST be set if the Key Usage extension is
-	 * present as per RFC 8446 section 4.4.2.2.
+	 * present as per RFC 9846 section 4.5.1.2.
 	 */
 	if (!(X509_get_key_usage(cpk->x509) & X509v3_KU_DIGITAL_SIGNATURE))
 		goto done;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.61 2025/04/18 07:34:01 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.62 2026/08/21 17:15:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,7 +240,7 @@ extern "C" {
 /* ExtensionType value from RFC 5054. */
 #define TLSEXT_TYPE_srp				12
 
-/* ExtensionType value from RFC 5246/RFC 8446. */
+/* ExtensionType value from RFC 5246/RFC 9846. */
 #define TLSEXT_TYPE_signature_algorithms	13
 
 /* ExtensionType value from RFC 5764. */
@@ -258,7 +258,7 @@ extern "C" {
 /* ExtensionType value from RFC 4507. */
 #define TLSEXT_TYPE_session_ticket		35
 
-/* ExtensionType values from RFC 8446 section 4.2 */
+/* ExtensionType values from RFC 9846 section 4.3 */
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 #define TLSEXT_TYPE_pre_shared_key		41
 #define TLSEXT_TYPE_early_data			42
@@ -279,7 +279,7 @@ extern "C" {
 
 /*
  * TLS 1.3 extension names from OpenSSL, where they decided to use a different
- * name from that given in RFC 8446.
+ * name from that given in RFC 9846.
  */
 #if defined(LIBRESSL_HAS_TLS1_3)
 #define TLSEXT_TYPE_psk				TLSEXT_TYPE_pre_shared_key
@@ -486,7 +486,7 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS1_CK_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256	0x030000C4
 #define TLS1_CK_ADH_WITH_CAMELLIA_256_CBC_SHA256	0x030000C5
 
-/* TLS 1.3 cipher suites from RFC 8446 appendix B.4. */
+/* TLS 1.3 cipher suites from RFC 9846 appendix B.4. */
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 #define TLS1_3_CK_AES_128_GCM_SHA256			0x03001301
 #define TLS1_3_CK_AES_256_GCM_SHA384			0x03001302
@@ -725,7 +725,7 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS1_TXT_ECDHE_ECDSA_WITH_CHACHA20_POLY1305	"ECDHE-ECDSA-CHACHA20-POLY1305"
 #define TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305		"DHE-RSA-CHACHA20-POLY1305"
 
-/* TLS 1.3 cipher suites from RFC 8446 appendix B.4. */
+/* TLS 1.3 cipher suites from RFC 9846 appendix B.4. */
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 #define TLS1_3_TXT_AES_128_GCM_SHA256			"AEAD-AES128-GCM-SHA256"
 #define TLS1_3_TXT_AES_256_GCM_SHA384			"AEAD-AES256-GCM-SHA384"

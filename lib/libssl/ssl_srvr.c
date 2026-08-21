@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.170 2026/06/06 15:24:26 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.171 2026/08/21 17:15:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1027,7 +1027,7 @@ ssl3_get_client_hello(SSL *s)
 	if (s->s3->hs.our_max_tls_version >= TLS1_2_VERSION &&
 	    s->s3->hs.negotiated_tls_version < s->s3->hs.our_max_tls_version) {
 		/*
-		 * RFC 8446 section 4.1.3. If we are downgrading from TLS 1.3
+		 * RFC 9846 section 4.2.3. If we are downgrading from TLS 1.3
 		 * we must set the last 8 bytes of the server random to magical
 		 * values to indicate we meant to downgrade.  For TLS 1.2 it is
 		 * recommended that we do the same.

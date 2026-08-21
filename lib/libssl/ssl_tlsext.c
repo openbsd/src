@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.165 2026/08/18 04:40:17 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.166 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -281,10 +281,8 @@ tlsext_supportedgroups_server_process(SSL *s, uint16_t msg_type, CBS *cbs,
 		if (!CBS_get_u16(&grouplist, &groups[i]))
 			goto err;
 		/*
-		 * Do not allow duplicate groups to be sent. This is not
-		 * currently specified in RFC 8446 or earlier, but there is no
-		 * legitimate justification for this to occur in TLS 1.2 or TLS
-		 * 1.3.
+		 * RFC 9846 section 4.3.7: The "named_group_list" MUST NOT
+		 * contain any duplicate entries.
 		 */
 		for (j = 0; j < i; j++) {
 			if (groups[i] == groups[j]) {
@@ -336,7 +334,7 @@ tlsext_supportedgroups_client_process(SSL *s, uint16_t msg_type, CBS *cbs,
 		return 0;
 
 	/*
-	 * RFC 8446, section 4.2.7: TLSv1.3 servers can send this extension but
+	 * RFC 9846 section 4.3.7: TLSv1.3 servers can send this extension but
 	 * clients must not act on it during the handshake. This allows servers
 	 * to advertise their preferences for subsequent handshakes. We ignore
 	 * this complication.
@@ -1064,7 +1062,7 @@ tlsext_ocsp_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (ssl_effective_tls_version(s) >= TLS1_3_VERSION) {
 		if (msg_type == SSL_TLSEXT_MSG_CR) {
 			/*
-			 * RFC 8446, 4.4.2.1 - the server may request an OCSP
+			 * RFC 9846, 4.5.1.1 - the server may request an OCSP
 			 * response with an empty status_request.
 			 */
 			if (CBS_len(cbs) == 0)
@@ -1440,7 +1438,7 @@ tlsext_srtp_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 #endif /* OPENSSL_NO_SRTP */
 
 /*
- * TLSv1.3 Key Share - RFC 8446 section 4.2.8.
+ * TLSv1.3 Key Share - RFC 9846 section 4.3.8.
  */
 static int
 tlsext_keyshare_client_needs(SSL *s, uint16_t msg_type)
@@ -1508,7 +1506,7 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	CBS client_shares, key_exchange;
 
 	/*
-	 * RFC 8446 section 4.2.8:
+	 * RFC 9846 section 4.3.8:
 	 *
 	 * Each KeyShareEntry value MUST correspond to a group offered in the
 	 * "supported_groups" extension and MUST appear in the same order.
@@ -1597,7 +1595,7 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		/*
 		 * There are no supported groups that are shared between the
 		 * client and server - this is treated as a handshake failure
-		 * or as insufficient security - see RFC 8446 section 4.1.1.
+		 * or as insufficient security - see RFC 9846 section 4.2.1.
 		 */
 		*alert = TLS13_ALERT_HANDSHAKE_FAILURE;
 		return 0;
@@ -1766,7 +1764,7 @@ tlsext_keyshare_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 }
 
 /*
- * Supported Versions - RFC 8446 section 4.2.1.
+ * Supported Versions - RFC 9846 section 4.3.1.
  */
 static int
 tlsext_versions_client_needs(SSL *s, uint16_t msg_type)
@@ -1868,7 +1866,7 @@ tlsext_versions_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 
 /*
- * Cookie - RFC 8446 section 4.2.2.
+ * Cookie - RFC 9846 section 4.3.2.
  */
 
 static int
@@ -1980,7 +1978,7 @@ tlsext_cookie_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 }
 
 /*
- * Pre-Shared Key Exchange Modes - RFC 8446, 4.2.9.
+ * Pre-Shared Key Exchange Modes - RFC 9846 section 4.3.9.
  */
 
 static int
@@ -2050,7 +2048,7 @@ tlsext_psk_kex_modes_client_process(SSL *s, uint16_t msg_type, CBS *cbs,
 }
 
 /*
- * Pre-Shared Key Extension - RFC 8446, 4.2.11
+ * Pre-Shared Key Extension - RFC 9846 section 4.3.11
  */
 
 static int
@@ -2484,7 +2482,7 @@ tlsext_randomize_build_order(SSL *s)
 		return 0;
 	s->tlsext_build_order_len = N_TLS_EXTENSIONS;
 
-	/* RFC 8446, section 4.2 - PSK MUST be the last extension in the CH. */
+	/* RFC 9846 section 4.3 - PSK MUST be the last extension in the CH. */
 	if ((psk_ext = tls_extension_find(TLSEXT_TYPE_pre_shared_key,
 	    NULL)) == NULL)
 		return 0;
@@ -2538,7 +2536,7 @@ tlsext_build(SSL *s, int is_server, uint16_t msg_type, CBB *cbb)
 		tlsext = s->tlsext_build_order[i];
 		ext = tlsext_funcs(tlsext, is_server);
 
-		/* RFC 8446 Section 4.2 */
+		/* RFC 9846 section 4.3 */
 		if (tls_version >= TLS1_3_VERSION &&
 		    !(tlsext->messages & msg_type))
 			continue;
@@ -2571,7 +2569,7 @@ static int
 tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
 {
 	/*
-	 * RFC 8446 4.1.2. For subsequent CH, early data will be removed,
+	 * RFC 9846, 4.2.2. For subsequent CH, early data will be removed,
 	 * cookie may be added, padding may be removed.
 	 */
 	struct tls13_ctx *ctx = s->tls13;
@@ -2644,7 +2642,7 @@ tlsext_parse(SSL *s, struct tlsext_data *td, int is_server, uint16_t msg_type,
 				goto err;
 		}
 
-		/* RFC 8446 Section 4.2 */
+		/* RFC 9846 section 4.3 */
 		if (tls_version >= TLS1_3_VERSION &&
 		    !(tlsext->messages & msg_type)) {
 			alert_desc = SSL_AD_ILLEGAL_PARAMETER;

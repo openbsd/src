@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.108 2026/06/14 15:51:17 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.109 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -73,8 +73,8 @@ tls13_client_init(struct tls13_ctx *ctx)
 	/*
 	 * The legacy session identifier should either be set to an
 	 * unpredictable 32-byte value or zero length... a non-zero length
-	 * legacy session identifier triggers compatibility mode (see RFC 8446
-	 * Appendix D.4). In the pre-TLSv1.3 case a zero length value is used.
+	 * legacy session identifier triggers compatibility mode (see RFC 9846
+	 * Appendix E.4). In the pre-TLSv1.3 case a zero length value is used.
 	 */
 	if (ctx->middlebox_compat &&
 	    ctx->hs->our_max_tls_version >= TLS1_3_VERSION) {
@@ -242,7 +242,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	if (tls13_server_hello_is_legacy(cbs)) {
 		if (ctx->hs->our_max_tls_version >= TLS1_3_VERSION) {
 			/*
-			 * RFC 8446 section 4.1.3: we must not downgrade if
+			 * RFC 9846 section 4.2.3: we must not downgrade if
 			 * the server random value contains the TLS 1.2 or 1.1
 			 * magical value.
 			 */
@@ -285,7 +285,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	/*
 	 * The supported versions extension indicated 0x0304 or greater.
 	 * Ensure that it was 0x0304 and that legacy version is set to 0x0303
-	 * (RFC 8446 section 4.2.1).
+	 * (RFC 9846 section 4.3.1).
 	 */
 	if (ctx->hs->tls13.server_version != TLS1_3_VERSION ||
 	    legacy_version != TLS1_2_VERSION) {
@@ -318,7 +318,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	if (!(ctx->handshake_stage.hs_type & WITHOUT_HRR) && !ctx->hs->tls13.hrr) {
 		/*
 		 * A ServerHello following a HelloRetryRequest MUST use the same
-		 * cipher suite (RFC 8446 section 4.1.4).
+		 * cipher suite (RFC 9846 section 4.2.4).
 		 */
 		if (ctx->hs->cipher != cipher) {
 			ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
@@ -450,7 +450,7 @@ tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 	/*
 	 * Ensure that the server supported group is one that we listed in our
 	 * supported groups and is not the same as the key share we previously
-	 * offered. See RFC 8446 section 4.2.8.
+	 * offered. See RFC 9846 section 4.3.8.
 	 */
 	if (!tls1_check_group(ctx->ssl, ctx->hs->tls13.server_group)) {
 		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
@@ -855,8 +855,8 @@ tls13_client_select_certificate(struct tls13_ctx *ctx, SSL_CERT_PKEY **out_cpk,
 	*out_sigalg = NULL;
 
 	/*
-	 * XXX - RFC 8446, 4.4.2.3: the server can communicate preferences
-	 * with the certificate_authorities (4.2.4) and oid_filters (4.2.5)
+	 * XXX - RFC 9846, 4.5.1.2: the server can communicate preferences
+	 * with the certificate_authorities (4.3.4) and oid_filters (4.3.5)
 	 * extensions. We should honor the former and must apply the latter.
 	 */
 

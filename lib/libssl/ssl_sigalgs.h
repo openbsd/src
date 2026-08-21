@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.28 2026/05/31 14:34:44 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.29 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -23,8 +23,8 @@ __BEGIN_HIDDEN_DECLS
 #define SIGALG_NONE			0x0000
 
 /*
- * RFC 8446 Section 4.2.3
- * RFC 5246 Section 7.4.1.4.1
+ * RFC 9846 section 4.3.3
+ * RFC 5246 section 7.4.1.4.1
  */
 #define SIGALG_RSA_PKCS1_SHA224		0x0301
 #define SIGALG_RSA_PKCS1_SHA256		0x0401

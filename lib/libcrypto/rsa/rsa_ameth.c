@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.65 2026/04/07 13:16:41 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.66 2026/08/21 17:15:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -879,7 +879,7 @@ rsa_pss_signature_info(const X509_ALGOR *alg, int *out_md_nid,
 		goto err;
 
 	/*
-	 * RFC 8446, section 4.2.3 - restricts the digest algorithm:
+	 * RFC 9846, section 4.3.3 - restricts the digest algorithm:
 	 * - it must be one of SHA256, SHA384, and SHA512;
 	 * - the same digest must be used in the mask generation function;
 	 * - the salt length must match the output length of the digest.

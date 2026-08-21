@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.105 2025/03/09 15:12:18 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.106 2026/08/21 17:15:22 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -114,7 +114,7 @@ struct tls13_secret {
 	size_t len;
 };
 
-/* RFC 8446 Section 7.1  Page 92 */
+/* RFC 9846 section 7.1 */
 struct tls13_secrets {
 	const EVP_MD *digest;
 	int resumption;
@@ -339,7 +339,7 @@ int tls13_legacy_shutdown(SSL *ssl);
 int tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert);
 
 /*
- * Message Types - RFC 8446, Section B.3.
+ * Message Types - RFC 9846 section B.3.
  *
  * Values listed as "_RESERVED" were used in previous versions of TLS and are
  * listed here for completeness.  TLS 1.3 implementations MUST NOT send them but
