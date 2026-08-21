@@ -1,0 +1,14 @@
+.\" $OpenBSD: indent.in,v 1.1 2026/08/21 11:21:12 schwarze Exp $
+.TH BLANK-INDENT 1 "August 21, 2026"
+.SH NAME
+blank-indent \- indented input line
+.SH DESCRIPTION
+BEGINTEST
+.PP
+regular text
+ line starting with a space character
+regular text
+      line starting with several space characters
+regular text
+.PP
+ENDTEST

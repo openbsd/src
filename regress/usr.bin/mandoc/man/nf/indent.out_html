@@ -1,19 +1,9 @@
-.\" $OpenBSD: indent.in,v 1.6 2026/08/21 11:21:12 schwarze Exp $
-.TH NF-INDENT 1 "August 21, 2026"
-.SH NAME
-nf-indent \- indentation of unfilled blocks
-.SH DESCRIPTION
-BEGINTEST
-.PP
-Here comes
-an unfilled block:
-.nf
-oneword
+<p class="Pp">Here comes an unfilled block:</p>
+<pre>oneword
 two words
 and three words
 This is a very long line; because it is indented, it is a bit too long to fit.
 completely blank line:
-
 line containing a blank character:
   
 line containing two blank characters:
@@ -21,20 +11,12 @@ line containing two blank characters:
 line containing space tab space:
  	 
 line containing a zero-width space:
-\&
 line containing an invalid numbered character escape:
-\N'257'
 line containing an invalid named character escape:
-\[foobar]
 line containing a font escape:
-\fR
 line starting with a blank character:
  x
 line starting with two blank characters:
   x
-end of unfilled
-.fi
-He is some more
-regular text.
-.PP
-ENDTEST
+end of unfilled</pre>
+He is some more regular text.

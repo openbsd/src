@@ -1,0 +1,24 @@
+.\" $OpenBSD: indent.in,v 1.1 2026/08/21 11:21:12 schwarze Exp $
+.TH EX-INDENT 1 "August 21, 2026"
+.SH NAME
+EX-indent \- manual indentation inside example blocks
+.SH DESCRIPTION
+BEGINTEST
+.PP
+regular
+text
+.EX
+literal
+text
+.EE
+regular
+text
+.EX
+ indented
+ literal
+ text
+.EE
+regular
+text
+.PP
+ENDTEST

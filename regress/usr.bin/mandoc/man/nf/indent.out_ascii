@@ -1,10 +1,12 @@
 NF-INDENT(1)                General Commands Manual               NF-INDENT(1)
 
 NNAAMMEE
-     nf-indent - indentation of literal blocks
+     nf-indent - indentation of unfilled blocks
 
 DDEESSCCRRIIPPTTIIOONN
-     Here comes an indented block:
+     BEGINTEST
+
+     Here comes an unfilled block:
      oneword
      two words
      and three words
@@ -24,7 +26,13 @@ DDEESSCCRRIIPPTTIIOONN
      line containing an invalid named character escape:
 
      line containing a font escape:
-     end of literal
+     line starting with a blank character:
+      x
+     line starting with two blank characters:
+       x
+     end of unfilled
      He is some more regular text.
 
-OpenBSD                         August 15, 2022                   NF-INDENT(1)
+     ENDTEST
+
+OpenBSD                         August 21, 2026                   NF-INDENT(1)

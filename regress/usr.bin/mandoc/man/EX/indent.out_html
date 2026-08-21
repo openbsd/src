@@ -1,0 +1,10 @@
+<p class="Pp">regular text</p>
+<pre>literal
+text
+</pre>
+regular text
+<pre> indented
+ literal
+ text
+</pre>
+regular text

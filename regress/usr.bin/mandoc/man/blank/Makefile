@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.3 2014/07/02 05:51:49 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2026/08/21 11:21:12 schwarze Exp $
 
-REGRESS_TARGETS = line afterSH afterSS
-LINT_TARGETS	= line afterSH afterSS
+REGRESS_TARGETS	 = afterSH afterSS indent line
+LINT_TARGETS	 = afterSH afterSS line
+HTML_TARGETS	 = indent
 
 .include <bsd.regress.mk>

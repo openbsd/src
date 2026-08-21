@@ -1,0 +1,15 @@
+BLANK-INDENT(1)             General Commands Manual            BLANK-INDENT(1)
+
+NNAAMMEE
+     blank-indent - indented input line
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     regular text
+      line starting with a space character regular text
+           line starting with several space characters regular text
+
+     ENDTEST
+
+OpenBSD                         August 21, 2026                BLANK-INDENT(1)

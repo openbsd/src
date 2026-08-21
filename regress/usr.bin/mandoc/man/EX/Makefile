@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2012/06/02 20:07:09 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2026/08/21 11:21:12 schwarze Exp $
 
-REGRESS_TARGETS=spacing nested args
+REGRESS_TARGETS	 = args indent nested spacing
+HTML_TARGETS	 = indent
 
 .include <bsd.regress.mk>

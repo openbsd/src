@@ -1,0 +1,20 @@
+EX-INDENT(1)                General Commands Manual               EX-INDENT(1)
+
+NNAAMMEE
+     EX-indent - manual indentation inside example blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     regular text
+     literal
+     text
+     regular text
+      indented
+      literal
+      text
+     regular text
+
+     ENDTEST
+
+OpenBSD                         August 21, 2026                   EX-INDENT(1)
