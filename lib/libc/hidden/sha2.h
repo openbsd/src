@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.5 2026/08/21 09:41:49 jsing Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.6 2026/08/21 14:52:57 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -25,6 +25,10 @@ void __sha256_block(uint32_t state[8], const uint8_t *in, size_t num);
 void __sha256_block_generic(uint32_t state[8], const uint8_t *in, size_t num);
 void __sha512_block(uint64_t state[8], const uint8_t *in, size_t num);
 void __sha512_block_generic(uint64_t state[8], const uint8_t *in, size_t num);
+
+#ifdef __aarch64__
+void __sha256_block_ce(uint32_t state[8], const uint8_t *in, size_t num);
+#endif
 
 #ifdef __amd64__
 void __sha256_block_shani(uint32_t state[8], const uint8_t *in, size_t num);

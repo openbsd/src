@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha256.c,v 1.2 2026/08/21 09:41:49 jsing Exp $	*/
+/*	$OpenBSD: sha256.c,v 1.3 2026/08/21 14:52:57 jsing Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,8 @@
 #if defined(__amd64__)
 #define HAVE_SHA256_BLOCK
 #define HAVE_SHA256_BLOCK_GENERIC
+#elif defined(__aarch64__)
+#define HAVE_SHA256_BLOCK
 #endif
 #endif
 
