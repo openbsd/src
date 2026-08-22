@@ -59,7 +59,6 @@
 ./usr/include/sparc64/trap.h
 ./usr/include/sparc64/vmparam.h
 ./usr/include/sparc64/z8530var.h
-./usr/include/unwind.h
 ./usr/libdata/ldscripts/elf64_sparc_obsd.x
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xbn
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xc
