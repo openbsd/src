@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.44 2025/09/19 17:16:28 sthen Exp $
+ * $OpenBSD: calendar.music,v 1.45 2026/08/22 03:12:47 jsg Exp $
  */
 
 #ifndef _calendar_music_
@@ -396,7 +396,7 @@
 09/23	Bruce "The Boss" Springsteen is born in Freehold, New Jersey, 1949
 09/24	Vaclav Nelhybel is born, 1919
 09/25	John Bonham (Led Zeppelin) dies of alcohol poisoning, 1980
-09/25	Dmitri Shostakovich is born in St. Petersberg, Russia, 1906
+09/25	Dmitri Shostakovich is born in St. Petersburg, Russia, 1906
 09/25	Jean Francaix dies, 1997
 09/25	John-Philippe Rameau is born in France, 1683
 09/26	Bela Bartok dies in New York City, 1945

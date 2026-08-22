@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.36 2016/01/28 09:52:43 dtucker Exp $
+ * $OpenBSD: calendar.holiday,v 1.37 2026/08/22 03:12:47 jsg Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -28,7 +28,7 @@
 01/16	Martyrs Day in Benin
 01/18	Revolution Day in Tunisia
 01/19	Confederate Heroes Day in Texas
-01/19	Ethopian Epiphany in Ethiopia
+01/19	Ethiopian Epiphany in Ethiopia
 01/19	Nameday of Archbishop Makarios in Cyprus
 01/20	Army Day in Mali
 01/20	National Heroes Day in Guinea-Bissau

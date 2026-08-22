@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.66 2020/04/19 21:08:39 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.67 2026/08/22 03:12:47 jsg Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -358,6 +358,6 @@
 12/25	Isaac Newton (Sir) born in Lincolnshire, England, 1642
 12/25	Humphrey Bogart born in New York City, 1899
 12/26	Charles Babbage born, 1791
-12/29	Grigori Yefimovich Rasputin assasinated, 1916
+12/29	Grigori Yefimovich Rasputin assassinated, 1916
 
 #endif /* !_calendar_birthday_ */

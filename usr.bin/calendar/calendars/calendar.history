@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.83 2024/09/14 20:15:24 schwarze Exp $
+ * $OpenBSD: calendar.history,v 1.84 2026/08/22 03:12:47 jsg Exp $
  */
 
 #ifndef _calendar_history_
@@ -171,7 +171,7 @@
 05/08	Herbert Akroyd Stuart patented the first "diesel" engine, 1890
 05/09	The first parliament of Australia opens in Melbourne, 1901
 05/10	Germany invades Low Countries, 1940
-05/10	Nazi bookburning, 1933
+05/10	Nazi book burning, 1933
 05/11	Thailand is no longer known as Siam, 1949
 05/12	Tunisia becomes a French protectorate, 1881
 05/13	Dutch statesman Johan van Oldenbarnevelt is executed in The Hague after
