@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.108 2026/08/22 14:04:42 kirill Exp $
+#	$OpenBSD: airport,v 1.109 2026/08/22 19:15:20 kn Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Only use the IATA airport codes, and only add ones you have been to.
@@ -1450,6 +1450,7 @@ REX:General Lucio Blanco, Reynosa, Tamaulipas, Mexico
 RFD:Greater Rockford, Illinois, USA
 RGA:Rio Grande, Tierra Del Fuego, Argentina
 RGN:Mingaladon, Yangon, Myanmar
+RGK:Gorno-Altaysk, Russia
 RHI:Rhinelander Oneida County, Wisconsin, USA
 RHO:Paradisi, Rhodes, Greece
 RHV:Reid-Hillview Airport, San Jose, California, USA
