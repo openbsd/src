@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.493 2026/08/07 05:49:53 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.494 2026/08/22 12:48:18 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -76,6 +76,8 @@
  */
 #define DEFAULT_BITS		3072
 #define DEFAULT_BITS_ECDSA	256
+
+#define KEY_COMMENT_MAX		(NI_MAXHOST + 1024)
 
 static int quiet = 0;
 
@@ -1008,7 +1010,7 @@ do_gen_all_hostkeys(struct passwd *pw)
 	int first = 0;
 	struct stat st;
 	struct sshkey *private, *public;
-	char comment[1024], *prv_tmp, *pub_tmp, *prv_file, *pub_file;
+	char comment[KEY_COMMENT_MAX], *prv_tmp, *pub_tmp, *prv_file, *pub_file;
 	int i, type, fd, r;
 
 	for (i = 0; key_types[i].key_type; i++) {
@@ -1496,7 +1498,7 @@ do_print_resource_record(struct passwd *pw, char *fname, char *hname,
 static void
 do_change_comment(struct passwd *pw, const char *identity_comment)
 {
-	char new_comment[1024], *comment, *passphrase;
+	char new_comment[KEY_COMMENT_MAX], *comment, *passphrase;
 	struct sshkey *private;
 	struct sshkey *public;
 	struct stat st;
@@ -3307,7 +3309,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char comment[1024], *passphrase = NULL;
+	char comment[KEY_COMMENT_MAX], *passphrase = NULL;
 	char *rr_hostname = NULL, *ep, *fp, *ra;
 	struct sshkey *private = NULL, *public = NULL;
 	struct passwd *pw;
