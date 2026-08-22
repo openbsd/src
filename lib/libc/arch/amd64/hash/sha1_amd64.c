@@ -1,6 +1,6 @@
-/*	$OpenBSD: sha1.h,v 1.4 2026/08/22 09:04:01 jsing Exp $	*/
+/* $OpenBSD: sha1_amd64.c,v 1.1 2026/08/22 09:04:01 jsing Exp $ */
 /*
- * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
+ * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,28 +15,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LIBC_SHA1_H
-#define _LIBC_SHA1_H
+#include <sys/types.h>
 
-#include_next <sha1.h>
+#include <stddef.h>
+#include <stdint.h>
 
-__BEGIN_HIDDEN_DECLS
-void __sha1_block(uint32_t state[5], const uint8_t *in, size_t num);
-void __sha1_block_generic(uint32_t state[5], const uint8_t *in, size_t num);
+#include <sha1.h>
 
-#ifdef __amd64__
-void __sha1_block_shani(uint32_t state[5], const uint8_t *in, size_t num);
-#endif
-__END_HIDDEN_DECLS
-
-PROTO_NORMAL(SHA1Data);
-PROTO_NORMAL(SHA1End);
-PROTO_NORMAL(SHA1File);
-PROTO_NORMAL(SHA1FileChunk);
-PROTO_NORMAL(SHA1Final);
-PROTO_NORMAL(SHA1Init);
-PROTO_NORMAL(SHA1Pad);
-PROTO_NORMAL(SHA1Transform);
-PROTO_NORMAL(SHA1Update);
-
-#endif /* _LIBC_SHA1_H */
+void
+__sha1_block(uint32_t state[5], const uint8_t *in, size_t num)
+{
+	if (__builtin_cpu_supports("sha")) {
+		__sha1_block_shani(state, in, num);
+		return;
+	}
+	__sha1_block_generic(state, in, num);
+}

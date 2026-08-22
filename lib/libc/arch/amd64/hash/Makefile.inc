@@ -1,5 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.2 2026/08/21 15:33:23 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2026/08/22 09:04:01 jsing Exp $
 
+SRCS += sha1_amd64.c
+SRCS += sha1_amd64_generic.S
+SRCS += sha1_amd64_shani.S
 SRCS += sha256_amd64.c
 SRCS += sha256_amd64_generic.S
 SRCS += sha256_amd64_shani.S
