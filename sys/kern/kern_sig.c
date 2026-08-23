@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.365 2025/05/31 06:58:27 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.366 2026/08/23 17:06:56 daniel Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -438,6 +438,7 @@ execsigs(struct proc *p)
 	 * Clear set of signals caught on the signal stack.
 	 */
 	sigstkinit(&p->p_sigstk);
+	ps->ps_sigonstack = 0;
 	atomic_clearbits_int(&ps->ps_sigflags, SAS_NOCLDWAIT);
 	if (ps->ps_sigact[SIGCHLD] == SIG_IGN)
 		ps->ps_sigact[SIGCHLD] = SIG_DFL;
