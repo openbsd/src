@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.109 2026/08/22 19:15:20 kn Exp $
+#	$OpenBSD: airport,v 1.110 2026/08/23 21:10:41 kirill Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Only use the IATA airport codes, and only add ones you have been to.
@@ -780,7 +780,7 @@ IQQ:Chucumata, Iquique, Chile
 IQT:Cf Secada, Iquitos, Peru
 ISB:Islamabad International, Pakistan
 ISC:Tresco, Isles Of Scilly, United Kingdom
-ISL:Ataturk International Istanbul, Turkey (closed)
+ISL:Ataturk International Istanbul, Turkey
 ISN:Sloulin Field International, Williston, North Dakota, USA
 ISO:Kinston, North Carolina, USA
 ISP:Long Island MacArthur, New York, USA
@@ -1645,7 +1645,7 @@ SWF:Stewart, Newburgh/Poughkeepsie, New York, USA
 SWP:Swakopmund, Namibia
 SWQ:Brang Bidji, Sumbawa Island, Indonesia
 SXB:Entzheim, Strasbourg, France
-SXF:Schoenefeld, Berlin, Germany (closed)
+SXF:Schoenefeld, Berlin, Germany
 SXL:Collooney, Sligo, Ireland
 SXM:Juliana, St Maarten, Netherlands Antilles
 SXR:Srinagar, India
@@ -1761,7 +1761,7 @@ TVU:Matei, Taveuni, Fiji
 TWB:Toowoomba, Queensland, Australia
 TWF:Twin Falls, Idaho, USA
 TXK:Texarkana Municipal, Arkansas, USA
-TXL:Tegel, Berlin, Germany (closed)
+TXL:Tegel, Berlin, Germany
 TXN:Tunxi, China
 TYF:Torsby, Wermland, Sweden
 TYN:Taiyuan, China
@@ -1942,7 +1942,7 @@ YKL:Schefferville, Quebec, Canada
 YKM:Yakima Air Terminal, Yakima, Washington, USA
 YKQ:Waskaganish, Quebec, Canada
 YKS:Yakutsk, Russia
-YKZ:Buttonville, Ontario, Canada (closed)
+YKZ:Buttonville, Ontario, Canada
 YLD:Chapleau, Ontario, Canada
 YLL:Lloydminster, Saskatchewan, Canada
 YLQ:La Tuque, La Tuque, Quebec, Canada
