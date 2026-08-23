@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.788 2026/08/18 23:36:28 jsg Exp $
+$OpenBSD: usbdevs,v 1.789 2026/08/23 23:34:20 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1681,6 +1681,7 @@ product DLINK DUBE100B1		0x3c05	DUB-E100 rev B1
 product DLINK RT2870		0x3c09	RT2870
 product DLINK RT3072		0x3c0a	RT3072
 product DLINK DWA140B3		0x3c15	DWA-140 rev B3
+product DLINK DWA125A3		0x3c19	DWA-125 rev A3
 product DLINK DWA160B2		0x3c1a	DWA-160 rev B2
 product DLINK DWA127		0x3c1b	DWA-127
 product DLINK DWA125B2		0x3c1e	DWA-125 rev B2
