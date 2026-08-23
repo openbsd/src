@@ -1,5 +1,5 @@
-.\" $OpenBSD: req.in,v 1.1 2022/04/30 18:46:16 schwarze Exp $
-.TH TBL-MACRO-REQ 1 "April 30, 2022"
+.\" $OpenBSD: req.in,v 1.2 2026/08/23 15:41:33 schwarze Exp $
+.TH TBL-MACRO-REQ 1 "August 23, 2026"
 .SH NAME
 tbl-macro-req \- requests generating nodes in a table
 .SH DESCRIPTION
@@ -26,5 +26,14 @@ j
 k
 T}
 .TE
-.PP
+middle text
+.TS
+box tab(:);
+l l.
+a:b
+.if n .ce
+c:d
+.if 0 .ce
+e:f
+.TE
 final text

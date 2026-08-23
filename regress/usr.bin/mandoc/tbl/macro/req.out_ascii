@@ -12,7 +12,12 @@ DDEESSCCRRIIPPTTIIOONN
      | f | g h |
      | i | j k |
      +---+-----+
-
+     middle text
+     +-------+
+     | a   b |
+     | c   d |
+     | e   f |
+     +-------+
      final text
 
-OpenBSD                         April 30, 2022                TBL-MACRO-REQ(1)
+OpenBSD                         August 23, 2026               TBL-MACRO-REQ(1)
