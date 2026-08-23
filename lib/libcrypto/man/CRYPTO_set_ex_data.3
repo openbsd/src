@@ -1,4 +1,4 @@
-.\" $OpenBSD: CRYPTO_set_ex_data.3,v 1.16 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: CRYPTO_set_ex_data.3,v 1.17 2026/08/23 04:46:31 jsg Exp $
 .\"
 .\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: August 23 2026 $
 .Dt CRYPTO_SET_EX_DATA 3
 .Os
 .Sh NAME
@@ -426,7 +426,7 @@ and
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
 .Sh CAVEATS
-If an program installs callback functions, the last call to
+If a program installs callback functions, the last call to
 .Fn CRYPTO_get_ex_new_index
 installing a function of a certain type for a certain
 .Fa class_index
