@@ -1,5 +1,5 @@
-.\" $OpenBSD: c_man.in,v 1.4 2018/08/25 12:28:52 schwarze Exp $
-.TH ESC-C_MAN 1 "August 25, 2018"
+.\" $OpenBSD: c_man.in,v 1.5 2026/08/23 19:26:33 schwarze Exp $
+.TH ESC-C_MAN 1 "August 23, 2026"
 .SH NAME
 esc-c_man \- the roff escape c sequence: remove trailing space
 .SH DESCRIPTION
@@ -22,6 +22,11 @@ one\c
 
 word
 .fi
+.PP
+In single-font macro scope:
+.B
+one\c
+word
 .PP
 In next-line element scope:
 .B

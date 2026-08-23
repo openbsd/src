@@ -13,6 +13,8 @@ DDEESSCCRRIIPPTTIIOONN
      one
      word
 
+     In single-font macro scope: oonneeword
+
      In next-line element scope: oonneeword
 
      In next-line block scope:
@@ -22,4 +24,4 @@ DDEESSCCRRIIPPTTIIOONN
 
      final text
 
-OpenBSD                         August 25, 2018                   ESC-C_MAN(1)
+OpenBSD                         August 23, 2026                   ESC-C_MAN(1)
