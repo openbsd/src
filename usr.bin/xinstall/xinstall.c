@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.78 2024/10/17 15:38:38 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.79 2026/08/24 15:48:03 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ void	copy(int, char *, int, char *, off_t, int);
 int	compare(int, const char *, off_t, int, const char *, off_t);
 void	install(char *, char *, u_long, u_int);
 void	install_dir(char *, int);
-void	strip(char *);
+int	strip(char *, char *);
 void	usage(void);
 int	create_tempfile(char *, char *, size_t);
 int	file_write(int, char *, size_t, int *, int *, int);
@@ -220,7 +220,8 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 {
 	struct stat from_sb, to_sb;
 	struct timespec ts[2];
-	int devnull, from_fd, to_fd, serrno, files_match = 0;
+	int devnull, from_fd = -1, to_fd = -1, serrno, files_match = 0;
+	int l_dostrip = dostrip, l_docompare = docompare;
 	char *p;
 	char *target_name = tempfile;
 
@@ -247,44 +248,61 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 
 	if (stat(to_name, &to_sb) == 0) {
 		/* Only compare against regular files. */
-		if (docompare && !S_ISREG(to_sb.st_mode)) {
-			docompare = 0;
+		if (l_docompare && !S_ISREG(to_sb.st_mode)) {
+			l_docompare = 0;
 			warnc(EFTYPE, "%s", to_name);
 		}
-	} else if (docompare) {
+	} else if (l_docompare) {
 		/* File does not exist so silently ignore compare flag. */
-		docompare = 0;
+		l_docompare = 0;
 	}
 
-	if (!devnull) {
+again:
+	if (!devnull && !l_dostrip) {
 		if ((from_fd = open(from_name, O_RDONLY)) == -1)
 			err(1, "%s", from_name);
 	}
 
 	to_fd = create_tempfile(to_name, tempfile, sizeof(tempfile));
 	if (to_fd < 0)
-		err(1, "%s", tempfile);
+		err(1, "mkstemp %s", tempfile);
 
-	if (!devnull)
+	if (!devnull && !l_dostrip)
 		copy(from_fd, from_name, to_fd, tempfile, from_sb.st_size,
 		    ((off_t)from_sb.st_blocks * S_BLKSIZE < from_sb.st_size));
 
-	if (dostrip) {
-		strip(tempfile);
-
-		/*
-		 * Re-open our fd on the target, in case we used a strip
-		 *  that does not work in-place -- like gnu binutils strip.
-		 */
-		close(to_fd);
-		if ((to_fd = open(tempfile, O_RDONLY)) == -1)
-			err(1, "stripping %s", to_name);
+	if (l_dostrip) {
+		if (strip(from_name, tempfile) == -1) {
+			/*
+			 * Don't know why it failed. Input file does not
+			 * exist?  Not a strippable binary?  Out of disk
+			 * space?  An error message has been issued, but
+			 * -s is a request to attempt stripping of the
+			 * resulting file. Try again without the strip attempt.
+			 */
+			if (from_fd != -1)
+				close(from_fd);
+			close(to_fd);
+			(void)unlink(tempfile);
+			l_dostrip = 0;
+			goto again;
+		} else {
+			/*
+			 * strip(1) may have created a new file after
+			 * unlink(2) or used rename(2) of a different
+			 * file, so we must re-open.  This is an ugly
+			 * race against a long mktemp filename.
+			 */
+			close(to_fd);
+			if ((to_fd = open(tempfile, O_RDONLY)) == -1)
+				err(1, "%s", to_name);
+		}
 	}
 
 	/*
 	 * Compare the (possibly stripped) temp file to the target.
 	 */
-	if (docompare) {
+	if (l_docompare) {
 		int temp_fd = to_fd;
 		struct stat temp_sb;
 
@@ -531,8 +549,8 @@ compare(int from_fd, const char *from_name, off_t from_len, int to_fd,
  * strip --
  *	use strip(1) to strip the target file
  */
-void
-strip(char *to_name)
+int
+strip(char *from_name, char *to_name)
 {
 	int serrno, status;
 	char * volatile path_strip;
@@ -547,7 +565,8 @@ strip(char *to_name)
 		(void)unlink(to_name);
 		errc(1, serrno, "forks");
 	case 0:
-		execl(path_strip, "strip", "--", to_name, (char *)NULL);
+		execl(path_strip, "strip", "-o", to_name, "--", from_name,
+		    (char *)NULL);
 		warn("%s", path_strip);
 		_exit(1);
 	default:
@@ -555,9 +574,10 @@ strip(char *to_name)
 			if (errno != EINTR)
 				break;
 		}
-		if (!WIFEXITED(status))
-			(void)unlink(to_name);
+		if (!WIFEXITED(status) || WEXITSTATUS(status))
+			return -1;
 	}
+	return 0;
 }
 
 /*

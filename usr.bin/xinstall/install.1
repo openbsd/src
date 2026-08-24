@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.31 2019/02/08 12:53:44 schwarze Exp $
+.\"	$OpenBSD: install.1,v 1.32 2026/08/24 15:48:03 deraadt Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 8 2019 $
+.Dd $Mdocdate: August 24 2026 $
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -147,11 +147,13 @@ in the destination directory, then atomically renamed.
 This avoids both race conditions and the destruction of existing
 files in case of write failures.
 .It Fl s
-.Nm
-exec's the command
+Attempt to strip the file of unneccessary sections and symbols.
+This executes the command
 .Pa /usr/bin/strip
-to strip binaries so that install can be portable over a large
-number of systems and binary types.
+using the
+.Fl o
+option to produce the output file, and if that fails copies the
+file in the regular way.
 If the environment variable
 .Ev STRIP
 is set, it is used instead.
@@ -175,7 +177,9 @@ creates an empty file.
 .It Ev STRIP
 For an alternate
 .Xr strip 1
-program to run.
+program to run, which must support the
+.Fl o
+option.
 Default is
 .Pa /usr/bin/strip .
 .El
