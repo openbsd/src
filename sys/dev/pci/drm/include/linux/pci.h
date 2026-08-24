@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.23 2026/08/19 01:34:10 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.24 2026/08/24 03:08:15 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -93,6 +93,7 @@ struct pci_dev {
 #define PCI_MEM64_END	0xffffffffffffffff
 #endif
 
+#define PCI_VENDOR_ID_AMD	PCI_VENDOR_AMD
 #define PCI_VENDOR_ID_APPLE	PCI_VENDOR_APPLE
 #define PCI_VENDOR_ID_ASUSTEK	PCI_VENDOR_ASUSTEK
 #define PCI_VENDOR_ID_ATI	PCI_VENDOR_ATI
