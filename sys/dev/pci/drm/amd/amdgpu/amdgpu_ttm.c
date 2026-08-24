@@ -2230,8 +2230,6 @@ int amdgpu_ttm_init(struct amdgpu_device *adev)
  */
 void amdgpu_ttm_fini(struct amdgpu_device *adev)
 {
-	int idx;
-
 	if (!adev->mman.initialized)
 		return;
 
@@ -2258,19 +2256,14 @@ void amdgpu_ttm_fini(struct amdgpu_device *adev)
 	amdgpu_ttm_fw_reserve_vram_fini(adev);
 	amdgpu_ttm_drv_reserve_vram_fini(adev);
 
-	if (drm_dev_enter(adev_to_drm(adev), &idx)) {
-
+	if (adev->mman.aper_base_kaddr) {
 #ifdef __linux__
-		if (adev->mman.aper_base_kaddr)
-			iounmap(adev->mman.aper_base_kaddr);
+		iounmap(adev->mman.aper_base_kaddr);
 #else
-		if (adev->mman.aper_base_kaddr)
-			bus_space_unmap(adev->memt, adev->mman.aper_bsh,
-			    adev->gmc.visible_vram_size);
+		bus_space_unmap(adev->memt, adev->mman.aper_bsh,
+		    adev->gmc.visible_vram_size);
 #endif
 		adev->mman.aper_base_kaddr = NULL;
-
-		drm_dev_exit(idx);
 	}
 
 	if (!adev->gmc.is_app_apu)
