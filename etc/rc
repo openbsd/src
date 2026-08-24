@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.590 2026/08/17 22:41:38 deraadt Exp $
+#	$OpenBSD: rc,v 1.591 2026/08/24 15:39:04 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -543,7 +543,7 @@ make_keys
 
 echo -n 'starting early daemons:'
 start_daemon syslogd ldattach bpflogd pflogd nsd unbound ntpd
-start_daemon iscsid isakmpd iked sasyncd ldapd npppd
+start_daemon lldpd iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
 # Load IPsec rules.
