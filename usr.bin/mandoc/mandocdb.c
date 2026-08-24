@@ -1,6 +1,6 @@
-/* $OpenBSD: mandocdb.c,v 1.222 2025/06/05 12:32:27 schwarze Exp $ */
+/* $OpenBSD: mandocdb.c,v 1.223 2026/08/24 19:56:01 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2021, 2024, 2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2021, 2024-2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
@@ -2200,14 +2200,15 @@ dbwrite(struct dba *dba)
 	 * then atomically move it into place.
 	 */
 
-	if (dba_write(MANDOC_DB "~", dba) != -1) {
-		if (rename(MANDOC_DB "~", MANDOC_DB) == -1) {
-			exitcode = (int)MANDOCLEVEL_SYSERR;
-			say(MANDOC_DB, "&rename");
-			unlink(MANDOC_DB "~");
-		}
+	if (dba_write(MANDOC_DB "~", dba) == -1) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(MANDOC_DB "~", "&dba_write");
+	} else if (rename(MANDOC_DB "~", MANDOC_DB) == -1) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(MANDOC_DB, "&rename");
+		unlink(MANDOC_DB "~");
+	} else
 		return;
-	}
 
 	/*
 	 * We lack write permission and cannot replace the database
@@ -2217,7 +2218,7 @@ dbwrite(struct dba *dba)
 	(void)strlcpy(tfn, "/tmp/mandocdb.XXXXXXXX", sizeof(tfn));
 	if (mkdtemp(tfn) == NULL) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say("", "&%s", tfn);
+		say(tfn, "&mkdtemp");
 		return;
 	}
 	cp1 = cp2 = MAP_FAILED;
@@ -2368,9 +2369,9 @@ say(const char *file, const char *format, ...)
 	va_list		 ap;
 	int		 use_errno;
 
-	if (*basedir != '\0')
+	if (*basedir != '\0' && *file != '/')
 		fprintf(stderr, "%s", basedir);
-	if (*basedir != '\0' && *file != '\0')
+	if (*basedir != '\0' && *file != '/' && *file != '\0')
 		fputc('/', stderr);
 	if (*file != '\0')
 		fprintf(stderr, "%s", file);
