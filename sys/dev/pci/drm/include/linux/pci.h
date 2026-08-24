@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.25 2026/08/24 03:13:12 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.26 2026/08/24 03:14:01 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -635,5 +635,11 @@ static inline int
 pcim_enable_device(struct pci_dev *pdev)
 {
 	return 0;
+}
+
+static inline const char *
+pci_name(const struct pci_dev *pdev)
+{
+	return pdev->_dev->dv_xname;
 }
 #endif /* _LINUX_PCI_H_ */
