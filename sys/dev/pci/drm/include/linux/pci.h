@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.24 2026/08/24 03:08:15 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.25 2026/08/24 03:13:12 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -116,6 +116,8 @@ struct pci_dev {
 
 #define pci_dev_put(x)
 
+#define PCI_EXP_TYPE_UPSTREAM	0x5
+#define PCI_EXP_TYPE_DOWNSTREAM	0x6
 #define PCI_EXP_DEVSTA		0x0a
 #define PCI_EXP_DEVSTA_TRPND	(1 << 5)
 #define PCI_EXP_LNKCAP		0x0c
@@ -247,6 +249,16 @@ pci_pcie_cap(struct pci_dev *pdev)
 	    &pos, NULL))
 		return -EINVAL;
 	return pos;
+}
+
+static inline int
+pci_pcie_type(struct pci_dev *pdev)
+{
+	pcireg_t cap = 0;
+
+	pci_get_capability(pdev->pc, pdev->tag, PCI_CAP_PCIEXPRESS,
+	    NULL, &cap);
+	return PCI_PCIE_XCAP_TYPE(cap);
 }
 
 bool pcie_aspm_enabled(struct pci_dev *);
