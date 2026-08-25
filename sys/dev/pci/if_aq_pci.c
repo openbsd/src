@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.37 2026/07/24 02:31:43 bcook Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.38 2026/08/25 01:18:03 jcs Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1001,6 +1001,7 @@ struct aq_softc {
 	void			*sc_ih;
 	bus_space_handle_t	sc_ioh;
 	bus_space_tag_t		sc_iot;
+	bus_size_t		sc_iosize;
 
 	uint32_t		sc_mbox_addr;
 	int			sc_rbl_enabled;
@@ -1130,6 +1131,7 @@ const struct aq_product {
 
 int	aq_match(struct device *, void *, void *);
 void	aq_attach(struct device *, struct device *, void *);
+int	aq_detach(struct device *, int);
 int	aq_activate(struct device *, int);
 int	aq_intr(void *);
 int	aq_intr_link(void *);
@@ -1230,7 +1232,7 @@ const struct aq_firmware_ops aq2_fw_ops = {
 };
 
 const struct cfattach aq_ca = {
-	sizeof(struct aq_softc), aq_match, aq_attach, NULL,
+	sizeof(struct aq_softc), aq_match, aq_attach, aq_detach,
 	aq_activate
 };
 
@@ -1296,7 +1298,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 
 	memtype = pci_mapreg_type(pc, tag, AQ_BAR0);
 	if (pci_mapreg_map(pa, AQ_BAR0, memtype, 0, &sc->sc_iot, &sc->sc_ioh,
-	    NULL, NULL, 0)) {
+	    NULL, &sc->sc_iosize, 0)) {
 		printf(": failed to map BAR0\n");
 		return;
 	}
@@ -1528,6 +1530,53 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 
 	aq_enable_intr(sc, 1, 0);
 	printf("\n");
+}
+
+int
+aq_detach(struct device *self, int flags)
+{
+	struct aq_softc *sc = (struct aq_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct aq_queues *aq;
+	int i;
+
+	if (ifp->if_flags & IFF_RUNNING)
+		aq_down(sc);
+
+	aq_enable_intr(sc, 0, 0);
+
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		aq = &sc->sc_queues[i];
+
+		if (aq->q_ihc != NULL) {
+			pci_intr_disestablish(sc->sc_pc, aq->q_ihc);
+			aq->q_ihc = NULL;
+		}
+		timeout_del(&aq->q_rx.rx_refill);
+	}
+
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	if (sc->sc_intrmap != NULL) {
+		intrmap_destroy(sc->sc_intrmap);
+		sc->sc_intrmap = NULL;
+	}
+
+	if (ifp->if_softc != NULL) {
+		ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
+
+	if (sc->sc_iosize != 0) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
+		sc->sc_iosize = 0;
+	}
+
+	return 0;
 }
 
 int
