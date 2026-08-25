@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.43 2026/07/20 10:02:55 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.44 2026/08/25 08:41:14 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -206,7 +206,7 @@ base64_encode_asn1_string(const ASN1_OCTET_STRING *astr, char **out)
 	return base64_encode(data, length, out) == 0;
 }
 
-static int
+int
 copy_asn1_string(const ASN1_STRING *astr, unsigned char *buf, size_t len)
 {
 	const unsigned char *data = ASN1_STRING_get0_data(astr);

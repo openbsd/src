@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.290 2026/07/15 07:53:06 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.291 2026/08/25 08:41:14 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1066,6 +1066,9 @@ void ccr_insert_roa(struct ccr_vrp_tree *, const struct roa *);
 void ccr_insert_tas(struct ccr_tas_tree *, const struct cert *);
 void ccr_insert_mft_sub(struct ccr_mft_tree *, const struct cert *);
 void serialize_ccr_content(struct validation_data *);
+
+/* ASN.1 helpers */
+int	copy_asn1_string(const ASN1_STRING *,  unsigned char *, size_t);
 
 void		 logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
