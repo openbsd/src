@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.31 2026/08/22 09:04:01 jsing Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.32 2026/08/25 13:57:18 jsing Exp $	*/
 /*
  * Copyright (c) 2024, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -25,7 +25,9 @@
 #include <sha1.h>
 
 #ifndef SHA1_SMALL
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#define HAVE_SHA1_BLOCK
+#elif defined(__amd64__)
 #define HAVE_SHA1_BLOCK
 #define HAVE_SHA1_BLOCK_GENERIC
 #endif

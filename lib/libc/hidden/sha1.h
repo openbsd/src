@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.4 2026/08/22 09:04:01 jsing Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.5 2026/08/25 13:57:18 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -23,6 +23,10 @@
 __BEGIN_HIDDEN_DECLS
 void __sha1_block(uint32_t state[5], const uint8_t *in, size_t num);
 void __sha1_block_generic(uint32_t state[5], const uint8_t *in, size_t num);
+
+#ifdef __aarch64__
+void __sha1_block_ce(uint32_t state[5], const uint8_t *in, size_t num);
+#endif
 
 #ifdef __amd64__
 void __sha1_block_shani(uint32_t state[5], const uint8_t *in, size_t num);
