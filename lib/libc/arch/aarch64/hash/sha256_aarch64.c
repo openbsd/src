@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64.c,v 1.1 2026/08/21 14:52:57 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64.c,v 1.2 2026/08/25 14:00:07 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -26,7 +26,7 @@
 void
 __sha256_block(uint32_t state[8], const uint8_t *in, size_t num)
 {
-	if (_hwcap & HWCAP_SHA2) {
+	if ((_hwcap & HWCAP_SHA2) != 0) {
 		__sha256_block_ce(state, in, num);
 		return;
 	}

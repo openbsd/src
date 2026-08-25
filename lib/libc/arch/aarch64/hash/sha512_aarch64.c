@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_aarch64.c,v 1.1 2026/08/21 16:28:25 jsing Exp $ */
+/* $OpenBSD: sha512_aarch64.c,v 1.2 2026/08/25 14:00:07 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -26,7 +26,7 @@
 void
 __sha512_block(uint64_t state[8], const uint8_t *in, size_t num)
 {
-	if (_hwcap & HWCAP_SHA512) {
+	if ((_hwcap & HWCAP_SHA512) != 0) {
 		__sha512_block_ce(state, in, num);
 		return;
 	}
