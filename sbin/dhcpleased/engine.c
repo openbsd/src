@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.68 2026/08/14 15:57:30 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.69 2026/08/25 11:03:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1289,10 +1289,14 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			log_debug("ignoring unexpected DHCPACK");
 			return;
 		}
-		if (server_identifier.s_addr == INADDR_ANY &&
-		    dhcp_hdr->yiaddr.s_addr == INADDR_ANY) {
-			log_warnx("%s: did not receive server identifier or "
-			    "offered IP address", __func__);
+		if (server_identifier.s_addr == INADDR_ANY) {
+			log_warnx("%s: did not receive server identifier from "
+			    "%s", __func__, from);
+			return;
+		}
+		if (dhcp_hdr->yiaddr.s_addr != iface->requested_ip.s_addr) {
+			log_warnx("%s: ignoring DHCPACK for unexpected IP "
+			    "address from %s", __func__, from);
 			return;
 		}
 		if (lease_time == 0) {
