@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.53 2026/03/11 14:42:43 deraadt Exp $
+.\"	$OpenBSD: recv.2,v 1.54 2026/08/25 01:25:42 jsg Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: March 11 2026 $
+.Dd $Mdocdate: August 25 2026 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -443,6 +443,6 @@ To avoid these, always use an
 .Fa iovec
 with at least a one-byte buffer and set
 .Fa msg_iov
-and an
+and
 .Fa msg_iovlen
 to use this vector.
