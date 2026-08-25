@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_do_handshake.3,v 1.7 2025/06/08 22:52:00 schwarze Exp $
+.\"	$OpenBSD: SSL_do_handshake.3,v 1.8 2026/08/25 00:08:28 jsg Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Martin Sjoegren <martin@strakt.com>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: August 25 2026 $
 .Dt SSL_DO_HANDSHAKE 3
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@
 .Fn SSL_do_handshake "SSL *ssl"
 .Sh DESCRIPTION
 .Fn SSL_do_handshake
-will wait for a SSL/TLS handshake to take place.
+will wait for an SSL/TLS handshake to take place.
 If the connection is in client mode, the handshake will be started.
 The handshake routines may have to be explicitly set in advance using either
 .Xr SSL_set_connect_state 3

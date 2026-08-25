@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.14 2016/11/21 07:11:13 dlg Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.15 2026/08/25 00:08:28 jsg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2016 $
+.Dd $Mdocdate: August 25 2026 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
@@ -68,9 +68,9 @@ macros build a linked list on top of shared reference pointers.
 This allows concurrent traversal of a linked list and access to the
 items on the list.
 .Pp
-SRP lists are a generic type represented by a
+SRP lists are a generic type represented by an
 .Vt SRPL_HEAD .
-The elements inserted into the list must be structures that contain a
+The elements inserted into the list must be structures that contain an
 .Vt SRPL_ENTRY
 field.
 Further, the elements must also support reference counting as

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_cert_verify_callback.3,v 1.6 2025/06/08 22:52:00 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_cert_verify_callback.3,v 1.7 2026/08/25 00:08:28 jsg Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: August 25 2026 $
 .Dt SSL_CTX_SET_CERT_VERIFY_CALLBACK 3
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ inherit the setting valid at the time when
 .Xr SSL_new 3
 is called.
 .Pp
-Whenever a certificate is verified during a SSL/TLS handshake,
+Whenever a certificate is verified during an SSL/TLS handshake,
 a verification function is called.
 If the application does not explicitly specify a verification callback
 function, the built-in verification function is used.

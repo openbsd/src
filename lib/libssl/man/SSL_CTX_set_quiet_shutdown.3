@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_quiet_shutdown.3,v 1.7 2025/06/08 22:52:00 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_quiet_shutdown.3,v 1.8 2026/08/25 00:08:28 jsg Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: August 25 2026 $
 .Dt SSL_CTX_SET_QUIET_SHUTDOWN 3
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ returns the
 setting of
 .Fa ssl .
 .Pp
-Normally when a SSL connection is finished, the parties must send out
+Normally when an SSL connection is finished, the parties must send out
 .Dq close notify
 alert messages using
 .Xr SSL_shutdown 3
