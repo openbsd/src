@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.287 2026/08/19 12:12:38 schwarze Exp $
+.\"	$OpenBSD: port-modules.5,v 1.288 2026/08/25 14:36:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 19 2026 $
+.Dd $Mdocdate: August 25 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -552,6 +552,13 @@ will get added to
 .Ev TEST_DEPENDS ,
 but not to any other
 .Ev *_DEPENDS .
+.It Cm devel/cabal
+See
+.Xr cabal-module 5
+for porting Haskell applications.
+.It Cm devel/cargo
+See
+.Xr cargo-module 5 .
 .It Cm devel/cmake
 Adds
 .Pa devel/cmake
@@ -670,13 +677,6 @@ This disables CMake's default optimization flags, putting them under
 ports control, and prevents network operations
 .Pq file DOWNLOAD/UPLOAD
 during the build.
-.It Cm devel/cabal
-See
-.Xr cabal-module 5
-for porting Haskell applications.
-.It Cm devel/cargo
-See
-.Xr cargo-module 5 .
 .It Cm devel/dconf
 Sets
 .Ev CONFIGURE_ARGS ,
@@ -1200,6 +1200,21 @@ and
 by appending
 .Ev MODINTLTOOL_OVERRIDE
 to them.
+.It Cm wayland/wlroots
+Used for Wayland ports using the wlroots library.
+Sets
+.Ev MODWLROOTS_LIB_DEPENDS ,
+.Ev MODWLROOTS_WANTLIB ,
+and
+.Ev MODWLROOTS_VERSION .
+Appends the corresponding values to
+.Ev LIB_DEPENDS
+and
+.Ev WANTLIB ,
+unless
+.Ev MODWLROOTS_LIBDEP
+is set to
+.Cm \&No .
 .It Cm www/mozilla
 Sets
 .Ev PKGNAME ,
@@ -1254,21 +1269,6 @@ contains the list of dirs where
 .Ev AUTOCONF
 will be run during
 .Cm pre-configure .
-.It Cm wayland/wlroots
-Used for Wayland ports using the wlroots library.
-Sets
-.Ev MODWLROOTS_LIB_DEPENDS ,
-.Ev MODWLROOTS_WANTLIB ,
-and
-.Ev MODWLROOTS_VERSION .
-Appends the corresponding values to
-.Ev LIB_DEPENDS
-and
-.Ev WANTLIB ,
-unless
-.Ev MODWLROOTS_LIBDEP
-is set to
-.Cm \&No .
 .It Cm www/pear
 Used for PHP PEAR ports.
 Sets default
