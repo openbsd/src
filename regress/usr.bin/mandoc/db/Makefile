@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2017/06/25 12:48:04 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2026/08/25 20:54:32 schwarze Exp $
 
-SUBDIR +=	binedit dbm_dump makeinodes run
+SUBDIR +=	binedit dbm_dump makeinodes makewhatis run
 
 obj-clean: _SUBDIRUSE
 

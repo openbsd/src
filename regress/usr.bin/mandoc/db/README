@@ -1,0 +1,38 @@
+The tests in this directory deal with makewhatis(8), apropos(1),
+and the mandoc.db(5) database format.
+
+Subdirectories are organized as follows:
+
+ * binedit, dbm_dump, makeinodes, and mlinks
+   C programs for low-level manipulation of mandoc.db(5) files.
+   Each one comes with its own manual page.
+
+   The dbm_dump utility is special in so far as it reaches around
+   for dbm.o dbm_map.o into the main usr.bin/mandoc build directory.
+   It is also useful outside the regression suite for low-level
+   inspection of mandoc.db(5) files.
+
+   The mlinks utility is provided for the benefit of OpenBSD subprojects
+   such as OpenSSH that do not want to use MLINKS on OpenBSD but have
+   to provide MLINKS on some other operating systems.
+
+ * man
+   Very small example manual pages to be used by the following tests.
+   They are essentially used as input data, but the way they are used
+   is much more complicated than a one-to-one relation of input files
+   to tests.  Most input files are used by multiple tests, and most
+   tests use multiple input files, and many tests do much more than
+   just manipulating input files.
+
+ * out
+   Files containing desired test output.  Most of these belong to one
+   specific test, but some are used by more than one test.
+
+ * makewhatis
+   Tests for makewhatis(8) command line options.
+
+ * run
+   Tests of low-level database format features, testing both valid
+   and invalid binary syntax, testing that makewhatis(8)
+   correctly generates databases, and testing both apropos(1)
+   output and apropos(1) error reporting.

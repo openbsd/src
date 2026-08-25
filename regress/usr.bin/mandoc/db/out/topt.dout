@@ -1,0 +1,4 @@
+/usr/src/regress/usr.bin/mandoc/db/man/empty.1: Adding name empty, bits=0x6
+/usr/src/regress/usr.bin/mandoc/db/man/empty.1: Adding name empty, bits=0x8
+/usr/src/regress/usr.bin/mandoc/db/man/empty.1: Adding name empty, bits=0x10
+empty(1) - no title
