@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.133 2026/06/21 19:23:56 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.134 2026/08/26 05:42:42 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -585,11 +585,7 @@ x509_check_tbs_sigalg(const char *fn, const X509_ALGOR *tbsalg)
 			    fn, LN_sha256WithRSAEncryption);
 			return 0;
 		}
-		/*
-		 * As of July 2025, there still are ~1600 ROA EE certs with this
-		 * faulty encoding, all issued by ARIN before September 2020.
-		 */
-		if (verbose > 1 && ptype == V_ASN1_UNDEF)
+		if (ptype == V_ASN1_UNDEF)
 			warnx("%s: RFC 4055, 5: %s without ASN.1 parameters",
 			    fn, LN_sha256WithRSAEncryption);
 		return 1;
