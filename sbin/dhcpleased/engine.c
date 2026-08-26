@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.69 2026/08/25 11:03:49 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.70 2026/08/26 17:25:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1259,10 +1259,9 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			log_debug("ignoring unexpected DHCPOFFER");
 			return;
 		}
-		if (server_identifier.s_addr == INADDR_ANY &&
-		    dhcp_hdr->yiaddr.s_addr == INADDR_ANY) {
-			log_warnx("%s: did not receive server identifier or "
-			    "offered IP address", __func__);
+		if (server_identifier.s_addr == INADDR_ANY) {
+			log_warnx("%s: did not receive server identifier from "
+			    "%s", __func__, from);
 			return;
 		}
 #ifndef SMALL
@@ -1273,6 +1272,12 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			break;
 		}
 #endif
+		if (dhcp_hdr->yiaddr.s_addr == INADDR_ANY) {
+			log_warnx("%s: did not receive offered IP address from "
+			    "%s", __func__, from);
+			return;
+		}
+
 		iface->server_identifier = server_identifier;
 		iface->dhcp_server = server_identifier;
 		iface->requested_ip = dhcp_hdr->yiaddr;
