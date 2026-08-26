@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amdisplay.4,v 1.4 2019/05/29 19:37:06 fcambus Exp $
+.\"	$OpenBSD: amdisplay.4,v 1.5 2026/08/26 11:36:06 jsg Exp $
 .\"
 .\" Copyright (c) 2017 Ian Sutton <ians@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2019 $
+.Dd $Mdocdate: August 26 2026 $
 .Dt AMDISPLAY 4 armv7
 .Os
 .Sh NAME
@@ -22,9 +22,9 @@
 .Nm nxphdmi
 .Nd Texas Instruments AM335x LCD display driver
 .Sh SYNOPSIS
-.Nm "amdisplay* at simplebus0"
-.Nm "nxphdmi* at iic*"
-.Nm "wsdisplay* at amdisplay*"
+.Cd "amdisplay* at fdt?"
+.Cd "nxphdmi* at iic?"
+.Cd "wsdisplay* at amdisplay?"
 .Sh DESCRIPTION
 The
 .Nm
