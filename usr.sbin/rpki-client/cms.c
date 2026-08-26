@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.60 2026/01/24 08:11:26 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.61 2026/08/26 05:57:47 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,6 +25,11 @@
 #include <openssl/cms.h>
 
 #include "extern.h"
+
+#define ASN1_TAG_SEQUENCE		0x30	/* X.690, section 8.9 */
+#define ASN1_LENGTH_INDEFINITE		0x80	/* X.690, section 8.1.3.6.1 */
+
+extern int filemode;
 
 static int
 cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
@@ -179,7 +184,7 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 	char				 buf[128], obuf[128];
 	const ASN1_OBJECT		*obj, *octype;
 	ASN1_OCTET_STRING		*kid = NULL;
-	CMS_ContentInfo			*cms;
+	CMS_ContentInfo			*cms = NULL;
 	long				 version;
 	STACK_OF(X509)			*certs = NULL;
 	STACK_OF(X509_CRL)		*crls = NULL;
@@ -198,6 +203,17 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
 		return 0;
+
+	if (len < 2) {
+		warnx("%s: RFC 6488: CMS encoding too short", fn);
+		goto out;
+	}
+	if (der[0] == ASN1_TAG_SEQUENCE && der[1] == ASN1_LENGTH_INDEFINITE) {
+		warnx("%s: RFC 6488: indefinite length encoding disallowed "
+		    "in DER", fn);
+		if (!filemode)
+			goto out;
+	}
 
 	oder = der;
 	if ((cms = d2i_CMS_ContentInfo(NULL, &der, len)) == NULL) {
