@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.255 2026/06/02 08:40:02 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.256 2026/08/26 13:53:38 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2026 $
+.Dd $Mdocdate: August 26 2026 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -617,6 +617,17 @@ If not specified, the default
 .Ic port
 is
 .Em 323 .
+.Pp
+.It Ic tcp md5sig password Ar secret
+.It Ic tcp md5sig key Ar secret
+Enable TCP MD5 signatures per RFC 2385.
+The shared secret can either be given as a password or hexadecimal key.
+.Bd -literal -offset indent
+tcp md5sig password mekmitasdigoat
+tcp md5sig key deadbeef
+.Ed
+.Pp
+After changing keys, a session needs to be reset to use the new keys.
 .El
 .El
 .Sh NETWORK AND FLOWSPEC ANNOUNCEMENTS
@@ -1604,6 +1615,7 @@ The shared secret can either be given as a password or hexadecimal key.
 tcp md5sig password mekmitasdigoat
 tcp md5sig key deadbeef
 .Ed
+.Pp
 After changing keys, a session needs to be reset to use the new keys.
 .Pp
 .It Xo
