@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.18 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.19 2026/08/26 06:47:59 tb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -83,6 +83,7 @@ printtime(time_t ftime)
 	char f_date[DATELEN];
 	static time_t now;
 	static int now_set = 0;
+	struct tm *tm;
 
 	if (! now_set) {
 		now = time(NULL);
@@ -92,9 +93,10 @@ printtime(time_t ftime)
 	/*
 	 * convert time to string, and print
 	 */
-	if (strftime(f_date, sizeof(f_date),
+	tm = localtime(&ftime);
+	if (tm == NULL || strftime(f_date, sizeof(f_date),
 	    (ftime + SIXMONTHS <= now || ftime > now) ? "%b %e  %Y" :
-	    "%b %e %H:%M", localtime(&ftime)) == 0)
+	    "%b %e %H:%M", tm) == 0)
 		f_date[0] = '\0';
 
 	printf("%s ", f_date);
