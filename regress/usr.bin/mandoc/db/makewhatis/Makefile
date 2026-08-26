@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2026/08/25 20:54:33 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2026/08/26 10:26:21 schwarze Exp $
 #
 # Copyright (c) 2026 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -87,7 +87,8 @@ nopt.dout: dopt.db
 	makewhatis -Dn dopt.dir > nopt.dout
 
 topt.dout: ${.CURDIR}/../man/empty.1
-	makewhatis -DDt ${.CURDIR}/../man/empty.1 > topt.dout
+	makewhatis -DDt ${.CURDIR}/../man/empty.1 | \
+		sed 's#.*/mandoc/db/man/##' > topt.dout
 
 
 # === GETTING ACCESS TO THE UTILITY ====================================
