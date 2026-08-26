@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_check.3,v 1.6 2025/07/04 05:16:56 jsg Exp $
+.\" $OpenBSD: EC_GROUP_check.3,v 1.7 2026/08/26 09:03:57 jsg Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2025 $
+.Dd $Mdocdate: August 26 2026 $
 .Dt EC_GROUP_CHECK 3
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ is a point on the curve whose order divides
 It checks with
 .Fn EC_GROUP_check_discriminant
 that the discriminant is non-zero
-and then verifies that that
+and then verifies that the
 .Fa order
 is non-zero and that the product
 .Fa generator No * Fa order
