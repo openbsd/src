@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.149 2026/06/23 11:45:54 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.150 2026/08/26 13:13:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1772,12 +1772,13 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	cpu_kstat_attach(ci);
 #endif
 
-	ci->ci_capacity = OF_getpropint(ci->ci_node, "capacity-dmips-mhz", 0);
 	opp = OF_getpropint(ci->ci_node, "operating-points-v2", 0);
-	if (opp) {
+	if (opp)
 		cpu_opp_init(ci, opp);
+
+	ci->ci_capacity = OF_getpropint(ci->ci_node, "capacity-dmips-mhz", 0);
+	if (ci->ci_opp_table)
 		ci->ci_capacity *= ci->ci_opp_table->ot_opp_hz_max / 1000000;
-	}
 	cpu_classify();
 
 	cpu_psci_init(ci);
