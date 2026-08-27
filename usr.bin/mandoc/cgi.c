@@ -1,6 +1,6 @@
-/* $OpenBSD: cgi.c,v 1.120 2022/12/26 19:16:02 jmc Exp $ */
+/* $OpenBSD: cgi.c,v 1.121 2026/08/27 13:17:42 schwarze Exp $ */
 /*
- * Copyright (c) 2014-2019, 2021, 2022 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2014-2019, 2021, 2022, 2026 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2022 Anna Vyalkova <cyber@sysrq.in>
  *
@@ -86,7 +86,7 @@ static	void		 pg_show(struct req *, const char *);
 static	int		 resp_begin_html(int, const char *, const char *);
 static	void		 resp_begin_http(int, const char *);
 static	void		 resp_catman(const struct req *, const char *);
-static	int		 resp_copy(const char *, const char *);
+static	int		 resp_copy(const char *, int *);
 static	void		 resp_end_html(void);
 static	void		 resp_format(const struct req *, const char *);
 static	void		 resp_searchform(const struct req *, enum focus);
@@ -135,6 +135,9 @@ static	const char *const arch_names[] = {
     "zaurus"
 };
 static	const int arch_MAX = sizeof(arch_names) / sizeof(char *);
+
+static	int header_fd = -1;
+static	int footer_fd = -1;
 
 /*
  * Print a character, escaping HTML along the way.
@@ -350,21 +353,21 @@ resp_begin_http(int code, const char *msg)
 }
 
 static int
-resp_copy(const char *element, const char *filename)
+resp_copy(const char *element, int *fd)
 {
 	char	 buf[4096];
 	ssize_t	 sz;
-	int	 fd;
 
-	if ((fd = open(filename, O_RDONLY)) == -1)
+	if (*fd == -1)
 		return 0;
 
 	if (element != NULL)
 		printf("<%s>\n", element);
 	fflush(stdout);
-	while ((sz = read(fd, buf, sizeof(buf))) > 0)
+	while ((sz = read(*fd, buf, sizeof(buf))) > 0)
 		write(STDOUT_FILENO, buf, sz);
-	close(fd);
+	close(*fd);
+	*fd = -1;
 	return 1;
 }
 
@@ -414,13 +417,13 @@ resp_begin_html(int code, const char *msg, const char *file)
 	       "<body>\n",
 	       CUSTOMIZE_TITLE);
 
-	return resp_copy("header", MAN_DIR "/header.html");
+	return resp_copy("header", &header_fd);
 }
 
 static void
 resp_end_html(void)
 {
-	if (resp_copy("footer", MAN_DIR "/footer.html"))
+	if (resp_copy("footer", &footer_fd))
 		puts("</footer>");
 
 	puts("</body>\n"
@@ -1090,14 +1093,6 @@ main(void)
 	const char	*querystring;
 	int		 i;
 
-	/*
-	 * The "rpath" pledge could be revoked after mparse_readfd()
-	 * if the file descriptor to "/footer.html" would be opened
-	 * up front, but it's probably not worth the complication
-	 * of the code it would cause: it would require scattering
-	 * pledge() calls in multiple low-level resp_*() functions.
-	 */
-
 	if (pledge("stdio rpath", NULL) == -1) {
 		warn("pledge");
 		pg_error_internal();
@@ -1127,6 +1122,11 @@ main(void)
 		pg_error_internal();
 		return EXIT_FAILURE;
 	}
+
+	/* These two files are optional. */
+
+	header_fd = open("header.html", O_RDONLY);
+	footer_fd = open("footer.html", O_RDONLY);
 
 	memset(&req, 0, sizeof(struct req));
 	req.q.equal = 1;
