@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.109 2026/06/25 13:19:06 sashan Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.110 2026/08/27 21:18:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -608,6 +608,7 @@ const char	*path_type_name(enum path_type);
 u_int16_t	 rtlabel_name2id(const char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
+void		 rtlabel_ref(u_int16_t);
 u_int32_t	 rtlabel_id2tag(u_int16_t);
 u_int16_t	 rtlabel_tag2id(u_int32_t);
 void		 rtlabel_tag(u_int16_t, u_int32_t);

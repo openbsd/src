@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.118 2025/01/01 13:44:52 anton Exp $ */
+/*	$OpenBSD: kroute.c,v 1.119 2026/08/27 21:18:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -79,7 +79,7 @@ int	kr_delete_fib(struct kroute_node *);
 
 struct kroute_node	*kroute_find(in_addr_t, u_int8_t, u_int8_t);
 struct kroute_node	*kroute_matchgw(struct kroute_node *, struct in_addr);
-int			 kroute_insert(struct kroute_node *);
+void			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
 void			 kroute_clear(void);
 
@@ -250,16 +250,29 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 					break;
 			}
 
-			if (kn != NULL)
-				/* nexthop already present, skip it */
+			if (kn != NULL) {
+				uint16_t label;
+
+				/* nexthop already present, just change it */
+				kn->r.flags = kroute[i].flags |
+				    F_OSPFD_INSERTED;
+				kn->r.ext_tag = kroute[i].ext_tag;
+				label = kn->r.rtlabel;
+				rtlabel_unref(kn->r.rtlabel);
+				kn->r.rtlabel = rtlabel_tag2id(kn->r.ext_tag);
+				rtlabel_ref(kn->r.rtlabel);
+
+				/* update if label changed */ 
+				if (kn->r.rtlabel != label) {
+					if (send_rtmsg(kr_state.fd, RTM_CHANGE,
+					    &kn->r) == -1)
+						return (-1);
+				}
 				continue;
+			}
 		} else
 			/* modify first entry */
 			kn = kr;
-
-		/* send update */
-		if (send_rtmsg(kr_state.fd, action, &kroute[i]) == -1)
-			return (-1);
 
 		/* create new entry unless we are changing the first entry */
 		if (action == RTM_ADD)
@@ -269,18 +282,21 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 		kn->r.prefix.s_addr = kroute[i].prefix.s_addr;
 		kn->r.prefixlen = kroute[i].prefixlen;
 		kn->r.nexthop.s_addr = kroute[i].nexthop.s_addr;
-		kn->r.flags = kroute[i].flags | F_OSPFD_INSERTED;
 		kn->r.priority = kr_state.fib_prio;
+
+		kn->r.flags = kroute[i].flags | F_OSPFD_INSERTED;
 		kn->r.ext_tag = kroute[i].ext_tag;
 		rtlabel_unref(kn->r.rtlabel);	/* for RTM_CHANGE */
-		kn->r.rtlabel = kroute[i].rtlabel;
+		kn->r.rtlabel = rtlabel_tag2id(kn->r.ext_tag);
+		rtlabel_ref(kn->r.rtlabel);
 
 		if (action == RTM_ADD)
-			if (kroute_insert(kn) == -1) {
-				log_debug("kr_update_fib: cannot insert %s",
-				    inet_ntoa(kn->r.nexthop));
-				free(kn);
-			}
+			kroute_insert(kn);
+
+		/* send update */
+		if (send_rtmsg(kr_state.fd, action, &kn->r) == -1)
+			return (-1);
+
 		action = RTM_ADD;
 	}
 	return  (0);
@@ -291,8 +307,6 @@ kr_change(struct kroute *kroute, int krcount)
 {
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
-
-	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
 	kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen,
 	    kr_state.fib_prio);
@@ -746,7 +760,7 @@ kroute_matchgw(struct kroute_node *kr, struct in_addr nh)
 	return (NULL);
 }
 
-int
+void
 kroute_insert(struct kroute_node *kr)
 {
 	struct kroute_node	*krm, *krh;
@@ -768,7 +782,7 @@ kroute_insert(struct kroute_node *kr)
 	if (!(kr->r.flags & F_KERNEL)) {
 		/* don't validate or redistribute ospf route */
 		kr->r.flags &= ~F_DOWN;
-		return (0);
+		return;
 	}
 
 	if (kif_validate(kr->r.ifindex))
@@ -777,7 +791,6 @@ kroute_insert(struct kroute_node *kr)
 		kr->r.flags |= F_DOWN;
 
 	kr_redistribute(krh);
-	return (0);
 }
 
 int

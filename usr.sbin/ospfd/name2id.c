@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.2 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: name2id.c,v 1.3 2026/08/27 21:18:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -75,13 +75,11 @@ rtlabel_unref(u_int16_t id)
 	_unref(&rt_labels, id);
 }
 
-/*
 void
 rtlabel_ref(u_int16_t id)
 {
 	_ref(&rt_labels, id);
 }
-*/
 
 u_int16_t
 _name2id(struct n2id_labels *head, const char *name)
