@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.66 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.67 2026/08/27 07:18:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,7 +126,7 @@ rsa_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
 	BIGNUM *f, *ret;
-	int i, j, k, num = 0, r = -1;
+	int i, num = 0, r = -1;
 	unsigned char *buf = NULL;
 	BN_CTX *ctx = NULL;
 
@@ -200,15 +200,9 @@ rsa_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	    rsa->_method_mod_n))
 		goto err;
 
-	/* put in leading 0 bytes if the number is less than the
-	 * length of the modulus */
-	j = BN_num_bytes(ret);
-	i = BN_bn2bin(ret, &(to[num - j]));
-	for (k = 0; k < num - i; k++)
-		to[k] = 0;
+	r = BN_bn2binpad(ret, to, num);
 
-	r = num;
-err:
+ err:
 	if (ctx != NULL) {
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
@@ -306,7 +300,7 @@ rsa_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
 	BIGNUM *f, *ret, *res;
-	int i, j, k, num = 0, r = -1;
+	int i, num = 0, r = -1;
 	unsigned char *buf = NULL;
 	BN_CTX *ctx = NULL;
 	int local_blinding = 0;
@@ -412,15 +406,9 @@ rsa_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	} else
 		res = ret;
 
-	/* put in leading 0 bytes if the number is less than the
-	 * length of the modulus */
-	j = BN_num_bytes(res);
-	i = BN_bn2bin(res, &(to[num - j]));
-	for (k = 0; k < num - i; k++)
-		to[k] = 0;
+	r = BN_bn2binpad(res, to, num);
 
-	r = num;
-err:
+ err:
 	if (ctx != NULL) {
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
