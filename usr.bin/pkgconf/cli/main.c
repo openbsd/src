@@ -82,7 +82,7 @@ deduce_personality(char *argv[])
 	if (i != NULL)
 		argv0 = i + 1;
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__OS2__)
 	i = strrchr(argv0, '\\');
 	if (i != NULL)
 		argv0 = i + 1;
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__)
 	/* When running regression tests in cygwin, and building native
 	 * executable, tests fail unless native executable outputs unix
 	 * line endings.  Come to think of it, this will probably help

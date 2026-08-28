@@ -498,7 +498,7 @@ pkgconf_path_trim_basename(pkgconf_buffer_t *buf)
 		return false;
 
 	sep = strrchr(buf->base, PKG_DIR_SEP_S);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__)
 	char *sep2 = strrchr(buf->base, '/');
 	if (sep2 != NULL && (sep == NULL || sep2 > sep))
 		sep = sep2;
@@ -531,7 +531,7 @@ pkgconf_path_find_basename(const char *path)
 	const char *sep;
 
 	sep = strrchr(path, PKG_DIR_SEP_S);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__)
 	const char *sep2 = strrchr(path, '/');
 	if (sep2 != NULL && (sep == NULL || sep2 > sep))
 		sep = sep2;

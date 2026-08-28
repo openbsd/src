@@ -1158,15 +1158,11 @@ pkgconf_cli_run(pkgconf_cli_state_t *state, int argc, char *argv[], int last_arg
 		(state->want_flags & PKG_DUMP_SOURCE) == PKG_DUMP_SOURCE)
 		want_client_flags |= PKGCONF_PKG_PKGF_SKIP_CONFLICTS;
 
-	/* if we are asking for a variable, path or list of variables, this only makes sense
+	/* if we are asking for a path or list of variables, this only makes sense
 	 * for a single package.
 	 */
-	if ((state->want_flags & PKG_VARIABLES) == PKG_VARIABLES ||
-		(state->want_flags & PKG_PATH) == PKG_PATH ||
-		state->want_variable != NULL)
-	{
+	if ((state->want_flags & PKG_VARIABLES) == PKG_VARIABLES || (state->want_flags & PKG_PATH) == PKG_PATH)
 		state->maximum_package_count = 1;
-	}
 
 	if ((state->want_flags & PKG_REQUIRES_PRIVATE) == PKG_REQUIRES_PRIVATE ||
 		(state->want_flags & PKG_CFLAGS))

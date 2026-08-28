@@ -121,7 +121,11 @@ pkg_get_parent_dir(pkgconf_pkg_t *pkg)
 		 *     /bar (absolute)  |  /foo/link (absolute)  |         /bar (absolute)
 		 *   ../bar (relative)  |  /foo/link (absolute)  |  /foo/../bar (relative)
 		 */
-		if ((sourcebuf[0] != '/') && strcmp(targetdir, "."))
+		if ((sourcebuf[0] != '/') &&
+#ifdef __OS2__
+			!(sourcebuf[0] != '\0' && sourcebuf[1] == ':') &&
+#endif
+			strcmp(targetdir, "."))
 		{
 			if (!pkgconf_buffer_append(&buf, targetdir) || !pkgconf_buffer_push_byte(&buf, '/'))
 				goto fail;
@@ -473,8 +477,8 @@ canonicalize_path(char *buf)
 static bool
 is_path_prefix_equal(const char *path1, const char *path2, size_t path2_len)
 {
-#ifdef _WIN32
-	return !_strnicmp(path1, path2, path2_len);
+#if defined(_WIN32) || defined(__OS2__)
+	return !strncasecmp(path1, path2, path2_len);
 #else
 	return !strncmp(path1, path2, path2_len);
 #endif

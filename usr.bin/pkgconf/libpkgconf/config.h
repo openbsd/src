@@ -1,6 +1,6 @@
 #define PACKAGE_NAME "pkgconf-lite"
 #define PACKAGE_BUGREPORT "https://github.com/pkgconf/pkgconf/issues"
-#define PACKAGE_VERSION "3.0.5"
+#define PACKAGE_VERSION "3.0.6"
 #define PACKAGE PACKAGE_NAME " " PACKAGE_VERSION
 
 #define HAVE_DECL_STRNDUP	1
