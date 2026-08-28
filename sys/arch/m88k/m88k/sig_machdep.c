@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.32 2024/10/14 08:42:39 jsg Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.33 2026/08/28 17:58:22 miod Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -238,24 +238,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	 */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
-#ifdef M88100
-	if (CPU_IS88100) {
-		/*
-		 * If we are returning from a signal handler triggered by
-		 * a data access exception, the interrupted access has
-		 * never been performed, and will not be reissued upon
-		 * returning to userland.
-		 *
-		 * We can't simply call data_access_emulation(), for
-		 * it might fault again. Instead, we invoke trap()
-		 * again, which will either trigger another signal,
-		 * or end up invoking data_access_emulation if safe.
-		 */
-		if (ISSET(tf->tf_dmt0, DMT_VALID))
-			m88100_trap(T_DATAFLT, tf);
-	}
-#endif
-
 	/*
 	 * We really want to return to the instruction pointed to by the
 	 * sigcontext.  However, due to the way exceptions work on 88110,
@@ -271,7 +253,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
  * Find out a safe place on the process' stack to put the sigframe struct.
  * While on 88110, this is straightforward, on 88100 we need to be
  * careful and not stomp over potential uncompleted data accesses, which
- * we will want to be able to perform upon sigreturn().
+ * we will want to be able when returning to userland, prior to the signal
+ * handler invocation.
  */
 vaddr_t
 local_stack_frame(struct trapframe *tf, vaddr_t tos, size_t fsize)
