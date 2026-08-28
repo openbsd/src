@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.41 2024/03/27 14:44:52 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.42 2026/08/28 04:43:27 dgl Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,8 @@ printtime(time_t ftime)
 		ftime = 0;
 		tm = localtime(&ftime);
 	}
-	if (strftime(f_date, sizeof(f_date), f_sectime ? "%b %e %H:%M:%S %Y" :
+	if (tm == NULL || strftime(f_date, sizeof(f_date),
+	    f_sectime ? "%b %e %H:%M:%S %Y" :
 	    (ftime <= now - SIXMONTHS || ftime > now) ? "%b %e  %Y" :
 	    "%b %e %H:%M", tm) == 0)
 		f_date[0] = '\0';

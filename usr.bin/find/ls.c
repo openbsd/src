@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.19 2026/08/26 06:47:59 tb Exp $	*/
+/*	$OpenBSD: ls.c,v 1.20 2026/08/28 04:43:27 dgl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -93,7 +93,11 @@ printtime(time_t ftime)
 	/*
 	 * convert time to string, and print
 	 */
-	tm = localtime(&ftime);
+	if ((tm = localtime(&ftime)) == NULL) {
+		/* Invalid time stamp, just display the epoch. */
+		ftime = 0;
+		tm = localtime(&ftime);
+	}
 	if (tm == NULL || strftime(f_date, sizeof(f_date),
 	    (ftime + SIXMONTHS <= now || ftime > now) ? "%b %e  %Y" :
 	    "%b %e %H:%M", tm) == 0)
