@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.90 2025/05/05 20:43:32 tedu Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.91 2026/08/28 18:01:43 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -30,7 +30,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 CMACHFLAGS=	-mno-check-zero-division -mmemcpy
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-vsnprintf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc 
+		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
