@@ -1,8 +1,0 @@
-prefix=/tmp
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include
-
-Name: Version test 1
-Description: pkg-config(1) regress file
-Version: 0.1.0

@@ -1,2 +1,0 @@
-Description: pkg-config(1) regress file
-Version: 0.0.0

@@ -1,8 +1,0 @@
-prefix=/usr/X11R6
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-
-Name: static-order3
-Description: static order test lib 3
-Version: 1.0
-Libs: -L${libdir} -lstatic-order3

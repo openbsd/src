@@ -1,6 +1,0 @@
-Name: Filter system dirs
-Description: pkg-config(1) regress file
-Version: 0.0
-Cflags: -I/usr/include -DFILTER
-Libs: -L/usr/lib/ -lfilter
-Libs.private: -L/usr/lib/ -lprivate-filter

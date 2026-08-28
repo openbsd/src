@@ -1,3 +1,0 @@
-Name: dash-stable
-Description: pkg-config(1) regress file
-Version: 2.0.22-stable

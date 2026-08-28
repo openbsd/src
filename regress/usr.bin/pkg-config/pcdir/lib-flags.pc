@@ -1,4 +1,0 @@
-Name: lib separation test
-Description: pkg-config(1) regress file
-Version: 0.0
-Libs: -lalpha2 -L/usr/local/lib -pthread
