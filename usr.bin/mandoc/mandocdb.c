@@ -1,4 +1,4 @@
-/* $OpenBSD: mandocdb.c,v 1.223 2026/08/24 19:56:01 schwarze Exp $ */
+/* $OpenBSD: mandocdb.c,v 1.224 2026/08/28 09:50:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2021, 2024-2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -310,7 +310,7 @@ mandocdb(int argc, char *argv[])
 	size_t		  j, sz;
 	int		  ch, i;
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath unveil", NULL) == -1) {
 		warn("pledge");
 		return (int)MANDOCLEVEL_SYSERR;
 	}
@@ -328,6 +328,7 @@ mandocdb(int argc, char *argv[])
 		goto usage; \
 	} while (/*CONSTCOND*/0)
 
+	exitcode = (int)MANDOCLEVEL_BADARG;
 	mparse_options = MPARSE_UTF8 | MPARSE_LATIN1 | MPARSE_VALIDATE;
 	path_arg = NULL;
 	op = OP_DEFAULT;
@@ -388,19 +389,12 @@ mandocdb(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (nodb) {
-		if (pledge("stdio rpath", NULL) == -1) {
-			warn("pledge");
-			return (int)MANDOCLEVEL_SYSERR;
-		}
-	}
-
 	if (op == OP_CONFFILE && argc > 0) {
 		warnx("-C: Too many arguments");
 		goto usage;
 	}
 
-	exitcode = (int)MANDOCLEVEL_OK;
+	exitcode = (int)MANDOCLEVEL_SYSERR;
 	mchars_alloc();
 	mp = mparse_alloc(mparse_options, MANDOC_OS_OTHER, NULL);
 	mandoc_ohash_init(&mpages, 6, offsetof(struct mpage, inodev));
@@ -408,13 +402,52 @@ mandocdb(int argc, char *argv[])
 
 	if (op == OP_UPDATE || op == OP_DELETE || op == OP_TEST) {
 
+		if (nodb == 0 && unveil("/tmp", "rwc") == -1) {
+			say("/tmp", "&unveil");
+			goto out;
+		}
+
 		/*
 		 * Most of these deal with a specific directory.
 		 * Jump into that directory first.
 		 */
-		if (op != OP_TEST && set_basedir(path_arg, 1) == 0)
-			goto out;
+		if (op != OP_TEST) {
+			if (unveil(path_arg, "r") == -1) {
+				say(path_arg, "&unveil");
+				goto out;
+			}
+			if (set_basedir(path_arg, 1) == 0)
+				goto out;
+			if (unveil(MANDOC_DB "~", "rwc") == -1) {
+				say(MANDOC_DB "~", "&unveil");
+				goto out;
+			}
+			if (unveil(MANDOC_DB, "rwc") == -1) {
+				say(MANDOC_DB, "&unveil");
+				goto out;
+			}
+			if (unveil(NULL, NULL) == -1) {
+				say("", "&unveil");
+				goto out;
+			}
+		}
 
+		/*
+		 * Avoid unveiling input files individually because
+		 * having many of them is a legitimate use case.
+		 */
+		else {
+			if (unveil("/", "r") == -1) {
+				say("/", "&unveil");
+				goto out;
+			}
+			if (pledge("stdio rpath", NULL) == -1) {
+				say("", "&pledge");
+				goto out;
+			}
+		}
+
+		exitcode = (int)MANDOCLEVEL_OK;
 		dba = nodb ? dba_new(128) : dba_read(MANDOC_DB);
 		if (dba != NULL) {
 			/*
@@ -431,7 +464,6 @@ mandocdb(int argc, char *argv[])
 			if (op != OP_UPDATE || errno != ENOENT)
 				say(MANDOC_DB, "%s: Automatically recreating"
 				    " from scratch", strerror(errno));
-			exitcode = (int)MANDOCLEVEL_OK;
 			op = OP_DEFAULT;
 			if (treescan() == 0)
 				goto out;
@@ -459,7 +491,26 @@ mandocdb(int argc, char *argv[])
 		if (conf.manpath.sz == 0) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say("", "Empty manpath");
+			goto out;
 		}
+		if (manpath_unveil(&conf.manpath, 1) == -1)
+			goto out;
+		if (nodb) {
+			if (pledge("stdio rpath", NULL) == -1) {
+				say("", "&pledge");
+				goto out;
+			}
+		} else {
+			if (unveil("/tmp", "rwc") == -1) {
+				say("/tmp", "&unveil");
+				goto out;
+			}
+			if (unveil(NULL, NULL) == -1) {
+				say("", "&unveil");
+				goto out;
+			}
+		}
+		exitcode = (int)MANDOCLEVEL_OK;
 
 		/*
 		 * First scan the tree rooted at a base directory, then
@@ -514,8 +565,7 @@ usage:
 			"       %s [-Dnp] -u dir [file ...]\n"
 			"       %s [-Q] -t file ...\n",
 		        progname, progname, progname, progname, progname);
-
-	return (int)MANDOCLEVEL_BADARG;
+	return exitcode;
 }
 
 /*
