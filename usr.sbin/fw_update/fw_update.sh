@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.67 2026/07/19 23:33:16 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.68 2026/08/28 03:56:19 dgl Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -19,7 +19,7 @@ set -o errexit -o pipefail -o nounset -o noclobber -o noglob
 set +o monitor
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-CFILE=SHA256.sig
+CFILE=SHA256
 DESTDIR=${DESTDIR:-}
 FWPATTERNS="${DESTDIR}/usr/share/misc/firmware_patterns"
 
@@ -67,7 +67,8 @@ cleanup() {
 	[ "${LOCKPID:-}" ] && kill -TERM -"$LOCKPID" 2>/dev/null
 	[ "${FWPKGTMP:-}" ] && rm -rf "$FWPKGTMP"
 	"$REMOVE_LOCALSRC" && rm -rf "$LOCALSRC"
-	[ -e "$CFILE" ] && [ ! -s "$CFILE" ] && rm -f "$CFILE"
+	[ -e "$CFILE" ] && rm -f "$CFILE"
+	[ -e "$CFILE.sig" ] && [ ! -s "$CFILE.sig" ] && rm -f "$CFILE.sig"
 }
 trap cleanup EXIT
 
@@ -113,6 +114,11 @@ fetch() {
 	case "$VERBOSE" in
 		0|1) _flags=-VM ; exec 2>"$_ftp_errors" ;;
 		  2) _flags=-Vm ;;
+	esac
+
+	case "$_src" in
+		*"'"*)  warn "Bad URL: $_src"
+			exit 1
 	esac
 
 	if ! "$DROP_PRIVS"; then
@@ -200,12 +206,12 @@ check_cfile() {
 fetch_cfile() {
 	if "$DOWNLOAD"; then
 		set +o noclobber # we want to get the latest CFILE
-		fetch "$CFILE" || return 1
+		fetch "$CFILE.sig" || return 1
 		set -o noclobber
-		signify -qVep "$FWPUB_KEY" -x "$CFILE" -m /dev/null \
+		signify -qVep "$FWPUB_KEY" -x "$CFILE.sig" -m "$CFILE" \
 		    2>&"$WARN_FD" || {
 		        warn "Signature check of SHA256.sig failed"
-		        rm -f "$CFILE"
+		        rm -f "$CFILE.sig"
 			return 1
 		    }
 	elif [ ! -e "$CFILE" ]; then
@@ -281,7 +287,7 @@ _devices_in_dmesg() {
 
 firmware_filename() {
 	check_cfile || return $?
-	sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d'
+	sed -n "s/.*(\($1-firmware-[[:alnum:]_.]*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d'
 }
 
 firmware_devicename() {
@@ -342,7 +348,7 @@ EOL
 
 available_firmware() {
 	check_cfile || return $?
-	sed -n 's/.*(\(.*\)-firmware.*/\1/p' "$CFILE"
+	sed -n 's/.*(\([a-z]*\)-firmware-[[:alnum:]_.]*\.tgz).*/\1/p' "$CFILE"
 }
 
 installed_firmware() {
@@ -517,7 +523,7 @@ set_fw_paths() {
 
 	FWURL=${FWURL%%+(/)}
 
-	# TODO: Would it be better to use the untrusted comment in CFILE?
+	# TODO: Would it be better to use the untrusted comment in CFILE.sig?
 	_version=${_version%.*}${_version#*.}
 	FWPUB_KEY=${DESTDIR}/etc/signify/openbsd-${_version}-fw.pub
 }
