@@ -28,15 +28,15 @@ nexttoward(double x, long double y)
 	int32_t hx,ix,iy;
 	u_int32_t lx,hy,ly,esy;
 
+	if(isnan(x) || isnan(y))
+	   return x+y;	/* x or y is nan */
+	if(x==y) return (double)y;		/* x=y, return y */
+
 	EXTRACT_WORDS(hx,lx,x);
 	GET_LDOUBLE_WORDS(esy,hy,ly,y);
 	ix = hx&0x7fffffff;		/* |x| */
 	iy = esy&0x7fff;		/* |y| */
 
-	if(((ix>=0x7ff00000)&&((ix-0x7ff00000)|lx)!=0) ||   /* x is nan */
-	   ((iy>=0x7fff)&&(hy|ly)!=0))		/* y is nan */
-	   return x+y;
-	if((long double) x==y) return y;	/* x=y, return y */
 	if((ix|lx)==0) {			/* x == 0 */
 	    volatile double u;
 	    INSERT_WORDS(x,(esy&0x8000)<<16,1); /* return +-minsub */
