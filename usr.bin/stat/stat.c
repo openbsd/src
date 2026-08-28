@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.25 2023/08/06 19:36:13 guenther Exp $ */
+/*	$OpenBSD: stat.c,v 1.26 2026/08/28 04:42:15 dgl Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -636,7 +636,13 @@ format1(const struct stat *st,
 		small = (sizeof(secs) == 4);
 		data = secs;
 		tm = localtime(&secs);
-		(void)strftime(path, sizeof(path), timefmt, tm);
+		if (tm == NULL) {
+			secs = 0;
+			tm = localtime(&secs);
+		}
+		if (tm == NULL || strftime(path, sizeof(path), timefmt, tm)
+		    == 0)
+			path[0] = '\0';
 		sdata = path;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
 		    FMTF_FLOAT | FMTF_STRING;
