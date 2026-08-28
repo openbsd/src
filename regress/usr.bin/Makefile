@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2026/06/22 15:55:46 tim Exp $
+#	$OpenBSD: Makefile,v 1.54 2026/08/28 15:12:08 tb Exp $
 
 SUBDIR+= apply awk
 SUBDIR+= basename bc
@@ -11,7 +11,7 @@ SUBDIR+= lastcomm libtool
 SUBDIR+= m4 mail make mandoc
 SUBDIR+= nc
 SUBDIR+= openssl
-SUBDIR+= patch
+SUBDIR+= patch pkgconf
 SUBDIR+= rcs rev rsync rsync-unit
 SUBDIR+= sdiff sed seq signify snmp sort
 SUBDIR+= ssh
