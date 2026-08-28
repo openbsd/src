@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2026/07/20 17:44:04 rsadowski Exp $
+#	$OpenBSD: Makefile,v 1.25 2026/08/28 14:19:19 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -73,7 +73,7 @@ run-$a: $a
 # EC tests
 .for a in ${ARGS_EC}
 REGRESS_TARGETS +=	run-$a
-run-$a: $a server.crt client.crt 127.0.0.1-ec.crt
+run-$a: $a
 .if empty (REMOTE_SSH)
 	${SUDO} cp 127.0.0.1-ec.crt /etc/ssl/127.0.0.1.crt
 	${SUDO} cp 127.0.0.1-ec.key /etc/ssl/private/127.0.0.1.key
@@ -137,8 +137,10 @@ client.crt: client-ca.crt client.req
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server.crt client.crt
 .if empty (REMOTE_SSH)
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: 127.0.0.1.crt
+${REGRESS_TARGETS:M*ssl*-ec*}: 127.0.0.1-ec.crt
 .else
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: ${REMOTE_ADDR}.crt
+${REGRESS_TARGETS:M*ssl*-ec*}: ${REMOTE_ADDR}-ec.crt
 .endif
 
 # make perl syntax check for all args files
