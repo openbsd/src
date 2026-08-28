@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.49 2022/03/31 17:27:14 naddy Exp $
+.\"	$OpenBSD: stty.1,v 1.50 2026/08/28 15:43:41 naddy Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stty.1	8.5 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 28 2026 $
 .Dt STTY 1
 .Os
 .Sh NAME
@@ -413,6 +413,7 @@ Recognized control-characters:
 .It susp Ta Dv VSUSP Ta "SUSP character"
 .It start Ta Dv VSTART Ta "START character"
 .It stop Ta Dv VSTOP Ta "STOP character"
+.It discard Ta Dv VDISCARD Ta "DISCARD character"
 .It dsusp Ta Dv VDSUSP Ta "DSUSP character"
 .It lnext Ta Dv VLNEXT Ta "LNEXT character"
 .It reprint Ta Dv VREPRINT Ta "REPRINT character"
