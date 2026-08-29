@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.46 2026/04/07 03:21:10 bcook Exp $ */
+/* $OpenBSD: i8253.c,v 1.47 2026/08/29 18:42:06 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -283,7 +283,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 
 		if (vei->vei.vei_dir == VEI_DIR_OUT) { /* OUT instruction */
 			if (i8253_channel[sel].last_w == 0) {
-				i8253_channel[sel].ilatch |= (out_data & 0xff);
+				i8253_channel[sel].ilatch = out_data & 0xff;
 				i8253_channel[sel].last_w = 1;
 			} else {
 				i8253_channel[sel].ilatch |=
