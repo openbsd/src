@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.56 2020/10/13 04:42:28 guenther Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.57 2026/08/29 17:41:02 daniel Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <millert@openbsd.org>
@@ -513,7 +513,7 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 		if (value == NULL)
 			as->flags &= ~AF_INTERACTIVE;
 		else
-			as->flags |= ~AF_INTERACTIVE;
+			as->flags |= AF_INTERACTIVE;
 		return (0);
 
 	default:
