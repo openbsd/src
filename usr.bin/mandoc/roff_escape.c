@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.16 2026/08/08 14:15:44 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.17 2026/08/29 16:57:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -268,6 +268,8 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 	if (buf[iarg] == '\0' && (term != '\0' || maxl != INT_MAX)) {
 		err = MANDOCERR_ESC_INCOMPLETE;
+		if (rval == ESCAPE_SPECIAL)
+			rval = ESCAPE_ERROR;
 		goto out;
 	}
 
