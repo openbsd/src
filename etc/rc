@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.591 2026/08/24 15:39:04 deraadt Exp $
+#	$OpenBSD: rc,v 1.592 2026/08/29 16:26:33 afresh1 Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -502,6 +502,24 @@ sysctl_conf
 mount -s /var >/dev/null 2>&1		# cannot be on NFS
 mount -s /var/log >/dev/null 2>&1	# cannot be on NFS
 mount -s /usr >/dev/null 2>&1		# if NFS, fstab must use IP address
+mount -s /tmp >/dev/null 2>&1		# if NFS, fstab must use IP address
+
+# Prune /tmp before users can authenticate.  A few files are removed
+# immediately, but most of the deletion happens asynchronously while
+# daemons are being started
+( cd /tmp && {
+    echo clearing /tmp
+    skip="-mindepth 1 -maxdepth 1 ! -name lost+found ! -name quota.user 
+	! -name quota.group ! -name vi.recover"
+    find . $skip ! -perm -1000 -print0 |
+	xargs -r0J % find -d % -exec rm -rf -- {} \; -print |
+	    head -50 >/dev/null
+    tmpdir=$(mktemp -d .delXXXXXXXXXX) && {
+	find . $skip ! -name "$tmpdir" -print0 |
+	    xargs -r0J % mv -f -- % "$tmpdir"
+	rm -rf -- "$tmpdir" &
+    }
+} ) 2>/dev/null
 
 reorder_libs 2>&1 |&
 
@@ -597,26 +615,6 @@ if [[ -f /etc/ptmp ]]; then
 	    'password file may be incorrect -- /etc/ptmp exists'
 fi
 
-echo clearing /tmp
-
-# Prune /tmp before users can authenticate.  A few files are removed
-# immediately, but most of the deletion happens asyncronously while
-# daemons are being started
-clear_tmp_dir=$(cd /tmp && {
-    rm -rf .{X11,ICE}-unix
-
-    set -- rm -rf
-    TMPDIR=$(mktemp -d /tmp/.delXXXXXXXXXX) && export TMPDIR &&
-	set -- sh -c 'mv -f -- "$@" "$TMPDIR"'
-    find . -maxdepth 1 ! -name . ! -name lost+found ! -name quota.user \
-	! -name quota.group ! -name vi.recover ! -name "$(basename "$TMPDIR")" \
-	-exec "$@" -- {} \+
-    rm -rfv "$TMPDIR" 2>&1 | head -20 >/dev/null
-    echo "$TMPDIR"
-} )
-rm -rf "$clear_tmp_dir" &
-clear_tmp_pid=$!
-
 # Create Unix sockets directories for X if needed and make sure they have
 # correct permissions.
 [[ -d /usr/X11R6/lib ]] && mkdir -m 1777 /tmp/.{X11,ICE}-unix
@@ -666,8 +664,6 @@ start_daemon dhcp6leased rad hostapd lpd smtpd slowcgi bgplgd httpd ftpd
 start_daemon ftpproxy ftpproxy6 tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd vmd spamd spamlogd sndiod
 echo '.'
-
-wait $clear_tmp_pid
 
 # If rc.firsttime exists, run it just once, and make sure it is deleted.
 run_upgrade_script firsttime
