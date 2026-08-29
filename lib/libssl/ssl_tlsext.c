@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.167 2026/08/29 04:54:43 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.168 2026/08/29 05:12:51 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -163,8 +163,8 @@ tlsext_alpn_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 static int
 tlsext_alpn_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	CBS server_list;
-	CBS selected;
+	CBS server_list, supported_list;
+	CBS selected, proto;
 
 	if (s->alpn_client_proto_list == NULL) {
 		*alert = SSL_AD_UNSUPPORTED_EXTENSION;
@@ -181,10 +181,24 @@ tlsext_alpn_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (CBS_len(&selected) == 0)
 		return 0;
 
-	if (!CBS_stow(&selected, &s->s3->alpn_selected, &s->s3->alpn_selected_len))
-		return 0;
+	/*
+	 * Check the server selected a protocol that we advertised as supported.
+	 */
 
-	return 1;
+	CBS_init(&supported_list, s->alpn_client_proto_list,
+	    s->alpn_client_proto_list_len);
+
+	while (CBS_len(&supported_list) > 0) {
+		if (!CBS_get_u8_length_prefixed(&supported_list, &proto))
+			return 0;
+		if (CBS_mem_equal(&selected, CBS_data(&proto), CBS_len(&proto)))
+			return CBS_stow(&selected,
+			    &s->s3->alpn_selected, &s->s3->alpn_selected_len);
+	}
+
+	*alert = SSL_AD_ILLEGAL_PARAMETER;
+
+	return 0;
 }
 
 /*
