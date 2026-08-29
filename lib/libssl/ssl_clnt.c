@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.176 2026/08/21 17:15:22 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.177 2026/08/29 08:41:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2348,7 +2348,8 @@ ssl3_get_server_finished(SSL *s)
 		goto fatal_err;
 	}
 
-	if (!CBS_mem_equal(&cbs, s->s3->hs.peer_finished, CBS_len(&cbs))) {
+	if (!CBS_mem_equal(&cbs,
+	    s->s3->hs.peer_finished, s->s3->hs.peer_finished_len)) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerror(s, SSL_R_DIGEST_CHECK_FAILED);
 		goto fatal_err;
