@@ -76,6 +76,9 @@ static bool useFramePointerForTargetByDefault(const llvm::opt::ArgList &Args,
   if (Triple.isAndroid())
     return true;
 
+  if (Triple.isOSOpenBSD())
+    return true;
+
   switch (Triple.getArch()) {
   case llvm::Triple::xcore:
   case llvm::Triple::wasm32:
@@ -206,6 +209,9 @@ static bool mustMaintainValidFrameChain(const llvm::opt::ArgList &Args,
 // cause frame records to be created in leaf functions.
 static bool framePointerImpliesLeafFramePointer(const llvm::opt::ArgList &Args,
                                                 const llvm::Triple &Triple) {
+  if (Triple.isOSOpenBSD())
+    return true;
+
   if (Triple.isARM() || Triple.isThumb()) {
     // For 32-bit Arm, the -mframe-chain=aapcs+leaf option causes the
     // -fno-omit-frame-pointer optiion to imply -mno-omit-leaf-frame-pointer,
