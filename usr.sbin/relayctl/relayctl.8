@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.34 2026/07/30 10:45:27 rsadowski Exp $
+.\" $OpenBSD: relayctl.8,v 1.35 2026/08/29 09:36:49 rsadowski Exp $
 .\"
 .\" Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2026 $
+.Dd $Mdocdate: August 29 2026 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nd control the relay daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl v
 .Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
@@ -42,6 +43,8 @@ instead of the default
 .Pa /var/run/relayd.sock
 to communicate with
 .Xr relayd 8 .
+.It Fl v
+Verbose output.
 .El
 .Pp
 The following commands are available:
@@ -78,7 +81,7 @@ the backup table as well.
 .It Cm reload
 Reload the configuration file.
 .It Cm show hosts
-Show detailed status of hosts and tables.
+Show detailed status of hosts.
 It will also print the last error for failed host checks;
 see the
 .Sx DIAGNOSTICS
