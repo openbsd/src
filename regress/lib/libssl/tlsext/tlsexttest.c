@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.97 2026/04/03 07:37:52 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.98 2026/08/29 05:12:47 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -151,6 +151,14 @@ const uint8_t tlsext_alpn_single_proto[] = {
 	/* opaque ProtocolName<1..2^8-1> -- 'http/1.1' */
 	0x08, /* len */
 	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31
+};
+
+const uint8_t tlsext_alpn_single_proto_unadvertised[] = {
+	/* ProtocolName protocol_name_list<2..2^16-1> -- ALPN names */
+	0x00, 0x09, /* len of all names */
+	/* opaque ProtocolName<1..2^8-1> -- 'http/1.2' */
+	0x08, /* len */
+	0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x32
 };
 
 #define TLSEXT_TYPE_alpn TLSEXT_TYPE_application_layer_protocol_negotiation
@@ -331,6 +339,21 @@ test_tlsext_alpn_client(void)
 		FAIL("client ALPN differs:\n");
 		compare_data(data, dlen, tlsext_alpn_multiple_protos_val,
 		    sizeof(tlsext_alpn_multiple_protos_val));
+		goto err;
+	}
+
+	/* Make sure we don't accept a protocol we did not advertise. */
+
+	CBS_init(&cbs, tlsext_alpn_single_proto_unadvertised,
+	    sizeof(tlsext_alpn_single_proto_unadvertised));
+
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
+		FAIL("failed to reject unadvertised ALPN protocol\n");
+		goto err;
+	}
+	if (alert != SSL_AD_ILLEGAL_PARAMETER) {
+		FAIL("unadvertised ALPN: want illegal_parameter, got %s\n",
+		    SSL_alert_desc_string_long(alert));
 		goto err;
 	}
 
