@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2024/03/04 19:35:13 miod Exp $
+#	$OpenBSD: Makefile,v 1.17 2026/08/29 05:01:30 anton Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -70,7 +70,7 @@ FAILING+=	run-ctrig_test-{1,4}
 FAILING+=	run-exponential_test-1
 FAILING+=	run-invtrig_test-7
 FAILING+=	run-logarithm_test-1
-FAILING+=	run-next_test-{1,2,4}
+FAILING+=	run-next_test-{2,4}
 . elif ${MACHINE} == arm64
 FAILING+=	run-cexp_test-{1,7}
 FAILING+=	run-ctrig_test-{1,4,5}
