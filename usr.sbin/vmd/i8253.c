@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.47 2026/08/29 18:42:06 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.48 2026/08/29 18:44:42 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -370,7 +370,8 @@ i8253_fire(int fd, short type, void *arg)
 	struct timeval tv;
 	struct i8253_channel *ctr = (struct i8253_channel *)arg;
 
-	vcpu_assert_irq(ctr->vm_id, 0, 0);
+	if (ctr == &i8253_channel[0])
+		vcpu_assert_irq(ctr->vm_id, 0, 0);
 
 	if (ctr->mode != TIMER_INTTC) {
 		timerclear(&tv);
