@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.166 2026/08/21 17:15:22 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.167 2026/08/29 04:54:43 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -163,25 +163,25 @@ tlsext_alpn_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 static int
 tlsext_alpn_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	CBS list, proto;
+	CBS server_list;
+	CBS selected;
 
 	if (s->alpn_client_proto_list == NULL) {
 		*alert = SSL_AD_UNSUPPORTED_EXTENSION;
 		return 0;
 	}
 
-	if (!CBS_get_u16_length_prefixed(cbs, &list))
+	if (!CBS_get_u16_length_prefixed(cbs, &server_list))
+		return 0;
+	if (!CBS_get_u8_length_prefixed(&server_list, &selected))
 		return 0;
 
-	if (!CBS_get_u8_length_prefixed(&list, &proto))
+	if (CBS_len(&server_list) != 0)
+		return 0;
+	if (CBS_len(&selected) == 0)
 		return 0;
 
-	if (CBS_len(&list) != 0)
-		return 0;
-	if (CBS_len(&proto) == 0)
-		return 0;
-
-	if (!CBS_stow(&proto, &s->s3->alpn_selected, &s->s3->alpn_selected_len))
+	if (!CBS_stow(&selected, &s->s3->alpn_selected, &s->s3->alpn_selected_len))
 		return 0;
 
 	return 1;
