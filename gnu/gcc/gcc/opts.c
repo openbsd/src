@@ -465,8 +465,10 @@ decode_options (unsigned int argc, const char **argv)
 #ifdef DELAY_SLOTS
       flag_delayed_branch = 1;
 #endif
+#if !defined(OPENBSD_NATIVE) && !defined(OPENBSD_CROSS)
 #ifdef CAN_DEBUG_WITHOUT_FP
       flag_omit_frame_pointer = 1;
+#endif
 #endif
       flag_guess_branch_prob = 1;
       flag_cprop_registers = 1;
