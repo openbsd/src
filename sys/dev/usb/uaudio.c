@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.181 2025/11/18 09:05:11 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.182 2026/08/29 08:40:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3439,6 +3439,11 @@ uaudio_pdata_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 		return;
 	}
 
+	if (!(sc->trigger_mode & AUMODE_PLAY))  {
+ 		DPRINTF("%s: halted\n", __func__);
+		return;
+	}
+
 	xfer = s->data_xfers + s->data_nextxfer;
 	if (xfer->usb_xfer != usb_xfer) {
 		DPRINTF("%s: wrong xfer\n", __func__);
@@ -3557,6 +3562,11 @@ uaudio_psync_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 
 	if (status != 0) {
 		DPRINTF("%s: xfer status = %d\n", __func__, status);
+		return;
+	}
+
+	if (!(sc->trigger_mode & AUMODE_PLAY))  {
+ 		DPRINTF("%s: halted\n", __func__);
 		return;
 	}
 
@@ -3704,6 +3714,11 @@ uaudio_rdata_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 
 	if (status != 0) {
 		DPRINTF("%s: xfer status = %d\n", __func__, status);
+		return;
+	}
+
+	if (!(sc->trigger_mode & AUMODE_RECORD))  {
+ 		DPRINTF("%s: halted\n", __func__);
 		return;
 	}
 
@@ -4292,8 +4307,8 @@ uaudio_halt_output(void *self)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 
-	uaudio_stream_close(sc, AUMODE_PLAY);
 	sc->trigger_mode &= ~AUMODE_PLAY;
+	uaudio_stream_close(sc, AUMODE_PLAY);
 	sc->copy_todo = 0;
 	return 0;
 }
@@ -4303,8 +4318,8 @@ uaudio_halt_input(void *self)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 
-	uaudio_stream_close(sc, AUMODE_RECORD);
 	sc->trigger_mode &= ~AUMODE_RECORD;
+	uaudio_stream_close(sc, AUMODE_RECORD);
 	return 0;
 }
 
