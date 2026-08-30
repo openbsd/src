@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.61 2025/01/02 13:10:03 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.62 2026/08/30 23:03:33 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1583,7 +1583,7 @@ sv_body(int s, unsigned char *context)
 
 			if (SSL_is_dtls(con) &&
 			    DTLSv1_handle_timeout(con) > 0)
-				BIO_printf(bio_err, "TIMEOUT occured\n");
+				BIO_printf(bio_err, "TIMEOUT occurred\n");
 			if (i <= 0)
 				continue;
 			if (pfd[0].revents) {

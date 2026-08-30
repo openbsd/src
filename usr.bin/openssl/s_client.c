@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.69 2026/05/09 14:16:37 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.70 2026/08/30 23:03:33 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1415,7 +1415,7 @@ s_client_main(int argc, char **argv)
 		}
 		if (SSL_is_dtls(con) &&
 		    DTLSv1_handle_timeout(con) > 0)
-			BIO_printf(bio_err, "TIMEOUT occured\n");
+			BIO_printf(bio_err, "TIMEOUT occurred\n");
 		if (!ssl_pending &&
 		    (pfd[2].revents & (POLLOUT|POLLERR|POLLNVAL))) {
 			if (pfd[2].revents & (POLLERR|POLLNVAL)) {

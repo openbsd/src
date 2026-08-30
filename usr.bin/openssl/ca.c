@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.64 2025/12/21 07:14:47 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.65 2026/08/30 23:03:33 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,7 @@
 
 /* Additional revocation information types */
 
-#define REV_NONE		0	/* No addditional information */
+#define REV_NONE		0	/* No additional information */
 #define REV_CRL_REASON		1	/* Value is CRL reason code */
 #define REV_HOLD		2	/* Value is hold instruction */
 #define REV_KEY_COMPROMISE	3	/* Value is cert key compromise time */
@@ -397,7 +397,7 @@ static const struct option ca_options[] = {
 	{
 		.name = "extfile",
 		.argname = "file",
-		.desc = "Configuration file with X509v3 extentions to add",
+		.desc = "Configuration file with X509v3 extensions to add",
 		.type = OPTION_ARG,
 		.opt.arg = &cfg.extfile,
 	},
@@ -959,7 +959,7 @@ ca_main(int argc, char **argv)
 		}
 	}
 	/*****************************************************************/
-	/* Read extentions config file                                   */
+	/* Read extensions config file                                   */
 	if (cfg.extfile != NULL) {
 		extconf = NCONF_new(NULL);
 		if (NCONF_load(extconf, cfg.extfile, &errorline) <= 0) {

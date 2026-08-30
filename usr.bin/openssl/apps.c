@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.72 2025/03/18 13:03:08 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.73 2026/08/30 23:03:33 jsg Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -490,7 +490,7 @@ load_pkcs12(BIO *err, BIO *in, const char *desc, pem_password_cb *pem_cb,
 			pem_cb = password_callback;
 		len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
 		if (len < 0) {
-			BIO_printf(err, "Passpharse callback error for %s\n",
+			BIO_printf(err, "Passphrase callback error for %s\n",
 			    desc);
 			goto die;
 		}
