@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.31 2026/05/20 13:02:04 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.32 2026/08/30 14:35:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -104,20 +104,17 @@ int
 dev_sio_open(struct dev *d)
 {
 	struct sio_par par;
-	unsigned int rate, mode = SIO_PLAY | SIO_REC;
+	unsigned int rate, mode;
 
+	mode = SIO_PLAY | SIO_REC;
 	d->sio.hdl = fdpass_sio_open(d->num, mode);
 	if (d->sio.hdl == NULL) {
-		if (mode != (SIO_PLAY | SIO_REC))
-			return 0;
-		d->sio.hdl = fdpass_sio_open(d->num, SIO_PLAY);
-		if (d->sio.hdl != NULL)
-			mode = SIO_PLAY;
-		else {
-			d->sio.hdl = fdpass_sio_open(d->num, SIO_REC);
-			if (d->sio.hdl != NULL)
-				mode = SIO_REC;
-			else
+		mode = SIO_PLAY;
+		d->sio.hdl = fdpass_sio_open(d->num, mode);
+		if (d->sio.hdl == NULL) {
+			mode = SIO_REC;
+			d->sio.hdl = fdpass_sio_open(d->num, mode);
+			if (d->sio.hdl == NULL)
 				return 0;
 		}
 		logx(1, "%s: warning, device opened in %s mode",
