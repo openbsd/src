@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.70 2026/08/30 06:21:05 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.71 2026/08/30 13:49:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -812,6 +812,10 @@ sock_hello(struct sock *f)
 		f->ctlops = 0;
 		f->ctlsyncpending = 0;
 	} else {
+		if (type != AMSG_TYPE_SND) {
+			logx(2, "sock %d: expected 'snd' type", f->fd);
+			return 0;
+		}
 		f->slot = slot_new(opt, id, p->who, &sock_slotops, f, mode);
 		if (f->slot == NULL)
 			return 0;
