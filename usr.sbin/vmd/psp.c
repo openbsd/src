@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.7 2025/06/04 08:21:29 bluhm Exp $	*/
+/*	$OpenBSD: psp.c,v 1.8 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -30,7 +30,7 @@
 extern struct vmd	*env;
 
 /* Guest policy */
-#define GPOL_NODBG	(1ULL << 0)	/* no debuggin */
+#define GPOL_NODBG	(1ULL << 0)	/* no debugging */
 #define GPOL_NOKS	(1ULL << 1)	/* no key sharing */
 #define GPOL_ES		(1ULL << 2)	/* SEV-ES required */
 #define GPOL_NOSEND	(1ULL << 3)	/* no guest migration */
@@ -71,7 +71,7 @@ psp_get_pstate(uint16_t *state, uint8_t *major, uint8_t *minor,
  * Flush data fabrics of all cores.
  *
  * This ensures all data of a SEV enabled guest is committed to
- * memory.  This needs to be done before an ASID is assigend to
+ * memory.  This needs to be done before an ASID is assigned to
  * guest using psp_activate().
  */
 int

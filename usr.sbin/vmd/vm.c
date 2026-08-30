@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.127 2026/08/04 19:12:14 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.128 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -277,7 +277,7 @@ start_vm(struct vmd_vm *vm, int fd)
 		return (ret);
 	}
 
-	/* Drop privleges further before starting the vcpu run loop(s). */
+	/* Drop privileges further before starting the vcpu run loop(s). */
 	if (pledge("stdio vmm", NULL) == -1)
 		fatal("pledge");
 
@@ -649,7 +649,7 @@ run_vm(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 		}
 
 		if (sev_activate(vm, i)) {
-			log_warnx("SEV activatation failed for vcpu %zu", i);
+			log_warnx("SEV activation failed for vcpu %zu", i);
 			return (EIO);
 		}
 
@@ -1023,7 +1023,7 @@ vm_pipe_init(struct vm_dev_pipe *p, void (*cb)(int, short, void *))
  * event structure with the given callback and argument.
  *
  * Parameters:
- *  p: pointer to vm_dev_pipe struct to initizlize
+ *  p: pointer to vm_dev_pipe struct to initialize
  *  cb: callback to use for READ events on the read end of the pipe
  *  arg: pointer to pass to the callback on event trigger
  */
@@ -1048,7 +1048,7 @@ vm_pipe_init2(struct vm_dev_pipe *p, void (*cb)(int, short, void *), void *arg)
 /*
  * vm_pipe_send
  *
- * Send a message to an emulated device vie the provided vm_dev_pipe. This
+ * Send a message to an emulated device via the provided vm_dev_pipe. This
  * relies on the fact sizeof(msg) < PIPE_BUF to ensure atomic writes.
  *
  * Parameters:

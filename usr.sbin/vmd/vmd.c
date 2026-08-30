@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.179 2026/08/06 14:20:39 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.180 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -170,7 +170,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
-		/* Validate curent state of vm */
+		/* Validate current state of vm */
 		if ((vm->vm_state & VM_STATE_SHUTDOWN) &&
 		    (flags & VMOP_FORCE) == 0) {
 				res = EALREADY;

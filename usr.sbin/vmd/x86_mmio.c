@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_mmio.c,v 1.1 2024/07/10 10:41:19 dv Exp $	*/
+/*	$OpenBSD: x86_mmio.c,v 1.2 2026/08/30 23:23:18 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
  *
@@ -125,7 +125,7 @@ const enum x86_operand_enc x86_2byte_operand_enc_table[255] = {
 /*
  * peek_byte
  *
- * Fetch the next byte fron the instruction bytes without advancing the
+ * Fetch the next byte from the instruction bytes without advancing the
  * position in the stream.
  *
  * Return values:
@@ -157,7 +157,7 @@ peek_byte(struct x86_decode_state *state, uint8_t *byte)
 /*
  * next_byte
  *
- * Fetch the next byte fron the instruction bytes, advancing the position in the
+ * Fetch the next byte from the instruction bytes, advancing the position in the
  * stream and mutating decode state.
  *
  * Return values:
@@ -277,7 +277,7 @@ str_cpu_mode(int mode)
 	case VMM_CPU_MODE_PROT32: return "PROT32";
 	case VMM_CPU_MODE_COMPAT: return "COMPAT";
 	case VMM_CPU_MODE_LONG: return "LONG";
-	default: return "UKNOWN";
+	default: return "UNKNOWN";
 	}
 }
 
@@ -358,7 +358,7 @@ str_sreg(int sreg) {
 	case VCPU_REGS_SS: return "GS";
 	case VCPU_REGS_LDTR: return "LDTR";
 	case VCPU_REGS_TR: return "TR";
-	default: return "UKNOWN";
+	default: return "UNKNOWN";
 	}
 }
 

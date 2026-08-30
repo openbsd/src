@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.16 2026/07/24 14:11:16 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.17 2026/08/30 23:23:18 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -560,7 +560,7 @@ vcpu_exit(struct vm_run_params *vrp)
  *
  * Return values:
  *  0: no action required
- *  EFAULT: a protection fault occured, kill the vm.
+ *  EFAULT: a protection fault occurred, kill the vm.
  */
 static int
 vcpu_exit_eptviolation(struct vm_run_params *vrp)

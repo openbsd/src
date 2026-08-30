@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.83 2026/05/28 20:31:57 hshoexer Exp $	*/
+/*	$OpenBSD: config.c,v 1.84 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -213,7 +213,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	 * Rate-limit the VM so that it cannot restart in a loop:
 	 * if the VM restarts after less than VM_START_RATE_SEC seconds,
 	 * we increment the limit counter.  After VM_START_RATE_LIMIT
-	 * of suchs fast reboots the VM is stopped.
+	 * of these fast reboots the VM is stopped.
 	 */
 	getmonotime(&tv);
 	if (vm->vm_start_tv.tv_sec) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.32 2026/08/04 19:12:14 claudio Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.33 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -465,7 +465,7 @@ reset:
  * characteristics, and copy into the provided buffers in the iovec array.
  *
  * It's assumed that the provided iovec array contains validated host virtual
- * address translations and not guest physical addreses.
+ * address translations and not guest physical addresses.
  *
  * Returns number of bytes copied on success, 0 if packet is dropped, and
  * -1 on an error.
@@ -949,7 +949,7 @@ handle_sync_io(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		/* Unpack our message. They ALL should be dev messeges! */
+		/* Unpack our message. They ALL should be dev messages! */
 		viodev_msg_read(&imsg, &msg);
 		imsg_free(&imsg);
 

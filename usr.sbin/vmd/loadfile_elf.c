@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.58 2026/07/29 19:08:54 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.59 2026/08/30 23:23:18 jsg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ extern int vm_id;
  * setsegment
  *
  * Initializes a segment selector entry with the provided descriptor.
- * For the purposes of the bootloader mimiced by vmd(8), we only need
+ * For the purposes of the bootloader mimicked by vmd(8), we only need
  * memory-type segment descriptor support.
  *
  * This function was copied from machdep.c
@@ -140,7 +140,7 @@ extern int vm_id;
  *  base: base of the segment
  *  limit: limit of the segment
  *  type: type of the segment
- *  dpl: privilege level of the egment
+ *  dpl: privilege level of the segment
  *  def32: default 16/32 bit size of the segment
  *  gran: granularity of the segment (byte/page)
  */

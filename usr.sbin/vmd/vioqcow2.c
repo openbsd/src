@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.32 2026/07/29 20:01:46 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.33 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -429,7 +429,7 @@ qc2_pwrite(void *p, char *buf, size_t len, off_t off)
 		 * If we couldn't find the cluster in the writable disk,
 		 * see if it exists in the base image. If it does, we
 		 * need to copy it before the write. The copy happens
-		 * in the '!inplace' if clause below te search.
+		 * in the '!inplace' if clause below the search.
 		 */
 		if (phys_off == 0)
 			for (d = disk->base; d; d = d->base)

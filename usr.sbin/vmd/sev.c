@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.8 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: sev.c,v 1.9 2026/08/30 23:23:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -94,7 +94,7 @@ sev_register_encryption(vaddr_t addr, size_t size)
 	if (size == 0)
 		return (0);
 
-	/* Adjust address and size to be aligend to AES_XTS_BLOCKSIZE. */
+	/* Adjust address and size to be aligned to AES_XTS_BLOCKSIZE. */
 	if (addr & (AES_XTS_BLOCKSIZE - 1)) {
 		size += (addr & (AES_XTS_BLOCKSIZE - 1));
 		addr &= ~(AES_XTS_BLOCKSIZE - 1);
@@ -129,7 +129,7 @@ sev_register_encryption(vaddr_t addr, size_t size)
 }
 
 /*
- * Encrypt and measure previously recorded memroy segments.
+ * Encrypt and measure previously recorded memory segments.
  *
  * This encrypts the memory initially used by the guest.  This
  * includes the kernel or BIOS image, initial stack, boot arguments
