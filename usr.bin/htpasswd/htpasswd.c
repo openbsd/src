@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.19 2026/02/18 15:23:36 deraadt Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.20 2026/08/30 12:29:37 jsg Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -210,7 +210,7 @@ main(int argc, char** argv)
 			err(1, "cannot delete temp file (%s)", tmpl);
 	}
 	if (nagcount >= MAXNAG)
-		warnx("%d more logins not using bcryt.", nagcount - MAXNAG);
+		warnx("%d more logins not using bcrypt.", nagcount - MAXNAG);
 	exit(0);
 }
 
