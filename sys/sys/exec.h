@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.58 2026/08/30 14:23:37 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.59 2026/08/30 19:10:17 kirill Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ struct exec_vmcmd_set {
 
 struct elf_args;
 struct exec_package {
-	char	*ep_name;		/* file's name */
+	const char *ep_name;		/* file's name */
 	void	*ep_hdr;		/* file's exec header */
 	u_int	ep_hdrlen;		/* length of ep_hdr */
 	u_int	ep_hdrvalid;		/* bytes of ep_hdr that are valid */

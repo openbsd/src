@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.49 2026/08/30 14:23:39 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.50 2026/08/30 19:10:16 kirill Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -201,14 +201,9 @@ check_shell:
 		strlcpy(*tmpsap++, shellarg, shellarglen + 1);
 	}
 	*tmpsap = malloc(MAXPATHLEN, M_EXEC, M_WAITOK);
-	if ((epp->ep_flags & EXEC_HASFD) == 0) {
-		error = copyinstr(epp->ep_name, *tmpsap, MAXPATHLEN,
-		    NULL);
-		if (error != 0) {
-			*(tmpsap + 1) = NULL;
-			goto fail;
-		}
-	} else
+	if ((epp->ep_flags & EXEC_HASFD) == 0)
+		strlcpy(*tmpsap, epp->ep_name, MAXPATHLEN);
+	else
 		snprintf(*tmpsap, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
 	tmpsap++;
 	*tmpsap = NULL;

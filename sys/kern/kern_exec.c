@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.271 2026/08/30 14:23:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.272 2026/08/30 19:10:17 kirill Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -357,7 +357,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	pack.ep_name = (char *)SCARG(uap, path);
+	pack.ep_name = pathname;
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
