@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.c,v 1.3 2023/11/19 13:11:06 tb Exp $	*/
+/*	$OpenBSD: pbkdf2.c,v 1.4 2026/08/30 12:19:37 kenjiro Exp $	*/
 /* Written by Christian Heimes, 2013 */
 /*
  * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.
@@ -196,9 +196,7 @@ main(int argc,char **argv)
 		test_p5_pbkdf2(n, "sha512", test, sha512_results[n]);
 	}
 
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
-	ERR_free_strings();
+	OPENSSL_cleanup();
 	return 0;
 }

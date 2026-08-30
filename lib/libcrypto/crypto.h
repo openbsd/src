@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.80 2025/09/28 07:52:53 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.81 2026/08/30 12:19:37 kenjiro Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -305,8 +305,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
  * (relative to the class type involved) */
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
-/* This function cleans up all "ex_data" state. It mustn't be called under
- * potential race-conditions. */
+/* Deprecated no-op retained for compatibility. */
 void CRYPTO_cleanup_all_ex_data(void);
 
 void CRYPTO_lock(int mode, int type, const char *file, int line);

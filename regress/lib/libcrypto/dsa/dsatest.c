@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsatest.c,v 1.11 2024/02/29 20:04:43 tb Exp $	*/
+/*	$OpenBSD: dsatest.c,v 1.12 2026/08/30 12:19:37 kenjiro Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,11 +193,10 @@ end:
 	if (!ret)
 		ERR_print_errors(bio_err);
 	DSA_free(dsa);
-	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_thread_state(NULL);
-	ERR_free_strings();
 	BIO_free(bio_err);
 	bio_err = NULL;
+	ERR_remove_thread_state(NULL);
+	OPENSSL_cleanup();
 
 	return !ret;
 }

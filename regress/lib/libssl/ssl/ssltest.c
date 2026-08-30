@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.45 2024/03/01 03:45:16 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.46 2026/08/30 12:19:37 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -759,11 +759,9 @@ end:
 	SSL_CTX_free(c_ctx);
 	BIO_free(bio_stdout);
 
-	CRYPTO_cleanup_all_ex_data();
-	ERR_free_strings();
-	ERR_remove_thread_state(NULL);
-	EVP_cleanup();
 	BIO_free(bio_err);
+	ERR_remove_thread_state(NULL);
+	OPENSSL_cleanup();
 
 	exit(ret);
 	return ret;

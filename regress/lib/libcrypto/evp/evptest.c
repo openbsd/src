@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.15 2024/03/30 09:49:59 tb Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.16 2026/08/30 12:19:37 kenjiro Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -431,10 +431,8 @@ main(int argc, char **argv)
 	}
 	fclose(f);
 
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
-	ERR_free_strings();
+	OPENSSL_cleanup();
 
 	return 0;
 }

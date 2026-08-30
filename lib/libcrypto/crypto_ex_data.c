@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_ex_data.c,v 1.6 2025/06/15 15:58:56 tb Exp $ */
+/* $OpenBSD: crypto_ex_data.c,v 1.7 2026/08/30 12:19:37 kenjiro Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <stdlib.h>
 
 #include <openssl/crypto.h>
+
+#include "crypto_internal.h"
 
 #define CRYPTO_EX_DATA_MAX_INDEX 32
 
@@ -151,6 +153,16 @@ LCRYPTO_ALIAS(CRYPTO_get_ex_new_index);
 void
 CRYPTO_cleanup_all_ex_data(void)
 {
+}
+LCRYPTO_ALIAS(CRYPTO_cleanup_all_ex_data);
+
+/*
+ * Free process-wide ex_data state during OPENSSL_cleanup(). The caller must
+ * ensure that no other thread is using libcrypto.
+ */
+void
+crypto_ex_data_cleanup(void)
+{
 	struct crypto_ex_data_class *class;
 	int i, j;
 
@@ -173,7 +185,6 @@ CRYPTO_cleanup_all_ex_data(void)
 	free(classes);
 	classes = NULL;
 }
-LCRYPTO_ALIAS(CRYPTO_cleanup_all_ex_data);
 
 static void
 crypto_ex_data_clear(CRYPTO_EX_DATA *exdata)

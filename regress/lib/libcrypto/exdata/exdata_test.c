@@ -1,4 +1,4 @@
-/* $OpenBSD: exdata_test.c,v 1.3 2024/10/02 14:12:21 jsing Exp $ */
+/* $OpenBSD: exdata_test.c,v 1.4 2026/08/30 12:19:37 kenjiro Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -264,8 +264,7 @@ main(int argc, char **argv)
 	failed |= ex_data_test();
 	failed |= ex_new_index_test();
 
-	/* Force a clean up. */
-	CRYPTO_cleanup_all_ex_data();
+	OPENSSL_cleanup();
 
 	return failed;
 }

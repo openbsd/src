@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.16 2025/07/22 09:18:02 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.17 2026/08/30 12:19:37 kenjiro Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -299,5 +299,6 @@ crypto_ror_u64(uint64_t v, size_t shift)
 #endif
 
 void crypto_cpu_caps_init(void);
+void crypto_ex_data_cleanup(void);
 
 #endif

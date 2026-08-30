@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.7 2025/06/09 12:43:53 schwarze Exp $
+.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.8 2026/08/30 12:19:37 kenjiro Exp $
 .\" Copyright (c) 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,13 +13,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2025 $
+.Dd $Mdocdate: August 30 2026 $
 .Dt OPENSSL_INIT_CRYPTO 3
 .Os
 .Sh NAME
 .Nm OPENSSL_init_crypto ,
-.Nm OPENSSL_init
-.Nd initialise the crypto library
+.Nm OPENSSL_init ,
+.Nm OPENSSL_cleanup
+.Nd initialise and shut down the crypto library
 .Sh SYNOPSIS
 .Lb libcrypto
 .In openssl/crypto.h
@@ -30,8 +31,13 @@
 .Fc
 .Ft void
 .Fn OPENSSL_init void
+.Ft void
+.Fn OPENSSL_cleanup void
 .Sh DESCRIPTION
-These functions are deprecated.
+.Fn OPENSSL_init_crypto
+and
+.Fn OPENSSL_init
+are deprecated.
 It is never useful for an application program
 to call either of them explicitly.
 .Pp
@@ -84,6 +90,21 @@ the first one have any effect.
 .Pp
 .Fn OPENSSL_init
 has no effect at all.
+.Pp
+.Fn OPENSSL_cleanup
+frees process-wide resources allocated by libcrypto.
+It is intended exclusively for the final shutdown of libcrypto in a process.
+Before calling it, the application has to ensure that all other threads
+that may use libcrypto have stopped and that no library component will use
+libcrypto again.
+After it returns, libcrypto cannot be reinitialized and no libcrypto or
+libssl function may be called.
+.Pp
+.Fn OPENSSL_cleanup
+is not a replacement for deprecated cleanup functions such as
+.Xr CRYPTO_cleanup_all_ex_data 3
+and must not be called after individual cryptographic operations or when an
+individual library component is finished with libcrypto.
 .Sh RETURN VALUES
 .Fn OPENSSL_init_crypto
 is intended to return 1 on success or 0 on error.
@@ -101,6 +122,10 @@ It stopped having any effect in OpenSSL 1.1.1 and in
 .Fn OPENSSL_init_crypto
 first appeared in OpenSSL 1.1.0 and has been available since
 .Ox 6.3 .
+.Pp
+.Fn OPENSSL_cleanup
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.2 .
 .Sh BUGS
 .Fn OPENSSL_init_crypto
 silently ignores almost all kinds of errors.

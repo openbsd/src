@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.36 2025/07/23 07:40:07 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.37 2026/08/30 12:19:37 kenjiro Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -668,9 +668,8 @@ main(int argc, char *argv[])
 
 	prime_field_tests();
 
-	CRYPTO_cleanup_all_ex_data();
-	ERR_free_strings();
 	ERR_remove_thread_state(NULL);
+	OPENSSL_cleanup();
 
 	return 0;
 }
