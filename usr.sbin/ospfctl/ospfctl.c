@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.75 2026/07/28 11:48:32 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.76 2026/08/30 12:33:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -321,12 +321,12 @@ show(struct imsg *imsg, struct parse_result *res)
 		break;
 	case IMSG_CTL_AREA:
 		if (imsg_get_data(imsg, &area_id, sizeof(area_id)) == -1)
-			errx(1, "IMSG_CTL_AREA: imsg_get_data() faied");
+			errx(1, "IMSG_CTL_AREA: imsg_get_data() failed");
 		lasttype = 0;
 		break;
 	case IMSG_CTL_IFACE:
 		if (imsg_get_data(imsg, ifname, sizeof(ifname)) == -1)
-			errx(1, "IMSG_CTL_IFACE: imsg_get_data() faied");
+			errx(1, "IMSG_CTL_IFACE: imsg_get_data() failed");
 		lasttype = 0;
 		break;
 	case IMSG_CTL_END:
