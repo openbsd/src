@@ -1,6 +1,7 @@
-/*	$OpenBSD: pkcs7test.c,v 1.6 2026/04/21 05:18:35 tb Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.7 2026/08/30 16:52:07 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,13 +17,16 @@
  */
 
 #include <err.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
+#include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
@@ -100,9 +104,13 @@ x509_store_callback(int ok, X509_STORE_CTX *ctx)
 }
 
 static void
-fatal(const char *msg)
+fatal(const char *msg, ...)
 {
-	warnx("%s", msg);
+	va_list ap;
+
+	va_start(ap, msg);
+	vwarnx("%s", ap);
+	va_end(ap);
 	ERR_print_errors_fp(stderr);
 	exit(1);
 }
@@ -300,12 +308,104 @@ pkcs7_basics(void)
 	return 0;
 }
 
+static int
+pkcs7_stream_missing_content_nid(int nid)
+{
+	PKCS7 *p7 = NULL;
+	const unsigned char *p, *name;
+	unsigned char **boundary = NULL;
+	unsigned char *der = NULL;
+	int der_len = 0;
+	int ret;
+	int failed = 1;
+
+	name = OBJ_nid2sn(nid);
+
+	/*
+	 * Create PKCS7 object with Content Type corresponding to nid
+	 * and omit the optional content.
+	 */
+
+	if ((p7 = PKCS7_new()) == NULL)
+		fatal("PKCS7_new NID %d (%s)", nid, name);
+	ASN1_OBJECT_free(p7->type);
+	if ((p7->type = OBJ_nid2obj(nid)) == NULL)
+		fatal("OBJ_nid2obj NID %d (%s)", nid, name);
+
+	/*
+	 * Round trip this through DER.
+	 */
+
+	if ((der_len = i2d_PKCS7(p7, &der)) <= 0)
+		fatal("i2d_PKCS7 NID %d (%s)", nid, name);
+
+	PKCS7_free(p7);
+	p7 = NULL;
+
+	p = der;
+	if ((p7 = d2i_PKCS7(NULL, &p, der_len)) == NULL)
+		fatal("d2i_PKCS7 NID %d (%s)", nid, name);
+
+	/*
+	 * It deserialized, so we can safely stream it, right?
+	 */
+
+	if ((ret = PKCS7_stream(&boundary, p7)) != 0) {
+		fprintf(stderr, "FAILURE: PKCS7_stream for NID %d (%s) "
+		    "want 0, got %d\n", nid, name, ret);
+		goto out;
+	}
+
+	failed = 0;
+
+ out:
+	PKCS7_free(p7);
+	freezero(der, der_len);
+
+	return failed;
+}
+
+/*
+ * For each Content Type OID (RFC 2315, section 14), create a PKCS7 object that
+ * d2i_PKCS7() accepts. For x in [1..6] we use an object that encodes to
+ *
+ * SEQUENCE {
+ *   OBJECT_IDENTIFIER { 1.2.840.113549.1.7.x }
+ * }
+ *
+ * This works because RFC 2315 section 7 marks the content optional:
+ *
+ *  ContentInfo ::= SEQUENCE {
+ *    contentType ContentType,
+ *    content
+ *      [0] EXPLICIT ANY DEFINED BY contentType OPTIONAL }
+ *
+ * reflected in the ASN1_TFLG_OPTIONAL in pk7_asn1.c's p7default_tt.
+ */
+
+static int
+pkcs7_stream_missing_content(void)
+{
+	int failed = 0;
+
+	/* NID naming consistency is king. */
+	failed |= pkcs7_stream_missing_content_nid(NID_pkcs7_data);
+	failed |= pkcs7_stream_missing_content_nid(NID_pkcs7_signed);
+	failed |= pkcs7_stream_missing_content_nid(NID_pkcs7_enveloped);
+	failed |= pkcs7_stream_missing_content_nid(NID_pkcs7_signedAndEnveloped);
+	failed |= pkcs7_stream_missing_content_nid(NID_pkcs7_digest);
+	failed |= pkcs7_stream_missing_content_nid(NID_pkcs7_encrypted);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
 	int failed = 0;
 
 	failed |= pkcs7_basics();
+	failed |= pkcs7_stream_missing_content();
 
 	return failed;
 }
