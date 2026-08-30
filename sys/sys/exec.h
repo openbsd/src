@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.57 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.58 2026/08/30 14:23:37 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -133,6 +133,7 @@ struct exec_package {
 	vaddr_t	ep_pinstart, ep_pinend;	/* executable region */
 	u_int	*ep_pins;		/* array of system call offsets */
 	int	ep_npins;		/* entries in array */
+	char	*ep_execpath;		/* execve path on userland stack */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -158,7 +159,7 @@ int	vmcmd_randomize(struct proc *, struct exec_vmcmd *);
 int	copyargs(struct exec_package *, struct ps_strings *, void *, void *);
 void	setregs(struct proc *, struct exec_package *, u_long,
 	    struct ps_strings *);
-int	check_exec(struct proc *, struct exec_package *);
+int	check_exec(struct proc *, struct exec_package *, int);
 int	exec_setup_stack(struct proc *, struct exec_package *);
 int	exec_process_vmcmds(struct proc *, struct exec_package *);
 

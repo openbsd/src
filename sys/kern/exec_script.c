@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.48 2019/07/15 04:11:03 visa Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.49 2026/08/30 14:23:39 deraadt Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -189,7 +189,6 @@ check_shell:
 	/* set up the parameters for the recursive check_exec() call */
 	epp->ep_ndp->ni_dirfd = AT_FDCWD;
 	epp->ep_ndp->ni_dirp = shellname;
-	epp->ep_ndp->ni_segflg = UIO_SYSSPACE;
 	epp->ep_flags |= EXEC_INDIR;
 
 	/* and set up the fake args list, for later */
@@ -220,7 +219,7 @@ check_shell:
 	 */
 	epp->ep_hdrvalid = 0;
 
-	if ((error = check_exec(p, epp)) == 0) {
+	if ((error = check_exec(p, epp, 0)) == 0) {
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR;
 
