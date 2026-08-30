@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.32 2026/08/30 16:52:56 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.33 2026/08/30 16:56:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -678,6 +678,10 @@ PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 	case NID_pkcs7_signed:
 		if (p7->d.sign == NULL || p7->d.sign->contents == NULL) {
 			PKCS7error(PKCS7_R_NO_CONTENT);
+			break;
+		}
+		if (!PKCS7_type_is_data(p7->d.sign->contents)) {
+			PKCS7error(PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 			break;
 		}
 		os = p7->d.sign->contents->d.data;
