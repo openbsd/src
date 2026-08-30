@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.44 2025/11/27 10:17:19 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.45 2026/08/30 12:37:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -730,7 +730,7 @@ appl_unregister(const char *ctxname, uint8_t priority, struct ber_oid *oid,
 
 	range_subid--;
 	if (range_subid >= oid->bo_n) {
-		log_warnx("%s: Can't unregiser %s: range_subid too large",
+		log_warnx("%s: Can't unregister %s: range_subid too large",
 		    backend->ab_name, oidbuf);
 		return APPL_ERROR_PARSEERROR;
 	}
