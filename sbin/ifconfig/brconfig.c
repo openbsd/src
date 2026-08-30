@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.45 2025/11/29 10:51:16 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.46 2026/08/30 06:29:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1346,11 +1346,12 @@ bridge_vidmap(const char *ifsname)
 void
 bridge_pvlans(const char *delim)
 {
-	uint16_t vp = 0, vs;
+	uint16_t vp = 0, vs, pvs;
 	struct ifbrpvlan ifbrpv;
 
 	for (;;) {
 		const char *sep = " community ";
+		int rangelen = 0;
 		memset(&ifbrpv, 0, sizeof(ifbrpv));
 
 		strlcpy(ifbrpv.ifbrpv_name, ifname, sizeof(ifbrpv.ifbrpv_name));
@@ -1398,10 +1399,23 @@ bridge_pvlans(const char *delim)
 				break;
 			}
 
-			printf("%s%u", sep, ifbrpv.ifbrpv_secondary);
-			vs = ifbrpv.ifbrpv_secondary;
-			sep = ",";
+			if (rangelen == 0) {
+				printf("%s%d", sep, ifbrpv.ifbrpv_secondary);
+				rangelen = 1;
+				sep = ",";
+			}
+
+			if (ifbrpv.ifbrpv_secondary == vs) {
+				rangelen++;
+			} else if (rangelen > 1) {
+				printf("-%d", pvs);
+				rangelen = 0;
+			}
+
+			pvs = vs = ifbrpv.ifbrpv_secondary;
 		}
+		if (rangelen > 1)
+			printf("-%d", pvs);
 
 		printf("\n");
 	}
