@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.22 2021/10/23 16:45:32 mestre Exp $	*/
+/*	$OpenBSD: stty.c,v 1.23 2026/08/30 02:31:53 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -154,7 +154,7 @@ args:	argc -= optind;
 		usage();
 	}
 
-	if (i.set && tcsetattr(i.fd, 0, &i.t) == -1)
+	if (i.set && tcsetattr(i.fd, TCSANOW, &i.t) == -1)
 		err(1, "tcsetattr");
 	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) == -1)
 		warn("TIOCSWINSZ");
