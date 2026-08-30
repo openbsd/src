@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.121 2026/08/27 13:17:42 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.122 2026/08/30 10:47:23 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022, 2026 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -85,12 +85,12 @@ static	void		 pg_searchres(const struct req *,
 static	void		 pg_show(struct req *, const char *);
 static	int		 resp_begin_html(int, const char *, const char *);
 static	void		 resp_begin_http(int, const char *);
-static	void		 resp_catman(const struct req *, const char *);
+static	void		 resp_catman(const struct req *, const char *, int);
 static	int		 resp_copy(const char *, int *);
 static	void		 resp_end_html(void);
-static	void		 resp_format(const struct req *, const char *);
+static	void		 resp_format(const struct req *, const char *, int);
 static	void		 resp_searchform(const struct req *, enum focus);
-static	void		 resp_show(const struct req *, const char *);
+static	void		 resp_show(const struct req *, const char *, int);
 static	void		 set_query_attr(char **, char **);
 static	int		 validate_arch(const char *);
 static	int		 validate_filename(const char *);
@@ -644,11 +644,10 @@ static void
 pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 {
 	char		*arch, *archend;
-	const char	*sec;
+	const char	*file, *sec;
 	size_t		 i, iuse;
 	int		 archprio, archpriouse;
 	int		 prio, priouse;
-	int		 have_header;
 
 	for (i = 0; i < sz; i++) {
 		if (validate_filename(r[i].file))
@@ -682,6 +681,7 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	 */
 
 	iuse = 0;
+	file = NULL;
 	if (req->q.equal || sz == 1) {
 		priouse = 20;
 		archpriouse = 3;
@@ -715,19 +715,17 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 			priouse = prio;
 			iuse = i;
 		}
-		have_header = resp_begin_html(200, NULL, r[iuse].file);
-	} else
-		have_header = resp_begin_html(200, NULL, NULL);
-
-	if (have_header == 0)
-		puts("<header>");
-	resp_searchform(req,
-	    req->q.equal || sz == 1 ? FOCUS_NONE : FOCUS_QUERY);
-	puts("</header>");
+		file = r[iuse].file;
+	}
 
 	if (sz > 1) {
-		puts("<nav>");
-		puts("<table class=\"results\">");
+		if (resp_begin_html(200, NULL, file) == 0)
+			puts("<header>");
+		resp_searchform(req,
+		    req->q.equal || sz == 1 ? FOCUS_NONE : FOCUS_QUERY);
+		puts("</header>\n"
+		     "<nav>\n"
+		     "<table class=\"results\">");
 		for (i = 0; i < sz; i++) {
 			printf("  <tr>\n"
 			       "    <td>"
@@ -746,18 +744,16 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		}
 		puts("</table>");
 		puts("</nav>");
-	}
-
-	if (req->q.equal || sz == 1) {
-		puts("<hr>");
-		resp_show(req, r[iuse].file);
-	}
-
-	resp_end_html();
+		if (req->q.equal) {
+			puts("<hr>");
+			resp_show(req, file, 1);
+		}
+	} else if (req->q.equal) 
+		resp_show(req, file, 0);
 }
 
 static void
-resp_catman(const struct req *req, const char *file)
+resp_catman(const struct req *req, const char *file, int html_begun)
 {
 	FILE		*f;
 	char		*p;
@@ -767,12 +763,21 @@ resp_catman(const struct req *req, const char *file)
 	int		 italic, bold;
 
 	if ((f = fopen(file, "r")) == NULL) {
-		puts("<p role=\"doc-notice\">\n"
-		     "  You specified an invalid manual file.\n"
-		     "</p>");
+		if (html_begun)
+			puts("<p role=\"doc-notice\">"
+			     "Internal Server Error</p>");
+		else
+			pg_error_badrequest(
+			    "You specified an invalid manual file.");
 		return;
 	}
 
+	if (html_begun == 0) {
+		if (resp_begin_html(200, NULL, file) == 0)
+			puts("<header>");
+		resp_searchform(req, FOCUS_NONE);
+		puts("</header>");
+	}
 	puts("<div class=\"catman\">\n"
 	     "<pre>");
 
@@ -891,12 +896,13 @@ resp_catman(const struct req *req, const char *file)
 
 	puts("</pre>\n"
 	     "</div>");
+	resp_end_html();
 
 	fclose(f);
 }
 
 static void
-resp_format(const struct req *req, const char *file)
+resp_format(const struct req *req, const char *file, int html_begun)
 {
 	struct manoutput conf;
 	struct mparse	*mp;
@@ -905,10 +911,13 @@ resp_format(const struct req *req, const char *file)
 	int		 fd;
 	int		 usepath;
 
-	if (-1 == (fd = open(file, O_RDONLY))) {
-		puts("<p role=\"doc-notice\">\n"
-		     "  You specified an invalid manual file.\n"
-		     "</p>");
+	if ((fd = open(file, O_RDONLY)) == -1) {
+		if (html_begun)
+			puts("<p role=\"doc-notice\">"
+			     "Internal Server Error</p>");
+		else
+			pg_error_badrequest(
+			    "You specified an invalid manual file.");
 		return;
 	}
 
@@ -927,11 +936,19 @@ resp_format(const struct req *req, const char *file)
 	    scriptname, *scriptname == '\0' ? "" : "/",
 	    usepath ? req->q.manpath : "", usepath ? "/" : "");
 
+	if (html_begun == 0) {
+	 	if (resp_begin_html(200, NULL, file) == 0)
+			puts("<header>");
+		resp_searchform(req, FOCUS_NONE);
+		puts("</header>");
+	}
+
 	vp = html_alloc(&conf);
 	if (meta->macroset == MACROSET_MDOC)
 		html_mdoc(vp, meta);
 	else
 		html_man(vp, meta);
+	resp_end_html();
 
 	html_free(vp);
 	mparse_free(mp);
@@ -941,16 +958,16 @@ resp_format(const struct req *req, const char *file)
 }
 
 static void
-resp_show(const struct req *req, const char *file)
+resp_show(const struct req *req, const char *file, int html_begun)
 {
 
 	if ('.' == file[0] && '/' == file[1])
 		file += 2;
 
 	if ('c' == *file)
-		resp_catman(req, file);
+		resp_catman(req, file, html_begun);
 	else
-		resp_format(req, file);
+		resp_format(req, file, html_begun);
 }
 
 static void
@@ -993,13 +1010,7 @@ pg_show(struct req *req, const char *fullpath)
 		    "You specified an invalid manual file.");
 		return;
 	}
-
-	if (resp_begin_html(200, NULL, file) == 0)
-		puts("<header>");
-	resp_searchform(req, FOCUS_NONE);
-	puts("</header>");
-	resp_show(req, file);
-	resp_end_html();
+	resp_show(req, file, 0);
 }
 
 static void
