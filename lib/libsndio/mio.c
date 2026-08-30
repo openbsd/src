@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.23 2019/06/29 06:05:26 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.24 2026/08/30 06:21:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,7 +48,7 @@ mio_open(const char *str, unsigned int mode, int nbio)
 			str = portany;
 	}
 	if (strcmp(str, portany) == 0) {
-		hdl = _mio_aucat_open("midithru/0", mode, nbio);
+		hdl = _mio_aucat_open("midi/default", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
 		return _mio_rmidi_open("rmidi/0", mode, nbio);

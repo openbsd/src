@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.61 2026/08/12 11:01:26 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.62 2026/08/30 06:21:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -522,7 +522,7 @@ main(int argc, char **argv)
 	p = NULL;
 
 	while ((c = getopt(argc, argv,
-	    "a:b:c:C:de:F:f:j:L:m:Q:q:r:s:t:U:v:w:x:z:")) != -1) {
+	    "a:b:c:C:de:F:f:j:L:m:Q:p:q:r:s:t:U:v:w:x:z:")) != -1) {
 		switch (c) {
 		case 'd':
 			log_level++;
@@ -577,6 +577,11 @@ main(int argc, char **argv)
 			if (mkopt(optarg, d, alt_list, pmin, pmax, rmin, rmax,
 				mode, vol, mmc, dup) == NULL)
 				return 1;
+			break;
+		case 'p':
+			if (!ckname(optarg))
+				return 1;
+			midithru_new(optarg);
 			break;
 		case 'q':
 		case 'Q':
@@ -666,6 +671,9 @@ main(int argc, char **argv)
 		if (o == NULL)
 			return 1;
 	}
+
+	if (!midithru_byname("default"))
+		midithru_new("default");
 
 	/*
 	 * For each device create an anonymous sub-device using

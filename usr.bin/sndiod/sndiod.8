@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.22 2026/06/22 14:15:26 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.23 2026/08/30 06:21:05 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 22 2026 $
+.Dd $Mdocdate: August 30 2026 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Op Fl j Ar flag
 .Op Fl L Ar addr
 .Op Fl m Ar mode
+.Op Fl p Ar name
 .Op Fl q Ar port
 .Op Fl r Ar rate
 .Op Fl s Ar name
@@ -262,6 +263,19 @@ Multiple modes can be specified, separated by commas.
 The default is
 .Ar play , Ns Ar rec
 (i.e. full-duplex).
+.It Fl p Ar name
+Add
+.Ar name
+to the list of MIDI thru ports to expose.
+This allows clients to send MIDI messages to each other or to
+hardware MIDI ports.
+The given
+.Ar name
+corresponds to the
+.Dq option
+part of the
+.Xr sndio 7
+MIDI port name string.
 .It Fl q Ar port
 Expose the given MIDI port.
 This allows multiple programs to share the port.

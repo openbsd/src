@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.27 2021/11/01 14:43:24 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.28 2026/08/30 06:21:05 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2021 $
+.Dd $Mdocdate: August 30 2026 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -77,12 +77,9 @@ how to access the audio device or MIDI port.
 The type of the audio device or MIDI port.
 Possible values are:
 .Pp
-.Bl -tag -width "midithru" -offset 3n -compact
+.Bl -tag -width "rmidi" -offset 3n -compact
 .It Cm snd
 Audio device exposed by
-.Xr sndiod 8 .
-.It Cm midithru
-MIDI thru port created with
 .Xr sndiod 8 .
 .It Cm midi
 MIDI port exposed by
@@ -112,8 +109,10 @@ option on the
 .Xr sndiod 8
 command line.
 .It Ar option
-Corresponds to the sub-device string registered using the
+Corresponds to the string registered using the
 .Fl s
+or
+.Fl p
 option of
 .Xr sndiod 8 .
 .El
@@ -159,7 +158,7 @@ the program uses the one specified in the
 .Ev MIDIDEVICE
 environment variable.
 If it is not set, the program first tries to connect to
-.Li midithru/0 .
+.Li midi/default .
 If that fails, it then tries to use
 .Li rmidi/0 .
 As long as
@@ -215,7 +214,7 @@ Raw audio devices.
 Raw MIDI ports.
 .El
 .Sh EXAMPLES
-.Bl -tag -width "midithru/0" -compact
+.Bl -tag -width "midi/synth" -compact
 .It Li snd/0
 Audio device referred to by the first
 .Fl f
@@ -224,9 +223,9 @@ option of
 .It Li snd/rear
 Sub-device registered with
 .Dq -s rear .
-.It Li midithru/0
-First MIDI thru port created with
-.Xr sndiod 8 .
+.It Li midi/synth
+MIDI thru port registered with
+.Dq -p synth .
 .It Li default
 Default audio or MIDI device.
 .It Li rsnd/0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.69 2026/08/12 10:58:19 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.70 2026/08/30 06:21:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -759,6 +759,12 @@ sock_hello(struct sock *f)
 			return 0;
 		break;
 	case AMSG_TYPE_MIDITHRU:
+		/*
+		 * Make legacy "midithru/0" an alias to "midi/default"
+		 */
+		if (strcmp("default-0", name) == 0)
+			strlcpy(name, "default", sizeof(name));
+		/* FALLTHROUGH */
 	case AMSG_TYPE_MIDI:
 		midithru = midithru_byname(name);
 		if (midithru == NULL)
