@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.66 2026/05/16 08:20:41 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.67 2026/08/30 12:23:16 kenjiro Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -233,7 +233,7 @@ dtls1_clear(SSL *s)
 long
 dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
-	int ret = 0;
+	long ret = 0;
 
 	switch (cmd) {
 	case DTLS_CTRL_GET_TIMEOUT:
