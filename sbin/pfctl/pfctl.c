@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.405 2026/07/10 06:28:43 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.406 2026/08/30 12:27:27 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2928,7 +2928,7 @@ pfctl_lookup_option(char *cmd, const char **list)
 				if (item == NULL)
 					item = *list;
 				else
-					errx(1, "%s is ambigious", cmd);
+					errx(1, "%s is ambiguous", cmd);
 			}
 
 	return (item);
