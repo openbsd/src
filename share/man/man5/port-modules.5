@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.288 2026/08/25 14:36:31 schwarze Exp $
+.\"	$OpenBSD: port-modules.5,v 1.289 2026/08/30 13:45:11 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2026 $
+.Dd $Mdocdate: August 30 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -758,6 +758,24 @@ To prevent this, unless devel/cmake/core is explicitly part of
 .Ev BUILD_DEPENDS ,
 .Xr cmake 1
 will be disabled by creating a link to false in ${WRKDIR}/bin/.
+.Pp
+Specific integration for building with
+.Xr cargo 1
+is automatically enabled if
+.Cm devel/cargo
+is included in
+.Ev MODULES .
+.Ev MODCARGO_BUILD ,
+.Ev MODCARGO_INSTALL ,
+and
+.Ev MODCARGO_TEST
+are set to
+.Cm \&No ,
+${MODCARGO_ENV} is added to
+.Ev MAKE_ENV
+and
+${MODCARGO_configure} is added to
+.Ev MODMESON_pre-configure .
 .Pp
 This module supports the following knob:
 .Bl -tag -width Ds
