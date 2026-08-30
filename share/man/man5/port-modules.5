@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.289 2026/08/30 13:45:11 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.290 2026/08/30 15:53:56 stu Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1169,6 +1169,14 @@ Sets
 .Ev MODTCL_LIB_DEPENDS ,
 and
 .Ev MODTCL_LIB .
+Also sets
+.Ev MODTCL_EXTLIB ,
+.Ev MODTCL_EXT8 ,
+.Ev MODTCL_EXT9 ,
+and
+.Ev MODTCL_COMMENT ,
+for Tcl 8/9 ports.
+See textproc/tdom and x11/dbus-tcl.
 .Ev MODTCL_VERSION
 is the default version used by all Tcl ports and may be overridden.
 Provides
