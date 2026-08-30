@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.712 2026/07/30 13:56:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.713 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4539,7 +4539,7 @@ rde_aspa_reload(void)
 	if (rpki_update_pending) {
 		aspa_table_free(aspa_new);	/* can't use new aspa table */
 		aspa_new = NULL;
-		return 1;			/* rpki_client_relaod warns */
+		return 1;			/* rde_rpki_reload warns */
 	}
 
 	aspa_old = rde_aspa;

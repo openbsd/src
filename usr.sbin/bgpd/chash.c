@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.15 2026/06/23 15:34:00 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.16 2026/08/30 23:43:22 jsg Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -92,7 +92,7 @@ struct ch_ext {
  *   cg_meta_get_flags: Return flags section as uint8_t.
  *   cg_meta_check_flags: Return true if flag is set in flags section.
  *   cg_meta_set_hash: Set one of the 7 hash bytes according to slot and hash.
- *   ch_meta_locate: find possible canidates.
+ *   ch_meta_locate: find possible candidates.
  */
 static inline int
 cg_meta_set_flags(struct ch_group *g, uint8_t flag)
@@ -191,7 +191,7 @@ ch_meta_locate(struct ch_group *g, uint64_t mask)
  * free (not set).
  *
  * Sub tables are automatically split in two when the maximum loadfactor is
- * reached. If the fill factor drops below a threashold then buddy tables
+ * reached. If the fill factor drops below a threshold then buddy tables
  * may be joined back together.
  */
 
@@ -629,7 +629,7 @@ ch_table_buddy(struct ch_table *t, uint64_t idx, uint32_t local_level)
 }
 
 /*
- * Grow the hash table by spliting a sub group and if needed by doubling
+ * Grow the hash table by splitting a sub group and if needed by doubling
  * the extendible hash of the primary table.
  * Return 0 on success, -1 on failure and set errno.
  */

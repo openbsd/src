@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.143 2026/07/30 13:56:06 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.144 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -303,7 +303,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		}
 
 		/*
-		 * TODO: this is wrong and shoud work the other way around.
+		 * TODO: this is wrong and should work the other way around.
 		 * The imsg.hdr.pid is from the remote end and should not
 		 * be trusted.
 		 */

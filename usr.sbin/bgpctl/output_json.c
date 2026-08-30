@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.65 2026/06/24 06:02:48 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.66 2026/08/30 23:43:23 jsg Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -869,7 +869,7 @@ json_rib(struct ctl_show_rib *r, struct ibuf *asbuf, struct parse_result *res)
 	if (r->flags & F_PREF_ANNOUNCE)
 		json_do_bool("announced", 1);
 
-	/* various attribibutes */
+	/* various attributes */
 	json_do_string("ovs", fmt_ovs(r->roa_validation_state, 0));
 	json_do_string("avs", fmt_avs(r->aspa_validation_state, 0));
 	json_do_string("origin", fmt_origin(r->origin, 0));

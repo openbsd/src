@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.303 2026/07/20 13:25:49 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.304 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1341,7 +1341,7 @@ nexthop_runner(void)
 	if (nh == NULL)
 		return;
 
-	/* remove from runnner queue */
+	/* remove from runner queue */
 	TAILQ_REMOVE(&nexthop_runners, nh, runner_l);
 
 	p = nh->next_prefix;

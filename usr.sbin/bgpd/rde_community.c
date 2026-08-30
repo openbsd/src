@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.26 2026/05/27 08:38:43 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.27 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -426,7 +426,7 @@ community_delete(struct rde_community *comm, const struct community *fc,
 /*
  * Internalize communities from the wireformat.
  * Store the partial flag in struct rde_community so it is not lost.
- * - community_add for ATTR_COMMUNITUES
+ * - community_add for ATTR_COMMUNITIES
  * - community_large_add for ATTR_LARGE_COMMUNITIES
  * - community_ext_add for ATTR_EXT_COMMUNITIES
  */
@@ -495,7 +495,7 @@ community_ext_add(struct rde_community *comm, int flags, int ebgp,
 			return (-1);
 
 		type = c >> 56;
-		/* filter out non-transitive ext communuties from ebgp peers */
+		/* filter out non-transitive ext communities from ebgp peers */
 		if (ebgp && (type & EXT_COMMUNITY_NON_TRANSITIVE))
 			continue;
 		switch (type & EXT_COMMUNITY_VALUE) {

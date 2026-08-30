@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.503 2026/06/02 08:40:02 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.504 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2905,7 +2905,7 @@ filter_elm	: filter_prefix_h	{
 		}
 		| MAXCOMMUNITIES NUMBER {
 			if ($2 < 0 || $2 > INT16_MAX) {
-				yyerror("bad max-comunities %lld", $2);
+				yyerror("bad max-communities %lld", $2);
 				YYERROR;
 			}
 			if (fmopts.m.maxcomm != 0) {

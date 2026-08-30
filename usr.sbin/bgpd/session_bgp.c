@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.12 2026/07/23 11:29:55 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.13 2026/08/30 23:43:23 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -480,7 +480,7 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 		if (ibuf_size(ibuf) >
 		    MAX_PKTSIZE - MSGSIZE_NOTIFICATION_MIN - datalen) {
 			log_peer_warnx(&p->conf,
-			    "oversized notification, data trunkated");
+			    "oversized notification, data truncated");
 			ibuf_truncate(ibuf, MAX_PKTSIZE -
 			    MSGSIZE_NOTIFICATION_MIN - datalen);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.203 2026/07/21 21:02:29 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.204 2026/08/30 23:43:23 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -990,7 +990,7 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 
 /*
  * Generate UPDATE message containing either just withdraws or updates.
- * UPDATE messages are contructed like this:
+ * UPDATE messages are constructed like this:
  *
  *    +-----------------------------------------------------+
  *    |   Withdrawn Routes Length (2 octets)                |

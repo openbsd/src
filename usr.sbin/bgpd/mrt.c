@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.137 2026/05/28 13:15:08 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.138 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -702,7 +702,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 	default:
 		/*
 		 * XXX The RFC defined the format for this type differently
-		 * and it is prohibitly expensive to implement that format.
+		 * and it is prohibitively expensive to implement that format.
 		 * Instead do what gobgp does and encode it like the other
 		 * types.
 		 */
@@ -1253,7 +1253,7 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 {
 	struct mrt	*m, *xm;
 
-	/* both lists here are actually struct mrt_conifg nodes */
+	/* both lists here are actually struct mrt_config nodes */
 	LIST_FOREACH(m, nconf, entry) {
 		if ((xm = mrt_get(xconf, m)) == NULL) {
 			/* NEW */

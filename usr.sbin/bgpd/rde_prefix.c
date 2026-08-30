@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.63 2026/05/21 13:28:17 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.64 2026/08/30 23:43:22 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -244,7 +244,7 @@ pt_getflowspec(struct pt_entry *pte, uint8_t **flow)
 }
 
 /*
- * Fill out a pt_entry for lookup, on failure return an object initalized
+ * Fill out a pt_entry for lookup, on failure return an object initialized
  * with 0xff. pt_add must reject such objects (by checking pte->aid).
  */
 struct pt_entry *
