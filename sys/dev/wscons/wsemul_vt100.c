@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.48 2024/11/05 08:12:08 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.49 2026/08/30 06:44:10 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -866,14 +866,25 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp,
 		/* argument digit */
 		if (edp->nargs >= VT100_EMUL_NARGS)
 			break;
-		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
-		    (instate->inchar - '0');
+		/* Do not allow values to grow too large */
+		if (edp->args[edp->nargs] >= 0 &&
+		    edp->args[edp->nargs] < VT100_EMUL_ARG_CLAMP / 10) {
+			edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
+			    (instate->inchar - '0');
+		} else
+			edp->args[edp->nargs] = -1;	/* clamped */
 		break;
 	case ';': /* argument terminator */
+		/* apply clamp */
+		if (edp->args[edp->nargs] < 0)
+			edp->args[edp->nargs] = VT100_EMUL_ARG_CLAMP;
 		if (edp->nargs < VT100_EMUL_NARGS)
 			edp->nargs++;
 		break;
 	default:
+		/* apply clamp */
+		if (edp->args[edp->nargs] < 0)
+			edp->args[edp->nargs] = VT100_EMUL_ARG_CLAMP;
 		if (edp->nargs < VT100_EMUL_NARGS)
 			edp->nargs++;
 		newstate = VT100_EMUL_STATE_STRING;
@@ -1061,12 +1072,20 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp,
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		/* argument digit */
-		if (edp->nargs > VT100_EMUL_NARGS - 1)
+		if (edp->nargs >= VT100_EMUL_NARGS)
 			break;
-		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
-		    (instate->inchar - '0');
+		/* Do not allow values to grow too large */
+		if (edp->args[edp->nargs] >= 0 &&
+		    edp->args[edp->nargs] < VT100_EMUL_ARG_CLAMP / 10) {
+			edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
+			    (instate->inchar - '0');
+		} else
+			edp->args[edp->nargs] = -1;	/* clamped */
 		break;
 	case ';': /* argument terminator */
+		/* apply clamp */
+		if (edp->args[edp->nargs] < 0)
+			edp->args[edp->nargs] = VT100_EMUL_ARG_CLAMP;
 		if (edp->nargs < VT100_EMUL_NARGS)
 			edp->nargs++;
 		break;
@@ -1082,6 +1101,9 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp,
 		break;
 	default: /* end of escape sequence */
 		oargs = edp->nargs;
+		/* apply clamp */
+		if (edp->args[edp->nargs] < 0)
+			edp->args[edp->nargs] = VT100_EMUL_ARG_CLAMP;
 		if (edp->nargs < VT100_EMUL_NARGS)
 			edp->nargs++;
 		rc = wsemul_vt100_handle_csi(edp, instate, kernel);

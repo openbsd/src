@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.37 2023/07/24 17:03:32 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.38 2026/08/30 06:44:10 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -95,6 +95,8 @@ const struct wsemul_ops wsemul_sun_ops = {
 
 #define	SUN_EMUL_NARGS	2		/* max # of args to a command */
 
+#define	SUN_EMUL_ARG_CLAMP	100000	/* max value of arg to a command */
+
 struct wsemul_sun_emuldata {
 	const struct wsdisplay_emulops *emulops;
 	struct wsemul_abortstate abortstate;
@@ -106,7 +108,7 @@ struct wsemul_sun_emuldata {
 
 	u_int state;			/* processing state */
 	u_int flags;
-	u_int args[SUN_EMUL_NARGS];	/* command args, if CONTROL */
+	int args[SUN_EMUL_NARGS];	/* command args, if CONTROL */
 	int nargs;			/* number of args */
 
 	u_int scrolldist;		/* distance to scroll */
@@ -612,17 +614,28 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp,
 			    (SUN_EMUL_NARGS - 1) * sizeof(edp->args[0]));
 			edp->args[edp->nargs = SUN_EMUL_NARGS - 1] = 0;
 		}
-		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
-		    (instate->inchar - '0');
+		/* Do not allow values to grow too large */
+		if (edp->args[edp->nargs] >= 0 &&
+		    edp->args[edp->nargs] < SUN_EMUL_ARG_CLAMP / 10) {
+			edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
+			    (instate->inchar - '0');
+		} else
+			edp->args[edp->nargs] = -1;	/* clamped */
 		break;
 
 	case ';':		/* argument terminator */
+		/* apply clamp */
+		if (edp->args[edp->nargs] < 0)
+			edp->args[edp->nargs] = SUN_EMUL_ARG_CLAMP;
 		if (edp->nargs < SUN_EMUL_NARGS)
 			edp->nargs++;
 		break;
 
 	default:		/* end of escape sequence */
 		oargs = edp->nargs;
+		/* apply clamp */
+		if (edp->args[edp->nargs] < 0)
+			edp->args[edp->nargs] = SUN_EMUL_ARG_CLAMP;
 		if (edp->nargs < SUN_EMUL_NARGS)
 			edp->nargs++;
 		rc = wsemul_sun_control(edp, instate);
