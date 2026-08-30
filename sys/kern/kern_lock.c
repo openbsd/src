@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.86 2026/02/04 00:10:27 jsg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.87 2026/08/30 23:36:26 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -491,7 +491,7 @@ mtx_leave(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
 	unsigned long owner, self = (unsigned long)ci;
-	int s;
+	int s, wantipl;
 
 	/* Avoid deadlocks after panic or in DDB */
 	if (panicstr || db_active)
@@ -504,6 +504,7 @@ mtx_leave(struct mutex *mtx)
 #endif
 
 	s = mtx->mtx_oldipl;
+	wantipl = mtx->mtx_wantipl;
 	membar_exit_before_atomic();
 	owner = atomic_cas_ulong(&mtx->mtx_owner, self, 0);
 	if (owner != self) {
@@ -529,7 +530,7 @@ mtx_leave(struct mutex *mtx)
 		mtx_leave_park(p, m);
 	}
 
-	if (mtx->mtx_wantipl != IPL_NONE)
+	if (wantipl != IPL_NONE)
 		splx(s);
 }
 #else /* MULTIPROCESSOR */
