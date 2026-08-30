@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.9 2026/05/21 05:33:20 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.10 2026/08/30 12:39:08 jsg Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -815,7 +815,7 @@ ax_error2string(enum ax_pdu_error error)
 	case AX_PDU_ERROR_DUPLICATEREGISTRATION:
 		return "Duplicate registration";
 	case AX_PDU_ERROR_UNKNOWNREGISTRATION:
-		return "Unkown registration";
+		return "Unknown registration";
 	case AX_PDU_ERROR_UNKNOWNAGENTCAPS:
 		return "Unknown agent capabilities";
 	case AX_PDU_ERROR_PARSEERROR:
