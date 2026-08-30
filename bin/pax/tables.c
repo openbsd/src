@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.56 2026/05/17 02:00:36 jsg Exp $	*/
+/*	$OpenBSD: tables.c,v 1.57 2026/08/30 23:13:06 jsg Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -693,12 +693,12 @@ sltab_add_sym(const char *path0, const char *value0, mode_t mode)
 			return (-1);
 		}
 	} else if ((path = strdup(path0)) == NULL) {
-		syswarn(1, errno, "defered symlink path");
+		syswarn(1, errno, "deferred symlink path");
 		unlink(path0);
 		return (-1);
 	}
 	if ((value = strdup(value0)) == NULL) {
-		syswarn(1, errno, "defered symlink value");
+		syswarn(1, errno, "deferred symlink value");
 		unlink(path);
 		free(path);
 		return (-1);
@@ -729,7 +729,7 @@ sltab_add_sym(const char *path0, const char *value0, mode_t mode)
 
 	/* Normal case: create a new node */
 	if ((s = malloc(sizeof *s)) == NULL) {
-		syswarn(1, errno, "defered symlink");
+		syswarn(1, errno, "deferred symlink");
 		unlink(path);
 		free(path);
 		free(value);
@@ -784,7 +784,7 @@ sltab_add_link(const char *path, const struct stat *sb)
 				return (-1);
 			}
 		} else if ((p->sp_path = strdup(path)) == NULL) {
-			syswarn(1, errno, "defered symlink hardlink path");
+			syswarn(1, errno, "deferred symlink hardlink path");
 			free(p);
 			return (-1);
 		}
@@ -810,7 +810,7 @@ sltab_process_one(struct slinode *s, struct slpath *p, const char *first,
 	int err;
 
 	/*
-	 * is it the expected placeholder?  This can fail legimately
+	 * is it the expected placeholder?  This can fail legitimately
 	 * if the archive overwrote the link with another, later entry,
 	 * so don't warn.
 	 */

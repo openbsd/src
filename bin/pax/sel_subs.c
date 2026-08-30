@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.29 2024/04/28 16:43:15 florian Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.30 2026/08/30 23:13:06 jsg Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ grp_add(char *str)
 		return(-1);
 	if ((grptb == NULL) &&
 	    ((grptb = calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
-		paxwarn(1, "Unable to allocate memory fo group selection table");
+		paxwarn(1, "Unable to allocate memory for group selection table");
 		return(-1);
 	}
 

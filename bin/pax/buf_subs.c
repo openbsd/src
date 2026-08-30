@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.33 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.34 2026/08/30 23:13:06 jsg Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ wr_start(void)
 	if (!wrblksz)
 		wrblksz = frmt->bsz;
 	if (wrblksz > MAXBLK) {
-		paxwarn(1, "Write block size of %d too large, maximium is: %d",
+		paxwarn(1, "Write block size of %d too large, maximum is: %d",
 			wrblksz, MAXBLK);
 		return(-1);
 	}
@@ -137,7 +137,7 @@ rd_start(void)
 	buf = &(bufmem[BLKMULT]);
 	if ((act == APPND) && wrblksz) {
 		if (wrblksz > MAXBLK) {
-			paxwarn(1,"Write block size %d too large, maximium is: %d",
+			paxwarn(1,"Write block size %d too large, maximum is: %d",
 				wrblksz, MAXBLK);
 			return(-1);
 		}
