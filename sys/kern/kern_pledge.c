@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.361 2026/08/23 16:06:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.362 2026/08/30 16:14:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -679,6 +679,10 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 	/*
 	 * In specific promise situations, __pledge_open() can open
 	 * specific paths and ignores rpath, wpath, or unveil restrictions.
+	 * Due to visibility rules, only libc calls __pledge_open().  In most
+	 * cases the file descriptor returned are used only a short moment of
+	 * time and then closed.  The file descriptors are marked UF_PLEDGEOPEN
+	 * and various operations are prohibited.
 	 */
 	if (ni->ni_unveil & UNVEIL_PLEDGEOPEN) {
 #ifdef SMALL_KERNEL
