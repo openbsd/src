@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.46 2026/08/30 06:29:03 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.47 2026/08/30 06:29:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1040,8 +1040,8 @@ bridge_addendpoint(const char *endpoint, const char *addr)
 	/* should we handle ports? */
 	ecode = getaddrinfo(endpoint, NULL, NULL, &res);
 	if (ecode != 0) {
-                errx(1, "%s endpoint %s: %s", ifname, endpoint,
-                    gai_strerror(ecode));
+		errx(1, "%s endpoint %s: %s", ifname, endpoint,
+		    gai_strerror(ecode));
 	}
 	if (res->ai_addrlen > sizeof(ifba.ifba_dstsa))
 		errx(1, "%s: addrlen > dstsa", __func__);
