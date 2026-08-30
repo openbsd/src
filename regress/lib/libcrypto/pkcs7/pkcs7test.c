@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.7 2026/08/30 16:52:07 tb Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.8 2026/08/30 16:55:41 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -399,6 +399,65 @@ pkcs7_stream_missing_content(void)
 	return failed;
 }
 
+/*
+ * SEQUENCE {
+ *   # signedData
+ *   OBJECT_IDENTIFIER { 1.2.840.113549.1.7.2 }
+ *   [0] {
+ *     SEQUENCE {
+ *       INTEGER { 1 }
+ *       SET {}
+ *       SEQUENCE {
+ *         # id-ct-TSTInfo
+ *         OBJECT_IDENTIFIER { 1.2.840.113549.1.9.16.1.4 }
+ *         [0] {
+ *           SEQUENCE {
+ *             INTEGER { 1 }
+ *             OCTET_STRING { `deadbeef` }
+ *           }
+ *         }
+ *       }
+ *       SET {}
+ *     }
+ *   }
+ * }
+ */
+static const uint8_t pkcs7_malformed_der[] = {
+	 0x30, 0x32, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
+	 0xf7, 0x0d, 0x01, 0x07, 0x02, 0xa0, 0x25, 0x30,
+	 0x23, 0x02, 0x01, 0x01, 0x31, 0x00, 0x30, 0x1a,
+	 0x06, 0x0b, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d,
+	 0x01, 0x09, 0x10, 0x01, 0x04, 0xa0, 0x0b, 0x30,
+	 0x09, 0x02, 0x01, 0x01, 0x04, 0x04, 0xde, 0xad,
+	 0xbe, 0xef, 0x31, 0x00,
+};
+static int pkcs7_malformed_der_len = sizeof(pkcs7_malformed_der);
+
+static int
+pkcs7_stream_signedData_oob(void)
+{
+	PKCS7 *p7 = NULL;
+	const unsigned char *p;
+	unsigned char **boundary = NULL;
+	int ret;
+	int failed = 1;
+
+	p = pkcs7_malformed_der;
+	if ((p7 = d2i_PKCS7(NULL, &p, pkcs7_malformed_der_len)) == NULL)
+		fatal("d2i_PKCS7 malformed");
+
+	if ((ret = PKCS7_stream(&boundary, p7)) != 0) {
+		fprintf(stderr, "FAILURE: PKCS7_stream want 0, got %d\n", ret);
+		goto out;
+	}
+
+	failed = 0;
+ out:
+	PKCS7_free(p7);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -406,6 +465,7 @@ main(int argc, char **argv)
 
 	failed |= pkcs7_basics();
 	failed |= pkcs7_stream_missing_content();
+	failed |= pkcs7_stream_signedData_oob();
 
 	return failed;
 }
