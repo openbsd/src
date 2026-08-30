@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.72 2026/07/13 05:28:03 jsg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.73 2026/08/30 05:38:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -2226,6 +2226,9 @@ veb_vid_inuse(struct veb_softc *sc, uint16_t vid)
 	/* must be holding sc->sc_rule_lock */
 
 	pm = SMR_PTR_GET_LOCKED(&sc->sc_ports);
+	if (pm == NULL)
+		return (0);
+
 	ps = veb_ports_array(pm);
 	for (i = 0; i < pm->m_count; i++) {
 		struct veb_port *p = ps[i];
