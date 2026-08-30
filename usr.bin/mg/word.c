@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.23 2026/02/23 09:36:50 op Exp $	*/
+/*	$OpenBSD: word.c,v 1.24 2026/08/30 12:31:46 jsg Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -108,7 +108,7 @@ transposeword(int f, int n)
 	(void)backword(FFRAND, 1);
 	ret = grabword(&word1);
 	if (ret == ABORT) {
-		ewprintf("No word to the left to tranpose.");
+		ewprintf("No word to the left to transpose.");
 		return (FALSE);
 	}
 	if (ret < 0) {
