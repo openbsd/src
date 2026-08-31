@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.183 2026/04/26 09:27:15 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.184 2026/08/31 15:40:34 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 #ifdef notyet /* XXXX */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		ttyfree(tp);
-		sc->sc_tty = 0;
+		sc->sc_tty = NULL;
 	}
 #endif
 	return 0;
