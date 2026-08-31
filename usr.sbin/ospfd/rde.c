@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.122 2026/08/17 08:58:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.123 2026/08/31 09:26:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -598,7 +598,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			LIST_FOREACH(area, &rdeconf->area_list, entry) {
 				imsg_compose_event(iev_ospfe, IMSG_CTL_AREA,
 				    0, imsg.hdr.pid, -1,
-				    area_txsan(area), sizeof(*area));
+				    &area->id, sizeof(area->id));
 
 				rt_dump(area->id, imsg.hdr.pid, RIB_RTR);
 				rt_dump(area->id, imsg.hdr.pid, RIB_NET);
