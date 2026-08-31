@@ -649,6 +649,7 @@ getbsize
 getcwd
 getdiskbyname
 getdomainname
+getexecpath
 getfsent
 getfsfile
 getfsspec

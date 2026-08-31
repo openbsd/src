@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.83 2024/07/14 09:48:48 jca Exp $
+#	$OpenBSD: Makefile.inc,v 1.84 2026/08/31 15:16:21 deraadt Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -9,7 +9,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         daemon.c devname.c dirfd.c dirname.c disklabel.c elf_aux_info.c \
         err.c errc.c errx.c errlist.c errno.c exec.c \
         fdatasync.c fnmatch.c fpclassify.c frexp.c \
-        fstab.c ftok.c fts.c ftw.c getbsize.c getcap.c getcwd.c \
+        fstab.c ftok.c fts.c ftw.c getbsize.c getcap.c getcwd.c getexecpath.c \
         getdomainname.c getgrent.c getgrouplist.c gethostname.c \
         getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
         getprogname.c getpwent.c getttyent.c getusershell.c glob.c \
@@ -41,7 +41,7 @@ MAN+=	__tfork_thread.3 alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	ftw.3 getbsize.3 cgetent.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getprogname.3 \
-	getpwent.3 getpwnam.3 \
+	getpwent.3 getpwnam.3 getexecpath.3 \
 	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 \
 	isascii.3 isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 \
 	isgreater.3 islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 \

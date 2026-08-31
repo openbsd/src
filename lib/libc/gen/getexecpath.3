@@ -1,0 +1,71 @@
+.\"	$OpenBSD: getexecpath.3,v 1.1 2026/08/31 15:16:21 deraadt Exp $
+.\"
+.\" Copyright (c) 2026 Theo de Raadt
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 31 2026 $
+.Dt GETEXECPATH 3
+.Os
+.Sh NAME
+.Nm getexecpath
+.Nd attempt to get executable path
+.Sh SYNOPSIS
+.In unistd.h
+.Ft int
+.Fn getexecpath "char *buf" "size_t bufsize"
+.Sh DESCRIPTION
+The
+.Fn getexecpath
+function retrieves the absolute pathname of this executable.
+If the pathname is shorter than
+.Fa bufsize
+bytes, it is copied into the memory referenced by
+.Fa buf .
+The recommended buffer size is
+.Dv PATH_MAX .
+This pathname has been canonicalized in the same manner as
+.Xr realpath 3 .
+.Pp
+The two main reasons why
+.Fn getexecpath
+can return failure are if the executable was started in a directory
+which is no longer linked to the filesystem, or if the absolute pathname
+would exceed
+.Dv PATH_MAX .
+.Sh RETURN VALUES
+.Rv -std
+.Sh ERRORS
+The
+.Fn getexecpath
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOENT
+.Xr execve 2 could not determine the executable pathname.
+.It Bq Er ERANGE
+The
+.Ar bufsize
+argument is too small.
+.El
+.Sh SEE ALSO
+.Xr execve 2
+.Sh HISTORY
+The
+.Fn getexecpath
+function first appeared in
+.Ox 8.0 .
+A variety of system-dependent (and often flawed) solutions for this
+problem of retrieving the executable path are available in other operating
+systems.
+.Fn getexecpath
+aspires to do better.

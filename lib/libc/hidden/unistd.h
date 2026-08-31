@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.14 2024/05/18 05:20:22 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.15 2026/08/31 15:16:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -72,6 +72,7 @@ PROTO_DEPRECATED(getdtablesize);
 PROTO_NORMAL(getegid);
 PROTO_NORMAL(getentropy);
 PROTO_NORMAL(geteuid);
+PROTO_NORMAL(getexecpath);
 PROTO_NORMAL(getgid);
 PROTO_NORMAL(getgrouplist);
 PROTO_NORMAL(getgroups);

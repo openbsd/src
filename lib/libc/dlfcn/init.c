@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.25 2026/05/09 19:39:14 naddy Exp $ */
+/*	$OpenBSD: init.c,v 1.26 2026/08/31 15:16:21 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -52,6 +52,7 @@ int	_pagesize = 0;
 struct timekeep	*_timekeep;
 unsigned long	_hwcap, _hwcap2;
 int	_hwcap_avail, _hwcap2_avail;
+char	*_execpath;
 
 /*
  * In dynamically linked binaries environ and __progname are overridden by
@@ -130,6 +131,9 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 			}
 			if (issetugid() == 0 && getenv("LIBC_NOUSERTC"))
 				_timekeep = NULL;
+			break;
+		case AUX_execpath:
+			_execpath = (void *)aux->au_v;
 			break;
 		}
 	}
