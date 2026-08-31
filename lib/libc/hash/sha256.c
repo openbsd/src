@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha256.c,v 1.5 2026/08/31 15:09:14 tb Exp $	*/
+/*	$OpenBSD: sha256.c,v 1.6 2026/08/31 16:16:00 tb Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -24,6 +24,8 @@
 
 #include <sha2.h>
 
+static void SHA256Pad(SHA2_CTX *);
+
 #ifndef SHA256_SMALL
 #if defined(__aarch64__)
 #define HAVE_SHA256_BLOCK
@@ -39,8 +41,6 @@ crypto_store_htobe32(uint8_t *dst, uint32_t v)
 	v = htobe32(v);
 	memcpy(dst, &v, sizeof(v));
 }
-
-static void SHA256Pad(SHA2_CTX *);
 
 static inline void
 crypto_store_htobe64(uint8_t *dst, uint64_t v)
