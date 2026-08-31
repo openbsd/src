@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.15 2026/08/30 06:44:10 miod Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.16 2026/08/31 07:18:07 dgl Exp $ */
 /* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
@@ -29,7 +29,7 @@
 
 #define	VT100_EMUL_NARGS	10	/* max # of args to a command */
 
-#define	VT100_EMUL_ARG_CLAMP	1000000	/* max value of arg to a command */
+#define	VT100_EMUL_ARG_CLAMP	100000	/* max value of arg to a command */
 
 struct wsemul_vt100_emuldata {
 	const struct wsdisplay_emulops *emulops;
