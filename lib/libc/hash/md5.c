@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.13 2025/04/14 18:32:24 claudio Exp $	*/
+/*	$OpenBSD: md5.c,v 1.14 2026/08/31 15:09:14 tb Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -42,6 +42,8 @@ static const u_int8_t PADDING[MD5_BLOCK_LENGTH] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
+
+static void MD5Transform(u_int32_t [4], const u_int8_t [MD5_BLOCK_LENGTH]);
 
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
@@ -105,7 +107,7 @@ DEF_WEAK(MD5Update);
  * Pad pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-void
+static void
 MD5Pad(MD5_CTX *ctx)
 {
 	u_int8_t count[8];
@@ -122,7 +124,6 @@ MD5Pad(MD5_CTX *ctx)
 	MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	MD5Update(ctx, count, 8);
 }
-DEF_WEAK(MD5Pad);
 
 /*
  * Final wrapup--call MD5Pad, fill in digest and zero out ctx.
@@ -157,7 +158,7 @@ DEF_WEAK(MD5Final);
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void
+static void
 MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 {
 	u_int32_t a, b, c, d, in[MD5_BLOCK_LENGTH / 4];
@@ -252,4 +253,3 @@ MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 	state[2] += c;
 	state[3] += d;
 }
-DEF_WEAK(MD5Transform);

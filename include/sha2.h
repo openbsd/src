@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.10 2016/09/03 17:00:29 tedu Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.11 2026/08/31 15:09:14 tb Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -68,85 +68,65 @@ typedef struct _SHA2_CTX {
 
 __BEGIN_DECLS
 void SHA224Init(SHA2_CTX *);
-void SHA224Transform(u_int32_t state[8], const u_int8_t [SHA224_BLOCK_LENGTH]);
 void SHA224Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA224Pad(SHA2_CTX *);
 void SHA224Final(u_int8_t [SHA224_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA224_DIGEST_LENGTH)));
 char *SHA224End(SHA2_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA224_DIGEST_STRING_LENGTH)));
 char *SHA224File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA224_DIGEST_STRING_LENGTH)));
-char *SHA224FileChunk(const char *, char *, off_t, off_t)
-	__attribute__((__bounded__(__minbytes__,2,SHA224_DIGEST_STRING_LENGTH)));
 char *SHA224Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))
 	__attribute__((__bounded__(__minbytes__,3,SHA224_DIGEST_STRING_LENGTH)));
 
 void SHA256Init(SHA2_CTX *);
-void SHA256Transform(u_int32_t state[8], const u_int8_t [SHA256_BLOCK_LENGTH]);
 void SHA256Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA256Pad(SHA2_CTX *);
 void SHA256Final(u_int8_t [SHA256_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA256_DIGEST_LENGTH)));
 char *SHA256End(SHA2_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
 char *SHA256File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
-char *SHA256FileChunk(const char *, char *, off_t, off_t)
-	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
 char *SHA256Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))
 	__attribute__((__bounded__(__minbytes__,3,SHA256_DIGEST_STRING_LENGTH)));
 
 void SHA384Init(SHA2_CTX *);
-void SHA384Transform(u_int64_t state[8], const u_int8_t [SHA384_BLOCK_LENGTH]);
 void SHA384Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA384Pad(SHA2_CTX *);
 void SHA384Final(u_int8_t [SHA384_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA384_DIGEST_LENGTH)));
 char *SHA384End(SHA2_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
 char *SHA384File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
-char *SHA384FileChunk(const char *, char *, off_t, off_t)
-	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
 char *SHA384Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))
 	__attribute__((__bounded__(__minbytes__,3,SHA384_DIGEST_STRING_LENGTH)));
 
 void SHA512Init(SHA2_CTX *);
-void SHA512Transform(u_int64_t state[8], const u_int8_t [SHA512_BLOCK_LENGTH]);
 void SHA512Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA512Pad(SHA2_CTX *);
 void SHA512Final(u_int8_t [SHA512_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA512_DIGEST_LENGTH)));
 char *SHA512End(SHA2_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
 char *SHA512File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
-char *SHA512FileChunk(const char *, char *, off_t, off_t)
-	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
 char *SHA512Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))
 	__attribute__((__bounded__(__minbytes__,3,SHA512_DIGEST_STRING_LENGTH)));
 
 void SHA512_256Init(SHA2_CTX *);
-void SHA512_256Transform(u_int64_t state[8], const u_int8_t [SHA512_256_BLOCK_LENGTH]);
 void SHA512_256Update(SHA2_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
-void SHA512_256Pad(SHA2_CTX *);
 void SHA512_256Final(u_int8_t [SHA512_256_DIGEST_LENGTH], SHA2_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA512_256_DIGEST_LENGTH)));
 char *SHA512_256End(SHA2_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_256_DIGEST_STRING_LENGTH)));
 char *SHA512_256File(const char *, char *)
-	__attribute__((__bounded__(__minbytes__,2,SHA512_256_DIGEST_STRING_LENGTH)));
-char *SHA512_256FileChunk(const char *, char *, off_t, off_t)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_256_DIGEST_STRING_LENGTH)));
 char *SHA512_256Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))

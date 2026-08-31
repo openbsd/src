@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.5 2026/08/25 13:57:18 jsing Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.6 2026/08/31 15:09:14 tb Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -36,11 +36,8 @@ __END_HIDDEN_DECLS
 PROTO_NORMAL(SHA1Data);
 PROTO_NORMAL(SHA1End);
 PROTO_NORMAL(SHA1File);
-PROTO_NORMAL(SHA1FileChunk);
 PROTO_NORMAL(SHA1Final);
 PROTO_NORMAL(SHA1Init);
-PROTO_NORMAL(SHA1Pad);
-PROTO_NORMAL(SHA1Transform);
 PROTO_NORMAL(SHA1Update);
 
 #endif /* _LIBC_SHA1_H */

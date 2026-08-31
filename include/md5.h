@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.h,v 1.17 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: md5.h,v 1.18 2026/08/31 15:09:14 tb Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -29,17 +29,11 @@ __BEGIN_DECLS
 void	 MD5Init(MD5_CTX *);
 void	 MD5Update(MD5_CTX *, const u_int8_t *, size_t)
 		__attribute__((__bounded__(__string__,2,3)));
-void	 MD5Pad(MD5_CTX *);
 void	 MD5Final(u_int8_t [MD5_DIGEST_LENGTH], MD5_CTX *)
 		__attribute__((__bounded__(__minbytes__,1,MD5_DIGEST_LENGTH)));
-void	 MD5Transform(u_int32_t [4], const u_int8_t [MD5_BLOCK_LENGTH])
-		__attribute__((__bounded__(__minbytes__,1,4)))
-		__attribute__((__bounded__(__minbytes__,2,MD5_BLOCK_LENGTH)));
 char	*MD5End(MD5_CTX *, char *)
 		__attribute__((__bounded__(__minbytes__,2,MD5_DIGEST_STRING_LENGTH)));
 char	*MD5File(const char *, char *)
-		__attribute__((__bounded__(__minbytes__,2,MD5_DIGEST_STRING_LENGTH)));
-char	*MD5FileChunk(const char *, char *, off_t, off_t)
 		__attribute__((__bounded__(__minbytes__,2,MD5_DIGEST_STRING_LENGTH)));
 char	*MD5Data(const u_int8_t *, size_t, char *)
 		__attribute__((__bounded__(__string__,1,2)))

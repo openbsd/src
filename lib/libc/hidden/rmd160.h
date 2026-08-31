@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.1 2015/09/11 09:18:27 guenther Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.2 2026/08/31 15:09:14 tb Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -23,11 +23,8 @@
 PROTO_NORMAL(RMD160Data);
 PROTO_NORMAL(RMD160End);
 PROTO_NORMAL(RMD160File);
-PROTO_NORMAL(RMD160FileChunk);
 PROTO_NORMAL(RMD160Final);
 PROTO_NORMAL(RMD160Init);
-PROTO_NORMAL(RMD160Pad);
-PROTO_NORMAL(RMD160Transform);
 PROTO_NORMAL(RMD160Update);
 
 #endif  /* _LIBC_RMD160_H */

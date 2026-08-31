@@ -16,20 +16,17 @@
 .\" If we meet some day, and you think this stuff is worth it, you
 .\" can buy me a beer in return. Poul-Henning Kamp
 .\"
-.\" 	$OpenBSD: MD5Init.3,v 1.4 2025/06/13 18:34:00 schwarze Exp $
+.\" 	$OpenBSD: MD5Init.3,v 1.5 2026/08/31 15:09:14 tb Exp $
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: August 31 2026 $
 .Dt MD5INIT 3
 .Os
 .Sh NAME
 .Nm MD5Init ,
 .Nm MD5Update ,
-.Nm MD5Pad ,
 .Nm MD5Final ,
-.Nm MD5Transform ,
 .Nm MD5End ,
 .Nm MD5File ,
-.Nm MD5FileChunk ,
 .Nm MD5Data
 .Nd calculate MD5 message digest
 .Sh SYNOPSIS
@@ -40,17 +37,13 @@
 .Ft void
 .Fn MD5Update "MD5_CTX *context" "const u_int8_t *data" "size_t len"
 .Ft void
-.Fn MD5Pad "MD5_CTX *context"
-.Ft void
 .Fn MD5Final "u_int8_t digest[MD5_DIGEST_LENGTH]" "MD5_CTX *context"
 .Ft void
-.Fn MD5Transform "u_int32_t state[4]" "u_int8_t block[MD5_BLOCK_LENGTH]"
 .Ft char *
 .Fn MD5End "MD5_CTX *context" "char *buf"
 .Ft char *
 .Fn MD5File "const char *filename" "char *buf"
 .Ft char *
-.Fn MD5FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft char *
 .Fn MD5Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
@@ -86,27 +79,6 @@ run over the data with
 and finally extract the result using
 .Fn MD5Final .
 .Pp
-The
-.Fn MD5Pad
-function can be used to apply padding to the message digest as in
-.Fn MD5Final ,
-but the current context can still be used with
-.Fn MD5Update .
-.Pp
-The
-.Fn MD5Transform
-function is used by
-.Fn MD5Update
-to hash 512-bit blocks and forms the core of the algorithm.
-Most programs should use the interface provided by
-.Fn MD5Init ,
-.Fn MD5Update
-and
-.Fn MD5Final
-instead of calling
-.Fn MD5Transform
-directly.
-.Pp
 .Fn MD5End
 is a wrapper for
 .Fn MD5Final
@@ -120,22 +92,6 @@ calculates the digest of a file, and uses
 to return the result.
 If the file cannot be opened, a null pointer is returned.
 .Pp
-.Fn MD5FileChunk
-behaves like
-.Fn MD5File
-but calculates the digest only for that portion of the file starting at
-.Fa offset
-and continuing for
-.Fa length
-bytes or until end of file is reached, whichever comes first.
-A zero
-.Fa length
-can be specified to read until end of file.
-A negative
-.Fa length
-or
-.Fa offset
-will be ignored.
 .Fn MD5Data
 calculates the digest of a chunk of data in memory, and uses
 .Fn MD5End
@@ -144,7 +100,6 @@ to return the result.
 When using
 .Fn MD5End ,
 .Fn MD5File ,
-.Fn MD5FileChunk ,
 or
 .Fn MD5Data ,
 the
@@ -203,7 +158,6 @@ This code is derived from a public domain implementation written by
 The
 .Fn MD5End ,
 .Fn MD5File ,
-.Fn MD5FileChunk ,
 and
 .Fn MD5Data
 helper functions are derived from code written by

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.32 2026/08/25 13:57:18 jsing Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.33 2026/08/31 15:09:14 tb Exp $	*/
 /*
  * Copyright (c) 2024, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -440,13 +440,6 @@ SHA1Init(SHA1_CTX *ctx)
 DEF_WEAK(SHA1Init);
 
 void
-SHA1Transform(uint32_t state[5], const uint8_t data[SHA1_BLOCK_LENGTH])
-{
-	__sha1_block(state, data, 1);
-}
-DEF_WEAK(SHA1Transform);
-
-void
 SHA1Update(SHA1_CTX *ctx, const uint8_t *data, size_t len)
 {
 	size_t blocks, m, n;
@@ -483,7 +476,7 @@ SHA1Update(SHA1_CTX *ctx, const uint8_t *data, size_t len)
 }
 DEF_WEAK(SHA1Update);
 
-void
+static void
 SHA1Pad(SHA1_CTX *ctx)
 {
 	size_t n;
@@ -503,7 +496,6 @@ SHA1Pad(SHA1_CTX *ctx)
 	memset(ctx->buffer, 0, sizeof(ctx->buffer));
 	ctx->count = 0;
 }
-DEF_WEAK(SHA1Pad);
 
 void
 SHA1Final(uint8_t digest[SHA1_DIGEST_LENGTH], SHA1_CTX *ctx)

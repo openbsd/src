@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512.c,v 1.4 2026/08/21 16:28:25 jsing Exp $	*/
+/*	$OpenBSD: sha512.c,v 1.5 2026/08/31 15:09:14 tb Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -23,6 +23,8 @@
 #include <string.h>
 
 #include <sha2.h>
+
+static void SHA512Pad(SHA2_CTX *);
 
 #ifndef SHA512_SMALL
 #if defined(__aarch64__)
@@ -363,13 +365,6 @@ SHA512Init(SHA2_CTX *ctx)
 DEF_WEAK(SHA512Init);
 
 void
-SHA512Transform(uint64_t state[8], const uint8_t data[SHA512_BLOCK_LENGTH])
-{
-	__sha512_block(state, data, 1);
-}
-DEF_WEAK(SHA512Transform);
-
-void
 SHA512Update(SHA2_CTX *ctx, const uint8_t *data, size_t len)
 {
 	size_t blocks, m, n;
@@ -433,7 +428,6 @@ SHA512Pad(SHA2_CTX *ctx)
 	ctx->bitcount[1] = 0;
 	ctx->bitcount[0] = 0;
 }
-DEF_WEAK(SHA512Pad);
 
 void
 SHA512Final(uint8_t digest[SHA512_DIGEST_LENGTH], SHA2_CTX *ctx)
@@ -467,12 +461,8 @@ SHA384Init(SHA2_CTX *ctx)
 }
 DEF_WEAK(SHA384Init);
 
-MAKE_CLONE(SHA384Transform, SHA512Transform);
 MAKE_CLONE(SHA384Update, SHA512Update);
-MAKE_CLONE(SHA384Pad, SHA512Pad);
-DEF_WEAK(SHA384Transform);
 DEF_WEAK(SHA384Update);
-DEF_WEAK(SHA384Pad);
 
 void
 SHA384Final(uint8_t digest[SHA384_DIGEST_LENGTH], SHA2_CTX *ctx)
@@ -505,12 +495,8 @@ SHA512_256Init(SHA2_CTX *ctx)
 }
 DEF_WEAK(SHA512_256Init);
 
-MAKE_CLONE(SHA512_256Transform, SHA512Transform);
 MAKE_CLONE(SHA512_256Update, SHA512Update);
-MAKE_CLONE(SHA512_256Pad, SHA512Pad);
-DEF_WEAK(SHA512_256Transform);
 DEF_WEAK(SHA512_256Update);
-DEF_WEAK(SHA512_256Pad);
 
 void
 SHA512_256Final(uint8_t digest[SHA512_256_DIGEST_LENGTH], SHA2_CTX *ctx)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.19 2026/03/10 16:20:57 deraadt Exp $ */
+/*	$OpenBSD: helper.c,v 1.20 2026/08/31 15:09:14 tb Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -57,33 +57,26 @@ HASHEnd(HASH_CTX *ctx, char *buf)
 DEF_WEAK(HASHEnd);
 
 char *
-HASHFileChunk(const char *filename, char *buf, off_t off, off_t len)
+HASHFile(const char *filename, char *buf)
 {
 	struct stat sb;
 	u_char buffer[BUFSIZ];
 	HASH_CTX ctx;
 	int fd, save_errno;
 	ssize_t nr;
+	off_t len;
 
 	HASHInit(&ctx);
 
 	if ((fd = open(filename, O_RDONLY|O_CLOEXEC)) == -1)
 		return (NULL);
-	if (len == 0) {
-		if (fstat(fd, &sb) == -1) {
-			save_errno = errno;
-			close(fd);
-			errno = save_errno;
-			return (NULL);
-		}
-		len = sb.st_size;
-	}
-	if (off > 0 && lseek(fd, off, SEEK_SET) == -1) {
+	if (fstat(fd, &sb) == -1) {
 		save_errno = errno;
 		close(fd);
 		errno = save_errno;
 		return (NULL);
 	}
+	len = sb.st_size;
 
 	while ((nr = read(fd, buffer, MINIMUM(sizeof(buffer), len))) > 0) {
 		HASHUpdate(&ctx, buffer, nr);
@@ -95,13 +88,6 @@ HASHFileChunk(const char *filename, char *buf, off_t off, off_t len)
 	close(fd);
 	errno = save_errno;
 	return (nr == -1 ? NULL : HASHEnd(&ctx, buf));
-}
-DEF_WEAK(HASHFileChunk);
-
-char *
-HASHFile(const char *filename, char *buf)
-{
-	return (HASHFileChunk(filename, buf, 0, 0));
 }
 DEF_WEAK(HASHFile);
 

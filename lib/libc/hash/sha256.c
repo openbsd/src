@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha256.c,v 1.4 2026/08/21 15:46:01 jsing Exp $	*/
+/*	$OpenBSD: sha256.c,v 1.5 2026/08/31 15:09:14 tb Exp $	*/
 /*
  * Copyright (c) 2023, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -39,6 +39,8 @@ crypto_store_htobe32(uint8_t *dst, uint32_t v)
 	v = htobe32(v);
 	memcpy(dst, &v, sizeof(v));
 }
+
+static void SHA256Pad(SHA2_CTX *);
 
 static inline void
 crypto_store_htobe64(uint8_t *dst, uint64_t v)
@@ -344,19 +346,15 @@ SHA224Init(SHA2_CTX *ctx)
 }
 DEF_WEAK(SHA224Init);
 
-MAKE_CLONE(SHA224Transform, SHA256Transform);
 MAKE_CLONE(SHA224Update, SHA256Update);
-MAKE_CLONE(SHA224Pad, SHA256Pad);
-DEF_WEAK(SHA224Transform);
 DEF_WEAK(SHA224Update);
-DEF_WEAK(SHA224Pad);
 
 void
 SHA224Final(uint8_t digest[SHA224_DIGEST_LENGTH], SHA2_CTX *ctx)
 {
 	int i;
 
-	SHA224Pad(ctx);
+	SHA256Pad(ctx);
 
 	for (i = 0; i < SHA224_DIGEST_LENGTH / 4; i++)
 		crypto_store_htobe32(&digest[i * 4], ctx->state.st32[i]);
@@ -382,13 +380,6 @@ SHA256Init(SHA2_CTX *ctx)
 	ctx->state.st32[7] = 0x5be0cd19UL;
 }
 DEF_WEAK(SHA256Init);
-
-void
-SHA256Transform(uint32_t state[8], const uint8_t data[SHA256_BLOCK_LENGTH])
-{
-	__sha256_block(state, data, 1);
-}
-DEF_WEAK(SHA256Transform);
 
 void
 SHA256Update(SHA2_CTX *ctx, const uint8_t *data, size_t len)
@@ -427,7 +418,7 @@ SHA256Update(SHA2_CTX *ctx, const uint8_t *data, size_t len)
 }
 DEF_WEAK(SHA256Update);
 
-void
+static void
 SHA256Pad(SHA2_CTX *ctx)
 {
 	size_t n;
@@ -447,7 +438,6 @@ SHA256Pad(SHA2_CTX *ctx)
 	memset(ctx->buffer, 0, sizeof(ctx->buffer));
 	ctx->bitcount[0] = 0;
 }
-DEF_WEAK(SHA256Pad);
 
 void
 SHA256Final(uint8_t digest[SHA256_DIGEST_LENGTH], SHA2_CTX *ctx)

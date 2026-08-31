@@ -88,6 +88,9 @@ static const u_int8_t PADDING[RMD160_BLOCK_LENGTH] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+static void RMD160Transform(u_int32_t [5],
+    const u_int8_t [RMD160_BLOCK_LENGTH]);
+
 void
 RMD160Init(RMD160_CTX *ctx)
 {
@@ -132,7 +135,7 @@ RMD160Update(RMD160_CTX *ctx, const u_int8_t *input, size_t len)
 }
 DEF_WEAK(RMD160Update);
 
-void
+static void
 RMD160Pad(RMD160_CTX *ctx)
 {
 	u_int8_t size[8];
@@ -150,7 +153,6 @@ RMD160Pad(RMD160_CTX *ctx)
 	RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	RMD160Update(ctx, size, 8);
 }
-DEF_WEAK(RMD160Pad);
 
 void
 RMD160Final(u_int8_t digest[RMD160_DIGEST_LENGTH], RMD160_CTX *ctx)
@@ -375,4 +377,3 @@ RMD160Transform(u_int32_t state[5], const u_int8_t block[RMD160_BLOCK_LENGTH])
 	state[4] = state[0] + bb + c;
 	state[0] = t;
 }
-DEF_WEAK(RMD160Transform);
