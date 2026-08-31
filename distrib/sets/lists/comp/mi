@@ -2632,6 +2632,7 @@
 ./usr/share/man/man3/getdomainname.3
 ./usr/share/man/man3/getdtablesize.3
 ./usr/share/man/man3/getenv.3
+./usr/share/man/man3/getexecpath.3
 ./usr/share/man/man3/getfsent.3
 ./usr/share/man/man3/getgrent.3
 ./usr/share/man/man3/getgrouplist.3
