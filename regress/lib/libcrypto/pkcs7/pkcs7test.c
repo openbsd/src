@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.10 2026/08/31 05:32:44 tb Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.11 2026/08/31 09:18:25 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -109,7 +109,7 @@ fatal(const char *msg, ...)
 	va_list ap;
 
 	va_start(ap, msg);
-	vwarnx("%s", ap);
+	vwarnx(msg, ap);
 	va_end(ap);
 	ERR_print_errors_fp(stderr);
 	exit(1);
