@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.120 2026/08/31 07:57:09 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.121 2026/08/31 08:57:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -484,35 +484,35 @@ kr_show_route(struct imsg *imsg)
 	struct kroute_node	*kn;
 	int			 flags;
 	struct in_addr		 addr;
+	uint32_t		 type;
+	pid_t			 pid;
 
-	switch (imsg->hdr.type) {
+	type = imsg_get_type(imsg);
+	pid = imsg_get_pid(imsg);
+	switch (type) {
 	case IMSG_CTL_KROUTE:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags)) {
-			log_warnx("kr_show_route: wrong imsg len");
+		if (imsg_get_data(imsg, &flags, sizeof(flags)) == -1) {
+			log_warnx("bad CTL_KROUTE imsg received");
 			return;
 		}
-		memcpy(&flags, imsg->data, sizeof(flags));
 		RB_FOREACH(kr, kroute_tree, &krt)
 			if (!flags || kr->r.flags & flags) {
 				kn = kr;
 				do {
 					main_imsg_compose_ospfe(IMSG_CTL_KROUTE,
-					    imsg->hdr.pid,
-					    &kn->r, sizeof(kn->r));
+					    pid, &kn->r, sizeof(kn->r));
 				} while ((kn = kn->next) != NULL);
 			}
 		break;
 	case IMSG_CTL_KROUTE_ADDR:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE +
-		    sizeof(struct in_addr)) {
-			log_warnx("kr_show_route: wrong imsg len");
+		if (imsg_get_data(imsg, &addr, sizeof(addr)) == -1) {
+			log_warnx("bad CTL_KROUTE_ADDR imsg received");
 			return;
 		}
-		memcpy(&addr, imsg->data, sizeof(addr));
 		kr = NULL;
 		kr = kroute_match(addr.s_addr);
 		if (kr != NULL)
-			main_imsg_compose_ospfe(IMSG_CTL_KROUTE, imsg->hdr.pid,
+			main_imsg_compose_ospfe(IMSG_CTL_KROUTE, pid,
 			    &kr->r, sizeof(kr->r));
 		break;
 	default:
@@ -520,7 +520,7 @@ kr_show_route(struct imsg *imsg)
 		break;
 	}
 
-	main_imsg_compose_ospfe(IMSG_CTL_END, imsg->hdr.pid, NULL, 0);
+	main_imsg_compose_ospfe(IMSG_CTL_END, pid, NULL, 0);
 }
 
 void
