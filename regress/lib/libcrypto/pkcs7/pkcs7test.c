@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.8 2026/08/30 16:55:41 tb Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.9 2026/08/31 04:25:08 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -452,6 +452,7 @@ pkcs7_stream_signedData_oob(void)
 	}
 
 	failed = 0;
+
  out:
 	PKCS7_free(p7);
 
