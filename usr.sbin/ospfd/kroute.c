@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.119 2026/08/27 21:18:41 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.120 2026/08/31 07:57:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1107,8 +1107,8 @@ void
 if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
 {
-	struct kif_node 	*kif;
-	struct kif_addr 	*ka;
+	struct kif_node		*kif;
+	struct kif_addr		*ka;
 	struct ifaddrchange	 ifn;
 
 	if (ifa == NULL || ifa->sin_family != AF_INET)
@@ -1142,7 +1142,7 @@ void
 if_deladdr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
 {
-	struct kif_node 	*kif;
+	struct kif_node		*kif;
 	struct kif_addr		*ka, *nka;
 	struct ifaddrchange	 ifc;
 

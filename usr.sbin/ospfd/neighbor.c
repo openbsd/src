@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.52 2026/07/30 11:40:23 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.53 2026/08/31 07:57:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -239,7 +239,7 @@ nbr_init(u_int32_t hashsize)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr;
-	u_int32_t        hs, i;
+	u_int32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;

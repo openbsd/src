@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.55 2026/05/19 08:14:47 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.56 2026/08/31 07:57:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -35,7 +35,8 @@
 struct ibuf *prepare_ls_update(struct iface *);
 int	add_ls_update(struct ibuf *, struct iface *, void *, u_int16_t,
 	    u_int16_t);
-int	send_ls_update(struct ibuf *, struct iface *, struct in_addr, u_int32_t);
+int	send_ls_update(struct ibuf *, struct iface *, struct in_addr,
+	    u_int32_t);
 
 void	ls_retrans_list_insert(struct nbr *, struct lsa_entry *);
 void	ls_retrans_list_remove(struct nbr *, struct lsa_entry *);
@@ -542,7 +543,7 @@ struct lsa_ref		*lsa_cache_look(struct lsa_hdr *);
 void
 lsa_cache_init(u_int32_t hashsize)
 {
-	u_int32_t        hs, i;
+	u_int32_t	hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
