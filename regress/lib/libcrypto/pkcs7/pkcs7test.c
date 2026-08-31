@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.9 2026/08/31 04:25:08 tb Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.10 2026/08/31 05:32:44 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -322,7 +322,7 @@ pkcs7_stream_missing_content_nid(int nid)
 	name = OBJ_nid2sn(nid);
 
 	/*
-	 * Create PKCS7 object with Content Type corresponding to nid
+	 * Create a PKCS7 object with Content Type corresponding to nid
 	 * and omit the optional content.
 	 */
 
