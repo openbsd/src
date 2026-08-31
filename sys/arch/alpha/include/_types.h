@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.26 2023/07/02 19:02:27 cheloha Exp $	*/
+/*	$OpenBSD: _types.h,v 1.27 2026/08/31 10:58:08 tb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -122,15 +122,7 @@ typedef float			__float_t;
 typedef long			__ptrdiff_t;
 typedef	unsigned long		__size_t;
 typedef	long			__ssize_t;
-#if defined(__GNUC__) && __GNUC__ >= 3
 typedef	__builtin_va_list	__va_list;
-#else
-typedef struct {
-	char *__base;
-	int __offset;
-	int __pad;
-} __va_list;
-#endif
 
 /* Wide character support types */
 #ifndef __cplusplus
