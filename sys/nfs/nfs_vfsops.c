@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.135 2026/06/09 02:50:21 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.136 2026/08/31 22:37:09 jsg Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -653,6 +653,9 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, hst, MNAMELEN);
 	bcopy(argp, &mp->mnt_stat.mount_info.nfs_args, sizeof(*argp));
+	mp->mnt_stat.mount_info.nfs_args.addr = NULL;
+	mp->mnt_stat.mount_info.nfs_args.fh = NULL;
+	mp->mnt_stat.mount_info.nfs_args.hostname = NULL;
 	nmp->nm_nam = nam;
 	nfs_decode_args(nmp, argp, &mp->mnt_stat.mount_info.nfs_args);
 
