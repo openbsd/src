@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2026/02/07 15:59:32 rsadowski Exp $
+# $OpenBSD: Makefile,v 1.8 2026/08/31 08:58:48 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -51,6 +51,7 @@ SRCS+=		abort_message.cpp \
 
 CPPFLAGS+=	-Wall -I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR} \
 		-I${LOCALHDRDIR} -I${SHDRDIR}/../ -I${SSHDRDIR}/../
+CPPFLAGS+=	-D_LIBUNWIND_HAVE_ELF_AUX_INFO
 CPPFLAGS+=	-D_LIBUNWIND_IS_NATIVE_ONLY
 CPPFLAGS+=	-D_LIBCXXABI_BUILDING_LIBRARY
 CPPFLAGS+=	-D_LIBCPP_BUILDING_LIBRARY

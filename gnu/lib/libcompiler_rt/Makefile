@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2026/03/02 20:33:49 kettenis Exp $
+# $OpenBSD: Makefile,v 1.16 2026/08/31 08:58:48 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,9 @@ CPPFLAGS+=	-DCOMPILER_RT_HAS_FLOAT16
 CPPFLAGS+=	-DCOMPILER_RT_HAS_BFLOAT16
 SRCS+=	extendbfsf2.c \
 	truncdfbf2.c \
-	truncsfbf2.c
+	truncxfbf2.c \
+	truncsfbf2.c \
+	trunctfbf2.c
 .endif
 
 GEN_SRCS=	absvdi2 \
@@ -78,6 +80,7 @@ GEN_SRCS=	absvdi2 \
 		enable_execute_stack \
 		eprintf \
 		extendhfsf2 \
+		extendhfdf2 \
 		ffsdi2 \
 		ffssi2 \
 		ffsti2 \
@@ -290,6 +293,7 @@ SRCS+=	x86.c
 
 # Extended precision (80-bit) support
 SRCS+=	divxc3.c \
+	extendhfxf2.c \
 	extendxftf2.c \
 	fixxfdi.c \
 	fixxfti.c \
@@ -302,7 +306,8 @@ SRCS+=	divxc3.c \
 	floatuntixf.c \
 	mulxc3.c \
 	powixf2.c \
-	trunctfxf2.c
+	trunctfxf2.c \
+	truncxfhf2.c
 
 .if ${RTARCH} == "x86_64"
 # Quad-precision float support (for __float128)

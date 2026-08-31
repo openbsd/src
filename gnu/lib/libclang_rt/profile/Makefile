@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2026/05/29 11:18:29 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2026/08/31 08:58:48 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ NOPROFILE=
 CFLAGS+=	-fPIC -std=gnu11 -fvisibility=hidden -fno-stack-protector
 CFLAGS+=	-DCOMPILER_RT_HAS_ATOMICS=1
 CFLAGS+=	-DCOMPILER_RT_HAS_FCNTL_LCK=1
+CFLAGS+=	-DCOMPILER_RT_HAS_FLOCK=1
 CFLAGS+=	-DCOMPILER_RT_HAS_UNAME=1
 CPPFLAGS+=	-DVISIBILITY_HIDDEN
 CPPFLAGS+=	-I${BSDSRCDIR}/gnu/llvm/compiler-rt/include/
