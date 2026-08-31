@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_spawn.c,v 1.10 2019/06/28 13:32:41 deraadt Exp $	*/
+/*	$OpenBSD: posix_spawn.c,v 1.11 2026/08/31 15:12:32 tb Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -51,7 +51,7 @@ struct __posix_spawn_file_actions {
 
 typedef struct __posix_spawn_file_actions_entry {
 	SIMPLEQ_ENTRY(__posix_spawn_file_actions_entry) fae_list;
-	enum { FAE_OPEN, FAE_DUP2, FAE_CLOSE } fae_action;
+	enum { FAE_OPEN, FAE_DUP2, FAE_CLOSE, FAE_CHDIR, FAE_FCHDIR } fae_action;
 
 	int fae_fildes;
 	union {
@@ -171,6 +171,14 @@ process_file_actions_entry(posix_spawn_file_actions_entry_t *fae)
 		/* Perform a close(), do not fail if already closed */
 		(void)close(fae->fae_fildes);
 		break;
+	case FAE_CHDIR:
+		if (chdir(fae->fae_path) == -1)
+			return (errno);
+		break;
+	case FAE_FCHDIR:
+		if (fchdir(fae->fae_fildes) == -1)
+			return (errno);
+		break;
 	}
 	return (0);
 }
@@ -273,7 +281,8 @@ posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *fa)
 		SIMPLEQ_REMOVE_HEAD(&(*fa)->fa_list, fae_list);
 
 		/* Deallocate file action entry */
-		if (fae->fae_action == FAE_OPEN)
+		if (fae->fae_action == FAE_OPEN ||
+		    fae->fae_action == FAE_CHDIR)
 			free(fae->fae_path);
 		free(fae);
 	}
@@ -352,6 +361,53 @@ posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa,
 
 	/* Set values and store in queue */
 	fae->fae_action = FAE_CLOSE;
+	fae->fae_fildes = fildes;
+
+	SIMPLEQ_INSERT_TAIL(&(*fa)->fa_list, fae, fae_list);
+	return (0);
+}
+
+int
+posix_spawn_file_actions_addchdir(posix_spawn_file_actions_t *fa,
+    const char *__restrict path)
+{
+	posix_spawn_file_actions_entry_t *fae;
+	int error;
+
+	/* Allocate object */
+	fae = malloc(sizeof(posix_spawn_file_actions_entry_t));
+	if (fae == NULL)
+		return (errno);
+
+	/* Set values and store in queue */
+	fae->fae_action = FAE_CHDIR;
+	fae->fae_path = strdup(path);
+	if (fae->fae_path == NULL) {
+		error = errno;
+		free(fae);
+		return (error);
+	}
+
+	SIMPLEQ_INSERT_TAIL(&(*fa)->fa_list, fae, fae_list);
+	return (0);
+}
+
+int
+posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *fa,
+    int fildes)
+{
+	posix_spawn_file_actions_entry_t *fae;
+
+	if (fildes < 0)
+		return (EBADF);
+
+	/* Allocate object */
+	fae = malloc(sizeof(posix_spawn_file_actions_entry_t));
+	if (fae == NULL)
+		return (errno);
+
+	/* Set values and store in queue */
+	fae->fae_action = FAE_FCHDIR;
 	fae->fae_fildes = fildes;
 
 	SIMPLEQ_INSERT_TAIL(&(*fa)->fa_list, fae, fae_list);

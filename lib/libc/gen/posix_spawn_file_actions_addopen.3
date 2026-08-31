@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.9 2022/03/29 18:15:52 naddy Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.10 2026/08/31 15:12:32 tb Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,26 +14,35 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: August 31 2026 $
 .Dt POSIX_SPAWN_FILE_ACTIONS_ADDOPEN 3
 .Os
 .Sh NAME
+.Nm posix_spawn_file_actions_addchdir ,
 .Nm posix_spawn_file_actions_addclose ,
 .Nm posix_spawn_file_actions_adddup2 ,
+.Nm posix_spawn_file_actions_addfchdir ,
 .Nm posix_spawn_file_actions_addopen
-.Nd add action to close, dup2 or open file descriptor to file actions object
+.Nd add action to change directory, close, dup2 or open file descriptor
+to file actions object
 .Sh SYNOPSIS
 .In spawn.h
+.Ft int
+.Fn posix_spawn_file_actions_addchdir "posix_spawn_file_actions_t *file_actions" "const char *restrict path"
 .Ft int
 .Fn posix_spawn_file_actions_addclose "posix_spawn_file_actions_t *file_actions" "int fildes"
 .Ft int
 .Fn posix_spawn_file_actions_adddup2 "posix_spawn_file_actions_t *file_actions" "int fildes" "int newfildes"
 .Ft int
+.Fn posix_spawn_file_actions_addfchdir "posix_spawn_file_actions_t *file_actions" "int fildes"
+.Ft int
 .Fn posix_spawn_file_actions_addopen "posix_spawn_file_actions_t *file_actions" "int fildes" "const char *restrict path" "int oflag" "mode_t mode"
 .Sh DESCRIPTION
-These function add an action to
+These functions add an action to
+.Xr chdir 2 ,
 .Xr close 2 ,
 .Xr dup2 2 ,
+.Xr fchdir 2 ,
 or
 .Xr open 2
 a file descriptor
@@ -43,6 +52,15 @@ file actions object.
 .Pp
 Actions are executed in order in the child process:
 .Bl -dash
+.It
+The
+.Fn posix_spawn_file_actions_addchdir
+function adds an action that causes
+.Bd -literal -offset indent
+chdir(path);
+.Ed
+.Pp
+to be called.
 .It
 The
 .Fn posix_spawn_file_actions_addclose
@@ -69,6 +87,15 @@ equals
 .Fa fildes .
 .It
 The
+.Fn posix_spawn_file_actions_addfchdir
+function adds an action that causes
+.Bd -literal -offset indent
+fchdir(fildes);
+.Ed
+.Pp
+to be called.
+.It
+The
 .Fn posix_spawn_file_actions_addopen
 function adds an action that causes
 .Bd -literal -offset indent
@@ -91,7 +118,7 @@ argument.
 .Sh RETURN VALUES
 Upon successful completion, these functions return zero.
 Otherwise they may return
-.Er EINVAL
+.Er EBADF
 for negative file descriptors, or
 .Er ENOMEM
 if they run out of memory.
@@ -101,6 +128,6 @@ if they run out of memory.
 .Xr posix_spawnp 3
 .Sh STANDARDS
 These functions conform to
-.St -p1003.1-2001 .
+.St -p1003.1-2024 .
 .Sh AUTHORS
 .An \&Ed Schouten Aq Mt ed@FreeBSD.org

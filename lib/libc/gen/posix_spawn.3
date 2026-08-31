@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn.3,v 1.11 2023/06/26 15:28:52 tb Exp $
+.\"	$OpenBSD: posix_spawn.3,v 1.12 2026/08/31 15:12:32 tb Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2023 $
+.Dd $Mdocdate: August 31 2026 $
 .Dt POSIX_SPAWN 3
 .Os
 .Sh NAME
@@ -73,8 +73,10 @@ with
 Otherwise, file descriptors in the child process
 are altered according to
 .Xr posix_spawn_file_actions_init 3 ,
+.Xr posix_spawn_file_actions_addchdir 3 ,
 .Xr posix_spawn_file_actions_addclose 3 ,
 .Xr posix_spawn_file_actions_adddup2 3 ,
+.Xr posix_spawn_file_actions_addfchdir 3 ,
 and
 .Xr posix_spawn_file_actions_addopen 3 .
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spawn.h,v 1.1 2015/10/04 07:57:21 guenther Exp $	*/
+/*	$OpenBSD: spawn.h,v 1.2 2026/08/31 15:12:32 tb Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,8 +21,10 @@
 #include_next <spawn.h>
 
 PROTO_DEPRECATED(posix_spawn);
+PROTO_DEPRECATED(posix_spawn_file_actions_addchdir);
 PROTO_DEPRECATED(posix_spawn_file_actions_addclose);
 PROTO_DEPRECATED(posix_spawn_file_actions_adddup2);
+PROTO_DEPRECATED(posix_spawn_file_actions_addfchdir);
 PROTO_DEPRECATED(posix_spawn_file_actions_addopen);
 PROTO_DEPRECATED(posix_spawn_file_actions_destroy);
 PROTO_DEPRECATED(posix_spawn_file_actions_init);

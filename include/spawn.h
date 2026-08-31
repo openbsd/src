@@ -1,4 +1,4 @@
-/*	$OpenBSD: spawn.h,v 1.3 2015/05/20 22:50:07 millert Exp $	*/
+/*	$OpenBSD: spawn.h,v 1.4 2026/08/31 15:12:32 tb Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -69,6 +69,11 @@ int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict,
     int, const char *__restrict, int, mode_t);
 int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *, int, int);
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *, int);
+#if __POSIX_VISIBLE >= 202405
+int posix_spawn_file_actions_addchdir(posix_spawn_file_actions_t *__restrict,
+    const char *__restrict);
+int posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *, int);
+#endif
 
 /*
  * Spawn attributes
