@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.114 2026/08/12 15:04:45 naddy Exp $ */
+/*	$OpenBSD: unistd.h,v 1.115 2026/08/31 15:21:18 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -346,6 +346,9 @@ char	*getcwd(char *, size_t)
 		__attribute__((__bounded__(__string__,1,2)));
 gid_t	 getegid(void);
 uid_t	 geteuid(void);
+#if __BSD_VISIBLE
+int	 getexecpath(char *, size_t);
+#endif
 gid_t	 getgid(void);
 int	 getgroups(int, gid_t *);
 char	*getlogin(void);
