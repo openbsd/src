@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.182 2026/08/29 08:40:56 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.183 2026/09/01 11:56:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -292,6 +292,7 @@ struct uaudio_softc {
 		int mode;		/* one of AUMODE_{RECORD,PLAY} */
 		int data_addr;		/* data endpoint address */
 		int sync_addr;		/* feedback endpoint address */
+		int impl_fb;		/* supports implicit feedback */
 		int maxpkt;		/* max supported bytes per frame */
 		int fps;		/* USB (micro-)frames per second */
 		int bps, bits, nch;	/* audio encoding */
@@ -2440,6 +2441,9 @@ uaudio_process_as_ep(struct uaudio_softc *sc,
 		a->data_addr = addr;
 		a->fps = sc->ufps / (1 << (ival - 1));
 		a->maxpkt = UE_GET_SIZE(maxpkt);
+
+		if (UE_GET_DIR(addr) == UE_DIR_IN)
+			a->impl_fb = UE_GET_ISO_USAGE(attr) == UE_ISO_USAGE_IMPL;
 	} else {
 		/* this is the sync endpoint */
 
@@ -2635,6 +2639,7 @@ uaudio_process_as(struct uaudio_softc *sc,
 	a->v1_rates = 0;
 	a->data_addr = 0;
 	a->sync_addr = 0;
+	a->impl_fb = 0;
 	a->ifnum = ifnum;
 	a->altnum = altnum;
 
@@ -2994,14 +2999,17 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 	struct usbd_interface *iface;
 	unsigned char req_buf[4];
 	unsigned int bpa, spf_max, min_blksz;
-	int err, i;
+	int err, i, sync;
 
 	if (dir == AUMODE_PLAY) {
 		s = &sc->pstream;
 		a = sc->params->palt;
+		sync = a->sync_addr &&
+		       !((sc->mode & AUMODE_RECORD) && sc->params->ralt->impl_fb);
 	} else {
 		s = &sc->rstream;
 		a = sc->params->ralt;
+		sync = 0;
 	}
 
 	for (i = 0; i < UAUDIO_NXFERS_MAX; i++) {
@@ -3112,7 +3120,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		    s->maxpkt, s->nframes_max);
 		if (err)
 			goto failed;
-		if (a->sync_addr) {
+		if (sync) {
 			err = uaudio_xfer_alloc(sc, s->sync_xfers + i,
 			    sc->sync_pktsz, 1);
 			if (err)
@@ -3182,7 +3190,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		goto failed;
 	}
 
-	if (a->sync_addr) {
+	if (sync) {
 		err = usbd_open_pipe(iface, a->sync_addr, 0, &s->sync_pipe);
 		if (err) {
 			printf("%s: can't open sync pipe\n", DEVNAME(sc));
