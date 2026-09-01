@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.123 2026/08/30 13:13:12 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.124 2026/09/01 13:56:12 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022, 2026 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -560,6 +560,12 @@ validate_filename(const char *file)
 static int
 pg_index(const struct req *req)
 {
+	if (pledge("stdio", NULL) == -1) {
+		warn("pledge");
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+
 	if (resp_begin_html(200, NULL, NULL) == 0)
 		puts("<header>");
 	resp_searchform(req, FOCUS_QUERY);
@@ -719,6 +725,14 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		file = r[iuse].file;
 	}
 
+	if (file == NULL) {
+		if (pledge("stdio", NULL) == -1) {
+			warn("pledge");
+			pg_error_internal();
+			return EXIT_FAILURE;
+		}
+	}
+
 	if (sz > 1) {
 		if (resp_begin_html(200, NULL, file) == 0)
 			puts("<header>");
@@ -773,6 +787,17 @@ resp_catman(const struct req *req, const char *file, int html_begun)
 		} else
 			pg_error_badrequest(
 			    "You specified an invalid manual file.");
+		return EXIT_FAILURE;
+	}
+
+	if (pledge("stdio", NULL) == -1) {
+		warn("pledge");
+		if (html_begun) {
+			puts("<p role=\"doc-notice\">"
+			     "Internal Server Error</p>");
+			resp_end_html();
+		} else
+			pg_error_internal();
 		return EXIT_FAILURE;
 	}
 
@@ -932,7 +957,17 @@ resp_format(const struct req *req, const char *file, int html_begun)
 	    MPARSE_VALIDATE, MANDOC_OS_OTHER, req->q.manpath);
 	mparse_readfd(mp, fd, file);
 	close(fd);
-	meta = mparse_result(mp);
+
+	if (pledge("stdio", NULL) == -1) {
+		warn("pledge");
+		if (html_begun) {
+			puts("<p role=\"doc-notice\">"
+			     "Internal Server Error</p>");
+			resp_end_html();
+		} else
+			pg_error_internal();
+		return EXIT_FAILURE;
+	}
 
 	memset(&conf, 0, sizeof(conf));
 	conf.fragment = 1;
@@ -950,6 +985,7 @@ resp_format(const struct req *req, const char *file, int html_begun)
 	}
 
 	vp = html_alloc(&conf);
+	meta = mparse_result(mp);
 	if (meta->macroset == MACROSET_MDOC)
 		html_mdoc(vp, meta);
 	else
@@ -998,6 +1034,22 @@ pg_show(struct req *req, const char *fullpath)
 		return EXIT_FAILURE;
 	}
 
+	if (unveil(MAN_DIR, "") == -1) {
+		warn("unveil %s", MAN_DIR);
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+	if (unveil(manpath, "r") == -1) {
+		warn("unveil %s", manpath);
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+	if (unveil(NULL, NULL) == -1) {
+		warn("unveil NULL");
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+
 	/*
 	 * Begin by chdir()ing into the manpath.
 	 * This way we can pick up the database files, which are
@@ -1030,6 +1082,22 @@ pg_search(const struct req *req)
 	char			 *query, *rp, *wp;
 	size_t			  ressz;
 	int			  argc, irc;
+
+	if (unveil(MAN_DIR, "") == -1) {
+		warn("unveil %s", MAN_DIR);
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+	if (unveil(req->q.manpath, "r") == -1) {
+		warn("unveil %s", req->q.manpath);
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+	if (unveil(NULL, NULL) == -1) {
+		warn("unveil NULL");
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
 
 	/*
 	 * Begin by chdir()ing into the root of the manpath.
@@ -1113,8 +1181,19 @@ main(void)
 	const char	*querystring;
 	int		 i, irc;
 
-	if (pledge("stdio rpath", NULL) == -1) {
+	/*
+	 * Baseline protections;
+	 * unveil(2) will be narrowed when the manpath is selected,
+	 * pledge(2) will be narrowed when the manual file is opened.
+	 */
+
+	if (pledge("stdio rpath unveil", NULL) == -1) {
 		warn("pledge");
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
+	if (unveil(MAN_DIR, "r") == -1) {
+		warn("unveil %s", MAN_DIR);
 		pg_error_internal();
 		return EXIT_FAILURE;
 	}
