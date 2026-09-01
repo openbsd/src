@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.186 2026/09/01 12:01:43 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.187 2026/09/01 12:02:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3133,16 +3133,13 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		goto failed;
 	}
 
-	if (sc->version == UAUDIO_V1) {
-		err = usbd_set_interface(iface, a->altnum);
-		if (err) {
-			printf("%s: can't set interface\n", DEVNAME(sc));
-			goto failed;
-		}
-	}
-
 	/*
-	 * Set the sample rate.
+	 * Set the sample rate and the alternate setting
+	 *
+	 * Unlike UAC1 devices, UAC2 devices set their sample rate with their
+	 * clock unit which is independent of the alternate setting. It makes
+	 * more sense to set the sample rate before the alternate setting.
+	 * Certain devices require it.
 	 *
 	 * Certain devices are able to lock their clock to the data
 	 * rate and expose no frequency control. In this case, the
@@ -3150,24 +3147,25 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 	 */
 	switch (sc->version) {
 	case UAUDIO_V1:
+		err = usbd_set_interface(iface, a->altnum);
+		if (err) {
+			printf("%s: can't set interface\n", DEVNAME(sc));
+			goto failed;
+		}
 		if (!a->v1_cap_freqctl) {
 			DPRINTF("%s: not setting endpoint rate\n", __func__);
-			break;
-		}
-		req_buf[0] = sc->rate;
-		req_buf[1] = sc->rate >> 8;
-		req_buf[2] = sc->rate >> 16;
-		if (!uaudio_req(sc, UT_WRITE_CLASS_ENDPOINT,
-			UAUDIO_V1_REQ_SET_CUR, UAUDIO_REQSEL_RATE, 0,
-			a->data_addr, 0, req_buf, 3)) {
-			printf("%s: failed to set endpoint rate\n", DEVNAME(sc));
+		} else {
+			req_buf[0] = sc->rate;
+			req_buf[1] = sc->rate >> 8;
+			req_buf[2] = sc->rate >> 16;
+			if (!uaudio_req(sc, UT_WRITE_CLASS_ENDPOINT,
+				UAUDIO_V1_REQ_SET_CUR, UAUDIO_REQSEL_RATE, 0,
+				a->data_addr, 0, req_buf, 3)) {
+				printf("%s: failed to set endpoint rate\n", DEVNAME(sc));
+			}
 		}
 		break;
 	case UAUDIO_V2:
-		req_buf[0] = sc->rate;
-		req_buf[1] = sc->rate >> 8;
-		req_buf[2] = sc->rate >> 16;
-		req_buf[3] = sc->rate >> 24;
 		clock = uaudio_clock(dir == AUMODE_PLAY ? sc->pclock : sc->rclock);
 		if (clock == NULL) {
 			printf("%s: can't get clock\n", DEVNAME(sc));
@@ -3175,22 +3173,23 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		}
 		if (!clock->cap_freqctl) {
 			DPRINTF("%s: not setting clock rate\n", __func__);
-			break;
+		} else {
+			req_buf[0] = sc->rate;
+			req_buf[1] = sc->rate >> 8;
+			req_buf[2] = sc->rate >> 16;
+			req_buf[3] = sc->rate >> 24;
+			if (!uaudio_req(sc, UT_WRITE_CLASS_INTERFACE,
+				UAUDIO_V2_REQ_CUR, UAUDIO_REQSEL_RATE, 0,
+				sc->ctl_ifnum, clock->id, req_buf, 4)) {
+				printf("%s: failed to set clock rate\n", DEVNAME(sc));
+			}
 		}
-		if (!uaudio_req(sc, UT_WRITE_CLASS_INTERFACE,
-			UAUDIO_V2_REQ_CUR, UAUDIO_REQSEL_RATE, 0,
-			sc->ctl_ifnum, clock->id, req_buf, 4)) {
-			printf("%s: failed to set clock rate\n", DEVNAME(sc));
-		}
-		break;
-	}
-
-	if (sc->version == UAUDIO_V2) {
 		err = usbd_set_interface(iface, a->altnum);
 		if (err) {
 			printf("%s: can't set interface\n", DEVNAME(sc));
 			goto failed;
 		}
+		break;
 	}
 
 	err = usbd_open_pipe(iface, a->data_addr, 0, &s->data_pipe);
