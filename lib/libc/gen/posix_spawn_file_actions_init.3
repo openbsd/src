@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_init.3,v 1.8 2014/11/30 02:41:43 schwarze Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_init.3,v 1.9 2026/09/01 05:51:25 jsg Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: September 1 2026 $
 .Dt POSIX_SPAWN_FILE_ACTIONS_INIT 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ The object should not be re-used after destruction.
 It can however be initialized again with
 .Fn posix_spawn_file_actions_init .
 .Sh RETURN VALUES
-These function return 0 on successful completion.
+These functions return 0 on successful completion.
 They may return
 .Er ENOMEM
 when running out of memory.
