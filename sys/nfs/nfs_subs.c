@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.152 2026/06/09 02:44:06 jsg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.153 2026/09/01 02:33:27 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -984,7 +984,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 	 * information.
 	 */
 	np = VTONFS(vp);
-	if (vp->v_type != vtyp) {
+	if (vp->v_type == VNON) {
 		cache_purge(vp);
 		vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
