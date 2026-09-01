@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.183 2026/09/01 11:56:36 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.184 2026/09/01 11:58:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3863,7 +3863,7 @@ uaudio_print(struct uaudio_softc *sc)
 	struct uaudio_unit *u;
 	struct uaudio_mixent *m;
 	struct uaudio_params *p;
-	int pchan = 0, rchan = 0, async = 0;
+	int pchan = 0, rchan = 0, async = 0, impl_fb = 0;
 	int nctl = 0;
 
 	for (u = sc->unit_list; u != NULL; u = u->unit_next) {
@@ -3886,13 +3886,16 @@ uaudio_print(struct uaudio_softc *sc)
 			async = 1;
 		if (p->ralt && p->ralt->sync_addr)
 			async = 1;
+		if (p->ralt && p->ralt->impl_fb)
+			impl_fb = 1;
 	}
 
-	printf("%s: class v%d, %s, %s, channels: %d play, %d rec, %d ctls\n",
+	printf("%s: class v%d, %s, %s%s, channels: %d play, %d rec, %d ctls\n",
 	    DEVNAME(sc),
 	    sc->version >> 8,
 	    sc->ufps == 1000 ? "full-speed" : "high-speed",
 	    async ? "async" : "sync",
+	    impl_fb ? ", impl-fb" : "",
 	    pchan, rchan, nctl);
 }
 
