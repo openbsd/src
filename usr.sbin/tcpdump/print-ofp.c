@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.12 2019/11/27 17:37:32 akoshibe Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.13 2026/09/01 07:07:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -202,7 +202,7 @@ ofp_print_featuresreply(const u_char *bp, u_int length)
 	struct ofp_switch_features		*swf;
 
 	if (length < sizeof(*swf)) {
-		printf(" [trucanted]");
+		printf(" [truncated]");
 		return;
 	}
 
