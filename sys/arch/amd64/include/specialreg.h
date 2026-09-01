@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.124 2026/07/30 14:00:48 hshoexer Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.125 2026/09/01 01:13:27 dv Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1409,6 +1409,8 @@
 #define VMCS_GUEST_IA32_SYSENTER_ESP	0x6824
 #define VMCS_GUEST_IA32_SYSENTER_EIP	0x6826
 #define VMCS_GUEST_IA32_S_CET		0x6828
+#define VMCS_GUEST_SSP			0x682A
+#define VMCS_GUEST_IA32_INTR_SSP_TABLE	0x682C
 
 /* Natural-width host state fields */
 #define VMCS_HOST_IA32_CR0		0x6C00
@@ -1424,6 +1426,8 @@
 #define VMCS_HOST_IA32_RSP		0x6C14
 #define VMCS_HOST_IA32_RIP		0x6C16
 #define VMCS_HOST_IA32_S_CET		0x6C18
+#define VMCS_HOST_SSP			0x6C1A
+#define VMCS_HOST_IA32_INTR_SSP_TABLE	0x6C1C
 
 #define IA32_VMX_INVVPID_INDIV_ADDR_CTX	0x0
 #define IA32_VMX_INVVPID_SINGLE_CTX	0x1

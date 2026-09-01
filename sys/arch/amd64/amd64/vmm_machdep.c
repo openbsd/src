@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.76 2026/09/01 00:55:13 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.77 2026/09/01 01:13:27 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2252,9 +2252,18 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		ctrlval = vcpu->vc_vmx_entry_ctls;
 	}
 
-	if (rcr4() & CR4_CET)
+	if (rcr4() & CR4_CET) {
 		want1 |= IA32_VMX_LOAD_GUEST_CET_STATE;
-	else
+		/* Zero initial guest CET and shadow-stack state. */
+		if (vmwrite(VMCS_GUEST_IA32_S_CET, 0) ||
+		    vmwrite(VMCS_GUEST_SSP, 0) ||
+		    vmwrite(VMCS_GUEST_IA32_INTR_SSP_TABLE, 0)) {
+			printf("%s: vmwrite error setting initial guest CET "
+			    "and SSP state\n", __func__);
+			ret = EINVAL;
+			goto exit;
+		}
+	} else
 		want0 |= IA32_VMX_LOAD_GUEST_CET_STATE;
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &entry)) {
@@ -3831,6 +3840,32 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			/* Host KernelGS.base (userspace GS.base here) */
 			msr_store[VCPU_HOST_REGS_KGSBASE].vms_data =
 			    rdmsr(MSR_KERNELGSBASE);
+
+			/* Host CET state. */
+			if (rcr4() & CR4_CET) {
+				msr = rdmsr(MSR_S_CET);
+				if (vmwrite(VMCS_HOST_IA32_S_CET, msr)) {
+					printf("%s: vmwrite(0x%04X, 0x%llx)\n",
+					    __func__, VMCS_HOST_IA32_S_CET,
+					    msr);
+					return (EINVAL);
+				}
+				/*
+				 * OpenBSD does not use supervisor
+				 * shadow stacks.
+				 */
+				if (vmwrite(VMCS_HOST_SSP, 0)) {
+					printf("%s: vmwrite(0x%04X, 0)\n",
+					    __func__, VMCS_HOST_SSP);
+					return (EINVAL);
+				}
+				if (vmwrite(VMCS_HOST_IA32_INTR_SSP_TABLE, 0)) {
+					printf("%s: vmwrite(0x%04X, 0)\n",
+					    __func__,
+					    VMCS_HOST_IA32_INTR_SSP_TABLE);
+					return (EINVAL);
+				}
+			}
 		}
 
 		/* Inject event if present */
