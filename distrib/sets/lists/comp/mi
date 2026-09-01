@@ -2100,6 +2100,7 @@
 ./usr/share/man/man3/SSL_CTX_set_min_proto_version.3
 ./usr/share/man/man3/SSL_CTX_set_mode.3
 ./usr/share/man/man3/SSL_CTX_set_msg_callback.3
+./usr/share/man/man3/SSL_CTX_set_num_tickets.3
 ./usr/share/man/man3/SSL_CTX_set_options.3
 ./usr/share/man/man3/SSL_CTX_set_quiet_shutdown.3
 ./usr/share/man/man3/SSL_CTX_set_read_ahead.3
