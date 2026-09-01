@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.185 2026/09/01 11:59:32 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.186 2026/09/01 12:01:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1350,8 +1350,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		case UAUDIO_AC_CLKMULT:
 		case UAUDIO_AC_RATECONV:
 			/* not using 'dest' list */
-			*rchild = u;
-			return 1;
+			goto done;
 		}
 	}
 
@@ -1360,8 +1359,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		u->dst_list = dest;
 		if (dest->dst_next != NULL) {
 			/* already seen */
-			*rchild = u;
-			return 1;
+			goto done;
 		}
 	}
 
@@ -1572,6 +1570,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		printf("%s: rate converter not supported\n", DEVNAME(sc));
 		break;
 	}
+done:
 	if (rchild)
 		*rchild = u;
 	return 1;
