@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.75 2026/09/01 00:51:14 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.76 2026/09/01 00:55:13 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3373,17 +3373,7 @@ vm_run(struct vm_run_params *vrp)
 		goto out;
 	}
 
-	/*
-	 * Attempt to transition from VCPU_STATE_STOPPED -> VCPU_STATE_RUNNING.
-	 * Failure to make the transition indicates the VCPU is busy.
-	 */
 	rw_enter_write(&vcpu->vc_lock);
-	old = VCPU_STATE_STOPPED;
-	next = VCPU_STATE_RUNNING;
-	if (atomic_cas_uint(&vcpu->vc_state, old, next) != old) {
-		ret = EBUSY;
-		goto out_unlock;
-	}
 
 	/*
 	 * We may be returning from userland helping us from the last
@@ -3394,6 +3384,17 @@ vm_run(struct vm_run_params *vrp)
 	ret = copyin(vrp->vrp_exit, &vcpu->vc_exit, sizeof(struct vm_exit));
 	if (ret)
 		goto out_unlock;
+
+	/*
+	 * Attempt to transition from VCPU_STATE_STOPPED -> VCPU_STATE_RUNNING.
+	 * Failure to make the transition indicates the VCPU is busy.
+	 */
+	old = VCPU_STATE_STOPPED;
+	next = VCPU_STATE_RUNNING;
+	if (atomic_cas_uint(&vcpu->vc_state, old, next) != old) {
+		ret = EBUSY;
+		goto out_unlock;
+	}
 
 	vcpu->vc_inject.vie_type = vrp->vrp_inject.vie_type;
 	vcpu->vc_inject.vie_vector = vrp->vrp_inject.vie_vector;
