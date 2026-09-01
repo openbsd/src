@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.13 2020/10/26 23:19:18 jca Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.14 2026/09/01 07:15:47 jsg Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -171,8 +171,8 @@ static struct tok gtp_v1_msgtype[] = {
 	{ 19,	"Update PDP Context Response" },
 	{ 20,	"Delete PDP Context Request" },
 	{ 21,	"Delete PDP Context Response" },
-	{ 22,	"Initiate PDP Context Activiation Request" },
-	{ 23,	"Initiate PDP Context Activiation Response" },
+	{ 22,	"Initiate PDP Context Activation Request" },
+	{ 23,	"Initiate PDP Context Activation Response" },
 	{ 26,	"Error Indication" },
 	{ 27,	"PDU Notification Request" },
 	{ 28,	"PDU Notification Response" },
