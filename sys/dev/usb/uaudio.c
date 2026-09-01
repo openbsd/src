@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.184 2026/09/01 11:58:28 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.185 2026/09/01 11:59:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3134,10 +3134,12 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		goto failed;
 	}
 
-	err = usbd_set_interface(iface, a->altnum);
-	if (err) {
-		printf("%s: can't set interface\n", DEVNAME(sc));
-		goto failed;
+	if (sc->version == UAUDIO_V1) {
+		err = usbd_set_interface(iface, a->altnum);
+		if (err) {
+			printf("%s: can't set interface\n", DEVNAME(sc));
+			goto failed;
+		}
 	}
 
 	/*
@@ -3182,6 +3184,14 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 			printf("%s: failed to set clock rate\n", DEVNAME(sc));
 		}
 		break;
+	}
+
+	if (sc->version == UAUDIO_V2) {
+		err = usbd_set_interface(iface, a->altnum);
+		if (err) {
+			printf("%s: can't set interface\n", DEVNAME(sc));
+			goto failed;
+		}
 	}
 
 	err = usbd_open_pipe(iface, a->data_addr, 0, &s->data_pipe);
