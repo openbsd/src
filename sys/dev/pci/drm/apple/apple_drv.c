@@ -237,26 +237,6 @@ static void apple_crtc_atomic_begin(struct drm_crtc *crtc,
 	}
 }
 
-static void dcp_atomic_commit_tail(struct drm_atomic_state *old_state)
-{
-	struct drm_device *dev = old_state->dev;
-
-	drm_atomic_helper_commit_modeset_disables(dev, old_state);
-
-	drm_atomic_helper_commit_modeset_enables(dev, old_state);
-
-	drm_atomic_helper_commit_planes(dev, old_state,
-					DRM_PLANE_COMMIT_ACTIVE_ONLY);
-
-	drm_atomic_helper_fake_vblank(old_state);
-
-	drm_atomic_helper_commit_hw_done(old_state);
-
-	drm_atomic_helper_wait_for_flip_done(dev, old_state);
-
-	drm_atomic_helper_cleanup_planes(dev, old_state);
-}
-
 static void apple_crtc_cleanup(struct drm_crtc *crtc)
 {
 	drm_crtc_cleanup(crtc);
@@ -279,7 +259,7 @@ static const struct drm_mode_config_funcs apple_mode_config_funcs = {
 };
 
 static const struct drm_mode_config_helper_funcs apple_mode_config_helpers = {
-	.atomic_commit_tail	= dcp_atomic_commit_tail,
+	.atomic_commit_tail	= drm_atomic_helper_commit_tail_rpm,
 };
 
 static void appledrm_connector_cleanup(struct drm_connector *connector)
