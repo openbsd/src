@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.74 2026/08/19 08:56:28 hshoexer Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.75 2026/09/01 00:51:14 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2999,6 +2999,11 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 		km_free((void *)vcpu->vc_control_va, PAGE_SIZE,
 		    &kv_page, &kp_zero);
 		vcpu->vc_control_va = 0;
+	}
+	if (vcpu->vc_msr_bitmap_va) {
+		km_free((void *)vcpu->vc_msr_bitmap_va, PAGE_SIZE,
+		    &kv_page, &kp_zero);
+		vcpu->vc_msr_bitmap_va = 0;
 	}
 	if (vcpu->vc_vmx_msr_exit_save_va) {
 		km_free((void *)vcpu->vc_vmx_msr_exit_save_va,
