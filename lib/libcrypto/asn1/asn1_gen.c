@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.29 2026/09/02 07:03:45 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.30 2026/09/02 07:04:56 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -462,8 +462,7 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 		}
 	}
 
-	/* Now we has a STACK of the components, convert to the correct form */
-
+	/* DER encode the stack as a SET or a SEQUENCE per utype. */
 	if (utype == V_ASN1_SET)
 		derlen = i2d_ASN1_SET_ANY(sk, &der);
 	else
