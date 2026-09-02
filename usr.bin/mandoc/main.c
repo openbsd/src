@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.272 2026/05/09 19:02:53 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.273 2026/09/02 12:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -898,16 +898,21 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	return globres;
 
 found:
-	warnx("outdated mandoc.db lacks %s(%s) entry, run %s %s",
-	    name, sec, BINM_MAKEWHATIS, paths->paths[ipath]);
 	if (res == NULL)
 		free(file);
 	else if (file == NULL)
 		fs_append(globinfo.gl_pathv, globinfo.gl_pathc, 1,
 		    ipath, sec, form, res, ressz);
-	else
+	else	/* Transfer ownership of file to res. */
 		fs_append(&file, 1, 0, ipath, sec, form, res, ressz);
 	globfree(&globinfo);
+
+	mandoc_asprintf(&file, "%s/%s", paths->paths[ipath], MANDOC_DB);
+	if (stat(file, &sb) != -1)
+		warnx("outdated %s lacks %s(%s) entry, run %s %s",
+		    MANDOC_DB, name, sec,
+		    BINM_MAKEWHATIS, paths->paths[ipath]);
+	free(file);
 	return 0;
 }
 
