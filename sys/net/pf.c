@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1238 2026/08/19 07:54:41 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1239 2026/09/02 20:27:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5557,7 +5557,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason,
 	struct tcphdr		*th = &pd->hdr.tcp;
 	struct pf_state_peer	*src, *dst;
 	u_int16_t		 win = ntohs(th->th_win);
-	u_int32_t		 ack, end, data_end, seq, orig_seq;
+	u_int32_t		 ack, orig_ack, end, data_end, seq, orig_seq;
 	u_int8_t		 sws, dws, psrc, pdst;
 	int			 ackskew;
 
@@ -5667,6 +5667,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason,
 		if (th->th_flags & TH_FIN)
 			end++;
 	}
+	orig_ack = ack;
 
 	if ((th->th_flags & TH_ACK) == 0) {
 		/* Let it pass through the ack skew check */
@@ -5722,7 +5723,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason,
 	    (orig_seq == src->seqlo + 1) || (orig_seq + 1 == src->seqlo) ||
 	    /* Require an exact/+1 sequence match on resets when possible */
 	    (SEQ_GEQ(orig_seq, src->seqlo - (dst->max_win << dws)) &&
-	    SEQ_LEQ(orig_seq, src->seqlo + 1) && ackskew == 0 &&
+	    SEQ_LEQ(orig_seq, src->seqlo + 1) && orig_ack == dst->seqlo &&
 	    (th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)))) {
 	    /* Allow resets to match sequence window if ack is perfect match */
 
