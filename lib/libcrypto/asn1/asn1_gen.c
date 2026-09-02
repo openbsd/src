@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.29 2026/09/02 07:03:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -436,7 +436,7 @@ parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 static ASN1_TYPE *
 asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 {
-	ASN1_TYPE *ret = NULL;
+	ASN1_TYPE *ret = NULL, *typ = NULL;
 	STACK_OF(ASN1_TYPE) *sk = NULL;
 	STACK_OF(CONF_VALUE) *sect = NULL;
 	unsigned char *der = NULL;
@@ -452,12 +452,13 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 		if (!sect)
 			goto bad;
 		for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
-			ASN1_TYPE *typ = ASN1_generate_v3(
-			    sk_CONF_VALUE_value(sect, i)->value, cnf);
-			if (!typ)
+			CONF_VALUE *val = sk_CONF_VALUE_value(sect, i);
+
+			if ((typ = ASN1_generate_v3(val->value, cnf)) == NULL)
 				goto bad;
-			if (!sk_ASN1_TYPE_push(sk, typ))
+			if (sk_ASN1_TYPE_push(sk, typ) <= 0)
 				goto bad;
+			typ = NULL;
 		}
 	}
 
@@ -487,6 +488,7 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
  bad:
 	free(der);
 	sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
+	ASN1_TYPE_free(typ);
 
 	return ret;
 }
