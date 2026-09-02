@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.78 2026/09/02 18:37:03 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.79 2026/09/02 18:43:14 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -116,9 +116,9 @@ int svm_handle_inout(struct vcpu *);
 int vmx_handle_inout(struct vcpu *);
 int svm_handle_hlt(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
-int vmm_inject_ud(struct vcpu *);
-int vmm_inject_gp(struct vcpu *);
-int vmm_inject_db(struct vcpu *);
+void vmm_inject_ud(struct vcpu *);
+void vmm_inject_gp(struct vcpu *);
+void vmm_inject_db(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_misc_enable_msr(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
@@ -4333,7 +4333,7 @@ svm_handle_exit(struct vcpu *vcpu)
 	case SVM_VMEXIT_RDTSCP:
 	case SVM_VMEXIT_ICEBP:
 	case SVM_VMEXIT_INVLPGA:
-		ret = vmm_inject_ud(vcpu);
+		vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
 	case SVM_VMEXIT_EFER_WRITE_TRAP:
@@ -4351,7 +4351,7 @@ svm_handle_exit(struct vcpu *vcpu)
 		    vcpu->vc_gueststate.vg_rax == HVCALL_FORCED_ABORT)
 			return (EINVAL);
 		DPRINTF("SVM_VMEXIT_VMMCALL at cpl=%d\n", guest_cpl);
-		ret = vmm_inject_ud(vcpu);
+		vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
 	default:
@@ -4363,13 +4363,8 @@ svm_handle_exit(struct vcpu *vcpu)
 	if (update_rip) {
 		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
 
-		if (rflags & PSL_T) {
-			if (vmm_inject_db(vcpu)) {
-				printf("%s: can't inject #DB exception to "
-				    "guest", __func__);
-				return (EINVAL);
-			}
-		}
+		if (rflags & PSL_T)
+			vmm_inject_db(vcpu);
 	}
 
 	/* Enable SVME in EFER (must always be set) */
@@ -4633,7 +4628,7 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 		syncout = 1;
 		break;
 	case SVM_VMEXIT_VMGEXIT:
-		error = vmm_inject_ud(vcpu);
+		vmm_inject_ud(vcpu);
 		break;
 	default:
 		DPRINTF("%s: unknown exit 0x%llx\n", __func__,
@@ -4771,7 +4766,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 	case VMX_EXIT_VMXOFF:
 	case VMX_EXIT_INVVPID:
 	case VMX_EXIT_INVEPT:
-		ret = vmm_inject_ud(vcpu);
+		vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
@@ -4791,7 +4786,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 		    vcpu->vc_gueststate.vg_rax == HVCALL_FORCED_ABORT)
 			return (EINVAL);
 		DPRINTF("VMX_EXIT_VMCALL at cpl=%d\n", guest_cpl);
-		ret = vmm_inject_ud(vcpu);
+		vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
 	default:
@@ -4826,13 +4821,8 @@ vmx_handle_exit(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
-		if (rflags & PSL_T) {
-			if (vmm_inject_db(vcpu)) {
-				printf("%s: can't inject #DB exception to "
-				    "guest", __func__);
-				return (EINVAL);
-			}
-		}
+		if (rflags & PSL_T)
+			vmm_inject_db(vcpu);
 	}
 
 	return (ret);
@@ -4845,11 +4835,8 @@ vmx_handle_exit(struct vcpu *vcpu)
  *
  * Parameters:
  *  vcpu: vcpu to inject into
- *
- * Return values:
- *  Always 0
  */
-int
+void
 vmm_inject_gp(struct vcpu *vcpu)
 {
 	DPRINTF("%s: injecting #GP at guest %%rip 0x%llx\n", __func__,
@@ -4857,8 +4844,6 @@ vmm_inject_gp(struct vcpu *vcpu)
 	vcpu->vc_inject.vie_vector = VMM_EX_GP;
 	vcpu->vc_inject.vie_type = VCPU_INJECT_EX;
 	vcpu->vc_inject.vie_errorcode = 0;
-
-	return (0);
 }
 
 /*
@@ -4868,11 +4853,8 @@ vmm_inject_gp(struct vcpu *vcpu)
  *
  * Parameters:
  *  vcpu: vcpu to inject into
- *
- * Return values:
- *  Always 0
  */
-int
+void
 vmm_inject_ud(struct vcpu *vcpu)
 {
 	DPRINTF("%s: injecting #UD at guest %%rip 0x%llx\n", __func__,
@@ -4880,8 +4862,6 @@ vmm_inject_ud(struct vcpu *vcpu)
 	vcpu->vc_inject.vie_vector = VMM_EX_UD;
 	vcpu->vc_inject.vie_type = VCPU_INJECT_EX;
 	vcpu->vc_inject.vie_errorcode = 0;
-
-	return (0);
 }
 
 /*
@@ -4891,11 +4871,8 @@ vmm_inject_ud(struct vcpu *vcpu)
  *
  * Parameters:
  *  vcpu: vcpu to inject into
- *
- * Return values:
- *  Always 0
  */
-int
+void
 vmm_inject_db(struct vcpu *vcpu)
 {
 	DPRINTF("%s: injecting #DB at guest %%rip 0x%llx\n", __func__,
@@ -4903,8 +4880,6 @@ vmm_inject_db(struct vcpu *vcpu)
 	vcpu->vc_inject.vie_vector = VMM_EX_DB;
 	vcpu->vc_inject.vie_type = VCPU_INJECT_EX;
 	vcpu->vc_inject.vie_errorcode = 0;
-
-	return (0);
 }
 
 /*
@@ -5870,7 +5845,6 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 	uint64_t insn_length;
 	uint64_t *rax, *rdx;
 	uint64_t *rcx;
-	int ret;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -5902,8 +5876,8 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		/* Unsupported MSRs causes #GP exception, don't advance %rip */
 		DPRINTF("%s: unsupported rdmsr (msr=0x%llx), injecting #GP\n",
 		    __func__, *rcx);
-		ret = vmm_inject_gp(vcpu);
-		return (ret);
+		vmm_inject_gp(vcpu);
+		return (0);
 	}
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
@@ -6005,13 +5979,15 @@ vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 
 	if (vmm_get_guest_cpu_cpl(vcpu) != 0) {
 		DPRINTF("%s: guest cpl not zero\n", __func__);
-		return (vmm_inject_gp(vcpu));
+		vmm_inject_gp(vcpu);
+		return (0);
 	}
 
 	if (*rcx != 0) {
 		DPRINTF("%s: guest specified invalid xcr register number "
 		    "%lld\n", __func__, *rcx);
-		return (vmm_inject_gp(vcpu));
+		vmm_inject_gp(vcpu);
+		return (0);
 	}
 
 	/* If we're exposing PKRU features, allow guests to set PKRU in xcr0. */
@@ -6022,7 +5998,8 @@ vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 	if (val & ~mask) {
 		DPRINTF("%s: guest specified xcr0 outside xsave_mask %lld\n",
 		    __func__, val);
-		return (vmm_inject_gp(vcpu));
+		vmm_inject_gp(vcpu);
+		return (0);
 	}
 
 	vcpu->vc_gueststate.vg_xcr0 = val;
@@ -6077,7 +6054,6 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 {
 	uint64_t insn_length, val;
 	uint64_t *rax, *rdx, *rcx;
-	int ret;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -6098,8 +6074,8 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	switch (*rcx) {
 	case MSR_CR_PAT:
 		if (!vmm_pat_is_valid(val)) {
-			ret = vmm_inject_gp(vcpu);
-			return (ret);
+			vmm_inject_gp(vcpu);
+			return (0);
 		}
 		vcpu->vc_shadow_pat = val;
 		break;
@@ -6113,8 +6089,8 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		 * Unsupported, so inject #GP and return without
 		 * advancing %rip.
 		 */
-		ret = vmm_inject_gp(vcpu);
-		return (ret);
+		vmm_inject_gp(vcpu);
+		return (0);
 	case KVM_MSR_SYSTEM_TIME:
 		vmm_init_pvclock(vcpu,
 		    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
@@ -6156,7 +6132,6 @@ svm_handle_msr(struct vcpu *vcpu)
 	uint64_t insn_length, val;
 	uint64_t *rax, *rcx, *rdx;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
-	int ret;
 
 	/* XXX: Validate RDMSR / WRMSR insn_length */
 	insn_length = 2;
@@ -6172,8 +6147,8 @@ svm_handle_msr(struct vcpu *vcpu)
 		switch (*rcx) {
 		case MSR_CR_PAT:
 			if (!vmm_pat_is_valid(val)) {
-				ret = vmm_inject_gp(vcpu);
-				return (ret);
+				vmm_inject_gp(vcpu);
+				return (0);
 			}
 			vcpu->vc_shadow_pat = val;
 			break;
@@ -6221,8 +6196,8 @@ svm_handle_msr(struct vcpu *vcpu)
 			 */
 			DPRINTF("%s: unsupported rdmsr (msr=0x%llx), "
 			    "injecting #GP\n", __func__, *rcx);
-			ret = vmm_inject_gp(vcpu);
-			return (ret);
+			vmm_inject_gp(vcpu);
+			return (0);
 		}
 	}
 
