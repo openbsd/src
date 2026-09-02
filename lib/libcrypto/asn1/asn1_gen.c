@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.31 2026/09/02 07:08:36 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.32 2026/09/02 07:09:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -445,20 +445,20 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	int i;
 	sk = sk_ASN1_TYPE_new_null();
 	if (!sk)
-		goto bad;
+		goto err;
 	if (section) {
 		if (!cnf)
-			goto bad;
+			goto err;
 		sect = X509V3_get0_section(cnf, section);
 		if (!sect)
-			goto bad;
+			goto err;
 		for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
 			CONF_VALUE *val = sk_CONF_VALUE_value(sect, i);
 
 			if ((typ = ASN1_generate_v3(val->value, cnf)) == NULL)
-				goto bad;
+				goto err;
 			if (sk_ASN1_TYPE_push(sk, typ) <= 0)
-				goto bad;
+				goto err;
 			typ = NULL;
 		}
 	}
@@ -470,23 +470,23 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 		derlen = i2d_ASN1_SEQUENCE_ANY(sk, &der);
 
 	if (derlen < 0)
-		goto bad;
+		goto err;
 
 	if ((astr = ASN1_STRING_type_new(utype)) == NULL)
-		goto bad;
+		goto err;
 	ASN1_STRING_set0(astr, der, derlen);
 	der = NULL;
 	derlen = 0;
 
 	if ((typ = ASN1_TYPE_new()) == NULL)
-		goto bad;
+		goto err;
 	ASN1_TYPE_set(typ, utype, astr);
 	astr = NULL;
 
 	ret = typ;
 	typ = NULL;
 
- bad:
+ err:
 	free(der);
 	sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
 	ASN1_TYPE_free(typ);
