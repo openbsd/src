@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.135 2024/05/23 03:21:08 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.136 2026/09/02 06:17:35 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Daan Vreeken.
- * 4. Neither the name of the author nor the names of any co-contributors
+ * 3. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
