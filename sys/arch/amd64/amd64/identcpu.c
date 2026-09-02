@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.155 2026/07/30 14:00:47 hshoexer Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.156 2026/09/02 19:25:00 dv Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -1054,12 +1054,13 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 	}
 
 	/*
-	 * Check for SVM Nested Paging
+	 * Check for SVM Nested Paging and NRIP Save.
 	 */
 	if ((ci->ci_vmm_flags & CI_VMM_SVM) &&
 	    ci->ci_pnfeatset >= CPUID_AMD_SVM_CAP) {
 		CPUID(CPUID_AMD_SVM_CAP, dummy, dummy, dummy, cap);
-		if (cap & AMD_SVM_NESTED_PAGING_CAP)
+		if ((cap & AMD_SVM_NESTED_PAGING_CAP) &&
+		    (cap & AMD_SVM_NRIP_SAVE_CAP))
 			ci->ci_vmm_flags |= CI_VMM_RVI;
 	}
 
