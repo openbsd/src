@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-mldsa-eddsa.c,v 1.4 2026/07/30 07:40:48 brynet Exp $ */
+/* $OpenBSD: ssh-mldsa-eddsa.c,v 1.5 2026/09/02 00:37:59 djm Exp $ */
 /*
  * Copyright (c) 2026 Damien Miller <djm@mindrot.org>
  *
@@ -32,7 +32,7 @@
 
 #define COMPOSITE_PREFIX "CompositeAlgorithmSignatures2025"
 #define COMPOSITE_LABEL  "COMPSIG-MLDSA44-Ed25519-SHA512"
-#define SSH_MLDSA44_ED25519_ALG_NAME   "ssh-mldsa44-ed25519@openssh.com"
+#define SSH_MLDSA44_ED25519_ALG_NAME   "ssh-mldsa44-ed25519"
 
 /*
  * raw_* functions implement the draft-ietf-lamps-pq-composite-sigs-18
@@ -479,7 +479,7 @@ const struct sshkey_impl_funcs sshkey_mldsa44_ed25519_funcs = {
 };
 
 const struct sshkey_impl sshkey_mldsa44_ed25519_impl = {
-	/* .name = */		"ssh-mldsa44-ed25519@openssh.com",
+	/* .name = */		"ssh-mldsa44-ed25519",
 	/* .shortname = */	"MLDSA44-ED25519",
 	/* .sigalg = */		NULL,
 	/* .type = */		KEY_MLDSA44_ED25519,
@@ -491,7 +491,7 @@ const struct sshkey_impl sshkey_mldsa44_ed25519_impl = {
 };
 
 const struct sshkey_impl sshkey_mldsa44_ed25519_cert_impl = {
-	/* .name = */		"ssh-mldsa44-ed25519-cert-v01@openssh.com",
+	/* .name = */		"ssh-mldsa44-ed25519-cert",
 	/* .shortname = */	"MLDSA44-ED25519-CERT",
 	/* .sigalg = */		NULL,
 	/* .type = */		KEY_MLDSA44_ED25519_CERT,

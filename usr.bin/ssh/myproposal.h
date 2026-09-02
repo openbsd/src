@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.80 2026/08/10 23:27:04 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.81 2026/09/02 00:37:59 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -58,7 +58,7 @@
 	"sk-ecdsa-sha2-nistp256@openssh.com," \
 	"webauthn-sk-ecdsa-sha2-nistp256@openssh.com," \
 	"rsa-sha2-512," \
-	"rsa-sha2-256" \
+	"rsa-sha2-256"
 
 #define	KEX_SERVER_ENCRYPT \
 	"chacha20-poly1305@openssh.com," \
