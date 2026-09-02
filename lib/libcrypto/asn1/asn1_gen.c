@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.34 2026/09/02 07:11:55 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.35 2026/09/02 07:15:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -436,10 +436,10 @@ parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 static ASN1_TYPE *
 asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 {
-	ASN1_TYPE *ret = NULL, *typ = NULL;
-	ASN1_STRING *astr = NULL;
 	STACK_OF(ASN1_TYPE) *sk = NULL;
 	STACK_OF(CONF_VALUE) *sect = NULL;
+	ASN1_TYPE *ret = NULL, *typ = NULL;
+	ASN1_STRING *astr = NULL;
 	unsigned char *der = NULL;
 	int derlen;
 	int i;
@@ -489,10 +489,10 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	typ = NULL;
 
  err:
-	free(der);
 	sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
 	ASN1_TYPE_free(typ);
 	ASN1_STRING_free(astr);
+	free(der);
 
 	return ret;
 }
