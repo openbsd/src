@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.33 2026/09/02 07:11:04 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.34 2026/09/02 07:11:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -447,8 +447,8 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	if ((sk = sk_ASN1_TYPE_new_null()) == NULL)
 		goto err;
 
-	if (section) {
-		if (!cnf)
+	if (section != NULL) {
+		if (cnf == NULL)
 			goto err;
 
 		if ((sect = X509V3_get0_section(cnf, section)) == NULL)
