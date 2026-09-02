@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.37 2026/05/09 00:37:45 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.38 2026/09/02 13:34:32 claudio Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -54,6 +54,8 @@ extern int bpf_maxbufsize;
 #endif /* _KERNEL */
 
 #include <net/bpf.h>
+
+#ifndef _KERNEL
 
 struct bpf_mem {
 	const u_char	*pkt;
@@ -145,6 +147,8 @@ bpf_filter(const struct bpf_insn *pc, const u_char *pkt,
 
 	return _bpf_filter(pc, &bpf_mem_ops, &bm, wirelen);
 }
+
+#endif /* _KERNEL */
 
 u_int
 _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,

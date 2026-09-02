@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.235 2025/11/13 10:53:25 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.236 2026/09/02 13:34:32 claudio Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ bpf_movein(struct uio *uio, struct bpf_d *d, struct mbuf **mp,
 	bps = SMR_PTR_GET(&d->bd_wfilter);
 	if (bps != NULL)
 		fcode = bps->bps_bf.bf_insns;
-	slen = bpf_filter(fcode, mtod(m, u_char *), len, len);
+	slen = bpf_mfilter(fcode, m, len);
 	smr_read_leave();
 
 	if (slen < len) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.75 2025/11/16 02:20:08 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.76 2026/09/02 13:34:32 claudio Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -309,8 +309,10 @@ struct bpf_ops {
 #define BPF_JUMP(code, k, jt, jf) { (u_int16_t)(code), jt, jf, k }
 
 __BEGIN_DECLS
+#ifndef _KERNEL
 u_int	 bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int)
 	    __bounded((__buffer__, 2, 4));
+#endif /* _KERNEL */
 
 u_int	 _bpf_filter(const struct bpf_insn *, const struct bpf_ops *,
 	     const void *, u_int);
