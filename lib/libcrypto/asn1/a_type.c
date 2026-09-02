@@ -1,4 +1,4 @@
-/* $OpenBSD: a_type.c,v 1.29 2025/12/05 14:19:27 tb Exp $ */
+/* $OpenBSD: a_type.c,v 1.30 2026/09/02 07:01:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,6 +119,7 @@ ASN1_TYPE_get(const ASN1_TYPE *a)
 }
 LCRYPTO_ALIAS(ASN1_TYPE_get);
 
+/* XXX - add ASN1_TYPE_set0() for internal use? */
 void
 ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value)
 {
