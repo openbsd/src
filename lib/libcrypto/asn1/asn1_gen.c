@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.30 2026/09/02 07:04:56 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.31 2026/09/02 07:08:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -437,6 +437,7 @@ static ASN1_TYPE *
 asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 {
 	ASN1_TYPE *ret = NULL, *typ = NULL;
+	ASN1_STRING *astr = NULL;
 	STACK_OF(ASN1_TYPE) *sk = NULL;
 	STACK_OF(CONF_VALUE) *sect = NULL;
 	unsigned char *der = NULL;
@@ -471,23 +472,25 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	if (derlen < 0)
 		goto bad;
 
-	if (!(ret = ASN1_TYPE_new()))
+	if ((astr = ASN1_STRING_type_new(utype)) == NULL)
 		goto bad;
-
-	if (!(ret->value.asn1_string = ASN1_STRING_type_new(utype)))
-		goto bad;
-
-	ret->type = utype;
-
-	ret->value.asn1_string->data = der;
-	ret->value.asn1_string->length = derlen;
-
+	ASN1_STRING_set0(astr, der, derlen);
 	der = NULL;
+	derlen = 0;
+
+	if ((typ = ASN1_TYPE_new()) == NULL)
+		goto bad;
+	ASN1_TYPE_set(typ, utype, astr);
+	astr = NULL;
+
+	ret = typ;
+	typ = NULL;
 
  bad:
 	free(der);
 	sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
 	ASN1_TYPE_free(typ);
+	ASN1_STRING_free(astr);
 
 	return ret;
 }
