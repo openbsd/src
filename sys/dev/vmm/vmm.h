@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.13 2025/12/17 19:26:25 dv Exp $ */
+/* $OpenBSD: vmm.h,v 1.14 2026/09/02 19:01:29 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -260,7 +260,7 @@ int vm_get_info(struct vm_info_params *);
 int vm_terminate(struct vm_terminate_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vm_rwvmparams(struct vm_rwvmparams_params *, int);
-int vcpu_must_stop(struct vcpu *);
+int vcpu_must_yield(struct vcpu *);
 int vm_share_mem(struct vm_sharemem_params *, struct proc *);
 int vm_run(struct vm_run_params *);
 

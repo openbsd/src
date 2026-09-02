@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.79 2026/09/02 18:43:14 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.80 2026/09/02 19:01:29 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3676,7 +3676,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct region_descriptor gdt;
 	struct cpu_info *ci = NULL;
 	uint64_t exit_reason, cr3, msr, insn_error;
-	struct schedstate_percpu *spc;
 	struct vmx_msr_store *msr_store;
 	struct vmx_invvpid_descriptor vid;
 	struct vmx_invept_descriptor vid_ept;
@@ -4061,19 +4060,13 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * Exit to vmd if we are terminating, failed to enter,
 			 * or need help (device I/O)
 			 */
-			if (ret || vcpu_must_stop(vcpu))
+			if (ret || vcpu_must_yield(vcpu))
 				break;
 
 			if (vcpu->vc_intr && vcpu->vc_irqready) {
 				ret = EAGAIN;
 				break;
 			}
-
-			/* Check if we should yield - don't hog the {p,v}pu */
-			spc = &ci->ci_schedstate;
-			if (spc->spc_schedflags & SPCF_SHOULDYIELD)
-				break;
-
 		} else {
 			/*
 			 * We failed vmresume or vmlaunch for some reason,
@@ -6666,7 +6659,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct region_descriptor gdt;
 	struct cpu_info *ci = NULL;
 	uint64_t exit_reason;
-	struct schedstate_percpu *spc;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
 	if (vrp->vrp_intr_pending)
@@ -6894,18 +6886,13 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * Exit to vmd if we are terminating, failed to enter,
 			 * or need help (device I/O)
 			 */
-			if (ret || vcpu_must_stop(vcpu))
+			if (ret || vcpu_must_yield(vcpu))
 				break;
 
 			if (vcpu->vc_intr && vcpu->vc_irqready) {
 				ret = EAGAIN;
 				break;
 			}
-
-			/* Check if we should yield - don't hog the cpu */
-			spc = &ci->ci_schedstate;
-			if (spc->spc_schedflags & SPCF_SHOULDYIELD)
-				break;
 		}
 	}
 

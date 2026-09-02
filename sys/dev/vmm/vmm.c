@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.10 2025/12/24 12:46:57 dv Exp $ */
+/* $OpenBSD: vmm.c,v 1.11 2026/09/02 19:01:29 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -819,12 +819,13 @@ out:
 }
 
 /*
- * vcpu_must_stop
+ * vcpu_must_yield
  *
  * Check if we need to (temporarily) stop running the VCPU for some reason,
  * such as:
  * - the VM was requested to terminate
  * - the proc running this VCPU has pending signals
+ * - the scheduler asks us to yield
  *
  * Parameters:
  *  vcpu: the VCPU to check
@@ -834,14 +835,20 @@ out:
  *  0: no stop is needed
  */
 int
-vcpu_must_stop(struct vcpu *vcpu)
+vcpu_must_yield(struct vcpu *vcpu)
 {
-	struct proc *p = curproc;
+	struct cpu_info *ci;
 
 	if (vcpu->vc_state == VCPU_STATE_REQTERM)
 		return (1);
-	if (SIGPENDING(p) != 0)
+
+	if (SIGPENDING(curproc) != 0)
 		return (1);
+
+	ci = curcpu();
+	if (ci->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
+		return (1);
+
 	return (0);
 }
 
