@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.77 2026/09/01 01:13:27 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.78 2026/09/02 18:37:03 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3879,6 +3879,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				/* Software Exceptions */
 				eii |= (4ULL << 8);
 				break;
+			case VMM_EX_DB:
 			case VMM_EX_UD:
 				/* Hardware exception, no error code. */
 				eii |= (3ULL << 8);
@@ -6781,13 +6782,13 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			switch (vcpu->vc_inject.vie_vector) {
 			case VMM_EX_BP:
 			case VMM_EX_OF:
-			case VMM_EX_DB:
 				/*
 				 * Software exception.
 				 * XXX check nRIP support.
 				 */
 				vmcb->v_eventinj |= (4ULL << 8);
 				break;
+			case VMM_EX_DB:
 			case VMM_EX_UD:
 				/* Hardware exception, no error code. */
 				vmcb->v_eventinj |= (3ULL << 8);
