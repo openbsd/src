@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcuart_acpi.c,v 1.1 2026/01/29 23:02:35 kettenis Exp $	*/
+/*	$OpenBSD: qcuart_acpi.c,v 1.2 2026/09/03 09:36:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis
  *
@@ -38,7 +38,8 @@ int	qcuart_acpi_match(struct device *, void *, void *);
 void	qcuart_acpi_attach(struct device *, struct device *, void *);
 
 const struct cfattach qcuart_acpi_ca = {
-	sizeof(struct qcuart_acpi_softc), qcuart_acpi_match, qcuart_acpi_attach
+	sizeof(struct qcuart_acpi_softc), qcuart_acpi_match,
+	qcuart_acpi_attach, NULL, qcuart_activate
 };
 
 const char *qcuart_hids[] = {

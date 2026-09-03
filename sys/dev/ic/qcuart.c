@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcuart.c,v 1.1 2026/01/29 11:23:35 kettenis Exp $	*/
+/*	$OpenBSD: qcuart.c,v 1.2 2026/09/03 09:36:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -118,6 +118,40 @@ qcuart_attach_common(struct qcuart_softc *sc, int console)
 	}
 
 	printf("\n");
+}
+
+int
+qcuart_activate(struct device *self, int act)
+{
+	struct qcuart_softc *sc = (struct qcuart_softc *)self;
+	struct tty *tp = sc->sc_tty;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		/* Disable interrupts. */
+		HWRITE4(sc, GENI_M_IRQ_EN, 0);
+		HWRITE4(sc, GENI_S_IRQ_EN, 0);
+		break;
+	case DVACT_RESUME:
+		/* Disable interrupts. */
+		HWRITE4(sc, GENI_M_IRQ_EN, 0);
+		HWRITE4(sc, GENI_S_IRQ_EN, 0);
+
+		if (tp && ISSET(tp->t_state, TS_ISOPEN)) {
+			/* Enable Rx interrupts. */
+			HSET4(sc, GENI_S_IRQ_EN,
+			    GENI_S_IRQ_RX_FIFO_WATERMARK |
+			    GENI_S_IRQ_RX_FIFO_LAST);
+			HSET4(sc, GENI_M_IRQ_EN, GENI_M_IRQ_SEC_IRQ);
+
+			/* Start Rx engine. */
+			HWRITE4(sc, GENI_S_CMD0,
+			    GENI_S_CMD0_OPCODE_UART_START_RX);
+		}
+		break;
+	}
+
+	return 0;
 }
 
 void

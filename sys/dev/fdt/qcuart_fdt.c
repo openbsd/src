@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcuart_fdt.c,v 1.1 2026/01/29 11:23:35 kettenis Exp $	*/
+/*	$OpenBSD: qcuart_fdt.c,v 1.2 2026/09/03 09:36:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,7 +31,8 @@ int	qcuart_fdt_match(struct device *, void *, void *);
 void	qcuart_fdt_attach(struct device *, struct device *, void *);
 
 const struct cfattach qcuart_fdt_ca = {
-	sizeof(struct qcuart_softc), qcuart_fdt_match, qcuart_fdt_attach
+	sizeof(struct qcuart_softc), qcuart_fdt_match, qcuart_fdt_attach,
+	NULL, qcuart_activate
 };
 
 void

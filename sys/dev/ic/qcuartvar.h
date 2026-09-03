@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcuartvar.h,v 1.1 2026/01/29 11:23:35 kettenis Exp $	*/
+/*	$OpenBSD: qcuartvar.h,v 1.2 2026/09/03 09:36:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,7 @@ struct qcuart_softc {
 };
 
 void	qcuart_attach_common(struct qcuart_softc *, int);
+int	qcuart_activate(struct device *, int);
 int	qcuart_intr(void *);
 
 int	qcuartcnattach(bus_space_tag_t, bus_addr_t);
