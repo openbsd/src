@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.150 2026/08/26 13:13:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.151 2026/09/03 11:54:23 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -145,7 +145,8 @@
 #define CPU_PART_AVALANCHE_MAX	0x039
 
 /* Ampere */
-#define CPU_PART_AMPERE1	0xac3
+#define CPU_PART_AMPERE1_AC03	0xac3
+#define CPU_PART_AMPERE1_AC04	0xac4
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -250,7 +251,8 @@ struct cpu_cores cpu_cores_apple[] = {
 };
 
 struct cpu_cores cpu_cores_ampere[] = {
-	{ CPU_PART_AMPERE1, "AmpereOne" },
+	{ CPU_PART_AMPERE1_AC03, "AmpereOne AC03" },
+	{ CPU_PART_AMPERE1_AC04, "AmpereOne AC04" },
 	{ 0, NULL },
 };
 
@@ -470,7 +472,7 @@ cpu_mitigate_spectre_bhb(struct cpu_info *ci)
 		break;
 	case CPU_IMPL_AMPERE:
 		switch (CPU_PART(ci->ci_midr)) {
-		case CPU_PART_AMPERE1:
+		case CPU_PART_AMPERE1_AC03:
 			ci->ci_trampoline_vectors =
 			    (vaddr_t)trampoline_vectors_loop_11;
 			break;
