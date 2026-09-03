@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.183 2026/07/21 12:21:42 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.184 2026/09/03 17:16:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -211,7 +211,8 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	struct crl		*crl;
 	const char		*errstr;
 
-	if ((roa = roa_parse(&cert, file, entp->talid, der, len)) == NULL)
+	if ((roa = signed_object_parse(&cert, file, RTYPE_ROA, entp->talid,
+	    der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
@@ -252,7 +253,8 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	struct crl		*crl;
 	const char		*errstr;
 
-	if ((spl = spl_parse(&cert, file, entp->talid, der, len)) == NULL)
+	if ((spl = signed_object_parse(&cert, file, RTYPE_SPL, entp->talid,
+	    der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
@@ -412,7 +414,8 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	if (der == NULL && errno != ENOENT)
 		warn("parse file %s", file);
 
-	if ((mft = mft_parse(&cert, file, entp->talid, der, len)) == NULL) {
+	if ((mft = signed_object_parse(&cert, file, RTYPE_MFT, entp->talid,
+	    der, len)) == NULL) {
 		free(der);
 		return NULL;
 	}
@@ -772,7 +775,8 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	struct crl	*crl;
 	const char	*errstr;
 
-	if ((aspa = aspa_parse(&cert, file, entp->talid, der, len)) == NULL)
+	if ((aspa = signed_object_parse(&cert, file, RTYPE_ASPA, entp->talid,
+	    der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
@@ -812,7 +816,8 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	struct auth	*a;
 	const char	*errstr;
 
-	if ((tak = tak_parse(&cert, file, entp->talid, der, len)) == NULL)
+	if ((tak = signed_object_parse(&cert, file, RTYPE_TAK, entp->talid,
+	    der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.86 2026/07/09 11:39:19 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.87 2026/09/03 17:16:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -500,7 +500,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 
 	switch (type) {
 	case RTYPE_ASPA:
-		aspa = aspa_parse(&cert, file, -1, buf, len);
+		aspa = signed_object_parse(&cert, file, type, -1, buf, len);
 		if (aspa == NULL)
 			break;
 		aia = cert->aia;
@@ -531,7 +531,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		crl_print(crl);
 		break;
 	case RTYPE_MFT:
-		mft = mft_parse(&cert, file, -1, buf, len);
+		mft = signed_object_parse(&cert, file, type, -1, buf, len);
 		if (mft == NULL)
 			break;
 		aia = cert->aia;
@@ -540,7 +540,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		notafter = &mft->nextupdate;
 		break;
 	case RTYPE_ROA:
-		roa = roa_parse(&cert, file, -1, buf, len);
+		roa = signed_object_parse(&cert, file, type, -1, buf, len);
 		if (roa == NULL)
 			break;
 		aia = cert->aia;
@@ -549,7 +549,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		notafter = &cert->notafter;
 		break;
 	case RTYPE_RSC:
-		rsc = rsc_parse(&cert, file, -1, buf, len);
+		rsc = signed_object_parse(&cert, file, type, -1, buf, len);
 		if (rsc == NULL)
 			break;
 		aia = cert->aia;
@@ -558,7 +558,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		notafter = &cert->notafter;
 		break;
 	case RTYPE_SPL:
-		spl = spl_parse(&cert, file, -1, buf, len);
+		spl = signed_object_parse(&cert, file, type, -1, buf, len);
 		if (spl == NULL)
 			break;
 		aia = cert->aia;
@@ -567,7 +567,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		notafter = &cert->notafter;
 		break;
 	case RTYPE_TAK:
-		tak = tak_parse(&cert, file, -1, buf, len);
+		tak = signed_object_parse(&cert, file, type, -1, buf, len);
 		if (tak == NULL)
 			break;
 		aia = cert->aia;
