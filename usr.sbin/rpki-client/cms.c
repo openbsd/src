@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.63 2026/09/03 17:19:30 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.64 2026/09/03 19:10:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -175,7 +175,7 @@ cms_SignerInfo_check_attributes(const char *fn, const CMS_SignerInfo *si,
 }
 
 static int
-cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
+cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
     const unsigned char *der, size_t len, const ASN1_OBJECT *oid,
     unsigned char **res, size_t *rsz, time_t *signtime)
 {
@@ -196,8 +196,6 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 
 	assert(*out_cert == NULL);
 
-	if (rsz != NULL)
-		*rsz = 0;
 	*signtime = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
@@ -395,26 +393,6 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 	return rc;
 }
 
-/*
- * Parse and validate a self-signed CMS message.
- * Conforms to RFC 6488.
- * The eContentType of the message must be an oid object.
- * Return the eContent as a string and set "rsz" to be its length.
- */
-static unsigned char *
-cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
-    const unsigned char *der, size_t derlen, const ASN1_OBJECT *oid,
-    size_t *rsz, time_t *st)
-{
-	unsigned char *res = NULL;
-
-	if (!cms_parse_validate_internal(out_cert, fn, talid, der, derlen, oid,
-	    &res, rsz, st))
-		return NULL;
-
-	return res;
-}
-
 static const struct signed_obj *
 cms_object_from_rtype(const char *fn, enum rtype rtype)
 {
@@ -444,8 +422,8 @@ signed_object_parse(struct cert **out_cert, const char *fn, enum rtype rtype,
 	const ASN1_OBJECT *oid;
 	void *obj = NULL;
 	struct cert *cert = NULL;
-	size_t cmsz;
-	unsigned char *cms;
+	unsigned char *cms = NULL;
+	size_t cmsz = 0;
 	time_t signtime = 0;
 	int rc = 0;
 
@@ -454,9 +432,8 @@ signed_object_parse(struct cert **out_cert, const char *fn, enum rtype rtype,
 	sobj = cms_object_from_rtype(fn, rtype);
 	oid = sobj->oid();
 
-	cms = cms_parse_validate(&cert, fn, talid, der, len, oid, &cmsz,
-	    &signtime);
-	if (cms == NULL)
+	if (!cms_parse_validate(&cert, fn, talid, der, len, oid, &cms, &cmsz,
+	    &signtime))
 		return NULL;
 
 	obj = sobj->new(len, signtime);
