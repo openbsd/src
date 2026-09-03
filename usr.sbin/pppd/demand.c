@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.13 2024/08/10 05:32:28 jsg Exp $	*/
+/*	$OpenBSD: demand.c,v 1.14 2026/09/03 11:52:26 claudio Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -315,13 +315,16 @@ active_packet(unsigned char *p, int len)
 {
     int proto, i;
     struct protent *protp;
+#ifdef PPP_FILTER
+    struct pcap_pkthdr fhdr = { .len = len, .caplen = len };
+#endif
 
     if (len < PPP_HDRLEN)
 	return 0;
     proto = PPP_PROTOCOL(p);
 #ifdef PPP_FILTER
     if (active_filter.bf_len != 0
-	&& bpf_filter(active_filter.bf_insns, frame, len, len) == 0)
+	&& pcap_offline_filter(&active_filter, &fhdr, frame) == 0)
 	return 0;
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
