@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.56 2026/08/31 07:57:09 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.57 2026/09/03 13:07:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,12 +41,14 @@ int	send_ls_update(struct ibuf *, struct iface *, struct in_addr,
 void	ls_retrans_list_insert(struct nbr *, struct lsa_entry *);
 void	ls_retrans_list_remove(struct nbr *, struct lsa_entry *);
 
+struct lsa_ref *lsa_cache_ref(struct lsa_ref *);
+
 /* link state update packet handling */
 int
-lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
-    void *data)
+lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_ref *ref)
 {
 	struct nbr		*nbr;
+	struct lsa_hdr		*lsa_hdr = &ref->hdr;
 	struct lsa_entry	*le = NULL;
 	int			 queued = 0, dont_ack = 0;
 	int			 r;
@@ -89,11 +91,11 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 		/* non DR or BDR router keep all lsa in one retrans list */
 		if (iface->state & IF_STA_DROTHER) {
 			if (!queued)
-				ls_retrans_list_add(iface->self, data,
+				ls_retrans_list_add(iface->self, ref,
 				    iface->rxmt_interval, 0);
 			queued = 1;
 		} else {
-			ls_retrans_list_add(nbr, data, iface->rxmt_interval, 0);
+			ls_retrans_list_add(nbr, ref, iface->rxmt_interval, 0);
 			queued = 1;
 		}
 	}
@@ -117,7 +119,7 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		ls_retrans_list_add(iface->self, data, 0, 1);
+		ls_retrans_list_add(iface->self, ref, 0, 1);
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
@@ -135,7 +137,7 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 				    lsa_hdr->adv_rtr != le->le_lsa->adv_rtr)
 					continue;
 			}
-			ls_retrans_list_add(nbr, data, 0, 1);
+			ls_retrans_list_add(nbr, ref, 0, 1);
 		}
 		break;
 	default:
@@ -296,20 +298,16 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 
 /* link state retransmit list */
 void
-ls_retrans_list_add(struct nbr *nbr, struct lsa_hdr *lsa,
+ls_retrans_list_add(struct nbr *nbr, struct lsa_ref *ref,
     unsigned short timeout, unsigned short oneshot)
 {
 	struct timeval		 tv;
 	struct lsa_entry	*le;
-	struct lsa_ref		*ref;
-
-	if ((ref = lsa_cache_get(lsa)) == NULL)
-		fatalx("King Bula sez: somebody forgot to lsa_cache_add");
 
 	if ((le = calloc(1, sizeof(*le))) == NULL)
 		fatal("ls_retrans_list_add");
 
-	le->le_ref = ref;
+	le->le_ref = lsa_cache_ref(ref);
 	le->le_when = timeout;
 	le->le_oneshot = oneshot;
 
@@ -465,8 +463,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 			 * old retransmission needs to be converted into
 			 * flood by rerunning the lsa_flood.
 			 */
-			lsa_flood(nbr->iface, nbr, &le->le_ref->hdr,
-			    le->le_ref->data);
+			lsa_flood(nbr->iface, nbr, le->le_ref);
 			ls_retrans_list_free(nbr, le);
 			/* ls_retrans_list_free retriggers the timer */
 			return;
@@ -565,15 +562,18 @@ lsa_hash_hdr(const struct lsa_hdr *hdr)
 }
 
 struct lsa_ref *
-lsa_cache_add(void *data, u_int16_t len)
+lsa_cache_add(struct ibuf *buf)
 {
 	struct lsa_cache_head	*head;
 	struct lsa_ref		*ref, *old;
 	struct timespec		 tp;
+	size_t			 len;
 
 	if ((ref = calloc(1, sizeof(*ref))) == NULL)
 		fatal("lsa_cache_add");
-	memcpy(&ref->hdr, data, sizeof(ref->hdr));
+	if (ibuf_get(buf, &ref->hdr, sizeof(ref->hdr)) == -1)
+		fatal("lsa_cache_add");
+	ibuf_rewind(buf);
 
 	if ((old = lsa_cache_look(&ref->hdr))) {
 		free(ref);
@@ -581,9 +581,10 @@ lsa_cache_add(void *data, u_int16_t len)
 		return (old);
 	}
 
+	len = ibuf_size(buf);
 	if ((ref->data = malloc(len)) == NULL)
 		fatal("lsa_cache_add");
-	memcpy(ref->data, data, len);
+	memcpy(ref->data, ibuf_data(buf), len);
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 	ref->stamp = tp.tv_sec;
@@ -596,14 +597,9 @@ lsa_cache_add(void *data, u_int16_t len)
 }
 
 struct lsa_ref *
-lsa_cache_get(struct lsa_hdr *lsa_hdr)
+lsa_cache_ref(struct lsa_ref *ref)
 {
-	struct lsa_ref		*ref;
-
-	ref = lsa_cache_look(lsa_hdr);
-	if (ref)
-		ref->refcnt++;
-
+	ref->refcnt++;
 	return (ref);
 }
 

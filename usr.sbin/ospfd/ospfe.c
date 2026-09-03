@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.123 2026/07/28 11:48:14 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.124 2026/09/03 13:07:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -489,6 +489,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 void
 ospfe_dispatch_rde(int fd, short event, void *bula)
 {
+	struct ibuf		 buf;
 	struct lsa_hdr		 lsa_hdr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
@@ -501,7 +502,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct abr_rtr		 ar;
 	int			 n, noack = 0, shut = 0;
-	u_int16_t		 l, age;
+	u_int16_t		 age;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -601,15 +602,12 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
-			l = imsg.hdr.len - IMSG_HEADER_SIZE;
-			if (l < sizeof(lsa_hdr))
-				fatalx("ospfe_dispatch_rde: "
-				    "bad imsg size");
-			memcpy(&lsa_hdr, imsg.data, sizeof(lsa_hdr));
+			if (imsg_get_ibuf(&imsg, &buf) == -1)
+				fatalx("bad LS_FLOOD imsg received");
 
-			ref = lsa_cache_add(imsg.data, l);
+			ref = lsa_cache_add(&buf);
 
-			if (lsa_hdr.type == LSA_TYPE_EXTERNAL) {
+			if (ref->hdr.type == LSA_TYPE_EXTERNAL) {
 				/*
 				 * flood on all areas but stub areas and
 				 * virtual links
@@ -619,16 +617,14 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 					    continue;
 				    LIST_FOREACH(iface, &area->iface_list,
 					entry) {
-					    noack += lsa_flood(iface, nbr,
-						&lsa_hdr, imsg.data);
+					    noack += lsa_flood(iface, nbr, ref);
 				    }
 				}
-			} else if (lsa_hdr.type == LSA_TYPE_LINK_OPAQ) {
+			} else if (ref->hdr.type == LSA_TYPE_LINK_OPAQ) {
 				/*
 				 * Flood on interface only
 				 */
-				noack += lsa_flood(nbr->iface, nbr,
-				    &lsa_hdr, imsg.data);
+				noack += lsa_flood(nbr->iface, nbr, ref);
 			} else {
 				/*
 				 * Flood on all area interfaces. For
@@ -636,14 +632,13 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				 */
 				area = nbr->iface->area;
 				LIST_FOREACH(iface, &area->iface_list, entry) {
-					noack += lsa_flood(iface, nbr,
-					    &lsa_hdr, imsg.data);
+					noack += lsa_flood(iface, nbr, ref);
 				}
 				/* XXX virtual links */
 			}
 
 			/* remove from ls_req_list */
-			le = ls_req_list_get(nbr, &lsa_hdr);
+			le = ls_req_list_get(nbr, &ref->hdr);
 			if (!(nbr->state & NBR_STA_FULL) && le != NULL) {
 				ls_req_list_free(nbr, le);
 				/*
@@ -660,7 +655,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				    nbr->iface->dr == nbr) {
 					/* delayed ack */
 					lhp = lsa_hdr_new();
-					memcpy(lhp, &lsa_hdr, sizeof(*lhp));
+					memcpy(lhp, &ref->hdr, sizeof(*lhp));
 					ls_ack_list_add(nbr->iface, lhp);
 				}
 			}
@@ -677,10 +672,8 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			 * IMSG_LS_SNAP is used in one case:
 			 *    in EXSTART when the LSA has age MaxAge
 			 */
-			l = imsg.hdr.len - IMSG_HEADER_SIZE;
-			if (l < sizeof(lsa_hdr))
-				fatalx("ospfe_dispatch_rde: "
-				    "bad imsg size");
+			if (imsg_get_ibuf(&imsg, &buf) == -1)
+				fatalx("bad LS_UPD/SNAP imsg received");
 
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL)
@@ -693,13 +686,14 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			    nbr->state != NBR_STA_SNAP)
 				break;
 
-			memcpy(&age, imsg.data, sizeof(age));
-			ref = lsa_cache_add(imsg.data, l);
+			ref = lsa_cache_add(&buf);
+			age = ref->hdr.age;
+
 			if (ntohs(age) >= MAX_AGE)
 				/* add to retransmit list */
-				ls_retrans_list_add(nbr, imsg.data, 0, 0);
+				ls_retrans_list_add(nbr, ref, 0, 0);
 			else
-				ls_retrans_list_add(nbr, imsg.data, 0, 1);
+				ls_retrans_list_add(nbr, ref, 0, 1);
 
 			lsa_cache_put(ref, nbr);
 			break;

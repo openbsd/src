@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.49 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.50 2026/09/03 13:07:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -180,11 +180,10 @@ void	 start_ls_req_tx_timer(struct nbr *);
 void	 stop_ls_req_tx_timer(struct nbr *);
 
 /* lsupdate.c */
-int		 lsa_flood(struct iface *, struct nbr *, struct lsa_hdr *,
-		     void *);
+int		 lsa_flood(struct iface *, struct nbr *, struct lsa_ref *);
 void		 recv_ls_update(struct nbr *, char *, u_int16_t);
 
-void		 ls_retrans_list_add(struct nbr *, struct lsa_hdr *,
+void		 ls_retrans_list_add(struct nbr *, struct lsa_ref *,
 		     unsigned short, unsigned short);
 int		 ls_retrans_list_del(struct nbr *, struct lsa_hdr *);
 struct lsa_entry	*ls_retrans_list_get(struct nbr *, struct lsa_hdr *);
@@ -193,8 +192,7 @@ void		 ls_retrans_list_clr(struct nbr *);
 void		 ls_retrans_timer(int, short, void *);
 
 void		 lsa_cache_init(u_int32_t);
-struct lsa_ref	*lsa_cache_add(void *, u_int16_t);
-struct lsa_ref	*lsa_cache_get(struct lsa_hdr *);
+struct lsa_ref	*lsa_cache_add(struct ibuf *);
 void		 lsa_cache_put(struct lsa_ref *, struct nbr *);
 
 /* neighbor.c */
