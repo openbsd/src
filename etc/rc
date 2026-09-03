@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.592 2026/08/29 16:26:33 afresh1 Exp $
+#	$OpenBSD: rc,v 1.593 2026/09/03 18:56:40 naddy Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -155,6 +155,12 @@ make_keys() {
 		else
 			echo failed.
 		fi
+	fi
+
+	# delete after OpenBSD 8.1
+	local _ssh_mldsa=/etc/ssh/ssh_host_mldsa44_ed25519_key
+	if grep -qs '^ssh-mldsa44-ed25519@openssh\.com' ${_ssh_mldsa}.pub; then
+		rm -f ${_ssh_mldsa} ${_ssh_mldsa}.pub
 	fi
 
 	[[ -f $_ssh_pub ]] || _show_ssh_fp=true
