@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.33 2025/10/23 05:35:46 tb Exp $ */
+/*	$Id: test-mft.c,v 1.34 2026/09/03 17:18:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,8 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < argc; i++) {
 		buf = load_file(argv[i], &len);
-		if ((p = mft_parse(&cert, argv[i], -1, buf, len)) == NULL) {
+		if ((p = signed_object_parse(&cert, argv[i], RTYPE_MFT, -1,
+		    buf, len)) == NULL) {
 			free(buf);
 			break;
 		}

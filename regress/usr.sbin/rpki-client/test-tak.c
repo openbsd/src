@@ -1,4 +1,4 @@
-/*	$Id: test-tak.c,v 1.12 2025/10/23 05:35:46 tb Exp $ */
+/*	$Id: test-tak.c,v 1.13 2026/09/03 17:18:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -63,7 +63,8 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < argc; i++) {
 		buf = load_file(argv[i], &len);
-		if ((p = tak_parse(&cert, argv[i], -1, buf, len)) == NULL) {
+		if ((p = signed_object_parse(&cert, argv[i], RTYPE_TAK, -1,
+		    buf, len)) == NULL) {
 			free(buf);
 			break;
 		}
