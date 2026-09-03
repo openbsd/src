@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.19 2026/09/03 17:07:08 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.20 2026/09/03 17:19:30 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -281,49 +281,6 @@ const struct signed_obj *
 spl_obj(void)
 {
 	return &spl_signed_obj;
-}
-
-/*
- * Parse a full Signed Prefix List file.
- * Returns the SPL, or NULL if the object was malformed.
- */
-struct spl *
-spl_parse(struct cert **out_cert, const char *fn, int talid,
-    const unsigned char *der, size_t len)
-{
-	struct spl	*spl;
-	struct cert	*cert = NULL;
-	size_t		 cmsz;
-	unsigned char	*cms;
-	time_t		 signtime = 0;
-	int		 rc = 0;
-
-	assert(*out_cert == NULL);
-
-	cms = cms_parse_validate(&cert, fn, talid, der, len, spl_oid, &cmsz,
-	    &signtime);
-	if (cms == NULL)
-		return NULL;
-
-	spl = spl_obj_new(len, signtime);
-	if (!spl_cert_info(fn, spl, cert))
-		goto out;
-	if (!spl_parse_econtent(fn, spl, cms, cmsz))
-		goto out;
-	(void)spl_validate(fn, spl, cert);
-
-	*out_cert = cert;
-	cert = NULL;
-
-	rc = 1;
- out:
-	if (rc == 0) {
-		spl_free(spl);
-		spl = NULL;
-	}
-	cert_free(cert);
-	free(cms);
-	return spl;
 }
 
 void

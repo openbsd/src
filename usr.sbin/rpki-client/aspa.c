@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.45 2026/09/03 17:07:08 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.46 2026/09/03 17:19:30 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -219,49 +219,6 @@ const struct signed_obj *
 aspa_obj(void)
 {
 	return &aspa_signed_obj;
-}
-
-/*
- * Parse a full ASPA file.
- * Returns the payload or NULL if the file was malformed.
- */
-struct aspa *
-aspa_parse(struct cert **out_cert, const char *fn, int talid,
-    const unsigned char *der, size_t len)
-{
-	struct aspa	*aspa;
-	struct cert	*cert = NULL;
-	size_t		 cmsz;
-	unsigned char	*cms;
-	time_t		 signtime = 0;
-	int		 rc = 0;
-
-	assert(*out_cert == NULL);
-
-	cms = cms_parse_validate(&cert, fn, talid, der, len, aspa_oid, &cmsz,
-	    &signtime);
-	if (cms == NULL)
-		return NULL;
-
-	aspa = aspa_obj_new(len, signtime);
-	if (!aspa_cert_info(fn, aspa, cert))
-		goto out;
-	if (!aspa_parse_econtent(fn, aspa, cms, cmsz))
-		goto out;
-	(void)aspa_validate(fn, aspa, cert);
-
-	*out_cert = cert;
-	cert = NULL;
-
-	rc = 1;
- out:
-	if (rc == 0) {
-		aspa_free(aspa);
-		aspa = NULL;
-	}
-	cert_free(cert);
-	free(cms);
-	return aspa;
 }
 
 /*

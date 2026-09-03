@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.62 2026/09/03 17:11:08 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.63 2026/09/03 17:19:30 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -401,7 +401,7 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
  * The eContentType of the message must be an oid object.
  * Return the eContent as a string and set "rsz" to be its length.
  */
-unsigned char *
+static unsigned char *
 cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
     const unsigned char *der, size_t derlen, const ASN1_OBJECT *oid,
     size_t *rsz, time_t *st)
