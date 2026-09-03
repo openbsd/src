@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.61 2026/08/26 05:57:47 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.62 2026/09/03 17:11:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -413,4 +413,71 @@ cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
 		return NULL;
 
 	return res;
+}
+
+static const struct signed_obj *
+cms_object_from_rtype(const char *fn, enum rtype rtype)
+{
+	switch (rtype) {
+	case RTYPE_ASPA:
+		return aspa_obj();
+	case RTYPE_MFT:
+		return mft_obj();
+	case RTYPE_ROA:
+		return roa_obj();
+	case RTYPE_RSC:
+		return rsc_obj();
+	case RTYPE_SPL:
+		return spl_obj();
+	case RTYPE_TAK:
+		return tak_obj();
+	default:
+		errx(1, "%s: unsupported signed object", fn);
+	}
+}
+
+void *
+signed_object_parse(struct cert **out_cert, const char *fn, enum rtype rtype,
+    int talid, const unsigned char *der, size_t len)
+{
+	const struct signed_obj *sobj;
+	const ASN1_OBJECT *oid;
+	void *obj = NULL;
+	struct cert *cert = NULL;
+	size_t cmsz;
+	unsigned char *cms;
+	time_t signtime = 0;
+	int rc = 0;
+
+	assert(*out_cert == NULL);
+
+	sobj = cms_object_from_rtype(fn, rtype);
+	oid = sobj->oid();
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, oid, &cmsz,
+	    &signtime);
+	if (cms == NULL)
+		return NULL;
+
+	obj = sobj->new(len, signtime);
+	if (!sobj->cert_info(fn, obj, cert))
+		goto out;
+	if (!sobj->parse_econtent(fn, obj, cms, cmsz))
+		goto out;
+	if (!sobj->validate(fn, obj, cert))
+		goto out;
+
+	*out_cert = cert;
+	cert = NULL;
+
+	rc = 1;
+
+ out:
+	if (rc == 0) {
+		sobj->free(obj);
+		obj = NULL;
+	}
+	cert_free(cert);
+	free(cms);
+	return obj;
 }
