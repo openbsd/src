@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.80 2026/09/02 19:01:29 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.81 2026/09/03 17:55:47 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4189,8 +4189,7 @@ svm_handle_hlt(struct vcpu *vcpu)
  *  vcpu: The VCPU that executed the HLT instruction
  *
  * Return Values:
- *  EINVAL: An error occurred extracting information from the VMCS, or an
- *   invalid HLT instruction was encountered
+ *  EINVAL: An error occurred extracting information from the VMCS
  *  EIO: The guest halted with interrupts disabled
  *  EAGAIN: Normal return to vmd - vmd should halt scheduling this VCPU
  *   until a virtual interrupt is ready to inject
@@ -4208,12 +4207,6 @@ vmx_handle_hlt(struct vcpu *vcpu)
 
 	if (vmread(VMCS_GUEST_IA32_RFLAGS, &rflags)) {
 		printf("%s: can't obtain guest rflags\n", __func__);
-		return (EINVAL);
-	}
-
-	if (insn_length != 1) {
-		DPRINTF("%s: HLT with instruction length %lld not supported\n",
-		    __func__, insn_length);
 		return (EINVAL);
 	}
 
@@ -5844,12 +5837,6 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	if (insn_length != 2) {
-		DPRINTF("%s: RDMSR with instruction length %lld not "
-		    "supported\n", __func__, insn_length);
-		return (EINVAL);
-	}
-
 	rax = &vcpu->vc_gueststate.vg_rax;
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
@@ -5898,13 +5885,6 @@ vmx_handle_xsetbv(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
-		return (EINVAL);
-	}
-
-	/* All XSETBV instructions are 3 bytes */
-	if (insn_length != 3) {
-		DPRINTF("%s: XSETBV with instruction length %lld not "
-		    "supported\n", __func__, insn_length);
 		return (EINVAL);
 	}
 
@@ -6050,12 +6030,6 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
-		return (EINVAL);
-	}
-
-	if (insn_length != 2) {
-		DPRINTF("%s: WRMSR with instruction length %lld not "
-		    "supported\n", __func__, insn_length);
 		return (EINVAL);
 	}
 
