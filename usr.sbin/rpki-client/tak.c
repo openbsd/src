@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.32 2026/07/07 13:45:59 claudio Exp $ */
+/*	$OpenBSD: tak.c,v 1.33 2026/09/03 17:07:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -208,6 +208,12 @@ tak_validate(const char *fn, void *obj, struct cert *cert)
 	return 1;
 }
 
+static const ASN1_OBJECT *
+tak_obj_oid(void)
+{
+	return tak_oid;
+}
+
 static void *
 tak_obj_new(size_t der_len, time_t signtime)
 {
@@ -228,11 +234,14 @@ tak_obj_free(void *obj)
 
 static const struct signed_obj tak_signed_obj = {
 	.rtype = RTYPE_TAK,
+
 	.new = tak_obj_new,
 	.free = tak_obj_free,
 	.cert_info = tak_cert_info,
 	.parse_econtent = tak_parse_econtent,
 	.validate = tak_validate,
+
+	.oid = tak_obj_oid,
 };
 
 const struct signed_obj *

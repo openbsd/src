@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.47 2026/07/09 12:13:56 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.48 2026/09/03 17:07:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -366,6 +366,12 @@ rsc_validate(const char *fn, void *obj, struct cert *cert)
 	return 1; /* XXX */
 }
 
+static const ASN1_OBJECT *
+rsc_obj_oid(void)
+{
+	return rsc_oid;
+}
+
 static void *
 rsc_obj_new(size_t der_len, time_t signtime)
 {
@@ -386,11 +392,14 @@ rsc_obj_free(void *obj)
 
 static const struct signed_obj rsc_signed_obj = {
 	.rtype = RTYPE_RSC,
+
 	.new = rsc_obj_new,
 	.free = rsc_obj_free,
 	.cert_info = rsc_cert_info,
 	.parse_econtent = rsc_parse_econtent,
 	.validate = rsc_validate,
+
+	.oid = rsc_obj_oid,
 };
 
 const struct signed_obj *

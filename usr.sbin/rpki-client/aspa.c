@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.44 2026/06/25 07:51:58 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.45 2026/09/03 17:07:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -179,6 +179,12 @@ aspa_validate(const char *fn, void *obj, struct cert *cert)
 	return 1; /* XXX */
 }
 
+static const ASN1_OBJECT *
+aspa_obj_oid(void)
+{
+	return aspa_oid;
+}
+
 static void *
 aspa_obj_new(size_t der_len, time_t signtime)
 {
@@ -199,11 +205,14 @@ aspa_obj_free(void *obj)
 
 static const struct signed_obj aspa_signed_obj = {
 	.rtype = RTYPE_ASPA,
+
 	.new = aspa_obj_new,
 	.free = aspa_obj_free,
 	.cert_info = aspa_cert_info,
 	.parse_econtent = aspa_parse_econtent,
 	.validate = aspa_validate,
+
+	.oid = aspa_obj_oid,
 };
 
 const struct signed_obj *

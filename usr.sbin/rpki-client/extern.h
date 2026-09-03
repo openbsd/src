@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.291 2026/08/25 08:41:14 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.292 2026/09/03 17:07:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -244,6 +244,7 @@ enum location {
 
 struct signed_obj {
 	enum rtype rtype;
+
 	void *(*new)(size_t, time_t);
 	void (*free)(void *);
 	int (*cert_info)(const char *, void *, const struct cert *);
@@ -251,6 +252,8 @@ struct signed_obj {
 	int (*parse_detached)(const char *, void *, BIO *, char *, size_t,
 	    uint8_t **, size_t *);
 	int (*validate)(const char *, void *, struct cert *);
+
+	const ASN1_OBJECT *(*oid)(void);
 };
 
 /*
