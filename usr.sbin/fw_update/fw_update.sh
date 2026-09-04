@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.68 2026/08/28 03:56:19 dgl Exp $
+#	$OpenBSD: fw_update.sh,v 1.69 2026/09/04 23:54:56 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -22,6 +22,10 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 CFILE=SHA256
 DESTDIR=${DESTDIR:-}
 FWPATTERNS="${DESTDIR}/usr/share/misc/firmware_patterns"
+
+# Size are in KiB
+integer MAX_CFILE_SIZE=1024
+integer MAX_FIRMWARE_SIZE=1048576
 
 unset DMESG
 unset FWURL
@@ -105,11 +109,25 @@ spin() {
 fetch() {
 	local _src="${FWURL}/${1##*/}" _dst=$1 _user=_file _exit _error=''
 	local _ftp_errors="$FD_DIR/ftp_errors"
+	integer _file_limit=$MAX_FIRMWARE_SIZE _free_space=0
 	rm -f "$_ftp_errors"
+
+	[ "${_dst##*/}" = "${CFILE##*/}.sig" ] && _file_limit=$MAX_CFILE_SIZE
+	_free_space=$(df -Pk "${_dst%/*}" |
+	     sed -nE 's/^([^ ]+ +){3}([0-9]+) .*$/\2/p')
+	if ((_free_space <= 0)); then
+		warn "Cannot determine free space for $_dst"
+		return 2
+	fi
+	# only allow up to half the free space per file
+	((_free_space/2 < _file_limit)) &&
+	    _file_limit=$((_free_space/2))
 
 	# The installer uses a limited doas(1) as a tiny su(1)
 	set -o monitor # make sure ftp gets its own process group
 	(
+	# ulimit -f takes blocks
+	ulimit -f "$(( _file_limit * 2 ))"
 	_flags=-vm
 	case "$VERBOSE" in
 		0|1) _flags=-VM ; exec 2>"$_ftp_errors" ;;
@@ -869,6 +887,7 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 
 				"$pending_status" && echo " failed."
 				status " failed (${f##*/})"
+				rm -f "$f"
 
 				if ((VERBOSE)) && [ -s "$FD_DIR/warn" ]; then
 					cat "$FD_DIR/warn" >&2
