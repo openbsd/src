@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.362 2026/08/30 16:14:33 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.363 2026/09/04 02:13:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -32,6 +32,8 @@
 #include <sys/ktrace.h>
 #include <sys/acct.h>
 #include <sys/swap.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
 
 #include <sys/ioctl.h>
 #include <sys/termios.h>
@@ -1379,13 +1381,38 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 }
 
 int
-pledge_sockopt(struct proc *p, int set, int level, int optname)
+pledge_sockopt(struct proc *p, int set, const struct protosw *pr,
+    int level, int optname)
 {
 	uint64_t pledge;
+	int af, af_inet = 0;
+	short proto;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 	pledge = p->p_pledge;
+
+	/*
+	 * the meaning of level and optname is scoped to the protocol
+	 * handler, which in turn is scoped by an address family.
+	 * there are exceptions though.
+	 *
+	 * optnames at the SOL_SOCKET level apply regardless of the
+	 * address family and protocol, so those variables are ignored
+	 * for that level.
+	 *
+	 * similarly, an address family may have a level that applies
+	 * to all protocols, eg, optnames at the level of IPPROTO_IP
+	 * in the the AF_INET family apply to all protocols.
+	 *
+	 * some protocols are implemented in multiple address families. eg,
+	 * the IPPROTO_TCP protocol and it's associated IPPROTO_TCP level
+	 * operates under both the AF_INET and AF_INET6 address families,
+	 * and should be handled for both.
+	 */
+
+	af = pr->pr_domain->dom_family;
+	proto = pr->pr_protocol;
 
 	/* Always allow these, which are too common to reject */
 	switch (level) {
@@ -1396,22 +1423,37 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			return (0);
 		}
 		break;
-	case IPPROTO_TCP:
-		switch (optname) {
-		case TCP_NODELAY:
-			return (0);
+	}
+
+	switch (af) {
+	case AF_INET:
+	case AF_INET6:
+		af_inet = af;
+	case AF_UNIX: /* some software assumes all streams are tcp */
+		if (proto == IPPROTO_TCP && level == IPPROTO_TCP) {
+			switch (optname) {
+			case TCP_NODELAY:
+				return (0);
+			}
 		}
 		break;
-	case IPPROTO_IP:
-		switch (optname) {
-		case IP_TOS:
-			return (0);
+	}
+
+	switch (af) {
+	case AF_INET:
+		if (level == IPPROTO_IP) {
+			switch (optname) {
+			case IP_TOS:
+				return (0);
+			}
 		}
 		break;
-	case IPPROTO_IPV6:
-		switch (optname) {
-		case IPV6_TCLASS:
-			return (0);
+	case AF_INET6:
+		if (level == IPPROTO_IPV6) {
+			switch (optname) {
+			case IPV6_TCLASS:
+				return (0);
+			}
 		}
 		break;
 	}
@@ -1440,8 +1482,8 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 
 	/* DNS resolver may do these requests */
 	if ((pledge & PLEDGE_DNS)) {
-		switch (level) {
-		case IPPROTO_IPV6:
+		if (af == AF_INET6 &&
+		    level == IPPROTO_IPV6) {
 			switch (optname) {
 			case IPV6_RECVPKTINFO:
 			case IPV6_USE_MIN_MTU:
@@ -1463,8 +1505,10 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 
 	if ((pledge & PLEDGE_INET) == 0)
 		return pledge_fail(p, EPERM, PLEDGE_INET);
-	switch (level) {
-	case IPPROTO_TCP:
+	if (!af_inet) /* af must be AF_INET or AF_INET6 after this point */
+		return pledge_fail(p, EPERM, PLEDGE_INET);
+
+	if (proto == IPPROTO_TCP && level == IPPROTO_TCP) {
 		switch (optname) {
 		case TCP_MD5SIG:
 		case TCP_SACK_ENABLE:
@@ -1473,8 +1517,13 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		case TCP_INFO:
 			return (0);
 		}
-		break;
-	case IPPROTO_IP:
+	}
+
+	switch (af_inet) {
+	case AF_INET:
+		if (level != IPPROTO_IP)
+			break;
+
 		switch (optname) {
 		case IP_OPTIONS:
 			if (!set)
@@ -1497,9 +1546,11 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			break;
 		}
 		break;
-	case IPPROTO_ICMP:
-		break;
-	case IPPROTO_IPV6:
+
+	case AF_INET6:
+		if (level != IPPROTO_IPV6)
+			break;
+
 		switch (optname) {
 		case IPV6_DONTFRAG:
 		case IPV6_UNICAST_HOPS:
@@ -1520,8 +1571,6 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 				return (0);
 			break;
 		}
-		break;
-	case IPPROTO_ICMPV6:
 		break;
 	}
 	return pledge_fail(p, EPERM, PLEDGE_INET);

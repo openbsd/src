@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.228 2026/08/26 08:26:30 claudio Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.229 2026/09/04 02:13:45 dlg Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1206,7 +1206,9 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = pledge_sockopt(p, 1, SCARG(uap, level), SCARG(uap, name));
+	so = fp->f_data;
+	error = pledge_sockopt(p, 1, so->so_proto,
+	     SCARG(uap, level), SCARG(uap, name));
 	if (error)
 		goto bad;
 	if (SCARG(uap, valsize) > MCLBYTES) {
@@ -1229,7 +1231,6 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	so = fp->f_data;
 	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
 bad:
 	m_freem(m);
@@ -1255,7 +1256,9 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = pledge_sockopt(p, 0, SCARG(uap, level), SCARG(uap, name));
+	so = fp->f_data;
+	error = pledge_sockopt(p, 0, so->so_proto,
+	    SCARG(uap, level), SCARG(uap, name));
 	if (error)
 		goto out;
 	if (SCARG(uap, val)) {
@@ -1266,7 +1269,6 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	} else
 		valsize = 0;
 	m = m_get(M_WAIT, MT_SOOPTS);
-	so = fp->f_data;
 	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), m);
 	if (error == 0 && SCARG(uap, val) && valsize && m != NULL) {
 		if (valsize > m->m_len)
