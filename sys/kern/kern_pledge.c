@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.363 2026/09/04 02:13:45 dlg Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.364 2026/09/04 02:16:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -53,6 +53,8 @@
 #include <netinet6/nd6.h>
 #include <netinet/tcp.h>
 #include <net/pfvar.h>
+#include <net/frame.h>
+#include <net/if_types.h>
 
 #include <sys/conf.h>
 #include <sys/specdev.h>
@@ -1463,6 +1465,18 @@ pledge_sockopt(struct proc *p, int set, const struct protosw *pr,
 		case SOL_SOCKET:
 			switch (optname) {
 			case SO_RTABLE:
+				return (0);
+			}
+		}
+	}
+
+	if ((pledge & PLEDGE_MCAST)) {
+		if (af == AF_FRAME &&
+		    proto == IFT_ETHER &&
+		    level == IFT_ETHER) {
+			switch (optname) {
+			case FRAME_ADD_MEMBERSHIP:
+			case FRAME_DEL_MEMBERSHIP:
 				return (0);
 			}
 		}
