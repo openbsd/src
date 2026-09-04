@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.45 2023/06/26 07:10:17 op Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.46 2026/09/04 04:33:56 dgl Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -674,7 +674,8 @@ mod_name(ARCHD *arcn)
 			p += 2;
 		}
 		if (last != NULL) {
-			last++;
+			while (*last == '/')
+				last++;
 			paxwarn(1, "Removing leading \"%.*s\"",
 			    (int)(last - arcn->name), arcn->name);
 			arcn->nlen = strlen(last);
