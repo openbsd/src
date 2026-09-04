@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.180 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.181 2026/09/04 00:42:30 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -373,7 +373,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (vmr.vmr_result) {
 			DPRINTF("%s: forwarding TERMINATE VM for vm id %d",
 			    __func__, vmr.vmr_id);
-			proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+			proc_compose_imsg(ps, PROC_CONTROL, type, peer_id, -1,
+			    &vmr, sizeof(vmr));
 		} else {
 			if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 				break;
