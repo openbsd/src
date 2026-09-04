@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.8 2026/08/03 18:43:10 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.9 2026/09/04 18:06:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -76,6 +76,7 @@ struct qcgpio_softc {
 
 	uint32_t		sc_npins;
 	struct qcgpio_intrhand	*sc_pin_ih;
+	uint32_t		*sc_pin_intr_cfg;
 
 	struct gpio_controller	sc_gc;
 	struct interrupt_controller sc_ic;
@@ -133,8 +134,10 @@ qcgpio_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_npins = 230;
 	else
 		sc->sc_npins = 239;
-	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_pin_ih = mallocarray(sc->sc_npins,
+	    sizeof(*sc->sc_pin_ih), M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_pin_intr_cfg = mallocarray(sc->sc_npins,
+	    sizeof(*sc->sc_pin_intr_cfg), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO, qcgpio_fdt_intr,
 	    sc, sc->sc_dev.dv_xname);
@@ -167,6 +170,8 @@ unmap:
 	if (sc->sc_ih)
 		fdt_intr_disestablish(sc->sc_ih);
 	free(sc->sc_pin_ih, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_ih));
+	free(sc->sc_pin_intr_cfg, M_DEVBUF,
+	    sc->sc_npins * sizeof(*sc->sc_pin_intr_cfg));
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 }
 
@@ -179,20 +184,24 @@ qcgpio_fdt_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_SUSPEND:
 		for (pin = 0; pin < sc->sc_npins; pin++) {
-			if (sc->sc_pin_ih[pin].ih_func == NULL ||
-			    sc->sc_pin_ih[pin].ih_wakeup)
+			if (sc->sc_pin_ih[pin].ih_func == NULL)
 				continue;
-			HCLR4(sc, TLMM_GPIO_INTR_CFG(pin),
-			    TLMM_GPIO_INTR_CFG_INTR_ENABLE);
+
+			sc->sc_pin_intr_cfg[pin] =
+			    HREAD4(sc, TLMM_GPIO_INTR_CFG(pin));
+			if (sc->sc_pin_ih[pin].ih_wakeup) {
+				HCLR4(sc, TLMM_GPIO_INTR_CFG(pin),
+				    TLMM_GPIO_INTR_CFG_INTR_ENABLE);
+			}
 		}
 		break;
 	case DVACT_RESUME:
 		for (pin = 0; pin < sc->sc_npins; pin++) {
-			if (sc->sc_pin_ih[pin].ih_func == NULL ||
-			    sc->sc_pin_ih[pin].ih_wakeup)
+			if (sc->sc_pin_ih[pin].ih_func == NULL)
 				continue;
-			HSET4(sc, TLMM_GPIO_INTR_CFG(pin),
-			    TLMM_GPIO_INTR_CFG_INTR_ENABLE);
+
+			HWRITE4(sc, TLMM_GPIO_INTR_CFG(pin),
+			    sc->sc_pin_intr_cfg[pin]);
 		}
 		break;
 	}
