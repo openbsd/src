@@ -75,14 +75,13 @@
 		ibufq_new;
 		ibufq_queuelen;
 		imsg_add;
+		imsg_add_strbuf;
 		imsg_close;
 		imsg_compose;
-		imsg_compose_ibuf;
 		imsg_composev;
 		imsg_create;
 		imsg_forward;
 		imsg_free;
-		imsg_get;
 		imsg_get_buf;
 		imsg_get_data;
 		imsg_get_fd;
@@ -99,10 +98,13 @@
 		imsgbuf_clear;
 		imsgbuf_flush;
 		imsgbuf_get;
+		imsgbuf_get_userdata;
 		imsgbuf_init;
 		imsgbuf_queuelen;
 		imsgbuf_read;
+		imsgbuf_set_close_callback;
 		imsgbuf_set_maxsize;
+		imsgbuf_set_userdata;
 		imsgbuf_write;
 		isduid;
 		login;
@@ -119,6 +121,7 @@
 		msgbuf_new_reader;
 		msgbuf_queuelen;
 		msgbuf_read;
+		msgbuf_readlen;
 		msgbuf_write;
 		ober_add_bitstring;
 		ober_add_boolean;

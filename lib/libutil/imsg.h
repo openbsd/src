@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.24 2025/06/05 08:55:07 tb Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.25 2026/09/04 18:47:43 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,8 @@ struct msgbuf;
 
 struct imsgbuf {
 	struct msgbuf		*w;
+	void			(*cb)(struct imsgbuf *, void *);
+	void			*userdata;
 	pid_t			 pid;
 	uint32_t		 maxsize;
 	int			 fd;
@@ -127,6 +129,7 @@ int		 ibuf_write(int, struct msgbuf *);
 int		 msgbuf_write(int, struct msgbuf *);
 int		 ibuf_read(int, struct msgbuf *);
 int		 msgbuf_read(int, struct msgbuf *);
+uint32_t	 msgbuf_readlen(struct msgbuf *);
 struct ibuf	*msgbuf_get(struct msgbuf *);
 
 struct ibufqueue	*ibufq_new(void);
@@ -140,14 +143,17 @@ void		 ibufq_flush(struct ibufqueue *);
 /* imsg.c */
 int	 imsgbuf_init(struct imsgbuf *, int);
 void	 imsgbuf_allow_fdpass(struct imsgbuf *imsgbuf);
+void	 imsgbuf_set_close_callback(struct imsgbuf *,
+	    void (*)(struct imsgbuf *, void *));
 int	 imsgbuf_set_maxsize(struct imsgbuf *, uint32_t);
+void	*imsgbuf_set_userdata(struct imsgbuf *, void *);
+void	*imsgbuf_get_userdata(struct imsgbuf *);
 int	 imsgbuf_read(struct imsgbuf *);
 int	 imsgbuf_write(struct imsgbuf *);
 int	 imsgbuf_flush(struct imsgbuf *);
 void	 imsgbuf_clear(struct imsgbuf *);
 uint32_t imsgbuf_queuelen(struct imsgbuf *);
 int	 imsgbuf_get(struct imsgbuf *, struct imsg *);
-ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_ibufq_pop(struct ibufqueue *, struct imsg *);
 void	 imsg_ibufq_push(struct ibufqueue *, struct imsg *);
 int	 imsg_get_ibuf(struct imsg *, struct ibuf *);
@@ -164,10 +170,9 @@ int	 imsg_compose(struct imsgbuf *, uint32_t, uint32_t, pid_t, int,
 	    const void *, size_t);
 int	 imsg_composev(struct imsgbuf *, uint32_t, uint32_t,  pid_t, int,
 	    const struct iovec *, int);
-int	 imsg_compose_ibuf(struct imsgbuf *, uint32_t, uint32_t, pid_t,
-	    struct ibuf *);
 struct ibuf *imsg_create(struct imsgbuf *, uint32_t, uint32_t, pid_t, size_t);
 int	 imsg_add(struct ibuf *, const void *, size_t);
+int	 imsg_add_strbuf(struct ibuf *, const char *, size_t);
 void	 imsg_close(struct imsgbuf *, struct ibuf *);
 void	 imsg_free(struct imsg *);
 int	 imsg_set_maxsize(struct ibuf *, size_t);

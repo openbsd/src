@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.47 2026/07/23 14:13:33 tb Exp $
+.\" $OpenBSD: imsg_init.3,v 1.48 2026/09/04 18:47:43 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,14 +15,14 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 23 2026 $
+.Dd $Mdocdate: September 4 2026 $
 .Dt IMSG_ADD 3
 .Os
 .Sh NAME
 .Nm imsg_add ,
+.Nm imsg_add_strbuf ,
 .Nm imsg_close ,
 .Nm imsg_compose ,
-.Nm imsg_compose_ibuf ,
 .Nm imsg_composev ,
 .Nm imsg_create ,
 .Nm imsg_forward ,
@@ -43,13 +43,14 @@
 .Nm imsgbuf_clear ,
 .Nm imsgbuf_flush ,
 .Nm imsgbuf_get ,
+.Nm imsgbuf_get_userdata ,
 .Nm imsgbuf_init ,
 .Nm imsgbuf_queuelen ,
 .Nm imsgbuf_read ,
+.Nm imsgbuf_set_close_callback ,
 .Nm imsgbuf_set_maxsize ,
+.Nm imsgbuf_set_userdata ,
 .Nm imsgbuf_write
-.\" .Nm imsg_get is intentionally undocumented
-.\" because imsgbuf_get should be used instead.
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .Lb libutil
@@ -58,14 +59,14 @@
 .Fd #define MAX_IMSGSIZE 16384
 .Ft int
 .Fn imsg_add "struct ibuf *msg" "const void *data" "size_t datalen"
+.Ft int
+.Fn imsg_add_strbuf "struct ibuf *msg" "const char *str" "size_t datalen"
 .Ft void
 .Fn imsg_close "struct imsgbuf *imsgbuf" "struct ibuf *msg"
 .Ft int
 .Fn imsg_compose "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "int fd" "const void *data" "size_t datalen"
 .Ft int
-.Fn imsg_compose_ibuf "struct imsgbuf *imsgbuf" "uint32_t type" \
-    "uint32_t id" "pid_t pid" "struct ibuf *buf"
 .Ft struct ibuf *
 .Fn imsg_create "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "size_t datalen"
@@ -105,14 +106,21 @@
 .Fn imsgbuf_flush "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_get "struct imsgbuf *imsgbuf" "struct imsg *imsg"
+.Ft void *
+.Fn imsgbuf_get_userdata "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_init "struct imsgbuf *imsgbuf" "int fd"
 .Ft uint32_t
 .Fn imsgbuf_queuelen "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_read "struct imsgbuf *imsgbuf"
+.Ft void
+.Fn imsgbuf_set_close_callback "struct imsgbuf *imsgbuf" \
+    "void (*cb)(struct imsgbuf *, void *)"
 .Ft int
 .Fn imsgbuf_set_maxsize "struct imsgbuf *imsgbuf" "uint32_t max"
+.Ft void *
+.Fn imsgbuf_set_userdata "struct imsgbuf *imsgbuf" "void *data"
 .Ft int
 .Fn imsgbuf_write "struct imsgbuf *imsgbuf"
 .In sys/uio.h
@@ -142,11 +150,30 @@ It returns 0 if successful and -1 on failure.
 enables file descriptor passing in both directions for this
 .Fa imsgbuf .
 .Pp
+.Fn imsgbuf_set_close_callback
+sets the callback used by
+.Fn imsg_close .
+The
+callback function is passed the
+.Fa imsgbuf
+and the value of
+.Fn imsgbuf_get_userdata
+as arguments.
+.Pp
 .Fn imsgbuf_set_maxsize
 changes the default maximum payload size
 to
 .Fa max .
 It returns 0 if successful and -1 on failure.
+.Pp
+With
+.Fn imsgbuf_set_userdata
+additional userdata can be connected to the
+.Fa imsgbuf
+and then later accessed with
+.Fn imsgbuf_get_userdata .
+.Fn imsgbuf_set_userdata
+returns the old userdata value.
 .Pp
 The
 .Fn imsgbuf_clear
@@ -215,7 +242,8 @@ returns the number of messages ready to be sent.
 This function returns 0 if no messages are pending for transmission.
 .Pp
 .Fn imsg_create ,
-.Fn imsg_add
+.Fn imsg_add ,
+.Fn imsg_add_strbuf ,
 and
 .Fn imsg_close
 are generic construction routines for messages that are to be sent using an
@@ -238,7 +266,9 @@ In addition to this common imsg header,
 .Fa datalen
 bytes of space may be reserved for attaching to this imsg.
 This space is populated using
-.Fn imsg_add .
+.Fn imsg_add
+or
+.Fn imsg_add_strbuf .
 .Fn imsg_create
 returns a pointer to a new message if it succeeds, NULL otherwise.
 .Pp
@@ -248,9 +278,17 @@ appends to
 .Fa datalen
 bytes of ancillary data pointed to by
 .Fa data .
-It returns
-.Fa datalen
-if it succeeds, otherwise
+It returns 0 on success, otherwise
+.Fa msg
+is freed and \-1 is returned.
+.Pp
+.Fn imsg_add_strbuf
+appends to
+.Fa msg
+a fixed-size buffer containing a string, zero-padded to
+.Fa datalen ,
+which must be large enough to allow at least one NUL.
+It returns 0 on success, otherwise
 .Fa msg
 is freed and \-1 is returned.
 .Pp
@@ -292,17 +330,6 @@ is similar to
 It takes the same parameters, except that the ancillary data buffer is specified
 by
 .Fa iovec .
-.Pp
-.Fn imsg_compose_ibuf
-is similar to
-.Fn imsg_compose .
-It takes the same parameters, except that the ancillary data buffer is specified
-by an ibuf
-.Fa buf .
-This routine returns 1 if it succeeds, \-1 otherwise.
-In either case the buffer
-.Fa buf
-is consumed by the function.
 .Pp
 .Fn imsg_forward
 forwards a just received

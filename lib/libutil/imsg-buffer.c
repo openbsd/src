@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.41 2026/07/30 17:55:33 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.42 2026/09/04 18:47:43 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -695,6 +695,12 @@ uint32_t
 msgbuf_queuelen(struct msgbuf *msgbuf)
 {
 	return ibufq_queuelen(&msgbuf->bufs);
+}
+
+uint32_t
+msgbuf_readlen(struct msgbuf *msgbuf)
+{
+	return ibufq_queuelen(&msgbuf->rbufs);
 }
 
 void

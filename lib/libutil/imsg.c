@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.43 2026/03/02 20:07:58 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.44 2026/09/04 18:47:43 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -39,6 +39,7 @@ static struct ibuf	*imsg_parse_hdr(struct ibuf *, void *, int *);
 int
 imsgbuf_init(struct imsgbuf *imsgbuf, int fd)
 {
+	memset(imsgbuf, 0, sizeof(*imsgbuf));
 	imsgbuf->w = msgbuf_new_reader(IMSG_HEADER_SIZE, imsg_parse_hdr,
 	    imsgbuf);
 	if (imsgbuf->w == NULL)
@@ -46,7 +47,6 @@ imsgbuf_init(struct imsgbuf *imsgbuf, int fd)
 	imsgbuf->pid = getpid();
 	imsgbuf->maxsize = MAX_IMSGSIZE;
 	imsgbuf->fd = fd;
-	imsgbuf->flags = 0;
 	return (0);
 }
 
@@ -54,6 +54,13 @@ void
 imsgbuf_allow_fdpass(struct imsgbuf *imsgbuf)
 {
 	imsgbuf->flags |= IMSG_ALLOW_FDPASS;
+}
+
+void
+imsgbuf_set_close_callback(struct imsgbuf *imsgbuf,
+    void (*cb)(struct imsgbuf *, void *))
+{
+	imsgbuf->cb = cb;
 }
 
 int
@@ -70,6 +77,21 @@ imsgbuf_set_maxsize(struct imsgbuf *imsgbuf, uint32_t max)
 	}
 	imsgbuf->maxsize = max;
 	return (0);
+}
+
+void *
+imsgbuf_set_userdata(struct imsgbuf *imsgbuf, void *data)
+{
+	void *old = imsgbuf->userdata;
+
+	imsgbuf->userdata = data;
+	return old;
+}
+
+void *
+imsgbuf_get_userdata(struct imsgbuf *imsgbuf)
+{
+	return imsgbuf->userdata;
 }
 
 int
@@ -134,16 +156,6 @@ imsgbuf_get(struct imsgbuf *imsgbuf, struct imsg *imsg)
 
 	*imsg = m;
 	return (1);
-}
-
-ssize_t
-imsg_get(struct imsgbuf *imsgbuf, struct imsg *imsg)
-{
-	int rv;
-
-	if ((rv = imsgbuf_get(imsgbuf, imsg)) != 1)
-		return rv;
-	return (imsg_get_len(imsg) + IMSG_HEADER_SIZE);
 }
 
 int
@@ -294,43 +306,6 @@ imsg_composev(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
 }
 
 /*
- * Enqueue imsg with payload from ibuf buf. fd passing is not possible 
- * with this function.
- */
-int
-imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id,
-    pid_t pid, struct ibuf *buf)
-{
-	struct ibuf	*hdrbuf = NULL;
-	struct imsg_hdr	 hdr;
-
-	if (ibuf_size(buf) + IMSG_HEADER_SIZE > imsgbuf->maxsize) {
-		errno = ERANGE;
-		goto fail;
-	}
-
-	hdr.type = type;
-	hdr.len = ibuf_size(buf) + IMSG_HEADER_SIZE;
-	hdr.peerid = id;
-	if ((hdr.pid = pid) == 0)
-		hdr.pid = imsgbuf->pid;
-
-	if ((hdrbuf = ibuf_open(IMSG_HEADER_SIZE)) == NULL)
-		goto fail;
-	if (ibuf_add(hdrbuf, &hdr, sizeof(hdr)) == -1)
-		goto fail;
-
-	ibuf_close(imsgbuf->w, hdrbuf);
-	ibuf_close(imsgbuf->w, buf);
-	return (1);
-
- fail:
-	ibuf_free(buf);
-	ibuf_free(hdrbuf);
-	return (-1);
-}
-
-/*
  * Forward imsg to another channel. Any attached fd is closed.
  */
 int
@@ -392,12 +367,21 @@ imsg_create(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
 int
 imsg_add(struct ibuf *msg, const void *data, size_t datalen)
 {
-	if (datalen)
-		if (ibuf_add(msg, data, datalen) == -1) {
-			ibuf_free(msg);
-			return (-1);
-		}
-	return (datalen);
+	if (ibuf_add(msg, data, datalen) == -1) {
+		ibuf_free(msg);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+imsg_add_strbuf(struct ibuf *msg, const char *str, size_t datalen)
+{
+	if (ibuf_add_strbuf(msg, str, datalen) == -1) {
+		ibuf_free(msg);
+		return (-1);
+	}
+	return (0);
 }
 
 void
@@ -410,6 +394,9 @@ imsg_close(struct imsgbuf *imsgbuf, struct ibuf *msg)
 		len |= IMSG_FD_MARK;
 	(void)ibuf_set_h32(msg, offsetof(struct imsg_hdr, len), len);
 	ibuf_close(imsgbuf->w, msg);
+
+	if (imsgbuf->cb != NULL)
+		imsgbuf->cb(imsgbuf, imsgbuf->userdata);
 }
 
 void
