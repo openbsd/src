@@ -1,4 +1,4 @@
-# $OpenBSD: freenull.awk,v 1.4 2023/11/19 13:11:06 tb Exp $
+# $OpenBSD: freenull.awk,v 1.5 2026/09/04 16:47:02 tb Exp $
 # Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,30 +15,12 @@
 
 # usage: awk -f freenull.awk < Symbols.list > freenull.c.body
 
-# Skip this function because it calls abort(3).
-/^CRYPTO_dbg_free/ {
-	next
-}
-
 # Skip *_free functions that take more than one or no argument.
 /^ASN1_item_ex_free$/				||
 /^ASN1_item_free$/				||
 /^CONF_modules_free$/				||
-/^EVP_PKEY_asn1_set_free$/			||
-/^X509V3_section_free$/				||
-/^X509V3_string_free$/				||
-/^sk_pop_free$/ {
-	next
-}
-
-# Skip functions that are prototyped in a .c file.
-/^BIO_CONNECT_free$/				||
 /^CRYPTO_free$/					||
-/^EC_PRIVATEKEY_free$/				||
-/^ECPARAMETERS_free$/				||
-/^ECPKPARAMETERS_free$/				||
-/^X9_62_CHARACTERISTIC_TWO_free$/		||
-/^X9_62_PENTANOMIAL_free$/ {
+/^sk_pop_free$/ {
 	next
 }
 
