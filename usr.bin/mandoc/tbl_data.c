@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.47 2026/08/20 12:56:15 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.48 2026/09/04 13:06:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2015, 2017-2019, 2021, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -270,7 +270,11 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 	    sp->layout->next == NULL ? sp->layout : sp->layout->next;
 	assert(rp != NULL);
 
-	if (p[1] == '\0') {
+	/*
+	 * Empty text lines generate empty spans,
+	 * but empty request lines are completely ignored.
+	 */
+	if (p[0] != '\0' && p[1] == '\0') {
 		switch (p[0]) {
 		case '.':
 			/*
