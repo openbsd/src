@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2025/06/16 13:14:53 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2026/09/04 18:44:44 bluhm Exp $
 
 # Copyright (c) 2016-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -113,11 +113,13 @@ PYTHON =	python3 -u ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
-.for t in challenge_ack beforegap_rst lessseq_fin negack_fin posack_fin
+TESTS !=		cd ${.CURDIR} && ls *.py
+
+.for t in ${TESTS}
 
 REGRESS_TARGETS +=	run-$t
-run-$t: $t.py addr.py
-	${SUDO} ${PYTHON}$t.py
+run-$t: $t addr.py
+	${SUDO} ${PYTHON}$t
 
 .endfor
 

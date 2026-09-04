@@ -11,6 +11,9 @@ between REMOTE and virtual FAKE_NET_ADDR and can create ICMP packets.
 - run-beforegap_rst sends TCP stream with a gap.  Then a TCP reset
   packet that matches the ACK before a sequence gap should terminate
   the connection.
+- run-fakeack_rst sends TCP reset packet with ack 0 and a sequence
+  behind the tracked one.  As pf fakes the ack of such a reset, it must
+  not be accepted within the backwards sequence window.
 - run-lessseq_fin sends TCP FIN packet that is not at the end of
   the sequence.
 - run-negack_fin send TCP FIN packet that uses ack number that was
