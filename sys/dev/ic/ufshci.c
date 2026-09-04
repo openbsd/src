@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.47 2026/06/06 16:12:18 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.48 2026/09/04 19:30:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -160,7 +160,7 @@ ufshci_intr(void *arg)
 	}
 
 	if (handled == 0) {
-		printf("%s: UNKNOWN interrupt, status=0x%08x\n",
+		DPRINTF(1, "%s: UNKNOWN interrupt, status=0x%08x\n",
 		    sc->sc_dev.dv_xname, status);
 	}
 
