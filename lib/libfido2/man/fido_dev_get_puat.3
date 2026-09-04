@@ -1,0 +1,181 @@
+.\" Copyright (c) 2026 Yubico AB. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.Dd $Mdocdate: September 4 2026 $
+.Dt FIDO_DEV_GET_PUAT 3
+.Os
+.Sh NAME
+.Nm fido_dev_get_puat ,
+.Nm fido_dev_set_puat ,
+.Nm fido_dev_puat_ptr ,
+.Nm fido_dev_puat_len
+.Nd FIDO2 PIN/UV Auth token management functions
+.Sh SYNOPSIS
+.In fido.h
+.Ft int
+.Fn fido_dev_get_puat "fido_dev_t *dev" "unsigned int perm" "const char *rpid" "const char *pin"
+.Ft int
+.Fn fido_dev_set_puat "fido_dev_t *dev" "const unsigned char *ptr" "size_t len"
+.Ft const unsigned char *
+.Fn fido_dev_puat_ptr "const fido_dev_t *dev"
+.Ft size_t
+.Fn fido_dev_puat_len "const fido_dev_t *dev"
+.Sh DESCRIPTION
+The
+.Fn fido_dev_get_puat
+negotiates a FIDO2 PIN/UV Auth token with the permission bitmask specified by
+.Fa perm
+and associates it with
+.Fa dev .
+If
+.Fa perm
+does not require specifying a relying party ID,
+.Fa rpid
+may be NULL.
+Otherwise
+.Fa rpid
+must point to a NUL-terminated UTF-8 string.
+If a PIN is not needed to authenticate against
+.Fa dev ,
+then
+.Fa pin
+may be NULL.
+Otherwise
+.Fa pin
+must point to a NUL-terminated UTF-8 string.
+Supported flags for
+.Fa perm
+are
+.Bl -tag -width Ds
+.It Dv FIDO_PUAT_MAKECRED
+Permission for
+.Fn fido_dev_make_cred .
+An
+.Fa rpid
+is required.
+.It Dv FIDO_PUAT_GETASSERT
+Permission for
+.Fn fido_dev_get_assert .
+An
+.Fa rpid
+is required.
+.It Dv FIDO_PUAT_CREDMAN
+Permission for the credential management API.
+An
+.Fa rpid
+is optional.
+.It Dv FIDO_PUAT_BIOENROLL
+Permission for the biometric enrollment API.
+The
+.Fa rpid
+is ignored.
+.It Dv FIDO_PUAT_LARGEBLOB
+Permission for the large blobs API.
+The
+.Fa rpid
+is ignored.
+.It Dv FIDO_PUAT_CONFIG
+Permission for the authenticator config API.
+The
+.Fa rpid
+is ignored.
+.It Dv FIDO_PUAT_CREDMAN_RO
+Persistent read-only permission for the credential management API.
+The
+.Fa rpid
+is ignored.
+.El
+.Pp
+The
+.Fn fido_dev_set_puat
+function can be used to associate a token retrieved out-of-band with
+.Fa dev .
+No references to
+.Fa ptr
+are kept.
+If
+.Fa ptr
+is NULL or
+.Fa len
+is zero, the token is cleared from
+.Fa dev .
+.Pp
+The
+.Fn fido_dev_puat_ptr
+function returns a pointer to the PIN/UV Auth token currently associated with
+.Fa dev .
+The corresponding length can be obtained by calling
+.Fn fido_dev_puat_len .
+.Pp
+Associating a token with
+.Fa dev
+has the main benefit of reducing the user interaction to a minimum in
+a sequence of operations where each would require some form of UV.
+Likewise, if multiple operations in a sequence need to be authenticated by a
+PIN, using a token avoids the need of caching the PIN for the duration of the
+whole sequence.
+.Pp
+Once a token is associated with
+.Fa dev ,
+it will take precedence over the regular PIN/UV Authentication for all
+operations that support the use of a token, until it is cleared from
+.Fa dev .
+The validity of the token is determined by the authenticator;
+it may expire and its permissions may be affected by its use.
+An invalid token is not automatically cleared from
+.Fa dev .
+Applications can call
+.Fn fido_dev_set_puat
+or
+.Fn fido_dev_get_puat
+to discard or obtain a new PIN/UV Auth token and retry the failed operation as
+appropriate.
+.Pp
+For further details on token semantics, please refer to the FIDO Client
+to Authenticator Protocol (CTAP) standard.
+.Sh RETURN VALUES
+On success,
+.Fn fido_dev_get_puat
+and
+.Fn fido_dev_set_puat
+return
+.Dv FIDO_OK .
+On error, a different error code defined in
+.In fido/err.h
+is returned.
+.Pp
+.Fn fido_dev_puat_ptr
+may return NULL if there is no PIN/UV Auth token associated with
+.Fa dev .
+If not NULL, the returned pointer is guaranteed to exist until either
+.Fn fido_dev_get_puat
+.Fn fido_dev_set_puat ,
+or
+.Fn fido_dev_free
+is invoked.
+.Sh SEE ALSO
+.Xr fido_dev_new 3

@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018-2021 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <openssl/sha.h>
@@ -38,6 +39,8 @@ parse_makecred_reply(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 		    &cred->authdata_ext));
 	case 3: /* attestation statement */
 		return (cbor_decode_attstmt(val, &cred->attstmt));
+	case 4: /* enterprise attestation */
+		return (cbor_decode_bool(val, &cred->ea.att));
 	case 5: /* large blob key */
 		return (fido_blob_decode(val, &cred->largeblob_key));
 	default: /* ignore */
@@ -47,26 +50,17 @@ parse_makecred_reply(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 }
 
 static int
-fido_dev_make_cred_tx(fido_dev_t *dev, fido_cred_t *cred, const char *pin,
-    int *ms)
+fido_dev_make_cred_tx(fido_dev_t *dev, fido_cred_t *cred,
+    const es256_pk_t *pk, const fido_blob_t *ecdh, const char *pin, int *ms)
 {
 	fido_blob_t	 f;
-	fido_blob_t	*ecdh = NULL;
 	fido_opt_t	 uv = cred->uv;
-	es256_pk_t	*pk = NULL;
-	cbor_item_t	*argv[9];
+	cbor_item_t	*argv[10];
 	const uint8_t	 cmd = CTAP_CBOR_MAKECRED;
 	int		 r;
 
 	memset(&f, 0, sizeof(f));
 	memset(argv, 0, sizeof(argv));
-
-	if (cred->cdh.ptr == NULL || cred->type == 0) {
-		fido_log_debug("%s: cdh=%p, type=%d", __func__,
-		    (void *)cred->cdh.ptr, cred->type);
-		r = FIDO_ERR_INVALID_ARGUMENT;
-		goto fail;
-	}
 
 	if ((argv[0] = fido_blob_encode(&cred->cdh)) == NULL ||
 	    (argv[1] = cbor_encode_rp_entity(&cred->rp)) == NULL ||
@@ -86,21 +80,18 @@ fido_dev_make_cred_tx(fido_dev_t *dev, fido_cred_t *cred, const char *pin,
 		}
 
 	/* extensions */
-	if (cred->ext.mask)
-		if ((argv[5] = cbor_encode_cred_ext(&cred->ext,
-		    &cred->blob)) == NULL) {
+	if (cred->ext.attr.mask)
+		if ((argv[5] = cbor_encode_cred_ext(dev, &cred->ext, ecdh,
+		    pk)) == NULL) {
 			fido_log_debug("%s: cbor_encode_cred_ext", __func__);
 			r = FIDO_ERR_INTERNAL;
 			goto fail;
 		}
 
 	/* user verification */
-	if (pin != NULL || (uv == FIDO_OPT_TRUE &&
-	    fido_dev_supports_permissions(dev))) {
-		if ((r = fido_do_ecdh(dev, &pk, &ecdh, ms)) != FIDO_OK) {
-			fido_log_debug("%s: fido_do_ecdh", __func__);
-			goto fail;
-		}
+	if (pin != NULL ||
+	    fido_dev_puat_blob(dev) != NULL ||
+	    (uv == FIDO_OPT_TRUE && fido_dev_supports_permissions(dev))) {
 		if ((r = cbor_add_uv_params(dev, cmd, &cred->cdh, pk, ecdh,
 		    pin, cred->rp.id, &argv[7], &argv[8], ms)) != FIDO_OK) {
 			fido_log_debug("%s: cbor_add_uv_params", __func__);
@@ -117,6 +108,15 @@ fido_dev_make_cred_tx(fido_dev_t *dev, fido_cred_t *cred, const char *pin,
 			goto fail;
 		}
 
+	/* enterprise attestation */
+	if (cred->ea.mode != 0)
+		if ((argv[9] = cbor_build_uint8((uint8_t)cred->ea.mode)) ==
+		    NULL) {
+			fido_log_debug("%s: cbor_build_uint8", __func__);
+			r = FIDO_ERR_INTERNAL;
+			goto fail;
+		}
+
 	/* framing and transmission */
 	if (cbor_build_frame(cmd, argv, nitems(argv), &f) < 0 ||
 	    fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len, ms) < 0) {
@@ -127,8 +127,6 @@ fido_dev_make_cred_tx(fido_dev_t *dev, fido_cred_t *cred, const char *pin,
 
 	r = FIDO_OK;
 fail:
-	es256_pk_free(&pk);
-	fido_blob_free(&ecdh);
 	cbor_vector_free(argv, nitems(argv));
 	free(f.ptr);
 
@@ -179,22 +177,49 @@ fail:
 }
 
 static int
-fido_dev_make_cred_wait(fido_dev_t *dev, fido_cred_t *cred, const char *pin,
-    int *ms)
+fido_dev_make_cred_wait(fido_dev_t *dev, fido_cred_t *cred,
+    const es256_pk_t *pk, const fido_blob_t *ecdh, const char *pin, int *ms)
 {
 	int  r;
 
-	if ((r = fido_dev_make_cred_tx(dev, cred, pin, ms)) != FIDO_OK ||
+	if ((r = fido_dev_make_cred_tx(dev, cred, pk, ecdh, pin, ms)) != FIDO_OK ||
 	    (r = fido_dev_make_cred_rx(dev, cred, ms)) != FIDO_OK)
 		return (r);
 
 	return (FIDO_OK);
 }
 
+static int
+decrypt_hmac_secret(const fido_dev_t *dev, fido_cred_t *cred,
+    const fido_blob_t *key)
+{
+	return (aes256_cbc_dec(dev, key, &cred->authdata_ext.hmac_secret_enc,
+	    &cred->hmac_secret));
+}
+
+static bool
+need_ecdh(const fido_dev_t *dev, const fido_cred_t *cred, const char *pin)
+{
+	if (cred->ext.attr.mask & FIDO_EXT_HMAC_SECRET_MC)
+		return true;
+
+	/* If available, prefer cached PUAT */
+	if (fido_dev_puat_blob(dev) != NULL)
+		return false;
+
+	if (pin != NULL)
+		return true;
+
+	return cred->uv == FIDO_OPT_TRUE && fido_dev_supports_permissions(dev);
+}
+
 int
 fido_dev_make_cred(fido_dev_t *dev, fido_cred_t *cred, const char *pin)
 {
-	int ms = dev->timeout_ms;
+	fido_blob_t	*ecdh = NULL;
+	es256_pk_t	*pk = NULL;
+	int		 ms = dev->timeout_ms;
+	int 		 r;
 
 #ifdef USE_WINHELLO
 	if (dev->flags & FIDO_DEV_WINHELLO)
@@ -202,23 +227,52 @@ fido_dev_make_cred(fido_dev_t *dev, fido_cred_t *cred, const char *pin)
 #endif
 	if (fido_dev_is_fido2(dev) == false) {
 		if (pin != NULL || cred->rk == FIDO_OPT_TRUE ||
-		    cred->ext.mask != 0)
+		    cred->ext.attr.mask != 0)
 			return (FIDO_ERR_UNSUPPORTED_OPTION);
 		return (u2f_register(dev, cred, &ms));
 	}
 
-	return (fido_dev_make_cred_wait(dev, cred, pin, &ms));
+	if (cred->cdh.ptr == NULL || cred->type == 0) {
+		fido_log_debug("%s: cdh=%p, type=%d", __func__,
+		    (void *)cred->cdh.ptr, cred->type);
+		r = FIDO_ERR_INVALID_ARGUMENT;
+		goto fail;
+	}
+
+	if (need_ecdh(dev, cred, pin) && (r = fido_do_ecdh(dev, &pk, &ecdh,
+	    &ms)) != FIDO_OK) {
+		fido_log_debug("%s: fido_do_ecdh", __func__);
+		goto fail;
+	}
+
+	r = fido_dev_make_cred_wait(dev, cred, pk, ecdh, pin, &ms);
+	if (r == FIDO_OK && (cred->ext.attr.mask & FIDO_EXT_HMAC_SECRET_MC)) {
+		if (decrypt_hmac_secret(dev, cred, ecdh) < 0) {
+			fido_log_debug("%s: decrypt_hmac_secret", __func__);
+			r = FIDO_ERR_INTERNAL;
+			goto fail;
+		}
+	}
+
+fail:
+	es256_pk_free(&pk);
+	fido_blob_free(&ecdh);
+
+	return (r);
 }
 
 static int
 check_extensions(const fido_cred_ext_t *authdata_ext,
     const fido_cred_ext_t *ext)
 {
-	fido_cred_ext_t	 tmp;
+	fido_cred_ext_t tmp;
 
-	/* XXX: largeBlobKey is not part of the extensions map */
+	/*
+	 * XXX: largeBlobKey is not part of the extensions map
+	 * XXX: thirdPartyPayment has no output for make credential
+	 */
 	memcpy(&tmp, ext, sizeof(tmp));
-	tmp.mask &= ~FIDO_EXT_LARGEBLOB_KEY;
+	tmp.mask &= ~(FIDO_EXT_LARGEBLOB_KEY | FIDO_EXT_PAYMENT);
 
 	return (timingsafe_bcmp(authdata_ext, &tmp, sizeof(*authdata_ext)));
 }
@@ -251,7 +305,7 @@ get_signed_hash_u2f(fido_blob_t *dgst, const unsigned char *rp_id,
 	EVP_MD_CTX	*ctx = NULL;
 	int		 ok = -1;
 
-	if (dgst->len != SHA256_DIGEST_LENGTH ||
+	if (dgst->len < SHA256_DIGEST_LENGTH ||
 	    (md = EVP_sha256()) == NULL ||
 	    (ctx = EVP_MD_CTX_new()) == NULL ||
 	    EVP_DigestInit_ex(ctx, md, NULL) != 1 ||
@@ -266,6 +320,7 @@ get_signed_hash_u2f(fido_blob_t *dgst, const unsigned char *rp_id,
 		fido_log_debug("%s: sha256", __func__);
 		goto fail;
 	}
+	dgst->len = SHA256_DIGEST_LENGTH;
 
 	ok = 0;
 fail:
@@ -282,15 +337,21 @@ verify_attstmt(const fido_blob_t *dgst, const fido_attstmt_t *attstmt)
 	EVP_PKEY	*pkey = NULL;
 	int		 ok = -1;
 
-	/* openssl needs ints */
-	if (attstmt->x5c.len > INT_MAX) {
+	if (!attstmt->x5c.len) {
 		fido_log_debug("%s: x5c.len=%zu", __func__, attstmt->x5c.len);
 		return (-1);
 	}
 
+	/* openssl needs ints */
+	if (attstmt->x5c.ptr[0].len > INT_MAX) {
+		fido_log_debug("%s: x5c[0].len=%zu", __func__,
+		    attstmt->x5c.ptr[0].len);
+		return (-1);
+	}
+
 	/* fetch key from x509 */
-	if ((rawcert = BIO_new_mem_buf(attstmt->x5c.ptr,
-	    (int)attstmt->x5c.len)) == NULL ||
+	if ((rawcert = BIO_new_mem_buf(attstmt->x5c.ptr[0].ptr,
+	    (int)attstmt->x5c.ptr[0].len)) == NULL ||
 	    (cert = d2i_X509_bio(rawcert, NULL)) == NULL ||
 	    (pkey = X509_get_pubkey(cert)) == NULL) {
 		fido_log_debug("%s: x509 key", __func__);
@@ -301,6 +362,9 @@ verify_attstmt(const fido_blob_t *dgst, const fido_attstmt_t *attstmt)
 	case COSE_UNSPEC:
 	case COSE_ES256:
 		ok = es256_verify_sig(dgst, pkey, &attstmt->sig);
+		break;
+	case COSE_ES384:
+		ok = es384_verify_sig(dgst, pkey, &attstmt->sig);
 		break;
 	case COSE_RS256:
 		ok = rs256_verify_sig(dgst, pkey, &attstmt->sig);
@@ -327,8 +391,9 @@ fail:
 int
 fido_cred_verify(const fido_cred_t *cred)
 {
-	unsigned char	buf[SHA256_DIGEST_LENGTH];
+	unsigned char	buf[1024]; /* XXX */
 	fido_blob_t	dgst;
+	int		cose_alg;
 	int		r;
 
 	dgst.ptr = buf;
@@ -362,14 +427,17 @@ fido_cred_verify(const fido_cred_t *cred)
 		goto out;
 	}
 
-	if (check_extensions(&cred->authdata_ext, &cred->ext) != 0) {
+	if (check_extensions(&cred->authdata_ext.attr, &cred->ext.attr) != 0) {
 		fido_log_debug("%s: check_extensions", __func__);
 		r = FIDO_ERR_INVALID_PARAM;
 		goto out;
 	}
 
+	if ((cose_alg = cred->attstmt.alg) == COSE_UNSPEC)
+		cose_alg = COSE_ES256; /* backwards compat */
+
 	if (!strcmp(cred->fmt, "packed")) {
-		if (fido_get_signed_hash(COSE_ES256, &dgst, &cred->cdh,
+		if (fido_get_signed_hash(cose_alg, &dgst, &cred->cdh,
 		    &cred->authdata_cbor) < 0) {
 			fido_log_debug("%s: fido_get_signed_hash", __func__);
 			r = FIDO_ERR_INTERNAL;
@@ -448,7 +516,7 @@ fido_cred_verify_self(const fido_cred_t *cred)
 		goto out;
 	}
 
-	if (check_extensions(&cred->authdata_ext, &cred->ext) != 0) {
+	if (check_extensions(&cred->authdata_ext.attr, &cred->ext.attr) != 0) {
 		fido_log_debug("%s: check_extensions", __func__);
 		r = FIDO_ERR_INVALID_PARAM;
 		goto out;
@@ -478,6 +546,10 @@ fido_cred_verify_self(const fido_cred_t *cred)
 	switch (cred->attcred.type) {
 	case COSE_ES256:
 		ok = es256_pk_verify_sig(&dgst, &cred->attcred.pubkey.es256,
+		    &cred->attstmt.sig);
+		break;
+	case COSE_ES384:
+		ok = es384_pk_verify_sig(&dgst, &cred->attcred.pubkey.es384,
 		    &cred->attstmt.sig);
 		break;
 	case COSE_RS256:
@@ -518,6 +590,7 @@ fido_cred_clean_authdata(fido_cred_t *cred)
 	fido_blob_reset(&cred->authdata_cbor);
 	fido_blob_reset(&cred->authdata_raw);
 	fido_blob_reset(&cred->attcred.id);
+	fido_blob_reset(&cred->authdata_ext.hmac_secret_enc);
 
 	memset(&cred->authdata_ext, 0, sizeof(cred->authdata_ext));
 	memset(&cred->authdata, 0, sizeof(cred->authdata));
@@ -530,10 +603,19 @@ fido_cred_clean_attstmt(fido_attstmt_t *attstmt)
 	fido_blob_reset(&attstmt->certinfo);
 	fido_blob_reset(&attstmt->pubarea);
 	fido_blob_reset(&attstmt->cbor);
-	fido_blob_reset(&attstmt->x5c);
+	fido_free_blob_array(&attstmt->x5c);
 	fido_blob_reset(&attstmt->sig);
 
 	memset(attstmt, 0, sizeof(*attstmt));
+}
+
+static void
+fido_cred_clean_attobj(fido_cred_t *cred)
+{
+	free(cred->fmt);
+	cred->fmt = NULL;
+	fido_cred_clean_authdata(cred);
+	fido_cred_clean_attstmt(&cred->attstmt);
 }
 
 void
@@ -542,33 +624,33 @@ fido_cred_reset_tx(fido_cred_t *cred)
 	fido_blob_reset(&cred->cd);
 	fido_blob_reset(&cred->cdh);
 	fido_blob_reset(&cred->user.id);
-	fido_blob_reset(&cred->blob);
+	fido_blob_reset(&cred->ext.blob);
+	fido_blob_reset(&cred->ext.hmac_salt);
 
 	free(cred->rp.id);
 	free(cred->rp.name);
 	free(cred->user.icon);
 	free(cred->user.name);
 	free(cred->user.display_name);
-	fido_free_blob_array(&cred->excl);
+	fido_cred_empty_exclude_list(cred);
 
 	memset(&cred->rp, 0, sizeof(cred->rp));
 	memset(&cred->user, 0, sizeof(cred->user));
-	memset(&cred->excl, 0, sizeof(cred->excl));
 	memset(&cred->ext, 0, sizeof(cred->ext));
 
 	cred->type = 0;
 	cred->rk = FIDO_OPT_OMIT;
 	cred->uv = FIDO_OPT_OMIT;
+	cred->ea.mode = 0;
 }
 
 void
 fido_cred_reset_rx(fido_cred_t *cred)
 {
-	free(cred->fmt);
-	cred->fmt = NULL;
-	fido_cred_clean_authdata(cred);
-	fido_cred_clean_attstmt(&cred->attstmt);
+	fido_cred_clean_attobj(cred);
 	fido_blob_reset(&cred->largeblob_key);
+	fido_blob_reset(&cred->hmac_secret);
+	cred->ea.att = false;
 }
 
 void
@@ -676,8 +758,29 @@ fido_cred_set_id(fido_cred_t *cred, const unsigned char *ptr, size_t len)
 int
 fido_cred_set_x509(fido_cred_t *cred, const unsigned char *ptr, size_t len)
 {
-	if (fido_blob_set(&cred->attstmt.x5c, ptr, len) < 0)
+	fido_blob_t x5c_blob;
+	fido_blob_t *list_ptr = NULL;
+
+	memset(&x5c_blob, 0, sizeof(x5c_blob));
+	fido_free_blob_array(&cred->attstmt.x5c);
+
+	if (fido_blob_set(&x5c_blob, ptr, len) < 0)
 		return (FIDO_ERR_INVALID_ARGUMENT);
+
+	if (cred->attstmt.x5c.len == SIZE_MAX) {
+		fido_blob_reset(&x5c_blob);
+		return (FIDO_ERR_INVALID_ARGUMENT);
+	}
+
+	if ((list_ptr = recallocarray(cred->attstmt.x5c.ptr,
+	    cred->attstmt.x5c.len, cred->attstmt.x5c.len + 1,
+	    sizeof(x5c_blob))) == NULL) {
+		fido_blob_reset(&x5c_blob);
+		return (FIDO_ERR_INTERNAL);
+	}
+
+	list_ptr[cred->attstmt.x5c.len++] = x5c_blob;
+	cred->attstmt.x5c.ptr = list_ptr;
 
 	return (FIDO_OK);
 }
@@ -725,6 +828,35 @@ fail:
 }
 
 int
+fido_cred_set_attobj(fido_cred_t *cred, const unsigned char *ptr, size_t len)
+{
+	cbor_item_t		*item = NULL;
+	struct cbor_load_result	 cbor;
+	int			 r = FIDO_ERR_INVALID_ARGUMENT;
+
+	fido_cred_clean_attobj(cred);
+
+	if (ptr == NULL || len == 0)
+		goto fail;
+
+	if ((item = cbor_load(ptr, len, &cbor)) == NULL) {
+		fido_log_debug("%s: cbor_load", __func__);
+		goto fail;
+	}
+	if (cbor_decode_attobj(item, cred) != 0) {
+		fido_log_debug("%s: cbor_decode_attobj", __func__);
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	if (item != NULL)
+		cbor_decref(&item);
+
+	return (r);
+}
+
+int
 fido_cred_exclude(fido_cred_t *cred, const unsigned char *id_ptr, size_t id_len)
 {
 	fido_blob_t id_blob;
@@ -748,6 +880,15 @@ fido_cred_exclude(fido_cred_t *cred, const unsigned char *id_ptr, size_t id_len)
 
 	list_ptr[cred->excl.len++] = id_blob;
 	cred->excl.ptr = list_ptr;
+
+	return (FIDO_OK);
+}
+
+int
+fido_cred_empty_exclude_list(fido_cred_t *cred)
+{
+	fido_free_blob_array(&cred->excl);
+	memset(&cred->excl, 0, sizeof(cred->excl));
 
 	return (FIDO_OK);
 }
@@ -860,14 +1001,48 @@ fail:
 }
 
 int
+fido_cred_set_hmac_salt(fido_cred_t *cred, const unsigned char *salt,
+    size_t salt_len)
+{
+	if ((salt_len != 32 && salt_len != 64) ||
+	    fido_blob_set(&cred->ext.hmac_salt, salt, salt_len) < 0)
+		return (FIDO_ERR_INVALID_ARGUMENT);
+
+	return (FIDO_OK);
+}
+
+int
+fido_cred_set_hmac_secret(fido_cred_t *cred,
+    const unsigned char *secret, size_t secret_len)
+{
+	if ((secret_len != 32 && secret_len != 64) ||
+	    fido_blob_set(&cred->hmac_secret, secret, secret_len) < 0)
+		return (FIDO_ERR_INVALID_ARGUMENT);
+
+	return (FIDO_OK);
+}
+
+const unsigned char *
+fido_cred_hmac_secret_ptr(const fido_cred_t *cred)
+{
+	return (cred->hmac_secret.ptr);
+}
+
+size_t
+fido_cred_hmac_secret_len(const fido_cred_t *cred)
+{
+	return (cred->hmac_secret.len);
+}
+
+int
 fido_cred_set_extensions(fido_cred_t *cred, int ext)
 {
 	if (ext == 0)
-		cred->ext.mask = 0;
+		cred->ext.attr.mask = 0;
 	else {
 		if ((ext & FIDO_EXT_CRED_MASK) != ext)
 			return (FIDO_ERR_INVALID_ARGUMENT);
-		cred->ext.mask |= ext;
+		cred->ext.attr.mask |= ext;
 	}
 
 	return (FIDO_OK);
@@ -899,19 +1074,31 @@ fido_cred_set_uv(fido_cred_t *cred, fido_opt_t uv)
 }
 
 int
+fido_cred_set_entattest(fido_cred_t *cred, int ea)
+{
+	if (ea != 0 && ea != FIDO_ENTATTEST_VENDOR &&
+	    ea != FIDO_ENTATTEST_PLATFORM)
+		return (FIDO_ERR_INVALID_ARGUMENT);
+
+	cred->ea.mode = ea;
+
+	return (FIDO_OK);
+}
+
+int
 fido_cred_set_prot(fido_cred_t *cred, int prot)
 {
 	if (prot == 0) {
-		cred->ext.mask &= ~FIDO_EXT_CRED_PROTECT;
-		cred->ext.prot = 0;
+		cred->ext.attr.mask &= ~FIDO_EXT_CRED_PROTECT;
+		cred->ext.attr.prot = 0;
 	} else {
 		if (prot != FIDO_CRED_PROT_UV_OPTIONAL &&
 		    prot != FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID &&
 		    prot != FIDO_CRED_PROT_UV_REQUIRED)
 			return (FIDO_ERR_INVALID_ARGUMENT);
 
-		cred->ext.mask |= FIDO_EXT_CRED_PROTECT;
-		cred->ext.prot = prot;
+		cred->ext.attr.mask |= FIDO_EXT_CRED_PROTECT;
+		cred->ext.attr.prot = prot;
 	}
 
 	return (FIDO_OK);
@@ -921,11 +1108,11 @@ int
 fido_cred_set_pin_minlen(fido_cred_t *cred, size_t len)
 {
 	if (len == 0)
-		cred->ext.mask &= ~FIDO_EXT_MINPINLEN;
+		cred->ext.attr.mask &= ~FIDO_EXT_MINPINLEN;
 	else
-		cred->ext.mask |= FIDO_EXT_MINPINLEN;
+		cred->ext.attr.mask |= FIDO_EXT_MINPINLEN;
 
-	cred->ext.minpinlen = len;
+	cred->ext.attr.minpinlen = len;
 
 	return (FIDO_OK);
 }
@@ -935,10 +1122,10 @@ fido_cred_set_blob(fido_cred_t *cred, const unsigned char *ptr, size_t len)
 {
 	if (ptr == NULL || len == 0)
 		return (FIDO_ERR_INVALID_ARGUMENT);
-	if (fido_blob_set(&cred->blob, ptr, len) < 0)
+	if (fido_blob_set(&cred->ext.blob, ptr, len) < 0)
 		return (FIDO_ERR_INTERNAL);
 
-	cred->ext.mask |= FIDO_EXT_CRED_BLOB;
+	cred->ext.attr.mask |= FIDO_EXT_CRED_BLOB;
 
 	return (FIDO_OK);
 }
@@ -965,8 +1152,10 @@ fido_cred_set_fmt(fido_cred_t *cred, const char *fmt)
 int
 fido_cred_set_type(fido_cred_t *cred, int cose_alg)
 {
-	if ((cose_alg != COSE_ES256 && cose_alg != COSE_RS256 &&
-	    cose_alg != COSE_EDDSA) || cred->type != 0)
+	if (cred->type != 0)
+		return (FIDO_ERR_INVALID_ARGUMENT);
+	if (cose_alg != COSE_ES256 && cose_alg != COSE_ES384 &&
+	    cose_alg != COSE_RS256 && cose_alg != COSE_EDDSA)
 		return (FIDO_ERR_INVALID_ARGUMENT);
 
 	cred->type = cose_alg;
@@ -1007,13 +1196,37 @@ fido_cred_clientdata_hash_len(const fido_cred_t *cred)
 const unsigned char *
 fido_cred_x5c_ptr(const fido_cred_t *cred)
 {
-	return (cred->attstmt.x5c.ptr);
+	return (fido_cred_x5c_list_ptr(cred, 0));
 }
 
 size_t
 fido_cred_x5c_len(const fido_cred_t *cred)
 {
+	return (fido_cred_x5c_list_len(cred, 0));
+}
+
+size_t
+fido_cred_x5c_list_count(const fido_cred_t *cred)
+{
 	return (cred->attstmt.x5c.len);
+}
+
+const unsigned char *
+fido_cred_x5c_list_ptr(const fido_cred_t *cred, size_t i)
+{
+	if (i >= cred->attstmt.x5c.len)
+		return (NULL);
+
+	return (cred->attstmt.x5c.ptr[i].ptr);
+}
+
+size_t
+fido_cred_x5c_list_len(const fido_cred_t *cred, size_t i)
+{
+	if (i >= cred->attstmt.x5c.len)
+		return (0);
+
+	return (cred->attstmt.x5c.ptr[i].len);
 }
 
 const unsigned char *
@@ -1073,6 +1286,9 @@ fido_cred_pubkey_ptr(const fido_cred_t *cred)
 	case COSE_ES256:
 		ptr = &cred->attcred.pubkey.es256;
 		break;
+	case COSE_ES384:
+		ptr = &cred->attcred.pubkey.es384;
+		break;
 	case COSE_RS256:
 		ptr = &cred->attcred.pubkey.rs256;
 		break;
@@ -1095,6 +1311,9 @@ fido_cred_pubkey_len(const fido_cred_t *cred)
 	switch (cred->attcred.type) {
 	case COSE_ES256:
 		len = sizeof(cred->attcred.pubkey.es256);
+		break;
+	case COSE_ES384:
+		len = sizeof(cred->attcred.pubkey.es384);
 		break;
 	case COSE_RS256:
 		len = sizeof(cred->attcred.pubkey.rs256);
@@ -1137,13 +1356,13 @@ fido_cred_aaguid_len(const fido_cred_t *cred)
 int
 fido_cred_prot(const fido_cred_t *cred)
 {
-	return (cred->ext.prot);
+	return (cred->ext.attr.prot);
 }
 
 size_t
 fido_cred_pin_minlen(const fido_cred_t *cred)
 {
-	return (cred->ext.minpinlen);
+	return (cred->ext.attr.minpinlen);
 }
 
 const char *
@@ -1198,4 +1417,17 @@ size_t
 fido_cred_largeblob_key_len(const fido_cred_t *cred)
 {
 	return (cred->largeblob_key.len);
+}
+
+bool
+fido_cred_entattest(const fido_cred_t *cred)
+{
+	return (cred->ea.att);
+}
+
+/* XXX mainly useful for credentials retrieved via fido_credman_rk() */
+bool
+fido_cred_payment(const fido_cred_t *cred)
+{
+	return (cred->ext.attr.mask & FIDO_EXT_PAYMENT);
 }

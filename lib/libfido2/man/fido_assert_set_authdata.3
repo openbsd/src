@@ -1,8 +1,31 @@
-.\" Copyright (c) 2018-2022 Yubico AB. All rights reserved.
-.\" Use of this source code is governed by a BSD-style
-.\" license that can be found in the LICENSE file.
+.\" Copyright (c) 2018-2025 Yubico AB. All rights reserved.
 .\"
-.Dd $Mdocdate: July 9 2025 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.Dd $Mdocdate: September 4 2026 $
 .Dt FIDO_ASSERT_SET_AUTHDATA 3
 .Os
 .Sh NAME
@@ -17,10 +40,10 @@
 .Nm fido_assert_set_up ,
 .Nm fido_assert_set_uv ,
 .Nm fido_assert_set_rp ,
-.Nm fido_assert_set_sig
+.Nm fido_assert_set_sig ,
+.Nm fido_assert_set_winhello_appid
 .Nd set parameters of a FIDO2 assertion
 .Sh SYNOPSIS
-.Lb libfido2 libcbor libcrypto libz
 .In fido.h
 .Bd -literal
 typedef enum {
@@ -53,6 +76,8 @@ typedef enum {
 .Fn fido_assert_set_rp "fido_assert_t *assert" "const char *id"
 .Ft int
 .Fn fido_assert_set_sig "fido_assert_t *assert" "size_t idx" "const unsigned char *ptr" "size_t len"
+.Ft int
+.Fn fido_assert_set_winhello_appid "fido_assert_t *assert" "const char *id"
 .Sh DESCRIPTION
 The
 .Nm
@@ -155,14 +180,21 @@ to the bitmask
 At the moment, only the
 .Dv FIDO_EXT_CRED_BLOB ,
 .Dv FIDO_EXT_HMAC_SECRET ,
+.Dv FIDO_EXT_LARGEBLOB_KEY ,
 and
-.Dv FIDO_EXT_LARGEBLOB_KEY
+.Dv FIDO_EXT_PAYMENT
 extensions are supported.
 If
 .Fa flags
 is zero, the extensions of
 .Fa assert
 are cleared.
+Enabling
+.Dv FIDO_EXT_PAYMENT
+does not affect how
+.Xr fido_assert_verify 3
+verifies the RP ID; the platform is responsible for determining what
+constitutes a payment authentication.
 .Pp
 The
 .Fn fido_assert_set_hmac_salt
@@ -204,6 +236,55 @@ Both are
 .Dv FIDO_OPT_OMIT
 by default, allowing the authenticator to use its default settings.
 .Pp
+The
+.Fn fido_assert_set_winhello_appid
+function sets the U2F application
+.Fa id
+.Pq Dq U2F AppID
+of
+.Fa assert ,
+where
+.Fa id
+is a NUL-terminated UTF-8 string.
+The content of
+.Fa id
+is copied, and no references to the passed pointer are kept.
+The
+.Fn fido_assert_set_winhello_appid
+function is a no-op unless
+.Fa assert
+is passed to
+.Xr fido_dev_get_assert 3
+with a device
+.Fa dev
+on which
+.Xr fido_dev_is_winhello 3
+holds true.
+In this case,
+.Em libfido2
+will instruct Windows Hello to try the assertion twice,
+first with the
+.Fa id
+passed to
+.Fn fido_assert_set_rp ,
+and a second time with the
+.Fa id
+passed to
+.Fn fido_assert_set_winhello_appid .
+If the second assertion succeeds,
+.Xr fido_assert_rp_id 3
+will point to the U2F AppID once
+.Xr fido_dev_get_assert 3
+completes.
+This mechanism exists in Windows Hello to ensure U2F backwards
+compatibility without the application inadvertently prompting the
+user twice.
+Note that
+.Fn fido_assert_set_winhello_appid
+is not needed on platforms offering CTAP primitives, since the
+authenticator can be silently probed for the existence of U2F
+credentials.
+.Pp
 Use of the
 .Nm
 set of functions may happen in two distinct situations:
@@ -236,4 +317,5 @@ set of functions are defined in
 .Sh SEE ALSO
 .Xr fido_assert_allow_cred 3 ,
 .Xr fido_assert_verify 3 ,
-.Xr fido_dev_get_assert 3
+.Xr fido_dev_get_assert 3 ,
+.Xr fido_dev_is_winhello 3

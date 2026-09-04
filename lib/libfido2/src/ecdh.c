@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018-2021 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <openssl/evp.h>
@@ -16,29 +17,29 @@
 #include "fido/es256.h"
 
 #if defined(LIBRESSL_VERSION_NUMBER)
-static int
-hkdf_sha256(uint8_t *key, const char *info, const fido_blob_t *secret)
+int
+hkdf_sha256(uint8_t *key, size_t keylen, const char *info,
+    const fido_blob_t *secret)
 {
 	const EVP_MD *md;
 	uint8_t salt[32];
 
 	memset(salt, 0, sizeof(salt));
 	if ((md = EVP_sha256()) == NULL ||
-	    HKDF(key, SHA256_DIGEST_LENGTH, md, secret->ptr, secret->len, salt,
+	    HKDF(key, keylen, md, secret->ptr, secret->len, salt,
 	    sizeof(salt), (const uint8_t *)info, strlen(info)) != 1)
 		return -1;
 
 	return 0;
 }
 #else
-static int
-hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
+int
+hkdf_sha256(uint8_t *key, size_t keylen, const char *info,
+    const fido_blob_t *secret)
 {
-	const EVP_MD *const_md;
-	EVP_MD *md = NULL;
+	const EVP_MD *md;
 	EVP_PKEY_CTX *ctx = NULL;
-	size_t keylen = SHA256_DIGEST_LENGTH;
-	uint8_t	salt[32];
+	uint8_t salt[32];
 	int ok = -1;
 
 	memset(salt, 0, sizeof(salt));
@@ -46,8 +47,7 @@ hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
 		fido_log_debug("%s: invalid param", __func__);
 		goto fail;
 	}
-	if ((const_md = EVP_sha256()) == NULL ||
-	    (md = EVP_MD_meth_dup(const_md)) == NULL ||
+	if ((md = EVP_sha256()) == NULL ||
 	    (ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)) == NULL) {
 		fido_log_debug("%s: init", __func__);
 		goto fail;
@@ -56,7 +56,8 @@ hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
 	    EVP_PKEY_CTX_set_hkdf_md(ctx, md) < 1 ||
 	    EVP_PKEY_CTX_set1_hkdf_salt(ctx, salt, sizeof(salt)) < 1 ||
 	    EVP_PKEY_CTX_set1_hkdf_key(ctx, secret->ptr, (int)secret->len) < 1 ||
-	    EVP_PKEY_CTX_add1_hkdf_info(ctx, (void *)info, (int)strlen(info)) < 1) {
+	    EVP_PKEY_CTX_add1_hkdf_info(ctx, (const void *)info,
+	    (int)strlen(info)) < 1) {
 		fido_log_debug("%s: EVP_PKEY_CTX", __func__);
 		goto fail;
 	}
@@ -67,8 +68,6 @@ hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
 
 	ok = 0;
 fail:
-	if (md != NULL)
-		EVP_MD_meth_free(md);
 	if (ctx != NULL)
 		EVP_PKEY_CTX_free(ctx);
 
@@ -77,10 +76,10 @@ fail:
 #endif /* defined(LIBRESSL_VERSION_NUMBER) */
 
 static int
-kdf(uint8_t prot, fido_blob_t *key, /* const */ fido_blob_t *secret)
+kdf(uint8_t prot, fido_blob_t *key, const fido_blob_t *secret)
 {
-	char hmac_info[] = "CTAP2 HMAC key"; /* const */
-	char aes_info[] = "CTAP2 AES key"; /* const */
+	const char hmac_info[] = "CTAP2 HMAC key";
+	const char aes_info[] = "CTAP2 AES key";
 
 	switch (prot) {
 	case CTAP_PIN_PROTOCOL1:
@@ -96,9 +95,9 @@ kdf(uint8_t prot, fido_blob_t *key, /* const */ fido_blob_t *secret)
 		/* use two instances of hkdf-sha256 on the resulting secret */
 		key->len = 2 * SHA256_DIGEST_LENGTH;
 		if ((key->ptr = calloc(1, key->len)) == NULL ||
-		    hkdf_sha256(key->ptr, hmac_info, secret) < 0 ||
-		    hkdf_sha256(key->ptr + SHA256_DIGEST_LENGTH, aes_info,
-		    secret) < 0) {
+		    hkdf_sha256(key->ptr, SHA256_DIGEST_LENGTH, hmac_info, secret) < 0 ||
+		    hkdf_sha256(key->ptr + SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH,
+		    aes_info, secret) < 0) {
 			fido_log_debug("%s: hkdf", __func__);
 			return -1;
 		}

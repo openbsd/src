@@ -1,13 +1,27 @@
 /*
- * Copyright (c) 2021 Yubico AB. All rights reserved.
+ * Copyright (c) 2021-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "fido.h"
 
+static const EVP_CIPHER *
+aes_cbc_cipher(size_t keysize)
+{
+	switch (keysize) {
+	case 16:
+		return EVP_aes_128_cbc();
+	case 32:
+		return EVP_aes_256_cbc();
+	default:
+		return NULL;
+	}
+}
+
 static int
-aes256_cbc(const fido_blob_t *key, const u_char *iv, const fido_blob_t *in,
+aes_cbc(const fido_blob_t *key, const u_char *iv, const fido_blob_t *in,
     fido_blob_t *out, int encrypt)
 {
 	EVP_CIPHER_CTX *ctx = NULL;
@@ -16,10 +30,6 @@ aes256_cbc(const fido_blob_t *key, const u_char *iv, const fido_blob_t *in,
 
 	memset(out, 0, sizeof(*out));
 
-	if (key->len != 32) {
-		fido_log_debug("%s: invalid key len %zu", __func__, key->len);
-		goto fail;
-	}
 	if (in->len > UINT_MAX || in->len % 16 || in->len == 0) {
 		fido_log_debug("%s: invalid input len %zu", __func__, in->len);
 		goto fail;
@@ -30,7 +40,7 @@ aes256_cbc(const fido_blob_t *key, const u_char *iv, const fido_blob_t *in,
 		goto fail;
 	}
 	if ((ctx = EVP_CIPHER_CTX_new()) == NULL ||
-	    (cipher = EVP_aes_256_cbc()) == NULL) {
+	    (cipher = aes_cbc_cipher(key->len)) == NULL) {
 		fido_log_debug("%s: EVP_CIPHER_CTX_new", __func__);
 		goto fail;
 	}
@@ -48,6 +58,37 @@ fail:
 		fido_blob_reset(out);
 
 	return ok;
+}
+
+int
+aes128_cbc_dec(const fido_blob_t *key, const fido_blob_t *in, fido_blob_t *out)
+{
+	const uint8_t *iv;
+	fido_blob_t cin;
+
+	if (key->len != 16) {
+		fido_log_debug("%s: invalid key len %zu", __func__, key->len);
+		return -1;
+	}
+	if (in->len < 16) {
+		fido_log_debug("%s: invalid input len %zu", __func__, in->len);
+		return -1;
+	}
+	cin.ptr = in->ptr + 16;
+	cin.len = in->len - 16;
+	iv = in->ptr;
+	return aes_cbc(key, iv, &cin, out, 0);
+}
+
+static int
+aes256_cbc(const fido_blob_t *key, const u_char *iv, const fido_blob_t *in,
+    fido_blob_t *out, int encrypt)
+{
+	if (key->len != 32) {
+		fido_log_debug("%s: invalid key len %zu", __func__, key->len);
+		return -1;
+	}
+	return aes_cbc(key, iv, in, out, encrypt);
 }
 
 static int
@@ -127,7 +168,11 @@ aes256_gcm(const fido_blob_t *key, const fido_blob_t *nonce,
 		    nonce->len, key->len, aad->len);
 		goto fail;
 	}
-	if (in->len > UINT_MAX || in->len > SIZE_MAX - 16 || in->len < 16) {
+	if (in->len > UINT_MAX || in->len > SIZE_MAX - 16) {
+		fido_log_debug("%s: invalid input len %zu", __func__, in->len);
+		goto fail;
+	}
+	if (!encrypt && in->len < 16) {
 		fido_log_debug("%s: invalid input len %zu", __func__, in->len);
 		goto fail;
 	}

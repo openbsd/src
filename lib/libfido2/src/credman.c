@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2019-2021 Yubico AB. All rights reserved.
+ * Copyright (c) 2019-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <openssl/sha.h>
@@ -19,7 +20,7 @@
 #define CMD_UPDATE_CRED		0x07
 
 static int
-credman_grow_array(void **ptr, size_t *n_alloc, size_t *n_rx, size_t n,
+credman_grow_array(void **ptr, size_t *n_alloc, const size_t *n_rx, size_t n,
     size_t size)
 {
 	void *new_ptr;
@@ -110,6 +111,15 @@ fail:
 	return (ok);
 }
 
+static uint8_t
+credman_get_cmd(const fido_dev_t *dev)
+{
+	if (dev->flags & FIDO_DEV_CREDMAN)
+		return (CTAP_CBOR_CRED_MGMT);
+
+	return (CTAP_CBOR_CRED_MGMT_PRE);
+}
+
 static int
 credman_tx(fido_dev_t *dev, uint8_t subcmd, const void *param, const char *pin,
     const char *rp_id, fido_opt_t uv, int *ms)
@@ -119,7 +129,7 @@ credman_tx(fido_dev_t *dev, uint8_t subcmd, const void *param, const char *pin,
 	fido_blob_t	 hmac;
 	es256_pk_t	*pk = NULL;
 	cbor_item_t	*argv[4];
-	const uint8_t	 cmd = CTAP_CBOR_CRED_MGMT_PRE;
+	const uint8_t	 cmd = credman_get_cmd(dev);
 	int		 r = FIDO_ERR_INTERNAL;
 
 	memset(&f, 0, sizeof(f));
@@ -139,14 +149,18 @@ credman_tx(fido_dev_t *dev, uint8_t subcmd, const void *param, const char *pin,
 	}
 
 	/* pinProtocol, pinAuth */
-	if (pin != NULL || uv == FIDO_OPT_TRUE) {
+	if (pin != NULL || fido_dev_puat_blob(dev) != NULL ||
+	    uv == FIDO_OPT_TRUE) {
 		if (credman_prepare_hmac(subcmd, param, &argv[1], &hmac) < 0) {
 			fido_log_debug("%s: credman_prepare_hmac", __func__);
 			goto fail;
 		}
-		if ((r = fido_do_ecdh(dev, &pk, &ecdh, ms)) != FIDO_OK) {
-			fido_log_debug("%s: fido_do_ecdh", __func__);
-			goto fail;
+
+		if (fido_dev_puat_blob(dev) == NULL) {
+			if ((r = fido_do_ecdh(dev, &pk, &ecdh, ms)) != FIDO_OK) {
+				fido_log_debug("%s: fido_do_ecdh", __func__);
+				goto fail;
+			}
 		}
 		if ((r = cbor_add_uv_params(dev, cmd, &hmac, pk, ecdh, pin,
 		    rp_id, &argv[3], &argv[2], ms)) != FIDO_OK) {
@@ -200,25 +214,34 @@ credman_parse_metadata(const cbor_item_t *key, const cbor_item_t *val,
 static int
 credman_rx_metadata(fido_dev_t *dev, fido_credman_metadata_t *metadata, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
-	int		r;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
 	memset(metadata, 0, sizeof(*metadata));
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
-		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
 	}
 
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, metadata,
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
+		r = FIDO_ERR_RX;
+		goto out;
+	}
+
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, metadata,
 	    credman_parse_metadata)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_metadata", __func__);
-		return (r);
+		goto out;
 	}
 
-	return (FIDO_OK);
+	r = FIDO_OK;
+out:
+	freezero(msg, FIDO_MAXMSG);
+
+	return (r);
 }
 
 static int
@@ -274,6 +297,12 @@ credman_parse_rk(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 		return (0);
 	case 11:
 		return (fido_blob_decode(val, &cred->largeblob_key));
+	case 12:
+		if (cbor_decode_bool(val, NULL) < 0)
+			return (-1);
+		if (cbor_ctrl_value(val) == CBOR_CTRL_TRUE)
+			cred->ext.attr.mask |= FIDO_EXT_PAYMENT;
+		return (0);
 	default:
 		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
@@ -325,69 +354,88 @@ credman_parse_rk_count(const cbor_item_t *key, const cbor_item_t *val,
 static int
 credman_rx_rk(fido_dev_t *dev, fido_credman_rk_t *rk, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
-	int		r;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
 	credman_reset_rk(rk);
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
+	}
+
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
 		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+		r = FIDO_ERR_RX;
+		goto out;
 	}
 
 	/* adjust as needed */
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, rk,
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, rk,
 	    credman_parse_rk_count)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_rk_count", __func__);
-		return (r);
+		goto out;
 	}
 
 	if (rk->n_alloc == 0) {
 		fido_log_debug("%s: n_alloc=0", __func__);
-		return (FIDO_OK);
+		r = FIDO_OK;
+		goto out;
 	}
 
 	/* parse the first rk */
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, &rk->ptr[0],
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, &rk->ptr[0],
 	    credman_parse_rk)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_rk", __func__);
-		return (r);
+		goto out;
 	}
+	rk->n_rx = 1;
 
-	rk->n_rx++;
+	r = FIDO_OK;
+out:
+	freezero(msg, FIDO_MAXMSG);
 
-	return (FIDO_OK);
+	return (r);
 }
 
 static int
 credman_rx_next_rk(fido_dev_t *dev, fido_credman_rk_t *rk, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
-	int		r;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
+	}
+
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
 		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+		r = FIDO_ERR_RX;
+		goto out;
 	}
 
 	/* sanity check */
 	if (rk->n_rx >= rk->n_alloc) {
 		fido_log_debug("%s: n_rx=%zu, n_alloc=%zu", __func__, rk->n_rx,
 		    rk->n_alloc);
-		return (FIDO_ERR_INTERNAL);
+		r = FIDO_ERR_INTERNAL;
+		goto out;
 	}
 
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, &rk->ptr[rk->n_rx],
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, &rk->ptr[rk->n_rx],
 	    credman_parse_rk)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_rk", __func__);
-		return (r);
+		goto out;
 	}
 
-	return (FIDO_OK);
+	r = FIDO_OK;
+out:
+	freezero(msg, FIDO_MAXMSG);
+
+	return (r);
 }
 
 static int
@@ -534,69 +582,88 @@ credman_parse_rp_count(const cbor_item_t *key, const cbor_item_t *val,
 static int
 credman_rx_rp(fido_dev_t *dev, fido_credman_rp_t *rp, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
-	int		r;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
 	credman_reset_rp(rp);
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
+	}
+
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
 		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+		r = FIDO_ERR_RX;
+		goto out;
 	}
 
 	/* adjust as needed */
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, rp,
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, rp,
 	    credman_parse_rp_count)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_rp_count", __func__);
-		return (r);
+		goto out;
 	}
 
 	if (rp->n_alloc == 0) {
 		fido_log_debug("%s: n_alloc=0", __func__);
-		return (FIDO_OK);
+		r = FIDO_OK;
+		goto out;
 	}
 
 	/* parse the first rp */
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, &rp->ptr[0],
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, &rp->ptr[0],
 	    credman_parse_rp)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_rp", __func__);
-		return (r);
+		goto out;
 	}
+	rp->n_rx = 1;
 
-	rp->n_rx++;
+	r = FIDO_OK;
+out:
+	freezero(msg, FIDO_MAXMSG);
 
-	return (FIDO_OK);
+	return (r);
 }
 
 static int
 credman_rx_next_rp(fido_dev_t *dev, fido_credman_rp_t *rp, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
-	int		r;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
+	}
+
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
 		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+		r = FIDO_ERR_RX;
+		goto out;
 	}
 
 	/* sanity check */
 	if (rp->n_rx >= rp->n_alloc) {
 		fido_log_debug("%s: n_rx=%zu, n_alloc=%zu", __func__, rp->n_rx,
 		    rp->n_alloc);
-		return (FIDO_ERR_INTERNAL);
+		r = FIDO_ERR_INTERNAL;
+		goto out;
 	}
 
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, &rp->ptr[rp->n_rx],
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, &rp->ptr[rp->n_rx],
 	    credman_parse_rp)) != FIDO_OK) {
 		fido_log_debug("%s: credman_parse_rp", __func__);
-		return (r);
+		goto out;
 	}
 
-	return (FIDO_OK);
+	r = FIDO_OK;
+out:
+	freezero(msg, FIDO_MAXMSG);
+
+	return (r);
 }
 
 static int

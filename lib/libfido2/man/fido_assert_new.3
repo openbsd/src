@@ -1,8 +1,31 @@
-.\" Copyright (c) 2018-2022 Yubico AB. All rights reserved.
-.\" Use of this source code is governed by a BSD-style
-.\" license that can be found in the LICENSE file.
+.\" Copyright (c) 2018-2023 Yubico AB. All rights reserved.
 .\"
-.Dd $Mdocdate: July 9 2025 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.Dd $Mdocdate: September 4 2026 $
 .Dt FIDO_ASSERT_NEW 3
 .Os
 .Sh NAME
@@ -14,6 +37,7 @@
 .Nm fido_assert_user_icon ,
 .Nm fido_assert_user_name ,
 .Nm fido_assert_authdata_ptr ,
+.Nm fido_assert_authdata_raw_ptr ,
 .Nm fido_assert_blob_ptr ,
 .Nm fido_assert_clientdata_hash_ptr ,
 .Nm fido_assert_hmac_secret_ptr ,
@@ -22,6 +46,7 @@
 .Nm fido_assert_sig_ptr ,
 .Nm fido_assert_id_ptr ,
 .Nm fido_assert_authdata_len ,
+.Nm fido_assert_authdata_raw_len ,
 .Nm fido_assert_blob_len ,
 .Nm fido_assert_clientdata_hash_len ,
 .Nm fido_assert_hmac_secret_len ,
@@ -33,7 +58,6 @@
 .Nm fido_assert_flags
 .Nd FIDO2 assertion API
 .Sh SYNOPSIS
-.Lb libfido2 libcbor libcrypto libz
 .In fido.h
 .Ft fido_assert_t *
 .Fn fido_assert_new "void"
@@ -52,6 +76,8 @@
 .Ft const unsigned char *
 .Fn fido_assert_authdata_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft const unsigned char *
+.Fn fido_assert_authdata_raw_ptr "const fido_assert_t *assert" "size_t idx"
+.Ft const unsigned char *
 .Fn fido_assert_clientdata_hash_ptr "const fido_assert_t *assert"
 .Ft const unsigned char *
 .Fn fido_assert_blob_ptr "const fido_assert_t *assert" "size_t idx"
@@ -67,6 +93,8 @@
 .Fn fido_assert_id_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
 .Fn fido_assert_authdata_len "const fido_assert_t *assert" "size_t idx"
+.Ft size_t
+.Fn fido_assert_authdata_raw_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
 .Fn fido_assert_clientdata_hash_len "const fido_assert_t *assert"
 .Ft size_t
@@ -155,9 +183,14 @@ in
 .Fa assert .
 If not NULL, the values returned by these functions point to
 NUL-terminated UTF-8 strings.
+The user display name, icon, and name attributes will typically
+only be returned by the authenticator if user verification was
+performed by the authenticator and multiple resident/discoverable
+credentials were involved in the assertion.
 .Pp
 The
 .Fn fido_assert_authdata_ptr ,
+.Fn fido_assert_authdata_raw_ptr ,
 .Fn fido_assert_clientdata_hash_ptr ,
 .Fn fido_assert_id_ptr ,
 .Fn fido_assert_user_id_ptr ,
@@ -165,7 +198,7 @@ The
 .Fn fido_assert_sigcount ,
 and
 .Fn fido_assert_flags
-functions return pointers to the CBOR-encoded authenticator data,
+functions return pointers to the CBOR-encoded and raw authenticator data,
 client data hash, credential ID, user ID, signature, signature
 count, and authenticator data flags of statement
 .Fa idx
@@ -205,6 +238,7 @@ are CTAP 2.1 extensions.
 .Pp
 The
 .Fn fido_assert_authdata_len ,
+.Fn fido_assert_authdata_raw_len ,
 .Fn fido_assert_clientdata_hash_len ,
 .Fn fido_assert_id_len ,
 .Fn fido_assert_user_id_len ,

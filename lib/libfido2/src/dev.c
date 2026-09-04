@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018-2022 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "fido.h"
@@ -45,16 +46,21 @@ fido_dev_set_option_flags(fido_dev_t *dev, const fido_cbor_info_t *info)
 		if (strcmp(ptr[i], "clientPin") == 0) {
 			dev->flags |= val[i] ?
 			    FIDO_DEV_PIN_SET : FIDO_DEV_PIN_UNSET;
-		} else if (strcmp(ptr[i], "credMgmt") == 0 ||
-			   strcmp(ptr[i], "credentialMgmtPreview") == 0) {
+		} else if (strcmp(ptr[i], "credMgmt") == 0) {
 			if (val[i])
 				dev->flags |= FIDO_DEV_CREDMAN;
+		} else if (strcmp(ptr[i], "credentialMgmtPreview") == 0) {
+			if (val[i])
+				dev->flags |= FIDO_DEV_CREDMAN_PRE;
 		} else if (strcmp(ptr[i], "uv") == 0) {
 			dev->flags |= val[i] ?
 			    FIDO_DEV_UV_SET : FIDO_DEV_UV_UNSET;
 		} else if (strcmp(ptr[i], "pinUvAuthToken") == 0) {
 			if (val[i])
 				dev->flags |= FIDO_DEV_TOKEN_PERMS;
+		} else if (strcmp(ptr[i], "bioEnroll") == 0) {
+			dev->flags |= val[i] ?
+			    FIDO_DEV_BIO_SET : FIDO_DEV_BIO_UNSET;
 		}
 }
 
@@ -468,6 +474,7 @@ fido_dev_free(fido_dev_t **dev_p)
 	if (dev_p == NULL || (dev = *dev_p) == NULL)
 		return;
 
+	fido_blob_reset(&dev->puat);
 	free(dev->path);
 	free(dev);
 
@@ -537,7 +544,7 @@ fido_dev_supports_cred_prot(const fido_dev_t *dev)
 bool
 fido_dev_supports_credman(const fido_dev_t *dev)
 {
-	return (dev->flags & FIDO_DEV_CREDMAN);
+	return (dev->flags & (FIDO_DEV_CREDMAN|FIDO_DEV_CREDMAN_PRE));
 }
 
 bool
@@ -597,4 +604,39 @@ fido_dev_set_timeout(fido_dev_t *dev, int ms)
 	dev->timeout_ms = ms;
 
 	return (FIDO_OK);
+}
+
+const unsigned char *
+fido_dev_puat_ptr(const fido_dev_t *dev)
+{
+	return dev->puat.ptr;
+}
+
+size_t
+fido_dev_puat_len(const fido_dev_t *dev)
+{
+	return dev->puat.len;
+}
+
+const fido_blob_t *
+fido_dev_puat_blob(const fido_dev_t *dev)
+{
+	return fido_blob_is_empty(&dev->puat) ? NULL : &dev->puat;
+}
+
+int
+fido_dev_set_puat(fido_dev_t *dev, const unsigned char *ptr, size_t len)
+{
+	if (fido_dev_is_winhello(dev))
+		return FIDO_ERR_INVALID_ARGUMENT;
+
+	if (ptr == NULL || len == 0) {
+		fido_blob_reset(&dev->puat);
+		return FIDO_OK;
+	}
+
+	if (fido_blob_set(&dev->puat, ptr, len) != 0)
+		return FIDO_ERR_INTERNAL;
+
+	return FIDO_OK;
 }

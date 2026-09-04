@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018-2021 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "fido.h"
@@ -68,10 +69,8 @@ decode_option(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 	fido_opt_array_t	*o = arg;
 	const size_t		 i = o->len;
 
-	if (cbor_isa_float_ctrl(val) == false ||
-	    cbor_float_get_width(val) != CBOR_FLOAT_0 ||
-	    cbor_is_bool(val) == false) {
-		fido_log_debug("%s: cbor type", __func__);
+	if (cbor_decode_bool(val, NULL) < 0) {
+		fido_log_debug("%s: cbor_decode_bool", __func__);
 		return (0); /* ignore */
 	}
 
@@ -109,7 +108,7 @@ decode_options(const cbor_item_t *item, fido_opt_array_t *o)
 }
 
 static int
-decode_protocol(const cbor_item_t *item, void *arg)
+decode_byte_array_item(const cbor_item_t *item, void *arg)
 {
 	fido_byte_array_t	*p = arg;
 	const size_t		 i = p->len;
@@ -128,7 +127,7 @@ decode_protocol(const cbor_item_t *item, void *arg)
 }
 
 static int
-decode_protocols(const cbor_item_t *item, fido_byte_array_t *p)
+decode_byte_array(const cbor_item_t *item, fido_byte_array_t *p)
 {
 	p->ptr = NULL;
 	p->len = 0;
@@ -143,8 +142,8 @@ decode_protocols(const cbor_item_t *item, fido_byte_array_t *p)
 	if (p->ptr == NULL)
 		return (-1);
 
-	if (cbor_array_iter(item, p, decode_protocol) < 0) {
-		fido_log_debug("%s: decode_protocol", __func__);
+	if (cbor_array_iter(item, p, decode_byte_array_item) < 0) {
+		fido_log_debug("%s: decode_byte_array_item", __func__);
 		return (-1);
 	}
 
@@ -237,9 +236,55 @@ decode_algorithms(const cbor_item_t *item, fido_algo_array_t *aa)
 }
 
 static int
+decode_cert(const cbor_item_t *key, const cbor_item_t *val, void *arg)
+{
+	fido_cert_array_t	*c = arg;
+	const size_t		 i = c->len;
+
+	if (cbor_is_int(val) == false) {
+		fido_log_debug("%s: cbor_is_int", __func__);
+		return (0); /* ignore */
+	}
+
+	if (cbor_string_copy(key, &c->name[i]) < 0) {
+		fido_log_debug("%s: cbor_string_copy", __func__);
+		return (0); /* ignore */
+	}
+
+	/* keep name/value and len consistent */
+	c->value[i] = cbor_get_int(val);
+	c->len++;
+
+	return (0);
+}
+
+static int
+decode_certs(const cbor_item_t *item, fido_cert_array_t *c)
+{
+	c->name = NULL;
+	c->value = NULL;
+	c->len = 0;
+
+	if (cbor_isa_map(item) == false ||
+	    cbor_map_is_definite(item) == false) {
+		fido_log_debug("%s: cbor type", __func__);
+		return (-1);
+	}
+
+	c->name = calloc(cbor_map_size(item), sizeof(char *));
+	c->value = calloc(cbor_map_size(item), sizeof(uint64_t));
+	if (c->name == NULL || c->value == NULL)
+		return (-1);
+
+	return (cbor_map_iter(item, c, decode_cert));
+}
+
+static int
 parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 {
 	fido_cbor_info_t *ci = arg;
+	uint64_t x;
+	bool b;
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8) {
@@ -259,7 +304,7 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 	case 5: /* maxMsgSize */
 		return (cbor_decode_uint64(val, &ci->maxmsgsiz));
 	case 6: /* pinProtocols */
-		return (decode_protocols(val, &ci->protocols));
+		return (decode_byte_array(val, &ci->protocols));
 	case 7: /* maxCredentialCountInList */
 		return (cbor_decode_uint64(val, &ci->maxcredcntlst));
 	case 8: /* maxCredentialIdLength */
@@ -270,12 +315,61 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 		return (decode_algorithms(val, &ci->algorithms));
 	case 11: /* maxSerializedLargeBlobArray */
 		return (cbor_decode_uint64(val, &ci->maxlargeblob));
+	case 12: /* forcePINChange */
+		return (cbor_decode_bool(val, &ci->new_pin_reqd));
+	case 13: /* minPINLength */
+		return (cbor_decode_uint64(val, &ci->minpinlen));
 	case 14: /* fwVersion */
 		return (cbor_decode_uint64(val, &ci->fwversion));
 	case 15: /* maxCredBlobLen */
 		return (cbor_decode_uint64(val, &ci->maxcredbloblen));
+	case 16: /* maxRPIDsForSetMinPINLength */
+		return (cbor_decode_uint64(val, &ci->maxrpid_minlen));
+	case 17: /* preferredPlatformUvAttempts */
+		return (cbor_decode_uint64(val, &ci->uv_attempts));
+	case 18: /* uvModality */
+		return (cbor_decode_uint64(val, &ci->uv_modality));
+	case 19: /* certifications */
+		return (decode_certs(val, &ci->certs));
+	case 20: /* remainingDiscoverableCredentials */
+		if (cbor_decode_uint64(val, &x) < 0 || x > INT64_MAX) {
+			fido_log_debug("%s: cbor_decode_uint64", __func__);
+			return (-1);
+		}
+		ci->rk_remaining = (int64_t)x;
+		return (0);
+	case 22: /* attestationFormats */
+		return (decode_string_array(val, &ci->attfmts));
+	case 23: /* uvCountSinceLastPinEntry */
+		if (cbor_decode_uint64(val, &x) < 0 || x > INT64_MAX) {
+			fido_log_debug("%s: cbor_decode_uint64", __func__);
+			return (-1);
+		}
+		ci->uv_since_pin = (int64_t)x;
+		return (0);
+	case 24: /* longTouchForReset */
+		return (cbor_decode_bool(val, &ci->long_reset));
+	case 25: /* encIdentifier */
+		return (fido_blob_decode(val, &ci->encid));
+	case 26: /* transportsForReset */
+		return (decode_string_array(val, &ci->rsttransports));
+	case 27: /* pinComplexityPolicy */
+		if (cbor_decode_bool(val, &b) < 0) {
+			fido_log_debug("%s: cbor_decode_bool", __func__);
+			return (-1);
+		}
+		ci->pinpolicy = b;
+		return (0);
+	case 28: /* pinComplexityPolicyUrl */
+		return (fido_blob_decode(val, &ci->pinpolicyurl));
+	case 29: /* maxPINLength */
+		return (cbor_decode_uint64(val, &ci->maxpinlen));
+	case 30: /* encCredStoreState */
+		return (fido_blob_decode(val, &ci->encstate));
+	case 31: /* authenticatorConfigCommands */
+		return (decode_byte_array(val, &ci->cfgcmds));
 	default: /* ignore */
-		fido_log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type: 0x%02x", __func__, cbor_get_uint8(key));
 		return (0);
 	}
 }
@@ -298,22 +392,31 @@ fido_dev_get_cbor_info_tx(fido_dev_t *dev, int *ms)
 static int
 fido_dev_get_cbor_info_rx(fido_dev_t *dev, fido_cbor_info_t *ci, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
 	fido_log_debug("%s: dev=%p, ci=%p, ms=%d", __func__, (void *)dev,
 	    (void *)ci, *ms);
 
 	fido_cbor_info_reset(ci);
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
-		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
 	}
 
-	return (cbor_parse_reply(reply, (size_t)reply_len, ci,
-	    parse_reply_element));
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
+		r = FIDO_ERR_RX;
+		goto out;
+	}
+
+	r = cbor_parse_reply(msg, (size_t)msglen, ci, parse_reply_element);
+out:
+	freezero(msg, FIDO_MAXMSG);
+
+	return (r);
 }
 
 int
@@ -347,7 +450,14 @@ fido_dev_get_cbor_info(fido_dev_t *dev, fido_cbor_info_t *ci)
 fido_cbor_info_t *
 fido_cbor_info_new(void)
 {
-	return (calloc(1, sizeof(fido_cbor_info_t)));
+	fido_cbor_info_t *ci;
+
+	if ((ci = calloc(1, sizeof(fido_cbor_info_t))) == NULL)
+		return (NULL);
+
+	fido_cbor_info_reset(ci);
+
+	return (ci);
 }
 
 void
@@ -356,9 +466,21 @@ fido_cbor_info_reset(fido_cbor_info_t *ci)
 	fido_str_array_free(&ci->versions);
 	fido_str_array_free(&ci->extensions);
 	fido_str_array_free(&ci->transports);
+	fido_str_array_free(&ci->attfmts);
+	fido_str_array_free(&ci->rsttransports);
 	fido_opt_array_free(&ci->options);
 	fido_byte_array_free(&ci->protocols);
+	fido_byte_array_free(&ci->cfgcmds);
 	fido_algo_array_free(&ci->algorithms);
+	fido_cert_array_free(&ci->certs);
+	fido_blob_reset(&ci->encid);
+	fido_blob_reset(&ci->id);
+	fido_blob_reset(&ci->pinpolicyurl);
+	fido_blob_reset(&ci->encstate);
+	fido_blob_reset(&ci->state);
+	ci->rk_remaining = -1;
+	ci->uv_since_pin = -1;
+	ci->pinpolicy = -1;
 }
 
 void
@@ -421,6 +543,54 @@ fido_cbor_info_aaguid_len(const fido_cbor_info_t *ci)
 	return (sizeof(ci->aaguid));
 }
 
+const unsigned char *
+fido_cbor_info_encid_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->encid.ptr);
+}
+
+size_t
+fido_cbor_info_encid_len(const fido_cbor_info_t *ci)
+{
+	return (ci->encid.len);
+}
+
+const unsigned char *
+fido_cbor_info_id_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->id.ptr);
+}
+
+size_t
+fido_cbor_info_id_len(const fido_cbor_info_t *ci)
+{
+	return (ci->id.len);
+}
+
+const unsigned char *
+fido_cbor_info_encstate_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->encstate.ptr);
+}
+
+size_t
+fido_cbor_info_encstate_len(const fido_cbor_info_t *ci)
+{
+	return (ci->encstate.len);
+}
+
+const unsigned char *
+fido_cbor_info_state_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->state.ptr);
+}
+
+size_t
+fido_cbor_info_state_len(const fido_cbor_info_t *ci)
+{
+	return (ci->state.len);
+}
+
 char **
 fido_cbor_info_options_name_ptr(const fido_cbor_info_t *ci)
 {
@@ -475,6 +645,42 @@ fido_cbor_info_fwversion(const fido_cbor_info_t *ci)
 	return (ci->fwversion);
 }
 
+uint64_t
+fido_cbor_info_minpinlen(const fido_cbor_info_t *ci)
+{
+	return (ci->minpinlen);
+}
+
+uint64_t
+fido_cbor_info_maxrpid_minpinlen(const fido_cbor_info_t *ci)
+{
+	return (ci->maxrpid_minlen);
+}
+
+uint64_t
+fido_cbor_info_uv_attempts(const fido_cbor_info_t *ci)
+{
+	return (ci->uv_attempts);
+}
+
+int64_t
+fido_cbor_info_uv_count_since_pin(const fido_cbor_info_t *ci)
+{
+	return (ci->uv_since_pin);
+}
+
+uint64_t
+fido_cbor_info_uv_modality(const fido_cbor_info_t *ci)
+{
+	return (ci->uv_modality);
+}
+
+int64_t
+fido_cbor_info_rk_remaining(const fido_cbor_info_t *ci)
+{
+	return (ci->rk_remaining);
+}
+
 const uint8_t *
 fido_cbor_info_protocols_ptr(const fido_cbor_info_t *ci)
 {
@@ -509,4 +715,157 @@ fido_cbor_info_algorithm_cose(const fido_cbor_info_t *ci, size_t idx)
 		return (0);
 
 	return (ci->algorithms.ptr[idx].cose);
+}
+
+bool
+fido_cbor_info_new_pin_required(const fido_cbor_info_t *ci)
+{
+	return (ci->new_pin_reqd);
+}
+
+bool
+fido_cbor_info_long_touch_reset(const fido_cbor_info_t *ci)
+{
+	return (ci->long_reset);
+}
+
+char **
+fido_cbor_info_certs_name_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->certs.name);
+}
+
+const uint64_t *
+fido_cbor_info_certs_value_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->certs.value);
+}
+
+size_t
+fido_cbor_info_certs_len(const fido_cbor_info_t *ci)
+{
+	return (ci->certs.len);
+}
+
+char **
+fido_cbor_info_attfmts_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->attfmts.ptr);
+}
+
+size_t
+fido_cbor_info_attfmts_len(const fido_cbor_info_t *ci)
+{
+	return (ci->attfmts.len);
+}
+
+char **
+fido_cbor_info_reset_transports_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->rsttransports.ptr);
+}
+
+size_t
+fido_cbor_info_reset_transports_len(const fido_cbor_info_t *ci)
+{
+	return (ci->rsttransports.len);
+}
+
+int
+fido_cbor_info_pin_policy(const fido_cbor_info_t *ci)
+{
+	return (ci->pinpolicy);
+}
+
+const unsigned char*
+fido_cbor_info_pin_policy_url_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->pinpolicyurl.ptr);
+}
+
+size_t
+fido_cbor_info_pin_policy_url_len(const fido_cbor_info_t *ci)
+{
+	return (ci->pinpolicyurl.len);
+}
+
+uint64_t
+fido_cbor_info_maxpinlen(const fido_cbor_info_t *ci)
+{
+	return (ci->maxpinlen);
+}
+
+const uint8_t *
+fido_cbor_info_cfgcmds_ptr(const fido_cbor_info_t *ci)
+{
+	return (ci->cfgcmds.ptr);
+}
+
+size_t
+fido_cbor_info_cfgcmds_len(const fido_cbor_info_t *ci)
+{
+	return (ci->cfgcmds.len);
+}
+
+static int
+decrypt(const fido_blob_t *secret, const char *info, const fido_blob_t *in,
+    fido_blob_t *out)
+{
+	fido_blob_t key;
+	unsigned char keybuf[16];
+	int r = FIDO_ERR_INTERNAL;
+
+	key.ptr = keybuf;
+	key.len = sizeof(keybuf);
+
+	fido_blob_reset(out);
+
+	if (hkdf_sha256(key.ptr, key.len, info, secret) != 0) {
+		fido_log_debug("%s: hkdf_sha256", __func__);
+		goto fail;
+	}
+	if (aes128_cbc_dec(&key, in, out) != 0) {
+		fido_log_debug("%s: aes128_cbc_dec", __func__);
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	explicit_bzero(key.ptr, key.len);
+
+	return r;
+}
+
+int
+fido_cbor_info_decrypt(fido_cbor_info_t *ci, const unsigned char *ppuat,
+    size_t ppuat_len)
+{
+	fido_blob_t secret;
+	int r;
+
+	memset(&secret, 0, sizeof(secret));
+
+	if (fido_blob_set(&secret, ppuat, ppuat_len) != 0) {
+		fido_log_debug("%s: fido_blob_set", __func__);
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	if (!fido_blob_is_empty(&ci->encid) && (r = decrypt(&secret,
+	    "encIdentifier", &ci->encid, &ci->id)) != FIDO_OK) {
+		fido_log_debug("%s: encIdentifier", __func__);
+		goto fail;
+	}
+
+	if (!fido_blob_is_empty(&ci->encstate) && (r = decrypt(&secret,
+	    "encCredStoreState", &ci->encstate, &ci->state)) != FIDO_OK) {
+		fido_log_debug("%s: encIdentifier", __func__);
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	fido_blob_reset(&secret);
+
+	return r;
 }

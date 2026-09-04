@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2020 Yubico AB. All rights reserved.
+ * Copyright (c) 2020-2026 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <openssl/sha.h>
@@ -200,27 +201,38 @@ parse_largeblob_reply(const cbor_item_t *key, const cbor_item_t *val,
 static int
 largeblob_get_rx(fido_dev_t *dev, fido_blob_t **chunk, int *ms)
 {
-	unsigned char reply[FIDO_MAXMSG];
-	int reply_len, r;
+	unsigned char *msg;
+	int msglen, r;
 
 	*chunk = NULL;
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
+	}
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
 		fido_log_debug("%s: fido_rx", __func__);
-		return FIDO_ERR_RX;
+		r = FIDO_ERR_RX;
+		goto out;
 	}
 	if ((*chunk = fido_blob_new()) == NULL) {
 		fido_log_debug("%s: fido_blob_new", __func__);
-		return FIDO_ERR_INTERNAL;
+		r = FIDO_ERR_INTERNAL;
+		goto out;
 	}
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, *chunk,
+	if ((r = cbor_parse_reply(msg, (size_t)msglen, *chunk,
 	    parse_largeblob_reply)) != FIDO_OK) {
 		fido_log_debug("%s: parse_largeblob_reply", __func__);
-		fido_blob_free(chunk);
-		return r;
+		goto out;
 	}
 
-	return FIDO_OK;
+	r = FIDO_OK;
+out:
+	if (r != FIDO_OK)
+		fido_blob_free(chunk);
+
+	freezero(msg, FIDO_MAXMSG);
+
+	return r;
 }
 
 static cbor_item_t *
@@ -534,21 +546,19 @@ fail:
 }
 
 static int
-largeblob_get_uv_token(fido_dev_t *dev, const char *pin, fido_blob_t **token,
+largeblob_get_uv_token(fido_dev_t *dev, const char *pin, fido_blob_t *token,
     int *ms)
 {
 	es256_pk_t *pk = NULL;
 	fido_blob_t *ecdh = NULL;
 	int r;
 
-	if ((*token = fido_blob_new()) == NULL)
-		return FIDO_ERR_INTERNAL;
 	if ((r = fido_do_ecdh(dev, &pk, &ecdh, ms)) != FIDO_OK) {
 		fido_log_debug("%s: fido_do_ecdh", __func__);
 		goto fail;
 	}
 	if ((r = fido_dev_get_uv_token(dev, CTAP_CBOR_LARGEBLOB, pin, ecdh, pk,
-	    NULL, *token, ms)) != FIDO_OK) {
+	    NULL, token, ms)) != FIDO_OK) {
 		fido_log_debug("%s: fido_dev_get_uv_token", __func__);
 		goto fail;
 	}
@@ -556,7 +566,7 @@ largeblob_get_uv_token(fido_dev_t *dev, const char *pin, fido_blob_t **token,
 	r = FIDO_OK;
 fail:
 	if (r != FIDO_OK)
-		fido_blob_free(token);
+		fido_blob_reset(token);
 
 	fido_blob_free(&ecdh);
 	es256_pk_free(&pk);
@@ -569,11 +579,13 @@ largeblob_set_array(fido_dev_t *dev, const cbor_item_t *item, const char *pin,
     int *ms)
 {
 	unsigned char dgst[SHA256_DIGEST_LENGTH];
-	fido_blob_t cbor, *token = NULL;
+	fido_blob_t cbor, token_store;
+	const fido_blob_t *token = NULL;
 	size_t chunklen, maxchunklen, totalsize;
 	int r;
 
 	memset(&cbor, 0, sizeof(cbor));
+	memset(&token_store, 0, sizeof(token_store));
 
 	if ((maxchunklen = get_chunklen(dev)) == 0) {
 		fido_log_debug("%s: maxchunklen=%zu", __func__, maxchunklen);
@@ -601,13 +613,17 @@ largeblob_set_array(fido_dev_t *dev, const cbor_item_t *item, const char *pin,
 		goto fail;
 	}
 	totalsize = cbor.len + sizeof(dgst) - 16; /* the first 16 bytes only */
-	if (pin != NULL || fido_dev_supports_permissions(dev)) {
-		if ((r = largeblob_get_uv_token(dev, pin, &token,
+
+	if ((token = fido_dev_puat_blob(dev)) == NULL &&
+	    (pin != NULL || fido_dev_supports_permissions(dev))) {
+		if ((r = largeblob_get_uv_token(dev, pin, &token_store,
 		    ms)) != FIDO_OK) {
 			fido_log_debug("%s: largeblob_get_uv_token", __func__);
 			goto fail;
 		}
+		token = &token_store;
 	}
+
 	for (size_t offset = 0; offset < cbor.len; offset += chunklen) {
 		if ((chunklen = cbor.len - offset) > maxchunklen)
 			chunklen = maxchunklen;
@@ -627,7 +643,7 @@ largeblob_set_array(fido_dev_t *dev, const cbor_item_t *item, const char *pin,
 
 	r = FIDO_OK;
 fail:
-	fido_blob_free(&token);
+	fido_blob_reset(&token_store);
 	fido_blob_reset(&cbor);
 
 	return r;
