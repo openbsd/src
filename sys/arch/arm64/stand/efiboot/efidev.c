@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.13 2023/10/26 14:08:48 jsg Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.14 2026/09/04 17:48:11 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <sys/hibernate.h>
 #include <lib/libz/zlib.h>
 #include <isofs/cd9660/iso.h>
 
@@ -765,4 +766,44 @@ espstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	return EOPNOTSUPP;
+}
+
+void
+check_hibernate(struct diskinfo *dip)
+{
+	uint8_t buf[DEV_BSIZE];
+	daddr_t sec;
+	int error;
+	union hibernate_info *hib = (union hibernate_info *)&buf;
+
+	/* Check that the b partition is swap. */
+	if (dip->disklabel.d_partitions[1].p_fstype != FS_SWAP ||
+	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) == 0)
+		return;
+
+	/* Last sector of swap holds the hibernate signature. */
+	sec = DL_GETPOFFSET(&dip->disklabel.d_partitions[1]) +
+	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) - 1;
+
+	/*
+	 * Use diskio (raw, absolute LBA) instead of strategy.  efistrategy
+	 * implicitly adds dip->disklabel.d_partitions[dip->part].p_offset
+	 * to the incoming block number, treating it as partition-relative
+	 * -- on amd64 this works because dip->bsddev's partition is
+	 * RAW_PART (c, with p_offset == 0), but here dip->part defaults to
+	 * 0 (= a), whose p_offset is non-zero.
+	 */
+	error = dip->diskio(F_READ, dip,
+	    DL_SECTOBLK(&dip->disklabel, sec), 1, &buf);
+	if (error == 0 && hib->magic == HIBERNATE_MAGIC)
+		dip->flags |= DISKINFO_FLAG_HIBVALID;
+}
+
+int
+bootdev_has_hibernate(void)
+{
+	if (bootdev_dip == NULL)
+		return 0;
+
+	return ((bootdev_dip->flags & DISKINFO_FLAG_HIBVALID) ? 1 : 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.71 2026/04/19 19:29:53 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.72 2026/09/04 17:48:11 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -332,10 +332,12 @@ efi_diskprobe(void)
 			TAILQ_INSERT_HEAD(&disklist, di, list);
 			bootdev_dip = di;
 			bootdev = 1;
+			check_hibernate(di);
 			continue;
 		}
 next:
 		TAILQ_INSERT_TAIL(&disklist, di, list);
+		check_hibernate(di);
 	}
 
 	free(handles, sz);

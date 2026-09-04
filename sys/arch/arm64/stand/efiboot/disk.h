@@ -1,4 +1,4 @@
-/* $OpenBSD: disk.h,v 1.3 2020/12/09 18:10:18 krw Exp $ */
+/* $OpenBSD: disk.h,v 1.4 2026/09/04 17:48:11 mglocker Exp $ */
 
 #ifndef _DISK_H
 #define _DISK_H
@@ -18,6 +18,7 @@ struct diskinfo {
 	u_int part;
 	u_int flags;
 #define DISKINFO_FLAG_GOODLABEL		(1 << 0)
+#define DISKINFO_FLAG_HIBVALID		(1 << 1)
 
 	int (*diskio)(int, struct diskinfo *, u_int, int, void *);
 	int (*strategy)(void *, int, daddr_t, size_t, void *, size_t *);

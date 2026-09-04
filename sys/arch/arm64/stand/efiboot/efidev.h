@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.h,v 1.4 2023/04/18 23:11:56 dlg Exp $	*/
+/*	$OpenBSD: efidev.h,v 1.5 2026/09/04 17:48:11 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,6 +34,8 @@ int		 efiopen(struct open_file *, ...);
 int		 efistrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int		 eficlose(struct open_file *);
 int		 efiioctl(struct open_file *, u_long, void *);
+void		 check_hibernate(struct diskinfo *);
+int		 bootdev_has_hibernate(void);
 
 int		 esp_open(char *, struct open_file *);
 int		 esp_close(struct open_file *);

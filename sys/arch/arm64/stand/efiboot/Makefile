@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2024/06/30 18:17:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2026/09/04 17:48:11 mglocker Exp $
 
 NOMAN=		#
 
@@ -49,6 +49,7 @@ CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/arm64
 CPPFLAGS+=	-D_STANDALONE -DBOOT_STTY
 CPPFLAGS+=	-DSMALL -DSLOW -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-DNEEDS_HEAP_H -DMDRANDOM -DFWRANDOM
+CPPFLAGS+=	-DHIBERNATE
 COPTS+=		-Wno-attributes -Wno-format
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
