@@ -1,13 +1,30 @@
 TBL-DATA-BLANKLINE(1)       General Commands Manual      TBL-DATA-BLANKLINE(1)
 
 NNAAMMEE
-     tbl-data-blankline - blank line in a table
+     tbl-data-blankline - blank lines in a table
 
 DDEESSCCRRIIPPTTIIOONN
-     normal text
+     completely empty line:
      ffiirrsstt
 
      llaasstt
-     normal text
 
-OpenBSD                        January 21, 2015          TBL-DATA-BLANKLINE(1)
+     empty macro line:
+     _f_i_r_s_t
+     llaasstt
+
+     empty line where the layout contains a horizontal line:
+     _f_i_r_s_t
+     ------
+
+     _l_a_s_t
+
+     empty macro line where the layout contains a horizontal line:
+     _f_i_r_s_t
+     -------
+     _l_a_s_t _1
+     _l_a_s_t _2
+
+     final text
+
+OpenBSD                        September 4, 2026         TBL-DATA-BLANKLINE(1)
