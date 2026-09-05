@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1288 2026/08/10 21:22:35 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1289 2026/09/05 11:28:38 jan Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -103,7 +103,6 @@ wait_cgiinfo() {
 		esac
 	done <$CGI_INFO
 }
-
 
 # ------------------------------------------------------------------------------
 # Utils functions
@@ -298,9 +297,9 @@ scan_dmesg() {
 # Extract device names from hw.disknames matching sed expression $1.
 scan_disknames() {
 	bsort $(IFS=,
-        	for _d in $(sysctl -n hw.disknames); do
+		for _d in $(sysctl -n hw.disknames); do
 			echo "${_d%%:*} "
-        	done | sed -n "$1")
+		done | sed -n "$1")
 }
 
 # Return list of disks with softraid chunks, optionally limited to the volume $1.
@@ -1352,9 +1351,9 @@ configure_ifs() {
 	while :; do
 		set -sA _ifs -- $(get_ifs)
 
-                # Skip all interface configuration questions if there is no
-                # physical interface to begin with.
-                ((${#_ifs[*]} == 0)) && break
+		# Skip all interface configuration questions if there is no
+		# physical interface to begin with.
+		((${#_ifs[*]} == 0)) && break
 
 		# Discover last configured vlan interface and increment its
 		# minor for the next offered vlan interface.
@@ -1476,7 +1475,6 @@ get_fqdn() {
 
 	echo "${_dn:=my.domain}"
 }
-
 
 # ------------------------------------------------------------------------------
 # Support functions for install_sets()
@@ -2142,7 +2140,6 @@ mount_mnt2() {
 	mount -o ro,$_opts /dev/$_dev$resp /mnt2
 }
 
-
 # ------------------------------------------------------------------------------
 # Functions used in install.sh/upgrade.sh and its associates
 # ------------------------------------------------------------------------------
@@ -2435,7 +2432,6 @@ get_rootinfo() {
 	local _rootdisks=$(get_dkdevs_root) _dkdev
 	local _q="Which disk is the root disk? ('?' for details)"
 
-	
 	if [[ $MODE == install ]]; then
 		# Prefer disks bigger than 1G as small ones tend to be install
 		# media, softraid(4) key disks or tiny USB sticks or SD cards.
@@ -2798,7 +2794,7 @@ install_sets() {
 	local _cddevs=$(get_cddevs) _d=$CGI_METHOD _im _locs=disk _src
 
 	# Offer network methods if there are physical interfaces.
-        if [[ -n $(get_ifs) ]]; then
+	if [[ -n $(get_ifs) ]]; then
 		_locs="$_locs http"
 
 		# Offer NFS if the ramdisk supports it.
@@ -2811,7 +2807,7 @@ install_sets() {
 		: ${_d:=http}
 	fi
 
-        # Default to CD, assuming it is installXY.iso containing sets.
+	# Default to CD, assuming it is installXY.iso containing sets.
 	[[ -n $_cddevs ]] && : ${_d:=cd0}
 
 	# Without network or CD, only disk is valid and available.
@@ -3091,7 +3087,7 @@ do_autoinstall() {
 	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
 		tee /dev/stderr | sed "s/^.*$(echo '\r')//" >/tmp/ai/ai.log
 
-	$UU || [[ -f /tmp/ai/ai.done ]] || 
+	$UU || [[ -f /tmp/ai/ai.done ]] ||
 		err_exit "failed; check /tmp/ai/ai.log"
 
 	# Email autoinstall protocol to root on next boot.
@@ -3560,7 +3556,6 @@ start_watchdog() {
 # above, so it's safest to put this code here rather than at the top.
 # ------------------------------------------------------------------------------
 
-
 PARTITIONS=a-p
 (( $(sysctl -n kern.maxpartitions) == 52 )) && PARTITIONS=a-zA-Z
 
@@ -3613,8 +3608,8 @@ dmesgtail >$DMESGBOOT
 #	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
 #
 # The following functions can be provided if required:
-#	md_fw()                   - device specific firmware quirks
-#	md_prep_fdisk()           - put a partition table on the disk
+#	md_fw()			  - device specific firmware quirks
+#	md_prep_fdisk()		  - put a partition table on the disk
 #
 # The following variables can be provided if required:
 #	MDEFI       - set to 'y' on archs that support GPT partitioning
