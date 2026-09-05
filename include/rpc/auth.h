@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.9 2022/02/14 03:38:59 guenther Exp $	*/
+/*	$OpenBSD: auth.h,v 1.10 2026/09/05 08:36:42 jsg Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ typedef struct __rpc_auth {
 		void	(*ah_nextverf)(struct __rpc_auth *);
 		/* nextverf & serialize */
 		int	(*ah_marshal)(struct __rpc_auth *, XDR *);
-		/* validate varifier */
+		/* validate verifier */
 		int	(*ah_validate)(struct __rpc_auth *,
 			    struct opaque_auth *);
 		/* refresh credentials */
