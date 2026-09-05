@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.23 2021/11/22 20:18:27 jca Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.24 2026/09/05 08:18:23 jsg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,7 +177,7 @@ struct __res_state_ext {
 #define RES_AAONLY	0x00000004	/* authoritative answers only (!IMPL)*/
 #define RES_USEVC	0x00000008	/* use virtual circuit */
 #define RES_PRIMARY	0x00000010	/* query primary server only (!IMPL) */
-#define RES_IGNTC	0x00000020	/* ignore trucation errors */
+#define RES_IGNTC	0x00000020	/* ignore truncation errors */
 #define RES_RECURSE	0x00000040	/* recursion desired */
 #define RES_DEFNAMES	0x00000080	/* use default domain name */
 #define RES_STAYOPEN	0x00000100	/* Keep TCP socket open */
