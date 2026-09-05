@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.69 2026/09/04 23:54:56 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.70 2026/09/05 17:22:52 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -108,12 +108,13 @@ spin() {
 
 fetch() {
 	local _src="${FWURL}/${1##*/}" _dst=$1 _user=_file _exit _error=''
-	local _ftp_errors="$FD_DIR/ftp_errors"
+	local _dst_dir=${_dst%/*} _ftp_errors="$FD_DIR/ftp_errors"
 	integer _file_limit=$MAX_FIRMWARE_SIZE _free_space=0
 	rm -f "$_ftp_errors"
 
+	[ "$_dst_dir" = "$_dst" ] && _dst_dir=.
 	[ "${_dst##*/}" = "${CFILE##*/}.sig" ] && _file_limit=$MAX_CFILE_SIZE
-	_free_space=$(df -Pk "${_dst%/*}" |
+	_free_space=$(df -Pk "$_dst_dir" |
 	     sed -nE 's/^([^ ]+ +){3}([0-9]+) .*$/\2/p')
 	if ((_free_space <= 0)); then
 		warn "Cannot determine free space for $_dst"
