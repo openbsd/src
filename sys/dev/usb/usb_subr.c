@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.167 2026/08/15 22:06:40 gnezdo Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.168 2026/09/08 00:24:30 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1298,6 +1298,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 	struct usbd_port *p;
 	int i;
 
+	memset(di, 0, sizeof(*di));
 	di->udi_bus = dev->bus->usbctl->dv_unit;
 	di->udi_addr = dev->address;
 	strlcpy(di->udi_vendor, dev->vendor, sizeof(di->udi_vendor));
@@ -1316,16 +1317,10 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 	di->udi_port = dev->powersrc ? dev->powersrc->portno : 0;
 
 	if (dev->subdevs != NULL) {
-		for (i = 0; dev->subdevs[i] && i < USB_MAX_DEVNAMES; i++) {
-			strncpy(di->udi_devnames[i],
+		for (i = 0; dev->subdevs[i] && i < USB_MAX_DEVNAMES; i++)
+			strlcpy(di->udi_devnames[i],
 			    dev->subdevs[i]->dv_xname, USB_MAX_DEVNAMELEN);
-			di->udi_devnames[i][USB_MAX_DEVNAMELEN-1] = '\0';
-		}
-	} else
-		i = 0;
-
-	for (/*i is set */; i < USB_MAX_DEVNAMES; i++)
-		di->udi_devnames[i][0] = 0; /* empty */
+	}
 
 	if (dev->hub) {
 		for (i = 0;
@@ -1335,13 +1330,10 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 			    UGETW(p->status.wPortStatus);
 		}
 		di->udi_nports = dev->hub->nports;
-	} else
-		di->udi_nports = 0;
+	}
 
-	bzero(di->udi_serial, sizeof(di->udi_serial));
 	if (dev->serial != NULL)
-		strlcpy(di->udi_serial, dev->serial,
-		    sizeof(di->udi_serial));
+		strlcpy(di->udi_serial, dev->serial, sizeof(di->udi_serial));
 }
 
 int
