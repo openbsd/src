@@ -1,4 +1,4 @@
-/* $OpenBSD: read.c,v 1.193 2026/08/18 14:02:11 schwarze Exp $ */
+/* $OpenBSD: read.c,v 1.194 2026/09/08 21:10:21 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022, 2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -542,11 +542,11 @@ mparse_end(struct mparse *curp)
 {
 	if (curp->man->meta.macroset == MACROSET_NONE)
 		curp->man->meta.macroset = MACROSET_MAN;
+	roff_endparse(curp->roff);
 	if (curp->man->meta.macroset == MACROSET_MDOC)
 		mdoc_endparse(curp->man);
 	else
 		man_endparse(curp->man);
-	roff_endparse(curp->roff);
 }
 
 /*
