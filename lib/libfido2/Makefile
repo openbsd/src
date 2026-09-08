@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2026/09/04 16:20:01 kirill Exp $
+# $OpenBSD: Makefile,v 1.11 2026/09/08 19:15:21 kirill Exp $
 
 .PATH:	${.CURDIR}/man ${.CURDIR}/src
 
@@ -13,9 +13,11 @@ LDADD+=		-L${BSDOBJDIR}/lib/libcbor -lcbor
 LDADD+=		-L${BSDOBJDIR}/lib/libcrypto -lcrypto
 LDADD+=		-L${BSDOBJDIR}/lib/libz -lz
 
+PC_FILES=	libfido2.pc
+
 SYMBOL_LIST=	Symbols.list
 VERSION_SCRIPT=	Symbols.map
-CLEANFILES=	${SYMBOL_LIST} ${VERSION_SCRIPT}
+CLEANFILES=	${PC_FILES} ${SYMBOL_LIST} ${VERSION_SCRIPT}
 
 LIB=	fido2
 SRCS=	aes256.c assert.c authkey.c bio.c blob.c buf.c cbor.c compress.c
@@ -62,3 +64,11 @@ ${VERSION_SCRIPT}: ${SYMBOL_LIST}
 	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
 
 .include <bsd.lib.mk>
+
+all: ${PC_FILES}
+${PC_FILES}: ${.CURDIR}/NEWS ${.CURDIR}/generate_pkgconfig.sh
+	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
+
+beforeinstall:
+	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
+	    -m ${SHAREMODE} ${.OBJDIR}/${PC_FILES} ${DESTDIR}/usr/lib/pkgconfig/
