@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.510 2026/09/01 19:50:58 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.511 2026/09/08 10:20:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3084,6 +3084,8 @@ server_client_control_flags(struct client *c, const char *next)
 		return (CLIENT_CONTROL_NOOUTPUT);
 	if (strcmp(next, "wait-exit") == 0)
 		return (CLIENT_CONTROL_WAITEXIT);
+	if (strcmp(next, "new-layouts") == 0)
+		return (CLIENT_CONTROL_NEWLAYOUTS);
 	return (0);
 }
 
@@ -3150,6 +3152,8 @@ server_client_get_flags(struct client *c)
 		strlcat(s, "no-output,", sizeof s);
 	if (c->flags & CLIENT_CONTROL_WAITEXIT)
 		strlcat(s, "wait-exit,", sizeof s);
+	if (c->flags & CLIENT_CONTROL_NEWLAYOUTS)
+		strlcat(s, "new-layouts,", sizeof s);
 	if (c->flags & CLIENT_CONTROL_PAUSEAFTER) {
 		xsnprintf(tmp, sizeof tmp, "pause-after=%u,",
 		    c->pause_age / 1000);

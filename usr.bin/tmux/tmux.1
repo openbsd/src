@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1166 2026/09/08 08:33:10 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1167 2026/09/08 10:20:08 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -1114,6 +1114,8 @@ The flags are:
 .Bl -tag -width Ds
 .It ignore\-size
 the client does not affect the size of other clients
+.It new\-layouts
+use the new layout string format
 .It no\-detach\-on\-destroy
 do not detach the client when the session it is attached to is destroyed if
 there are any other sessions
