@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.122 2026/08/01 17:04:12 miod Exp $
+# $OpenBSD: Makefile,v 1.123 2026/09/08 08:33:10 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -89,6 +89,7 @@ SRCS=	alerts.c \
 	input-keys.c \
 	input.c \
 	job.c \
+	json.c \
 	key-bindings.c \
 	key-string.c \
 	layout-custom.c \

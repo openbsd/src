@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1165 2026/09/08 07:31:59 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1166 2026/09/08 08:33:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -8277,7 +8277,7 @@ The following keys are available in menus:
 .El
 .Tg display
 .It Xo Ic display\-message
-.Op Fl aCIlNpv
+.Op Fl aCIjlNpv
 .Op Fl c Ar target\-client
 .Op Fl d Ar delay
 .Op Fl t Ar target\-pane
@@ -8316,6 +8316,12 @@ section; information is taken from
 if
 .Fl t
 is given, otherwise the active pane.
+.Pp
+If
+.Fl j
+is given,
+.Ar message
+is parsed as JSON and printed.
 .Pp
 .Fl v
 prints verbose logging as the format is parsed and
