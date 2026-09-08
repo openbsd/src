@@ -609,14 +609,14 @@ EXPORT_SYMBOL(ttm_tt_pages_limit);
  */
 int ttm_tt_setup_backup(struct ttm_tt *tt)
 {
-	struct file *backup =
+	struct uvm_object *backup =
 		ttm_backup_shmem_create(((loff_t)tt->num_pages) << PAGE_SHIFT);
 
 	if (WARN_ON_ONCE(!(tt->page_flags & TTM_TT_FLAG_EXTERNAL_MAPPABLE)))
 		return -EINVAL;
 
-	if (IS_ERR(backup))
-		return PTR_ERR(backup);
+	if (backup == NULL)
+		return -ENOMEM;
 
 	if (tt->backup)
 		ttm_backup_fini(tt->backup);

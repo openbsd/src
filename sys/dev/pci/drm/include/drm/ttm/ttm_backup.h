@@ -53,20 +53,20 @@ ttm_backup_page_ptr_to_handle(const struct vm_page *page)
 	return (unsigned long)page >> 1;
 }
 
-void ttm_backup_drop(struct file *backup, pgoff_t handle);
+void ttm_backup_drop(struct uvm_object *backup, pgoff_t handle);
 
 int ttm_backup_copy_page(struct file *backup, struct vm_page *dst,
 			 pgoff_t handle, bool intr);
 
 s64
-ttm_backup_backup_page(struct file *backup, struct vm_page *page,
+ttm_backup_backup_page(struct uvm_object *backup, struct vm_page *page,
 		       bool writeback, pgoff_t idx, gfp_t page_gfp,
 		       gfp_t alloc_gfp);
 
-void ttm_backup_fini(struct file *backup);
+void ttm_backup_fini(struct uvm_object *backup);
 
 u64 ttm_backup_bytes_avail(void);
 
-struct file *ttm_backup_shmem_create(loff_t size);
+struct uvm_object *ttm_backup_shmem_create(loff_t size);
 
 #endif

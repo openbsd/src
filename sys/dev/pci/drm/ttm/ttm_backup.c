@@ -30,7 +30,7 @@ static pgoff_t ttm_backup_handle_to_shmem_idx(pgoff_t handle)
  * @backup: The struct backup pointer used to obtain the handle
  * @handle: The handle obtained from the @backup_page function.
  */
-void ttm_backup_drop(struct file *backup, pgoff_t handle)
+void ttm_backup_drop(struct uvm_object *backup, pgoff_t handle)
 {
 	STUB();
 #ifdef notyet
@@ -102,7 +102,7 @@ int ttm_backup_copy_page(struct file *backup, struct vm_page *dst,
  * the folio size- and usage.
  */
 s64
-ttm_backup_backup_page(struct file *backup, struct vm_page *page,
+ttm_backup_backup_page(struct uvm_object *backup, struct vm_page *page,
 		       bool writeback, pgoff_t idx, gfp_t page_gfp,
 		       gfp_t alloc_gfp)
 {
@@ -153,9 +153,9 @@ ttm_backup_backup_page(struct file *backup, struct vm_page *page,
  *
  * After a call to this function, it's illegal to use the @backup pointer.
  */
-void ttm_backup_fini(struct file *backup)
+void ttm_backup_fini(struct uvm_object *backup)
 {
-	fput(backup);
+	uao_detach(backup);
 }
 
 /**
@@ -189,11 +189,7 @@ EXPORT_SYMBOL_GPL(ttm_backup_bytes_avail);
  * Return: A pointer to a struct file on success,
  * an error pointer on error.
  */
-struct file *ttm_backup_shmem_create(loff_t size)
+struct uvm_object *ttm_backup_shmem_create(loff_t size)
 {
-	STUB();
-	return ERR_PTR(-ENOSYS);
-#ifdef notyet
-	return shmem_file_setup("ttm shmem backup", size, 0);
-#endif
+	return uao_create(size, 0);
 }
