@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.312 2026/08/19 08:56:28 hshoexer Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.313 2026/09/08 00:47:00 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -466,15 +466,16 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	bios_diskinfo_t *pdi;
 	int biosdev;
 
-	/* all sysctl names at this level except diskinfo are terminal */
-	if (namelen != 1 && name[0] != BIOS_DISKINFO)
-		return (ENOTDIR);	       /* overloaded */
+	if (namelen < 1)
+		return (ENOTDIR);
 
 	if (!(bootapiver & BAPIV_VECTOR))
 		return EOPNOTSUPP;
 
 	switch (name[0]) {
 	case BIOS_DEV:
+		if (namelen != 1)
+			return ENOTDIR;
 		if ((pdi = bios_getdiskinfo(bootdev)) == NULL)
 			return ENXIO;
 		biosdev = pdi->bios_number;
@@ -486,6 +487,8 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return ENXIO;
 		return sysctl_rdstruct(oldp, oldlenp, newp, pdi, sizeof(*pdi));
 	case BIOS_CKSUMLEN:
+		if (namelen != 1)
+			return ENOTDIR;
 		return sysctl_rdint(oldp, oldlenp, newp, bios_cksumlen);
 	default:
 		return EOPNOTSUPP;
