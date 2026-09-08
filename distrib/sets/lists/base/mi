@@ -807,6 +807,7 @@
 ./usr/lib/pkgconfig/fuse.pc
 ./usr/lib/pkgconfig/libcrypto.pc
 ./usr/lib/pkgconfig/libelf.pc
+./usr/lib/pkgconfig/libfido2.pc
 ./usr/lib/pkgconfig/libssl.pc
 ./usr/lib/pkgconfig/menu.pc
 ./usr/lib/pkgconfig/menuw.pc
