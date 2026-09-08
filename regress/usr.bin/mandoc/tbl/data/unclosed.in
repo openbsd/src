@@ -1,0 +1,11 @@
+.\" $OpenBSD: unclosed.in,v 1.1 2026/09/08 21:17:06 schwarze Exp $
+.TH TBL-DATA-UNCLOSED 1 "September 8, 2026"
+.SH NAME
+tbl-data-unclosed \- table not closed before the end of the file
+.SH DESCRIPTION
+normal text
+.TS
+box;
+l.
+first line
+second line

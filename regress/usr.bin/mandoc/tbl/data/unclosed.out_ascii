@@ -1,0 +1,13 @@
+TBL-DATA-UNCLOSED(1)        General Commands Manual       TBL-DATA-UNCLOSED(1)
+
+NNAAMMEE
+     tbl-data-unclosed - table not closed before the end of the file
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text
+     +-------------+
+     | first line  |
+     | second line |
+     +-------------+
+
+OpenBSD                        September 8, 2026          TBL-DATA-UNCLOSED(1)
