@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.113 2026/04/21 06:38:28 sashan Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.114 2026/09/08 18:42:14 bluhm Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -789,8 +789,9 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		if (pfi_skip_if(name, p))
 			continue;
-		if (*size <= ++n)
+		if (n >= *size)
 			break;
+		n++;
 		if (!p->pfik_tzero)
 			p->pfik_tzero = gettime();
 		memcpy(buf++, p, sizeof(*buf));
