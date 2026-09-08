@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.156 2026/09/02 19:25:00 dv Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.157 2026/09/08 21:01:59 daniel Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -495,6 +495,7 @@ identifycpu(struct cpu_info *ci)
 	uint32_t cflushsz, curcpu_1_ecx, curcpu_apmi_edx = 0;
 	uint32_t curcpu_perf_eax = 0, curcpu_perf_edx = 0;
 	uint32_t curcpu_tpm_ecxflags = 0, curcpu_d_1_eax = 0;
+	uint32_t sefflags_max = 0;
 	uint64_t freq = 0;
 	u_int32_t dummy;
 	char mycpu_model[48];
@@ -606,10 +607,15 @@ identifycpu(struct cpu_info *ci)
 
 	if (ci->ci_cpuid_level >= 0x07) {
 		/* "Structured Extended Feature Flags" */
-		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags_ebx,
+		CPUID_LEAF(0x7, 0, sefflags_max, ci->ci_feature_sefflags_ebx,
 		    ci->ci_feature_sefflags_ecx, ci->ci_feature_sefflags_edx);
+
 		/* SEFF0ECX_OSPKE is set late on AP */
 		ci->ci_feature_sefflags_ecx &= ~SEFF0ECX_OSPKE;
+
+		if (sefflags_max >= 2)
+			CPUID_LEAF(0x7, 2, dummy, dummy, dummy,
+			    ci->ci_feature_sefflags_2_edx);
 	}
 
 	printf("%s: %s", ci->ci_dev->dv_xname, mycpu_model);
@@ -659,6 +665,8 @@ identifycpu(struct cpu_info *ci)
 	    'b', CPUID_MEMBER(ci_feature_sefflags_ebx), SEFF0_EBX_BITS,
 	    'c', CPUID_MEMBER(ci_feature_sefflags_ecx), SEFF0_ECX_BITS,
 	    'd', CPUID_MEMBER(ci_feature_sefflags_edx), SEFF0_EDX_BITS);
+	pcpuid(ci, "7.2", 'd', CPUID_MEMBER(ci_feature_sefflags_2_edx),
+	    SEFF2_EDX_BITS);
 	print_perf_cpuid(ci, curcpu_perf_eax, curcpu_perf_edx);
 	pcpuid(ci, "d.1", 'a', curcpu_d_1_eax, prevcpu_d_1_eax, XSAVE_BITS);
 	pcpuid2(ci, "80000001",

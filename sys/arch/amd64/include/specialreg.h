@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.126 2026/09/02 19:25:00 dv Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.127 2026/09/08 21:01:59 daniel Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -281,6 +281,11 @@
     ("\20" "\03AVX512FNNIW" "\04AVX512FMAPS" "\012SRBDS_CTRL" "\013MD_CLEAR" \
      "\016TSXFA" "\025IBT" "\033IBRS,IBPB" "\034STIBP" "\035L1DF" "\040SSBD" )
 
+/* SEFF subleaf 2 EDX bits */
+#define SEFF2EDX_BHI_CTRL	0x00000010 /* BHI_DIS_S supported */
+#define SEFF2_EDX_BITS \
+    ("\20" "\05BHI_CTRL" )
+
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits
  */
@@ -474,6 +479,7 @@
 #define SPEC_CTRL_IBRS		(1ULL << 0)
 #define SPEC_CTRL_STIBP		(1ULL << 1)
 #define SPEC_CTRL_SSBD		(1ULL << 2)
+#define SPEC_CTRL_BHI_DIS_S	(1ULL << 10)
 #define MSR_PRED_CMD		0x049	/* Speculation Control IBPB */
 #define PRED_CMD_IBPB		(1ULL << 0)
 #define MSR_BIOS_UPDT_TRIG	0x079
