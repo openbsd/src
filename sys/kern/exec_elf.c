@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.202 2026/08/30 14:23:39 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.203 2026/09/08 15:33:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -892,22 +892,14 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 	epp->ep_entry = eh->e_entry + exe_base;
 
 	/*
-	 * Check if we found a dynamically linked binary and arrange to load
-	 * its interpreter when the exec file is released.
+	 * Fill in details for auxinfo
 	 */
-	if (interp || eh->e_type == ET_DYN) {
-		struct elf_args *ap;
-
-		ap = malloc(sizeof(*ap), M_TEMP, M_WAITOK);
-
-		ap->arg_phaddr = phdr;
-		ap->arg_phentsize = eh->e_phentsize;
-		ap->arg_phnum = eh->e_phnum;
-		ap->arg_entry = eh->e_entry + exe_base;
-		ap->arg_interp = exe_base;
-
-		epp->ep_args = ap;
-	}
+	epp->ep_args = malloc(sizeof(*epp->ep_args), M_TEMP, M_WAITOK);
+	epp->ep_args->arg_phaddr = phdr;
+	epp->ep_args->arg_phentsize = eh->e_phentsize;
+	epp->ep_args->arg_phnum = eh->e_phnum;
+	epp->ep_args->arg_entry = eh->e_entry + exe_base;
+	epp->ep_args->arg_interp = exe_base;
 
 	free(ph, M_TEMP, phsize);
 	vn_marktext(epp->ep_vp);
@@ -938,7 +930,7 @@ unsigned long hwcap2;
 int
 exec_elf_fixup(struct proc *p, struct exec_package *epp)
 {
-	char	*interp;
+	char	*interp = NULL;
 	int	error = 0;
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
@@ -952,9 +944,6 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	}
 
 	ap = epp->ep_args;
-	if (ap == NULL) {
-		return (0);
-	}
 
 	if (interp &&
 	    (error = elf_load_file(p, interp, epp, ap)) != 0) {
