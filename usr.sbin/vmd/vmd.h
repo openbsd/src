@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.148 2026/07/17 13:09:18 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.149 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -393,7 +393,7 @@ struct vmd_config {
 struct vmd {
 	struct privsep		 vmd_ps;
 	const char		*vmd_conffile;
-	char			*argv0;	/* abs. path to vmd for exec, unveil */
+	char			 vmd_execpath[PATH_MAX];
 
 	/* global configuration that is sent to the children */
 	struct vmd_config	 vmd_cfg;

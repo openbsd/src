@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.39 2026/08/04 19:12:14 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.40 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -36,8 +36,8 @@
 
 #include "proc.h"
 
-void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
-	    char **);
+void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int,
+	    char *, int, char **);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_accept(struct privsep *, int, enum privsep_procid);
 void	 proc_close(struct privsep *);
@@ -65,7 +65,7 @@ proc_getid(struct privsep_proc *procs, unsigned int nproc,
 
 void
 proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int argc, char **argv)
+    char *execpath, int argc, char **argv)
 {
 	unsigned int		 proc, nargc, i, proc_i;
 	char			**nargv;
@@ -77,9 +77,9 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 	if (nargv == NULL)
 		fatal("%s: calloc", __func__);
 
-	/* Copy call argument first. */
+	/* Set executable path. */
 	nargc = 0;
-	nargv[nargc++] = argv[0];
+	nargv[nargc++] = execpath;
 
 	/* Set process name argument and save the position. */
 	nargv[nargc++] = "-P";
@@ -117,8 +117,8 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 			} else if (fcntl(fds[1], F_SETFD, 0) == -1)
 				fatal("fcntl");
 
-			execvp(argv[0], nargv);
-			fatal("%s: execvp", __func__);
+			execv(nargv[0], nargv);
+			fatal("%s: execv", __func__);
 			break;
 		default:
 			ps->ps_pipes[p->p_id] = fds[0];
@@ -156,7 +156,7 @@ proc_connect(struct privsep *ps)
 
 void
 proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nprocs,
-    int debug, int argc, char **argv, enum privsep_procid proc_id)
+    int debug, char *execpath, int argc, char **argv, enum privsep_procid proc_id)
 {
 	struct privsep_proc	*p = NULL;
 	unsigned int		 proc;
@@ -174,7 +174,7 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nprocs,
 			fatal("failed to daemonize");
 
 		/* Engage! */
-		proc_exec(ps, procs, nprocs, argc, argv);
+		proc_exec(ps, procs, nprocs, execpath, argc, argv);
 		return;
 	}
 

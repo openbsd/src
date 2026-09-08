@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.31 2026/06/30 13:52:34 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.32 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -128,7 +128,7 @@ struct privsep_proc {
 
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
-	    int, char **, enum privsep_procid);
+	    char *, int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *ps);
 void	 proc_dispatch(int, short event, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.148 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.149 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1697,7 +1697,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		t[1] = '\0';
 
 		i = 0;
-		nargv[i++] = env->argv0;
+		nargv[i++] = env->vmd_execpath;
 		nargv[i++] = "-X";
 		nargv[i++] = num;
 		nargv[i++] = "-t";
@@ -1717,7 +1717,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 			fatalx("%s: nargv overflow", __func__);
 
 		/* Control resumes in vmd.c:main(). */
-		execvp(nargv[0], nargv);
+		execv(nargv[0], nargv);
 
 		ret = errno;
 		log_warn("%s: failed to exec device", __func__);

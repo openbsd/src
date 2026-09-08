@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.140 2026/08/04 19:12:14 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.141 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -81,8 +81,8 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/*
 	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
 	 */
-	if (unveil(env->argv0, "x") == -1)
-		fatal("unveil %s", env->argv0);
+	if (unveil(env->vmd_execpath, "x") == -1)
+		fatal("unveil %s", env->vmd_execpath);
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil lock");
 
@@ -739,7 +739,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		snprintf(psp_fd, sizeof(psp_fd), "%d", env->vmd_psp_fd);
 
 		i = 0;
-		nargv[i++] = env->argv0;
+		nargv[i++] = env->vmd_execpath;
 		nargv[i++] = "-V";
 		nargv[i++] = num;
 		nargv[i++] = "-i";
@@ -757,7 +757,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 			fatalx("%s: nargv overflow", __func__);
 
 		/* Control resumes in vmd main(). */
-		execvp(nargv[0], nargv);
+		execv(nargv[0], nargv);
 
 		ret = errno;
 		log_warn("execvp %s", nargv[0]);

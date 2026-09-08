@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.181 2026/09/04 00:42:30 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.182 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -567,6 +567,9 @@ main(int argc, char **argv)
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
+	if (getexecpath(env->vmd_execpath, sizeof(env->vmd_execpath)))
+		fatal("getexecpath");
+
 	env->vmd_ptm_fd = -1;
 	env->vmd_psp_fd = -1;
 	env->vmd_sock_fd = -1;
@@ -651,11 +654,6 @@ main(int argc, char **argv)
 	log_init(env->vmd_debug, LOG_DAEMON);
 	log_setverbose(env->vmd_verbose);
 
-	/* Re-exec from the vmm child process requires an absolute path. */
-	if (proc_id == PROC_PARENT && *argv[0] != '/' && !env->vmd_noaction)
-		fatalx("re-exec requires execution with an absolute path");
-	env->argv0 = argv[0];
-
 	/* check for root privileges */
 	if (env->vmd_noaction == 0 && !vm_launch) {
 		if (geteuid())
@@ -718,8 +716,8 @@ main(int argc, char **argv)
 		ps->ps_title[proc_id] = title;
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), env->vmd_debug, argc0, argv,
-	    proc_id);
+	proc_init(ps, procs, nitems(procs), env->vmd_debug, env->vmd_execpath,
+	    argc0, argv, proc_id);
 
 	if (ps->ps_noaction == 0)
 		log_info("startup");

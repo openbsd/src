@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.128 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: vm.c,v 1.129 2026/09/08 19:46:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -94,8 +94,8 @@ vm_main(int fd, int fd_vmm)
 	/*
 	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
 	 */
-	if (unveil(env->argv0, "x") == -1)
-		fatal("unveil %s", env->argv0);
+	if (unveil(env->vmd_execpath, "x") == -1)
+		fatal("unveil %s", env->vmd_execpath);
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil lock");
 
