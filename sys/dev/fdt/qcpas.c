@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.13 2026/09/07 21:34:37 kettenis Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.14 2026/09/08 13:56:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -215,6 +215,7 @@ qcpas_attach(struct device *parent, struct device *self, void *aux)
 int
 qcpas_activate(struct device *self, int act)
 {
+#ifdef SUSPEND
 	struct qcpas_softc *sc = (struct qcpas_softc *)self;
 	int node;
 
@@ -235,6 +236,7 @@ qcpas_activate(struct device *self, int act)
 		}
 		break;
 	}
+#endif
 
 	return 0;
 }
@@ -814,8 +816,10 @@ qcpas_glink_detach(struct qcpas_softc *sc)
 	qcpas_pmic_rtr_apm_cookie = NULL;
 #endif
 
+#ifndef SMALL_KERNEL
 	if (sc->sc_senstask)
 		sensor_task_unregister(sc->sc_senstask);
+#endif
 
 	if (sc->sc_glink_ih) {
 		fdt_intr_disestablish(sc->sc_glink_ih);
