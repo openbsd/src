@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.65 2025/12/15 12:59:24 dlg Exp $ */
+/* $OpenBSD: agintc.c,v 1.66 2026/09/08 19:48:28 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -197,6 +197,7 @@ struct intrhand {
 	void			*ih_arg;		/* arg for handler */
 	int			 ih_ipl;		/* IPL_* */
 	int			 ih_flags;
+	int			 ih_type;		/* trigger type */
 	int			 ih_irq;		/* IRQ number */
 	struct evcount		 ih_count;
 	char			*ih_name;
@@ -230,6 +231,8 @@ void		agintc_dmamem_free(bus_dma_tag_t, struct agintc_dmamem *);
 
 int		agintc_match(struct device *, void *, void *);
 void		agintc_attach(struct device *, struct device *, void *);
+int		agintc_activate(struct device *, int);
+void		agintc_restore(struct agintc_softc *);
 void		agintc_mbiinit(struct agintc_softc *, int, bus_addr_t);
 void		agintc_cpuinit(void);
 int		agintc_spllower(int);
@@ -270,7 +273,8 @@ void		agintc_msi_discard(struct agintc_lpi_info *);
 void		agintc_msi_inv(struct agintc_lpi_info *);
 
 const struct cfattach	agintc_ca = {
-	sizeof (struct agintc_softc), agintc_match, agintc_attach
+	sizeof (struct agintc_softc), agintc_match, agintc_attach,
+	NULL, agintc_activate
 };
 
 struct cfdriver agintc_cd = {
@@ -682,6 +686,54 @@ unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_d_ioh, faa->fa_reg[0].size);
 }
 
+int
+agintc_activate(struct device *self, int act)
+{
+	struct agintc_softc *sc = (struct agintc_softc *)self;
+
+	switch(act) {
+	case DVACT_RESUME:
+		agintc_restore(sc);
+		break;
+	}
+
+	return config_activate_children(self, act);
+}
+
+void
+agintc_restore(struct agintc_softc *sc)
+{
+	struct intrhand *ih;
+	uint8_t *prop;
+	int irq;
+
+	for (irq = 0; irq < sc->sc_nintr; irq++) {
+		if (TAILQ_EMPTY(&sc->sc_handler[irq].iq_list))
+			continue;
+
+		ih = TAILQ_FIRST(&sc->sc_handler[irq].iq_list);
+		agintc_intr_config(sc, irq, ih->ih_type);
+		agintc_set_priority(sc, irq, sc->sc_handler[irq].iq_irq_min);
+		agintc_route(sc, irq, IRQ_ENABLE, ih->ih_ci);
+		agintc_intr_enable(sc, irq);
+	}
+
+	for (irq = 0; irq < sc->sc_nlpi; irq++) {
+		if (sc->sc_lpi[irq] == NULL)
+			continue;
+		ih = sc->sc_lpi[irq]->li_ih;
+		KASSERT(ih != NULL);
+		prop = AGINTC_DMA_KVA(sc->sc_prop);
+		prop[irq] |= GICR_PROP_ENABLE;
+		/* Make globally visible. */
+		cpu_dcache_wb_range((vaddr_t)&prop[irq],
+		    sizeof(*prop));
+		__asm volatile("dsb sy");
+		/* Invalidate cache */
+		agintc_msi_inv(sc->sc_lpi[irq]);
+	}
+}
+
 void
 agintc_mbiinit(struct agintc_softc *sc, int node, bus_addr_t addr)
 {
@@ -849,43 +901,7 @@ agintc_enable_wakeup(void)
 void
 agintc_disable_wakeup(void)
 {
-	struct agintc_softc *sc = agintc_sc;
-	struct intrhand *ih;
-	uint8_t *prop;
-	int irq, wakeup;
-
-	for (irq = 0; irq < sc->sc_nintr; irq++) {
-		/* No handler? Keep disabled. */
-		if (TAILQ_EMPTY(&sc->sc_handler[irq].iq_list))
-			continue;
-		/* WAKEUPs are already enabled. */
-		wakeup = 0;
-		TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
-			if (ih->ih_flags & IPL_WAKEUP) {
-				wakeup = 1;
-				break;
-			}
-		}
-		if (!wakeup)
-			agintc_intr_enable(sc, irq);
-	}
-
-	for (irq = 0; irq < sc->sc_nlpi; irq++) {
-		if (sc->sc_lpi[irq] == NULL)
-			continue;
-		ih = sc->sc_lpi[irq]->li_ih;
-		KASSERT(ih != NULL);
-		if (ih->ih_flags & IPL_WAKEUP)
-			continue;
-		prop = AGINTC_DMA_KVA(sc->sc_prop);
-		prop[irq] |= GICR_PROP_ENABLE;
-		/* Make globally visible. */
-		cpu_dcache_wb_range((vaddr_t)&prop[irq],
-		    sizeof(*prop));
-		__asm volatile("dsb sy");
-		/* Invalidate cache */
-		agintc_msi_inv(sc->sc_lpi[irq]);
-	}
+	/* All interrupts have already been enabled. */
 }
 
 void
@@ -1219,6 +1235,7 @@ agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 	ih->ih_arg = arg;
 	ih->ih_ipl = level & IPL_IRQMASK;
 	ih->ih_flags = level & IPL_FLAGMASK;
+	ih->ih_type = type;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 	ih->ih_ci = ci;
