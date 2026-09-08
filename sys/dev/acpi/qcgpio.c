@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.15 2025/06/16 15:44:35 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.16 2026/09/08 23:42:30 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -113,6 +113,7 @@ const char *qcgpio_hids[] = {
 	"QCOM060C",
 	"QCOM080D",
 	"QCOM0C0C",
+	"QCOM0F0C",
 	NULL
 };
 
@@ -315,7 +316,8 @@ qcgpio_acpi_attach(struct device *parent, struct device *self, void *aux)
 	} else if (strcmp(aaa->aaa_dev, "QCOM060C") == 0) {
 		sc->sc_npins = 228;
 		sc->sc_pin_map = qcgpio_sc8280xp_pin_map;
-	} else if (strcmp(aaa->aaa_dev, "QCOM0C0C") == 0) {
+	} else if (strcmp(aaa->aaa_dev, "QCOM0C0C") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0F0C") == 0) {
 		if (aml_evalname(sc->sc_acpi, sc->sc_node, "_CRS", 0, NULL,
 		    &res)) {
 			printf("no _CRS method\n");

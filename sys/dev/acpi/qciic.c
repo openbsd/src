@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic.c,v 1.8 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: qciic.c,v 1.9 2026/09/08 23:42:30 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -109,6 +109,7 @@ const char *qciic_hids[] = {
 	"QCOM0610",
 	"QCOM0811",
 	"QCOM0C10",
+	"QCOM0F10",
 	NULL
 };
 

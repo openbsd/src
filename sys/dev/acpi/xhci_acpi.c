@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.14 2026/01/25 10:29:17 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.15 2026/09/08 23:42:30 tobhe Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -67,6 +67,9 @@ const char *xhci_hids[] = {
 	"QCOM0C8C",
 	"QCOM0D07",
 	"QCOM0EA1",		/* QCS6490 USB */
+	"QCOM0F8B",		/* X2 URS */
+	"QCOM0F8C",
+	"QCOM0FED",
 	NULL
 };
 
@@ -116,7 +119,10 @@ xhci_acpi_attach(struct device *parent, struct device *self, void *aux)
 	    strcmp(aaa->aaa_dev, "QCOM24B7") == 0 ||
 	    strcmp(aaa->aaa_dev, "QCOM0C8B") == 0 ||
 	    strcmp(aaa->aaa_dev, "QCOM0C8C") == 0 ||
-	    strcmp(aaa->aaa_dev, "QCOM0D07") == 0) {
+	    strcmp(aaa->aaa_dev, "QCOM0D07") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0F8B") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0F8C") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0FED") == 0) {
 		SIMPLEQ_FOREACH(node, &sc->sc_node->son, sib) {
 			if (strncmp(node->name, "USB", 3) == 0) {
 				aaa->aaa_node = node;
