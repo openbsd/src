@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.39 2026/08/03 18:48:06 claudio Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.40 2026/09/09 00:59:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -99,7 +99,7 @@ int
 main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sighup;
-	char			*saved_argv0;
+	char			 execpath[PATH_MAX];
 	int			 ch;
 	int			 debug = 0, rflag = 0, eflag = 0;
 	int			 ipforwarding;
@@ -115,10 +115,6 @@ main(int argc, char *argv[])
 
 	log_init(1);	/* log to stderr until daemonized */
 	log_verbose(1);
-
-	saved_argv0 = argv[0];
-	if (saved_argv0 == NULL)
-		saved_argv0 = "eigrpd";
 
 	while ((ch = getopt(argc, argv, "dD:f:ns:vRE")) != -1) {
 		switch (ch) {
@@ -155,6 +151,9 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
+	if (getexecpath(execpath, sizeof execpath) != 0)
+		errx(1, "getexecpath");
 
 	argc -= optind;
 	argv += optind;
@@ -219,9 +218,9 @@ main(int argc, char *argv[])
 		fatal("socketpair");
 
 	/* start children */
-	rde_pid = start_child(PROC_RDE_ENGINE, saved_argv0, pipe_parent2rde[1],
+	rde_pid = start_child(PROC_RDE_ENGINE, execpath, pipe_parent2rde[1],
 	    debug, global.cmd_opts & EIGRPD_OPT_VERBOSE, NULL);
-	eigrpe_pid = start_child(PROC_EIGRP_ENGINE, saved_argv0,
+	eigrpe_pid = start_child(PROC_EIGRP_ENGINE, execpath,
 	    pipe_parent2eigrpe[1], debug, global.cmd_opts & EIGRPD_OPT_VERBOSE,
 	    sockname);
 
@@ -316,7 +315,7 @@ eigrpd_shutdown(void)
 }
 
 static pid_t
-start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
+start_child(enum eigrpd_process p, char *execpath, int fd, int debug, int verbose,
     char *sockname)
 {
 	char	*argv[7];
@@ -339,7 +338,7 @@ start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
 	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
-	argv[argc++] = argv0;
+	argv[argc++] = execpath;
 	switch (p) {
 	case PROC_MAIN:
 		fatalx("Can not start main process");
@@ -360,8 +359,8 @@ start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
 	}
 	argv[argc++] = NULL;
 
-	execvp(argv0, argv);
-	fatal("execvp");
+	execv(execpath, argv);
+	fatal("execv");
 }
 
 /* imsg handling */
