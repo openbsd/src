@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.789 2026/08/23 23:34:20 jsg Exp $
+$OpenBSD: usbdevs,v 1.790 2026/09/09 03:51:32 daniel Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2473,6 +2473,7 @@ product INTEL2 BLUETOOTH4	0x0029	Bluetooth
 product INTEL2 BLUETOOTH6	0x0032	Bluetooth
 product INTEL2 BLUETOOTH7	0x0033	Bluetooth
 product INTEL2 BLUETOOTH8	0x0035	Bluetooth
+product INTEL2 BLUETOOTH13	0x0037	Bluetooth
 product INTEL2 BLUETOOTH9	0x07da	Bluetooth
 product INTEL2 BLUETOOTH10	0x07dc	Bluetooth
 product INTEL2 BLUETOOTH	0x0a2a	Bluetooth
