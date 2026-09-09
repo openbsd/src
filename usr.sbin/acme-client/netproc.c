@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.48 2026/05/22 01:53:10 jmatthew Exp $ */
+/*	$Id: netproc.c,v 1.49 2026/09/09 06:11:43 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -80,7 +80,16 @@ buf_dump(const struct buf *buf)
 static char *
 url2host(const char *host, short *port, char **path)
 {
-	char	*url, *ep;
+	const char	*cp;
+	char		*url, *ep;
+
+	for (cp = host; *cp != '\0'; cp++) {
+		if (iscntrl((unsigned char)*cp) ||
+		    isspace((unsigned char)*cp)) {
+			warnx("invalid character in URL");
+			return NULL;
+		}
+	}
 
 	/* We only understand HTTP and HTTPS. */
 	if (strncmp(host, "https://", 8) == 0) {
