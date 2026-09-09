@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.593 2026/09/03 18:56:40 naddy Exp $
+#	$OpenBSD: rc,v 1.594 2026/09/09 17:26:14 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -309,7 +309,11 @@ run_upgrade_script() {
 #   cd /dev && ./MAKEDEV redodisks
 rootdisk_nodes() {
 	if [ $(sysctl -n kern.maxpartitions) = 16 ]; then
-		_rootdev=$(mount | grep ' / ' | cut -d' ' -f1)
+		# Find and use root device if we are not booting from NFS
+		_rootdev=$(mount | grep ' / ' | grep -v ':' | cut -d' ' -f1)
+		if [ -z $_rootdev ]; then
+			return
+		fi
 		_maj=$(stat -f "%Hr" $_rootdev)
 		_omin=$(stat -f "%Lr" $_rootdev)
 		_min=$((_omin / 16 * 64))
