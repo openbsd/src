@@ -219,9 +219,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/meta_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/meta_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
@@ -235,9 +233,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test1_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test1_maintainer",
             "software_copyrightText": "Test1 copyright text",
             "software_homePage": "",
             "software_downloadLocation": "",
@@ -251,9 +247,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test2_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test2_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
@@ -267,9 +261,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test3_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test3_maintainer",
             "software_copyrightText": "Test3 copyright text",
             "software_homePage": "https://github.com/pkgconf/pkgconf/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
@@ -283,9 +275,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test4_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test4_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
@@ -299,9 +289,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test5_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test5_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
@@ -315,9 +303,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test6_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test6_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf/releases/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",

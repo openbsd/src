@@ -52,9 +52,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/nolicense_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/nolicense_maintainer",
             "software_copyrightText": "Nolicense copyright text",
             "software_homePage": "https://example.com/nolicense",
             "software_downloadLocation": "https://example.com/nolicense/nolicense-1.0.0.tar.gz",

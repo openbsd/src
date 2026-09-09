@@ -60,9 +60,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/mc_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/mc_maintainer",
             "software_copyrightText": "First copyright holder\nSecond copyright holder",
             "software_homePage": "https://example.com/mc",
             "software_downloadLocation": "",

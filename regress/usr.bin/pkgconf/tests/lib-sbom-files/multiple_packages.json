@@ -87,9 +87,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test5_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test5_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
@@ -103,9 +101,7 @@
             "originatedBy": [
                 "https://github.com/pkgconf/pkgconf/Agent/default"
             ],
-            "suppliedBy": [
-                "https://github.com/pkgconf/pkgconf/Agent/test6_maintainer"
-            ],
+            "suppliedBy": "https://github.com/pkgconf/pkgconf/Agent/test6_maintainer",
             "software_copyrightText": "NOASSERTION",
             "software_homePage": "https://github.com/pkgconf/pkgconf/releases/",
             "software_downloadLocation": "https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-2.5.1.tar.gz",
