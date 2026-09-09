@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.363 2026/09/07 19:51:16 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.364 2026/09/09 00:34:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -65,6 +65,7 @@ static void setup_done(struct mproc *);
 static void setup_proc(void);
 static struct mproc *setup_peer(enum smtp_proc_type, pid_t, int);
 static int imsg_wait(struct imsgbuf *, struct imsg *, int);
+static int transform_path(char *, size_t, const char *, const char *);
 
 static void	offline_scan(int, short, void *);
 static int	offline_add(char *, uid_t, gid_t);
@@ -471,6 +472,24 @@ parent_sig_handler(int sig, short event, void *p)
 }
 
 int
+transform_path(char *path, size_t pathsize, const char *from, const char *to)
+{
+	const size_t pathlen = strlen(path);
+	const size_t fromlen = strlen(from);
+	char *cp;
+
+	if (pathlen < fromlen)
+		return -1;
+	cp = &path[pathlen - fromlen];
+	if (strcmp(cp, from) != 0)
+		return -1;
+	*cp = '\0';
+	if (strlcat(path, to, pathsize) >= pathsize)
+		return -1;
+	return 0;
+}
+
+int
 main(int argc, char *argv[])
 {
 	int		 c, i;
@@ -806,7 +825,7 @@ static struct mproc *
 start_child(int save_argc, char **save_argv, char *rexec)
 {
 	struct mproc *p;
-	char *argv[SMTPD_MAXARG], *a0;
+	char *argv[SMTPD_MAXARG], *a0, execpath[PATH_MAX];
 	int sp[2], argc = 0;
 	pid_t pid;
 
@@ -818,6 +837,12 @@ start_child(int save_argc, char **save_argv, char *rexec)
 
 	io_set_nonblocking(sp[0]);
 	io_set_nonblocking(sp[1]);
+
+	if (getexecpath(execpath, sizeof execpath) != 0)
+		fatal("getexecpath");
+	if (transform_path(execpath, sizeof execpath,
+	    "/sbin/smtpd", "/libexec/smtpd") == -1)
+		fatalx("getexecpath");		
 
 	switch (pid = fork()) {
 	case -1:
@@ -851,7 +876,7 @@ start_child(int save_argc, char **save_argv, char *rexec)
 	argv[argc++] = "-x";
 	argv[argc++] = rexec;
 	argv[argc++] = NULL;
-	asprintf(&a0, "/usr/libexec/smtpd-%s", rexec);
+	asprintf(&a0, "%s-%s", execpath, rexec);
 
 	execvp(a0, argv);
 	fatal("%s: execvp", a0);
