@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.280 2026/08/20 12:56:15 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.281 2026/09/09 18:28:29 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -3337,11 +3337,10 @@ roff_TE(ROFF_ARGS)
 	if (r->tbl == NULL)
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, ln, ppos, "TE");
 	else if (roff_endtbl(r, 0) == 0) {
-		free(buf->buf);
-		buf->buf = mandoc_strdup(".sp");
-		buf->sz = 4;
-		*offs = 0;
-		return ROFF_REPARSE;
+		roff_elem_alloc(r->man, ln, ppos, ROFF_br);
+		r->man->last->flags |=
+		    NODE_LINE | NODE_NOSRC | NODE_VALID | NODE_ENDED;
+		r->man->next = ROFF_NEXT_SIBLING;
 	}
 	return ROFF_IGN;
 }
