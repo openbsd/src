@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2026/04/22 13:57:58 henning Exp $ */
+/*	$OpenBSD: util.c,v 1.31 2026/09/10 15:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -179,7 +179,7 @@ log_ntp_addr(struct ntp_addr *addr)
 }
 
 pid_t
-start_child(char *pname, int cfd, int argc, char **argv)
+start_child(char *pname, int cfd, char *execpath, int argc, char **argv)
 {
 	char		**nargv;
 	int		  nargc, i;
@@ -214,8 +214,8 @@ start_child(char *pname, int cfd, int argc, char **argv)
 		} else if (fcntl(cfd, F_SETFD, 0) == -1)
 			fatal("fcntl");
 
-		execvp(argv[0], nargv);
-		fatal("%s: execvp", __func__);
+		execv(execpath, nargv);
+		fatal("%s: execv", __func__);
 		break;
 
 	default:

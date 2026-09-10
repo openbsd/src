@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.147 2026/08/04 19:05:21 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.148 2026/09/10 15:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,7 @@ __dead void	usage(void);
 int		auto_preconditions(const struct ntpd_conf *);
 int		main(int, char *[]);
 void		check_child(void);
-int		dispatch_imsg(struct ntpd_conf *, int, char **);
+int		dispatch_imsg(struct ntpd_conf *, char *, int, char **);
 void		reset_adjtime(void);
 int		ntpd_adjtime(double);
 void		ntpd_adjfreq(double, int);
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 	struct passwd		*pw;
 	void			*newp;
 	int			argc0 = argc, logdest;
-	char			**argv0 = argv;
+	char			**argv0 = argv, execpath[PATH_MAX];
 	char			*pname = NULL;
 	time_t			 settime_deadline = 0;
 	int			 sopt = 0;
@@ -195,6 +195,9 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
+
+	if (getexecpath(execpath, sizeof execpath) != 0)
+		errx(1, "getexecpath");
 
 	if (parse_config(conffile, &lconf))
 		exit(1);
@@ -261,7 +264,7 @@ main(int argc, char *argv[])
 	signal(SIGCHLD, sighdlr);
 
 	/* fork child process */
-	start_child(NTP_PROC_NAME, pipe_chld[1], argc0, argv0);
+	start_child(NTP_PROC_NAME, pipe_chld[1], execpath, argc0, argv0);
 
 	log_procinit("[priv]");
 	readfreq();
@@ -283,8 +286,8 @@ main(int argc, char *argv[])
 	 * Constraint processes are forked with certificates in memory,
 	 * then privdrop into chroot before speaking to the outside world.
 	 */
-	if (unveil("/usr/sbin/ntpd", "x") == -1)
-		err(1, "unveil /usr/sbin/ntpd");
+	if (unveil(execpath, "x") == -1)
+		err(1, "unveil %s", execpath);
 	if (pledge("stdio settime proc exec", NULL) == -1)
 		err(1, "pledge");
 
@@ -341,7 +344,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_PIPE].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg(&lconf, argc0, argv0) == -1)
+			if (dispatch_imsg(&lconf, execpath, argc0, argv0) == -1)
 				quit = 1;
 		}
 
@@ -388,7 +391,7 @@ check_child(void)
 }
 
 int
-dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
+dispatch_imsg(struct ntpd_conf *lconf, char *execpath, int argc, char **argv)
 {
 	struct imsg		 imsg;
 	int			 n, synced;
@@ -439,7 +442,7 @@ dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 		case IMSG_CONSTRAINT_QUERY:
 			priv_constraint_msg(imsg.hdr.peerid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE,
-			    argc, argv);
+			    execpath, argc, argv);
 			break;
 		case IMSG_CONSTRAINT_KILL:
 			priv_constraint_kill(imsg.hdr.peerid);

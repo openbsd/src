@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.155 2025/08/20 10:40:21 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.156 2026/09/10 15:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -386,7 +386,7 @@ int	 constraint_check(double);
 void	 constraint_msg_dns(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_result(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_close(u_int32_t, u_int8_t *, size_t);
-void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t, int, char **);
+void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t, char *, int, char **);
 void	 priv_constraint_child(const char *, uid_t, gid_t);
 void	 priv_constraint_kill(u_int32_t);
 int	 priv_constraint_dispatch(struct pollfd *);
@@ -407,7 +407,7 @@ struct s_fixedpt	 d_to_sfp(double);
 char			*print_rtable(int);
 const char		*log_sockaddr(struct sockaddr *);
 const char		*log_ntp_addr(struct ntp_addr *);
-pid_t			 start_child(char *, int, int, char **);
+pid_t			 start_child(char *, int, char *, int, char **);
 int			 sanitize_argv(int *, char ***);
 
 /* sensors.c */

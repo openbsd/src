@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.235 2026/07/16 09:35:40 martijn Exp $	*/
+/*	$OpenBSD: iked.h,v 1.236 2026/09/10 15:06:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1319,7 +1319,7 @@ void	 timer_del(struct iked *, struct iked_timer *);
 
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
-	    int, char **, enum privsep_procid);
+	    char *, int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *, void (*)(struct privsep *));
 void	 proc_dispatch(int, short event, void *);

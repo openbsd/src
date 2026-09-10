@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.293 2026/07/30 13:56:06 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.294 2026/09/10 15:06:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stddef.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -133,7 +134,7 @@ main(int argc, char *argv[])
 	monotime_t		 timeout;
 	pid_t			 se_pid = 0, rde_pid = 0, rtr_pid = 0, pid;
 	const char		*conffile;
-	char			*saved_argv0;
+	char			 execpath[PATH_MAX];
 	u_int			 pfd_elms = 0, npfd, i;
 	int			 debug = 0;
 	int			 rfd, keyfd;
@@ -147,10 +148,6 @@ main(int argc, char *argv[])
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_procinit(log_procnames[PROC_MAIN]);
 	log_setverbose(1);
-
-	saved_argv0 = argv[0];
-	if (saved_argv0 == NULL)
-		saved_argv0 = "bgpd";
 
 	while ((ch = getopt(argc, argv, "cdD:f:nRSTvV")) != -1) {
 		switch (ch) {
@@ -198,6 +195,9 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
+
+	if (getexecpath(execpath, sizeof execpath) != 0)
+		errx(1, "getexecpath");
 
 	if (cmd_opts & BGPD_OPT_NOACTION) {
 		if ((conf = parse_config(conffile, NULL, NULL)) == NULL)
@@ -257,11 +257,11 @@ main(int argc, char *argv[])
 	getsockpair(pipe_m2roa);
 
 	/* fork children */
-	rde_pid = start_child(PROC_RDE, saved_argv0, pipe_m2r[1], debug,
+	rde_pid = start_child(PROC_RDE, execpath, pipe_m2r[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
-	se_pid = start_child(PROC_SE, saved_argv0, pipe_m2s[1], debug,
+	se_pid = start_child(PROC_SE, execpath, pipe_m2s[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
-	rtr_pid = start_child(PROC_RTR, saved_argv0, pipe_m2roa[1], debug,
+	rtr_pid = start_child(PROC_RTR, execpath, pipe_m2roa[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
 
 	signal(SIGTERM, sighdlr);
@@ -517,7 +517,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 }
 
 pid_t
-start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
+start_child(enum bgpd_process p, char *execpath, int fd, int debug, int verbose)
 {
 	char *argv[5];
 	int argc = 0;
@@ -539,7 +539,7 @@ start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
 	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
-	argv[argc++] = argv0;
+	argv[argc++] = execpath;
 	switch (p) {
 	case PROC_MAIN:
 		fatalx("Can not start main process");
@@ -559,8 +559,8 @@ start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
 		argv[argc++] = "-v";
 	argv[argc++] = NULL;
 
-	execvp(argv0, argv);
-	fatal("execvp");
+	execv(execpath, argv);
+	fatal("execv");
 }
 
 int

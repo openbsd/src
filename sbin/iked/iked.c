@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.73 2026/07/02 05:21:48 martijn Exp $	*/
+/*	$OpenBSD: iked.c,v 1.74 2026/09/10 15:06:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -77,6 +77,7 @@ main(int argc, char *argv[])
 	const char		*conffile = IKED_CONFIG;
 	const char		*sock = IKED_SOCKET;
 	const char		*errstr, *title = NULL;
+	char			 execpath[PATH_MAX];
 	struct iked		*env = NULL;
 	struct privsep		*ps;
 	enum privsep_procid	 proc_id = PROC_PARENT;
@@ -181,6 +182,9 @@ main(int argc, char *argv[])
 	if ((ps->ps_pw =  getpwnam(IKED_USER)) == NULL)
 		errx(1, "unknown user %s", IKED_USER);
 
+	if (getexecpath(execpath, sizeof execpath) != 0)
+		fatal("getexecpath");
+
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = sock;
 
@@ -200,7 +204,7 @@ main(int argc, char *argv[])
 		ps->ps_title[proc_id] = title;
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv, proc_id);
 
 	setproctitle("parent");
 	log_procinit("parent");
