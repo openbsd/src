@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.35 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.36 2026/09/10 20:46:17 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ extern ino_t	lastino;		/* last inode in use */
 
 extern ino_t	lfdir;			/* lost & found directory inode number */
 extern char	*lfname;		/* lost & found directory name */
-extern int	lfmode;			/* lost & found directory creation mode */
+extern mode_t	lfmode;			/* lost & found directory creation mode */
 
 extern daddr_t	n_blks;			/* number of blocks in use */
 extern int64_t	n_files;		/* number of files in use */

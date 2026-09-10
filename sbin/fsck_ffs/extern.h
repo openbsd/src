@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2016/09/09 15:37:15 tb Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2026/09/10 20:46:17 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 void	adjust(struct inodesc *, short);
 daddr_t	allocblk(int);
-ino_t	allocdir(ino_t, ino_t, int);
+ino_t	allocdir(ino_t, ino_t, mode_t);
 void	blkerror(ino_t, char *, daddr_t);
 int	bread(int, char *, daddr_t, long);
 void	bufinit(void);

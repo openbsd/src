@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.35 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: dir.c,v 1.36 2026/09/10 20:46:17 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>	/* DEV_BSIZE roundup btodb */
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -46,7 +47,7 @@
 #include "extern.h"
 
 char	*lfname = "lost+found";
-int	lfmode = 01700;
+mode_t	lfmode = S_ISTXT | S_IRWXU;
 struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
 struct	dirtemplate dirhead = {
 	0, 12, DT_DIR, 1, ".",
@@ -547,7 +548,7 @@ bad:
  * allocate a new directory
  */
 ino_t
-allocdir(ino_t parent, ino_t request, int mode)
+allocdir(ino_t parent, ino_t request, mode_t mode)
 {
 	ino_t ino;
 	uid_t uid;
