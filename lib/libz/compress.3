@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.35 2026/03/23 09:11:44 jsg Exp $
+.\"	$OpenBSD: compress.3,v 1.36 2026/09/10 01:17:21 jsg Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: March 23 2026 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -2852,9 +2852,9 @@ In that case
 return
 .Dv NULL
 and errno will be
-.Dv EAGAIN
+.Er EAGAIN
 or
-.Dv EWOULDBLOCK .
+.Er EWOULDBLOCK .
 The call to
 .Fn gzopen
 with the resulting file descriptor and
@@ -3036,9 +3036,9 @@ can be used to read a gzip file on a non-blocking device.
 If the input stalls and there is no uncompressed data to return, then
 .Fn gzread
 will return \-1, and errno will be
-.Dv EAGAIN
+.Er EAGAIN
 or
-.Dv EWOULDBLOCK .
+.Er EWOULDBLOCK .
 .Fn gzread
 can then be called again.
 .Pp
@@ -3291,9 +3291,9 @@ can be used to read a gzip file on a non-blocking device.
 If the input stalls and there is no uncompressed data to return, then
 .Fn gzgetc
 will return \-1, and errno will be
-.Dv EAGAIN
+.Er EAGAIN
 or
-.Dv EWOULDBLOCK .
+.Er EWOULDBLOCK .
 .Fn gzread
 can then be called again.
 .It Xo

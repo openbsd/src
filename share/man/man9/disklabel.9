@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.9,v 1.19 2025/09/15 10:33:02 krw Exp $
+.\"	$OpenBSD: disklabel.9,v 1.20 2026/09/10 01:17:22 jsg Exp $
 .\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 15 2025 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt DISKLABEL 9
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ it acquires and sets up an I/O buffer to pass to the strategy routine
 .Fa strat .
 .Fn writedisklabel
 returns 0 on success and
-.Dv EINVAL
+.Er EINVAL
 if the disk label specifies invalid or unconvertible values.
 Otherwise, any error condition reported by the device strategy routine
 in the buffer's
@@ -119,9 +119,9 @@ identifying the partitions that are currently in use.
 Failure to pass on
 .Dq basic sanity ,
 results in a
-.Dv EINVAL
+.Er EINVAL
 return value, while a vetoed update of the partition layout is signalled by a
-.Dv EBUSY
+.Er EBUSY
 return value.
 Otherwise, 0 is returned.
 .Pp
@@ -137,7 +137,7 @@ If this check fails,
 sets the buffer's
 .Dq Va b_error
 field to
-.Dv EINVAL
+.Er EINVAL
 and sets the
 .Dv B_ERROR
 flag in

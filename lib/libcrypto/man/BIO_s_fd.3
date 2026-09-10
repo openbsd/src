@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_fd.3,v 1.14 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: BIO_s_fd.3,v 1.15 2026/09/10 01:17:21 jsg Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt BIO_S_FD 3
 .Os
 .Sh NAME
@@ -245,12 +245,12 @@ if an error occurred.
 returns 1 if
 .Fa errnum
 is
-.Dv EAGAIN ,
-.Dv EALREADY ,
-.Dv EINPROGRESS ,
-.Dv EINTR ,
+.Er EAGAIN ,
+.Er EALREADY ,
+.Er EINPROGRESS ,
+.Er EINTR ,
 or
-.Dv ENOTCONN
+.Er ENOTCONN
 and 0 otherwise, even if
 .Fa errnum
 is 0.

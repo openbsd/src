@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_accept.3,v 1.3 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: BIO_accept.3,v 1.4 2026/09/10 01:17:21 jsg Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt BIO_ACCEPT 3
 .Os
 .Sh NAME
@@ -243,16 +243,16 @@ fails in a non-fatal way and might succeed when retried later.
 .Pp
 .Fn BIO_sock_error
 returns an error status code like
-.Dv EAGAIN ,
-.Dv ECONNABORTED ,
-.Dv ECONNREFUSED ,
-.Dv ECONNRESET ,
-.Dv ELOOP ,
-.Dv EMSGSIZE ,
-.Dv ENOBUFS ,
-.Dv ENOTCONN ,
-.Dv EPIPE ,
-.Dv ETIMEDOUT ,
+.Er EAGAIN ,
+.Er ECONNABORTED ,
+.Er ECONNREFUSED ,
+.Er ECONNRESET ,
+.Er ELOOP ,
+.Er EMSGSIZE ,
+.Er ENOBUFS ,
+.Er ENOTCONN ,
+.Er EPIPE ,
+.Er ETIMEDOUT ,
 or others, 0 if the
 .Fa socket
 is not in an error state, or 1 if
@@ -263,12 +263,12 @@ fails.
 returns 1 if
 .Fa errnum
 is
-.Dv EAGAIN ,
-.Dv EALREADY ,
-.Dv EINPROGRESS ,
-.Dv EINTR ,
+.Er EAGAIN ,
+.Er EALREADY ,
+.Er EINPROGRESS ,
+.Er EINTR ,
 or
-.Dv ENOTCONN
+.Er ENOTCONN
 and 0 otherwise, even if
 .Fa errnum
 is 0.

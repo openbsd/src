@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.9 2020/09/01 01:57:15 gnezdo Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.10 2026/09/10 01:17:22 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2020 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt SYSCTL_INT 9
 .Os
 .Sh NAME
@@ -194,7 +194,7 @@ pointer and
 .Ar newlen
 specifies an appropriate data length.
 All read-only versions of the functions return
-.Dv EPERM
+.Er EPERM
 if a write operation is requested.
 .Pp
 The following helper functions are provided to aid operation on the
@@ -243,21 +243,21 @@ The old value is copied out into a user buffer pointed to by the
 .Ar oldp
 argument.
 If there is not enough space to store it, an
-.Dv ENOMEM
+.Er ENOMEM
 is returned.
 If
 .Ar newlen
 is larger than
 .Ar maxlen ,
 an
-.Dv EINVAL
+.Er EINVAL
 error is returned.
 .It Fn sysctl_tstring "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "char *str" "int maxlen"
 A version of the above that truncates the old value that does not fit
 into the buffer provided by
 .Ar oldp
 instead of returning
-.Dv ENOMEM .
+.Er ENOMEM .
 .It Fn sysctl_rdstring "void *oldp" "size_t *oldlenp" "void *newp" "const char *str"
 A read-only version of
 .Fn sysctl_string .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.30 2025/08/05 14:25:11 schwarze Exp $
+.\" $OpenBSD: rwlock.9,v 1.31 2026/09/10 01:17:22 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 5 2025 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -161,7 +161,7 @@ Must be combined with
 When waiting for a lock, allow signals to interrupt the sleep.
 .It Dv RW_NOSLEEP
 Do not wait for busy locks, fail with
-.Dv EBUSY
+.Er EBUSY
 instead.
 .It Dv RW_DUPOK
 Prevents

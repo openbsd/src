@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getnewvnode.9,v 1.11 2020/11/14 10:35:58 jmc Exp $
+.\"     $OpenBSD: getnewvnode.9,v 1.12 2026/09/10 01:17:22 jsg Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/getnewvnode.9,v 1.1 2001/12/02 02:13:35 alfred Exp $
 .\"
-.Dd $Mdocdate: November 14 2020 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt GETNEWVNODE 9
 .Os
 .Sh NAME
@@ -75,7 +75,9 @@ Points to the new vnode upon successful completion.
 .El
 .Sh RETURN VALUES
 .Fn getnewvnode
-returns 0 on success, or ENFILE if the vnode table is full.
+returns 0 on success, or
+.Er ENFILE
+if the vnode table is full.
 .Sh AUTHORS
 This man page was originally written by
 .An Chad David Aq Mt davidc@acns.ab.ca

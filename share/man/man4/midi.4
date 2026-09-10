@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.31 2022/03/31 17:30:05 naddy Exp $
+.\" $OpenBSD: midi.4,v 1.32 2026/09/10 01:17:22 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt MIDI 4
 .Os
 .Sh NAME
@@ -117,10 +117,13 @@ will never block.
 The
 .Xr write 2
 system call may write less bytes than requested, or may return
-EAGAIN if no data could be sent or queued.
+.Er EAGAIN
+if no data could be sent or queued.
 Similarly, the
 .Xr read 2
-system call may return EAGAIN if no input is available.
+system call may return
+.Er EAGAIN
+if no input is available.
 .Pp
 Note that even if non-blocking I/O is not selected,
 .Xr read 2
