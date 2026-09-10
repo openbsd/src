@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.26 2026/08/31 15:16:21 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.27 2026/09/10 03:31:33 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -139,15 +139,6 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 	}
 
 #ifndef PIC
-	if (cb == NULL && phdr == NULL && __executable_start != NULL) {
-		/*
-		 * Static non-PIE processes don't get an AUX vector,
-		 * so find the phdrs through the ELF header
-		 */
-		phdr = (void *)((char *)__executable_start +
-		    __executable_start->e_phoff);
-		phnum = __executable_start->e_phnum;
-	}
 	_static_phdr_info.dlpi_phdr = phdr;
 	_static_phdr_info.dlpi_phnum = phnum;
 
