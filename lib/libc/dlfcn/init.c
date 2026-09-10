@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.27 2026/09/10 03:31:33 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.28 2026/09/10 03:52:16 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -132,7 +132,8 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 			if (issetugid() == 0 && getenv("LIBC_NOUSERTC"))
 				_timekeep = NULL;
 			break;
-		case AUX_execpath:
+		case AUX_execpath:	/* XXX delete before 2027 */
+		case AUX_openbsd_execpath:
 			_execpath = (void *)aux->au_v;
 			break;
 		}
