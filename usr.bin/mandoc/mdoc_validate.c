@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.311 2025/07/26 12:20:21 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.312 2026/09/10 16:16:11 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1996,9 +1996,9 @@ post_bl(POST_ARGS)
 		roff_body_alloc(mdoc, nchild->line, nchild->pos, MDOC_It);
 		while (nchild->tok != MDOC_It) {
 			roff_node_relink(mdoc, nchild);
-			if (nnext == NULL)
-				break;
 			nchild = nnext;
+			if (nchild == NULL)
+				break;
 			nnext = nchild->next;
 			mdoc->next = ROFF_NEXT_SIBLING;
 		}
