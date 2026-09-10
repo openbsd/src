@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.41 2020/02/27 01:25:58 schwarze Exp $
+# $OpenBSD: Makefile,v 1.42 2026/09/10 16:21:56 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
-REGRESS_TARGETS += column column_nogroff colNoIt
+REGRESS_TARGETS += column column_nogroff colNoIt colEQ
 REGRESS_TARGETS += esc extend nested offset secstart vert
 
 REGRESS_TARGETS += notype multitype badargs
@@ -31,7 +31,8 @@ SKIP_GROFF ?= breakingTa
 
 SKIP_GROFF += column_nogroff notype empty emptytag break breakingIt broken
 
-SKIP_TMAN ?= column colNoIt multitype multitag bareTa break breakingTa broken
+SKIP_TMAN ?= column colNoIt colEQ multitype multitag
+SKIP_TMAN += bareTa break breakingTa broken
 
 # Fixing the indentation in long .IP and .TP tags in -man -Tascii
 # caused a minor regression in -Tman that is not trivial to fix,
@@ -44,7 +45,8 @@ SKIP_TMAN += tag
 SKIP_TMAN += column_nogroff emptyhead emptytag
 
 # mandoc -T markdown still has issues with badly nested lists
+#                    and it cannot handle equation blocks
 
-SKIP_MARKDOWN ?= break
+SKIP_MARKDOWN ?= break colEQ
 
 .include <bsd.regress.mk>

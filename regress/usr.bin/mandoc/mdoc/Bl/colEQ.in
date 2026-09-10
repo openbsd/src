@@ -1,0 +1,14 @@
+.\" $OpenBSD: colEQ.in,v 1.1 2026/09/10 16:21:56 schwarze Exp $
+.Dd $Mdocdate: September 10 2026 $
+.Dt BL-COLEQ 1
+.Os
+.Sh NAME
+.Nm Bl-colEQ
+.Nd equation inside a column list
+.Sh DESCRIPTION
+.Bl -column "first column" "second column"
+first cell	second cell
+.EQ
+sin
+.EN
+.El
