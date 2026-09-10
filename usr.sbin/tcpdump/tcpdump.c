@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.101 2026/09/07 19:46:29 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.102 2026/09/10 15:33:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -46,6 +46,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <util.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -82,7 +83,7 @@ int Xflag;			/* print packet in emacs-hexl style */
 
 int packettype;
 
-char *program_name;
+const char *program_name;
 char *device = NULL;
 
 int32_t thiszone;		/* seconds offset from gmt to local time */
@@ -209,7 +210,7 @@ main(int argc, char **argv)
 {
 	int cnt = -1, op, i;
 	bpf_u_int32 localnet, netmask;
-	char *cp, *RFileName = NULL, execpath[PATH_MAX];
+	char *RFileName = NULL, execpath[PATH_MAX];
 	char ebuf[PCAP_ERRBUF_SIZE], *WFileName = NULL;
 	pcap_handler printer;
 	struct bpf_program *fcode;
@@ -217,10 +218,7 @@ main(int argc, char **argv)
 	u_int dirfilt = 0, dlt = (u_int) -1;
 	const char *errstr;
 
-	if ((cp = strrchr(argv[0], '/')) != NULL)
-		program_name = cp + 1;
-	else
-		program_name = argv[0];
+	program_name = getprogname();
 
 	/* '-P' used internally, exec privileged portion */
 	if (argc >= 2 && strcmp("-P", argv[1]) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.88 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.89 2026/09/10 15:33:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.88 2024/05/21 05:00:48 jsg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.89 2026/09/10 15:33:45 deraadt Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -123,7 +123,7 @@ extern char *device;		/* as specified by -i  */
 #endif
 #endif
 
-extern char *program_name;	/* used to generate self-identifying messages */
+extern const char *program_name; /* used to generate self-identifying messages */
 
 extern int32_t thiszone;	/* seconds offset from gmt to local time */
 
