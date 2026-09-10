@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.82 2026/07/26 14:46:32 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.83 2026/09/10 12:31:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -126,6 +126,7 @@ main(int argc, char *argv[])
 	int			 proc_instance = 0;
 	const char		*errp, *title = NULL;
 	int			 argc0 = argc;
+	char			 execpath[PATH_MAX];
 
 	while ((c = getopt(argc, argv, "dD:nf:I:P:v")) != -1) {
 		switch (c) {
@@ -172,6 +173,9 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
+	if (getexecpath(execpath, sizeof execpath) != 0)
+		fatalx("getexecpath");
+
 	if ((env = calloc(1, sizeof(*env))) == NULL ||
 	    (ps = calloc(1, sizeof(*ps))) == NULL)
 		exit(1);
@@ -214,7 +218,7 @@ main(int argc, char *argv[])
 	}
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv, proc_id);
 
 	log_procinit("parent");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.183 2026/09/07 02:13:04 jsg Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.184 2026/09/10 12:31:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -770,7 +770,7 @@ enum privsep_procid	 proc_getid(struct privsep_proc *, unsigned int,
     const char *);
 void			 proc_init(struct privsep *, struct privsep_proc *,
     unsigned int, int,
-    int, char **, enum privsep_procid);
+    char *, int, char **, enum privsep_procid);
 void			 proc_kill(struct privsep *);
 void			 proc_connect(struct privsep *);
 void			 proc_dispatch(int, short event, void *);

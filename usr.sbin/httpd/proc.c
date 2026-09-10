@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.59 2026/08/03 11:26:53 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.60 2026/09/10 12:31:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -37,8 +37,8 @@
 #include "httpd.h"
 #include "log.h"
 
-void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
-    char **);
+void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int,
+		char *, int, char **);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_open(struct privsep *, int, int);
 void	 proc_accept(struct privsep *, int, enum privsep_procid,
@@ -69,7 +69,7 @@ proc_getid(struct privsep_proc *procs, unsigned int nproc,
 
 void
 proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int argc, char **argv)
+    char *execpath, int argc, char **argv)
 {
 	unsigned int		  proc, nargc, i, proc_i;
 	char			**nargv;
@@ -126,8 +126,8 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 				} else if (fcntl(fd, F_SETFD, 0) == -1)
 					fatal("fcntl");
 
-				execvp(argv[0], nargv);
-				fatal("%s: execvp", __func__);
+				execv(execpath, nargv);
+				fatal("%s: execv", __func__);
 				break;
 			default:
 				/* Close child end. */
@@ -179,7 +179,7 @@ proc_connect(struct privsep *ps)
 
 void
 proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int debug, int argc, char **argv, enum privsep_procid proc_id)
+    int debug, char *execpath, int argc, char **argv, enum privsep_procid proc_id)
 {
 	struct privsep_proc	*p = NULL;
 	struct privsep_pipes	*pa, *pb;
@@ -222,7 +222,7 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 		}
 
 		/* Engage! */
-		proc_exec(ps, procs, nproc, argc, argv);
+		proc_exec(ps, procs, nproc, execpath, argc, argv);
 		return;
 	}
 
