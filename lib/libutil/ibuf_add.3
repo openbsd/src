@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.13 2026/09/04 18:47:43 claudio Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.14 2026/09/10 08:06:58 jsg Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2026 $
+.Dd $Mdocdate: September 10 2026 $
 .Dt IBUF_ADD 3
 .Os
 .Sh NAME
@@ -460,7 +460,9 @@ callback to obtain a
 .Vt struct ibuf
 of the appropriate size.
 It returns 1 on success, 0 if the connection was closed and \-1 on error
-and the global variable errno is set to indicate the error.
+and the global variable
+.Va errno
+is set to indicate the error.
 The errors
 .Er EINTR
 and
@@ -661,7 +663,9 @@ The function calls the
 .Fn readhdr
 callback function to get the total size of message.
 It returns 1 on success, 0 if the connection was closed and \-1 on error
-and the global variable errno is set to indicate the error.
+and the global variable
+.Va errno
+is set to indicate the error.
 The errors
 .Er EINTR
 and
