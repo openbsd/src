@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.128 2026/08/17 08:58:47 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.129 2026/09/10 09:10:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -446,7 +446,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf;
 	struct imsg	 imsg;
-	int		 n, count, shut = 0;
+	int		 n, shut = 0;
 
 	ibuf = &iev->ibuf;
 
@@ -473,14 +473,12 @@ main_dispatch_rde(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_KROUTE_CHANGE:
-			count = (imsg.hdr.len - IMSG_HEADER_SIZE) /
-			    sizeof(struct kroute);
-			if (kr_change(imsg.data, count))
+			if (kr_change(&imsg))
 				log_warn("main_dispatch_rde: error changing "
 				    "route");
 			break;
 		case IMSG_KROUTE_DELETE:
-			if (kr_delete(imsg.data))
+			if (kr_delete(&imsg))
 				log_warn("main_dispatch_rde: error deleting "
 				    "route");
 			break;
