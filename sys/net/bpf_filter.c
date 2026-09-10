@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.40 2026/09/07 09:07:47 claudio Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.41 2026/09/10 11:54:31 claudio Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -232,18 +232,6 @@ _bpf_lfilter(const struct bpf_insn *pc, u_int pc_len, const struct bpf_ops *ops,
 				return 0;
 			continue;
 
-		case BPF_LD|BPF_W|BPF_LEN:
-			A = wirelen;
-			continue;
-
-		case BPF_LDX|BPF_W|BPF_LEN:
-			X = wirelen;
-			continue;
-
-		case BPF_LD|BPF_W|BPF_RND:
-			A = arc4random();
-			continue;
-
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
 			A = ops->ldw(pkt, k, &err);
@@ -265,12 +253,24 @@ _bpf_lfilter(const struct bpf_insn *pc, u_int pc_len, const struct bpf_ops *ops,
 				return 0;
 			continue;
 
-		case BPF_LDX|BPF_MSH|BPF_B:
+		case BPF_LDX|BPF_B|BPF_MSH:
 			X = ops->ldb(pkt, pc->k, &err);
 			if (err != 0)
 				return 0;
 			X &= 0xf;
 			X <<= 2;
+			continue;
+
+		case BPF_LD|BPF_W|BPF_LEN:
+			A = wirelen;
+			continue;
+
+		case BPF_LDX|BPF_W|BPF_LEN:
+			X = wirelen;
+			continue;
+
+		case BPF_LD|BPF_W|BPF_RND:
+			A = arc4random();
 			continue;
 
 		case BPF_LD|BPF_IMM:
@@ -495,6 +495,11 @@ bpf_validate(struct bpf_insn *f, int len)
 	for (i = 0; i < len; ++i) {
 		p = &f[i];
 		switch (p->code) {
+		default:
+			return 0;
+		case BPF_RET|BPF_K:
+		case BPF_RET|BPF_A:
+			break;
 		/*
 		 * Check that memory operations use valid addresses.
 		 */
@@ -540,6 +545,36 @@ bpf_validate(struct bpf_insn *f, int len)
 		case BPF_STX:
 			if (p->k >= BPF_MEMWORDS)
 				return 0;
+			break;
+		case BPF_JMP|BPF_JA:
+		case BPF_JMP|BPF_JGT|BPF_K:
+		case BPF_JMP|BPF_JGE|BPF_K:
+		case BPF_JMP|BPF_JEQ|BPF_K:
+		case BPF_JMP|BPF_JSET|BPF_K:
+		case BPF_JMP|BPF_JGT|BPF_X:
+		case BPF_JMP|BPF_JGE|BPF_X:
+		case BPF_JMP|BPF_JEQ|BPF_X:
+		case BPF_JMP|BPF_JSET|BPF_X:
+			/*
+			 * Check that jumps are forward, and within
+			 * the code block.
+			 */
+			from = i + 1;
+			switch (BPF_OP(p->code)) {
+			case BPF_JA:
+				if (from + p->k < from || from + p->k >= len)
+					return 0;
+				break;
+			case BPF_JEQ:
+			case BPF_JGT:
+			case BPF_JGE:
+			case BPF_JSET:
+				if (from + p->jt >= len || from + p->jf >= len)
+					return 0;
+				break;
+			default:
+				return 0;
+			}
 			break;
 		case BPF_ALU|BPF_ADD|BPF_X:
 		case BPF_ALU|BPF_SUB|BPF_X:
@@ -591,44 +626,9 @@ bpf_validate(struct bpf_insn *f, int len)
 				return 0;
 			}
 			break;
-		case BPF_JMP|BPF_JA:
-		case BPF_JMP|BPF_JGT|BPF_K:
-		case BPF_JMP|BPF_JGE|BPF_K:
-		case BPF_JMP|BPF_JEQ|BPF_K:
-		case BPF_JMP|BPF_JSET|BPF_K:
-		case BPF_JMP|BPF_JGT|BPF_X:
-		case BPF_JMP|BPF_JGE|BPF_X:
-		case BPF_JMP|BPF_JEQ|BPF_X:
-		case BPF_JMP|BPF_JSET|BPF_X:
-			/*
-			 * Check that jumps are forward, and within
-			 * the code block.
-			 */
-			from = i + 1;
-			switch (BPF_OP(p->code)) {
-			case BPF_JA:
-				if (from + p->k < from || from + p->k >= len)
-					return 0;
-				break;
-			case BPF_JEQ:
-			case BPF_JGT:
-			case BPF_JGE:
-			case BPF_JSET:
-				if (from + p->jt >= len || from + p->jf >= len)
-					return 0;
-				break;
-			default:
-				return 0;
-			}
-			break;
-		case BPF_RET|BPF_K:
-		case BPF_RET|BPF_A:
-			break;
 		case BPF_MISC|BPF_TAX:
 		case BPF_MISC|BPF_TXA:
 			break;
-		default:
-			return 0;
 		}
 
 	}
