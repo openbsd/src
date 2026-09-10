@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.365 2026/09/04 02:38:28 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.366 2026/09/10 07:56:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1451,9 +1451,17 @@ pledge_sockopt(struct proc *p, int set, const struct protosw *pr,
 		}
 		break;
 	case AF_INET6:
-		if (level == IPPROTO_IPV6) {
+		switch (level) {
+		case IPPROTO_IPV6:
 			switch (optname) {
 			case IPV6_TCLASS:
+				return (0);
+			}
+			break;
+		/* Lots of software tries IPPROTO_IP / IP_TOS on v6 sockets */
+		case IPPROTO_IP:
+			switch (optname) {
+			case IP_TOS:
 				return (0);
 			}
 		}
