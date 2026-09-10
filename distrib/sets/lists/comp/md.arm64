@@ -23,6 +23,8 @@
 ./usr/include/arm64/fenv.h
 ./usr/include/arm64/fpu.h
 ./usr/include/arm64/frame.h
+./usr/include/arm64/hibernate.h
+./usr/include/arm64/hibernate_var.h
 ./usr/include/arm64/hypervisor.h
 ./usr/include/arm64/ieee.h
 ./usr/include/arm64/ieeefp.h
