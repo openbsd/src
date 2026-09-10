@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.10 2026/09/10 01:17:22 jsg Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.11 2026/09/10 01:47:51 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -242,16 +242,15 @@ argument is a string of maximum length of
 The old value is copied out into a user buffer pointed to by the
 .Ar oldp
 argument.
-If there is not enough space to store it, an
+If there is not enough space to store it,
 .Er ENOMEM
 is returned.
 If
 .Ar newlen
 is larger than
 .Ar maxlen ,
-an
 .Er EINVAL
-error is returned.
+is returned.
 .It Fn sysctl_tstring "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "char *str" "int maxlen"
 A version of the above that truncates the old value that does not fit
 into the buffer provided by
