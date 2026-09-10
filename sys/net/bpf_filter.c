@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.41 2026/09/10 11:54:31 claudio Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.42 2026/09/10 18:31:39 claudio Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ _bpf_lfilter(const struct bpf_insn *pc, u_int pc_len, const struct bpf_ops *ops,
  * Otherwise, a bogus program could easily crash the system.
  */
 int
-bpf_validate(struct bpf_insn *f, int len)
+bpf_validate(struct bpf_insn *f, u_int len)
 {
 	u_int i, from;
 	struct bpf_insn *p;

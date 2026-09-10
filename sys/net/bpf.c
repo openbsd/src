@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.237 2026/09/07 09:07:47 claudio Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.238 2026/09/10 18:31:39 claudio Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1129,7 +1129,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, u_long cmd)
 
 		size = flen * sizeof(*fp->bf_insns);
 		if (copyin(fp->bf_insns, fcode, size) != 0 ||
-		    bpf_validate(fcode, (int)flen) == 0) {
+		    bpf_validate(fcode, flen) == 0) {
 			free(fcode, M_DEVBUF, size);
 			return (EINVAL);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.123 2026/09/07 09:07:47 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.124 2026/09/10 18:31:39 claudio Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	case PPPIOCSPASS:
 	case PPPIOCSACTIVE:
 		nbp = (struct bpf_program *) data;
-		if ((unsigned) nbp->bf_len > BPF_MAXINSNS)
+		if (nbp->bf_len > BPF_MAXINSNS)
 			return EINVAL;
 		newcodelen = nbp->bf_len * sizeof(struct bpf_insn);
 		if (nbp->bf_len != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.77 2026/09/07 09:07:47 claudio Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.78 2026/09/10 18:31:39 claudio Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ __END_DECLS
 struct ifnet;
 struct mbuf;
 
-int	 bpf_validate(struct bpf_insn *, int);
+int	 bpf_validate(struct bpf_insn *, u_int);
 int	 bpf_mtap(caddr_t, const struct mbuf *, u_int);
 int	 bpf_mtap_hdr(caddr_t, const void *, u_int, const struct mbuf *, u_int);
 int	 bpf_mtap_af(caddr_t, u_int32_t, const struct mbuf *, u_int);
