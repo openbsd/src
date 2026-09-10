@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.433 2026/07/27 19:02:48 gnezdo Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.434 2026/09/10 12:28:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -984,7 +984,9 @@ pf_statelim_add(const struct pfioc_statelim *ioc)
 {
 	struct pf_statelim	*pfstlim;
 	int			 error;
-	size_t			 namelen;
+
+	if (strnlen(ioc->name, sizeof(ioc->name)) >= sizeof(ioc->name))
+		return (ENAMETOOLONG);
 
 	if (ioc->id < PF_STATELIM_ID_MIN ||
 	    ioc->id > PF_STATELIM_ID_MAX)
@@ -997,21 +999,12 @@ pf_statelim_add(const struct pfioc_statelim *ioc)
 	if ((ioc->rate.limit == 0) != (ioc->rate.seconds == 0))
 		return (EINVAL);
 
-	namelen = strnlen(ioc->name, sizeof(ioc->name));
-	/* is the name from userland nul terminated? */
-	if (namelen == sizeof(ioc->name))
-		return (EINVAL);
-
 	pfstlim = pool_get(&pf_statelim_pl, PR_WAITOK|PR_ZERO);
 	if (pfstlim == NULL)
 		return (ENOMEM);
 
 	pfstlim->pfstlim_id = ioc->id;
-	if (strlcpy(pfstlim->pfstlim_nm, ioc->name,
-	    sizeof(pfstlim->pfstlim_nm)) >= sizeof(pfstlim->pfstlim_nm)) {
-		error = EINVAL;
-		goto free;
-	}
+	strlcpy(pfstlim->pfstlim_nm, ioc->name, sizeof(pfstlim->pfstlim_nm));
 	pfstlim->pfstlim_limit = ioc->limit;
 	pfstlim->pfstlim_rate.limit = ioc->rate.limit;
 	pfstlim->pfstlim_rate.seconds = ioc->rate.seconds;
@@ -1059,7 +1052,6 @@ pf_statelim_add(const struct pfioc_statelim *ioc)
 unlock:
 	PF_UNLOCK();
 	NET_UNLOCK();
-free:
 	pool_put(&pf_statelim_pl, pfstlim);
 
 	return (error);
@@ -1427,9 +1419,14 @@ pf_sourcelim_add(const struct pfioc_sourcelim *ioc)
 {
 	struct pf_sourcelim	*pfsrlim;
 	int			 error;
-	size_t			 namelen, tablelen;
 	unsigned int		 prefix;
 	size_t			 i;
+
+	if (strnlen(ioc->name, sizeof(ioc->name)) >= sizeof(ioc->name))
+		return (ENAMETOOLONG);
+	if (strnlen(ioc->overload_tblname, sizeof(ioc->overload_tblname)) >=
+	    sizeof(ioc->overload_tblname))
+		return (ENAMETOOLONG);
 
 	if (ioc->id < PF_SOURCELIM_ID_MIN ||
 	    ioc->id > PF_SOURCELIM_ID_MAX)
@@ -1449,17 +1446,7 @@ pf_sourcelim_add(const struct pfioc_sourcelim *ioc)
 	if (ioc->inet6_prefix > 128)
 		return (EINVAL);
 
-	namelen = strnlen(ioc->name, sizeof(ioc->name));
-	/* is the name from userland nul terminated? */
-	if (namelen == sizeof(ioc->name))
-		return (EINVAL);
-
-	tablelen = strnlen(ioc->overload_tblname,
-	    sizeof(ioc->overload_tblname));
-	/* is the name from userland nul terminated? */
-	if (tablelen == sizeof(ioc->overload_tblname))
-		return (EINVAL);
-	if (tablelen != 0) {
+	if (ioc->overload_tblname[0]) {
 		if (ioc->overload_hwm == 0)
 			return (EINVAL);
 
@@ -1478,20 +1465,11 @@ pf_sourcelim_add(const struct pfioc_sourcelim *ioc)
 	pfsrlim->pfsrlim_ipv6_prefix = ioc->inet6_prefix;
 	pfsrlim->pfsrlim_rate.limit = ioc->rate.limit;
 	pfsrlim->pfsrlim_rate.seconds = ioc->rate.seconds;
-	if (strlcpy(pfsrlim->pfsrlim_overload.name, ioc->overload_tblname,
-	    sizeof(pfsrlim->pfsrlim_overload.name)) >=
-	    sizeof(pfsrlim->pfsrlim_overload.name)) {
-		error = EINVAL;
-		goto free;
-	}
+	strlcpy(pfsrlim->pfsrlim_overload.name, ioc->overload_tblname,
+	    sizeof(pfsrlim->pfsrlim_overload.name));
 	pfsrlim->pfsrlim_overload.hwm = ioc->overload_hwm;
 	pfsrlim->pfsrlim_overload.lwm = ioc->overload_lwm;
-	memcpy(pfsrlim->pfsrlim_nm, ioc->name, namelen);
-	if (strlcpy(pfsrlim->pfsrlim_nm, ioc->name,
-	    sizeof(pfsrlim->pfsrlim_nm)) >= sizeof(pfsrlim->pfsrlim_nm)) {
-		error = EINVAL;
-		goto free;
-	}
+	strlcpy(pfsrlim->pfsrlim_nm, ioc->name, sizeof pfsrlim->pfsrlim_nm);
 
 	if (pfsrlim->pfsrlim_rate.limit) {
 		uint64_t bucket = pfsrlim->pfsrlim_rate.seconds * 1000000000ULL;
@@ -1565,7 +1543,6 @@ unlock:
 		pfr_detach_table(pfsrlim->pfsrlim_overload.table);
 	PF_UNLOCK();
 	NET_UNLOCK();
-free:
 	pool_put(&pf_sourcelim_pl, pfsrlim);
 
 	return (error);
@@ -1688,6 +1665,8 @@ pf_source_get(struct pfioc_source *ioc,
 	size_t used = 0, len = ioc->entrieslen;
 	int error = 0;
 
+	if (strnlen(ioc->name, sizeof(ioc->name)) >= sizeof(ioc->name))
+		return (ENAMETOOLONG);
 	if (ioc->entry_size != sizeof(e))
 		return (EINVAL);
 	if (len < sizeof(e))
@@ -1780,6 +1759,9 @@ pf_source_clr(struct pfioc_source_kill *ioc)
 	int error = 0;
 	unsigned int gen;
 
+	if (strnlen(ioc->name, sizeof(ioc->name)) >= sizeof(ioc->name))
+		return (ENAMETOOLONG);
+
 	if (ioc->rmstates) {
 		/* XXX userland wants the states removed too */
 		return (EOPNOTSUPP);
@@ -1844,6 +1826,13 @@ pf_states_clr(struct pfioc_state_kill *psk)
 	struct pf_state		*head, *tail;
 	u_int			 killed = 0;
 	int			 error;
+
+	if (strnlen(psk->psk_ifname, sizeof(psk->psk_ifname)) >=
+	    sizeof(psk->psk_ifname))
+		return ENAMETOOLONG;
+	if (strnlen(psk->psk_label, sizeof(psk->psk_label)) >=
+	    sizeof(psk->psk_label))
+		return ENAMETOOLONG;
 
 	NET_LOCK();
 
@@ -2202,6 +2191,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_queue	*q = (struct pfioc_queue *)addr;
 		struct pf_queuespec	*qs;
 
+		if (strnlen(q->queue.qname, sizeof(q->queue.qname)) >=
+		    sizeof(q->queue.qname) ||
+		    strnlen(q->queue.parent, sizeof(q->queue.parent)) >=
+		    sizeof(q->queue.parent) ||
+		    strnlen(q->queue.ifname, sizeof(q->queue.ifname)) >=
+		    sizeof(q->queue.ifname)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
+
 		qs = pool_get(&pf_queue_pl, PR_WAITOK|PR_LIMITFAIL|PR_ZERO);
 		if (qs == NULL) {
 			error = ENOMEM;
@@ -2218,9 +2217,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			goto fail;
 		}
 		memcpy(qs, &q->queue, sizeof(*qs));
-		qs->qname[sizeof(qs->qname) - 1] = '\0';
-		qs->parent[sizeof(qs->parent) - 1] = '\0';
-		qs->ifname[sizeof(qs->ifname) - 1] = '\0';
 		qs->qid = pf_qname2qid(qs->qname, 1);
 		if (qs->qid == 0) {
 			error = EBUSY;
@@ -2296,6 +2292,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*rule, *tail;
 
+		if (strnlen(pr->anchor, sizeof(pr->anchor)) >=
+		    sizeof(pr->anchor) ||
+		    strnlen(pr->anchor_call, sizeof(pr->anchor_call)) >=
+		    sizeof(pr->anchor_call)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}			
+
 		rule = pool_get(&pf_rule_pl, PR_WAITOK|PR_LIMITFAIL|PR_ZERO);
 		if (rule == NULL) {
 			error = ENOMEM;
@@ -2336,7 +2340,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		NET_LOCK();
 		PF_LOCK();
-		pr->anchor[sizeof(pr->anchor) - 1] = '\0';
 		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
@@ -2410,9 +2413,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_trans		*t;
 		u_int32_t		 ruleset_version;
 
+		if (strnlen(pr->anchor, sizeof(pr->anchor)) >=
+		    sizeof(pr->anchor)) {
+			/* anchor_call[PATH_MAX] is not used here */
+			error = ENAMETOOLONG;
+			goto fail;
+		}
 		NET_LOCK();
 		PF_LOCK();
-		pr->anchor[sizeof(pr->anchor) - 1] = '\0';
 		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
@@ -2523,6 +2531,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*oldrule = NULL, *newrule = NULL;
 		u_int32_t		 nr = 0;
+
+		if (strnlen(pcr->anchor, sizeof(pcr->anchor)) >=
+		    sizeof(pcr->anchor) ||
+		    strnlen(pcr->anchor_call, sizeof(pcr->anchor_call)) >=
+		    sizeof(pcr->anchor_call)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
 
 		if (pcr->action < PF_CHANGE_ADD_HEAD ||
 		    pcr->action > PF_CHANGE_GET_TICKET) {
@@ -2710,6 +2726,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		const int		 dirs[] = { PF_IN, PF_OUT };
 		int			 sidx, didx;
 
+		if (strnlen(psk->psk_ifname, sizeof(psk->psk_ifname)) >=
+		    sizeof(psk->psk_ifname) ||
+		    strnlen(psk->psk_label, sizeof(psk->psk_label)) >=
+		    sizeof(psk->psk_label)) {
+			error = ENAMETOOLONG;
+			break;
+		}
 		if (psk->psk_pfcmp.id) {
 			if (psk->psk_pfcmp.creatorid == 0)
 				psk->psk_pfcmp.creatorid = pf_status.hostid;
@@ -2886,11 +2909,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case DIOCGETSTATUS:
-		pf_status_read((struct pf_status *)addr);
+		error = pf_status_read((struct pf_status *)addr);
 		break;
 
 	case DIOCSETSTATUSIF: {
 		struct pfioc_iface	*pi = (struct pfioc_iface *)addr;
+
+		if (strnlen(pi->pfiio_name, sizeof(pi->pfiio_name)) >=
+		    sizeof(pi->pfiio_name)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
 
 		NET_LOCK();
 		PF_LOCK();
@@ -2909,6 +2938,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCCLRSTATUS: {
 		struct pfioc_iface	*pi = (struct pfioc_iface *)addr;
+
+		if (strnlen(pi->pfiio_name, sizeof(pi->pfiio_name)) >=
+		    sizeof(pi->pfiio_name)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
 
 		NET_LOCK();
 		PF_LOCK();
@@ -3094,8 +3129,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_anchor	*anchor;
 
+		if (strnlen(pr->path, sizeof(pr->path)) >= sizeof(pr->path)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
+
 		PF_LOCK();
-		pr->path[sizeof(pr->path) - 1] = '\0';
 		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			PF_UNLOCK();
@@ -3122,14 +3161,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_anchor	*anchor;
 		u_int32_t		 nr = 0;
 
+		if (strnlen(pr->path, sizeof(pr->path)) >= sizeof(pr->path) ||
+		    strnlen(pr->name, sizeof(pr->name)) >= sizeof(pr->name)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
+
 		PF_LOCK();
-		pr->path[sizeof(pr->path) - 1] = '\0';
 		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			PF_UNLOCK();
 			goto fail;
 		}
-		pr->name[0] = '\0';
 		if (ruleset == &pf_main_ruleset) {
 			/* XXX kludge for pf_main_ruleset */
 			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
@@ -3864,6 +3907,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfi_kif		*kif_buf;
 		int			 apfiio_size = io->pfiio_size;
 
+		if (strnlen(io->pfiio_name, sizeof(io->pfiio_name)) >=
+		    sizeof(io->pfiio_name)) {
+			error = ENAMETOOLONG;
+			goto fail;
+		}
 		if (io->pfiio_esize != sizeof(struct pfi_kif)) {
 			error = ENODEV;
 			goto fail;
@@ -3890,8 +3938,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETIFFLAG: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
-		if (io == NULL) {
-			error = EINVAL;
+		if (strnlen(io->pfiio_name, sizeof(io->pfiio_name)) >=
+		    sizeof(io->pfiio_name)) {
+			error = ENAMETOOLONG;
 			goto fail;
 		}
 
@@ -3904,8 +3953,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCCLRIFFLAG: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
-		if (io == NULL) {
-			error = EINVAL;
+		if (strnlen(io->pfiio_name, sizeof(io->pfiio_name)) >=
+		    sizeof(io->pfiio_name)) {
+			error = ENAMETOOLONG;
 			goto fail;
 		}
 
@@ -4043,14 +4093,30 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 
 	/* XXX union skip[] */
 
-	from->label[sizeof(from->label) - 1] = '\0';
-	from->ifname[sizeof(from->ifname) - 1] = '\0';
-	from->rcv_ifname[sizeof(from->rcv_ifname) - 1] = '\0';
-	from->qname[sizeof(from->qname) - 1] = '\0';
-	from->pqname[sizeof(from->pqname) - 1] = '\0';
-	from->tagname[sizeof(from->tagname) - 1] = '\0';
-	from->match_tagname[sizeof(from->match_tagname) - 1] = '\0';
-	from->overload_tblname[sizeof(from->overload_tblname) - 1] = '\0';
+	if (strnlen(from->label, sizeof(from->label)) >=
+	    sizeof(from->label))
+		return ENAMETOOLONG;
+	if (strnlen(from->ifname, sizeof(from->ifname)) >=
+	    sizeof(from->ifname))
+		return ENAMETOOLONG;
+	if (strnlen(from->rcv_ifname, sizeof(from->rcv_ifname)) >=
+	    sizeof(from->rcv_ifname))
+		return ENAMETOOLONG;
+	if (strnlen(from->qname, sizeof(from->qname)) >=
+	    sizeof(from->qname))
+		return ENAMETOOLONG;
+	if (strnlen(from->pqname, sizeof(from->pqname)) >=
+	    sizeof(from->pqname))
+		return ENAMETOOLONG;
+	if (strnlen(from->tagname, sizeof(from->tagname)) >=
+	    sizeof(from->tagname))
+		return ENAMETOOLONG;
+	if (strnlen(from->match_tagname, sizeof(from->match_tagname)) >=
+	    sizeof(from->match_tagname))
+		return ENAMETOOLONG;
+	if (strnlen(from->overload_tblname, sizeof(from->overload_tblname)) >=
+	    sizeof(from->overload_tblname))
+		return ENAMETOOLONG;
 
 	strlcpy(to->label, from->label, sizeof(to->label));
 	strlcpy(to->ifname, from->ifname, sizeof(to->ifname));
@@ -4206,9 +4272,11 @@ int
 pf_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	struct pf_status	pfs;
+	int error;
 
-	pf_status_read(&pfs);
-
+	error = pf_status_read(&pfs);
+	if (error)
+		return (ENOENT);
 	return sysctl_rdstruct(oldp, oldlenp, newp, &pfs, sizeof(pfs));
 }
 

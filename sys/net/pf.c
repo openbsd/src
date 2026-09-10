@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1240 2026/09/04 08:29:31 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1241 2026/09/10 12:28:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -9160,11 +9160,14 @@ pf_status_clear(void)
 	counters_zero(pf_status_fcounters, FCNT_MAX);
 }
 
-void
+int
 pf_status_read(struct pf_status *pfs)
 {
 	uint64_t scratch[FCNT_MAX];
 
+	if (strnlen(pfs->ifname, sizeof(pfs->ifname)) >=
+	    sizeof(pfs->ifname))
+		return ENAMETOOLONG;
 	NET_LOCK();
 	PF_LOCK();
 	PF_FRAG_LOCK();
@@ -9175,4 +9178,5 @@ pf_status_read(struct pf_status *pfs)
 	NET_UNLOCK();
 
 	counters_read(pf_status_fcounters, pfs->fcounters, FCNT_MAX, scratch);
+	return 0;
 }

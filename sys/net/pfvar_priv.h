@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.42 2026/02/05 03:26:00 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.43 2026/09/10 12:28:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -682,7 +682,7 @@ u_int16_t		pf_pkt_hash(sa_family_t, uint8_t,
 
 void			pf_status_init(void);
 void			pf_status_clear(void);
-void			pf_status_read(struct pf_status *);
+int			pf_status_read(struct pf_status *);
 
 #endif /* _KERNEL */
 

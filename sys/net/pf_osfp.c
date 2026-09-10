@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.48 2024/04/13 23:44:11 jsg Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.49 2026/09/10 12:28:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -368,6 +368,16 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	    fpadd.fp_wscale,
 	    fpioc->fp_os.fp_os);
 
+	if (strnlen(fpioc->fp_os.fp_class_nm, sizeof(fpioc->fp_os.fp_class_nm)) >=
+	    sizeof(fpioc->fp_os.fp_class_nm))
+		return ENAMETOOLONG;
+	if (strnlen(fpioc->fp_os.fp_version_nm, sizeof(fpioc->fp_os.fp_version_nm)) >=
+	    sizeof(fpioc->fp_os.fp_version_nm))
+		return ENAMETOOLONG;
+	if (strnlen(fpioc->fp_os.fp_subtype_nm, sizeof(fpioc->fp_os.fp_subtype_nm)) >=
+	    sizeof(fpioc->fp_os.fp_subtype_nm))
+		return ENAMETOOLONG;
+
 	entry = pool_get(&pf_osfp_entry_pl, PR_WAITOK|PR_LIMITFAIL);
 	if (entry == NULL)
 		return (ENOMEM);
@@ -405,11 +415,6 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 		pf_osfp_insert(fp);
 	}
 	memcpy(entry, &fpioc->fp_os, sizeof(*entry));
-
-	/* Make sure the strings are NUL terminated */
-	entry->fp_class_nm[sizeof(entry->fp_class_nm)-1] = '\0';
-	entry->fp_version_nm[sizeof(entry->fp_version_nm)-1] = '\0';
-	entry->fp_subtype_nm[sizeof(entry->fp_subtype_nm)-1] = '\0';
 
 	SLIST_INSERT_HEAD(&fp->fp_oses, entry, fp_entry);
 	PF_UNLOCK();
