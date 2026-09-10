@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.109 2026/08/30 14:23:37 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.110 2026/09/10 03:50:40 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -727,7 +727,7 @@ enum AuxID {
 	AUX_base = 7,			/* base addr for ld.so or static PIE */
 	AUX_flags = 8,			/* processor flags */
 	AUX_entry = 9,			/* a.out entry */
-	AUX_execpath = 15,		/* realpath'd executable path */
+	AUX_execpath = 15,		/* realpath'd executable path XXX delete */
 	AUX_hwcap = 25,			/* processor flags */
 	AUX_hwcap2 = 26,		/* processor flags (continued) */
 	AUX_sun_uid = 2000,		/* euid */
@@ -735,6 +735,7 @@ enum AuxID {
 	AUX_sun_gid = 2002,		/* egid */
 	AUX_sun_rgid = 2003,		/* rgid */
 	AUX_openbsd_timekeep = 4000,	/* userland clock_gettime */
+	AUX_openbsd_execpath = 4001,	/* realpath'd executable path */
 };
 
 struct elf_args {
@@ -823,7 +824,7 @@ extern Elf_Dyn		_DYNAMIC[];
 /*
  * How many entries are in the AuxInfo array we pass to the process?
  */
-#define	ELF_AUX_ENTRIES	12
+#define	ELF_AUX_ENTRIES	13
 #define	ELF_AUX_WORDS	(sizeof(AuxInfo) * ELF_AUX_ENTRIES / sizeof(char *))
 
 #define	ELFROUNDSIZE	sizeof(Elf_Word)
