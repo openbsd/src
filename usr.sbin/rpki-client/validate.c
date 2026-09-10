@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.84 2026/06/15 14:30:53 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.85 2026/09/10 13:11:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -90,8 +90,21 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 	uint32_t	 min, max;
 
 	for (i = 0; i < cert->num_ases; i++) {
-		if (cert->ases[i].type == CERT_AS_INHERIT)
-			continue;
+		if (cert->ases[i].type == CERT_AS_INHERIT) {
+			if (a->cert->num_ases > 0)
+				continue;
+
+			/*
+			 * Many MFTs are issued by a CA without AS resources.
+			 * Accept this non-compliance with RFC 3779, 3.3.
+			 * Apart from MFTs, this affects only TAKs and GBRs.
+			 */
+			if (cert->purpose == CERT_PURPOSE_EE)
+				continue;
+
+			warnx("%s: parent without AS resources", fn);
+			return 0;
+		}
 
 		if (cert->ases[i].type == CERT_AS_ID) {
 			min = cert->ases[i].id;
@@ -109,8 +122,21 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 	}
 
 	for (i = 0; i < cert->num_ips; i++) {
-		if (cert->ips[i].type == CERT_IP_INHERIT)
-			continue;
+		if (cert->ips[i].type == CERT_IP_INHERIT) {
+			if (a->cert->num_ips > 0)
+				continue;
+
+			/*
+			 * Many MFT are issued by a CA without IP resources.
+			 * Accept this non-compliance with RFC 3779, 2.3.
+			 * Apart from MFTs, this affects only TAKs and GBRs.
+			 */
+			if (cert->purpose == CERT_PURPOSE_EE)
+				continue;
+
+			warnx("%s: parent without IP resources", fn);
+			return 0;
+		}
 
 		if (valid_ip(a, cert->ips[i].afi, cert->ips[i].min,
 		    cert->ips[i].max))
