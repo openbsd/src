@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.66 2026/09/07 12:29:27 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.67 2026/09/10 13:15:49 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -302,6 +302,27 @@ cms_check_SignerInfo(const char *fn, CMS_ContentInfo *cms,
 	return 1;
 }
 
+static const struct signed_obj *
+cms_object_from_rtype(const char *fn, enum rtype rtype)
+{
+	switch (rtype) {
+	case RTYPE_ASPA:
+		return aspa_obj();
+	case RTYPE_MFT:
+		return mft_obj();
+	case RTYPE_ROA:
+		return roa_obj();
+	case RTYPE_RSC:
+		return rsc_obj();
+	case RTYPE_SPL:
+		return spl_obj();
+	case RTYPE_TAK:
+		return tak_obj();
+	default:
+		errx(1, "%s: unsupported signed object", fn);
+	}
+}
+
 static int
 cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
     const unsigned char *der, size_t len, const ASN1_OBJECT *oid,
@@ -402,27 +423,6 @@ cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
 	sk_X509_free(certs);
 	CMS_ContentInfo_free(cms);
 	return rc;
-}
-
-static const struct signed_obj *
-cms_object_from_rtype(const char *fn, enum rtype rtype)
-{
-	switch (rtype) {
-	case RTYPE_ASPA:
-		return aspa_obj();
-	case RTYPE_MFT:
-		return mft_obj();
-	case RTYPE_ROA:
-		return roa_obj();
-	case RTYPE_RSC:
-		return rsc_obj();
-	case RTYPE_SPL:
-		return spl_obj();
-	case RTYPE_TAK:
-		return tak_obj();
-	default:
-		errx(1, "%s: unsupported signed object", fn);
-	}
 }
 
 void *
