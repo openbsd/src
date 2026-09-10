@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.37 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.38 2026/09/10 01:55:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -215,6 +215,7 @@ TAILQ_HEAD(listenerlist, listener);
 struct conn {
 	TAILQ_ENTRY(conn)	 next;
 	int			 fd;
+	uint64_t		 id;
 	struct bufferevent	*bev;
 	struct ber		 ber;
 	int			 disconnect;
@@ -269,7 +270,7 @@ struct ldapd_stats
 
 struct auth_req
 {
-	int			 fd;
+	uint64_t		 id;
 	long long		 msgid;
 	char			 name[128];
 	char			 password[128];
@@ -278,7 +279,7 @@ struct auth_req
 struct auth_res
 {
 	int			 ok;
-	int			 fd;
+	uint64_t		 id;
 	long long		 msgid;
 };
 
@@ -337,8 +338,9 @@ extern struct ldapd_stats	 stats;
 extern struct ldapd_config	*conf;
 
 /* conn.c */
+extern uint64_t		 conn_id;
 extern struct conn_list	 conn_list;
-struct conn		*conn_by_fd(int fd);
+struct conn		*conn_by_id(uint64_t id);
 void			 conn_read(struct bufferevent *bev, void *data);
 void			 conn_write(struct bufferevent *bev, void *data);
 void			 conn_err(struct bufferevent *bev, short w, void *data);

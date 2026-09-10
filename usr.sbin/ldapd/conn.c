@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.21 2023/06/26 10:28:12 claudio Exp $ */
+/*	$OpenBSD: conn.c,v 1.22 2026/09/10 01:55:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -30,6 +30,7 @@ int			 conn_dispatch(struct conn *conn);
 int			 conn_tls_init(struct conn *);
 unsigned int		 ldap_application(struct ber_element *elm);
 
+uint64_t		 conn_id;
 struct conn_list	 conn_list;
 
 unsigned int
@@ -298,6 +299,7 @@ conn_accept(int fd, short event, void *data)
 		goto giveup;
 	}
 	ober_set_application(&conn->ber, ldap_application);
+	conn->id = conn_id++;
 	conn->fd = afd;
 	conn->listener = l;
 
@@ -334,12 +336,12 @@ giveup:
 }
 
 struct conn *
-conn_by_fd(int fd)
+conn_by_id(uint64_t id)
 {
 	struct conn		*conn;
 
 	TAILQ_FOREACH(conn, &conn_list, next) {
-		if (conn->fd == fd)
+		if (conn->id == id)
 			return conn;
 	}
 	return NULL;

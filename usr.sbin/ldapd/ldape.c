@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.40 2025/05/11 15:38:48 tb Exp $ */
+/*	$OpenBSD: ldape.c,v 1.41 2026/09/10 01:55:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -352,6 +352,7 @@ ldape(int debug, int verbose, char *csockpath)
 	char			 host[128];
 	mode_t			old_umask = 0;
 	
+	conn_id = 0;
 	TAILQ_INIT(&conn_list);
 
 	ldap_loginit("ldap server", debug, verbose);
@@ -533,10 +534,12 @@ ldape_auth_result(struct imsg *imsg)
 	struct conn		*conn;
 	struct auth_res		*ares = imsg->data;
 
-	log_debug("authentication on conn %d/%lld = %d", ares->fd, ares->msgid,
+	log_debug("authentication on conn %llu/%lld = %d", ares->id, ares->msgid,
 	    ares->ok);
-	conn = conn_by_fd(ares->fd);
-	if (conn->bind_req != NULL && conn->bind_req->msgid == ares->msgid)
+	conn = conn_by_id(ares->id);
+	if (conn == NULL)
+		log_warnx("auth result with no connection");
+	else if (conn->bind_req != NULL && conn->bind_req->msgid == ares->msgid)
 		ldap_bind_continue(conn, ares->ok);
 	else
 		log_warnx("spurious auth result");
