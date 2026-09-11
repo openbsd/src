@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo-fault.c,v 1.2 2021/09/28 08:56:15 kettenis Exp $	*/
+/*	$OpenBSD: siginfo-fault.c,v 1.3 2026/09/11 18:51:37 miod Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -31,8 +31,11 @@
 
 /*
  * Some architectures may deliver an imprecise fault address.
+ *
+ * On m88k, 88100+88200 report the address truncated to a 32-bit boundary,
+ * while 88110 systems report the exact address.
  */
-#ifdef __sparc64__
+#if defined(__m88k__) || defined(__sparc64__)
 #define EXPADDR_MASK	~(3UL)
 #else
 #define EXPADDR_MASK	~(0UL)
