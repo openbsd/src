@@ -1,4 +1,4 @@
-.\" $OpenBSD: ogx.4,v 1.2 2020/12/31 09:57:23 visa Exp $
+.\" $OpenBSD: ogx.4,v 1.3 2026/09/11 16:22:55 visa Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 31 2020 $
+.Dd $Mdocdate: September 11 2026 $
 .Dt OGX 4 octeon
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@ driver supports built-in Ethernet ports on the OCTEON III network processor.
 The
 .Nm
 driver utilizes IPv4 and TCP/UDP checksum offload on transmission.
+The driver additionally supports jumbo frames.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
