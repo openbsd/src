@@ -98,12 +98,6 @@ DEFINE_STATIC_SRCU(drm_unplug_srcu);
  */
 int drm_refcnt; 
 
-struct drm_softc {
-	struct device		sc_dev;
-	struct drm_device 	*sc_drm;
-	int			sc_allocated;
-};
-
 struct drm_attach_args {
 	struct drm_device		*drm;
 	const struct drm_driver		*driver;

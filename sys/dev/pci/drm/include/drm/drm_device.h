@@ -424,4 +424,10 @@ static inline struct device *drm_dev_dma_dev(struct drm_device *dev)
 	return dev->dev;
 }
 
+struct drm_softc {
+	struct device		sc_dev;
+	struct drm_device 	*sc_drm;
+	int			sc_allocated;
+};
+
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.145 2026/08/19 01:34:09 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.146 2026/09/11 01:18:09 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3392,13 +3392,13 @@ bus_dma_tag_t
 dma_tag_lookup(struct device *dev)
 {
 	extern struct cfdriver drm_cd;
-	struct drm_device *drm;
+	struct drm_softc *sc;
 	int i;
 
 	for (i = 0; i < drm_cd.cd_ndevs; i++) {
-		drm = drm_cd.cd_devs[i];
-		if (drm && drm->dev == dev)
-			return drm->dmat;
+		sc = drm_cd.cd_devs[i];
+		if (sc && &sc->sc_dev == dev)
+			return sc->sc_drm->dmat;
 	}
 
 	return ((struct platform_device *)dev)->dmat;
