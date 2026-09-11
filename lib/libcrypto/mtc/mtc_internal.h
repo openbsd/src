@@ -24,6 +24,8 @@
 
 #include <openssl/evp.h>
 
+#include "bytestring.h"
+
 __BEGIN_HIDDEN_DECLS
 
 /*
@@ -119,6 +121,40 @@ int mtc_tree_inclusion_proof(const struct mtc_tree *tree, uint64_t index,
 int mtc_tree_consistency_proof(const struct mtc_tree *tree,
     struct mtc_subtree subtree, struct mtc_subtree tree_range,
     uint8_t **out_proof, size_t *out_proof_len);
+
+/*
+ * The MTCProof carried in the signatureValue of a Merkle Tree Certificate,
+ * per section 6.2 of draft-ietf-plants-merkle-tree-certs-05.  Every CBS
+ * references the input the proof was parsed from, which must outlive it.
+ */
+
+struct mtc_cosignature {
+	CBS cosigner_id;
+	CBS signature;
+};
+
+struct mtc_proof {
+	CBS extensions;
+	uint64_t start;
+	uint64_t end;
+	CBS inclusion_proof;
+	CBS signatures;
+};
+
+/*
+ * Parses the MTCProof in [in, in_len).  Fails on trailing bytes, on
+ * start >= end, and on a cosignature list that is not strictly ascending by
+ * cosigner_id.  proof is untouched on failure.
+ */
+int mtc_proof_parse(const uint8_t *in, size_t in_len, struct mtc_proof *proof);
+
+/*
+ * Extracts the cosignatures of a parsed proof.  With out NULL only *count is
+ * set.  With out non-NULL, fails if more than max are present.  Nothing is
+ * written on failure.
+ */
+int mtc_proof_get_cosignatures(const struct mtc_proof *proof,
+    struct mtc_cosignature *out, size_t max, size_t *count);
 
 __END_HIDDEN_DECLS
 
