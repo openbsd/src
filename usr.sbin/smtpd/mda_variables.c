@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.11 2026/04/03 10:18:58 jtt Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.12 2026/09/11 14:43:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -53,6 +53,7 @@ mda_expand_token(char *dest, size_t len, const char *token,
 	char		tmp[EXPAND_BUFFER];
 	const char     *string = NULL;
 	char	       *lbracket, *rbracket, *content, *sep, *mods;
+	const char     *escape = NULL;
 	ssize_t		i;
 	ssize_t		begoff, endoff;
 	const char     *errstr = NULL;
@@ -188,10 +189,13 @@ mda_expand_token(char *dest, size_t len, const char *token,
 		} while ((mods = sep) != NULL);
 	}
 
-	if (!raw && replace)
+	if (replace) {
+		escape = raw ? MAILADDR_RAW_ESCAPE : MAILADDR_ESCAPE;
+
 		for (i = 0; (size_t)i < strlen(tmp); ++i)
-			if (strchr(MAILADDR_ESCAPE, tmp[i]))
-				tmp[i] = ':';
+			if (strchr(escape, tmp[i]))
+		tmp[i] = ':';
+	}
 
 	/* expanded string is empty */
 	i = strlen(string);

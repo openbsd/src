@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_unpriv.c,v 1.9 2024/03/15 21:52:20 op Exp $	*/
+/*	$OpenBSD: mda_unpriv.c,v 1.10 2026/09/11 14:43:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -23,11 +23,30 @@
 
 #include "smtpd.h"
 
+static void
+mda_escape(char *dst, size_t dstsz, const char *src)
+{
+	size_t	i;
+
+	if (strlcpy(dst, src, dstsz) >= dstsz)
+		errx(1, "mda environment value too long");
+	for (i = 0; dst[i] != '\0'; i++)
+		if (strchr(MAILADDR_RAW_ESCAPE, dst[i]))
+			dst[i] = ':';
+}
+
 void
 mda_unpriv(struct dispatcher *dsp, struct deliver *deliver,
     const char *pw_name, const char *pw_dir)
 {
 	int		idx;
+	char		s_user[SMTPD_MAXLOCALPARTSIZE];
+	char		s_domain[SMTPD_MAXDOMAINPARTSIZE];
+	char		d_user[SMTPD_MAXLOCALPARTSIZE];
+	char		d_domain[SMTPD_MAXDOMAINPARTSIZE];
+	char		r_user[SMTPD_MAXLOCALPARTSIZE];
+	char		r_domain[SMTPD_MAXDOMAINPARTSIZE];
+	char		subaddr[SMTPD_SUBADDRESS_SIZE];
 	char	       *mda_environ[12];
 	char		mda_exec[LINE_MAX];
 	char		mda_wrapper[LINE_MAX];
@@ -49,26 +68,34 @@ mda_unpriv(struct dispatcher *dsp, struct deliver *deliver,
 
 	mda_command = mda_exec;
 
+	mda_escape(r_user, sizeof r_user, deliver->rcpt.user);
+	mda_escape(r_domain, sizeof r_domain, deliver->rcpt.domain);
+	mda_escape(d_user, sizeof d_user, deliver->dest.user);
+	mda_escape(d_domain, sizeof d_domain, deliver->dest.domain);
+	mda_escape(s_user, sizeof s_user, deliver->sender.user);
+	mda_escape(s_domain, sizeof s_domain, deliver->sender.domain);
+	mda_escape(subaddr, sizeof subaddr, deliver->mda_subaddress);
+
 	/* setup environment similar to other MTA */
 	idx = 0;
 	xasprintf(&mda_environ[idx++], "PATH=%s", _PATH_DEFPATH);
-	xasprintf(&mda_environ[idx++], "DOMAIN=%s", deliver->rcpt.domain);
+	xasprintf(&mda_environ[idx++], "DOMAIN=%s", r_domain);
 	xasprintf(&mda_environ[idx++], "HOME=%s", pw_dir);
-	xasprintf(&mda_environ[idx++], "ORIGINAL_RECIPIENT=%s@%s", deliver->rcpt.user, deliver->rcpt.domain);
-	xasprintf(&mda_environ[idx++], "RECIPIENT=%s@%s", deliver->dest.user, deliver->dest.domain);
+	xasprintf(&mda_environ[idx++], "ORIGINAL_RECIPIENT=%s@%s", r_user, r_domain);
+	xasprintf(&mda_environ[idx++], "RECIPIENT=%s@%s", d_user, d_domain);
 	xasprintf(&mda_environ[idx++], "SHELL=/bin/sh");
-	xasprintf(&mda_environ[idx++], "LOCAL=%s", deliver->rcpt.user);
+	xasprintf(&mda_environ[idx++], "LOCAL=%s", r_user);
 	xasprintf(&mda_environ[idx++], "LOGNAME=%s", deliver->userinfo.username);
 	xasprintf(&mda_environ[idx++], "USER=%s", deliver->userinfo.username);
 
 	if (deliver->sender.user[0])
 		xasprintf(&mda_environ[idx++], "SENDER=%s@%s",
-		    deliver->sender.user, deliver->sender.domain);
+		    s_user, s_domain);
 	else
 		xasprintf(&mda_environ[idx++], "SENDER=");
 
 	if (deliver->mda_subaddress[0])
-		xasprintf(&mda_environ[idx++], "EXTENSION=%s", deliver->mda_subaddress);
+		xasprintf(&mda_environ[idx++], "EXTENSION=%s", subaddr);
 
 	mda_environ[idx++] = (char *)NULL;
 
