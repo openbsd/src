@@ -37,6 +37,7 @@ SUBDIR += init
 SUBDIR += lhash
 SUBDIR += md
 SUBDIR += mlkem
+SUBDIR += mtc
 SUBDIR += objects
 SUBDIR += pbkdf2
 SUBDIR += pem
