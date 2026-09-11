@@ -918,9 +918,6 @@ EXPORT_SYMBOL(drm_prime_pages_to_sg);
  */
 unsigned long drm_prime_get_contiguous_size(struct sg_table *sgt)
 {
-	STUB();
-	return 0;
-#ifdef notyet
 	dma_addr_t expected = sg_dma_address(sgt->sgl);
 	struct scatterlist *sg;
 	unsigned long size = 0;
@@ -937,7 +934,6 @@ unsigned long drm_prime_get_contiguous_size(struct sg_table *sgt)
 		size += len;
 	}
 	return size;
-#endif
 }
 EXPORT_SYMBOL(drm_prime_get_contiguous_size);
 
