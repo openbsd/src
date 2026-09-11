@@ -19,6 +19,9 @@
 #ifndef HEADER_MTC_INTERNAL_H
 #define HEADER_MTC_INTERNAL_H
 
+#include <sys/queue.h>
+
+#include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -155,6 +158,50 @@ int mtc_proof_parse(const uint8_t *in, size_t in_len, struct mtc_proof *proof);
  */
 int mtc_proof_get_cosignatures(const struct mtc_proof *proof,
     struct mtc_cosignature *out, size_t max, size_t *count);
+
+/*
+ * A Merkle Tree CA as configured by a relying party, per section 7.1 of
+ * draft-ietf-plants-merkle-tree-certs-05.  The CA cosigner (section 5.4)
+ * is identified by the CA's own ID; cosigners holds the other cosigners
+ * the relying party recognises.  IDs are TrustAnchorID relative-OID bytes.
+ * lock guards the fields that change after construction.
+ */
+
+struct mtc_cosigner {
+	SLIST_ENTRY(mtc_cosigner) entry;
+	uint8_t *id;
+	size_t id_len;
+	EVP_PKEY *pkey;
+};
+
+struct mtc_ca {
+	uint8_t *id;
+	size_t id_len;
+	const EVP_MD *hash;
+	uint64_t min_serial;
+	EVP_PKEY *cosigner_pkey;
+	pthread_mutex_t lock;
+	SLIST_HEAD(, mtc_cosigner) cosigners;
+};
+
+/*
+ * The ID bytes are copied and a reference is taken on cosigner_pkey.  Fails
+ * on an empty ID.
+ */
+struct mtc_ca *mtc_ca_new(const uint8_t *id, size_t id_len,
+    const EVP_MD *hash, uint64_t min_serial, EVP_PKEY *cosigner_pkey);
+void mtc_ca_free(struct mtc_ca *ca);
+
+/*
+ * Adds a cosigner; the ID bytes are copied and a reference is taken on
+ * pkey.  Fails if id is empty, the CA's own ID or one already added.
+ */
+int mtc_ca_add_cosigner(struct mtc_ca *ca, const uint8_t *id, size_t id_len,
+    EVP_PKEY *pkey);
+
+const uint8_t *mtc_ca_id(const struct mtc_ca *ca, size_t *out_len);
+const EVP_MD *mtc_ca_hash(const struct mtc_ca *ca);
+EVP_PKEY *mtc_ca_cosigner_pkey(const struct mtc_ca *ca);
 
 __END_HIDDEN_DECLS
 
