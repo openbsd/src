@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.68 2026/09/10 13:23:25 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.69 2026/09/11 06:25:00 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -336,7 +336,7 @@ cms_parse_validate(struct cert **out_cert, const char *fn, enum rtype rtype,
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
-		return 0;
+		goto out;
 
 	if (len < 2) {
 		warnx("%s: RFC 6488: CMS encoding too short", fn);
