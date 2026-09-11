@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.47 2019/05/10 13:29:21 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.48 2026/09/11 16:54:32 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 
 /* Offset of ARGC from bottom of stack */
 #define	ARGC	CC64FSZ
-/* XXX - DL_DATA_SIZE should be (9*8), but I can't think right now. */
+/* XXX - DL_DATA_SIZE should be (10*8), but I can't think right now. */
 #define DL_DATA_SIZE (16*8)
 
 	.section .boot.text,"ax",@progbits
