@@ -214,6 +214,136 @@ test_ca_add_cosigner_duplicate(void)
 	return failed;
 }
 
+static int
+check_revoked(struct mtc_ca *ca, uint64_t serial, int want)
+{
+	int got;
+
+	if ((got = mtc_ca_serial_is_revoked(ca, serial)) != want) {
+		warnx("serial %llu revoked %d, want %d", serial, got, want);
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * Serials below min_serial are revoked, added half-open ranges are honoured
+ * at both boundaries whether they overlap, abut or contain earlier ones,
+ * empty and inverted ranges are rejected, and setting max_serial revokes
+ * everything above it.
+ */
+static int
+test_ca_revoked_serials(void)
+{
+	struct mtc_ca *ca;
+	EVP_PKEY *ca_key;
+	int failed = 0;
+
+	ca_key = gen_key();
+	ca = new_ca(ca_key, 5);
+
+	failed |= check_revoked(ca, 0, 1);
+	failed |= check_revoked(ca, 4, 1);
+	failed |= check_revoked(ca, 5, 0);
+	failed |= check_revoked(ca, UINT64_MAX, 0);
+
+	if (!mtc_ca_add_revoked_range(ca, 10, 20)) {
+		warnx("add revoked range [10, 20) failed");
+		failed = 1;
+	}
+	failed |= check_revoked(ca, 9, 0);
+	failed |= check_revoked(ca, 10, 1);
+	failed |= check_revoked(ca, 19, 1);
+	failed |= check_revoked(ca, 20, 0);
+
+	if (!mtc_ca_add_revoked_range(ca, 100, 101)) {
+		warnx("add revoked range [100, 101) failed");
+		failed = 1;
+	}
+	failed |= check_revoked(ca, 100, 1);
+	failed |= check_revoked(ca, 101, 0);
+
+	if (mtc_ca_add_revoked_range(ca, 30, 30)) {
+		warnx("empty revoked range accepted");
+		failed = 1;
+	}
+	if (mtc_ca_add_revoked_range(ca, 40, 30)) {
+		warnx("inverted revoked range accepted");
+		failed = 1;
+	}
+	failed |= check_revoked(ca, 30, 0);
+	failed |= check_revoked(ca, 35, 0);
+
+	if (!mtc_ca_add_revoked_range(ca, 15, 25)) {
+		warnx("add revoked range [15, 25) failed");
+		failed = 1;
+	}
+	if (!mtc_ca_add_revoked_range(ca, 25, 30)) {
+		warnx("add revoked range [25, 30) failed");
+		failed = 1;
+	}
+	if (!mtc_ca_add_revoked_range(ca, 5, 10)) {
+		warnx("add revoked range [5, 10) failed");
+		failed = 1;
+	}
+	failed |= check_revoked(ca, 5, 1);
+	failed |= check_revoked(ca, 9, 1);
+	failed |= check_revoked(ca, 24, 1);
+	failed |= check_revoked(ca, 25, 1);
+	failed |= check_revoked(ca, 29, 1);
+	failed |= check_revoked(ca, 30, 0);
+	failed |= check_revoked(ca, 99, 0);
+	failed |= check_revoked(ca, 100, 1);
+
+	if (!mtc_ca_add_revoked_range(ca, 50, 60)) {
+		warnx("add revoked range [50, 60) failed");
+		failed = 1;
+	}
+	if (!mtc_ca_add_revoked_range(ca, 70, 80)) {
+		warnx("add revoked range [70, 80) failed");
+		failed = 1;
+	}
+	if (!mtc_ca_add_revoked_range(ca, 40, 150)) {
+		warnx("add revoked range [40, 150) failed");
+		failed = 1;
+	}
+	failed |= check_revoked(ca, 39, 0);
+	failed |= check_revoked(ca, 40, 1);
+	failed |= check_revoked(ca, 65, 1);
+	failed |= check_revoked(ca, 149, 1);
+	failed |= check_revoked(ca, 150, 0);
+
+	failed |= check_revoked(ca, mtc_serial(1, 200), 0);
+	if (!mtc_ca_set_max_serial(ca, mtc_serial(1, 200))) {
+		warnx("set max_serial failed");
+		failed = 1;
+	}
+	failed |= check_revoked(ca, mtc_serial(1, 200), 0);
+	failed |= check_revoked(ca, mtc_serial(1, 201), 1);
+	failed |= check_revoked(ca, mtc_serial(2, 0), 1);
+
+	mtc_ca_free(ca);
+	EVP_PKEY_free(ca_key);
+
+	return failed;
+}
+
+static int
+test_serial(void)
+{
+	int failed = 0;
+
+	if (mtc_serial(0, 0) != 0 || mtc_serial(0, 7) != 7 ||
+	    mtc_serial(1, 0) != (UINT64_C(1) << 48) ||
+	    mtc_serial(0xffff, 0xffffffffffff) != UINT64_MAX) {
+		warnx("mtc_serial");
+		failed = 1;
+	}
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -222,6 +352,8 @@ main(void)
 	failed |= test_ca_roundtrip();
 	failed |= test_ca_add_cosigners();
 	failed |= test_ca_add_cosigner_duplicate();
+	failed |= test_ca_revoked_serials();
+	failed |= test_serial();
 	mtc_ca_free(NULL);
 
 	return failed;

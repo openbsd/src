@@ -20,6 +20,7 @@
 #define HEADER_MTC_INTERNAL_H
 
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 #include <pthread.h>
 #include <stddef.h>
@@ -174,14 +175,25 @@ struct mtc_cosigner {
 	EVP_PKEY *pkey;
 };
 
+/* Revoked serials are kept as disjoint half-open ranges ordered by start. */
+struct mtc_serial_range {
+	RB_ENTRY(mtc_serial_range) entry;
+	uint64_t start;
+	uint64_t end;
+};
+
+RB_HEAD(mtc_range_tree, mtc_serial_range);
+
 struct mtc_ca {
 	uint8_t *id;
 	size_t id_len;
 	const EVP_MD *hash;
 	uint64_t min_serial;
+	uint64_t max_serial;
 	EVP_PKEY *cosigner_pkey;
 	pthread_mutex_t lock;
 	SLIST_HEAD(, mtc_cosigner) cosigners;
+	struct mtc_range_tree revoked;
 };
 
 /*
@@ -202,6 +214,19 @@ int mtc_ca_add_cosigner(struct mtc_ca *ca, const uint8_t *id, size_t id_len,
 const uint8_t *mtc_ca_id(const struct mtc_ca *ca, size_t *out_len);
 const EVP_MD *mtc_ca_hash(const struct mtc_ca *ca);
 EVP_PKEY *mtc_ca_cosigner_pkey(const struct mtc_ca *ca);
+
+/*
+ * Revocation by serial number, per section 7.5 of
+ * draft-ietf-plants-merkle-tree-certs-05.  A serial is a log number in the
+ * top 16 bits and a log index in the low 48.  Serials below min_serial and
+ * above max_serial (UINT64_MAX until set) are revoked, as is any serial in
+ * an added half-open range [start, end), which must be non-empty.  Ranges
+ * that overlap or abut are merged as they are added.
+ */
+uint64_t mtc_serial(uint16_t log_number, uint64_t index);
+int mtc_ca_add_revoked_range(struct mtc_ca *ca, uint64_t start, uint64_t end);
+int mtc_ca_set_max_serial(struct mtc_ca *ca, uint64_t max_serial);
+int mtc_ca_serial_is_revoked(struct mtc_ca *ca, uint64_t serial);
 
 __END_HIDDEN_DECLS
 
