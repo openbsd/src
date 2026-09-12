@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.12 2026/09/11 14:43:29 gilles Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.13 2026/09/12 15:14:47 op Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -194,7 +194,7 @@ mda_expand_token(char *dest, size_t len, const char *token,
 
 		for (i = 0; (size_t)i < strlen(tmp); ++i)
 			if (strchr(escape, tmp[i]))
-		tmp[i] = ':';
+				tmp[i] = ':';
 	}
 
 	/* expanded string is empty */
