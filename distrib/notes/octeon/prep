@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.12 2021/02/18 16:18:04 visa Exp $
+dnl	$OpenBSD: prep,v 1.13 2026/09/12 12:54:58 visa Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
 installed on the CompactFlash card or USB drive.
 
@@ -93,3 +93,16 @@ Booting the installation kernel
   arguments provided:
 
 	# bootoctlinux
+
+EdgeRouter Infinity
+
+The ogx(4) Ethernet driver requires non-free firmware that is not included
+in the base installation sets.  The firmware gets downloaded automatically
+if you install the system with internet access over a USB Ethernet adapter.
+Alternatively, install the OpenBSD/MACHINE machine without network access.
+Then, use another computer to download the appropriate "ogx-firmware*"
+file from http://firmware.openbsd.org/firmware/ and put it on a USB drive
+that is readable by OpenBSD.  If you have an existing OpenBSD machine, you can
+download the firmware with "fw_update -Fv ogx".  On the OpenBSD/MACHINE
+machine, mount(8) the drive and use fw_update(8) to install the firmware
+from there.
