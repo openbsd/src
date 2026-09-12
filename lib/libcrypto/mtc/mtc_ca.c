@@ -20,11 +20,14 @@
  * draft-ietf-plants-merkle-tree-certs-05.
  */
 
+#include <ctype.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 
 #include "bytestring.h"
@@ -41,6 +44,23 @@ range_cmp(const struct mtc_serial_range *a, const struct mtc_serial_range *b)
 
 RB_PROTOTYPE_STATIC(mtc_range_tree, mtc_serial_range, entry, range_cmp);
 RB_GENERATE_STATIC(mtc_range_tree, mtc_serial_range, entry, range_cmp);
+
+static int
+trusted_subtree_cmp(const struct mtc_trusted_subtree *a,
+    const struct mtc_trusted_subtree *b)
+{
+	if (a->subtree.start != b->subtree.start)
+		return a->subtree.start < b->subtree.start ? -1 : 1;
+	if (a->subtree.end != b->subtree.end)
+		return a->subtree.end < b->subtree.end ? -1 : 1;
+
+	return 0;
+}
+
+RB_PROTOTYPE_STATIC(mtc_subtree_tree, mtc_trusted_subtree, entry,
+    trusted_subtree_cmp);
+RB_GENERATE_STATIC(mtc_subtree_tree, mtc_trusted_subtree, entry,
+    trusted_subtree_cmp);
 
 struct mtc_ca *
 mtc_ca_new(const uint8_t *id, size_t id_len, const EVP_MD *hash,
@@ -60,6 +80,7 @@ mtc_ca_new(const uint8_t *id, size_t id_len, const EVP_MD *hash,
 	}
 	SLIST_INIT(&ca->cosigners);
 	RB_INIT(&ca->revoked);
+	SLIST_INIT(&ca->logs);
 	CBS_init(&cbs, id, id_len);
 	if (!CBS_stow(&cbs, &ca->id, &ca->id_len))
 		goto err;
@@ -83,6 +104,7 @@ mtc_ca_free(struct mtc_ca *ca)
 {
 	struct mtc_cosigner *cosigner, *next_cosigner;
 	struct mtc_serial_range *range, *next;
+	struct mtc_log *log, *next_log;
 
 	if (ca == NULL)
 		return;
@@ -95,6 +117,10 @@ mtc_ca_free(struct mtc_ca *ca)
 	RB_FOREACH_SAFE(range, mtc_range_tree, &ca->revoked, next) {
 		RB_REMOVE(mtc_range_tree, &ca->revoked, range);
 		free(range);
+	}
+	SLIST_FOREACH_SAFE(log, &ca->logs, entry, next_log) {
+		free(log->subtrees);
+		free(log);
 	}
 	free(ca->id);
 	EVP_PKEY_free(ca->cosigner_pkey);
@@ -268,4 +294,265 @@ mtc_ca_serial_is_revoked(struct mtc_ca *ca, uint64_t serial)
 	pthread_mutex_unlock(&ca->lock);
 
 	return revoked;
+}
+
+static struct mtc_log *
+find_log(struct mtc_ca *ca, uint64_t log_number)
+{
+	struct mtc_log *log;
+
+	SLIST_FOREACH(log, &ca->logs, entry) {
+		if (log->log_number == log_number)
+			return log;
+	}
+
+	return NULL;
+}
+
+static struct mtc_log *
+find_or_add_log(struct mtc_ca *ca, uint64_t log_number)
+{
+	struct mtc_log *log;
+
+	if ((log = find_log(ca, log_number)) != NULL)
+		return log;
+
+	if ((log = calloc(1, sizeof(*log))) == NULL)
+		return NULL;
+	log->log_number = log_number;
+	RB_INIT(&log->tree);
+	SLIST_INSERT_HEAD(&ca->logs, log, entry);
+
+	return log;
+}
+
+static struct mtc_trusted_subtree *
+find_subtree(struct mtc_log *log, struct mtc_subtree subtree)
+{
+	struct mtc_trusted_subtree key;
+
+	key.subtree = subtree;
+
+	return RB_FIND(mtc_subtree_tree, &log->tree, &key);
+}
+
+/*
+ * Reads one newline-terminated line of in into buf.  Fails on a missing
+ * newline or a line longer than the buffer.
+ */
+static int
+read_line(BIO *in, char *buf, size_t buf_len)
+{
+	int len;
+
+	if ((len = BIO_gets(in, buf, buf_len)) <= 0)
+		return 0;
+	if (buf[len - 1] != '\n')
+		return 0;
+	buf[len - 1] = '\0';
+
+	return 1;
+}
+
+/* Parses a non-negative decimal integer with nothing before or after it. */
+static int
+parse_u64(const char *s, uint64_t *out)
+{
+	unsigned long long v;
+	char *ep;
+
+	if (!isdigit((unsigned char)*s))
+		return 0;
+	errno = 0;
+	v = strtoull(s, &ep, 10);
+	if (errno != 0 || *ep != '\0')
+		return 0;
+	*out = v;
+
+	return 1;
+}
+
+/*
+ * The landmark description of section 6.4.3: a line "<last_landmark>
+ * <num_active>", then num_active + 1 lines each holding the tree size of
+ * landmark last_landmark - i, strictly decreasing and at most
+ * MTC_MAX_TREE_SIZE.
+ */
+static int
+read_landmarks(BIO *in, uint64_t *out_last_landmark, uint64_t **out_sizes,
+    size_t *out_size_count)
+{
+	char line[64], *space;
+	uint64_t last_landmark, num_active, i, *sizes = NULL;
+	int ret = 0;
+
+	if (!read_line(in, line, sizeof(line)))
+		goto err;
+	if ((space = strchr(line, ' ')) == NULL)
+		goto err;
+	*space = '\0';
+	if (!parse_u64(line, &last_landmark))
+		goto err;
+	if (!parse_u64(space + 1, &num_active))
+		goto err;
+	if (num_active > last_landmark)
+		goto err;
+
+	if ((sizes = reallocarray(NULL, num_active + 1, sizeof(*sizes))) ==
+	    NULL)
+		goto err;
+	for (i = 0; i <= num_active; i++) {
+		if (!read_line(in, line, sizeof(line)))
+			goto err;
+		if (!parse_u64(line, &sizes[i]))
+			goto err;
+		if (sizes[i] > MTC_MAX_TREE_SIZE)
+			goto err;
+		if (i > 0 && sizes[i] >= sizes[i - 1])
+			goto err;
+	}
+	if (BIO_gets(in, line, sizeof(line)) > 0)
+		goto err;
+
+	*out_last_landmark = last_landmark;
+	*out_sizes = sizes;
+	*out_size_count = num_active + 1;
+	sizes = NULL;
+
+	ret = 1;
+
+ err:
+	free(sizes);
+
+	return ret;
+}
+
+int
+mtc_ca_load_landmarks(struct mtc_ca *ca, uint64_t log_number, BIO *in)
+{
+	struct mtc_trusted_subtree *subtrees = NULL, *prev, *ts;
+	struct mtc_subtree_tree tree;
+	struct mtc_subtree interval, cover[2];
+	struct mtc_log *log;
+	uint64_t last_landmark, *sizes = NULL;
+	size_t size_count, subtree_count = 0, i, j, n;
+	int locked = 0, ret = 0;
+
+	if (!read_landmarks(in, &last_landmark, &sizes, &size_count))
+		goto err;
+
+	/* Each active landmark is covered by at most two subtrees. */
+	if ((subtrees = calloc(2 * (size_count - 1), sizeof(*subtrees))) ==
+	    NULL)
+		goto err;
+	RB_INIT(&tree);
+
+	if (pthread_mutex_lock(&ca->lock) != 0)
+		goto err;
+	locked = 1;
+
+	if ((log = find_or_add_log(ca, log_number)) == NULL)
+		goto err;
+
+	/*
+	 * Landmark last_landmark - i covers [sizes[i + 1], sizes[i]).  Its
+	 * subtrees are those covering that interval (section 6.4.1).
+	 */
+	for (i = 0; i + 1 < size_count; i++) {
+		interval.start = sizes[i + 1];
+		interval.end = sizes[i];
+		n = mtc_find_subtrees(interval, cover);
+		for (j = 0; j < n; j++) {
+			ts = &subtrees[subtree_count];
+			ts->landmark = last_landmark - i;
+			ts->subtree = cover[j];
+			if (RB_INSERT(mtc_subtree_tree, &tree, ts) != NULL)
+				continue;
+			if ((prev = find_subtree(log, cover[j])) != NULL &&
+			    prev->hashed) {
+				memcpy(ts->hash, prev->hash, sizeof(ts->hash));
+				ts->hashed = 1;
+			}
+			subtree_count++;
+		}
+	}
+
+	free(log->subtrees);
+	log->subtrees = subtrees;
+	log->subtree_count = subtree_count;
+	log->tree = tree;
+	log->last_landmark = last_landmark;
+	subtrees = NULL;
+
+	ret = 1;
+
+ err:
+	if (locked)
+		pthread_mutex_unlock(&ca->lock);
+	free(subtrees);
+	free(sizes);
+
+	return ret;
+}
+
+int
+mtc_ca_add_subtree_hash(struct mtc_ca *ca, uint64_t log_number,
+    struct mtc_subtree subtree, const uint8_t *hash, size_t hash_len)
+{
+	struct mtc_trusted_subtree *ts;
+	struct mtc_log *log;
+	int ret = 0;
+
+	if (hash_len != (size_t)EVP_MD_size(ca->hash))
+		return 0;
+
+	if (pthread_mutex_lock(&ca->lock) != 0)
+		return 0;
+
+	if ((log = find_log(ca, log_number)) == NULL)
+		goto err;
+	if ((ts = find_subtree(log, subtree)) == NULL)
+		goto err;
+
+	if (ts->hashed) {
+		ret = memcmp(ts->hash, hash, hash_len) == 0;
+		goto err;
+	}
+	memcpy(ts->hash, hash, hash_len);
+	ts->hashed = 1;
+
+	ret = 1;
+
+ err:
+	pthread_mutex_unlock(&ca->lock);
+
+	return ret;
+}
+
+int
+mtc_ca_trusted_subtree_matches(struct mtc_ca *ca, uint64_t log_number,
+    struct mtc_subtree subtree, const uint8_t *hash, size_t hash_len,
+    int *out_found)
+{
+	struct mtc_trusted_subtree *ts;
+	struct mtc_log *log;
+	int ret = 0;
+
+	*out_found = 0;
+
+	if (hash_len != (size_t)EVP_MD_size(ca->hash))
+		return 0;
+
+	if (pthread_mutex_lock(&ca->lock) != 0)
+		return 0;
+
+	if ((log = find_log(ca, log_number)) != NULL &&
+	    (ts = find_subtree(log, subtree)) != NULL) {
+		*out_found = 1;
+		ret = ts->hashed && memcmp(ts->hash, hash, hash_len) == 0;
+	}
+
+	pthread_mutex_unlock(&ca->lock);
+
+	return ret;
 }

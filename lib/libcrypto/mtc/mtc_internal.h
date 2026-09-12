@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 
 #include "bytestring.h"
@@ -184,6 +185,36 @@ struct mtc_serial_range {
 
 RB_HEAD(mtc_range_tree, mtc_serial_range);
 
+/*
+ * A subtree of an issuance log covering one of its active landmarks
+ * (section 6.4.1).  hash is meaningful once hashed is set.
+ */
+struct mtc_trusted_subtree {
+	RB_ENTRY(mtc_trusted_subtree) entry;
+	uint64_t landmark;
+	struct mtc_subtree subtree;
+	int hashed;
+	uint8_t hash[EVP_MAX_MD_SIZE];
+};
+
+RB_HEAD(mtc_subtree_tree, mtc_trusted_subtree);
+
+/* Log indices are at most 2^48 - 1 (section 5.2). */
+#define MTC_MAX_TREE_SIZE	(UINT64_C(1) << 48)
+
+/*
+ * An issuance log (section 5.2) and its active landmark window: the
+ * subtrees array owns the entries, tree indexes them by (start, end).
+ */
+struct mtc_log {
+	SLIST_ENTRY(mtc_log) entry;
+	uint64_t log_number;
+	uint64_t last_landmark;
+	struct mtc_trusted_subtree *subtrees;
+	size_t subtree_count;
+	struct mtc_subtree_tree tree;
+};
+
 struct mtc_ca {
 	uint8_t *id;
 	size_t id_len;
@@ -194,6 +225,7 @@ struct mtc_ca {
 	pthread_mutex_t lock;
 	SLIST_HEAD(, mtc_cosigner) cosigners;
 	struct mtc_range_tree revoked;
+	SLIST_HEAD(, mtc_log) logs;
 };
 
 /*
@@ -227,6 +259,30 @@ uint64_t mtc_serial(uint16_t log_number, uint64_t index);
 int mtc_ca_add_revoked_range(struct mtc_ca *ca, uint64_t start, uint64_t end);
 int mtc_ca_set_max_serial(struct mtc_ca *ca, uint64_t max_serial);
 int mtc_ca_serial_is_revoked(struct mtc_ca *ca, uint64_t serial);
+
+/*
+ * Trusted subtrees, per sections 6.4.3 and 7.4 of
+ * draft-ietf-plants-merkle-tree-certs-05.
+ *
+ * mtc_ca_load_landmarks() reads a log's published landmark description in
+ * the section 6.4.3 format and replaces that log's active window with the
+ * subtrees covering its active landmarks.  A subtree still active keeps a
+ * hash already added to it.  The CA is unchanged on failure.
+ *
+ * mtc_ca_add_subtree_hash() records the hash of an active subtree.  It
+ * fails if the subtree is not active, if hash_len is not the CA hash's
+ * size, or if a different hash is already recorded; the same hash again
+ * succeeds.
+ *
+ * mtc_ca_trusted_subtree_matches() sets *out_found when the subtree is
+ * active and returns 1 when it also has a hash equal to hash.
+ */
+int mtc_ca_load_landmarks(struct mtc_ca *ca, uint64_t log_number, BIO *in);
+int mtc_ca_add_subtree_hash(struct mtc_ca *ca, uint64_t log_number,
+    struct mtc_subtree subtree, const uint8_t *hash, size_t hash_len);
+int mtc_ca_trusted_subtree_matches(struct mtc_ca *ca, uint64_t log_number,
+    struct mtc_subtree subtree, const uint8_t *hash, size_t hash_len,
+    int *out_found);
 
 __END_HIDDEN_DECLS
 

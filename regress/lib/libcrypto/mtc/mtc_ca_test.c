@@ -21,9 +21,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 
 #include "mtc_internal.h"
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 /* The CA ID 32473.1 and two more cosigner IDs, 32473.0 and 32473.2. */
 static const uint8_t ca_id[] = { 0x81, 0xfd, 0x59, 0x01 };
@@ -344,6 +349,177 @@ test_serial(void)
 	return failed;
 }
 
+static struct mtc_subtree
+subtree(uint64_t start, uint64_t end)
+{
+	struct mtc_subtree s = { start, end };
+
+	return s;
+}
+
+static int
+load_landmarks(struct mtc_ca *ca, uint64_t log_number, const char *text)
+{
+	BIO *bio;
+	int ret;
+
+	if ((bio = BIO_new_mem_buf(text, -1)) == NULL)
+		errx(1, "BIO_new_mem_buf");
+	ret = mtc_ca_load_landmarks(ca, log_number, bio);
+	BIO_free(bio);
+
+	return ret;
+}
+
+static int
+check_match(struct mtc_ca *ca, uint64_t log_number, struct mtc_subtree s,
+    const uint8_t *hash, int want_found, int want_match)
+{
+	int found, match;
+
+	match = mtc_ca_trusted_subtree_matches(ca, log_number, s, hash, 32,
+	    &found);
+	if (found != want_found || match != want_match) {
+		warnx("subtree [%llu, %llu): found %d match %d, "
+		    "want %d %d", s.start, s.end, found, match, want_found,
+		    want_match);
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * A landmark description installs the subtrees covering its active
+ * landmarks; adding a hash makes one usable; a later description keeps the
+ * hash of a subtree still active and drops the ones that aged out.
+ */
+static int
+test_ca_landmarks(void)
+{
+	const uint8_t hash[32] = { 0x5a };
+	const uint8_t other[32] = { 0xa5 };
+	struct mtc_ca *ca;
+	EVP_PKEY *ca_key;
+	int failed = 0;
+
+	ca_key = gen_key();
+	ca = new_ca(ca_key, 0);
+
+	/*
+	 * Landmarks 3 and 2 active with tree sizes 8, 6, 3: landmark 3 covers
+	 * [6, 8) and landmark 2 covers [3, 6), giving the subtrees [6, 7),
+	 * [7, 8), [3, 4) and [4, 6).
+	 */
+	if (!load_landmarks(ca, 1, "3 2\n8\n6\n3\n")) {
+		warnx("load_landmarks failed");
+		failed = 1;
+		goto done;
+	}
+	failed |= check_match(ca, 1, subtree(7, 8), hash, 1, 0);
+	failed |= check_match(ca, 1, subtree(4, 6), hash, 1, 0);
+	failed |= check_match(ca, 1, subtree(0, 2), hash, 0, 0);
+	failed |= check_match(ca, 2, subtree(7, 8), hash, 0, 0);
+
+	if (mtc_ca_add_subtree_hash(ca, 1, subtree(0, 2), hash, 32)) {
+		warnx("hash added to inactive subtree");
+		failed = 1;
+	}
+	if (mtc_ca_add_subtree_hash(ca, 1, subtree(7, 8), hash, 16)) {
+		warnx("hash of wrong length added");
+		failed = 1;
+	}
+	if (!mtc_ca_add_subtree_hash(ca, 1, subtree(7, 8), hash, 32)) {
+		warnx("add_subtree_hash failed");
+		failed = 1;
+	}
+	failed |= check_match(ca, 1, subtree(7, 8), hash, 1, 1);
+	failed |= check_match(ca, 1, subtree(7, 8), other, 1, 0);
+
+	if (!mtc_ca_add_subtree_hash(ca, 1, subtree(7, 8), hash, 32)) {
+		warnx("re-adding the same hash failed");
+		failed = 1;
+	}
+	if (mtc_ca_add_subtree_hash(ca, 1, subtree(7, 8), other, 32)) {
+		warnx("a different hash replaced the recorded one");
+		failed = 1;
+	}
+
+	/*
+	 * Landmarks 4 and 3 active with tree sizes 10, 8, 6: [7, 8) stays and
+	 * keeps its hash, [3, 4) and [4, 6) age out.
+	 */
+	if (!load_landmarks(ca, 1, "4 2\n10\n8\n6\n")) {
+		warnx("second load_landmarks failed");
+		failed = 1;
+		goto done;
+	}
+	failed |= check_match(ca, 1, subtree(7, 8), hash, 1, 1);
+	failed |= check_match(ca, 1, subtree(9, 10), hash, 1, 0);
+	failed |= check_match(ca, 1, subtree(4, 6), hash, 0, 0);
+	if (mtc_ca_add_subtree_hash(ca, 1, subtree(4, 6), hash, 32)) {
+		warnx("hash added to aged-out subtree");
+		failed = 1;
+	}
+
+	if (!load_landmarks(ca, 2, "18446744073709551615 1\n"
+	    "281474976710656\n281474976710655\n")) {
+		warnx("load_landmarks with maximal values failed");
+		failed = 1;
+		goto done;
+	}
+	failed |= check_match(ca, 2, subtree(MTC_MAX_TREE_SIZE - 1,
+	    MTC_MAX_TREE_SIZE), hash, 1, 0);
+
+ done:
+	mtc_ca_free(ca);
+	EVP_PKEY_free(ca_key);
+
+	return failed;
+}
+
+/* Malformed landmark descriptions are rejected and install nothing. */
+static int
+test_ca_landmarks_bad(void)
+{
+	const char *bad[] = {
+		"garbage\n",
+		"3\n",
+		"2 3\n8\n6\n3\n",
+		"3 2\n8\n6\n",
+		"3 2\n8\n6\n6\n",
+		"3 2\n8\n6\n3\nextra\n",
+		"3 2\n8\n6\n3",
+		"-3 2\n8\n6\n3\n",
+		"+3 2\n8\n6\n3\n",
+		" 3 2\n8\n6\n3\n",
+		"3 2\n8\n6\n3 \n",
+		"18446744073709551616 2\n8\n6\n3\n",
+		"3 2\n281474976710657\n6\n3\n",
+	};
+	const uint8_t hash[32] = { 0 };
+	struct mtc_ca *ca;
+	EVP_PKEY *ca_key;
+	size_t i;
+	int failed = 0;
+
+	ca_key = gen_key();
+	ca = new_ca(ca_key, 0);
+
+	for (i = 0; i < nitems(bad); i++) {
+		if (load_landmarks(ca, 1, bad[i])) {
+			warnx("bad landmarks %zu accepted", i);
+			failed = 1;
+		}
+	}
+	failed |= check_match(ca, 1, subtree(7, 8), hash, 0, 0);
+
+	mtc_ca_free(ca);
+	EVP_PKEY_free(ca_key);
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -354,6 +530,8 @@ main(void)
 	failed |= test_ca_add_cosigner_duplicate();
 	failed |= test_ca_revoked_serials();
 	failed |= test_serial();
+	failed |= test_ca_landmarks();
+	failed |= test_ca_landmarks_bad();
 	mtc_ca_free(NULL);
 
 	return failed;
