@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.85 2026/09/10 13:11:34 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.86 2026/09/12 07:03:00 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -292,7 +292,7 @@ valid_uri(const char *uri, size_t usz, const char *proto)
 	}
 
 	/* do not allow files or directories to start with a '.' */
-	if (strstr(uri, "/.") != NULL)
+	if (memmem(uri, usz, "/.", strlen("/.")) != NULL)
 		return 0;
 
 	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
