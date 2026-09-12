@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Tue Oct 18 08:00:00 MDT 2026
+From deraadt@do-not-reply.openbsd.org Tue Oct 20 08:00:00 MDT 2026
 Return-Path: root
-Date: Oct 18 08:00:00 MDT 2026
+Date: Oct 20 08:00:00 MDT 2026
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 8.0!
