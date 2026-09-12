@@ -678,6 +678,7 @@ HDRS=\
 	${LCRYPTO_SRC}/md5/md5.h \
 	${LCRYPTO_SRC}/mlkem/mlkem.h \
 	${LCRYPTO_SRC}/modes/modes.h \
+	${LCRYPTO_SRC}/mtc/mtc.h \
 	${LCRYPTO_SRC}/objects/objects.h \
 	${LCRYPTO_SRC}/ocsp/ocsp.h \
 	${LCRYPTO_SRC}/opensslconf.h \

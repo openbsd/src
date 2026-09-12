@@ -3,6 +3,7 @@
 PROGS +=	mtc_tree_test
 PROGS +=	mtc_cert_test
 PROGS +=	mtc_ca_test
+PROGS +=	mtc_api_test
 
 run-regress-mtc_cert_test: mtc_cert_test
 	./mtc_cert_test ${.CURDIR}

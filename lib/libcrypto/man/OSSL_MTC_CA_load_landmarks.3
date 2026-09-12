@@ -1,0 +1,106 @@
+.\" $OpenBSD$
+.\"
+.\" Copyright (c) 2026 Bob Beck <beck@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate$
+.Dt OSSL_MTC_CA_LOAD_LANDMARKS 3
+.Os
+.Sh NAME
+.Nm OSSL_MTC_CA_load_landmarks ,
+.Nm OSSL_MTC_CA_add_subtree_hash
+.Nd trusted subtrees of a Merkle Tree Certificate authority's logs
+.Sh SYNOPSIS
+.Lb libcrypto
+.In openssl/mtc.h
+.Ft int
+.Fo OSSL_MTC_CA_load_landmarks
+.Fa "OSSL_MTC_CA *ca"
+.Fa "uint64_t log_number"
+.Fa "BIO *in"
+.Fc
+.Ft int
+.Fo OSSL_MTC_CA_add_subtree_hash
+.Fa "OSSL_MTC_CA *ca"
+.Fa "uint64_t log_number"
+.Fa "uint64_t start"
+.Fa "uint64_t end"
+.Fa "const uint8_t *hash"
+.Fa "size_t hash_len"
+.Fc
+.Sh DESCRIPTION
+A Merkle Tree Certificate authority publishes, for each of its issuance
+logs, a description of the log's active landmarks.
+A relying party loads that description to learn which subtrees of the
+log are active, then records the hash of each subtree it has verified
+through the log's cosigners.
+A certificate issued relative to a landmark is accepted only against a
+subtree whose hash has been recorded.
+.Pp
+.Fn OSSL_MTC_CA_load_landmarks
+reads from
+.Fa in
+a landmark description for log
+.Fa log_number
+of
+.Fa ca
+in the format of section 6.4.3 of the Merkle Tree Certificates
+specification:
+a line holding the number of the newest landmark and the number of
+active landmarks, separated by a space,
+followed by one line per active landmark and one more,
+each holding a tree size, newest first and strictly decreasing.
+Every line ends in a newline character and nothing may follow the last.
+The log's set of active subtrees is replaced by the subtrees covering the
+active landmarks.
+A subtree that remains active keeps a hash already recorded for it.
+On failure the CA is unchanged.
+.Pp
+.Fn OSSL_MTC_CA_add_subtree_hash
+records the
+.Fa hash_len
+bytes at
+.Fa hash
+as the hash of the active subtree of log
+.Fa log_number
+covering the leaves from
+.Fa start
+inclusive to
+.Fa end
+exclusive.
+.Fa hash_len
+must be the output size of the CA's hash algorithm.
+Recording the same hash again succeeds; a different hash for a subtree
+that already has one is rejected, as is a subtree that is not active.
+.Sh RETURN VALUES
+These functions return 1 on success or 0 on failure.
+.Sh SEE ALSO
+.Xr BIO_new 3 ,
+.Xr OSSL_MTC_CA_new 3
+.Sh STANDARDS
+.Rs
+.%A D. Benjamin
+.%A D. O'Brien
+.%A B. E. Westerbaan
+.%A L. Valenta
+.%A F. Valsorda
+.%D July 2026
+.%R draft-ietf-plants-merkle-tree-certs-05
+.%T Merkle Tree Certificates
+.Re
+.Sh HISTORY
+These functions first appeared in
+.Ox 8.1 .
+.Sh AUTHORS
+.An Bob Beck Aq Mt beck@openbsd.org

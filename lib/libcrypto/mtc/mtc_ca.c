@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/mtc.h>
+
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
@@ -597,3 +599,105 @@ mtc_ca_trusted_subtree_matches(struct mtc_ca *ca, uint64_t log_number,
 
 	return ret;
 }
+
+OSSL_MTC_CA *
+OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len, const EVP_MD *hash,
+    uint64_t min_serial, EVP_PKEY *cosigner_pkey)
+{
+	if (ca_id == NULL || hash == NULL || cosigner_pkey == NULL)
+		return NULL;
+
+	return mtc_ca_new(ca_id, ca_id_len, hash, min_serial, cosigner_pkey);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_new);
+
+void
+OSSL_MTC_CA_free(OSSL_MTC_CA *ca)
+{
+	mtc_ca_free(ca);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_free);
+
+int
+OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
+    const char *sig_name, EVP_PKEY *pkey)
+{
+	if (ca == NULL || id == NULL || pkey == NULL)
+		return 0;
+
+	return mtc_ca_add_cosigner(ca, id, id_len, pkey);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_add1_cosigner);
+
+int
+OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end)
+{
+	if (ca == NULL)
+		return 0;
+
+	return mtc_ca_add_revoked_range(ca, start, end);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_add_revoked_range);
+
+int
+OSSL_MTC_CA_set_max_serial(OSSL_MTC_CA *ca, uint64_t max_serial)
+{
+	if (ca == NULL)
+		return 0;
+
+	return mtc_ca_set_max_serial(ca, max_serial);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_set_max_serial);
+
+int
+OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca, const uint8_t **out_id,
+    size_t *out_id_len)
+{
+	if (ca == NULL || out_id == NULL || out_id_len == NULL)
+		return 0;
+
+	*out_id = mtc_ca_id(ca, out_id_len);
+
+	return 1;
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_get0_id);
+
+int
+OSSL_MTC_CA_cmp(const OSSL_MTC_CA * const *a, const OSSL_MTC_CA * const *b)
+{
+	return mtc_ca_cmp(a, b);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_cmp);
+
+int
+OSSL_MTC_CA_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in)
+{
+	if (ca == NULL || in == NULL)
+		return 0;
+
+	return mtc_ca_load_landmarks(ca, log_number, in);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_load_landmarks);
+
+int
+OSSL_MTC_CA_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
+    uint64_t start, uint64_t end, const uint8_t *hash, size_t hash_len)
+{
+	struct mtc_subtree subtree;
+
+	if (ca == NULL || hash == NULL)
+		return 0;
+
+	subtree.start = start;
+	subtree.end = end;
+
+	return mtc_ca_add_subtree_hash(ca, log_number, subtree, hash, hash_len);
+}
+LCRYPTO_ALIAS(OSSL_MTC_CA_add_subtree_hash);
+
+uint64_t
+OSSL_MTC_serial(uint16_t log_number, uint64_t index)
+{
+	return mtc_serial(log_number, index);
+}
+LCRYPTO_ALIAS(OSSL_MTC_serial);

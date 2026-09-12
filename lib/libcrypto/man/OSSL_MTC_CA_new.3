@@ -1,0 +1,222 @@
+.\" $OpenBSD$
+.\"
+.\" Copyright (c) 2026 Bob Beck <beck@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate$
+.Dt OSSL_MTC_CA_NEW 3
+.Os
+.Sh NAME
+.Nm OSSL_MTC_CA_new ,
+.Nm OSSL_MTC_CA_free ,
+.Nm OSSL_MTC_CA_add1_cosigner ,
+.Nm OSSL_MTC_CA_add_revoked_range ,
+.Nm OSSL_MTC_CA_set_max_serial ,
+.Nm OSSL_MTC_CA_get0_id ,
+.Nm OSSL_MTC_CA_cmp ,
+.Nm OSSL_MTC_serial
+.Nd Merkle Tree Certificate authorities trusted by a relying party
+.Sh SYNOPSIS
+.Lb libcrypto
+.In openssl/mtc.h
+.Ft OSSL_MTC_CA *
+.Fo OSSL_MTC_CA_new
+.Fa "const uint8_t *ca_id"
+.Fa "size_t ca_id_len"
+.Fa "const EVP_MD *hash"
+.Fa "uint64_t min_serial"
+.Fa "EVP_PKEY *cosigner_pkey"
+.Fc
+.Ft void
+.Fo OSSL_MTC_CA_free
+.Fa "OSSL_MTC_CA *ca"
+.Fc
+.Ft int
+.Fo OSSL_MTC_CA_add1_cosigner
+.Fa "OSSL_MTC_CA *ca"
+.Fa "const uint8_t *id"
+.Fa "size_t id_len"
+.Fa "const char *sig_name"
+.Fa "EVP_PKEY *pkey"
+.Fc
+.Ft int
+.Fo OSSL_MTC_CA_add_revoked_range
+.Fa "OSSL_MTC_CA *ca"
+.Fa "uint64_t start"
+.Fa "uint64_t end"
+.Fc
+.Ft int
+.Fo OSSL_MTC_CA_set_max_serial
+.Fa "OSSL_MTC_CA *ca"
+.Fa "uint64_t max_serial"
+.Fc
+.Ft int
+.Fo OSSL_MTC_CA_get0_id
+.Fa "const OSSL_MTC_CA *ca"
+.Fa "const uint8_t **out_id"
+.Fa "size_t *out_id_len"
+.Fc
+.Ft int
+.Fo OSSL_MTC_CA_cmp
+.Fa "const OSSL_MTC_CA * const *a"
+.Fa "const OSSL_MTC_CA * const *b"
+.Fc
+.Ft uint64_t
+.Fo OSSL_MTC_serial
+.Fa "uint16_t log_number"
+.Fa "uint64_t index"
+.Fc
+.Sh DESCRIPTION
+An
+.Vt OSSL_MTC_CA
+object holds what a relying party knows about one
+Merkle Tree Certificate authority it trusts:
+the CA's trust anchor identifier,
+the hash algorithm of its issuance logs,
+the public keys whose cosignatures it accepts,
+and the serial numbers it considers revoked.
+.Pp
+.Fn OSSL_MTC_CA_new
+allocates a new object for the CA whose trust anchor identifier is the
+.Fa ca_id_len
+bytes at
+.Fa ca_id ,
+in the relative object identifier encoding of the Trust Anchor Identifiers
+specification; the bytes are copied.
+.Fa hash
+is the hash algorithm the CA uses for its Merkle trees.
+Serial numbers below
+.Fa min_serial
+are revoked.
+.Fa cosigner_pkey
+is the public key that verifies the CA's own cosignature.
+The reference count of
+.Fa cosigner_pkey
+is incremented.
+.Pp
+.Fn OSSL_MTC_CA_free
+frees
+.Fa ca
+and drops its references to the keys it holds.
+If
+.Fa ca
+is
+.Dv NULL ,
+no action occurs.
+.Pp
+.Fn OSSL_MTC_CA_add1_cosigner
+adds a cosigner whose trust anchor identifier is the
+.Fa id_len
+bytes at
+.Fa id
+and whose cosignatures are verified with
+.Fa pkey .
+The reference count of
+.Fa pkey
+is incremented.
+.Fa sig_name
+is ignored.
+An identifier equal to the CA's own or to one already added is rejected.
+.Pp
+.Fn OSSL_MTC_CA_add_revoked_range
+marks the serial numbers from
+.Fa start
+inclusive to
+.Fa end
+exclusive as revoked.
+The range must be non-empty.
+Ranges that overlap or adjoin ranges already added are merged with them.
+.Pp
+.Fn OSSL_MTC_CA_set_max_serial
+marks all serial numbers above
+.Fa max_serial
+as revoked.
+Until it is called, no serial number is revoked for being too large.
+.Pp
+.Fn OSSL_MTC_CA_get0_id
+stores a pointer to the CA's trust anchor identifier in
+.Pf * Fa out_id
+and its length in
+.Pf * Fa out_id_len .
+The pointer remains valid until
+.Fa ca
+is freed.
+.Pp
+.Fn OSSL_MTC_CA_cmp
+orders two CAs by their trust anchor identifiers,
+a shorter identifier before a longer one and identifiers of equal length
+by their bytes.
+It is the comparison function for a sorted
+.Vt STACK_OF(OSSL_MTC_CA) .
+.Pp
+.Fn OSSL_MTC_serial
+returns the serial number of the certificate at
+.Fa index
+in issuance log
+.Fa log_number
+of a CA, which is
+.Fa log_number
+in the top 16 bits and
+.Fa index
+in the low 48.
+.Sh RETURN VALUES
+.Fn OSSL_MTC_CA_new
+returns the new object or
+.Dv NULL
+on failure, including when
+.Fa ca_id_len
+is 0.
+.Pp
+.Fn OSSL_MTC_CA_add1_cosigner ,
+.Fn OSSL_MTC_CA_add_revoked_range ,
+.Fn OSSL_MTC_CA_set_max_serial ,
+and
+.Fn OSSL_MTC_CA_get0_id
+return 1 on success or 0 on failure.
+.Pp
+.Fn OSSL_MTC_CA_cmp
+returns a negative value, 0, or a positive value if the CA at
+.Fa a
+orders before, equal to, or after the CA at
+.Fa b .
+.Sh SEE ALSO
+.Xr EVP_PKEY_new 3 ,
+.Xr OPENSSL_sk_new 3 ,
+.Xr OSSL_MTC_CA_load_landmarks 3
+.Sh STANDARDS
+.Rs
+.%A D. Benjamin
+.%A D. O'Brien
+.%A B. E. Westerbaan
+.%A L. Valenta
+.%A F. Valsorda
+.%D July 2026
+.%R draft-ietf-plants-merkle-tree-certs-05
+.%T Merkle Tree Certificates
+.Re
+.Pp
+.Rs
+.%A B. Beck
+.%A D. Benjamin
+.%A D. O'Brien
+.%A K. Nekritz
+.%D September 2026
+.%R draft-ietf-tls-trust-anchor-ids-05
+.%T TLS Trust Anchor Identifiers
+.Re
+.Sh HISTORY
+These functions first appeared in
+.Ox 8.1 .
+.Sh AUTHORS
+.An Bob Beck Aq Mt beck@openbsd.org

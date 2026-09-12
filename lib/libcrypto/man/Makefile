@@ -233,6 +233,8 @@ MAN=	\
 	OPENSSL_init_crypto.3 \
 	OPENSSL_malloc.3 \
 	OPENSSL_sk_new.3 \
+	OSSL_MTC_CA_load_landmarks.3 \
+	OSSL_MTC_CA_new.3 \
 	OpenSSL_add_all_algorithms.3 \
 	PEM_ASN1_read.3 \
 	PEM_X509_INFO_read_bio.3 \

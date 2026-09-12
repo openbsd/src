@@ -28,7 +28,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
-#include <openssl/safestack.h>
+#include <openssl/mtc.h>
 
 #include "bytestring.h"
 
@@ -254,9 +254,6 @@ EVP_PKEY *mtc_ca_cosigner_pkey(const struct mtc_ca *ca);
  * comparison function.  The stack does not own the CAs.  Adding a CA whose
  * ID is already present fails.
  */
-typedef struct mtc_ca OSSL_MTC_CA;
-DECLARE_STACK_OF(OSSL_MTC_CA)
-
 int mtc_ca_cmp(const OSSL_MTC_CA * const *a, const OSSL_MTC_CA * const *b);
 int mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, struct mtc_ca *ca);
 struct mtc_ca *mtc_ca_stack_lookup(STACK_OF(OSSL_MTC_CA) *cas,

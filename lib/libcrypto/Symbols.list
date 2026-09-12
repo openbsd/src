@@ -1666,6 +1666,16 @@ OPENSSL_posix_to_tm
 OPENSSL_timegm
 OPENSSL_tm_to_posix
 OPENSSL_uni2asc
+OSSL_MTC_CA_add1_cosigner
+OSSL_MTC_CA_add_revoked_range
+OSSL_MTC_CA_add_subtree_hash
+OSSL_MTC_CA_cmp
+OSSL_MTC_CA_free
+OSSL_MTC_CA_get0_id
+OSSL_MTC_CA_load_landmarks
+OSSL_MTC_CA_new
+OSSL_MTC_CA_set_max_serial
+OSSL_MTC_serial
 OTHERNAME_cmp
 OTHERNAME_free
 OTHERNAME_it
