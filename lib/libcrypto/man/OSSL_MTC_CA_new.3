@@ -25,6 +25,7 @@
 .Nm OSSL_MTC_CA_set_max_serial ,
 .Nm OSSL_MTC_CA_get0_id ,
 .Nm OSSL_MTC_CA_cmp ,
+.Nm OSSL_MTC_CA_find ,
 .Nm OSSL_MTC_serial
 .Nd Merkle Tree Certificate authorities trusted by a relying party
 .Sh SYNOPSIS
@@ -71,6 +72,13 @@
 .Fo OSSL_MTC_CA_cmp
 .Fa "const OSSL_MTC_CA * const *a"
 .Fa "const OSSL_MTC_CA * const *b"
+.Fc
+.Ft OSSL_MTC_CA *
+.Fo OSSL_MTC_CA_find
+.Fa "STACK_OF(OSSL_MTC_CA) *cas"
+.Fa "const uint8_t *ca_id"
+.Fa "size_t ca_id_len"
+.Fa "const char *ca_id_str"
 .Fc
 .Ft uint64_t
 .Fo OSSL_MTC_serial
@@ -160,6 +168,25 @@ by their bytes.
 It is the comparison function for a sorted
 .Vt STACK_OF(OSSL_MTC_CA) .
 .Pp
+.Fn OSSL_MTC_CA_find
+looks up the CA in
+.Fa cas ,
+a stack created with
+.Fn OSSL_MTC_CA_cmp
+as its comparison function,
+whose trust anchor identifier is given either as the
+.Fa ca_id_len
+bytes at
+.Fa ca_id
+or, if
+.Fa ca_id_str
+is not
+.Dv NULL ,
+as the dotted decimal string
+.Fa ca_id_str ,
+for example
+.Qq 32473.1 .
+.Pp
 .Fn OSSL_MTC_serial
 returns the serial number of the certificate at
 .Fa index
@@ -190,10 +217,18 @@ returns a negative value, 0, or a positive value if the CA at
 .Fa a
 orders before, equal to, or after the CA at
 .Fa b .
+.Pp
+.Fn OSSL_MTC_CA_find
+returns the matching CA, or
+.Dv NULL
+if there is none or
+.Fa ca_id_str
+is not a dotted decimal identifier.
 .Sh SEE ALSO
 .Xr EVP_PKEY_new 3 ,
 .Xr OPENSSL_sk_new 3 ,
-.Xr OSSL_MTC_CA_load_landmarks 3
+.Xr OSSL_MTC_CA_load_landmarks 3 ,
+.Xr OSSL_MTC_CA_parse_certificates 3
 .Sh STANDARDS
 .Rs
 .%A D. Benjamin

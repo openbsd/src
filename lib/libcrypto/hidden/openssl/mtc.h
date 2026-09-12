@@ -32,6 +32,8 @@ LCRYPTO_USED(OSSL_MTC_CA_add_revoked_range);
 LCRYPTO_USED(OSSL_MTC_CA_set_max_serial);
 LCRYPTO_USED(OSSL_MTC_CA_get0_id);
 LCRYPTO_USED(OSSL_MTC_CA_cmp);
+LCRYPTO_USED(OSSL_MTC_CA_find);
+LCRYPTO_USED(OSSL_MTC_CA_parse_certificates);
 LCRYPTO_USED(OSSL_MTC_CA_load_landmarks);
 LCRYPTO_USED(OSSL_MTC_CA_add_subtree_hash);
 LCRYPTO_USED(OSSL_MTC_serial);

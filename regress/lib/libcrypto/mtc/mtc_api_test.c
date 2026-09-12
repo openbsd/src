@@ -16,16 +16,26 @@
  */
 
 #include <err.h>
+#include <limits.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/mtc.h>
 
-/* The CA ID 32473.1 and a cosigner ID 32473.0. */
+/*
+ * The CA ID 32473.1 and a cosigner ID 32473.0.  mtc-ca-cert.pem is an
+ * unsigned CA certificate for 32473.1 minted for this test: an Ed25519
+ * cosigner key, SHA-256 logs, minSerial 5 and maxSerial 2^64 - 1.
+ * mtc-ca-key.pem is its private key, for minting further fixtures.
+ * XXX Change to ML-DSA once we support it.
+ */
 static const uint8_t ca_id[] = { 0x81, 0xfd, 0x59, 0x01 };
 static const uint8_t cosigner_id[] = { 0x81, 0xfd, 0x59, 0x00 };
+
+static const char *certs_dir;
 
 static EVP_PKEY *
 gen_key(void)
@@ -194,13 +204,135 @@ test_cmp_and_serial(void)
 	return failed;
 }
 
+static int
+parse_certificates(const char *pem, STACK_OF(OSSL_MTC_CA) *cas)
+{
+	BIO *bio;
+	int ret;
+
+	if ((bio = BIO_new_mem_buf(pem, -1)) == NULL)
+		errx(1, "BIO_new_mem_buf");
+	ret = OSSL_MTC_CA_parse_certificates(NULL, NULL, bio, cas);
+	BIO_free(bio);
+
+	return ret;
+}
+
+static int
+parse_certificate_file(const char *name, STACK_OF(OSSL_MTC_CA) *cas)
+{
+	char path[PATH_MAX];
+	BIO *bio;
+	int ret;
+
+	snprintf(path, sizeof(path), "%s/%s", certs_dir, name);
+	if ((bio = BIO_new_file(path, "r")) == NULL)
+		errx(1, "BIO_new_file %s", path);
+	ret = OSSL_MTC_CA_parse_certificates(NULL, NULL, bio, cas);
+	BIO_free(bio);
+
+	return ret;
+}
+
+/*
+ * A CA certificate file yields the CA it describes, found by ID in either
+ * form; a second copy of the same CA is rejected and leaves the stack as
+ * it was; non-certificate PEM blocks are skipped; a certificate that is
+ * not an MTC CA fails.
+ */
+static int
+test_parse_certificates(void)
+{
+	STACK_OF(OSSL_MTC_CA) *cas;
+	OSSL_MTC_CA *ca;
+	const uint8_t *id;
+	size_t id_len;
+	int failed = 0;
+
+	if ((cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)) == NULL)
+		errx(1, "sk_OSSL_MTC_CA_new");
+
+	if (!parse_certificate_file("mtc-ca-cert.pem", cas)) {
+		warnx("parse_certificates failed");
+		failed = 1;
+		goto done;
+	}
+	if (sk_OSSL_MTC_CA_num(cas) != 1) {
+		warnx("parsed %d CAs, want 1", sk_OSSL_MTC_CA_num(cas));
+		failed = 1;
+		goto done;
+	}
+
+	if ((ca = OSSL_MTC_CA_find(cas, ca_id, sizeof(ca_id), NULL)) == NULL) {
+		warnx("find by bytes failed");
+		failed = 1;
+		goto done;
+	}
+	if (OSSL_MTC_CA_find(cas, NULL, 0, "32473.1") != ca) {
+		warnx("find by string failed");
+		failed = 1;
+	}
+	if (OSSL_MTC_CA_find(cas, cosigner_id, sizeof(cosigner_id), NULL) !=
+	    NULL || OSSL_MTC_CA_find(cas, NULL, 0, "32473.2") != NULL) {
+		warnx("find of unknown ID found a CA");
+		failed = 1;
+	}
+	if (OSSL_MTC_CA_find(cas, NULL, 0, "32473.") != NULL ||
+	    OSSL_MTC_CA_find(cas, NULL, 0, "") != NULL) {
+		warnx("find with malformed string found a CA");
+		failed = 1;
+	}
+	if (!OSSL_MTC_CA_get0_id(ca, &id, &id_len) ||
+	    id_len != sizeof(ca_id) || memcmp(id, ca_id, id_len) != 0) {
+		warnx("parsed CA ID mismatch");
+		failed = 1;
+	}
+
+	if (parse_certificate_file("mtc-ca-cert.pem", cas)) {
+		warnx("duplicate CA accepted");
+		failed = 1;
+	}
+	if (sk_OSSL_MTC_CA_num(cas) != 1 ||
+	    sk_OSSL_MTC_CA_value(cas, 0) != ca) {
+		warnx("failed parse changed the stack");
+		failed = 1;
+	}
+
+	if (!parse_certificates("-----BEGIN PRIVATE KEY-----\n"
+	    "MC4CAQAwBQYDK2VwBCIEIGQgz7Ie3RLtS0Cn0KWmfJxQ7gyCQ5nbP2pHKBT4NDAe\n"
+	    "-----END PRIVATE KEY-----\n", cas)) {
+		warnx("non-certificate block not skipped");
+		failed = 1;
+	}
+	if (parse_certificates("-----BEGIN CERTIFICATE-----\n"
+	    "MAA=\n-----END CERTIFICATE-----\n", cas)) {
+		warnx("malformed certificate accepted");
+		failed = 1;
+	}
+	if (sk_OSSL_MTC_CA_num(cas) != 1) {
+		warnx("stack changed by rejected input");
+		failed = 1;
+	}
+
+ done:
+	OSSL_MTC_CA_free(sk_OSSL_MTC_CA_pop(cas));
+	sk_OSSL_MTC_CA_free(cas);
+
+	return failed;
+}
+
 int
-main(void)
+main(int argc, char **argv)
 {
 	int failed = 0;
 
+	if (argc != 2)
+		errx(1, "usage: %s certs-dir", argv[0]);
+	certs_dir = argv[1];
+
 	failed |= test_ca_api();
 	failed |= test_cmp_and_serial();
+	failed |= test_parse_certificates();
 
 	return failed;
 }

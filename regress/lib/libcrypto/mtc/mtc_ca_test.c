@@ -599,6 +599,63 @@ test_ca_stack(void)
 	return failed;
 }
 
+/*
+ * Dotted-decimal IDs encode to relative-OID content octets; empty
+ * strings, empty components, non-digits and components above UINT64_MAX
+ * are rejected.
+ */
+static int
+test_reloid_from_text(void)
+{
+	const struct {
+		const char *text;
+		const uint8_t *want;
+		size_t want_len;
+	} good[] = {
+		{ "32473.1", ca_id, sizeof(ca_id) },
+		{ "0", (const uint8_t *)"\x00", 1 },
+		{ "127", (const uint8_t *)"\x7f", 1 },
+		{ "128", (const uint8_t *)"\x81\x00", 2 },
+		{ "0.0.0", (const uint8_t *)"\x00\x00\x00", 3 },
+		{ "18446744073709551615",
+		    (const uint8_t *)"\x81\xff\xff\xff\xff\xff\xff\xff\xff\x7f",
+		    10 },
+	};
+	const char *bad[] = {
+		"", ".", "1.", ".1", "1..2", "1 2", "1a", "-1", "+1",
+		"18446744073709551616",
+	};
+	uint8_t *out;
+	size_t out_len, i;
+	int failed = 0;
+
+	for (i = 0; i < nitems(good); i++) {
+		if (!mtc_reloid_from_text(good[i].text, strlen(good[i].text),
+		    &out, &out_len)) {
+			warnx("reloid_from_text(\"%s\") failed", good[i].text);
+			failed = 1;
+			continue;
+		}
+		if (out_len != good[i].want_len ||
+		    memcmp(out, good[i].want, out_len) != 0) {
+			warnx("reloid_from_text(\"%s\") encoded wrongly",
+			    good[i].text);
+			failed = 1;
+		}
+		free(out);
+	}
+	for (i = 0; i < nitems(bad); i++) {
+		if (mtc_reloid_from_text(bad[i], strlen(bad[i]), &out,
+		    &out_len)) {
+			warnx("reloid_from_text(\"%s\") accepted", bad[i]);
+			failed = 1;
+			free(out);
+		}
+	}
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -612,6 +669,7 @@ main(void)
 	failed |= test_ca_landmarks();
 	failed |= test_ca_landmarks_bad();
 	failed |= test_ca_stack();
+	failed |= test_reloid_from_text();
 	mtc_ca_free(NULL);
 
 	return failed;

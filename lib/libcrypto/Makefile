@@ -390,6 +390,7 @@ SRCS+= xts128.c
 
 # mtc/
 SRCS+= mtc_ca.c
+SRCS+= mtc_ca_cert.c
 SRCS+= mtc_cert.c
 SRCS+= mtc_tree.c
 

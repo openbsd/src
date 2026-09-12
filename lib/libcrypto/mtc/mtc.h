@@ -44,6 +44,10 @@ int OSSL_MTC_CA_set_max_serial(OSSL_MTC_CA *ca, uint64_t max_serial);
 int OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca, const uint8_t **out_id,
     size_t *out_id_len);
 int OSSL_MTC_CA_cmp(const OSSL_MTC_CA * const *a, const OSSL_MTC_CA * const *b);
+OSSL_MTC_CA *OSSL_MTC_CA_find(STACK_OF(OSSL_MTC_CA) *cas, const uint8_t *ca_id,
+    size_t ca_id_len, const char *ca_id_str);
+int OSSL_MTC_CA_parse_certificates(void *libctx, const char *propq, BIO *in,
+    STACK_OF(OSSL_MTC_CA) *out_cas);
 
 int OSSL_MTC_CA_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in);
 int OSSL_MTC_CA_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,

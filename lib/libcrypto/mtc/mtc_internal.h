@@ -29,6 +29,7 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/mtc.h>
+#include <openssl/x509.h>
 
 #include "bytestring.h"
 
@@ -258,6 +259,31 @@ int mtc_ca_cmp(const OSSL_MTC_CA * const *a, const OSSL_MTC_CA * const *b);
 int mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, struct mtc_ca *ca);
 struct mtc_ca *mtc_ca_stack_lookup(STACK_OF(OSSL_MTC_CA) *cas,
     const uint8_t *id, size_t id_len);
+
+/*
+ * Converts a trust anchor ID in dotted-decimal form to the content octets
+ * of its relative-OID encoding (section 4 of
+ * draft-ietf-tls-trust-anchor-ids-05), in a buffer allocated with
+ * malloc(3).  Components are at most UINT64_MAX.
+ */
+int mtc_reloid_from_text(const char *text, size_t text_len, uint8_t **out,
+    size_t *out_len);
+
+/*
+ * Extracts the CA ID from a name of the form in section 5.1 of
+ * draft-ietf-plants-merkle-tree-certs-05, into a buffer allocated with
+ * malloc(3).
+ */
+int mtc_ca_id_from_name(const X509_NAME *name, uint8_t **out_id,
+    size_t *out_id_len);
+
+/*
+ * Reads the PEM certificates in in (section 5.5 of
+ * draft-ietf-plants-merkle-tree-certs-05), skipping other PEM blocks, and
+ * adds a CA for each to cas.  The CA IDs must be distinct from each other
+ * and from those already in cas.  On failure nothing is added.
+ */
+int mtc_ca_parse_certificates(BIO *in, STACK_OF(OSSL_MTC_CA) *cas);
 
 /*
  * Revocation by serial number, per section 7.5 of

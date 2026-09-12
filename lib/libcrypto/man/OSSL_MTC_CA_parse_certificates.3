@@ -1,0 +1,116 @@
+.\" $OpenBSD$
+.\"
+.\" Copyright (c) 2026 Bob Beck <beck@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate$
+.Dt OSSL_MTC_CA_PARSE_CERTIFICATES 3
+.Os
+.Sh NAME
+.Nm OSSL_MTC_CA_parse_certificates
+.Nd load Merkle Tree Certificate authorities from certificates
+.Sh SYNOPSIS
+.Lb libcrypto
+.In openssl/mtc.h
+.Ft int
+.Fo OSSL_MTC_CA_parse_certificates
+.Fa "void *libctx"
+.Fa "const char *propq"
+.Fa "BIO *in"
+.Fa "STACK_OF(OSSL_MTC_CA) *out_cas"
+.Fc
+.Sh DESCRIPTION
+A Merkle Tree Certificate authority is represented as an X.509
+certificate in the form of section 5.5 of the Merkle Tree Certificates
+specification:
+the subject is the CA's trust anchor identifier,
+the subject public key is the CA cosigner's key,
+and a critical extension carries the hash algorithm of the CA's logs
+and the range of serial numbers it may issue.
+.Pp
+.Fn OSSL_MTC_CA_parse_certificates
+reads PEM-encoded certificates from
+.Fa in
+until the end of input and adds to
+.Fa out_cas
+one
+.Vt OSSL_MTC_CA
+for each, with the CA's minimum and maximum serial numbers set from the
+certificate.
+PEM blocks that are not certificates are skipped.
+.Fa out_cas
+must have been created with
+.Xr OSSL_MTC_CA_cmp 3
+as its comparison function.
+It fails if a certificate does not have the form above,
+or if two CAs would have the same trust anchor identifier,
+counting those already in
+.Fa out_cas ;
+in that case
+.Fa out_cas
+is unchanged.
+.Fa libctx
+and
+.Fa propq
+are ignored.
+.Pp
+The certificates are not verified.
+The caller owns the
+.Vt OSSL_MTC_CA
+objects added to
+.Fa out_cas
+and frees them with
+.Xr OSSL_MTC_CA_free 3 .
+.Sh RETURN VALUES
+.Fn OSSL_MTC_CA_parse_certificates
+returns 1 on success or 0 on failure.
+.Sh SEE ALSO
+.Xr BIO_new 3 ,
+.Xr OSSL_MTC_CA_find 3 ,
+.Xr OSSL_MTC_CA_new 3 ,
+.Xr PEM_read_bio_X509 3
+.Sh STANDARDS
+.Rs
+.%A D. Benjamin
+.%A D. O'Brien
+.%A B. E. Westerbaan
+.%A L. Valenta
+.%A F. Valsorda
+.%D July 2026
+.%R draft-ietf-plants-merkle-tree-certs-05
+.%T Merkle Tree Certificates
+.Re
+.Pp
+.Rs
+.%A B. Beck
+.%A D. Benjamin
+.%A D. O'Brien
+.%A K. Nekritz
+.%D September 2026
+.%R draft-ietf-tls-trust-anchor-ids-05
+.%T TLS Trust Anchor Identifiers
+.Re
+.Pp
+.Rs
+.%A D. Benjamin
+.%D February 2026
+.%R RFC 9925
+.%T Unsigned X.509 Certificates
+.Re
+.Sh HISTORY
+.Fn OSSL_MTC_CA_parse_certificates
+first appeared in
+.Ox 8.1 .
+.Sh AUTHORS
+.An Bob Beck Aq Mt beck@openbsd.org
