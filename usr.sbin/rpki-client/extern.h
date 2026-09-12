@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.295 2026/09/12 07:13:09 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.296 2026/09/12 12:46:04 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -277,6 +277,7 @@ struct mft {
 	char		*seqnum; /* manifestNumber */
 	char		*aki; /* AKI */
 	char		*sia; /* SIA signedObject */
+	char		*crldp; /* full canonical path rsync://... */
 	char		*crl; /* CRL file name */
 	unsigned char	 mfthash[SHA256_DIGEST_LENGTH];
 	size_t		 mftsize;
@@ -543,6 +544,7 @@ struct crl {
 	RB_ENTRY(crl)	 entry;
 	char		*aki;
 	char		*mftpath;
+	char		*mftcrldp;
 	X509_CRL	*x509_crl;
 	time_t		 thisupdate;	/* do not use before */
 	time_t		 nextupdate;	/* do not use after */

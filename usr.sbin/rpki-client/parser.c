@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.184 2026/09/03 17:16:51 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.185 2026/09/12 12:46:04 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -372,6 +372,9 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
 	if ((crl->mftpath = strdup(mft->sia)) == NULL)
 		err(1, NULL);
 
+	if ((crl->mftcrldp = strdup(mft->crldp)) == NULL)
+		err(1, NULL);
+
 	*crlfile = fn;
 	free(f);
 
@@ -621,6 +624,11 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
+
+	if (strcmp(cert->crl, crl->mftcrldp) != 0) {
+		warnx("%s: invalid CRLDP pointer", file);
+		goto out;
+	}
 
 	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
 	    !valid_cert(file, a, cert)) {

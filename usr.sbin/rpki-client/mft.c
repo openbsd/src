@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.143 2026/09/03 17:19:30 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.144 2026/09/12 12:46:04 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -390,6 +390,8 @@ mft_cert_info(const char *fn, void *obj, const struct cert *cert)
 		err(1, NULL);
 	if ((mft->sia = strdup(cert->signedobj)) == NULL)
 		err(1, NULL);
+	if ((mft->crldp = strdup(cert->crl)) == NULL)
+		err(1, NULL);
 
 	crlfile = strrchr(cert->crl, '/');
 	if (crlfile == NULL) {
@@ -487,6 +489,7 @@ mft_free(struct mft *p)
 	free(p->seqnum);
 	free(p->aki);
 	free(p->sia);
+	free(p->crldp);
 	free(p->crl);
 	free(p);
 }

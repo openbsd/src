@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.52 2025/12/01 14:40:56 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.53 2026/09/12 12:46:04 job Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -360,6 +360,7 @@ crl_free(struct crl *crl)
 		return;
 	free(crl->aki);
 	free(crl->mftpath);
+	free(crl->mftcrldp);
 	X509_CRL_free(crl->x509_crl);
 	free(crl);
 }
