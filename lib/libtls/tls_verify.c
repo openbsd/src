@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.35 2026/09/12 07:42:34 tb Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.36 2026/09/12 07:47:24 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -179,6 +179,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 					*alt_match = 1;
 					goto done;
 				}
+
 				free(datastr);
 				datastr = NULL;
 			} else {
