@@ -1,0 +1,77 @@
+.\" $OpenBSD$
+.\"
+.\" Copyright (c) 2026 Bob Beck <beck@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate$
+.Dt X509_STORE_TRUST_MTC_CA 3
+.Os
+.Sh NAME
+.Nm X509_STORE_trust_mtc_ca
+.Nd trust a Merkle Tree Certificate authority in a certificate store
+.Sh SYNOPSIS
+.Lb libcrypto
+.In openssl/x509_vfy.h
+.Ft int
+.Fo X509_STORE_trust_mtc_ca
+.Fa "X509_STORE *store"
+.Fa "OSSL_MTC_CA *ca"
+.Fc
+.Sh DESCRIPTION
+.Fn X509_STORE_trust_mtc_ca
+adds
+.Fa ca
+to the Merkle Tree Certificate authorities that
+.Fa store
+trusts, so that Merkle Tree Certificates issued by that CA verify against
+.Fa store .
+A CA whose trust anchor identifier equals that of one already added is
+rejected.
+.Pp
+.Fa store
+does not take ownership of
+.Fa ca
+and does not free it.
+.Fa ca
+must remain valid for as long as
+.Fa store
+exists.
+The caller keeps its pointer and may go on configuring the CA with
+.Xr OSSL_MTC_CA_load_landmarks 3
+while it is trusted.
+.Sh RETURN VALUES
+.Fn X509_STORE_trust_mtc_ca
+returns 1 on success or 0 on failure.
+.Sh SEE ALSO
+.Xr OSSL_MTC_CA_new 3 ,
+.Xr OSSL_MTC_CA_parse_certificates 3 ,
+.Xr X509_STORE_new 3 ,
+.Xr X509_STORE_set1_param 3
+.Sh STANDARDS
+.Rs
+.%A D. Benjamin
+.%A D. O'Brien
+.%A B. E. Westerbaan
+.%A L. Valenta
+.%A F. Valsorda
+.%D July 2026
+.%R draft-ietf-plants-merkle-tree-certs-05
+.%T Merkle Tree Certificates
+.Re
+.Sh HISTORY
+.Fn X509_STORE_trust_mtc_ca
+first appeared in
+.Ox 8.1 .
+.Sh AUTHORS
+.An Bob Beck Aq Mt beck@openbsd.org

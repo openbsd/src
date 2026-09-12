@@ -59,6 +59,7 @@
 #ifndef HEADER_X509_LOCAL_H
 #define HEADER_X509_LOCAL_H
 
+#include <openssl/mtc.h>
 #include <openssl/x509v3.h>
 
 #include "bytestring.h"
@@ -313,6 +314,8 @@ struct x509_store_st {
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
+
+	STACK_OF(OSSL_MTC_CA) *mtc_cas;
 } /* X509_STORE */;
 
 /* This is the functions plus an instance of the local variables. */
@@ -369,6 +372,8 @@ struct x509_store_ctx_st {
 } /* X509_STORE_CTX */;
 
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
+
+STACK_OF(OSSL_MTC_CA) *x509_store_get0_mtc_cas(const X509_STORE *store);
 
 int name_cmp(const char *name, const char *cmp);
 

@@ -60,10 +60,12 @@
 #include <string.h>
 
 #include <openssl/lhash.h>
+#include <openssl/mtc.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "err_local.h"
+#include "mtc_internal.h"
 #include "x509_local.h"
 
 static int X509_OBJECT_up_ref_count(X509_OBJECT *a);
@@ -232,6 +234,7 @@ X509_STORE_free(X509_STORE *store)
 
 	sk_X509_LOOKUP_pop_free(store->get_cert_methods, X509_LOOKUP_free);
 	sk_X509_OBJECT_pop_free(store->objs, X509_OBJECT_free);
+	sk_OSSL_MTC_CA_free(store->mtc_cas);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, store, &store->ex_data);
 	X509_VERIFY_PARAM_free(store->param);
@@ -405,6 +408,35 @@ X509_STORE_add_crl(X509_STORE *store, X509_CRL *x)
 	return X509_STORE_add_object(store, obj);
 }
 LCRYPTO_ALIAS(X509_STORE_add_crl);
+
+int
+X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca)
+{
+	int ret = 0;
+
+	if (store == NULL || ca == NULL)
+		return 0;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+
+	if (store->mtc_cas == NULL &&
+	    (store->mtc_cas = sk_OSSL_MTC_CA_new(mtc_ca_cmp)) == NULL)
+		goto err;
+
+	ret = mtc_ca_stack_add(store->mtc_cas, ca);
+
+ err:
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+	return ret;
+}
+LCRYPTO_ALIAS(X509_STORE_trust_mtc_ca);
+
+STACK_OF(OSSL_MTC_CA) *
+x509_store_get0_mtc_cas(const X509_STORE *store)
+{
+	return store->mtc_cas;
+}
 
 static int
 X509_OBJECT_up_ref_count(X509_OBJECT *a)

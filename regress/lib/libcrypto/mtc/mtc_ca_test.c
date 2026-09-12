@@ -23,8 +23,10 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/x509_vfy.h>
 
 #include "mtc_internal.h"
+#include "x509_local.h"
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -656,6 +658,61 @@ test_reloid_from_text(void)
 	return failed;
 }
 
+/*
+ * The CAs a store trusts are those given to X509_STORE_trust_mtc_ca(), and
+ * configuring a CA through the caller's pointer is seen through the store.
+ */
+static int
+test_store_mtc_cas(void)
+{
+	const uint8_t hash[32] = { 0x5a };
+	X509_STORE *store;
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca, *trusted;
+	EVP_PKEY *key;
+	int failed = 0;
+
+	key = gen_key();
+	if ((ca = mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0, key)) ==
+	    NULL)
+		errx(1, "mtc_ca_new");
+	if ((store = X509_STORE_new()) == NULL)
+		errx(1, "X509_STORE_new");
+
+	if (x509_store_get0_mtc_cas(store) != NULL) {
+		warnx("new store trusts MTC CAs");
+		failed = 1;
+	}
+	if (!X509_STORE_trust_mtc_ca(store, ca)) {
+		warnx("X509_STORE_trust_mtc_ca failed");
+		failed = 1;
+	}
+	if ((cas = x509_store_get0_mtc_cas(store)) == NULL ||
+	    sk_OSSL_MTC_CA_num(cas) != 1 ||
+	    (trusted = mtc_ca_stack_lookup(cas, ca_id, sizeof(ca_id))) !=
+	    ca) {
+		warnx("trusted CA not in the store's stack");
+		failed = 1;
+		goto done;
+	}
+
+	if (!load_landmarks(ca, 1, "3 2\n8\n6\n3\n") ||
+	    !mtc_ca_add_subtree_hash(ca, 1, subtree(6, 7), hash,
+	    sizeof(hash))) {
+		warnx("configuring the trusted CA failed");
+		failed = 1;
+	}
+	failed |= check_match(trusted, 1, subtree(6, 7), hash, 1, 1);
+	failed |= check_match(trusted, 1, subtree(0, 8), hash, 0, 0);
+
+ done:
+	X509_STORE_free(store);
+	mtc_ca_free(ca);
+	EVP_PKEY_free(key);
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -670,6 +727,7 @@ main(void)
 	failed |= test_ca_landmarks_bad();
 	failed |= test_ca_stack();
 	failed |= test_reloid_from_text();
+	failed |= test_store_mtc_cas();
 	mtc_ca_free(NULL);
 
 	return failed;

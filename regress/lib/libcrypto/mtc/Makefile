@@ -17,6 +17,7 @@ DPADD =		${LIBCRYPTO}
 CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/mtc
+CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/x509
 
 WARNINGS = Yes
 

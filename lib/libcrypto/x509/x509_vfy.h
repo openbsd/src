@@ -348,6 +348,7 @@ const X509_LOOKUP_METHOD *X509_LOOKUP_mem(void);
 
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x);
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
+int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca);
 
 int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     X509_NAME *name, X509_OBJECT *ret);

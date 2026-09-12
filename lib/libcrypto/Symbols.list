@@ -2651,6 +2651,7 @@ X509_STORE_set_purpose
 X509_STORE_set_trust
 X509_STORE_set_verify
 X509_STORE_set_verify_cb
+X509_STORE_trust_mtc_ca
 X509_STORE_up_ref
 X509_VAL_free
 X509_VAL_it

@@ -23,13 +23,13 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/ossl_typ.h>
 #include <openssl/safestack.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct mtc_ca OSSL_MTC_CA;
 DECLARE_STACK_OF(OSSL_MTC_CA)
 
 OSSL_MTC_CA *OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len,

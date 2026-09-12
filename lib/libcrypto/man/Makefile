@@ -349,6 +349,7 @@ MAN=	\
 	X509_STORE_new.3 \
 	X509_STORE_set1_param.3 \
 	X509_STORE_set_verify_cb_func.3 \
+	X509_STORE_trust_mtc_ca.3 \
 	X509_VERIFY_PARAM_new.3 \
 	X509_VERIFY_PARAM_set_flags.3 \
 	X509_add1_trust_object.3 \

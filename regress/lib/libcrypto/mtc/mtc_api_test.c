@@ -24,6 +24,7 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/mtc.h>
+#include <openssl/x509_vfy.h>
 
 /*
  * The CA ID 32473.1 and a cosigner ID 32473.0.  mtc-ca-cert.pem is an
@@ -321,6 +322,53 @@ test_parse_certificates(void)
 	return failed;
 }
 
+/*
+ * A store accepts a CA once, rejects a second CA with the same ID and a
+ * NULL CA, and leaves the CA to the caller when freed.
+ */
+static int
+test_store_trust(void)
+{
+	X509_STORE *store;
+	OSSL_MTC_CA *ca, *same_id;
+	EVP_PKEY *key;
+	int failed = 0;
+
+	key = gen_key();
+	if ((ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+	    key)) == NULL ||
+	    (same_id = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+	    key)) == NULL)
+		errx(1, "OSSL_MTC_CA_new");
+	if ((store = X509_STORE_new()) == NULL)
+		errx(1, "X509_STORE_new");
+
+	if (!X509_STORE_trust_mtc_ca(store, ca)) {
+		warnx("trust_mtc_ca failed");
+		failed = 1;
+	}
+	if (X509_STORE_trust_mtc_ca(store, ca)) {
+		warnx("trust_mtc_ca accepted the same CA twice");
+		failed = 1;
+	}
+	if (X509_STORE_trust_mtc_ca(store, same_id)) {
+		warnx("trust_mtc_ca accepted a second CA with the same ID");
+		failed = 1;
+	}
+	if (X509_STORE_trust_mtc_ca(store, NULL) ||
+	    X509_STORE_trust_mtc_ca(NULL, ca)) {
+		warnx("trust_mtc_ca accepted NULL");
+		failed = 1;
+	}
+
+	X509_STORE_free(store);
+	OSSL_MTC_CA_free(ca);
+	OSSL_MTC_CA_free(same_id);
+	EVP_PKEY_free(key);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -333,6 +381,7 @@ main(int argc, char **argv)
 	failed |= test_ca_api();
 	failed |= test_cmp_and_serial();
 	failed |= test_parse_certificates();
+	failed |= test_store_trust();
 
 	return failed;
 }
