@@ -199,6 +199,47 @@ mtc_ca_cosigner_pkey(const struct mtc_ca *ca)
 	return ca->cosigner_pkey;
 }
 
+static int
+id_cmp(const uint8_t *a, size_t a_len, const uint8_t *b, size_t b_len)
+{
+	if (a_len != b_len)
+		return a_len < b_len ? -1 : 1;
+
+	return memcmp(a, b, a_len);
+}
+
+int
+mtc_ca_cmp(const OSSL_MTC_CA * const *a, const OSSL_MTC_CA * const *b)
+{
+	return id_cmp((*a)->id, (*a)->id_len, (*b)->id, (*b)->id_len);
+}
+
+int
+mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, struct mtc_ca *ca)
+{
+	if (sk_OSSL_MTC_CA_find(cas, ca) >= 0)
+		return 0;
+
+	return sk_OSSL_MTC_CA_push(cas, ca) > 0;
+}
+
+struct mtc_ca *
+mtc_ca_stack_lookup(STACK_OF(OSSL_MTC_CA) *cas, const uint8_t *id,
+    size_t id_len)
+{
+	struct mtc_ca key;
+	int idx;
+
+	memset(&key, 0, sizeof(key));
+	key.id = (uint8_t *)id;
+	key.id_len = id_len;
+
+	if ((idx = sk_OSSL_MTC_CA_find(cas, &key)) < 0)
+		return NULL;
+
+	return sk_OSSL_MTC_CA_value(cas, idx);
+}
+
 uint64_t
 mtc_serial(uint16_t log_number, uint64_t index)
 {

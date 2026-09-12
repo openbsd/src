@@ -28,6 +28,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/safestack.h>
 
 #include "bytestring.h"
 
@@ -246,6 +247,20 @@ int mtc_ca_add_cosigner(struct mtc_ca *ca, const uint8_t *id, size_t id_len,
 const uint8_t *mtc_ca_id(const struct mtc_ca *ca, size_t *out_len);
 const EVP_MD *mtc_ca_hash(const struct mtc_ca *ca);
 EVP_PKEY *mtc_ca_cosigner_pkey(const struct mtc_ca *ca);
+
+/*
+ * The set of CAs a relying party trusts is a STACK_OF(OSSL_MTC_CA) ordered
+ * by CA ID (shorter first, then bytewise) with mtc_ca_cmp() as its
+ * comparison function.  The stack does not own the CAs.  Adding a CA whose
+ * ID is already present fails.
+ */
+typedef struct mtc_ca OSSL_MTC_CA;
+DECLARE_STACK_OF(OSSL_MTC_CA)
+
+int mtc_ca_cmp(const OSSL_MTC_CA * const *a, const OSSL_MTC_CA * const *b);
+int mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, struct mtc_ca *ca);
+struct mtc_ca *mtc_ca_stack_lookup(STACK_OF(OSSL_MTC_CA) *cas,
+    const uint8_t *id, size_t id_len);
 
 /*
  * Revocation by serial number, per section 7.5 of

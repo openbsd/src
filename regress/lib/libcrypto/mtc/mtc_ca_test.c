@@ -520,6 +520,85 @@ test_ca_landmarks_bad(void)
 	return failed;
 }
 
+/*
+ * A stack of CAs orders them by ID, shorter first, finds each by its ID,
+ * rejects a second CA with the same ID and finds nothing for an unknown ID.
+ */
+static int
+test_ca_stack(void)
+{
+	const uint8_t long_id[] = { 0x81, 0xfd, 0x59, 0x00, 0x01 };
+	const uint8_t unknown_id[] = { 0x81, 0xfd, 0x59, 0x03 };
+	const uint8_t *ids[] = { ca_id, cosigner0_id, cosigner2_id, long_id };
+	const size_t id_lens[] = { sizeof(ca_id), sizeof(cosigner0_id),
+	    sizeof(cosigner2_id), sizeof(long_id) };
+	const size_t want_order[] = { 1, 0, 2, 3 };
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca[nitems(ids)], *dup;
+	EVP_PKEY *key;
+	size_t i;
+	int failed = 0;
+
+	key = gen_key();
+	for (i = 0; i < nitems(ids); i++) {
+		if ((ca[i] = mtc_ca_new(ids[i], id_lens[i], EVP_sha256(), 0,
+		    key)) == NULL)
+			errx(1, "mtc_ca_new");
+	}
+	if ((dup = mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0, key)) ==
+	    NULL)
+		errx(1, "mtc_ca_new");
+	if ((cas = sk_OSSL_MTC_CA_new(mtc_ca_cmp)) == NULL)
+		errx(1, "sk_OSSL_MTC_CA_new");
+
+	if (mtc_ca_stack_lookup(cas, ca_id, sizeof(ca_id)) != NULL) {
+		warnx("lookup in empty stack found a CA");
+		failed = 1;
+	}
+	for (i = 0; i < nitems(ids); i++) {
+		if (!mtc_ca_stack_add(cas, ca[i])) {
+			warnx("adding CA %zu failed", i);
+			failed = 1;
+		}
+	}
+	if (mtc_ca_stack_add(cas, dup)) {
+		warnx("duplicate CA ID accepted");
+		failed = 1;
+	}
+	if ((size_t)sk_OSSL_MTC_CA_num(cas) != nitems(ids)) {
+		warnx("stack holds %d CAs, want %zu", sk_OSSL_MTC_CA_num(cas),
+		    nitems(ids));
+		failed = 1;
+		goto done;
+	}
+	sk_OSSL_MTC_CA_sort(cas);
+	for (i = 0; i < nitems(ids); i++) {
+		if (sk_OSSL_MTC_CA_value(cas, i) != ca[want_order[i]]) {
+			warnx("CA at position %zu out of order", i);
+			failed = 1;
+		}
+	}
+	for (i = 0; i < nitems(ids); i++) {
+		if (mtc_ca_stack_lookup(cas, ids[i], id_lens[i]) != ca[i]) {
+			warnx("lookup of CA %zu failed", i);
+			failed = 1;
+		}
+	}
+	if (mtc_ca_stack_lookup(cas, unknown_id, sizeof(unknown_id)) != NULL) {
+		warnx("lookup of unknown ID found a CA");
+		failed = 1;
+	}
+
+ done:
+	sk_OSSL_MTC_CA_free(cas);
+	for (i = 0; i < nitems(ids); i++)
+		mtc_ca_free(ca[i]);
+	mtc_ca_free(dup);
+	EVP_PKEY_free(key);
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -532,6 +611,7 @@ main(void)
 	failed |= test_serial();
 	failed |= test_ca_landmarks();
 	failed |= test_ca_landmarks_bad();
+	failed |= test_ca_stack();
 	mtc_ca_free(NULL);
 
 	return failed;
