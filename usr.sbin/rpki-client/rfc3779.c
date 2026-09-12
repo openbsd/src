@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.2 2023/10/18 06:30:40 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.3 2026/09/12 07:13:09 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -26,6 +26,7 @@
  * These should really have been part of the public OpenSSL RFC 3779 API...
  */
 
+#ifndef HAVE_IPADDRBLOCKS_NEW
 IPAddrBlocks *
 IPAddrBlocks_new(void)
 {
@@ -44,9 +45,12 @@ IPAddrBlocks_new(void)
 
 	return addrs;
 }
+#endif /* !HAVE_IPADDRBLOCKS_NEW */
 
+#ifndef HAVE_IPADDRBLOCKS_FREE
 void
 IPAddrBlocks_free(IPAddrBlocks *addr)
 {
 	sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
 }
+#endif /* !HAVE_IPADDRBLOCKS_FREE */
