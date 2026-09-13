@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.178 2026/08/03 06:58:55 claudio Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.179 2026/09/13 19:14:41 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1161,6 +1161,7 @@ show_queue_envelope(struct envelope *e, int online)
 	getflag(&e->flags, EF_BOUNCE, "bounce", status, sizeof(status));
 	getflag(&e->flags, EF_AUTHENTICATED, "auth", status, sizeof(status));
 	getflag(&e->flags, EF_INTERNAL, "internal", status, sizeof(status));
+	getflag(&e->flags, EF_TLS, "tls", status, sizeof(status));
 	getflag(&e->flags, EF_SUSPEND, "suspend", status, sizeof(status));
 	getflag(&e->flags, EF_HOLD, "hold", status, sizeof(status));
 

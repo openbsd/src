@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.450 2026/09/13 15:34:39 kirill Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.451 2026/09/13 19:14:41 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2321,6 +2321,8 @@ smtp_tx(struct smtp_session *s)
 		tx->evp.flags |= EF_BOUNCE;
 	if (s->flags & SF_AUTHENTICATED)
 		tx->evp.flags |= EF_AUTHENTICATED;
+	if (s->flags & SF_SECURE)
+		tx->evp.flags |= EF_TLS;
 
 	if ((tx->parser = rfc5322_parser_new()) == NULL) {
 		free(tx);

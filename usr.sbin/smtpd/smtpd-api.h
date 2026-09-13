@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.37 2024/06/09 10:13:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.38 2026/09/13 19:14:41 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -74,6 +74,7 @@ enum envelope_flags {
 	EF_AUTHENTICATED	= 0x01,
 	EF_BOUNCE		= 0x02,
 	EF_INTERNAL		= 0x04, /* Internal expansion forward */
+	EF_TLS			= 0x08,
 
 	/* runstate, not saved on disk */
 

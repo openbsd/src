@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.48 2021/06/14 17:58:16 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.49 2026/09/13 19:14:41 op Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -129,11 +129,14 @@ ruleset_match_smtp_helo(struct rule *r, const struct envelope *evp)
 static int
 ruleset_match_smtp_starttls(struct rule *r, const struct envelope *evp)
 {
+	int	ret;
+
 	if (!r->flag_smtp_starttls)
 		return 1;
 
-	/* XXX - not until TLS flag is added to envelope */
-	return -1;
+	ret = evp->flags & EF_TLS;
+
+	return MATCH_RESULT(ret, r->flag_smtp_starttls);
 }
 
 static int
