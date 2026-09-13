@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.49 2026/09/10 12:28:04 deraadt Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.50 2026/09/13 03:27:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -333,6 +333,16 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	struct pf_os_fingerprint *fp, *fp_prealloc, fpadd;
 	struct pf_osfp_entry *entry;
 
+	if (strnlen(fpioc->fp_os.fp_class_nm, sizeof(fpioc->fp_os.fp_class_nm)) >=
+	    sizeof(fpioc->fp_os.fp_class_nm))
+		return ENAMETOOLONG;
+	if (strnlen(fpioc->fp_os.fp_version_nm, sizeof(fpioc->fp_os.fp_version_nm)) >=
+	    sizeof(fpioc->fp_os.fp_version_nm))
+		return ENAMETOOLONG;
+	if (strnlen(fpioc->fp_os.fp_subtype_nm, sizeof(fpioc->fp_os.fp_subtype_nm)) >=
+	    sizeof(fpioc->fp_os.fp_subtype_nm))
+		return ENAMETOOLONG;
+
 	memset(&fpadd, 0, sizeof(fpadd));
 	fpadd.fp_tcpopts = fpioc->fp_tcpopts;
 	fpadd.fp_wsize = fpioc->fp_wsize;
@@ -367,16 +377,6 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	    (fpadd.fp_flags & PF_OSFP_WSCALE_DC) ? "*" : "",
 	    fpadd.fp_wscale,
 	    fpioc->fp_os.fp_os);
-
-	if (strnlen(fpioc->fp_os.fp_class_nm, sizeof(fpioc->fp_os.fp_class_nm)) >=
-	    sizeof(fpioc->fp_os.fp_class_nm))
-		return ENAMETOOLONG;
-	if (strnlen(fpioc->fp_os.fp_version_nm, sizeof(fpioc->fp_os.fp_version_nm)) >=
-	    sizeof(fpioc->fp_os.fp_version_nm))
-		return ENAMETOOLONG;
-	if (strnlen(fpioc->fp_os.fp_subtype_nm, sizeof(fpioc->fp_os.fp_subtype_nm)) >=
-	    sizeof(fpioc->fp_os.fp_subtype_nm))
-		return ENAMETOOLONG;
 
 	entry = pool_get(&pf_osfp_entry_pl, PR_WAITOK|PR_LIMITFAIL);
 	if (entry == NULL)
