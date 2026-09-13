@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2023/12/11 22:29:25 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.4 2026/09/13 16:14:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@openbsd.org>
@@ -51,5 +51,5 @@ __CONCAT(_dl_,n):						;\
 	beqz	t0, 1f						;\
 	sub	a0, zero, a0	/* r0 = -errno */		;\
 1:								;\
-	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)	 		;\
+	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)			;\
 	ret

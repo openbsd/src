@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.41 2024/05/17 06:11:54 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.42 2026/09/13 16:14:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
@@ -79,7 +79,7 @@ __END_HIDDEN_DECLS
 #define	_dl_round_page(x) \
 	(((x) + ((1 << _MAX_PAGE_SHIFT) - 1)) & ~((1 << _MAX_PAGE_SHIFT) - 1))
 
-#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 
 /*
  *	The following functions are declared inline so they can

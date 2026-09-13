@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2020/07/16 21:18:09 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2026/09/13 16:14:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -89,7 +89,7 @@ _dl_start:
 END(_dl_start)
 
 ENTRY(_dl_bind_start)
-	# r0 contains offset, do not overwrite 
+	# r0 contains offset, do not overwrite
 	# r2 ld.so toc is loaded on entry to this function.
 	mflr	%r12
 	std	%r12,16(%r1)		# save	lr

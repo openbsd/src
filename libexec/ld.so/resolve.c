@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.102 2024/01/22 02:08:31 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.103 2026/09/13 16:14:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -110,7 +110,8 @@ _dl_add_object(elf_object_t *object)
  * Identify substitution sequence name.
  */
 static int
-_dl_subst_name(const char *name, size_t siz) {
+_dl_subst_name(const char *name, size_t siz)
+{
 	switch (siz) {
 	case 5:
 		if (_dl_strncmp(name, "OSREL", 5) == 0)

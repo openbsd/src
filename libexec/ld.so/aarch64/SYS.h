@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.7 2023/12/11 22:29:23 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.8 2026/09/13 16:14:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -50,5 +50,5 @@ __CONCAT(_dl_,n):						;\
 	RETGUARD_SETUP(__CONCAT(_dl_,n), x15)			;\
 	SYSTRAP(n)						;\
 	cneg	x0, x0, cs	/* r0 = -errno */		;\
-	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)	 		;\
+	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)			;\
 	ret
