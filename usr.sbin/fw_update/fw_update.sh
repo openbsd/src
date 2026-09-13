@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.70 2026/09/05 17:22:52 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.71 2026/09/13 05:29:54 dgl Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -418,6 +418,7 @@ add_firmware () {
 	ftp -N "${0##/}" -D "$_m" "$_flags" -o- "file:${1}" |
 		tar -s ",^\+,${FWPKGTMP}/+," \
 		    -s ",^firmware,${DESTDIR}/etc/firmware," \
+		    -s ",.*,," \
 		    -C / -zxphf - "+*" "firmware/*"
 
 
