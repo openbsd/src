@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.108 2024/05/21 05:00:47 jsg Exp $ */
+/*	$OpenBSD: resolve.h,v 1.109 2026/09/13 19:30:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -368,6 +368,7 @@ extern struct r_debug *_dl_debug_map;
 
 extern int  _dl_pagesz;
 extern int  _dl_errno;
+extern char *_dl_execpath;
 
 extern char **_dl_libpath;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.c,v 1.4 2022/01/17 19:45:34 guenther Exp $ */
+/*	$OpenBSD: boot_md.c,v 1.5 2026/09/13 19:30:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -86,13 +86,15 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 
 	/*
 	 * Dig out auxiliary data set up by exec call. Move all known
-	 * tags to an indexed local table for easy access.
+	 * tags to an indexed local table for easy access by _dl_boot().
+	 * dl_data[0] points at the on-stack auxinfo.  Indexes 1 to 9
+	 * are a copy of the on-stack AUX_* values up to AUX_entry.
 	 */
+	dl_data[0] = (long)stack;
 	for (auxstack = (AuxInfo *)stack; auxstack->au_id != AUX_null;
 	    auxstack++) {
-		if (auxstack->au_id > AUX_entry)
-			continue;
-		dl_data[auxstack->au_id] = auxstack->au_v;
+		if (auxstack->au_id <= AUX_entry)
+			dl_data[auxstack->au_id] = auxstack->au_v;
 	}
 	loff = dl_data[AUX_base];	/* XXX assumes ld.so is linked at 0x0 */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.103 2026/09/13 16:14:37 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.104 2026/09/13 19:30:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -224,20 +224,27 @@ _dl_origin_subst_path(elf_object_t *object, const char *origin_path,
 }
 
 /*
- * Determine origin_path from object load_name. The origin_path argument
- * must refer to a buffer capable of storing at least PATH_MAX characters.
+ * Determine origin_path.  For the main executable, first look at
+ * AUX_openbsd_execpath. Otherwise use realpath of the object
+ * load_name.  The origin_path argument * must refer to a buffer
+ * capable of storing at least PATH_MAX characters.
  * Returns 0 on success.
  */
 static int
 _dl_origin_path(elf_object_t *object, char *origin_path)
 {
 	const char *dirname_path;
+	extern char *_dl_execpath;
 
-	/* syscall in ld.so returns 0/-errno, where libc returns char* */
-	if (_dl___realpath(object->load_name, origin_path) < 0)
-		return -1;
+	if (object->obj_type == OBJTYPE_EXE && _dl_execpath != NULL)
+		dirname_path = _dl_dirname(_dl_execpath);
+	else {
+		/* syscall in ld.so returns 0/-errno, where libc returns char* */
+		if (_dl___realpath(object->load_name, origin_path) < 0)
+			return -1;
+		dirname_path = _dl_dirname(origin_path);
+	}
 
-	dirname_path = _dl_dirname(origin_path);
 	if (dirname_path == NULL)
 		return -1;
 

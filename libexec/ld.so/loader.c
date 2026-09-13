@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.223 2024/01/22 02:08:31 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.224 2026/09/13 19:30:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -64,6 +64,7 @@ static inline void reprotect_if_textrel(elf_object_t *_object);
 static void _dl_rreloc(elf_object_t *_object);
 
 int _dl_pagesz __relro = 4096;
+char *_dl_execpath __relro = NULL;
 int _dl_bindnow __relro = 0;
 int _dl_debug __relro = 0;
 int _dl_trust __relro = 0;
@@ -526,11 +527,30 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	Elf_Addr minva, maxva, exe_loff, exec_end, cur_exec_end;
 	Elf_Addr relro_addr = 0, relro_size = 0;
 	Elf_Phdr *ptls = NULL;
+	AuxInfo		*auxstack;
 	int align;
 
 	if (dl_data[AUX_pagesz] != 0)
 		_dl_pagesz = dl_data[AUX_pagesz];
 	_dl_malloc_init();
+
+	/*
+	 * dl_data[] index 0 points at the on-stack auxinfo.  Indexes
+	 * 1 to 9 are a copy of the on-stack AUX_* values up to AUX_entry.
+	 * Scan for additional interesting values.
+	 */
+	for (auxstack = (AuxInfo *)dl_data[0]; auxstack->au_id != AUX_null;
+	    auxstack++) {
+		if (auxstack->au_id == AUX_openbsd_execpath &&
+		    auxstack->au_v && _dl_execpath == NULL) {
+			/*
+			 * Allocate new memory to avoid ld.so pointing at
+			 * a string on the stack which could be damaged
+			 * before later use.
+			 */
+			_dl_execpath = _dl_strdup((char *)auxstack->au_v);
+		}
+	}
 
 	_dl_argv = argv;
 	while (_dl_argv[_dl_argc] != NULL)
