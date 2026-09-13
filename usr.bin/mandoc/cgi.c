@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.124 2026/09/01 13:56:12 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.125 2026/09/13 17:03:42 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022, 2026 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -940,8 +940,13 @@ resp_format(const struct req *req, const char *file, int html_begun)
 	void		*vp;
 	int		 fd;
 	int		 usepath;
+	int		 irc = EXIT_FAILURE;
 
-	if ((fd = open(file, O_RDONLY)) == -1) {
+	mchars_alloc();
+	mp = mparse_alloc(MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1 |
+	    MPARSE_VALIDATE, MANDOC_OS_OTHER, req->q.manpath);
+
+	if ((fd = mparse_open(mp, file)) == -1) {
 		if (html_begun) {
 			puts("<p role=\"doc-notice\">"
 			     "Internal Server Error</p>");
@@ -949,12 +954,8 @@ resp_format(const struct req *req, const char *file, int html_begun)
 		} else
 			pg_error_badrequest(
 			    "You specified an invalid manual file.");
-		return EXIT_FAILURE;
+		goto out;
 	}
-
-	mchars_alloc();
-	mp = mparse_alloc(MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1 |
-	    MPARSE_VALIDATE, MANDOC_OS_OTHER, req->q.manpath);
 	mparse_readfd(mp, fd, file);
 	close(fd);
 
@@ -966,7 +967,7 @@ resp_format(const struct req *req, const char *file, int html_begun)
 			resp_end_html();
 		} else
 			pg_error_internal();
-		return EXIT_FAILURE;
+		goto out;
 	}
 
 	memset(&conf, 0, sizeof(conf));
@@ -993,11 +994,14 @@ resp_format(const struct req *req, const char *file, int html_begun)
 	resp_end_html();
 
 	html_free(vp);
-	mparse_free(mp);
-	mchars_free();
 	free(conf.man);
 	free(conf.style);
-	return EXIT_SUCCESS;
+	irc = EXIT_SUCCESS;
+
+ out:
+	mparse_free(mp);
+	mchars_free();
+	return irc;
 }
 
 static int
