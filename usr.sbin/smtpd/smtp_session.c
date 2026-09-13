@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.449 2026/05/26 22:43:32 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.450 2026/09/13 15:34:39 kirill Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2769,22 +2769,27 @@ smtp_message_begin(struct smtp_tx *tx)
 
 	m_printf(tx, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
-		m_printf(tx, "from %s (%s %s%s%s)",
+		m_printf(tx, "from %s (%s %s%s%s)\n\t",
 		    s->helo,
 		    s->rdns,
 		    s->ss.ss_family == AF_INET6 ? "" : "[",
 		    ss_to_text(&s->ss),
 		    s->ss.ss_family == AF_INET6 ? "" : "]");
 	}
-	m_printf(tx, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
-	    s->smtpname,
-	    SMTPD_NAME,
-	    s->flags & SF_EHLO ? "E" : "",
-	    s->flags & SF_SECURE ? "S" : "",
-	    s->flags & SF_AUTHENTICATED ? "A" : "",
-	    tx->msgid);
 
-	if (s->flags & SF_SECURE) {
+	m_printf(tx, "by %s (%s) ",
+	    s->smtpname,
+	    SMTPD_NAME);
+
+	if (!(s->listener->flags & F_MASK_SOURCE)) {
+		m_printf(tx, "with %sSMTP%s%s ",
+		    s->flags & SF_EHLO ? "E" : "",
+		    s->flags & SF_SECURE ? "S" : "",
+		    s->flags & SF_AUTHENTICATED ? "A" : "");
+	}
+	m_printf(tx, "id %08x", tx->msgid);
+
+	if (!(s->listener->flags & F_MASK_SOURCE) && s->flags & SF_SECURE) {
 		m_printf(tx, " (%s:%s:%d:%s)",
 		    tls_conn_version(io_tls(s->io)),
 		    tls_conn_cipher(io_tls(s->io)),
