@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.23 2025/07/08 14:26:45 schwarze Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.24 2026/09/13 14:13:41 remi Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2025 $
+.Dd $Mdocdate: September 13 2026 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -221,7 +221,8 @@ when the interface state is going down.
 The demotion counter will be decreased when the interface
 state is active again.
 .It Ic passive
-Prevent transmission and reception of RIP packets on this interface.
+Prevent transmission and reception of RIP packets on this interface 
+and advertise all prefixes configured on this interface.
 .El
 .Sh FILES
 .Bl -tag -width /etc/examples/ripd.conf -compact

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.47 2026/08/17 08:59:53 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.48 2026/09/13 14:13:41 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -462,6 +462,14 @@ rip_redistribute(struct kroute *kr)
 
 	if (kr->flags & F_RIPD_INSERTED)
 		return (1);
+
+	/* redistribute prefixes from passive interfaces */
+	if (kr->flags & F_CONNECTED) {
+		struct iface *iface = if_find_index(kr->ifindex);
+
+		if (iface != NULL && iface->passive)
+			return (1);
+	}
 
 	/* only allow 0.0.0.0/0 via REDIST_DEFAULT */
 	if (kr->prefix.s_addr == INADDR_ANY && kr->netmask.s_addr == INADDR_ANY)
