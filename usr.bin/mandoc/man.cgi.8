@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.cgi.8,v 1.23 2022/07/06 15:47:10 schwarze Exp $
+.\"	$OpenBSD: man.cgi.8,v 1.24 2026/09/13 18:59:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2022 $
+.Dd $Mdocdate: September 13 2026 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -199,6 +199,7 @@ It needs to have at least one component; the root directory cannot be used
 for this purpose.
 The files
 .Pa manpath.conf ,
+.Pa head.html ,
 .Pa header.html ,
 and
 .Pa footer.html
@@ -380,6 +381,11 @@ or any character not contained in the
 .Sx Restricted character set ,
 .Nm
 reports an internal server error and exits without doing anything.
+.It Pa /man/head.html
+An optional file containing static HTML code to be inserted right before
+closing the <HEAD> element.
+For example, it can contain additional <META> tags
+or <LINK>s to additional resources.
 .It Pa /man/header.html
 An optional file containing static HTML code to be wrapped in
 a <HEADER> element and inserted right after opening the <BODY> element.

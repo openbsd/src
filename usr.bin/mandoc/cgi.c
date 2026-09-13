@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.125 2026/09/13 17:03:42 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.126 2026/09/13 18:59:42 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022, 2026 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -136,6 +136,7 @@ static	const char *const arch_names[] = {
 };
 static	const int arch_MAX = sizeof(arch_names) / sizeof(char *);
 
+static	int head_fd = -1;
 static	int header_fd = -1;
 static	int footer_fd = -1;
 
@@ -412,11 +413,10 @@ resp_begin_html(int code, const char *msg, const char *file)
 			printf("(%.*s)", secsz, sec);
 		fputs(" - ", stdout);
 	}
-	printf("%s</title>\n"
-	       "</head>\n"
-	       "<body>\n",
-	       CUSTOMIZE_TITLE);
-
+	printf("%s</title>\n", CUSTOMIZE_TITLE);
+	(void)resp_copy(NULL, &head_fd);
+	puts("</head>\n"
+	     "<body>");
 	return resp_copy("header", &header_fd);
 }
 
@@ -1226,8 +1226,9 @@ main(void)
 		return EXIT_FAILURE;
 	}
 
-	/* These two files are optional. */
+	/* These three files are optional. */
 
+	head_fd = open("head.html", O_RDONLY);
 	header_fd = open("header.html", O_RDONLY);
 	footer_fd = open("footer.html", O_RDONLY);
 
