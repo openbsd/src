@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.9 2025/07/16 15:59:26 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.10 2026/09/14 23:36:58 kenjiro Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -125,7 +125,6 @@ LCRYPTO_USED(BIO_get_host_ip);
 LCRYPTO_USED(BIO_get_accept_socket);
 LCRYPTO_USED(BIO_accept);
 LCRYPTO_USED(BIO_sock_init);
-LCRYPTO_USED(BIO_sock_cleanup);
 LCRYPTO_USED(BIO_set_tcp_ndelay);
 LCRYPTO_USED(BIO_new_socket);
 LCRYPTO_USED(BIO_new_dgram);
@@ -137,5 +136,6 @@ LCRYPTO_USED(BIO_printf);
 LCRYPTO_USED(ERR_load_BIO_strings);
 LCRYPTO_USED(BIO_get_ex_new_index);
 LCRYPTO_USED(BIO_new_bio_pair);
+LCRYPTO_UNUSED(BIO_sock_cleanup);
 
 #endif /* _LIBCRYPTO_BIO_H */

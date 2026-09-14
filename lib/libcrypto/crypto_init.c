@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.27 2026/08/30 12:19:37 kenjiro Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.28 2026/09/14 23:36:58 kenjiro Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -108,7 +108,6 @@ OPENSSL_cleanup(void)
 	ERR_free_strings();
 
 	crypto_ex_data_cleanup();
-	EVP_cleanup();
 
 	X509_VERIFY_PARAM_table_cleanup();
 

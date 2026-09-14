@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.11 2026/08/31 09:18:25 tb Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.12 2026/09/14 23:36:58 kenjiro Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -146,8 +146,6 @@ pkcs7_basics(void)
 	int flags;
 
 	ERR_load_crypto_strings();
-	OpenSSL_add_all_algorithms();
-
 	/*
 	 * A bunch of setup...
 	 */

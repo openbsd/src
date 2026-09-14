@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.c,v 1.4 2026/08/30 12:19:37 kenjiro Exp $	*/
+/*	$OpenBSD: pbkdf2.c,v 1.5 2026/09/14 23:36:58 kenjiro Exp $	*/
 /* Written by Christian Heimes, 2013 */
 /*
  * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.
@@ -187,8 +187,6 @@ main(int argc,char **argv)
 {
 	unsigned int n;
 	const testdata *test = test_cases;
-
-	OpenSSL_add_all_digests();
 
 	for (n = 0; test->pass != NULL; n++, test++) {
 		test_p5_pbkdf2(n, "sha1", test, sha1_results[n]);

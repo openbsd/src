@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.35 2026/07/29 02:27:31 tb Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.36 2026/09/14 23:36:58 kenjiro Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -692,7 +692,6 @@ main(int argc, char **argv)
 		/*
 		 * Validate the OCSP response we got back
 		 */
-		OPENSSL_add_all_algorithms_noconf();
 		if (!validate_response(hget->bodypart, hget->bodypartsz,
 			request, castore, host, certfile))
 			exit(1);
@@ -728,7 +727,6 @@ main(int argc, char **argv)
 		/*
 		 * Validate the OCSP staple we read in.
 		 */
-		OPENSSL_add_all_algorithms_noconf();
 		if (!validate_response(instaple, instaplesz,
 			request, castore, host, certfile))
 			exit(1);

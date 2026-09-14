@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.42 2026/08/30 12:19:37 kenjiro Exp $ */
+/* $OpenBSD: openssl.c,v 1.43 2026/09/14 23:36:58 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -347,7 +347,6 @@ openssl_startup(void)
 {
 	signal(SIGPIPE, SIG_IGN);
 
-	OpenSSL_add_all_algorithms();
 	SSL_library_init();
 	SSL_load_error_strings();
 

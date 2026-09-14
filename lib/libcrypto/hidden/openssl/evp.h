@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.6 2024/08/31 10:38:49 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.7 2026/09/14 23:36:58 kenjiro Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -257,13 +257,8 @@ LCRYPTO_USED(EVP_sm4_cbc);
 LCRYPTO_USED(EVP_sm4_cfb128);
 LCRYPTO_USED(EVP_sm4_ofb);
 LCRYPTO_USED(EVP_sm4_ctr);
-LCRYPTO_USED(OPENSSL_add_all_algorithms_noconf);
-LCRYPTO_USED(OPENSSL_add_all_algorithms_conf);
-LCRYPTO_USED(OpenSSL_add_all_ciphers);
-LCRYPTO_USED(OpenSSL_add_all_digests);
 LCRYPTO_USED(EVP_get_cipherbyname);
 LCRYPTO_USED(EVP_get_digestbyname);
-LCRYPTO_USED(EVP_cleanup);
 LCRYPTO_USED(EVP_CIPHER_do_all);
 LCRYPTO_USED(EVP_CIPHER_do_all_sorted);
 LCRYPTO_USED(EVP_MD_do_all);
@@ -370,6 +365,11 @@ LCRYPTO_USED(EVP_AEAD_CTX_cleanup);
 LCRYPTO_USED(EVP_AEAD_CTX_seal);
 LCRYPTO_USED(EVP_AEAD_CTX_open);
 LCRYPTO_USED(ERR_load_EVP_strings);
+LCRYPTO_UNUSED(OPENSSL_add_all_algorithms_noconf);
+LCRYPTO_UNUSED(OPENSSL_add_all_algorithms_conf);
+LCRYPTO_UNUSED(OpenSSL_add_all_ciphers);
+LCRYPTO_UNUSED(OpenSSL_add_all_digests);
+LCRYPTO_UNUSED(EVP_cleanup);
 LCRYPTO_UNUSED(EVP_MD_CTX_init);
 LCRYPTO_UNUSED(EVP_EncryptFinal);
 LCRYPTO_UNUSED(EVP_DecryptFinal);

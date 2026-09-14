@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.16 2026/08/30 12:19:37 kenjiro Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.17 2026/09/14 23:36:58 kenjiro Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -339,9 +339,6 @@ main(int argc, char **argv)
 	}
 
 	/* Load up the software EVP_CIPHER and EVP_MD definitions */
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
-
 	for (;;) {
 		char line[8 * 1024];
 		char *p;
