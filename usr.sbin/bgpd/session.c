@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.540 2026/07/24 05:01:01 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.541 2026/09/14 13:27:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -414,7 +414,9 @@ session_main(int debug, int verbose)
 			}
 
 			/* are we waiting for a write? */
-			events = POLLIN;
+			events = 0;
+			if (msgbuf_readlen(p->wbuf) < MSG_PROCESS_LIMIT)
+				events |= POLLIN;
 			if (msgbuf_queuelen(p->wbuf) > 0 ||
 			    p->state == STATE_CONNECT)
 				events |= POLLOUT;
