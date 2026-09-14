@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execvp.3,v 1.1 2026/09/11 13:56:55 schwarze Exp $
+.\"	$OpenBSD: execvp.3,v 1.2 2026/09/14 20:59:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,23 +27,23 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2026 $
+.Dd $Mdocdate: September 14 2026 $
 .Dt EXECVP 3
 .Os
 .Sh NAME
-.Nm execlp ,
 .Nm execvp ,
-.Nm execvpe
+.Nm execvpe ,
+.Nm execlp
 .Nd execute a file with an optional path search
 .Sh SYNOPSIS
 .In unistd.h
 .Vt extern char **environ;
 .Ft int
-.Fn execlp "const char *file" "const char *arg" ...
-.Ft int
 .Fn execvp "const char *file" "char *const argv[]"
 .Ft int
 .Fn execvpe "const char *file" "char *const argv[]" "char *const envp[]"
+.Ft int
+.Fn execlp "const char *file" "const char *arg" ...
 .Sh DESCRIPTION
 This family of functions replace the current process image with a
 new process image.
@@ -151,10 +151,10 @@ will be set to indicate the error.
 default shell program
 .El
 .Sh ERRORS
-.Fn execlp ,
 .Fn execvp ,
+.Fn execvpe ,
 and
-.Fn execvpe
+.Fn execlp
 may fail and set
 .Va errno
 for any of the errors specified for the library functions
@@ -171,17 +171,17 @@ and
 .Xr environ 7
 .Sh STANDARDS
 Historically, the default path for the
-.Fn execlp
-and
 .Fn execvp
+and
+.Fn execlp
 functions was
 .Pa \&. : Ns Pa /bin : Ns Pa /usr/bin .
 This was changed to improve security and behaviour.
 .Pp
 The behavior of
-.Fn execlp
-and
 .Fn execvp
+and
+.Fn execlp
 when errors occur while attempting to execute the file is historic
 practice, but has not traditionally been documented and is not specified
 by the
@@ -189,9 +189,9 @@ by the
 standard.
 .Pp
 Traditionally, the functions
-.Fn execlp
-and
 .Fn execvp
+and
+.Fn execlp
 ignored all errors except for the ones described above and
 .Er ENOMEM
 and
@@ -199,9 +199,9 @@ and
 upon which they returned.
 They now return if any error other than the ones described above occurs.
 .Pp
-.Fn execlp
-and
 .Fn execvp
+and
+.Fn execlp
 conform to
 .St -p1003.1-88 .
 .Fn execvpe
@@ -212,8 +212,8 @@ A predecessor to
 .Fn pexec ,
 first appeared in the Programmer's Workbench (PWB/UNIX).
 The functions
-.Fn execlp
-and
 .Fn execvp
+and
+.Fn execlp
 first appeared in
 .At v7 .

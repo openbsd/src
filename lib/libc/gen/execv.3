@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execv.3,v 1.4 2026/09/11 13:56:55 schwarze Exp $
+.\"	$OpenBSD: execv.3,v 1.5 2026/09/14 20:59:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,23 +27,23 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2026 $
+.Dd $Mdocdate: September 14 2026 $
 .Dt EXECV 3
 .Os
 .Sh NAME
+.Nm execv ,
 .Nm execl ,
-.Nm execle ,
-.Nm execv
+.Nm execle
 .Nd execute a file
 .Sh SYNOPSIS
 .In unistd.h
 .Vt extern char **environ;
 .Ft int
+.Fn execv "const char *path" "char *const argv[]"
+.Ft int
 .Fn execl "const char *path" "const char *arg" ...
 .Ft int
 .Fn execle "const char *path" "const char *arg" ... "char *const envp[]"
-.Ft int
-.Fn execv "const char *path" "char *const argv[]"
 .Sh DESCRIPTION
 This family of functions replace the current process image with a
 new process image.
@@ -54,6 +54,17 @@ about the replacement of the current process.
 .Pp
 The initial argument for these functions is the pathname of a file which
 is to be executed.
+.Pp
+The
+.Fn execv
+function provides an array of pointers to
+NUL-terminated strings that
+represent the argument list available to the new program.
+The first argument, by convention, should point to the file name associated
+with the file being executed.
+The array of pointers
+.Em must
+be terminated by a null pointer itself.
 .Pp
 The
 .Fa "const char *arg"
@@ -76,17 +87,6 @@ The list of arguments
 be terminated by a null pointer.
 .Pp
 The
-.Fn execv
-function provides an array of pointers to
-NUL-terminated strings that
-represent the argument list available to the new program.
-The first argument, by convention, should point to the file name associated
-with the file being executed.
-The array of pointers
-.Em must
-be terminated by a null pointer itself.
-.Pp
-The
 .Fn execle
 function also specifies the environment of the executed process by following
 the null
@@ -106,6 +106,12 @@ The return value is \-1, and the global variable
 .Va errno
 will be set to indicate the error.
 .Sh ERRORS
+.Fn execv
+may fail and set
+.Va errno
+for any of the errors specified for the library function
+.Xr execve 2 .
+.Pp
 .Fn execl
 and
 .Fn execle
@@ -115,12 +121,6 @@ for any of the errors specified for the library functions
 .Xr execve 2
 and
 .Xr malloc 3 .
-.Pp
-.Fn execv
-may fail and set
-.Va errno
-for any of the errors specified for the library function
-.Xr execve 2 .
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr execve 2 ,
@@ -130,22 +130,22 @@ for any of the errors specified for the library function
 .Xr execvp 3 ,
 .Xr environ 7
 .Sh STANDARDS
-.Fn execl ,
 .Fn execv ,
+.Fn execl ,
 and
 .Fn execle
 conform to
 .St -p1003.1-88 .
 .Sh HISTORY
 The functions
-.Fn execl
-and
 .Fn execv
+and
+.Fn execl
 first appeared in
 .At v2 .
 The functions
-.Fn execle
-and
 .Fn execve
+and
+.Fn execle
 first appeared in
 .At v7 .
