@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.8 2026/08/30 23:43:22 jsg Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.9 2026/09/14 08:51:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -459,9 +459,12 @@ aspa_table_equal(const struct rde_aspa *ra, const struct rde_aspa *rb)
 	if (ra->maxset != rb->maxset ||
 	    ra->maxdata != rb->maxdata)
 		return 0;
-	for (i = 0; i < ra->maxset; i++)
+	for (i = 0; i < ra->maxset; i++) {
 		if (ra->sets[i].as != rb->sets[i].as)
 			return 0;
+		if (ra->sets[i].num != rb->sets[i].num)
+			return 0;
+	}
 	if (memcmp(ra->data, rb->data, ra->maxdata * sizeof(ra->data[0])) != 0)
 		return 0;
 
