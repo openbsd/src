@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.126 2026/09/13 18:59:42 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.127 2026/09/14 15:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022, 2026 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -66,6 +66,7 @@ enum	focus {
 	FOCUS_QUERY
 };
 
+static	int		 fileprec(const char *file);
 static	void		 html_print(const char *);
 static	void		 html_putchar(char);
 static	int		 http_decode(char *);
@@ -373,9 +374,20 @@ resp_copy(const char *element, int *fd)
 }
 
 static int
+fileprec(const char *file)
+{
+	int len;
+
+	len = strlen(file);
+	if (len > 3 && strcmp(file + len - 3, ".gz") == 0)
+		len -= 3;
+	return len;
+}
+
+static int
 resp_begin_html(int code, const char *msg, const char *file)
 {
-	const char	*name, *sec, *cp;
+	const char	*name, *sec, *cp, *end;
 	int		 namesz, secsz;
 
 	resp_begin_http(code, msg);
@@ -391,23 +403,50 @@ resp_begin_html(int code, const char *msg, const char *file)
 	       "  <title>",
 	       CSS_DIR);
 	if (file != NULL) {
-		cp = strrchr(file, '/');
-		name = cp == NULL ? file : cp + 1;
-		cp = strrchr(name, '.');
-		namesz = cp == NULL ? strlen(name) : cp - name;
-		sec = NULL;
-		if (cp != NULL && cp[1] != '0') {
-			sec = cp + 1;
-			secsz = strlen(sec);
-		} else if (name - file > 1) {
-			for (cp = name - 2; cp >= file; cp--) {
-				if (*cp < '1' || *cp > '9')
-					continue;
-				sec = cp;
-				secsz = name - cp - 1;
-				break;
-			}
+		cp = end = file + strlen(file);
+		while (cp > file && *cp != '.' && *cp != '/')
+			cp--;
+
+		/* Skip gzip filename extension. */
+
+		if (cp > file && strcmp(cp, ".gz") == 0) {
+			end = cp;
+			do {
+				cp--;
+			} while (cp > file && *cp != '.' && *cp != '/');
 		}
+
+		/* Determine the section number from the filename extension. */
+
+		sec = NULL;
+		if (*cp == '.') {
+			if (cp[1] != '\0' && cp[1] != '0') {
+				sec = cp + 1;
+				secsz = end - sec;
+			}
+			end = cp;
+		}
+
+		/* Determine the manual page name. */
+
+		while (cp > file && *cp != '/')
+			cp--;
+		name = *cp == '/' && cp + 1 < end ? cp + 1 : file;
+		namesz = end - name;
+
+		/* Determine the section number from the directory name. */
+
+		if (sec == NULL && cp > file) {
+			end = cp;
+			do {
+				cp--;
+			} while (cp > file && (*cp < '1' || *cp > '9'));
+			sec = cp;
+			secsz = end - sec;
+		}
+
+		/* Print name(section) to the <title> element. */
+
 		printf("%.*s", namesz, name);
 		if (sec != NULL)
 			printf("(%.*s)", secsz, sec);
@@ -676,9 +715,10 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 			printf("%s/", scriptname);
 		if (strcmp(req->q.manpath, req->p[0]))
 			printf("%s/", req->q.manpath);
-		printf("%s\r\n"
+		file = r[0].file;
+		printf("%.*s\r\n"
 		    "Content-Type: text/html; charset=utf-8\r\n\r\n",
-		    r[0].file);
+		    fileprec(file), file);
 		return EXIT_SUCCESS;
 	}
 
@@ -749,7 +789,7 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 				printf("%s/", scriptname);
 			if (strcmp(req->q.manpath, req->p[0]))
 				printf("%s/", req->q.manpath);
-			printf("%s\">", r[i].file);
+			printf("%.*s\">", fileprec(r[i].file), r[i].file);
 			html_print(r[i].names);
 			printf("</a></td>\n"
 			       "    <td><span class=\"Nd\">");
