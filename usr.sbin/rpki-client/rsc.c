@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.49 2026/09/03 17:19:30 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.50 2026/09/14 09:21:41 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -413,18 +413,18 @@ rsc_obj(void)
  * Safe to call with NULL.
  */
 void
-rsc_free(struct rsc *p)
+rsc_free(struct rsc *rsc)
 {
 	size_t	i;
 
-	if (p == NULL)
+	if (rsc == NULL)
 		return;
 
-	for (i = 0; i < p->num_files; i++)
-		free(p->files[i].filename);
+	for (i = 0; i < rsc->num_files; i++)
+		free(rsc->files[i].filename);
 
-	free(p->ips);
-	free(p->ases);
-	free(p->files);
-	free(p);
+	free(rsc->ips);
+	free(rsc->ases);
+	free(rsc->files);
+	free(rsc);
 }

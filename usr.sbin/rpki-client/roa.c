@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.92 2026/09/03 17:19:30 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.93 2026/09/14 09:21:41 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -283,13 +283,13 @@ roa_obj(void)
  * Safe to call with NULL.
  */
 void
-roa_free(struct roa *p)
+roa_free(struct roa *roa)
 {
 
-	if (p == NULL)
+	if (roa == NULL)
 		return;
-	free(p->ips);
-	free(p);
+	free(roa->ips);
+	free(roa);
 }
 
 /*
@@ -297,15 +297,15 @@ roa_free(struct roa *p)
  * See roa_read() for reader.
  */
 void
-roa_buffer(struct ibuf *b, const struct roa *p)
+roa_buffer(struct ibuf *b, const struct roa *roa)
 {
-	io_simple_buffer(b, &p->valid, sizeof(p->valid));
-	io_simple_buffer(b, &p->asid, sizeof(p->asid));
-	io_simple_buffer(b, &p->talid, sizeof(p->talid));
-	io_simple_buffer(b, &p->num_ips, sizeof(p->num_ips));
-	io_simple_buffer(b, &p->expires, sizeof(p->expires));
+	io_simple_buffer(b, &roa->valid, sizeof(roa->valid));
+	io_simple_buffer(b, &roa->asid, sizeof(roa->asid));
+	io_simple_buffer(b, &roa->talid, sizeof(roa->talid));
+	io_simple_buffer(b, &roa->num_ips, sizeof(roa->num_ips));
+	io_simple_buffer(b, &roa->expires, sizeof(roa->expires));
 
-	io_simple_buffer(b, p->ips, p->num_ips * sizeof(p->ips[0]));
+	io_simple_buffer(b, roa->ips, roa->num_ips * sizeof(roa->ips[0]));
 }
 
 /*
@@ -316,24 +316,25 @@ roa_buffer(struct ibuf *b, const struct roa *p)
 struct roa *
 roa_read(struct ibuf *b)
 {
-	struct roa	*p;
+	struct roa	*roa;
 
-	if ((p = calloc(1, sizeof(struct roa))) == NULL)
+	if ((roa = calloc(1, sizeof(struct roa))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &p->valid, sizeof(p->valid));
-	io_read_buf(b, &p->asid, sizeof(p->asid));
-	io_read_buf(b, &p->talid, sizeof(p->talid));
-	io_read_buf(b, &p->num_ips, sizeof(p->num_ips));
-	io_read_buf(b, &p->expires, sizeof(p->expires));
+	io_read_buf(b, &roa->valid, sizeof(roa->valid));
+	io_read_buf(b, &roa->asid, sizeof(roa->asid));
+	io_read_buf(b, &roa->talid, sizeof(roa->talid));
+	io_read_buf(b, &roa->num_ips, sizeof(roa->num_ips));
+	io_read_buf(b, &roa->expires, sizeof(roa->expires));
 
-	if (p->num_ips > 0) {
-		if ((p->ips = calloc(p->num_ips, sizeof(p->ips[0]))) == NULL)
+	if (roa->num_ips > 0) {
+		if ((roa->ips = calloc(roa->num_ips,
+		    sizeof(roa->ips[0]))) == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ips, p->num_ips * sizeof(p->ips[0]));
+		io_read_buf(b, roa->ips, roa->num_ips * sizeof(roa->ips[0]));
 	}
 
-	return p;
+	return roa;
 }
 
 /*
