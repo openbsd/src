@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa_test.c,v 1.7 2026/03/03 10:10:11 claudio Exp $ */
+/*	$OpenBSD: rde_aspa_test.c,v 1.8 2026/09/14 08:53:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -53,6 +53,16 @@ struct aspa_test {
 	uint32_t	 aspathcnt;
 	enum role	 role;
 	uint8_t		 expected_result;
+};
+
+struct aspa_test_set cmpset1[] = {
+	{ 1, (const uint32_t []){ 4, 5, 6 }, 3 },
+	{ 2, (const uint32_t []){ 10, 11 }, 2 },
+};
+
+struct aspa_test_set cmpset2[] = {
+	{ 1, (const uint32_t []){ 5, 6 }, 2 },
+	{ 2, (const uint32_t []){ 10, 11, 4 }, 3 },
 };
 
 struct aspa_test_set testset[] = {
@@ -402,12 +412,12 @@ vstate_for_role(struct rde_aspa_state *vstate, enum role role)
 int
 main(int argc, char **argv)
 {
-	struct rde_aspa *aspa;
+	struct rde_aspa *aspa, *cmp1, *cmp2, *aspa2;
 	size_t num_cp = sizeof(cp_testset) / sizeof(cp_testset[0]);
 	size_t num_aspath = sizeof(aspath_testset) / sizeof(aspath_testset[0]);
 	size_t num_aspa = sizeof(aspa_testset) / sizeof(aspa_testset[0]);
 	size_t i;
-	int cp_failed = 0, aspath_failed = 0, aspa_failed = 0;
+	int cp_failed = 0, aspath_failed = 0, aspa_failed = 0, cmp_failed = 0;
 
 	/* first test, loading empty aspa table works. */
 	aspa = load_test_set(NULL, 0);
@@ -514,12 +524,44 @@ main(int argc, char **argv)
 
 		free(a);
 	}
+
 	if (!aspa_failed)
 		printf("OK\n");
 
-	aspa_table_free(aspa);
+	printf("testing aspa_table_equal: ");
+	aspa2 = load_test_set(testset, sizeof(testset) / sizeof(testset[0]));
+	assert(aspa2 != NULL);
+	cmp1 = load_test_set(cmpset1, sizeof(cmpset1) / sizeof(cmpset1[0]));
+	assert(cmp1 != NULL);
+	cmp2 = load_test_set(cmpset2, sizeof(cmpset2) / sizeof(cmpset2[0]));
+	assert(cmp2 != NULL);
 
-	return cp_failed | aspath_failed | aspa_failed;
+	if (!aspa_table_equal(aspa, aspa)) {
+		printf("failed: aspa, aspa\n");
+		cmp_failed = 1;
+	}
+	if (!aspa_table_equal(aspa, aspa2)) {
+		printf("failed: aspa, aspa2\n");
+		cmp_failed = 1;
+	}
+	if (!aspa_table_equal(cmp1, cmp1)) {
+		printf("failed: cmp1, cmp1\n");
+		cmp_failed = 1;
+	}
+	if (aspa_table_equal(cmp1, cmp2)) {
+		printf("failed: cmp1, cmp2\n");
+		cmp_failed = 1;
+	}
+
+	if (!cmp_failed)
+		printf("OK\n");
+
+	aspa_table_free(aspa);
+	aspa_table_free(aspa2);
+	aspa_table_free(cmp1);
+	aspa_table_free(cmp2);
+
+	return cp_failed | aspath_failed | aspa_failed | cmp_failed;
 }
 
 __dead void
