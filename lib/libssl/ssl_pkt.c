@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.73 2026/09/15 23:00:07 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.74 2026/09/15 23:02:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -335,7 +335,6 @@ ssl3_get_record(SSL *s)
 	SSL3_RECORD_INTERNAL *rr = &(s->s3->rrec);
 	uint8_t alert_desc;
 	int al, n;
-	int ret = -1;
 
  again:
 	/* check if we have the header */
@@ -457,7 +456,7 @@ ssl3_get_record(SSL *s)
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	return (ret);
+	return -1;
 }
 
 /* Call this to write data in records of type 'type'
