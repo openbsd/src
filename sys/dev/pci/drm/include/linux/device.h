@@ -184,4 +184,20 @@ device_set_wakeup_path(struct device *dev)
 {
 }
 
+static inline void *
+devres_open_group(struct device *dev, void *ident, gfp_t gfp)
+{
+	return (void *)1;
+}
+
+static inline void
+devres_close_group(struct device *dev, void *ident)
+{
+}
+
+static inline void
+devres_release_group(struct device *dev, void *ident)
+{
+}
+
 #endif
