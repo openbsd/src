@@ -601,9 +601,6 @@ static void i915_ttm_delete_mem_notify(struct ttm_buffer_object *bo)
 
 static struct i915_refct_sgt *i915_ttm_tt_get_st(struct ttm_tt *ttm)
 {
-	STUB();
-	return ERR_PTR(-ENOSYS);
-#ifdef notyet
 	struct i915_ttm_tt *i915_tt = container_of(ttm, typeof(*i915_tt), ttm);
 	struct sg_table *st;
 	int ret;
@@ -628,7 +625,6 @@ static struct i915_refct_sgt *i915_ttm_tt_get_st(struct ttm_tt *ttm)
 	}
 
 	return i915_refct_sgt_get(&i915_tt->cached_rsgt);
-#endif
 }
 
 /**
