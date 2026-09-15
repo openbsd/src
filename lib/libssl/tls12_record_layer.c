@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.42 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.43 2026/09/15 19:11:12 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -1051,8 +1051,8 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 }
 
 int
-tls12_record_layer_open_record(struct tls12_record_layer *rl, uint8_t *buf,
-    size_t buf_len, struct tls_content *out)
+tls12_record_layer_open_record(struct tls12_record_layer *rl,
+    const uint8_t *buf, size_t buf_len, struct tls_content *out)
 {
 	CBS cbs, fragment, seq_num;
 	uint16_t version;
