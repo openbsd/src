@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.96 2026/05/18 04:24:01 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.97 2026/09/15 23:51:49 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1890,6 +1890,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	IPAddressFamily *child_af, *parent_af;
 	IPAddressOrRanges *child_aor, *parent_aor;
 	X509 *cert = NULL;
+	int strict_inherit = 1;
 	int depth = -1;
 	int i;
 	unsigned int length;
@@ -1920,6 +1921,15 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		}
 		if ((ext = cert->rfc3779_addr) == NULL)
 			goto done;
+		/*
+		 * A lot of manifest EE certs inherit from a parent without IP
+		 * address resources. Rejecting these breaks the RPKI and makes
+		 * 20% of validated ASPA payloads disappear (as of 09/2026).
+		 * The only other RPKI EE certs that may inherit are in TAKs and
+		 * GBRs, which are essentially unused.
+		 */
+		if (X509_check_ca(cert) == 0)
+			strict_inherit = 0;
 	} else if (!X509v3_addr_is_canonical(ext)) {
 		if ((ret = verify_error(ctx, cert,
 		    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
@@ -1952,8 +1962,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 				child_af = sk_IPAddressFamily_value(child, i);
 
-				if (IPAddressFamily_inheritance(child_af) !=
-				    NULL)
+				if (depth == 1 && !strict_inherit &&
+				    IPAddressFamily_inheritance(child_af) != NULL)
 					continue;
 
 				if ((ret = verify_error(ctx, cert,

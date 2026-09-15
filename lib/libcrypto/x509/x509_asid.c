@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.46 2025/05/10 05:54:39 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.47 2026/09/15 23:51:49 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1091,7 +1091,7 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
     ASIdentifiers *ext)
 {
 	ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
-	int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
+	int i, ret = 1, inherit_as = 0, inherit_rdi = 0, strict_inherit = 1;
 	X509 *x;
 
 	/* We need a non-empty chain to test against. */
@@ -1121,6 +1121,15 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			goto done;
 		if ((ext = x->rfc3779_asid) == NULL)
 			goto done;
+		/*
+		 * A lot of manifest EE certs inherit from a parent without AS
+		 * number resources. Rejecting these breaks the RPKI and makes
+		 * >10% of validated ROA payloads disappear (as of 09/2026).
+		 * The only other RPKI EE certs that may inherit are in TAKs
+		 * and GBRs, which are essentially unused.
+		 */
+		if (X509_check_ca(x) == 0)
+			strict_inherit = 0;
 	}
 	if (ext->asnum != NULL) {
 		switch (ext->asnum->type) {
@@ -1154,6 +1163,8 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			validation_err(X509_V_ERR_INVALID_EXTENSION);
 		if (x->rfc3779_asid == NULL) {
 			if (child_as != NULL || child_rdi != NULL)
+				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
+			if ((i > 1 || strict_inherit) && (inherit_as || inherit_rdi))
 				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 			continue;
 		}
