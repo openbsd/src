@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.222 2026/03/09 02:44:04 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.223 2026/09/15 17:09:59 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -668,10 +668,13 @@ uipc_sense(struct socket *so, struct stat *sb)
 
 	sb->st_blksize = so->so_snd.sb_hiwat;
 	sb->st_dev = NODEV;
-	mtx_enter(&unp_ino_mtx);
-	if (unp->unp_ino == 0)
-		unp->unp_ino = unp_ino++;
-	mtx_leave(&unp_ino_mtx);
+	if (unp->unp_ino == 0) {
+		mtx_enter(&unp_ino_mtx);
+		if (++unp_ino == 0)
+			unp_ino = 1;
+		unp->unp_ino = unp_ino;
+		mtx_leave(&unp_ino_mtx);
+	}
 	sb->st_atim.tv_sec =
 	    sb->st_mtim.tv_sec =
 	    sb->st_ctim.tv_sec = unp->unp_ctime.tv_sec;
