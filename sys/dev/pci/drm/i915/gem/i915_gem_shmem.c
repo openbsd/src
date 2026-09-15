@@ -34,7 +34,7 @@ static void check_release_folio_batch(struct folio_batch *fbatch)
 
 void shmem_sg_free_table(struct sg_table *st, struct address_space *mapping,
 			 bool dirty, bool backup,
-			 struct drm_i915_gem_object *obj)
+			 struct uvm_object *uao, size_t uao_size)
 {
 	struct sgt_iter sgt_iter;
 	struct folio_batch fbatch;
@@ -69,7 +69,7 @@ void shmem_sg_free_table(struct sg_table *st, struct address_space *mapping,
 	if (fbatch.nr)
 		check_release_folio_batch(&fbatch);
 #else
-	uvm_obj_unwire(obj->base.uao, 0, obj->base.size);
+	uvm_obj_unwire(uao, 0, uao_size);
 #endif
 
 	sg_free_table(st);
@@ -79,7 +79,7 @@ int shmem_sg_alloc_table(struct drm_i915_private *i915, struct sg_table *st,
 			 size_t size, struct intel_memory_region *mr,
 			 struct address_space *mapping,
 			 unsigned int max_segment,
-			 struct drm_i915_gem_object *obj)
+			 struct uvm_object *uao)
 {
 	unsigned int page_count; /* restricted by sg_alloc_table */
 	unsigned long i;
@@ -201,7 +201,7 @@ int shmem_sg_alloc_table(struct drm_i915_private *i915, struct sg_table *st,
 	st->nents = 0;
 
 	TAILQ_INIT(&plist);
-	if (uvm_obj_wire(obj->base.uao, 0, obj->base.size, &plist)) {
+	if (uvm_obj_wire(uao, 0, size, &plist)) {
 		ret = -ENOMEM;
 		goto err_sg;
 	}
@@ -225,7 +225,7 @@ int shmem_sg_alloc_table(struct drm_i915_private *i915, struct sg_table *st,
 err_sg:
 	sg_mark_end(sg);
 	if (sg != st->sgl) {
-		shmem_sg_free_table(st, mapping, false, false, obj);
+		shmem_sg_free_table(st, mapping, false, false, uao, size);
 	} else {
 		mapping_clear_unevictable(mapping);
 		sg_free_table(st);
@@ -275,7 +275,7 @@ rebuild_st:
 				   max_segment);
 #else
 	ret = shmem_sg_alloc_table(i915, st, obj->base.size, mem, NULL,
-				   max_segment, obj);
+				   max_segment, obj->base.uao);
 #endif
 	if (ret)
 		goto err_st;
@@ -291,7 +291,7 @@ rebuild_st:
 #ifdef __linux__
 			shmem_sg_free_table(st, mapping, false, false);
 #else
-			shmem_sg_free_table(st, NULL, false, false, obj);
+			shmem_sg_free_table(st, NULL, false, false, obj->base.uao, obj->base.size);
 #endif
 			sg_free_table(st);
 			kfree(st);
@@ -320,7 +320,7 @@ err_pages:
 #ifdef __linux__
 	shmem_sg_free_table(st, mapping, false, false);
 #else
-	shmem_sg_free_table(st, NULL, false, false, obj);
+	shmem_sg_free_table(st, NULL, false, false, obj->base.uao, obj->base.size);
 #endif
 	/*
 	 * shmemfs first checks if there is enough memory to allocate the page
@@ -459,7 +459,8 @@ void i915_gem_object_put_pages_shmem(struct drm_i915_gem_object *obj, struct sg_
 			    obj->mm.dirty, obj->mm.madv == I915_MADV_WILLNEED);
 #else
 	shmem_sg_free_table(pages, NULL,
-			    obj->mm.dirty, obj->mm.madv == I915_MADV_WILLNEED, obj);
+			    obj->mm.dirty, obj->mm.madv == I915_MADV_WILLNEED,
+			    obj->base.uao, obj->base.size);
 #endif
 	kfree(pages);
 	obj->mm.dirty = false;

@@ -855,10 +855,10 @@ int shmem_sg_alloc_table(struct drm_i915_private *i915, struct sg_table *st,
 			 size_t size, struct intel_memory_region *mr,
 			 struct address_space *mapping,
 			 unsigned int max_segment,
-			 struct drm_i915_gem_object *obj);
+			 struct uvm_object *);
 void shmem_sg_free_table(struct sg_table *st, struct address_space *mapping,
 			 bool dirty, bool backup,
-			 struct drm_i915_gem_object *obj);
+			 struct uvm_object *, size_t);
 #endif
 void __shmem_writeback(size_t size, struct address_space *mapping);
 
