@@ -53,7 +53,11 @@ struct i915_ttm_tt {
 	struct i915_refct_sgt cached_rsgt;
 
 	bool is_shmem;
+#ifdef __linux__
 	struct file *filp;
+#else
+	struct uvm_object *filp;
+#endif
 };
 
 static const struct ttm_place sys_placement_flags = {
@@ -179,13 +183,11 @@ i915_ttm_placement_from_obj(const struct drm_i915_gem_object *obj,
 	placement->placement = places;
 }
 
+#ifdef __linux__
 static int i915_ttm_tt_shmem_populate(struct ttm_device *bdev,
 				      struct ttm_tt *ttm,
 				      struct ttm_operation_ctx *ctx)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct drm_i915_private *i915 = container_of(bdev, typeof(*i915), bdev);
 	struct intel_memory_region *mr = i915->mm.regions[INTEL_MEMORY_SYSTEM];
 	struct i915_ttm_tt *i915_tt = container_of(ttm, typeof(*i915_tt), ttm);
@@ -239,8 +241,58 @@ err_free_st:
 	shmem_sg_free_table(st, filp->f_mapping, false, false);
 
 	return err;
-#endif
 }
+#else /* !__linux__ */
+static int i915_ttm_tt_shmem_populate(struct ttm_device *bdev,
+				      struct ttm_tt *ttm,
+				      struct ttm_operation_ctx *ctx)
+{
+	struct drm_i915_private *i915 = container_of(bdev, typeof(*i915), bdev);
+	struct intel_memory_region *mr = i915->mm.regions[INTEL_MEMORY_SYSTEM];
+	struct i915_ttm_tt *i915_tt = container_of(ttm, typeof(*i915_tt), ttm);
+	const unsigned int max_segment = i915_sg_segment_size(i915->drm.dev);
+	const size_t size = (size_t)ttm->num_pages << PAGE_SHIFT;
+	struct uvm_object *uao = i915_tt->filp;
+	struct sgt_iter sgt_iter;
+	struct sg_table *st;
+	struct vm_page *page;
+	unsigned long i;
+	int err;
+
+	if (!uao) {
+		uao = uao_create(size, 0);
+		if (uao == NULL)
+			return -ENOMEM;
+
+		i915_tt->filp = uao;
+	}
+
+	st = &i915_tt->cached_rsgt.table;
+	err = shmem_sg_alloc_table(i915, st, size, mr, /*filp->f_mapping*/NULL,
+				   max_segment, uao);
+	if (err)
+		return err;
+
+	err = dma_map_sgtable(i915_tt->dev, st, DMA_BIDIRECTIONAL,
+			      DMA_ATTR_SKIP_CPU_SYNC);
+	if (err)
+		goto err_free_st;
+
+	i = 0;
+	for_each_sgt_page(page, sgt_iter, st)
+		ttm->pages[i++] = page;
+
+	if (ttm->page_flags & TTM_TT_FLAG_SWAPPED)
+		ttm->page_flags &= ~TTM_TT_FLAG_SWAPPED;
+
+	return 0;
+
+err_free_st:
+	shmem_sg_free_table(st, NULL, false, false, uao, size);
+
+	return err;
+}
+#endif /* !__linux__ */
 
 static void i915_ttm_tt_shmem_unpopulate(struct ttm_tt *ttm)
 {
@@ -356,7 +408,11 @@ static void i915_ttm_tt_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
 	struct i915_ttm_tt *i915_tt = container_of(ttm, typeof(*i915_tt), ttm);
 
 	if (i915_tt->filp)
+#ifdef __linux__
 		fput(i915_tt->filp);
+#else
+		uao_detach(i915_tt->filp);
+#endif
 
 	ttm_tt_fini(ttm);
 	i915_refct_sgt_put(&i915_tt->cached_rsgt);
@@ -456,13 +512,14 @@ int i915_ttm_purge(struct drm_i915_gem_object *obj)
 #ifdef __linux__
 			shmem_truncate_range(file_inode(i915_tt->filp),
 					     0, (loff_t)-1);
-#else
-			rw_enter(obj->base.uao->vmobjlock, RW_WRITE);
-			obj->base.uao->pgops->pgo_flush(obj->base.uao, 0,
-			    obj->base.size, PGO_ALLPAGES | PGO_FREE);
-			rw_exit(obj->base.uao->vmobjlock);
-#endif
 			fput(fetch_and_zero(&i915_tt->filp));
+#else
+			rw_enter(i915_tt->filp->vmobjlock, RW_WRITE);
+			i915_tt->filp->pgops->pgo_flush(i915_tt->filp, 0,
+			    obj->base.size, PGO_ALLPAGES | PGO_FREE);
+			rw_exit(i915_tt->filp->vmobjlock);
+			uao_detach(fetch_and_zero(&i915_tt->filp));
+#endif
 		}
 	}
 
