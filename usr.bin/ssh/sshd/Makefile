@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.114 2026/05/27 13:57:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.115 2026/09/15 06:30:58 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
-SRCS=	sshd.c servconf.c sshpty.c srclimit.c groupaccess.c auth2-methods.c
+SRCS=	sshd.c servconf.c srclimit.c groupaccess.c auth2-methods.c
 SRCS+=	dns.c fatal.c compat.c utf8.c authfd.c canohost.c kex-names.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} \
 	${SRCS_MAC} ${SRCS_UTL} ${SRCS_SK_CLIENT} ${SRCS_PKCS11_CLIENT}
