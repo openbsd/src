@@ -296,14 +296,16 @@ err_free_st:
 
 static void i915_ttm_tt_shmem_unpopulate(struct ttm_tt *ttm)
 {
-	STUB();
-#ifdef notyet
 	struct i915_ttm_tt *i915_tt = container_of(ttm, typeof(*i915_tt), ttm);
 	bool backup = ttm->page_flags & TTM_TT_FLAG_SWAPPED;
 	struct sg_table *st = &i915_tt->cached_rsgt.table;
 
+#ifdef __linux__
 	shmem_sg_free_table(st, file_inode(i915_tt->filp)->i_mapping,
 			    backup, backup);
+#else
+	const size_t size = (size_t)ttm->num_pages << PAGE_SHIFT;
+	shmem_sg_free_table(st, NULL, backup, backup, i915_tt->filp, size);
 #endif
 }
 
@@ -386,8 +388,6 @@ static int i915_ttm_tt_populate(struct ttm_device *bdev,
 
 static void i915_ttm_tt_unpopulate(struct ttm_device *bdev, struct ttm_tt *ttm)
 {
-	STUB();
-#ifdef notyet
 	struct i915_ttm_tt *i915_tt = container_of(ttm, typeof(*i915_tt), ttm);
 	struct sg_table *st = &i915_tt->cached_rsgt.table;
 
@@ -400,7 +400,6 @@ static void i915_ttm_tt_unpopulate(struct ttm_device *bdev, struct ttm_tt *ttm)
 		sg_free_table(st);
 		ttm_pool_free(&bdev->pool, ttm);
 	}
-#endif
 }
 
 static void i915_ttm_tt_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
