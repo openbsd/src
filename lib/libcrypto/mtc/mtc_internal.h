@@ -286,6 +286,40 @@ int mtc_ca_id_from_name(const X509_NAME *name, uint8_t **out_id,
 int mtc_ca_parse_certificates(BIO *in, STACK_OF(OSSL_MTC_CA) *cas);
 
 /*
+ * Verification of a Merkle Tree Certificate, per section 7.2 of
+ * draft-ietf-plants-merkle-tree-certs-05.
+ */
+
+/* Whether cert's signature algorithm is id-alg-mtcProof. */
+int mtc_is_mtc(const X509 *cert);
+
+/*
+ * The CA in cas whose ID is cert's issuer name.  *error is set to
+ * X509_V_ERR_MTC_NOT_MTC when the issuer is not a CA ID and to
+ * X509_V_ERR_MTC_UNTRUSTED_CA when no CA has that ID.
+ */
+struct mtc_ca *mtc_ca_for_cert(STACK_OF(OSSL_MTC_CA) *cas, const X509 *cert,
+    int *error);
+
+/*
+ * Checks cert's proof against ca: it must lead to a trusted subtree or carry
+ * a valid cosignature by the CA cosigner.  Returns 1 with *error X509_V_OK,
+ * or 0 with *error an X509_V_ERR_MTC_* code.  The certificate's validity,
+ * names and extensions are not checked.
+ */
+int mtc_verify(struct mtc_ca *ca, X509 *cert, int *error);
+
+/* The MerkleTreeCertEntry of a TBSCertificate (5.2.1). */
+int mtc_cert_entry(const EVP_MD *md, const uint8_t *tbs, size_t tbs_len,
+    const CBS *extensions, uint8_t **out, size_t *out_len);
+
+/* The CosignedMessage a cosigner signs (5.3.1). */
+int mtc_cosigned_message(const uint8_t *cosigner_id, size_t cosigner_id_len,
+    const uint8_t *ca_id, size_t ca_id_len, uint16_t log_number,
+    uint64_t start, uint64_t end, const uint8_t *subtree_hash,
+    size_t subtree_hash_len, uint8_t **out, size_t *out_len);
+
+/*
  * Revocation by serial number, per section 7.5 of
  * draft-ietf-plants-merkle-tree-certs-05.  A serial is a log number in the
  * top 16 bits and a log index in the low 48.  Serials below min_serial and

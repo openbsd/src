@@ -189,6 +189,18 @@ X509_verify_cert_error_string(long n)
 		return "CA certificate key too weak";
 	case X509_V_ERR_CA_MD_TOO_WEAK:
 		return "CA signature digest algorithm too weak";
+	case X509_V_ERR_MTC_NOT_MTC:
+		return "Not a Merkle Tree Certificate";
+	case X509_V_ERR_MTC_BAD_PROOF:
+		return "Malformed Merkle Tree Certificate proof";
+	case X509_V_ERR_MTC_UNTRUSTED_CA:
+		return "No trusted Merkle Tree Certificate CA for the issuer";
+	case X509_V_ERR_MTC_REVOKED:
+		return "Merkle Tree Certificate serial number is revoked";
+	case X509_V_ERR_MTC_INCLUSION_FAILED:
+		return "Merkle Tree Certificate inclusion proof failed";
+	case X509_V_ERR_MTC_NOT_TRUSTED:
+		return "Merkle Tree Certificate subtree is not trusted";
 	default:
 		return "Unknown certificate verification error";
 	}

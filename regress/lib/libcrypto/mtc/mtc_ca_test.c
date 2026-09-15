@@ -23,6 +23,8 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
 
 #include "mtc_internal.h"
@@ -31,6 +33,22 @@
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
+
+/*
+ * mtc-leaf-cosigned.pem and mtc-leaf-landmark.pem are the same Ed25519
+ * leaf (key mtc-leaf-key.pem) at index 6 of an eight-entry log 1 of the CA
+ * in mtc-ca-cert.pem, whose other entries are 32 bytes of the entry index.
+ * The first carries a proof into [0, 8) cosigned with mtc-ca-key.pem, the
+ * second a proof into [6, 8) with no cosignatures; its -landmarks.txt and
+ * -subtrees.txt hold the landmark description and the [6, 8) hash that
+ * make it trusted.  mtc-landmark.pem and its two .txt files are
+ * BoringSSL's pki/testdata/path_builder_unittest/mtc_plants04 vector of
+ * the same shape (ML-DSA-44 leaf, proof into [0, 4) of an eight-entry log),
+ * as are the mtc-leaf-standalone*.pem certificates, which are cosigned
+ * by an ML-DSA-44 key.
+ */
+
+static const char *certs_dir;
 
 /* The CA ID 32473.1 and two more cosigner IDs, 32473.0 and 32473.2. */
 static const uint8_t ca_id[] = { 0x81, 0xfd, 0x59, 0x01 };
@@ -713,10 +731,400 @@ test_store_mtc_cas(void)
 	return failed;
 }
 
+static FILE *
+open_fixture(const char *name)
+{
+	char *path;
+	FILE *fp;
+
+	if (asprintf(&path, "%s/%s", certs_dir, name) == -1)
+		err(1, "asprintf");
+	if ((fp = fopen(path, "r")) == NULL)
+		err(1, "%s", path);
+	free(path);
+
+	return fp;
+}
+
+static X509 *
+load_cert(const char *name)
+{
+	X509 *cert;
+	FILE *fp;
+
+	fp = open_fixture(name);
+	if ((cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL)
+		errx(1, "%s: PEM_read_X509", name);
+	fclose(fp);
+
+	return cert;
+}
+
+/* The CA of mtc-ca-cert.pem, alone on a new stack. */
+static STACK_OF(OSSL_MTC_CA) *
+load_ca(void)
+{
+	STACK_OF(OSSL_MTC_CA) *cas;
+	BIO *bio;
+	FILE *fp;
+
+	if ((cas = sk_OSSL_MTC_CA_new(mtc_ca_cmp)) == NULL)
+		errx(1, "sk_OSSL_MTC_CA_new");
+	fp = open_fixture("mtc-ca-cert.pem");
+	if ((bio = BIO_new_fp(fp, BIO_CLOSE)) == NULL)
+		errx(1, "BIO_new_fp");
+	if (!mtc_ca_parse_certificates(bio, cas))
+		errx(1, "mtc-ca-cert.pem: mtc_ca_parse_certificates");
+	BIO_free(bio);
+	if (sk_OSSL_MTC_CA_num(cas) != 1)
+		errx(1, "mtc-ca-cert.pem: %d CAs", sk_OSSL_MTC_CA_num(cas));
+
+	return cas;
+}
+
+static void
+free_cas(STACK_OF(OSSL_MTC_CA) *cas)
+{
+	sk_OSSL_MTC_CA_pop_free(cas, mtc_ca_free);
+}
+
+static void
+load_landmark_file(struct mtc_ca *ca, uint64_t log_number, const char *name)
+{
+	BIO *bio;
+	FILE *fp;
+
+	fp = open_fixture(name);
+	if ((bio = BIO_new_fp(fp, BIO_CLOSE)) == NULL)
+		errx(1, "BIO_new_fp");
+	if (!mtc_ca_load_landmarks(ca, log_number, bio))
+		errx(1, "%s: mtc_ca_load_landmarks", name);
+	BIO_free(bio);
+}
+
+/*
+ * Reads the one line of a subtrees file, "<ca> <log> <start> <end>
+ * <base64 hash>", returning the log number and subtree and the hash.
+ */
+static uint64_t
+read_subtree_file(const char *name, struct mtc_subtree *out_subtree,
+    uint8_t out_hash[32])
+{
+	char line[256], ca[64], b64[64];
+	uint8_t decoded[48];
+	unsigned long long log_number, start, end;
+	FILE *fp;
+
+	fp = open_fixture(name);
+	if (fgets(line, sizeof(line), fp) == NULL)
+		err(1, "%s", name);
+	fclose(fp);
+	if (sscanf(line, "%63s %llu %llu %llu %63s", ca, &log_number, &start,
+	    &end, b64) != 5)
+		errx(1, "%s: malformed", name);
+	if (strlen(b64) != 44 ||
+	    EVP_DecodeBlock(decoded, (const unsigned char *)b64, 44) != 33)
+		errx(1, "%s: bad hash", name);
+	memcpy(out_hash, decoded, 32);
+	out_subtree->start = start;
+	out_subtree->end = end;
+
+	return log_number;
+}
+
+static void
+trust_subtree_file(struct mtc_ca *ca, const char *name)
+{
+	struct mtc_subtree s;
+	uint8_t hash[32];
+	uint64_t log_number;
+
+	log_number = read_subtree_file(name, &s, hash);
+	if (!mtc_ca_add_subtree_hash(ca, log_number, s, hash, sizeof(hash)))
+		errx(1, "%s: mtc_ca_add_subtree_hash", name);
+}
+
+static int
+check_verify(const char *what, struct mtc_ca *ca, X509 *cert, int want_ret,
+    int want_error)
+{
+	int error = -1, ret;
+
+	ret = mtc_verify(ca, cert, &error);
+	if (ret != want_ret || error != want_error) {
+		warnx("%s: verify %d error %d (%s), want %d %d", what, ret,
+		    error, X509_verify_cert_error_string(error), want_ret,
+		    want_error);
+		return 1;
+	}
+
+	return 0;
+}
+
+static int
+check_verify_file(const char *name, struct mtc_ca *ca, int want_ret,
+    int want_error)
+{
+	X509 *cert;
+	int failed;
+
+	cert = load_cert(name);
+	failed = check_verify(name, ca, cert, want_ret, want_error);
+	X509_free(cert);
+
+	return failed;
+}
+
+/* An MTC is recognised by its signature algorithm alone. */
+static int
+test_is_mtc(void)
+{
+	X509 *cert;
+	int failed = 0;
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	if (!mtc_is_mtc(cert)) {
+		warnx("mtc-leaf-cosigned.pem not recognised as an MTC");
+		failed = 1;
+	}
+	X509_free(cert);
+
+	cert = load_cert("mtc-ca-cert.pem");
+	if (mtc_is_mtc(cert)) {
+		warnx("mtc-ca-cert.pem recognised as an MTC");
+		failed = 1;
+	}
+	X509_free(cert);
+
+	return failed;
+}
+
+/*
+ * The CA for a certificate is the trusted one whose ID is the issuer's
+ * trust anchor ID; an issuer that is not one is not an MTC.
+ */
+static int
+test_ca_for_cert(void)
+{
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca, *other;
+	X509_NAME *name;
+	X509 *cert;
+	EVP_PKEY *key;
+	int error, failed = 0;
+
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	error = -1;
+	if (mtc_ca_for_cert(cas, cert, &error) != ca || error != -1) {
+		warnx("CA not found for mtc-leaf-cosigned.pem");
+		failed = 1;
+	}
+
+	key = gen_key();
+	if ((other = mtc_ca_new(cosigner2_id, sizeof(cosigner2_id),
+	    EVP_sha256(), 0, key)) == NULL)
+		errx(1, "mtc_ca_new");
+	if (!mtc_ca_stack_add(cas, other))
+		errx(1, "mtc_ca_stack_add");
+	if (mtc_ca_for_cert(cas, cert, &error) != ca) {
+		warnx("CA not found among two");
+		failed = 1;
+	}
+	free_cas(cas);
+	if ((cas = sk_OSSL_MTC_CA_new(mtc_ca_cmp)) == NULL)
+		errx(1, "sk_OSSL_MTC_CA_new");
+	if ((other = mtc_ca_new(cosigner2_id, sizeof(cosigner2_id),
+	    EVP_sha256(), 0, key)) == NULL)
+		errx(1, "mtc_ca_new");
+	if (!mtc_ca_stack_add(cas, other))
+		errx(1, "mtc_ca_stack_add");
+	error = -1;
+	if (mtc_ca_for_cert(cas, cert, &error) != NULL ||
+	    error != X509_V_ERR_MTC_UNTRUSTED_CA) {
+		warnx("issuer 32473.1 found among CA 32473.2: error %d", error);
+		failed = 1;
+	}
+	X509_free(cert);
+
+	if ((cert = X509_new()) == NULL || (name = X509_NAME_new()) == NULL)
+		errx(1, "X509_new");
+	if (!X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+	    (const unsigned char *)"Not an MTC", -1, -1, 0))
+		errx(1, "X509_NAME_add_entry_by_txt");
+	if (!X509_set_issuer_name(cert, name))
+		errx(1, "X509_set_issuer_name");
+	X509_NAME_free(name);
+	error = -1;
+	if (mtc_ca_for_cert(cas, cert, &error) != NULL ||
+	    error != X509_V_ERR_MTC_NOT_MTC) {
+		warnx("CN issuer taken for a trust anchor ID: error %d", error);
+		failed = 1;
+	}
+	X509_free(cert);
+
+	free_cas(cas);
+	EVP_PKEY_free(key);
+
+	return failed;
+}
+
+/*
+ * A cosigned MTC verifies against the CA whose cosigner key signed it and
+ * against no other; a revoked serial, an inclusion proof that does not
+ * reconstruct the cosigned hash, one that does not fit its subtree and a
+ * malformed proof each fail with their own error.
+ */
+static int
+test_verify_cosigned(void)
+{
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca, *other;
+	X509 *cert;
+	EVP_PKEY *key;
+	int failed = 0;
+
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+	cert = load_cert("mtc-leaf-cosigned.pem");
+
+	failed |= check_verify("cosigned", ca, cert, 1, X509_V_OK);
+
+	key = gen_key();
+	other = new_ca(key, 0);
+	failed |= check_verify("cosigned, other cosigner key", other, cert, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	mtc_ca_free(other);
+	EVP_PKEY_free(key);
+
+	if (!mtc_ca_add_revoked_range(ca, mtc_serial(1, 6), mtc_serial(1, 7)))
+		errx(1, "mtc_ca_add_revoked_range");
+	failed |= check_verify("cosigned, revoked", ca, cert, 0,
+	    X509_V_ERR_MTC_REVOKED);
+	free_cas(cas);
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+
+	/*
+	 * The proof starts with an empty extensions list (2 bytes), start and
+	 * end (6 bytes each) and the inclusion_proof length (2 bytes).
+	 */
+	if (cert->signature->length < 17)
+		errx(1, "mtc-leaf-cosigned.pem: short proof");
+	cert->signature->data[16] ^= 0x01;
+	failed |= check_verify("cosigned, damaged proof hash", ca, cert, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	cert->signature->data[16] ^= 0x01;
+	failed |= check_verify("cosigned, proof restored", ca, cert, 1,
+	    X509_V_OK);
+	if (cert->signature->data[13] != 8)
+		errx(1, "mtc-leaf-cosigned.pem: end is not 8");
+	cert->signature->data[13] = 16;
+	failed |= check_verify("cosigned, proof too short for [0, 16)", ca,
+	    cert, 0, X509_V_ERR_MTC_INCLUSION_FAILED);
+	cert->signature->data[13] = 8;
+	X509_free(cert);
+
+	failed |= check_verify_file("mtc-leaf-standalone-truncated.pem", ca, 0,
+	    X509_V_ERR_MTC_BAD_PROOF);
+	failed |= check_verify_file("mtc-leaf-standalone-trailing.pem", ca, 0,
+	    X509_V_ERR_MTC_BAD_PROOF);
+
+	free_cas(cas);
+
+	return failed;
+}
+
+/*
+ * A signatureless MTC verifies only through a trusted subtree with the
+ * hash its proof reconstructs; a cosigned one still verifies when its
+ * subtree is not a trusted one.
+ */
+static int
+test_verify_landmark(void)
+{
+	const uint8_t wrong_hash[32] = { 0x01 };
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca;
+	int failed = 0;
+
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+
+	failed |= check_verify_file("mtc-leaf-landmark.pem", ca, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	load_landmark_file(ca, 1, "mtc-leaf-landmark-landmarks.txt");
+	failed |= check_verify_file("mtc-leaf-landmark.pem", ca, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	trust_subtree_file(ca, "mtc-leaf-landmark-subtrees.txt");
+	failed |= check_verify_file("mtc-leaf-landmark.pem", ca, 1, X509_V_OK);
+	failed |= check_verify_file("mtc-leaf-cosigned.pem", ca, 1, X509_V_OK);
+	free_cas(cas);
+
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+	load_landmark_file(ca, 1, "mtc-leaf-landmark-landmarks.txt");
+	if (!mtc_ca_add_subtree_hash(ca, 1, subtree(6, 8), wrong_hash,
+	    sizeof(wrong_hash)))
+		errx(1, "mtc_ca_add_subtree_hash");
+	failed |= check_verify_file("mtc-leaf-landmark.pem", ca, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	free_cas(cas);
+
+	return failed;
+}
+
+/*
+ * The BoringSSL vectors: the landmark leaf verifies through its trusted
+ * subtree; the standalone leaves are cosigned by a key this CA does not
+ * have, so only their cosignature lists are judged.
+ */
+static int
+test_verify_boringssl(void)
+{
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca;
+	int failed = 0;
+
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+
+	failed |= check_verify_file("mtc-landmark.pem", ca, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	load_landmark_file(ca, 1, "mtc-landmark-landmarks.txt");
+	trust_subtree_file(ca, "mtc-landmark-subtrees.txt");
+	failed |= check_verify_file("mtc-landmark.pem", ca, 1, X509_V_OK);
+
+	failed |= check_verify_file("mtc-leaf-standalone.pem", ca, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	failed |= check_verify_file("mtc-leaf-standalone-3cosigners.pem", ca, 0,
+	    X509_V_ERR_MTC_NOT_TRUSTED);
+	failed |= check_verify_file("mtc-leaf-standalone-no_ca_signer.pem", ca,
+	    0, X509_V_ERR_MTC_NOT_TRUSTED);
+	failed |= check_verify_file(
+	    "mtc-leaf-standalone-duplicate_ca_signer.pem", ca, 0,
+	    X509_V_ERR_MTC_BAD_PROOF);
+	failed |= check_verify_file(
+	    "mtc-leaf-standalone-cosigner_wrong_order.pem", ca, 0,
+	    X509_V_ERR_MTC_BAD_PROOF);
+
+	free_cas(cas);
+
+	return failed;
+}
+
 int
-main(void)
+main(int argc, char **argv)
 {
 	int failed = 0;
+
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s certs-dir\n", argv[0]);
+		return 1;
+	}
+	certs_dir = argv[1];
 
 	failed |= test_ca_roundtrip();
 	failed |= test_ca_add_cosigners();
@@ -728,6 +1136,11 @@ main(void)
 	failed |= test_ca_stack();
 	failed |= test_reloid_from_text();
 	failed |= test_store_mtc_cas();
+	failed |= test_is_mtc();
+	failed |= test_ca_for_cert();
+	failed |= test_verify_cosigned();
+	failed |= test_verify_landmark();
+	failed |= test_verify_boringssl();
 	mtc_ca_free(NULL);
 
 	return failed;

@@ -8,6 +8,9 @@ PROGS +=	mtc_api_test
 run-regress-mtc_cert_test: mtc_cert_test
 	./mtc_cert_test ${.CURDIR}
 
+run-regress-mtc_ca_test: mtc_ca_test
+	./mtc_ca_test ${.CURDIR}
+
 run-regress-mtc_api_test: mtc_api_test
 	./mtc_api_test ${.CURDIR}
 

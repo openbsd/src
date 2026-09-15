@@ -210,6 +210,14 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_CA_KEY_TOO_SMALL                     68
 #define		X509_V_ERR_CA_MD_TOO_WEAK                       69
 
+/* Merkle Tree Certificate errors */
+#define		X509_V_ERR_MTC_NOT_MTC				105
+#define		X509_V_ERR_MTC_BAD_PROOF			106
+#define		X509_V_ERR_MTC_UNTRUSTED_CA			107
+#define		X509_V_ERR_MTC_REVOKED				108
+#define		X509_V_ERR_MTC_INCLUSION_FAILED			109
+#define		X509_V_ERR_MTC_NOT_TRUSTED			110
+
 /* Certificate verify flags */
 
 /* Deprecated in 1.1.0, has no effect. Various FFI bindings still expose it. */

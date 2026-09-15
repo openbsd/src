@@ -393,6 +393,7 @@ SRCS+= mtc_ca.c
 SRCS+= mtc_ca_cert.c
 SRCS+= mtc_cert.c
 SRCS+= mtc_tree.c
+SRCS+= mtc_verify.c
 
 # objects/
 SRCS+= obj_dat.c
