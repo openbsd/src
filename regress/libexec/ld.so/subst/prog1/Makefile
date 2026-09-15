@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2026/09/11 22:30:47 kurt Exp $
+# $OpenBSD: Makefile,v 1.5 2026/09/15 15:02:22 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -25,7 +25,7 @@ LDADD+=		-laa
 LDFLAGS+=	-Wl,-z,origin,-rpath,'$$ORIGIN/$${OSNAME}/$$OSREL/$${PLATFORM}'
 LDFLAGS+=	-L$(AA_OBJDIR)
 
-REGRESS_TARGETS = test1
+REGRESS_TARGETS = test1 test2
 
 .PHONY: test1 test2
 
