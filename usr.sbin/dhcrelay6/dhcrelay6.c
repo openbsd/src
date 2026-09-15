@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay6.c,v 1.6 2025/05/21 05:09:17 kn Exp $	*/
+/*	$OpenBSD: dhcrelay6.c,v 1.7 2026/09/15 14:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Rafael Zalamena <rzalamena@openbsd.org>
@@ -589,6 +589,12 @@ relay6_poprelaymsg(struct packet_ctx *pc, struct interface_info **intf,
 	char				 ifname[64];
 
 	*intf = NULL;
+
+	/* Sanity check: message should contain header */
+	if (*plen < sizeof(*dsr)) {
+		log_debug("relay-message too short to pop");
+		return -1;
+	}
 
 	/* Sanity check: this is a relay message of the right type. */
 	if (dsr->dsr_msgtype != DHCP6_MT_RELAYREPL) {
