@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.72 2026/04/03 13:11:00 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.73 2026/09/15 23:00:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,6 @@
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
-static int ssl3_get_record(SSL *s);
 
 /*
  * Force a WANT_READ return for certain error conditions where
