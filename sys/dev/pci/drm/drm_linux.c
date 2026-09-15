@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.146 2026/09/11 01:18:09 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.147 2026/09/15 01:16:07 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3485,6 +3485,19 @@ dma_unmap_resource(struct device *dev, dma_addr_t addr, size_t size,
     enum dma_data_direction dir, u_long attr)
 {
 	STUB();
+}
+
+int
+dma_map_sgtable(struct device *dev, struct sg_table *sgt,
+    enum dma_data_direction dir, unsigned long attrs)
+{
+	return 0;
+}
+
+void
+dma_unmap_sgtable(struct device *dev, struct sg_table *sgt,
+    enum dma_data_direction dir, unsigned long attrs)
+{
 }
 
 #ifdef BUS_DMA_FIXED
