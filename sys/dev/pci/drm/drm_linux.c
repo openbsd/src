@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.147 2026/09/15 01:16:07 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.148 2026/09/15 01:24:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1249,6 +1249,38 @@ sg_free_table(struct sg_table *table)
 	    table->orig_nents * sizeof(struct scatterlist));
 	table->orig_nents = 0;
 	table->sgl = NULL;
+}
+
+int
+sg_alloc_table_from_pages_segment(struct sg_table *table, struct vm_page **pages,
+    unsigned int npages, unsigned int off, unsigned long size,
+    unsigned int max_segs, gfp_t gfp_mask)
+{
+	struct scatterlist *sg;
+	int r, i;
+	unsigned int len;
+
+	r = sg_alloc_table(table, npages, gfp_mask);
+	if (r != 0)
+		return r;
+
+	sg = table->sgl;
+	table->nents = 0;
+	len = PAGE_SIZE - off;
+	for (i = 0; i < npages; i++) {
+		if (i)
+			sg = sg_next(sg);
+		sg_set_page(sg, pages[i], len, off);
+		off = 0;
+		table->nents++;
+		size -= len;
+		if (size > PAGE_SIZE)
+			len = PAGE_SIZE;
+		else
+			len = size;
+	}
+
+	return 0;
 }
 
 int

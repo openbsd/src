@@ -1,4 +1,4 @@
-/*	$OpenBSD: scatterlist.h,v 1.12 2026/09/11 02:47:58 jsg Exp $	*/
+/*	$OpenBSD: scatterlist.h,v 1.13 2026/09/15 01:24:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -58,6 +58,9 @@ sg_next(struct scatterlist *sgl)
 
 int sg_alloc_table(struct sg_table *, unsigned int, gfp_t);
 void sg_free_table(struct sg_table *);
+
+int sg_alloc_table_from_pages_segment(struct sg_table *, struct vm_page **,
+    unsigned int, unsigned int, unsigned long, unsigned int, gfp_t);
 
 static inline void
 sg_mark_end(struct scatterlist *sgl)
