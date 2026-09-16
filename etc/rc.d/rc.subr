@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.167 2025/12/06 11:04:45 kn Exp $
+#	$OpenBSD: rc.subr,v 1.168 2026/09/16 00:52:19 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -239,6 +239,9 @@ rc_cmd() {
 	start)
 		if [ X"${daemon_flags}" = X"NO" ]; then
 			_rc_err "$0: need -f to force $1 since ${_name}_flags=NO"
+		fi
+		if [ -n "${daemon_logger}" -a X"${rc_bg}" != X"YES" ]; then
+			_rc_err "daemon_logger needs rc_bg to be set to 'YES'"
 		fi
 		[ -z "${INRC}" ] && _rc_do rc_check && exit 0
 		_rc_printname
