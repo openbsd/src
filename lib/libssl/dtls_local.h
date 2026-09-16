@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.9 2026/07/16 14:37:21 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.10 2026/09/16 16:07:35 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -115,6 +115,7 @@ typedef struct hm_fragment_st {
 	struct hm_header_st msg_header;
 	unsigned char *fragment;
 	unsigned char *reassembly;
+	struct dtls12_handshake_msg *hs_msg;
 } hm_fragment;
 
 typedef struct dtls1_record_data_internal_st {

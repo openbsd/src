@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls12_internal.h,v 1.1 2026/05/16 08:20:41 jsing Exp $ */
+/* $OpenBSD: dtls12_internal.h,v 1.2 2026/09/16 16:07:35 jsing Exp $ */
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -29,6 +29,7 @@ struct dtls12_handshake_msg;
 
 struct dtls12_handshake_msg *dtls12_handshake_msg_new(void);
 void dtls12_handshake_msg_free(struct dtls12_handshake_msg *msg);
+void dtls12_handshake_msg_up_ref(struct dtls12_handshake_msg *msg);
 void dtls12_handshake_msg_data(struct dtls12_handshake_msg *msg, CBS *cbs);
 uint8_t dtls12_handshake_msg_type(struct dtls12_handshake_msg *msg);
 int dtls12_handshake_msg_content(struct dtls12_handshake_msg *msg, CBS *cbs);

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.99 2026/07/16 14:43:22 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.100 2026/09/16 16:07:35 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -199,6 +199,8 @@ dtls1_hm_fragment_free(hm_fragment *frag)
 	if (frag == NULL)
 		return;
 
+	dtls12_handshake_msg_free(frag->hs_msg);
+
 	free(frag->fragment);
 	free(frag->reassembly);
 	free(frag);
@@ -213,10 +215,6 @@ dtls12_create_handshake_msg(SSL *s)
 	OPENSSL_assert(s->init_num == (int)s->d1->w_msg_hdr.msg_len +
 	    DTLS1_HM_HEADER_LENGTH);
 
-	/* Skip over the existing header. */
-	s->init_off += DTLS1_HM_HEADER_LENGTH;
-	s->init_num -= DTLS1_HM_HEADER_LENGTH;
-
 	if (s->d1->hs_msg != NULL)
 		goto err;
 
@@ -225,8 +223,8 @@ dtls12_create_handshake_msg(SSL *s)
 	if (!dtls12_handshake_msg_start(s->d1->hs_msg, &cbb,
 	    s->d1->w_msg_hdr.type, s->d1->w_msg_hdr.seq))
 		goto err;
-	if (!CBB_add_bytes(&cbb, &s->init_buf->data[s->init_off],
-	    s->init_num))
+	if (!CBB_add_bytes(&cbb, &s->init_buf->data[DTLS1_HM_HEADER_LENGTH],
+	    s->init_num - DTLS1_HM_HEADER_LENGTH))
 		goto err;
 	if (!dtls12_handshake_msg_finish(s->d1->hs_msg))
 		goto err;
@@ -270,10 +268,8 @@ dtls1_do_write_handshake_message(SSL *s)
 	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu());
 	/* should have something reasonable now */
 
-	if (s->d1->hs_msg == NULL) {
-		if (!dtls12_create_handshake_msg(s))
-			return -1;
-	}
+	if (s->d1->hs_msg == NULL)
+		return -1;
 
 	if (!tls12_record_layer_write_overhead(s->rl, &overhead))
 		return -1;
@@ -929,22 +925,15 @@ dtls1_get_queue_priority(unsigned short seq, int is_ccs)
 static int
 dtls1_retransmit_message(SSL *s, hm_fragment *frag)
 {
-	unsigned long header_length;
 	uint16_t epoch;
 	int ret;
 
-	if (frag->msg_header.is_ccs)
-		header_length = DTLS1_CCS_HEADER_LENGTH;
-	else
-		header_length = DTLS1_HM_HEADER_LENGTH;
-
-	memcpy(s->init_buf->data, frag->fragment,
-	    frag->msg_header.msg_len + header_length);
-	s->init_num = frag->msg_header.msg_len + header_length;
-
-	dtls1_set_message_header(s, frag->msg_header.type,
-	    frag->msg_header.msg_len, frag->msg_header.seq, 0,
-	    frag->msg_header.frag_len);
+	if (!frag->msg_header.is_ccs) {
+		dtls12_handshake_msg_fragment_reset(frag->hs_msg);
+		dtls12_handshake_msg_up_ref(frag->hs_msg);
+		dtls12_handshake_msg_free(s->d1->hs_msg);
+		s->d1->hs_msg = frag->hs_msg;
+	}
 
 	epoch = tls12_record_layer_write_epoch(s->rl);
 
@@ -998,21 +987,18 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 
 	/* Buffer the message in order to handle DTLS retransmissions. */
 
-	/*
-	 * This function is called immediately after a message has
-	 * been serialized
-	 */
-	OPENSSL_assert(s->init_off == 0);
-
-	frag = dtls1_hm_fragment_new(s->init_num, 0);
+	frag = dtls1_hm_fragment_new(0, 0);
 	if (frag == NULL)
 		return 0;
 
-	memcpy(frag->fragment, s->init_buf->data, s->init_num);
-
-	OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
-	    (is_ccs ? DTLS1_CCS_HEADER_LENGTH : DTLS1_HM_HEADER_LENGTH) ==
-	    (unsigned int)s->init_num);
+	if (!is_ccs) {
+		if (s->d1->hs_msg == NULL) {
+			dtls1_hm_fragment_free(frag);
+			return 0;
+		}
+		dtls12_handshake_msg_up_ref(s->d1->hs_msg);
+		frag->hs_msg = s->d1->hs_msg;
+	}
 
 	frag->msg_header.epoch = tls12_record_layer_write_epoch(s->rl);
 	frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;
@@ -1187,6 +1173,8 @@ dtls12_handshake_msg_built(SSL *s)
 	dtls1_set_message_header(s, msg_type, len, s->d1->handshake_write_seq,
 	    0, len);
 
+	if (!dtls12_create_handshake_msg(s))
+		return 0;
 	if (!dtls1_buffer_message(s, 0))
 		return 0;
 

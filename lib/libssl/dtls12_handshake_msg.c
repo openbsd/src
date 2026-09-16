@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls12_handshake_msg.c,v 1.1 2026/05/16 08:20:41 jsing Exp $ */
+/* $OpenBSD: dtls12_handshake_msg.c,v 1.2 2026/09/16 16:07:35 jsing Exp $ */
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -38,6 +38,8 @@ struct dtls12_handshake_msg {
 	size_t fragment_data_len;
 	int fragment_pending;
 
+	int refcount;
+
 	uint8_t *data;
 	size_t data_len;
 
@@ -53,6 +55,8 @@ dtls12_handshake_msg_new(void)
 	if ((msg = calloc(1, sizeof(struct dtls12_handshake_msg))) == NULL)
 		return NULL;
 
+	msg->refcount = 1;
+
 	return msg;
 }
 
@@ -62,12 +66,21 @@ dtls12_handshake_msg_free(struct dtls12_handshake_msg *msg)
 	if (msg == NULL)
 		return;
 
+	if (--msg->refcount > 0)
+		return;
+
 	CBB_cleanup(&msg->cbb);
 
 	freezero(msg->data, msg->data_len);
 	freezero(msg->fragment_data, msg->fragment_data_len);
 
 	freezero(msg, sizeof(struct dtls12_handshake_msg));
+}
+
+void
+dtls12_handshake_msg_up_ref(struct dtls12_handshake_msg *msg)
+{
+	msg->refcount++;
 }
 
 void
