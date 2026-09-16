@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.74 2026/09/15 23:02:11 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.75 2026/09/16 00:24:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,6 +120,7 @@
 #include "dtls_local.h"
 #include "ssl_local.h"
 #include "tls_content.h"
+#include "tls12_record.h"
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
@@ -319,89 +320,49 @@ ssl3_packet_extend(SSL *s, int plen)
 	return plen;
 }
 
-/* Call this to get a new input record.
- * It will return <= 0 if more data is needed, normally due to an error
- * or non-blocking IO.
- * When it finishes, one packet has been decoded and can be found in
- * ssl->s3->rrec.type    - is the type of record
- * ssl->s3->rrec.data, 	 - data
- * ssl->s3->rrec.length, - number of bytes
- */
-/* used only by ssl3_read_bytes */
 static int
 ssl3_get_record(SSL *s)
 {
-	SSL3_BUFFER_INTERNAL *rb = &(s->s3->rbuf);
-	SSL3_RECORD_INTERNAL *rr = &(s->s3->rrec);
 	uint8_t alert_desc;
-	int al, n;
+	int al, ret;
+	CBS cbs;
 
  again:
-	/* check if we have the header */
-	if ((s->rstate != SSL_ST_READ_BODY) ||
-	    (s->packet_length < SSL3_RT_HEADER_LENGTH)) {
-		CBS header;
-		uint16_t len, ssl_version;
-		uint8_t type;
+	if (s->s3->tls_rrec == NULL)
+		s->s3->tls_rrec = tls12_record_new();
+	if (s->s3->tls_rrec == NULL)
+		goto err;
 
-		n = ssl3_packet_read(s, SSL3_RT_HEADER_LENGTH);
-		if (n <= 0)
-			return (n);
-
-		s->rstate = SSL_ST_READ_BODY;
-
-		CBS_init(&header, s->packet, SSL3_RT_HEADER_LENGTH);
-
-		/* Pull apart the header into the SSL3_RECORD_INTERNAL */
-		if (!CBS_get_u8(&header, &type) ||
-		    !CBS_get_u16(&header, &ssl_version) ||
-		    !CBS_get_u16(&header, &len)) {
-			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-			goto err;
-		}
-
-		rr->type = type;
-		rr->length = len;
-
-		/* Lets check version */
-		if (!s->first_packet && ssl_version != s->version) {
-			if ((s->version & 0xFF00) == (ssl_version & 0xFF00) &&
-			    !tls12_record_layer_write_protected(s->rl)) {
-				/* Send back error using their minor version number :-) */
-				s->version = ssl_version;
-			}
+	if ((ret = tls12_record_recv(s->s3->tls_rrec, tls12_legacy_wire_read_cb, s)) <= 0) {
+		switch (ret) {
+		case TLS12_IO_EOF:
+			return 0;
+		case TLS12_IO_RECORD_VERSION:
 			SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 			al = SSL_AD_PROTOCOL_VERSION;
 			goto fatal_err;
-		}
-
-		if ((ssl_version >> 8) != SSL3_VERSION_MAJOR) {
-			SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
-			goto err;
-		}
-
-		if (rr->length > rb->len - SSL3_RT_HEADER_LENGTH) {
+		case TLS12_IO_RECORD_OVERFLOW:
 			al = SSL_AD_RECORD_OVERFLOW;
 			SSLerror(s, SSL_R_PACKET_LENGTH_TOO_LONG);
 			goto fatal_err;
 		}
+		return -1;
 	}
 
-	n = ssl3_packet_extend(s, SSL3_RT_HEADER_LENGTH + rr->length);
-	if (n <= 0)
-		return (n);
-	if (n != SSL3_RT_HEADER_LENGTH + rr->length)
-		return (n);
-
-	s->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
+	if (!s->first_packet && tls12_record_version(s->s3->tls_rrec) != s->version) {
+		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
+		al = SSL_AD_PROTOCOL_VERSION;
+		goto fatal_err;
+	}
 
 	/*
 	 * A full record has now been read from the wire, which now needs
 	 * to be processed.
 	 */
 	tls12_record_layer_set_version(s->rl, s->version);
+	tls12_record_data(s->s3->tls_rrec, &cbs);
 
-	if (!tls12_record_layer_open_record(s->rl, s->packet, s->packet_length,
+	if (!tls12_record_layer_open_record(s->rl, CBS_data(&cbs), CBS_len(&cbs),
 	    s->s3->rcontent)) {
 		tls12_record_layer_alert(s->rl, &alert_desc);
 
@@ -417,15 +378,15 @@ ssl3_get_record(SSL *s)
 		goto fatal_err;
 	}
 
-	/* we have pulled in a full packet so zero things */
-	s->packet_length = 0;
+	tls12_record_free(s->s3->tls_rrec);
+	s->s3->tls_rrec = NULL;
 
 	if (tls_content_remaining(s->s3->rcontent) == 0) {
 		/*
 		 * Zero-length fragments are only permitted for application
 		 * data, as per RFC 5246 section 6.2.1.
 		 */
-		if (rr->type != SSL3_RT_APPLICATION_DATA) {
+		if (tls_content_type(s->s3->rcontent) != SSL3_RT_APPLICATION_DATA) {
 			SSLerror(s, SSL_R_BAD_LENGTH);
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			goto fatal_err;
@@ -451,7 +412,7 @@ ssl3_get_record(SSL *s)
 
 	s->empty_record_count = 0;
 
-	return (1);
+	return 1;
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -993,11 +954,6 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	int rrcount = 0;
 	ssize_t ssret;
 	int ret;
-
-	if (s->s3->rbuf.buf == NULL) {
-		if (!ssl3_setup_read_buffer(s))
-			return -1;
-	}
 
 	if (s->s3->rcontent == NULL) {
 		if ((s->s3->rcontent = tls_content_new()) == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.44 2026/09/15 19:11:12 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.45 2026/09/16 00:24:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,6 +162,7 @@
 
 #include "bytestring.h"
 #include "tls_content.h"
+#include "tls12_internal.h"
 #include "tls13_internal.h"
 
 __BEGIN_HIDDEN_DECLS
@@ -1087,6 +1088,8 @@ typedef struct ssl3_state_st {
 	SSL3_BUFFER_INTERNAL wbuf;	/* write IO goes into here */
 
 	SSL3_RECORD_INTERNAL rrec;	/* each decoded record goes in here */
+
+	struct tls12_record *tls_rrec;
 
 	struct tls_content *rcontent;	/* Content from opened TLS records. */
 

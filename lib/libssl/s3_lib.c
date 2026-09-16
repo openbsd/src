@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.262 2026/08/21 17:15:22 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.263 2026/09/16 00:24:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,6 +165,7 @@
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 #include "tls_content.h"
+#include "tls12_record.h"
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers) / sizeof(SSL_CIPHER))
 
@@ -1257,6 +1258,8 @@ ssl3_free(SSL *s)
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
 
+	tls12_record_free(s->s3->tls_rrec);
+
 	tls_content_free(s->s3->rcontent);
 
 	tls_buffer_free(s->s3->alert_fragment);
@@ -1342,6 +1345,9 @@ ssl3_clear(SSL *s)
 	wp = s->s3->wbuf.buf;
 	rlen = s->s3->rbuf.len;
 	wlen = s->s3->wbuf.len;
+
+	tls12_record_free(s->s3->tls_rrec);
+	s->s3->tls_rrec = NULL;
 
 	tls_content_free(s->s3->rcontent);
 	s->s3->rcontent = NULL;
