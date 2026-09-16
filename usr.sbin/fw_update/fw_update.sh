@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.71 2026/09/13 05:29:54 dgl Exp $
+#	$OpenBSD: fw_update.sh,v 1.72 2026/09/16 17:40:05 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -19,36 +19,37 @@ set -o errexit -o pipefail -o nounset -o noclobber -o noglob
 set +o monitor
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-CFILE=SHA256
-DESTDIR=${DESTDIR:-}
-FWPATTERNS="${DESTDIR}/usr/share/misc/firmware_patterns"
+readonly DESTDIR=${DESTDIR:-}
+readonly FWPATTERNS="${DESTDIR}/usr/share/misc/firmware_patterns"
 
 # Size are in KiB
 integer MAX_CFILE_SIZE=1024
 integer MAX_FIRMWARE_SIZE=1048576
 
+unset CFILE
 unset DMESG
 unset FWURL
 unset FWPUB_KEY
 
-DRYRUN=false
-integer VERBOSE=0
+unset FTPPID
+unset LOCKPID
+
+unset FWPKGTMP
+unset LOCALSRC
+unset WRKTMP
+
 DELETE=false
 DOWNLOAD=true
+DROP_PRIVS=true
+DRYRUN=false
 INSTALL=true
-LOCALSRC=
+
 ENABLE_SPINNER=false
 [ -t 1 ] && ENABLE_SPINNER=true
+integer VERBOSE=0
 
 integer STATUS_FD=1
 integer WARN_FD=2
-FD_DIR=
-
-unset FTPPID
-unset LOCKPID
-unset FWPKGTMP
-REMOVE_LOCALSRC=false
-DROP_PRIVS=true
 
 status() { echo -n "$*" >&"$STATUS_FD"; }
 warn()   { echo    "$*" >&"$WARN_FD"; }
@@ -56,23 +57,20 @@ warn()   { echo    "$*" >&"$WARN_FD"; }
 cleanup() {
 	set +o errexit # ignore errors from killing ftp
 
-	if [ -d "$FD_DIR" ]; then
+	if [ "${WRKTMP:-}" ]; then
 		echo "" >&"$STATUS_FD"
 		((STATUS_FD == 3)) && exec 3>&-
 		((WARN_FD   == 4)) && exec 4>&-
 
-		[ -s "$FD_DIR/status" ] && cat "$FD_DIR/status"
-		[ -s "$FD_DIR/warn"   ] && cat "$FD_DIR/warn" >&2
+		[ -s "$WRKTMP/status" ] && cat "$WRKTMP/status"
+		[ -s "$WRKTMP/warn"   ] && cat "$WRKTMP/warn" >&2
 
-		rm -rf "$FD_DIR"
+		rm -rf "$WRKTMP"
 	fi
 
-	[ "${FTPPID:-}" ] && kill -TERM -"$FTPPID" 2>/dev/null
-	[ "${LOCKPID:-}" ] && kill -TERM -"$LOCKPID" 2>/dev/null
+	[ "${FTPPID:-}" ]   && kill -TERM -"$FTPPID"  2>/dev/null
+	[ "${LOCKPID:-}" ]  && kill -TERM -"$LOCKPID" 2>/dev/null
 	[ "${FWPKGTMP:-}" ] && rm -rf "$FWPKGTMP"
-	"$REMOVE_LOCALSRC" && rm -rf "$LOCALSRC"
-	[ -e "$CFILE" ] && rm -f "$CFILE"
-	[ -e "$CFILE.sig" ] && [ ! -s "$CFILE.sig" ] && rm -f "$CFILE.sig"
 }
 trap cleanup EXIT
 
@@ -108,7 +106,7 @@ spin() {
 
 fetch() {
 	local _src="${FWURL}/${1##*/}" _dst=$1 _user=_file _exit _error=''
-	local _dst_dir=${_dst%/*} _ftp_errors="$FD_DIR/ftp_errors"
+	local _dst_dir=${_dst%/*} _ftp_errors="$WRKTMP/ftp_errors"
 	integer _file_limit=$MAX_FIRMWARE_SIZE _free_space=0
 	rm -f "$_ftp_errors"
 
@@ -223,22 +221,32 @@ check_cfile() {
 }
 
 fetch_cfile() {
+	local _sig="$LOCALSRC/${CFILE##*/}.sig"
 	if "$DOWNLOAD"; then
 		set +o noclobber # we want to get the latest CFILE
-		fetch "$CFILE.sig" || return 1
+		fetch "$_sig" || return 1
 		set -o noclobber
-		signify -qVep "$FWPUB_KEY" -x "$CFILE.sig" -m "$CFILE" \
-		    2>&"$WARN_FD" || {
-		        warn "Signature check of SHA256.sig failed"
-		        rm -f "$CFILE.sig"
-			return 1
-		    }
+		verify_cfile "$_sig" || return $?
 	elif [ ! -e "$CFILE" ]; then
+		if [ -e "$_sig" ]; then
+			verify_cfile "$_sig"
+			return $?
+		fi
 		warn "${0##*/}: $CFILE: No such file or directory"
 		return 1
 	fi
 
 	return 0
+}
+
+verify_cfile() {
+	local _sig=$1
+	signify -qVep "$FWPUB_KEY" -x "$_sig" -m "$CFILE" \
+	    2>&"$WARN_FD" || {
+	        warn "Signature check of ${_sig##*/} failed"
+	        rm -f "$CFILE"
+		return 1
+	    }
 }
 
 verify() {
@@ -269,10 +277,10 @@ devices_in_dmesg() {
 		return
 	fi
 
-	dmesg > "$FD_DIR/dmesg"
+	dmesg > "$WRKTMP/dmesg"
 	
 	_devices_in_dmesg /var/run/dmesg.boot
-	_devices_in_dmesg "$FD_DIR/dmesg"
+	_devices_in_dmesg "$WRKTMP/dmesg"
 }
 
 _devices_in_dmesg() {
@@ -621,16 +629,18 @@ fi
 
 set -sA devices -- "$@"
 
-FD_DIR="$( tmpdir "${DESTDIR}/tmp/${0##*/}-fd" )"
+WRKTMP="$( tmpdir "${DESTDIR}/tmp/${0##*/}" )"
+CFILE="$WRKTMP/SHA256"
+
 # When being verbose, save the status line for the end.
 if ((VERBOSE)); then
-	exec 3>"${FD_DIR}/status"
+	exec 3>"$WRKTMP/status"
 	STATUS_FD=3
 fi
 # Control "warning" messages to avoid the middle of a line.
 # Things that we don't expect to send to STDERR
 # still go there so the output, while it may be ugly, isn't lost
-exec 4>"${FD_DIR}/warn"
+exec 4>"$WRKTMP/warn"
 WARN_FD=4
 
 status "${0##*/}:"
@@ -699,19 +709,17 @@ if "$DELETE"; then
 	[ "$comma" ] || status none
 
 	# no status when listing
-	"$LIST" && rm -f "$FD_DIR/status"
+	"$LIST" && rm -f "$WRKTMP/status"
 
 	exit
 fi
 
 ! "$INSTALL" && ! "$LIST" && ! "$DRYRUN" && LOCALSRC="${LOCALSRC:-.}"
 
-if [ ! "$LOCALSRC" ]; then
-	LOCALSRC="$( tmpdir "${DESTDIR}/tmp/${0##*/}" )"
-	REMOVE_LOCALSRC=true
+if [ ! "${LOCALSRC:-}" ]; then
+	LOCALSRC="$WRKTMP/src"
+	mkdir -p "$LOCALSRC"
 fi
-
-CFILE="$LOCALSRC/$CFILE"
 
 if [ "${devices[*]:-}" ]; then
 	"$ALL" && warn "Cannot use -a and devices/files" && usage
@@ -731,7 +739,7 @@ kept=''
 unregister=''
 
 "$LIST" && ! "$INSTALL" &&
-    echo "$FWURL/${CFILE##*/}"
+    echo "$FWURL/${CFILE##*/}.sig"
 
 if [ "${devices[*]:-}" ]; then
 	lock_db
@@ -837,7 +845,7 @@ fi
 
 if "$LIST"; then
 	# No status when listing
-	rm -f "$FD_DIR/status"
+	rm -f "$WRKTMP/status"
 	exit
 fi
 
@@ -891,9 +899,9 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 				status " failed (${f##*/})"
 				rm -f "$f"
 
-				if ((VERBOSE)) && [ -s "$FD_DIR/warn" ]; then
-					cat "$FD_DIR/warn" >&2
-					rm -f "$FD_DIR/warn"
+				if ((VERBOSE)) && [ -s "$WRKTMP/warn" ]; then
+					cat "$WRKTMP/warn" >&2
+					rm -f "$WRKTMP/warn"
 				fi
 
 				# Fetch or verify exited > 1
