@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.270 2026/09/16 00:16:10 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.271 2026/09/16 12:41:21 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2158,7 +2158,6 @@ relayoptsl	: LISTEN ON STRING port opttls {
 			rlay->rl_proto = p;
 			free($2);
 		}
-		| DISABLE		{ rlay->rl_conf.flags |= F_DISABLE; }
 		| include
 		;
 
