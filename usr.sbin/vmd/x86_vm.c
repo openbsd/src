@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.17 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.18 2026/09/16 18:31:37 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -47,8 +47,6 @@ typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 #define MAX_PORTS	65536
 
 io_fn_t	ioports_map[MAX_PORTS];
-
-int	 translate_gva(struct vm_exit*, uint64_t, uint64_t *, int);
 
 static int	loadfile_bios(gzFile, off_t, struct vcpu_reg_state *);
 static int	vcpu_exit_eptviolation(struct vm_run_params *);
@@ -984,141 +982,6 @@ get_input_data(struct vm_exit *vei, uint32_t *data)
 		    vei->vei.vei_size);
 	}
 
-}
-
-/*
- * translate_gva
- *
- * Translates a guest virtual address to a guest physical address by walking
- * the currently active page table (if needed).
- *
- * XXX ensure translate_gva updates the A bit in the PTE
- * XXX ensure translate_gva respects segment base and limits in i386 mode
- * XXX ensure translate_gva respects segment wraparound in i8086 mode
- * XXX ensure translate_gva updates the A bit in the segment selector
- * XXX ensure translate_gva respects CR4.LMSLE if available
- *
- * Parameters:
- *  exit: The VCPU this translation should be performed for (guest MMU settings
- *   are gathered from this VCPU)
- *  va: virtual address to translate
- *  pa: pointer to paddr_t variable that will receive the translated physical
- *   address. 'pa' is unchanged on error.
- *  mode: one of PROT_READ, PROT_WRITE, PROT_EXEC indicating the mode in which
- *   the address should be translated
- *
- * Return values:
- *  0: the address was successfully translated - 'pa' contains the physical
- *     address currently mapped by 'va'.
- *  EFAULT: the PTE for 'VA' is unmapped. A #PF will be injected in this case
- *     and %cr2 set in the vcpu structure.
- *  EINVAL: an error occurred reading paging table structures
- */
-int
-translate_gva(struct vm_exit* exit, uint64_t va, uint64_t* pa, int mode)
-{
-	int level, shift, pdidx;
-	uint64_t pte, pt_paddr, pte_paddr, mask, low_mask, high_mask;
-	uint64_t shift_width, pte_size;
-	struct vcpu_reg_state *vrs;
-
-	vrs = &exit->vrs;
-
-	if (!pa)
-		return (EINVAL);
-
-	if (!(vrs->vrs_crs[VCPU_REGS_CR0] & CR0_PG)) {
-		log_debug("%s: unpaged, va=pa=0x%llx", __func__, va);
-		*pa = va;
-		return (0);
-	}
-
-	pt_paddr = vrs->vrs_crs[VCPU_REGS_CR3];
-
-	log_debug("%s: guest %%cr0=0x%llx, %%cr3=0x%llx", __func__,
-	    vrs->vrs_crs[VCPU_REGS_CR0], vrs->vrs_crs[VCPU_REGS_CR3]);
-
-	if (vrs->vrs_crs[VCPU_REGS_CR0] & CR0_PE) {
-		if (vrs->vrs_crs[VCPU_REGS_CR4] & CR4_PAE) {
-			pte_size = sizeof(uint64_t);
-			shift_width = 9;
-
-			if (vrs->vrs_msrs[VCPU_REGS_EFER] & EFER_LMA) {
-				/* 4 level paging */
-				level = 4;
-				mask = L4_MASK;
-				shift = L4_SHIFT;
-			} else {
-				/* 32 bit with PAE paging */
-				level = 3;
-				mask = L3_MASK;
-				shift = L3_SHIFT;
-			}
-		} else {
-			/* 32 bit paging */
-			level = 2;
-			shift_width = 10;
-			mask = 0xFFC00000;
-			shift = 22;
-			pte_size = sizeof(uint32_t);
-		}
-	} else
-		return (EINVAL);
-
-	/* XXX: Check for R bit in segment selector and set A bit */
-
-	for (;level > 0; level--) {
-		pdidx = (va & mask) >> shift;
-		pte_paddr = (pt_paddr) + (pdidx * pte_size);
-
-		log_debug("%s: read pte level %d @ GPA 0x%llx", __func__,
-		    level, pte_paddr);
-		if (read_mem(pte_paddr, &pte, pte_size)) {
-			log_warn("%s: failed to read pte", __func__);
-			return (EFAULT);
-		}
-
-		log_debug("%s: PTE @ 0x%llx = 0x%llx", __func__, pte_paddr,
-		    pte);
-
-		/* XXX: Set CR2  */
-		if (!(pte & PG_V))
-			return (EFAULT);
-
-		/* XXX: Check for SMAP */
-		if ((mode == PROT_WRITE) && !(pte & PG_RW))
-			return (EPERM);
-
-		if ((exit->cpl > 0) && !(pte & PG_u))
-			return (EPERM);
-
-		pte = pte | PG_U;
-		if (mode == PROT_WRITE)
-			pte = pte | PG_M;
-		if (write_mem(pte_paddr, &pte, pte_size)) {
-			log_warn("%s: failed to write back flags to pte",
-			    __func__);
-			return (EIO);
-		}
-
-		/* XXX: EINVAL if in 32bit and PG_PS is 1 but CR4.PSE is 0 */
-		if (pte & PG_PS)
-			break;
-
-		if (level > 1) {
-			pt_paddr = pte & PG_FRAME;
-			shift -= shift_width;
-			mask = mask >> shift_width;
-		}
-	}
-
-	low_mask = (1 << shift) - 1;
-	high_mask = (((uint64_t)1ULL << ((pte_size * 8) - 1)) - 1) ^ low_mask;
-	*pa = (pte & high_mask) | (va & low_mask);
-
-	log_debug("%s: final GPA for GVA 0x%llx = 0x%llx\n", __func__, va, *pa);
-
-	return (0);
 }
 
 int
