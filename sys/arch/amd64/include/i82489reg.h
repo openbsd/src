@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489reg.h,v 1.5 2019/07/26 04:35:38 kevlo Exp $	*/
+/*	$OpenBSD: i82489reg.h,v 1.6 2026/09/16 03:52:40 mlarkin Exp $	*/
 /*	$NetBSD: i82489reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -73,6 +73,8 @@
 #define LAPIC_IRR	0x200
 #define LAPIC_ESR	0x280			/* Err status. R */
 
+#define LAPIC_LVT_CMCI	0x2f0			/* Corrected machine chk LVT */
+
 #define LAPIC_ICRLO	0x300			/* Int. cmd. RW */
 #	define LAPIC_DLMODE_MASK	0x00000700
 #	define LAPIC_DLMODE_FIXED	0x00000000
@@ -82,6 +84,7 @@
 #	define LAPIC_DLMODE_NMI		0x00000400
 #	define LAPIC_DLMODE_INIT	0x00000500
 #	define LAPIC_DLMODE_STARTUP	0x00000600
+#	define LAPIC_DLMODE_EXTINT	0x00000700
 
 #	define LAPIC_DSTMODE_LOG	0x00000800
 
@@ -115,6 +118,7 @@
 #	 define LAPIC_LVTT_TM_PERIODIC	0x00020000
 #	 define LAPIC_LVTT_TM_TSCDL	0x00040000
 
+#define LAPIC_LVT_THERM	0x330			/* Thermal sensor LVT */
 #define LAPIC_PCINT	0x340
 #define LAPIC_LVINT0	0x350			/* Loc.vec (LINT0) RW */
 #	define LAPIC_LVT_PERIODIC	0x00020000
@@ -144,6 +148,9 @@
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
 
 #define	MSR_X2APIC_BASE		0x800
+#define	MSR_X2APIC_END		0x83f
 #define	MSR_X2APIC_EOI		(MSR_X2APIC_BASE+0x0b)	/* End Int. W */
 #define	MSR_X2APIC_ID		(MSR_X2APIC_BASE+0x02)	/* ID. RW */
+#define	MSR_X2APIC_ICR		(MSR_X2APIC_BASE+0x30)	/* ICR. RW */
+#define	MSR_X2APIC_SELF_IPI	(MSR_X2APIC_BASE+0x3f)	/* Self IPI. W */
 #define	X2APIC_ID_MASK		0xff
