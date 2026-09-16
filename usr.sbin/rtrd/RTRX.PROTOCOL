@@ -1,0 +1,332 @@
+RTRx Protocol Version 1
+=======================
+
+This is a protocol for interacting with an RTR Cache server on the back end.
+It allows for importing of tables and exporting of server statistics.
+
+The protocol is in network order (big endian).
+
+The main version field is set to 2 in all PDUs.
+Max length is 65,535 bytes. The reserved field is set to 0.
+
+Extended RTR PDUs are in the 128-254 range with 0-127 and 255 reserved.
+
+The time_t type is of the int64_t type.
+
+The in_addr type is 32 bits wide while the in6_addr is 128 bits wide.
+
+The controller_version field is set to 1.
+
+RTRx PDU Constants
+==================
+
+OPEN_CONTROLLER         = 128
+CLOSE_CONTROLLER        = 129
+START_OF_IMPORT         = 130
+IPV4_PREFIX_IMPORT      = 131
+IPV6_PREFIX_IMPORT      = 132
+ROUTER_KEY_IMPORT       = 133
+ASPA_PDU_IMPORT         = 134
+END_OF_IMPORT           = 135
+PUSH_IMPORT             = 136
+QUERY_STATS             = 137
+START_OF_STATS          = 138
+GLOBAL_STATS            = 139
+CLIENT_STATS            = 140
+CACHE_FRAME_STATS       = 141
+END_OF_STATS            = 142
+
+RTRx PDU Structures
+===================
+
+#define RTR_VERSION		2
+
+#define CONTROLLER_VERSION	1
+
+#define CONTROLLER_FLAGS_IMPORTER	0x00000001
+#define CONTROLLER_FLAGS_STATS		0x00000002
+
+struct pdu_open_controller
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+        uint32_t controller_version;
+        uint32_t controller_flags;
+} PACKED;
+
+struct pdu_close_controller
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+struct pdu_start_of_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+struct pdu_ipv4_prefix_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+        time_t expire;
+        uint8_t flags;
+        uint8_t prefix_length;
+        uint8_t max_prefix_length;
+        uint8_t zero;
+        struct in_addr prefix;
+        uint32_t asn;
+} PACKED;
+
+struct pdu_ipv6_prefix_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+        time_t expire;
+        uint8_t flags;
+        uint8_t prefix_length;
+        uint8_t max_prefix_length;
+        uint8_t zero;
+        struct in6_addr prefix;
+        uint32_t asn;
+} PACKED;
+
+#define SKI_LENGTH 20
+
+struct pdu_router_key_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint8_t flags;
+        uint8_t zero;
+        uint32_t length;
+        time_t expire;
+        unsigned char ski[SKI_LENGTH];
+        uint32_t asn;
+        unsigned char spki[];
+} PACKED;
+
+struct pdu_aspa_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint8_t flags;
+        uint8_t zero;
+        uint32_t length;
+        time_t expire;
+        uint32_t customer_asn;
+        uint32_t provider_asns[];
+} PACKED;
+
+struct pdu_end_of_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+struct pdu_push_import
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+struct pdu_query_stats
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+struct pdu_start_of_stats
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+#define NODENAME_SIZE   256
+#define DOMAINNAME_SIZE 256
+#define RELEASE_SIZE    64
+
+struct pdu_global_stats
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+        char nodename[NODENAME_SIZE];
+        char domainname[DOMAINNAME_SIZE];
+        char release[RELEASE_SIZE];
+        time_t start_time;
+        int64_t total_bytes_in;
+        int64_t total_bytes_out;
+        int64_t total_client_connects;
+        int64_t total_controller_connects;
+} PACKED;
+
+#define CLIENT_STATE_REGISTERED 0x01
+#define CLIENT_STATE_CLOSED     0x02
+
+struct pdu_client_stats
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+        int64_t fd;
+        struct in_addr client_ip;
+        uint16_t client_port;
+        uint8_t client_version;
+        uint8_t client_state;
+        time_t connect_time;
+        int64_t total_bytes_in;
+        int64_t total_bytes_out;
+        int64_t sendq_length;
+        int64_t sendq_max;
+        int64_t vrp4_announcements;
+        int64_t vrp4_withdrawals;
+        int64_t vrp4_outq;
+        int64_t vrp6_announcements;
+        int64_t vrp6_withdrawals;
+        int64_t vrp6_outq;
+        int64_t brk_announcements;
+        int64_t brk_withdrawals;
+        int64_t brk_outq;
+        int64_t vap_announcements;
+        int64_t vap_withdrawals;
+        int64_t vap_outq;
+        int64_t reset_query_count;
+        int64_t serial_query_count;
+} PACKED;
+
+#define CACHE_FRAME_FLAGS_ACTIVE 0x01
+
+struct pdu_cache_frame_stats
+{
+        uint8_t version;
+        uint8_t type;
+        uint8_t reserved;
+        uint8_t flags;
+        uint32_t length;
+        uint8_t cache_version;
+        uint8_t zero;
+        uint16_t cache_session_id;
+        uint32_t cache_serial;
+        int64_t vrp4_count;
+        time_t vrp4_creation_time;
+        int64_t vrp6_count;
+        time_t vrp6_creation_time;
+        int64_t brk_count;
+        time_t brk_creation_time;
+        int64_t vap_count;
+        time_t vap_creation_time;
+} PACKED;
+
+struct pdu_end_of_stats
+{
+        uint8_t version;
+        uint8_t type;
+        uint16_t reserved;
+        uint32_t length;
+} PACKED;
+
+Protocol Sequences
+==================
+
+Single Shot Full Table Import
+-----------------------------
+
+Client *connects*
+Client: OPEN_CONTROLLER                -> :RTR Server
+Client: START_OF_IMPORT                -> :RTR Server
+Client: IPV4_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: IPV6_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: ROUTER_KEY_IMPORT  (0 or more) -> :RTR Server
+Client: ASPA_PDU_IMPORT    (0 or more) -> :RTR Server
+Client: END_OF_IMPORT                  -> :RTR Server
+Client *disconnects*
+
+Full Table Plus Streaming Deltas Import
+---------------------------------------
+
+Client *connects*
+Client: OPEN_CONTROLLER                -> :RTR Server
+Client: START_OF_IMPORT                -> :RTR Server
+Client: IPV4_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: IPV6_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: ROUTER_KEY_IMPORT  (0 or more) -> :RTR Server
+Client: ASPA_PDU_IMPORT    (0 or more) -> :RTR Server
+Client: PUSH_IMPORT                    -> :RTR Server
+...
+Client: IPV4_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: IPV6_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: ROUTER_KEY_IMPORT  (0 or more) -> :RTR Server
+Client: ASPA_PDU_IMPORT    (0 or more) -> :RTR Server
+Client: PUSH_IMPORT                    -> :RTR Server
+...
+Client: IPV4_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: IPV6_PREFIX_IMPORT (0 or more) -> :RTR Server
+Client: ROUTER_KEY_IMPORT  (0 or more) -> :RTR Server
+Client: ASPA_PDU_IMPORT    (0 or more) -> :RTR Server
+Client: PUSH_IMPORT                    -> :RTR Server
+Client: CLOSE_CONTROLLER               -> :RTR Server
+Client *disconnects*
+
+PUSH followed by a CLOSE is the same behavior as END_OF_IMPORT.
+START_OF_IMPORT resets the state.
+
+...
+Client: END_OF_IMPORT                  -> :RTR Server
+Client *disconnects*
+
+Single Shot Statistics Export
+-----------------------------
+
+Client *connects*
+Client: OPEN_CONTROLLER               -> :RTR Server
+Client: QUERY_STATS                   -> :RTR Server
+Client: <-                START_OF_STATS :RTR Server
+Client: <-                  GLOBAL_STATS :RTR Server
+Client: <- (0 or more)      CLIENT_STATS :RTR Server
+Client: <- (0 or more) CACHE_FRAME_STATS :RTR Server
+Client: <-                  END_OF_STATS :RTR Server
+Client: CLOSE_CONTROLLER              -> :RTR Server
+Client *disconnects*
+
+Periodic Statistics Export
+--------------------------
+
+Client *connects*
+Client: OPEN_CONTROLLER               -> :RTR Server
+Client: QUERY_STATS                   -> :RTR Server
+Client: <-                START_OF_STATS :RTR Server
+Client: <-                  GLOBAL_STATS :RTR Server
+Client: <- (0 or more)      CLIENT_STATS :RTR Server
+Client: <- (0 or more) CACHE_FRAME_STATS :RTR Server
+Client: <-                  END_OF_STATS :RTR Server
+...
+Client: QUERY_STATS                   -> :RTR Server
+Client: <-                START_OF_STATS :RTR Server
+Client: <-                  GLOBAL_STATS :RTR Server
+Client: <- (0 or more)      CLIENT_STATS :RTR Server
+Client: <- (0 or more) CACHE_FRAME_STATS :RTR Server
+Client: <-                  END_OF_STATS :RTR Server
+Client: CLOSE_CONTROLLER              -> :RTR Server
+Client *disconnects*

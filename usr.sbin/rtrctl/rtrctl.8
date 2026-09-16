@@ -1,0 +1,97 @@
+.\"	$OpenBSD: rtrctl.8,v 1.1 2026/09/16 16:11:46 job Exp $
+.\"
+.\" Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 16 2026 $
+.Dt RTRCTL 8
+.Os
+.Sh NAME
+.Nm rtrctl
+.Nd control the RTR cache daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl h
+.Op Fl s Ar socket
+.Ar command
+.Op Ar argument
+.Sh DESCRIPTION
+The
+.Nm
+program controls the
+.Xr rtrd 8
+daemon.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl h
+Display help and exit.
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/rtrd.sock
+to communicate with
+.Xr rtrd 8 .
+.El
+.Pp
+The following commands are availale:
+.Bl -tag -width Ds
+.It Cm import Op Ar file
+Import RPKI payloads from
+.Ar file
+into
+.Xr rtrd 8 .
+The format of
+.Ar file
+is compatible with the
+.Xr bgpd 8
+configuration format.
+.It Cm stats
+Export statistics in OpenMetrics format.
+.El
+.Sh FILES
+.Bl -tag -width "/var/db/rpki-client/openbgpd" -compact
+.It Pa /var/run/rtrd.sock
+Unix-domain socket used for communication with
+.Xr rtrd 8 .
+.It Pa /var/db/rpki-client/openbgpd
+Default import file.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr rpki-client 8 ,
+.Xr rtrd 8
+.Sh STANDARDS
+.Rs
+.%T The RPKI to Router Protocol
+.%R RFC 6810
+.Re
+.Pp
+.Rs
+.%T The RPKI to Router Protocol, Version 1
+.%R RFC 8210
+.Re
+.Pp
+.Rs
+.%T The RPKI to Router Protocol, Version 2
+.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-8210bis-27
+.%D Aug, 2026
+.Re
+.Sh AUTHORS
+.An -nosplit
+.An Ralph Covelli Aq Mt rcovelli@he.net
+and
+.An Job Snijders Aq Mt job@bsd.nl .
