@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.93 2026/05/21 02:20:53 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.94 2026/09/16 04:26:22 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -876,5 +876,3 @@ bad:
 	*vpp = NULL;
 	return (error);
 }
-
-
