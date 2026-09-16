@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.171 2026/09/16 18:34:45 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.172 2026/09/16 20:09:26 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -170,7 +170,7 @@ ls_installed()
 
 ls_missing()
 {
-	local _c _f _cmd _l="$(ls_installed)" _p _sha=${_TMP}/SHA256
+	local _c _f _l="$(ls_installed)" _p _sha=${_TMP}/SHA256
 
 	# don't output anything on stdout to prevent corrupting the patch list
 	unpriv -f "${_sha}.sig" ftp -N syspatch -MVo "${_sha}.sig" \
@@ -186,15 +186,16 @@ ls_missing()
 		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
 		[[ -n ${_l} ]] && echo ${_c} | grep -qw -- "${_l}" || echo ${_c}
 	done | while read _p; do
-		_cmd="ftp -N syspatch -MVo - \
-			${_MIRROR}/syspatch${_OSrev}-${_p}.tgz"
-		unpriv "${_cmd}" | (cd ${TMPDIR:-/tmp} && unpriv "tar tzf -") |
+		# no earlier version of _all_ files contained in the tgz
+		# exists on the system, it means a missing set: skip it;
+		# otherwise stop ftp(1) and tell pipefail it's not an error
+		{ unpriv "ftp -N syspatch -MVo - \
+			${_MIRROR}/syspatch${_OSrev}-${_p}.tgz" |
+			(cd ${TMPDIR:-/tmp} && unpriv "tar tzf -") |
 			while read _f; do
-			# no earlier version of _all_ files contained in the tgz
-			# exists on the system, it means a missing set: skip it
 			[[ -f /${_f} ]] || continue && echo ${_p} && pkill -u \
-				_syspatch -xf "${_cmd}" || true && break
-		done
+				_syspatch -f "${_p}.tgz" || true && exit 125
+		done; } 2>/dev/null || (($? == 125))
 	done | sort -V # only used as a buffer to display all patches at once
 	set +o pipefail
 }
