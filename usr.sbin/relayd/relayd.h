@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.296 2026/09/07 19:34:30 deraadt Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.297 2026/09/16 00:16:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -323,6 +323,12 @@ enum digest_type {
 TAILQ_HEAD(kvlist, kv);
 RB_HEAD(kvtree, kv);
 
+#define KV_FLAG_MACRO		 0x01
+#define KV_FLAG_INVALID		 0x02
+#define KV_FLAG_GLOBBING	 0x04
+#define KV_FLAG_KEY_PATTERN	 0x08
+#define KV_FLAG_VAL_PATTERN	 0x10
+
 struct kv {
 	char			*kv_key;
 	char			*kv_value;
@@ -331,9 +337,6 @@ struct kv {
 	enum key_option		 kv_option;
 	enum digest_type	 kv_digest;
 
-#define KV_FLAG_MACRO		 0x01
-#define KV_FLAG_INVALID		 0x02
-#define KV_FLAG_GLOBBING	 0x04
 	u_int8_t		 kv_flags;
 
 	struct kvlist		 kv_children;
@@ -1354,6 +1357,8 @@ int			 kv_log(struct rsession *, struct kv *, u_int16_t,
 struct kv		*kv_find(struct kvtree *, struct kv *);
 struct kv		*kv_find_value(struct kvtree *, char *, const char *,
     const char *);
+int			 kv_match_key(const struct kv *, const char *, int);
+int			 kv_match_val(const struct kv *, const char *, int);
 int			 kv_cmp(struct kv *, struct kv *);
 int			 rule_add(struct protocol *, struct relay_rule *,
     const char *);

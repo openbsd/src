@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.209 2026/09/07 19:34:30 deraadt Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.210 2026/09/16 00:16:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@
 #include <tls.h>
 
 #include "relayd.h"
+#include "patterns.h"
 #include "log.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
@@ -843,18 +844,65 @@ kv_log(struct rsession *con, struct kv *kv, u_int16_t labelid,
 	return (0);
 }
 
+/*
+ * Match "pattern" against "str".
+ * Returns 1 on match, 0 on no match or error.
+ */
+static int
+_kv_match(const char *pattern, const char *str, int is_pattern, int fnflags)
+{
+	struct str_find	 sm;
+	const char	*errstr = NULL;
+
+	if (pattern == NULL || str == NULL)
+		return (0);
+	if (!is_pattern)
+		return (fnmatch(pattern, str, fnflags) != FNM_NOMATCH);
+
+	if (str_find(str, pattern, &sm, 1, &errstr) > 0 && errstr == NULL)
+		return (1);
+	if (errstr != NULL)
+		log_warnx("%s: pattern \"%s\": %s", __func__, pattern, errstr);
+	return (0);
+}
+
+int
+kv_match_key(const struct kv *kv, const char *str, int fnflags)
+{
+	return (_kv_match(kv->kv_key, str, kv->kv_flags & KV_FLAG_KEY_PATTERN,
+	    fnflags));
+}
+
+int
+kv_match_val(const struct kv *kv, const char *str, int fnflags)
+{
+	return (_kv_match(kv->kv_value, str, kv->kv_flags & KV_FLAG_VAL_PATTERN,
+	    fnflags));
+}
+
+/*
+ * Look up for "kv"
+ * Return the matched kv, or NULL if none.
+ */
 struct kv *
 kv_find(struct kvtree *keys, struct kv *kv)
 {
-	struct kv	*match;
-	const char	*key;
+	struct kv	*match = NULL;
 
-	if (kv->kv_flags & KV_FLAG_GLOBBING) {
-		/* Test header key using shell globbing rules */
-		key = kv->kv_key == NULL ? "" : kv->kv_key;
+	 /*
+	  * If the key uses glob(7) or a patterns(7) expression, fall back
+	  * to a linear scan and match each entry.
+	  */
+	if (kv->kv_flags & (KV_FLAG_GLOBBING | KV_FLAG_KEY_PATTERN)) {
 		RB_FOREACH(match, kvtree, keys) {
-			if (fnmatch(key, match->kv_key, FNM_CASEFOLD) == 0)
+			if (kv_match_key(kv, match->kv_key, FNM_CASEFOLD)) {
+				log_debug("%s: %s \"%s\" matched key \"%s\"",
+				    __func__,
+				    (kv->kv_flags & KV_FLAG_KEY_PATTERN) ?
+				    "pattern" : "glob",
+				    kv->kv_key, match->kv_key);
 				break;
+			}
 		}
 	} else {
 		/* Fast tree-based lookup only works without globbing */
@@ -949,9 +997,14 @@ rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
 			break;
 		}
 
-		if (kv->kv_value != NULL && strchr(kv->kv_value, '$') != NULL)
+		/* Only auto-detect on the side that is not a pattern. */
+		if (kv->kv_value != NULL &&
+		    !(kv->kv_flags & KV_FLAG_VAL_PATTERN) &&
+		    strchr(kv->kv_value, '$') != NULL)
 			kv->kv_flags |= KV_FLAG_MACRO;
-		if (kv->kv_key != NULL && strpbrk(kv->kv_key, "*?[") != NULL)
+		if (kv->kv_key != NULL &&
+		    !(kv->kv_flags & KV_FLAG_KEY_PATTERN) &&
+		    strpbrk(kv->kv_key, "*?[") != NULL)
 			kv->kv_flags |= KV_FLAG_GLOBBING;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.269 2026/08/12 19:29:34 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.270 2026/09/16 00:16:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,6 +125,7 @@ static enum key_type	 keytype = KEY_TYPE_NONE;
 static enum direction	 dir = RELAY_DIR_ANY;
 static char		*rulefile = NULL;
 static union hashkey	*hashkey = NULL;
+static int		 value_pattern = 0;
 
 struct address	*host_ip(const char *);
 int		 host_dns(const char *, struct addresslist *,
@@ -185,8 +186,8 @@ typedef struct {
 %token	LABEL LEASTSTATES LISTEN LOADBALANCE LOG LOOKUP
 %token	MATCH METHOD MODE NAT NO NODELAY NOTHING
 %token	OCSP ON
-%token	PARAMS PARENT PASS PASSWORD PATH PFLOG PFTAG PORT PREFORK PRIORITY
-%token	PROTO PROXYPROTO
+%token	PARAMS PARENT PASS PASSWORD PATH PATTERN PFLOG PFTAG PORT PREFORK
+%token	PRIORITY PROTO PROXYPROTO
 %token	QUERYSTR QUICK
 %token	RANDOM REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY RETURN
 %token	ROUNDROBIN ROUTE ROUTER RTABLE RTLABEL
@@ -203,7 +204,7 @@ typedef struct {
 %type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	opttls opttlsclient optproxyproto
 %type	<v.number>	redirect_proto relay_proto match pflog
-%type	<v.number>	action ruleaf key_option
+%type	<v.number>	action ruleaf key_option optpattern
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.addr>	address rulesrc ruledst addrprefix
@@ -1598,18 +1599,24 @@ ruleopts	: METHOD STRING					{
 			rule->rule_method = id;
 			free($2);
 		}
-		| COOKIE key_option STRING value		{
+		| COOKIE key_option optpattern STRING value	{
 			keytype = KEY_TYPE_COOKIE;
-			rule->rule_kv[keytype].kv_key = strdup($3);
+			rule->rule_kv[keytype].kv_key = strdup($4);
 			rule->rule_kv[keytype].kv_option = $2;
-			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
-			    strdup($4) : strdup("*"));
+			if ($3)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
+			    strdup($5) : strdup("*"));
+			if (value_pattern)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_VAL_PATTERN;
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
-			free($3);
-			if ($4)
-				free($4);
+			free($4);
+			if ($5)
+				free($5);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
 		| COOKIE key_option				{
@@ -1617,20 +1624,26 @@ ruleopts	: METHOD STRING					{
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| HEADER key_option STRING value		{
+		| HEADER key_option optpattern STRING value		{
 			keytype = KEY_TYPE_HEADER;
 			memset(&rule->rule_kv[keytype], 0,
 			    sizeof(rule->rule_kv[keytype]));
 			rule->rule_kv[keytype].kv_option = $2;
-			rule->rule_kv[keytype].kv_key = strdup($3);
-			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
-			    strdup($4) : strdup("*"));
+			if ($3)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_key = strdup($4);
+			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
+			    strdup($5) : strdup("*"));
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
-			free($3);
-			if ($4)
-				free($4);
+			if (value_pattern)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_VAL_PATTERN;
+			free($4);
+			if ($5)
+				free($5);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
 		| HEADER key_option				{
@@ -1638,18 +1651,24 @@ ruleopts	: METHOD STRING					{
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| PATH key_option STRING value			{
+		| PATH key_option optpattern STRING value	{
 			keytype = KEY_TYPE_PATH;
 			rule->rule_kv[keytype].kv_option = $2;
-			rule->rule_kv[keytype].kv_key = strdup($3);
-			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
-			    strdup($4) : strdup("*"));
+			if ($3)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_key = strdup($4);
+			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
+			    strdup($5) : strdup("*"));
+			if (value_pattern)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_VAL_PATTERN;
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
-			free($3);
-			if ($4)
-				free($4);
+			free($4);
+			if ($5)
+				free($5);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
 		| PATH key_option				{
@@ -1671,30 +1690,36 @@ ruleopts	: METHOD STRING					{
 			rule->rule_kv[keytype].kv_value = strip;
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| QUERYSTR key_option STRING value		{
+		| QUERYSTR key_option optpattern STRING value	{
 			switch ($2) {
 			case KEY_OPTION_APPEND:
 			case KEY_OPTION_SET:
 			case KEY_OPTION_REMOVE:
 				yyerror("combining query type and the given "
 				    "option is not supported");
-				free($3);
-				if ($4)
-					free($4);
+				free($4);
+				if ($5)
+					free($5);
 				YYERROR;
 				break;
 			}
 			keytype = KEY_TYPE_QUERY;
 			rule->rule_kv[keytype].kv_option = $2;
-			rule->rule_kv[keytype].kv_key = strdup($3);
-			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
-			    strdup($4) : strdup("*"));
+			if ($3)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_key = strdup($4);
+			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
+			    strdup($5) : strdup("*"));
+			if (value_pattern)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_VAL_PATTERN;
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
-			free($3);
-			if ($4)
-				free($4);
+			free($4);
+			if ($5)
+				free($5);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
 		| QUERYSTR key_option				{
@@ -1711,30 +1736,36 @@ ruleopts	: METHOD STRING					{
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| URL key_option optdigest value			{
+		| URL key_option optpattern optdigest value	{
 			switch ($2) {
 			case KEY_OPTION_APPEND:
 			case KEY_OPTION_SET:
 			case KEY_OPTION_REMOVE:
 				yyerror("combining url type and the given "
 				"option is not supported");
-				free($3.digest);
-				free($4);
+				free($4.digest);
+				free($5);
 				YYERROR;
 				break;
 			}
 			keytype = KEY_TYPE_URL;
 			rule->rule_kv[keytype].kv_option = $2;
-			rule->rule_kv[keytype].kv_key = strdup($3.digest);
-			rule->rule_kv[keytype].kv_digest = $3.type;
-			rule->rule_kv[keytype].kv_value = (($4 != NULL) ?
-			    strdup($4) : strdup("*"));
+			if ($3)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_key = strdup($4.digest);
+			rule->rule_kv[keytype].kv_digest = $4.type;
+			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
+			    strdup($5) : strdup("*"));
+			if (value_pattern)
+				rule->rule_kv[keytype].kv_flags |=
+				    KV_FLAG_VAL_PATTERN;
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
-			free($3.digest);
-			if ($4)
-				free($4);
+			free($4.digest);
+			if ($5)
+				free($5);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
 		| URL key_option					{
@@ -1888,8 +1919,19 @@ ruleopts	: METHOD STRING					{
 		}
 		;
 
-value		: /* empty */		{ $$ = NULL; }
-		| VALUE STRING		{ $$ = $2; }
+optpattern	: /* empty */		{ $$ = 0; }
+		| PATTERN		{ $$ = 1; }
+		;
+
+value		: /* empty */		{ $$ = NULL;
+					  value_pattern = 0;
+					}
+		| VALUE STRING		{ $$ = $2;
+					  value_pattern = 0;
+					}
+		| VALUE PATTERN STRING	{ $$ = $3;
+					  value_pattern = 1;
+					}
 		;
 
 key_option	: /* empty */		{ $$ = KEY_OPTION_NONE; }
@@ -2600,6 +2642,7 @@ lookup(char *s)
 		{ "pass",		PASS },
 		{ "password",		PASSWORD },
 		{ "path",		PATH },
+		{ "pattern",		PATTERN},
 		{ "pflog",		PFLOG },
 		{ "pftag",		PFTAG },
 		{ "port",		PORT },

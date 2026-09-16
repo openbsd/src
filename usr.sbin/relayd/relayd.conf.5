@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.223 2026/08/12 19:29:34 rsadowski Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.224 2026/09/16 00:16:10 rsadowski Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2026 $
+.Dd $Mdocdate: September 16 2026 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -366,16 +366,18 @@ milliseconds.
 .Ic check send
 .Ar data
 .Ic expect
-.Ar pattern
+.Ar response
 .Op Ic tls
 .Xc
 For each host in the table, a TCP connection is established on the
 port specified, then
 .Ar data
 is sent.
-Incoming data is then read and is expected to match against
-.Ar pattern
-using shell globbing rules.
+Incoming data is then read and is expected to match the
+.Ar response
+using shell-style
+.Xr glob 7
+pattern matching.
 If
 .Ar data
 is an empty string or
@@ -1320,16 +1322,47 @@ $ echo -n "example.com/path/?args" | sha1
 .Bq Ar type
 may be one of:
 .Bl -tag -width Ds
-.It Ic cookie Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+.It Xo Ic cookie Ar option
+.Oo Oo Ic pattern Oc Ar key
+.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Xc
 Look up the entity as a value in the Cookie header.
 This type is only available with the direction
-.Ic request .
-.It Ic header Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+.Ic request ,
+for example:
+.Bd -literal -offset indent
+# Block requests carrying an admin session cookie
+block request quick cookie "session" value pattern "^admin_"
+
+# Only accept two-letter language cookies
+pass  request cookie "lang" value pattern "^%a%a$"
+.Ed
+.It Xo Ic header Ar option
+.Oo Oo Ic pattern Oc Ar key
+.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Xc
 Look up the entity in the application protocol headers, like HTTP
 headers in
 .Ic http
-mode.
-.It Ic path Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+mode,
+for example:
+.Bd -literal -offset indent
+# Block crawlers whose User-Agent contains a "bot" word
+# ([Bb]ot at the end of a word, using a frontier pattern)
+block request quick header "User-Agent" \e
+    value pattern "[Bb]ot%f[^%a]"
+
+# Require JSON requests on the API
+pass  request header "Content-Type" \e
+    value pattern "^application/json"
+
+# Strip any custom debug header (matches key by pattern)
+pass request header remove pattern "^X%-Debug%-"
+.Ed
+.It Xo Ic path Ar option
+.Oo Oo Ic pattern Oc Ar key
+.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Xc
 Look up the entity as a value in the URL path when using the
 .Ic http
 protocol.
@@ -1342,7 +1375,17 @@ and query and the value will match the complete query,
 for example:
 .Bd -literal -offset indent
 block path "/index.html"
+block path pattern "^/index%.html$"
 block path "/cgi-bin/t.cgi" value "foo=bar*"
+
+# Block direct access to the admin tree
+block request quick path pattern "^/admin/"
+
+# Only versioned API paths (v1, v2, ...)
+pass request path pattern "^/api/v%d+/"
+
+# Match image extensions
+pass request path pattern "%.jpe?g$"
 .Ed
 .It Ic path  strip Ar number
 Strip
@@ -1353,7 +1396,10 @@ when using the
 protocol.
 This type is only available with the direction
 .Ic request .
-.It Ic query Ar option Oo Ar key Oo Ic value Ar value Oc Oc
+.It Xo Ic query Ar option
+.Oo Oo Ic pattern Oc Ar key
+.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Xc
 Look up the entity as a query variable in the URL when using the
 .Ic http
 protocol.
@@ -1363,8 +1409,17 @@ for example:
 .Bd -literal -offset indent
 # Will match /cgi-bin/example.pl?foo=bar&ok=yes
 pass request query "foo" value "bar"
+
+# Only allow numeric IDs
+pass request query "id" value pattern "^%d+$"
+
+# Reject requests that carry a debug flag on any query key
+block request quick query pattern "^debug" value "*"
 .Ed
-.It Ic url Ar option Oo Oo Ic digest Oc Ar key Oo Ic value Ar value Oc Oc
+.It Xo Ic url Ar option
+.Oo Oo Ic pattern Oc Oo Ic digest Oc Ar key
+.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Xc
 Look up the entity as a URL suffix/prefix expression consisting of a
 canonicalized hostname without port or suffix and a path name or
 prefix when using the
@@ -1375,7 +1430,10 @@ This type is only available with the direction
 for example:
 .Bd -literal -offset indent
 block url "example.com/index.html"
-block url "example.com/test.cgi?val=1"
+block url pattern "^example%.com/index%.html$"
+
+# Any subdomain of example.com, path under /api/
+pass request url pattern "^[%w%-]+%.example%.com/api/"
 .Ed
 .Pp
 .Xr relayd 8
@@ -1400,6 +1458,93 @@ example.com/1/2/
 example.com/1/2/3/
 .Ed
 .El
+.Pp
+The optional
+.Ic pattern
+keyword makes the following string a
+.Xr patterns 7
+expression instead of the default
+.Xr glob 7
+pattern.
+It can appear before any matchable string, for example:
+.Bd -literal -offset indent
+pass request path pattern "^/api/v%d+/" \e
+    value pattern "^id=%d+$"
+.Ed
+.Pp
+Note that macro expansion is disabled on a
+.Ar value
+that uses
+.Ic pattern ,
+because
+.Sq $
+in
+.Xr patterns 7
+is the end-of-string anchor, not a macro prefix.
+Use a plain
+.Ar value
+if macro expansion is required.
+.Pp
+Matching with
+.Ic pattern
+is always case-sensitive.
+The default
+.Xr glob 7
+matching is case-insensitive for the
+.Ic url
+lookup, for
+.Ic cookie
+names and values, and for
+.Ic header
+names.
+It is case-sensitive for
+.Ic header
+values, for the
+.Ic path
+name, and for
+.Ic query
+names and values, matching how the client sent them on the wire.
+When porting existing rules to
+.Ic pattern ,
+add character classes such as
+.Dq [Uu]ser%-[Aa]gent
+where the previous
+.Xr glob 7
+match was case-insensitive.
+.Pp
+If
+.Ar value
+is omitted, it defaults to
+.Sq *
+and matches any value using
+.Xr glob 7
+rules regardless of whether the key uses
+.Ic pattern .
+.Pp
+For
+.Ic url ,
+.Ic pattern
+on the
+.Ar key
+is tested against every candidate form listed above; anchor patterns
+carefully.
+When combined with
+.Ic digest ,
+the pattern applies to the digest string, not to the URL.
+.Pp
+.Ic pattern
+on the
+.Ar key
+is most useful with the
+.Ic remove
+and
+.Ic log
+options.
+It has no effect for
+.Ic append
+or
+.Ic set ,
+which create a new entity from a literal name.
 .Pp
 .Bq Ar option
 may be one of:
@@ -1720,7 +1865,9 @@ router "uplinks" {
 }
 .Ed
 .Sh SEE ALSO
+.Xr glob 7 ,
 .Xr ocspcheck 8 ,
+.Xr patterns 7 ,
 .Xr relayctl 8 ,
 .Xr relayd 8 ,
 .Xr ssl 8

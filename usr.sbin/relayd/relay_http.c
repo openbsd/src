@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.103 2026/08/07 10:21:39 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.104 2026/09/16 00:16:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,6 +39,7 @@
 
 #include "relayd.h"
 #include "http.h"
+#include "patterns.h"
 #include "log.h"
 
 static int	 _relay_lookup_url(struct ctl_relay_event *, char *, char *,
@@ -836,6 +837,12 @@ relay_reset_http(struct ctl_relay_event *cre)
 	cre->done = 0;
 }
 
+/*
+ * Match a single URL candidate (host+path[?query], or its digest) against
+ * the rule key. Default matches literally, ignoring case. With pattern
+ * the key is a patterns(7) expression.
+ * Return RES_DROP on match, RES_PASS on miss.
+ */
 static int
 _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
     char *query, struct kv *kv)
@@ -860,7 +867,7 @@ _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
 		    val, strlen(val), NULL)) == NULL) {
 			relay_abort_http(con, 500,
 			    "failed to allocate digest", 0);
-			goto fail;
+			goto done;
 		}
 		str = md;
 		break;
@@ -869,21 +876,36 @@ _relay_lookup_url(struct ctl_relay_event *cre, char *host, char *path,
 		break;
 	}
 
-	log_debug("%s: session %d: %s, %s: %d", __func__, con->se_id,
-	    str, kv->kv_key, strcasecmp(kv->kv_key, str));
+	log_debug("%s: session %d: %s, %s", __func__, con->se_id,
+	    str, kv->kv_key);
 
-	if (strcasecmp(kv->kv_key, str) == 0) {
+	if (kv->kv_flags & KV_FLAG_KEY_PATTERN) {
+		if (kv_match_key(kv, str, 0)) {
+			log_debug("%s: session %d: pattern \"%s\" matched "
+			    "url \"%s\"",
+			    __func__, con->se_id, kv->kv_key, str);
+			ret = RES_DROP;
+			goto done;
+		}
+	} else if (strcasecmp(kv->kv_key, str) == 0) {
 		ret = RES_DROP;
-		goto fail;
+		goto done;
 	}
 
 	ret = RES_PASS;
- fail:
+ done:
 	free(md);
 	free(val);
 	return (ret);
 }
 
+/*
+ * URL lookup algorithm inspired by an old version of
+ * https://developers.google.com/safe-browsing/reference/URLs.and.Hashing
+ * Enumerate URL candidates by stripping subdomains and path components
+ * and probe each with _relay_lookup_url.
+ * Return RES_DROP on the first match, RES_PASS if none match.
+ */
 int
 relay_lookup_url(struct ctl_relay_event *cre, const char *host, struct kv *kv)
 {
@@ -895,12 +917,6 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *host, struct kv *kv)
 
 	if (desc->http_path == NULL)
 		return (RES_PASS);
-
-	/*
-	 * This is an URL lookup algorithm inspired by
-	 * http://code.google.com/apis/safebrowsing/
-	 *     developers_guide.html#PerformingLookups
-	 */
 
 	log_debug("%s: host '%s', path '%s', query '%s'",
 	    __func__, host, desc->http_path,
@@ -960,6 +976,11 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *host, struct kv *kv)
 	return (ret);
 }
 
+/*
+ * Devide the cookie "str" into key/value pairs.
+ * If key match search case-senstive and value by pattern matching
+ * we return RES_DROP otherwise RES_PASS
+ */
 int
 relay_lookup_cookie(struct ctl_relay_event *cre, const char *str,
     struct kv *kv)
@@ -971,22 +992,22 @@ relay_lookup_cookie(struct ctl_relay_event *cre, const char *str,
 		return (RES_INTERNAL);
 	}
 
+	/* split the whole cookie string into pairs of key/value */
 	for (ptr = val; ptr != NULL && strlen(ptr);) {
 		if (*ptr == ' ')
 			*ptr++ = '\0';
 		key = ptr;
 		if ((ptr = strchr(ptr, ';')) != NULL)
 			*ptr++ = '\0';
+
 		/*
-		 * XXX We do not handle attributes
-		 * ($Path, $Domain, or $Port)
+		 * Skip RFC 2965 attributes ($Path, $Domain, $Port);
+		 * obsolete per RFC 6265.
 		 */
 		if (*key == '$')
 			continue;
 
-		if ((value =
-		    strchr(key, '=')) == NULL ||
-		    strlen(value) < 1)
+		if ((value = strchr(key, '=')) == NULL || strlen(value) < 1)
 			continue;
 		*value++ = '\0';
 		if (*value == '"')
@@ -994,19 +1015,19 @@ relay_lookup_cookie(struct ctl_relay_event *cre, const char *str,
 		if (value[strlen(value) - 1] == '"')
 			value[strlen(value) - 1] = '\0';
 
-		log_debug("%s: key %s = %s, %s = %s : %d",
-		    __func__, key, value, kv->kv_key, kv->kv_value,
-		    strcasecmp(kv->kv_key, key));
-
-		if (strcasecmp(kv->kv_key, key) == 0 &&
-		    ((kv->kv_value == NULL) ||
-		     (fnmatch(kv->kv_value, value,
-		      FNM_CASEFOLD) != FNM_NOMATCH))) {
+		if (((kv->kv_flags & KV_FLAG_KEY_PATTERN) ?
+		    kv_match_key(kv, key, 0) :
+		    strcasecmp(kv->kv_key, key) == 0) &&
+		    (kv->kv_value == NULL ||
+		     kv_match_val(kv, value, FNM_CASEFOLD))) {
+			log_debug("%s: matched cookie \"%s\" value \"%s\" "
+			    "(rule value \"%s\")",
+			    __func__, key, value,
+			    kv->kv_value ? kv->kv_value : "(any)");
 			ret = RES_DROP;
 			goto done;
 		}
 	}
-
 	ret = RES_PASS;
 
  done:
@@ -1014,16 +1035,21 @@ relay_lookup_cookie(struct ctl_relay_event *cre, const char *str,
 	return (ret);
 }
 
+/*
+ * Devide the http query string by "&" and the key/value pairs by "=".
+ * Search key/value pair pattern matching, of seccessful match return RES_DROP
+ * otherwise RES_FAIL.
+ */
 int
 relay_lookup_query(struct ctl_relay_event *cre, struct kv *kv)
 {
 	struct http_descriptor	*desc = cre->desc;
 	struct kv		*match = &desc->http_matchquery;
 	char			*val, *ptr, *tmpkey = NULL, *tmpval = NULL;
-	int			 ret = -1;
+	int			 ret = RES_FAIL;
 
 	if (desc->http_query == NULL)
-		return (-1);
+		return (ret);
 	if ((val = strdup(desc->http_query)) == NULL) {
 		return (RES_INTERNAL);
 	}
@@ -1038,11 +1064,14 @@ relay_lookup_query(struct ctl_relay_event *cre, struct kv *kv)
 			continue;
 		*tmpval++ = '\0';
 
-		if (fnmatch(kv->kv_key, tmpkey, 0) != FNM_NOMATCH &&
-		    (kv->kv_value == NULL || fnmatch(kv->kv_value, tmpval, 0) !=
-		     FNM_NOMATCH))
+		if (kv_match_key(kv, tmpkey, 0) &&
+		    (kv->kv_value == NULL || kv_match_val(kv, tmpval, 0))) {
+			log_debug("%s: matched query key \"%s\" value \"%s\" "
+			    "(rule key \"%s\" value \"%s\")",
+			    __func__, tmpkey, tmpval, kv->kv_key,
+			    kv->kv_value ? kv->kv_value : "(any)");
 			break;
-		else
+		} else
 			tmpkey = NULL;
 	}
 
@@ -1055,7 +1084,7 @@ relay_lookup_query(struct ctl_relay_event *cre, struct kv *kv)
 	match->kv_value = strdup(tmpval);
 	if (match->kv_value == NULL)
 		goto done;
-	ret = 0;
+	ret = RES_DROP;
 
  done:
 	free(val);
@@ -1208,6 +1237,7 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf,
 
 	if (strstr(val, "$HOST") != NULL) {
 		key.kv_key = "Host";
+		/* look up the Host header for $HOST expansion */
 		host = kv_find(&desc->http_headers, &key);
 		if (host) {
 			if (host->kv_value == NULL)
@@ -1439,7 +1469,7 @@ relay_httpquery_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 		return (0);
 	else if (kv->kv_key == NULL)
 		return (0);
-	else if ((res = relay_lookup_query(cre, kv)) != 0)
+	else if ((res = relay_lookup_query(cre, kv)) != RES_DROP)
 		return (res);
 
 	relay_match(actions, kv, match, NULL);
@@ -1447,6 +1477,13 @@ relay_httpquery_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	return (0);
 }
 
+/*
+ * Match the rule against request or response headers.
+ * When the rule has a value, it is compared against the header value
+ * (default glob(7), or patterns(7) when pattern is set).
+ * Return 0 on match or when the header will be appended or set later,
+ * or a negative value on mismatch or missing header.
+ */
 int
 relay_httpheader_test(struct ctl_relay_event *cre, struct relay_rule *rule,
     struct kvlist *actions)
@@ -1458,6 +1495,7 @@ relay_httpheader_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	if (kv->kv_type != KEY_TYPE_HEADER)
 		return (0);
 
+	/* find a header matching the rule key (pattern/glob aware) */
 	match = kv_find(&desc->http_headers, kv);
 
 	if (kv->kv_option == KEY_OPTION_APPEND ||
@@ -1467,13 +1505,14 @@ relay_httpheader_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 		/* Fail if header doesn't exist */
 		return (-1);
 	} else {
-		if (fnmatch(kv->kv_key, match->kv_key,
-		    FNM_CASEFOLD) == FNM_NOMATCH)
+		if (kv->kv_value != NULL && match->kv_value != NULL &&
+		    !kv_match_val(kv, match->kv_value, 0)) {
+			log_debug("%s: rule %d: header \"%s\" value mismatch: "
+			    "rule \"%s\" vs. actual \"%s\"",
+			    __func__, rule->rule_id, kv->kv_key,
+			    kv->kv_value, match->kv_value);
 			return (-1);
-		if (kv->kv_value != NULL &&
-		    match->kv_value != NULL &&
-		    fnmatch(kv->kv_value, match->kv_value, 0) == FNM_NOMATCH)
-			return (-1);
+		}
 	}
 
 	relay_match(actions, kv, match, &desc->http_headers);
@@ -1481,6 +1520,12 @@ relay_httpheader_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	return (0);
 }
 
+/*
+ * Match the rule against the request path, and when a rule value is set
+ * also against the query string.
+ * Return 0 on match or when the path is only being stripped,
+ * or a negative value on mismatch.
+ */
 int
 relay_httppath_test(struct ctl_relay_event *cre, struct relay_rule *rule,
     struct kvlist *actions)
@@ -1495,15 +1540,23 @@ relay_httppath_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	else if (kv->kv_option != KEY_OPTION_STRIP) {
 		if (kv->kv_key == NULL)
 			return (0);
-		else if (fnmatch(kv->kv_key, desc->http_path, 0) == FNM_NOMATCH)
+		else if (!kv_match_key(kv, desc->http_path, 0)) {
+			log_debug("%s: rule %d: path \"%s\" does not match "
+			    "rule key \"%s\"",
+			    __func__, rule->rule_id, desc->http_path,
+			    kv->kv_key);
 			return (-1);
-		else if (kv->kv_value != NULL &&
+		} else if (kv->kv_value != NULL &&
 		    kv->kv_option == KEY_OPTION_NONE) {
 			query = desc->http_query == NULL ? "" :
 			    desc->http_query;
-			if (fnmatch(kv->kv_value, query, FNM_CASEFOLD) ==
-			    FNM_NOMATCH)
+			if (!kv_match_val(kv, query, FNM_CASEFOLD)) {
+				log_debug("%s: rule %d: query \"%s\" does not "
+				    "match rule value \"%s\"",
+				    __func__, rule->rule_id, query,
+				    kv->kv_value);
 				return (-1);
+			}
 		}
 	}
 
@@ -1512,6 +1565,10 @@ relay_httppath_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	return (0);
 }
 
+/*
+ * Match the rule against the full URL (Host header + path[?query]) via
+ * relay_lookup_url.
+ */
 int
 relay_httpurl_test(struct ctl_relay_event *cre, struct relay_rule *rule,
     struct kvlist *actions)
@@ -1533,8 +1590,11 @@ relay_httpurl_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 		return (0);
 	else if (rule->rule_action != RULE_ACTION_BLOCK &&
 	    kv->kv_option == KEY_OPTION_LOG &&
-	    fnmatch(kv->kv_key, match->kv_key, FNM_CASEFOLD) != FNM_NOMATCH) {
-		/* fnmatch url only for logging */
+	    kv_match_key(kv, match->kv_key, FNM_CASEFOLD)) {
+		log_info("%s: rule %d: url \"%s\" matched",
+		    __func__, rule->rule_id,
+		    match->kv_key ? match->kv_key : "");
+		/* match url only for logging */
 	} else if ((res = relay_lookup_url(cre, host->kv_value, kv)) != 0)
 		return (res);
 	relay_match(actions, kv, match, NULL);
@@ -1577,7 +1637,7 @@ relay_httpcookie_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 		if (kv->kv_key == NULL || match->kv_value == NULL)
 			return (0);
 		else if ((res = relay_lookup_cookie(cre, match->kv_value,
-		    kv)) != 0)
+		    kv)) != RES_DROP)
 			return (res);
 	}
 
