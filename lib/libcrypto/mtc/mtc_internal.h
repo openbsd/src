@@ -320,6 +320,20 @@ int mtc_cosigned_message(const uint8_t *cosigner_id, size_t cosigner_id_len,
     size_t subtree_hash_len, uint8_t **out, size_t *out_len);
 
 /*
+ * Verifies ctx->cert as an MTC against the CAs trusted by ctx->store: its
+ * proof, then mtc_leaf_checks().  On success ctx->chain holds the
+ * certificate alone.  Returns 1, or 0 with the reason in ctx->error.  The
+ * verification callback is not called.
+ */
+int x509_verify_mtc(X509_STORE_CTX *ctx);
+
+/*
+ * Checks ctx->cert against ctx->param as a lone leaf: validity, identity,
+ * purpose and extensions.  Returns 1, or 0 with the reason in ctx->error.
+ */
+int mtc_leaf_checks(X509_STORE_CTX *ctx);
+
+/*
  * Revocation by serial number, per section 7.5 of
  * draft-ietf-plants-merkle-tree-certs-05.  A serial is a log number in the
  * top 16 bits and a log index in the low 48.  Serials below min_serial and

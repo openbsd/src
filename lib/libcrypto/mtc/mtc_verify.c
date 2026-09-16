@@ -17,7 +17,8 @@
 
 /*
  * Verification of a Merkle Tree Certificate's proof against a trusted CA,
- * per section 7.2 of draft-ietf-plants-merkle-tree-certs-05.
+ * per section 7.2 of draft-ietf-plants-merkle-tree-certs-05, and of the
+ * certificate in an X509_STORE_CTX.
  */
 
 #include <stddef.h>
@@ -25,17 +26,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <openssl/mtc.h>
 
 #include <openssl/asn1.h>
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 
 #include "bytestring.h"
 #include "mtc_internal.h"
+#include "x509_internal.h"
 #include "x509_local.h"
 
 /* 1.3.6.1.4.1.44363.47.0, the signature algorithm of an MTC (6.2). */
@@ -412,6 +417,168 @@ mtc_verify(struct mtc_ca *ca, X509 *cert, int *error)
  err:
 	free(tbs);
 	free(entry);
+
+	return ret;
+}
+
+static int
+leaf_check_times(X509_STORE_CTX *ctx)
+{
+	X509 *cert = ctx->cert;
+	time_t when, not_before, not_after;
+
+	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
+		when = ctx->param->check_time;
+	else if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
+		return 1;
+	else
+		when = time(NULL);
+
+	if (!x509_verify_asn1_time_to_time_t(X509_get_notBefore(cert), 0,
+	    &not_before)) {
+		ctx->error = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
+		return 0;
+	}
+	if (when < not_before) {
+		ctx->error = X509_V_ERR_CERT_NOT_YET_VALID;
+		return 0;
+	}
+	if (!x509_verify_asn1_time_to_time_t(X509_get_notAfter(cert), 1,
+	    &not_after)) {
+		ctx->error = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
+		return 0;
+	}
+	if (when > not_after) {
+		ctx->error = X509_V_ERR_CERT_HAS_EXPIRED;
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+leaf_check_hosts(X509_STORE_CTX *ctx)
+{
+	X509_VERIFY_PARAM *vpm = ctx->param;
+	const char *name;
+	int i;
+
+	free(vpm->peername);
+	vpm->peername = NULL;
+
+	for (i = 0; i < sk_OPENSSL_STRING_num(vpm->hosts); i++) {
+		name = sk_OPENSSL_STRING_value(vpm->hosts, i);
+		if (X509_check_host(ctx->cert, name, strlen(name),
+		    vpm->hostflags, &vpm->peername) > 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+static int
+leaf_check_id(X509_STORE_CTX *ctx)
+{
+	X509_VERIFY_PARAM *vpm = ctx->param;
+	X509 *cert = ctx->cert;
+
+	if (vpm->hosts != NULL && !leaf_check_hosts(ctx)) {
+		ctx->error = X509_V_ERR_HOSTNAME_MISMATCH;
+		return 0;
+	}
+	if (vpm->email != NULL && X509_check_email(cert, vpm->email,
+	    vpm->emaillen, 0) <= 0) {
+		ctx->error = X509_V_ERR_EMAIL_MISMATCH;
+		return 0;
+	}
+	if (vpm->ip != NULL && X509_check_ip(cert, vpm->ip, vpm->iplen,
+	    0) <= 0) {
+		ctx->error = X509_V_ERR_IP_ADDRESS_MISMATCH;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+mtc_leaf_checks(X509_STORE_CTX *ctx)
+{
+	X509 *cert = ctx->cert;
+
+	if (!x509v3_cache_extensions(cert)) {
+		ctx->error = X509_V_ERR_UNSPECIFIED;
+		return 0;
+	}
+	if (!leaf_check_times(ctx))
+		return 0;
+	if (!leaf_check_id(ctx))
+		return 0;
+	if (ctx->param->purpose >= X509_PURPOSE_MIN &&
+	    X509_check_purpose(cert, ctx->param->purpose, 0) != 1) {
+		ctx->error = X509_V_ERR_INVALID_PURPOSE;
+		return 0;
+	}
+	if ((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0 &&
+	    (cert->ex_flags & EXFLAG_CRITICAL) != 0) {
+		ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
+		return 0;
+	}
+	if (cert->altname != NULL && sk_GENERAL_NAME_num(cert->altname) <= 0) {
+		ctx->error = X509_V_ERR_INVALID_EXTENSION;
+		return 0;
+	}
+	if (X509_ALGOR_cmp(cert->sig_alg, cert->cert_info->signature) != 0) {
+		ctx->error = X509_V_ERR_MTC_BAD_PROOF;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+x509_verify_mtc(X509_STORE_CTX *ctx)
+{
+	struct mtc_ca *ca;
+	STACK_OF(X509) *chain = NULL;
+	int ret = 0;
+
+	if (ctx->chain != NULL) {
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		goto err;
+	}
+	if (ctx->store == NULL) {
+		ctx->error = X509_V_ERR_MTC_UNTRUSTED_CA;
+		goto err;
+	}
+
+	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+	ca = mtc_ca_for_cert(x509_store_get0_mtc_cas(ctx->store), ctx->cert,
+	    &ctx->error);
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+	if (ca == NULL)
+		goto err;
+
+	if (!mtc_verify(ca, ctx->cert, &ctx->error))
+		goto err;
+	if (!mtc_leaf_checks(ctx))
+		goto err;
+
+	if ((chain = sk_X509_new_null()) == NULL ||
+	    !sk_X509_push(chain, ctx->cert)) {
+		ctx->error = X509_V_ERR_OUT_OF_MEM;
+		goto err;
+	}
+	X509_up_ref(ctx->cert);
+	ctx->chain = chain;
+	chain = NULL;
+	ctx->error = X509_V_OK;
+
+	ret = 1;
+
+ err:
+	sk_X509_free(chain);
+	ctx->current_cert = ctx->cert;
+	ctx->error_depth = 0;
 
 	return ret;
 }

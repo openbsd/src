@@ -20,12 +20,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 
 #include "mtc_internal.h"
 #include "x509_local.h"
@@ -1115,6 +1118,265 @@ test_verify_boringssl(void)
 	return failed;
 }
 
+/* Times within, before and after the leaves' validity, 2020 to 2035. */
+static const time_t valid_time = 1609459200;	/* 2021-01-01T00:00:00Z */
+static const time_t early_time = 1262304000;	/* 2010-01-01T00:00:00Z */
+static const time_t late_time = 4102444800;	/* 2100-01-01T00:00:00Z */
+
+/*
+ * Verifies cert in a context over store at time when, with host and purpose
+ * applied when given, reporting the result and ctx->error.
+ */
+static int
+store_verify(X509_STORE *store, X509 *cert, const char *host, time_t when,
+    int purpose, int *error)
+{
+	X509_STORE_CTX *ctx;
+	X509_VERIFY_PARAM *param;
+	int ret;
+
+	if ((ctx = X509_STORE_CTX_new()) == NULL)
+		errx(1, "X509_STORE_CTX_new");
+	if (!X509_STORE_CTX_init(ctx, store, cert, NULL))
+		errx(1, "X509_STORE_CTX_init");
+	param = X509_STORE_CTX_get0_param(ctx);
+	X509_VERIFY_PARAM_set_time(param, when);
+	if (host != NULL && !X509_VERIFY_PARAM_set1_host(param, host, 0))
+		errx(1, "X509_VERIFY_PARAM_set1_host");
+	if (purpose != 0 && !X509_VERIFY_PARAM_set_purpose(param, purpose))
+		errx(1, "X509_VERIFY_PARAM_set_purpose");
+
+	ret = x509_verify_mtc(ctx);
+	*error = X509_STORE_CTX_get_error(ctx);
+	if (ret) {
+		if (sk_X509_num(X509_STORE_CTX_get0_chain(ctx)) != 1 ||
+		    sk_X509_value(X509_STORE_CTX_get0_chain(ctx), 0) != cert) {
+			warnx("verified chain is not the leaf alone");
+			ret = -1;
+		}
+		if (X509_STORE_CTX_get_current_cert(ctx) != cert ||
+		    X509_STORE_CTX_get_error_depth(ctx) != 0) {
+			warnx("current cert or depth not the leaf");
+			ret = -1;
+		}
+	}
+	X509_STORE_CTX_free(ctx);
+
+	return ret;
+}
+
+static int
+check_store_verify(const char *what, X509_STORE *store, X509 *cert,
+    const char *host, time_t when, int purpose, int want_ret, int want_error)
+{
+	int error, ret;
+
+	ret = store_verify(store, cert, host, when, purpose, &error);
+	if (ret != want_ret || error != want_error) {
+		warnx("%s: x509_verify_mtc %d error %d (%s), want %d %d", what,
+		    ret, error, X509_verify_cert_error_string(error), want_ret,
+		    want_error);
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * An MTC verifies in a store context when its proof verifies against a CA
+ * the store trusts and it passes the leaf checks for the parameters given;
+ * the verified chain is the leaf alone.
+ */
+static int
+test_x509_verify_mtc(void)
+{
+	STACK_OF(OSSL_MTC_CA) *cas;
+	struct mtc_ca *ca;
+	X509_STORE *store;
+	X509_STORE_CTX *ctx;
+	X509 *cert, *landmark;
+	int failed = 0;
+
+	cas = load_ca();
+	ca = sk_OSSL_MTC_CA_value(cas, 0);
+	if ((store = X509_STORE_new()) == NULL)
+		errx(1, "X509_STORE_new");
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	landmark = load_cert("mtc-landmark.pem");
+
+	failed |= check_store_verify("untrusting store", store, cert, NULL,
+	    valid_time, 0, 0, X509_V_ERR_MTC_UNTRUSTED_CA);
+	failed |= check_store_verify("no store", NULL, cert, NULL, valid_time,
+	    0, 0, X509_V_ERR_MTC_UNTRUSTED_CA);
+
+	if (!X509_STORE_trust_mtc_ca(store, ca))
+		errx(1, "X509_STORE_trust_mtc_ca");
+
+	failed |= check_store_verify("cosigned", store, cert, NULL, valid_time,
+	    0, 1, X509_V_OK);
+	failed |= check_store_verify("cosigned, host", store, cert, "a.example",
+	    valid_time, 0, 1, X509_V_OK);
+	failed |= check_store_verify("cosigned, other host", store, cert,
+	    "b.example", valid_time, 0, 0, X509_V_ERR_HOSTNAME_MISMATCH);
+	failed |= check_store_verify("cosigned, not yet valid", store, cert,
+	    NULL, early_time, 0, 0, X509_V_ERR_CERT_NOT_YET_VALID);
+	failed |= check_store_verify("cosigned, expired", store, cert, NULL,
+	    late_time, 0, 0, X509_V_ERR_CERT_HAS_EXPIRED);
+	failed |= check_store_verify("cosigned, server", store, cert, NULL,
+	    valid_time, X509_PURPOSE_SSL_SERVER, 1, X509_V_OK);
+	failed |= check_store_verify("landmark, untrusted", store, landmark,
+	    NULL, valid_time, 0, 0, X509_V_ERR_MTC_NOT_TRUSTED);
+
+	load_landmark_file(ca, 1, "mtc-landmark-landmarks.txt");
+	trust_subtree_file(ca, "mtc-landmark-subtrees.txt");
+	failed |= check_store_verify("landmark", store, landmark, NULL,
+	    valid_time, 0, 1, X509_V_OK);
+	failed |= check_store_verify("landmark, server", store, landmark, NULL,
+	    valid_time, X509_PURPOSE_SSL_SERVER, 1, X509_V_OK);
+	failed |= check_store_verify("landmark, client", store, landmark, NULL,
+	    valid_time, X509_PURPOSE_SSL_CLIENT, 0, X509_V_ERR_INVALID_PURPOSE);
+
+	if ((ctx = X509_STORE_CTX_new()) == NULL)
+		errx(1, "X509_STORE_CTX_new");
+	if (!X509_STORE_CTX_init(ctx, store, cert, NULL))
+		errx(1, "X509_STORE_CTX_init");
+	X509_VERIFY_PARAM_set_time(X509_STORE_CTX_get0_param(ctx), valid_time);
+	if (x509_verify_mtc(ctx) != 1 || x509_verify_mtc(ctx) != 0 ||
+	    X509_STORE_CTX_get_error(ctx) != X509_V_ERR_INVALID_CALL) {
+		warnx("second verification in one context not refused");
+		failed = 1;
+	}
+	X509_STORE_CTX_free(ctx);
+
+	X509_free(landmark);
+	X509_free(cert);
+	X509_STORE_free(store);
+	free_cas(cas);
+
+	return failed;
+}
+
+/* Runs the leaf checks alone over cert at valid_time with flags. */
+static int
+leaf_checks(X509 *cert, unsigned long flags, int *error)
+{
+	X509_STORE_CTX *ctx;
+	X509_VERIFY_PARAM *param;
+	int ret;
+
+	if ((ctx = X509_STORE_CTX_new()) == NULL)
+		errx(1, "X509_STORE_CTX_new");
+	if (!X509_STORE_CTX_init(ctx, NULL, cert, NULL))
+		errx(1, "X509_STORE_CTX_init");
+	param = X509_STORE_CTX_get0_param(ctx);
+	X509_VERIFY_PARAM_set_time(param, valid_time);
+	if (!X509_VERIFY_PARAM_set_flags(param, flags))
+		errx(1, "X509_VERIFY_PARAM_set_flags");
+
+	ret = mtc_leaf_checks(ctx);
+	*error = X509_STORE_CTX_get_error(ctx);
+	X509_STORE_CTX_free(ctx);
+
+	return ret;
+}
+
+/* The leaf checks leave ctx->error alone when they pass. */
+static int
+check_leaf(const char *what, X509 *cert, unsigned long flags, int want_ret,
+    int want_error)
+{
+	int error, ret;
+
+	ret = leaf_checks(cert, flags, &error);
+	if (ret != want_ret || (ret == 0 && error != want_error)) {
+		warnx("%s: leaf checks %d error %d (%s), want %d %d", what, ret,
+		    error, X509_verify_cert_error_string(error), want_ret,
+		    want_error);
+		return 1;
+	}
+
+	return 0;
+}
+
+/* Adds an extension under 1.3.6.1.4.1.32473.99 (an RFC 5612 example arc). */
+static void
+add_example_ext(X509 *cert, int critical)
+{
+	ASN1_OBJECT *obj;
+	ASN1_OCTET_STRING *value;
+	X509_EXTENSION *ext;
+
+	if ((obj = OBJ_txt2obj("1.3.6.1.4.1.32473.99", 1)) == NULL)
+		errx(1, "OBJ_txt2obj");
+	if ((value = ASN1_OCTET_STRING_new()) == NULL ||
+	    !ASN1_OCTET_STRING_set(value, (const unsigned char *)"!", 1))
+		errx(1, "ASN1_OCTET_STRING_set");
+	if ((ext = X509_EXTENSION_create_by_OBJ(NULL, obj, critical, value)) ==
+	    NULL)
+		errx(1, "X509_EXTENSION_create_by_OBJ");
+	if (!X509_add_ext(cert, ext, -1))
+		errx(1, "X509_add_ext");
+	X509_EXTENSION_free(ext);
+	ASN1_OCTET_STRING_free(value);
+	ASN1_OBJECT_free(obj);
+}
+
+/*
+ * The leaf checks reject a duplicate extension, an unhandled critical
+ * extension unless asked to ignore it, an empty subject alternative name
+ * and a TBSCertificate signature algorithm other than the outer one.
+ */
+static int
+test_leaf_checks(void)
+{
+	GENERAL_NAMES *names;
+	X509 *cert;
+	int loc, failed = 0;
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	failed |= check_leaf("as issued", cert, 0, 1, X509_V_OK);
+	X509_free(cert);
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	add_example_ext(cert, 0);
+	add_example_ext(cert, 0);
+	failed |= check_leaf("duplicate extension", cert, 0, 0,
+	    X509_V_ERR_UNSPECIFIED);
+	X509_free(cert);
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	add_example_ext(cert, 1);
+	failed |= check_leaf("unhandled critical extension", cert, 0, 0,
+	    X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
+	failed |= check_leaf("ignored critical extension", cert,
+	    X509_V_FLAG_IGNORE_CRITICAL, 1, X509_V_OK);
+	X509_free(cert);
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	if ((loc = X509_get_ext_by_NID(cert, NID_subject_alt_name, -1)) < 0)
+		errx(1, "mtc-leaf-cosigned.pem: no subject alternative name");
+	X509_EXTENSION_free(X509_delete_ext(cert, loc));
+	if ((names = sk_GENERAL_NAME_new_null()) == NULL)
+		errx(1, "sk_GENERAL_NAME_new_null");
+	if (!X509_add1_ext_i2d(cert, NID_subject_alt_name, names, 0,
+	    X509V3_ADD_DEFAULT))
+		errx(1, "X509_add1_ext_i2d");
+	sk_GENERAL_NAME_free(names);
+	failed |= check_leaf("empty subject alternative name", cert, 0, 0,
+	    X509_V_ERR_INVALID_EXTENSION);
+	X509_free(cert);
+
+	cert = load_cert("mtc-leaf-cosigned.pem");
+	if (!X509_ALGOR_set0(cert->cert_info->signature,
+	    OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL))
+		errx(1, "X509_ALGOR_set0");
+	failed |= check_leaf("inner signature algorithm", cert, 0, 0,
+	    X509_V_ERR_MTC_BAD_PROOF);
+	X509_free(cert);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1141,6 +1403,8 @@ main(int argc, char **argv)
 	failed |= test_verify_cosigned();
 	failed |= test_verify_landmark();
 	failed |= test_verify_boringssl();
+	failed |= test_x509_verify_mtc();
+	failed |= test_leaf_checks();
 	mtc_ca_free(NULL);
 
 	return failed;
