@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.297 2026/09/16 00:16:10 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.298 2026/09/16 00:25:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -449,6 +449,7 @@ struct host {
 	int			 idx;
 	u_int16_t		 he;
 	int			 code;
+	u_int16_t		 icmp_ident;
 	struct ctl_tcp_event	 cte;
 };
 TAILQ_HEAD(hostlist, host);
@@ -1118,7 +1119,6 @@ struct relayd {
 	struct relaycertlist	*sc_certs;
 	struct sessionlist	 sc_sessions;
 	char			 sc_demote_group[IFNAMSIZ];
-	u_int16_t		 sc_id;
 	int			 sc_rtable;
 
 	struct event		 sc_statev;

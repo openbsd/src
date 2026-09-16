@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.50 2026/06/15 11:02:13 rsadowski Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.51 2026/09/16 00:25:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -69,7 +69,6 @@ icmp_init(struct relayd *env)
 	icmp_setup(env, &env->sc_icmp_recv, AF_INET);
 	icmp_setup(env, &env->sc_icmp6_send, AF_INET6);
 	icmp_setup(env, &env->sc_icmp6_recv, AF_INET6);
-	env->sc_id = getpid() & 0xffff;
 }
 
 void
@@ -77,6 +76,7 @@ schedule_icmp(struct relayd *env, struct host *host)
 {
 	host->last_up = host->up;
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
+	host->icmp_ident = arc4random() & 0xFFFF;
 
 	if (((struct sockaddr *)&host->conf.ss)->sa_family == AF_INET)
 		env->sc_has_icmp = 1;
@@ -181,14 +181,12 @@ send_icmp(int s, short event, void *arg)
 	if (cie->af == AF_INET) {
 		icp->icmp_type = ICMP_ECHO;
 		icp->icmp_code = 0;
-		icp->icmp_id = htons(cie->env->sc_id);
 		icp->icmp_cksum = 0;
 		slen = sizeof(struct sockaddr_in);
 	} else {
 		icp6->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp6->icmp6_code = 0;
 		icp6->icmp6_cksum = 0;
-		icp6->icmp6_id = htons(cie->env->sc_id);
 		slen = sizeof(struct sockaddr_in6);
 	}
 
@@ -211,10 +209,12 @@ send_icmp(int s, short event, void *arg)
 				icp->icmp_seq = htons(i);
 				icp->icmp_cksum = 0;
 				icp->icmp_mask = id;
+				icp->icmp_id = host->icmp_ident;
 				icp->icmp_cksum = in_cksum((u_short *)icp,
 				    sizeof(packet));
 			} else {
 				icp6->icmp6_seq = htons(i);
+				icp6->icmp6_id = host->icmp_ident;
 				icp6->icmp6_cksum = 0;
 				memcpy(packet + sizeof(*icp6), &id, sizeof(id));
 				icp6->icmp6_cksum = in_cksum((u_short *)icp6,
@@ -315,21 +315,25 @@ recv_icmp(int s, short event, void *arg)
 
 	if (cie->af == AF_INET) {
 		icp = (struct icmp *)(packet + sizeof(struct ip));
-		icpid = ntohs(icp->icmp_id);
+		icpid = icp->icmp_id;
 		id = icp->icmp_mask;
 	} else {
 		icp6 = (struct icmp6_hdr *)packet;
-		icpid = ntohs(icp6->icmp6_id);
+		icpid = icp6->icmp6_id;
 		memcpy(&id, packet + sizeof(*icp6), sizeof(id));
 	}
-	if (icpid != cie->env->sc_id)
-		goto retry;
 	id = ntohl(id);
 	host = host_find(cie->env, id);
 	if (host == NULL) {
 		log_warn("%s: ping for unknown host received", __func__);
 		goto retry;
 	}
+	if (icpid != host->icmp_ident) {
+		log_warn("%s: bad icmp ident from %s", __func__,
+		    host->conf.name);
+		goto retry;
+	}
+
 	if (bcmp(&ss, &host->conf.ss, slen)) {
 		log_warnx("%s: forged icmp packet?", __func__);
 		goto retry;

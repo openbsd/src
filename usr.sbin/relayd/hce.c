@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.88 2026/08/12 18:38:17 rsadowski Exp $	*/
+/*	$OpenBSD: hce.c,v 1.89 2026/09/16 00:25:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -64,8 +64,6 @@ hce_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
-
-	env->sc_id = getpid() & 0xffff;
 
 	/* Allow maximum available sockets for TCP checks */
 	socket_rlimit(-1);
