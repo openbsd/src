@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.80 2022/10/04 07:01:38 kn Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.81 2026/09/16 04:24:52 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -419,7 +419,7 @@ rarp_bootable(u_int32_t addr)
 		if (chdir(TFTP_DIR) == -1)
 			error("chdir: %s", strerror(errno));
 		d = opendir(".");
-		if (d == 0)
+		if (d == NULL)
 			error("opendir: %s", strerror(errno));
 		dd = d;
 	}
