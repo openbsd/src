@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.99 2026/05/05 10:23:27 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.100 2026/09/16 16:02:40 jmatthew Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -3253,6 +3253,12 @@ const struct rkclock rk3528_clocks[] = {
 	{
 		RK3528_TCLK_EMMC, 0, 0, 0,
 		{ RK3528_XIN24M }
+	},
+	{
+		RK3528_CLK_I2C5, RK3528_CRU_CLKSEL_CON(63),
+		SEL(15, 14), 0,
+		{ RK3528_CLK_MATRIX_200M_SRC, RK3528_CLK_MATRIX_100M_SRC,
+		  RK3528_CLK_MATRIX_50M_SRC, RK3528_XIN24M }
 	},
 	{
 		RK3528_CLK_GMAC1_SRC_VPU, 0, 0, 0,
