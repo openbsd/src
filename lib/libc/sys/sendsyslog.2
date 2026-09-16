@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.13 2021/03/09 15:08:23 bluhm Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.14 2026/09/16 22:26:12 deraadt Exp $
 .\"
 .\" Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 .\" Copyright (c) 2014 Theo de Raadt
@@ -15,15 +15,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2021 $
+.Dd $Mdocdate: September 16 2026 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
 .Nm sendsyslog
 .Nd send a message to syslogd
 .Sh SYNOPSIS
-.In sys/syslog.h
 .In sys/types.h
+.In sys/syslog.h
 .Ft int
 .Fn sendsyslog "const char *msg" "size_t len" "int flags"
 .Sh DESCRIPTION
