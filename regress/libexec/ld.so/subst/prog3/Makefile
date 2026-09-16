@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2026/09/16 15:48:56 kurt Exp $
+# $OpenBSD: Makefile,v 1.2 2026/09/16 22:52:10 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -24,8 +24,8 @@ YY_OBJDIR!=	if [ -d $(YY_DIR)/${__objdir} ]; then \
 			echo "$(YY_DIR)"; \
 		fi
 
-AA_ORIGIN_DIR=	libaa
 YY_ORIGIN_DIR=	libyy
+AA_ORIGIN_DIR=	libyy/libaa
 
 PROG=		prog3
 SRCS=		main.c
@@ -43,8 +43,8 @@ ${YY_ORIGIN_DIR}:
 	cp $(YY_OBJDIR)/libyy.so* ${YY_ORIGIN_DIR}/
 
 ${AA_ORIGIN_DIR}: ${YY_ORIGIN_DIR}
-	mkdir -p ${YY_ORIGIN_DIR}/${AA_ORIGIN_DIR}
-	cp $(AA_OBJDIR)/libaa.so* ${YY_ORIGIN_DIR}/${AA_ORIGIN_DIR}/
+	mkdir -p ${AA_ORIGIN_DIR}
+	cp $(AA_OBJDIR)/libaa.so* ${AA_ORIGIN_DIR}/
 
 test1: $(PROG) ${AA_ORIGIN_DIR}
 	./$(PROG)
