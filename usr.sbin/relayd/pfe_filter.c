@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.69 2026/08/07 10:21:39 rsadowski Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.70 2026/09/16 12:47:12 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -92,10 +92,16 @@ init_tables(struct relayd *env)
 		return;
 
 	/*
-	 * clear all tables, since some already existed
+	 * Clear disabled tables and tables belonging to disabled redirects.
+	 * Don't touch enabled tables since that could disrupt traffic.
 	 */
-	TAILQ_FOREACH(rdr, env->sc_rdrs, entry)
-		flush_table(env, rdr);
+	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
+		if (rdr->conf.flags & F_DISABLE)
+			sync_ruleset(env, rdr, 0);
+		if (rdr->conf.flags & F_DISABLE ||
+		    rdr->table->conf.flags & F_DISABLE)
+			flush_table(env, rdr);
+	}
 
 	return;
 
