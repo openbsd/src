@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.88 2026/08/12 00:52:40 mvs Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.89 2026/09/16 16:37:39 mvs Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -69,11 +69,11 @@
 struct rwlock sysvshm_lock = RWLOCK_INITIALIZER("shmlk");
 
 extern struct shminfo shminfo;
-struct shmid_ds **shmsegs;	/* linear mapping of shmid -> shmseg */
+struct shmid_ds_kern **shmsegs;	/* linear mapping of shmid -> shmseg */
 struct pool shm_pool;
 unsigned short *shmseqs;	/* array of shm sequence numbers */
 
-struct shmid_ds *shm_find_segment_by_shmid(int);
+struct shmid_ds_kern *shm_find_segment_by_shmid(int);
 
 /*
  * Provides the following externally accessible functions:
@@ -84,7 +84,7 @@ struct shmid_ds *shm_find_segment_by_shmid(int);
  * shmsys(arg1, arg2, arg3, arg4);         shm{at,ctl,dt,get}(arg2, arg3, arg4)
  *
  * Structures:
- * shmsegs (an array of 'struct shmid_ds *')
+ * shmsegs (an array of 'struct shmid_ds_kern *')
  * per proc 'struct shmmap_head' with an array of 'struct shmmap_state'
  */
 
@@ -111,7 +111,7 @@ struct shmmap_head {
 };
 
 int shm_find_segment_by_key(key_t);
-void shm_deallocate_segment(struct shmid_ds *);
+void shm_deallocate_segment(struct shmid_ds_kern *);
 int shm_delete_mapping(struct vmspace *, struct shmmap_state *);
 int shmget_existing(struct proc *, struct sys_shmget_args *,
 			 int, int, register_t *);
@@ -121,7 +121,7 @@ int shmget_allocate_segment(struct proc *, struct sys_shmget_args *,
 int
 shm_find_segment_by_key(key_t key)
 {
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 	int i;
 
 	for (i = 0; i < shminfo.shmmni; i++) {
@@ -132,11 +132,11 @@ shm_find_segment_by_key(key_t key)
 	return (-1);
 }
 
-struct shmid_ds *
+struct shmid_ds_kern *
 shm_find_segment_by_shmid(int shmid)
 {
 	int segnum;
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 
 	segnum = IPCID_TO_IX(shmid);
 	if (segnum < 0 || segnum >= shminfo.shmmni ||
@@ -147,7 +147,7 @@ shm_find_segment_by_shmid(int shmid)
 }
 
 void
-shm_deallocate_segment(struct shmid_ds *shmseg)
+shm_deallocate_segment(struct shmid_ds_kern *shmseg)
 {
 	struct shm_handle *shm_handle;
 	size_t size;
@@ -163,7 +163,7 @@ shm_deallocate_segment(struct shmid_ds *shmseg)
 int
 shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s)
 {
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 	int segnum;
 	vaddr_t end;
 
@@ -174,7 +174,7 @@ shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s)
 	end = round_page(shmmap_s->va+shmseg->shm_segsz);
 	shmmap_s->shmid = -1;
 	shmseg->shm_dtime = gettime();
-	if ((--shmseg->shm_nattch <= 0) &&
+	if ((--shmseg->shm_nattch == 0) &&
 	    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
 		shm_last_free = segnum;
 		shmsegs[shm_last_free] = NULL;
@@ -218,7 +218,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int error, i, flags = 0;
 	struct ucred *cred = p->p_ucred;
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 	struct shmmap_head *shmmap_h;
 	struct shmmap_state *shmmap_s;
 	struct shm_handle *shm_handle;
@@ -292,7 +292,7 @@ allocated:
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
 	    MAP_INHERIT_SHARE, MADV_RANDOM, flags));
 	if (error) {
-		if ((--shmseg->shm_nattch <= 0) &&
+		if ((--shmseg->shm_nattch == 0) &&
 		    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
 			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
 			shmsegs[shm_last_free] = NULL;
@@ -317,13 +317,13 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 	struct sys_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds *) buf;
+		syscallarg(struct shmid_ds_kern *) buf;
 	} */ *uap = v;
 	int		shmid = SCARG(uap, shmid);
 	int		cmd = SCARG(uap, cmd);
 	void		*buf = SCARG(uap, buf);
 	struct ucred	*cred = p->p_ucred;
-	struct shmid_ds	shmbuf, *shmseg;
+	struct shmid_ds_kern	shmbuf, *shmseg;
 	int		error;
 
 	if (cmd == IPC_SET) {
@@ -360,7 +360,7 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 			return (error);
 		shmseg->shm_perm.key = IPC_PRIVATE;
 		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
-		if (shmseg->shm_nattch <= 0) {
+		if (shmseg->shm_nattch == 0) {
 			shm_last_free = IPCID_TO_IX(shmid);
 			shmsegs[shm_last_free] = NULL;
 			shm_deallocate_segment(shmseg);
@@ -383,7 +383,7 @@ shmget_existing(struct proc *p,
 	} */ *uap,
 	int mode, int segnum, register_t *retval)
 {
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 	struct ucred *cred = p->p_ucred;
 	int error;
 
@@ -412,7 +412,7 @@ shmget_allocate_segment(struct proc *p,
 	key_t key;
 	int segnum;
 	struct ucred *cred = p->p_ucred;
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 	struct shm_handle *shm_handle;
 	int error = 0;
 
@@ -509,7 +509,7 @@ shmfork(struct vmspace *vm1, struct vmspace *vm2)
 {
 	struct shmmap_head *shmmap_h;
 	struct shmmap_state *shmmap_s;
-	struct shmid_ds *shmseg;
+	struct shmid_ds_kern *shmseg;
 	size_t size;
 	int i;
 
@@ -555,9 +555,9 @@ shminit(void)
 {
 
 	pool_init(&shm_pool,
-	    sizeof(struct shmid_ds) + sizeof(struct shm_handle), 0,
+	    sizeof(struct shmid_ds_kern) + sizeof(struct shm_handle), 0,
 	    IPL_NONE, PR_WAITOK, "shmpl", NULL);
-	shmsegs = mallocarray(shminfo.shmmni, sizeof(struct shmid_ds *),
+	shmsegs = mallocarray(shminfo.shmmni, sizeof(struct shmid_ds_kern *),
 	    M_SHM, M_WAITOK|M_ZERO);
 	shmseqs = mallocarray(shminfo.shmmni, sizeof(unsigned short),
 	    M_SHM, M_WAITOK|M_ZERO);
@@ -572,15 +572,15 @@ shminit(void)
 void
 shm_reallocate(int val)
 {
-	struct shmid_ds **newsegs;
+	struct shmid_ds_kern **newsegs;
 	unsigned short *newseqs;
 
-	newsegs = mallocarray(val, sizeof(struct shmid_ds *),
+	newsegs = mallocarray(val, sizeof(struct shmid_ds_kern *),
 	    M_SHM, M_WAITOK | M_ZERO);
 	memcpy(newsegs, shmsegs,
-	    shminfo.shmmni * sizeof(struct shmid_ds *));
+	    shminfo.shmmni * sizeof(struct shmid_ds_kern *));
 	free(shmsegs, M_SHM,
-	    shminfo.shmmni * sizeof(struct shmid_ds *));
+	    shminfo.shmmni * sizeof(struct shmid_ds_kern *));
 	shmsegs = newsegs;
 	newseqs = mallocarray(val, sizeof(unsigned short), M_SHM,
 	    M_WAITOK | M_ZERO);

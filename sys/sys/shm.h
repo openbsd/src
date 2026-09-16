@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.32 2026/07/12 15:49:45 mvs Exp $	*/
+/*	$OpenBSD: shm.h,v 1.33 2026/09/16 16:37:39 mvs Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -128,7 +128,22 @@ struct shm_sysctl_info {
 #ifdef _KERNEL
 extern struct rwlock	sysvshm_lock;
 extern struct shminfo shminfo;
-extern struct shmid_ds **shmsegs;
+extern struct shmid_ds_kern **shmsegs;
+
+struct shmid_ds_kern {
+	struct ipc_perm	shm_perm;	/* operation permission structure */
+	int		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm op */
+	pid_t		shm_cpid;	/* process ID of creator */
+	uint64_t	shm_nattch;	/* number of current attaches */
+	time_t		shm_atime;	/* time of last shmat() */
+	long		__shm_atimensec;
+	time_t		shm_dtime;	/* time of last shmdt() */
+	long		__shm_dtimensec;
+	time_t		shm_ctime;	/* time of last change by shmctl() */
+	long		__shm_ctimensec;
+	void		*shm_internal;	/* implementation specific data */
+};
 
 struct vmspace;
 

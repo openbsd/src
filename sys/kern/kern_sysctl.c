@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.495 2026/07/12 15:49:45 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.496 2026/09/16 16:37:39 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2776,9 +2776,34 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 					break;
 				}
 				if (shmsegs[i]) {
-					memcpy(&info->shmids[i], shmsegs[i],
-					    sizeof(info->shmids[0]));
-					info->shmids[i].shm_internal = NULL;
+					info->shmids[i].shm_perm = 
+					    shmsegs[i]->shm_perm;
+					info->shmids[i].shm_lpid =
+					    shmsegs[i]->shm_lpid;
+					info->shmids[i].shm_segsz =
+					    shmsegs[i]->shm_segsz;
+					info->shmids[i].shm_lpid =
+					    shmsegs[i]->shm_lpid;
+					info->shmids[i].shm_cpid =
+					    shmsegs[i]->shm_cpid;
+					if (shmsegs[i]->shm_nattch > SHRT_MAX)
+						info->shmids[i].shm_nattch =
+						    SHRT_MAX;
+					else
+						info->shmids[i].shm_nattch =
+						    shmsegs[i]->shm_nattch;
+					info->shmids[i].shm_atime =
+					    shmsegs[i]->shm_atime;
+					info->shmids[i].__shm_atimensec =
+					    shmsegs[i]->__shm_atimensec;
+					info->shmids[i].shm_dtime =
+					    shmsegs[i]->shm_dtime;
+					info->shmids[i].__shm_dtimensec =
+					    shmsegs[i]->__shm_dtimensec;
+					info->shmids[i].shm_ctime =
+					    shmsegs[i]->shm_ctime;
+					info->shmids[i].__shm_ctimensec =
+					    shmsegs[i]->__shm_ctimensec;
 				}
 				avail -= sizeof(info->shmids[0]);
 			}
