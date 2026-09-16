@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.130 2025/03/12 14:03:55 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.131 2026/09/16 17:02:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -210,7 +210,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	pitem *item = NULL;
 
 	/* Limit the size of the queue to prevent DOS attacks */
-	if (pqueue_size(queue->q) >= 100)
+	if (pqueue_size(queue->q) >= 16)
 		return 0;
 
 	if ((rdata = malloc(sizeof(*rdata))) == NULL)
@@ -256,7 +256,7 @@ dtls1_buffer_rcontent(SSL *s, rcontent_pqueue *queue, unsigned char *priority)
 	pitem *item = NULL;
 
 	/* Limit the size of the queue to prevent DOS attacks */
-	if (pqueue_size(queue->q) >= 100)
+	if (pqueue_size(queue->q) >= 16)
 		return 0;
 
 	if ((rdata = malloc(sizeof(*rdata))) == NULL)
