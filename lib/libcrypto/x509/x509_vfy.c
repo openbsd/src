@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.153 2026/06/26 06:03:32 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.154 2026/09/16 23:40:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1232,6 +1232,9 @@ get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer, unsigned int *preasons,
 	/* Invalid IDP cannot be processed */
 	if (crl->idp_flags & IDP_INVALID)
 		return 0;
+	/* Don't process deltas at this stage */
+	if (crl->base_crl_number)
+		return 0;
 	/* Reason codes or indirect CRLs need extended CRL support */
 	if (!(ctx->param->flags & X509_V_FLAG_EXTENDED_CRL_SUPPORT)) {
 		if (crl->idp_flags & (IDP_INDIRECT | IDP_REASONS))
@@ -1241,9 +1244,6 @@ get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer, unsigned int *preasons,
 		if (!(crl->idp_reasons & ~tmp_reasons))
 			return 0;
 	}
-	/* Don't process deltas at this stage */
-	else if (crl->base_crl_number)
-		return 0;
 	/* If issuer name doesn't match certificate need indirect CRL */
 	if (X509_NAME_cmp(X509_get_issuer_name(x), X509_CRL_get_issuer(crl))) {
 		if (!(crl->idp_flags & IDP_INDIRECT))
