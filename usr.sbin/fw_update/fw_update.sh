@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.72 2026/09/16 17:40:05 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.73 2026/09/16 22:11:00 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -232,7 +232,7 @@ fetch_cfile() {
 			verify_cfile "$_sig"
 			return $?
 		fi
-		warn "${0##*/}: $CFILE: No such file or directory"
+		warn "${0##*/}: $_sig: No such file or directory"
 		return 1
 	fi
 
