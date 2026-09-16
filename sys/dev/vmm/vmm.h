@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.14 2026/09/02 19:01:29 dv Exp $ */
+/* $OpenBSD: vmm.h,v 1.15 2026/09/16 06:07:19 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -32,6 +32,19 @@
 #define VMM_MAX_VCPUS_PER_VM	64
 #define VMM_MAX_VM_MEM_SIZE	128L * 1024 * 1024 * 1024
 #define VMM_MAX_NICS_PER_VM	4
+
+#ifdef _KERNEL
+/*
+ * Actions returned by machine-dependent VM-exit handlers.
+ */
+enum vmm_action {
+	VMM_ACTION_ADVANCE,		/* Advance PC/IP and re-enter */
+	VMM_ACTION_INJECT,		/* Inject the queued exception */
+	VMM_ACTION_ASSIST,		/* Return to userspace for assist */
+	VMM_ACTION_TERMINATE,		/* Terminate the vcpu */
+	VMM_ACTION_RETRY		/* Re-enter without advancing PC/IP */
+};
+#endif /* _KERNEL */
 
 /* VMCALL services %rax values */
 #define	HVCALL_FORCED_ABORT	0x1234

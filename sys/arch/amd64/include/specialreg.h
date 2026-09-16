@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.127 2026/09/08 21:01:59 daniel Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.128 2026/09/16 06:07:19 dv Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1367,6 +1367,8 @@
 #define VMCS_GUEST_IA32_LDTR_AR		0x4820
 #define VMCS_GUEST_IA32_TR_AR		0x4822
 #define VMCS_GUEST_INTERRUPTIBILITY_ST	0x4824
+#define VMX_INT_STATE_BLOCK_STI		(1 << 0)
+#define VMX_INT_STATE_BLOCK_MOVSS	(1 << 1)
 #define VMCS_GUEST_ACTIVITY_STATE	0x4826
 #define VMCS_GUEST_SMBASE		0x4828
 #define VMCS_GUEST_IA32_SYSENTER_CS	0x482A
