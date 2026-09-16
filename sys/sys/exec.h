@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.59 2026/08/30 19:10:17 kirill Exp $	*/
+/*	$OpenBSD: exec.h,v 1.60 2026/09/16 03:22:35 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@ struct exec_vmcmd_set {
 	struct	exec_vmcmd evs_start[EXEC_DEFAULT_VMCMD_SETSIZE];
 };
 
-struct elf_args;
 struct exec_package {
 	const char *ep_name;		/* file's name */
 	void	*ep_hdr;		/* file's exec header */
@@ -123,11 +122,13 @@ struct exec_package {
 	u_long	ep_maxsaddr;		/* proc's max stack addr ("top") */
 	u_long	ep_minsaddr;		/* proc's min stack addr ("bottom") */
 	u_long	ep_ssize;		/* size of process's stack */
-	u_long	ep_entry;		/* process's entry point */
+	u_long	ep_entry;		/* process's (maybe ld.so) point */
+	u_long	ep_entrymain;		/* process's (main) entry point */
+	u_long	ep_phdraddr;		/* process's elf phdr location */
+	u_long	ep_interpaddr;		/* process's ld.so location */
 	u_int	ep_flags;		/* flags; see below. */
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
-	struct	elf_args *ep_args;	/* ELF info */
 	void	*ep_auxinfo;		/* userspace auxinfo address */
 	char	*ep_interp;		/* name of interpreter if any */
 	vaddr_t	ep_pinstart, ep_pinend;	/* executable region */

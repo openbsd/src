@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.111 2026/09/15 15:40:08 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.112 2026/09/16 03:22:35 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -736,15 +736,6 @@ enum AuxID {
 	AUX_openbsd_timekeep = 4000,	/* userland clock_gettime */
 	AUX_openbsd_execpath = 4001,	/* realpath'd executable path */
 };
-
-struct elf_args {
-        u_long  arg_entry;		/* program entry point */
-        u_long  arg_interp;		/* Interpreter load address */
-        u_long  arg_phaddr;		/* program header address */
-        u_long  arg_phentsize;		/* Size of program header */
-        u_long  arg_phnum;		/* Number of program headers */
-};
-
 #endif
 
 #if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)

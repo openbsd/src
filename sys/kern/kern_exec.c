@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.272 2026/08/30 19:10:17 kirill Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.273 2026/09/16 03:22:37 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -107,8 +107,6 @@ exec_free_package(struct exec_package *pack)
 		pool_put(&namei_pool, pack->ep_interp);
 		pack->ep_interp = NULL;
 	}
-	free(pack->ep_args, M_TEMP, sizeof(*pack->ep_args));
-	pack->ep_args = NULL;
 	free(pack->ep_pins, M_PINSYSCALL,
 	    pack->ep_npins * sizeof(*pack->ep_pins));
 	pack->ep_pins = NULL;
@@ -363,7 +361,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
 	pack.ep_interp = NULL;
-	pack.ep_args = NULL;
 	pack.ep_auxinfo = NULL;
 	VMCMDSET_INIT(&pack.ep_vmcmds);
 	pack.ep_vap = &attr;
@@ -914,10 +911,7 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return (0);
 
-	/* if this process needs auxinfo, note where to place it */
-	if (pack->ep_args != NULL)
-		pack->ep_auxinfo = cpp;
-
+	pack->ep_auxinfo = cpp;	/* remember where auxinfo will be placed */
 	return (1);
 }
 
