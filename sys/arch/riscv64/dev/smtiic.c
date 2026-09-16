@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtiic.c,v 1.1 2026/04/06 10:30:27 kettenis Exp $	*/
+/*	$OpenBSD: smtiic.c,v 1.2 2026/09/16 17:03:45 jca Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2026 Mark Kettenis <kettenis@openbsd.org>
@@ -187,6 +187,8 @@ smtiic_i2c_acquire_bus(void *cookie, int flags)
 	struct smtiic_softc *sc = cookie;
 
 	HSET4(sc, ICR, ICR_IUE);
+	delay(10);
+
 	return 0;
 }
 
