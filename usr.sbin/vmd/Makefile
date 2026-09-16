@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2024/09/11 15:42:52 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.32 2026/09/16 00:26:19 mlarkin Exp $
 
 .if ${MACHINE} == "amd64" || ${MACHINE} == "arm64"
 
@@ -10,7 +10,7 @@ SRCS+=		vionet.c
 
 .if ${MACHINE} == "amd64"
 SRCS+=		i8253.c i8259.c fw_cfg.c loadfile_elf.c mc146818.c ns8250.c
-SRCS+=		x86_vm.c x86_mmio.c
+SRCS+=		x86_vm.c x86_mmio.c acpi.c
 SRCS+=		psp.c sev.c
 .endif # amd64
 .if ${MACHINE} == "arm64"
