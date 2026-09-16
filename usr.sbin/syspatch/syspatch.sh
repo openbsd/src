@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.170 2026/09/13 13:14:48 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.171 2026/09/16 18:34:45 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -188,7 +188,8 @@ ls_missing()
 	done | while read _p; do
 		_cmd="ftp -N syspatch -MVo - \
 			${_MIRROR}/syspatch${_OSrev}-${_p}.tgz"
-		unpriv "${_cmd}" | tar tzf - | while read _f; do
+		unpriv "${_cmd}" | (cd ${TMPDIR:-/tmp} && unpriv "tar tzf -") |
+			while read _f; do
 			# no earlier version of _all_ files contained in the tgz
 			# exists on the system, it means a missing set: skip it
 			[[ -f /${_f} ]] || continue && echo ${_p} && pkill -u \
