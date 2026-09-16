@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.61 2026/09/16 20:01:10 tb Exp $ */
+/*	$Id: main.c,v 1.62 2026/09/16 20:03:39 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -291,6 +291,8 @@ main(int argc, char *argv[])
 		close(file_fds[1]);
 		c = acctproc(acct_fds[0], authority->account,
 		    authority->keytype, eab, eab_key, eab_key_len);
+		freezero(eab, eab != NULL ? strlen(eab) : 0);
+		freezero(eab_key, eab_key_len);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 

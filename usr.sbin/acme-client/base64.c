@@ -1,4 +1,4 @@
-/*	$Id: base64.c,v 1.11 2026/07/30 06:17:45 jmatthew Exp $ */
+/*	$Id: base64.c,v 1.12 2026/09/16 20:03:39 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
 	len = strlen(data);
 	out = malloc(len);
 	if (out == NULL)
-		return -1;
+		goto out;
 
 	p = data;
 	bp = out;
@@ -103,11 +103,11 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
                 c1 = CHAR64(*p);
                 /* Invalid data */
                 if (c1 == 255)
-                        return -1;
+			goto out;
 
                 c2 = CHAR64(*(p + 1));
                 if (c2 == 255)
-                        return -1;
+                        goto out;
 
                 *bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
                 if ((p + 2) >= data + len)
@@ -117,7 +117,7 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
                         break;
                 c3 = CHAR64(*(p + 2));
                 if (c3 == 255)
-                        return -1;
+			goto out;
 
                 *bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
                 if ((p + 3) >= data + len)
@@ -127,7 +127,7 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
                         break;
                 c4 = CHAR64(*(p + 3));
                 if (c4 == 255)
-                        return -1;
+			goto out;
                 *bp++ = ((c3 & 0x03) << 6) | c4;
 
                 p += 4;
@@ -135,4 +135,8 @@ unbase64buf_url(const unsigned char *data, unsigned char **decoded)
 
 	*decoded = out;
 	return (bp - out);
+
+ out:
+	freezero(out, len);
+	return -1;
 }
