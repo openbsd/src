@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.271 2026/09/16 12:41:21 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.272 2026/09/16 15:00:13 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -417,7 +417,7 @@ sendbinbuf	: NOTHING		{
 		;
 
 main		: INTERVAL NUMBER	{
-			if ((conf->sc_conf.interval.tv_sec = $2) < 0) {
+			if ((conf->sc_conf.interval.tv_sec = $2) <= 0) {
 				yyerror("invalid interval: %lld", $2);
 				YYERROR;
 			}
@@ -1198,7 +1198,7 @@ httpflags_l	: httpflags comma httpflags_l
 		;
 
 httpflags	: HEADERLEN NUMBER	{
-			if ($2 < 0 || $2 > RELAY_MAXHEADERLENGTH) {
+			if ($2 <= 0 || $2 > RELAY_MAXHEADERLENGTH) {
 				yyerror("invalid headerlen: %lld", $2);
 				YYERROR;
 			}
@@ -1227,13 +1227,13 @@ tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		}
 		| SOCKET BUFFER NUMBER	{
 			proto->tcpflags |= TCPFLAG_BUFSIZ;
-			if ((proto->tcpbufsiz = $3) < 0) {
+			if ((proto->tcpbufsiz = $3) <= 0) {
 				yyerror("invalid socket buffer size: %lld", $3);
 				YYERROR;
 			}
 		}
 		| IP STRING NUMBER	{
-			if ($3 < 0) {
+			if ($3 < 0 || $3 > 255) {
 				yyerror("invalid ttl: %lld", $3);
 				free($2);
 				YYERROR;
