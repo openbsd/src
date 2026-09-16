@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.59 2026/05/22 01:53:10 jmatthew Exp $ */
+/*	$Id: main.c,v 1.60 2026/09/16 20:00:05 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,7 +68,8 @@ main(int argc, char *argv[])
 			force = 1;
 			break;
 		case 'e':
-			eab = strdup(optarg);
+			if ((eab = strdup(optarg)) == NULL)
+				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'f':
 			if ((conffile = strdup(optarg)) == NULL)
