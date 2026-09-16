@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.23 2026/09/07 21:30:59 kettenis Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.24 2026/09/16 23:02:43 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -43,7 +43,7 @@ u_int wakeup_devices;
 time_t resume_time;
 
 /* Current sleep mode. */
-int sleep_mode;
+int sleep_mode = SLEEP_RESUME;
 
 void
 device_register_wakeup(struct device *dev)
@@ -65,17 +65,22 @@ sleep_state(void *v, int mode)
 	extern void sr_quiesce(void);
 #endif
 
+	sleep_mode = mode;
+
 top:
 	error = ENXIO;
 	rndbuf = NULL;
 	rndbuflen = 0;
 
-	if (mode == SLEEP_SUSPEND && wakeup_devices == 0)
+	if (sleep_mode == SLEEP_SUSPEND && wakeup_devices == 0) {
+		sleep_mode = SLEEP_RESUME;
 		return EOPNOTSUPP;
+	}
 
-	if (sleep_showstate(v, mode))
+	if (sleep_showstate(v, sleep_mode)) {
+		sleep_mode = SLEEP_RESUME;
 		return EOPNOTSUPP;
-	sleep_mode = mode;
+	}
 
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
