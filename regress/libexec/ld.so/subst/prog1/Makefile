@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.5 2026/09/15 15:02:22 kurt Exp $
+# $OpenBSD: Makefile,v 1.6 2026/09/16 15:02:25 kurt Exp $
 
 .include <bsd.obj.mk>
 
 PROG_OBJDIR!=	if [ -d ${.CURDIR}/${__objdir} ]; then \
 			echo "${.CURDIR}/${__objdir}"; \
 		else \
-			echo "${.CURDIR})"; \
+			echo "${.CURDIR}"; \
 		fi
 
 AA_DIR=${.CURDIR}/../libaa
