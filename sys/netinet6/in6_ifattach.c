@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.126 2026/07/21 14:20:37 bket Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.127 2026/09/16 06:18:35 gnezdo Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -400,6 +400,7 @@ void
 in6_ifdetach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *next;
+	struct ifmaddr *ifma, *nextma;
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
 
@@ -407,6 +408,16 @@ in6_ifdetach(struct ifnet *ifp)
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
 #endif
+
+	/* see in_ifdetach() for why these are unlinked and not freed */
+	rw_enter_write(&ifp->if_maddrlock);
+	TAILQ_FOREACH_SAFE(ifma, &ifp->if_maddrlist, ifma_list, nextma) {
+		if (ifma->ifma_addr->sa_family != AF_INET6)
+			continue;
+		TAILQ_REMOVE(&ifp->if_maddrlist, ifma, ifma_list);
+		ifmatoin6m(ifma)->in6m_ifidx = 0;
+	}
+	rw_exit_write(&ifp->if_maddrlock);
 
 	/* nuke any of IPv6 addresses we have */
 	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {

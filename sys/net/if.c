@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.764 2026/08/11 16:19:02 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.765 2026/09/16 06:18:35 gnezdo Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1336,6 +1336,7 @@ if_detach(struct ifnet *ifp)
 	KASSERT(TAILQ_EMPTY(&ifp->if_addrhooks));
 	KASSERT(TAILQ_EMPTY(&ifp->if_linkstatehooks));
 	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
+	KASSERT(TAILQ_EMPTY(&ifp->if_maddrlist));
 
 #ifdef INET6
 	nd6_ifdetach(ifp);

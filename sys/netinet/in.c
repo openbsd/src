@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.194 2026/03/22 23:14:00 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.195 2026/09/16 06:18:35 gnezdo Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -1006,6 +1006,21 @@ void
 in_ifdetach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *next;
+	struct ifmaddr *ifma, *nextma;
+
+	/* Unlink the multicast records we have. Sockets outlive the interface
+	 * they joined a group on and still reach these through imo_membership,
+	 * so they cannot be freed here, but they must not stay linked into an
+	 * ifnet that is about to be freed.
+	 */
+	rw_enter_write(&ifp->if_maddrlock);
+	TAILQ_FOREACH_SAFE(ifma, &ifp->if_maddrlist, ifma_list, nextma) {
+		if (ifma->ifma_addr->sa_family != AF_INET)
+			continue;
+		TAILQ_REMOVE(&ifp->if_maddrlist, ifma, ifma_list);
+		ifmatoinm(ifma)->inm_ifidx = 0;
+	}
+	rw_exit_write(&ifp->if_maddrlock);
 
 	/* nuke any of IPv4 addresses we have */
 	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {
