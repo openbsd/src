@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.331 2026/08/07 05:18:05 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.332 2026/09/16 00:25:50 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,6 +60,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
+#include <pwd.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -163,7 +164,8 @@ pid_t cleanup_pid = 0;
 
 /* pathname and directory for AUTH_SOCKET */
 static char *socket_name;
-static char socket_dir[PATH_MAX];
+static char *socket_dir;
+static char *socket_dirspec;
 
 /* Pattern-list of allowed PKCS#11/Security key paths */
 static char *allowed_providers;
@@ -2187,12 +2189,12 @@ cleanup_socket(void)
 		return;
 	debug_f("cleanup");
 	if (socket_name != NULL) {
-		unlink(socket_name);
+		agent_listener_cleanup(socket_dirspec, socket_name, socket_dir);
 		free(socket_name);
 		socket_name = NULL;
+		free(socket_dir);
+		socket_dir = NULL;
 	}
-	if (socket_dir[0])
-		rmdir(socket_dir);
 }
 
 void
@@ -2235,9 +2237,11 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ssh-agent [-c | -s] [-DdTU] [-a bind_address] [-E fingerprint_hash]\n"
-	    "                 [-O option] [-P allowed_providers] [-t life]\n"
-	    "       ssh-agent [-TU] [-a bind_address] [-E fingerprint_hash] [-O option]\n"
+	    "usage: ssh-agent [-c | -s] [-DdU] [-T | -A directory | -a bind_address]\n"
+	    "                 [-E fingerprint_hash] [-O option]\n"
+	    "                 [-P allowed_providers] [-t life]\n"
+	    "       ssh-agent [-U] [-T | -A directory | -a bind_address]\n"
+	    "                 [-E fingerprint_hash] [-O option]\n"
 	    "                 [-P allowed_providers] [-t life] command [arg ...]\n"
 	    "       ssh-agent [-c | -s] -k\n"
 	    "       ssh-agent -u\n"
@@ -2265,6 +2269,7 @@ main(int ac, char **av)
 	size_t npfd = 0;
 	u_int maxfds;
 	sigset_t nsigset, osigset;
+	struct passwd *pw;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -2273,10 +2278,14 @@ main(int ac, char **av)
 	(void)setegid(getgid());
 	(void)setgid(getgid());
 
+	if ((pw = getpwuid(getuid())) == NULL)
+		fatal("No user exists for uid %lu", (u_long)getuid());
+	pw = pwcopy(pw);
+
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 		fatal("%s: getrlimit: %s", __progname, strerror(errno));
 
-	while ((ch = getopt(ac, av, "cDdksTuUVE:a:O:P:t:")) != -1) {
+	while ((ch = getopt(ac, av, "cDdksTuUVA:E:a:O:P:t:")) != -1) {
 		switch (ch) {
 		case 'E':
 			fingerprint_hash = ssh_digest_alg_by_name(optarg);
@@ -2327,6 +2336,9 @@ main(int ac, char **av)
 		case 'a':
 			agentsocket = optarg;
 			break;
+		case 'A':
+			socket_dirspec = xstrdup(optarg);
+			break;
 		case 't':
 			if ((lifetime = convtime(optarg)) == -1) {
 				fprintf(stderr, "Invalid lifetime\n");
@@ -2356,6 +2368,9 @@ main(int ac, char **av)
 	if (ac > 0 &&
 	    (c_flag || k_flag || s_flag || d_flag || D_flag || u_flag))
 		usage();
+	/* only one of -a, -A and -T allowed */
+	if (((socket_dirspec != NULL) + (agentsocket != NULL) + T_flag) > 1)
+		usage();
 
 	log_init(__progname,
 	    d_flag ? SYSLOG_LEVEL_DEBUG3 : SYSLOG_LEVEL_INFO,
@@ -2365,6 +2380,11 @@ main(int ac, char **av)
 		allowed_providers = xstrdup(DEFAULT_ALLOWED_PROVIDERS);
 	if (websafe_allowlist == NULL)
 		websafe_allowlist = xstrdup(DEFAULT_WEBSAFE_ALLOWLIST);
+
+	if (T_flag)
+		socket_dirspec = xstrdup(_PATH_SSH_AGENT_SOCKET_TMPDIR);
+	else if (socket_dirspec == NULL && agentsocket == NULL)
+		socket_dirspec = xstrdup(_PATH_SSH_AGENT_SOCKET_DIR);
 
 	if (ac == 0 && !c_flag && !s_flag) {
 		shell = getenv("SHELL");
@@ -2401,7 +2421,8 @@ main(int ac, char **av)
 	if (u_flag) {
 		if ((homedir = get_homedir()) == NULL)
 			fatal("Couldn't determine home directory");
-		agent_cleanup_stale(homedir, u_flag > 1);
+		agent_cleanup_stale(socket_dirspec,
+		    pw->pw_name, pw->pw_uid, homedir, u_flag > 1);
 		printf("Deleted stale agent sockets in ~/%s\n",
 		    _PATH_SSH_AGENT_SOCKET_DIR);
 		exit(0);
@@ -2424,35 +2445,23 @@ main(int ac, char **av)
 	 * Create socket early so it will exist before command gets run from
 	 * the parent.
 	 */
-	if (agentsocket == NULL && !T_flag) {
-		/* Default case: ~/.ssh/agent/[socket] */
+	if (agentsocket == NULL) {
+		/* Listen on a socket in/under a given directory */
 		if ((homedir = get_homedir()) == NULL)
 			fatal("Couldn't determine home directory");
-		if (!U_flag)
-			agent_cleanup_stale(homedir, 0);
-		if (agent_listener(homedir, "agent", &sock, &socket_name) != 0)
+		if (!U_flag) {
+			agent_cleanup_stale(socket_dirspec,
+			    pw->pw_name, pw->pw_uid, homedir, 0);
+		}
+		if (agent_listener(socket_dirspec, pw->pw_name, pw->pw_uid,
+		    homedir, getpid(), "local", &sock, &socket_name,
+		    &socket_dir) != 0)
 			fatal_f("Couldn't prepare agent socket");
 		free(homedir);
 	} else {
-		if (T_flag) {
-			/*
-			 * Create private directory for agent socket
-			 * in $TMPDIR.
-			 */
-			mktemp_proto(socket_dir, sizeof(socket_dir));
-			if (mkdtemp(socket_dir) == NULL) {
-				perror("mkdtemp: private socket dir");
-				exit(1);
-			}
-			xasprintf(&socket_name, "%s/agent.%ld",
-			    socket_dir, (long)parent_pid);
-		} else {
-			/* Try to use specified agent socket */
-			socket_dir[0] = '\0';
-			socket_name = xstrdup(agentsocket);
-		}
-		/* Listen on socket */
+		/* Listen on explicit socket path */
 		prev_mask = umask(0177);
+		socket_name = xstrdup(agentsocket);
 		if ((sock = unix_listener(socket_name,
 		    SSH_LISTEN_BACKLOG, 0)) < 0) {
 			*socket_name = '\0'; /* Don't unlink existing file */
@@ -2552,7 +2561,7 @@ skip:
 		fatal("%s: unveil %s %s", __progname, socket_name,
 		    strerror(errno));
 	}
-	if (*socket_dir != '\0' && unveil(socket_dir, "c") == -1) {
+	if (socket_dir != NULL && unveil(socket_dir, "c") == -1) {
 		fatal("%s: unveil %s %s", __progname, socket_dir,
 		    strerror(errno));
 	}
