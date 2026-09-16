@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.25 2026/05/22 01:53:10 jmatthew Exp $ */
+/*	$Id: json.c,v 1.26 2026/09/16 22:16:05 jan Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -401,7 +401,8 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 		p->status = json_parse_response(obj);
 		if (p->status == CHNG_INVALID) {
 			error = json_getobj(obj, "error");
-			p->error = json_getstr(error, "detail");
+			if (error != NULL)
+				p->error = json_getstr(error, "detail");
 		}
 		return p->uri != NULL && p->token != NULL;
 	}
