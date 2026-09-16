@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.106 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.107 2026/09/16 19:53:45 jan Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -960,7 +960,8 @@ number:			if ((dprec = prec) >= 0)
 			 *	-- ANSI X3J11
 			 */
 			cp = buf + KPRINTF_BUFSIZE;
-			if (_uquad != 0 || prec != 0) {
+			if (_uquad != 0 || prec != 0 ||
+			    (flags & ALT && base == OCT)) {
 				/*
 				 * Unsigned mod is hard, and unsigned mod
 				 * by a constant is easier than that by

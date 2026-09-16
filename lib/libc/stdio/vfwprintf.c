@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.25 2025/08/08 15:58:53 yasuoka Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.26 2026/09/16 19:53:45 jan Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -901,9 +901,13 @@ number:			if ((dprec = prec) >= 0)
 			 * ``The result of converting a zero value with an
 			 * explicit precision of zero is no characters.''
 			 *	-- ANSI X3J11
+			 *
+			 * The # flag overrides that for octal: it asks for a
+			 * leading zero, so "%#.0o" of 0 is "0", not "".
 			 */
 			cp = buf + BUF;
-			if (_umax != 0 || prec != 0) {
+			if (_umax != 0 || prec != 0 ||
+			    (flags & ALT && base == OCT)) {
 				/*
 				 * Unsigned mod is hard, and unsigned mod
 				 * by a constant is easier than that by

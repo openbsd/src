@@ -1,4 +1,4 @@
-/* $OpenBSD: int.c,v 1.2 2020/07/14 16:40:04 kettenis Exp $ */
+/* $OpenBSD: int.c,v 1.3 2026/09/16 19:53:45 jan Exp $ */
 /*
  * Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -326,6 +326,7 @@ main(int argc, char *argv[])
 
 	tu("<%hho>", S_CHAR, 0, "<0>");
 	tu("<%#hho>", S_CHAR, 0, "<0>");
+	tu("<%#.0hho>", S_CHAR, 0, "<0>");
 	tu("<%hho>", S_CHAR, UINT8_MAX, "<377>");
 	tu("<%#hho>", S_CHAR, UINT8_MAX, "<0377>");
 	tu("<%hho>", S_CHAR, -1, "<377>");
