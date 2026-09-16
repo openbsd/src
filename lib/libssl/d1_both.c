@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.100 2026/09/16 16:07:35 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.101 2026/09/16 17:23:53 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -464,7 +464,7 @@ dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
 		return SSL_AD_ILLEGAL_PARAMETER;
 	}
 
-	if ((frag_off + frag_len) > (unsigned long)max) {
+	if (msg_len > (unsigned long)max) {
 		SSLerror(s, SSL_R_EXCESSIVE_MESSAGE_SIZE);
 		return SSL_AD_ILLEGAL_PARAMETER;
 	}
