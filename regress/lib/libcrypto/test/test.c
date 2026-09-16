@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.6 2025/10/07 15:41:19 tb Exp $ */
+/*	$OpenBSD: test.c,v 1.7 2026/09/16 20:03:23 joshua Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -33,21 +33,38 @@ struct test {
 };
 
 static struct test *
-test_new(struct test *pt, const char *name)
+test_new_root(void)
 {
 	struct test *t;
 
 	if ((t = calloc(1, sizeof(*t))) == NULL)
 		err(1, "calloc");
 
-	if (name != NULL) {
+	return t;
+}
+
+static struct test *
+test_new(struct test *parent, const char *name)
+{
+	struct test *t;
+
+	if (parent == NULL || name == NULL)
+		err(1, "parent and name must not be NULL");
+
+	if ((t = calloc(1, sizeof(*t))) == NULL)
+		err(1, "calloc");
+
+	t->parent = parent;
+	t->out = parent->out;
+
+	if (parent->name == NULL) {
 		if ((t->name = strdup(name)) == NULL)
 			err(1, "strdup");
+	} else {
+		/* Add prefix of parent test name. */
+		if (asprintf(&t->name, "%s/%s", parent->name, name) < 0)
+			err(1, "asprintf");
 	}
-
-	if (pt != NULL)
-		t->out = pt->out;
-	t->parent = pt;
 
 	return t;
 }
@@ -60,7 +77,7 @@ test_init(void)
 	int out_fd;
 	char *v;
 
-	t = test_new(NULL, NULL);
+	t = test_new_root();
 	t->out = stderr;
 
 	if (((v = getenv("TEST_VERBOSE")) != NULL) && strcmp(v, "0") != 0)
