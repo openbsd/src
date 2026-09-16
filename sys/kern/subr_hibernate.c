@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.159 2026/09/06 18:26:41 mglocker Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.160 2026/09/16 03:22:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -885,12 +885,15 @@ hibernate_deflate(union hibernate_info *hib, paddr_t src,
 int
 hibernate_write_signature(union hibernate_info *hib)
 {
-	memset(&disk_hib, 0, hib->sec_size);
-	memcpy(&disk_hib, hib, DEV_BSIZE);
+	vaddr_t hibernate_io_page = hib->piglet_va + PAGE_SIZE;
+
+	KASSERT(hib->sec_size <= PAGE_SIZE);
+	memset((void *)hibernate_io_page, 0, hib->sec_size);
+	memcpy((void *)hibernate_io_page, hib, DEV_BSIZE);
 
 	/* Write hibernate info to disk */
 	return (hibernate_write(hib, hib->sig_offset,
-	    (vaddr_t)&disk_hib, hib->sec_size, IO_TYPE_SIG));
+	    hibernate_io_page, hib->sec_size, IO_TYPE_SIG));
 }
 
 /*
