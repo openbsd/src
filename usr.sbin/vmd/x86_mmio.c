@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_mmio.c,v 1.3 2026/09/16 18:31:37 mlarkin Exp $	*/
+/*	$OpenBSD: x86_mmio.c,v 1.4 2026/09/16 19:27:18 mlarkin Exp $	*/
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <sys/types.h>
@@ -89,6 +90,8 @@ static int emulate_sub(struct x86_insn *, struct vm_exit *, uint32_t);
 static void emulate_sub_flags(struct vm_exit *, uint64_t, uint64_t, uint64_t,
     int);
 static int emulate_test(struct x86_insn *, struct vm_exit *, uint32_t);
+
+SLIST_HEAD(mmio_dev_head, mmio_dev) mmio_devs;
 
 /* Lookup table for 1-byte opcodes, in opcode alphabetical order. */
 const enum x86_opcode_type x86_1byte_opcode_tbl[256] = {
@@ -2128,4 +2131,44 @@ insn_emulate(struct vm_exit *exit, struct x86_insn *insn, uint32_t vcpu_id)
 		exit->vrs.vrs_gprs[VCPU_REGS_RIP] += insn->insn_bytes_len;
 
 	return (res);
+}
+
+void
+mmio_init(void)
+{
+	SLIST_INIT(&mmio_devs);
+}
+
+int
+mmio_dev_add(paddr_t start, paddr_t end, mmio_dev_fn_t fn)
+{
+	struct mmio_dev *dev;
+
+	dev = malloc(sizeof(*dev));
+	if (!dev)
+		return ENOMEM;
+
+	dev->start = start;
+	dev->end = end;
+	dev->fn = fn;
+
+	SLIST_INSERT_HEAD(&mmio_devs, dev, dev_next);
+	log_debug("%s: added mmio handler for range [0x%lx - 0x%lx]",
+	    __func__, start, end);
+
+	return 0;
+}
+
+mmio_dev_fn_t
+mmio_find_dev(paddr_t addr)
+{
+	struct mmio_dev *dev;
+
+	SLIST_FOREACH(dev, &mmio_devs, dev_next) {
+		if (addr >= dev->start &&
+		    addr <= dev->end)
+			return dev->fn;
+	}
+
+	return NULL;
 }
