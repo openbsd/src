@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_hp_methods.c,v 1.5 2025/08/03 15:44:00 jsing Exp $	*/
+/*	$OpenBSD: ecp_hp_methods.c,v 1.6 2026/09/16 22:48:29 tb Exp $	*/
 /*
  * Copyright (c) 2024-2025 Joel Sing <jsing@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #include "err_local.h"
 
 static int
-ec_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+ec_hp_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
 	BIGNUM *t;
@@ -79,7 +79,7 @@ ec_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 }
 
 static int
-ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
+ec_hp_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
     BIGNUM *b, BN_CTX *ctx)
 {
 	if (p != NULL) {
@@ -98,14 +98,14 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
 }
 
 static int
-ec_point_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
+ec_hp_point_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 {
 	/* Check if Z is equal to zero. */
 	return ec_field_element_is_zero(&group->fm, &point->fe_z);
 }
 
 static int
-ec_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
+ec_hp_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
 	/* Infinity is (x = 0, y = 1, z = 0). */
 
@@ -119,7 +119,7 @@ ec_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 }
 
 static int
-ec_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
+ec_hp_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 {
 	if (x == NULL || y == NULL) {
@@ -151,7 +151,7 @@ ec_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
 }
 
 static int
-ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
+ec_hp_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
     BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
 	BIGNUM *zinv;
@@ -194,7 +194,7 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 }
 
 static int
-ec_point_add_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+ec_hp_point_add_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3;
@@ -298,7 +298,7 @@ ec_point_add_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 }
 
 static int
-ec_point_add_a2(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+ec_hp_point_add_a2(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3;
@@ -402,17 +402,17 @@ ec_point_add_a2(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 }
 
 static int
-ec_point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+ec_hp_point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
 	if (group->a_is_minus3)
-		return ec_point_add_a2(group, r, a, b, ctx);
+		return ec_hp_point_add_a2(group, r, a, b, ctx);
 
-	return ec_point_add_a1(group, r, a, b, ctx);
+	return ec_hp_point_add_a1(group, r, a, b, ctx);
 }
 
 static int
-ec_point_dbl_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
+ec_hp_point_dbl_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT X1, Y1, Z1, X3, Y3, Z3;
 	EC_FIELD_ELEMENT b3, t0, t1, t2, t3;
@@ -496,7 +496,7 @@ ec_point_dbl_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *c
 }
 
 static int
-ec_point_dbl_a2(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
+ec_hp_point_dbl_a2(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT X1, Y1, Z1, X3, Y3, Z3;
 	EC_FIELD_ELEMENT t0, t1, t2, t3;
@@ -581,16 +581,16 @@ ec_point_dbl_a2(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *c
 }
 
 static int
-ec_point_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
+ec_hp_point_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 {
 	if (group->a_is_minus3)
-		return ec_point_dbl_a2(group, r, a, ctx);
+		return ec_hp_point_dbl_a2(group, r, a, ctx);
 
-	return ec_point_dbl_a1(group, r, a, ctx);
+	return ec_hp_point_dbl_a1(group, r, a, ctx);
 }
 
 static int
-ec_point_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
+ec_hp_point_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT y;
 	BN_ULONG mask;
@@ -601,7 +601,7 @@ ec_point_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 	 * is not at infinity.
 	 */
 
-	mask = ~(0 - (ec_point_is_at_infinity(group, point) |
+	mask = ~(0 - (ec_hp_point_is_at_infinity(group, point) |
 	    ec_field_element_is_zero(&group->fm, &point->fe_y)));
 
 	/* XXX - masked/conditional subtraction? */
@@ -614,7 +614,7 @@ ec_point_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 }
 
 static int
-ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
+ec_hp_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT sum, axz2, bz3, x3, y2z, z2;
 
@@ -643,11 +643,11 @@ ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 	ec_field_element_add(&group->fm, &sum, &sum, &bz3);
 
 	return ec_field_element_equal(&group->fm, &y2z, &sum) |
-	    ec_point_is_at_infinity(group, point);
+	    ec_hp_point_is_at_infinity(group, point);
 }
 
 static int
-ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
+ec_hp_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 {
 	EC_FIELD_ELEMENT ax, ay, bx, by;
 
@@ -675,7 +675,7 @@ ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX
 
 #if 0
 static int
-ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
+ec_hp_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
     BN_CTX *ctx)
 {
 	size_t i;
@@ -691,7 +691,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 #else
 
 static int
-ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
+ec_hp_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
     BN_CTX *ctx)
 {
 	BIGNUM **prod_Z = NULL;
@@ -778,7 +778,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 #endif
 
 static void
-ec_point_select(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+ec_hp_point_select(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     const EC_POINT *b, int conditional)
 {
 	ec_field_element_select(&group->fm, &r->fe_x, &a->fe_x, &b->fe_x, conditional);
@@ -787,7 +787,7 @@ ec_point_select(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 }
 
 static int
-ec_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, const EC_POINT *point,
+ec_hp_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, const EC_POINT *point,
     BN_CTX *ctx)
 {
 	BIGNUM *cardinality;
@@ -859,7 +859,7 @@ ec_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, const EC_POINT 
 		wv = scalar_bytes[i] >> 4;
 		for (j = 1; j < 16; j++) {
 			conditional = crypto_ct_eq_u8(j, wv);
-			ec_point_select(group, t, t, multiples[j - 1], conditional);
+			ec_hp_point_select(group, t, t, multiples[j - 1], conditional);
 		}
 		if (!EC_POINT_add(group, rr, rr, t, ctx))
 			goto err;
@@ -879,7 +879,7 @@ ec_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, const EC_POINT 
 		wv = scalar_bytes[i] & 0xf;
 		for (j = 1; j < 16; j++) {
 			conditional = crypto_ct_eq_u8(j, wv);
-			ec_point_select(group, t, t, multiples[j - 1], conditional);
+			ec_hp_point_select(group, t, t, multiples[j - 1], conditional);
 		}
 		if (!EC_POINT_add(group, rr, rr, t, ctx))
 			goto err;
@@ -905,14 +905,14 @@ ec_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, const EC_POINT 
 }
 
 static int
-ec_mul_single_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+ec_hp_mul_single_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     const EC_POINT *point, BN_CTX *ctx)
 {
-	return ec_mul(group, r, scalar, point, ctx);
+	return ec_hp_mul(group, r, scalar, point, ctx);
 }
 
 static int
-ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
+ec_hp_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
     const EC_POINT *point1, const BIGNUM *scalar2, const EC_POINT *point2,
     BN_CTX *ctx)
 {
@@ -920,20 +920,20 @@ ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
 }
 
 static const EC_METHOD ec_GFp_homogeneous_projective_method = {
-	.group_set_curve = ec_group_set_curve,
-	.group_get_curve = ec_group_get_curve,
-	.point_set_to_infinity = ec_point_set_to_infinity,
-	.point_is_at_infinity = ec_point_is_at_infinity,
-	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
-	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
-	.add = ec_point_add,
-	.dbl = ec_point_dbl,
-	.invert = ec_point_invert,
-	.point_is_on_curve = ec_point_is_on_curve,
-	.point_cmp = ec_point_cmp,
-	.points_make_affine = ec_points_make_affine,
-	.mul_single_ct = ec_mul_single_ct,
-	.mul_double_nonct = ec_mul_double_nonct,
+	.group_set_curve = ec_hp_group_set_curve,
+	.group_get_curve = ec_hp_group_get_curve,
+	.point_set_to_infinity = ec_hp_point_set_to_infinity,
+	.point_is_at_infinity = ec_hp_point_is_at_infinity,
+	.point_set_affine_coordinates = ec_hp_point_set_affine_coordinates,
+	.point_get_affine_coordinates = ec_hp_point_get_affine_coordinates,
+	.add = ec_hp_point_add,
+	.dbl = ec_hp_point_dbl,
+	.invert = ec_hp_point_invert,
+	.point_is_on_curve = ec_hp_point_is_on_curve,
+	.point_cmp = ec_hp_point_cmp,
+	.points_make_affine = ec_hp_points_make_affine,
+	.mul_single_ct = ec_hp_mul_single_ct,
+	.mul_double_nonct = ec_hp_mul_double_nonct,
 };
 
 const EC_METHOD *
