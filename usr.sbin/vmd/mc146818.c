@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.32 2026/06/25 16:45:01 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.33 2026/09/16 03:06:11 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -145,7 +145,10 @@ rtc_fire1(int fd, short type, void *arg)
 static void
 rtc_fireper(int fd, short type, void *arg)
 {
-	rtc.regs[MC_REGC] |= MC_REGC_PF;
+	if ((rtc.regs[MC_REGB] & MC_REGB_PIE) == 0)
+		return;
+
+	rtc.regs[MC_REGC] |= MC_REGC_PF | MC_REGC_IRQF;
 
 	vcpu_assert_irq((ptrdiff_t)arg, 0, 8);
 
@@ -211,6 +214,9 @@ rtc_reschedule_per(void)
 	uint64_t us;
 	uint8_t period;
 
+	if (evtimer_pending(&rtc.per, NULL))
+		evtimer_del(&rtc.per);
+
 	if (rtc.regs[MC_REGB] & MC_REGB_PIE) {
 		period = rtc.regs[MC_REGA] & MC_RATE_MASK;
 		if (period == 0)
@@ -218,9 +224,6 @@ rtc_reschedule_per(void)
 		rate = 32768 >> (period - 1);
 		us = (1.0 / rate) * 1000000;
 		rtc.per_tv.tv_usec = us;
-		if (evtimer_pending(&rtc.per, NULL))
-			evtimer_del(&rtc.per);
-
 		evtimer_add(&rtc.per, &rtc.per_tv);
 	}
 }
@@ -236,8 +239,11 @@ rtc_reschedule_per(void)
 static void
 rtc_update_rega(uint32_t data)
 {
+	uint8_t old;
+
+	old = rtc.regs[MC_REGA];
 	rtc.regs[MC_REGA] = data;
-	if ((rtc.regs[MC_REGA] ^ data) & 0x0f)
+	if ((old ^ data) & MC_REGA_RSMASK)
 		vm_pipe_send(&dev_pipe, MC146818_RESCHEDULE_PER);
 }
 
@@ -252,15 +258,18 @@ rtc_update_rega(uint32_t data)
 static void
 rtc_update_regb(uint32_t data)
 {
+	uint8_t old;
+
 	if (data & MC_REGB_DSE)
 		log_warnx("%s: DSE mode not supported", __func__);
 
 	if (!(data & MC_REGB_24HR))
 		log_warnx("%s: 12 hour mode not supported", __func__);
 
+	old = rtc.regs[MC_REGB];
 	rtc.regs[MC_REGB] = data;
 
-	if (data & MC_REGB_PIE)
+	if ((old ^ data) & MC_REGB_PIE)
 		vm_pipe_send(&dev_pipe, MC146818_RESCHEDULE_PER);
 }
 
@@ -326,8 +335,12 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 			set_return_data(vei, data);
 
 			if (rtc.idx == MC_REGC) {
-				/* Reset IRQ state */
-				rtc.regs[MC_REGC] &= ~MC_REGC_PF;
+				/*
+				 * Reading register C clears its interrupt flags
+				 * and IRQ.
+				 */
+				rtc.regs[MC_REGC] = 0;
+				vcpu_deassert_irq(rtc.vm_id, 0, 8);
 			}
 		}
 	} else {
