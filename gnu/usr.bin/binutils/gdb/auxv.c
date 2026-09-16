@@ -247,6 +247,8 @@ fprint_target_auxv (struct ui_file *file, struct target_ops *ops)
 	       "Canonicalized file name given to execve", str);
 	  TAG (AT_SUN_MMU, "String for name of MMU module", str);
 	  TAG (AT_SUN_LDDATA, "Dynamic linker's data segment address", hex);
+	  TAG (AT_OPENBSD_TIMEKEEP, "userland clock_gettime", hex);
+	  TAG (AT_OPENBSD_EXECPATH, "Canonicalized path of this binary", str);
 	}
 
       fprintf_filtered (file, "%-4s %-20s %-30s ",

@@ -764,5 +764,7 @@
 #define AT_SUN_MMU      2015    /* String for name of MMU module.   */
 #define AT_SUN_LDDATA   2016    /* Dynamic linker's data segment address.  */
 
+#define	AT_OPENBSD_TIMEKEEP 4000	/* pointer to page for clock_gettime. */
+#define	AT_OPENBSD_EXECPATH 4001	/* Canonicalized path given to execve. */
 
 #endif /* _ELF_COMMON_H */
