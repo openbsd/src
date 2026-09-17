@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.274 2026/09/17 18:51:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.275 2026/09/17 19:45:07 dgl Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ exec_free_package(struct exec_package *pack)
  *			error code, locked vnode, exec header unmodified
  */
 int
-check_exec(struct proc *p, struct exec_package *epp, int realpath)
+check_exec(struct proc *p, struct exec_package *epp)
 {
 	int error, i;
 	struct vnode *vp;
@@ -147,9 +147,40 @@ check_exec(struct proc *p, struct exec_package *epp, int realpath)
 
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
-	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME | realpath;
+	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME | EXECPATH;
 	if (epp->ep_flags & EXEC_INDIR)
 		ndp->ni_cnd.cn_flags |= BYPASSUNVEIL;
+
+	ndp->ni_cnd.cn_rpi = 0;
+
+	/*
+	 * If realpath calculations fail, execve proceeds without
+	 * the information
+	 */
+	if (ndp->ni_dirp[0] != '\0' && ndp->ni_dirp[0] != '/') {
+		int cwdlen = MAXPATHLEN * 4; /* for vfs_getcwd_common */
+		char *cwdbuf, *bp;
+
+		cwdbuf = malloc(cwdlen, M_TEMP, M_WAITOK);
+
+		/* vfs_getcwd_common fills this in backwards */
+		bp = &cwdbuf[cwdlen - 1];
+		*bp = '\0';
+
+		KERNEL_LOCK();
+		error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, cwdbuf,
+		    cwdlen/2, GETCWD_CHECK_ACCESS, p);
+		KERNEL_UNLOCK();
+
+		if (error || strlcpy(ndp->ni_cnd.cn_rpbuf, bp, MAXPATHLEN)
+		    >= MAXPATHLEN) {
+			ndp->ni_cnd.cn_flags &= ~EXECPATH;
+		} else {
+			ndp->ni_cnd.cn_rpi = &cwdbuf[cwdlen - 1] - bp;
+		}
+		free(cwdbuf, M_TEMP, cwdlen);
+	}
+
 	/* first get the vnode */
 	if ((error = namei(ndp)) != 0)
 		return (error);
@@ -300,32 +331,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		return (error);
 	}
 
-	/*
-	 * If realpath calculations fail, execve proceeds without
-	 * the information
-	 */
 	rpbuf = pool_get(&namei_pool, PR_WAITOK | PR_ZERO);
-	if (pathlen >= 2 && pathname[0] != '/') {
-		int cwdlen = MAXPATHLEN * 4; /* for vfs_getcwd_common */
-		char *cwdbuf, *bp;
-
-		cwdbuf = malloc(cwdlen, M_TEMP, M_WAITOK);
-
-		/* vfs_getcwd_common fills this in backwards */
-		bp = &cwdbuf[cwdlen - 1];
-		*bp = '\0';
-
-		KERNEL_LOCK();
-		error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, cwdbuf,
-		    cwdlen/2, GETCWD_CHECK_ACCESS, p);
-		KERNEL_UNLOCK();
-
-		if (error || strlcpy(rpbuf, bp, MAXPATHLEN) >= MAXPATHLEN) {
-			pool_put(&namei_pool, rpbuf);
-			rpbuf = NULL;
-		}
-		free(cwdbuf, M_TEMP, cwdlen);
-	}
 
 	/*
 	 * Get other threads to stop, if contested return ERESTART,
@@ -333,8 +339,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 */
 	if (single_thread_set(p, SINGLE_UNWIND | SINGLE_DEEP)) {
 		pool_put(&namei_pool, pathname);
-		if (rpbuf)
-			pool_put(&namei_pool, rpbuf);
+		pool_put(&namei_pool, rpbuf);
 		return (ERESTART);
 	}
 
@@ -347,10 +352,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathname, p);
 	nid.ni_pledge = PLEDGE_EXEC;
 	nid.ni_unveil = UNVEIL_EXEC;
-	if (rpbuf) {
-		nid.ni_cnd.cn_rpbuf = rpbuf;
-		nid.ni_cnd.cn_rpi = strlen(rpbuf);
-	}
+	nid.ni_cnd.cn_rpbuf = rpbuf;
+	nid.ni_cnd.cn_rpi = 0;
 
 	/*
 	 * initialize the fields of the exec package.
@@ -369,7 +372,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_npins = 0;
 
 	/* see if we can run it. */
-	if ((error = check_exec(p, &pack, rpbuf ? EXECPATH : 0)) != 0) {
+	if ((error = check_exec(p, &pack)) != 0) {
 		goto freehdr;
 	}
 
@@ -571,7 +574,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)pr->ps_strings, sizeof(arginfo)))
 		goto exec_abort;
-	if (rpbuf && nid.ni_cnd.cn_rpi) {
+	if (nid.ni_cnd.cn_rpi) {
 		if (copyoutstr(rpbuf, pack.ep_execpath, PATH_MAX, NULL))
 			goto exec_abort;
 	} else
@@ -812,8 +815,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 	pool_put(&namei_pool, pathname);
-	if (rpbuf)
-		pool_put(&namei_pool, rpbuf);
+	pool_put(&namei_pool, rpbuf);
 
 	p->p_descfd = 255;
 	if ((pack.ep_flags & EXEC_HASFD) && pack.ep_fd < 255)
@@ -844,8 +846,7 @@ bad:
 freehdr:
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 	pool_put(&namei_pool, pathname);
-	if (rpbuf)
-		pool_put(&namei_pool, rpbuf);
+	pool_put(&namei_pool, rpbuf);
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p);
 
@@ -866,8 +867,7 @@ exec_abort:
 free_pack_abort:
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 	pool_put(&namei_pool, pathname);
-	if (rpbuf)
-		pool_put(&namei_pool, rpbuf);
+	pool_put(&namei_pool, rpbuf);
 	exit1(p, 0, SIGABRT, EXIT_NORMAL);
 	/* NOTREACHED */
 }

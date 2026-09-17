@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.50 2026/08/30 19:10:16 kirill Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.51 2026/09/17 19:45:07 dgl Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ check_shell:
 	 */
 	epp->ep_hdrvalid = 0;
 
-	if ((error = check_exec(p, epp, 0)) == 0) {
+	if ((error = check_exec(p, epp)) == 0) {
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR;
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getexecpath.3,v 1.1 2026/08/31 15:16:21 deraadt Exp $
+.\"	$OpenBSD: getexecpath.3,v 1.2 2026/09/17 19:45:07 dgl Exp $
 .\"
 .\" Copyright (c) 2026 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2026 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt GETEXECPATH 3
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Sh DESCRIPTION
 The
 .Fn getexecpath
-function retrieves the absolute pathname of this executable.
+function retrieves the absolute pathname of this ELF executable.
 If the pathname is shorter than
 .Fa bufsize
 bytes, it is copied into the memory referenced by
