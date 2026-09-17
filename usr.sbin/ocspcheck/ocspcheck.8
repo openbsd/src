@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ocspcheck.8,v 1.9 2017/11/29 21:15:45 jmc Exp $
+.\"	$OpenBSD: ocspcheck.8,v 1.10 2026/09/17 19:44:34 tb Exp $
 .\"
 .\" Copyright (c) 2017 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2017 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt OCSPCHECK 8
 .Os
 .Sh NAME
@@ -88,6 +88,11 @@ exits >0 if an error occurs or the OCSP response fails to validate.
 .Xr tls_config_set_ocsp_staple_file 3 ,
 .Xr tls_config_set_ocsp_staple_mem 3 ,
 .Xr httpd 8
+.Sh STANDARDS
+.Rs
+.%T X.509 Internet Public Key Infrastructure Online Certificate Status Protocol
+.%R RFC 6960
+.Re
 .Sh HISTORY
 The
 .Nm
