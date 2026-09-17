@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.196 2026/08/14 03:29:07 jsg Exp $
+.\" $OpenBSD: mdoc.7,v 1.197 2026/09/17 13:19:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2021, 2024-2026 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2026 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -23,19 +23,19 @@
 .Nd semantic markup language for formatting manual pages
 .Sh DESCRIPTION
 The
-.Nm mdoc
+.Nm  mdoc
 language supports authoring of manual pages for the
-.Xr man 1
+.Xr  man 1
 utility by allowing semantic annotations of words, phrases,
 page sections and complete manual pages.
 Such annotations are used by formatting tools to achieve a uniform
 presentation across all manuals written in
-.Nm ,
+.Nm  mdoc ,
 and to support hyperlinking if supported by the output medium.
 .Pp
 This reference document describes the structure of manual pages
 and the syntax and usage of the
-.Nm
+.Nm  mdoc
 language.
 The reference implementation of a parsing and formatting tool is
 .Xr mandoc 1 ;
@@ -44,7 +44,7 @@ the
 section describes compatibility with other implementations.
 .Pp
 In an
-.Nm
+.Nm  mdoc
 document, lines beginning with the control character
 .Sq \&.
 are called
@@ -69,9 +69,9 @@ Text lines are interpreted within the current state.
 .Ed
 .Pp
 Many aspects of the basic syntax of the
-.Nm
+.Nm  mdoc
 language are based on the
-.Xr roff 7
+.Xr  roff 7
 language; see the
 .Em LANGUAGE SYNTAX
 and
@@ -81,15 +81,15 @@ sections in the
 manual for details, in particular regarding
 comments, escape sequences, whitespace, and quoting.
 However, using
-.Xr roff 7
+.Xr  roff 7
 requests in
-.Nm
+.Nm  mdoc
 documents is discouraged;
 .Xr mandoc 1
 supports some of them merely for backward compatibility.
 .Sh MANUAL STRUCTURE
 A well-formed
-.Nm
+.Nm  mdoc
 document consists of a document prologue followed by one or more
 sections.
 .Pp
@@ -114,7 +114,7 @@ and
 sections, although this varies between manual sections.
 .Pp
 The following is a well-formed skeleton
-.Nm
+.Nm  mdoc
 file for a utility
 .Qq progname :
 .Bd -literal -offset indent
@@ -163,7 +163,7 @@ utility processes files ...
 .Ed
 .Pp
 The sections in an
-.Nm
+.Nm  mdoc
 document are conventionally ordered as they appear above.
 Sections should be composed as follows:
 .Bl -ohang -offset Ds
@@ -806,7 +806,7 @@ is mandatory and must be specified first:
 .It Fl centered
 Produce one output line from each input line, and center-justify each line.
 Using this display type is not recommended; many
-.Nm
+.Nm  mdoc
 implementations render it poorly.
 .It Fl filled
 Change the positions of line breaks to fill each line, and left- and
@@ -1222,7 +1222,7 @@ Does not have any tail arguments.
 Document date for display in the page footer,
 by convention the date of the last change.
 This is the mandatory first macro of any
-.Nm
+.Nm  mdoc
 manual.
 .Pp
 The
@@ -1247,7 +1247,7 @@ the special string
 can be given as an argument.
 .It
 The traditional, purely numeric
-.Xr man 7
+.Xr  man 7
 format
 .Ar year Ns \(en Ns Ar month Ns \(en Ns Ar day
 is accepted, too.
@@ -1316,7 +1316,7 @@ and
 .It Ic \&Dt Ar TITLE section Op Ar arch
 Document title for display in the page header.
 This is the mandatory second macro of any
-.Nm
+.Nm  mdoc
 file.
 .Pp
 Its arguments are as follows:
@@ -1841,7 +1841,7 @@ block macro or by literal tab characters.
 .Pp
 Using literal tabs is strongly discouraged because they are very
 hard to use correctly and
-.Nm
+.Nm  mdoc
 code using them is very hard to read.
 In particular, a blank character is syntactically significant
 before and after the literal tab character.
@@ -1959,7 +1959,7 @@ macro technically accepts child macros and terminates with a subsequent
 .Ic \&Sh
 invocation.
 Do not assume this behaviour: some
-.Xr whatis 1
+.Xr  whatis 1
 database generators are not smart enough to parse more than the line
 arguments and will display macros verbatim.
 .Pp
@@ -2098,7 +2098,7 @@ See also
 .Tg Os
 .It Ic \&Os Op Ar footer text
 The mandatory third macro of every
-.Nm
+.Nm  mdoc
 file.
 Usually, do not specify any arguments,
 in particular not the operating system name and/or version.
@@ -2132,7 +2132,7 @@ instead; with
 both have the same effect.
 .Pp
 Historical
-.Nm
+.Nm  mdoc
 packages described it as
 .Dq "old function type (FORTRAN)" .
 .Tg Ox
@@ -2774,7 +2774,7 @@ macro or the body of a partial-implicit block macro
 beyond the end of the input line.
 This macro originally existed to work around the 9-argument limit
 of historic
-.Xr roff 7 .
+.Xr  roff 7 .
 .Tg Xr
 .It Ic \&Xr Ar name section
 Link to another manual
@@ -2809,7 +2809,7 @@ which has the same effect as
 .Cm 6n .
 .It
 The name of any
-.Nm
+.Nm  mdoc
 macro, which selects a default width associated with that macro.
 Using this form is not recommended outside the ERRORS section.
 .It
@@ -3234,20 +3234,20 @@ sentence, for example when an abbreviation happens to occur
 at the end of a text or macro input line.
 .Ss Font handling
 In
-.Nm
+.Nm  mdoc
 documents, usage of semantic markup is recommended in order to have
 proper fonts automatically selected; only when no fitting semantic markup
 is available, consider falling back to
 .Sx Physical markup
 macros.
 Whenever any
-.Nm
+.Nm  mdoc
 macro switches the
-.Xr roff 7
+.Xr  roff 7
 font mode, it will automatically restore the previous font when exiting
 its scope.
 Manually switching the font using the
-.Xr roff 7
+.Xr  roff 7
 .Ql \ef
 font escape sequences is never required.
 .Sh COMPATIBILITY
@@ -3326,7 +3326,7 @@ contained in the
 package documents exactly the same language in a somewhat different style.
 .Sh HISTORY
 The
-.Nm
+.Nm  mdoc
 language first appeared as a troff macro package in
 .Bx 4.4 .
 It was later significantly updated by Werner Lemberg and Ruslan Ermilov
@@ -3336,7 +3336,7 @@ The standalone implementation that is part of the
 utility written by Kristaps Dzonsons appeared in
 .Ox 4.6 .
 .Sh AUTHORS
-The
+This
 .Nm
 reference was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

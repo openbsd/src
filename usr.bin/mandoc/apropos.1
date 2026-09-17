@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apropos.1,v 1.45 2020/10/01 22:47:26 schwarze Exp $
+.\"	$OpenBSD: apropos.1,v 1.46 2026/09/17 13:19:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011,2012,2014,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2020 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nm whatis
 .Nd search manual page databases
 .Sh SYNOPSIS
-.Nm
+.Nm apropos
 .Op Fl afk
 .Op Fl C Ar file
 .Op Fl M Ar path
@@ -46,7 +46,7 @@ By default, they display the names, section numbers, and description lines
 of all matching manuals.
 .Pp
 By default,
-.Nm
+.Nm apropos
 searches for
 .Xr makewhatis 8
 databases in the default paths stipulated by
@@ -59,7 +59,7 @@ Multiple terms imply pairwise
 .Pp
 .Nm whatis
 is a synonym for
-.Nm
+.Nm apropos
 .Fl f .
 .Pp
 The options are as follows:
@@ -100,7 +100,7 @@ Support the full
 .Ar expression
 syntax.
 It is the default for
-.Nm .
+.Nm apropos .
 .It Fl M Ar path
 Use the colon-separated path instead of the default list of paths
 searched for
@@ -436,11 +436,11 @@ The following two invocations are equivalent:
 .Xr makewhatis 8
 .Sh STANDARDS
 The
-.Nm
+.Nm apropos
 utility is compliant with the
 .St -p1003.1-2008
 specification of
-.Xr man 1
+.Xr  man 1
 .Fl k .
 .Pp
 All options, the
@@ -460,9 +460,9 @@ was already provided by the former
 utility in
 .Bx 1 .
 The
-.Nm
+.Nm  apropos
 and
-.Nm whatis
+.Nm  whatis
 utilities first appeared in
 .Bx 2 .
 They were rewritten from scratch for
@@ -487,7 +487,7 @@ and
 in
 .Ox 4.5
 for
-.Nm
+.Nm apropos
 and in
 .Ox 5.6
 for
@@ -503,9 +503,9 @@ wrote
 .Nm manwhere
 in 1977 and the original
 .Bx
-.Nm
+.Nm  apropos
 and
-.Nm whatis
+.Nm  whatis
 in February 1979.
 The current version was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv

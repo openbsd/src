@@ -1,4 +1,4 @@
-.\" $OpenBSD: tbl.7,v 1.27 2022/08/28 13:51:58 schwarze Exp $
+.\" $OpenBSD: tbl.7,v 1.28 2026/09/17 13:19:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2014,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2022 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -23,21 +23,21 @@
 .Nd tbl language reference for mandoc
 .Sh DESCRIPTION
 The
-.Nm tbl
+.Nm  tbl
 language formats tables.
 It is used within
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 pages.
 This manual describes the subset of the
-.Nm
+.Nm  tbl
 language accepted by the
 .Xr mandoc 1
 utility.
 .Pp
 Each table is started with a
-.Xr roff 7
+.Xr  roff 7
 .Ic \&TS
 macro, consist of at most one line of
 .Sx Options ,
@@ -76,7 +76,7 @@ layout key.
 This is a GNU extension.
 .It Cm delim
 Use the two characters of the argument as
-.Xr eqn 7
+.Xr  eqn 7
 delimiters.
 Currently unsupported.
 .It Cm doublebox
@@ -106,7 +106,7 @@ By default, the horizontal tabulator character is used.
 The table layout follows an
 .Sx Options
 line or a
-.Xr roff 7
+.Xr  roff 7
 .Ic \&TS
 or
 .Ic \&T&
@@ -393,7 +393,7 @@ T}::line 5
 .Ed
 .Pp
 These examples were constructed to demonstrate many
-.Nm
+.Nm  tbl
 features in a compact way.
 In real manual pages, keep tables as simple as possible.
 They usually look better, are less fragile, and are more portable.
@@ -401,13 +401,13 @@ They usually look better, are less fragile, and are more portable.
 The
 .Xr mandoc 1
 implementation of
-.Nm
+.Nm  tbl
 doesn't support
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 macros and
-.Xr eqn 7
+.Xr  eqn 7
 equations inside tables.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
@@ -421,18 +421,23 @@ equations inside tables.
 .%D June 11, 1976
 .Re
 .Sh HISTORY
-The tbl utility, a preprocessor for troff, was originally written by M.
-E. Lesk at Bell Labs in 1975.
-The GNU reimplementation of tbl, part of the groff package, was released
-in 1990 by James Clark.
-A standalone tbl implementation was written by Kristaps Dzonsons in
-2010.
+The
+.Nm  tbl
+utility, a preprocessor for troff, was originally written
+by M. E. Lesk at Bell Labs in 1975.
+The GNU reimplementation of
+.Nm  tbl ,
+part of the groff package, was released in 1990 by James Clark.
+A standalone
+.Nm  tbl
+implementation was written by Kristaps Dzonsons in 2010.
 This formed the basis of the implementation that first appeared in
 .Ox 4.9
 as a part of the
 .Xr mandoc 1
 utility.
 .Sh AUTHORS
+.An -nosplit
 This
 .Nm
 reference was written by

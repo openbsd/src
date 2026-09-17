@@ -1,4 +1,4 @@
-.\" $OpenBSD: roff.7,v 1.107 2026/08/17 00:45:49 jsg Exp $
+.\" $OpenBSD: roff.7,v 1.108 2026/09/17 13:19:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2019, 2022-2023, 2025, 2026
 .\"               Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 17 2026 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -24,33 +24,33 @@
 .Nd roff language reference for mandoc
 .Sh DESCRIPTION
 The
-.Nm roff
+.Nm  roff
 language is a general purpose text formatting language.
 Since traditional implementations of the
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 manual formatting languages are based on it,
 many real-world manuals use small numbers of
-.Nm
+.Nm  roff
 requests and escape sequences intermixed with their
-.Xr mdoc 7
+.Xr  mdoc 7
 or
-.Xr man 7
+.Xr  man 7
 code.
 To properly format such manuals, the
 .Xr mandoc 1
 utility supports a subset of
-.Nm
+.Nm  roff
 requests and escapes.
 Even though this manual page lists all
-.Nm
+.Nm  roff
 requests and escape sequences, it only contains partial information
 about requests not supported by
 .Xr mandoc 1
 and about language features that do not matter for manual pages.
 For complete
-.Nm
+.Nm  roff
 manuals, consult the
 .Sx SEE ALSO
 section.
@@ -79,7 +79,7 @@ Lines not beginning with control characters are called
 They provide free-form text to be printed; the formatting of the text
 depends on the respective processing context.
 .Sh LANGUAGE SYNTAX
-.Nm
+.Nm  roff
 documents are text files containing only printable
 .Xr ascii 7
 characters, the space character,
@@ -138,9 +138,9 @@ See
 for a complete list.
 .Ss Font Selection
 In
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 documents, fonts are usually selected with macros.
 The
 .Ic \ef
@@ -148,7 +148,7 @@ escape sequence and the
 .Ic \&ft
 request can be used to manually change the font,
 but this is not recommended in
-.Xr mdoc 7
+.Xr  mdoc 7
 documents.
 Such manual font changes are overridden by many subsequent macros.
 .Pp
@@ -295,10 +295,10 @@ Examples:
 .Bl -tag -width "xBl -tag -width 2i" -offset indent -compact
 .It Li \&.Bl -tag -width 2i
 two-inch tagged list indentation in
-.Xr mdoc 7
+.Xr  mdoc 7
 .It Li \&.HP 2i
 two-inch tagged list indentation in
-.Xr man 7
+.Xr  man 7
 .It Li \&.sp 2v
 two vertical spaces
 .El
@@ -358,9 +358,9 @@ Thus, the following request lines are all equivalent:
 .Ed
 .Sh MACRO SYNTAX
 Macros are provided by the
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 languages and can be defined by the
 .Ic \&de
 request.
@@ -414,7 +414,7 @@ as literal text instead of a flag macro.
 .Sh REQUEST REFERENCE
 The
 .Xr mandoc 1
-.Nm
+.Nm  roff
 parser recognises the following requests.
 For requests marked as "ignored" or "unsupported", any arguments are
 ignored, and the number of arguments is not checked.
@@ -445,7 +445,7 @@ The syntax of this request is the same as that of
 Since
 .Xr mandoc 1
 does not implement
-.Nm
+.Nm  roff
 compatibility mode at all, it handles this request as an alias for
 .Ic \&am .
 .It Ic \&ami Ar macrostring Op Ar endstring
@@ -462,7 +462,7 @@ The syntax of this request is the same as that of
 Since
 .Xr mandoc 1
 does not implement
-.Nm
+.Nm  roff
 compatibility mode at all, it handles this request as an alias for
 .Ic \&ami .
 .It Ic \&as Ar stringname Op Ar string
@@ -479,7 +479,7 @@ The syntax of this request is the same as that of
 Since
 .Xr mandoc 1
 does not implement
-.Nm
+.Nm  roff
 compatibility mode at all, it handles this request as an alias for
 .Ic \&as .
 .It Ic \&asciify Ar divname
@@ -594,7 +594,7 @@ loop.
 Currently unsupported.
 .It Ic \&cp Op Cm 1 | 0
 Switch
-.Nm
+.Nm  roff
 compatibility mode on or off.
 Currently ignored.
 .It Ic \&cropat Ar left top width height
@@ -616,7 +616,7 @@ Change a trap location in the current diversion.
 This is a Heirloom extension and currently unsupported.
 .It Ic \&de Ar macroname Op Ar endmacro
 Define a
-.Nm
+.Nm  roff
 macro.
 Its syntax can be either
 .Bd -literal -offset indent
@@ -638,13 +638,13 @@ to represent the
 .Ar definition ,
 which may consist of one or more input lines, including the newline
 characters terminating each line, optionally containing calls to
-.Nm
+.Nm  roff
 requests,
-.Nm
+.Nm  roff
 macros or high-level macros like
-.Xr man 7
+.Xr  man 7
 or
-.Xr mdoc 7
+.Xr  mdoc 7
 macros, whichever applies to the document in question.
 .Pp
 Specifying a custom
@@ -656,9 +656,9 @@ namely, the call to
 first ends the
 .Ar definition ,
 and after that, it is also evaluated as a
-.Nm
+.Nm  roff
 request or
-.Nm
+.Nm  roff
 macro, but not as a high-level macro.
 .Pp
 The macro can be invoked later using the syntax
@@ -719,15 +719,15 @@ also limits the length of the expanded input line.
 Do not rely on the exact values of these limits.
 .It Ic \&de1 Ar macroname Op Ar endmacro
 Define a
-.Nm
+.Nm  roff
 macro that will be executed with
-.Nm
+.Nm  roff
 compatibility mode switched off during macro execution.
 This is a groff extension.
 Since
 .Xr mandoc 1
 does not implement
-.Nm
+.Nm  roff
 compatibility mode at all, it handles this request as an alias for
 .Ic \&de .
 .It Ic \&defcolor Ar newname scheme component ...
@@ -735,7 +735,7 @@ Define a color name.
 This is a groff extension and currently ignored.
 .It Ic \&dei Ar macrostring Op Ar endstring
 Define a
-.Nm
+.Nm  roff
 macro, specifying the macro name indirectly (groff extension).
 The syntax of this request is the same as that of
 .Ic \&de .
@@ -744,15 +744,15 @@ The effect is the same as:
 .D1 Pf . Cm \&de No \e* Ns Bo Ar macrostring Bc Op \e* Ns Bq Ar endstring
 .It Ic \&dei1 Ar macrostring Op Ar endstring
 Define a
-.Nm
+.Nm  roff
 macro that will be executed with
-.Nm
+.Nm  roff
 compatibility mode switched off during macro execution,
 specifying the macro name indirectly (groff extension).
 Since
 .Xr mandoc 1
 does not implement
-.Nm
+.Nm  roff
 compatibility mode at all, it handles this request as an alias for
 .Ic \&dei .
 .It Ic \&device Ar string ...
@@ -764,7 +764,7 @@ Begin a diversion.
 Currently unsupported.
 .It Ic \&do Ar command Op Ar argument ...
 Execute
-.Nm
+.Nm  roff
 request or macro line with compatibility mode disabled.
 Currently unsupported.
 .It Ic \&ds Ar stringname Op Oo \(dq Oc Ns Ar string
@@ -818,18 +818,18 @@ H SYNOPSIS
 invokes the
 .Ic SH
 macro when used in a
-.Xr man 7
+.Xr  man 7
 document.
 Such abuse is of course strongly discouraged.
 .It Ic \&ds1 Ar stringname Op Oo \(dq Oc Ns Ar string
 Define a user-defined string that will be expanded with
-.Nm
+.Nm  roff
 compatibility mode switched off during string expansion.
 This is a groff extension.
 Since
 .Xr mandoc 1
 does not implement
-.Nm
+.Nm  roff
 compatibility mode at all, it handles this request as an alias for
 .Ic \&ds .
 .It Ic \&dwh Ar dist macroname
@@ -924,10 +924,10 @@ In fill mode, input from subsequent input lines is added to
 the same output line until the next word no longer fits,
 at which point the output line is broken.
 This request is implied by the
-.Xr mdoc 7
+.Xr  mdoc 7
 .Ic \&Sh
 macro and by the
-.Xr man 7
+.Xr  man 7
 .Ic \&SH ,
 .Ic \&SS ,
 and
@@ -1387,12 +1387,12 @@ Subsequent input lines are kept together on the same output line
 even when exceeding the right margin,
 and line breaks in subsequent input cause output line breaks.
 This request is implied by the
-.Xr mdoc 7
+.Xr  mdoc 7
 .Ic \&Bd Fl unfilled
 and
 .Ic \&Bd Fl literal
 macros and by the
-.Xr man 7
+.Xr  man 7
 .Ic \&EX
 macro.
 The
@@ -1593,12 +1593,12 @@ Rename a request, macro, diversion, or string.
 In
 .Xr mandoc 1 ,
 user-defined macros,
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 macros, and user-defined strings can be renamed, but renaming of
 predefined strings and of
-.Nm
+.Nm  roff
 requests is not supported, and diversions are not implemented at all.
 .It Ic \&rnn Ar oldname newname
 Rename a number register.
@@ -1929,12 +1929,12 @@ Inside parentheses, whitespace is ignored.
 .Sh ESCAPE SEQUENCE REFERENCE
 The
 .Xr mandoc 1
-.Nm
+.Nm  roff
 parser recognises the following escape sequences.
 In
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 documents, using escape sequences is discouraged except for those
 described in the
 .Sx LANGUAGE SYNTAX
@@ -2310,13 +2310,13 @@ Output the next character without advancing the cursor position.
 .El
 .Sh NUMBER REGISTER REFERENCE
 In
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 documents, using registers is discouraged.
 For compatibility with legacy documents, the
 .Xr mandoc 1
-.Nm
+.Nm  roff
 parser recognises the following names of read-only registers:
 .Bl -tag -width Ds
 .It Cm .$
@@ -2359,7 +2359,7 @@ The
 .Cm nS
 register is handled specially.
 If set to a positive integer value, certain
-.Xr mdoc 7
+.Xr  mdoc 7
 macros behave in the same way as in the
 .Em SYNOPSIS
 section.
@@ -2369,13 +2369,13 @@ section, even when called within the
 .Em SYNOPSIS
 section itself.
 Starting a new
-.Xr mdoc 7
+.Xr  mdoc 7
 section with the
 .Ic \&Sh
 macro resets this register.
 .Pp
 Full
-.Nm
+.Nm  roff
 implementations support large numbers of additional predefined registers.
 While the
 .Ic \&nr
@@ -2389,7 +2389,7 @@ All other registers are undefined by default and yield 0 when interpolated.
 The
 .Xr mandoc 1
 implementation of the
-.Nm
+.Nm  roff
 language is incomplete.
 Major unimplemented features include:
 .Pp
@@ -2409,7 +2409,7 @@ Except when the
 or
 .Ic \&rj
 requests or the
-.Xr tbl 7
+.Xr  tbl 7
 cell specifications
 .Cm c ,
 .Cm n ,
@@ -2422,7 +2422,7 @@ are used, output is always set flush-left.
 Support for setting tabulator and leader characters is missing, and the
 .Ic \&in
 indentation request is not supported in
-.Xr mdoc 7
+.Xr  mdoc 7
 input files.
 .It
 Width measurements are implemented in a crude way
@@ -2455,7 +2455,7 @@ The special semantics of the
 number register is an idiosyncrasy of
 .Ox
 manuals and not supported by other
-.Xr mdoc 7
+.Xr  mdoc 7
 implementations.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
@@ -2494,13 +2494,13 @@ implementations.
 .Re
 .Sh HISTORY
 The RUNOFF typesetting system, whose input forms the basis for
-.Nm ,
+.Nm  roff ,
 was written in MAD and FAP for the CTSS operating system by Jerome E.
 Saltzer in 1964.
 Doug McIlroy rewrote it in BCPL in 1969, renaming it
-.Nm .
+.Nm  roff .
 Dennis M. Ritchie rewrote McIlroy's
-.Nm
+.Nm  roff
 in PDP-11 assembly for
 .At v1 ,
 Joseph F. Ossanna improved roff and renamed it nroff

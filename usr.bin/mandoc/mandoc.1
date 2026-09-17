@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.201 2026/08/10 06:56:09 jsg Exp $
+.\" $OpenBSD: mandoc.1,v 1.202 2026/09/17 13:19:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2012,2014-2023,2025,2026 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2026 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -39,9 +39,9 @@ utility formats manual pages for display.
 By default,
 .Nm
 reads
-.Xr mdoc 7
+.Xr  mdoc 7
 or
-.Xr man 7
+.Xr  man 7
 text from stdin and produces
 .Fl T Cm locale
 output.
@@ -67,10 +67,10 @@ It can be specified to override
 Override the default operating system
 .Ar name
 for the
-.Xr mdoc 7
+.Xr  mdoc 7
 .Ic \&Os
 and for the
-.Xr man 7
+.Xr  man 7
 .Ic \&TH
 macro.
 .It Fl K Ar encoding
@@ -110,11 +110,11 @@ Otherwise, input is interpreted as
 With
 .Fl mdoc ,
 all input files are interpreted as
-.Xr mdoc 7 .
+.Xr  mdoc 7 .
 With
 .Fl man ,
 all input files are interpreted as
-.Xr man 7 .
+.Xr  man 7 .
 By default, the input language is automatically detected for each file:
 if the first macro is
 .Ic \&Dd
@@ -278,7 +278,7 @@ In particular, opening and closing
 are represented as characters number 0x60 and 0x27, respectively,
 which agrees with all ASCII standards from 1965 to the latest
 revision (2012) and which matches the traditional way in which
-.Xr roff 7
+.Xr  roff 7
 formatters represent single quotes in ASCII output.
 This correct ASCII rendering may look strange with modern
 Unicode-compatible fonts because contrary to ASCII, Unicode uses
@@ -475,13 +475,13 @@ This output mode can also be selected explicitly with
 Use
 .Fl T Cm man
 to translate
-.Xr mdoc 7
+.Xr  mdoc 7
 input into
-.Xr man 7
+.Xr  man 7
 output format.
 This is useful for distributing manual sources to legacy systems
 lacking
-.Xr mdoc 7
+.Xr  mdoc 7
 formatters.
 Embedded
 .Xr eqn 7
@@ -490,7 +490,7 @@ and
 code is not supported.
 .Pp
 If the input format of a file is
-.Xr man 7 ,
+.Xr  man 7 ,
 the input is copied to the output.
 The parser is also run, and as usual, the
 .Fl W
@@ -501,7 +501,7 @@ are displayed before copying the input to the output.
 Use
 .Fl T Cm markdown
 to translate
-.Xr mdoc 7
+.Xr  mdoc 7
 input to the markdown format conforming to
 .Lk https://daringfireball.net/projects/markdown/syntax.text\
  "John Gruber's 2004 specification" .
@@ -552,9 +552,9 @@ Rather than typesetting the document, this mode essentially produces
 .Sx ASCII Output
 and minimally adjusts it to conform to PostScript syntax.
 Formatting defects are particularly severe for, but not limited to,
-.Xr tbl 7
+.Xr  tbl 7
 and
-.Xr eqn 7
+.Xr  eqn 7
 input.
 To typeset manual pages, use the GNU roff
 .Pq Sy groff
@@ -613,9 +613,9 @@ It is useful for debugging the source code of manual pages.
 The exact format is subject to change, so don't write parsers for it.
 .Pp
 The first paragraph shows meta data found in the
-.Xr mdoc 7
+.Xr  mdoc 7
 prologue, on the
-.Xr man 7
+.Xr  man 7
 .Ic \&TH
 line, or the fallbacks used.
 .Pp
@@ -626,10 +626,10 @@ The columns are:
 .Bl -enum -compact
 .It
 For macro nodes, the macro name; for text and
-.Xr tbl 7
+.Xr  tbl 7
 nodes, the content.
 There is a special format for
-.Xr eqn 7
+.Xr  eqn 7
 nodes.
 .It
 Node type (text, elem, block, head, body, body-end, tail, tbl, eqn).
@@ -778,11 +778,11 @@ To check over a large set of manuals:
 .Dl $ mandoc \-T lint \(gafind /usr/src -name \e*\e.[1-9]\(ga
 .Pp
 Convert a modern
-.Xr mdoc 7
+.Xr  mdoc 7
 manual to the older
-.Xr man 7
+.Xr  man 7
 format, for use on systems lacking an
-.Xr mdoc 7
+.Xr  mdoc 7
 parser:
 .Pp
 .Dl $ mandoc \-T man foo.mdoc > foo.man
@@ -836,7 +836,7 @@ Invalid command line arguments were specified.
 No input files have been read and no output is produced.
 .It Cm unsupp
 An input file uses unsupported low-level
-.Xr roff 7
+.Xr  roff 7
 features.
 The output may be incomplete and/or misformatted,
 so using GNU troff instead of
@@ -954,11 +954,11 @@ keyword substitution as conventionally used in these operating systems.
 The
 .Ic \&Dd
 macro uses the legacy
-.Xr man 7
+.Xr  man 7
 date format
 .Dq yyyy-mm-dd .
 Consider using the conventional
-.Xr mdoc 7
+.Xr  mdoc 7
 date format
 .Dq "Month dd, yyyy"
 instead.
@@ -1131,7 +1131,7 @@ or
 macro has no arguments, its first argument is an empty string, or there is no
 .Ic \&Dt
 macro before the first non-prologue
-.Xr mdoc 7
+.Xr  mdoc 7
 macro.
 .It Sy "missing manual title, using \(dq\(dq"
 .Pq man
@@ -1167,14 +1167,14 @@ Consider checking whether the file name or the argument need a correction.
 .It Sy "missing date, using \(dq\(dq"
 .Pq mdoc , man
 The document was parsed as
-.Xr mdoc 7
+.Xr  mdoc 7
 and it has no
 .Ic \&Dd
 macro, or the
 .Ic \&Dd
 macro has no arguments or only empty arguments;
 or the document was parsed as
-.Xr man 7
+.Xr  man 7
 and it has no
 .Ic \&TH
 macro, or the
@@ -1355,7 +1355,7 @@ otherwise, escape it by prepending
 .Sq \e& .
 .It Sy "skipping paragraph macro"
 In
-.Xr mdoc 7
+.Xr  mdoc 7
 documents, this happens
 .Bl -dash -compact
 .It
@@ -1368,7 +1368,7 @@ at the end of items in non-column, non-compact lists
 and for multiple consecutive paragraph macros.
 .El
 In
-.Xr man 7
+.Xr  man 7
 documents, it happens
 .Bl -dash -compact
 .It
@@ -1463,7 +1463,7 @@ The previous, interrupted macro is deleted from the parse tree.
 .Pq roff , eqn
 The macro name is missing from a macro definition request,
 or an
-.Xr eqn 7
+.Xr  eqn 7
 control statement or operation keyword lacks its required argument.
 .It Sy "conditional request controls empty scope"
 .Pq roff
@@ -1529,7 +1529,7 @@ macro, at least one other argument precedes the type argument.
 The
 .Nm
 utility copes with any argument order, but some other
-.Xr mdoc 7
+.Xr  mdoc 7
 implementations do not.
 .It Sy "missing -width in -tag list, using 8n"
 .Pq mdoc
@@ -1778,10 +1778,10 @@ A wrong font may remain active after using the character.
 .It Sy "unknown font, skipping request"
 .Pq man , tbl
 A
-.Xr roff 7
+.Xr  roff 7
 .Ic \&ft
 request or a
-.Xr tbl 7
+.Xr  tbl 7
 .Ic \&f
 layout modifier has an unknown
 .Ar font
@@ -1986,11 +1986,11 @@ transliteration of the intended character.
 .It Sy "skipping unknown macro"
 .Pq mdoc , man , roff
 The first identifier on a request or macro line is neither recognized as a
-.Xr roff 7
+.Xr  roff 7
 request, nor as a user-defined macro, nor, respectively, as an
-.Xr mdoc 7
+.Xr  mdoc 7
 or
-.Xr man 7
+.Xr  man 7
 macro.
 It may be mistyped or unsupported.
 The request or macro is discarded including its arguments.
@@ -2013,7 +2013,7 @@ An
 macro occurs outside any
 .Ic \&Bl
 list, or an
-.Xr eqn 7
+.Xr  eqn 7
 .Ic above
 delimiter occurs outside any pile.
 It is discarded including its arguments.
@@ -2030,16 +2030,16 @@ It is discarded including its arguments.
 Various syntax elements can only be used to explicitly close blocks
 that have previously been opened.
 An
-.Xr mdoc 7
+.Xr  mdoc 7
 block closing macro, a
-.Xr man 7
+.Xr  man 7
 .Ic \&ME , \&RE
 or
 .Ic \&UE
 macro, an
-.Xr eqn 7
+.Xr  eqn 7
 right delimiter or closing brace, or the end of an equation, table, or
-.Xr roff 7
+.Xr  roff 7
 conditional request is encountered but no matching block is open.
 The offending request or macro is discarded.
 .It Sy "fewer RS blocks open, skipping"
@@ -2055,7 +2055,7 @@ macro is discarded.
 .It Sy "inserting missing end of block"
 .Pq mdoc , tbl
 Various
-.Xr mdoc 7
+.Xr  mdoc 7
 macros as well as tables require explicit closing by dedicated macros.
 A block that doesn't support bad nesting
 ends before all of its children are properly closed.
@@ -2063,15 +2063,15 @@ The open child nodes are closed implicitly.
 .It Sy "appending missing end of block"
 .Pq mdoc , man , eqn , tbl , roff
 At the end of the document, an explicit
-.Xr mdoc 7
+.Xr  mdoc 7
 block, a
-.Xr man 7
+.Xr  man 7
 next-line scope or
 .Ic \&MT , \&RS
 or
 .Ic \&UR
 block, an equation, table, or
-.Xr roff 7
+.Xr  roff 7
 conditional or ignore block is still open.
 The open block is closed implicitly.
 .It Sy "escaped character not allowed in a name"
@@ -2197,7 +2197,7 @@ macro has an unknown argument and is discarded.
 An
 .Ic \&it
 request or an
-.Xr eqn 7
+.Xr  eqn 7
 .Ic \&size
 or
 .Ic \&gsize
@@ -2236,7 +2236,7 @@ only shows the path as it appears behind
 .It Sy "skipping all arguments"
 .Pq mdoc , man , eqn , roff
 An
-.Xr mdoc 7
+.Xr  mdoc 7
 .Ic \&Bt ,
 .Ic \&Ed ,
 .Ic \&Ef ,
@@ -2251,18 +2251,18 @@ or
 macro, an
 .Ic \&It
 macro in a list that don't support item heads, a
-.Xr man 7
+.Xr  man 7
 .Ic \&LP ,
 .Ic \&P ,
 or
 .Ic \&PP
 macro, an
-.Xr eqn 7
+.Xr  eqn 7
 .Ic \&EQ
 or
 .Ic \&EN
 macro, or a
-.Xr roff 7
+.Xr  roff 7
 .Ic \&br ,
 .Ic \&fi ,
 or
@@ -2383,7 +2383,7 @@ Parsing is aborted as soon as the condition is detected.
 .It Sy "unsupported control character"
 .Pq roff
 An ASCII control character supported by other
-.Xr roff 7
+.Xr  roff 7
 implementations but not by
 .Nm
 was found in an input file.
@@ -2398,7 +2398,7 @@ or considerable misformatting.
 .It Sy "unsupported roff request"
 .Pq roff
 An input file contains a
-.Xr roff 7
+.Xr  roff 7
 request supported by GNU troff or Heirloom troff but not by
 .Nm ,
 and it is likely that this will cause information loss
@@ -2416,9 +2416,9 @@ The modifier is discarded.
 .It Sy "ignoring macro in table"
 .Pq tbl , mdoc , man
 A table contains an invocation of an
-.Xr mdoc 7
+.Xr  mdoc 7
 or
-.Xr man 7
+.Xr  man 7
 macro or of an undefined macro.
 The macro is ignored, and its arguments are handled
 as if they were a text line.
@@ -2430,7 +2430,7 @@ macro.
 This message is only generated in
 .Fl T Cm man
 output mode, where
-.Xr tbl 7
+.Xr  tbl 7
 input is not supported.
 .It Sy "skipping eqn in -Tman mode"
 .Pq mdoc , eqn
@@ -2440,7 +2440,7 @@ macro.
 This message is only generated in
 .Fl T Cm man
 output mode, where
-.Xr eqn 7
+.Xr  eqn 7
 input is not supported.
 .El
 .Ss Bad command line arguments
@@ -2484,7 +2484,7 @@ manual pages.
 The
 .Fl T Cm markdown
 option was specified but an input file uses the
-.Xr man 7
+.Xr  man 7
 language.
 No output is produced for that input file.
 .El

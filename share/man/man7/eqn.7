@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eqn.7,v 1.12 2020/01/10 11:54:05 schwarze Exp $
+.\"	$OpenBSD: eqn.7,v 1.13 2026/09/17 13:19:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2020 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt EQN 7
 .Os
 .Sh NAME
@@ -23,23 +23,23 @@
 .Nd eqn language reference for mandoc
 .Sh DESCRIPTION
 The
-.Nm eqn
+.Nm  eqn
 language is an equation-formatting language.
 It is used within
-.Xr mdoc 7
+.Xr  mdoc 7
 and
-.Xr man 7
+.Xr  man 7
 .Ux
 manual pages.
 It describes the
 .Em structure
 of an equation, not its mathematical meaning.
 This manual describes the
-.Nm
+.Nm  eqn
 language accepted by the
 .Xr mandoc 1
 utility, which corresponds to the Second Edition
-.Nm
+.Nm  eqn
 specification (see
 .Sx SEE ALSO
 for references).
@@ -144,7 +144,7 @@ or
 Note that a quoted
 .Ar key
 causes errors in some
-.Nm
+.Nm  eqn
 implementations and should not be considered portable.
 It is not expanded for replacements.
 Definitions may refer to other definitions; these are evaluated
@@ -262,7 +262,7 @@ A synonym for
 Set the second argument using the font specified by the first argument;
 currently not recognized by the
 .Xr mandoc 1
-.Nm
+.Nm  eqn
 parser.
 .It Cm from
 Set the following box below the preceding box,
@@ -432,10 +432,11 @@ later operations:
 .Cm to
 .El
 .Sh COMPATIBILITY
-This section documents the compatibility of mandoc
-.Nm
+This section documents the compatibility of
+.Xr mandoc 1
+.Nm  eqn
 and the troff
-.Nm
+.Nm  eqn
 implementation (including GNU troff).
 .Pp
 .Bl -dash -compact
@@ -450,7 +451,7 @@ fixed-width spaces.
 In mandoc, these characters are synonyms for the space character.
 .It
 The troff implementation of
-.Nm
+.Nm  eqn
 allows for equation alignment with the
 .Cm mark
 and
@@ -493,11 +494,17 @@ commands are also ignored.
 .%D 1978
 .Re
 .Sh HISTORY
-The eqn utility, a preprocessor for troff, was originally written by
+The
+.Nm  eqn
+utility, a preprocessor for troff, was originally written by
 Brian W. Kernighan and Lorinda L. Cherry in 1975.
-The GNU reimplementation of eqn, part of the GNU troff package, was
+The GNU reimplementation of
+.Nm  eqn ,
+part of the GNU troff package, was
 released in 1989 by James Clark.
-The eqn component of
+The
+.Nm  eqn
+component of
 .Xr mandoc 1
 was added in 2011.
 .Sh AUTHORS

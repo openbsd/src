@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.15 2022/03/16 23:23:24 schwarze Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.16 2026/09/17 13:19:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,14 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2022 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
 .Nm makewhatis
 .Nd index UNIX manuals
 .Sh SYNOPSIS
-.Nm
+.Nm makewhatis
 .Op Fl aDnpQ
 .Op Fl T Cm utf8
 .Op Fl C Ar file
@@ -183,7 +183,7 @@ The output databases are corrupt and should be removed.
 .Xr man.conf 5
 .Sh HISTORY
 A
-.Nm
+.Nm  makewhatis
 utility first appeared in
 .Bx 2 .
 It was rewritten in
@@ -214,7 +214,7 @@ in
 .An Bill Joy
 wrote the original
 .Bx
-.Nm
+.Nm  makewhatis
 in February 1979,
 .An Marc Espie
 started the Perl version in 2000,
