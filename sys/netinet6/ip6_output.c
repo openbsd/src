@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.308 2026/08/05 09:43:19 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.309 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ reroute:
 			 * if necessary.
 			 */
 			if (atomic_load_int(&ip6_mforwarding) &&
-			    ip6_mrouter[ifp->if_rdomain] &&
+			    ip6_mrouter_active(ifp->if_rdomain) &&
 			    (flags & IPV6_FORWARDING) == 0) {
 				int rv;
 

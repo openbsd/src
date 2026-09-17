@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.75 2026/03/29 18:08:07 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.76 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -535,7 +535,7 @@ mld6_sendpkt(const struct mld6_pktinfo *pkt)
 	 * router, so that the process-level routing daemon can hear it.
 	 */
 #ifdef MROUTING
-	im6o.im6o_loop = (ip6_mrouter[pkt->mpi_rdomain] != NULL);
+	im6o.im6o_loop = ip6_mrouter_active(pkt->mpi_rdomain);
 #endif
 	if_put(ifp);
 

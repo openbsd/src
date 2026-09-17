@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.154 2026/07/16 12:21:40 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.155 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ int		 ip_mrtproto = IGMP_DVMRP;	/* [I] for netstat only */
 
 struct cpumem *mrtcounters;
 
-struct rtentry	*mfc_find(struct ifnet *, struct in_addr *, unsigned int);
 int get_sg_cnt(unsigned int, struct sioc_sg_req *);
 int get_vif_cnt(unsigned int, struct sioc_vif_req *);
 int mrt_rtwalk_mfcsysctl(struct rtentry *, void *, unsigned int);
@@ -126,7 +125,6 @@ int get_version(struct mbuf *);
 int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct socket *, struct mbuf *);
 void update_mfc_params(struct mfcctl2 *, int, unsigned int);
-void mfc_expire_route(struct rtentry *, u_int);
 int mfc_add(struct mfcctl2 *, struct in_addr *, struct in_addr *,
     int, unsigned int, int);
 int add_mfc(struct socket *, struct mbuf *);
@@ -136,7 +134,9 @@ int get_api_support(struct mbuf *);
 int get_api_config(struct socket *, struct mbuf *);
 int socket_send(struct socket *, struct mbuf *, struct sockaddr_in *);
 int ip_mdq(struct mbuf *, struct ifnet *, struct rtentry *, int);
+void mfc_expire_route(struct rtentry *, u_int);
 struct ifnet *if_lookupbyvif(vifi_t, unsigned int);
+struct rtentry *mfc_find(struct ifnet *, struct in_addr *, unsigned int);
 struct rtentry *rt_mcast_add(struct ifnet *, struct sockaddr *,
     struct sockaddr *);
 void mrt_mcast_del(struct rtentry *, unsigned int);
@@ -222,7 +222,18 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf *m)
 int
 ip_mrouter_get(struct socket *so, int optname, struct mbuf *m)
 {
+	struct inpcb *inp = sotoinpcb(so);
+	unsigned int rtableid = inp->inp_rtableid;
 	int error;
+
+	soassertlocked(so);
+
+	rw_enter_read(&mrt_routerlock);
+
+	if (so != mrt_mrouter[rtableid]) {
+		error = EPROTONOSUPPORT;
+		goto out;
+	}
 
 	switch (optname) {
 	case MRT_VERSION:
@@ -238,6 +249,8 @@ ip_mrouter_get(struct socket *so, int optname, struct mbuf *m)
 		error = ENOPROTOOPT;
 		break;
 	}
+ out:
+	rw_exit_read(&mrt_routerlock);
 
 	return (error);
 }
@@ -263,17 +276,22 @@ mrt_init(void)
 int
 mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 {
-	struct inpcb *inp = sotoinpcb(so);
+	struct inpcb *inp;
+	unsigned int rtableid;
 	int error;
 
-	if (inp == NULL)
-		return (ENOTCONN);
+	solock_shared(so);
 
+	inp = sotoinpcb(so);
+	if (inp == NULL) {
+		error = ENOTCONN;
+		goto sounlock;
+	}
+	rtableid = inp->inp_rtableid;
 
-	NET_LOCK_SHARED();
 	rw_enter_read(&mrt_routerlock);
 
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
+	if (so != mrt_mrouter[rtableid]) {
 		error =  EPROTONOSUPPORT;
 		goto out;
 	}
@@ -281,24 +299,22 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCGETVIFCNT:
 		KERNEL_LOCK();
-		error = get_vif_cnt(inp->inp_rtableid,
-		    (struct sioc_vif_req *)data);
+		error = get_vif_cnt(rtableid, (struct sioc_vif_req *)data);
 		KERNEL_UNLOCK();
 		break;
 	case SIOCGETSGCNT:
 		KERNEL_LOCK();
-		error = get_sg_cnt(inp->inp_rtableid,
-		    (struct sioc_sg_req *)data);
+		error = get_sg_cnt(rtableid, (struct sioc_sg_req *)data);
 		KERNEL_UNLOCK();
 		break;
 	default:
 		error = ENOTTY;
 		break;
 	}
-
  out:
 	rw_exit_read(&mrt_routerlock);
-	NET_UNLOCK_SHARED();
+ sounlock:
+	sounlock_shared(so);
 
 	return (error);
 }
@@ -584,6 +600,8 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	unsigned int rtableid = inp->inp_rtableid;
 	int *v;
 
+	soassertlocked(so);
+
 	if (so->so_type != SOCK_RAW ||
 	    so->so_proto->pr_protocol != IPPROTO_IGMP)
 		return (EOPNOTSUPP);
@@ -602,6 +620,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 		return (EADDRINUSE);
 	}
 	mrt_mrouter[rtableid] = soref(so);
+	mrt_api_config[rtableid] = 0;
 
 	rw_exit_write(&mrt_routerlock);
 
@@ -630,11 +649,11 @@ ip_mrouter_done(struct socket *so)
 	unsigned int rtableid = inp->inp_rtableid;
 	int error;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	rw_enter_write(&mrt_routerlock);
 
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
+	if (so != mrt_mrouter[rtableid]) {
 		rw_exit_write(&mrt_routerlock);
 		return (EPROTONOSUPPORT);
 	}
@@ -666,8 +685,8 @@ ip_mrouter_done(struct socket *so)
 		vif_delete(ifp);
 	}
 
-	mrt_api_config[rtableid] = 0;
 	mrt_mrouter[rtableid] = NULL;
+	mrt_api_config[rtableid] = 0;
 	sorele(so);
 
 	rw_exit_write(&mrt_routerlock);
@@ -682,6 +701,7 @@ get_version(struct mbuf *m)
 
 	*v = 0x0305;	/* XXX !!!! */
 	m->m_len = sizeof(int);
+
 	return (0);
 }
 
@@ -695,6 +715,8 @@ set_api_config(struct socket *so, struct mbuf *m)
 	struct ifnet *ifp;
 	uint32_t *apival;
 	unsigned int rtableid = inp->inp_rtableid;
+
+	NET_ASSERT_LOCKED();
 
 	if (m == NULL || m->m_len < sizeof(u_int32_t))
 		return (EINVAL);
@@ -750,7 +772,6 @@ get_api_support(struct mbuf *m)
 		return (EINVAL);
 
 	apival = mtod(m, uint32_t *);
-
 	*apival = mrt_api_support;
 
 	return (0);
@@ -766,18 +787,13 @@ get_api_config(struct socket *so, struct mbuf *m)
 	uint32_t *apival;
 	unsigned int rtableid = inp->inp_rtableid;
 
+	rw_assert_rdlock(&mrt_routerlock);
+
 	if (m == NULL || m->m_len < sizeof(u_int32_t))
 		return (EINVAL);
 
 	apival = mtod(m, uint32_t *);
-
-	rw_enter_read(&mrt_routerlock);
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
-		rw_exit_read(&mrt_routerlock);
-		return (EPROTONOSUPPORT);
-	}
 	*apival = mrt_api_config[rtableid];
-	rw_exit_read(&mrt_routerlock);
 
 	return (0);
 }
@@ -794,13 +810,13 @@ add_vif(struct socket *so, struct mbuf *m)
 	int error;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	if (m == NULL || m->m_len < sizeof(struct vifctl))
 		return (EINVAL);
 
 	rw_enter_read(&mrt_routerlock);
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
+	if (so != mrt_mrouter[rtableid]) {
 		rw_exit_read(&mrt_routerlock);
 		return (EPROTONOSUPPORT);
 	}
@@ -868,13 +884,13 @@ del_vif(struct socket *so, struct mbuf *m)
 	vifi_t *vifip;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	if (m == NULL || m->m_len < sizeof(vifi_t))
 		return (EINVAL);
 
 	rw_enter_read(&mrt_routerlock);
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
+	if (so != mrt_mrouter[rtableid]) {
 		rw_exit_read(&mrt_routerlock);
 		return (EPROTONOSUPPORT);
 	}
@@ -885,16 +901,17 @@ del_vif(struct socket *so, struct mbuf *m)
 		return (EADDRNOTAVAIL);
 
 	vif_delete(ifp);
+
 	return (0);
 }
 
 void
 vif_delete(struct ifnet *ifp)
 {
-	struct vif	*v;
+	struct vif	*v = ifp->if_mcast;
 	struct ifreq	 ifr;
 
-	if ((v = ifp->if_mcast) == NULL)
+	if (v == NULL)
 		return;
 
 	ifp->if_mcast = NULL;
@@ -1115,10 +1132,10 @@ add_mfc(struct socket *so, struct mbuf *m)
 	uint32_t api_config;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	rw_enter_read(&mrt_routerlock);
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
+	if (so != mrt_mrouter[rtableid]) {
 		rw_exit_read(&mrt_routerlock);
 		return (EPROTONOSUPPORT);
 	}
@@ -1144,11 +1161,8 @@ add_mfc(struct socket *so, struct mbuf *m)
 		    sizeof(mfcctl2) - sizeof(struct mfcctl));
 	}
 
-	if (mfc_add(&mfcctl2, &mfcctl2.mfcc_origin, &mfcctl2.mfcc_mcastgrp,
-	    mfcctl2.mfcc_parent, rtableid, M_WAITOK) == -1)
-		return (EINVAL);
-
-	return (0);
+	return (mfc_add(&mfcctl2, &mfcctl2.mfcc_origin, &mfcctl2.mfcc_mcastgrp,
+	    mfcctl2.mfcc_parent, rtableid, M_WAITOK));
 }
 
 int
@@ -1161,7 +1175,7 @@ del_mfc(struct socket *so, struct mbuf *m)
 	struct mfcctl *mp;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	/*
 	 * XXX: for deleting MFC entries the information in entries
@@ -1172,7 +1186,7 @@ del_mfc(struct socket *so, struct mbuf *m)
 		return (EINVAL);
 
 	rw_enter_read(&mrt_routerlock);
-	if (so != mrt_mrouter[inp->inp_rtableid]) {
+	if (so != mrt_mrouter[rtableid]) {
 		rw_exit_read(&mrt_routerlock);
 		return (EPROTONOSUPPORT);
 	}
@@ -1187,7 +1201,8 @@ del_mfc(struct socket *so, struct mbuf *m)
 	DPRINTF("origin %#08X group %#08X rtableid %d",
 	    mfcctl2.mfcc_origin.s_addr, mfcctl2.mfcc_mcastgrp.s_addr, rtableid);
 
-	while ((rt = mfc_find(NULL, &mfcctl2.mfcc_mcastgrp, rtableid)) != NULL) {
+	while ((rt = mfc_find(NULL, &mfcctl2.mfcc_mcastgrp,
+	    rtableid)) != NULL) {
 		mrt_mcast_del(rt, rtableid);
 		rtfree(rt);
 	}
@@ -1236,6 +1251,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 	struct rtentry *rt;
 	struct mbuf *mm;
 	unsigned int rtableid = ifp->if_rdomain;
+
+	NET_ASSERT_LOCKED();
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    ((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
@@ -1310,8 +1327,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 			im->im_mbz = 0;
 			im->im_vif = v->v_id;
 
-			mrtstat_inc(mrts_upcalls);
-
 			sin.sin_addr = ip->ip_src;
 			rw_enter_read(&mrt_routerlock);
 			if (socket_send(mrt_mrouter[rtableid], mm, &sin) < 0) {
@@ -1322,6 +1337,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 				return (ENOBUFS);
 			}
 			rw_exit_read(&mrt_routerlock);
+
+			mrtstat_inc(mrts_upcalls);
 
 			mfc_add(NULL, &ip->ip_src, &ip->ip_dst, v->v_id,
 			    rtableid, M_NOWAIT);
@@ -1338,22 +1355,23 @@ int
 ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 {
 	struct ip  *ip = mtod(m, struct ip *);
-	struct mfc *mfc = (struct mfc *)rt->rt_llinfo;
 	struct vif *v = ifp0->if_mcast;
+	struct mfc *mfc = (struct mfc *)rt->rt_llinfo;
 	struct ifnet *ifp;
 	struct mbuf *mc;
 	struct ip_moptions imo;
+	int plen = m->m_pkthdr.len;
 
-	/* Sanity check: we have all promised pointers. */
 	if (v == NULL || mfc == NULL) {
 		rtfree(rt);
 		return (EHOSTUNREACH);
 	}
 
 	/*
-	 * Don't forward if it didn't arrive from the parent vif for its origin.
+	 * Don't forward if it didn't arrive from the parent vif
+	 * for its origin.
 	 */
-	if (mfc->mfc_parent != v->v_id) {
+	if (v->v_id != mfc->mfc_parent) {
 		/* came in the wrong interface */
 		mrtstat_inc(mrts_wrong_if);
 		mfc->mfc_wrong_if++;
@@ -1364,10 +1382,10 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 	/* If I sourced this packet, it counts as output, else it was input. */
 	if (in_hosteq(ip->ip_src, v->v_lcl_addr)) {
 		v->v_pkt_out++;
-		v->v_bytes_out += m->m_pkthdr.len;
+		v->v_bytes_out += plen;
 	} else {
 		v->v_pkt_in++;
-		v->v_bytes_in += m->m_pkthdr.len;
+		v->v_bytes_in += plen;
 	}
 
 	/*
@@ -1387,7 +1405,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 			continue;
 
 		mfc->mfc_pkt_cnt++;
-		mfc->mfc_byte_cnt += m->m_pkthdr.len;
+		mfc->mfc_byte_cnt += plen;
 
 		/* Don't let this route expire. */
 		mfc->mfc_expire = 0;
@@ -1410,7 +1428,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 		}
 
 		v->v_pkt_out++;
-		v->v_bytes_out += m->m_pkthdr.len;
+		v->v_bytes_out += plen;
 
 		/*
 		 * Make a new reference to the packet; make sure
@@ -1446,6 +1464,8 @@ if_lookupbyvif(vifi_t vifi, unsigned int rtableid)
 	struct vif	*v;
 	struct ifnet	*ifp;
 
+	NET_ASSERT_LOCKED();
+
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
@@ -1466,6 +1486,8 @@ rt_mcast_add(struct ifnet *ifp, struct sockaddr *origin, struct sockaddr *group)
 	struct ifaddr		*ifa;
 	int			 rv;
 	unsigned int		 rtableid = ifp->if_rdomain;
+
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET)

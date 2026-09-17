@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.26 2026/06/24 12:33:49 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.27 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -221,6 +221,8 @@ mrt6stat_inc(enum mrt6stat_counters c)
 
 /* How frequent should we look for expired entries (in seconds). */
 #define	MCAST_EXPIRE_TIMEOUT	30
+
+extern int ip6_mrtproto;
 
 /*
  * The kernel's multicast-interface structure.

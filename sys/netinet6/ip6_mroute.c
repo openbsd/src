@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.158 2026/06/24 12:33:49 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.159 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -107,6 +107,8 @@
 /*
  * Locks used to protect data:
  *	I	immutable after creation
+ *	N	net lock
+ *	R	multicast router lock
  */
 
 /* #define MCAST_DEBUG */
@@ -127,14 +129,13 @@ int mcast6_debug = 1;
 int ip6_mdq(struct mbuf *, struct ifnet *, struct rtentry *, int);
 void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *, int, int);
 
-/*
- * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
- * except for netstat or debugging purposes.
- */
-struct socket  *ip6_mrouter[RT_TABLEID_MAX + 1];
-struct rttimer_queue ip6_mrouterq;
-int		ip6_mrouter_ver = 0;
-int		ip6_mrtproto;    /* [I] for netstat only */
+struct rwlock mrt6_routerlock = RWLOCK_INITIALIZER("mrouter6");
+
+struct rttimer_queue mrt6_timer;
+struct socket	*mrt6_mrouter[RT_TABLEID_MAX + 1];	/* [R] */
+int		 mrt6_mrouter_ver[RT_TABLEID_MAX + 1];	/* [R] */
+int		 ip6_mrtproto;    		/* [I] for netstat only */
+
 struct cpumem *mrt6counters;
 
 int get_sg6_cnt(struct sioc_sg_req6 *, unsigned int);
@@ -144,6 +145,7 @@ int add_m6if(struct socket *, struct mif6ctl *);
 int del_m6if(struct socket *, mifi_t *);
 int add_m6fc(struct socket *, struct mf6cctl *);
 int del_m6fc(struct socket *, struct mf6cctl *);
+int socket6_send(struct socket *, struct mbuf *, struct sockaddr_in6 *);
 void mf6c_expire_route(struct rtentry *, u_int);
 struct ifnet *mrt6_iflookupbymif(mifi_t, unsigned int);
 struct rtentry *mf6c_find(struct ifnet *, struct in6_addr *, unsigned int);
@@ -156,11 +158,6 @@ void mrt6_mcast_del(struct rtentry *, unsigned int);
 int
 ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 {
-	struct inpcb	*inp = sotoinpcb(so);
-
-	if (cmd != MRT6_INIT && so != ip6_mrouter[inp->inp_rtableid])
-		return (EPERM);
-
 	switch (cmd) {
 	case MRT6_INIT:
 		if (m == NULL || m->m_len < sizeof(int))
@@ -195,15 +192,34 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 int
 ip6_mrouter_get(int cmd, struct socket *so, struct mbuf *m)
 {
-	struct inpcb	*inp = sotoinpcb(so);
+	struct inpcb *inp = sotoinpcb(so);
+	unsigned int rtableid = inp->inp_rtableid;
+	int error;
 
-	if (so != ip6_mrouter[inp->inp_rtableid])
-		return (EPERM);
+	soassertlocked(so);
+
+	rw_enter_read(&mrt6_routerlock);
+
+	if (so != mrt6_mrouter[rtableid]) {
+		error = EPROTONOSUPPORT;
+		goto out;
+	}
 
 	switch (cmd) {
 	default:
-		return EOPNOTSUPP;
+		error = EOPNOTSUPP;
+		break;
 	}
+ out:
+	rw_exit_read(&mrt6_routerlock);
+
+	return (error);
+}
+
+int
+ip6_mrouter_active(u_int rtableid)
+{
+	return (READ_ONCE(mrt6_mrouter[rtableid]) != NULL);
 }
 
 void
@@ -211,7 +227,7 @@ mrt6_init(void)
 {
 	mrt6counters = counters_alloc(mrt6s_ncounters);
 
-	rt_timer_queue_init(&ip6_mrouterq, MCAST_EXPIRE_TIMEOUT,
+	rt_timer_queue_init(&mrt6_timer, MCAST_EXPIRE_TIMEOUT,
 	    &mf6c_expire_route);
 }
 
@@ -221,33 +237,46 @@ mrt6_init(void)
 int
 mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 {
-	struct inpcb *inp = sotoinpcb(so);
+	struct inpcb *inp;
+	unsigned int rtableid;
 	int error;
 
-	if (inp == NULL)
-		return (ENOTCONN);
+	solock_shared(so);
 
-	KERNEL_LOCK();
+	inp = sotoinpcb(so);
+	if (inp == NULL) {
+		error = ENOTCONN;
+		goto sounlock;
+	}
+	rtableid = inp->inp_rtableid;
+
+	rw_enter_read(&mrt6_routerlock);
+
+	if (so != mrt6_mrouter[rtableid]) {
+		error =  EPROTONOSUPPORT;
+		goto out;
+	}
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
-		NET_LOCK_SHARED();
-		error = get_sg6_cnt((struct sioc_sg_req6 *)data,
-		    inp->inp_rtableid);
-		NET_UNLOCK_SHARED();
+		KERNEL_LOCK();
+		error = get_sg6_cnt((struct sioc_sg_req6 *)data, rtableid);
+		KERNEL_UNLOCK();
 		break;
 	case SIOCGETMIFCNT_IN6:
-		NET_LOCK_SHARED();
-		error = get_mif6_cnt((struct sioc_mif_req6 *)data,
-		    inp->inp_rtableid);
-		NET_UNLOCK_SHARED();
+		KERNEL_LOCK();
+		error = get_mif6_cnt((struct sioc_mif_req6 *)data, rtableid);
+		KERNEL_UNLOCK();
 		break;
 	default:
 		error = ENOTTY;
 		break;
 	}
+ out:
+	rw_exit_read(&mrt6_routerlock);
+ sounlock:
+	sounlock_shared(so);
 
-	KERNEL_UNLOCK();
 	return error;
 }
 
@@ -526,6 +555,8 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 	struct inpcb *inp = sotoinpcb(so);
 	unsigned int rtableid = inp->inp_rtableid;
 
+	soassertlocked(so);
+
 	if (so->so_type != SOCK_RAW ||
 	    so->so_proto->pr_protocol != IPPROTO_ICMPV6)
 		return (EOPNOTSUPP);
@@ -533,11 +564,16 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 	if (v != 1)
 		return (ENOPROTOOPT);
 
-	if (ip6_mrouter[rtableid] != NULL)
-		return (EADDRINUSE);
+	rw_enter_write(&mrt6_routerlock);
 
-	ip6_mrouter[rtableid] = so;
-	ip6_mrouter_ver = cmd;
+	if (mrt6_mrouter[rtableid] != NULL) {
+		rw_exit_write(&mrt6_routerlock);
+		return (EADDRINUSE);
+	}
+	mrt6_mrouter[rtableid] = soref(so);
+	mrt6_mrouter_ver[rtableid] = cmd;
+
+	rw_exit_write(&mrt6_routerlock);
 
 	return (0);
 }
@@ -564,7 +600,14 @@ ip6_mrouter_done(struct socket *so)
 	unsigned int rtableid = inp->inp_rtableid;
 	int error;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
+
+	rw_enter_write(&mrt6_routerlock);
+
+	if (so != mrt6_mrouter[rtableid]) {
+		rw_exit_write(&mrt6_routerlock);
+		return (EPROTONOSUPPORT);
+	}
 
 	/* Delete all remaining installed multicast routes. */
 	do {
@@ -587,8 +630,11 @@ ip6_mrouter_done(struct socket *so)
 		ip6_mrouter_detach(ifp);
 	}
 
-	ip6_mrouter[inp->inp_rtableid] = NULL;
-	ip6_mrouter_ver = 0;
+	mrt6_mrouter[rtableid] = NULL;
+	mrt6_mrouter_ver[rtableid] = 0;
+	sorele(so);
+
+	rw_exit_write(&mrt6_routerlock);
 
 	return 0;
 }
@@ -605,6 +651,7 @@ ip6_mrouter_detach(struct ifnet *ifp)
 	ifp->if_mcast6 = NULL;
 
 	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 	ifr.ifr_addr.sin6_family = AF_INET6;
 	ifr.ifr_addr.sin6_addr = in6addr_any;
 	KERNEL_LOCK();
@@ -627,23 +674,29 @@ add_m6if(struct socket *so, struct mif6ctl *mifcp)
 	int error;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
+
+	rw_enter_read(&mrt6_routerlock);
+	if (so != mrt6_mrouter[rtableid]) {
+		rw_exit_read(&mrt6_routerlock);
+		return (EPROTONOSUPPORT);
+	}
+	rw_exit_read(&mrt6_routerlock);
 
 	if (mifcp->mif6c_mifi >= MAXMIFS)
-		return EINVAL;
-
+		return (EINVAL);
 	if (mrt6_iflookupbymif(mifcp->mif6c_mifi, rtableid) != NULL)
-		return EADDRINUSE; /* XXX: is it appropriate? */
+		return (EADDRINUSE);
 
 	{
 		ifp = if_get(mifcp->mif6c_pifi);
 		if (ifp == NULL)
-			return ENXIO;
+			return (ENXIO);
 
 		/* Make sure the interface supports multicast */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
 			if_put(ifp);
-			return EOPNOTSUPP;
+			return (EOPNOTSUPP);
 		}
 
 		/*
@@ -651,15 +704,15 @@ add_m6if(struct socket *so, struct mif6ctl *mifcp)
 		 * from the interface.
 		 */
 		memset(&ifr, 0, sizeof(ifr));
+		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
 		KERNEL_LOCK();
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
 		KERNEL_UNLOCK();
-
 		if (error) {
 			if_put(ifp);
-			return error;
+			return (error);
 		}
 	}
 
@@ -675,7 +728,7 @@ add_m6if(struct socket *so, struct mif6ctl *mifcp)
 
 	if_put(ifp);
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -686,17 +739,25 @@ del_m6if(struct socket *so, mifi_t *mifip)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct ifnet *ifp;
+	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
+
+	rw_enter_read(&mrt6_routerlock);
+	if (so != mrt6_mrouter[rtableid]) {
+		rw_exit_read(&mrt6_routerlock);
+		return (EPROTONOSUPPORT);
+	}
+	rw_exit_read(&mrt6_routerlock);
 
 	if (*mifip >= MAXMIFS)
-		return EINVAL;
-	if ((ifp = mrt6_iflookupbymif(*mifip, inp->inp_rtableid)) == NULL)
-		return EINVAL;
+		return (EINVAL);
+	if ((ifp = mrt6_iflookupbymif(*mifip, rtableid)) == NULL)
+		return (EADDRNOTAVAIL);
 
 	ip6_mrouter_detach(ifp);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -726,7 +787,7 @@ mf6c_add_route(struct ifnet *ifp, struct sockaddr *origin,
 	}
 
 	rt->rt_llinfo = (caddr_t)mf6c;
-	rt_timer_add(rt, &ip6_mrouterq, rtableid);
+	rt_timer_add(rt, &mrt6_timer, rtableid);
 	mf6c->mf6c_parent = mf6cc->mf6cc_parent;
 	rtfree(rt);
 
@@ -870,7 +931,14 @@ add_m6fc(struct socket *so, struct mf6cctl *mfccp)
 	struct inpcb *inp = sotoinpcb(so);
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
+
+	rw_enter_read(&mrt6_routerlock);
+	if (so != mrt6_mrouter[rtableid]) {
+		rw_exit_read(&mrt6_routerlock);
+		return (EPROTONOSUPPORT);
+	}
+	rw_exit_read(&mrt6_routerlock);
 
 	return mf6c_add(mfccp, &mfccp->mf6cc_origin.sin6_addr,
 	    &mfccp->mf6cc_mcastgrp.sin6_addr, mfccp->mf6cc_parent,
@@ -884,7 +952,14 @@ del_m6fc(struct socket *so, struct mf6cctl *mfccp)
 	struct rtentry *rt;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
+
+	rw_enter_read(&mrt6_routerlock);
+	if (so != mrt6_mrouter[rtableid]) {
+		rw_exit_read(&mrt6_routerlock);
+		return (EPROTONOSUPPORT);
+	}
+	rw_exit_read(&mrt6_routerlock);
 
 	while ((rt = mf6c_find(NULL, &mfccp->mf6cc_mcastgrp.sin6_addr,
 	    rtableid)) != NULL) {
@@ -892,7 +967,7 @@ del_m6fc(struct socket *so, struct mf6cctl *mfccp)
 		rtfree(rt);
 	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -930,7 +1005,6 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 	struct rtentry *rt;
 	struct mif6 *mifp;
 	struct mbuf *mm;
-	struct sockaddr_in6 sin6;
 	unsigned int rtableid = ifp->if_rdomain;
 
 	NET_ASSERT_LOCKED();
@@ -978,6 +1052,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 		mrt6stat_inc(mrt6s_no_route);
 
 		{
+			struct sockaddr_in6 sin6 = { sizeof(sin6), AF_INET6 };
 			struct mrt6msg *im;
 
 			if ((mifp = ifp->if_mcast6) == NULL)
@@ -989,18 +1064,15 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 			 */
 			mm = m_copym(m, 0, sizeof(struct ip6_hdr), M_NOWAIT);
 			if (mm == NULL)
-				return ENOBUFS;
+				return (ENOBUFS);
 
 			/*
 			 * Send message to routing daemon
 			 */
-			(void)memset(&sin6, 0, sizeof(sin6));
-			sin6.sin6_len = sizeof(sin6);
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_addr = ip6->ip6_src;
 
-			im = NULL;
-			switch (ip6_mrouter_ver) {
+			rw_enter_read(&mrt6_routerlock);
+
+			switch (mrt6_mrouter_ver[rtableid]) {
 			case MRT6_INIT:
 				im = mtod(mm, struct mrt6msg *);
 				im->im6_msgtype = MRT6MSG_NOCACHE;
@@ -1008,17 +1080,21 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 				im->im6_mif = mifp->m6_mifi;
 				break;
 			default:
+				rw_exit_read(&mrt6_routerlock);
 				m_freem(mm);
-				return EINVAL;
+				return (EINVAL);
 			}
 
-			if (socket6_send(ip6_mrouter[rtableid], mm,
+			sin6.sin6_addr = ip6->ip6_src;
+			if (socket6_send(mrt6_mrouter[rtableid], mm,
 			    &sin6) < 0) {
-				log(LOG_WARNING, "ip6_mforward: ip6_mrouter "
+				rw_exit_read(&mrt6_routerlock);
+				log(LOG_WARNING, "ip6_mforward: mrt6_mrouter "
 				    "socket queue full\n");
 				mrt6stat_inc(mrt6s_upq_sockfull);
-				return ENOBUFS;
+				return (ENOBUFS);
 			}
+			rw_exit_read(&mrt6_routerlock);
 
 			mrt6stat_inc(mrt6s_upcalls);
 
@@ -1026,7 +1102,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 			    mifp->m6_mifi, rtableid, M_NOWAIT);
 		}
 
-		return 0;
+		return (0);
 	}
 }
 
@@ -1051,7 +1127,7 @@ mf6c_expire_route(struct rtentry *rt, u_int rtableid)
 
 	if (mf6c->mf6c_expire == 0) {
 		mf6c->mf6c_expire = 1;
-		rt_timer_add(rt, &ip6_mrouterq, rtableid);
+		rt_timer_add(rt, &mrt6_timer, rtableid);
 		return;
 	}
 
@@ -1072,7 +1148,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 
 	if (mifp == NULL || mf6c == NULL) {
 		rtfree(rt);
-		return EHOSTUNREACH;
+		return (EHOSTUNREACH);
 	}
 
 	/*
@@ -1114,7 +1190,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 			continue;
 
 		mf6c->mf6c_pkt_cnt++;
-		mf6c->mf6c_byte_cnt += m->m_pkthdr.len;
+		mf6c->mf6c_byte_cnt += plen;
 
 		/* Don't let this route expire. */
 		mf6c->mf6c_expire = 0;
@@ -1246,10 +1322,10 @@ mrt6_iflookupbymif(mifi_t mifi, unsigned int rtableid)
 		if (m6->m6_mifi != mifi)
 			continue;
 
-		return ifp;
+		return (ifp);
 	}
 
-	return NULL;
+	return (NULL);
 }
 
 struct rtentry *
@@ -1259,8 +1335,8 @@ mf6c_find(struct ifnet *ifp, struct in6_addr *group, unsigned int rtableid)
 	struct sockaddr_in6 msin6;
 
 	memset(&msin6, 0, sizeof(msin6));
-	msin6.sin6_family = AF_INET6;
 	msin6.sin6_len = sizeof(msin6);
+	msin6.sin6_family = AF_INET6;
 	msin6.sin6_addr = *group;
 
 	rt = rtalloc(sin6tosa(&msin6), 0, rtableid);
@@ -1288,6 +1364,8 @@ mrt6_mcast_add(struct ifnet *ifp, struct sockaddr *group)
 	struct ifaddr *ifa;
 	int rv;
 	unsigned int rtableid = ifp->if_rdomain;
+
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET6)

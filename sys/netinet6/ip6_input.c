@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.300 2025/09/16 09:19:16 florian Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.301 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -475,7 +475,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 
 #ifdef MROUTING
 		if (atomic_load_int(&ip6_mforwarding) &&
-		    ip6_mrouter[ifp->if_rdomain]) {
+		    ip6_mrouter_active(ifp->if_rdomain)) {
 			int error;
 
 			nxt = ip6_hbhchcheck(&m, offp, &ours, flags);
@@ -1432,10 +1432,6 @@ const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	ENOPROTOOPT
 };
-
-#ifdef MROUTING
-extern int ip6_mrtproto;
-#endif
 
 #ifndef SMALL_KERNEL
 const struct sysctl_bounded_args ipv6ctl_vars[] = {

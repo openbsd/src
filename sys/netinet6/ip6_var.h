@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.131 2026/08/11 14:28:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.132 2026/09/17 15:56:59 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -300,6 +300,7 @@ int	ip6_unknown_opt(struct mbuf **, u_int8_t *, int);
 int	ip6_get_prevhdr(struct mbuf *, int);
 int	ip6_nexthdr(struct mbuf *, int, int, int *);
 int	ip6_lasthdr(struct mbuf *, int, int, int *);
+int	ip6_mrouter_active(u_int);
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *, int);
 int	ip6_process_hopopts(struct mbuf **, u_int8_t *, int, u_int32_t *,
 	     u_int32_t *);
