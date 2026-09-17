@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_wire_test.c,v 1.1 2026/04/25 14:36:12 jsing Exp $ */
+/* $OpenBSD: dtls_wire_test.c,v 1.2 2026/09/17 22:17:48 jsing Exp $ */
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -262,6 +262,7 @@ dtls_send_handshake_message_test(void)
 		hexdump(wbuf, len);
 		fprintf(stderr, "want handshake message wire bytes:\n");
 		hexdump(dtls12_hm_wire_bytes, len);
+		goto failure;
 	}
 
 	failed = 0;
