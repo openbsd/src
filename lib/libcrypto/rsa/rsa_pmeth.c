@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.46 2026/04/07 13:16:41 tb Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.47 2026/09/17 00:00:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -148,6 +148,8 @@ pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	dctx->pad_mode = sctx->pad_mode;
 	dctx->md = sctx->md;
 	dctx->mgf1md = sctx->mgf1md;
+	dctx->saltlen = sctx->saltlen;
+	dctx->min_saltlen = sctx->min_saltlen;
 	if (sctx->oaep_label != NULL) {
 		free(dctx->oaep_label);
 		if ((dctx->oaep_label = calloc(1, sctx->oaep_label_len)) == NULL)
