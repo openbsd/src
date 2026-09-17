@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.148 2026/09/10 15:06:22 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.149 2026/09/17 15:34:10 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <syslog.h>
 #include <tls.h>
