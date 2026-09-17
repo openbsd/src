@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.224 2026/09/13 19:30:29 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.225 2026/09/17 23:10:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -518,17 +518,15 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	struct r_debug *debug_map;
 	struct load_list *next_load, *load_list = NULL;
 	Elf_Dyn *dynp;
-	Elf_Phdr *phdp;
+	Elf_Phdr *phdp, *ptls = NULL;
 	Elf_Ehdr *ehdr;
 	char *us = NULL;
 	unsigned int loop;
-	int failed;
+	int failed, align;
 	struct dep_node *n;
 	Elf_Addr minva, maxva, exe_loff, exec_end, cur_exec_end;
 	Elf_Addr relro_addr = 0, relro_size = 0;
-	Elf_Phdr *ptls = NULL;
 	AuxInfo		*auxstack;
-	int align;
 
 	if (dl_data[AUX_pagesz] != 0)
 		_dl_pagesz = dl_data[AUX_pagesz];
