@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: rtrd.c,v 1.2 2026/09/17 21:58:42 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -113,11 +113,6 @@ main(int argc, char **argv)
 
 	init_masks();
 
-	if (sizeof(time_t) != sizeof(int64_t)) {
-		fprintf(stderr, "unsupported time format\n");
-		exit(1);
-	}
-
 	if (init_stats() != 0) {
 		fprintf(stderr, "couldnt initialize stats\n");
 		exit(1);
@@ -125,10 +120,6 @@ main(int argc, char **argv)
 
 	if (clock_gettime(CLOCK_REALTIME, (struct timespec *)&now) != 0) {
 		fprintf(stderr, "couldnt get the clock\n");
-		exit(1);
-	}
-	if (now.tv_sec < 0) {
-		fprintf(stderr, "clock overflow\n");
 		exit(1);
 	}
 	now.tv_usec /= 1000; /* nsec -> usec */
