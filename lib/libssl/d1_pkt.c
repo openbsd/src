@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.131 2026/09/16 17:02:54 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.132 2026/09/17 23:06:51 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -675,17 +675,19 @@ dtls1_read_handshake_unexpected(SSL *s)
 		s->renegotiate = 1;
 		s->new_session = 1;
 
-	} else if (hs_msg_hdr.type == SSL3_MT_FINISHED && s->server) {
-		/*
-		 * If we are server, we may have a repeated FINISHED of the
-		 * client here, then retransmit our CCS and FINISHED.
-		 */
-		if (dtls1_check_timeout_num(s) < 0)
-			return -1;
+	} else if (hs_msg_hdr.type == SSL3_MT_FINISHED) {
+		if (s->server) {
+			/*
+			 * If we are server, we may have a repeated FINISHED of the
+			 * client here, then retransmit our CCS and FINISHED.
+			 */
+			if (dtls1_check_timeout_num(s) < 0)
+				return -1;
 
-		/* XXX - should this be calling ssl_msg_callback()? */
+			/* XXX - should this be calling ssl_msg_callback()? */
 
-		dtls1_retransmit_buffered_messages(s);
+			dtls1_retransmit_buffered_messages(s);
+		}
 
 		tls_content_clear(s->s3->rcontent);
 		s->s3->rrec.length = 0;
