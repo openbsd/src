@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.366 2026/09/10 07:56:38 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.367 2026/09/17 22:09:55 dgl Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1432,7 +1432,7 @@ pledge_sockopt(struct proc *p, int set, const struct protosw *pr,
 	case AF_INET6:
 		af_inet = af;
 	case AF_UNIX: /* some software assumes all streams are tcp */
-		if (proto == IPPROTO_TCP && level == IPPROTO_TCP) {
+		if (level == IPPROTO_TCP) {
 			switch (optname) {
 			case TCP_NODELAY:
 				return (0);
