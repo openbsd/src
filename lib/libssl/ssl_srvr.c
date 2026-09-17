@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.172 2026/08/29 08:41:17 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.173 2026/09/17 22:58:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -306,7 +306,7 @@ ssl3_accept(SSL *s)
 		case SSL3_ST_SW_HELLO_REQ_B:
 			s->shutdown = 0;
 			if (SSL_is_dtls(s)) {
-				dtls1_clear_record_buffer(s);
+				dtls1_clear_flight(s);
 				dtls1_start_timer(s);
 			}
 			ret = ssl3_send_hello_request(s);
