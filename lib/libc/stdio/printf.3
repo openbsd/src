@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.94 2024/08/07 05:15:28 guenther Exp $
+.\"	$OpenBSD: printf.3,v 1.95 2026/09/17 20:11:40 cludwig Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 7 2024 $
+.Dd $Mdocdate: September 17 2026 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -606,10 +606,7 @@ If the
 .Sq Cm #
 flag is given,
 .Ar mindigits
-is increased such that the first digit printed is a zero,
-except if a zero value is printed with an explicit
-.Ar mindigits
-of zero.
+is increased such that the first digit printed is a zero.
 .It Cm \&%O
 A deprecated alias for
 .Cm %lo .
