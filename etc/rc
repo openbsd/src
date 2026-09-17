@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.594 2026/09/09 17:26:14 deraadt Exp $
+#	$OpenBSD: rc,v 1.595 2026/09/17 16:15:21 job Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -672,7 +672,7 @@ start_daemon ldomd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
 start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd route6d
 start_daemon dhcp6leased rad hostapd lpd smtpd slowcgi bgplgd httpd ftpd
 start_daemon ftpproxy ftpproxy6 tftpd tftpproxy identd inetd rarpd bootparamd
-start_daemon rbootd mopd vmd spamd spamlogd sndiod
+start_daemon rbootd mopd vmd spamd spamlogd sndiod rtrd
 echo '.'
 
 # If rc.firsttime exists, run it just once, and make sure it is deleted.
