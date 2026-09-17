@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.57 2017/07/11 10:28:24 reyk Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.58 2026/09/17 20:06:48 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -567,8 +567,12 @@ dhcpinform(struct packet *packet)
 	lease.starts = lease.timestamp = lease.ends = MIN_TIME;
 	lease.flags = INFORM_NOLEASE;
 	ack_lease(packet, &lease, DHCPACK, 0);
+	free(lease.client_hostname);
+	free(lease.client_identifier);
 	if (lease.state != NULL)
 		free_lease_state(lease.state, "ack_lease");
+	free(lease.client_hostname);
+	free(lease.client_identifier);
 }
 
 void
@@ -911,24 +915,6 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		lt.flags = BOOTP_LEASE;
 	}
 
-	/* Record the uid, if given... */
-	i = DHO_DHCP_CLIENT_IDENTIFIER;
-	if (packet->options[i].len) {
-		if (packet->options[i].len <= sizeof lt.uid_buf) {
-			memcpy(lt.uid_buf, packet->options[i].data,
-			    packet->options[i].len);
-			lt.uid = lt.uid_buf;
-			lt.uid_max = sizeof lt.uid_buf;
-			lt.uid_len = packet->options[i].len;
-		} else {
-			lt.uid_max = lt.uid_len = packet->options[i].len;
-			lt.uid = malloc(lt.uid_max);
-			if (!lt.uid)
-				fatalx("can't allocate memory for large uid.");
-			memcpy(lt.uid, packet->options[i].data, lt.uid_len);
-		}
-	}
-
 	lt.host = lease->host;
 	lt.subnet = lease->subnet;
 	lt.shared_network = lease->shared_network;
@@ -942,6 +928,25 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		memcpy(lease->hardware_addr.haddr, packet->raw->chaddr,
 		    sizeof packet->raw->chaddr); /* XXX */
 	} else {
+		/* Record the uid, if given... */
+		i = DHO_DHCP_CLIENT_IDENTIFIER;
+		if (packet->options[i].len) {
+			if (packet->options[i].len <= sizeof lt.uid_buf) {
+				memcpy(lt.uid_buf, packet->options[i].data,
+				    packet->options[i].len);
+				lt.uid = lt.uid_buf;
+				lt.uid_max = sizeof lt.uid_buf;
+				lt.uid_len = packet->options[i].len;
+			} else {
+				lt.uid_max = lt.uid_len = packet->options[i].len;
+				lt.uid = malloc(lt.uid_max);
+				if (!lt.uid)
+					fatalx("can't allocate memory for large uid.");
+				memcpy(lt.uid, packet->options[i].data,
+				    lt.uid_len);
+			}
+		}
+
 		/* Record the hardware address, if given... */
 		lt.hardware_addr.hlen = packet->raw->hlen;
 		lt.hardware_addr.htype = packet->raw->htype;
@@ -955,6 +960,8 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 
 		if (!(supersede_lease(lease, &lt, !offer ||
 		    offer == DHCPACK) || (offer && offer != DHCPACK))) {
+			if (lt.uid != NULL && lt.uid != lt.uid_buf)
+				free(lt.uid);
 			free_lease_state(state, "ack_lease: !supersede_lease");
 			return;
 		}
@@ -1073,6 +1080,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		if (!state->options[i]) {
 		 use_primary:
 			state->options[i] = new_tree_cache("server-id");
+			state->options[i]->flags = TC_TEMPORARY;
 			state->options[i]->value =
 			    (unsigned char *)&state->ip->primary_address;
 			state->options[i]->len =
@@ -1279,7 +1287,7 @@ void
 dhcp_reply(struct lease *lease)
 {
 	char ciaddrbuf[INET_ADDRSTRLEN];
-	int bufs = 0, packet_length, i;
+	int bufs = 0, packet_length;
 	struct dhcp_packet raw;
 	struct sockaddr_in to;
 	struct in_addr from;
@@ -1340,14 +1348,6 @@ dhcp_reply(struct lease *lease)
 	/* Insert such options as will fit into the buffer. */
 	packet_length = cons_options(NULL, &raw, state->max_message_size,
 	    state->options, bufs, nulltp, bootpp, prl, prl_len);
-
-	/* Having done the cons_options(), we can release the tree_cache
-	   entries. */
-	for (i = 0; i < 256; i++) {
-		if (state->options[i] &&
-		    state->options[i]->flags & TC_TEMPORARY)
-			free_tree_cache(state->options[i]);
-	}
 
 	memcpy(&raw.ciaddr, &state->ciaddr, sizeof raw.ciaddr);
 	if ((lease->flags & INFORM_NOLEASE) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.16 2025/05/31 01:42:22 dlg Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.17 2026/09/17 20:06:48 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -88,6 +88,13 @@ new_lease_state(char *name)
 void
 free_lease_state(struct lease_state *ptr, char *name)
 {
+	int i;
+
+	for (i = 0; i < OPTIONS_LEN; i++) {
+		if (ptr->options[i] != NULL &&
+		    (ptr->options[i]->flags & TC_TEMPORARY))
+			free_tree_cache(ptr->options[i]);
+	}
 	free(ptr->prl);
 	free(ptr);
 }
