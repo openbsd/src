@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.36 2026/03/11 16:18:42 kettenis Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.37 2026/09/17 18:09:37 robert Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -158,20 +158,6 @@ sleep_resume(void *v)
 	return 0;
 }
 
-
-static int
-checklids(struct acpi_softc *sc)
-{
-	extern int lid_action;
-	int lids;
-
-	lids = acpibtn_numopenlids();
-	if (lids == 0 && lid_action != 0)
-		return 1;
-	return 0;
-}	
-
-
 int
 suspend_finish(void *v)
 {
@@ -209,7 +195,7 @@ suspend_finish(void *v)
 	sc->sc_state = ACPI_STATE_S0;
 
 	/* If we woke up but all the lids are closed, go back to sleep */
-	if (sleepmode == SLEEP_RESUME && checklids(sc))
+	if (sleepmode == SLEEP_RESUME && !acpibtn_numopenlids())
 		sleepmode = SLEEP_SUSPEND;
 	
 	return sleepmode;
