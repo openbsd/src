@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.18 2026/09/16 18:31:37 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.19 2026/09/17 22:20:06 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -31,15 +32,21 @@
 
 #include <zlib.h>
 
+#include "acpi.h"
 #include "atomicio.h"
 #include "fw_cfg.h"
+#include "i82093aa.h"
 #include "i8253.h"
 #include "i8259.h"
+#include "lapic.h"
 #include "loadfile.h"
 #include "mc146818.h"
+#include "mmio.h"
 #include "ns8250.h"
 #include "pci.h"
 #include "virtio.h"
+#include "x86_mmio.h"
+#include "x86_vm.h"
 
 typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 
@@ -403,6 +410,23 @@ init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
 	ioports_map[PCI_MODE1_DATA_REG + 3] = vcpu_exit_pci;
 	pci_init();
 
+	mmio_init();
+	i82093aa_init(vmc->vmc_ncpus);
+	for (i = 0; i < vmc->vmc_ncpus; i++)
+		lapic_init(i);
+
+	acpi_pm1_init();
+	for (i = VMD_PM1A_EVT_BASE;
+	    i < VMD_PM1A_EVT_BASE + VMD_PM1A_EVT_LEN; i++)
+		ioports_map[i] = vcpu_exit_acpi_pm1;
+	for (i = VMD_PM1A_CNT_BASE;
+	    i < VMD_PM1A_CNT_BASE + VMD_PM1A_CNT_LEN; i++)
+		ioports_map[i] = vcpu_exit_acpi_pm1;
+	for (i = VMD_PM_TMR_BASE;
+	    i < VMD_PM_TMR_BASE + VMD_PM_TMR_LEN; i++)
+		ioports_map[i] = vcpu_exit_acpi_pm_timer;
+	acpi_init(vmc->vmc_ncpus);
+
 	/* Initialize virtio devices */
 	if (virtio_init(current_vm, child_cdrom, child_disks, child_taps))
 		return (1);
@@ -565,16 +589,13 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
 	struct vm_exit *ve = vrp->vrp_exit;
 	int ret = 0;
-#if MMIO_NOTYET
 	struct x86_insn insn;
 	uint64_t va, pa;
 	size_t len = 15;		/* Max instruction length in x86. */
-#endif /* MMIO_NOTYET */
 	switch (ve->vee.vee_fault_type) {
 	case VEE_FAULT_HANDLED:
 		break;
 
-#if MMIO_NOTYET
 	case VEE_FAULT_MMIO_ASSIST:
 		/* Intel VMX might give us the length of the instruction. */
 		if (ve->vee.vee_insn_info & VEE_LEN_VALID)
@@ -615,9 +636,8 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 
 		ret = insn_decode(ve, &insn);
 		if (ret == 0)
-			ret = insn_emulate(ve, &insn);
+			ret = insn_emulate(ve, &insn, vrp->vrp_vcpu_id);
 		break;
-#endif /* MMIO_NOTYET */
 
 	case VEE_FAULT_PROTECT:
 		log_debug("EPT Violation: rip=0x%llx",
@@ -889,8 +909,9 @@ void
 vcpu_assert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
 {
 	i8259_assert_irq(irq);
+	i82093aa_assert_pin(irq);
 
-	if (i8259_is_pending()) {
+	if (intr_pending(current_vm)) {
 		if (vcpu_intr(vmm_id, vcpu_id, 1))
 			fatalx("%s: can't assert INTR", __func__);
 
@@ -913,8 +934,9 @@ void
 vcpu_deassert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
 {
 	i8259_deassert_irq(irq);
+	i82093aa_deassert_pin(irq);
 
-	if (!i8259_is_pending()) {
+	if (!intr_pending(current_vm)) {
 		if (vcpu_intr(vmm_id, vcpu_id, 0))
 			fatalx("%s: can't deassert INTR for vmm_id %d, "
 			    "vcpu_id %d", __func__, vmm_id, vcpu_id);
@@ -987,14 +1009,31 @@ get_input_data(struct vm_exit *vei, uint32_t *data)
 int
 intr_pending(struct vmd_vm *vm)
 {
-	/* XXX select active interrupt controller */
-	return i8259_is_pending();
+	if (lapic_is_pending(0))
+		return 1;
+	if (!i8259_is_pending())
+		return 0;
+
+	/* A disabled LAPIC leaves the processor wired directly to the PIC. */
+	if (!lapic_enabled(0))
+		return 1;
+
+	/* With the LAPIC enabled, the PIC reaches the CPU only via LINT0. */
+	return lapic_extint_enabled(0);
 }
 
 int
 intr_ack(struct vmd_vm *vm)
 {
-	/* XXX select active interrupt controller */
+	int vec;
+
+	vec = lapic_ack(0);
+	if (vec != 0xffff)
+		return vec;
+
+	if (lapic_enabled(0) && !lapic_extint_enabled(0))
+		return 0xffff;
+
 	return i8259_ack();
 }
 

@@ -1,6 +1,7 @@
-/*	$OpenBSD: fw_cfg.h,v 1.4 2026/09/17 22:20:06 mlarkin Exp $	*/
+/*	$OpenBSD: i82093aa.h,v 1.1 2026/09/17 22:20:06 mlarkin Exp $ */
+
 /*
- * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2024 Mike Larkin <mlarkin@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,20 +16,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "vmd.h"
+#ifndef _I82093AA_H_
+#define _I82093AA_H_
 
-#ifndef _FW_CFG_H_
-#define _FW_CFG_H_
+#include <sys/types.h>
 
-#define	FW_CFG_IO_SELECT	0x510
-#define	FW_CFG_IO_DATA		0x511
-#define	FW_CFG_IO_DMA_ADDR_HIGH	0x514
-#define	FW_CFG_IO_DMA_ADDR_LOW	0x518
+#define I82093AA_MAX_PIN		0x17
+#define I82093AA_PIN_COUNT		(I82093AA_MAX_PIN + 1)
+#define I82093AA_VERSION		0x000011
+#define I82093AA_REDIR_SHIFT		56
+#define I82093AA_REDTBL_DWORDS		(I82093AA_PIN_COUNT * 2)
 
-void	fw_cfg_init(struct vmop_create_params *);
-uint8_t	vcpu_exit_fw_cfg(struct vm_run_params *);
-uint8_t	vcpu_exit_fw_cfg_dma(struct vm_run_params *);
-void	fw_cfg_add_file(const char *, const void *, size_t);
-void	fw_cfg_add_acpi_rsdp(const void *, size_t);
+#define I82093AA_REDTBL0_LO		0x10
+#define I82093AA_REDTBL23_HI		0x3f
 
-#endif /* _FW_CFG_H_ */
+int i82093aa_mmio(uint32_t, int, paddr_t, uint8_t, uint64_t *);
+void i82093aa_init(int);
+void i82093aa_assert_pin(uint8_t);
+void i82093aa_deassert_pin(uint8_t);
+void i82093aa_eoi(int);
+
+#endif /* !_I82093AA_H_ */

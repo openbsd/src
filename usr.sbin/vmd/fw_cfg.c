@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.16 2026/07/24 14:24:49 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.17 2026/09/17 22:20:06 mlarkin Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -34,6 +34,26 @@
 #define	FW_CFG_NOGRAPHIC	0x0004
 #define	FW_CFG_FILE_DIR		0x0019
 #define	FW_CFG_FILE_FIRST	0x0020
+
+/* SeaBIOS romfile linker/loader interface. */
+#define	FW_CFG_LOADER_FILESZ		56
+#define	FW_CFG_LOADER_ALLOC		1
+#define	FW_CFG_LOADER_ZONE_FSEG		2
+
+struct fw_cfg_loader_entry {
+	uint32_t command;
+	union {
+		struct {
+			char file[FW_CFG_LOADER_FILESZ];
+			uint32_t align;
+			uint8_t zone;
+		} alloc;
+		uint8_t pad[124];
+	};
+} __packed;
+
+_Static_assert(sizeof(struct fw_cfg_loader_entry) == 128,
+    "invalid SeaBIOS table-loader entry size");
 
 #define FW_CFG_DMA_SIGNATURE	0x51454d5520434647ULL /* QEMU CFG */
 
@@ -363,6 +383,29 @@ fw_cfg_add_file(const char *name, const void *data, size_t len)
 	memcpy(f->data, data, len);
 
 	TAILQ_INSERT_TAIL(&fw_cfg_files, f, entry);
+}
+
+/*
+ * SeaBIOS rebuilds the BDA and EBDA during POST, so the RSDP that vmd puts
+ * in its provisional EBDA is no longer discoverable after firmware boot.
+ * Ask SeaBIOS to copy the RSDP into its own F-segment allocation instead.
+ * This requires firmware built with CONFIG_FW_ROMFILE_LOAD.
+ */
+void
+fw_cfg_add_acpi_rsdp(const void *rsdp, size_t len)
+{
+	struct fw_cfg_loader_entry loader;
+
+	memset(&loader, 0, sizeof(loader));
+	loader.command = htole32(FW_CFG_LOADER_ALLOC);
+	if (strlcpy(loader.alloc.file, "etc/acpi/rsdp",
+	    sizeof(loader.alloc.file)) >= sizeof(loader.alloc.file))
+		fatalx("fw_cfg: ACPI RSDP file name too long");
+	loader.alloc.align = htole32(16);
+	loader.alloc.zone = FW_CFG_LOADER_ZONE_FSEG;
+
+	fw_cfg_add_file("etc/acpi/rsdp", rsdp, len);
+	fw_cfg_add_file("etc/table-loader", &loader, sizeof(loader));
 }
 
 static int

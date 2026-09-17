@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.1 2026/09/16 00:26:19 mlarkin Exp $ */
+/*	$OpenBSD: acpi.c,v 1.2 2026/09/17 22:20:06 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -598,10 +598,7 @@ acpi_create_rsdp(paddr_t pa, paddr_t xsdt_pa)
 	    sizeof(rsdp));
 
 	acpi_verify_checksum((uint8_t *)&rsdp, sizeof(rsdp));
-
-#if 0
 	fw_cfg_add_acpi_rsdp(&rsdp, sizeof(rsdp));
-#endif
 
 	log_warnx("%s: writing RSDP to %lx", __func__, pa);
 	if (write_mem(pa, &rsdp, sizeof(rsdp)))
@@ -613,7 +610,7 @@ acpi_create_rsdp(paddr_t pa, paddr_t xsdt_pa)
 void
 acpi_init(size_t numcpu)
 {
-	paddr_t tables[5];
+	paddr_t tables[2];
 	size_t numtables;
 	ssize_t dsdt_size;
 	uint16_t rsdp_ptr_real;
@@ -645,8 +642,7 @@ acpi_init(size_t numcpu)
 
 	acpi_create_madt(VMD_MADT_PADDR, numcpu);
 	tables[numtables++] = VMD_MADT_PADDR;
-	acpi_create_hpet(VMD_HPET_PADDR);
-	tables[numtables++] = VMD_HPET_PADDR;
+	/* Do not advertise an HPET until vmd provides the device itself. */
 
 	acpi_create_xsdt(VMD_XSDT_PADDR, tables, numtables);
 	acpi_create_rsdp(VMD_RSDP_PADDR, VMD_XSDT_PADDR);

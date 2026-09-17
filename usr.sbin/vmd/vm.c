@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.129 2026/09/08 19:46:18 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.130 2026/09/17 22:20:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -38,6 +38,10 @@
 #include <util.h>
 
 #include "atomicio.h"
+#ifdef __amd64__
+#include "acpi.h"
+#include "lapic.h"
+#endif
 #include "pci.h"
 #include "virtio.h"
 #include "vmd.h"
@@ -47,6 +51,9 @@
 static int run_vm(struct vmd_vm *, struct vcpu_reg_state *);
 static void vm_dispatch_vmm(int, short, void *);
 static void *event_thread(void *);
+#ifdef __amd64__
+static void *lapic_timer_thread(void *);
+#endif
 static void *vcpu_run_loop(void *);
 static int vmm_create_vm(struct vmd_vm *);
 static void pause_vm(struct vmd_vm *);
@@ -70,6 +77,10 @@ pthread_mutex_t vcpu_unpause_mtx[VMM_MAX_VCPUS_PER_VM];
 pthread_mutex_t vm_mtx;
 uint8_t vcpu_hlt[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
+
+#ifdef __amd64__
+static volatile int lapic_timer_stop;
+#endif
 
 /*
  * vm_main
@@ -96,6 +107,11 @@ vm_main(int fd, int fd_vmm)
 	 */
 	if (unveil(env->vmd_execpath, "x") == -1)
 		fatal("unveil %s", env->vmd_execpath);
+#ifdef __amd64__
+	if (unveil("/etc/firmware/vmm.dsdt", "r") == -1 && errno != ENOENT)
+		fatal("unveil /etc/firmware/vmm.dsdt");
+	(void)acpi_load_dsdt("/etc/firmware/vmm.dsdt");
+#endif
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil lock");
 
@@ -591,6 +607,9 @@ run_vm(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 	size_t i;
 	int ret;
 	pthread_t *tid, evtid;
+#ifdef __amd64__
+	pthread_t laptid;
+#endif
 	char tname[MAXCOMLEN + 1];
 	struct vm_run_params **vrp;
 	void *exit_status;
@@ -709,6 +728,17 @@ run_vm(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 	}
 
 	log_debug("%s: waiting on events for VM %s", __func__, vmc->vmc_name);
+#ifdef __amd64__
+	lapic_timer_stop = 0;
+	ret = pthread_create(&laptid, NULL, lapic_timer_thread,
+	    (void *)(intptr_t)vmc->vmc_ncpus);
+	if (ret) {
+		errno = ret;
+		log_warn("%s: could not create LAPIC timer thread", __func__);
+		return (ret);
+	}
+	pthread_set_name_np(laptid, "lapictmr");
+#endif
 	ret = pthread_create(&evtid, NULL, event_thread, &evdone);
 	if (ret) {
 		errno = ret;
@@ -767,11 +797,48 @@ run_vm(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 		/* Some more threads to wait for, start over */
 	}
 
+#ifdef __amd64__
+	lapic_timer_stop = 1;
+	pthread_join(laptid, &exit_status);
+#endif
+
 	if (pthread_barrier_destroy(&vm_pause_barrier))
 		log_warnx("could not destroy pause barrier");
 
 	return (ret);
 }
+
+#ifdef __amd64__
+static void *
+lapic_timer_thread(void *arg)
+{
+	size_t ncpus = (size_t)(intptr_t)arg;
+	size_t i;
+	int error;
+
+	while (!lapic_timer_stop) {
+		usleep(200);
+
+		for (i = 0; i < ncpus; i++) {
+			if (vcpu_done[i])
+				continue;
+			if (!lapic_timer_check(i))
+				continue;
+
+			error = vcpu_intr(current_vm->vm_vmmid, i, 1);
+			if (error != 0) {
+				log_debug("%s: could not interrupt vcpu %zu: %s",
+				    __func__, i, strerror(error));
+				continue;
+			}
+			vcpu_unhalt(i);
+			vcpu_signal_run(i);
+		}
+	}
+
+	return (NULL);
+}
+#endif
 
 static void *
 event_thread(void *arg)

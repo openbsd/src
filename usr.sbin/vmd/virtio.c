@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.149 2026/09/08 19:46:18 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.150 2026/09/17 22:20:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1871,6 +1871,7 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	memset(&msg, 0, sizeof(msg));
 	msg.reg = reg;
 	msg.io_sz = sz;
+	msg.irq = dev->irq;
 
 	if (dir == 0) {
 		msg.type = VIODEV_MSG_IO_WRITE;

@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.82 2026/09/16 06:07:19 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.83 2026/09/17 22:20:06 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -39,6 +39,7 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/ghcb.h>
+#include <machine/i82489reg.h>
 #include <machine/vmmvar.h>
 
 #include <dev/isa/isareg.h>
@@ -5885,6 +5886,14 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		*rdx = (vcpu->vc_shadow_pat >> 32);
 		action = VMM_ACTION_ADVANCE;
 		break;
+	case MSR_APICBASE:
+		/*
+		 * The single vcpu is the BSP and uses the architectural base.
+		 */
+		*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE | APICBASE_BSP;
+		*rdx = 0;
+		action = VMM_ACTION_ADVANCE;
+		break;
 	default:
 		/* Unsupported MSRs causes #GP exception, don't advance %rip */
 		DPRINTF("%s: unsupported rdmsr (msr=0x%llx), injecting #GP\n",
@@ -6161,6 +6170,16 @@ svm_handle_msr(struct vcpu *vcpu)
 		case MSR_DE_CFG:
 			/* LFENCE serializing bit is set by host */
 			*rax = DE_CFG_SERIALIZE_LFENCE;
+			*rdx = 0;
+			action = VMM_ACTION_ADVANCE;
+			break;
+		case MSR_APICBASE:
+			/*
+			 * The single vcpu is the BSP and uses the architectural
+			 * base.
+			 */
+			*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE |
+			    APICBASE_BSP;
 			*rdx = 0;
 			action = VMM_ACTION_ADVANCE;
 			break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.42 2025/12/02 02:31:10 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.43 2026/09/17 22:20:06 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -37,6 +37,21 @@ static struct vm_dev_pipe dev_pipe;
 
 static void com_rcv_event(int, short, void *);
 static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t);
+static void ns8250_update_iir(struct ns8250_dev *);
+
+static void
+ns8250_update_iir(struct ns8250_dev *com)
+{
+	uint8_t fifo;
+
+	fifo = com->regs.iir & IIR_FIFO_MASK;
+	if ((com->regs.ier & IER_ERXRDY) && (com->regs.lsr & LSR_RXRDY))
+		com->regs.iir = fifo | IIR_RXRDY;
+	else if ((com->regs.ier & IER_ETXRDY) && com->tx_intr_pending)
+		com->regs.iir = fifo | IIR_TXRDY;
+	else
+		com->regs.iir = fifo | IIR_NOPEND;
+}
 
 /*
  * ns8250_pipe_dispatch
@@ -73,12 +88,12 @@ ns8250_pipe_dispatch(int fd, short event, void *arg)
 static void
 ratelimit(int fd, short type, void *arg)
 {
-	/* Set TXRDY and clear "no pending interrupt" */
 	mutex_lock(&com1_dev.mutex);
-	com1_dev.regs.iir |= IIR_TXRDY;
-	com1_dev.regs.iir &= ~IIR_NOPEND;
-
-	vcpu_assert_irq(com1_dev.vmid, 0, com1_dev.irq);
+	if (com1_dev.regs.ier & IER_ETXRDY)
+		com1_dev.tx_intr_pending = 1;
+	ns8250_update_iir(&com1_dev);
+	if ((com1_dev.regs.iir & IIR_NOPEND) == 0)
+		vcpu_assert_irq(com1_dev.vmid, 0, com1_dev.irq);
 	mutex_unlock(&com1_dev.mutex);
 }
 
@@ -100,6 +115,7 @@ ns8250_init(int fd, uint32_t vmid)
 	com1_dev.vmid = vmid;
 	com1_dev.byte_out = 0;
 	com1_dev.regs.divlo = 1;
+	com1_dev.regs.iir = IIR_NOPEND;
 	com1_dev.baudrate = 115200;
 
 	/*
@@ -225,10 +241,7 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 		com->regs.lsr |= LSR_RXRDY;
 		com->regs.data = buf[1];
 
-		if (com->regs.ier & IER_ERXRDY) {
-			com->regs.iir |= IIR_RXRDY;
-			com->regs.iir &= ~IIR_NOPEND;
-		}
+		ns8250_update_iir(com);
 	}
 }
 
@@ -268,13 +281,12 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 			/* Limit output rate if needed */
 			if (com1_dev.pause_ct > 0 &&
 			    com1_dev.byte_out % com1_dev.pause_ct == 0) {
+				com1_dev.tx_intr_pending = 0;
 				vm_pipe_send(&dev_pipe, NS8250_RATELIMIT);
-			} else {
-				/* Set TXRDY and clear "no pending interrupt" */
-				com1_dev.regs.iir |= IIR_TXRDY;
-				com1_dev.regs.iir &= ~IIR_NOPEND;
-			}
+			} else
+				com1_dev.tx_intr_pending = 1;
 		}
+		ns8250_update_iir(&com1_dev);
 	} else {
 		if (com1_dev.regs.lcr & LCR_DLAB) {
 			set_return_data(vei, com1_dev.regs.divlo);
@@ -298,15 +310,7 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 			    __func__);
 		}
 
-		/* Reading the data register always clears RXRDY from IIR */
-		com1_dev.regs.iir &= ~IIR_RXRDY;
-
-		/*
-		 * Clear "interrupt pending" by setting IIR low bit to 1
-		 * if no interrupt are pending
-		 */
-		if (com1_dev.regs.iir == 0x0)
-			com1_dev.regs.iir = 0x1;
+		ns8250_update_iir(&com1_dev);
 	}
 
 	/* If pending interrupt, make sure it gets injected */
@@ -396,14 +400,9 @@ vcpu_process_com_iir(struct vm_exit *vei)
 		 * after the data is read.
 		 */
 		set_return_data(vei, com1_dev.regs.iir);
-		com1_dev.regs.iir &= ~IIR_TXRDY;
-
-		/*
-		 * Clear "interrupt pending" by setting IIR low bit to 1
-		 * if no interrupts are pending
-		 */
-		if (com1_dev.regs.iir == 0x0)
-			com1_dev.regs.iir = 0x1;
+		if ((com1_dev.regs.iir & IIR_IMASK) == IIR_TXRDY)
+			com1_dev.tx_intr_pending = 0;
+		ns8250_update_iir(&com1_dev);
 	}
 }
 
@@ -553,7 +552,10 @@ vcpu_process_com_ier(struct vm_exit *vei)
 		}
 		com1_dev.regs.ier = vei->vei.vei_data;
 		if (com1_dev.regs.ier & IER_ETXRDY)
-			com1_dev.regs.iir |= IIR_TXRDY;
+			com1_dev.tx_intr_pending = 1;
+		else
+			com1_dev.tx_intr_pending = 0;
+		ns8250_update_iir(&com1_dev);
 	} else {
 		if (com1_dev.regs.lcr & LCR_DLAB) {
 			set_return_data(vei, com1_dev.regs.divhi);
@@ -586,6 +588,7 @@ vcpu_exit_com(struct vm_run_params *vrp)
 {
 	uint8_t intr = 0xFF;
 	struct vm_exit *vei = vrp->vrp_exit;
+	int deassert = 0;
 
 	mutex_lock(&com1_dev.mutex);
 
@@ -595,9 +598,18 @@ vcpu_exit_com(struct vm_run_params *vrp)
 		break;
 	case COM1_IER:
 		vcpu_process_com_ier(vei);
+		if (vei->vei.vei_dir == VEI_DIR_OUT) {
+			if (com1_dev.regs.iir & IIR_NOPEND)
+				deassert = 1;
+			else
+				intr = com1_dev.irq;
+		}
 		break;
 	case COM1_IIR:
 		vcpu_process_com_iir(vei);
+		if (vei->vei.vei_dir == VEI_DIR_IN &&
+		    (com1_dev.regs.iir & IIR_NOPEND))
+			deassert = 1;
 		break;
 	case COM1_MCR:
 		vcpu_process_com_mcr(vei);
@@ -614,10 +626,16 @@ vcpu_exit_com(struct vm_run_params *vrp)
 	case COM1_DATA:
 		intr = vcpu_process_com_data(vei, vrp->vrp_vm_id,
 		    vrp->vrp_vcpu_id);
+		if (vei->vei.vei_dir == VEI_DIR_IN &&
+		    (com1_dev.regs.iir & IIR_NOPEND))
+			deassert = 1;
 		break;
 	}
 
 	mutex_unlock(&com1_dev.mutex);
+	if (deassert)
+		vcpu_deassert_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id,
+		    com1_dev.irq);
 
 	return (intr);
 }
