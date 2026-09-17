@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.18 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.19 2026/09/17 22:21:20 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -585,7 +585,13 @@ do_connect_shutdown(SSL *ssl, const char *name, int *done, short *events)
 static int
 do_accept(SSL *ssl, const char *name, int *done, short *events)
 {
+	char buf[1];
 	int ssl_ret;
+
+	if (*done) {
+		SSL_read(ssl, buf, 0);
+		return 1;
+	}
 
 	if ((ssl_ret = SSL_accept(ssl)) != 1)
 		return ssl_error(ssl, name, "accept", ssl_ret, events);
@@ -599,9 +605,15 @@ do_accept(SSL *ssl, const char *name, int *done, short *events)
 static int
 do_accept_write(SSL *ssl, const char *name, int *done, short *events)
 {
+	uint8_t buf[1];
 	int ssl_ret;
 	BIO *bio;
 	int i;
+
+	if (*done) {
+		SSL_read(ssl, buf, 0);
+		return 1;
+	}
 
 	if ((ssl_ret = SSL_accept(ssl)) != 1)
 		return ssl_error(ssl, name, "accept", ssl_ret, events);
@@ -629,8 +641,14 @@ do_accept_write(SSL *ssl, const char *name, int *done, short *events)
 static int
 do_accept_shutdown(SSL *ssl, const char *name, int *done, short *events)
 {
+	uint8_t buf[1];
 	int ssl_ret;
 	BIO *bio;
+
+	if (*done) {
+		SSL_read(ssl, buf, 0);
+		return 1;
+	}
 
 	if ((ssl_ret = SSL_accept(ssl)) != 1)
 		return ssl_error(ssl, name, "accept", ssl_ret, events);
@@ -729,6 +747,15 @@ do_client_server_loop(SSL *client, ssl_func *client_func, SSL *server,
 				return 0;
 			if (server_done)
 				pfd[1].events = 0;
+		} else if (!client_done) {
+			/*
+			 * The server is done but the client is not - we need to
+			 * continue to perform reads in order to process client
+			 * retransmits.
+			 */
+			if (!server_func(server, "server", &server_done,
+			    &pfd[1].events))
+				return 0;
 		}
 		if (poll(pfd, 2, poll_timeout(client, server)) == -1)
 			err(1, "poll");
