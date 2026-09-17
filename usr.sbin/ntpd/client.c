@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.119 2026/06/08 12:46:17 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.120 2026/09/17 10:43:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -299,7 +299,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
 		    errno == ENETUNREACH || errno == ENETDOWN ||
 		    errno == ECONNREFUSED || errno == EADDRNOTAVAIL ||
-		    errno == ENOPROTOOPT || errno == ENOENT) {
+		    errno == ENOPROTOOPT || errno == EMSGSIZE ||
+		    errno == ENOENT) {
 			client_log_error(p, "recvmsg", errno);
 			set_next(p, error_interval());
 			return (-1);
