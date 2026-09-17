@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2026/09/16 22:52:10 kurt Exp $
+# $OpenBSD: Makefile,v 1.3 2026/09/17 16:53:28 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -25,7 +25,7 @@ YY_OBJDIR!=	if [ -d $(YY_DIR)/${__objdir} ]; then \
 		fi
 
 YY_ORIGIN_DIR=	libyy
-AA_ORIGIN_DIR=	libyy/libaa
+AA_ORIGIN_DIR!=	echo "${YY_ORIGIN_DIR}/OpenBSD/`uname -r`/`uname -m`"
 
 PROG=		prog3
 SRCS=		main.c
