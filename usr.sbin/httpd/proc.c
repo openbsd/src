@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.60 2026/09/10 12:31:09 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.61 2026/09/17 17:55:06 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -38,7 +38,7 @@
 #include "log.h"
 
 void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int,
-		char *, int, char **);
+    char *, int, char **);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_open(struct privsep *, int, int);
 void	 proc_accept(struct privsep *, int, enum privsep_procid,
@@ -179,7 +179,8 @@ proc_connect(struct privsep *ps)
 
 void
 proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int debug, char *execpath, int argc, char **argv, enum privsep_procid proc_id)
+    int debug, char *execpath, int argc, char **argv,
+    enum privsep_procid proc_id)
 {
 	struct privsep_proc	*p = NULL;
 	struct privsep_pipes	*pa, *pb;

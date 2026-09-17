@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.83 2026/09/10 12:31:09 deraadt Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.84 2026/09/17 17:55:06 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -218,7 +218,8 @@ main(int argc, char *argv[])
 	}
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv,
+	    proc_id);
 
 	log_procinit("parent");
 
