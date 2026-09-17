@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.159 2026/04/03 13:11:00 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.160 2026/09/17 23:03:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -250,32 +250,11 @@ tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
     const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len)
 {
 	const EVP_MD *md;
-	size_t half_len;
 
 	memset(out, 0, out_len);
 
 	if (!ssl_get_handshake_evp_md(s, &md))
 		return (0);
-
-	if (EVP_MD_type(md) == NID_md5_sha1) {
-		/*
-		 * Partition secret between MD5 and SHA1, then XOR result.
-		 * If the secret length is odd, a one byte overlap is used.
-		 */
-		half_len = secret_len - (secret_len / 2);
-		if (!tls1_P_hash(EVP_md5(), secret, half_len, seed1, seed1_len,
-		    seed2, seed2_len, seed3, seed3_len, seed4, seed4_len,
-		    seed5, seed5_len, out, out_len))
-			return (0);
-
-		secret += secret_len - half_len;
-		if (!tls1_P_hash(EVP_sha1(), secret, half_len, seed1, seed1_len,
-		    seed2, seed2_len, seed3, seed3_len, seed4, seed4_len,
-		    seed5, seed5_len, out, out_len))
-			return (0);
-
-		return (1);
-	}
 
 	if (!tls1_P_hash(md, secret, secret_len, seed1, seed1_len,
 	    seed2, seed2_len, seed3, seed3_len, seed4, seed4_len,
