@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.273 2026/09/16 03:22:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.274 2026/09/17 18:51:39 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -369,7 +369,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_npins = 0;
 
 	/* see if we can run it. */
-	if ((error = check_exec(p, &pack, rpbuf ? REALPATH : 0)) != 0) {
+	if ((error = check_exec(p, &pack, rpbuf ? EXECPATH : 0)) != 0) {
 		goto freehdr;
 	}
 
@@ -571,7 +571,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)pr->ps_strings, sizeof(arginfo)))
 		goto exec_abort;
-	if (rpbuf) {
+	if (rpbuf && nid.ni_cnd.cn_rpi) {
 		if (copyoutstr(rpbuf, pack.ep_execpath, PATH_MAX, NULL))
 			goto exec_abort;
 	} else

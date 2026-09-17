@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.54 2026/05/18 06:45:53 jsg Exp $	*/
+/*	$OpenBSD: namei.h,v 1.55 2026/09/17 18:51:39 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -147,6 +147,7 @@ struct nameidata {
 #define BYPASSUNVEIL	0x400000      /* bypass pledgepath check */
 #define KERNELPATH	0x800000      /* access file as kernel, not process */
 #define BPU_ZONEINFO	0x1000000     /* /usr/share/zoneinfo prohibits symlinks */
+#define EXECPATH	0x2000000     /* like REALPATH, but can give up */
 
 /*
  * Initialization of an nameidata structure.

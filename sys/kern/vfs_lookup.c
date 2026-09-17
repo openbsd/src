@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.94 2026/09/16 04:26:22 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.95 2026/09/17 18:51:39 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ namei(struct nameidata *ndp)
 	if (cnp->cn_pnbuf[0] == '/') {
 		dp = ndp->ni_rootdir;
 		vref(dp);
-		if (cnp->cn_flags & REALPATH && cnp->cn_rpi == 0) {
+		if (cnp->cn_flags & (REALPATH|EXECPATH) && cnp->cn_rpi == 0) {
 			cnp->cn_rpbuf[0] = '/';
 			cnp->cn_rpbuf[1] = '\0';
 			cnp->cn_rpi = 1;
@@ -339,12 +339,12 @@ badlink:
 			vref(dp);
 			ndp->ni_unveil_match = NULL;
 			unveil_check_component(p, ndp, dp);
-			if (cnp->cn_flags & REALPATH) {
+			if (cnp->cn_flags & (REALPATH|EXECPATH)) {
 				cnp->cn_rpbuf[0] = '/';
 				cnp->cn_rpbuf[1] = '\0';
 				cnp->cn_rpi = 1;
 			}
-		} else if (cnp->cn_flags & REALPATH) {
+		} else if (cnp->cn_flags & (REALPATH|EXECPATH)) {
 			component_pop(cnp);
 		}
 	}
@@ -485,15 +485,20 @@ dirloop:
 	printf("{%s}: ", cnp->cn_nameptr);
 	*cp = c; }
 #endif
-	if (cnp->cn_flags & REALPATH) {
+	if (cnp->cn_flags & (REALPATH|EXECPATH)) {
 		size_t len = cp - cnp->cn_nameptr;
 		if (len == 2 && cnp->cn_nameptr[0] == '.' &&
 		    cnp->cn_nameptr[1] == '.')
 			component_pop(cnp);
 		else if (!(len == 1 && cnp->cn_nameptr[0] == '.')) {
 			if (!component_push(cnp, cnp->cn_nameptr, len)) {
-				error = ENAMETOOLONG;
-				goto bad;
+				if (cnp->cn_flags & REALPATH) {
+					error = ENAMETOOLONG;
+					goto bad;
+				}
+				/* EXECPATH: give up building path */
+				cnp->cn_rpi = 0;
+				cnp->cn_flags &= ~EXECPATH;
 			}
 		}
 	}
