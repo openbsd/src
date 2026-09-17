@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.210 2026/09/16 00:16:10 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.211 2026/09/17 23:15:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -227,7 +227,8 @@ main(int argc, char *argv[])
 		errx(1, "getexecpath");
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv,
+	    proc_id);
 
 	log_procinit("parent");
 

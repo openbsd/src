@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.298 2026/09/16 00:25:02 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.299 2026/09/17 23:15:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1160,10 +1160,10 @@ int	 load_config(const char *, struct relayd *);
 int	 cmdline_symset(char *);
 
 /* util.c */
-const char *host_error(enum host_error);
-const char *host_status(enum host_status);
-const char *table_check(enum table_check);
-const char *relay_state(enum relay_state);
+const char	*host_error(enum host_error);
+const char	*host_status(enum host_status);
+const char	*table_check(enum table_check);
+const char	*relay_state(enum relay_state);
 const char	*print_availability(u_long, u_long);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
 const char	*print_time(struct timeval *, struct timeval *, char *, size_t);

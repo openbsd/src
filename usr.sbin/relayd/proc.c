@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.62 2026/09/07 19:34:30 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.63 2026/09/17 23:15:32 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -179,7 +179,8 @@ proc_connect(struct privsep *ps)
 
 void
 proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int debug, char *execpath, int argc, char **argv, enum privsep_procid proc_id)
+    int debug, char *execpath, int argc, char **argv,
+    enum privsep_procid proc_id)
 {
 	struct privsep_proc	*p = NULL;
 	struct privsep_pipes	*pa, *pb;
