@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.170 2026/07/26 14:46:32 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.171 2026/09/17 17:53:31 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -125,6 +125,7 @@ server_httpdesc_free(struct http_descriptor *desc)
 	desc->http_method = 0;
 	desc->http_chunked = 0;
 	desc->http_cl = 0;
+	desc->http_bodylen = 0;
 }
 
 int
@@ -571,6 +572,8 @@ void
 server_read_httpchunks(struct bufferevent *bev, void *arg)
 {
 	struct client		*clt = arg;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
+	struct http_descriptor	*desc = clt->clt_descreq;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	const char		*buf = EVBUFFER_DATA(src);
 	size_t			 size = EVBUFFER_LENGTH(src);
@@ -620,6 +623,13 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 			server_close(clt, "invalid chunk size");
 			return;
 		}
+		if ((uint64_t)llval > (uint64_t)(srv_conf->maxrequestbody -
+		    desc->http_bodylen)) {
+			free(line);
+			server_abort_http(clt, 413, "request body too large");
+			return;
+		}
+		desc->http_bodylen += (size_t)llval;
 
 		free(line);
 
