@@ -13,11 +13,11 @@ main(int argc, char *argv[])
 	char path[PATH_MAX];
 
 	if (argc < 1)
-		errx(1, "usage: getexecpath expected-path");
+		errx(1, "usage: getexecpath [...] expected-path");
 
 	if (getexecpath(path, sizeof path) == -1)
 		err(1, "getexepath: on path");
-	if (strcmp(path, argv[1]) != 0)
+	if (strcmp(path, argv[argc - 1]) != 0)
 		exit(1);
 	printf("getexecpath(3) is working\n");
 	exit(0);
