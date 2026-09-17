@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.101 2026/09/16 17:23:53 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.102 2026/09/17 22:47:41 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -557,19 +557,21 @@ dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
  * but may be greater if the maximum certificate list size requires it.
  */
 static unsigned long
-dtls1_max_handshake_message_len(const SSL *s)
+dtls1_max_handshake_message_len(const SSL *s, uint8_t msg_type)
 {
 	unsigned long max_len;
 
 	max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
-	if (max_len < (unsigned long)s->max_cert_list)
-		return s->max_cert_list;
+	if (msg_type == SSL3_MT_CERTIFICATE &&
+	    max_len < (unsigned long)s->max_cert_list)
+		max_len = s->max_cert_list;
 	return max_len;
 }
 
 static int
-dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
+dtls1_reassemble_fragment(SSL *s, struct hm_header_st *msg_hdr, int *ok)
 {
+	piterator iter;
 	hm_fragment *frag = NULL;
 	pitem *item = NULL;
 	int i = -1, is_complete;
@@ -577,7 +579,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	unsigned long frag_len = msg_hdr->frag_len;
 
 	if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len ||
-	    msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
+	    msg_hdr->msg_len > dtls1_max_handshake_message_len(s, msg_hdr->type))
 		goto err;
 
 	if (frag_len == 0) {
@@ -592,6 +594,14 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	item = pqueue_find(s->d1->buffered_messages, seq64be);
 
 	if (item == NULL) {
+		/* Ensure that we only have one of each handshake message type. */
+		iter = pqueue_iterator(s->d1->buffered_messages);
+		for (item = pqueue_next(&iter); item != NULL; item = pqueue_next(&iter)) {
+			frag = (hm_fragment *)item->data;
+			if (frag->msg_header.type == msg_hdr->type)
+				goto err;
+		}
+
 		frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
 		if (frag == NULL)
 			goto err;
@@ -716,7 +726,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		if (frag_len < msg_hdr->msg_len)
 			return dtls1_reassemble_fragment(s, msg_hdr, ok);
 
-		if (frag_len > dtls1_max_handshake_message_len(s))
+		if (frag_len > dtls1_max_handshake_message_len(s, msg_hdr->type))
 			goto err;
 
 		frag = dtls1_hm_fragment_new(frag_len, 0);
