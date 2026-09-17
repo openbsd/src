@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.21 2024/11/12 20:52:35 tobhe Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.22 2026/09/17 15:21:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -82,9 +82,11 @@ struct wsdisplay_charcell simplefb_bs[SIMPLEFB_WIDTH * SIMPLEFB_HEIGHT];
 
 int	simplefb_match(struct device *, void *, void *);
 void	simplefb_attach(struct device *, struct device *, void *);
+int	simplefb_activate(struct device *, int act);
 
 const struct cfattach simplefb_ca = {
-	sizeof(struct simplefb_softc), simplefb_match, simplefb_attach
+	sizeof(struct simplefb_softc), simplefb_match, simplefb_attach,
+	NULL, simplefb_activate
 };
 
 struct cfdriver simplefb_cd = {
@@ -197,6 +199,22 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 
 	config_found_sm(self, &waa, wsemuldisplaydevprint,
 	    wsemuldisplaydevsubmatch);
+}
+
+int
+simplefb_activate(struct device *self, int act)
+{
+	struct simplefb_softc *sc = (struct simplefb_softc *)self;
+	struct rasops_info *ri = &sc->sc_ri;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		if (sleep_mode == SLEEP_HIBERNATE)
+			rasops_show_screen(ri, ri->ri_active, 0, NULL, NULL);
+		break;
+	}
+
+	return config_activate_children(self, act);	
 }
 
 const char *
