@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2026/09/16 15:48:56 kurt Exp $
+#	$OpenBSD: Makefile,v 1.4 2026/09/17 17:00:04 kurt Exp $
 
-SUBDIR+= libaa libyy prog1 prog2 prog3
+SUBDIR+= libaa libyy prog1 prog2 prog3 prog4
 
 install:
 
