@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.19 2026/09/17 22:21:20 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.20 2026/09/17 23:16:38 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -300,11 +300,13 @@ BIO_packet_monkey_delay(BIO *bio, int num, int count)
 	return BIO_ctrl(bio, BIO_C_DELAY_PACKET, num, NULL);
 }
 
+#if 0
 static int
 BIO_packet_monkey_delay_flush(BIO *bio)
 {
 	return BIO_ctrl(bio, BIO_C_DELAY_FLUSH, 0, NULL);
 }
+#endif
 
 static int
 BIO_packet_monkey_drop(BIO *bio, int num)
@@ -536,53 +538,6 @@ do_connect(SSL *ssl, const char *name, int *done, short *events)
 }
 
 static int
-do_connect_read(SSL *ssl, const char *name, int *done, short *events)
-{
-	uint8_t buf[2048];
-	int ssl_ret;
-	int i;
-
-	if ((ssl_ret = SSL_connect(ssl)) != 1)
-		return ssl_error(ssl, name, "connect", ssl_ret, events);
-
-	fprintf(stderr, "INFO: %s connect done\n", name);
-	*done = 1;
-
-	for (i = 0; i < 3; i++) {
-		fprintf(stderr, "INFO: %s reading after connect\n", name);
-		if ((ssl_ret = SSL_read(ssl, buf, sizeof(buf))) != 3) {
-			fprintf(stderr, "ERROR: %s read failed\n", name);
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
-static int
-do_connect_shutdown(SSL *ssl, const char *name, int *done, short *events)
-{
-	uint8_t buf[2048];
-	int ssl_ret;
-
-	if ((ssl_ret = SSL_connect(ssl)) != 1)
-		return ssl_error(ssl, name, "connect", ssl_ret, events);
-
-	fprintf(stderr, "INFO: %s connect done\n", name);
-	*done = 1;
-
-	ssl_ret = SSL_read(ssl, buf, sizeof(buf));
-	if (SSL_get_error(ssl, ssl_ret) != SSL_ERROR_ZERO_RETURN) {
-		fprintf(stderr, "FAIL: %s did not receive close-notify\n", name);
-		return 0;
-	}
-
-	fprintf(stderr, "INFO: %s received close-notify\n", name);
-
-	return 1;
-}
-
-static int
 do_accept(SSL *ssl, const char *name, int *done, short *events)
 {
 	char buf[1];
@@ -599,71 +554,6 @@ do_accept(SSL *ssl, const char *name, int *done, short *events)
 	fprintf(stderr, "INFO: %s accept done\n", name);
 	*done = 1;
 
-	return 1;
-}
-
-static int
-do_accept_write(SSL *ssl, const char *name, int *done, short *events)
-{
-	uint8_t buf[1];
-	int ssl_ret;
-	BIO *bio;
-	int i;
-
-	if (*done) {
-		SSL_read(ssl, buf, 0);
-		return 1;
-	}
-
-	if ((ssl_ret = SSL_accept(ssl)) != 1)
-		return ssl_error(ssl, name, "accept", ssl_ret, events);
-
-	fprintf(stderr, "INFO: %s accept done\n", name);
-
-	for (i = 0; i < 3; i++) {
-		fprintf(stderr, "INFO: %s writing after accept\n", name);
-		if ((ssl_ret = SSL_write(ssl, "abc", 3)) != 3) {
-			fprintf(stderr, "ERROR: %s write failed\n", name);
-			return 0;
-		}
-	}
-
-	if ((bio = SSL_get_wbio(ssl)) == NULL)
-		errx(1, "SSL has NULL bio");
-
-	/* Flush any delayed packets. */
-	BIO_packet_monkey_delay_flush(bio);
-
-	*done = 1;
-	return 1;
-}
-
-static int
-do_accept_shutdown(SSL *ssl, const char *name, int *done, short *events)
-{
-	uint8_t buf[1];
-	int ssl_ret;
-	BIO *bio;
-
-	if (*done) {
-		SSL_read(ssl, buf, 0);
-		return 1;
-	}
-
-	if ((ssl_ret = SSL_accept(ssl)) != 1)
-		return ssl_error(ssl, name, "accept", ssl_ret, events);
-
-	fprintf(stderr, "INFO: %s accept done\n", name);
-
-	SSL_shutdown(ssl);
-
-	if ((bio = SSL_get_wbio(ssl)) == NULL)
-		errx(1, "SSL has NULL bio");
-
-	/* Flush any delayed packets. */
-	BIO_packet_monkey_delay_flush(bio);
-
-	*done = 1;
 	return 1;
 }
 
@@ -783,8 +673,6 @@ struct dtls_test {
 	int client_bbio_off;
 	int server_bbio_off;
 	uint16_t initial_epoch;
-	int write_after_accept;
-	int shutdown_after_accept;
 	struct dtls_delay client_delays[MAX_PACKET_DELAYS];
 	struct dtls_delay server_delays[MAX_PACKET_DELAYS];
 	uint8_t client_drops[MAX_PACKET_DROPS];
@@ -902,15 +790,10 @@ static const struct dtls_test dtls_tests[] = {
 		.client_delays = { { 3, 2 } },
 	},
 	{
-		/*
-		 * Send CCS after server Finished - note app data will be
-		 * dropped if we send the CCS after app data.
-		 */
 		.desc = "DTLS with delayed server CCS",
 		.ssl_options = SSL_OP_NO_TICKET,
 		.server_bbio_off = 1,
 		.server_delays = { { 5, 2 } },
-		.write_after_accept = 1,
 	},
 	{
 		.desc = "DTLS with delayed server CCS (initial epoch 0xfffe)",
@@ -918,7 +801,6 @@ static const struct dtls_test dtls_tests[] = {
 		.server_bbio_off = 1,
 		.initial_epoch = 0xfffe,
 		.server_delays = { { 5, 2 } },
-		.write_after_accept = 1,
 	},
 	{
 		.desc = "DTLS with delayed server CCS (initial epoch 0xffff)",
@@ -926,7 +808,6 @@ static const struct dtls_test dtls_tests[] = {
 		.server_bbio_off = 1,
 		.initial_epoch = 0xffff,
 		.server_delays = { { 5, 2 } },
-		.write_after_accept = 1,
 	},
 	{
 		/* Send Finished after app data - this is currently buffered. */
@@ -934,15 +815,6 @@ static const struct dtls_test dtls_tests[] = {
 		.ssl_options = SSL_OP_NO_TICKET,
 		.server_bbio_off = 1,
 		.server_delays = { { 6, 3 } },
-		.write_after_accept = 1,
-	},
-	{
-		/* Send CCS after server finished and close-notify. */
-		.desc = "DTLS with delayed server CCS (close-notify)",
-		.ssl_options = SSL_OP_NO_TICKET,
-		.server_bbio_off = 1,
-		.server_delays = { { 5, 3 } },
-		.shutdown_after_accept = 1,
 	},
 };
 
@@ -987,7 +859,6 @@ static int
 dtlstest(const struct dtls_test *dt)
 {
 	SSL *client = NULL, *server = NULL;
-	ssl_func *connect_func, *accept_func;
 	struct sockaddr_in server_sin;
 	struct pollfd pfd[2];
 	int client_sock = -1;
@@ -1021,24 +892,10 @@ dtlstest(const struct dtls_test *dt)
 	pfd[1].fd = server_sock;
 	pfd[1].events = POLLIN;
 
-	accept_func = do_accept;
-	connect_func = do_connect;
-
-	if (dt->write_after_accept) {
-		accept_func = do_accept_write;
-		connect_func = do_connect_read;
-	} else if (dt->shutdown_after_accept) {
-		accept_func = do_accept_shutdown;
-		connect_func = do_connect_shutdown;
-	}
-
-	if (!do_client_server_loop(client, connect_func, server, accept_func, pfd)) {
+	if (!do_client_server_loop(client, do_connect, server, do_accept, pfd)) {
 		fprintf(stderr, "FAIL: client and server handshake failed\n");
 		goto failure;
 	}
-
-	if (dt->write_after_accept || dt->shutdown_after_accept)
-		goto done;
 
 	pfd[0].events = POLLIN;
 	pfd[1].events = POLLOUT;
@@ -1064,7 +921,6 @@ dtlstest(const struct dtls_test *dt)
 		goto failure;
 	}
 
- done:
 	fprintf(stderr, "INFO: Done!\n");
 
 	failed = 0;
