@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.151 2026/09/18 05:27:30 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.152 2026/09/18 21:47:36 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -348,6 +348,9 @@ struct vmd_vm {
 	/* For rate-limiting */
 	struct timeval		 vm_start_tv;
 	int			 vm_start_limit;
+
+	/* Timeout for termination. */
+	struct event		 vm_timeout_ev;
 
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };

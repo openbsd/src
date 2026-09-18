@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.22 2026/09/18 05:27:30 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.23 2026/09/18 21:47:36 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -997,7 +997,7 @@ vcpu_assert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
 
 	if (intr_pending(vcpu_id)) {
 		if (vcpu_intr(vmm_id, vcpu_id, 1))
-			fatalx("%s: can't assert INTR", __func__);
+			log_debug("%s: can't assert INTR", __func__);
 
 		vcpu_unhalt(vcpu_id);
 		vcpu_signal_run(vcpu_id);

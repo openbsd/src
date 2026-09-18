@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.85 2026/09/18 21:26:16 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.86 2026/09/18 21:47:36 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3461,13 +3461,13 @@ vm_run(struct vm_run_params *vrp)
 		vrp->vrp_exit_reason = (vcpu_rv == 0) ? VM_EXIT_NONE
 		    : vcpu->vc_gueststate.vg_exit_reason;
 		vrp->vrp_irqready = vcpu->vc_irqready;
-		vcpu->vc_state = VCPU_STATE_STOPPED;
+		atomic_store_int(&vcpu->vc_state, VCPU_STATE_STOPPED);
 		ret = copyout(&vcpu->vc_exit, vrp->vrp_exit,
 		    sizeof(struct vm_exit));
 	} else {
 		/* vcpu is in a terminal state */
 		vrp->vrp_exit_reason = VM_EXIT_TERMINATED;
-		vcpu->vc_state = VCPU_STATE_TERMINATED;
+		atomic_store_int(&vcpu->vc_state, VCPU_STATE_TERMINATED);
 	}
 out_unlock:
 	rw_exit_write(&vcpu->vc_lock);

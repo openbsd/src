@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.141 2026/09/08 19:46:18 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.142 2026/09/18 21:47:36 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 #include <dev/vmm/vmm.h>
 
@@ -45,7 +46,8 @@ int	vmm_start_vm(struct imsg *, uint32_t *, pid_t *);
 int	vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void	vmm_run(struct privsep *, struct privsep_proc *, void *);
 void	vmm_dispatch_vm(int, short, void *);
-int	terminate_vm(struct vm_terminate_params *);
+void	vmm_vm_timeout(int, short, void *);
+int	terminate_vm(struct vmd_vm *);
 int	get_info_vm(struct privsep *, struct imsg *, int);
 int	opentap(char *);
 
@@ -108,7 +110,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct privsep		*ps = p->p_ps;
 	int			 res = 0, cmd = IMSG_NONE, verbose;
 	struct vmd_vm		*vm = NULL;
-	struct vm_terminate_params vtp;
 	struct vmop_id		 vid;
 	struct vmop_result	 vmr;
 	struct vmop_addr_result  var;
@@ -171,10 +172,8 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			res = ENOENT;
 		} else if ((vm = vm_getbyvmid(id)) != NULL) {
 			if (flags & VMOP_FORCE) {
-				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
 				vm->vm_state |= VM_STATE_SHUTDOWN;
-				(void)terminate_vm(&vtp);
-				res = 0;
+				res = terminate_vm(vm);
 			} else if (!(vm->vm_state & VM_STATE_SHUTDOWN)) {
 				log_debug("%s: sending shutdown request"
 				    " to vm %d", __func__, id);
@@ -199,7 +198,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				 * Check to see if the VM process is still
 				 * active.  If not, return VMD_VM_STOP_INVALID.
 				 */
-				if (vm_vmid2id(vm->vm_vmid, vm) == 0) {
+				if (kill(vm->vm_pid, 0) == -1 && errno == ESRCH) {
 					log_debug("%s: no vm running anymore",
 					    __func__);
 					res = VMD_VM_STOP_INVALID;
@@ -327,7 +326,7 @@ void
 vmm_sighdlr(int sig, short event, void *arg)
 {
 	struct privsep *ps = arg;
-	int status, ret = 0;
+	int status, ret;
 	pid_t pid;
 	struct vmop_result vmr;
 	struct vmd_vm *vm;
@@ -340,6 +339,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 			pid = waitpid(-1, &status, WNOHANG);
 			if (pid <= 0)
 				continue;
+			ret = 0;
 
 			if (WIFEXITED(status) || WIFSIGNALED(status)) {
 				vm = vm_getbypid(pid);
@@ -354,6 +354,8 @@ vmm_sighdlr(int sig, short event, void *arg)
 
 				if (WIFEXITED(status))
 					ret = WEXITSTATUS(status);
+				else if (WIFSIGNALED(status))
+					ret = EIO;
 
 				/* Don't reboot on pending shutdown */
 				if (ret == EAGAIN &&
@@ -363,7 +365,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 				/* XXX check this */
 				vtp.vtp_vm_id = vm->vm_vmmid;
 
-				if (terminate_vm(&vtp) == 0)
+				if (ioctl(env->vmd_vmm_fd, VMM_IOC_TERM, &vtp) == 0)
 					log_debug("%s: terminated vm %s"
 					    " (id %d)", __func__,
 					    vm->vm_params.vmc_name,
@@ -378,7 +380,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 					log_warnx("could not signal "
 					    "termination of VM %u to "
 					    "parent", vm->vm_vmid);
-
+				event_del(&vm->vm_timeout_ev);
 				vm_remove(vm, __func__);
 			} else
 				fatalx("unexpected cause of SIGCHLD");
@@ -404,7 +406,10 @@ vmm_shutdown(void)
 		vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
 
 		/* XXX suspend or request graceful shutdown */
-		(void)terminate_vm(&vtp);
+		if (vm->vm_pid > 0)
+			kill(vm->vm_pid, SIGKILL);
+		(void)ioctl(env->vmd_vmm_fd, VMM_IOC_TERM, &vtp);
+		event_del(&vm->vm_timeout_ev);
 		vm_remove(vm, __func__);
 	}
 }
@@ -514,24 +519,32 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	imsg_event_add(iev);
 }
 
-/*
- * terminate_vm
- *
- * Requests vmm(4) to terminate the VM whose ID is provided in the
- * supplied vm_terminate_params structure (vtp->vtp_vm_id)
- *
- * Parameters
- *  vtp: vm_terminate_params struct containing the ID of the VM to terminate
- *
- * Return values:
- *  0: success
- *  !0: ioctl to vmm(4) failed (eg, ENOENT if the supplied VM is not valid)
- */
 int
-terminate_vm(struct vm_terminate_params *vtp)
+terminate_vm(struct vmd_vm *vm)
 {
-	if (ioctl(env->vmd_vmm_fd, VMM_IOC_TERM, vtp) == -1)
+	struct timeval tv;
+
+	if (vm->vm_pid <= 0)
+		return (EINVAL);
+
+	/* Force the vm process out of its event loop. */
+	if (kill(vm->vm_pid, SIGTERM) == -1) {
+		log_warn("failed to signal termination to vm for pid %u",
+		    vm->vm_pid);
 		return (errno);
+	}
+
+	/* Give it 10 seconds to exit before trying to kill. */
+	timerclear(&tv);
+	tv.tv_sec = 10;
+	evtimer_del(&vm->vm_timeout_ev);
+	evtimer_set(&vm->vm_timeout_ev, vmm_vm_timeout, vm);
+
+	if (evtimer_add(&vm->vm_timeout_ev, &tv) == -1) {
+		log_warn("failed to schedule timeout for vm %u", vm->vm_vmid);
+		if (kill(vm->vm_pid, SIGKILL) == -1)
+			return (errno);
+	}
 
 	return (0);
 }
@@ -840,8 +853,10 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 	for (i = 0; i < ct; i++) {
 		if (terminate) {
 			vtp.vtp_vm_id = info[i].vir_id;
-			if ((ret = terminate_vm(&vtp)) != 0)
+			if (ioctl(env->vmd_vmm_fd, VMM_IOC_TERM, &vtp) == -1) {
+				ret = errno;
 				break;
+			}
 			log_debug("%s: terminated vm %s (id %d)", __func__,
 			    info[i].vir_name, info[i].vir_id);
 			continue;
@@ -869,4 +884,18 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 	free(info);
 
 	return (ret);
+}
+
+void
+vmm_vm_timeout(int fd, short event, void *arg)
+{
+	struct vmd_vm *vm = (struct vmd_vm *)arg;
+
+	if (vm->vm_pid <= 0)
+		fatalx("%s: invalid pid %u", __func__, vm->vm_pid);
+
+	if (kill(vm->vm_pid, SIGKILL) == -1)
+		log_warn("failed to kill vm %u", vm->vm_vmid);
+	else
+		log_warn("force killed vm %u", vm->vm_vmid);
 }
