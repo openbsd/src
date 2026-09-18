@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.16 2025/08/08 13:40:12 dv Exp $	*/
+/*	$OpenBSD: pci.h,v 1.17 2026/09/18 05:27:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -20,6 +20,8 @@
 
 #include <dev/pci/pcireg.h>
 
+#include <pthread.h>
+
 #include "vmd.h"
 
 #ifndef _PCI_H_
@@ -31,6 +33,10 @@
 #define PCI_CONFIG_MAX_DEV	32
 #define PCI_MAX_BARS		6
 #define PCI_MAX_CAPS		8
+#define PCI_MSIX_MAX_VECTORS	16
+
+#define PCI_MSIX_TABLE_OFFSET	0x0000
+#define PCI_MSIX_PBA_OFFSET	0x0800
 
 #define PCI_BAR_TYPE_IO		0x0
 #define PCI_BAR_TYPE_MMIO	0x1
@@ -43,7 +49,14 @@
 typedef int (*pci_cs_fn_t)(int dir, uint8_t reg, uint32_t *data);
 typedef int (*pci_iobar_fn_t)(int dir, uint16_t reg, uint32_t *data, uint8_t *,
     void *, uint8_t);
-typedef int (*pci_mmiobar_fn_t)(int dir, uint32_t ofs, uint32_t *data);
+typedef int (*pci_mmiobar_fn_t)(uint32_t, int, uint32_t, uint8_t,
+    uint64_t *, void *);
+
+struct pci_msix_entry {
+	uint64_t pme_addr;
+	uint32_t pme_data;
+	uint32_t pme_vector_control;
+};
 
 /*
  * Represents a PCI Capability entry with enough space for the virtio-specific
@@ -95,6 +108,13 @@ struct pci_dev {
 	uint32_t pd_barsize[PCI_MAX_BARS];
 	void *pd_barfunc[PCI_MAX_BARS];
 	void *pd_bar_cookie[PCI_MAX_BARS];
+
+	uint8_t pd_msi_cap;
+	uint8_t pd_msix_cap;
+	uint16_t pd_msix_nvec;
+	uint64_t pd_msix_pba;
+	struct pci_msix_entry pd_msix_table[PCI_MSIX_MAX_VECTORS];
+	pthread_mutex_t pd_mtx;
 };
 
 struct pci {
@@ -114,6 +134,10 @@ int pci_add_device(uint8_t *, uint16_t, uint16_t, uint8_t, uint8_t, uint16_t,
 int pci_add_capability(uint8_t, struct pci_cap *);
 int pci_add_bar(uint8_t, uint32_t, void *, void *);
 int pci_set_bar_fn(uint8_t, uint8_t, void *, void *);
+int pci_add_msi_capability(uint8_t);
+int pci_add_msix_capability(uint8_t, uint16_t);
+void pci_assert_irq(uint8_t, uint16_t);
+void pci_deassert_irq(uint8_t);
 uint8_t pci_get_dev_irq(uint8_t);
 uint16_t pci_get_subsys_id(uint8_t);
 
@@ -121,6 +145,7 @@ uint16_t pci_get_subsys_id(uint8_t);
 void pci_handle_address_reg(struct vm_run_params *);
 void pci_handle_data_reg(struct vm_run_params *);
 uint8_t pci_handle_io(struct vm_run_params *);
+int pci_handle_mmio(uint32_t, int, paddr_t, uint8_t, uint64_t *);
 #endif /* __amd64__ */
 
 #endif /* _PCI_H_ */

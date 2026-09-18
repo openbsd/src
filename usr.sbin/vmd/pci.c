@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.40 2025/12/02 02:31:10 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.41 2026/09/18 05:27:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -22,17 +22,57 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/vmm/vmm.h>
 
+#include <errno.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "vmd.h"
 #include "pci.h"
 #include "atomicio.h"
+#include "mmio.h"
 
 struct pci pci;
 
-extern struct vmd_vm current_vm;
+extern struct vmd_vm *current_vm;
+
+#define PCI_MSI_ADDR_BASE		0xfee00000ULL
+#define PCI_MSI_ADDR_MASK		0xfff00000ULL
+#define PCI_MSI_ADDR_DEST_SHIFT		12
+#define PCI_MSI_ADDR_DEST_MASK		0xff
+#define PCI_MSI_ADDR_DESTMODE		(1ULL << 2)
+#define PCI_MSI_DATA_VECTOR_MASK	0xff
+#define PCI_MSI_DATA_DELIVERY_SHIFT	8
+#define PCI_MSI_DATA_DELIVERY_MASK	0x7
+#define PCI_MSI_DELIVERY_FIXED		0
+
+struct pci_msi_cap {
+	uint8_t pmc_id;
+	uint8_t pmc_next;
+	uint16_t pmc_control;
+	uint32_t pmc_address;
+	uint32_t pmc_address_hi;
+	uint16_t pmc_data;
+	uint16_t pmc_reserved;
+} __packed;
+
+struct pci_msix_cap {
+	uint8_t pmc_id;
+	uint8_t pmc_next;
+	uint16_t pmc_control;
+	uint32_t pmc_table;
+	uint32_t pmc_pba;
+} __packed;
+
+static int pci_msix_mmio(uint32_t, int, uint32_t, uint8_t, uint64_t *,
+    void *);
+static void pci_msi_deliver(uint64_t, uint32_t);
+static int pci_msi_enabled(struct pci_dev *);
+static int pci_msix_enabled(struct pci_dev *);
+static void pci_config_write(struct pci_dev *, uint8_t, uint8_t, uint8_t,
+    uint32_t);
+static void pci_msix_drain(struct pci_dev *);
 
 /* PIC IRQs, assigned to devices in order */
 const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 6, 7, 9, 10, 11, 12,
@@ -170,6 +210,8 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
     uint8_t subclass, uint16_t subsys_vid, uint16_t subsys_id,
     uint8_t rev_id, uint8_t irq_needed, pci_cs_fn_t csfunc)
 {
+	int ret;
+
 	/* Exceeded max devices? */
 	if (pci.pci_dev_ct >= PCI_CONFIG_MAX_DEV)
 		return (1);
@@ -180,6 +222,12 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		return (1);
 
 	*id = pci.pci_dev_ct;
+	ret = pthread_mutex_init(&pci.pci_devices[*id].pd_mtx, NULL);
+	if (ret != 0) {
+		errno = ret;
+		log_warn("can't initialize PCI device mutex");
+		return (1);
+	}
 
 	pci.pci_devices[*id].pd_vid = vid;
 	pci.pci_devices[*id].pd_did = pid;
@@ -198,7 +246,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		pci.pci_next_pic_irq++;
 		DPRINTF("assigned irq %d to pci dev %d",
 		    pci.pci_devices[*id].pd_irq, *id);
-		intr_toggle_el(&current_vm, pci.pci_devices[*id].pd_irq, 1);
+		intr_toggle_el(current_vm, pci.pci_devices[*id].pd_irq, 1);
 	}
 
 	pci.pci_dev_ct++;
@@ -234,6 +282,300 @@ pci_add_capability(uint8_t id, struct pci_cap *cap)
 	return (cid);
 }
 
+int
+pci_add_msi_capability(uint8_t id)
+{
+	struct pci_dev *dev;
+	struct pci_cap storage;
+	struct pci_msi_cap cap;
+	int cid;
+
+	if (id >= pci.pci_dev_ct)
+		return (-1);
+	dev = &pci.pci_devices[id];
+	if (dev->pd_msi_cap != 0)
+		return (-1);
+
+	memset(&cap, 0, sizeof(cap));
+	cap.pmc_id = PCI_CAP_MSI;
+	/* A 64-bit address keeps the capability layout uniform. */
+	cap.pmc_control = PCI_MSI_MC_C64 >> 16;
+	memset(&storage, 0, sizeof(storage));
+	memcpy(&storage, &cap, sizeof(cap));
+	cid = pci_add_capability(id, &storage);
+	if (cid == -1)
+		return (-1);
+	dev->pd_msi_cap = offsetof(struct pci_dev, pd_caps) +
+	    cid * sizeof(struct pci_cap);
+
+	return (0);
+}
+
+int
+pci_add_msix_capability(uint8_t id, uint16_t nvec)
+{
+	struct pci_dev *dev;
+	struct pci_cap storage;
+	struct pci_msix_cap cap;
+	int bar, cid;
+
+	if (id >= pci.pci_dev_ct || nvec == 0 ||
+	    nvec > PCI_MSIX_MAX_VECTORS)
+		return (-1);
+	dev = &pci.pci_devices[id];
+	if (dev->pd_msix_cap != 0)
+		return (-1);
+
+	bar = pci_add_bar(id, PCI_MAPREG_TYPE_MEM, pci_msix_mmio, dev);
+	if (bar == -1)
+		return (-1);
+
+	memset(&cap, 0, sizeof(cap));
+	cap.pmc_id = PCI_CAP_MSIX;
+	cap.pmc_control = nvec - 1;
+	cap.pmc_table = PCI_MSIX_TABLE_OFFSET | bar;
+	cap.pmc_pba = PCI_MSIX_PBA_OFFSET | bar;
+	memset(&storage, 0, sizeof(storage));
+	memcpy(&storage, &cap, sizeof(cap));
+	cid = pci_add_capability(id, &storage);
+	if (cid == -1)
+		return (-1);
+
+	dev->pd_msix_cap = offsetof(struct pci_dev, pd_caps) +
+	    cid * sizeof(struct pci_cap);
+	dev->pd_msix_nvec = nvec;
+	/* MSI-X vectors begin masked until the guest programs the table. */
+	for (cid = 0; cid < nvec; cid++)
+		dev->pd_msix_table[cid].pme_vector_control =
+		    PCI_MSIX_VC_MASK;
+
+	return (0);
+}
+
+static int
+pci_msi_enabled(struct pci_dev *dev)
+{
+	uint16_t control;
+
+	if (dev->pd_msi_cap == 0)
+		return (0);
+	memcpy(&control, (uint8_t *)dev->pd_cfg_space + dev->pd_msi_cap + 2,
+	    sizeof(control));
+	return ((control & (PCI_MSI_MC_MSIE >> 16)) != 0);
+}
+
+static int
+pci_msix_enabled(struct pci_dev *dev)
+{
+	uint16_t control;
+
+	if (dev->pd_msix_cap == 0)
+		return (0);
+	memcpy(&control, (uint8_t *)dev->pd_cfg_space + dev->pd_msix_cap + 2,
+	    sizeof(control));
+	return ((control & (PCI_MSIX_MC_MSIXE >> 16)) != 0);
+}
+
+static void
+pci_msi_deliver(uint64_t address, uint32_t data)
+{
+	uint32_t dest;
+	uint8_t delivery, vector;
+
+	if ((address & PCI_MSI_ADDR_MASK) != PCI_MSI_ADDR_BASE ||
+	    (address >> 32) != 0) {
+		log_debug("%s: unsupported MSI address 0x%llx", __func__,
+		    address);
+		return;
+	}
+	if (address & PCI_MSI_ADDR_DESTMODE) {
+		log_debug("%s: logical MSI destination unsupported", __func__);
+		return;
+	}
+
+	delivery = (data >> PCI_MSI_DATA_DELIVERY_SHIFT) &
+	    PCI_MSI_DATA_DELIVERY_MASK;
+	if (delivery != PCI_MSI_DELIVERY_FIXED) {
+		log_debug("%s: MSI delivery mode %u unsupported", __func__,
+		    delivery);
+		return;
+	}
+
+	dest = (address >> PCI_MSI_ADDR_DEST_SHIFT) &
+	    PCI_MSI_ADDR_DEST_MASK;
+	vector = data & PCI_MSI_DATA_VECTOR_MASK;
+	vcpu_assert_vector(current_vm->vm_vmmid, dest, vector);
+}
+
+void
+pci_assert_irq(uint8_t id, uint16_t msix_vector)
+{
+	struct pci_dev *dev;
+	uint64_t address = 0;
+	uint32_t data = 0;
+	uint16_t control;
+	int legacy = 0, deliver = 0;
+
+	if (id >= pci.pci_dev_ct)
+		return;
+	dev = &pci.pci_devices[id];
+
+	pthread_mutex_lock(&dev->pd_mtx);
+	if (pci_msix_enabled(dev)) {
+		memcpy(&control, (uint8_t *)dev->pd_cfg_space +
+		    dev->pd_msix_cap + 2, sizeof(control));
+		if (msix_vector == UINT16_MAX ||
+		    msix_vector >= dev->pd_msix_nvec) {
+			log_debug("%s: PCI device %u has no MSI-X vector",
+			    __func__, id);
+		} else if ((control & (PCI_MSIX_MC_FM >> 16)) ||
+		    (dev->pd_msix_table[msix_vector].pme_vector_control &
+		    PCI_MSIX_VC_MASK)) {
+			dev->pd_msix_pba |= 1ULL << msix_vector;
+		} else {
+			address = dev->pd_msix_table[msix_vector].pme_addr;
+			data = dev->pd_msix_table[msix_vector].pme_data;
+			deliver = 1;
+		}
+	} else if (pci_msi_enabled(dev)) {
+		memcpy(&address, (uint8_t *)dev->pd_cfg_space +
+		    dev->pd_msi_cap + PCI_MSI_MA, sizeof(address));
+		memcpy(&control, (uint8_t *)dev->pd_cfg_space +
+		    dev->pd_msi_cap + PCI_MSI_MD64, sizeof(control));
+		data = control;
+		deliver = 1;
+	} else
+		legacy = 1;
+	pthread_mutex_unlock(&dev->pd_mtx);
+
+	if (deliver)
+		pci_msi_deliver(address, data);
+	else if (legacy && dev->pd_int)
+		vcpu_assert_irq(current_vm->vm_vmmid, 0, dev->pd_irq);
+}
+
+void
+pci_deassert_irq(uint8_t id)
+{
+	struct pci_dev *dev;
+	int legacy;
+
+	if (id >= pci.pci_dev_ct)
+		return;
+	dev = &pci.pci_devices[id];
+
+	pthread_mutex_lock(&dev->pd_mtx);
+	legacy = !pci_msix_enabled(dev) && !pci_msi_enabled(dev);
+	pthread_mutex_unlock(&dev->pd_mtx);
+
+	if (legacy && dev->pd_int)
+		vcpu_deassert_irq(current_vm->vm_vmmid, 0, dev->pd_irq);
+}
+
+static void
+pci_msix_drain(struct pci_dev *dev)
+{
+	uint64_t address;
+	uint32_t data;
+	uint16_t control;
+	int i, deliver;
+
+	for (i = 0; i < dev->pd_msix_nvec; i++) {
+		deliver = 0;
+		pthread_mutex_lock(&dev->pd_mtx);
+		memcpy(&control, (uint8_t *)dev->pd_cfg_space +
+		    dev->pd_msix_cap + 2, sizeof(control));
+		if ((control & (PCI_MSIX_MC_MSIXE >> 16)) &&
+		    !(control & (PCI_MSIX_MC_FM >> 16)) &&
+		    !(dev->pd_msix_table[i].pme_vector_control &
+		    PCI_MSIX_VC_MASK) && (dev->pd_msix_pba & (1ULL << i))) {
+			dev->pd_msix_pba &= ~(1ULL << i);
+			address = dev->pd_msix_table[i].pme_addr;
+			data = dev->pd_msix_table[i].pme_data;
+			deliver = 1;
+		}
+		pthread_mutex_unlock(&dev->pd_mtx);
+		if (deliver)
+			pci_msi_deliver(address, data);
+	}
+}
+
+static int
+pci_msix_mmio(uint32_t vcpu_id, int dir, uint32_t ofs, uint8_t size,
+    uint64_t *data, void *cookie)
+{
+	struct pci_dev *dev = cookie;
+	struct pci_msix_entry *entry;
+	uint32_t reg = 0;
+	uint16_t vector;
+	int drain = 0;
+
+	(void)vcpu_id;
+	(void)size;
+	if (ofs < dev->pd_msix_nvec * sizeof(*entry)) {
+		vector = ofs / sizeof(*entry);
+		if ((ofs & 3) != 0)
+			return (EINVAL);
+		entry = &dev->pd_msix_table[vector];
+
+		pthread_mutex_lock(&dev->pd_mtx);
+		switch (ofs & 0xf) {
+		case PCI_MSIX_MA(0):
+			reg = entry->pme_addr;
+			if (dir == MMIO_DIR_WRITE) {
+				entry->pme_addr &= 0xffffffff00000000ULL;
+				entry->pme_addr |= (uint32_t)*data;
+			}
+			break;
+		case PCI_MSIX_MAU32(0):
+			reg = entry->pme_addr >> 32;
+			if (dir == MMIO_DIR_WRITE) {
+				entry->pme_addr &= 0x00000000ffffffffULL;
+				entry->pme_addr |= (uint64_t)(uint32_t)*data << 32;
+			}
+			break;
+		case PCI_MSIX_MD(0):
+			reg = entry->pme_data;
+			if (dir == MMIO_DIR_WRITE)
+				entry->pme_data = (uint32_t)*data;
+			break;
+		case PCI_MSIX_VC(0):
+			reg = entry->pme_vector_control;
+			if (dir == MMIO_DIR_WRITE) {
+				entry->pme_vector_control =
+				    (uint32_t)*data & PCI_MSIX_VC_MASK;
+				if (!(entry->pme_vector_control & PCI_MSIX_VC_MASK))
+					drain = 1;
+			}
+			break;
+		}
+		if (dir == MMIO_DIR_READ) {
+			*data &= 0xffffffff00000000ULL;
+			*data |= reg;
+		}
+		pthread_mutex_unlock(&dev->pd_mtx);
+		if (drain)
+			pci_msix_drain(dev);
+		return (0);
+	}
+
+	if (ofs == PCI_MSIX_PBA_OFFSET || ofs == PCI_MSIX_PBA_OFFSET + 4) {
+		pthread_mutex_lock(&dev->pd_mtx);
+		if (dir == MMIO_DIR_READ) {
+			reg = ofs == PCI_MSIX_PBA_OFFSET ? dev->pd_msix_pba :
+			    dev->pd_msix_pba >> 32;
+			*data &= 0xffffffff00000000ULL;
+			*data |= reg;
+		}
+		pthread_mutex_unlock(&dev->pd_mtx);
+		return (0);
+	}
+
+	if (dir == MMIO_DIR_READ)
+		*data = UINT64_MAX;
+	return (0);
+}
+
 /*
  * pci_init
  *
@@ -264,6 +606,111 @@ pci_init(void)
 }
 
 #ifdef __amd64__
+int
+pci_handle_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
+    uint64_t *data)
+{
+	struct pci_dev *dev;
+	pci_mmiobar_fn_t fn;
+	uint64_t base;
+	int i, j;
+
+	for (i = 0; i < pci.pci_dev_ct; i++) {
+		dev = &pci.pci_devices[i];
+		for (j = 0; j < dev->pd_bar_ct; j++) {
+			if (dev->pd_bartype[j] != PCI_BAR_TYPE_MMIO)
+				continue;
+			base = PCI_MAPREG_MEM_ADDR(dev->pd_bar[j]);
+			if (addr < base || addr >= base + dev->pd_barsize[j])
+				continue;
+			fn = (pci_mmiobar_fn_t)dev->pd_barfunc[j];
+			if (fn == NULL)
+				break;
+			return (fn(vcpu_id, dir, addr - base, size, data,
+			    dev->pd_bar_cookie[j]));
+		}
+	}
+
+	if (dir == MMIO_DIR_READ)
+		*data = UINT64_MAX;
+	return (0);
+}
+
+static void
+pci_config_write(struct pci_dev *dev, uint8_t reg, uint8_t ofs, uint8_t sz,
+    uint32_t data)
+{
+	uint32_t old, val, mask, fixed;
+	uint8_t baridx;
+	int drain = 0;
+
+	if (sz != 1 && sz != 2 && sz != 4)
+		return;
+	if (ofs + sz > 4)
+		return;
+
+	pthread_mutex_lock(&dev->pd_mtx);
+	old = dev->pd_cfg_space[reg];
+	if (sz == 4)
+		mask = UINT32_MAX;
+	else
+		mask = ((1U << (sz * 8)) - 1) << (ofs * 8);
+	val = (old & ~mask) | ((data << (ofs * 8)) & mask);
+
+	if (reg >= PCI_MAPREG_START / 4 && reg < PCI_MAPREG_END / 4) {
+		baridx = reg - PCI_MAPREG_START / 4;
+		if (baridx >= dev->pd_bar_ct)
+			val = 0;
+		else if (sz == 4 && data == UINT32_MAX) {
+			val = ~(dev->pd_barsize[baridx] - 1);
+			if (dev->pd_bartype[baridx] == PCI_BAR_TYPE_IO)
+				val = (val & PCI_MAPREG_IO_ADDR_MASK) |
+				    PCI_MAPREG_TYPE_IO;
+			else
+				val &= PCI_MAPREG_MEM_ADDR_MASK;
+		} else if (dev->pd_bartype[baridx] == PCI_BAR_TYPE_IO) {
+			val &= ~(dev->pd_barsize[baridx] - 1);
+			val |= PCI_MAPREG_TYPE_IO;
+		} else {
+			val &= ~(dev->pd_barsize[baridx] - 1);
+			val &= PCI_MAPREG_MEM_ADDR_MASK;
+		}
+	}
+
+	if (dev->pd_msi_cap != 0 && reg == dev->pd_msi_cap / 4) {
+		fixed = old & ~PCI_MSI_MC_MSIE;
+		val = fixed | (val & PCI_MSI_MC_MSIE);
+		if (val & PCI_MSI_MC_MSIE) {
+			if (dev->pd_msix_cap != 0)
+				dev->pd_cfg_space[dev->pd_msix_cap / 4] &=
+				    ~PCI_MSIX_MC_MSIXE;
+		}
+	} else if (dev->pd_msi_cap != 0 &&
+	    reg == (dev->pd_msi_cap + PCI_MSI_MD64) / 4) {
+		val &= 0xffff;
+	}
+
+	if (dev->pd_msix_cap != 0 && reg == dev->pd_msix_cap / 4) {
+		fixed = old & ~(PCI_MSIX_MC_MSIXE | PCI_MSIX_MC_FM);
+		val = fixed | (val & (PCI_MSIX_MC_MSIXE | PCI_MSIX_MC_FM));
+		if (val & PCI_MSIX_MC_MSIXE) {
+			if (dev->pd_msi_cap != 0)
+				dev->pd_cfg_space[dev->pd_msi_cap / 4] &=
+				    ~PCI_MSI_MC_MSIE;
+			drain = (val & PCI_MSIX_MC_FM) == 0;
+		}
+	} else if (dev->pd_msix_cap != 0 &&
+	    (reg == (dev->pd_msix_cap + PCI_MSIX_TABLE) / 4 ||
+	    reg == (dev->pd_msix_cap + 8) / 4))
+		val = old;
+
+	dev->pd_cfg_space[reg] = val;
+	pthread_mutex_unlock(&dev->pd_mtx);
+
+	if (drain)
+		pci_msix_drain(dev);
+}
+
 void
 pci_handle_address_reg(struct vm_run_params *vrp)
 {
@@ -302,6 +749,8 @@ pci_handle_io(struct vm_run_params *vrp)
 
 	for (i = 0 ; i < pci.pci_dev_ct; i++) {
 		for (j = 0 ; j < pci.pci_devices[i].pd_bar_ct; j++) {
+			if (pci.pci_devices[i].pd_bartype[j] != PCI_BAR_TYPE_IO)
+				continue;
 			b_lo = PCI_MAPREG_IO_ADDR(pci.pci_devices[i].pd_bar[j]);
 			b_hi = b_lo + VM_PCI_IO_BAR_SIZE;
 			if (reg >= b_lo && reg < b_hi) {
@@ -337,7 +786,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 {
 	struct vm_exit *vei = vrp->vrp_exit;
 	struct pci_dev *pd = NULL;
-	uint8_t b, d, f, o, baridx, cfgidx, ofs, sz;
+	uint8_t b, d, f, o, cfgidx, ofs, sz;
 	uint32_t data = 0;
 	int ret;
 	pci_cs_fn_t csfunc;
@@ -361,7 +810,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	f = (pci.pci_addr_reg >> 8) & 0x7;
 	o = (pci.pci_addr_reg & 0xfc);
 
-	if (d >= pci.pci_dev_ct) {
+	if (b != 0 || f != 0 || d >= pci.pci_dev_ct || ofs + sz > 4) {
 		/* Device out of range. Return 0xFF's if a read. */
 		DPRINTF("%s: invalid pci device access (%u)", __func__, d);
 		if (vei->vei.vei_dir == VEI_DIR_IN)
@@ -375,8 +824,8 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		DPRINTF("%s: out of range config space access", __func__);
 		if (vei->vei.vei_dir == VEI_DIR_IN)
 			set_return_data(vei, 0xFFFFFFFF);
+		return;
 	}
-	baridx = cfgidx - 4;	/* baridx checked below */
 
 	csfunc = pd->pd_csfunc;
 	if (csfunc != NULL) {
@@ -387,9 +836,6 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		return;
 	}
 
-	/* No config space function, fallback to default simple r/w impl. */
-	o += ofs;
-
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
@@ -397,37 +843,13 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	 * value in the address register.
 	 */
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		if ((o >= 0x10 && o <= 0x24) &&
-		    vei->vei.vei_data == 0xffffffff) {
-			/*
-			 * Compute BAR index:
-			 * o = 0x10 -> baridx = 0
-			 * o = 0x14 -> baridx = 1
-			 * o = 0x18 -> baridx = 2
-			 * o = 0x1c -> baridx = 3
-			 * o = 0x20 -> baridx = 4
-			 * o = 0x24 -> baridx = 5
-			 */
-			if (baridx < pd->pd_bar_ct)
-				vei->vei.vei_data = 0xfffff000;
-			else
-				vei->vei.vei_data = 0;
-		}
-
-		/* IOBAR registers must have bit 0 set */
-		if (o >= 0x10 && o <= 0x24) {
-			if (baridx < pd->pd_bar_ct &&
-			    pd->pd_bartype[baridx] == PCI_BAR_TYPE_IO)
-				vei->vei.vei_data |= 1;
-		}
-
 		/*
 		 * Discard writes to "option rom base address" as none of our
-		 * emulated devices have PCI option roms. Accept any other
-		 * writes and copy data to config space registers.
+		 * emulated devices have PCI option roms.
 		 */
 		if (o != PCI_EXROMADDR_0)
-			get_input_data(vei, &pd->pd_cfg_space[cfgidx]);
+			pci_config_write(pd, cfgidx, ofs, sz,
+			    vei->vei.vei_data);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
@@ -435,25 +857,10 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		 * The guest read from the config space location determined by
 		 * the current value in the address register.
 		 */
-		if (d > pci.pci_dev_ct || b > 0 || f > 0)
-			set_return_data(vei, 0xFFFFFFFF);
-		else {
-			data = pd->pd_cfg_space[cfgidx];
-			switch (sz) {
-			case 4:
-				set_return_data(vei, data);
-				break;
-			case 2:
-				if (ofs == 0)
-					set_return_data(vei, data);
-				else
-					set_return_data(vei, data >> 16);
-				break;
-			case 1:
-				set_return_data(vei, data >> (ofs * 8));
-				break;
-			}
-		}
+		pthread_mutex_lock(&pd->pd_mtx);
+		data = pd->pd_cfg_space[cfgidx];
+		pthread_mutex_unlock(&pd->pd_mtx);
+		set_return_data(vei, data >> (ofs * 8));
 	}
 }
 #endif /* __amd64__ */

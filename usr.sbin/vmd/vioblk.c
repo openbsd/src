@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.34 2026/09/18 04:04:14 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.35 2026/09/18 05:27:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -519,7 +519,9 @@ handle_sync_io(int fd, short event, void *arg)
 		case VIODEV_MSG_IO_WRITE:
 			/* Write IO: no reply needed, but maybe an irq assert */
 			if (vioblk_write(dev, &msg))
-				virtio_assert_irq(dev, 0);
+				virtio_assert_irq(dev, 0,
+				    (dev->isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) ?
+				    VIODEV_QUEUE_CONFIG : (uint16_t)msg.data);
 			break;
 		case VIODEV_MSG_SHUTDOWN:
 			event_del(&dev->sync_iev.ev);

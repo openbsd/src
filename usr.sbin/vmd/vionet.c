@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.34 2026/09/18 04:04:14 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.35 2026/09/18 05:27:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -82,7 +82,7 @@ static void handle_sync_io(int, short, void *);
 static void read_pipe_main(int, short, void *);
 static void read_pipe_rx(int, short, void *);
 static void read_pipe_tx(int, short, void *);
-static void vionet_assert_pic_irq(struct virtio_dev *);
+static void vionet_assert_irq(struct virtio_dev *, uint16_t);
 static void vionet_deassert_pic_irq(struct virtio_dev *);
 
 /* Device Globals */
@@ -631,7 +631,8 @@ vionet_rx_event(int fd, short event, void *arg)
 	pthread_rwlock_unlock(&lock);
 
 	if (raise_irq)
-		vm_pipe_send(&pipe_main, VIRTIO_RAISE_IRQ);
+		vm_pipe_send(&pipe_main, ret == 1 ? VIRTIO_RAISE_IRQ_RX :
+		    VIRTIO_RAISE_IRQ_CONFIG);
 }
 
 static void
@@ -1016,7 +1017,7 @@ vionet_cfg_read(struct virtio_dev *dev, struct viodev_msg *msg)
 		}
 		break;
 	case VIO1_PCI_CONFIG_MSIX_VECTOR:
-		data = VIRTIO_MSI_NO_VECTOR;	/* Unsupported */
+		data = pci_cfg->config_msix_vector;
 		break;
 	case VIO1_PCI_NUM_QUEUES:
 		data = dev->num_queues;
@@ -1034,7 +1035,7 @@ vionet_cfg_read(struct virtio_dev *dev, struct viodev_msg *msg)
 		data = pci_cfg->queue_size;
 		break;
 	case VIO1_PCI_QUEUE_MSIX_VECTOR:
-		data = VIRTIO_MSI_NO_VECTOR;	/* Unsupported */
+		data = pci_cfg->queue_msix_vector;
 		break;
 	case VIO1_PCI_QUEUE_ENABLE:
 		data = pci_cfg->queue_enable;
@@ -1123,7 +1124,14 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 		    dev->driver_feature);
 		break;
 	case VIO1_PCI_CONFIG_MSIX_VECTOR:
-		/* Ignore until we support MSIX. */
+		if (sz != 2)
+			log_warnx("%s: invalid config MSI-X vector size %u",
+			    __func__, sz);
+		else if (data == VIRTIO_MSI_NO_VECTOR ||
+		    data < dev->num_queues + 1)
+			pci_cfg->config_msix_vector = data;
+		else
+			pci_cfg->config_msix_vector = VIRTIO_MSI_NO_VECTOR;
 		break;
 	case VIO1_PCI_NUM_QUEUES:
 		log_warnx("illegal write to num queues register");
@@ -1150,6 +1158,7 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 			/* Reset device and virtqueues. */
 			dev->driver_feature = 0;
 			dev->isr = 0;
+			pci_cfg->config_msix_vector = VIRTIO_MSI_NO_VECTOR;
 			pci_cfg->queue_select = 0;	/* Technically RXQ. */
 			virtio_vq_init(dev, RXQ);
 			virtio_vq_init(dev, TXQ);
@@ -1187,7 +1196,19 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 		virtio_update_qa(dev);
 		break;
 	case VIO1_PCI_QUEUE_MSIX_VECTOR:
-		/* Ignore until we support MSI-X. */
+		if (sz != 2)
+			log_warnx("%s: invalid queue MSI-X vector size %u",
+			    __func__, sz);
+		else if (pci_cfg->queue_select < dev->num_queues) {
+			if (data == VIRTIO_MSI_NO_VECTOR ||
+			    data < dev->num_queues + 1)
+				dev->vq[pci_cfg->queue_select].q_msix_vector = data;
+			else
+				dev->vq[pci_cfg->queue_select].q_msix_vector =
+				    VIRTIO_MSI_NO_VECTOR;
+			pci_cfg->queue_msix_vector =
+			    dev->vq[pci_cfg->queue_select].q_msix_vector;
+		}
 		break;
 	case VIO1_PCI_QUEUE_ENABLE:
 		pci_cfg->queue_enable = data;
@@ -1501,7 +1522,8 @@ read_pipe_tx(int fd, short event, void *arg)
 	pthread_rwlock_unlock(&lock);
 
 	if (raise_irq)
-		vm_pipe_send(&pipe_main, VIRTIO_RAISE_IRQ);
+		vm_pipe_send(&pipe_main, ret == 1 ? VIRTIO_RAISE_IRQ_TX :
+		    VIRTIO_RAISE_IRQ_CONFIG);
 }
 
 /*
@@ -1518,8 +1540,14 @@ read_pipe_main(int fd, short event, void *arg)
 
 	msg = vm_pipe_recv(&pipe_main);
 	switch (msg) {
-	case VIRTIO_RAISE_IRQ:
-		vionet_assert_pic_irq(dev);
+	case VIRTIO_RAISE_IRQ_RX:
+		vionet_assert_irq(dev, RXQ);
+		break;
+	case VIRTIO_RAISE_IRQ_TX:
+		vionet_assert_irq(dev, TXQ);
+		break;
+	case VIRTIO_RAISE_IRQ_CONFIG:
+		vionet_assert_irq(dev, VIODEV_QUEUE_CONFIG);
 		break;
 	default:
 		fatalx("%s: invalid channel msg: %d", __func__, msg);
@@ -1531,7 +1559,7 @@ read_pipe_main(int fd, short event, void *arg)
  * thread.
  */
 static void
-vionet_assert_pic_irq(struct virtio_dev *dev)
+vionet_assert_irq(struct virtio_dev *dev, uint16_t vq_idx)
 {
 	struct viodev_msg	msg;
 	int			ret;
@@ -1539,6 +1567,7 @@ vionet_assert_pic_irq(struct virtio_dev *dev)
 	memset(&msg, 0, sizeof(msg));
 	msg.irq = dev->irq;
 	msg.vcpu = 0; /* XXX: smp */
+	msg.vq_idx = vq_idx;
 	msg.type = VIODEV_MSG_KICK;
 	msg.state = INTR_STATE_ASSERT;
 
@@ -1561,6 +1590,7 @@ vionet_deassert_pic_irq(struct virtio_dev *dev)
 	memset(&msg, 0, sizeof(msg));
 	msg.irq = dev->irq;
 	msg.vcpu = 0; /* XXX: smp */
+	msg.vq_idx = VIODEV_QUEUE_CONFIG;
 	msg.type = VIODEV_MSG_KICK;
 	msg.state = INTR_STATE_DEASSERT;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.150 2026/09/18 02:35:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.151 2026/09/18 05:27:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -430,7 +430,9 @@ enum pipe_msg_type {
 	NS8250_RATELIMIT,
 	MC146818_RESCHEDULE_PER,
 	VIRTIO_NOTIFY,
-	VIRTIO_RAISE_IRQ,
+	VIRTIO_RAISE_IRQ_RX,
+	VIRTIO_RAISE_IRQ_TX,
+	VIRTIO_RAISE_IRQ_CONFIG,
 	VIRTIO_THREAD_START,
 	VIRTIO_THREAD_PAUSE,
 	VIRTIO_THREAD_STOP,

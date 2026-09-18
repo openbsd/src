@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.64 2026/09/18 04:04:14 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.65 2026/09/18 05:27:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -139,6 +139,8 @@ struct viodev_msg {
 	uint8_t io_sz;		/* IO instruction size */
 	uint8_t vcpu;		/* VCPU id */
 	uint8_t irq;		/* IRQ number */
+	uint16_t vq_idx;	/* Virtqueue, or VIODEV_QUEUE_CONFIG */
+#define VIODEV_QUEUE_CONFIG	UINT16_MAX
 
 	int8_t state;		/* Interrupt state toggle (if any) */
 #define INTR_STATE_ASSERT	 1
@@ -216,6 +218,9 @@ struct virtio_vq_info {
 	 * driver notified to the host.
 	 */
 	uint16_t notified_avail;
+
+	/* MSI-X table entry selected by the guest for this virtqueue. */
+	uint16_t q_msix_vector;
 
 	uint8_t vq_enabled;
 };
@@ -394,7 +399,7 @@ uint32_t vring_size(uint32_t);
 int vm_device_pipe(struct virtio_dev *, void (*)(int, short, void *),
     struct event_base *);
 int virtio_pci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-void virtio_assert_irq(struct virtio_dev *, int);
+void virtio_assert_irq(struct virtio_dev *, int, uint16_t);
 void virtio_deassert_irq(struct virtio_dev *, int);
 uint32_t virtio_io_cfg(struct virtio_dev *, int, uint8_t, uint32_t, uint8_t);
 

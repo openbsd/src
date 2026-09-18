@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.21 2026/09/18 03:53:59 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.22 2026/09/18 05:27:30 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -439,6 +439,9 @@ init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
 	pci_init();
 
 	mmio_init();
+	if (mmio_dev_add(PCI_MMIO_BAR_BASE, PCI_MMIO_BAR_END,
+	    pci_handle_mmio) != 0)
+		fatalx("%s: cannot register PCI MMIO window", __func__);
 	i82093aa_init(vmc->vmc_ncpus);
 	for (i = 0; i < vmc->vmc_ncpus; i++)
 		lapic_init(i);
