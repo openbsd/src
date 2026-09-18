@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.468 2026/04/21 18:36:13 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.469 2026/09/18 22:14:46 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -183,7 +183,8 @@ struct syn_cache *syn_cache_lookup(const struct sockaddr *,
 /*
  * Insert segment ti into reassembly queue of tcp with
  * control block tp.  Return TH_FIN if reassembly now includes
- * a segment with FIN.  The macro form does the common case inline
+ * a segment with FIN, or -1 if the input segment was discarded due
+ * to memory pressure.  The macro form does the common case inline
  * (segment is the next to be received on an established connection,
  * and the queue is empty), avoiding linkage into and removal
  * from the queue and repetition of various conversions.
@@ -202,6 +203,9 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	 */
 	tiqe = pool_get(&tcpqe_pool, PR_NOWAIT);
 	if (tiqe == NULL) {
+		/* Any SACK report for data we are about to discard is stale. */
+		if (tp->sack_enable && tp->rcv_numsacks)
+			tcp_clean_sackreport(tp);
 		tiqe = TAILQ_LAST(&tp->t_segq, tcpqehead);
 		if (tiqe != NULL && th->th_seq == tp->rcv_nxt) {
 			/* Reuse last entry since new segment fills a hole */
@@ -213,7 +217,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 			tcp_freeq(tp);
 			tcpstat_inc(tcps_rcvmemdrop);
 			m_freem(m);
-			return (0);
+			return (-1);
 		}
 	}
 
@@ -1942,6 +1946,7 @@ dodata:							/* XXX */
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		tcp_seq laststart = th->th_seq;
 		tcp_seq lastend = th->th_seq + tlen;
+		int reass_failed = 0;
 
 		if (th->th_seq == tp->rcv_nxt && TAILQ_EMPTY(&tp->t_segq) &&
 		    tp->t_state == TCPS_ESTABLISHED) {
@@ -1961,9 +1966,13 @@ dodata:							/* XXX */
 		} else {
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
+			if (tiflags == -1) {
+				tiflags = 0;
+				reass_failed = 1;
+			}
 			tp->t_flags |= TF_ACKNOW;
 		}
-		if (tp->sack_enable)
+		if (tp->sack_enable && !reass_failed)
 			tcp_update_sack_list(tp, laststart, lastend);
 
 		/*
