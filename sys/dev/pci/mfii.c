@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.94 2026/09/18 21:54:34 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.95 2026/09/18 22:01:01 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -304,12 +304,6 @@ struct mfii_softc {
 	struct mfii_pd_softc	*sc_pd;
 	struct scsi_iopool	sc_iopool;
 
-	/* save some useful information for logical drives that is missing
-	 * in sc_ld_list
-	 */
-	struct {
-		char		ld_dev[16];	/* device name sd? */
-	}			sc_ld[MFII_MAX_LD];
 	int			sc_target_lds[MFII_MAX_LD];
 
 	/* scsi ioctl from sd device */
@@ -318,7 +312,7 @@ struct mfii_softc {
 	/* bio */
 	struct mfi_conf		*sc_cfg;
 	struct mfi_ctrl_info	sc_info;
-	struct mfi_ld_list	sc_ld_list;
+	struct mfi_ld_cfg	*sc_ld_cfg;
 	struct mfi_ld_details	*sc_ld_details; /* array to all logical disks */
 	int			sc_no_pd; /* used physical disks */
 	int			sc_ld_sz; /* sizeof sc_ld_details */
@@ -412,6 +406,7 @@ int			mfii_reset_hard(struct mfii_softc *);
 int			mfii_transition_firmware(struct mfii_softc *);
 int			mfii_initialise_firmware(struct mfii_softc *);
 int			mfii_get_info(struct mfii_softc *);
+int			mfii_get_cfg(struct mfii_softc *);
 int			mfii_syspd(struct mfii_softc *);
 
 void			mfii_start(struct mfii_softc *, struct mfii_ccb *);
@@ -784,6 +779,18 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 		printf(", %uMB cache", letoh16(sc->sc_info.mci_memory_size));
 	printf("\n");
 
+	if (mfii_get_cfg(sc) != 0) {
+		printf("%s: could not retrieve controller configuration\n",
+		    DEVNAME(sc));
+		goto free_sgl;
+	}
+
+	memset(sc->sc_target_lds, -1, sizeof(sc->sc_target_lds));
+	for (i = 0; i < sc->sc_cfg->mfc_no_ld; i++) {
+		int target = sc->sc_ld_cfg[i].mlc_prop.mlp_ld.mld_target;
+		sc->sc_target_lds[target] = i;
+	}
+
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 	    mfii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL)
@@ -807,17 +814,6 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	if (mfii_aen_register(sc) != 0) {
 		/* error printed by mfii_aen_register */
 		goto intr_disestablish;
-	}
-
-	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
-	    sizeof(sc->sc_ld_list), SCSI_DATA_IN) != 0) {
-		printf("%s: getting list of logical disks failed\n", DEVNAME(sc));
-		goto intr_disestablish;
-	}
-	memset(sc->sc_target_lds, -1, sizeof(sc->sc_target_lds));
-	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
-		int target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
-		sc->sc_target_lds[target] = i;
 	}
 
 	/* enable interrupts */
@@ -1352,18 +1348,17 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	int i, state, target, old, nld;
 	int newlds[MFII_MAX_LD];
 
-	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
-	    sizeof(sc->sc_ld_list), SCSI_DATA_IN) != 0) {
-		DNPRINTF(MFII_D_MISC, "%s: getting list of logical disks failed\n",
+	if (mfii_get_cfg(sc) != 0) {
+		DNPRINTF(MFII_D_MISC, "%s: could not retrieve controller configuration\n",
 		    DEVNAME(sc));
 		return;
 	}
 
 	memset(newlds, -1, sizeof(newlds));
 
-	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
-		state = sc->sc_ld_list.mll_list[i].mll_state;
-		target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+	for (i = 0; i < sc->sc_cfg->mfc_no_ld; i++) {
+		state = sc->sc_ld_cfg[i].mlc_parm.mpa_state;
+		target = sc->sc_ld_cfg[i].mlc_prop.mlp_ld.mld_target;
 		DNPRINTF(MFII_D_MISC, "%s: target %d: state %d\n",
 		    DEVNAME(sc), target, state);
 		newlds[target] = i;
@@ -1678,6 +1673,47 @@ mfii_get_info(struct mfii_softc *sc)
 	DPRINTF("\n");
 
 	return (0);
+}
+
+int
+mfii_get_cfg(struct mfii_softc *sc)
+{
+	struct mfi_conf		*cfg = NULL;
+	size_t			 size;
+
+	/* send single element command to retrieve size for full structure */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cfg == NULL)
+		return ENOMEM;
+	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, sizeof(*cfg),
+	    SCSI_DATA_IN)) {
+		free(cfg, M_DEVBUF, sizeof *cfg);
+		return EIO;
+	}
+
+	size = cfg->mfc_size;
+	free(cfg, M_DEVBUF, sizeof *cfg);
+
+	/* memory for read config */
+	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cfg == NULL)
+		return ENOMEM;
+	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, size, SCSI_DATA_IN)) {
+		free(cfg, M_DEVBUF, size);
+		return EIO;
+	}
+
+	/* replace current pointer with new one */
+	if (sc->sc_cfg)
+		free(sc->sc_cfg, M_DEVBUF, 0);
+	sc->sc_cfg = cfg;
+
+	/* calculate offset to ld structure */
+	sc->sc_ld_cfg = (struct mfi_ld_cfg *)(
+	    ((uint8_t *)cfg) + offsetof(struct mfi_conf, mfc_array) +
+	    cfg->mfc_array_size * cfg->mfc_no_array);
+
+	return 0;
 }
 
 int
@@ -2903,8 +2939,13 @@ mfii_bio_getitall(struct mfii_softc *sc)
 	int			i, d, rv = EINVAL;
 	size_t			size;
 	union mfi_mbox		mbox;
-	struct mfi_conf		*cfg = NULL;
 	struct mfi_ld_details	*ld_det = NULL;
+
+	if (mfii_get_cfg(sc)) {
+		DNPRINTF(MFII_D_IOCTL, "%s: mfii_get_cfg failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
 
 	/* get info */
 	if (mfii_get_info(sc)) {
@@ -2913,40 +2954,8 @@ mfii_bio_getitall(struct mfii_softc *sc)
 		goto done;
 	}
 
-	/* send single element command to retrieve size for full structure */
-	cfg = malloc(sizeof *cfg, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (cfg == NULL)
-		goto done;
-	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, sizeof(*cfg),
-	    SCSI_DATA_IN)) {
-		free(cfg, M_DEVBUF, sizeof *cfg);
-		goto done;
-	}
-
-	size = cfg->mfc_size;
-	free(cfg, M_DEVBUF, sizeof *cfg);
-
-	/* memory for read config */
-	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (cfg == NULL)
-		goto done;
-	if (mfii_mgmt(sc, MR_DCMD_CONF_GET, NULL, cfg, size, SCSI_DATA_IN)) {
-		free(cfg, M_DEVBUF, size);
-		goto done;
-	}
-
-	/* replace current pointer with new one */
-	if (sc->sc_cfg)
-		free(sc->sc_cfg, M_DEVBUF, 0);
-	sc->sc_cfg = cfg;
-
-	/* get all ld info */
-	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
-	    sizeof(sc->sc_ld_list), SCSI_DATA_IN))
-		goto done;
-
 	/* get memory for all ld structures */
-	size = cfg->mfc_no_ld * sizeof(struct mfi_ld_details);
+	size = sc->sc_cfg->mfc_no_ld * sizeof(struct mfi_ld_details);
 	if (sc->sc_ld_sz != size) {
 		if (sc->sc_ld_details)
 			free(sc->sc_ld_details, M_DEVBUF, 0);
@@ -2960,15 +2969,15 @@ mfii_bio_getitall(struct mfii_softc *sc)
 
 	/* find used physical disks */
 	size = sizeof(struct mfi_ld_details);
-	for (i = 0, d = 0; i < cfg->mfc_no_ld; i++) {
+	for (i = 0, d = 0; i < sc->sc_cfg->mfc_no_ld; i++) {
 		memset(&mbox, 0, sizeof(mbox));
-		mbox.b[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		mbox.b[0] = sc->sc_ld_cfg[i].mlc_prop.mlp_ld.mld_target;
 		if (mfii_mgmt(sc, MR_DCMD_LD_GET_INFO, &mbox, &sc->sc_ld_details[i], size,
 		    SCSI_DATA_IN))
 			goto done;
 
-		d += sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
-		    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
+		d += sc->sc_ld_cfg[i].mlc_parm.mpa_no_drv_per_span *
+		    sc->sc_ld_cfg[i].mlc_parm.mpa_span_depth;
 	}
 	sc->sc_no_pd = d;
 
@@ -3027,14 +3036,14 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 		goto done;
 	}
 
-	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
+	if (bv->bv_volid >= sc->sc_cfg->mfc_no_ld) {
 		/* go do hotspares & unused disks */
 		rv = mfii_bio_hs(sc, bv->bv_volid, MFI_MGMT_VD, bv);
 		goto done;
 	}
 
 	i = bv->bv_volid;
-	target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+	target = sc->sc_ld_cfg[i].mlc_prop.mlp_ld.mld_target;
 	link = scsi_get_link(sc->sc_scsibus, target, 0);
 	if (link == NULL) {
 		strlcpy(bv->bv_dev, "cache", sizeof(bv->bv_dev));
@@ -3046,7 +3055,7 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 		strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
 	}
 
-	switch(sc->sc_ld_list.mll_list[i].mll_state) {
+	switch(sc->sc_ld_cfg[i].mlc_parm.mpa_state) {
 	case MFI_LD_OFFLINE:
 		bv->bv_status = BIOC_SVOFFLINE;
 		break;
@@ -3064,7 +3073,7 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 		bv->bv_status = BIOC_SVINVALID;
 		DNPRINTF(MFII_D_IOCTL, "%s: invalid logical disk state %#x\n",
 		    DEVNAME(sc),
-		    sc->sc_ld_list.mll_list[i].mll_state);
+		    sc->sc_ld_cfg[i].mlc_parm.mpa_state);
 	}
 
 	/* additional status can modify MFI status */
@@ -3119,7 +3128,6 @@ mfii_ioctl_disk(struct mfii_softc *sc, struct bioc_disk *bd)
 {
 	struct mfi_conf		*cfg;
 	struct mfi_array	*ar;
-	struct mfi_ld_cfg	*ld;
 	struct mfi_pd_details	*pd;
 	struct mfi_pd_list	*pl;
 	struct mfi_pd_progress	*mfp;
@@ -3152,20 +3160,15 @@ mfii_ioctl_disk(struct mfii_softc *sc, struct bioc_disk *bd)
 		goto freeme;
 	}
 
-	/* calculate offset to ld structure */
-	ld = (struct mfi_ld_cfg *)(
-	    ((uint8_t *)cfg) + offsetof(struct mfi_conf, mfc_array) +
-	    cfg->mfc_array_size * cfg->mfc_no_array);
-
 	/* use span 0 only when raid group is not spanned */
-	if (ld[vol].mlc_parm.mpa_span_depth > 1)
-		span = bd->bd_diskid / ld[vol].mlc_parm.mpa_no_drv_per_span;
+	if (sc->sc_ld_cfg[vol].mlc_parm.mpa_span_depth > 1)
+		span = bd->bd_diskid / sc->sc_ld_cfg[vol].mlc_parm.mpa_no_drv_per_span;
 	else
 		span = 0;
-	arr = ld[vol].mlc_span[span].mls_index;
+	arr = sc->sc_ld_cfg[vol].mlc_span[span].mls_index;
 
 	/* offset disk into pd list */
-	disk = bd->bd_diskid % ld[vol].mlc_parm.mpa_no_drv_per_span;
+	disk = bd->bd_diskid % sc->sc_ld_cfg[vol].mlc_parm.mpa_no_drv_per_span;
 
 	if (ar[arr].pd[disk].mar_pd.mfp_id == 0xffffU) {
 		/* disk is missing but succeed command */
@@ -3867,10 +3870,10 @@ mfii_refresh_ld_sensor(struct mfii_softc *sc, int ld)
 	struct ksensor *sensor;
 	int target;
 
-	target = sc->sc_ld_list.mll_list[ld].mll_ld.mld_target;
+	target = sc->sc_ld_cfg[ld].mlc_prop.mlp_ld.mld_target;
 	sensor = &sc->sc_sensors[target];
 
-	switch(sc->sc_ld_list.mll_list[ld].mll_state) {
+	switch(sc->sc_ld_cfg[ld].mlc_parm.mpa_state) {
 	case MFI_LD_OFFLINE:
 		sensor->value = SENSOR_DRIVE_FAIL;
 		sensor->status = SENSOR_S_CRIT;
@@ -3902,7 +3905,7 @@ mfii_init_ld_sensor(struct mfii_softc *sc, int ld)
 	struct ksensor		*sensor;
 	int			target;
 
-	target = sc->sc_ld_list.mll_list[ld].mll_ld.mld_target;
+	target = sc->sc_ld_cfg[ld].mlc_prop.mlp_ld.mld_target;
 	sensor = &sc->sc_sensors[target];
 
 	link = scsi_get_link(sc->sc_scsibus, target, 0);
@@ -3967,9 +3970,9 @@ mfii_create_sensors(struct mfii_softc *sc)
 	if (sc->sc_sensors == NULL)
 		return (1);
 
-	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
+	for (i = 0; i < sc->sc_cfg->mfc_no_ld; i++) {
 		mfii_init_ld_sensor(sc, i);
-		target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		target = sc->sc_ld_cfg[i].mlc_prop.mlp_ld.mld_target;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[target]);
 	}
 
@@ -4000,7 +4003,7 @@ mfii_refresh_sensors(void *arg)
 	mfii_bio_getitall(sc);
 	rw_exit_write(&sc->sc_lock);
 
-	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++)
+	for (i = 0; i < sc->sc_cfg->mfc_no_ld; i++)
 		mfii_refresh_ld_sensor(sc, i);
 }
 #endif /* SMALL_KERNEL */
