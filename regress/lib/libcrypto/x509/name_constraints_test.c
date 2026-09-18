@@ -1,4 +1,4 @@
-/*	$OpenBSD: name_constraints_test.c,v 1.2 2026/09/18 18:21:50 beck Exp $ */
+/*	$OpenBSD: name_constraints_test.c,v 1.3 2026/09/18 18:24:13 beck Exp $ */
 /*
  * Copyright (c) 2026 Bob Beck <beck@openbsd.org>
  *
@@ -104,6 +104,116 @@ static const char email_leaf_pem[] =
     "YIEp9QRLgyOu\n"
     "-----END CERTIFICATE-----\n";
 
+static const char dns_cn_leaf_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBsTCCAVegAwIBAgIBBDAKBggqhkjOPQQDAjAoMSYwJAYDVQQDDB1UZXN0IENv\n"
+    "bnN0cmFpbmVkIEludGVybWVkaWF0ZTAgFw0yNjA5MTgwMjUzNDRaGA8yMTI2MDgy\n"
+    "NTAyNTM0NFowGzEZMBcGA1UEAwwQbGVhZi5leGFtcGxlLm9yZzBZMBMGByqGSM49\n"
+    "AgEGCCqGSM49AwEHA0IABBLyzECQc0VYC55Cb6jg3O1+0BbO7AIdJabNyHL7GNtV\n"
+    "hmJJB59kkJNjzLX37N7Uy4j/NOxEcfoQrFF95UccMhyjfTB7MAwGA1UdEwEB/wQC\n"
+    "MAAwDgYDVR0PAQH/BAQDAgeAMB0GA1UdDgQWBBRjn8rykjP1IkSBhUy7NN6fl/H0\n"
+    "ejAfBgNVHSMEGDAWgBTLb8i4dukeWGVncrjgA5bPOg+63zAbBgNVHREEFDASgRB1\n"
+    "c2VyQGV4YW1wbGUuY29tMAoGCCqGSM49BAMCA0gAMEUCIFgc+BAThnmPh5IRoc4c\n"
+    "HCNmK365bDZrcLSz5XZ+nzbcAiEArDBXcFwG2F50tlDLfI5nXJZeETu6UWuvZbdj\n"
+    "rTBBmTI=\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char dns_excl_inter_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBrjCCAVSgAwIBAgIBBTAKBggqhkjOPQQDAjAUMRIwEAYDVQQDDAlUZXN0IFJv\n"
+    "b3QwIBcNMjYwOTE4MDI1MzQ0WhgPMjEyNjA4MjUwMjUzNDRaMCUxIzAhBgNVBAMM\n"
+    "GlRlc3QgRXhjbHVkZWQgSW50ZXJtZWRpYXRlMFkwEwYHKoZIzj0CAQYIKoZIzj0D\n"
+    "AQcDQgAE3OeWDBuxIgkJ1yJiRNtspV3d1J8LtvyB/6uX61Xw203nlaY/tRtFJpms\n"
+    "W5Qcq9v676bjgFGDuybbStf8+PMY3qOBgzCBgDAPBgNVHRMBAf8EBTADAQH/MA4G\n"
+    "A1UdDwEB/wQEAwIBBjAdBgNVHQ4EFgQUud+UN27swGg6gVB/W4BaQPJ4YRIwHwYD\n"
+    "VR0jBBgwFoAU5InBepxtbHhQp+BRI6Pj3RQ/8SswHQYDVR0eAQH/BBMwEaEPMA2C\n"
+    "C2V4YW1wbGUub3JnMAoGCCqGSM49BAMCA0gAMEUCIQCbQPsHms8Hwei7PGtL6mpw\n"
+    "5jH19pLpPzyY99Unanm9TgIgQsQKHB75RU+xBv5dLFSdW3UeiFSwQLtHF0k4o0pt\n"
+    "nHI=\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char dns_excl_leaf_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBrTCCAVOgAwIBAgIBBjAKBggqhkjOPQQDAjAlMSMwIQYDVQQDDBpUZXN0IEV4\n"
+    "Y2x1ZGVkIEludGVybWVkaWF0ZTAgFw0yNjA5MTgwMjUzNDRaGA8yMTI2MDgyNTAy\n"
+    "NTM0NFowGzEZMBcGA1UEAwwQbGVhZi5leGFtcGxlLm9yZzBZMBMGByqGSM49AgEG\n"
+    "CCqGSM49AwEHA0IABDbzQfOvW110/r+jCHB2bAqKjsSDpEQHPCQQogEiCO2H46YS\n"
+    "OAzX6gt8mW5Y8YFfgXaIYHDLhXlqpcFIy9KmxfujfDB6MAwGA1UdEwEB/wQCMAAw\n"
+    "DgYDVR0PAQH/BAQDAgeAMB0GA1UdDgQWBBQ4Z0xqYT1cdKLs1+gbthQlSUEwEDAf\n"
+    "BgNVHSMEGDAWgBS535Q3buzAaDqBUH9bgFpA8nhhEjAaBgNVHREEEzARgg93d3cu\n"
+    "ZXhhbXBsZS5vcmcwCgYIKoZIzj0EAwIDSAAwRQIhAMH+klkOm7BHkul03p3GDVUk\n"
+    "pPryO5u/0kU3Jl+d10OnAiBa0Y6nu6nfzj8jT59iJdfs5fwO8AE5kH3V57LkF3cd\n"
+    "kA==\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char email_ok_leaf_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBtDCCAVqgAwIBAgIBBDAKBggqhkjOPQQDAjAuMSwwKgYDVQQDDCNUZXN0IEVt\n"
+    "YWlsIENvbnN0cmFpbmVkIEludGVybWVkaWF0ZTAgFw0yNjA5MTgwMjUzNDRaGA8y\n"
+    "MTI2MDgyNTAyNTM0NFowNTESMBAGA1UEAwwJVGVzdCBVc2VyMR8wHQYJKoZIhvcN\n"
+    "AQkBFhB1c2VyQGV4YW1wbGUuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n"
+    "nn9I5/2RfTFiu7Vxemgews7Le/3v0OdDKpYN5KwYWudGBid9mddCLHXRBUVvA23r\n"
+    "R4PTEsHB1/KaYzP5BWytOqNgMF4wDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMC\n"
+    "B4AwHQYDVR0OBBYEFM/LNHcuOx+sE1EqG78wLXXuCTHoMB8GA1UdIwQYMBaAFCDI\n"
+    "dWBN+tJaakZCscNnslxc1L/TMAoGCCqGSM49BAMCA0gAMEUCIE00zjYzEdP7dFfl\n"
+    "s0V7iaIYNvZ41/t35oZ0bXHgUptRAiEAhUGI0T8jDqn7DuFiDQ1nHP00c01hs9Fy\n"
+    "FIW+41F3IrU=\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char email_excl_inter_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBtTCCAVqgAwIBAgIBBTAKBggqhkjOPQQDAjAUMRIwEAYDVQQDDAlUZXN0IFJv\n"
+    "b3QwIBcNMjYwOTE4MDI1MzQ1WhgPMjEyNjA4MjUwMjUzNDVaMCsxKTAnBgNVBAMM\n"
+    "IFRlc3QgRW1haWwgRXhjbHVkZWQgSW50ZXJtZWRpYXRlMFkwEwYHKoZIzj0CAQYI\n"
+    "KoZIzj0DAQcDQgAEE1Rc0u+OMb8UbVRJDxoAeAWifYoq1oLwZ+4F8X47cRDL7lMC\n"
+    "rZilhaSwGzjXFQJ5FxX/93SMxu+sjsswRsFbdqOBgzCBgDAPBgNVHRMBAf8EBTAD\n"
+    "AQH/MA4GA1UdDwEB/wQEAwIBBjAdBgNVHQ4EFgQUqrFGC9sTUYjCT5pdFPOnAycf\n"
+    "anowHwYDVR0jBBgwFoAUx2JSxgwWFJUfF8awK+A8osNTwggwHQYDVR0eAQH/BBMw\n"
+    "EaEPMA2BC2V4YW1wbGUub3JnMAoGCCqGSM49BAMCA0kAMEYCIQD00PY0EoyrJS4/\n"
+    "83kjFqb83lG9ZBWw0XGR8esr2SzMFAIhAO+G6nu6sT4u/k/AtrkCmln1/OLyGfxj\n"
+    "Zj6ikR+6DvUy\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char email_excl_leaf_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBsjCCAVegAwIBAgIBBjAKBggqhkjOPQQDAjArMSkwJwYDVQQDDCBUZXN0IEVt\n"
+    "YWlsIEV4Y2x1ZGVkIEludGVybWVkaWF0ZTAgFw0yNjA5MTgwMjU2MzFaGA8yMTI2\n"
+    "MDgyNTAyNTYzMVowNTESMBAGA1UEAwwJVGVzdCBVc2VyMR8wHQYJKoZIhvcNAQkB\n"
+    "FhB1c2VyQGV4YW1wbGUub3JnMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfVn0\n"
+    "cdCdfkM1XAPHFJeK3zyfuLc/a7HkKOimAbhJSLxdgjVy98mzQHYmr1X26WW7+23K\n"
+    "VdAT65wA7c3Ouw/ZFqNgMF4wDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCB4Aw\n"
+    "HQYDVR0OBBYEFNb22Ua2KfmULgfMXfv6jThOELGqMB8GA1UdIwQYMBaAFKqxRgvb\n"
+    "E1GIwk+aXRTzpwMnH2p6MAoGCCqGSM49BAMCA0kAMEYCIQDruoAdKFOrJxUhVwcH\n"
+    "/R9SjO65jv4fFdkMpSSJT6B+PwIhAKQ3v/k5lpSkSF6FHP7NhNMz6zkZM9W4AfyU\n"
+    "QAspl5T3\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char ta_root_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBmjCCAUCgAwIBAgIJAJR5kOBZRsJKMAoGCCqGSM49BAMCMCAxHjAcBgNVBAMM\n"
+    "FVRlc3QgQ29uc3RyYWluZWQgUm9vdDAgFw0yNjA5MTgwMjUzNDVaGA8yMTI2MDgy\n"
+    "NTAyNTM0NVowIDEeMBwGA1UEAwwVVGVzdCBDb25zdHJhaW5lZCBSb290MFkwEwYH\n"
+    "KoZIzj0CAQYIKoZIzj0DAQcDQgAEwsk0AG3kxZUW0PTd0ACcdfehKqiahuz3KTL+\n"
+    "PoguOZd2Yo9Q0kvpYbgqmVx1l0PNySOB/sbWfBvHZp6v/BWCKqNhMF8wDwYDVR0T\n"
+    "AQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFP1xzpZ86Geu85q8\n"
+    "ChAmleVSdvCjMB0GA1UdHgEB/wQTMBGgDzANggtleGFtcGxlLmNvbTAKBggqhkjO\n"
+    "PQQDAgNIADBFAiBbvp2jH4jW7F0cTvbGON48L5L6t/6awyY6ZRHnrWIzWQIhAJ8z\n"
+    "ny3xLcu6GdoovzkfIIYX53NhpESm8h/VveIwqrYE\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char ta_leaf_pem[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBqDCCAU6gAwIBAgIBAjAKBggqhkjOPQQDAjAgMR4wHAYDVQQDDBVUZXN0IENv\n"
+    "bnN0cmFpbmVkIFJvb3QwIBcNMjYwOTE4MDI1MzQ1WhgPMjEyNjA4MjUwMjUzNDVa\n"
+    "MBsxGTAXBgNVBAMMEGxlYWYuZXhhbXBsZS5vcmcwWTATBgcqhkjOPQIBBggqhkjO\n"
+    "PQMBBwNCAARHYJTIBgDXb4MaYYuBFd8lh8k4Qa3+uubJie/1sxXR9vG3032OizO5\n"
+    "55485s125WOkxKEOVqmFxBkRx2KfAwPZo3wwejAMBgNVHRMBAf8EAjAAMA4GA1Ud\n"
+    "DwEB/wQEAwIHgDAdBgNVHQ4EFgQUIvzYrx2wGgl61G4j8faQvHMsbIgwHwYDVR0j\n"
+    "BBgwFoAU/XHOlnzoZ67zmrwKECaV5VJ28KMwGgYDVR0RBBMwEYIPd3d3LmV4YW1w\n"
+    "bGUub3JnMAoGCCqGSM49BAMCA0gAMEUCIQCWjCpNLtzVsg6XDfY23rk3KeJyijtQ\n"
+    "/ib6CgFIASJOjQIgbgP7eHmzW/dWvW7XXYP3PulZitNVoEK47xP80CHpCIw=\n"
+    "-----END CERTIFICATE-----\n";
+
 static const time_t check_time = 1798761600;
 
 struct chain_test {
@@ -146,7 +256,8 @@ test_chain(struct test *t, const void *arg)
 
 	if ((root = cert_from_pem(t, ct->root_pem)) == NULL)
 		goto err;
-	if ((intermediate = cert_from_pem(t, ct->inter_pem)) == NULL)
+	if (ct->inter_pem != NULL &&
+	    (intermediate = cert_from_pem(t, ct->inter_pem)) == NULL)
 		goto err;
 	if ((leaf = cert_from_pem(t, ct->leaf_pem)) == NULL)
 		goto err;
@@ -163,7 +274,7 @@ test_chain(struct test *t, const void *arg)
 		test_errorf(t, "sk_X509_new_null");
 		goto err;
 	}
-	if (!sk_X509_push(untrusted, intermediate)) {
+	if (intermediate != NULL && !sk_X509_push(untrusted, intermediate)) {
 		test_errorf(t, "sk_X509_push");
 		goto err;
 	}
@@ -228,6 +339,60 @@ static const struct chain_test email_subject_not_permitted = {
 	.want_error = X509_V_ERR_PERMITTED_VIOLATION,
 };
 
+/* As above, but the subject email address user@example.com is permitted. */
+static const struct chain_test email_subject_permitted = {
+	.root_pem = email_root_pem,
+	.inter_pem = email_inter_pem,
+	.leaf_pem = email_ok_leaf_pem,
+	.want_error = X509_V_OK,
+};
+
+/*
+ * The intermediate is constrained to DNS names under example.com. The leaf's
+ * SAN holds only an email address, so its subject CN, leaf.example.org, is
+ * checked as a DNS name and violates the constraint.
+ */
+static const struct chain_test dns_cn_not_permitted = {
+	.root_pem = dns_root_pem,
+	.inter_pem = dns_inter_pem,
+	.leaf_pem = dns_cn_leaf_pem,
+	.want_error = X509_V_ERR_PERMITTED_VIOLATION,
+};
+
+/*
+ * The intermediate excludes DNS names under example.org and the leaf's SAN
+ * is www.example.org.
+ */
+static const struct chain_test dns_san_excluded = {
+	.root_pem = dns_root_pem,
+	.inter_pem = dns_excl_inter_pem,
+	.leaf_pem = dns_excl_leaf_pem,
+	.want_error = X509_V_ERR_EXCLUDED_VIOLATION,
+};
+
+/*
+ * The intermediate excludes email addresses under example.org and the leaf
+ * has no SAN and user@example.org in its subject.
+ */
+static const struct chain_test email_subject_excluded = {
+	.root_pem = email_root_pem,
+	.inter_pem = email_excl_inter_pem,
+	.leaf_pem = email_excl_leaf_pem,
+	.want_error = X509_V_ERR_EXCLUDED_VIOLATION,
+};
+
+/*
+ * The trust anchor itself is constrained to DNS names under example.com and
+ * directly issues a leaf with SAN www.example.org. Constraints on a trust
+ * anchor are enforced.
+ */
+static const struct chain_test trust_anchor_constrained = {
+	.root_pem = ta_root_pem,
+	.inter_pem = NULL,
+	.leaf_pem = ta_leaf_pem,
+	.want_error = X509_V_ERR_PERMITTED_VIOLATION,
+};
+
 int
 main(int argc, char **argv)
 {
@@ -236,6 +401,14 @@ main(int argc, char **argv)
 	test_run(t, "dns permitted san", test_chain, &dns_permitted_san);
 	test_run(t, "email subject not permitted", test_chain,
 	    &email_subject_not_permitted);
+	test_run(t, "email subject permitted", test_chain,
+	    &email_subject_permitted);
+	test_run(t, "dns cn not permitted", test_chain, &dns_cn_not_permitted);
+	test_run(t, "dns san excluded", test_chain, &dns_san_excluded);
+	test_run(t, "email subject excluded", test_chain,
+	    &email_subject_excluded);
+	test_run(t, "trust anchor constrained", test_chain,
+	    &trust_anchor_constrained);
 
 	return test_result(t);
 }
