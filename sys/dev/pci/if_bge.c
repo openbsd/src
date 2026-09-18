@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.408 2025/07/15 13:40:02 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.409 2026/09/18 17:15:51 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1285,7 +1285,8 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, sc->bge_rx_std_len, 1,
-		    sc->bge_rx_std_len, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    sc->bge_rx_std_len, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | sc->bge_dmaflags,
 		    &sc->bge_cdata.bge_rx_std_map[i]) != 0) {
 			printf("%s: unable to create dmamap for slot %d\n",
 			    sc->bge_dev.dv_xname, i);
@@ -1411,7 +1412,7 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_JLEN, 4, BGE_JLEN, 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | sc->bge_dmaflags,
 		    &sc->bge_cdata.bge_rx_jumbo_map[i]) != 0) {
 			printf("%s: unable to create dmamap for slot %d\n",
 			    sc->bge_dev.dv_xname, i);
@@ -1560,7 +1561,8 @@ bge_init_tx_ring(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, txmaxsegsz,
-		    BGE_NTXSEG, txsegsz, 0, BUS_DMA_NOWAIT, &sc->bge_txdma[i]))
+		    BGE_NTXSEG, txsegsz, 0, BUS_DMA_NOWAIT | sc->bge_dmaflags,
+		    &sc->bge_txdma[i]))
 			return (ENOBUFS);
 	}
 
@@ -2906,6 +2908,10 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGE_CPMU_PRESENT;
 
+	sc->bge_dmaflags = (sc->bge_flags & BGE_PCIE) &&
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720 ?
+	    BUS_DMA_64BIT : 0;
+
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI,
 	    &sc->bge_msicap, NULL)) {
 		if (bge_can_use_msi(sc) == 0)
@@ -3000,7 +3006,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 	    PAGE_SIZE, 0, &sc->bge_ring_seg, 1, &sc->bge_ring_nseg,
-	    BUS_DMA_NOWAIT)) {
+	    BUS_DMA_NOWAIT | sc->bge_dmaflags)) {
 		printf(": can't alloc rx buffers\n");
 		goto fail_2;
 	}
@@ -3015,7 +3021,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("bus_dmamap_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
-	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
+	    BUS_DMA_NOWAIT | sc->bge_dmaflags, &sc->bge_ring_map)) {
 		printf(": can't create dma map\n");
 		goto fail_4;
 	}
@@ -3055,6 +3061,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
+	if (ISSET(sc->bge_dmaflags, BUS_DMA_64BIT))
+		ifp->if_xflags |= IFXF_MBUF_64BIT;
 	ifp->if_ioctl = bge_ioctl;
 	ifp->if_qstart = bge_start;
 	ifp->if_watchdog = bge_watchdog;
