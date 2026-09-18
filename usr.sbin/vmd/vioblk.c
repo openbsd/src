@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.33 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.34 2026/09/18 04:04:14 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -273,13 +273,14 @@ vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 	vq_info = &dev->vq[vq_idx];
 	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
-	if (vr == NULL)
+	if (vr == NULL || vq_info->q_avail_hva == NULL ||
+	    vq_info->q_used_hva == NULL)
 		fatalx("%s: null vring", __func__);
 
-	/* Compute offsets in table of descriptors, avail ring, and used ring */
+	/* Locate the independently mapped split virtqueue areas. */
 	table = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
+	avail = vq_info->q_avail_hva;
+	used = vq_info->q_used_hva;
 
 	while (idx != avail->idx) {
 		/* Retrieve Command descriptor. */

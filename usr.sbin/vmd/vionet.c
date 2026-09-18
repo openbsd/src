@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.33 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.34 2026/09/18 04:04:14 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -333,13 +333,14 @@ vionet_rx(struct virtio_dev *dev, int fd)
 	vq_info = &dev->vq[RXQ];
 	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
-	if (vr == NULL)
+	if (vr == NULL || vq_info->q_avail_hva == NULL ||
+	    vq_info->q_used_hva == NULL)
 		fatalx("%s: vr == NULL", __func__);
 
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
+	/* Locate the independently mapped split virtqueue areas. */
 	table = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
+	avail = vq_info->q_avail_hva;
+	used = vq_info->q_used_hva;
 	used->flags |= VRING_USED_F_NO_NOTIFY;
 
 	while (idx != avail->idx) {
@@ -682,13 +683,14 @@ vionet_tx(struct virtio_dev *dev)
 	vq_info = &dev->vq[TXQ];
 	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
-	if (vr == NULL)
+	if (vr == NULL || vq_info->q_avail_hva == NULL ||
+	    vq_info->q_used_hva == NULL)
 		fatalx("%s: vr == NULL", __func__);
 
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
+	/* Locate the independently mapped split virtqueue areas. */
 	table = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
+	avail = vq_info->q_avail_hva;
+	used = vq_info->q_used_hva;
 
 	while (idx != avail->idx) {
 		hdr_idx = avail->ring[idx & vq_info->mask];
@@ -1149,9 +1151,9 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 			dev->driver_feature = 0;
 			dev->isr = 0;
 			pci_cfg->queue_select = 0;	/* Technically RXQ. */
-			virtio_update_qs(dev);
 			virtio_vq_init(dev, RXQ);
 			virtio_vq_init(dev, TXQ);
+			virtio_update_qs(dev);
 		}
 		DPRINTF("%s: dev %u status [%s%s%s%s%s%s]", __func__,
 		    dev->pci_id,

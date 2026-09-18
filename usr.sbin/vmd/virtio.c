@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.150 2026/09/17 22:20:06 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.151 2026/09/18 04:04:14 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -175,7 +175,7 @@ virtio_update_qs(struct virtio_dev *dev)
 {
 	struct virtio_vq_info *vq_info = NULL;
 
-	if (dev->driver_feature & VIRTIO_F_VERSION_1) {
+	if (dev->device_feature & VIRTIO_F_VERSION_1) {
 		/* Invalid queue */
 		if (dev->pci_cfg.queue_select >= dev->num_queues) {
 			dev->pci_cfg.queue_size = 0;
@@ -185,8 +185,8 @@ virtio_update_qs(struct virtio_dev *dev)
 		vq_info = &dev->vq[dev->pci_cfg.queue_select];
 		dev->pci_cfg.queue_size = vq_info->qs;
 		dev->pci_cfg.queue_desc = vq_info->q_gpa;
-		dev->pci_cfg.queue_avail = vq_info->q_gpa + vq_info->vq_availoffset;
-		dev->pci_cfg.queue_used = vq_info->q_gpa + vq_info->vq_usedoffset;
+		dev->pci_cfg.queue_avail = vq_info->q_avail_gpa;
+		dev->pci_cfg.queue_used = vq_info->q_used_gpa;
 		dev->pci_cfg.queue_enable = vq_info->vq_enabled;
 	} else {
 		/* Invalid queue? */
@@ -205,16 +205,21 @@ void
 virtio_update_qa(struct virtio_dev *dev)
 {
 	struct virtio_vq_info *vq_info = NULL;
-	void *hva = NULL;
-	uint64_t availoff, usedoff, availsz, usedsz;
+	void *hva = NULL, *avail_hva = NULL, *used_hva = NULL;
+	uint64_t descsz, availsz, usedsz;
 
-	if (dev->driver_feature & VIRTIO_F_VERSION_1) {
+	if (dev->device_feature & VIRTIO_F_VERSION_1) {
 		if (dev->pci_cfg.queue_select >= dev->num_queues) {
 			log_warnx("%s: invalid queue index", __func__);
 			return;
 		}
 		vq_info = &dev->vq[dev->pci_cfg.queue_select];
 		vq_info->q_gpa = dev->pci_cfg.queue_desc;
+		vq_info->q_avail_gpa = dev->pci_cfg.queue_avail;
+		vq_info->q_used_gpa = dev->pci_cfg.queue_used;
+		vq_info->q_hva = NULL;
+		vq_info->q_avail_hva = NULL;
+		vq_info->q_used_hva = NULL;
 
 		/*
 		 * Queue size is adjustable by the guest in Virtio 1.x.
@@ -223,47 +228,52 @@ virtio_update_qa(struct virtio_dev *dev)
 		vq_info->qs = dev->pci_cfg.queue_size;
 		vq_info->mask = vq_info->qs - 1;
 
-		/*
-		 * Require the available (driver) and used (device) area to be
-		 * similar to Virtio 0.9 but support Virtio 1.x alignment.
-		 */
-		if (dev->pci_cfg.queue_avail < dev->pci_cfg.queue_desc ||
-		    dev->pci_cfg.queue_used < dev->pci_cfg.queue_desc) {
+		if (vq_info->q_gpa == 0 || vq_info->q_avail_gpa == 0 ||
+		    vq_info->q_used_gpa == 0 || vq_info->qs == 0 ||
+		    (vq_info->qs & 1) != 0 ||
+		    (vq_info->q_gpa & 15) != 0 ||
+		    (vq_info->q_avail_gpa & 1) != 0 ||
+		    (vq_info->q_used_gpa & 3) != 0 ||
+		    vq_info->qs > VIRTIO_QUEUE_SIZE_MAX ||
+		    (vq_info->qs & (vq_info->qs - 1)) != 0) {
+			if (dev->pci_cfg.queue_enable == 1)
+				log_warnx("%s: invalid queue %u layout: "
+				    "desc=0x%llx avail=0x%llx used=0x%llx "
+				    "size=%u", __func__,
+				    dev->pci_cfg.queue_select,
+				    (unsigned long long)vq_info->q_gpa,
+				    (unsigned long long)vq_info->q_avail_gpa,
+				    (unsigned long long)vq_info->q_used_gpa,
+				    vq_info->qs);
 			vq_info->vq_enabled = 0;
 			return;
 		}
 
-		availoff = dev->pci_cfg.queue_avail - dev->pci_cfg.queue_desc;
-		usedoff = dev->pci_cfg.queue_used - dev->pci_cfg.queue_desc;
-		if (availoff > UINT32_MAX || usedoff > UINT32_MAX ||
-		    (usedoff & 3) != 0) {
-			vq_info->vq_enabled = 0;
-			return;
-		}
-
+		descsz = sizeof(struct vring_desc) * vq_info->qs;
 		availsz = sizeof(uint16_t) * (2 + vq_info->qs);
 		usedsz = (sizeof(uint16_t) * 2) +
 		    (sizeof(struct vring_used_elem) * vq_info->qs);
-		hva = hvaddr_mem(dev->pci_cfg.queue_desc + availoff, availsz);
-		if (hva == NULL) {
-			vq_info->vq_enabled = 0;
-			return;
-		}
-		hva = hvaddr_mem(dev->pci_cfg.queue_desc + usedoff, usedsz);
-		if (hva == NULL) {
+		hva = hvaddr_mem(vq_info->q_gpa, descsz);
+		avail_hva = hvaddr_mem(vq_info->q_avail_gpa, availsz);
+		used_hva = hvaddr_mem(vq_info->q_used_gpa, usedsz);
+		if (hva == NULL || avail_hva == NULL || used_hva == NULL) {
+			if (dev->pci_cfg.queue_enable == 1)
+				log_warnx("%s: cannot map queue %u: "
+				    "desc=0x%llx/%p avail=0x%llx/%p "
+				    "used=0x%llx/%p size=%u", __func__,
+				    dev->pci_cfg.queue_select,
+				    (unsigned long long)vq_info->q_gpa, hva,
+				    (unsigned long long)vq_info->q_avail_gpa,
+				    avail_hva,
+				    (unsigned long long)vq_info->q_used_gpa,
+				    used_hva, vq_info->qs);
 			vq_info->vq_enabled = 0;
 			return;
 		}
 
-		if (vq_info->qs > 0 && vq_info->qs % 2 == 0) {
-			vq_info->vq_availoffset = availoff;
-			vq_info->vq_usedoffset = usedoff;
-			vq_info->vq_enabled = (dev->pci_cfg.queue_enable == 1);
-		} else {
-			vq_info->vq_availoffset = 0;
-			vq_info->vq_usedoffset = 0;
-			vq_info->vq_enabled = 0;
-		}
+		vq_info->vq_availoffset = 0;
+		vq_info->vq_usedoffset = 0;
+		vq_info->vq_enabled = (dev->pci_cfg.queue_enable == 1);
 	} else {
 		/* Invalid queue? */
 		if (dev->cfg.queue_select >= dev->num_queues) {
@@ -280,16 +290,27 @@ virtio_update_qa(struct virtio_dev *dev)
 		vq_info->vq_usedoffset = VIRTQUEUE_ALIGN(
 			sizeof(struct vring_desc) * vq_info->qs +
 			sizeof(uint16_t) * (2 + vq_info->qs));
+		vq_info->q_avail_gpa = vq_info->q_gpa +
+		    vq_info->vq_availoffset;
+		vq_info->q_used_gpa = vq_info->q_gpa +
+		    vq_info->vq_usedoffset;
+
+		/* Legacy split rings occupy one contiguous allocation. */
+		if (vq_info->q_gpa != 0) {
+			hva = hvaddr_mem(vq_info->q_gpa,
+			    vring_size(vq_info->qs));
+			if (hva == NULL)
+				fatalx("%s: failed to translate gpa to hva",
+				    __func__);
+			avail_hva = (char *)hva + vq_info->vq_availoffset;
+			used_hva = (char *)hva + vq_info->vq_usedoffset;
+		}
 	}
 
-	/* Update any host va mappings. */
-	if (vq_info->q_gpa > 0) {
-		hva = hvaddr_mem(vq_info->q_gpa, vring_size(vq_info->qs));
-		if (hva == NULL)
-			fatalx("%s: failed to translate gpa to hva", __func__);
-		vq_info->q_hva = hva;
-	} else {
-		vq_info->q_hva = NULL;
+	vq_info->q_hva = hva;
+	vq_info->q_avail_hva = avail_hva;
+	vq_info->q_used_hva = used_hva;
+	if (hva == NULL) {
 		vq_info->last_avail = 0;
 		vq_info->notified_avail = 0;
 	}
@@ -322,12 +343,13 @@ viornd_notifyq(struct virtio_dev *dev, uint16_t idx)
 	}
 
 	vr = vq_info->q_hva;
-	if (vr == NULL)
+	if (vr == NULL || vq_info->q_avail_hva == NULL ||
+	    vq_info->q_used_hva == NULL)
 		fatalx("%s: null vring", __func__);
 
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
+	avail = vq_info->q_avail_hva;
+	used = vq_info->q_used_hva;
 
 	aidx = avail->idx & vq_info->mask;
 	uidx = used->idx & vq_info->mask;
@@ -470,8 +492,6 @@ virtio_io_cfg(struct virtio_dev *dev, int dir, uint8_t reg, uint32_t data,
 				dev->isr = 0;
 
 				pci_cfg->queue_select = 0;
-				virtio_update_qs(dev);
-
 				if (dev->num_queues > 0) {
 					/*
 					 * Reset virtqueues to initial state and
@@ -481,6 +501,7 @@ virtio_io_cfg(struct virtio_dev *dev, int dir, uint8_t reg, uint32_t data,
 					for (i = 0; i < dev->num_queues; i++)
 						virtio_vq_init(dev, i);
 				}
+				virtio_update_qs(dev);
 			}
 
 			DPRINTF("%s: dev %u status [%s%s%s%s%s%s]", __func__,
@@ -1452,6 +1473,11 @@ virtio_vq_init(struct virtio_dev *dev, size_t idx)
 	vq_info = &dev->vq[idx];
 
 	vq_info->q_gpa = 0;
+	vq_info->q_avail_gpa = 0;
+	vq_info->q_used_gpa = 0;
+	vq_info->q_hva = NULL;
+	vq_info->q_avail_hva = NULL;
+	vq_info->q_used_hva = NULL;
 	vq_info->qs = dev->queue_size;
 	vq_info->mask = dev->queue_size - 1;
 

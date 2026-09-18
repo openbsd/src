@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.33 2026/08/04 19:12:14 claudio Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.34 2026/09/18 04:04:14 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -2209,13 +2209,14 @@ vioscsi_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 	}
 
 	vr = vq_info->q_hva;
-	if (vr == NULL)
+	if (vr == NULL || vq_info->q_avail_hva == NULL ||
+	    vq_info->q_used_hva == NULL)
 		fatalx("%s: null vring", __func__);
 
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
+	/* Locate the independently mapped split virtqueue areas. */
 	acct.desc = (struct vring_desc *)(vr);
-	acct.avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	acct.used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
+	acct.avail = vq_info->q_avail_hva;
+	acct.used = vq_info->q_used_hva;
 
 	acct.idx = vq_info->last_avail & vq_info->mask;
 
