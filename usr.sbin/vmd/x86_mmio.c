@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_mmio.c,v 1.4 2026/09/16 19:27:18 mlarkin Exp $	*/
+/*	$OpenBSD: x86_mmio.c,v 1.5 2026/09/18 19:02:10 dv Exp $	*/
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
  *
@@ -28,6 +28,21 @@
 #include "pci.h"
 #include "x86_mmio.h"
 #include "x86_vm.h"
+
+#ifdef DPRINTF
+#undef DPRINTF
+#endif
+#if MMIO_DEBUG
+static void dump_regs(struct vcpu_reg_state *);
+static void dump_insn(struct x86_insn *);
+#define DPRINTF			log_debug
+#define DUMP_REGS		dump_regs
+#define DUMP_INSN		dump_insn
+#else
+#define DPRINTF(x...)		do {} while(0)
+#define DUMP_REGS(x...)		do {} while(0)
+#define DUMP_INSN(x...)		do {} while(0)
+#endif	/* MMIO_DEBUG */
 
 extern char* __progname;
 
@@ -328,12 +343,12 @@ dump_regs(struct vcpu_reg_state *vrs)
 	struct vcpu_segment_info *vsi;
 
 	for (i = 0; i < VCPU_REGS_NGPRS; i++)
-		log_info("%s: %s 0x%llx", __progname, str_reg(i),
+		log_debug("%s: %s 0x%llx", __progname, str_reg(i),
 		    vrs->vrs_gprs[i]);
 
 	for (i = 0; i < VCPU_REGS_NSREGS; i++) {
 		vsi = &vrs->vrs_sregs[i];
-		log_info("%s: %s { sel: 0x%04x, lim: 0x%08x, ar: 0x%08x, "
+		log_debug("%s: %s { sel: 0x%04x, lim: 0x%08x, ar: 0x%08x, "
 		    "base: 0x%llx }", __progname, str_sreg(i),
 		    vsi->vsi_sel, vsi->vsi_limit, vsi->vsi_ar, vsi->vsi_base);
 	}
@@ -342,7 +357,7 @@ dump_regs(struct vcpu_reg_state *vrs)
 static void
 dump_insn(struct x86_insn *insn)
 {
-	log_info("instruction { %s, enc=%s, len=%d, mod=0x%02x, ("
+	log_debug("instruction { %s, enc=%s, len=%d, mod=0x%02x, ("
 	    "reg=%s, addr=0x%lx) sib=0x%02x }",
 	    str_opcode(&insn->insn_opcode),
 	    str_operand_enc(&insn->insn_opcode), insn->insn_bytes_len,
@@ -1078,21 +1093,21 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 	mode = detect_cpu_mode(vrs);
 	if (mode == VMM_CPU_MODE_UNKNOWN) {
 		log_warnx("%s: failed to identify cpu mode", __func__);
-#ifdef MMIO_DEBUG
-		dump_regs(vrs);
-#endif
+		DUMP_REGS(vrs);
 		return (-1);
 	}
 	insn->insn_cpu_mode = mode;
 
 #ifdef MMIO_DEBUG
-	log_info("%s: cpu mode %s detected", __progname, str_cpu_mode(mode));
-	printf("%s: got bytes: [ ", __progname);
+	DPRINTF("%s: cpu mode %s detected", __progname, str_cpu_mode(mode));
+	char _bytes[128] = { 0 };
+	char *p = _bytes;
 	for (int i = 0; i < len; i++) {
-		printf("%02x ", bytes[i]);
+		p += snprintf(p, 6, "%02x ", bytes[i]);
 	}
-	printf("]\n");
+	DPRINTF("%s: got bytes [ %s]", __func__, _bytes);
 #endif
+
 	/* 2. Decode prefixes. */
 	res = decode_prefix(&state, insn);
 	if (res == DECODE_ERROR) {
@@ -1101,12 +1116,10 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 	} else if (res == DECODE_DONE)
 		goto done;
 
-#ifdef MMIO_DEBUG
-	log_info("%s: prefixes {g1: 0x%02x, g2: 0x%02x, g3: 0x%02x, g4: 0x%02x,"
+	DPRINTF("%s: prefixes {g1: 0x%02x, g2: 0x%02x, g3: 0x%02x, g4: 0x%02x,"
 	    " rex: 0x%02x }", __progname, insn->insn_prefix.pfx_group1,
 	    insn->insn_prefix.pfx_group2, insn->insn_prefix.pfx_group3,
 	    insn->insn_prefix.pfx_group4, insn->insn_prefix.pfx_rex);
-#endif
 
 	/* 3. Pick apart opcode. Here we can start short-circuiting. */
 	res = decode_opcode(&state, insn);
@@ -1116,11 +1129,9 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 	} else if (res == DECODE_DONE)
 		goto done;
 
-#ifdef MMIO_DEBUG
-	log_info("%s: found opcode %s (operand encoding %s) (%s)", __progname,
+	DPRINTF("%s: found opcode %s (operand encoding %s) (%s)", __progname,
 	    str_opcode(&insn->insn_opcode), str_operand_enc(&insn->insn_opcode),
 	    str_decode_res(res));
-#endif
 
 	/* Process optional ModR/M byte. */
 	res = decode_modrm(&state, insn);
@@ -1135,11 +1146,9 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 	if (res == DECODE_DONE)
 		goto done;
 
-#ifdef MMIO_DEBUG
 	if (insn->insn_modrm_valid)
-		log_info("%s: found ModRM 0x%02x (%s)", __progname,
+		DPRINTF("%s: found ModRM 0x%02x (%s)", __progname,
 		    insn->insn_modrm, str_decode_res(res));
-#endif
 
 	/* Process optional SIB byte. */
 	res = decode_sib(&state, vrs, insn);
@@ -1149,11 +1158,9 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 	} else if (res == DECODE_DONE)
 		goto done;
 
-#ifdef MMIO_DEBUG
 	if (insn->insn_sib_valid)
-		log_info("%s: found SIB 0x%02x (%s)", __progname,
+		DPRINTF("%s: found SIB 0x%02x (%s)", __progname,
 		    insn->insn_sib, str_decode_res(res));
-#endif
 
 	/* Process any Displacement bytes. */
 	res = decode_disp(&state, vrs, insn);
@@ -1177,25 +1184,21 @@ done:
 		insn->insn_gva += insn->insn_bytes_len;
 	}
 
-#ifdef MMIO_DEBUG
-	log_info("%s: final instruction length is %u", __func__,
+	DPRINTF("%s: final instruction length is %u", __func__,
 		insn->insn_bytes_len);
-	dump_insn(insn);
-	log_info("%s: modrm: {mod: %d, regop: %d, rm: %d}", __func__,
+	DUMP_INSN(insn);
+	DPRINTF("%s: modrm: {mod: %d, regop: %d, rm: %d}", __func__,
 	    MODRM_MOD(insn->insn_modrm), MODRM_REGOP(insn->insn_modrm),
 	    MODRM_RM(insn->insn_modrm));
-	dump_regs(vrs);
-#endif /* MMIO_DEBUG */
+	DUMP_REGS(vrs);
 	return (0);
 
 err:
-#ifdef MMIO_DEBUG
-	dump_insn(insn);
-	log_info("%s: modrm: {mod: %d, regop: %d, rm: %d}", __func__,
+	DUMP_INSN(insn);
+	DPRINTF("%s: modrm: {mod: %d, regop: %d, rm: %d}", __func__,
 	    MODRM_MOD(insn->insn_modrm), MODRM_REGOP(insn->insn_modrm),
 	    MODRM_RM(insn->insn_modrm));
-	dump_regs(vrs);
-#endif /* MMIO_DEBUG */
+	DUMP_REGS(vrs);
 	return (-1);
 }
 

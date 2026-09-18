@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.131 2026/09/18 02:35:55 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.132 2026/09/18 19:02:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -45,8 +45,6 @@
 #include "pci.h"
 #include "virtio.h"
 #include "vmd.h"
-
-#define MMIO_NOTYET 0
 
 static int run_vm(struct vmd_vm *, struct vcpu_reg_state *);
 static void vm_dispatch_vmm(int, short, void *);
