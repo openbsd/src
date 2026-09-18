@@ -871,9 +871,6 @@ void intel_sseu_print_ss_info(const char *type,
 u16 intel_slicemask_from_xehp_dssmask(intel_sseu_ss_mask_t dss_mask,
 				      int dss_per_slice)
 {
-	STUB();
-	return 0;
-#ifdef notyet
 	intel_sseu_ss_mask_t per_slice_mask = {};
 	unsigned long slice_mask = 0;
 	int i;
@@ -891,5 +888,4 @@ u16 intel_slicemask_from_xehp_dssmask(intel_sseu_ss_mask_t dss_mask,
 	}
 
 	return slice_mask;
-#endif
 }

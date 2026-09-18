@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.10 2026/03/09 23:58:03 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.11 2026/09/18 09:00:53 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -197,6 +197,22 @@ bitmap_release_region(void *p, u_int b, int o)
 {
 	KASSERT(o == 0);
 	__clear_bit(b, p);
+}
+
+static inline void
+bitmap_shift_right(void *dst, const void *src, unsigned int shift,
+    unsigned int n)
+{
+	u_int *d = dst;
+	const u_int *s = src;
+	u_int b, rem = 0, v;
+
+	for (b = 0; b < n; b += 32) {
+		v = rem << (32 - shift);
+		v |= s[b >> 5] >> shift;
+		rem = s[b >> 5] & ((1 << shift) - 1);
+		d[b >> 5] = v;
+	}
 }
 
 void *bitmap_zalloc(u_int, gfp_t);
