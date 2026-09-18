@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrctl.c,v 1.3 2026/09/18 15:47:36 job Exp $ */
+/*	$OpenBSD: rtrctl.c,v 1.4 2026/09/18 22:06:13 job Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -42,6 +42,8 @@ static const char * const state_names[] = {
 int rtr_write(int, char *, int);
 int rtr_read(int, char *, int);
 int connect_socket(char *);
+void import_start(int);
+void import_end(int);
 void read_openbgpd(FILE *, int);
 void read_sock_print_ometric(int);
 
@@ -326,14 +328,57 @@ connect_socket(char *filename)
 #define MAXLINE 2097152
 
 void
-read_openbgpd(FILE *fp, int sock)
+import_start(int sock)
 {
 	struct pdu_open_controller oc;
 	struct pdu_start_of_import soi;
+	uint32_t length;
+
+	oc.version = RTR_VERSION;
+	oc.type = OPEN_CONTROLLER;
+	oc.reserved = 0;
+	length = sizeof(struct pdu_open_controller);
+	oc.length = length;
+	oc.controller_version = 1;
+	oc.controller_flags = 1;
+	oc.reserved = htobe16(oc.reserved);
+	oc.length = htobe32(oc.length);
+	oc.controller_version = htobe32(oc.controller_version);
+	oc.controller_flags = htobe32(oc.controller_flags);
+	rtr_write(sock, (char *)&oc, length);
+
+	soi.version = RTR_VERSION;
+	soi.type = START_OF_IMPORT;
+	soi.reserved = 0;
+	length = sizeof(struct pdu_start_of_import);
+	soi.length = length;
+	soi.reserved = htobe16(soi.reserved);
+	soi.length = htobe32(soi.length);
+	rtr_write(sock, (char *)&soi, length);
+}
+
+void
+import_end(int sock)
+{
+	struct pdu_end_of_import eoi;
+	uint32_t length;
+
+	eoi.version = RTR_VERSION;
+	eoi.type = END_OF_IMPORT;
+	eoi.reserved = 0;
+	length = sizeof(struct pdu_end_of_import);
+	eoi.length = length;
+	eoi.reserved = htobe16(eoi.reserved);
+	eoi.length = htobe32(eoi.length);
+	rtr_write(sock, (char *)&eoi, length);
+}
+
+void
+read_openbgpd(FILE *fp, int sock)
+{
 	struct pdu_ipv4_prefix_import ip4;
 	struct pdu_ipv6_prefix_import ip6;
 	struct pdu_aspa_import *aspa;
-	struct pdu_end_of_import eoi;
 	uint32_t length;
 	char *s_asn;
 	char *s_cidr;
@@ -347,32 +392,6 @@ read_openbgpd(FILE *fp, int sock)
 	unsigned char buf[PDU_MAX_LENGTH];
 	char line[MAXLINE];
 	uint32_t p_count;
-
-	oc.version = RTR_VERSION;
-	oc.type = OPEN_CONTROLLER;
-	oc.reserved = 0;
-	length = sizeof(struct pdu_open_controller);
-	oc.length = length;
-	oc.controller_version = 1;
-	oc.controller_flags = 1;
-
-	oc.reserved            = htobe16(oc.reserved);
-	oc.length              = htobe32(oc.length);
-	oc.controller_version  = htobe32(oc.controller_version);
-	oc.controller_flags    = htobe32(oc.controller_flags);
-
-	rtr_write(sock, (char *)&oc, length);
-
-	soi.version = RTR_VERSION;
-	soi.type = START_OF_IMPORT;
-	soi.reserved = 0;
-	length = sizeof(struct pdu_start_of_import);
-	soi.length = length;
-
-	soi.reserved   = htobe16(soi.reserved);
-	soi.length     = htobe32(soi.length);
-
-	rtr_write(sock, (char *)&soi, length);
 
 	while (fgets(line, MAXLINE, fp)) {
 		if (line[0] == '#')
@@ -550,16 +569,6 @@ read_openbgpd(FILE *fp, int sock)
 			continue;
 	}
 
-	eoi.version = RTR_VERSION;
-	eoi.type = END_OF_IMPORT;
-	eoi.reserved = 0;
-	length = sizeof(struct pdu_end_of_import);
-	eoi.length = length;
-
-	eoi.reserved   = htobe16(eoi.reserved);
-	eoi.length     = htobe32(eoi.length);
-
-	rtr_write(sock, (char *)&eoi, length);
 }
 
 #define BUF_SIZE 32
@@ -1021,13 +1030,15 @@ process_import(char *openbgpd, char *controller_filename)
 		exit(1);
 	}
 
-	sock = connect_socket(controller_filename);
-	if (sock < 0) {
+	if ((sock = connect_socket(controller_filename)) < 0) {
 		fprintf(stderr, "could not open socket\n");
 		exit(1);
 	}
 
+	import_start(sock);
 	read_openbgpd(fp, sock);
+	import_end(sock);
+
 	fclose(fp);
 	close(sock);
 }
