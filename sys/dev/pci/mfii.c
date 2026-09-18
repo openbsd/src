@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.93 2026/07/27 04:12:50 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.94 2026/09/18 21:54:34 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -71,6 +71,8 @@
 #define MFII_1MB_IO		(MFII_256K_IO * 4)
 
 #define MFII_CHAIN_FRAME_MIN	1024
+
+#define	MFII_MAX_LD		240
 
 struct mfii_request_descr {
 	u_int8_t	flags;
@@ -154,7 +156,7 @@ struct mfii_ld_map {
 	uint32_t		mlm_reserved1[5];
 	uint32_t		mlm_num_lds;
 	uint32_t		mlm_reserved2;
-	uint8_t			mlm_tgtid_to_ld[2 * MFI_MAX_LD];
+	uint8_t			mlm_tgtid_to_ld[2 * MFII_MAX_LD];
 	uint8_t			mlm_pd_timeout;
 	uint8_t			mlm_reserved3[7];
 	struct mfii_array_map	mlm_am[MFII_MAX_ARRAY];
@@ -307,8 +309,8 @@ struct mfii_softc {
 	 */
 	struct {
 		char		ld_dev[16];	/* device name sd? */
-	}			sc_ld[MFI_MAX_LD];
-	int			sc_target_lds[MFI_MAX_LD];
+	}			sc_ld[MFII_MAX_LD];
+	int			sc_target_lds[MFII_MAX_LD];
 
 	/* scsi ioctl from sd device */
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
@@ -954,7 +956,7 @@ mfii_detach(struct device *self, int flags)
 	if (sc->sc_sensors) {
 		sensordev_deinstall(&sc->sc_sensordev);
 		free(sc->sc_sensors, M_DEVBUF,
-		    MFI_MAX_LD * sizeof(struct ksensor));
+		    MFII_MAX_LD * sizeof(struct ksensor));
 	}
 
 	if (sc->sc_bbu) {
@@ -1348,7 +1350,7 @@ void
 mfii_aen_ld_update(struct mfii_softc *sc)
 {
 	int i, state, target, old, nld;
-	int newlds[MFI_MAX_LD];
+	int newlds[MFII_MAX_LD];
 
 	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
 	    sizeof(sc->sc_ld_list), SCSI_DATA_IN) != 0) {
@@ -1367,7 +1369,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 		newlds[target] = i;
 	}
 
-	for (i = 0; i < MFI_MAX_LD; i++) {
+	for (i = 0; i < MFII_MAX_LD; i++) {
 		old = sc->sc_target_lds[i];
 		nld = newlds[i];
 
@@ -3960,7 +3962,7 @@ mfii_create_sensors(struct mfii_softc *sc)
 		}
 	}
 
-	sc->sc_sensors = mallocarray(MFI_MAX_LD, sizeof(struct ksensor),
+	sc->sc_sensors = mallocarray(MFII_MAX_LD, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
@@ -3980,7 +3982,7 @@ mfii_create_sensors(struct mfii_softc *sc)
 
 bad:
 	free(sc->sc_sensors, M_DEVBUF,
-	    MFI_MAX_LD * sizeof(struct ksensor));
+	    MFII_MAX_LD * sizeof(struct ksensor));
 
 	return (1);
 }
