@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvreg.h,v 1.6 2019/05/13 15:40:34 pd Exp $	*/
+/*	$OpenBSD: pvreg.h,v 1.7 2026/09/18 19:24:50 jan Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
  * KVM
  */
 #define	CPUID_OFFSET_KVM_FEATURES		0x1
+#define	CPUID_OFFSET_KVM_TIMING			0x10
 
 #define	KVM_FEATURE_CLOCKSOURCE			0	/* deprecated */
 #define	KVM_FEATURE_NOP_IO_DELAY		1

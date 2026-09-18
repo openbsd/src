@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.32 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.33 2026/09/18 19:24:50 jan Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,14 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+
+#include "pvbus.h"
+#if NPVBUS > 0
+#include <dev/pv/pvreg.h>
+#include <dev/pv/pvvar.h>
+
+extern struct pvbus_hv pvbus_hv[PVBUS_MAX];
+#endif
 
 #define RECALIBRATE_MAX_RETRIES		5
 #define RECALIBRATE_SMI_THRESHOLD	50000
@@ -160,6 +168,46 @@ tsc_freq_msr(struct cpu_info *ci)
 	return base * multiplier / divisor;
 }
 
+#if NPVBUS > 0
+/*
+ * Under KVM neither the Intel crystal-clock leaf 0x15 nor the AMD P-state
+ * MSRs carry a usable TSC frequency: the value is only exposed via the KVM
+ * paravirtual leaf at hv_base + 0x10 (eax = TSC kHz, ebx = LAPIC bus kHz).
+ */
+uint64_t
+tsc_freq_kvm(struct cpu_info *ci)
+{
+	uint32_t base, max, eax, ebx, ecx, edx;
+
+	base = pvbus_hv[PVBUS_KVM].hv_base;
+	if (base == 0)
+		base = pvbus_hv[PVBUS_VMWARE].hv_base;
+	if (base == 0)
+		return 0;		/* not running under KVM nor VMWARE */
+
+	/* Make sure the timing leaf is actually present. */
+	CPUID(base, max, ebx, ecx, edx);
+	if (max < base + CPUID_OFFSET_KVM_TIMING)
+		return 0;
+
+	CPUID(base + CPUID_OFFSET_KVM_TIMING, eax, ebx, ecx, edx);
+	if (eax == 0)
+		return 0;		/* no frequency advertised */
+
+#if NLAPIC > 0
+	/*
+	 * ebx is the LAPIC timer frequency in kHz.  Seeding lapic_per_second
+	 * here lets lapic_calibrate_timer() skip the i8254-based calibration
+	 * entirely, which is essential when the i8254 is not emulated at all.
+	 */
+	if (ebx != 0)
+		lapic_per_second = ebx * 1000;
+#endif
+
+	return (uint64_t)eax * 1000;	/* kHz -> Hz */
+}
+#endif /* NPVBUS > 0 */
+
 void
 tsc_identify(struct cpu_info *ci)
 {
@@ -180,6 +228,10 @@ tsc_identify(struct cpu_info *ci)
 	tsc_frequency = tsc_freq_cpuid(ci);
 	if (tsc_frequency == 0)
 		tsc_frequency = tsc_freq_msr(ci);
+#if NPVBUS > 0
+	if (tsc_frequency == 0)
+		tsc_frequency = tsc_freq_kvm(ci);
+#endif
 	if (tsc_frequency > 0)
 		delay_init(tsc_delay, 5000);
 }
