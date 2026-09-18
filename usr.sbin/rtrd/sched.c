@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: sched.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -46,9 +46,7 @@ int insert_sched(struct sched_tree *, struct sched *);
 int remove_sched(struct sched_tree *, struct sched *);
 void remove_sched_type(struct sched_tree *, uint32_t);
 void remove_sched_socket(struct sched_tree *, struct rtr_socket *);
-void remove_sched_type_and_socket(
-    struct sched_tree *,
-    uint32_t,
+void remove_sched_type_and_socket(struct sched_tree *, uint32_t,
     struct rtr_socket *);
 void free_sched_tree(struct sched_tree *);
 void sched_init(void);
@@ -71,16 +69,12 @@ void rtr_gettime(void)
 		logx(0, "clock overflow\n");
 		exit(1);
 	}
-
 	now.tv_usec /= 1000; /* nsec -> usec */
-
-	return;
 }
 
 static inline int
 schedcmp(struct sched *a, struct sched *b)
 {
-
 	if (a->event_time > b->event_time)
 		return 1;
 	if (a->event_time < b->event_time)
@@ -113,14 +107,12 @@ insert_sched(struct sched_tree *schedtree, struct sched *sched)
 	assert(sched);
 
 	node = malloc(sizeof(struct sched));
-
 	if (node == NULL)
 		err(1, NULL);
 
 	node->event_time = sched->event_time;
 	node->type = sched->type;
 	node->rtr_socket = sched->rtr_socket;
-
 	if (RB_INSERT(sched_tree, schedtree, node) != NULL) {
 		free(node);
 		return 1;
@@ -133,8 +125,7 @@ insert_sched(struct sched_tree *schedtree, struct sched *sched)
 int
 remove_sched(struct sched_tree *schedtree, struct sched *sched)
 {
-	struct sched query;
-	struct sched *node;
+	struct sched query, *node;
 
 	assert(schedtree);
 	assert(sched);
@@ -144,7 +135,6 @@ remove_sched(struct sched_tree *schedtree, struct sched *sched)
 	query.rtr_socket = sched->rtr_socket;
 
 	node = RB_FIND(sched_tree, schedtree, &query);
-
 	if (!node)
 		return 1;
 
@@ -157,8 +147,7 @@ remove_sched(struct sched_tree *schedtree, struct sched *sched)
 void
 remove_sched_type(struct sched_tree *schedtree, uint32_t type)
 {
-	struct sched *sched;
-	struct sched *tmpsched;
+	struct sched *sched, *tmpsched;
 
 	assert(schedtree);
 
@@ -168,15 +157,12 @@ remove_sched_type(struct sched_tree *schedtree, uint32_t type)
 			free(sched);
 		}
 	}
-
-	return;
 }
 
 void
 remove_sched_socket(struct sched_tree *schedtree, struct rtr_socket *rtr_socket)
 {
-	struct sched *sched;
-	struct sched *tmpsched;
+	struct sched *sched, *tmpsched;
 
 	assert(schedtree);
 	assert(rtr_socket);
@@ -187,18 +173,13 @@ remove_sched_socket(struct sched_tree *schedtree, struct rtr_socket *rtr_socket)
 			free(sched);
 		}
 	}
-
-	return;
 }
 
 void
-remove_sched_type_and_socket(
-    struct sched_tree *schedtree,
-    uint32_t type,
-    struct rtr_socket *rtr_socket)
+remove_sched_type_and_socket(struct sched_tree *schedtree,
+    uint32_t type, struct rtr_socket *rtr_socket)
 {
-	struct sched *sched;
-	struct sched *tmpsched;
+	struct sched *sched, *tmpsched;
 
 	assert(schedtree);
 	assert(rtr_socket);
@@ -210,54 +191,44 @@ remove_sched_type_and_socket(
 			free(sched);
 		}
 	}
-
-	return;
 }
 
 void
 free_sched_tree(struct sched_tree *schedtree)
 {
-	struct sched *sched;
-	struct sched *tmpsched;
+	struct sched *sched, *tmpsched;
 
 	if (!schedtree)
 		return;
-
 	RB_FOREACH_SAFE(sched, sched_tree, schedtree, tmpsched) {
 		RB_REMOVE(sched_tree, schedtree, sched);
 		free(sched);
 	}
-
-	return;
 }
 
 void
 sched_init(void)
 {
 	RB_INIT(&scheduler);
-	return;
 }
 
 int
 time_until_next_event(struct timeval present)
 {
 	struct sched *sched;
-	struct timeval delay;
-	struct timeval tv_event;
+	struct timeval delay, tv_event;
 
 	/* signal is waiting, dont wait */
 	if (sigflags != 0)
 		return 0;
 
 	sched = RB_MIN(sched_tree, &scheduler);
-
 	/* nothing scheduled, wait forever */
 	if (sched == NULL)
 		return -1;
 
 	tv_event.tv_sec = sched->event_time;
 	tv_event.tv_usec = 0;
-
 	/* this event is not in the future, no delay */
 	if (!timercmp(&tv_event, &present, >))
 		return 0;
@@ -276,7 +247,6 @@ schedule_cleanup(time_t present)
 	sched.event_time = present + CLEANUP_INTERVAL;
 	sched.type = SCHED_TYPE_CLEANUP;
 	sched.rtr_socket = NULL;
-
 	return insert_sched(&scheduler, &sched);
 }
 
@@ -288,7 +258,6 @@ schedule_handshake_timeout(time_t present, struct rtr_socket *s)
 	sched.event_time = present + HANDSHAKE_TIMEOUT;
 	sched.type = SCHED_TYPE_HANDSHAKE_TIMEOUT;
 	sched.rtr_socket = s;
-
 	return insert_sched(&scheduler, &sched);
 }
 
@@ -300,7 +269,6 @@ schedule_idle_timeout(time_t present, struct rtr_socket *s)
 	sched.event_time = present + IDLE_TIMEOUT;
 	sched.type = SCHED_TYPE_IDLE_TIMEOUT;
 	sched.rtr_socket = s;
-
 	return insert_sched(&scheduler, &sched);
 }
 
@@ -335,10 +303,7 @@ process_cleanup(time_t present)
 		free_brk_tree(&brks);
 		free_vap_tree(&vaps);
 	}
-
 	schedule_cleanup(present);
-
-	return;
 }
 
 void
@@ -353,8 +318,6 @@ process_handshake_timeout(struct rtr_socket *s)
 		logx(0, "Handshake timeout\n");
 
 	SetSocketFlag(s, RTR_SOCKET_FLAG_CLOSED);
-
-	return;
 }
 
 void
@@ -375,15 +338,12 @@ process_idle_timeout(struct rtr_socket *s)
 	rtr_flush_write(s);
 
 	SetSocketFlag(s, RTR_SOCKET_FLAG_CLOSED);
-
-	return;
 }
 
 void
 process_scheduler_events(time_t present)
 {
-	struct sched *sched;
-	struct sched *tmpsched;
+	struct sched *sched, *tmpsched;
 
 	RB_FOREACH_SAFE(sched, sched_tree, &scheduler, tmpsched) {
 		if (present < sched->event_time)
@@ -404,6 +364,4 @@ process_scheduler_events(time_t present)
 		RB_REMOVE(sched_tree, &scheduler, sched);
 		free(sched);
 	}
-
-	return;
 }

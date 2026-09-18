@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: send.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -63,13 +63,11 @@ ssize_t sendendofstatsto_one(struct rtr_socket *);
 ssize_t
 sendto_one(struct rtr_socket *s, void *pdu)
 {
-	struct pdu_header *ph;
+	struct pdu_header *ph = pdu;
 	ssize_t ret;
 
 	assert(s);
 	assert(pdu);
-
-	ph = pdu;
 
 	if (!TestSocketFlag(s, RTR_SOCKET_FLAG_INUSE))
 		return -1;
@@ -82,19 +80,17 @@ sendto_one(struct rtr_socket *s, void *pdu)
 
 	if (ph->type >= PDU_TYPE_MAX) {
 		logx(1, "Sending unknown PDU (%u) to %s\n",
-		    ph->type,
-		    s->name);
+		    ph->type, s->name);
 	} else {
 		logx(1, "Sending %s to %s\n",
-		    pdu_type_to_str[ph->type],
-		    s->name);
+		    pdu_type_to_str[ph->type], s->name);
 	}
 
 	/* pdu is in host order */
 
 	ph->version = s->version;
 
-	switch(ph->type) {
+	switch (ph->type) {
 	case SERIAL_NOTIFY:
 	case SERIAL_QUERY:
 	case CACHE_RESPONSE:
@@ -106,21 +102,17 @@ sendto_one(struct rtr_socket *s, void *pdu)
 	pdu_hton(s, ph);
 	ret = writeto(s, ph);
 	pdu_ntoh(s, ph);
-
 	return ret;
 }
 
 void
 sendto_allclients(void *pdu)
 {
-	struct pdu_header *ph;
-	int fd;
+	struct pdu_header *ph = pdu;
+	int fd, i;
 	struct rtr_socket *s;
-	int i;
 
 	assert(pdu);
-
-	ph = pdu;
 
 	/* pdu is in host order */
 
@@ -141,17 +133,15 @@ sendto_allclients(void *pdu)
 
 			if (ph->type >= PDU_TYPE_MAX) {
 				logx(1, "Sending unknown PDU (%u) to %s\n",
-				    ph->type,
-				    s->name);
+				    ph->type, s->name);
 			} else {
 				logx(1, "Sending %s to %s\n",
-				    pdu_type_to_str[ph->type],
-				    s->name);
+				    pdu_type_to_str[ph->type], s->name);
 			}
 
 			ph->version = s->version;
 
-			switch(ph->type) {
+			switch (ph->type) {
 			case SERIAL_NOTIFY:
 			case SERIAL_QUERY:
 			case CACHE_RESPONSE:
@@ -164,24 +154,17 @@ sendto_allclients(void *pdu)
 			writeto(s, ph);
 			pdu_ntoh(s, ph);
 		}
-
 	}
-
-	return;
 }
-
 
 void
 sendto_allregisteredclients(void *pdu)
 {
-	struct pdu_header *ph;
-	int fd;
+	struct pdu_header *ph = pdu;
 	struct rtr_socket *s;
-	int i;
+	int fd, i;
 
 	assert(pdu);
-
-	ph = pdu;
 
 	/* pdu is in host order */
 
@@ -213,7 +196,7 @@ sendto_allregisteredclients(void *pdu)
 
 			ph->version = s->version;
 
-			switch(ph->type) {
+			switch (ph->type) {
 			case SERIAL_NOTIFY:
 			case SERIAL_QUERY:
 			case CACHE_RESPONSE:
@@ -227,27 +210,21 @@ sendto_allregisteredclients(void *pdu)
 			pdu_ntoh(s, ph);
 		}
 	}
-
-	return;
 }
 
 void
 sendto_allregisteredclientsversion(void *pdu, uint8_t version)
 {
-	struct pdu_header *ph;
-	int fd;
+	struct pdu_header *ph = pdu;
+	int fd, i;
 	struct rtr_socket *s;
-	int i;
 
 	assert(pdu);
-
-	ph = pdu;
 
 	/* pdu is in host order */
 
 	for (i = 0; i < poll_table_count; i++) {
 		fd = poll_table[i].fd;
-
 		if (is_listener(fd))
 			continue;
 
@@ -274,7 +251,7 @@ sendto_allregisteredclientsversion(void *pdu, uint8_t version)
 
 			ph->version = s->version;
 
-			switch(ph->type) {
+			switch (ph->type) {
 			case SERIAL_NOTIFY:
 			case SERIAL_QUERY:
 			case CACHE_RESPONSE:
@@ -289,9 +266,8 @@ sendto_allregisteredclientsversion(void *pdu, uint8_t version)
 		}
 
 	}
-
-	return;
 }
+
 
 ssize_t
 sendserialnotifyto_one(struct rtr_socket *s, uint32_t serial_number)
@@ -332,7 +308,6 @@ ssize_t
 sendcacheresponseto_one(struct rtr_socket *s)
 {
 	struct pdu_cache_response cr;
-	ssize_t ret;
 
 	assert(s);
 
@@ -356,9 +331,7 @@ sendcacheresponseto_one(struct rtr_socket *s)
 	/* pdu is in host order */
 
 	pdu_hton(s, &cr);
-	ret = writeto(s, &cr);
-
-	return ret;
+	return writeto(s, &cr);
 }
 
 
@@ -740,7 +713,6 @@ ssize_t
 sendglobalstatsto_one(struct rtr_socket *s)
 {
 	struct pdu_global_stats gs;
-	ssize_t ret;
 
 	assert(s);
 
@@ -783,18 +755,15 @@ sendglobalstatsto_one(struct rtr_socket *s)
 	/* pdu is in host order */
 
 	pdu_hton(s, &gs);
-	ret = writeto(s, &gs);
-
-	return ret;
+	return writeto(s, &gs);
 }
 
 void
 sendclientstatsto_one(struct rtr_socket *s)
 {
 	struct pdu_client_stats cs;
-	int fd;
+	int fd, i;
 	struct rtr_socket *client;
-	int i;
 
 	assert(s);
 
@@ -814,7 +783,6 @@ sendclientstatsto_one(struct rtr_socket *s)
 
 	for (i = 0; i < poll_table_count; i++) {
 		fd = poll_table[i].fd;
-
 		if (is_listener(fd))
 			continue;
 
@@ -826,70 +794,40 @@ sendclientstatsto_one(struct rtr_socket *s)
 		    TestSocketFlag(
 			client, RTR_SOCKET_FLAG_INUSE) &&
 		    client->type == RTR_SOCKET_TYPE_CLIENT) {
-			cs.fd =
-			    fd;
-			cs.client_ip =
-			    client->client.sin_addr;
-			cs.client_port =
-			    client->client.sin_port;
-			cs.client_version =
-			    client->version;
+			cs.fd = fd;
+			cs.client_ip = client->client.sin_addr;
+			cs.client_port = client->client.sin_port;
+			cs.client_version = client->version;
 			cs.client_state = 0;
-			if (TestSocketFlag(
-			    client, RTR_SOCKET_FLAG_REGISTERED))
+			if (TestSocketFlag(client, RTR_SOCKET_FLAG_REGISTERED))
 				cs.client_state |= CLIENT_STATE_REGISTERED;
-			if (TestSocketFlag(
-			    client, RTR_SOCKET_FLAG_CLOSED))
+			if (TestSocketFlag(client, RTR_SOCKET_FLAG_CLOSED))
 				cs.client_state |= CLIENT_STATE_CLOSED;
-			cs.connect_time =
-			    client->stats.connect_time;
-			cs.total_bytes_in =
-			    client->stats.total_bytes_in;
-			cs.total_bytes_out =
-			    client->stats.total_bytes_out;
-			cs.sendq_length =
-			    client->sendq.length;
-			cs.sendq_max =
-			    client->sendq.max;
-			cs.vrp4_announcements =
-			    client->stats.vrp4_announcements;
-			cs.vrp4_withdrawals =
-			    client->stats.vrp4_withdrawals;
-			cs.vrp4_advertised =
-			    client->stats.vrp4_advertised;
-			cs.vrp6_announcements =
-			    client->stats.vrp6_announcements;
-			cs.vrp6_withdrawals =
-			    client->stats.vrp6_withdrawals;
-			cs.vrp6_advertised =
-			    client->stats.vrp6_advertised;
-			cs.brk_announcements =
-			    client->stats.brk_announcements;
-			cs.brk_withdrawals =
-			    client->stats.brk_withdrawals;
-			cs.brk_advertised =
-			    client->stats.brk_advertised;
-			cs.vap_announcements =
-			    client->stats.vap_announcements;
-			cs.vap_withdrawals =
-			    client->stats.vap_withdrawals;
-			cs.vap_advertised =
-			    client->stats.vap_advertised;
-			cs.reset_query_count =
-			    client->stats.reset_query_count;
-			cs.serial_query_count =
-			    client->stats.serial_query_count;
+			cs.connect_time = client->stats.connect_time;
+			cs.total_bytes_in = client->stats.total_bytes_in;
+			cs.total_bytes_out = client->stats.total_bytes_out;
+			cs.sendq_length = client->sendq.length;
+			cs.sendq_max = client->sendq.max;
+			cs.vrp4_announcements = client->stats.vrp4_announcements;
+			cs.vrp4_withdrawals = client->stats.vrp4_withdrawals;
+			cs.vrp4_advertised = client->stats.vrp4_advertised;
+			cs.vrp6_announcements = client->stats.vrp6_announcements;
+			cs.vrp6_withdrawals = client->stats.vrp6_withdrawals;
+			cs.vrp6_advertised = client->stats.vrp6_advertised;
+			cs.brk_announcements = client->stats.brk_announcements;
+			cs.brk_withdrawals = client->stats.brk_withdrawals;
+			cs.brk_advertised = client->stats.brk_advertised;
+			cs.vap_announcements = client->stats.vap_announcements;
+			cs.vap_withdrawals = client->stats.vap_withdrawals;
+			cs.vap_advertised = client->stats.vap_advertised;
+			cs.reset_query_count = client->stats.reset_query_count;
+			cs.serial_query_count = client->stats.serial_query_count;
 			pdu_hton(s, &cs);
 			writeto(s, &cs);
 			pdu_ntoh(s, &cs);
 		}
-
 	}
-
-	logx(1, "Sending CLIENT_STATS to %s\n",
-	    s->name);
-
-	return;
+	logx(1, "Sending CLIENT_STATS to %s\n", s->name);
 }
 
 void
@@ -925,22 +863,15 @@ sendcacheframestatsto_one(struct rtr_socket *s)
 			cfs.flags = 0;
 			cfs.cache_version = v;
 			cfs.zero = 0;
-			cfs.cache_session_id =
-			    cache[v].session_id;
-			cfs.cache_serial =
-			    CFRAME(v,i).serial_number;
-			cfs.vrp4_count =
-			    CFRAME(v,i).rtr_vrp4s->entry_count;
-			cfs.vrp4_creation_time =
-			    CFRAME(v,i).rtr_vrp4s->creation_time;
-			cfs.vrp6_count =
-			    CFRAME(v,i).rtr_vrp6s->entry_count;
-			cfs.vrp6_creation_time =
-			    CFRAME(v,i).rtr_vrp6s->creation_time;
+			cfs.cache_session_id = cache[v].session_id;
+			cfs.cache_serial = CFRAME(v,i).serial_number;
+			cfs.vrp4_count = CFRAME(v,i).rtr_vrp4s->entry_count;
+			cfs.vrp4_creation_time = CFRAME(v,i).rtr_vrp4s->creation_time;
+			cfs.vrp6_count = CFRAME(v,i).rtr_vrp6s->entry_count;
+			cfs.vrp6_creation_time = CFRAME(v,i).rtr_vrp6s->creation_time;
 
 			if (v >= RTR_VERSION_1) {
-				cfs.brk_count =
-				    CFRAME(v,i).rtr_brks->entry_count;
+				cfs.brk_count = CFRAME(v,i).rtr_brks->entry_count;
 				cfs.brk_creation_time =
 				    CFRAME(v,i).rtr_brks->creation_time;
 			} else {
@@ -948,8 +879,7 @@ sendcacheframestatsto_one(struct rtr_socket *s)
 				cfs.brk_creation_time = 0;
 			}
 			if (v >= RTR_VERSION_2) {
-				cfs.vap_count =
-				    CFRAME(v,i).rtr_vaps->entry_count;
+				cfs.vap_count = CFRAME(v,i).rtr_vaps->entry_count;
 				cfs.vap_creation_time =
 				    CFRAME(v,i).rtr_vaps->creation_time;
 			} else {
@@ -964,21 +894,14 @@ sendcacheframestatsto_one(struct rtr_socket *s)
 		cfs.flags = 1;
 		cfs.cache_version = v;
 		cfs.zero = 0;
-		cfs.cache_session_id =
-		    cache[v].session_id;
-		cfs.cache_serial =
-		    CHEAD(v).serial_number;
-		cfs.vrp4_count =
-		    CHEAD(v).rtr_vrp4s->entry_count;
-		cfs.vrp4_creation_time =
-		    CHEAD(v).rtr_vrp4s->creation_time;
-		cfs.vrp6_count =
-		    CHEAD(v).rtr_vrp6s->entry_count;
-		cfs.vrp6_creation_time =
-		    CHEAD(v).rtr_vrp6s->creation_time;
+		cfs.cache_session_id = cache[v].session_id;
+		cfs.cache_serial = CHEAD(v).serial_number;
+		cfs.vrp4_count = CHEAD(v).rtr_vrp4s->entry_count;
+		cfs.vrp4_creation_time = CHEAD(v).rtr_vrp4s->creation_time;
+		cfs.vrp6_count = CHEAD(v).rtr_vrp6s->entry_count;
+		cfs.vrp6_creation_time = CHEAD(v).rtr_vrp6s->creation_time;
 		if (v >= RTR_VERSION_1) {
-			cfs.brk_count =
-			    CHEAD(v).rtr_brks->entry_count;
+			cfs.brk_count = CHEAD(v).rtr_brks->entry_count;
 			cfs.brk_creation_time =
 			    CHEAD(v).rtr_brks->creation_time;
 		} else {
@@ -986,8 +909,7 @@ sendcacheframestatsto_one(struct rtr_socket *s)
 			cfs.brk_creation_time = 0;
 		}
 		if (v >= RTR_VERSION_2) {
-			cfs.vap_count =
-			    CHEAD(v).rtr_vaps->entry_count;
+			cfs.vap_count = CHEAD(v).rtr_vaps->entry_count;
 			cfs.vap_creation_time =
 			    CHEAD(v).rtr_vaps->creation_time;
 		} else {
@@ -998,18 +920,13 @@ sendcacheframestatsto_one(struct rtr_socket *s)
 		writeto(s, &cfs);
 		pdu_ntoh(s, &cfs);
 	}
-
-	logx(1, "Sending CACHE_FRAME_STATS to %s\n",
-	    s->name);
-
-	return;
+	logx(1, "Sending CACHE_FRAME_STATS to %s\n", s->name);
 }
 
 ssize_t
 sendendofstatsto_one(struct rtr_socket *s)
 {
 	struct pdu_end_of_stats eos;
-	ssize_t ret;
 
 	assert(s);
 
@@ -1027,13 +944,10 @@ sendendofstatsto_one(struct rtr_socket *s)
 	eos.reserved = 0;
 	eos.length = sizeof(struct pdu_end_of_stats);
 
-	logx(1, "Sending END_OF_STATS to %s\n",
-	    s->name);
+	logx(1, "Sending END_OF_STATS to %s\n", s->name);
 
 	/* pdu is in host order */
 
 	pdu_hton(s, &eos);
-	ret = writeto(s, &eos);
-
-	return ret;
+	return writeto(s, &eos);
 }

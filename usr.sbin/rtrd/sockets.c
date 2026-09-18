@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: sockets.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define _GNU_SOURCE
+/* #define _GNU_SOURCE -- why ? */
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -114,10 +114,8 @@ is_listener(int fd)
 
 	if (fd == listener)
 		return 1;
-
 	if (fd == controller)
 		return 1;
-
 	return 0;
 }
 
@@ -132,7 +130,6 @@ poll_find(int fd)
 		if (poll_table[i].fd == fd)
 			return poll_table + i;
 	}
-
 	return NULL;
 }
 
@@ -147,7 +144,6 @@ poll_index(int fd)
 		if (poll_table[i].fd == fd)
 			return i;
 	}
-
 	return -1;
 }
 
@@ -183,7 +179,6 @@ poll_remove(int fd)
 		return;
 
 	index = poll_index(fd);
-
 	if (index < 0)
 		return;
 
@@ -193,8 +188,6 @@ poll_remove(int fd)
 		poll_table[index] = poll_table[last];
 
 	poll_table_count--;
-
-	return;
 }
 
 int
@@ -205,13 +198,10 @@ poll_isset_events(int fd, short events)
 	assert(fd >= 0);
 
 	p = poll_find(fd);
-
 	if (p == NULL)
 		return 0;
-
 	if (p->events & events)
 		return 1;
-
 	return 0;
 }
 
@@ -223,13 +213,10 @@ poll_isset_revents(int fd, short revents)
 	assert(fd >= 0);
 
 	p = poll_find(fd);
-
 	if (p == NULL)
 		return 0;
-
 	if (p->revents & revents)
 		return 1;
-
 	return 0;
 }
 
@@ -296,8 +283,6 @@ init_socket(int fd, int type, uint32_t flags, ssize_t read_block_size,
 	RB_INIT(&s->vrp6s);
 	RB_INIT(&s->brks);
 	RB_INIT(&s->vaps);
-
-	return;
 }
 
 #define MINIMUM_SOCKETS		128
@@ -307,11 +292,11 @@ init_socket(int fd, int type, uint32_t flags, ssize_t read_block_size,
 int
 init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 {
-	assert (fp);
-
 	int val;
 	struct sockaddr_in server;
 	struct sockaddr_un local;
+
+	assert (fp);
 
 	max_sockets = getdtablesize();
 
@@ -366,12 +351,7 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	val = fcntl(listener, F_GETFL, 0);
 	fcntl(listener, F_SETFL, val | O_NONBLOCK);
 
-	init_socket(listener,
-	    RTR_SOCKET_TYPE_UNKNOWN,
-	    0,
-	    0,
-	    0,
-	    0,
+	init_socket(listener, RTR_SOCKET_TYPE_UNKNOWN, 0, 0, 0, 0,
 	    RTR_DEFAULT_VERSION);
 
 	memset(&server, 0, sizeof(struct sockaddr_in));
@@ -413,12 +393,7 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	val = fcntl(controller, F_GETFL, 0);
 	fcntl(controller, F_SETFL, val | O_NONBLOCK);
 
-	init_socket(controller,
-	    RTR_SOCKET_TYPE_UNKNOWN,
-	    0,
-	    0,
-	    0,
-	    0,
+	init_socket(controller, RTR_SOCKET_TYPE_UNKNOWN, 0, 0, 0, 0,
 	    RTR_DEFAULT_VERSION);
 
 	unlink(controller_filename ? controller_filename : CONTROLLER_FILENAME);
@@ -445,7 +420,6 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	}
 
 	poll_add(controller, POLLIN);
-
 	return 0;
 }
 
@@ -461,7 +435,6 @@ rtr_errno_ignore(int e)
 	case ENOBUFS:
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -535,7 +508,6 @@ rtr_flush_write(struct rtr_socket *s)
 
 	addstats(global_stats.total_bytes_out, ret);
 	addstats(s->stats.total_bytes_out, ret);
-
 	return ret;
 }
 
@@ -556,8 +528,6 @@ rtr_flushall_write(void)
 			rtr_flush_write(rtr_socket_table+fd);
 		}
 	}
-
-	return;
 }
 
 /* 1 on fail */
@@ -632,7 +602,6 @@ rtr_sendq_add(struct rtr_socket *s, void *data, int length)
 			s->sendq.tail = new_sendq_link;
 		}
 	}
-
 	return 0;
 }
 
@@ -672,8 +641,6 @@ rtr_sendq_pop(struct rtr_socket *s, int length)
 		}
 
 	}
-
-	return;
 }
 
 void
@@ -681,7 +648,6 @@ rtr_sendq_popall(struct rtr_socket *s)
 {
 	assert(s);
 	rtr_sendq_pop(s, s->sendq.length);
-	return;
 }
 
 /* 0 sendq is now empty */
@@ -741,7 +707,6 @@ rtr_sendq_flush(struct rtr_socket *s)
 
 	if (s->sendq.length > 0)
 		return 1;
-
 	return 0;
 }
 
@@ -805,7 +770,7 @@ writeto(struct rtr_socket *s, void *pdu)
 	sendq_overflow:
 
 	SetSocketFlag(s, RTR_SOCKET_FLAG_CLOSED);
-	switch(s->type) {
+	switch (s->type) {
 	case RTR_SOCKET_TYPE_CLIENT:
 	case RTR_SOCKET_TYPE_CONTROLLER:
 		logx(0, "SendQ exceeded for %s\n",
@@ -836,7 +801,7 @@ rtr_close(struct rtr_socket *s)
 	if (is_listener(s->fd))
 		return;
 
-	switch(s->type) {
+	switch (s->type) {
 	case RTR_SOCKET_TYPE_CLIENT:
 	case RTR_SOCKET_TYPE_CONTROLLER:
 		logx(0, "Closing connection to %s\n",
@@ -869,24 +834,16 @@ rtr_close(struct rtr_socket *s)
 	free_brk_tree(&s->brks);
 	free_vap_tree(&s->vaps);
 
-	init_socket(s->fd,
-	    RTR_SOCKET_TYPE_UNKNOWN,
-	    0,
-	    0,
-	    0,
-	    0,
+	init_socket(s->fd, RTR_SOCKET_TYPE_UNKNOWN, 0, 0, 0, 0,
 	    RTR_DEFAULT_VERSION);
 
 	close(s->fd);
-
-	return;
 }
 
 void
 rtr_flushall_closed(void)
 {
-	int fd;
-	int i;
+	int fd, i;
 	struct rtr_socket *s;
 
 	for (i = 0; i < poll_table_count; i++) {
@@ -904,15 +861,12 @@ rtr_flushall_closed(void)
 			rtr_close(s);
 		}
 	}
-
-	return;
 }
 
 void
 rtr_shutdown(int restart)
 {
-	int fd;
-	int i;
+	int fd, i;
 	struct rtr_socket *s;
 	char *reason;
 	uint16_t error_code;
@@ -956,22 +910,14 @@ rtr_shutdown(int restart)
 void
 core_loop(void)
 {
-
-	int fd;
-	int i;
-	int val;
+	int fd, i, val, delay;
 	struct sockaddr_in client;
 	socklen_t client_len;
 	unsigned char read_block[READ_BLOCK];
-	ssize_t read_length;
-	ssize_t read_move_length;
-	ssize_t read_index;
-
+	ssize_t read_length, read_move_length, read_index;
 	struct rtr_socket *s;
 	struct pdu_header *ph;
 	uint32_t pdu_length;
-
-	int delay;
 
 	int (*command_function)(struct rtr_socket *, struct pdu_header *);
 
@@ -992,10 +938,8 @@ core_loop(void)
 
 			client_len = sizeof(struct sockaddr_in);
 
-			fd = accept(listener,
-			    (struct sockaddr *)&client,
+			fd = accept(listener, (struct sockaddr *)&client,
 			    &client_len);
-
 			if (fd < 0)
 				continue;
 
@@ -1041,12 +985,9 @@ core_loop(void)
 
 			poll_add(fd, POLLIN);
 
-			init_socket(fd,
-			    RTR_SOCKET_TYPE_CLIENT,
-			    RTR_SOCKET_FLAG_INUSE,
-			    READ_BLOCK,
-			    WRITE_BLOCK,
-			    max_sendq,
+			init_socket(fd, RTR_SOCKET_TYPE_CLIENT,
+			    RTR_SOCKET_FLAG_INUSE, READ_BLOCK,
+			    WRITE_BLOCK, max_sendq,
 			    RTR_DEFAULT_VERSION);
 
 			s = fd_to_socket(fd);
@@ -1073,34 +1014,27 @@ core_loop(void)
 			/* we have a new controller */
 
 			fd = accept(controller, NULL, NULL);
-
 			if (fd < 0)
 				continue;
 
 			val = fcntl(fd, F_GETFL, 0);
 			fcntl(fd, F_SETFL, val | O_NONBLOCK);
 
-			logx(0, "Opening controller connection "
-			    "on socket %d\n",
+			logx(0, "Opening controller connection on socket %d\n",
 			    fd);
 
 			if (fd >= max_sockets) {
 				logx(0, "Rejecting controller connection "
-				    "on socket %d "
-				    "(too many sockets)\n",
-				    fd);
+				    "on socket %d (too many sockets)\n", fd);
 				close(fd);
 				continue;
 			}
 
 			poll_add(fd, POLLIN);
 
-			init_socket(fd,
-			    RTR_SOCKET_TYPE_CONTROLLER,
-			    RTR_SOCKET_FLAG_INUSE,
-			    UNIX_READ_BLOCK,
-			    UNIX_WRITE_BLOCK,
-			    max_sendq,
+			init_socket(fd, RTR_SOCKET_TYPE_CONTROLLER,
+			    RTR_SOCKET_FLAG_INUSE, UNIX_READ_BLOCK,
+			    UNIX_WRITE_BLOCK, max_sendq,
 			    RTR_MAX_VERSION);
 
 			s = fd_to_socket(fd);
@@ -1113,7 +1047,6 @@ core_loop(void)
 			snprintf(s->name, RTR_SOCKET_NAME_LENGTH,
 			    "controller socket %d",
 			    fd);
-
 			addstats(global_stats.total_controller_connects, 1);
 		}
 

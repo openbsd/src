@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: structs.h,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -31,7 +31,7 @@
  * Stats
  */
 
-#define HOSTNAME_SIZE	256
+#define HOSTNAME_SIZE	(NI_MAXHOST+1)
 #define NODENAME_SIZE	256
 #define DOMAINNAME_SIZE	256
 #define RELEASE_SIZE	64

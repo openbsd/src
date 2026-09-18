@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.c,v 1.2 2026/09/17 21:58:42 deraadt Exp $ */
+/*	$OpenBSD: rtrd.c,v 1.3 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define _GNU_SOURCE
+/*  #define _GNU_SOURCE -- why? */
 
 #include <sys/time.h>
 #include <sys/types.h>

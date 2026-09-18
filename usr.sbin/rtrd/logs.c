@@ -1,4 +1,4 @@
-/*	$OpenBSD: logs.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: logs.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -21,13 +21,12 @@
 #include <syslog.h>
 
 #include "rtr_config.h"
+#include "logs.h"
 
 #include "structs.h"
 
 int verbose = 0;
 int foreground = 1;
-
-void logx(int, const char *, ...);
 
 void
 logx(int level, const char *format, ...)
@@ -40,13 +39,9 @@ logx(int level, const char *format, ...)
 		return;
 
 	va_start(va, format);
-
 	if (foreground)
 		vprintf(format, va);
 	else
 		vsyslog(LOG_INFO, format, va);
-
 	va_end(va);
-
-	return;
 }

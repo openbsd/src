@@ -1,4 +1,4 @@
-/*	$OpenBSD: packets.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: packets.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -82,7 +82,7 @@ pdu_hton(struct rtr_socket *s, void *pdu)
 	if (TestSocketFlag(s, RTR_SOCKET_FLAG_CLOSED))
 		return;
 
-	switch(s->type) {
+	switch (s->type) {
 	case RTR_SOCKET_TYPE_CLIENT:
 		pdu_hton_rtr(pdu);
 		break;
@@ -90,8 +90,6 @@ pdu_hton(struct rtr_socket *s, void *pdu)
 		pdu_hton_controller(pdu);
 		break;
 	}
-
-	return;
 }
 
 void
@@ -107,7 +105,7 @@ pdu_ntoh(struct rtr_socket *s, void *pdu)
 	if (TestSocketFlag(s, RTR_SOCKET_FLAG_CLOSED))
 		return;
 
-	switch(s->type) {
+	switch (s->type) {
 	case RTR_SOCKET_TYPE_CLIENT:
 		pdu_ntoh_rtr(pdu);
 		break;
@@ -115,8 +113,6 @@ pdu_ntoh(struct rtr_socket *s, void *pdu)
 		pdu_ntoh_controller(pdu);
 		break;
 	}
-
-	return;
 }
 
 void
@@ -207,8 +203,6 @@ pdu_hton_rtr(void *pdu)
 		}
 		break;
 	}
-
-	return;
 }
 
 void
@@ -295,8 +289,6 @@ pdu_ntoh_rtr(void *pdu)
 		}
 		break;
 	}
-
-	return;
 }
 
 void
@@ -445,8 +437,6 @@ pdu_hton_controller(void *pdu)
 	/* case END_OF_STATS: */
 		/* break; */
 	}
-
-	return;
 }
 
 void
@@ -595,8 +585,6 @@ pdu_ntoh_controller(void *pdu)
 	/* case END_OF_STATS: */
 		/* break; */
 	}
-
-	return;
 }
 
 #define IPV4_PREFIX_BITS	(sizeof(struct in_addr) * 8)
@@ -709,7 +697,7 @@ check_pdu_aspa_controller(struct pdu_aspa_import *pdu)
 int
 check_error_code(uint16_t error_code, uint8_t version)
 {
-	switch(version) {
+	switch (version) {
 	case RTR_VERSION_0:
 		if (error_code <= DUPLICATE_ANNOUNCEMENT_RECEIVED)
 			return 0;

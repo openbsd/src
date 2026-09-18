@@ -1,4 +1,4 @@
-/*	$OpenBSD: stats.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: stats.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <netdb.h>
 #include <unistd.h>
 #include <err.h>
 
@@ -27,30 +28,21 @@
 
 #include "structs.h"
 #include "version.h"
+#include "stats.h"
 
 struct global_stats global_stats;
 
-int init_stats(void);
-
 /* 1 on fail */
 int
-init_stats(void) {
-	char *c;
-
-	char hostname[HOSTNAME_SIZE];
-
-	char *node;
-	char *domain;
-
-	memset(hostname, 0, HOSTNAME_SIZE);
+init_stats(void)
+{
+	char hostname[HOSTNAME_SIZE], *node, *domain, *c;
 
 	memset(&global_stats, 0, sizeof(struct global_stats));
 
-	if (gethostname(hostname, HOSTNAME_SIZE) != 0)
+	if (gethostname(hostname, sizeof hostname) != 0)
 		return 1;
-
 	c = strchr(hostname, '.');
-
 	if (c) {
 		*c = '\0';
 		domain = c + 1;
@@ -62,6 +54,5 @@ init_stats(void) {
 	snprintf(global_stats.nodename, NODENAME_SIZE, "%s", node);
 	snprintf(global_stats.domainname, DOMAINNAME_SIZE, "%s", domain);
 	snprintf(global_stats.release, RELEASE_SIZE, "%s", RTRD_VERSION);
-
 	return 0;
 }

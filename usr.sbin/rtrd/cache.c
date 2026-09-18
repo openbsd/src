@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: cache.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -60,8 +60,6 @@ init_cache_frame(struct cache_frame *c)
 	c->rtr_vrp6s = NULL;
 	c->rtr_brks = NULL;
 	c->rtr_vaps = NULL;
-
-	return;
 }
 
 int
@@ -143,8 +141,6 @@ free_cache_frame(struct cache_frame *c)
 
 	cache_vap_tree_free(c->rtr_vaps);
 	c->rtr_vaps = NULL;
-
-	return;
 }
 
 struct cache_frame *
@@ -447,6 +443,4 @@ update_cache(struct vrp4_tree *vrp4tree, struct vrp6_tree *vrp6tree,
 		logx(0, "Updated v2 cache to serial %u\n", cf->serial_number);
 
 	}
-
-	return;
 }

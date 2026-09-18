@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_utils.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: ip_utils.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -39,12 +39,8 @@ struct in6_addr cidrmask6[IP6_BITS + 1];
 void init_masks(void);
 struct in_addr cidr_to_netmask4(uint8_t);
 struct in6_addr cidr_to_netmask6(uint8_t);
-int is_supernet_of_subnet4(
-    struct in_addr, uint8_t,
-    struct in_addr, uint8_t);
-int is_supernet_of_subnet6(
-    struct in6_addr, uint8_t,
-    struct in6_addr, uint8_t);
+int is_supernet_of_subnet4(struct in_addr, uint8_t, struct in_addr, uint8_t);
+int is_supernet_of_subnet6(struct in6_addr, uint8_t, struct in6_addr, uint8_t);
 
 struct in_addr address_to_network4(struct in_addr, uint8_t);
 struct in6_addr address_to_network6(struct in6_addr, uint8_t);
@@ -59,8 +55,6 @@ init_masks(void)
 
 	for (i = 0; i <= IP6_BITS; i++)
 		cidrmask6[i] = cidr_to_netmask6(i);
-
-	return;
 }
 
 struct in_addr
@@ -78,7 +72,6 @@ cidr_to_netmask4(uint8_t cidr)
 	} else {
 		r.s_addr = 0;
 	}
-
 	return r;
 }
 
@@ -86,13 +79,10 @@ struct in6_addr
 cidr_to_netmask6(uint8_t cidr)
 {
 	struct in6_addr r;
-	uint8_t boundry_byte;
-	uint8_t boundry_bits;
-	uint8_t i;
+	uint8_t boundry_byte, boundry_bits, i;
 
 	if (cidr > IP6_BITS)
 		cidr = IP6_BITS;
-
 	boundry_byte = cidr / 8;
 	boundry_bits = (IP6_BITS - cidr) % 8;
 
@@ -110,7 +100,6 @@ cidr_to_netmask6(uint8_t cidr)
 		if (i > boundry_byte)
 			r.s6_addr[i] = 0;
 	}
-
 	return r;
 }
 
@@ -118,16 +107,12 @@ int
 is_supernet_of_subnet4(struct in_addr super_net, uint8_t super_cidr,
     struct in_addr sub_net, uint8_t sub_cidr)
 {
-	struct in_addr super;
-	struct in_addr sub;
-	struct in_addr supermask;
+	struct in_addr super, sub, supermask;
 
 	if (super_cidr > IP4_BITS)
 		super_cidr = IP4_BITS;
-
 	if (sub_cidr > IP4_BITS)
 		sub_cidr = IP4_BITS;
-
 	if (sub_cidr < super_cidr)
 		return 0;
 
@@ -139,7 +124,6 @@ is_supernet_of_subnet4(struct in_addr super_net, uint8_t super_cidr,
 
 	super.s_addr = super_net.s_addr & supermask.s_addr;
 	sub.s_addr = sub_net.s_addr & supermask.s_addr;
-
 	return (super.s_addr == sub.s_addr);
 }
 
@@ -147,17 +131,13 @@ int
 is_supernet_of_subnet6(struct in6_addr super_net, uint8_t super_cidr,
     struct in6_addr sub_net, uint8_t sub_cidr)
 {
-	struct in6_addr super;
-	struct in6_addr sub;
-	struct in6_addr supermask;
+	struct in6_addr super, sub, supermask;
 	uint8_t i;
 
 	if (super_cidr > IP6_BITS)
 		super_cidr = IP6_BITS;
-
 	if (sub_cidr > IP6_BITS)
 		sub_cidr = IP6_BITS;
-
 	if (sub_cidr < super_cidr)
 		return 0;
 
@@ -173,40 +153,33 @@ is_supernet_of_subnet6(struct in6_addr super_net, uint8_t super_cidr,
 		if (super.s6_addr[i] != sub.s6_addr[i])
 			return 0;
 	}
-
 	return 1;
 }
 
 struct in_addr
 address_to_network4(struct in_addr address, uint8_t cidr)
 {
-	struct in_addr network;
-	struct in_addr netmask;
+	struct in_addr network, netmask;
 
 	if (cidr > IP4_BITS)
 		cidr = IP4_BITS;
 
 	netmask = cidrmask4[cidr];
-
 	network.s_addr = address.s_addr & netmask.s_addr;
-
 	return network;
 }
 
 struct in6_addr
 address_to_network6(struct in6_addr address, uint8_t cidr)
 {
-	struct in6_addr network;
-	struct in6_addr netmask;
+	struct in6_addr network, netmask;
 	uint8_t i;
 
 	if (cidr > IP6_BITS)
 		cidr = IP6_BITS;
 
 	netmask = cidrmask6[cidr];
-
 	for (i = 0; i < IP6_BYTES; i++)
 		network.s6_addr[i] = address.s6_addr[i] & netmask.s6_addr[i];
-
 	return network;
 }

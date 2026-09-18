@@ -1,4 +1,4 @@
-/*	$OpenBSD: signals.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: signals.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -42,30 +42,32 @@ int
 init_signals(void)
 {
 	struct sigaction sa;
-
 	sigflags = 0;
 
 	memset(&sa, 0, sizeof(sa));
-
 	if (sigfillset(&sa.sa_mask) != 0)
 		return 1;
 
 	sa.sa_flags = SA_RESTART;
-
 	sa.sa_handler = SIG_IGN;
-
-	if (sigaction(SIGPIPE, &sa, NULL) != 0) return 1;
-	if (sigaction(SIGALRM, &sa, NULL) != 0) return 1;
-	if (sigaction(SIGUSR2, &sa, NULL) != 0) return 1;
+	if (sigaction(SIGPIPE, &sa, NULL) != 0)
+		return 1;
+	if (sigaction(SIGALRM, &sa, NULL) != 0)
+		return 1;
+	if (sigaction(SIGUSR2, &sa, NULL) != 0)
+		return 1;
 
 	sa.sa_handler = &signal_handler;
-
-	if (sigaction(SIGTERM, &sa, NULL) != 0) return 1;
-	if (sigaction(SIGINT,  &sa, NULL) != 0) return 1;
-	if (sigaction(SIGQUIT, &sa, NULL) != 0) return 1;
-	if (sigaction(SIGUSR1, &sa, NULL) != 0) return 1;
-	if (sigaction(SIGHUP,  &sa, NULL) != 0) return 1;
-
+	if (sigaction(SIGTERM, &sa, NULL) != 0)
+		return 1;
+	if (sigaction(SIGINT,  &sa, NULL) != 0)
+		return 1;
+	if (sigaction(SIGQUIT, &sa, NULL) != 0)
+		return 1;
+	if (sigaction(SIGUSR1, &sa, NULL) != 0)
+		return 1;
+	if (sigaction(SIGHUP,  &sa, NULL) != 0)
+		return 1;
 	return 0;
 }
 
@@ -89,8 +91,6 @@ signal_handler(int sig)
 		sigflags |= SIGFLAGS_HUP;
 		break;
 	}
-
-	return;
 }
 
 void
@@ -119,8 +119,5 @@ signal_processor(void)
 	if (sigflags & SIGFLAGS_HUP) {
 		logx(0, "Received HUP signal\n");
 	}
-
 	sigflags = 0;
-
-	return;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: tables.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -52,11 +52,8 @@ int64_t vrp4_treecount(struct vrp4_tree *);
 int vrp4_treeempty(struct vrp4_tree *);
 void vrp4_treeupdate(struct vrp4_tree *, struct vrp4_tree *);
 uint32_t vrp4_treehash(struct vrp4_tree *);
-void vrp4_treecpy_count_and_hash(
-    struct vrp4_tree *,
-    struct vrp4_tree *,
-    int64_t *,
-    uint32_t *);
+void vrp4_treecpy_count_and_hash(struct vrp4_tree *, struct vrp4_tree *,
+    int64_t *, uint32_t *);
 
 struct cache_vrp4_tree *cache_vrp4_tree_find(struct vrp4_tree *);
 struct cache_vrp4_tree *cache_vrp4_tree_dup(struct cache_vrp4_tree *);
@@ -78,11 +75,8 @@ int64_t vrp6_treecount(struct vrp6_tree *);
 int vrp6_treeempty(struct vrp6_tree *);
 void vrp6_treeupdate(struct vrp6_tree *, struct vrp6_tree *);
 uint32_t vrp6_treehash(struct vrp6_tree *);
-void vrp6_treecpy_count_and_hash(
-    struct vrp6_tree *,
-    struct vrp6_tree *,
-    int64_t *,
-    uint32_t *);
+void vrp6_treecpy_count_and_hash(struct vrp6_tree *, struct vrp6_tree *,
+    int64_t *, uint32_t *);
 
 struct cache_vrp6_tree *cache_vrp6_tree_find(struct vrp6_tree *);
 struct cache_vrp6_tree *cache_vrp6_tree_dup(struct cache_vrp6_tree *);
@@ -104,11 +98,8 @@ int64_t brk_treecount(struct brk_tree *);
 int brk_treeempty(struct brk_tree *);
 void brk_treeupdate(struct brk_tree *, struct brk_tree *);
 uint32_t brk_treehash(struct brk_tree *);
-void brk_treecpy_count_and_hash(
-    struct brk_tree *,
-    struct brk_tree *,
-    int64_t *,
-    uint32_t *);
+void brk_treecpy_count_and_hash(struct brk_tree *, struct brk_tree *,
+    int64_t *, uint32_t *);
 
 struct cache_brk_tree *cache_brk_tree_find(struct brk_tree *);
 struct cache_brk_tree *cache_brk_tree_dup(struct cache_brk_tree *);
@@ -143,11 +134,8 @@ int64_t vap_treecount(struct vap_tree *);
 int vap_treeempty(struct vap_tree *);
 void vap_treeupdate(struct vap_tree *, struct vap_tree *);
 uint32_t vap_treehash(struct vap_tree *);
-void vap_treecpy_count_and_hash(
-    struct vap_tree *,
-    struct vap_tree *,
-    int64_t *,
-    uint32_t *);
+void vap_treecpy_count_and_hash(struct vap_tree *, struct vap_tree *,
+    int64_t *, uint32_t *);
 
 struct cache_vap_tree *cache_vap_tree_find(struct vap_tree *);
 struct cache_vap_tree *cache_vap_tree_dup(struct cache_vap_tree *);
@@ -191,7 +179,6 @@ vrp4cmp(struct vrp4 *a, struct vrp4 *b)
 		return -1;
 	if (a->asn < b->asn)
 		return 1;
-
 	return 0;
 }
 
@@ -210,7 +197,6 @@ insert_vrp4(struct vrp4_tree *vrp4tree, struct vrp4 *vrp4, time_t present)
 		return 0;
 
 	node = malloc(sizeof(struct vrp4));
-
 	if (node == NULL)
 		err(1, NULL);
 
@@ -225,7 +211,6 @@ insert_vrp4(struct vrp4_tree *vrp4tree, struct vrp4 *vrp4, time_t present)
 		free(node);
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -239,21 +224,18 @@ remove_vrp4(struct vrp4_tree *vrp4tree, struct vrp4 *vrp4)
 	assert(vrp4);
 
 	node = RB_FIND(vrp4_tree, vrp4tree, vrp4);
-
 	if (!node)
 		return 1;
 
 	RB_REMOVE(vrp4_tree, vrp4tree, node);
 	free(node);
-
 	return 0;
 }
 
 void
 free_vrp4_tree(struct vrp4_tree *vrp4tree)
 {
-	struct vrp4 *vrp4;
-	struct vrp4 *tmpvrp4;
+	struct vrp4 *vrp4, *tmpvrp4;
 
 	if (!vrp4tree)
 		return;
@@ -262,8 +244,6 @@ free_vrp4_tree(struct vrp4_tree *vrp4tree)
 		RB_REMOVE(vrp4_tree, vrp4tree, vrp4);
 		free(vrp4);
 	}
-
-	return;
 }
 
 int
@@ -290,8 +270,7 @@ vrp4_treecmp(struct vrp4_tree *a, struct vrp4_tree *b)
 void
 vrp4_treecpy(struct vrp4_tree *src, struct vrp4_tree *dst)
 {
-	struct vrp4 *vrp4;
-	struct vrp4 *node;
+	struct vrp4 *vrp4, *node;
 
 	assert(src);
 	assert(dst);
@@ -300,7 +279,6 @@ vrp4_treecpy(struct vrp4_tree *src, struct vrp4_tree *dst)
 
 	RB_FOREACH(vrp4, vrp4_tree, src) {
 		node = malloc(sizeof(struct vrp4));
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -310,21 +288,15 @@ vrp4_treecpy(struct vrp4_tree *src, struct vrp4_tree *dst)
 		node->max_prefix_length = vrp4->max_prefix_length;
 		node->zero = 0;
 		node->asn = vrp4->asn;
-
 		RB_INSERT(vrp4_tree, dst, node);
 	}
-
-	return;
 }
 
 void
-vrp4_treecpy_expire(
-    struct vrp4_tree *src,
-    struct vrp4_tree *dst,
+vrp4_treecpy_expire(struct vrp4_tree *src, struct vrp4_tree *dst,
     time_t present)
 {
-	struct vrp4 *vrp4;
-	struct vrp4 *node;
+	struct vrp4 *vrp4, *node;
 
 	assert(src);
 	assert(dst);
@@ -336,7 +308,6 @@ vrp4_treecpy_expire(
 			continue;
 
 		node = malloc(sizeof(struct vrp4));
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -346,22 +317,17 @@ vrp4_treecpy_expire(
 		node->max_prefix_length = vrp4->max_prefix_length;
 		node->zero = 0;
 		node->asn = vrp4->asn;
-
 		RB_INSERT(vrp4_tree, dst, node);
 	}
-
-	return;
 }
 
 int64_t
 vrp4_treecount(struct vrp4_tree *vrp4tree)
 {
 	struct vrp4 *vrp4;
-	int64_t i;
+	int64_t i = 0;
 
 	assert(vrp4tree);
-
-	i = 0;
 
 	RB_FOREACH(vrp4, vrp4_tree, vrp4tree) {
 		i++;
@@ -371,7 +337,6 @@ vrp4_treecount(struct vrp4_tree *vrp4tree)
 
 	if (i < -1)
 		i = -1;
-
 	return i;
 }
 
@@ -389,8 +354,7 @@ vrp4_treeempty(struct vrp4_tree *vrp4tree)
 void
 vrp4_treeupdate(struct vrp4_tree *oldtree, struct vrp4_tree *newtree)
 {
-	struct vrp4 *oldvrp4;
-	struct vrp4 *newvrp4;
+	struct vrp4 *oldvrp4, *newvrp4;
 
 	assert(oldtree);
 	assert(newtree);
@@ -400,8 +364,6 @@ vrp4_treeupdate(struct vrp4_tree *oldtree, struct vrp4_tree *newtree)
 		if (newvrp4)
 			oldvrp4->expire = newvrp4->expire;
 	}
-
-	return;
 }
 
 uint32_t
@@ -416,36 +378,21 @@ vrp4_treehash(struct vrp4_tree *vrp4tree)
 	hash = fnv32_init;
 
 	RB_FOREACH(vrp4, vrp4_tree, vrp4tree) {
-		hash = fnv32_hash(
-		    &vrp4->prefix,
-		    sizeof(vrp4->prefix),
-		    hash);
-		hash = fnv32_hash(
-		    &vrp4->prefix_length,
-		    sizeof(vrp4->prefix_length),
-		    hash);
-		hash = fnv32_hash(
-		    &vrp4->max_prefix_length,
-		    sizeof(vrp4->max_prefix_length),
-		    hash);
-		hash = fnv32_hash(
-		    &vrp4->asn,
-		    sizeof(vrp4->asn),
-		    hash);
+		hash = fnv32_hash(&vrp4->prefix, sizeof(vrp4->prefix), hash);
+		hash = fnv32_hash(&vrp4->prefix_length,
+		    sizeof(vrp4->prefix_length), hash);
+		hash = fnv32_hash(&vrp4->max_prefix_length,
+		    sizeof(vrp4->max_prefix_length), hash);
+		hash = fnv32_hash(&vrp4->asn, sizeof(vrp4->asn), hash);
 	}
-
 	return hash;
 }
 
 void
-vrp4_treecpy_count_and_hash(
-    struct vrp4_tree *src,
-    struct vrp4_tree *dst,
-    int64_t *count,
-    uint32_t *hash)
+vrp4_treecpy_count_and_hash(struct vrp4_tree *src, struct vrp4_tree *dst,
+    int64_t *count, uint32_t *hash)
 {
-	struct vrp4 *vrp4;
-	struct vrp4 *node;
+	struct vrp4 *vrp4, *node;
 
 	assert(src);
 	assert(dst);
@@ -459,7 +406,6 @@ vrp4_treecpy_count_and_hash(
 
 	RB_FOREACH(vrp4, vrp4_tree, src) {
 		node = malloc(sizeof(struct vrp4));
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -469,30 +415,19 @@ vrp4_treecpy_count_and_hash(
 		node->max_prefix_length = vrp4->max_prefix_length;
 		node->zero = 0;
 		node->asn = vrp4->asn;
-
 		RB_INSERT(vrp4_tree, dst, node);
 
 		(*count)++;
 
-		*hash = fnv32_hash(
-		    &vrp4->prefix,
-		    sizeof(vrp4->prefix),
+		*hash = fnv32_hash(&vrp4->prefix, sizeof(vrp4->prefix),
 		    *hash);
-		*hash = fnv32_hash(
-		    &vrp4->prefix_length,
-		    sizeof(vrp4->prefix_length),
-		    *hash);
-		*hash = fnv32_hash(
-		    &vrp4->max_prefix_length,
-		    sizeof(vrp4->max_prefix_length),
-		    *hash);
-		*hash = fnv32_hash(
-		    &vrp4->asn,
-		    sizeof(vrp4->asn),
+		*hash = fnv32_hash(&vrp4->prefix_length,
+		    sizeof(vrp4->prefix_length), *hash);
+		*hash = fnv32_hash(&vrp4->max_prefix_length,
+		    sizeof(vrp4->max_prefix_length), *hash);
+		*hash = fnv32_hash(&vrp4->asn, sizeof(vrp4->asn),
 		    *hash);
 	}
-
-	return;
 }
 
 struct cache_vrp4_tree *
@@ -527,7 +462,6 @@ cache_vrp4_tree_find(struct vrp4_tree *vrp4tree)
 			}
 		}
 	}
-
 	return NULL;
 }
 
@@ -550,28 +484,22 @@ cache_vrp4_tree_new(struct vrp4_tree *vrp4tree)
 
 	cache_vrp4 = cache_vrp4_tree_find(vrp4tree);
 
-	if (cache_vrp4)
-	{
+	if (cache_vrp4) {
 		cache_vrp4 = cache_vrp4_tree_dup(cache_vrp4);
 		return cache_vrp4;
 	}
 
 	cache_vrp4 = malloc(sizeof(struct cache_vrp4_tree));
-
 	if (cache_vrp4 == NULL)
 		err(1, NULL);
 
 	RB_INIT(&cache_vrp4->vrp4s);
 
 	cache_vrp4->reference_count = 1;
-	vrp4_treecpy_count_and_hash(
-	    vrp4tree,
-	    &cache_vrp4->vrp4s,
-	    &cache_vrp4->entry_count,
-	    &cache_vrp4->hash);
+	vrp4_treecpy_count_and_hash(vrp4tree, &cache_vrp4->vrp4s,
+	    &cache_vrp4->entry_count, &cache_vrp4->hash);
 	rtr_gettime();
 	cache_vrp4->creation_time = now.tv_sec;
-
 	return cache_vrp4;
 }
 
@@ -583,13 +511,10 @@ cache_vrp4_tree_free(struct cache_vrp4_tree *cache_vrp4)
 
 	cache_vrp4->reference_count--;
 
-	if (cache_vrp4->reference_count < 1)
-	{
+	if (cache_vrp4->reference_count < 1) {
 		free_vrp4_tree(&cache_vrp4->vrp4s);
 		free(cache_vrp4);
 	}
-
-	return;
 }
 
 /*
@@ -629,7 +554,6 @@ vrp6cmp(struct vrp6 *a, struct vrp6 *b)
 		return -1;
 	if (a->asn < b->asn)
 		return 1;
-
 	return 0;
 }
 
@@ -648,7 +572,6 @@ insert_vrp6(struct vrp6_tree *vrp6tree, struct vrp6 *vrp6, time_t present)
 		return 0;
 
 	node = malloc(sizeof(struct vrp6));
-
 	if (node == NULL)
 		err(1, NULL);
 
@@ -658,12 +581,10 @@ insert_vrp6(struct vrp6_tree *vrp6tree, struct vrp6 *vrp6, time_t present)
 	node->max_prefix_length = vrp6->max_prefix_length;
 	node->zero = 0;
 	node->asn = vrp6->asn;
-
 	if (RB_INSERT(vrp6_tree, vrp6tree, node) != NULL) {
 		free(node);
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -683,15 +604,13 @@ remove_vrp6(struct vrp6_tree *vrp6tree, struct vrp6 *vrp6)
 
 	RB_REMOVE(vrp6_tree, vrp6tree, node);
 	free(node);
-
 	return 0;
 }
 
 void
 free_vrp6_tree(struct vrp6_tree *vrp6tree)
 {
-	struct vrp6 *vrp6;
-	struct vrp6 *tmpvrp6;
+	struct vrp6 *vrp6, *tmpvrp6;
 
 	if (!vrp6tree)
 		return;
@@ -700,7 +619,6 @@ free_vrp6_tree(struct vrp6_tree *vrp6tree)
 		RB_REMOVE(vrp6_tree, vrp6tree, vrp6);
 		free(vrp6);
 	}
-	return;
 }
 
 int
@@ -718,15 +636,13 @@ vrp6_treecmp(struct vrp6_tree *a, struct vrp6_tree *b)
 	RB_FOREACH(vrp6, vrp6_tree, b)
 		if (!RB_FIND(vrp6_tree, a, vrp6))
 			return -1;
-
 	return 0;
 }
 
 void
 vrp6_treecpy(struct vrp6_tree *src, struct vrp6_tree *dst)
 {
-	struct vrp6 *vrp6;
-	struct vrp6 *node;
+	struct vrp6 *vrp6, *node;
 
 	assert(src);
 	assert(dst);
@@ -735,7 +651,6 @@ vrp6_treecpy(struct vrp6_tree *src, struct vrp6_tree *dst)
 
 	RB_FOREACH(vrp6, vrp6_tree, src) {
 		node = malloc(sizeof(struct vrp6));
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -748,18 +663,13 @@ vrp6_treecpy(struct vrp6_tree *src, struct vrp6_tree *dst)
 
 		RB_INSERT(vrp6_tree, dst, node);
 	}
-
-	return;
 }
 
 void
-vrp6_treecpy_expire(
-    struct vrp6_tree *src,
-    struct vrp6_tree *dst,
+vrp6_treecpy_expire(struct vrp6_tree *src, struct vrp6_tree *dst,
     time_t present)
 {
-	struct vrp6 *vrp6;
-	struct vrp6 *node;
+	struct vrp6 *vrp6, *node;
 
 	assert(src);
 	assert(dst);
@@ -771,7 +681,6 @@ vrp6_treecpy_expire(
 			continue;
 
 		node = malloc(sizeof(struct vrp6));
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -781,11 +690,8 @@ vrp6_treecpy_expire(
 		node->max_prefix_length = vrp6->max_prefix_length;
 		node->zero = 0;
 		node->asn = vrp6->asn;
-
 		RB_INSERT(vrp6_tree, dst, node);
 	}
-
-	return;
 }
 
 int64_t
@@ -806,7 +712,6 @@ vrp6_treecount(struct vrp6_tree *vrp6tree)
 
 	if (i < -1)
 		i = -1;
-
 	return i;
 }
 
@@ -824,8 +729,7 @@ vrp6_treeempty(struct vrp6_tree *vrp6tree)
 void
 vrp6_treeupdate(struct vrp6_tree *oldtree, struct vrp6_tree *newtree)
 {
-	struct vrp6 *oldvrp6;
-	struct vrp6 *newvrp6;
+	struct vrp6 *oldvrp6, *newvrp6;
 
 	assert(oldtree);
 	assert(newtree);
@@ -835,52 +739,33 @@ vrp6_treeupdate(struct vrp6_tree *oldtree, struct vrp6_tree *newtree)
 		if (newvrp6)
 			oldvrp6->expire = newvrp6->expire;
 	}
-
-	return;
 }
 
 uint32_t
 vrp6_treehash(struct vrp6_tree *vrp6tree)
 {
 	struct vrp6 *vrp6;
-
-	uint32_t hash;
+	uint32_t hash = fnv32_init;
 
 	assert(vrp6tree);
 
-	hash = fnv32_init;
-
 	RB_FOREACH(vrp6, vrp6_tree, vrp6tree) {
-		hash = fnv32_hash(
-		    &vrp6->prefix,
-		    sizeof(vrp6->prefix),
+		hash = fnv32_hash(&vrp6->prefix, sizeof(vrp6->prefix),
 		    hash);
-		hash = fnv32_hash(
-		    &vrp6->prefix_length,
-		    sizeof(vrp6->prefix_length),
-		    hash);
-		hash = fnv32_hash(
-		    &vrp6->max_prefix_length,
-		    sizeof(vrp6->max_prefix_length),
-		    hash);
-		hash = fnv32_hash(
-		    &vrp6->asn,
-		    sizeof(vrp6->asn),
-		    hash);
+		hash = fnv32_hash(&vrp6->prefix_length,
+		    sizeof(vrp6->prefix_length), hash);
+		hash = fnv32_hash(&vrp6->max_prefix_length,
+		    sizeof(vrp6->max_prefix_length), hash);
+		hash = fnv32_hash(&vrp6->asn, sizeof(vrp6->asn), hash);
 	}
-
 	return hash;
 }
 
 void
-vrp6_treecpy_count_and_hash(
-    struct vrp6_tree *src,
-    struct vrp6_tree *dst,
-    int64_t *count,
-    uint32_t *hash)
+vrp6_treecpy_count_and_hash(struct vrp6_tree *src, struct vrp6_tree *dst,
+    int64_t *count, uint32_t *hash)
 {
-	struct vrp6 *vrp6;
-	struct vrp6 *node;
+	struct vrp6 *vrp6, *node;
 
 	assert(src);
 	assert(dst);
@@ -894,7 +779,6 @@ vrp6_treecpy_count_and_hash(
 
 	RB_FOREACH(vrp6, vrp6_tree, src) {
 		node = malloc(sizeof(struct vrp6));
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -904,30 +788,18 @@ vrp6_treecpy_count_and_hash(
 		node->max_prefix_length = vrp6->max_prefix_length;
 		node->zero = 0;
 		node->asn = vrp6->asn;
-
 		RB_INSERT(vrp6_tree, dst, node);
 
 		(*count)++;
 
-		*hash = fnv32_hash(
-		    &vrp6->prefix,
-		    sizeof(vrp6->prefix),
+		*hash = fnv32_hash(&vrp6->prefix, sizeof(vrp6->prefix),
 		    *hash);
-		*hash = fnv32_hash(
-		    &vrp6->prefix_length,
-		    sizeof(vrp6->prefix_length),
-		    *hash);
-		*hash = fnv32_hash(
-		    &vrp6->max_prefix_length,
-		    sizeof(vrp6->max_prefix_length),
-		    *hash);
-		*hash = fnv32_hash(
-		    &vrp6->asn,
-		    sizeof(vrp6->asn),
-		    *hash);
+		*hash = fnv32_hash(&vrp6->prefix_length,
+		    sizeof(vrp6->prefix_length), *hash);
+		*hash = fnv32_hash(&vrp6->max_prefix_length,
+		    sizeof(vrp6->max_prefix_length), *hash);
+		*hash = fnv32_hash(&vrp6->asn, sizeof(vrp6->asn), *hash);
 	}
-
-	return;
 }
 
 struct cache_vrp6_tree *
@@ -962,7 +834,6 @@ cache_vrp6_tree_find(struct vrp6_tree *vrp6tree)
 			}
 		}
 	}
-
 	return NULL;
 }
 
@@ -984,28 +855,22 @@ cache_vrp6_tree_new(struct vrp6_tree *vrp6tree)
 	assert(vrp6tree);
 
 	cache_vrp6 = cache_vrp6_tree_find(vrp6tree);
-
 	if (cache_vrp6) {
 		cache_vrp6 = cache_vrp6_tree_dup(cache_vrp6);
 		return cache_vrp6;
 	}
 
 	cache_vrp6 = malloc(sizeof(struct cache_vrp6_tree));
-
 	if (cache_vrp6 == NULL)
 		err(1, NULL);
 
 	RB_INIT(&cache_vrp6->vrp6s);
 
 	cache_vrp6->reference_count = 1;
-	vrp6_treecpy_count_and_hash(
-	    vrp6tree,
-	    &cache_vrp6->vrp6s,
-	    &cache_vrp6->entry_count,
-	    &cache_vrp6->hash);
+	vrp6_treecpy_count_and_hash(vrp6tree, &cache_vrp6->vrp6s,
+	    &cache_vrp6->entry_count, &cache_vrp6->hash);
 	rtr_gettime();
 	cache_vrp6->creation_time = now.tv_sec;
-
 	return cache_vrp6;
 }
 
@@ -1021,8 +886,6 @@ cache_vrp6_tree_free(struct cache_vrp6_tree *cache_vrp6)
 		free_vrp6_tree(&cache_vrp6->vrp6s);
 		free(cache_vrp6);
 	}
-
-	return;
 }
 
 /*
@@ -1051,7 +914,6 @@ brkcmp(struct brk *a, struct brk *b)
 		return 1;
 	if (a->asn < b->asn)
 		return -1;
-
 	return 0;
 }
 
@@ -1073,7 +935,6 @@ insert_brk(struct brk_tree *brktree, struct brk *brk, time_t present)
 		return 1;
 
 	node = malloc(sizeof(struct brk) + brk->spki_length);
-
 	if (node == NULL)
 		err(1, NULL);
 
@@ -1088,7 +949,6 @@ insert_brk(struct brk_tree *brktree, struct brk *brk, time_t present)
 		free(node);
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -1102,21 +962,18 @@ remove_brk(struct brk_tree *brktree, struct brk *brk)
 	assert(brk);
 
 	node = RB_FIND(brk_tree, brktree, brk);
-
 	if (!node)
 		return 1;
 
 	RB_REMOVE(brk_tree, brktree, node);
 	free(node);
-
 	return 0;
 }
 
 void
 free_brk_tree(struct brk_tree *brktree)
 {
-	struct brk *brk;
-	struct brk *tmpbrk;
+	struct brk *brk, *tmpbrk;
 
 	if (!brktree)
 		return;
@@ -1125,8 +982,6 @@ free_brk_tree(struct brk_tree *brktree)
 		RB_REMOVE(brk_tree, brktree, brk);
 		free(brk);
 	}
-
-	return;
 }
 
 int
@@ -1146,7 +1001,6 @@ brk_treecmp(struct brk_tree *a, struct brk_tree *b)
 		if (!RB_FIND(brk_tree, a, brk))
 			return -1;
 	}
-
 	return 0;
 }
 
@@ -1163,7 +1017,6 @@ brk_treecpy(struct brk_tree *src, struct brk_tree *dst)
 
 	RB_FOREACH(brk, brk_tree, src) {
 		node = malloc(sizeof(struct brk) + brk->spki_length);
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -1173,18 +1026,14 @@ brk_treecpy(struct brk_tree *src, struct brk_tree *dst)
 		node->spki_length = brk->spki_length;
 		if (brk->spki_length > 0)
 			memcpy(node->spki, brk->spki, brk->spki_length);
-
 		RB_INSERT(brk_tree, dst, node);
 	}
-
-	return;
 }
 
 void
 brk_treecpy_expire(struct brk_tree *src, struct brk_tree *dst, time_t present)
 {
-	struct brk *brk;
-	struct brk *node;
+	struct brk *brk, *node;
 
 	assert(src);
 	assert(dst);
@@ -1196,7 +1045,6 @@ brk_treecpy_expire(struct brk_tree *src, struct brk_tree *dst, time_t present)
 			continue;
 
 		node = malloc(sizeof(struct brk) + brk->spki_length);
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -1206,22 +1054,17 @@ brk_treecpy_expire(struct brk_tree *src, struct brk_tree *dst, time_t present)
 		node->spki_length = brk->spki_length;
 		if (brk->spki_length > 0)
 			memcpy(node->spki, brk->spki, brk->spki_length);
-
 		RB_INSERT(brk_tree, dst, node);
 	}
-
-	return;
 }
 
 int64_t
 brk_treecount(struct brk_tree *brktree)
 {
 	struct brk *brk;
-	int64_t i;
+	int64_t i = 0;
 
 	assert(brktree);
-
-	i = 0;
 
 	RB_FOREACH(brk, brk_tree, brktree) {
 		i++;
@@ -1231,7 +1074,6 @@ brk_treecount(struct brk_tree *brktree)
 
 	if (i < -1)
 		i = -1;
-
 	return i;
 }
 
@@ -1249,8 +1091,7 @@ brk_treeempty(struct brk_tree *brktree)
 void
 brk_treeupdate(struct brk_tree *oldtree, struct brk_tree *newtree)
 {
-	struct brk *oldbrk;
-	struct brk *newbrk;
+	struct brk *oldbrk, *newbrk;
 
 	assert(oldtree);
 	assert(newtree);
@@ -1260,49 +1101,30 @@ brk_treeupdate(struct brk_tree *oldtree, struct brk_tree *newtree)
 		if (newbrk)
 			oldbrk->expire = newbrk->expire;
 	}
-
-	return;
 }
 
 uint32_t
 brk_treehash(struct brk_tree *brktree)
 {
 	struct brk *brk;
-
-	uint32_t hash;
+	uint32_t hash = fnv32_init;
 
 	assert(brktree);
 
-	hash = fnv32_init;
-
 	RB_FOREACH(brk, brk_tree, brktree) {
-
-		hash = fnv32_hash(
-		    &brk->asn,
-		    sizeof(uint32_t),
-		    hash);
-		hash = fnv32_hash(
-		    &brk->ski,
-		    SKI_LENGTH,
-		    hash);
-
+		hash = fnv32_hash(&brk->asn, sizeof(uint32_t), hash);
+		hash = fnv32_hash(&brk->ski, SKI_LENGTH, hash);
 		if (brk->spki_length > 0)
 			hash = fnv32_hash(brk->spki, brk->spki_length, hash);
-
 	}
-
 	return hash;
 }
 
 void
-brk_treecpy_count_and_hash(
-    struct brk_tree *src,
-    struct brk_tree *dst,
-    int64_t *count,
-    uint32_t *hash)
+brk_treecpy_count_and_hash(struct brk_tree *src, struct brk_tree *dst,
+    int64_t *count, uint32_t *hash)
 {
-	struct brk *brk;
-	struct brk *node;
+	struct brk *brk, *node;
 
 	assert(src);
 	assert(dst);
@@ -1316,7 +1138,6 @@ brk_treecpy_count_and_hash(
 
 	RB_FOREACH(brk, brk_tree, src) {
 		node = malloc(sizeof(struct brk) + brk->spki_length);
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -1326,29 +1147,17 @@ brk_treecpy_count_and_hash(
 		node->spki_length = brk->spki_length;
 		if (brk->spki_length > 0)
 			memcpy(node->spki, brk->spki, brk->spki_length);
-
 		RB_INSERT(brk_tree, dst, node);
 
 		(*count)++;
 
-		*hash = fnv32_hash(
-		    &brk->asn,
-		    sizeof(uint32_t),
-		    *hash);
-		*hash = fnv32_hash(
-		    &brk->ski,
-		    SKI_LENGTH,
-		    *hash);
+		*hash = fnv32_hash(&brk->asn, sizeof(uint32_t), *hash);
+		*hash = fnv32_hash(&brk->ski, SKI_LENGTH, *hash);
 
 		if (brk->spki_length > 0) {
-			*hash = fnv32_hash(
-			    brk->spki,
-			    brk->spki_length,
-			    *hash);
+			*hash = fnv32_hash(brk->spki, brk->spki_length, *hash);
 		}
 	}
-
-	return;
 }
 
 struct cache_brk_tree *
@@ -1383,7 +1192,6 @@ cache_brk_tree_find(struct brk_tree *brktree)
 			}
 		}
 	}
-
 	return NULL;
 }
 
@@ -1406,28 +1214,22 @@ cache_brk_tree_new(struct brk_tree *brktree)
 
 	cache_brk = cache_brk_tree_find(brktree);
 
-	if (cache_brk)
-	{
+	if (cache_brk) {
 		cache_brk = cache_brk_tree_dup(cache_brk);
 		return cache_brk;
 	}
 
 	cache_brk = malloc(sizeof(struct cache_brk_tree));
-
 	if (cache_brk == NULL)
 		err(1, NULL);
 
 	RB_INIT(&cache_brk->brks);
 
 	cache_brk->reference_count = 1;
-	brk_treecpy_count_and_hash(
-	    brktree,
-	    &cache_brk->brks,
-	    &cache_brk->entry_count,
-	    &cache_brk->hash);
+	brk_treecpy_count_and_hash(brktree, &cache_brk->brks,
+	    &cache_brk->entry_count, &cache_brk->hash);
 	rtr_gettime();
 	cache_brk->creation_time = now.tv_sec;
-
 	return cache_brk;
 }
 
@@ -1439,13 +1241,10 @@ cache_brk_tree_free(struct cache_brk_tree *cache_brk)
 
 	cache_brk->reference_count--;
 
-	if (cache_brk->reference_count < 1)
-	{
+	if (cache_brk->reference_count < 1) {
 		free_brk_tree(&cache_brk->brks);
 		free(cache_brk);
 	}
-
-	return;
 }
 
 /*
@@ -1459,7 +1258,6 @@ asncmp(struct asn *a, struct asn *b)
 		return 1;
 	if (a->asn < b->asn)
 		return -1;
-
 	return 0;
 }
 
@@ -1474,17 +1272,14 @@ insert_asn(struct asn_tree *asntree, uint32_t asn)
 	assert(asntree);
 
 	node = malloc(sizeof(struct asn));
-
 	if (node == NULL)
 		err(1, NULL);
 
 	node->asn = asn;
-
 	if (RB_INSERT(asn_tree, asntree, node) != NULL) {
 		free(node);
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -1492,21 +1287,18 @@ insert_asn(struct asn_tree *asntree, uint32_t asn)
 int
 remove_asn(struct asn_tree *asntree, uint32_t asn)
 {
-	struct asn query;
-	struct asn *node;
+	struct asn query, *node;
 
 	assert(asntree);
 
 	query.asn = asn;
 
 	node = RB_FIND(asn_tree, asntree, &query);
-
 	if (!node)
 		return 1;
 
 	RB_REMOVE(asn_tree, asntree, node);
 	free(node);
-
 	return 0;
 }
 
@@ -1523,24 +1315,17 @@ free_asn_tree(struct asn_tree *asntree)
 		RB_REMOVE(asn_tree, asntree, asn);
 		free(asn);
 	}
-
-	return;
 }
 
 int
 clean_asn_tree(struct asn_tree *asntree)
 {
-	struct asn *asn;
-	struct asn *tmpasn;
-
-	int zero;
-	int non_zero;
+	struct asn *asn, *tmpasn;
+	int zero = 0;
+	int non_zero = 0;
 
 	if (!asntree)
 		return 0;
-
-	zero = 0;
-	non_zero = 0;
 
 	RB_FOREACH(asn, asn_tree, asntree) {
 		if (asn->asn != 0)
@@ -1560,7 +1345,6 @@ clean_asn_tree(struct asn_tree *asntree)
 			}
 		}
 	}
-
 	return zero && non_zero;
 }
 
@@ -1568,11 +1352,9 @@ int32_t
 asn_treecount(struct asn_tree *asntree)
 {
 	struct asn *asn;
-	int32_t i;
+	int32_t i = 0;
 
 	assert(asntree);
-
-	i = 0;
 
 	RB_FOREACH(asn, asn_tree, asntree) {
 		i++;
@@ -1582,7 +1364,6 @@ asn_treecount(struct asn_tree *asntree)
 
 	if (i < -1)
 		i = -1;
-
 	return i;
 }
 
@@ -1597,7 +1378,6 @@ vapcmp(struct vap *a, struct vap *b)
 		return 1;
 	if (a->customer_asn < b->customer_asn)
 		return -1;
-
 	return 0;
 }
 
@@ -1633,7 +1413,6 @@ vapfullcmp(struct vap *a, struct vap *b)
 		    b->provider_asns[provider_index])
 			return -1;
 	}
-
 	return 0;
 }
 
@@ -1641,17 +1420,10 @@ vapfullcmp(struct vap *a, struct vap *b)
 int
 insert_vap(struct vap_tree *vaptree, struct vap *vap, time_t present)
 {
-	struct vap *newnode;
-	struct vap *foundnode;
-
+	struct vap *newnode, *foundnode;
 	struct asn_tree asns;
-
-	struct asn *asn;
-	struct asn *tmpasn;
-
-	int32_t provider_length;
-	int32_t provider_count;
-	int32_t provider_index;
+	struct asn *asn, *tmpasn;
+	int32_t provider_length, provider_count, provider_index;
 
 	assert(vaptree);
 	assert(vap);
@@ -1669,29 +1441,23 @@ insert_vap(struct vap_tree *vaptree, struct vap *vap, time_t present)
 	    provider_index++)
 		insert_asn(&asns, vap->provider_asns[provider_index]);
 
-	if (clean_asn_tree(&asns) != 0) {
+	if (clean_asn_tree(&asns) != 0)
 		logx(0, "Mixed ASPA AS0 record found for AS%u, stripping AS0",
 		    vap->customer_asn);
-	}
 
 	provider_count = asn_treecount(&asns);
-
 	if (provider_count < 0)
 		err(1, NULL);
 
 	provider_length = sizeof(uint32_t) * provider_count;
-
 	newnode = malloc(sizeof(struct vap) + provider_length);
-
 	if (newnode == NULL)
 		err(1, NULL);
 
 	newnode->expire = vap->expire;
 	newnode->customer_asn = vap->customer_asn;
 	newnode->provider_count = provider_count;
-
 	provider_index = 0;
-
 	RB_FOREACH_SAFE(asn, asn_tree, &asns, tmpasn) {
 		newnode->provider_asns[provider_index++] = asn->asn;
 		RB_REMOVE(asn_tree, &asns, asn);
@@ -1699,7 +1465,6 @@ insert_vap(struct vap_tree *vaptree, struct vap *vap, time_t present)
 	}
 
 	foundnode = RB_INSERT(vap_tree, vaptree, newnode);
-
 	if (!foundnode)
 		return 0;
 
@@ -1712,7 +1477,6 @@ insert_vap(struct vap_tree *vaptree, struct vap *vap, time_t present)
 	free(foundnode);
 
 	RB_INSERT(vap_tree, vaptree, newnode);
-
 	return 0;
 }
 
@@ -1720,8 +1484,7 @@ insert_vap(struct vap_tree *vaptree, struct vap *vap, time_t present)
 int
 remove_vap(struct vap_tree *vaptree, struct vap *vap)
 {
-	struct vap query;
-	struct vap *node;
+	struct vap query, *node;
 
 	assert(vaptree);
 	assert(vap);
@@ -1734,21 +1497,18 @@ remove_vap(struct vap_tree *vaptree, struct vap *vap)
 	query.provider_count = 0;
 
 	node = RB_FIND(vap_tree, vaptree, &query);
-
 	if (!node)
 		return 1;
 
 	RB_REMOVE(vap_tree, vaptree, node);
 	free(node);
-
 	return 0;
 }
 
 void
 free_vap_tree(struct vap_tree *vaptree)
 {
-	struct vap *vap;
-	struct vap *tmpvap;
+	struct vap *vap, *tmpvap;
 
 	if (!vaptree)
 		return;
@@ -1757,15 +1517,12 @@ free_vap_tree(struct vap_tree *vaptree)
 		RB_REMOVE(vap_tree, vaptree, vap);
 		free(vap);
 	}
-
-	return;
 }
 
 int
 vap_treecmp(struct vap_tree *a, struct vap_tree *b)
 {
-	struct vap *vap;
-	struct vap *node;
+	struct vap *vap, *node;
 	int i;
 
 	assert(a);
@@ -1790,15 +1547,13 @@ vap_treecmp(struct vap_tree *a, struct vap_tree *b)
 		if (i != 0)
 			return i;
 	}
-
 	return 0;
 }
 
 void
 vap_treecpy(struct vap_tree *src, struct vap_tree *dst)
 {
-	struct vap *vap;
-	struct vap *node;
+	struct vap *vap, *node;
 
 	uint32_t vap_length;
 	int32_t provider_index;
@@ -1813,7 +1568,6 @@ vap_treecpy(struct vap_tree *src, struct vap_tree *dst)
 		    (vap->provider_count * sizeof(uint32_t));
 
 		node = malloc(vap_length);
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -1829,15 +1583,12 @@ vap_treecpy(struct vap_tree *src, struct vap_tree *dst)
 
 		RB_INSERT(vap_tree, dst, node);
 	}
-
-	return;
 }
 
 void
 vap_treecpy_expire(struct vap_tree *src, struct vap_tree *dst, time_t present)
 {
-	struct vap *vap;
-	struct vap *node;
+	struct vap *vap, *node;
 
 	uint32_t vap_length;
 	int32_t provider_index;
@@ -1855,7 +1606,6 @@ vap_treecpy_expire(struct vap_tree *src, struct vap_tree *dst, time_t present)
 		    (vap->provider_count * sizeof(uint32_t));
 
 		node = malloc(vap_length);
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -1871,19 +1621,15 @@ vap_treecpy_expire(struct vap_tree *src, struct vap_tree *dst, time_t present)
 
 		RB_INSERT(vap_tree, dst, node);
 	}
-
-	return;
 }
 
 int64_t
 vap_treecount(struct vap_tree *vaptree)
 {
 	struct vap *vap;
-	int64_t i;
+	int64_t i = 0;
 
 	assert(vaptree);
-
-	i = 0;
 
 	RB_FOREACH(vap, vap_tree, vaptree) {
 		i++;
@@ -1911,8 +1657,7 @@ vap_treeempty(struct vap_tree *vaptree)
 void
 vap_treeupdate(struct vap_tree *oldtree, struct vap_tree *newtree)
 {
-	struct vap *oldvap;
-	struct vap *newvap;
+	struct vap *oldvap, *newvap;
 
 	assert(oldtree);
 	assert(newtree);
@@ -1922,50 +1667,33 @@ vap_treeupdate(struct vap_tree *oldtree, struct vap_tree *newtree)
 		if (newvap)
 			oldvap->expire = newvap->expire;
 	}
-
-	return;
 }
 
 uint32_t
 vap_treehash(struct vap_tree *vaptree)
 {
 	struct vap *vap;
-
-	uint32_t hash;
+	uint32_t hash = fnv32_init;
 
 	assert(vaptree);
 
-	hash = fnv32_init;
 
 	RB_FOREACH(vap, vap_tree, vaptree) {
-
-		hash = fnv32_hash(
-		    &vap->customer_asn,
-		    sizeof(uint32_t),
-		    hash);
+		hash = fnv32_hash(&vap->customer_asn, sizeof(uint32_t), hash);
 
 		if (vap->provider_count > 0) {
-			hash = fnv32_hash(
-			    &vap->provider_asns,
-			    vap->provider_count * sizeof(uint32_t),
-			    hash);
+			hash = fnv32_hash(&vap->provider_asns,
+			    vap->provider_count * sizeof(uint32_t), hash);
 		}
-
 	}
-
 	return hash;
 }
 
 void
-vap_treecpy_count_and_hash(
-    struct vap_tree *src,
-    struct vap_tree *dst,
-    int64_t *count,
-    uint32_t *hash)
+vap_treecpy_count_and_hash(struct vap_tree *src, struct vap_tree *dst,
+    int64_t *count, uint32_t *hash)
 {
-	struct vap *vap;
-	struct vap *node;
-
+	struct vap *vap, *node;
 	uint32_t vap_length;
 	int32_t provider_index;
 
@@ -1984,7 +1712,6 @@ vap_treecpy_count_and_hash(
 		    (vap->provider_count * sizeof(uint32_t));
 
 		node = malloc(vap_length);
-
 		if (node == NULL)
 			err(1, NULL);
 
@@ -1997,25 +1724,17 @@ vap_treecpy_count_and_hash(
 		    provider_index++)
 			node->provider_asns[provider_index] =
 			    vap->provider_asns[provider_index];
-
 		RB_INSERT(vap_tree, dst, node);
 
 		(*count)++;
 
-		*hash = fnv32_hash(
-		    &vap->customer_asn,
-		    sizeof(uint32_t),
-		    *hash);
+		*hash = fnv32_hash(&vap->customer_asn, sizeof(uint32_t), *hash);
 
 		if (vap->provider_count > 0) {
-			*hash = fnv32_hash(
-			    &vap->provider_asns,
-			    vap->provider_count * sizeof(uint32_t),
-			    *hash);
+			*hash = fnv32_hash(&vap->provider_asns,
+			    vap->provider_count * sizeof(uint32_t), *hash);
 		}
 	}
-
-	return;
 }
 
 struct cache_vap_tree *
@@ -2050,7 +1769,6 @@ cache_vap_tree_find(struct vap_tree *vaptree)
 			}
 		}
 	}
-
 	return NULL;
 }
 
@@ -2072,29 +1790,22 @@ cache_vap_tree_new(struct vap_tree *vaptree)
 	assert(vaptree);
 
 	cache_vap = cache_vap_tree_find(vaptree);
-
-	if (cache_vap)
-	{
+	if (cache_vap) {
 		cache_vap = cache_vap_tree_dup(cache_vap);
 		return cache_vap;
 	}
 
 	cache_vap = malloc(sizeof(struct cache_vap_tree));
-
 	if (cache_vap == NULL)
 		err(1, NULL);
 
 	RB_INIT(&cache_vap->vaps);
 
 	cache_vap->reference_count = 1;
-	vap_treecpy_count_and_hash(
-	    vaptree,
-	    &cache_vap->vaps,
-	    &cache_vap->entry_count,
-	    &cache_vap->hash);
+	vap_treecpy_count_and_hash(vaptree, &cache_vap->vaps,
+	    &cache_vap->entry_count, &cache_vap->hash);
 	rtr_gettime();
 	cache_vap->creation_time = now.tv_sec;
-
 	return cache_vap;
 }
 
@@ -2106,11 +1817,8 @@ cache_vap_tree_free(struct cache_vap_tree *cache_vap)
 
 	cache_vap->reference_count--;
 
-	if (cache_vap->reference_count < 1)
-	{
+	if (cache_vap->reference_count < 1) {
 		free_vap_tree(&cache_vap->vaps);
 		free(cache_vap);
 	}
-
-	return;
 }
