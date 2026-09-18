@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.29 2026/03/28 11:33:33 tb Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.30 2026/09/18 21:54:54 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -200,42 +200,37 @@ tls_conninfo_alpn_proto(struct tls *ctx)
 }
 
 static int
-tls_conninfo_cert_pem(struct tls *ctx)
+tls_conninfo_certs_pem(STACK_OF(X509) *certs, uint8_t **out_pem,
+    size_t *out_pem_len)
 {
-	int i, rv = -1;
 	BIO *membio = NULL;
 	BUF_MEM *bptr = NULL;
+	int i, rv = -1;
 
-	if (ctx->ssl_peer_cert == NULL)
+	free(*out_pem);
+	*out_pem = NULL;
+	*out_pem_len = 0;
+
+	if (certs == NULL || sk_X509_num(certs) <= 0)
 		return 0;
-	if ((membio = BIO_new(BIO_s_mem()))== NULL)
+
+	if ((membio = BIO_new(BIO_s_mem())) == NULL)
 		goto err;
 
-	/*
-	 * We have to write the peer cert out separately, because
-	 * the certificate chain may or may not contain it.
-	 */
-	if (!PEM_write_bio_X509(membio, ctx->ssl_peer_cert))
-		goto err;
-	for (i = 0; i < sk_X509_num(ctx->ssl_peer_chain); i++) {
-		X509 *chaincert = sk_X509_value(ctx->ssl_peer_chain, i);
-		if (chaincert != ctx->ssl_peer_cert &&
-		    !PEM_write_bio_X509(membio, chaincert))
+	for (i = 0; i < sk_X509_num(certs); i++) {
+		if (!PEM_write_bio_X509(membio, sk_X509_value(certs, i)))
 			goto err;
 	}
 
 	BIO_get_mem_ptr(membio, &bptr);
-	free(ctx->conninfo->peer_cert);
-	ctx->conninfo->peer_cert_len = 0;
-	if ((ctx->conninfo->peer_cert = malloc(bptr->length)) == NULL)
+	if ((*out_pem = malloc(bptr->length)) == NULL)
 		goto err;
-	ctx->conninfo->peer_cert_len = bptr->length;
-	memcpy(ctx->conninfo->peer_cert, bptr->data,
-	    ctx->conninfo->peer_cert_len);
+	memcpy(*out_pem, bptr->data, bptr->length);
+	*out_pem_len = bptr->length;
 
-	/* BIO_free() will kill BUF_MEM - because we have not set BIO_NOCLOSE */
 	rv = 0;
  err:
+	/* BIO_free() will kill BUF_MEM - because we have not set BIO_NOCLOSE */
 	BIO_free(membio);
 	return rv;
 }
@@ -283,7 +278,8 @@ tls_conninfo_populate(struct tls *ctx)
 	if (tls_get_peer_cert_info(ctx) == -1)
 		goto err;
 
-	if (tls_conninfo_cert_pem(ctx) == -1)
+	if (tls_conninfo_certs_pem(ctx->ssl_peer_chain,
+	    &ctx->conninfo->peer_cert, &ctx->conninfo->peer_cert_len) == -1)
 		goto err;
 
 	if (tls_conninfo_session(ctx) == -1)

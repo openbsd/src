@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.105 2026/04/16 07:28:00 tb Exp $ */
+/* $OpenBSD: tls.c,v 1.106 2026/09/18 21:54:54 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -728,11 +728,11 @@ tls_reset(struct tls *ctx)
 	SSL_CTX_free(ctx->ssl_ctx);
 	SSL_free(ctx->ssl_conn);
 	X509_free(ctx->ssl_peer_cert);
+	sk_X509_pop_free(ctx->ssl_peer_chain, X509_free);
 
 	ctx->ssl_conn = NULL;
 	ctx->ssl_ctx = NULL;
 	ctx->ssl_peer_cert = NULL;
-	/* X509 objects in chain are freed with the SSL */
 	ctx->ssl_peer_chain = NULL;
 
 	ctx->socket = -1;
@@ -815,6 +815,56 @@ tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret, const char *prefix)
 	}
 }
 
+/*
+ * The certificates from SSL_get_peer_cert_chain() include the peer
+ * certificate for a client but not for a server.
+ */
+static int
+tls_peer_cert_chain(struct tls *ctx)
+{
+	STACK_OF(X509) *certs;
+	X509 *cert, *owned_cert = NULL;
+	int i;
+
+	sk_X509_pop_free(ctx->ssl_peer_chain, X509_free);
+	ctx->ssl_peer_chain = NULL;
+
+	if (ctx->ssl_peer_cert == NULL)
+		return (0);
+
+	if ((ctx->ssl_peer_chain = sk_X509_new_null()) == NULL)
+		goto err;
+	if (!X509_up_ref(ctx->ssl_peer_cert))
+		goto err;
+	owned_cert = ctx->ssl_peer_cert;
+	if (!sk_X509_push(ctx->ssl_peer_chain, owned_cert))
+		goto err;
+	owned_cert = NULL;
+
+	certs = SSL_get_peer_cert_chain(ctx->ssl_conn);
+	for (i = 0; i < sk_X509_num(certs); i++) {
+		cert = sk_X509_value(certs, i);
+		if (cert == ctx->ssl_peer_cert)
+			continue;
+		if (!X509_up_ref(cert))
+			goto err;
+		owned_cert = cert;
+		if (!sk_X509_push(ctx->ssl_peer_chain, owned_cert))
+			goto err;
+		owned_cert = NULL;
+	}
+
+	return (0);
+
+ err:
+	X509_free(owned_cert);
+	sk_X509_pop_free(ctx->ssl_peer_chain, X509_free);
+	ctx->ssl_peer_chain = NULL;
+	tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+	    "failed to build peer certificate chain");
+	return (-1);
+}
+
 int
 tls_handshake(struct tls *ctx)
 {
@@ -841,8 +891,9 @@ tls_handshake(struct tls *ctx)
 
 	if (rv == 0) {
 		ctx->ssl_peer_cert = SSL_get_peer_certificate(ctx->ssl_conn);
-		ctx->ssl_peer_chain = SSL_get_peer_cert_chain(ctx->ssl_conn);
-		if (tls_conninfo_populate(ctx) == -1)
+		if (tls_peer_cert_chain(ctx) == -1)
+			rv = -1;
+		else if (tls_conninfo_populate(ctx) == -1)
 			rv = -1;
 		if (ctx->ocsp == NULL)
 			ctx->ocsp = tls_ocsp_setup_from_peer(ctx);
