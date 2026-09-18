@@ -1,18 +1,23 @@
-#	$OpenBSD: Makefile,v 1.29 2026/06/26 06:08:08 tb Exp $
+#	$OpenBSD: Makefile,v 1.30 2026/09/18 14:37:52 beck Exp $
 
 PROGS =	constraints verify x509attribute x509req_ext callback
 PROGS += expirecallback callbackfailures x509_asn1 x509_extensions_test
-PROGS += x509_crl x509_name_test
+PROGS += x509_crl x509_name_test name_constraints_test
 LDADD =	-lcrypto
 DPADD =	${LIBCRYPTO}
 
 LDADD_constraints = ${CRYPTO_INT}
 LDADD_verify = ${CRYPTO_INT}
 
+SRCS_name_constraints_test = name_constraints_test.c test.c test_util.c
+
 WARNINGS =	Yes
 CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/x509
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
+CFLAGS +=	-I${.CURDIR}/../test
+
+.PATH: ${.CURDIR}/../test
 
 SUBDIR += bettertls policy rfc3779
 
