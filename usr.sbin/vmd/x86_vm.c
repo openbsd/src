@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.20 2026/09/18 02:35:55 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.21 2026/09/18 03:53:59 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -753,22 +753,24 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 /*
  * find_gpa_range
  *
- * Search for a contiguous guest physical mem range.
+ * Find the base memory range that provides contiguous memory for the given
+ * starting gpa and spanning len bytes.
  *
  * Parameters:
- *  vcp: VM create parameters that contain the memory map to search in
+ *  vcp: VM create parameters that contain the memory map to search
  *  gpa: the starting guest physical address
- *  len: the length of the memory range
+ *  len: the length of the requested span
  *
  * Return values:
- *  NULL: on failure if there is no memory range as described by the parameters
- *  Pointer to vm_mem_range that contains the start of the range otherwise.
+ *  NULL: if no base memory range
+ *  On success, a pointer to vm_mem_range that contains the start of the range.
  */
 struct vm_mem_range *
 find_gpa_range(struct vmop_create_params *vmc, paddr_t gpa, size_t len)
 {
-	size_t i, n;
-	struct vm_mem_range *vmr;
+	size_t i, n, rest;
+	paddr_t prev_end_gpa;
+	struct vm_mem_range *vmr, *end_vmr;
 
 	/* Find the first vm_mem_range that contains gpa */
 	for (i = 0; i < vmc->vmc_nmemranges; i++) {
@@ -782,30 +784,53 @@ find_gpa_range(struct vmop_create_params *vmc, paddr_t gpa, size_t len)
 	if (i == vmc->vmc_nmemranges)
 		return (NULL);
 
-	/*
-	 * vmr may cover the range [gpa, gpa + len) only partly. Make
-	 * sure that the following vm_mem_ranges are contiguous and
-	 * cover the rest.
-	 */
-	n = vmr->vmr_size - (gpa - vmr->vmr_gpa);
-	if (len < n)
-		len = 0;
-	else
-		len -= n;
-	gpa = vmr->vmr_gpa + vmr->vmr_size;
-	for (i = i + 1; len != 0 && i < vmc->vmc_nmemranges; i++) {
-		vmr = &vmc->vmc_memranges[i];
-		if (gpa != vmr->vmr_gpa)
-			return (NULL);
-		if (len <= vmr->vmr_size)
-			len = 0;
-		else
-			len -= vmr->vmr_size;
+	/* Reject MMIO ranges or those with bogus host VAs. */
+	if (vmr->vmr_type == VM_MEM_MMIO || vmr->vmr_va == 0)
+		return (NULL);
 
-		gpa = vmr->vmr_gpa + vmr->vmr_size;
+	/* Does the requested span fit in the found range? */
+	n = vmr->vmr_size - (gpa - vmr->vmr_gpa);
+	if (len <= n)
+		return (vmr);
+	rest = len - n;
+
+	/*
+	 * vmr covers the range [gpa, gpa + len) partially. Make sure
+	 * that the following vm_mem_ranges are contiguous without
+	 * mmio holes and covers the remaining requested span.
+	 */
+	if (vmr->vmr_size - 1 > UINT64_MAX - vmr->vmr_gpa)
+		return (NULL);
+	prev_end_gpa = vmr->vmr_gpa + (vmr->vmr_size - 1);
+
+	for (i = i + 1; rest > 0 && i < vmc->vmc_nmemranges; i++) {
+		end_vmr = &vmc->vmc_memranges[i];
+
+		/* Is the region valid memory and mapped in the host? */
+		if (end_vmr->vmr_type == VM_MEM_MMIO || end_vmr->vmr_va == 0)
+			return (NULL);
+
+		/* Are the regions contiguous? */
+		if (prev_end_gpa == UINT64_MAX)
+			return (NULL);
+		if (prev_end_gpa + 1 != end_vmr->vmr_gpa)
+			return (NULL);
+
+		/* Does the span end here or do we continue checking? */
+		if (rest <= end_vmr->vmr_size) {
+			rest = 0;
+			break;
+		}
+
+		/* Check for if we'd overflow */
+		if (end_vmr->vmr_size - 1 > UINT64_MAX - end_vmr->vmr_gpa)
+			return (NULL);
+
+		rest -= end_vmr->vmr_size;
+		prev_end_gpa = end_vmr->vmr_gpa + (end_vmr->vmr_size - 1);
 	}
 
-	if (len != 0)
+	if (rest != 0)
 		return (NULL);
 
 	return (vmr);
