@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.84 2026/09/18 02:35:55 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.85 2026/09/18 21:26:16 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5148,6 +5148,8 @@ svm_handle_np_fault(struct vcpu *vcpu)
 	switch (gpa_memtype) {
 	case VMM_MEM_TYPE_REGULAR:
 		vee->vee_fault_type = VEE_FAULT_HANDLED;
+		vee->vee_gpa = gpa;
+		vee->vee_insn_info |= VEE_GPA_VALID;
 		action = svm_fault_page(vcpu, gpa);
 		break;
 	case VMM_MEM_TYPE_MMIO:
@@ -5158,6 +5160,8 @@ svm_handle_np_fault(struct vcpu *vcpu)
 			    sizeof(vee->vee_insn_bytes));
 			vee->vee_insn_info |= VEE_BYTES_VALID;
 		}
+		vee->vee_gpa = gpa;
+		vee->vee_insn_info |= VEE_GPA_VALID;
 		action = VMM_ACTION_ASSIST;
 		break;
 	default:
@@ -5277,6 +5281,8 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 	switch (gpa_memtype) {
 	case VMM_MEM_TYPE_REGULAR:
 		vee->vee_fault_type = VEE_FAULT_HANDLED;
+		vee->vee_gpa = gpa;
+		vee->vee_insn_info |= VEE_GPA_VALID;
 		action = vmx_fault_page(vcpu, gpa);
 		break;
 	case VMM_MEM_TYPE_MMIO:
@@ -5291,6 +5297,8 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 			vee->vee_insn_info |= VEE_LEN_VALID;
 			action = VMM_ACTION_ASSIST;
 		}
+		vee->vee_gpa = gpa;
+		vee->vee_insn_info |= VEE_GPA_VALID;
 		break;
 	default:
 		printf("%s: unknown memory type %d for GPA 0x%llx\n",

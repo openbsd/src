@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_mmio.c,v 1.5 2026/09/18 19:02:10 dv Exp $	*/
+/*	$OpenBSD: x86_mmio.c,v 1.6 2026/09/18 21:26:16 dv Exp $	*/
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
  *
@@ -81,14 +81,12 @@ static enum decode_result decode_imm(struct x86_decode_state *,
     struct x86_insn *);
 static int get_operand_size(struct x86_insn *);
 
-static int mmio_valid_addr(uint64_t);
-
 static enum decode_result peek_byte(struct x86_decode_state *, uint8_t *);
 static enum decode_result next_byte(struct x86_decode_state *, uint8_t *);
 static enum decode_result next_value(struct x86_decode_state *, size_t,
     uint64_t *);
 static int is_valid_state(struct x86_decode_state *, const char *);
-static void invalid_mmio_gpa(struct x86_insn *, struct vm_exit *, uint64_t);
+__dead static void mmio_fatal(struct x86_insn *, struct vm_exit *, uint64_t);
 
 static int emulate_add(struct x86_insn *, struct vm_exit *, uint32_t);
 static void emulate_add_flags(struct vm_exit *, uint64_t, uint64_t, uint64_t,
@@ -204,20 +202,13 @@ const enum x86_operand_enc x86_2byte_operand_enc_table[256] = {
 	[0xB7] = OP_ENC_RM,
 };
 
-static int
-mmio_valid_addr(uint64_t gpa)
-{
-	return (mmio_find_dev(gpa) != NULL);
-}
-
 static void
-invalid_mmio_gpa(struct x86_insn *insn, struct vm_exit *exit, uint64_t gpa)
+mmio_fatal(struct x86_insn *insn, struct vm_exit *exit, uint64_t gpa)
 {
 	uint64_t *r = exit->vrs.vrs_gprs;
 
-	log_warnx("invalid MMIO address: rip=0x%llx gva=0x%lx gpa=0x%llx",
+	fatalx("invalid MMIO address: rip=0x%llx gva=0x%lx gpa=0x%llx",
 	    r[VCPU_REGS_RIP], insn->insn_gva, gpa);
-	fatalx("invalid mmio gpa 0x%llx", gpa);
 }
 
 /*
@@ -1259,13 +1250,14 @@ emulate_add(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 
 	if (insn->insn_opcode.op_encoding != OP_ENC_RM)
 		return (EINVAL);
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret != 0)
-		return (ret);
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
+
 	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
-		return (ENODEV);
+		mmio_fatal(insn, exit, gpa);
+
 	opsz = get_operand_size(insn);
 	data = 0;
 	if ((ret = mmio_fn(vcpu_id, MMIO_DIR_READ, gpa, opsz, &data)) != 0)
@@ -1334,20 +1326,12 @@ emulate_and(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		return (EINVAL);
 	}
 
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret) {
-		log_warnx("%s: error translating gva 0x%lx: %s", __func__,
-		    insn->insn_gva, strerror(ret));
-		return (0);
-	}
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
 
-	mmio_fn = mmio_find_dev(gpa);
-	if (mmio_fn == NULL) {
-		log_warnx("%s: no mmio fn for gpa 0x%llx", __func__, gpa);
-		return (0);
-	}
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
 
 	opsz = get_operand_size(insn);
 	data = 0;
@@ -1399,20 +1383,12 @@ emulate_test(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		return (EINVAL);
 	}
 
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret != 0) {
-		log_warnx("%s: error translating gva 0x%lx: %s", __func__,
-		    insn->insn_gva, strerror(ret));
-		return (0);
-	}
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
 
-	mmio_fn = mmio_find_dev(gpa);
-	if (mmio_fn == NULL) {
-		log_warnx("%s: no mmio fn for gpa 0x%llx", __func__, gpa);
-		return (0);
-	}
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
 
 	opsz = get_operand_size(insn);
 	data = 0;
@@ -1466,20 +1442,12 @@ emulate_cmp(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 	    MODRM_REGOP(insn->insn_modrm) != 7))
 		return (EINVAL);
 
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret != 0) {
-		log_warnx("%s: error translating gva 0x%lx: %s", __func__,
-		    insn->insn_gva, strerror(ret));
-		return (ret);
-	}
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
 
-	mmio_fn = mmio_find_dev(gpa);
-	if (mmio_fn == NULL) {
-		log_warnx("%s: no mmio fn for gpa 0x%llx", __func__, gpa);
-		return (ENODEV);
-	}
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
 
 	opsz = get_operand_size(insn);
 	data = 0;
@@ -1578,14 +1546,10 @@ emulate_pop(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		    __func__, insn->insn_gva, strerror(ret));
 		return (ret);
 	}
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
 
-	mmio_fn = mmio_find_dev(gpa);
-	if (mmio_fn == NULL) {
-		log_warnx("%s: no mmio fn for gpa 0x%llx", __func__, gpa);
-		return (ENODEV);
-	}
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
+
 	ret = mmio_fn(vcpu_id, MMIO_DIR_WRITE, gpa, opsz, &data);
 	if (ret != 0) {
 		log_warnx("%s: mmio function indicated failure", __func__);
@@ -1626,20 +1590,12 @@ emulate_push(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		return (EINVAL);
 	}
 
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret != 0) {
-		log_warnx("%s: error translating source gva 0x%lx: %s",
-		    __func__, insn->insn_gva, strerror(ret));
-		return (ret);
-	}
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
 
-	mmio_fn = mmio_find_dev(gpa);
-	if (mmio_fn == NULL) {
-		log_warnx("%s: no mmio fn for gpa 0x%llx", __func__, gpa);
-		return (ENODEV);
-	}
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
 
 	data = 0;
 	ret = mmio_fn(vcpu_id, MMIO_DIR_READ, gpa, opsz, &data);
@@ -1683,20 +1639,12 @@ emulate_sub(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		return (EINVAL);
 	}
 
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret != 0) {
-		log_warnx("%s: error translating gva 0x%lx: %s", __func__,
-		    insn->insn_gva, strerror(ret));
-		return (ret);
-	}
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
 
-	mmio_fn = mmio_find_dev(gpa);
-	if (mmio_fn == NULL) {
-		log_warnx("%s: no mmio fn for gpa 0x%llx", __func__, gpa);
-		return (ENODEV);
-	}
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
 
 	opsz = get_operand_size(insn);
 	data = 0;
@@ -1767,29 +1715,18 @@ emulate_mov(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 
 	DPRINTF("%s: entered", __func__);
 
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
+
+	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
+		mmio_fatal(insn, exit, gpa);
+
 	switch (insn->insn_opcode.op_encoding) {
 	case OP_ENC_FD:		/* Read: From displacement */
 	case OP_ENC_RM:		/* Read: mem->reg */
 		DPRINTF("%s: read from gva 0x%lx to %s", __func__,
 		    insn->insn_gva, str_reg(insn->insn_reg));
-		ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-		if (ret) {
-			log_warnx("error translating gva 0x%lx: %s",
-			    insn->insn_gva, strerror(ret));
-			return 0;
-		}
-		if (!mmio_valid_addr(gpa))
-			invalid_mmio_gpa(insn, exit, gpa);
-
-		DPRINTF("%s: gva 0x%lx translated to gpa 0x%llx", __func__,
-		    insn->insn_gva, gpa);
-		mmio_fn = mmio_find_dev(gpa);
-		if (!mmio_fn) {
-			log_warnx("%s: no mmio fn for gpa 0x%llx", __func__,
-			    gpa);
-			return 0;
-		}
-		data = 0;
 		opsz = get_operand_size(insn);
 		switch (opsz) {
 		case 1:
@@ -1842,70 +1779,31 @@ emulate_mov(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 	case OP_ENC_MR:		/* Write: reg->mem */
 		DPRINTF("%s: write to gva 0x%lx to %s", __func__,
 		    insn->insn_gva, str_reg(insn->insn_reg));
-		ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_WRITE);
-		if (ret) {
-			log_warnx("error translating gva 0x%lx: %s",
-			    insn->insn_gva, strerror(ret));
-			return (0);
+		opsz = get_operand_size(insn);
+		reg = insn->insn_reg;
+		if (opsz == 1 && insn->insn_modrm_valid &&
+		    insn->insn_prefix.pfx_rex == REX_NONE &&
+		    MODRM_REGOP(insn->insn_modrm) >= 4) {
+			reg = MODRM_REGOP(insn->insn_modrm) - 4;
+			regshift = 8;
 		}
-		if (!mmio_valid_addr(gpa))
-			invalid_mmio_gpa(insn, exit, gpa);
-
-		DPRINTF("%s: gva 0x%lx translated to gpa 0x%llx", __func__,
-		    insn->insn_gva, gpa);
-		mmio_fn = mmio_find_dev(gpa);
-		if (mmio_fn) {
-			opsz = get_operand_size(insn);
-			reg = insn->insn_reg;
-			if (opsz == 1 && insn->insn_modrm_valid &&
-			    insn->insn_prefix.pfx_rex == REX_NONE &&
-			    MODRM_REGOP(insn->insn_modrm) >= 4) {
-				reg = MODRM_REGOP(insn->insn_modrm) - 4;
-				regshift = 8;
-			}
-			data = exit->vrs.vrs_gprs[reg] >> regshift;
-			DPRINTF("%s: write 0x%llx to mmio addr 0x%llx",
-			    __func__, data, gpa);
-			ret = mmio_fn(vcpu_id, MMIO_DIR_WRITE, gpa, opsz, &data);
-			if (ret) {
-				log_warnx("%s: mmio function indicated failure",
-				    __func__);
-			}
-		} else {
-			log_warnx("%s: no mmio fn for gpa 0x%llx", __func__,
-			    gpa);
+		data = exit->vrs.vrs_gprs[reg] >> regshift;
+		DPRINTF("%s: write 0x%llx to mmio addr 0x%llx", __func__, data,
+		    gpa);
+		ret = mmio_fn(vcpu_id, MMIO_DIR_WRITE, gpa, opsz, &data);
+		if (ret) {
+			log_warnx("%s: mmio function indicated failure", __func__);
 		}
 		return (0);
 	case OP_ENC_MI:		/* Write: immediate to mem */
 		DPRINTF("%s: write immediate 0x%llx to gva 0x%lx", __func__,
 		    insn->insn_immediate, insn->insn_gva);
-		ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_WRITE);
+		opsz = get_operand_size(insn);
+		data = insn->insn_immediate;
+		ret = mmio_fn(vcpu_id, MMIO_DIR_WRITE, gpa, opsz, &data);
 		if (ret) {
-			log_warnx("error translating gva 0x%lx: %s",
-			    insn->insn_gva, strerror(ret));
-			return (0);
-		}
-		if (!mmio_valid_addr(gpa))
-			invalid_mmio_gpa(insn, exit, gpa);
-
-		DPRINTF("%s: gva 0x%lx translated to gpa 0x%llx", __func__,
-		    insn->insn_gva, gpa);
-		mmio_fn = mmio_find_dev(gpa);
-		if (mmio_fn) {
-			opsz = get_operand_size(insn);
-			data = insn->insn_immediate;
-			ret = mmio_fn(vcpu_id, MMIO_DIR_WRITE, gpa, opsz,
-			    &data);
-			if (!ret) {
-				DPRINTF("%s: wrote immediate value 0x%llx to "
-				    "memory", __func__, data);
-			} else {
-				log_warnx("%s: mmio function indicated failure",
-				    __func__);
-			}
-		} else {
-			log_warnx("%s: no mmio fn for gpa 0x%llx", __func__,
-			    gpa);
+			log_warnx("%s: mmio function indicated failure",
+			    __func__);
 		}
 		return (0);
 	default:
@@ -1976,7 +1874,8 @@ emulate_movs(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		srcfn = mmio_find_dev(srcgpa);
 		dstfn = mmio_find_dev(dstgpa);
 		if (srcfn == NULL && dstfn == NULL)
-			return (ENODEV);
+			fatalx("%s: no functions for src gpa=0x%llx, dst "
+			    "gpa=0x%llx", __func__, srcgpa, dstgpa);
 		data = 0;
 		if (srcfn != NULL)
 			ret = srcfn(vcpu_id, MMIO_DIR_READ, srcgpa, opsz,
@@ -2048,13 +1947,13 @@ emulate_movzx(struct x86_insn *insn, struct vm_exit *exit, uint32_t vcpu_id)
 		return (-1);
 	}
 
-	ret = translate_gva(exit, insn->insn_gva, &gpa, PROT_READ);
-	if (ret != 0)
-		return (ret);
-	if (!mmio_valid_addr(gpa))
-		invalid_mmio_gpa(insn, exit, gpa);
+	if (!(exit->vee.vee_insn_info & VEE_GPA_VALID))
+		fatalx("%s: exit information missing GPA", __func__);
+	gpa = exit->vee.vee_gpa;
+
 	if ((mmio_fn = mmio_find_dev(gpa)) == NULL)
-		return (ENODEV);
+		mmio_fatal(insn, exit, gpa);
+
 	if ((ret = mmio_fn(vcpu_id, MMIO_DIR_READ, gpa, src, &value)) != 0)
 		return (ret);
 	mask = src == 1 ? 0xff : 0xffff;
@@ -2086,42 +1985,33 @@ insn_emulate(struct vm_exit *exit, struct x86_insn *insn, uint32_t vcpu_id)
 	case OP_ADD:
 		res = emulate_add(insn, exit, vcpu_id);
 		break;
-
 	case OP_AND:
 		res = emulate_and(insn, exit, vcpu_id);
 		break;
-
 	case OP_CMP:
 		res = emulate_cmp(insn, exit, vcpu_id);
 		break;
-
 	case OP_MOV:
 		res = emulate_mov(insn, exit, vcpu_id);
 		break;
 	case OP_MOVS:
 		res = emulate_movs(insn, exit, vcpu_id);
 		break;
-
 	case OP_MOVZX:
 		res = emulate_movzx(insn, exit, vcpu_id);
 		break;
-
 	case OP_POP:
 		res = emulate_pop(insn, exit, vcpu_id);
 		break;
-
 	case OP_PUSH:
 		res = emulate_push(insn, exit, vcpu_id);
 		break;
-
 	case OP_SUB:
 		res = emulate_sub(insn, exit, vcpu_id);
 		break;
-
 	case OP_TEST:
 		res = emulate_test(insn, exit, vcpu_id);
 		break;
-
 	default:
 		log_warnx("%s: emulation not defined for %s", __func__,
 		    str_opcode(&insn->insn_opcode));

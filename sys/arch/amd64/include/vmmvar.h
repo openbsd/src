@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.119 2026/09/18 02:35:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.120 2026/09/18 21:26:16 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -348,10 +348,12 @@ struct vm_exit_inout {
 struct vm_exit_eptviolation {
 	uint8_t		vee_fault_type;		/* type of vm exit */
 	uint8_t		vee_insn_info;		/* bitfield */
-#define VEE_LEN_VALID		0x1		/* vee_insn_len is valid */
-#define VEE_BYTES_VALID		0x2		/* vee_insn_bytes is valid */
+#define VEE_LEN_VALID		(1 << 0)	/* vee_insn_len is valid */
+#define VEE_BYTES_VALID		(1 << 1)	/* vee_insn_bytes is valid */
+#define VEE_GPA_VALID		(1 << 2)	/* vee_gpa is valid */
 	uint8_t		vee_insn_len;		/* [VMX] instruction length */
 	uint8_t		vee_insn_bytes[15];	/* [SVM] bytes at {R,E,}IP */
+	uint64_t	vee_gpa;		/* GPA that caused the fault */
 };
 
 /*
