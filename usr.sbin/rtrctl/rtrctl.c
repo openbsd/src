@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrctl.c,v 1.2 2026/09/18 05:21:43 deraadt Exp $ */
+/*	$OpenBSD: rtrctl.c,v 1.3 2026/09/18 15:47:36 job Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -1053,7 +1053,7 @@ process_stats(char *controller_filename)
 #define COMMAND_MAXLENGTH	80
 
 #define COMMAND_UNKNOWN		0
-#define COMMAND_IMPORT		1
+#define COMMAND_RELOAD		1
 #define COMMAND_STATS		2
 
 int
@@ -1094,8 +1094,8 @@ main(int argc, char **argv)
 
 	command = COMMAND_UNKNOWN;
 
-	if (strncmp(argv[0], "import", COMMAND_MAXLENGTH) == 0)
-		command = COMMAND_IMPORT;
+	if (strncmp(argv[0], "reload", COMMAND_MAXLENGTH) == 0)
+		command = COMMAND_RELOAD;
 
 	if (strncmp(argv[0], "stats", COMMAND_MAXLENGTH) == 0)
 		command = COMMAND_STATS;
@@ -1104,11 +1104,12 @@ main(int argc, char **argv)
 	argc--;
 
 	switch (command) {
-	case COMMAND_IMPORT:
+	case COMMAND_RELOAD:
 		if (argc >= 1)
 			import_filename = argv[0];
-
+		printf("reload request sent.\n");
 		process_import(import_filename, controller_filename);
+		printf("request processed\n");
 		break;
 	case COMMAND_STATS:
 		process_stats(controller_filename);
