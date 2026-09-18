@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093aa.c,v 1.2 2026/09/18 04:25:01 dv Exp $ */
+/*	$OpenBSD: i82093aa.c,v 1.3 2026/09/18 04:46:25 dv Exp $ */
 
 /*
  * Copyright (c) 2024 Mike Larkin <mlarkin@openbsd.org>
@@ -55,10 +55,9 @@ static void	i82093aa_winop(int, uint64_t *);
 static void
 i82093aa_decode_redent(uint32_t reg)
 {
-	uint8_t pin;
-	uint32_t lo, hi;
 #ifdef I82093AA_DEBUG
-	uint8_t dest, delmod, vector;
+	uint8_t dest, delmod, pin, vector;
+	uint32_t lo, hi;
 #endif /* I82093AA_DEBUG */
 
 	if (reg < I82093AA_REDTBL0_LO || reg > I82093AA_REDTBL23_HI) {
@@ -66,11 +65,11 @@ i82093aa_decode_redent(uint32_t reg)
 		return;
 	}
 
+#ifdef I82093AA_DEBUG
 	pin = (reg - I82093AA_REDTBL0_LO) / 2;
 	lo = ioapic.redtbl[pin * 2];
 	hi = ioapic.redtbl[pin * 2 + 1];
 
-#ifdef I82093AA_DEBUG
 	dest = (hi & IOAPIC_REDHI_DEST_MASK) >> IOAPIC_REDHI_DEST_SHIFT;
 	delmod = (lo & IOAPIC_REDLO_DEL_MASK) >> IOAPIC_REDLO_DEL_SHIFT;
 	vector = lo & IOAPIC_REDLO_VECTOR_MASK;
