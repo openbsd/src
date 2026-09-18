@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.22 2026/09/17 15:21:02 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.23 2026/09/18 03:33:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -204,6 +204,7 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 int
 simplefb_activate(struct device *self, int act)
 {
+#ifdef SUSPEND
 	struct simplefb_softc *sc = (struct simplefb_softc *)self;
 	struct rasops_info *ri = &sc->sc_ri;
 
@@ -213,6 +214,7 @@ simplefb_activate(struct device *self, int act)
 			rasops_show_screen(ri, ri->ri_active, 0, NULL, NULL);
 		break;
 	}
+#endif
 
 	return config_activate_children(self, act);	
 }
