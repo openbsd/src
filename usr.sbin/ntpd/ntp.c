@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.186 2026/09/10 15:06:22 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.187 2026/09/18 00:45:50 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -708,6 +708,7 @@ peer_addr_head_clear(struct ntp_peer *p)
 static void
 priv_adjfreq(double offset)
 {
+	static double time_origin;
 	double curtime, freq;
 
 	if (!conf->status.synced){
@@ -724,6 +725,10 @@ priv_adjfreq(double offset)
 	offset = conf->freq.overall_offset;
 
 	curtime = gettime_corrected();
+	/* Center time to keep the regression sums numerically stable. */
+	if (conf->freq.samples == 1)
+		time_origin = curtime;
+	curtime -= time_origin;
 	conf->freq.xy += offset * curtime;
 	conf->freq.x += curtime;
 	conf->freq.y += offset;
