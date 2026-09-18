@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_mmu.c,v 1.1 2026/09/16 18:49:50 mlarkin Exp $ */
+/*	$OpenBSD: x86_mmu.c,v 1.2 2026/09/18 04:25:01 dv Exp $ */
 /*
  * Copyright (c) 2024 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -29,6 +29,15 @@
 #include "x86_vm.h"
 
 #define	I386_FRAME	0xfffff000ULL
+
+#ifdef DPRINTF
+#undef DPRINTF
+#endif
+#if MMU_DEBUG
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif	/* MMU_DEBUG */
 
 /*
  * translate_gva
@@ -77,7 +86,7 @@ translate_gva(struct vm_exit *exit, uint64_t va, uint64_t *pa, int mode)
 
 	pt_paddr = vrs->vrs_crs[VCPU_REGS_CR3];
 
-	log_debug("%s: guest %%cr0=0x%llx, %%cr3=0x%llx", __func__,
+	DPRINTF("%s: guest %%cr0=0x%llx, %%cr3=0x%llx", __func__,
 	    vrs->vrs_crs[VCPU_REGS_CR0], pt_paddr);
 
 	if (!(vrs->vrs_crs[VCPU_REGS_CR0] & CR0_PE))
@@ -119,7 +128,7 @@ translate_gva(struct vm_exit *exit, uint64_t va, uint64_t *pa, int mode)
 		pdidx = (va & mask) >> shift;
 		pte_paddr = pt_paddr + pdidx * pte_size;
 
-		log_debug("%s: read pte level %d @ GPA 0x%llx", __func__,
+		DPRINTF("%s: read pte level %d @ GPA 0x%llx", __func__,
 		    level, pte_paddr);
 
 		/* A 32-bit read must not leave stale upper bits in pte */
@@ -129,7 +138,7 @@ translate_gva(struct vm_exit *exit, uint64_t va, uint64_t *pa, int mode)
 			return (EFAULT);
 		}
 
-		log_debug("%s: PTE @ 0x%llx = 0x%llx", __func__, pte_paddr,
+		DPRINTF("%s: PTE @ 0x%llx = 0x%llx", __func__, pte_paddr,
 		    pte);
 
 		if (!(pte & PG_V))
@@ -167,7 +176,7 @@ translate_gva(struct vm_exit *exit, uint64_t va, uint64_t *pa, int mode)
 	low_mask = (1ULL << shift) - 1;
 	*pa = (pte & frame_mask & ~low_mask) | (va & low_mask);
 
-	log_debug("%s: final GPA for GVA 0x%llx = 0x%llx", __func__, va,
+	DPRINTF("%s: final GPA for GVA 0x%llx = 0x%llx", __func__, va,
 	    *pa);
 
 	return (0);

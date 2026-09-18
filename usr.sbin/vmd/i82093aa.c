@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093aa.c,v 1.1 2026/09/17 22:20:06 mlarkin Exp $ */
+/*	$OpenBSD: i82093aa.c,v 1.2 2026/09/18 04:25:01 dv Exp $ */
 
 /*
  * Copyright (c) 2024 Mike Larkin <mlarkin@openbsd.org>
@@ -24,6 +24,15 @@
 #include "mmio.h"
 #include "vmd.h"
 
+#ifdef DPRINTF
+#undef DPRINTF
+#endif
+#if I82093AA_DEBUG
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif	/* I82093AA_DEBUG */
+
 struct i82093aa {
 	uint32_t	reg;
 	uint32_t	id;
@@ -46,8 +55,11 @@ static void	i82093aa_winop(int, uint64_t *);
 static void
 i82093aa_decode_redent(uint32_t reg)
 {
-	uint8_t pin, dest, delmod, vector;
+	uint8_t pin;
 	uint32_t lo, hi;
+#ifdef I82093AA_DEBUG
+	uint8_t dest, delmod, vector;
+#endif /* I82093AA_DEBUG */
 
 	if (reg < I82093AA_REDTBL0_LO || reg > I82093AA_REDTBL23_HI) {
 		log_warnx("%s: impossible reg 0x%x", __func__, reg);
@@ -57,11 +69,14 @@ i82093aa_decode_redent(uint32_t reg)
 	pin = (reg - I82093AA_REDTBL0_LO) / 2;
 	lo = ioapic.redtbl[pin * 2];
 	hi = ioapic.redtbl[pin * 2 + 1];
+
+#ifdef I82093AA_DEBUG
 	dest = (hi & IOAPIC_REDHI_DEST_MASK) >> IOAPIC_REDHI_DEST_SHIFT;
 	delmod = (lo & IOAPIC_REDLO_DEL_MASK) >> IOAPIC_REDLO_DEL_SHIFT;
 	vector = lo & IOAPIC_REDLO_VECTOR_MASK;
+#endif /* I82093AA_DEBUG */
 
-	log_debug("%s: pin %u %s write: hi=0x%08x lo=0x%08x "
+	DPRINTF("%s: pin %u %s write: hi=0x%08x lo=0x%08x "
 	    "dest=%u/%s delivery=%u vector=%u %s/%s %s rirr=%u",
 	    __func__, pin, reg & 1 ? "high" : "low", hi, lo, dest,
 	    lo & IOAPIC_REDLO_DSTMOD ? "logical" : "physical", delmod,
@@ -170,7 +185,7 @@ i82093aa_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
 {
 	(void)size;
 
-	log_debug("%s: vcpu=%u dir=%d addr=0x%lx data=0x%llx", __func__,
+	DPRINTF("%s: vcpu=%u dir=%d addr=0x%lx data=0x%llx", __func__,
 	    vcpu_id, dir, addr,
 	    *data);
 
@@ -210,7 +225,6 @@ i82093aa_assert_pin(uint8_t pin)
 		log_warnx("%s: invalid pin %u", __func__, pin);
 		return;
 	}
-	log_debug("%s: asserting pin %u", __func__, pin);
 	pthread_mutex_lock(&ioapic.mtx);
 	ioapic.pin_level[pin] = 1;
 	i82093aa_evaluate_pin(pin);
@@ -224,7 +238,6 @@ i82093aa_deassert_pin(uint8_t pin)
 		log_warnx("%s: invalid pin %u", __func__, pin);
 		return;
 	}
-	log_debug("%s: deasserting pin %u", __func__, pin);
 	pthread_mutex_lock(&ioapic.mtx);
 	ioapic.pin_level[pin] = 0;
 	i82093aa_evaluate_pin(pin);
@@ -291,7 +304,7 @@ i82093aa_deliver(uint8_t dest, int dest_mode, int delivery_mode,
 	if (vector < 32 || !lapic_enabled(dest))
 		return 0;
 
-	log_debug("%s: vector %u to physical APIC %u", __func__, vector,
+	DPRINTF("%s: vector %u to physical APIC %u", __func__, vector,
 	    dest);
 	lapic_vector_irq(dest, 0, vector, level);
 
@@ -304,7 +317,7 @@ i82093aa_eoi(int vector)
 	uint8_t pin;
 	uint64_t ent;
 
-	log_debug("%s: EOI for vector %d", __func__, vector);
+	DPRINTF("%s: EOI for vector %d", __func__, vector);
 	pthread_mutex_lock(&ioapic.mtx);
 
 	for (pin = 0; pin < I82093AA_PIN_COUNT; pin++) {

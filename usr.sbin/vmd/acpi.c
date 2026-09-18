@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.2 2026/09/17 22:20:06 mlarkin Exp $ */
+/*	$OpenBSD: acpi.c,v 1.3 2026/09/18 04:25:01 dv Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -188,7 +188,7 @@ vcpu_exit_acpi_pm1(struct vm_run_params *vrp)
 	mutex_unlock(&acpi_pm1.mtx);
 
 	if (powerdown) {
-		log_info("%s: guest entered ACPI S5", __func__);
+		log_debug("%s: guest entered ACPI S5", __func__);
 		vm_shutdown(VMMCI_SHUTDOWN);
 	}
 
@@ -335,7 +335,7 @@ acpi_create_facs(paddr_t pa)
 	facs.length = sizeof(facs);
 	facs.version = 1;
 
-	log_warnx("%s: writing FACS to %lx", __func__, pa);
+	log_debug("%s: writing FACS to %lx", __func__, pa);
 	if (write_mem(pa, &facs, sizeof(facs)))
 		log_warnx("%s: could not write FACS", __func__);
 }
@@ -351,7 +351,7 @@ acpi_create_fadt(paddr_t pa, paddr_t facs_pa, paddr_t dsdt_pa)
 {
 	struct acpi_fadt fadt;
 
-	log_warnx("%s: creating FADT", __func__);
+	log_debug("%s: creating FADT", __func__);
 	memset(&fadt, 0, sizeof(fadt));
 
 	acpi_populate_header(&fadt.hdr, VMD_FADT_OEM_TABLEID);
@@ -419,17 +419,17 @@ acpi_create_fadt(paddr_t pa, paddr_t facs_pa, paddr_t dsdt_pa)
 	/* Checksum */
 	fadt.hdr.checksum = acpi_calculate_checksum((uint8_t *)&fadt, sizeof(fadt));
 
-	log_warnx("%s: FADT size %zu", __func__, sizeof(fadt));
-	log_warnx("%s: DSDT pointer 0x%x / 0x%llx", __func__, fadt.dsdt,
+	log_debug("%s: FADT size %zu", __func__, sizeof(fadt));
+	log_debug("%s: DSDT pointer 0x%x / 0x%llx", __func__, fadt.dsdt,
 	    (unsigned long long)fadt.x_dsdt);
 
 	acpi_verify_checksum((uint8_t *)&fadt, sizeof(fadt));
 
-	log_warnx("%s: writing FADT to %lx", __func__, pa);
+	log_debug("%s: writing FADT to %lx", __func__, pa);
 	if (write_mem(pa, &fadt, sizeof(fadt)))
 		log_warnx("%s: could not write FADT table", __func__);
 
-	log_warnx("%s: FADT creation complete", __func__);
+	log_debug("%s: FADT creation complete", __func__);
 }
 
 /*
@@ -446,9 +446,9 @@ acpi_create_madt(paddr_t pa, size_t numcpu)
 	uint8_t *tbl, *b;
 	size_t i, sz;
 
-	log_warnx("%s: creating MADT", __func__);
+	log_debug("%s: creating MADT", __func__);
 	sz = sizeof(*madt) + sizeof(*ioapic) + (sizeof(*lapic) * numcpu);
-	log_warnx("%s: MADT size %zd", __func__, sz);
+	log_debug("%s: MADT size %zd", __func__, sz);
 	tbl = (uint8_t *)malloc(sz);
 	if (tbl == NULL)
 		fatal("malloc");
@@ -486,16 +486,16 @@ acpi_create_madt(paddr_t pa, size_t numcpu)
 	memcpy(madt->hdr_signature, MADT_SIG, 4);
 	madt->hdr.length = sz;
 	madt->hdr.checksum = acpi_calculate_checksum(tbl, sz);
-	log_warnx("%s: computed MADT checksum 0x%x", __func__, madt->hdr.checksum);
+	log_debug("%s: computed MADT checksum 0x%x", __func__, madt->hdr.checksum);
 
-	log_warnx("%s: writing MADT to %lx", __func__, pa);
+	log_debug("%s: writing MADT to %lx", __func__, pa);
 	acpi_verify_checksum((uint8_t *)tbl, sz);
 
 	if (write_mem(pa, tbl, sz))
 		log_warnx("%s: could not write MADT table", __func__);
 	free(tbl);
 
-	log_warnx("%s: MADT creation complete", __func__);
+	log_debug("%s: MADT creation complete", __func__);
 }
 
 void
@@ -537,9 +537,9 @@ acpi_create_xsdt(paddr_t pa, paddr_t *tables, size_t numtables)
 	struct acpi_xsdt *xsdt;
 	size_t i, sz;
 
-	log_warnx("%s: creating XSDT", __func__);
+	log_debug("%s: creating XSDT", __func__);
 	sz = sizeof(*xsdt) + ((numtables - 1) * sizeof(paddr_t));
-	log_warnx("%s: XSDT size %zd", __func__, sz);
+	log_debug("%s: XSDT size %zd", __func__, sz);
 
 	xsdt = (struct acpi_xsdt *)malloc(sz);
 
@@ -559,11 +559,11 @@ acpi_create_xsdt(paddr_t pa, paddr_t *tables, size_t numtables)
 
 	acpi_verify_checksum((uint8_t *)xsdt, sz);
 
-	log_warnx("%s: writing XSDT to %lx", __func__, pa);
+	log_debug("%s: writing XSDT to %lx", __func__, pa);
 	if (write_mem(pa, xsdt, sz))
 		log_warnx("%s: could not write XSDT table", __func__);
 
-	log_warnx("%s: XSDT creation complete", __func__);
+	log_debug("%s: XSDT creation complete", __func__);
 	free(xsdt);
 }
 
@@ -577,7 +577,7 @@ acpi_create_rsdp(paddr_t pa, paddr_t xsdt_pa)
 {
 	struct acpi_rsdp rsdp;
 
-	log_warnx("%s: creating RSDP", __func__);
+	log_debug("%s: creating RSDP", __func__);
 	memset(&rsdp, 0, sizeof(rsdp));
 
 	/* RSDP v1 fields */
@@ -600,11 +600,11 @@ acpi_create_rsdp(paddr_t pa, paddr_t xsdt_pa)
 	acpi_verify_checksum((uint8_t *)&rsdp, sizeof(rsdp));
 	fw_cfg_add_acpi_rsdp(&rsdp, sizeof(rsdp));
 
-	log_warnx("%s: writing RSDP to %lx", __func__, pa);
+	log_debug("%s: writing RSDP to %lx", __func__, pa);
 	if (write_mem(pa, &rsdp, sizeof(rsdp)))
 		log_warnx("%s: could not write RSDP table", __func__);
 
-	log_warnx("%s: RSDP creation complete", __func__);
+	log_debug("%s: RSDP creation complete", __func__);
 }
 
 void
@@ -616,7 +616,7 @@ acpi_init(size_t numcpu)
 	uint16_t rsdp_ptr_real;
 	int have_dsdt = 0;
 
-	log_warnx("%s: initializing acpi tables", __func__);
+	log_debug("%s: initializing acpi tables", __func__);
 	rsdp_ptr_real = VMD_RSDP_PADDR >> 4;
 
 	numtables = 0;
@@ -625,7 +625,7 @@ acpi_init(size_t numcpu)
 	dsdt_size = acpi_install_dsdt(VMD_DSDT_PADDR);
 	if (dsdt_size != -1) {
 		have_dsdt = 1;
-		log_warnx("%s: DSDT loaded successfully (%zd bytes)", __func__,
+		log_debug("%s: DSDT loaded successfully (%zd bytes)", __func__,
 		    dsdt_size);
 	} else {
 		log_warnx("%s: DSDT not loaded (optional)", __func__);
@@ -637,7 +637,7 @@ acpi_init(size_t numcpu)
 		acpi_create_fadt(VMD_FADT_PADDR, VMD_FACS_PADDR,
 		    VMD_DSDT_PADDR);
 		tables[numtables++] = VMD_FADT_PADDR;
-		log_warnx("%s: FADT created pointing to DSDT", __func__);
+		log_debug("%s: FADT created pointing to DSDT", __func__);
 	}
 
 	acpi_create_madt(VMD_MADT_PADDR, numcpu);
@@ -648,7 +648,7 @@ acpi_init(size_t numcpu)
 	acpi_create_rsdp(VMD_RSDP_PADDR, VMD_XSDT_PADDR);
 
 	/* EBDA pointer */
-	log_warnx("%s: writing RSDP pointer 0x%x -> 0x%x", __func__,
+	log_debug("%s: writing RSDP pointer 0x%x -> 0x%x", __func__,
 	    rsdp_ptr_real, VMD_ACPI_EBDA_PTR);
 
 	if (write_mem(VMD_ACPI_EBDA_PTR , &rsdp_ptr_real, sizeof(rsdp_ptr_real)))

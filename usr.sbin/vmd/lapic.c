@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.2 2026/09/18 02:35:55 mlarkin Exp $ */
+/*	$OpenBSD: lapic.c,v 1.3 2026/09/18 04:25:01 dv Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -27,6 +27,15 @@
 #include "i82093aa.h"
 #include "mmio.h"
 #include "vmd.h"
+
+#ifdef DPRINTF
+#undef DPRINTF
+#endif
+#if LAPIC_DEBUG
+#define DPRINTF		log_debug
+#else
+#define DPRINTF(x...)	do {} while(0)
+#endif	/* LAPIC_DEBUG */
 
 extern struct vmd_vm *current_vm;
 
@@ -366,7 +375,7 @@ lapic_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
 			d = (uint32_t)*data;
 			lapic->svr = d & (LAPIC_SVR_VECTOR_MASK |
 			    LAPIC_SVR_ENABLE | LAPIC_SVR_FOCUS);
-			log_debug("%s: vcpu %u svr=0x%x", __func__, vcpu_id,
+			DPRINTF("%s: vcpu %u svr=0x%x", __func__, vcpu_id,
 			    lapic->svr);
 		}
 		break;
@@ -405,7 +414,7 @@ lapic_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
 			    (lapic->lvt[LVT_TIMER] & LAPIC_LVTT_TM) ==
 			    LAPIC_LVTT_TM_PERIODIC;
 			lapic_timer_reload(lapic);
-			log_debug("%s: vcpu %u lapic timer icr=%u div=%u",
+			DPRINTF("%s: vcpu %u lapic timer icr=%u div=%u",
 			    __func__, vcpu_id, lapic->icr_timer,
 			    lapic_divisor(lapic->dcr_timer));
 		}
@@ -534,7 +543,7 @@ lapic_icr(uint32_t source, uint32_t hi, uint32_t lo)
 		break;
 	}
 
-	log_debug("%s: vcpu %u mode=0x%x vector=0x%x targets=0x%llx",
+	DPRINTF("%s: vcpu %u mode=0x%x vector=0x%x targets=0x%llx",
 	    __func__, source, mode, vector, (unsigned long long)targets);
 	switch (mode) {
 	case LAPIC_DLMODE_FIXED:
@@ -679,7 +688,7 @@ lapic_timer_check(uint32_t vcpu_id)
 		goto out;
 	}
 
-	log_debug("%s: vcpu %u lapic timer expired, vector %u", __func__,
+	DPRINTF("%s: vcpu %u lapic timer expired, vector %u", __func__,
 	    vcpu_id, vector);
 	lapic_set_map(lapic->irr, vector);
 	lapic_clear_map(lapic->tmr, vector);
@@ -717,7 +726,7 @@ lapic_vector_irq(uint32_t dest_vcpu, int destmode, uint8_t vector,
 		return (0);
 	}
 
-	log_debug("%s: delivering vec=%d level=%d to vcpu %u (%s dest)",
+	DPRINTF("%s: delivering vec=%d level=%d to vcpu %u (%s dest)",
 	    __func__, vector, level, dest_vcpu,
 	    destmode ? "logical" : "physical");
 	lapic_set_map(lapic->irr, vector);
