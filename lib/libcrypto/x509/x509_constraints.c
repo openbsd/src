@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.35 2026/07/31 03:59:50 kenjiro Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.36 2026/09/18 18:21:50 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -826,6 +826,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 	X509_NAME *subject_name;
 	GENERAL_NAME *name;
 	ssize_t i = 0;
+	int idx;
 	int name_type, include_cn = is_leaf, include_email = is_leaf;
 
 	/* first grab the altnames */
@@ -948,12 +949,13 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 		 * add them as mbox names to be compared against any
 		 * email constraints
 		 */
+		idx = -1;
 		while (include_email &&
-		    (i = X509_NAME_get_index_by_NID(subject_name,
-		     NID_pkcs9_emailAddress, i)) >= 0) {
+		    (idx = X509_NAME_get_index_by_NID(subject_name,
+		     NID_pkcs9_emailAddress, idx)) >= 0) {
 			ASN1_STRING *aname;
 			CBS cbs;
-			if ((email = X509_NAME_get_entry(subject_name, i)) ==
+			if ((email = X509_NAME_get_entry(subject_name, idx)) ==
 			    NULL ||
 			    (aname = X509_NAME_ENTRY_get_data(email)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
@@ -979,12 +981,13 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 		 * Include the CN as a hostname to be checked against
 		 * name constraints if it looks like a hostname.
 		 */
+		idx = -1;
 		while (include_cn &&
-		    (i = X509_NAME_get_index_by_NID(subject_name,
-		     NID_commonName, i)) >= 0) {
+		    (idx = X509_NAME_get_index_by_NID(subject_name,
+		     NID_commonName, idx)) >= 0) {
 			CBS cbs;
 			ASN1_STRING *aname;
-			if ((cn = X509_NAME_get_entry(subject_name, i)) ==
+			if ((cn = X509_NAME_get_entry(subject_name, idx)) ==
 			    NULL ||
 			    (aname = X509_NAME_ENTRY_get_data(cn)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
