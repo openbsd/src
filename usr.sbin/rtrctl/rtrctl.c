@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrctl.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: rtrctl.c,v 1.2 2026/09/18 05:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,30 +15,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/un.h>
+#include <assert.h>
 #include <errno.h>
-#include <signal.h>
-#include <endian.h>
 #include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "rtr_config.h"
-
 #include "ometric.h"
 
 static const char * const state_names[] = {
-    "Open",
-    "Established",
-    "Open-Closing",
-    "Closing"
+	"Open",
+	"Established",
+	"Open-Closing",
+	"Closing"
 };
 
 int rtr_write(int, char *, int);
@@ -83,8 +81,7 @@ struct pdu_header {
 	uint32_t len;
 } PACKED;
 
-struct pdu_open_controller
-{
+struct pdu_open_controller {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
@@ -129,8 +126,7 @@ struct pdu_ipv6_prefix_import {
 } PACKED;
 
 #define VAP_MAX_PROVIDERS       16378	/* 65532 bytes */
-struct pdu_aspa_import
-{
+struct pdu_aspa_import {
 	uint8_t version;
 	uint8_t type;
 	uint8_t flags;
@@ -148,16 +144,14 @@ struct pdu_end_of_import {
 	uint32_t length;
 } PACKED;
 
-struct pdu_query_stats
-{
+struct pdu_query_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
 } PACKED;
 
-struct pdu_start_of_stats
-{
+struct pdu_start_of_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
@@ -168,8 +162,7 @@ struct pdu_start_of_stats
 #define DOMAINNAME_SIZE 256
 #define RELEASE_SIZE    64
 
-struct pdu_global_stats
-{
+struct pdu_global_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
@@ -187,8 +180,7 @@ struct pdu_global_stats
 #define CLIENT_STATE_REGISTERED 0x01
 #define CLIENT_STATE_CLOSED     0x02
 
-struct pdu_client_stats
-{
+struct pdu_client_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
@@ -219,8 +211,7 @@ struct pdu_client_stats
 	int64_t serial_query_count;
 } PACKED;
 
-struct pdu_cache_frame_stats
-{
+struct pdu_cache_frame_stats {
 	uint8_t version;
 	uint8_t type;
 	uint8_t reserved;
@@ -240,8 +231,7 @@ struct pdu_cache_frame_stats
 	time_t vap_creation_time;
 } PACKED;
 
-struct pdu_end_of_stats
-{
+struct pdu_end_of_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
@@ -250,10 +240,10 @@ struct pdu_end_of_stats
 
 struct pollfd pfd;
 
-int rtr_write(int sock, char *buf, int size)
+int
+rtr_write(int sock, char *buf, int size)
 {
-	int offset = 0;
-	int ret;
+	int offset = 0, ret;
 
 	if (size > PDU_MAX_LENGTH)
 		return  -1;
@@ -275,10 +265,10 @@ int rtr_write(int sock, char *buf, int size)
 	return size;
 }
 
-int rtr_read(int sock, char *buf, int size)
+int
+rtr_read(int sock, char *buf, int size)
 {
-	int offset = 0;
-	int ret;
+	int offset = 0, ret;
 
 	if (size > PDU_MAX_LENGTH)
 		return  -1;
@@ -300,13 +290,13 @@ int rtr_read(int sock, char *buf, int size)
 	return size;
 }
 
-int connect_socket(char *filename)
+int
+connect_socket(char *filename)
 {
-	int sockfd;
 	struct sockaddr_un  serv_addr;
+	int sockfd;
 
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-
 	if (sockfd < 0)
 		return -1;
 
@@ -315,15 +305,14 @@ int connect_socket(char *filename)
 	serv_addr.sun_family = AF_UNIX;
 	strncpy(serv_addr.sun_path, filename, sizeof(serv_addr.sun_path) - 1);
 
-	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof serv_addr)
-	    < 0) {
+	if (connect(sockfd, (struct sockaddr *) &serv_addr,
+	    sizeof serv_addr) < 0) {
 		close(sockfd);
 		return -1;
 	}
 
 	pfd.fd = sockfd;
 	pfd.events |= POLLIN;
-
 	return sockfd;
 }
 
@@ -336,7 +325,8 @@ int connect_socket(char *filename)
 
 #define MAXLINE 2097152
 
-void read_openbgpd(FILE *fp, int sock)
+void
+read_openbgpd(FILE *fp, int sock)
 {
 	struct pdu_open_controller oc;
 	struct pdu_start_of_import soi;
@@ -344,9 +334,7 @@ void read_openbgpd(FILE *fp, int sock)
 	struct pdu_ipv6_prefix_import ip6;
 	struct pdu_aspa_import *aspa;
 	struct pdu_end_of_import eoi;
-
 	uint32_t length;
-
 	char *s_asn;
 	char *s_cidr;
 	char *s_prefix;
@@ -354,14 +342,10 @@ void read_openbgpd(FILE *fp, int sock)
 	char *s_maxlen;
 	char *s_expire;
 	char *type;
-
 	char *s_customer_asn;
 	char *s_provider_asn;
-
 	unsigned char buf[PDU_MAX_LENGTH];
-
 	char line[MAXLINE];
-
 	uint32_t p_count;
 
 	oc.version = RTR_VERSION;
@@ -393,16 +377,13 @@ void read_openbgpd(FILE *fp, int sock)
 	while (fgets(line, MAXLINE, fp)) {
 		if (line[0] == '#')
 			continue;
-
 		if (strcmp(line, "roa-set {\n") == 0)
 			break;
-
 	}
 
 	while (fgets(line, MAXLINE, fp)) {
 		if (line[0] == '#')
 			continue;
-
 		if (strcmp(line, "}\n") == 0)
 			break;
 
@@ -493,9 +474,7 @@ void read_openbgpd(FILE *fp, int sock)
 
 				rtr_write(sock, (char *)&ip6, length);
 			}
-
 		}
-
 	}
 
 	aspa = (struct pdu_aspa_import *)&buf;
@@ -581,13 +560,12 @@ void read_openbgpd(FILE *fp, int sock)
 	eoi.length     = htobe32(eoi.length);
 
 	rtr_write(sock, (char *)&eoi, length);
-
-	return;
 }
 
 #define BUF_SIZE 32
 
-void read_sock_print_ometric(int sock)
+void
+read_sock_print_ometric(int sock)
 {
 	struct pdu_header *h;
 
@@ -773,8 +751,7 @@ void read_sock_print_ometric(int sock)
 	rtrd_cache_vap = ometric_new(OMT_GAUGE, "rtrd_cache_vap",
 	    "per object type count of VAP entries");
 
-	while ( !done ) {
-
+	while (!done) {
 		poll(&pfd, 1, -1);
 
 		if ((pfd.fd != sock) || !(pfd.revents & POLLIN))
@@ -797,7 +774,7 @@ void read_sock_print_ometric(int sock)
 			rtr_read(sock, packet+PDU_HEADER_LENGTH,
 			    h->len-PDU_HEADER_LENGTH);
 
-		switch(h->type) {
+		switch (h->type) {
 		case GLOBAL_STATS:
 			gs=(struct pdu_global_stats *)packet;
 			gs->start_time = be64toh(gs->start_time);
@@ -1016,8 +993,6 @@ void read_sock_print_ometric(int sock)
 
 	ometric_output_all(stdout);
 	ometric_free_all();
-
-	return;
 }
 
 __dead static void
@@ -1027,7 +1002,6 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-h] [-s socket] command [argument ...]\n",
 	    __progname);
-
 	exit(1);
 }
 
@@ -1048,16 +1022,13 @@ process_import(char *openbgpd, char *controller_filename)
 	}
 
 	sock = connect_socket(controller_filename);
-
 	if (sock < 0) {
 		fprintf(stderr, "could not open socket\n");
 		exit(1);
 	}
 
 	read_openbgpd(fp, sock);
-
 	fclose(fp);
-
 	close(sock);
 }
 
@@ -1076,7 +1047,6 @@ process_stats(char *controller_filename)
 	}
 
 	read_sock_print_ometric(sock);
-
 	close(sock);
 }
 
@@ -1089,8 +1059,7 @@ process_stats(char *controller_filename)
 int
 main(int argc, char **argv)
 {
-	int c;
-	int command;
+	int command, c;
 	char *controller_filename = CONTROLLER_FILENAME;
 	char *import_filename = IMPORT_FILENAME;
 
@@ -1120,11 +1089,6 @@ main(int argc, char **argv)
 	signal(SIGINT,SIG_IGN);
 	signal(SIGALRM,SIG_IGN);
 
-	if (sizeof(time_t) != sizeof(int64_t)) {
-		fprintf(stderr, "unsupported time format\n");
-		exit(1);
-	}
-
 	if (argc < 1)
 		usage();
 
@@ -1145,10 +1109,10 @@ main(int argc, char **argv)
 			import_filename = argv[0];
 
 		process_import(import_filename, controller_filename);
-	break;
+		break;
 	case COMMAND_STATS:
 		process_stats(controller_filename);
-	break;
+		break;
 	case COMMAND_UNKNOWN:
 	default:
 		usage();
