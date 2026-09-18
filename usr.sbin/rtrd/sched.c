@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: sched.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -37,29 +37,12 @@
 #include "logs.h"
 #include "signals.h"
 #include "send.h"
+#include "sched.h"
 
 struct timeval now;
 
-void rtr_gettime(void);
-static inline int schedcmp(struct sched *, struct sched *);
-int insert_sched(struct sched_tree *, struct sched *);
-int remove_sched(struct sched_tree *, struct sched *);
-void remove_sched_type(struct sched_tree *, uint32_t);
-void remove_sched_socket(struct sched_tree *, struct rtr_socket *);
-void remove_sched_type_and_socket(struct sched_tree *, uint32_t,
-    struct rtr_socket *);
-void free_sched_tree(struct sched_tree *);
-void sched_init(void);
-int time_until_next_event(struct timeval);
-int schedule_cleanup(time_t);
-int schedule_handshake_timeout(time_t, struct rtr_socket *);
-int schedule_idle_timeout(time_t, struct rtr_socket *);
-void process_cleanup(time_t);
-void process_handshake_timeout(struct rtr_socket *);
-void process_idle_timeout(struct rtr_socket *);
-void process_scheduler_events(time_t);
-
-void rtr_gettime(void)
+void
+rtr_gettime(void)
 {
 	if (clock_gettime(CLOCK_REALTIME, (struct timespec *)&now) != 0) {
 		logx(0, "couldnt get the clock\n");

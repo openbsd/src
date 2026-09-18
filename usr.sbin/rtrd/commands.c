@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.1 2026/09/16 16:11:46 job Exp $ */
+/*	$OpenBSD: commands.c,v 1.2 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -38,38 +38,7 @@
 #include "logs.h"
 #include "stats.h"
 #include "sched.h"
-
-int m_serial_notify(struct rtr_socket *, struct pdu_header *);
-int m_serial_query(struct rtr_socket *, struct pdu_header *);
-int m_reset_query(struct rtr_socket *, struct pdu_header *);
-int m_cache_response(struct rtr_socket *, struct pdu_header *);
-int m_ipv4_prefix(struct rtr_socket *, struct pdu_header *);
-int m_reserved(struct rtr_socket *, struct pdu_header *);
-int m_ipv6_prefix(struct rtr_socket *, struct pdu_header *);
-int m_end_of_data(struct rtr_socket *, struct pdu_header *);
-int m_cache_reset(struct rtr_socket *, struct pdu_header *);
-int m_router_key(struct rtr_socket *, struct pdu_header *);
-int m_error(struct rtr_socket *, struct pdu_header *);
-int m_aspa_pdu(struct rtr_socket *, struct pdu_header *);
-
-int m_open_controller(struct rtr_socket *, struct pdu_header *);
-int m_close_controller(struct rtr_socket *, struct pdu_header *);
-int m_start_of_import(struct rtr_socket *, struct pdu_header *);
-int m_ipv4_prefix_import(struct rtr_socket *, struct pdu_header *);
-int m_ipv6_prefix_import(struct rtr_socket *, struct pdu_header *);
-int m_router_key_import(struct rtr_socket *, struct pdu_header *);
-int m_aspa_pdu_import(struct rtr_socket *, struct pdu_header *);
-int m_end_of_import(struct rtr_socket *, struct pdu_header *);
-int m_push_import(struct rtr_socket *, struct pdu_header *);
-int m_query_stats(struct rtr_socket *, struct pdu_header *);
-int m_start_of_stats(struct rtr_socket *, struct pdu_header *);
-int m_global_stats(struct rtr_socket *, struct pdu_header *);
-int m_client_stats(struct rtr_socket *, struct pdu_header *);
-int m_cache_frame_stats(struct rtr_socket *, struct pdu_header *);
-int m_end_of_stats(struct rtr_socket *, struct pdu_header *);
-
-int (*command_lookup(uint8_t, uint8_t, int))
-    (struct rtr_socket *, struct pdu_header *);
+#include "commands.h"
 
 int
 m_serial_notify(struct rtr_socket *s, struct pdu_header *ph)

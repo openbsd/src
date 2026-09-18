@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: cache.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -34,19 +34,7 @@
 #include "sched.h"
 #include "logs.h"
 #include "hash.h"
-
-void init_cache_frame(struct cache_frame *);
-int init_cache(struct cache *, uint16_t, uint16_t);
-int init_cache_array(uint16_t);
-int is_cache_empty(struct cache *);
-void free_cache_frame(struct cache_frame *);
-struct cache_frame *get_latest_cache_frame(uint8_t);
-struct cache_frame *get_serial_cache_frame(uint8_t, uint32_t);
-struct cache_frame *cache_frame_push(uint8_t,
-    struct cache_vrp4_tree *, struct cache_vrp6_tree *,
-    struct cache_brk_tree *, struct cache_vap_tree *);
-void update_cache(struct vrp4_tree *, struct vrp6_tree *,
-    struct brk_tree *, struct vap_tree *);
+#include "cache.h"
 
 struct cache cache[RTR_MAX_VERSION + 1];
 

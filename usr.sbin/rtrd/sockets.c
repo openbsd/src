@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: sockets.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -52,29 +52,7 @@
 #include "ip_utils.h"
 #include "stats.h"
 #include "signals.h"
-
-struct rtr_socket *fd_to_socket(int);
-int is_listener(int);
-struct pollfd *poll_find(int);
-int poll_index(int);
-struct pollfd *poll_add(int, short);
-void poll_remove(int);
-int poll_isset_events(int, short);
-int poll_isset_revents(int, short);
-void init_socket(int, int, uint32_t, ssize_t, ssize_t, ssize_t, uint8_t);
-int init_socket_table(FILE *, char *, uint16_t);
-int rtr_errno_ignore(int);
-ssize_t rtr_flush_write(struct rtr_socket *);
-void rtr_flushall_write(void);
-int rtr_sendq_add(struct rtr_socket *, void *, int);
-void rtr_sendq_pop(struct rtr_socket *, int length);
-void rtr_sendq_popall(struct rtr_socket *);
-int rtr_sendq_flush(struct rtr_socket *);
-ssize_t writeto(struct rtr_socket *, void *);
-void rtr_close(struct rtr_socket *);
-void rtr_flushall_closed(void);
-void rtr_shutdown(int);
-void core_loop(void);
+#include "sockets.h"
 
 int listener = -1;
 int controller = -1;

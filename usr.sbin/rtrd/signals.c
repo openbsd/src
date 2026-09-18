@@ -1,4 +1,4 @@
-/*	$OpenBSD: signals.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: signals.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -24,18 +24,15 @@
 
 #include "sockets.h"
 #include "logs.h"
+#include "signals.h"
+
+volatile sig_atomic_t sigflags = 0;
 
 #define SIGFLAGS_TERM	0x01
 #define SIGFLAGS_INT	0x02
 #define SIGFLAGS_QUIT	0x04
 #define SIGFLAGS_USR1	0x08
 #define SIGFLAGS_HUP	0x10
-
-volatile sig_atomic_t sigflags = 0;
-
-int init_signals(void);
-void signal_handler(int);
-void signal_processor(void);
 
 /* 1 on fail */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: tables.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -33,114 +33,10 @@
 #include "packets.h"
 #include "cache.h"
 #include "sched.h"
+#include "tables.h"
 #include "hash.h"
 #include "ip_utils.h"
 #include "logs.h"
-
-/*
- * VRP4
- */
-
-static inline int vrp4cmp(struct vrp4 *, struct vrp4 *);
-int insert_vrp4(struct vrp4_tree *, struct vrp4 *, time_t);
-int remove_vrp4(struct vrp4_tree *, struct vrp4 *);
-void free_vrp4_tree(struct vrp4_tree *);
-int vrp4_treecmp(struct vrp4_tree *, struct vrp4_tree *);
-void vrp4_treecpy(struct vrp4_tree *, struct vrp4_tree *);
-void vrp4_treecpy_expire(struct vrp4_tree *, struct vrp4_tree *, time_t);
-int64_t vrp4_treecount(struct vrp4_tree *);
-int vrp4_treeempty(struct vrp4_tree *);
-void vrp4_treeupdate(struct vrp4_tree *, struct vrp4_tree *);
-uint32_t vrp4_treehash(struct vrp4_tree *);
-void vrp4_treecpy_count_and_hash(struct vrp4_tree *, struct vrp4_tree *,
-    int64_t *, uint32_t *);
-
-struct cache_vrp4_tree *cache_vrp4_tree_find(struct vrp4_tree *);
-struct cache_vrp4_tree *cache_vrp4_tree_dup(struct cache_vrp4_tree *);
-struct cache_vrp4_tree *cache_vrp4_tree_new(struct vrp4_tree *);
-void cache_vrp4_tree_free(struct cache_vrp4_tree *);
-
-/*
- * VRP6
- */
-
-static inline int vrp6cmp(struct vrp6 *, struct vrp6 *);
-int insert_vrp6(struct vrp6_tree *, struct vrp6 *, time_t);
-int remove_vrp6(struct vrp6_tree *, struct vrp6 *);
-void free_vrp6_tree(struct vrp6_tree *);
-int vrp6_treecmp(struct vrp6_tree *, struct vrp6_tree *);
-void vrp6_treecpy(struct vrp6_tree *, struct vrp6_tree *);
-void vrp6_treecpy_expire(struct vrp6_tree *, struct vrp6_tree *, time_t);
-int64_t vrp6_treecount(struct vrp6_tree *);
-int vrp6_treeempty(struct vrp6_tree *);
-void vrp6_treeupdate(struct vrp6_tree *, struct vrp6_tree *);
-uint32_t vrp6_treehash(struct vrp6_tree *);
-void vrp6_treecpy_count_and_hash(struct vrp6_tree *, struct vrp6_tree *,
-    int64_t *, uint32_t *);
-
-struct cache_vrp6_tree *cache_vrp6_tree_find(struct vrp6_tree *);
-struct cache_vrp6_tree *cache_vrp6_tree_dup(struct cache_vrp6_tree *);
-struct cache_vrp6_tree *cache_vrp6_tree_new(struct vrp6_tree *);
-void cache_vrp6_tree_free(struct cache_vrp6_tree *);
-
-/*
- * BRK
- */
-
-static inline int brkcmp(struct brk *, struct brk *);
-int insert_brk(struct brk_tree *, struct brk *, time_t);
-int remove_brk(struct brk_tree *, struct brk *);
-void free_brk_tree(struct brk_tree *);
-int brk_treecmp(struct brk_tree *, struct brk_tree *);
-void brk_treecpy(struct brk_tree *, struct brk_tree *);
-void brk_treecpy_expire(struct brk_tree *, struct brk_tree *, time_t);
-int64_t brk_treecount(struct brk_tree *);
-int brk_treeempty(struct brk_tree *);
-void brk_treeupdate(struct brk_tree *, struct brk_tree *);
-uint32_t brk_treehash(struct brk_tree *);
-void brk_treecpy_count_and_hash(struct brk_tree *, struct brk_tree *,
-    int64_t *, uint32_t *);
-
-struct cache_brk_tree *cache_brk_tree_find(struct brk_tree *);
-struct cache_brk_tree *cache_brk_tree_dup(struct cache_brk_tree *);
-struct cache_brk_tree *cache_brk_tree_new(struct brk_tree *);
-void cache_brk_tree_free(struct cache_brk_tree *);
-
-/*
- * ASN
- */
-
-static inline int asncmp(struct asn *, struct asn *);
-int insert_asn(struct asn_tree *, uint32_t);
-int remove_asn(struct asn_tree *, uint32_t);
-void free_asn_tree(struct asn_tree *);
-int clean_asn_tree(struct asn_tree *);
-int32_t asn_treecount(struct asn_tree *);
-
-
-/*
- * VAP
- */
-
-static inline int vapcmp(struct vap *, struct vap *);
-int vapfullcmp(struct vap *, struct vap *);
-int insert_vap(struct vap_tree *, struct vap *, time_t);
-int remove_vap(struct vap_tree *, struct vap *);
-void free_vap_tree(struct vap_tree *);
-int vap_treecmp(struct vap_tree *, struct vap_tree *);
-void vap_treecpy(struct vap_tree *, struct vap_tree *);
-void vap_treecpy_expire(struct vap_tree *, struct vap_tree *, time_t);
-int64_t vap_treecount(struct vap_tree *);
-int vap_treeempty(struct vap_tree *);
-void vap_treeupdate(struct vap_tree *, struct vap_tree *);
-uint32_t vap_treehash(struct vap_tree *);
-void vap_treecpy_count_and_hash(struct vap_tree *, struct vap_tree *,
-    int64_t *, uint32_t *);
-
-struct cache_vap_tree *cache_vap_tree_find(struct vap_tree *);
-struct cache_vap_tree *cache_vap_tree_dup(struct cache_vap_tree *);
-struct cache_vap_tree *cache_vap_tree_new(struct vap_tree *);
-void cache_vap_tree_free(struct cache_vap_tree *);
 
 /*
  * VRP4

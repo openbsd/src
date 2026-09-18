@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: send.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -35,30 +35,10 @@
 #include "sched.h"
 #include "logs.h"
 #include "stats.h"
+#include "send.h"
 
 #define PDU_ERROR_MAX_MESSAGE \
     (PDU_MAX_LENGTH - (sizeof(struct pdu_error) + sizeof(uint32_t)))
-
-ssize_t sendto_one(struct rtr_socket *, void *);
-void sendto_allclients(void *);
-void sendto_allregisteredclients(void *);
-void sendto_allregisteredclientsversion(void *, uint8_t);
-
-ssize_t sendserialnotifyto_one(struct rtr_socket *, uint32_t);
-ssize_t sendcacheresponseto_one(struct rtr_socket *);
-ssize_t sendvrp4to_one(struct rtr_socket *, struct vrp4 *, uint8_t);
-ssize_t sendvrp6to_one(struct rtr_socket *, struct vrp6 *, uint8_t);
-ssize_t sendbrkto_one(struct rtr_socket *, struct brk *, uint8_t);
-ssize_t sendvapto_one(struct rtr_socket *, struct vap *, uint8_t);
-ssize_t sendendofdatato_one(struct rtr_socket *, uint32_t);
-ssize_t senderrorto_one(struct rtr_socket *, uint16_t, void *, char *, ...);
-ssize_t sendcacheresetto_one(struct rtr_socket *);
-
-ssize_t sendstartofstatsto_one(struct rtr_socket *);
-ssize_t sendglobalstatsto_one(struct rtr_socket *);
-void sendclientstatsto_one(struct rtr_socket *);
-void sendcacheframestatsto_one(struct rtr_socket *);
-ssize_t sendendofstatsto_one(struct rtr_socket *);
 
 ssize_t
 sendto_one(struct rtr_socket *s, void *pdu)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packets.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: packets.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -24,18 +24,7 @@
 
 #include "structs.h"
 #include "ip_utils.h"
-
-void pdu_hton(struct rtr_socket *, void *);
-void pdu_ntoh(struct rtr_socket *, void *);
-void pdu_hton_rtr(void *);
-void pdu_ntoh_rtr(void *);
-void pdu_hton_controller(void *);
-void pdu_ntoh_controller(void *);
-int check_pdu_ipv4_prefix_controller(struct pdu_ipv4_prefix_import *);
-int check_pdu_ipv6_prefix_controller(struct pdu_ipv6_prefix_import *);
-int check_pdu_router_key_controller(struct pdu_router_key_import *);
-int check_pdu_aspa_controller(struct pdu_aspa_import *);
-int check_error_code(uint16_t, uint8_t);
+#include "packets.h"
 
 char *error_code_to_str[] = {
 	"CORRUPT_DATA",

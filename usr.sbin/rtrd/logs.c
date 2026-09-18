@@ -1,4 +1,4 @@
-/*	$OpenBSD: logs.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: logs.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -21,8 +21,8 @@
 #include <syslog.h>
 
 #include "rtr_config.h"
-#include "logs.h"
 
+#include "logs.h"
 #include "structs.h"
 
 int verbose = 0;

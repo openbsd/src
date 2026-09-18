@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_utils.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: ip_utils.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -27,6 +27,7 @@
 #include "rtr_config.h"
 
 #include "structs.h"
+#include "ip_utils.h"
 
 #define IP4_BITS	(sizeof(struct in_addr) * 8)
 #define IP4_BYTES	(sizeof(struct in_addr))
@@ -35,15 +36,6 @@
 
 struct in_addr cidrmask4[IP4_BITS + 1];
 struct in6_addr cidrmask6[IP6_BITS + 1];
-
-void init_masks(void);
-struct in_addr cidr_to_netmask4(uint8_t);
-struct in6_addr cidr_to_netmask6(uint8_t);
-int is_supernet_of_subnet4(struct in_addr, uint8_t, struct in_addr, uint8_t);
-int is_supernet_of_subnet6(struct in6_addr, uint8_t, struct in6_addr, uint8_t);
-
-struct in_addr address_to_network4(struct in_addr, uint8_t);
-struct in6_addr address_to_network6(struct in6_addr, uint8_t);
 
 void
 init_masks(void)
