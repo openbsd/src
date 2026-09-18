@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.18 2026/02/23 10:27:49 sthen Exp $ */
+/*	$OpenBSD: parse.h,v 1.19 2026/09/18 18:23:09 jmatthew Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -94,6 +94,7 @@ struct authority_c	*authority_find0(struct acme_conf *);
 struct domain_c		*domain_find_handle(struct acme_conf *, char *);
 
 int			 domain_valid(const char *);
+int			 altname_domain_valid(const char *);
 const char		*ip_valid(const char *);
 
 #endif /* PARSE_H */

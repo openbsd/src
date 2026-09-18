@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2026/02/23 10:27:49 sthen Exp $ */
+/*	$OpenBSD: parse.y,v 1.49 2026/09/18 18:23:09 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -454,7 +454,7 @@ altname		: STRING {
 				if ((s = strdup(ip)) == NULL)
 					err(EXIT_FAILURE, "strdup");
 			} else {
-				if (!domain_valid($1)) {
+				if (!altname_domain_valid($1)) {
 					yyerror("bad domain name syntax");
 					YYERROR;
 				}
@@ -775,7 +775,7 @@ nodigits:
 	x != '!' && x != '=' && x != '#' && \
 	x != ','))
 
-	if (isalnum(c) || c == ':' || c == '_') {
+	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
 			if ((size_t)(p-buf) >= sizeof(buf)) {
@@ -1161,6 +1161,15 @@ domain_valid(const char *cp)
 		    *cp == '_' || isalnum((unsigned char)*cp)))
 			return 0;
 	return 1;
+}
+
+int
+altname_domain_valid(const char *cp)
+{
+	if (cp[0] == '*' && cp[1] == '.')
+		cp += 2;
+
+	return domain_valid(cp);
 }
 
 const char *
