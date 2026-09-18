@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.83 2026/09/17 22:20:06 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.84 2026/09/18 02:35:55 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -506,7 +506,17 @@ vm_intr_pending(struct vm_intr_params *vip)
 		goto out;
 	}
 
-	vcpu->vc_intr = vip->vip_intr;
+	/*
+	 * VMM_IOC_RUN supplies vmd's current interrupt-pending snapshot, but
+	 * another vCPU can assert an interrupt after that snapshot and before
+	 * the target enters the kernel. Do not write vc_intr here: the target
+	 * owns it while holding vc_lock, and a direct write can be overwritten
+	 * by the stale VMM_IOC_RUN snapshot. Instead, latch assertions until
+	 * the target consumes them at run entry. Deassertions are reconciled
+	 * by the next VMM_IOC_RUN; an extra interrupt-window exit is harmless.
+	 */
+	if (vip->vip_intr)
+		atomic_setbits_int(&vcpu->vc_intr_latch, 1);
 #ifdef MULTIPROCESSOR
 	ci = READ_ONCE(vcpu->vc_curcpu);
 	if (ci != NULL)
@@ -1604,6 +1614,19 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    SVM_INTERCEPT_MWAIT_UNCOND | SVM_INTERCEPT_MONITOR |
 	    SVM_INTERCEPT_MWAIT_COND | SVM_INTERCEPT_RDTSCP;
 
+	/*
+	 * A reset can follow a run which armed the virtual-interrupt window.
+	 * Do not leave its dummy vector pending after resetting the intercepts:
+	 * without the VINTR intercept, hardware would deliver vector zero to
+	 * the guest when it next enables interrupts.
+	 */
+	vmcb->v_tpr = 0;
+	vmcb->v_irq = 0;
+	vmcb->v_intr_misc = 0;
+	vmcb->v_intr_vector = 0;
+	vmcb->v_intr_shadow = 0;
+	vmcb->v_eventinj = 0;
+
 	/* With SEV-ES we cannot force access XCR0, thus no intercept */
 	if (xsave_mask && !vcpu->vc_seves)
 		vmcb->v_intercept2 |= SVM_INTERCEPT_XSETBV;
@@ -1696,6 +1719,9 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* Enable SVME in EFER (must always be set) */
 	vmcb->v_efer |= EFER_SVME;
+
+	/* Every VMCB state group above was rewritten by this reset. */
+	svm_set_dirty(vcpu, SVM_CLEANBITS_ALL);
 
 	if ((ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs)) != 0)
 		return ret;
@@ -2818,6 +2844,15 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	else
 		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 
+	if (ret == 0) {
+		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
+		vcpu->vc_gueststate.vg_exit_reason = 0;
+		vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
+		vcpu->vc_intr = 0;
+		atomic_swap_uint(&vcpu->vc_intr_latch, 0);
+		vcpu->vc_irqready = 0;
+	}
+
 	return (ret);
 }
 
@@ -3697,11 +3732,13 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * last time, fix up any needed vcpu state first. Which state
 	 * needs to be fixed up depends on what vmd populated in the
 	 * exit data structure.
+	 *
+	 * Merge the userspace level snapshot with assertions which raced the
+	 * transition into VMM_IOC_RUN.  Assertions arriving after the swap stay
+	 * visible through vc_intr_latch until this run returns to userspace.
 	 */
-	if (vrp->vrp_intr_pending)
-		vcpu->vc_intr = 1;
-	else
-		vcpu->vc_intr = 0;
+	vcpu->vc_intr = vrp->vrp_intr_pending |
+	    atomic_swap_uint(&vcpu->vc_intr_latch, 0);
 
 	switch (vcpu->vc_gueststate.vg_exit_reason) {
 	case VMX_EXIT_IO:
@@ -3749,7 +3786,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 			vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		}
-	} else if (!vcpu->vc_intr) {
+	} else if (!(vcpu->vc_intr || READ_ONCE(vcpu->vc_intr_latch))) {
 		/*
 		 * Disable window exiting
 		 */
@@ -4057,7 +4094,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * If not ready for interrupts, but interrupts pending,
 			 * enable interrupt window exiting.
 			 */
-			if (vcpu->vc_irqready == 0 && vcpu->vc_intr) {
+			if (vcpu->vc_irqready == 0 &&
+			    (vcpu->vc_intr || READ_ONCE(vcpu->vc_intr_latch))) {
 				if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
 					printf("%s: can't read procbased ctls "
 					    "on intwin exit\n", __func__);
@@ -4120,7 +4158,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			continue;
 		case VMM_ACTION_ADVANCE:
 		case VMM_ACTION_RETRY:
-			if (vcpu->vc_intr && vcpu->vc_irqready) {
+			if ((vcpu->vc_intr || READ_ONCE(vcpu->vc_intr_latch)) &&
+			    vcpu->vc_irqready) {
 				ret = EAGAIN;
 				goto out;
 			}
@@ -4183,7 +4222,8 @@ vmx_handle_intr(struct vcpu *vcpu)
 /*
  * svm_handle_hlt
  *
- * Handle HLT exits
+ * Handle HLT exits. An interrupt-disabled BSP halt terminates the guest,
+ * while an AP may use that state to wait for a later INIT/SIPI.
  *
  * Parameters
  *  vcpu: The VCPU that executed the HLT instruction
@@ -4193,7 +4233,7 @@ svm_handle_hlt(struct vcpu *vcpu)
 {
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
-	if (!svm_get_iflag(vcpu, vmcb->v_rflags)) {
+	if (!svm_get_iflag(vcpu, vmcb->v_rflags) && vcpu->vc_id == 0) {
 		DPRINTF("%s: guest halted with interrupts disabled\n",
 		    __func__);
 		return (VMM_ACTION_TERMINATE);
@@ -4207,15 +4247,16 @@ svm_handle_hlt(struct vcpu *vcpu)
 /*
  * vmx_handle_hlt
  *
- * Handle HLT exits. HLTing the CPU with interrupts disabled will terminate
- * the guest (no NMIs handled) by returning EIO to vmd.
+ * Handle HLT exits. HLTing the BSP with interrupts disabled will terminate
+ * the guest (no NMIs handled).  Firmware may park an AP this way while it
+ * waits for a later INIT/SIPI, so return AP halts to vmd instead.
  *
  * Parameters:
  *  vcpu: The VCPU that executed the HLT instruction
  *
  * Return Values:
  *  VMM_ACTION_TERMINATE: An error occurred extracting information from the
- *   VMCS, or the guest halted with interrupts disabled
+ *   VMCS, or the BSP halted with interrupts disabled
  *  VMM_ACTION_ASSIST: Normal return to vmd - vmd should halt scheduling this
  *   VCPU until a virtual interrupt is ready to inject
  */
@@ -4229,7 +4270,7 @@ vmx_handle_hlt(struct vcpu *vcpu)
 		return (VMM_ACTION_TERMINATE);
 	}
 
-	if (!(rflags & PSL_I)) {
+	if (!(rflags & PSL_I) && vcpu->vc_id == 0) {
 		DPRINTF("%s: guest halted with interrupts disabled\n",
 		    __func__);
 		return (VMM_ACTION_TERMINATE);
@@ -5887,10 +5928,9 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		action = VMM_ACTION_ADVANCE;
 		break;
 	case MSR_APICBASE:
-		/*
-		 * The single vcpu is the BSP and uses the architectural base.
-		 */
-		*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE | APICBASE_BSP;
+		*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
+		if (vcpu->vc_id == 0)
+			*rax |= APICBASE_BSP;
 		*rdx = 0;
 		action = VMM_ACTION_ADVANCE;
 		break;
@@ -6174,12 +6214,9 @@ svm_handle_msr(struct vcpu *vcpu)
 			action = VMM_ACTION_ADVANCE;
 			break;
 		case MSR_APICBASE:
-			/*
-			 * The single vcpu is the BSP and uses the architectural
-			 * base.
-			 */
-			*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE |
-			    APICBASE_BSP;
+			*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
+			if (vcpu->vc_id == 0)
+				*rax |= APICBASE_BSP;
 			*rdx = 0;
 			action = VMM_ACTION_ADVANCE;
 			break;
@@ -6271,6 +6308,42 @@ vmm_handle_cpuid_0xd(struct vcpu *vcpu, uint32_t subleaf, uint64_t *rax,
 }
 
 /*
+ * Return the number of APIC ID bits needed for ncpus. APIC IDs are kept
+ * dense, but the legacy CPUID 1/4 topology leafs describe the size of
+ * the ID space rather than the number of attached processors.
+ */
+static uint32_t
+vmm_topology_shift(uint32_t ncpus)
+{
+	uint32_t shift = 0;
+
+	KASSERT(ncpus > 0 && ncpus <= VMM_MAX_VCPUS_PER_VM);
+	for (ncpus--; ncpus != 0; ncpus >>= 1)
+		shift++;
+
+	return (shift);
+}
+
+static uint32_t
+vmm_topology_capacity(uint32_t ncpus)
+{
+	return (1U << vmm_topology_shift(ncpus));
+}
+
+static uint32_t
+vmm_cpuid_cache_eax(uint32_t eax, uint32_t ncpus)
+{
+	uint32_t capacity;
+
+	eax &= VMM_CPUID4_CACHE_TOPOLOGY_MASK;
+	if ((eax & 0x1f) == 0)
+		return (0);
+
+	capacity = vmm_topology_capacity(ncpus);
+	return (eax | ((capacity - 1) << 26));
+}
+
+/*
  * vmm_handle_cpuid
  *
  * Exit handler for CPUID instruction
@@ -6288,7 +6361,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	uint64_t cr4;
 	uint64_t *rax, *rbx, *rcx, *rdx;
 	struct vmcb *vmcb;
-	uint32_t leaf, subleaf, eax, ebx, ecx, edx;
+	uint32_t leaf, subleaf, eax, ebx, ecx, edx, ncpus, shift;
+	uint32_t topology_capacity;
 	struct vmx_msr_store *msr_store;
 	int vmm_cpuid_level;
 
@@ -6367,6 +6441,9 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rax = cpu_id;
 		/* mask off host's APIC ID, reset to vcpu id */
 		*rbx = cpu_ebxfeature & 0x0000FFFF;
+		ncpus = vcpu->vc_parent->vm_vcpu_ct;
+		topology_capacity = vmm_topology_capacity(ncpus);
+		*rbx |= (topology_capacity & 0xff) << 16;
 		*rbx |= (vcpu->vc_id & 0xFF) << 24;
 		*rcx = (cpu_ecxfeature | CPUIDECX_HV) & VMM_CPUIDECX_MASK;
 
@@ -6377,6 +6454,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			*rcx &= ~CPUIDECX_OSXSAVE;
 
 		*rdx = curcpu()->ci_feature_flags & VMM_CPUIDEDX_MASK;
+		if (ncpus > 1)
+			*rdx |= CPUID_HTT;
 		break;
 	case 0x02:	/* Cache and TLB information */
 		*rax = eax;
@@ -6393,7 +6472,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x04:	/* Deterministic cache info */
-		*rax = eax & VMM_CPUID4_CACHE_TOPOLOGY_MASK;
+		ncpus = vcpu->vc_parent->vm_vcpu_ct;
+		*rax = vmm_cpuid_cache_eax(eax, ncpus);
 		*rbx = ebx;
 		*rcx = ecx;
 		*rdx = edx;
@@ -6461,13 +6541,28 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = 0;
 		*rdx = 0;
 		break;
-	case 0x0b:	/* Extended topology enumeration (not supported) */
-		DPRINTF("%s: function 0x0b (topology enumeration) not "
-		    "supported\n", __func__);
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
+	case 0x0b:	/* Extended topology enumeration */
+	case 0x1f:	/* V2 extended topology enumeration */
+		ncpus = vcpu->vc_parent->vm_vcpu_ct;
+		shift = vmm_topology_shift(ncpus);
+		*rdx = vcpu->vc_id;
+		switch (subleaf) {
+		case 0:	/* one thread per core */
+			*rax = 0;
+			*rbx = 1;
+			*rcx = (1U << 8) | 0;
+			break;
+		case 1:	/* one package containing all configured vCPUs */
+			*rax = shift;
+			*rbx = ncpus;
+			*rcx = (2U << 8) | 1;
+			break;
+		default:
+			*rax = 0;
+			*rbx = 0;
+			*rcx = subleaf;
+			break;
+		}
 		break;
 	case 0x0d:	/* Processor ext. state information */
 		vmm_handle_cpuid_0xd(vcpu, subleaf, rax, eax, ebx, ecx, edx);
@@ -6589,17 +6684,28 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = edx & VMM_APMI_EDX_INCLUDE_MASK;
 		break;
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
+		ncpus = vcpu->vc_parent->vm_vcpu_ct;
+		shift = vmm_topology_shift(ncpus);
 		*rax = eax;
 		*rbx = ebx & VMM_AMDSPEC_EBX_MASK;
-		/* Reset %rcx (topology) */
-		*rcx = 0;
+		/* One thread per core, with all cores in one package. */
+		*rcx = (shift << 12) | (ncpus - 1);
 		*rdx = edx;
 		break;
 	case 0x8000001d:	/* cache topology (AMD) */
-		*rax = eax;
+		ncpus = vcpu->vc_parent->vm_vcpu_ct;
+		*rax = vmm_cpuid_cache_eax(eax, ncpus);
 		*rbx = ebx;
 		*rcx = ecx;
 		*rdx = edx;
+		break;
+	case 0x8000001e:	/* processor topology (AMD) */
+		*rax = vcpu->vc_id;
+		/* Core ID in bits 7:0, one thread per core in bits 15:8. */
+		*rbx = vcpu->vc_id;
+		/* Node 0, one node per package. */
+		*rcx = 0;
+		*rdx = 0;
 		break;
 	case 0x8000001f:	/* encryption features (AMD) */
 		*rax = eax;
@@ -6648,10 +6754,9 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	uint64_t exit_reason;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
-	if (vrp->vrp_intr_pending)
-		vcpu->vc_intr = 1;
-	else
-		vcpu->vc_intr = 0;
+	/* See vcpu_run_vmx(): preserve assertions racing VMM_IOC_RUN entry. */
+	vcpu->vc_intr = vrp->vrp_intr_pending |
+	    atomic_swap_uint(&vcpu->vc_intr_latch, 0);
 
 	/*
 	 * If we are returning from userspace (vmd) because we exited
@@ -6867,7 +6972,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * If not ready for interrupts, but interrupts pending,
 			 * enable interrupt window exiting.
 			 */
-			if (vcpu->vc_irqready == 0 && vcpu->vc_intr) {
+			if (vcpu->vc_irqready == 0 &&
+			    (vcpu->vc_intr || READ_ONCE(vcpu->vc_intr_latch))) {
 				vmcb->v_intercept1 |= SVM_INTERCEPT_VINTR;
 				vmcb->v_irq = 1;
 				vmcb->v_intr_misc = SVM_INTR_MISC_V_IGN_TPR;
@@ -6885,7 +6991,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			continue;
 		case VMM_ACTION_ADVANCE:
 		case VMM_ACTION_RETRY:
-			if (vcpu->vc_intr && vcpu->vc_irqready) {
+			if ((vcpu->vc_intr || READ_ONCE(vcpu->vc_intr_latch)) &&
+			    vcpu->vc_irqready) {
 				ret = EAGAIN;
 				goto out;
 			}

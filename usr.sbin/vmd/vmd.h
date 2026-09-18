@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.149 2026/09/08 19:46:18 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.150 2026/09/18 02:35:55 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -303,6 +303,7 @@ TAILQ_HEAD(switchlist, vmd_switch);
 
 struct vmd_vm {
 	struct vmop_create_params vm_params;
+	size_t			 vm_ncpus_config;
 
 	/* Owner and identifier information */
 	pid_t			 vm_pid;
@@ -533,8 +534,8 @@ struct vm_mem_range *
 	 find_gpa_range(struct vmop_create_params *, paddr_t, size_t);
 int	 write_mem(paddr_t, const void *, size_t);
 int	 read_mem(paddr_t, void *, size_t);
-int	 intr_ack(struct vmd_vm *);
-int	 intr_pending(struct vmd_vm *);
+int	 intr_ack(int);
+int	 intr_pending(int);
 void	 intr_toggle_el(struct vmd_vm *, int, int);
 void	 vcpu_assert_irq(uint32_t, uint32_t, int);
 void	 vcpu_deassert_irq(uint32_t, uint32_t, int);
@@ -543,14 +544,19 @@ uint8_t	 vcpu_exit_pci(struct vm_run_params *);
 
 #ifdef __amd64__
 /* x86 io functions in x86_vm.c */
+void	 vcpu_init_ap(struct vcpu_reg_state *);
+void	 vcpu_init_sipi(struct vcpu_reg_state *, uint8_t);
 void	 set_return_data(struct vm_exit *, uint32_t);
 void	 get_input_data(struct vm_exit *, uint32_t *);
 #endif /* __amd64 __ */
 
 /* vm.c (mi functions) */
-void	 vcpu_halt(uint32_t);
+void	 vcpu_halt(uint32_t, int);
 void	 vcpu_unhalt(uint32_t);
 void	 vcpu_signal_run(uint32_t);
+void	 vcpu_assert_vector(uint32_t, uint32_t, uint8_t);
+void	 vcpu_assert_init(uint32_t);
+void	 vcpu_start_sipi(uint32_t, uint8_t);
 int 	 vcpu_intr(uint32_t, uint32_t, uint8_t);
 void	 vm_main(int, int);
 void	 mutex_lock(pthread_mutex_t *);

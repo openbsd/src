@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.69 2025/07/06 15:45:02 schwarze Exp $
+.\" $OpenBSD: vm.conf.5,v 1.70 2026/09/18 02:35:55 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2025 $
+.Dd $Mdocdate: September 18 2026 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -170,6 +170,9 @@ The block enclosed in curly braces can contain the following parameters:
 .It Ic allow instance Brq ...
 Set the permissions to create
 .Sx VM instances .
+.It Ic cpus Ar count
+Number of virtual CPUs to provide to the VM.
+The default is 1 and the maximum is 64.
 .It Ic boot Ar path
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
@@ -378,6 +381,8 @@ Valid options are:
 .It Ic boot
 Allow user to configure the kernel or BIOS image.
 The user needs read access to the image.
+.It Ic cpus
+Allow user to configure the number of virtual CPUs.
 .It Ic cdrom
 Allow user to configure the ISO file.
 The user needs read access to the file.

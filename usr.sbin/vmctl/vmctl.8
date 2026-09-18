@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.79 2025/06/09 18:43:01 dv Exp $
+.\"	$OpenBSD: vmctl.8,v 1.80 2026/09/18 02:35:55 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015-2024 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2025 $
+.Dd $Mdocdate: September 18 2026 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -142,6 +142,7 @@ command.
 .Op Fl i Ar count
 .Op Fl m Ar size
 .Op Fl n Ar switch
+.Op Fl p Ar count
 .Op Fl r Ar path
 .Op Fl t Ar name
 .Ar id | name
@@ -217,6 +218,10 @@ Add a network interface that is attached to the specified virtual
 See the SWITCH CONFIGURATION section in
 .Xr vm.conf 5
 for more information.
+.It Fl p Ar count
+Number of virtual CPUs to provide to a newly created VM or VM instance,
+or override the configured count for the next boot of an existing VM.
+The default is 1 and the maximum is 64.
 .It Fl r Ar path
 ISO image file for virtual CD-ROM.
 This image file will be available in the

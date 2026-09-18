@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.98 2026/04/16 21:34:47 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.99 2026/09/18 02:35:55 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -58,6 +58,7 @@ struct imsgbuf *ibuf;
  *  start_id: optional ID of the VM
  *  name: optional name of the VM
  *  memsize: memory size (in bytes) of the VM to create
+ *  ncpus: number of virtual CPUs to create (0 selects the default)
  *  nnics: number of vionet network interfaces to create
  *  nics: switch names of the network interfaces to create
  *  ndisks: number of disk images
@@ -71,7 +72,8 @@ struct imsgbuf *ibuf;
  *  ENOMEM if a memory allocation failure occurred.
  */
 int
-vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
+vm_start(uint32_t start_id, const char *name, size_t memsize, size_t ncpus,
+    int nnics,
     char **nics, int ndisks, char **disks, enum vm_disk_fmt *disktypes,
     char *kernel, char *iso, char *instance, unsigned int bootdevice)
 {
@@ -92,6 +94,8 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 
 	if (memsize)
 		flags |= VMOP_CREATE_MEMORY;
+	if (ncpus)
+		flags |= VMOP_CREATE_CPU;
 	if (nnics)
 		flags |= VMOP_CREATE_NETWORK;
 	if (ndisks)
@@ -102,7 +106,7 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 		flags |= VMOP_CREATE_CDROM;
 	if (instance)
 		flags |= VMOP_CREATE_INSTANCE;
-	else if (flags != 0) {
+	else if (flags != 0 && flags != VMOP_CREATE_CPU) {
 		if (memsize < 1)
 			memsize = VM_DEFAULT_MEMORY;
 		if (ndisks > VM_MAX_DISKS_PER_VM)
@@ -126,7 +130,7 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 	vmc.vmc_nmemranges = 1;
 	vmc.vmc_memranges[0].vmr_size = memsize;
 
-	vmc.vmc_ncpus = 1;
+	vmc.vmc_ncpus = ncpus;
 	vmc.vmc_id = start_id;
 
 	vmc.vmc_ndisks = ndisks;

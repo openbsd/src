@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.90 2026/07/29 13:32:50 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.91 2026/09/18 02:35:55 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -78,7 +78,8 @@ struct ctl_command ctl_commands[] = {
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,
 	    "[-cL] [-B device] [-b path] [-d disk] [-i count]\n"
-	    "\t\t[-m size] [-n switch] [-r path] [-t name] id | name",	1},
+	    "\t\t[-m size] [-n switch] [-p count] [-r path] [-t name] "
+	    "id | name",	1},
 	{ "status",	CMD_STATUS,	ctl_status,	"[-r] [id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"[-fw] [id | -a]" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
@@ -213,7 +214,8 @@ vmmaction(struct parse_result *res)
 
 	switch (res->action) {
 	case CMD_START:
-		ret = vm_start(res->id, res->name, res->size, res->nifs,
+		ret = vm_start(res->id, res->name, res->size, res->ncpus,
+		    res->nifs,
 		    res->nets, res->ndisks, res->disks, res->disktypes,
 		    res->path, res->isopath, res->instance, res->bootdevice);
 		if (ret) {
@@ -824,7 +826,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	if (pledge("stdio rpath exec unix getpw unveil sendfd", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:r:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:p:r:t:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (res->path)
@@ -870,6 +872,17 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			if (parse_network(res, optarg) != 0)
 				errx(1, "invalid network: %s", optarg);
 			break;
+		case 'p': {
+			const char *errstr;
+
+			if (res->ncpus != 0)
+				errx(1, "cpus specified multiple times");
+			res->ncpus = strtonum(optarg, 1,
+			    VMM_MAX_VCPUS_PER_VM, &errstr);
+			if (errstr != NULL)
+				errx(1, "cpu count is %s: %s", errstr, optarg);
+			break;
+		}
 		case 'd':
 			type = parse_disktype(optarg, &s);
 			if (realpath(s, path) == NULL)

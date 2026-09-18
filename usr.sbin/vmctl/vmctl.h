@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.45 2026/04/16 21:34:47 dv Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.46 2026/09/18 02:35:55 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@ struct parse_result {
 	char			*path;
 	char			*isopath;
 	size_t			 size;
+	size_t			 ncpus;
 	int			 nifs;
 	char			**nets;
 	int			 nnets;
@@ -96,7 +97,7 @@ void	 log_warnx(const char *, ...);
 int	 open_imagefile(int, const char *, int,
 	    struct virtio_backing *, off_t *);
 int	 create_imagefile(int, const char *, const char *, uint64_t, const char **);
-int	 vm_start(uint32_t, const char *, size_t, int, char **, int,
+int	 vm_start(uint32_t, const char *, size_t, size_t, int, char **, int,
 	    char **, enum vm_disk_fmt *, char *, char *, char *, unsigned int);
 int	 vm_start_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t, const char *, unsigned int);

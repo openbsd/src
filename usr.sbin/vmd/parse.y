@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2026/04/14 21:41:19 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2026/09/18 02:35:55 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -119,7 +119,7 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD AGENTX ALLOW BOOT CDROM CONTEXT DEVICE DISABLE DISK DOWN ENABLE
+%token	ADD AGENTX ALLOW BOOT CDROM CONTEXT CPUS DEVICE DISABLE DISK DOWN ENABLE
 %token	FORMAT GROUP
 %token	INET6 INSTANCE INTERFACE LLADDR LOCAL LOCKED MEMORY NET NIFS OWNER
 %token	PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP VM VMID STAGGERED START
@@ -503,6 +503,18 @@ vm_opts		: disable			{
 			free($2);
 			vmc.vmc_flags |= VMOP_CREATE_CDROM;
 		}
+		| CPUS NUMBER			{
+			if (vmc.vmc_ncpus != 0) {
+				yyerror("cpus specified more than once");
+				YYERROR;
+			}
+			if ($2 < 1 || $2 > VMM_MAX_VCPUS_PER_VM) {
+				yyerror("invalid number of cpus: %lld", $2);
+				YYERROR;
+			}
+			vmc.vmc_ncpus = (size_t)$2;
+			vmc.vmc_flags |= VMOP_CREATE_CPU;
+		}
 		| NIFS NUMBER			{
 			if (vmc.vmc_nnics != 0) {
 				yyerror("interfaces specified more than once");
@@ -560,6 +572,7 @@ instance_l	: instance_flags optcommanl instance_l
 
 instance_flags	: BOOT		{ vmc.vmc_insflags |= VMOP_CREATE_KERNEL; }
 		| MEMORY	{ vmc.vmc_insflags |= VMOP_CREATE_MEMORY; }
+		| CPUS		{ vmc.vmc_insflags |= VMOP_CREATE_CPU; }
 		| INTERFACE	{ vmc.vmc_insflags |= VMOP_CREATE_NETWORK; }
 		| DISK		{ vmc.vmc_insflags |= VMOP_CREATE_DISK; }
 		| CDROM		{ vmc.vmc_insflags |= VMOP_CREATE_CDROM; }
@@ -827,6 +840,7 @@ lookup(char *s)
 		{ "boot",		BOOT },
 		{ "cdrom",		CDROM },
 		{ "context",		CONTEXT},
+		{ "cpus",		CPUS },
 		{ "delay",		DELAY },
 		{ "device",		DEVICE },
 		{ "disable",		DISABLE },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.118 2026/09/17 22:20:06 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.119 2026/09/18 02:35:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -975,6 +975,7 @@ struct vcpu {
 	struct vm_exit vc_exit;			/* [v] */
 
 	uint16_t vc_intr;			/* [v] */
+	u_int vc_intr_latch;			/* [a] */
 	uint8_t vc_irqready;			/* [v] */
 
 	uint8_t vc_fpuinited;			/* [v] */

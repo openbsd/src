@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.19 2026/09/17 22:20:06 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.20 2026/09/18 02:35:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,10 +19,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 
 #include <machine/pte.h>
+#include <machine/psl.h>
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
 
@@ -52,10 +54,13 @@ typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 
 #define LOWMEM_KB	576
 #define MAX_PORTS	65536
+#define PIIX_RESET_PORT	0xcf9
+#define PIIX_RESET_FULL	0x06
 
 io_fn_t	ioports_map[MAX_PORTS];
 
 static int	loadfile_bios(gzFile, off_t, struct vcpu_reg_state *);
+static int	vcpu_exit_reset(struct vm_run_params *);
 static int	vcpu_exit_eptviolation(struct vm_run_params *);
 static void	vcpu_exit_inout(struct vm_run_params *);
 
@@ -148,6 +153,29 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
 	.vrs_crs[VCPU_REGS_XCR0] = XFEATURE_X87
 };
+
+/*
+ * Construct an inert real-mode register state for an application processor.
+ * The AP remains parked in userspace after creation or INIT, so this state is
+ * not executed; SIPI replaces its CS selector/base and RIP before it runs
+ */
+void
+vcpu_init_ap(struct vcpu_reg_state *vrs)
+{
+	memcpy(vrs, &vcpu_init_flat16, sizeof(*vrs));
+	vrs->vrs_gprs[VCPU_REGS_RIP] = 0;
+	vrs->vrs_sregs[VCPU_REGS_CS].vsi_sel = 0;
+	vrs->vrs_sregs[VCPU_REGS_CS].vsi_base = 0;
+}
+
+/* Construct the real-mode state selected by an xAPIC startup IPI */
+void
+vcpu_init_sipi(struct vcpu_reg_state *vrs, uint8_t vector)
+{
+	vcpu_init_ap(vrs);
+	vrs->vrs_sregs[VCPU_REGS_CS].vsi_sel = (uint16_t)vector << 8;
+	vrs->vrs_sregs[VCPU_REGS_CS].vsi_base = (uint64_t)vector << 12;
+}
 
 /*
  * create_memory_map
@@ -463,6 +491,31 @@ unpause_vm_md(struct vmd_vm *vm)
 }
 
 /*
+ * Recognize the conventional PC reset ports used by firmware and operating
+ * systems. The caller turns a matching request into the same EAGAIN restart
+ * path used for a guest triple fault.
+ */
+static int
+vcpu_exit_reset(struct vm_run_params *vrp)
+{
+	struct vm_exit_inout *vei = &vrp->vrp_exit->vei;
+	uint8_t data;
+
+	if (vei->vei_dir != VEI_DIR_OUT || vei->vei_rep || vei->vei_string ||
+	    vei->vei_size != 1)
+		return (0);
+
+	data = vei->vei_data;
+	if (vei->vei_port == IO_KBD + KBCMDP && data == KBC_PULSE0)
+		return (1);
+	if (vei->vei_port == PIIX_RESET_PORT &&
+	    (data & PIIX_RESET_FULL) == PIIX_RESET_FULL)
+		return (1);
+
+	return (0);
+}
+
+/*
  * vcpu_exit_inout
  *
  * Handle all I/O exits that need to be emulated in vmd. This includes the
@@ -555,11 +608,14 @@ vcpu_exit(struct vm_run_params *vrp)
 		break;
 	case VMX_EXIT_IO:
 	case SVM_VMEXIT_IOIO:
+		if (vcpu_exit_reset(vrp))
+			return (EAGAIN);
 		vcpu_exit_inout(vrp);
 		break;
 	case VMX_EXIT_HLT:
 	case SVM_VMEXIT_HLT:
-		vcpu_halt(vrp->vrp_vcpu_id);
+		vcpu_halt(vrp->vrp_vcpu_id,
+		    (vrp->vrp_exit->vrs.vrs_gprs[VCPU_REGS_RFLAGS] & PSL_I) != 0);
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 	case SVM_VMEXIT_SHUTDOWN:
@@ -911,7 +967,7 @@ vcpu_assert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
 	i8259_assert_irq(irq);
 	i82093aa_assert_pin(irq);
 
-	if (intr_pending(current_vm)) {
+	if (intr_pending(vcpu_id)) {
 		if (vcpu_intr(vmm_id, vcpu_id, 1))
 			fatalx("%s: can't assert INTR", __func__);
 
@@ -936,10 +992,32 @@ vcpu_deassert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
 	i8259_deassert_irq(irq);
 	i82093aa_deassert_pin(irq);
 
-	if (!intr_pending(current_vm)) {
+	if (!intr_pending(vcpu_id)) {
 		if (vcpu_intr(vmm_id, vcpu_id, 0))
 			fatalx("%s: can't deassert INTR for vmm_id %d, "
 			    "vcpu_id %d", __func__, vmm_id, vcpu_id);
+	}
+}
+
+/* Deliver an edge-triggered interrupt vector directly to a local APIC */
+void
+vcpu_assert_vector(uint32_t vmm_id, uint32_t vcpu_id, uint8_t vector)
+{
+	if (vcpu_id >= current_vm->vm_params.vmc_ncpus) {
+		log_debug("%s: invalid destination vcpu %u", __func__, vcpu_id);
+		return;
+	}
+
+	if (lapic_vector_irq(vcpu_id, 0, vector, 0))
+		return;
+
+	if (intr_pending(vcpu_id)) {
+		if (vcpu_intr(vmm_id, vcpu_id, 1))
+			fatalx("%s: can't assert vector %u on vcpu %u", __func__,
+			    vector, vcpu_id);
+
+		vcpu_unhalt(vcpu_id);
+		vcpu_signal_run(vcpu_id);
 	}
 }
 
@@ -1007,31 +1085,31 @@ get_input_data(struct vm_exit *vei, uint32_t *data)
 }
 
 int
-intr_pending(struct vmd_vm *vm)
+intr_pending(int vcpu_id)
 {
-	if (lapic_is_pending(0))
+	if (lapic_is_pending(vcpu_id))
 		return 1;
 	if (!i8259_is_pending())
 		return 0;
 
 	/* A disabled LAPIC leaves the processor wired directly to the PIC. */
-	if (!lapic_enabled(0))
+	if (!lapic_enabled(vcpu_id))
 		return 1;
 
 	/* With the LAPIC enabled, the PIC reaches the CPU only via LINT0. */
-	return lapic_extint_enabled(0);
+	return lapic_extint_enabled(vcpu_id);
 }
 
 int
-intr_ack(struct vmd_vm *vm)
+intr_ack(int vcpu_id)
 {
 	int vec;
 
-	vec = lapic_ack(0);
+	vec = lapic_ack(vcpu_id);
 	if (vec != 0xffff)
 		return vec;
 
-	if (lapic_enabled(0) && !lapic_extint_enabled(0))
+	if (lapic_enabled(vcpu_id) && !lapic_extint_enabled(vcpu_id))
 		return 0xffff;
 
 	return i8259_ack();

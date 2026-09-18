@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.11 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.12 2026/09/18 02:35:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -81,7 +81,7 @@ read_mem(paddr_t src, void *buf, size_t len)
 }
 
 int
-intr_pending(struct vmd_vm *vm)
+intr_pending(int vcpu_id)
 {
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
@@ -96,7 +96,7 @@ intr_toggle_el(struct vmd_vm *vm, int irq, int val)
 }
 
 int
-intr_ack(struct vmd_vm *vm)
+intr_ack(int vcpu_id)
 {
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */

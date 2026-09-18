@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.11 2026/09/02 19:01:29 dv Exp $ */
+/* $OpenBSD: vmm.c,v 1.12 2026/09/18 02:35:55 mlarkin Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -367,8 +367,8 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	if (memsize == 0)
 		return (EINVAL);
 
-	/* XXX - support UP only (for now) */
-	if (vcp->vcp_ncpus != 1)
+	if (vcp->vcp_ncpus == 0 ||
+	    vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM)
 		return (EINVAL);
 
 	/*
