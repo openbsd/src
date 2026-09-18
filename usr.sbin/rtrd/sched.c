@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
+/*	$OpenBSD: sched.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,29 +15,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <arpa/inet.h>
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/tree.h>
 #include <assert.h>
-#include <string.h>
-#include <stdlib.h>
 #include <err.h>
-#include <poll.h>
-#include <time.h>
+#include <errno.h>
+#include <netdb.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "rtr_config.h"
-
-#include "structs.h"
-#include "sockets.h"
-#include "packets.h"
-#include "cache.h"
-#include "tables.h"
-#include "logs.h"
-#include "signals.h"
-#include "send.h"
-#include "sched.h"
+#include "rtrd.h"
 
 struct timeval now;
 

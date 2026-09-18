@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_utils.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
+/*	$OpenBSD: ip_utils.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,19 +15,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/tree.h>
+#include <assert.h>
 #include <err.h>
-#include <endian.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "rtr_config.h"
-
-#include "structs.h"
-#include "ip_utils.h"
+#include "rtrd.h"
 
 #define IP4_BITS	(sizeof(struct in_addr) * 8)
 #define IP4_BYTES	(sizeof(struct in_addr))

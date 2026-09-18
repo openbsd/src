@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.2 2026/09/18 03:36:08 deraadt Exp $ */
+/*	$OpenBSD: commands.c,v 1.3 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,30 +15,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/tree.h>
 #include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include <poll.h>
+#include <unistd.h>
 
 #include "rtr_config.h"
-
-#include "structs.h"
-#include "sockets.h"
-#include "packets.h"
-#include "send.h"
-#include "cache.h"
-#include "tables.h"
-#include "sched.h"
-#include "logs.h"
-#include "stats.h"
-#include "sched.h"
-#include "commands.h"
+#include "rtrd.h"
 
 int
 m_serial_notify(struct rtr_socket *s, struct pdu_header *ph)

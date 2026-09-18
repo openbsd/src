@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
+/*	$OpenBSD: sockets.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,44 +15,31 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* #define _GNU_SOURCE -- why ? */
-
 #include <sys/types.h>
+#include <sys/tree.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <netdb.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <err.h>
-#include <endian.h>
 #include <time.h>
 #include <unistd.h>
-#include <signal.h>
-#include <poll.h>
 
 #include "rtr_config.h"
-
-#include "structs.h"
-#include "packets.h"
-#include "commands.h"
-#include "send.h"
-#include "tables.h"
-#include "sched.h"
-#include "logs.h"
-#include "ip_utils.h"
-#include "stats.h"
-#include "signals.h"
-#include "sockets.h"
+#include "rtrd.h"
 
 int listener = -1;
 int controller = -1;

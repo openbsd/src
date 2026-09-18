@@ -1,4 +1,4 @@
-/*	$OpenBSD: stats.c,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: stats.c,v 1.3 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,20 +15,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/tree.h>
 #include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #include "rtr_config.h"
-
-#include "structs.h"
+#include "rtrd.h"
 #include "version.h"
-#include "stats.h"
 
 struct global_stats global_stats;
 

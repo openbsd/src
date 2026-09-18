@@ -1,4 +1,4 @@
-/*	$OpenBSD: signals.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
+/*	$OpenBSD: signals.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,16 +15,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/tree.h>
+#include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <netdb.h>
 #include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "sockets.h"
-#include "logs.h"
-#include "signals.h"
+#include "rtrd.h"
 
 volatile sig_atomic_t sigflags = 0;
 

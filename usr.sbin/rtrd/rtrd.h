@@ -1,4 +1,5 @@
-/*	$OpenBSD: structs.h,v 1.2 2026/09/18 03:26:23 deraadt Exp $ */
+/*	$OpenBSD: rtrd.h,v 1.1 2026/09/18 04:55:39 deraadt Exp $	*/
+
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -14,11 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <stdint.h>
-#include <netinet/in.h>
-#include <sys/time.h>
-#include <sys/tree.h>
 
 #define RTR_VERSION_0	0
 #define RTR_VERSION_1	1
@@ -715,3 +711,297 @@ struct sched
 
 RB_HEAD(sched_tree, sched);
 RB_PROTOTYPE(sched_tree, sched, entry, schedcmp)
+
+/* VRP4 */
+
+extern RB_PROTOTYPE(vrp4_tree, vrp4, entry, vrp4cmp)
+
+extern int insert_vrp4(struct vrp4_tree *, struct vrp4 *, time_t);
+extern int remove_vrp4(struct vrp4_tree *, struct vrp4 *);
+extern void free_vrp4_tree(struct vrp4_tree *);
+extern int vrp4_treecmp(struct vrp4_tree *, struct vrp4_tree *);
+extern void vrp4_treecpy(struct vrp4_tree *, struct vrp4_tree *);
+extern void vrp4_treecpy_expire(struct vrp4_tree *, struct vrp4_tree *, time_t);
+extern int64_t vrp4_treecount(struct vrp4_tree *);
+extern int vrp4_treeempty(struct vrp4_tree *);
+extern void vrp4_treeupdate(struct vrp4_tree *, struct vrp4_tree *);
+extern uint32_t vrp4_treehash(struct vrp4_tree *);
+extern void vrp4_treecpy_count_and_hash(
+    struct vrp4_tree *,
+    struct vrp4_tree *,
+    int64_t *,
+    uint32_t *);
+
+extern struct cache_vrp4_tree *cache_vrp4_tree_find(struct vrp4_tree *);
+extern struct cache_vrp4_tree *cache_vrp4_tree_dup(struct cache_vrp4_tree *);
+extern struct cache_vrp4_tree *cache_vrp4_tree_new(struct vrp4_tree *);
+extern void cache_vrp4_tree_free(struct cache_vrp4_tree *);
+
+/* VRP6 */
+
+extern RB_PROTOTYPE(vrp6_tree, vrp6, entry, vrp6cmp)
+
+extern int insert_vrp6(struct vrp6_tree *, struct vrp6 *, time_t);
+extern int remove_vrp6(struct vrp6_tree *, struct vrp6 *);
+extern void free_vrp6_tree(struct vrp6_tree *);
+extern int vrp6_treecmp(struct vrp6_tree *, struct vrp6_tree *);
+extern void vrp6_treecpy(struct vrp6_tree *, struct vrp6_tree *);
+extern void vrp6_treecpy_expire(struct vrp6_tree *, struct vrp6_tree *, time_t);
+extern int64_t vrp6_treecount(struct vrp6_tree *);
+extern int vrp6_treeempty(struct vrp6_tree *);
+extern void vrp6_treeupdate(struct vrp6_tree *, struct vrp6_tree *);
+extern uint32_t vrp6_treehash(struct vrp6_tree *);
+extern void vrp6_treecpy_count_and_hash(
+    struct vrp6_tree *,
+    struct vrp6_tree *,
+    int64_t *,
+    uint32_t *);
+
+extern struct cache_vrp6_tree *cache_vrp6_tree_find(struct vrp6_tree *);
+extern struct cache_vrp6_tree *cache_vrp6_tree_dup(struct cache_vrp6_tree *);
+extern struct cache_vrp6_tree *cache_vrp6_tree_new(struct vrp6_tree *);
+extern void cache_vrp6_tree_free(struct cache_vrp6_tree *);
+
+/* BRK */
+
+extern RB_PROTOTYPE(brk_tree, brk, entry, brkcmp)
+
+extern int insert_brk(struct brk_tree *, struct brk *, time_t);
+extern int remove_brk(struct brk_tree *, struct brk *);
+extern void free_brk_tree(struct brk_tree *);
+extern int brk_treecmp(struct brk_tree *, struct brk_tree *);
+extern void brk_treecpy(struct brk_tree *, struct brk_tree *);
+extern void brk_treecpy_expire(struct brk_tree *, struct brk_tree *, time_t);
+extern int64_t brk_treecount(struct brk_tree *);
+extern int brk_treeempty(struct brk_tree *);
+extern void brk_treeupdate(struct brk_tree *, struct brk_tree *);
+extern uint32_t brk_treehash(struct brk_tree *);
+extern void brk_treecpy_count_and_hash(
+    struct brk_tree *,
+    struct brk_tree *,
+    int64_t *,
+    uint32_t *);
+
+extern struct cache_brk_tree *cache_brk_tree_find(struct brk_tree *);
+extern struct cache_brk_tree *cache_brk_tree_dup(struct cache_brk_tree *);
+extern struct cache_brk_tree *cache_brk_tree_new(struct brk_tree *);
+extern void cache_brk_tree_free(struct cache_brk_tree *);
+
+/* ASN */
+
+extern RB_PROTOTYPE(asn_tree, asn, entry, asncmp)
+
+extern int insert_asn(struct asn_tree *, uint32_t);
+extern int remove_asn(struct asn_tree *, uint32_t);
+extern void free_asn_tree(struct asn_tree *);
+extern int clean_asn_tree(struct asn_tree *);
+extern int32_t asn_treecount(struct asn_tree *);
+
+/* VAP */
+
+extern RB_PROTOTYPE(vap_tree, vap, entry, vapcmp)
+
+extern int vapfullcmp(struct vap *, struct vap *);
+extern int insert_vap(struct vap_tree *, struct vap *, time_t);
+extern int remove_vap(struct vap_tree *, struct vap *);
+extern void free_vap_tree(struct vap_tree *);
+extern int vap_treecmp(struct vap_tree *, struct vap_tree *);
+extern void vap_treecpy(struct vap_tree *, struct vap_tree *);
+extern void vap_treecpy_expire(struct vap_tree *, struct vap_tree *, time_t);
+extern int64_t vap_treecount(struct vap_tree *);
+extern int vap_treeempty(struct vap_tree *);
+extern void vap_treeupdate(struct vap_tree *, struct vap_tree *);
+extern uint32_t vap_treehash(struct vap_tree *);
+extern void vap_treecpy_count_and_hash(
+    struct vap_tree *,
+    struct vap_tree *,
+    int64_t *,
+    uint32_t *);
+
+extern struct cache_vap_tree *cache_vap_tree_find(struct vap_tree *);
+extern struct cache_vap_tree *cache_vap_tree_dup(struct cache_vap_tree *);
+extern struct cache_vap_tree *cache_vap_tree_new(struct vap_tree *);
+extern void cache_vap_tree_free(struct cache_vap_tree *);
+
+extern void init_cache_frame(struct cache_frame *);
+extern int init_cache(struct cache *, uint16_t, uint16_t);
+extern int init_cache_array(uint16_t);
+extern int is_cache_empty(struct cache *);
+extern void free_cache_frame(struct cache_frame *);
+extern struct cache_frame *get_latest_cache_frame(uint8_t);
+extern struct cache_frame *get_serial_cache_frame(uint8_t, uint32_t);
+extern struct cache_frame *cache_frame_push(uint8_t,
+    struct cache_vrp4_tree *, struct cache_vrp6_tree *,
+    struct cache_brk_tree *, struct cache_vap_tree *);
+extern void update_cache(struct vrp4_tree *, struct vrp6_tree *,
+    struct brk_tree *, struct vap_tree *);
+
+extern struct cache cache[];
+
+extern int m_serial_notify(struct rtr_socket *, struct pdu_header *);
+extern int m_serial_query(struct rtr_socket *, struct pdu_header *);
+extern int m_reset_query(struct rtr_socket *, struct pdu_header *);
+extern int m_cache_response(struct rtr_socket *, struct pdu_header *);
+extern int m_ipv4_prefix(struct rtr_socket *, struct pdu_header *);
+extern int m_reserved(struct rtr_socket *, struct pdu_header *);
+extern int m_ipv6_prefix(struct rtr_socket *, struct pdu_header *);
+extern int m_end_of_data(struct rtr_socket *, struct pdu_header *);
+extern int m_cache_reset(struct rtr_socket *, struct pdu_header *);
+extern int m_router_key(struct rtr_socket *, struct pdu_header *);
+extern int m_error(struct rtr_socket *, struct pdu_header *);
+extern int m_aspa_pdu(struct rtr_socket *, struct pdu_header *);
+
+extern int m_open_controller(struct rtr_socket *, struct pdu_header *);
+extern int m_close_controller(struct rtr_socket *, struct pdu_header *);
+extern int m_start_of_import(struct rtr_socket *, struct pdu_header *);
+extern int m_ipv4_prefix_import(struct rtr_socket *, struct pdu_header *);
+extern int m_ipv6_prefix_import(struct rtr_socket *, struct pdu_header *);
+extern int m_router_key_import(struct rtr_socket *, struct pdu_header *);
+extern int m_aspa_pdu_import(struct rtr_socket *, struct pdu_header *);
+extern int m_end_of_import(struct rtr_socket *, struct pdu_header *);
+extern int m_push_import(struct rtr_socket *, struct pdu_header *);
+extern int m_query_stats(struct rtr_socket *, struct pdu_header *);
+extern int m_start_of_stats(struct rtr_socket *, struct pdu_header *);
+extern int m_global_stats(struct rtr_socket *, struct pdu_header *);
+extern int m_client_stats(struct rtr_socket *, struct pdu_header *);
+extern int m_cache_frame_stats(struct rtr_socket *, struct pdu_header *);
+extern int m_end_of_stats(struct rtr_socket *, struct pdu_header *);
+
+extern int (*command_lookup(uint8_t, uint8_t, int))
+    (struct rtr_socket *, struct pdu_header *);
+
+extern uint32_t fnv32_init;
+extern uint32_t fnv32_hash(void *, size_t, uint32_t);
+
+extern struct in_addr cidrmask4[];
+extern struct in6_addr cidrmask6[];
+
+extern void init_masks(void);
+extern struct in_addr cidr_to_netmask4(uint8_t);
+extern struct in6_addr cidr_to_netmask6(uint8_t);
+extern int is_supernet_of_subnet4(
+    struct in_addr, uint8_t,
+    struct in_addr, uint8_t);
+extern int is_supernet_of_subnet6(
+    struct in6_addr, uint8_t,
+    struct in6_addr, uint8_t);
+
+extern struct in_addr address_to_network4(struct in_addr, uint8_t);
+extern struct in6_addr address_to_network6(struct in6_addr, uint8_t);
+
+extern int verbose;
+extern int foreground;
+
+extern void logx(int, const char *, ...);
+
+extern char *error_code_to_str[];
+extern char *pdu_type_to_str[];
+
+extern void pdu_hton(struct rtr_socket *, void *);
+extern void pdu_ntoh(struct rtr_socket *, void *);
+extern void pdu_hton_rtr(void *);
+extern void pdu_ntoh_rtr(void *);
+extern void pdu_hton_controller(void *);
+extern void pdu_ntoh_controller(void *);
+extern int check_pdu_ipv4_prefix_controller(struct pdu_ipv4_prefix_import *);
+extern int check_pdu_ipv6_prefix_controller(struct pdu_ipv6_prefix_import *);
+extern int check_pdu_router_key_controller(struct pdu_router_key_import *);
+extern int check_pdu_aspa_controller(struct pdu_aspa_import *);
+extern int check_error_code(uint16_t, uint8_t);
+
+extern struct timeval now;
+
+extern void rtr_gettime(void);
+extern RB_PROTOTYPE(sched_tree, sched, entry, schedcmp)
+extern int insert_sched(struct sched_tree *, struct sched *);
+extern int remove_sched(struct sched_tree *, struct sched *);
+extern void remove_sched_type(struct sched_tree *, uint32_t);
+extern void remove_sched_socket(struct sched_tree *, struct rtr_socket *);
+extern void remove_sched_type_and_socket(
+    struct sched_tree *,
+    uint32_t,
+    struct rtr_socket *);
+extern void free_sched_tree(struct sched_tree *);
+extern void sched_init(void);
+extern int time_until_next_event(struct timeval);
+extern int schedule_cleanup(time_t);
+extern int schedule_handshake_timeout(time_t, struct rtr_socket *);
+extern int schedule_idle_timeout(time_t, struct rtr_socket *);
+extern void process_cleanup(time_t);
+extern void process_handshake_timeout(struct rtr_socket *);
+extern void process_idle_timeout(struct rtr_socket *);
+extern void process_scheduler_events(time_t);
+
+extern struct sched_tree scheduler;
+
+extern ssize_t sendto_one(struct rtr_socket *, void *);
+extern void sendto_allclients(void *);
+extern void sendto_allregisteredclients(void *);
+extern void sendto_allregisteredclientsversion(void *, uint8_t);
+
+extern ssize_t sendserialnotifyto_one(struct rtr_socket *, uint32_t);
+extern ssize_t sendcacheresponseto_one(struct rtr_socket *);
+extern ssize_t sendvrp4to_one(struct rtr_socket *, struct vrp4 *, uint8_t);
+extern ssize_t sendvrp6to_one(struct rtr_socket *, struct vrp6 *, uint8_t);
+extern ssize_t sendbrkto_one(struct rtr_socket *, struct brk *, uint8_t);
+extern ssize_t sendvapto_one(struct rtr_socket *, struct vap *, uint8_t);
+extern ssize_t sendendofdatato_one(struct rtr_socket *, uint32_t);
+extern ssize_t senderrorto_one(struct rtr_socket *, uint16_t, void *, char *,
+    ...);
+extern ssize_t sendcacheresetto_one(struct rtr_socket *);
+
+extern ssize_t sendstartofstatsto_one(struct rtr_socket *);
+extern ssize_t sendglobalstatsto_one(struct rtr_socket *);
+extern void sendclientstatsto_one(struct rtr_socket *);
+extern void sendcacheframestatsto_one(struct rtr_socket *);
+extern ssize_t sendendofstatsto_one(struct rtr_socket *);
+
+extern volatile sig_atomic_t sigflags;
+
+extern int init_signals(void);
+extern void signal_handler(int);
+extern void signal_processor(void);
+
+extern int listener;
+extern int controller;
+extern char *controller_filename;
+extern int client_count;
+extern int max_clients;
+extern int max_sockets;
+extern int max_sendq;
+
+extern struct rtr_socket *rtr_socket_table;
+
+extern struct pollfd *poll_table;
+extern int poll_table_count;
+
+extern uint8_t rtr_max_version;
+
+extern ssize_t sendq_block_size;
+
+extern struct rtr_socket *fd_to_socket(int);
+extern int is_listener(int);
+extern struct pollfd *poll_find(int);
+extern int poll_index(int);
+extern struct pollfd *poll_add(int, short);
+extern void poll_remove(int);
+extern int poll_isset_events(int, short);
+extern int poll_isset_revents(int, short);
+extern void init_socket(int, int, uint32_t, ssize_t, ssize_t, ssize_t, uint8_t);
+extern int init_socket_table(FILE *, char *, uint16_t);
+extern int rtr_errno_ignore(int);
+extern ssize_t rtr_flush_write(struct rtr_socket *);
+extern void rtr_flushall_write(void);
+extern int rtr_sendq_add(struct rtr_socket *, void *, int);
+extern void rtr_sendq_pop(struct rtr_socket *, int);
+extern void rtr_sendq_popall(struct rtr_socket *);
+extern int rtr_sendq_flush(struct rtr_socket *);
+extern ssize_t writeto(struct rtr_socket *, void *);
+extern void rtr_close(struct rtr_socket *);
+extern void rtr_flushall_closed(void);
+extern void rtr_shutdown(int);
+extern void core_loop(void);
+
+extern struct global_stats global_stats;
+
+extern int init_stats(void);

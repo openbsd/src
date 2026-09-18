@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.3 2026/09/18 03:36:08 deraadt Exp $ */
+/*	$OpenBSD: send.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,27 +15,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/tree.h>
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 #include <err.h>
-#include <time.h>
+#include <errno.h>
+#include <netdb.h>
 #include <poll.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "rtr_config.h"
-
-#include "structs.h"
-#include "sockets.h"
-#include "packets.h"
-#include "cache.h"
-#include "sched.h"
-#include "logs.h"
-#include "stats.h"
-#include "send.h"
+#include "rtrd.h"
 
 #define PDU_ERROR_MAX_MESSAGE \
     (PDU_MAX_LENGTH - (sizeof(struct pdu_error) + sizeof(uint32_t)))
