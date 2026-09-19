@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.197 2026/09/17 13:19:23 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.198 2026/09/19 13:29:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2021, 2024-2026 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2026 $
+.Dd $Mdocdate: September 19 2026 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1166,8 +1166,17 @@ This denotes strings accepted by
 .Xr config 8 .
 It is most often used in section 4 manual pages.
 .Pp
+In
+.Fx ,
+it is also used for device hints, loader tunables, and
+.Xr sysctl 8
+nodes in the
+.Em SYNOPSIS
+section.
+.Pp
 Examples:
 .Dl \&.Cd device le0 at scode?
+.Dl \&.Cd kern.vty=vt \e" FreeBSD
 .Pp
 .Em Remarks :
 this macro is commonly abused by using quoted literals to retain
