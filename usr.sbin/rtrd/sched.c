@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: sched.c,v 1.5 2026/09/19 16:14:17 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -40,10 +40,6 @@ rtr_gettime(void)
 {
 	if (clock_gettime(CLOCK_REALTIME, (struct timespec *)&now) != 0) {
 		logx(0, "couldnt get the clock\n");
-		exit(1);
-	}
-	if (now.tv_sec < 0) {
-		logx(0, "clock overflow\n");
 		exit(1);
 	}
 	now.tv_usec /= 1000; /* nsec -> usec */
