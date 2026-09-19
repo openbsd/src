@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.73 2026/04/16 07:33:11 tb Exp $ */
+/* $OpenBSD: tls_config.c,v 1.74 2026/09/19 16:48:08 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -16,17 +16,22 @@
  */
 
 #include <sys/stat.h>
+#include <sys/types.h>
 
-#include <ctype.h>
-#include <errno.h>
+#include <arpa/inet.h>
+
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
-#include <tls.h>
+#include <openssl/ec.h>
+#include <openssl/objects.h>
 
+#include <tls.h>
 #include "tls_internal.h"
 
 static const char default_ca_file[] = TLS_DEFAULT_CA_FILE;
