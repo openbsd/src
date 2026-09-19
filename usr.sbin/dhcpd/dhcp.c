@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.58 2026/09/17 20:06:48 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.59 2026/09/19 00:33:12 jsg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -571,8 +571,6 @@ dhcpinform(struct packet *packet)
 	free(lease.client_identifier);
 	if (lease.state != NULL)
 		free_lease_state(lease.state, "ack_lease");
-	free(lease.client_hostname);
-	free(lease.client_identifier);
 }
 
 void
