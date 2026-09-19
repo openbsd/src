@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.102 2026/05/28 10:50:47 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.103 2026/09/19 19:36:43 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -678,6 +678,8 @@ void ieee80211_clean_nodes(struct ieee80211com *, int);
 void ieee80211_setup_htcaps(struct ieee80211_node *, const uint8_t *,
     uint8_t);
 void ieee80211_clear_htcaps(struct ieee80211_node *);
+uint8_t ieee80211_node_ht_secondary_channel_offset(struct ieee80211_node *);
+uint8_t ieee80211_node_vht_channel_width(struct ieee80211_node *);
 int ieee80211_setup_htop(struct ieee80211_node *, const uint8_t *,
     uint8_t, int);
 void ieee80211_setup_vhtcaps(struct ieee80211_node *, const uint8_t *,

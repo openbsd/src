@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.229 2026/05/28 10:51:52 kirill Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.230 2026/09/19 19:36:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3652,29 +3652,46 @@ iwx_phy_ctxt_task(void *arg)
 	}
 
 	chains = iwx_mimo_enabled(sc) ? 2 : 1;
-	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-	    IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
-	    ieee80211_node_supports_ht_chan40(ni))
-		sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
-	else
-		sco = IEEE80211_HTOP0_SCO_SCN;
-	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    IEEE80211_CHAN_160MHZ_ALLOWED(in->in_ni.ni_chan) &&
-	    ieee80211_node_supports_vht_chan160(ni))
-		vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_160;
-	else if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    IEEE80211_CHAN_80MHZ_ALLOWED(in->in_ni.ni_chan) &&
-	    ieee80211_node_supports_vht_chan80(ni))
-		vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
-	else
-		vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_HT;
+	sco = ieee80211_node_ht_secondary_channel_offset(ni);
+	vht_chan_width = ieee80211_node_vht_channel_width(ni);
 	if (in->in_phyctxt->sco != sco ||
 	    in->in_phyctxt->vht_chan_width != vht_chan_width) {
+		int going_narrow = 0;
+
+		if ((sco == IEEE80211_HTOP0_SCO_SCN &&
+		    in->in_phyctxt->sco != IEEE80211_HTOP0_SCO_SCN) ||
+		    in->in_phyctxt->vht_chan_width > vht_chan_width)
+			going_narrow = 1;
+
+		if (going_narrow) {
+			/*
+			 * When channel bandwidth becomes narrower adjust
+			 * firmware Tx rates before setting new PHY context.
+			 */
+			err = iwx_rs_init(sc, in);
+			if (err) {
+				printf("%s: failed to update rate scaling "
+				    "(error %d)\n", DEVNAME(sc), err);
+			}
+		}
+
 		err = iwx_phy_ctxt_update(sc, in->in_phyctxt,
 		    in->in_phyctxt->channel, chains, chains, 0, sco,
 		    vht_chan_width);
 		if (err)
 			printf("%s: failed to update PHY\n", DEVNAME(sc));
+
+		if (!going_narrow) {
+			/*
+			 * When channel bandwidth becomes wider adjust
+			 * firmware Tx rates after setting the new PHY context.
+			 */
+			err = iwx_rs_init(sc, in);
+			if (err) {
+				printf("%s: failed to update rate scaling "
+				    "(error %d)\n", DEVNAME(sc), err);
+			}
+		}
 	}
 
 	refcnt_rele_wake(&sc->task_refs);
@@ -8575,8 +8592,12 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 	uint32_t cmd_id;
 	int i;
 	size_t cmd_size = sizeof(cfg_cmd);
+	uint8_t sco, vht_chan_width;
 
 	memset(&cfg_cmd, 0, sizeof(cfg_cmd));
+
+	sco = ieee80211_node_ht_secondary_channel_offset(ni);
+	vht_chan_width = ieee80211_node_vht_channel_width(ni);
 
 	for (i = 0; i < rs->rs_nrates; i++) {
 		uint8_t rval = rs->rs_rates[i] & IEEE80211_RATE_VAL;
@@ -8590,16 +8611,14 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_VHT;
 		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_vht_rates(sc, ni, 1));
-		if (in->in_phyctxt->vht_chan_width ==
-		    IEEE80211_VHTOP0_CHAN_WIDTH_160) {
+		if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160) {
 			cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_160] =
 			    cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80];
 		}
 		if (iwx_mimo_enabled(sc)) {
 			cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
 			    htole16(iwx_rs_vht_rates(sc, ni, 2));
-			if (in->in_phyctxt->vht_chan_width ==
-			    IEEE80211_VHTOP0_CHAN_WIDTH_160) {
+			if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160) {
 				cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_160] =
 				    cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80];
 			}
@@ -8619,14 +8638,13 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 
 	cfg_cmd.sta_id = IWX_STATION_ID;
 	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160)
+	    vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160)
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_160MHZ;
 	else if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
+	    vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_80MHZ;
 	else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-	    (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
-	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB))
+	    (sco == IEEE80211_HTOP0_SCO_SCA || sco == IEEE80211_HTOP0_SCO_SCB))
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_40MHZ;
 	else
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_20MHZ;
@@ -8662,7 +8680,7 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 	    ieee80211_node_supports_vht_sgi80(ni))
 		cfg_cmd.sgi_ch_width_supp |= (1 << IWX_TLC_MNG_CH_WIDTH_80MHZ);
 	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160 &&
+	    vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160 &&
 	    ieee80211_node_supports_vht_sgi160(ni))
 		cfg_cmd.sgi_ch_width_supp |= (1 << IWX_TLC_MNG_CH_WIDTH_160MHZ);
 
@@ -8679,8 +8697,12 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 	uint32_t cmd_id;
 	int i;
 	size_t cmd_size = sizeof(cfg_cmd);
+	uint8_t sco, vht_chan_width;
 
 	memset(&cfg_cmd, 0, sizeof(cfg_cmd));
+
+	sco = ieee80211_node_ht_secondary_channel_offset(ni);
+	vht_chan_width = ieee80211_node_vht_channel_width(ni);
 
 	for (i = 0; i < rs->rs_nrates; i++) {
 		uint8_t rval = rs->rs_rates[i] & IEEE80211_RATE_VAL;
@@ -8694,16 +8716,14 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_VHT;
 		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_vht_rates(sc, ni, 1));
-		if (in->in_phyctxt->vht_chan_width ==
-		    IEEE80211_VHTOP0_CHAN_WIDTH_160) {
+		if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160) {
 			cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_160] =
 			    cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80];
 		}
 		if (iwx_mimo_enabled(sc)) {
 			cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
 			    htole16(iwx_rs_vht_rates(sc, ni, 2));
-			if (in->in_phyctxt->vht_chan_width ==
-			    IEEE80211_VHTOP0_CHAN_WIDTH_160) {
+			if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160) {
 				cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_160] =
 				    cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80];
 			}
@@ -8723,14 +8743,13 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 
 	cfg_cmd.sta_id = IWX_STATION_ID;
 	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160)
+	    vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160)
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_160MHZ;
 	else if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
+	    vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_80MHZ;
 	else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-	    (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
-	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB))
+	    (sco == IEEE80211_HTOP0_SCO_SCA || sco == IEEE80211_HTOP0_SCO_SCB))
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_40MHZ;
 	else
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_20MHZ;
@@ -8766,7 +8785,7 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 	    ieee80211_node_supports_vht_sgi80(ni))
 		cfg_cmd.sgi_ch_width_supp |= (1 << IWX_TLC_MNG_CH_WIDTH_80MHZ);
 	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160 &&
+	    vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160 &&
 	    ieee80211_node_supports_vht_sgi160(ni))
 		cfg_cmd.sgi_ch_width_supp |= (1 << IWX_TLC_MNG_CH_WIDTH_160MHZ);
 

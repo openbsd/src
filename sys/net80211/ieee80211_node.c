@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.216 2026/05/24 16:29:51 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.217 2026/09/19 19:36:42 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2447,6 +2447,32 @@ ieee80211_clear_htcaps(struct ieee80211_node *ni)
 
 }
 #endif
+
+uint8_t
+ieee80211_node_ht_secondary_channel_offset(struct ieee80211_node *ni)
+{
+	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
+	    ieee80211_node_supports_ht_chan40(ni))
+		return (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
+	else
+		return IEEE80211_HTOP0_SCO_SCN;
+}
+
+uint8_t
+ieee80211_node_vht_channel_width(struct ieee80211_node *ni)
+{
+	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    IEEE80211_CHAN_160MHZ_ALLOWED(ni->ni_chan) &&
+	    ieee80211_node_supports_vht_chan160(ni))
+		return IEEE80211_VHTOP0_CHAN_WIDTH_160;
+	else if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    IEEE80211_CHAN_80MHZ_ALLOWED(ni->ni_chan) &&
+	    ieee80211_node_supports_vht_chan80(ni))
+		return IEEE80211_VHTOP0_CHAN_WIDTH_80;
+	else
+		return IEEE80211_VHTOP0_CHAN_WIDTH_HT;
+}
 
 int
 ieee80211_40mhz_valid_secondary_above(uint8_t primary_chan)
