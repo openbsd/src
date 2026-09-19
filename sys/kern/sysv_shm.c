@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.89 2026/09/16 16:37:39 mvs Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.90 2026/09/19 14:36:54 mvs Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -323,7 +323,8 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 	int		cmd = SCARG(uap, cmd);
 	void		*buf = SCARG(uap, buf);
 	struct ucred	*cred = p->p_ucred;
-	struct shmid_ds_kern	shmbuf, *shmseg;
+	struct shmid_ds_kern *shmseg;
+	struct shmid_ds shmbuf;
 	int		error;
 
 	if (cmd == IPC_SET) {
@@ -339,8 +340,24 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
 			return (error);
-		memcpy(&shmbuf, shmseg, sizeof(shmbuf));
-		shmbuf.shm_internal = NULL;
+
+		memset(&shmbuf, 0, sizeof(shmbuf));
+		shmbuf.shm_perm = shmseg->shm_perm;
+		shmbuf.shm_lpid = shmseg->shm_lpid;
+		shmbuf.shm_segsz = shmseg->shm_segsz;
+		shmbuf.shm_lpid = shmseg->shm_lpid;
+		shmbuf.shm_cpid = shmseg->shm_cpid;
+		if (shmseg->shm_nattch > SHRT_MAX)
+			shmbuf.shm_nattch = SHRT_MAX;
+		else
+			shmbuf.shm_nattch = shmseg->shm_nattch;
+		shmbuf.shm_atime = shmseg->shm_atime;
+		shmbuf.__shm_atimensec = shmseg->__shm_atimensec;
+		shmbuf.shm_dtime = shmseg->shm_dtime;
+		shmbuf.__shm_dtimensec = shmseg->__shm_dtimensec;
+		shmbuf.shm_ctime = shmseg->shm_ctime;
+		shmbuf.__shm_ctimensec = shmseg->__shm_ctimensec;
+
 		error = copyout(&shmbuf, buf, sizeof(shmbuf));
 		if (error)
 			return (error);
