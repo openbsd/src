@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_asm.S,v 1.1 2026/09/06 18:25:22 mglocker Exp $ */
+/*	$OpenBSD: hibernate_asm.S,v 1.2 2026/09/19 17:27:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 2026 Marcus Glocker <mglocker@openbsd.org>
@@ -67,20 +67,22 @@ END(hibernate_resume_machdep)
  * 4-level walk the resume PT was built with.
  */
 ENTRY(hibernate_activate_resume_pt_machdep)
+	RETGUARD_SETUP(hibernate_activate_resume_pt_machdep, x15)
+
 	mrs	x1, tcr_el1
 	bic	x1, x1, #0x3f
 	orr	x1, x1, #16
 	msr	tcr_el1, x1
 	isb
 
-	adrp	x0, hibernate_resume_pt0_pa
-	ldr	x0, [x0, :lo12:hibernate_resume_pt0_pa]
+	adrp	x0, hibernate_resume_ttbr0
+	ldr	x0, [x0, :lo12:hibernate_resume_ttbr0]
 	dsb	ish
 	msr	ttbr0_el1, x0
 	isb
 
-	adrp	x0, hibernate_resume_pt1_pa
-	ldr	x0, [x0, :lo12:hibernate_resume_pt1_pa]
+	adrp	x0, hibernate_resume_ttbr1
+	ldr	x0, [x0, :lo12:hibernate_resume_ttbr1]
 	dsb	ish
 	msr	ttbr1_el1, x0
 	isb
@@ -89,23 +91,29 @@ ENTRY(hibernate_activate_resume_pt_machdep)
 	tlbi	vmalle1is
 	dsb	ish
 	isb
+
+	RETGUARD_CHECK(hibernate_activate_resume_pt_machdep, x15)
 	ret
 END(hibernate_activate_resume_pt_machdep)
 
 /* Switch to the private resume-time hibernate stack */
 ENTRY(hibernate_switch_stack_machdep)
-	adrp	x0, hibernate_stack_top_pa
-	ldr	x0, [x0, :lo12:hibernate_stack_top_pa]
+	RETGUARD_SETUP(hibernate_switch_stack_machdep, x15)
+	adrp	x0, hibernate_stack_top_va
+	ldr	x0, [x0, :lo12:hibernate_stack_top_va]
 	mov	sp, x0
+	RETGUARD_CHECK(hibernate_switch_stack_machdep, x15)
 	ret
 END(hibernate_switch_stack_machdep)
 
 /* Broadcast TLBI (no ASID-less single-page primitive on arm64) */
 ENTRY(hibernate_flush)
+	RETGUARD_SETUP(hibernate_flush, x15)
 	dsb	ish
 	tlbi	vmalle1is
 	dsb	ish
 	isb
+	RETGUARD_CHECK(hibernate_flush, x15)
 	ret
 END(hibernate_flush)
 
@@ -114,6 +122,7 @@ END(hibernate_flush)
  * writes are visible to subsequent TTBR1-side reads.  Trashes x0..x10.
  */
 ENTRY(hibernate_dcache_flush_machdep)
+	RETGUARD_SETUP(hibernate_dcache_flush_machdep, x15)
 	mrs	x0, clidr_el1
 	and	x3, x0, #0x7000000
 	lsr	x3, x3, #23
@@ -149,6 +158,7 @@ ENTRY(hibernate_dcache_flush_machdep)
 	b.gt	1b
 5:      dsb	sy
 	isb
+	RETGUARD_CHECK(hibernate_dcache_flush_machdep, x15)
 	ret
 END(hibernate_dcache_flush_machdep)
 
@@ -166,10 +176,10 @@ END(hibernate_dcache_flush_machdep)
  * is used directly as the write address.
  */
 ENTRY(hibernate_retguard_copy_machdep)
-	adrp	x1, retguard_start_phys
-	ldr	x1, [x1, :lo12:retguard_start_phys]	/* dest PA (VA==PA) */
-	adrp	x2, retguard_end_phys
-	ldr	x2, [x2, :lo12:retguard_end_phys]	/* end  PA (VA==PA) */
+	adrp	x1, __retguard_start
+	add	x1, x1, :lo12:__retguard_start
+	adrp	x2, __retguard_end
+	add	x2, x2, :lo12:__retguard_end
 	sub	x2, x2, x1				/* byte count */
 	lsr	x2, x2, #3				/* quadword count */
 	cbz	x2, 2f

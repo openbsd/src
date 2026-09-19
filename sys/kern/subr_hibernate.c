@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.160 2026/09/16 03:22:44 kettenis Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.161 2026/09/19 17:27:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -58,8 +58,9 @@ CTASSERT((offsetof(union hibernate_info, sec_size) + sizeof(u_int32_t)) <= DEV_B
  * 29*PAGE_SIZE			start of hiballoc area
  * 30*PAGE_SIZE			preserved entropy
  * 110*PAGE_SIZE		end of hiballoc area (80 pages)
- * 366*PAGE_SIZE		end of retguard preservation region (256 pages)
+ * 142*PAGE_SIZE		end of retguard preservation region (256 pages)
  * ...				unused
+ * 512*PAGE_SIZE		start of MD area
  * HIBERNATE_CHUNK_SIZE		start of hibernate chunk table
  * 2*HIBERNATE_CHUNK_SIZE	bounce area for chunks being unpacked
  * 4*HIBERNATE_CHUNK_SIZE	end of piglet

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.1 2026/09/06 18:25:22 mglocker Exp $ */
+/*	$OpenBSD: hibernate_var.h,v 1.2 2026/09/19 17:27:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -16,41 +16,48 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _LOCORE
+extern vaddr_t global_piglet_va;
+extern paddr_t global_piglet_pa;
+#endif
+
 #define PIGLET_PAGE_MASK	(~((1ULL << 21) - 1))
 
 /*
- * L0 table for resume; L1/L2/L3 low+high tables backing it.  arm64 uses
- * TTBR0 for the low-VA identity map built during unpack.
+ * On arm64 the resume page tables use both TTBR0 and TTBR1.  The
+ * TTBR0 (PT0) page tables start at L0 and cover the first 4MB of the
+ * piglet with 4KB pages (such that pages in the piglet can be
+ * accessed using their offset) and also covers identy mappings for
+ * the pig, the piglet and kernel using 2MB mappings.  The TTBR1 (PT1)
+ * page tables covers mappings for the piglet and kernel using normal
+ * kernel VAs.
  */
-#define HIBERNATE_L0_PAGE	(PAGE_SIZE * 21)
-#define HIBERNATE_L1_LOW	(PAGE_SIZE * 22)
-#define HIBERNATE_L1_HI		(PAGE_SIZE * 23)
-#define HIBERNATE_L2_LOW	(PAGE_SIZE * 24)
-#define HIBERNATE_L3_LOW	(PAGE_SIZE * 25)
-#define HIBERNATE_PT1_L1_PAGE	(PAGE_SIZE * 26)
+#define HIBERNATE_PT0_L0_PAGE	(PAGE_SIZE * 512)	/* TTBR0 root */
+#define HIBERNATE_PT0_L1_LOW	(PAGE_SIZE * 513)
+#define HIBERNATE_PT0_L2_LOW	(PAGE_SIZE * 514)
+#define HIBERNATE_PT0_L3_LOW	(PAGE_SIZE * 515)	/* 2 pages */
+#define HIBERNATE_PT0_L1_HI	(PAGE_SIZE * 517)
+#define HIBERNATE_PT1_L1_PAGE	(PAGE_SIZE * 518)	/* TTBR1 root */
 
-#define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 33)
-
-/* Pool of L2 pages per distinct L1_LOW / L1_HI slot */
-#define HIBERNATE_L2_LOW_POOL		(PAGE_SIZE * 200)
-#define HIBERNATE_L2_LOW_POOL_COUNT	16
-#define HIBERNATE_L2_HI_POOL		(PAGE_SIZE * 216)
-#define HIBERNATE_L2_HI_POOL_COUNT	16
-#define HIBERNATE_PT1_L2_POOL		(PAGE_SIZE * 232)
+/* Pool of L2 pages per distinct PT0_L1_LOW/PT0_L1_HI/PT1_L1 slot */
+#define HIBERNATE_PT0_L2_LOW_POOL	(PAGE_SIZE * 520)
+#define HIBERNATE_PT0_L2_LOW_POOL_COUNT	16
+#define HIBERNATE_PT0_L2_HI_POOL	(PAGE_SIZE * 536)
+#define HIBERNATE_PT0_L2_HI_POOL_COUNT	16
+#define HIBERNATE_PT1_L2_POOL		(PAGE_SIZE * 552)
 #define HIBERNATE_PT1_L2_POOL_COUNT	16
 
 /* 3 pages for stack */
-#define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 380)
+#define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 570)
+
+#define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 571)
 
 /*
- * HIBERNATE_HIBALLOC_PAGE must be the last stolen page (see machdep.c).
- * On arm64 a HIGH VA inside the piglet (kernel pmap only manages TTBR1,
- * no low-VA pmap_kenter_pa() like amd64).
+ * On arm64 we can't access low VA using the normal kernel page
+ * tables.  Since the hiballoc page is used before we install the
+ * resume page tables, use the normal kernel VA for access.
  */
-#ifndef _LOCORE
-extern vaddr_t global_piglet_va;
-#endif
-#define HIBERNATE_HIBALLOC_PAGE	(global_piglet_va + PAGE_SIZE * 366)
+#define HIBERNATE_HIBALLOC_PAGE	(global_piglet_va + PAGE_SIZE * 572)
 
 /* Use 4MB hibernation chunks */
 #define HIBERNATE_CHUNK_SIZE		0x400000
