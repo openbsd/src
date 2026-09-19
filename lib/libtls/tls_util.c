@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.17 2026/03/10 05:26:04 deraadt Exp $ */
+/* $OpenBSD: tls_util.c,v 1.18 2026/09/19 16:51:49 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "tls.h"
+#include <tls.h>
 #include "tls_internal.h"
 
 static void *
