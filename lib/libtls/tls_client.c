@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.52 2026/04/16 07:28:00 tb Exp $ */
+/* $OpenBSD: tls_client.c,v 1.53 2026/09/19 16:47:40 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -24,11 +24,14 @@
 
 #include <limits.h>
 #include <netdb.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 #include <openssl/x509.h>
 
 #include <tls.h>
