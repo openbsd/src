@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.496 2026/09/16 16:37:39 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.497 2026/09/19 17:29:23 dgl Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2239,6 +2239,17 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	} else {
 		cnt = pss.ps_nenvstr;
 		vargv = pss.ps_envstr;
+	}
+
+	/*
+	 * Clamp to avoid overflow, using ARG_MAX is only an approximation.
+	 * It is not possible to execve() with this many elements, so this only
+	 * happens if a process has changed its strings.
+	 */
+	if (cnt > ARG_MAX) {
+		/* Hard cap, so don't return ENOMEM, caller can't retry */
+		error = EINVAL;
+		goto out;
 	}
 
 	/* -1 to have space for a terminating NUL */
