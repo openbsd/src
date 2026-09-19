@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.183 2026/09/18 02:35:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.184 2026/09/19 14:17:19 jan Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1212,8 +1212,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	} else if (vmc->vmc_nnics > VM_MAX_NICS_PER_VM) {
 		log_warnx("invalid number of interfaces");
 		goto fail;
-	} else if (vmc->vmc_kernel == -1 && vmc->vmc_ndisks == 0
-	    && strlen(vmc->vmc_cdrom) == 0) {
+	} else if ((vmc->vmc_flags & VMOP_CREATE_KERNEL) == 0 &&
+	    vmc->vmc_ndisks == 0 && strlen(vmc->vmc_cdrom) == 0) {
 		log_warnx("no kernel or disk/cdrom specified");
 		goto fail;
 	} else if (strlen(vmc->vmc_name) == 0) {
@@ -1416,7 +1416,7 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 
 	/* kernel */
 	if (vmc->vmc_kernel > -1 || ((*vm_parent)->vm_kernel_path != NULL &&
-		strnlen((*vm_parent)->vm_kernel_path, PATH_MAX) < PATH_MAX)) {
+	    strnlen((*vm_parent)->vm_kernel_path, PATH_MAX) < PATH_MAX)) {
 		if (vm_checkinsflag(vmc_parent, VMOP_CREATE_KERNEL, uid) != 0) {
 			log_warnx("vm \"%s\" no permission to set boot image",
 			    name);
