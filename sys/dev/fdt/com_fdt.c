@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.10 2026/04/06 10:27:53 kettenis Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.11 2026/09/19 21:37:56 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -38,7 +38,8 @@ void	com_fdt_attach(struct device *, struct device *, void *);
 int	com_fdt_intr_designware(void *);
 
 const struct cfattach com_fdt_ca = {
-	sizeof (struct com_softc), com_fdt_match, com_fdt_attach
+	sizeof (struct com_softc), com_fdt_match, com_fdt_attach,
+	NULL, com_activate
 };
 
 struct consdev com_fdt_cons = {
