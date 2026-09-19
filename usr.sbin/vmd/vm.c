@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.133 2026/09/18 21:47:36 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.134 2026/09/19 15:40:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1423,8 +1423,10 @@ vcpu_assert_init(uint32_t vcpu_id)
 	if (vcpu_id >= current_vm->vm_params.vmc_ncpus)
 		return;
 	mutex_lock(&vcpu_run_mtx[vcpu_id]);
+#ifdef __amd64__
 	/* Serialize the LAPIC reset against a closely following SIPI. */
 	lapic_reset(vcpu_id);
+#endif /* __amd64__ */
 	vcpu_runstate[vcpu_id] = VCPU_RUNSTATE_INIT;
 	vcpu_hlt[vcpu_id] = 0;
 	ret = pthread_cond_signal(&vcpu_run_cond[vcpu_id]);
