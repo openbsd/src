@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.106 2026/09/18 21:54:54 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.107 2026/09/19 16:46:30 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -16,18 +16,24 @@
  */
 
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include <errno.h>
 #include <limits.h>
 #include <pthread.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
 #include <openssl/safestack.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
