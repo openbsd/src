@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.68 2026/09/17 22:58:23 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.69 2026/09/19 16:06:42 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -84,8 +84,6 @@ dtls1_new(SSL *s)
 	if ((s->d1 = calloc(1, sizeof(*s->d1))) == NULL)
 		goto err;
 
-	if ((s->d1->unprocessed_rcds.q = pqueue_new()) == NULL)
-		goto err;
 	if ((s->d1->buffered_messages = pqueue_new()) == NULL)
 		goto err;
 	if ((s->d1->buffered_app_data.q = pqueue_new()) == NULL)
@@ -120,23 +118,6 @@ dtls1_drain_rcontents(pqueue queue)
 }
 
 static void
-dtls1_drain_records(pqueue queue)
-{
-	pitem *item;
-	DTLS1_RECORD_DATA_INTERNAL *rdata;
-
-	if (queue == NULL)
-		return;
-
-	while ((item = pqueue_pop(queue)) != NULL) {
-		rdata = (DTLS1_RECORD_DATA_INTERNAL *)item->data;
-		ssl3_release_buffer(&rdata->rbuf);
-		free(item->data);
-		pitem_free(item);
-	}
-}
-
-static void
 dtls1_drain_fragments(pqueue queue)
 {
 	pitem *item;
@@ -153,7 +134,6 @@ dtls1_drain_fragments(pqueue queue)
 static void
 dtls1_clear_queues(SSL *s)
 {
-	dtls1_drain_records(s->d1->unprocessed_rcds.q);
 	dtls1_drain_fragments(s->d1->buffered_messages);
 	dtls1_drain_rcontents(s->d1->buffered_app_data.q);
 }
@@ -172,7 +152,6 @@ dtls1_free(SSL *s)
 	dtls1_clear_queues(s);
 	dtls1_clear_flight(s);
 
-	pqueue_free(s->d1->unprocessed_rcds.q);
 	pqueue_free(s->d1->buffered_messages);
 	pqueue_free(s->d1->buffered_app_data.q);
 
@@ -185,13 +164,11 @@ dtls1_free(SSL *s)
 void
 dtls1_clear(SSL *s)
 {
-	pqueue unprocessed_rcds;
 	pqueue buffered_messages;
 	pqueue buffered_app_data;
 	unsigned int mtu;
 
 	if (s->d1) {
-		unprocessed_rcds = s->d1->unprocessed_rcds.q;
 		buffered_messages = s->d1->buffered_messages;
 		buffered_app_data = s->d1->buffered_app_data.q;
 		mtu = s->d1->mtu;
@@ -204,9 +181,6 @@ dtls1_clear(SSL *s)
 
 		memset(s->d1, 0, sizeof(*s->d1));
 
-		s->d1->unprocessed_rcds.epoch =
-		    tls12_record_layer_read_epoch(s->rl) + 1;
-
 		if (s->server) {
 			s->d1->cookie_len = sizeof(s->d1->cookie);
 		}
@@ -215,7 +189,6 @@ dtls1_clear(SSL *s)
 			s->d1->mtu = mtu;
 		}
 
-		s->d1->unprocessed_rcds.q = unprocessed_rcds;
 		s->d1->buffered_messages = buffered_messages;
 		s->d1->buffered_app_data.q = buffered_app_data;
 	}
