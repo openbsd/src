@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.31 2026/09/19 16:48:39 tb Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.32 2026/09/19 16:56:13 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -31,6 +31,7 @@
 #include <openssl/x509.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
 
 static int

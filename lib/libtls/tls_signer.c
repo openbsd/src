@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.16 2026/09/19 16:51:15 tb Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.17 2026/09/19 16:56:13 tb Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include <openssl/x509.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
 
 struct tls_signer_key {

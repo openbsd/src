@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.54 2026/09/19 16:50:37 tb Exp $ */
+/* $OpenBSD: tls_server.c,v 1.55 2026/09/19 16:56:13 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include <openssl/ssl.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
 
 struct tls *

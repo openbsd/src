@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.23 2026/09/19 16:47:00 tb Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.24 2026/09/19 16:56:13 tb Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -23,6 +23,7 @@
 #include <openssl/ssl.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
 
 static int bio_cb_write(BIO *bio, const char *buf, int num);

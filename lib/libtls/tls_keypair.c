@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.14 2026/09/19 16:49:13 tb Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.15 2026/09/19 16:56:13 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <openssl/x509.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
 
 struct tls_keypair *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.30 2026/09/19 01:14:47 tb Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.31 2026/09/19 16:56:13 tb Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -29,6 +29,7 @@
 #include <openssl/x509.h>
 
 #include <tls.h>
+
 #include "tls_internal.h"
 
 #define MAXAGE_SEC (14*24*60*60)
