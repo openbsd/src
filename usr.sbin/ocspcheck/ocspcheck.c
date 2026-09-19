@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.36 2026/09/14 23:36:58 kenjiro Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.37 2026/09/19 01:18:07 tb Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -436,8 +436,7 @@ validate_response(char *buf, size_t size, ocsp_request *request,
 		goto err;
 	}
 
-	if (OCSP_basic_verify(bresp, request->fullchain, store,
-		OCSP_TRUSTOTHER) != 1) {
+	if (OCSP_basic_verify(bresp, request->fullchain, store, 0) != 1) {
 		warnx("OCSP verify failed from %s", host);
 		goto err;
 	}
