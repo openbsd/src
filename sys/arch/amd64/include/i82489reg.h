@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489reg.h,v 1.7 2026/09/16 04:05:02 mlarkin Exp $	*/
+/*	$OpenBSD: i82489reg.h,v 1.8 2026/09/19 07:04:46 jsg Exp $	*/
 /*	$NetBSD: i82489reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@
 #	define LAPIC_LVTT_VEC_MASK	0x000000ff
 #	define LAPIC_LVTT_DS		0x00001000
 #	define LAPIC_LVTT_M		0x00010000
-#	define LAPIC_LVTT_TM		0x00020000
+#	define LAPIC_LVTT_TM		0x00060000
 #	 define LAPIC_LVTT_TM_ONESHOT	0x00000000
 #	 define LAPIC_LVTT_TM_PERIODIC	0x00020000
 #	 define LAPIC_LVTT_TM_TSCDL	0x00040000
