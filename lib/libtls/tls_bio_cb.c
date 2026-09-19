@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.22 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.23 2026/09/19 16:47:00 tb Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -15,12 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <fcntl.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <openssl/bio.h>
+#include <openssl/ssl.h>
 
 #include <tls.h>
 #include "tls_internal.h"
