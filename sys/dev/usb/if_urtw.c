@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.74 2024/09/01 03:09:00 jsg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.75 2026/09/19 19:46:50 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -722,6 +722,14 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = urtw_newstate;
 	ieee80211_media_init(ifp, urtw_media_change, ieee80211_media_status);
+
+	/*
+	 * ic_bss is allocated by ieee80211_node_lateattach(), called from
+	 * ieee80211_media_init() above, and starts out with ni_chan set to
+	 * IEEE80211_CHAN_ANYC (NULL).  Give it a real channel right away so
+	 * that nothing can dereference it before the interface comes up.
+	 */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
@@ -2293,6 +2301,14 @@ urtw_init(struct ifnet *ifp)
 
 	ifp->if_timer = 1;
 
+	/*
+	 * Make sure ic_bss->ni_chan is a real channel before the 802.11
+	 * state machine runs: ieee80211_newstate() dereferences it, e.g.
+	 * in ieee80211_node_abg_mode(), without checking for
+	 * IEEE80211_CHAN_ANYC (NULL).
+	 */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 	else
@@ -3693,6 +3709,14 @@ urtw_8187b_init(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	ifp->if_timer = 1;
+
+	/*
+	 * Make sure ic_bss->ni_chan is a real channel before the 802.11
+	 * state machine runs: ieee80211_newstate() dereferences it, e.g.
+	 * in ieee80211_node_abg_mode(), without checking for
+	 * IEEE80211_CHAN_ANYC (NULL).
+	 */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
