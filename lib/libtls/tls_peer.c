@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.9 2024/12/10 08:40:30 tb Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.10 2026/09/19 16:49:58 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -16,9 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-
-#include <openssl/x509.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
 
 #include <tls.h>
 #include "tls_internal.h"
