@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.120 2026/09/18 21:26:16 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.121 2026/09/19 16:11:07 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -87,6 +87,7 @@
 #define VMX_EXIT_XSAVES				63
 #define VMX_EXIT_XRSTORS			64
 
+#define VM_EXIT_X2APIC				0xFFFD
 #define VM_EXIT_TERMINATED			0xFFFE
 #define VM_EXIT_NONE				0xFFFF
 
@@ -356,6 +357,14 @@ struct vm_exit_eptviolation {
 	uint64_t	vee_gpa;		/* GPA that caused the fault */
 };
 
+/* Userspace-assisted x2APIC MSR access. */
+struct vm_exit_x2apic {
+	uint32_t	vex_msr;
+	uint8_t		vex_write;
+	uint8_t		vex_pad[3];
+	uint64_t	vex_data;
+};
+
 /*
  * struct vcpu_inject_event	: describes an exception or interrupt to inject.
  */
@@ -471,6 +480,7 @@ struct vm_exit {
 	union {
 		struct vm_exit_inout		vei;	/* IN/OUT exit */
 		struct vm_exit_eptviolation	vee;	/* EPT VIOLATION exit*/
+		struct vm_exit_x2apic		vex;	/* x2APIC MSR exit */
 	};
 
 	struct vcpu_reg_state		vrs;
@@ -993,6 +1003,7 @@ struct vcpu {
 
 	/* Shadowed MSRs */
 	uint64_t vc_shadow_pat;			/* [v] */
+	uint64_t vc_apicbase;			/* [v] */
 
 	/* Userland Protection Keys */
 	uint32_t vc_pkru;			/* [v] */

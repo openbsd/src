@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.23 2026/09/18 21:47:36 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.24 2026/09/19 16:11:07 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -62,6 +62,7 @@ io_fn_t	ioports_map[MAX_PORTS];
 static int	loadfile_bios(gzFile, off_t, struct vcpu_reg_state *);
 static int	vcpu_exit_reset(struct vm_run_params *);
 static int	vcpu_exit_eptviolation(struct vm_run_params *);
+static int	vcpu_exit_x2apic(struct vm_run_params *);
 static void	vcpu_exit_inout(struct vm_run_params *);
 
 extern struct vmd_vm	*current_vm;
@@ -562,6 +563,16 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 	if (intr != 0xFF)
 		vcpu_assert_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
 }
+static int
+vcpu_exit_x2apic(struct vm_run_params *vrp)
+{
+	struct vm_exit_x2apic *vex = &vrp->vrp_exit->vex;
+	int dir;
+
+	dir = vex->vex_write ? MMIO_DIR_WRITE : MMIO_DIR_READ;
+	return (lapic_x2apic(vrp->vrp_vcpu_id, dir, vex->vex_msr,
+	    &vex->vex_data));
+}
 
 /*
  * vcpu_exit
@@ -606,6 +617,11 @@ vcpu_exit(struct vm_run_params *vrp)
 	case SVM_VMEXIT_NPF:
 	case VMX_EXIT_EPT_VIOLATION:
 		ret = vcpu_exit_eptviolation(vrp);
+		if (ret)
+			return (ret);
+		break;
+	case VM_EXIT_X2APIC:
+		ret = vcpu_exit_x2apic(vrp);
 		if (ret)
 			return (ret);
 		break;

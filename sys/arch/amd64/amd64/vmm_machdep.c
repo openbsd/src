@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.86 2026/09/18 21:47:36 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.87 2026/09/19 16:11:07 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -173,6 +173,9 @@ void vmm_decode_cr3(uint64_t);
 void vmm_decode_cr4(uint64_t);
 void vmm_decode_msr_value(uint64_t, uint64_t);
 void vmm_decode_apicbase_msr_value(uint64_t);
+static enum vmm_action vmm_write_apicbase(struct vcpu *, uint64_t);
+static enum vmm_action vmm_x2apic_msr(struct vcpu *, uint32_t, int,
+    uint64_t);
 void vmm_decode_ia32_fc_value(uint64_t);
 void vmm_decode_mtrrcap_value(uint64_t);
 void vmm_decode_perf_status_value(uint64_t);
@@ -2847,6 +2850,9 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (ret == 0) {
 		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 		vcpu->vc_gueststate.vg_exit_reason = 0;
+		vcpu->vc_apicbase = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
+		if (vcpu->vc_id == 0)
+			vcpu->vc_apicbase |= APICBASE_BSP;
 		vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		vcpu->vc_intr = 0;
 		atomic_swap_uint(&vcpu->vc_intr_latch, 0);
@@ -3741,6 +3747,14 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	    atomic_swap_uint(&vcpu->vc_intr_latch, 0);
 
 	switch (vcpu->vc_gueststate.vg_exit_reason) {
+	case VM_EXIT_X2APIC:
+		if (!vcpu->vc_exit.vex.vex_write) {
+			vcpu->vc_gueststate.vg_rax =
+			    (uint32_t)vcpu->vc_exit.vex.vex_data;
+			vcpu->vc_gueststate.vg_rdx =
+			    vcpu->vc_exit.vex.vex_data >> 32;
+		}
+		break;
 	case VMX_EXIT_IO:
 		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN)
 			vcpu->vc_gueststate.vg_rax = vcpu->vc_exit.vei.vei_data;
@@ -5895,6 +5909,118 @@ vmx_handle_cr(struct vcpu *vcpu)
 }
 
 /*
+ * Maintain the guest-visible APIC mode independently of the host APIC. The
+ * emulated LAPIC has a fixed base and the BSP bit is read-only. An x2APIC
+ * cannot transition directly back to xAPIC mode; software must disable it
+ * first.
+ */
+static enum vmm_action
+vmm_write_apicbase(struct vcpu *vcpu, uint64_t val)
+{
+	uint64_t allowed, oldmode, newmode;
+
+	allowed = APICBASE_ADDRESS_MASK | APICBASE_BSP |
+	    APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE;
+	oldmode = vcpu->vc_apicbase &
+	    (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE);
+	newmode = val & (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE);
+
+	/* condition checks as per intel sdm */
+	if ((val & ~allowed) != 0 ||
+	    (val & APICBASE_ADDRESS_MASK) != LAPIC_BASE ||
+	    (val & APICBASE_BSP) != (vcpu->vc_apicbase & APICBASE_BSP) ||
+	    newmode == APICBASE_ENABLE_X2APIC ||
+	    (oldmode == (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE) &&
+	    newmode == APICBASE_GLOBAL_ENABLE)) {
+		vmm_inject_gp(vcpu);
+		return (VMM_ACTION_INJECT);
+	}
+
+	vcpu->vc_apicbase = val;
+	return (VMM_ACTION_ADVANCE);
+}
+
+/*
+ * Validate an x2APIC MSR access and pass it to vmd
+ */
+static enum vmm_action
+vmm_x2apic_msr(struct vcpu *vcpu, uint32_t msr, int write, uint64_t data)
+{
+	struct vm_exit_x2apic *vex = &vcpu->vc_exit.vex;
+	int readable = 0, writable = 0, wide = 0;
+
+	if ((vcpu->vc_apicbase & (APICBASE_ENABLE_X2APIC |
+	    APICBASE_GLOBAL_ENABLE)) != (APICBASE_ENABLE_X2APIC |
+	    APICBASE_GLOBAL_ENABLE))
+		goto fault;
+	if (msr < MSR_X2APIC_BASE || msr > MSR_X2APIC_END)
+		goto fault;
+
+	switch (msr) {
+	case MSR_X2APIC_ID:
+	case MSR_X2APIC_VERSION:
+	case MSR_X2APIC_PPR:
+	case MSR_X2APIC_LDR:
+	case MSR_X2APIC_ISR0 ... MSR_X2APIC_ISR7:
+	case MSR_X2APIC_TMR0 ... MSR_X2APIC_TMR7:
+	case MSR_X2APIC_IRR0 ... MSR_X2APIC_IRR7:
+	case MSR_X2APIC_TIMER_CCR:
+		readable = 1;
+		break;
+	case MSR_X2APIC_TPR:
+	case MSR_X2APIC_SVR:
+	case MSR_X2APIC_ESR:
+	case MSR_X2APIC_LVT_CMCI:
+	case MSR_X2APIC_LVT_TIMER:
+	case MSR_X2APIC_LVT_THERM:
+	case MSR_X2APIC_LVT_PCINT:
+	case MSR_X2APIC_LVT_LINT0:
+	case MSR_X2APIC_LVT_LINT1:
+	case MSR_X2APIC_LVT_ERROR:
+	case MSR_X2APIC_TIMER_ICR:
+	case MSR_X2APIC_TIMER_DCR:
+		readable = writable = 1;
+		break;
+	case MSR_X2APIC_EOI:
+		writable = 1;
+		if (data != 0)
+			goto fault;
+		break;
+	case MSR_X2APIC_ICR:
+		readable = writable = wide = 1;
+		break;
+	case MSR_X2APIC_SELF_IPI:
+		writable = 1;
+		if ((data & ~0xffULL) != 0)
+			goto fault;
+		break;
+	default:
+		goto fault;
+	}
+
+	/* condition checks */
+	if ((write && !writable) || (!write && !readable) ||
+	    (write && !wide && (data >> 32) != 0))
+		goto fault;
+
+	memset(vex, 0, sizeof(*vex));
+	vex->vex_msr = msr;
+	vex->vex_write = (write != 0);
+	vex->vex_data = data;
+	vcpu->vc_gueststate.vg_exit_reason = VM_EXIT_X2APIC;
+	if (vmm_softc->mode == VMM_MODE_EPT) {
+		if (vmx_advance_rip(vcpu))
+			return (VMM_ACTION_TERMINATE);
+	} else if (svm_advance_rip(vcpu))
+		return (VMM_ACTION_TERMINATE);
+	return (VMM_ACTION_ASSIST);
+
+fault:
+	vmm_inject_gp(vcpu);
+	return (VMM_ACTION_INJECT);
+}
+
+/*
  * vmx_handle_rdmsr
  *
  * Handler for rdmsr instructions. Bitmap MSRs are allowed implicit access
@@ -5936,13 +6062,13 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		action = VMM_ACTION_ADVANCE;
 		break;
 	case MSR_APICBASE:
-		*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
-		if (vcpu->vc_id == 0)
-			*rax |= APICBASE_BSP;
+		*rax = vcpu->vc_apicbase;
 		*rdx = 0;
 		action = VMM_ACTION_ADVANCE;
 		break;
 	default:
+		if (*rcx >= MSR_X2APIC_BASE && *rcx <= MSR_X2APIC_END)
+			return (vmm_x2apic_msr(vcpu, *rcx, 0, 0));
 		/* Unsupported MSRs causes #GP exception, don't advance %rip */
 		DPRINTF("%s: unsupported rdmsr (msr=0x%llx), injecting #GP\n",
 		    __func__, *rcx);
@@ -6101,6 +6227,8 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	val = (*rdx << 32) | (*rax & 0xFFFFFFFFULL);
 
 	switch (*rcx) {
+	case MSR_APICBASE:
+		return (vmm_write_apicbase(vcpu, val));
 	case MSR_CR_PAT:
 		if (vmm_pat_is_valid(val)) {
 			vcpu->vc_shadow_pat = val;
@@ -6133,6 +6261,8 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
 		break;
 	default:
+		if (*rcx >= MSR_X2APIC_BASE && *rcx <= MSR_X2APIC_END)
+			return (vmm_x2apic_msr(vcpu, *rcx, 1, val));
 		/* Log the access, to be able to identify unknown MSRs */
 		DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
 		    "written from guest=0x%llx:0x%llx\n", __func__,
@@ -6171,6 +6301,8 @@ svm_handle_msr(struct vcpu *vcpu)
 		val = (*rdx << 32) | (*rax & 0xFFFFFFFFULL);
 
 		switch (*rcx) {
+		case MSR_APICBASE:
+			return (vmm_write_apicbase(vcpu, val));
 		case MSR_CR_PAT:
 			if (!vmm_pat_is_valid(val)) {
 				vmm_inject_gp(vcpu);
@@ -6192,6 +6324,9 @@ svm_handle_msr(struct vcpu *vcpu)
 			    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
 			break;
 		default:
+			if (*rcx >= MSR_X2APIC_BASE &&
+			    *rcx <= MSR_X2APIC_END)
+				return (vmm_x2apic_msr(vcpu, *rcx, 1, val));
 			/* Log the access, to be able to identify unknown MSRs */
 			DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
 			    "written from guest=0x%llx:0x%llx\n", __func__,
@@ -6222,13 +6357,14 @@ svm_handle_msr(struct vcpu *vcpu)
 			action = VMM_ACTION_ADVANCE;
 			break;
 		case MSR_APICBASE:
-			*rax = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
-			if (vcpu->vc_id == 0)
-				*rax |= APICBASE_BSP;
+			*rax = vcpu->vc_apicbase;
 			*rdx = 0;
 			action = VMM_ACTION_ADVANCE;
 			break;
 		default:
+			if (*rcx >= MSR_X2APIC_BASE &&
+			    *rcx <= MSR_X2APIC_END)
+				return (vmm_x2apic_msr(vcpu, *rcx, 0, 0));
 			/*
 			 * Unsupported MSRs causes #GP exception, don't advance
 			 * %rip
@@ -6454,6 +6590,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rbx |= (topology_capacity & 0xff) << 16;
 		*rbx |= (vcpu->vc_id & 0xFF) << 24;
 		*rcx = (cpu_ecxfeature | CPUIDECX_HV) & VMM_CPUIDECX_MASK;
+		if (!vcpu->vc_seves)
+			*rcx |= CPUIDECX_X2APIC;
 
 		/* Guest CR4.OSXSAVE determines presence of CPUIDECX_OSXSAVE */
 		if (cr4 & CR4_OSXSAVE)
@@ -6773,6 +6911,14 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * exit data structure.
 	 */
 	switch (vcpu->vc_gueststate.vg_exit_reason) {
+	case VM_EXIT_X2APIC:
+		if (!vcpu->vc_exit.vex.vex_write) {
+			vcpu->vc_gueststate.vg_rax = vmcb->v_rax =
+			    (uint32_t)vcpu->vc_exit.vex.vex_data;
+			vcpu->vc_gueststate.vg_rdx =
+			    vcpu->vc_exit.vex.vex_data >> 32;
+		}
+		break;
 	case SVM_VMEXIT_IOIO:
 		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
 			vcpu->vc_gueststate.vg_rax =

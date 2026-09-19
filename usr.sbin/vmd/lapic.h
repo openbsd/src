@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.h,v 1.2 2026/09/18 02:35:55 mlarkin Exp $ */
+/*	$OpenBSD: lapic.h,v 1.3 2026/09/19 16:11:07 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -25,6 +25,7 @@
 void lapic_init(uint32_t);
 void lapic_reset(uint32_t);
 int lapic_mmio(uint32_t, int, paddr_t, uint8_t, uint64_t *);
+int lapic_x2apic(uint32_t, int, uint32_t, uint64_t *);
 int lapic_vector_irq(uint32_t, int, uint8_t, int);
 int lapic_is_pending(int);
 int lapic_ack(int);
