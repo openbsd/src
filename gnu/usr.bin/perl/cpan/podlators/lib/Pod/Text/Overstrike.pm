@@ -103,6 +103,16 @@ sub wrap {
     my $output = '';
     my $spaces = ' ' x $$self{MARGIN};
     my $width = $$self{opt_width} - $$self{MARGIN};
+
+    # Pathological margins make wrapping impossible. In this case, complain to
+    # the user and reset the margin to 0.
+    if ($width <= 0) {
+        my $error = 'Margin is wider than the output width';
+        $self->whine($self->line_count(), $error);
+        $spaces = q{};
+        $width = $self->{opt_width};
+    }
+
     while (length > $width) {
         # This regex represents a single character, that's possibly underlined
         # or in bold (in which case, it's three characters; the character, a
@@ -198,7 +208,7 @@ created by Russ Allbery <rra@cpan.org>.  Subsequently updated by Russ Allbery.
 
 Copyright 2000 Joe Smith <Joe.Smith@inwap.com>
 
-Copyright 2001, 2004, 2008, 2014, 2018-2019, 2022, 2024 Russ Allbery
+Copyright 2001, 2004, 2008, 2014, 2018-2019, 2022, 2024, 2026 Russ Allbery
 <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it

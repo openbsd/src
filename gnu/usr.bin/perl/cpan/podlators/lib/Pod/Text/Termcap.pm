@@ -147,6 +147,15 @@ sub wrap {
         return $self->SUPER::wrap($_);
     }
 
+    # Pathological margins make wrapping impossible. In this case, complain to
+    # the user and reset the margin to 0.
+    if ($width <= 0) {
+        my $error = 'Margin is wider than the output width';
+        $self->whine($self->line_count(), $error);
+        $spaces = q{};
+        $width = $self->{opt_width};
+    }
+
     # $code matches a single special sequence.  $char matches any number of
     # special sequences preceding a single character other than a newline.
     # $shortchar matches some sequence of $char ending in codes followed by
@@ -263,7 +272,7 @@ Russ Allbery <rra@cpan.org>
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 1999, 2001-2002, 2004, 2006, 2008-2009, 2014-2015, 2018-2019, 2022,
-2024 Russ Allbery <rra@cpan.org>
+2024, 2026 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.
