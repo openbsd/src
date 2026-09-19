@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1291 2026/09/19 17:28:04 phessler Exp $
+#	$OpenBSD: install.sub,v 1.1292 2026/09/19 19:52:10 dgl Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2366,7 +2366,6 @@ set_timezone() {
 		TZ=${TZ#*${_zoneroot#/mnt}/}
 	fi
 
-	wait_cgiinfo
 	isin "$CGI_TZ" $(<$_zonefile) && TZ=$CGI_TZ
 
 	# If neither the base or HTTP_LIST gave a hint, and this is the
@@ -3214,6 +3213,9 @@ do_install() {
 	# Gather information for setting up the initial user account.
 	user_setup
 	ask_root_sshd
+
+	# Ensure that previous installer choices (e.g. timezone) are available.
+	wait_cgiinfo
 
 	# Set TZ variable based on zonefile and user selection.
 	set_timezone /var/tzlist
