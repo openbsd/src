@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.90 2026/09/19 14:36:54 mvs Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.91 2026/09/19 15:44:42 deraadt Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 	struct sys_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds_kern *) buf;
+		syscallarg(struct shmid_ds *) buf;
 	} */ *uap = v;
 	int		shmid = SCARG(uap, shmid);
 	int		cmd = SCARG(uap, cmd);
