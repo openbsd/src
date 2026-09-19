@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.399 2026/07/14 15:03:31 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.400 2026/09/19 16:29:14 gnezdo Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #include <sys/pclock.h>
 
 #ifdef _KERNEL
+#include <sys/ptrace.h>		/* For struct ptrace_state */
 #include <sys/atomic.h>
 #define __need_process
 #endif
@@ -207,7 +208,7 @@ struct process {
 
 	pid_t	ps_ppid;		/* [K|m] Cached parent pid */
 	int	ps_ptmask;		/* Ptrace event mask */
-	struct	ptrace_state *ps_ptstat;/* Ptrace state */
+	struct	ptrace_state ps_ptstat;	/* Ptrace state */
 	struct	process *ps_opptr; 	/* [K|m] Old parent during ptrace. */
 
 	struct	rusage *ps_ru;		/* sum of stats for dead threads. */

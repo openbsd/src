@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.279 2026/04/15 18:55:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.280 2026/09/19 16:29:14 gnezdo Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -359,7 +359,6 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	int count, maxprocess_local;
 	vaddr_t uaddr;
 	int error;
-	struct  ptrace_state *newptstat = NULL;
 
 	KASSERT((flags & ~(FORK_FORK | FORK_VFORK | FORK_PPWAIT | FORK_PTRACE
 	    | FORK_IDLE | FORK_SHAREVM | FORK_SHAREFILES | FORK_NOZOMBIE
@@ -449,9 +448,6 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 		forkstat.cntkthread++;
 	}
 
-	if (pr->ps_flags & PS_TRACED && flags & FORK_FORK)
-		newptstat = malloc(sizeof(*newptstat), M_SUBPROC, M_WAITOK);
-
 	p->p_tid = alloctid();
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
@@ -469,13 +465,11 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 		/*
 		 * Set ptrace status.
 		 */
-		if (newptstat != NULL) {
-			pr->ps_ptstat = newptstat;
-			newptstat = NULL;
-			curpr->ps_ptstat->pe_report_event = PTRACE_FORK;
-			pr->ps_ptstat->pe_report_event = PTRACE_FORK;
-			curpr->ps_ptstat->pe_other_pid = pr->ps_pid;
-			pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
+		if (flags & FORK_FORK) {
+			curpr->ps_ptstat.pe_report_event = PTRACE_FORK;
+			pr->ps_ptstat.pe_report_event = PTRACE_FORK;
+			curpr->ps_ptstat.pe_other_pid = pr->ps_pid;
+			pr->ps_ptstat.pe_other_pid = curpr->ps_pid;
 		}
 	}
 	mtx_leave(&pr->ps_mtx);
@@ -497,8 +491,6 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 		atomic_setbits_int(&p->p_flag, P_CPUPEG);
 	} else
 		fork_thread_start(p, curp, flags);
-
-	free(newptstat, M_SUBPROC, sizeof(*newptstat));
 
 	/*
 	 * Notify any interested parties about the new process.

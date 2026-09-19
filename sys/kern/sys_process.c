@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.107 2025/12/11 14:13:18 kurt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.108 2026/09/19 16:29:14 gnezdo Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -319,10 +319,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
 		tr->ps_opptr = tr->ps_pptr;
 		mtx_leave(&tr->ps_mtx);
-		if (tr->ps_ptstat == NULL)
-			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
-			    M_SUBPROC, M_WAITOK);
-		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
+		memset(&tr->ps_ptstat, 0, sizeof(tr->ps_ptstat));
 		return 0;
 
 	/* calls that only operate on the PID */
@@ -508,7 +505,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		mtx_leave(&tr->ps_mtx);
 
 	sendsig:
-		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
+		memset(&tr->ps_ptstat, 0, sizeof(tr->ps_ptstat));
 
 		/* Finally, deliver the requested signal (or none). */
 		mtx_enter(&tr->ps_mtx);
@@ -554,9 +551,6 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		tr->ps_opptr = tr->ps_pptr;
 		process_reparent(tr, p->p_p);
 		mtx_leave(&tr->ps_mtx);
-		if (tr->ps_ptstat == NULL)
-			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
-			    M_SUBPROC, M_WAITOK);
 		data = SIGSTOP;
 		goto sendsig;
 	default:
@@ -624,12 +618,12 @@ ptrace_kstate(struct proc *p, int req, pid_t pid, void *addr)
 	case PT_GET_PROCESS_STATE:
 		mtx_enter(&tr->ps_mtx);
 		if (tr->ps_trapped != NULL)
-			tr->ps_ptstat->pe_tid = tr->ps_trapped->p_tid +
+			tr->ps_ptstat.pe_tid = tr->ps_trapped->p_tid +
 			    THREAD_PID_OFFSET;
 		else
-			tr->ps_ptstat->pe_tid = 0;
+			tr->ps_ptstat.pe_tid = 0;
 		mtx_leave(&tr->ps_mtx);
-		memcpy(addr, tr->ps_ptstat, sizeof *tr->ps_ptstat);
+		memcpy(addr, &tr->ps_ptstat, sizeof(tr->ps_ptstat));
 		break;
 	default:
 		KASSERTMSG(0, "%s: unhandled request %d", __func__, req);
