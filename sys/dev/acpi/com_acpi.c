@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_acpi.c,v 1.11 2023/04/16 11:38:42 kettenis Exp $	*/
+/*	$OpenBSD: com_acpi.c,v 1.12 2026/09/19 14:07:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -79,7 +79,7 @@ com_acpi_match(struct device *parent, void *match, void *aux)
 	if (com_acpi_is_designware(aaa->aaa_dev))
 		return 1;
 
-	if (aaa->aaa_addr[0] == comconsaddr)
+	if (aaa->aaa_addr[0] == comconsaddr && !comconsattached)
 		return 1;
 	iot = aaa->aaa_bst[0];
 	if (bus_space_map(iot, aaa->aaa_addr[0], aaa->aaa_size[0], 0, &ioh))
