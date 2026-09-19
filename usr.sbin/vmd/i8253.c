@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.49 2026/09/17 22:20:06 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.50 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -73,29 +73,29 @@ i8253_pipe_dispatch(int fd, short event, void *arg)
  * Initialize the emulated i8253 PIT.
  *
  * Parameters:
- *  vm_id: vmm(4)-assigned ID of the VM
+ *  vm_fd: file descriptor of the VM
  */
 void
-i8253_init(uint32_t vm_id)
+i8253_init(int vm_fd)
 {
 	memset(&i8253_channel, 0, sizeof(struct i8253_channel));
 	clock_gettime(CLOCK_MONOTONIC, &i8253_channel[0].ts);
 	i8253_channel[0].start = 0xFFFF;
 	i8253_channel[0].mode = TIMER_INTTC;
 	i8253_channel[0].last_r = 1;
-	i8253_channel[0].vm_id = vm_id;
+	i8253_channel[0].vm_fd = vm_fd;
 	i8253_channel[0].state = 0;
 
 	i8253_channel[1].start = 0xFFFF;
 	i8253_channel[1].mode = TIMER_INTTC;
 	i8253_channel[1].last_r = 1;
-	i8253_channel[1].vm_id = vm_id;
+	i8253_channel[1].vm_fd = vm_fd;
 	i8253_channel[1].state = 0;
 
 	i8253_channel[2].start = 0xFFFF;
 	i8253_channel[2].mode = TIMER_INTTC;
 	i8253_channel[2].last_r = 1;
-	i8253_channel[2].vm_id = vm_id;
+	i8253_channel[2].vm_fd = vm_fd;
 	i8253_channel[2].state = 0;
 
 	evtimer_set(&i8253_channel[0].timer, i8253_fire, &i8253_channel[0]);
@@ -371,8 +371,8 @@ i8253_fire(int fd, short type, void *arg)
 	struct i8253_channel *ctr = (struct i8253_channel *)arg;
 
 	if (ctr == &i8253_channel[0]) {
-		vcpu_assert_irq(ctr->vm_id, 0, 0);
-		vcpu_deassert_irq(ctr->vm_id, 0, 0);
+		vcpu_assert_irq(ctr->vm_fd, 0, 0);
+		vcpu_deassert_irq(ctr->vm_fd, 0, 0);
 	}
 
 	if (ctr->mode != TIMER_INTTC) {

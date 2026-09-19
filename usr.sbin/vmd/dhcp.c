@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.15 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.16 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -139,7 +139,7 @@ dhcp_request(struct virtio_dev *dev, char *buf, size_t buflen, char **obuf)
 
 	if (vionet->pxeboot) {
 		strlcpy(resp.file, "auto_install", sizeof resp.file);
-		vm = vm_getbyid(dev->vmm_id);
+		vm = vm_getbyvmid(dev->vm_id);
 		if (vm && res_hnok(vm->vm_params.vmc_name))
 			hostname = vm->vm_params.vmc_name;
 	}

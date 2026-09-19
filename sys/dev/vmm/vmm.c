@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.12 2026/09/18 02:35:55 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.13 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -18,12 +18,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/pool.h>
 #include <sys/pledge.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
+#include <sys/stat.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_aobj.h>
@@ -36,12 +40,48 @@ struct vmm_softc *vmm_softc;
 struct pool vm_pool;
 struct pool vcpu_pool;
 
+int	vmm_probe(struct device *, void *, void *);
+int	vmm_activate(struct device *, int);
+void	vmm_attach(struct device *, struct device *,  void *);
+int	vmmopen(dev_t, int, int, struct proc *);
+int	vmmclose(dev_t, int, int, struct proc *);
+int	vm_find_file(int, struct proc *, struct vm **);
+
 struct cfdriver vmm_cd = {
 	NULL, "vmm", DV_DULL, CD_SKIPHIBERNATE
 };
 
 const struct cfattach vmm_ca = {
 	sizeof(struct vmm_softc), vmm_probe, vmm_attach, NULL, vmm_activate
+};
+
+int	vmm_dev_enter(int);
+void	vmm_dev_exit(void);
+int	vm_create(struct vm_create_params *, struct proc *);
+size_t	vm_create_check_mem_ranges(struct vm_create_params *);
+int	vm_intr_pending(struct vm *, struct vm_intr_params *);
+int	vm_resetcpu(struct vm *, struct vm_resetcpu_params *);
+int	vm_rwvmparams(struct vm *, struct vm_rwvmparams_params *, int);
+int	vm_share_mem(struct vm *, struct vm_sharemem_params *, struct proc *);
+void	vm_teardown(struct vm **);
+int	vm_rele(struct vm *);
+void	vm_request_stop(struct vm *);
+
+int	vm_read(struct file *, struct uio *, int);
+int	vm_write(struct file *, struct uio *, int);
+int	vm_close(struct file *, struct proc *);
+int	vm_kqfilter(struct file *, struct knote *);
+int	vm_ioctl(struct file *, u_long, caddr_t, struct proc *);
+int	vm_stat(struct file *, struct stat *, struct proc *);
+
+static const struct fileops vmops = {
+	.fo_read	= vm_read,
+	.fo_write	= vm_write,
+	.fo_ioctl	= vm_ioctl,
+	.fo_kqfilter	= vm_kqfilter,
+	.fo_stat	= vm_stat,
+	.fo_close	= vm_close,
+	.fo_seek	= NULL,		/* lseek(2) checks for NULL. */
 };
 
 int
@@ -154,163 +194,113 @@ vmmclose(dev_t dev, int flag, int mode, struct proc *p)
 	return 0;
 }
 
-/*
- * vm_find
- *
- * Function to find an existing VM by its identifier.
- * Must be called under the global vm_lock.
- *
- * Parameters:
- *  id: The VM identifier.
- *  *res: A pointer to the VM or NULL if not found
- *
- * Return values:
- *  0: if successful
- *  ENOENT: if the VM defined by 'id' cannot be found
- *  EPERM: if the VM cannot be accessed by the current process
- */
 int
-vm_find(uint32_t id, struct vm **res)
+vm_find_file(int fd, struct proc *p, struct vm **res)
 {
-	struct proc *p = curproc;
-	struct vm *vm;
-	int ret = ENOENT;
+	struct file *fp;
+	struct vm *vm = NULL;
 
 	*res = NULL;
 
-	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == id) {
-			/*
-			 * In the pledged VM process, only allow to find
-			 * the VM that is running in the current process.
-			 * The managing vmm parent process can lookup all
-			 * all VMs and is indicated by PLEDGE_PROC.
-			 */
-			if (((p->p_pledge &
-			    (PLEDGE_VMM | PLEDGE_PROC)) == PLEDGE_VMM) &&
-			    (vm->vm_creator_pid != p->p_p->ps_pid))
-				ret = EPERM;
-			else {
-				refcnt_take(&vm->vm_refcnt);
-				*res = vm;
-				ret = 0;
-			}
-			break;
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+		return (EBADF);
+
+	if (fp->f_type != DTYPE_VMM) {
+		FRELE(fp, p);
+		return (EINVAL);
+	}
+
+	vm = (struct vm *)fp->f_data;
+	refcnt_take(&vm->vm_refcnt);
+	*res = vm;
+	FRELE(fp, p);
+
+	return (0);
+}
+
+/*
+ * vmm_dev_enter
+ *
+ * Acquire a reference to the vmm softc instance, sleeping if it's not
+ * currently active due to power management (i.e. suspend/resume).
+ * If interruptable is zero, wait until a reference is acquired.
+ */
+int
+vmm_dev_enter(int interruptable)
+{
+	int flags, priority, ret;
+
+	flags = RW_READ;
+	priority = PWAIT;
+	if (interruptable) {
+		flags |= RW_INTR;
+		priority |= PCATCH;
+	}
+
+	ret = rw_enter(&vmm_softc->sc_slock, flags);
+	if (ret != 0)
+		return (ret);
+	while (vmm_softc->sc_status != VMM_ACTIVE) {
+		ret = rwsleep_nsec(&vmm_softc->sc_status, &vmm_softc->sc_slock,
+		    priority, "vmmresume", INFSLP);
+		if (ret != 0) {
+			rw_exit(&vmm_softc->sc_slock);
+			return (ret);
 		}
 	}
-	rw_exit_read(&vmm_softc->vm_lock);
+	refcnt_take(&vmm_softc->sc_refcnt);
+	rw_exit(&vmm_softc->sc_slock);
+	return (0);
+}
 
-	if (ret == EPERM)
-		return (pledge_fail(p, EPERM, PLEDGE_VMM));
-	return (ret);
+/*
+ * vmm_dev_exit
+ *
+ * Release a reference to the vmm softc, waking any waiters.
+ */
+void
+vmm_dev_exit(void)
+{
+	refcnt_rele_wake(&vmm_softc->sc_refcnt);
 }
 
 /*
  * vmmioctl
  *
- * Main ioctl dispatch routine for /dev/vmm. Parses ioctl type and calls
- * appropriate lower level handler routine. Returns result to ioctl caller.
+ * Control device ioctl dispatch for creating virtual machines.
  */
 int
 vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int ret;
+	int ret = ENOTTY;
 
 	KERNEL_UNLOCK();
 
-	ret = rw_enter(&vmm_softc->sc_slock, RW_READ | RW_INTR);
+	ret = vmm_dev_enter(1);
 	if (ret != 0)
 		goto out;
-	while (vmm_softc->sc_status != VMM_ACTIVE) {
-		ret = rwsleep_nsec(&vmm_softc->sc_status, &vmm_softc->sc_slock,
-		    PWAIT | PCATCH, "vmmresume", INFSLP);
-		if (ret != 0) {
-			rw_exit(&vmm_softc->sc_slock);
-			goto out;
-		}
-	}
-	refcnt_take(&vmm_softc->sc_refcnt);
-	rw_exit(&vmm_softc->sc_slock);
 
 	switch (cmd) {
 	case VMM_IOC_CREATE:
-		if ((ret = vmm_start()) != 0) {
+		ret = vmm_start();
+		if (ret) {
 			vmm_stop();
 			break;
 		}
 		ret = vm_create((struct vm_create_params *)data, p);
-		break;
-	case VMM_IOC_RUN:
-		ret = vm_run((struct vm_run_params *)data);
-		break;
-	case VMM_IOC_INFO:
-		ret = vm_get_info((struct vm_info_params *)data);
-		break;
-	case VMM_IOC_TERM:
-		ret = vm_terminate((struct vm_terminate_params *)data);
-		break;
-	case VMM_IOC_RESETCPU:
-		ret = vm_resetcpu((struct vm_resetcpu_params *)data);
-		break;
-	case VMM_IOC_READREGS:
-		ret = vm_rwregs((struct vm_rwregs_params *)data, 0);
-		break;
-	case VMM_IOC_WRITEREGS:
-		ret = vm_rwregs((struct vm_rwregs_params *)data, 1);
-		break;
-	case VMM_IOC_READVMPARAMS:
-		ret = vm_rwvmparams((struct vm_rwvmparams_params *)data, 0);
-		break;
-	case VMM_IOC_WRITEVMPARAMS:
-		ret = vm_rwvmparams((struct vm_rwvmparams_params *)data, 1);
-		break;
-	case VMM_IOC_SHAREMEM:
-		ret = vm_share_mem((struct vm_sharemem_params *)data, p);
+		if (ret)
+			break;
 		break;
 	default:
-		ret = vmmioctl_machdep(dev, cmd, data, flag, p);
+		ret = ENOTTY;
 		break;
 	}
 
-	refcnt_rele_wake(&vmm_softc->sc_refcnt);
+	vmm_dev_exit();
 out:
 	KERNEL_LOCK();
 
 	return (ret);
-}
-
-/*
- * pledge_ioctl_vmm
- *
- * Restrict the allowed ioctls in a pledged process context.
- * Is called from pledge_ioctl().
- */
-int
-pledge_ioctl_vmm(struct proc *p, long com)
-{
-	switch (com) {
-	case VMM_IOC_CREATE:
-	case VMM_IOC_INFO:
-	case VMM_IOC_SHAREMEM:
-		/* The "parent" process in vmd forks and manages VMs */
-		if (p->p_pledge & PLEDGE_PROC)
-			return (0);
-		break;
-	case VMM_IOC_TERM:
-		/* XXX VM processes should only terminate themselves */
-	case VMM_IOC_RUN:
-	case VMM_IOC_RESETCPU:
-	case VMM_IOC_READREGS:
-	case VMM_IOC_WRITEREGS:
-	case VMM_IOC_READVMPARAMS:
-	case VMM_IOC_WRITEVMPARAMS:
-		return (0);
-	default:
-		return pledge_ioctl_vmm_machdep(p, com);
-	}
-
-	return (EPERM);
 }
 
 /*
@@ -357,6 +347,8 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 {
 	int i, ret = EINVAL;
 	size_t memsize;
+	struct file *fp;
+	struct filedesc *fdp;
 	struct vm *vm;
 	struct vcpu *vcpu;
 	struct uvm_object *uao;
@@ -466,15 +458,27 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 			pool_put(&vcpu_pool, vcpu);
 			goto err;
 		}
-		/* Publish vcpu to list, inheriting the reference. */
 		SLIST_INSERT_HEAD(&vm->vm_vcpu_list, vcpu, vc_vcpu_link);
 	}
+
+	/* Create our file. */
+	fdp = p->p_fd;
+	fdplock(fdp);
+
+	ret = falloc(p, &fp, &vcp->vcp_fd);
+	if (ret) {
+		fdpunlock(fdp);
+		goto err;
+	}
+	fp->f_flag = FREAD | FWRITE;
+	fp->f_type = DTYPE_VMM;
+	fp->f_data = vm;
+	fp->f_ops = &vmops;
 
 	/* Increment the global index and insert into the list. */
 	rw_enter_write(&vmm_softc->vm_lock);
 	vmm_softc->vm_idx++;
 	vm->vm_id = vmm_softc->vm_idx;
-	vcp->vcp_id = vm->vm_id;
 
 	refcnt_init(&vm->vm_refcnt);
 	SLIST_INSERT_HEAD(&vmm_softc->vm_list, vm, vm_link);
@@ -483,6 +487,12 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	/* Update the userland process's view of guest memory. */
 	memcpy(vcp->vcp_memranges, vm->vm_memranges,
 	    vcp->vcp_nmemranges * sizeof(vcp->vcp_memranges[0]));
+
+	/* Publish the file descriptor. */
+	refcnt_take(&vm->vm_refcnt);
+	fdinsert(fdp, vcp->vcp_fd, 0, fp);
+	FRELE(fp, p);
+	fdpunlock(fdp);
 
 	return (0);
 
@@ -614,149 +624,36 @@ vm_teardown(struct vm **target)
 	*target = NULL;
 }
 
-/*
- * vm_get_info
- *
- * Returns information about the VM indicated by 'vip'. The 'vip_size' field
- * in the 'vip' parameter is used to indicate the size of the caller's buffer.
- * If insufficient space exists in that buffer, the required size needed is
- * returned in vip_size and the number of VM information structures returned
- * in vip_info_count is set to 0. The caller should then try the ioctl again
- * after allocating a sufficiently large buffer.
- *
- * Parameters:
- *  vip: information structure identifying the VM to query
- *
- * Return values:
- *  0: the operation succeeded
- *  ENOMEM: memory allocation error during processing
- *  EFAULT: error copying data to user process
- */
-int
-vm_get_info(struct vm_info_params *vip)
+void
+vm_request_stop(struct vm *vm)
 {
-	struct vm_info_result *out;
-	struct vm *vm;
 	struct vcpu *vcpu;
-	int i = 0, j;
-	size_t need, vm_ct;
+	u_int old;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+#endif
 
-	rw_enter_read(&vmm_softc->vm_lock);
-	vm_ct = vmm_softc->vm_ct;
-	rw_exit_read(&vmm_softc->vm_lock);
+	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+		do {
+			old = atomic_load_int(&vcpu->vc_state);
+			if (old == VCPU_STATE_REQTERM ||
+			    old == VCPU_STATE_TERMINATED)
+				break;
+		} while (atomic_cas_uint(&vcpu->vc_state, old,
+		    VCPU_STATE_REQTERM) != old);
 
-	need = vm_ct * sizeof(struct vm_info_result);
-	if (vip->vip_size < need) {
-		vip->vip_info_ct = 0;
-		vip->vip_size = need;
-		return (0);
-	}
-
-	out = malloc(need, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (out == NULL) {
-		vip->vip_info_ct = 0;
-		return (ENOMEM);
-	}
-
-	vip->vip_info_ct = vm_ct;
-
-	rw_enter_read(&vmm_softc->vm_lock);
-	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		refcnt_take(&vm->vm_refcnt);
-
-		out[i].vir_memory_size = vm->vm_memory_size;
-		out[i].vir_used_size =
-		    pmap_resident_count(vm->vm_pmap) * PAGE_SIZE;
-		out[i].vir_ncpus = vm->vm_vcpu_ct;
-		out[i].vir_id = vm->vm_id;
-		out[i].vir_creator_pid = vm->vm_creator_pid;
-		strlcpy(out[i].vir_name, vm->vm_name, VMM_MAX_NAME_LEN);
-
-		for (j = 0; j < vm->vm_vcpu_ct; j++) {
-			out[i].vir_vcpu_state[j] = VCPU_STATE_UNKNOWN;
-			SLIST_FOREACH(vcpu, &vm->vm_vcpu_list,
-			    vc_vcpu_link) {
-				if (vcpu->vc_id == j)
-					out[i].vir_vcpu_state[j] =
-					    vcpu->vc_state;
-			}
+#ifdef MULTIPROCESSOR
+		/*
+		 * If this vCPU is currently running in guest mode, nudge the
+		 * host CPU so it exits promptly and observes REQTERM.
+		 */
+		if (old != VCPU_STATE_TERMINATED) {
+			ci = READ_ONCE(vcpu->vc_curcpu);
+			if (ci != NULL)
+				x86_send_ipi(ci, X86_IPI_NOP);
 		}
-
-		refcnt_rele_wake(&vm->vm_refcnt);
-		i++;
-		if (i == vm_ct)
-			break;	/* Truncate to keep within bounds of 'out'. */
+#endif
 	}
-	rw_exit_read(&vmm_softc->vm_lock);
-
-	if (copyout(out, vip->vip_info, need) == EFAULT) {
-		free(out, M_DEVBUF, need);
-		return (EFAULT);
-	}
-
-	free(out, M_DEVBUF, need);
-	return (0);
-}
-
-/*
- * vm_terminate
- *
- * Terminates the VM indicated by 'vtp'.
- *
- * Parameters:
- *  vtp: structure defining the VM to terminate
- *
- * Return values:
- *  0: the VM was terminated
- *  !0: the VM could not be located
- */
-int
-vm_terminate(struct vm_terminate_params *vtp)
-{
-	struct vm *vm;
-	int error, nvcpu, vm_id;
-
-	/*
-	 * Find desired VM
-	 */
-	error = vm_find(vtp->vtp_vm_id, &vm);
-	if (error)
-		return (error);
-
-	/* Only proceed through remove and teardown once. */
-	if (atomic_cas_uint(&vm->vm_dying, 0, 1) == 1) {
-		refcnt_rele_wake(&vm->vm_refcnt);
-		return (EBUSY);
-	}
-
-	/* Pop the vm out of the global vm list. */
-	rw_enter_write(&vmm_softc->vm_lock);
-	SLIST_REMOVE(&vmm_softc->vm_list, vm, vm, vm_link);
-	rw_exit_write(&vmm_softc->vm_lock);
-
-	/* Drop the vm_list's reference to the vm. */
-	if (refcnt_rele(&vm->vm_refcnt))
-		panic("%s: vm %d(%p) vm_list refcnt drop was the last",
-		    __func__, vm->vm_id, vm);
-
-	/* Wait for our reference (taken from vm_find) is the last active. */
-	refcnt_finalize(&vm->vm_refcnt, __func__);
-
-	vm_id = vm->vm_id;
-	nvcpu = vm->vm_vcpu_ct;
-
-	vm_teardown(&vm);
-
-	if (vm_id > 0) {
-		rw_enter_write(&vmm_softc->vm_lock);
-		vmm_softc->vm_ct--;
-		vmm_softc->vcpu_ct -= nvcpu;
-		if (vmm_softc->vm_ct < 1)
-			vmm_stop();
-		rw_exit_write(&vmm_softc->vm_lock);
-	}
-
-	return (0);
 }
 
 /*
@@ -768,39 +665,27 @@ vm_terminate(struct vm_terminate_params *vtp)
  *  vrp: ioctl structure defining the vcpu to reset (see vmmvar.h)
  *
  * Returns 0 if successful, or various error codes on failure:
- *  ENOENT if the VM id contained in 'vrp' refers to an unknown VM or
- *      if vrp describes an unknown vcpu for this VM
+ *  ENOENT if vrp describes an unknown vcpu for this VM
  *  EBUSY if the indicated VCPU is not stopped
  *  EIO if the indicated VCPU failed to reset
  */
 int
-vm_resetcpu(struct vm_resetcpu_params *vrp)
+vm_resetcpu(struct vm *vm, struct vm_resetcpu_params *vrp)
 {
-	struct vm *vm;
 	struct vcpu *vcpu;
-	int error, ret = 0;
-
-	/* Find the desired VM */
-	error = vm_find(vrp->vrp_vm_id, &vm);
-
-	/* Not found? exit. */
-	if (error != 0) {
-		DPRINTF("%s: vm id %u not found\n", __func__,
-		    vrp->vrp_vm_id);
-		return (error);
-	}
+	int ret = 0;
 
 	vcpu = vm_find_vcpu(vm, vrp->vrp_vcpu_id);
 
 	if (vcpu == NULL) {
-		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
-		    vrp->vrp_vcpu_id, vrp->vrp_vm_id);
+		DPRINTF("%s: vcpu id %u not found\n", __func__,
+		    vrp->vrp_vcpu_id);
 		ret = ENOENT;
 		goto out;
 	}
 
 	rw_enter_write(&vcpu->vc_lock);
-	if (vcpu->vc_state != VCPU_STATE_STOPPED)
+	if (atomic_load_int(&vcpu->vc_state) != VCPU_STATE_STOPPED)
 		ret = EBUSY;
 	else {
 		if (vcpu_reset_regs(vcpu, &vrp->vrp_init_state)) {
@@ -813,8 +698,6 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 	}
 	rw_exit_write(&vcpu->vc_lock);
 out:
-	refcnt_rele_wake(&vm->vm_refcnt);
-
 	return (ret);
 }
 
@@ -839,7 +722,7 @@ vcpu_must_yield(struct vcpu *vcpu)
 {
 	struct cpu_info *ci;
 
-	if (vcpu->vc_state == VCPU_STATE_REQTERM)
+	if (atomic_load_int(&vcpu->vc_state) == VCPU_STATE_REQTERM)
 		return (1);
 
 	if (SIGPENDING(curproc) != 0)
@@ -859,62 +742,29 @@ vcpu_must_yield(struct vcpu *vcpu)
  *
  * Return values:
  *  0: if successful
- *  ENOENT: if the vm cannot be found by vm_find
  *  other errno on uvm_map or uvm_map_immutable failures
  */
 int
-vm_share_mem(struct vm_sharemem_params *vsp, struct proc *p)
+vm_share_mem(struct vm *vm, struct vm_sharemem_params *vsp, struct proc *p)
 {
 	int ret = EINVAL, unmap = 0;
-	size_t i, failed_uao = 0, n;
-	struct vm *vm;
-	struct vm_mem_range *src, *dst;
+	size_t i, failed_uao = 0;
+	struct vm_mem_range *vmr;
 	struct uvm_object *uao;
 	unsigned int uvmflags;
-
-	ret = vm_find(vsp->vsp_vm_id, &vm);
-	if (ret)
-		return (ret);
-
-	/* Check we have the expected number of ranges. */
-	if (vm->vm_nmemranges != vsp->vsp_nmemranges)
-		goto out;
-	n = vm->vm_nmemranges;
-
-	/* Check their types, sizes, and gpa's (implying page alignment). */
-	for (i = 0; i < n; i++) {
-		src = &vm->vm_memranges[i];
-		dst = &vsp->vsp_memranges[i];
-
-		/*
-		 * The vm memranges were already checked during creation, so
-		 * compare to them to confirm validity of mapping request.
-		 */
-		if (src->vmr_type != dst->vmr_type)
-			goto out;
-		if (src->vmr_gpa != dst->vmr_gpa)
-			goto out;
-		if (src->vmr_size != dst->vmr_size)
-			goto out;
-
-		/* The virtual addresses will be chosen by uvm_map(). */
-		if (vsp->vsp_va[i] != 0)
-			goto out;
-	}
 
 	/* Share each UVM aobj with the calling process. */
 	uvmflags = UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 	    MAP_INHERIT_NONE, MADV_NORMAL, UVM_FLAG_CONCEAL);
-	for (i = 0; i < n; i++) {
-		dst = &vsp->vsp_memranges[i];
-		if (dst->vmr_type == VM_MEM_MMIO)
+	for (i = 0; i < vm->vm_nmemranges; i++) {
+		vmr = &vm->vm_memranges[i];
+		if (vmr->vmr_type == VM_MEM_MMIO)
 			continue;
 
 		uao = vm->vm_memory_slot[i];
 		KASSERT(uao != NULL);
-
 		ret = uvm_map(&p->p_p->ps_vmspace->vm_map, &vsp->vsp_va[i],
-		    dst->vmr_size, uao, 0, 0, uvmflags);
+		    vmr->vmr_size, uao, 0, 0, uvmflags);
 		if (ret) {
 			printf("%s: uvm_map failed: %d\n", __func__, ret);
 			unmap = (i > 0) ? 1 : 0;
@@ -924,7 +774,7 @@ vm_share_mem(struct vm_sharemem_params *vsp, struct proc *p)
 		uao_reference(uao);	/* Add a reference for the process. */
 
 		ret = uvm_map_immutable(&p->p_p->ps_vmspace->vm_map,
-		    vsp->vsp_va[i], vsp->vsp_va[i] + dst->vmr_size, 1);
+		    vsp->vsp_va[i], vsp->vsp_va[i] + vmr->vmr_size, 1);
 		if (ret) {
 			printf("%s: uvm_map_immutable failed: %d\n",
 			    __func__, ret);
@@ -938,11 +788,189 @@ out:
 	if (unmap) {
 		/* Unmap mapped aobjs, which drops the process's reference. */
 		for (i = 0; i < failed_uao; i++) {
-			dst = &vsp->vsp_memranges[i];
+			vmr = &vm->vm_memranges[i];
 			uvm_unmap(&p->p_p->ps_vmspace->vm_map,
-			    vsp->vsp_va[i], vsp->vsp_va[i] + dst->vmr_size);
+			    vsp->vsp_va[i], vsp->vsp_va[i] + vmr->vmr_size);
 		}
 	}
-	refcnt_rele_wake(&vm->vm_refcnt);
 	return (ret);
+}
+
+int
+vm_read(struct file *fp, struct uio *uio, int fflags)
+{
+	return (ENXIO);
+}
+
+int
+vm_write(struct file *fp, struct uio *uio, int fflags)
+{
+	return (ENXIO);
+}
+
+int
+vm_kqfilter(struct file *fp, struct knote *kn)
+{
+	return (EINVAL);
+}
+
+/*
+ * vm_ioctl
+ *
+ * Dispatcher for all virtual machine operations for the vm referenced
+ * by the file fp.
+ */
+int
+vm_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
+{
+	struct vm *vm = (struct vm *)fp->f_data;
+	int ret = 0;
+
+	if (vm == NULL)
+		return (ENXIO);
+
+	KERNEL_ASSERT_UNLOCKED();
+
+	refcnt_take(&vm->vm_refcnt);
+	ret = vmm_dev_enter(1);
+	if (ret != 0)
+		goto out;
+
+	if (atomic_load_int(&vm->vm_dying) != VMM_VM_ALIVE) {
+		if (cmd == VMM_IOC_RUN) {
+			((struct vm_run_params *)data)->vrp_exit_reason =
+			    VM_EXIT_TERMINATED;
+			ret = 0;
+		} else {
+			ret = EBUSY;
+		}
+		goto out_active;
+	}
+
+	switch (cmd) {
+	case VMM_IOC_RUN:
+		ret = vm_run(vm, (struct vm_run_params *)data);
+		break;
+	case VMM_IOC_RESETCPU:
+		ret = vm_resetcpu(vm, (struct vm_resetcpu_params *)data);
+		break;
+	case VMM_IOC_READREGS:
+		ret = vm_rwregs(vm, (struct vm_rwregs_params *)data, 0);
+		break;
+	case VMM_IOC_WRITEREGS:
+		ret = vm_rwregs(vm, (struct vm_rwregs_params *)data, 1);
+		break;
+	case VMM_IOC_READVMPARAMS:
+		ret = vm_rwvmparams(vm, (struct vm_rwvmparams_params *)data, 0);
+		break;
+	case VMM_IOC_WRITEVMPARAMS:
+		ret = vm_rwvmparams(vm, (struct vm_rwvmparams_params *)data, 1);
+		break;
+	case VMM_IOC_SHAREMEM:
+		ret = vm_share_mem(vm, (struct vm_sharemem_params *)data, p);
+		break;
+	case VMM_IOC_INTR:
+		ret = vm_intr_pending(vm, (struct vm_intr_params *)data);
+		break;
+	default:
+		ret = ENOTTY;
+		break;
+	}
+
+out_active:
+	vmm_dev_exit();
+out:
+	vm_rele(vm);
+	return (ret);
+}
+
+int
+vm_rele(struct vm *vm)
+{
+	int nvcpu;
+
+	/*
+	 * May sleep if we drop the last reference and teardown,
+	 * so confirm caller doesn't hold the big lock.
+	 */
+	KERNEL_ASSERT_UNLOCKED();
+
+	if (refcnt_rele(&vm->vm_refcnt) == 0)
+		return (0);
+
+	nvcpu = vm->vm_vcpu_ct;
+
+	vm_teardown(&vm);
+
+	/* Update global accounting. */
+	rw_enter_write(&vmm_softc->vm_lock);
+	vmm_softc->vm_ct--;
+	vmm_softc->vcpu_ct -= nvcpu;
+	if (vmm_softc->vm_ct < 1)
+		vmm_stop();
+	rw_exit_write(&vmm_softc->vm_lock);
+
+	return (1);
+}
+
+int
+vm_close(struct file *fp, struct proc *p)
+{
+	struct vm *vm = (struct vm *)fp->f_data;
+#ifdef MULTIPROCESSOR
+	int relock;
+#endif
+
+	if (vm == NULL)
+		return (0);
+
+	/*
+	 * vm_close is called from multiple contexts within the kernel,
+	 * inside and outside of vmm(4). Some callers hold the kernel lock.
+	 * Since vmm(4) operates without the kernel lock, we need to
+	 * unlock and relock before return.
+	 */
+#ifdef MULTIPROCESSOR
+	relock = _kernel_lock_held();
+	if (relock)
+		KERNEL_UNLOCK();
+#endif
+
+	vmm_dev_enter(0);
+
+	atomic_swap_uint(&vm->vm_dying, VMM_VM_TEARDOWN);
+	vm_request_stop(vm);
+
+	/* Remove the vm from the global vm list. */
+	rw_enter_write(&vmm_softc->vm_lock);
+	SLIST_REMOVE(&vmm_softc->vm_list, vm, vm, vm_link);
+	rw_exit_write(&vmm_softc->vm_lock);
+	vm_rele(vm);
+
+	/* Drop the file's reference. */
+	vm_rele(vm);
+
+	vmm_dev_exit();
+
+#ifdef MULTIPROCESSOR
+	if (relock)
+		KERNEL_LOCK();
+#endif
+	return (0);
+}
+
+int
+vm_stat(struct file *fp, struct stat *st, struct proc *p)
+{
+	struct vm *vm = (struct vm *)fp->f_data;
+
+	if (vm == NULL)
+		return (0);
+
+	memset(st, 0, sizeof(*st));
+	st->st_mode = S_IFCHR;
+	st->st_blksize = PAGE_SIZE;
+	st->st_blocks = pmap_resident_count(vm->vm_pmap);
+
+	return (0);
 }

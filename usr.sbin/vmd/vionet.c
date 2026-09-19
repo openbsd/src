@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.35 2026/09/18 05:27:30 mlarkin Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.36 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -105,7 +105,7 @@ pthread_rwlock_t lock = NULL;		/* Guards device config state. */
 int rx_enabled = 0;	/* 1: we expect to read the tap, 0: wait for notify. */
 
 __dead void
-vionet_main(int fd, int fd_vmm)
+vionet_main(int fd, int vm_fd)
 {
 	struct virtio_dev	 dev;
 	struct vionet_dev	*vionet = NULL;
@@ -141,8 +141,8 @@ vionet_main(int fd, int fd_vmm)
 	vionet = &dev.vionet;
 
 	log_debug("%s: got vionet dev. tap fd = %d, syncfd = %d, asyncfd = %d"
-	    ", vmm fd = %d", __func__, vionet->data_fd, dev.sync_fd,
-	    dev.async_fd, fd_vmm);
+	    ", vm fd = %d", __func__, vionet->data_fd, dev.sync_fd,
+	    dev.async_fd, vm_fd);
 
 	/* Receive our vm information from the vm process. */
 	memset(&vm, 0, sizeof(vm));
@@ -157,16 +157,16 @@ vionet_main(int fd, int fd_vmm)
 	log_procinit("vm/%s/vionet%d", vm.vm_params.vmc_name, vionet->idx);
 
 	/* Now that we have our vm information, we can remap memory. */
-	ret = remap_guest_mem(&vm, fd_vmm);
+	ret = remap_guest_mem(&vm, vm_fd);
 	if (ret) {
 		fatal("%s: failed to remap", __func__);
 		goto fail;
 	}
 
 	/*
-	 * We no longer need /dev/vmm access.
+	 * We no longer need VM fd access.
 	 */
-	close_fd(fd_vmm);
+	close_fd(vm_fd);
 	if (pledge("stdio", NULL) == -1)
 		fatal("pledge2");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.152 2026/09/18 05:27:30 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.153 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -33,6 +33,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -946,7 +947,7 @@ vmmci_ack(struct virtio_dev *dev, unsigned int cmd)
 		 */
 		if (v->cmd == 0) {
 			log_debug("%s: vm %u requested shutdown", __func__,
-			    dev->vmm_id);
+			    dev->vm_id);
 			vm_pipe_send(&v->dev_pipe, VMMCI_SET_TIMEOUT_SHORT);
 			return;
 		}
@@ -961,13 +962,13 @@ vmmci_ack(struct virtio_dev *dev, unsigned int cmd)
 		 */
 		if (cmd == v->cmd) {
 			log_debug("%s: vm %u acknowledged shutdown request",
-			    __func__, dev->vmm_id);
+			    __func__, dev->vm_id);
 			vm_pipe_send(&v->dev_pipe, VMMCI_SET_TIMEOUT_LONG);
 		}
 		break;
 	case VMMCI_SYNCRTC:
 		log_debug("%s: vm %u acknowledged RTC sync request",
-		    __func__, dev->vmm_id);
+		    __func__, dev->vm_id);
 		v->cmd = VMMCI_NONE;
 		break;
 	default:
@@ -986,7 +987,7 @@ vmmci_timeout(int fd, short type, void *arg)
 		fatalx("%s: device is not a vmmci device", __func__);
 	v = &dev->vmmci;
 
-	log_debug("vm %u shutdown", dev->vmm_id);
+	log_debug("vm %u shutdown", dev->vm_id);
 	vm_shutdown(v->cmd == VMMCI_REBOOT ? VMMCI_REBOOT : VMMCI_SHUTDOWN);
 }
 
@@ -1209,7 +1210,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 
 			/* Device specific initialization. */
 			dev->dev_type = VMD_DEVTYPE_NET;
-			dev->vmm_id = vm->vm_vmmid;
+			dev->vm_fd = vm->vm_fd;
 			dev->vionet.data_fd = child_taps[i];
 
 			/* MAC address has been assigned by the parent */
@@ -1279,7 +1280,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 
 			/* Device specific initialization. */
 			dev->dev_type = VMD_DEVTYPE_DISK;
-			dev->vmm_id = vm->vm_vmmid;
+			dev->vm_fd = vm->vm_fd;
 			dev->vioblk.seg_max = VIOBLK_SEG_MAX_DEFAULT;
 
 			/*
@@ -1328,7 +1329,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 
 		/* Device specific initialization. */
 		dev->dev_type = VMD_DEVTYPE_SCSI;
-		dev->vmm_id = vm->vm_vmmid;
+		dev->vm_fd = vm->vm_fd;
 		dev->vioscsi.cdrom_fd = child_cdrom;
 		dev->vioscsi.locked = 0;
 		dev->vioscsi.lba = 0;
@@ -1521,7 +1522,7 @@ virtio_dev_init(struct vmd_vm *vm, struct virtio_dev *dev, uint8_t pci_id,
 	dev->irq = pci_get_dev_irq(pci_id);
 	dev->isr = 0;
 	dev->vm_id = vm->vm_vmid;
-	dev->vmm_id = vm->vm_vmmid;
+	dev->vm_fd = vm->vm_fd;
 
 	dev->device_feature = features;
 
@@ -1803,14 +1804,24 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 			if (virtio_dev_closefds(dev_entry) == -1)
 				fatalx("unable to close other virtio devs");
 		}
+		/*
+		 * Device helpers only need the VM file descriptor passed via
+		 * argv -i for remap_guest_mem(); close inherited control fds.
+		 */
+		if (env->vmd_vmm_fd != -1 && env->vmd_vmm_fd != vm->vm_fd)
+			close_fd(env->vmd_vmm_fd);
+		if (env->vmd_psp_fd != -1 && env->vmd_psp_fd != vm->vm_fd)
+			close_fd(env->vmd_psp_fd);
 
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", sync_fds[1]);
 		memset(vmm_fd, 0, sizeof(vmm_fd));
-		snprintf(vmm_fd, sizeof(vmm_fd), "%d", env->vmd_vmm_fd);
+		snprintf(vmm_fd, sizeof(vmm_fd), "%d", vm->vm_fd);
 		memset(vm_name, 0, sizeof(vm_name));
 		snprintf(vm_name, sizeof(vm_name), "%s",
 		    vm->vm_params.vmc_name);
+		if (vm->vm_fd > 0)
+			fcntl(vm->vm_fd, F_SETFD, 0); /* keep vm fd across exec */
 
 		t[0] = dev->dev_type;
 		t[1] = '\0';

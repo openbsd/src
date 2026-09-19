@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.152 2026/09/18 21:47:36 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.153 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -309,7 +309,7 @@ struct vmd_vm {
 	pid_t			 vm_pid;
 	uid_t			 vm_uid;
 	uint32_t		 vm_vmid;	/* vmd(8) identifier */
-	uint32_t		 vm_vmmid;	/* vmm(4) identifier */
+	int			 vm_fd;		/* vmm(4) vm file descriptor */
 	uint32_t		 vm_peerid;
 
 	/* AMD SEV features */
@@ -477,10 +477,7 @@ ssize_t	 decode_udp_ip_header(unsigned char *, size_t, size_t,
 
 /* vmd.c */
 int	 vmd_reload(unsigned int, const char *);
-struct vmd_vm *vm_getbyid(uint32_t);
 struct vmd_vm *vm_getbyvmid(uint32_t);
-uint32_t vm_id2vmid(uint32_t, struct vmd_vm *);
-uint32_t vm_vmid2id(uint32_t, struct vmd_vm *);
 struct vmd_vm *vm_getbyname(const char *);
 struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_stop(struct vmd_vm *, int, const char *);
@@ -531,7 +528,7 @@ void	 create_memory_map(struct vmd_vm *);
 int	 load_firmware(struct vmd_vm *, struct vcpu_reg_state *);
 int	 init_emulated_hw(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK],
     int *);
-int	 vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
+int	 vcpu_reset(int, uint32_t, struct vcpu_reg_state *);
 void	 pause_vm_md(struct vmd_vm *);
 void	 unpause_vm_md(struct vmd_vm *);
 void	*hvaddr_mem(paddr_t, size_t);
@@ -542,8 +539,8 @@ int	 read_mem(paddr_t, void *, size_t);
 int	 intr_ack(int);
 int	 intr_pending(int);
 void	 intr_toggle_el(struct vmd_vm *, int, int);
-void	 vcpu_assert_irq(uint32_t, uint32_t, int);
-void	 vcpu_deassert_irq(uint32_t, uint32_t, int);
+void	 vcpu_assert_irq(int, uint32_t, int);
+void	 vcpu_deassert_irq(int, uint32_t, int);
 int	 vcpu_exit(struct vm_run_params *);
 uint8_t	 vcpu_exit_pci(struct vm_run_params *);
 
@@ -559,10 +556,10 @@ void	 get_input_data(struct vm_exit *, uint32_t *);
 void	 vcpu_halt(uint32_t, int);
 void	 vcpu_unhalt(uint32_t);
 void	 vcpu_signal_run(uint32_t);
-void	 vcpu_assert_vector(uint32_t, uint32_t, uint8_t);
+void	 vcpu_assert_vector(int, uint32_t, uint8_t);
 void	 vcpu_assert_init(uint32_t);
 void	 vcpu_start_sipi(uint32_t, uint8_t);
-int 	 vcpu_intr(uint32_t, uint32_t, uint8_t);
+int 	 vcpu_intr(int, uint32_t, uint8_t);
 void	 vm_main(int, int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);
@@ -611,7 +608,7 @@ int	 psp_df_flush(void);
 int	 psp_get_gstate(uint32_t, uint32_t *, uint32_t *, uint8_t *);
 int	 psp_launch_start(uint32_t *, int);
 int	 psp_launch_update(uint32_t, vaddr_t, size_t);
-int	 psp_encrypt_state(uint32_t, uint32_t, uint32_t, uint32_t);
+int	 psp_encrypt_state(uint32_t, uint32_t, int, uint32_t);
 int	 psp_launch_measure(uint32_t);
 int	 psp_launch_finish(uint32_t);
 int	 psp_activate(uint32_t, uint32_t);

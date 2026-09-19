@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.4 2026/09/19 16:11:07 mlarkin Exp $ */
+/*	$OpenBSD: lapic.c,v 1.5 2026/09/19 17:21:52 dv Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -587,7 +587,7 @@ lapic_icr_dispatch(uint32_t source, uint32_t lo, uint64_t targets)
 	case LAPIC_DLMODE_FIXED:
 		for (i = 0; i < lapic_ncpus; i++) {
 			if (targets & (1ULL << i))
-				vcpu_assert_vector(current_vm->vm_vmmid, i, vector);
+				vcpu_assert_vector(current_vm->vm_fd, i, vector);
 		}
 		break;
 	case LAPIC_DLMODE_INIT:
@@ -879,7 +879,7 @@ lapic_vector_irq(uint32_t dest_vcpu, int destmode, uint8_t vector,
 	 * cannot reliably decide here whether the new vector is deliverable.
 	 * The resulting exit synchronizes the state before vmd checks the IRR.
 	 */
-	error = vcpu_intr(current_vm->vm_vmmid, dest_vcpu, 1);
+	error = vcpu_intr(current_vm->vm_fd, dest_vcpu, 1);
 	if (error != 0)
 		fatalx("%s: can't assert vector %u on vcpu %u: %s",
 		    __func__, vector, dest_vcpu, strerror(error));

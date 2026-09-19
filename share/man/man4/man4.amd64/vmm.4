@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmm.4,v 1.10 2024/11/05 15:08:46 mlarkin Exp $
+.\"	$OpenBSD: vmm.4,v 1.11 2026/09/19 17:21:52 dv Exp $
 .\"
 .\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2024 $
+.Dd $Mdocdate: September 19 2026 $
 .Dt VMM 4 amd64
 .Os
 .Sh NAME
@@ -72,23 +72,37 @@ For more information, consult the CPU vendor's documentation.
 .Pp
 The following
 .Xr ioctl 2
-commands are provided for managing
-.Nm
-guests:
+commands are provided through two interfaces:
+.Bl -tag -width Ds -offset indent
+.It Pa /dev/vmm
+Control device for creating VMs.
+.It VM file descriptor
+Per-VM handle returned by
+.Dv VMM_IOC_CREATE .
+The lifetime of a VM is tied to this descriptor.
+Closing the last reference to it tears down the VM.
+.El
+.Pp
+The following ioctl call applies to the
+.Pa /dev/vmm
+control device:
 .Bl -tag -width Ds -offset indent
 .It Dv VMM_IOC_CREATE Fa "struct vm_create_params *"
-Create a VM, initializing
+Create a VM via
+.Pa /dev/vmm ,
+initializing
 .Nm
 if not yet started.
+Returns a VM file descriptor in
+.Fa vcp_fd .
 (Does not start the VCPU.)
+.El
+.Pp
+The following ioctl calls apply to the VM file descriptor returned by
+.Dv VMM_IOC_CREATE .
+.Bl -tag -width Ds -offset indent
 .It Dv VMM_IOC_RUN Fa "struct vm_run_params *"
-Run a VCPU for a defined VM.
-Return on VM-exit, when the VCPU stopped, or an error occurred.
-.It Dv VMM_IOC_INFO Fa "struct vm_info_params *"
-Get information about the VMs currently hosted by
-.Nm .
-.It Dv VMM_IOC_TERM Fa "struct vm_terminate_params *"
-Terminate a given VM.
+Run a VCPU and return on VM-exit, when the VCPU stopped, or on error.
 .It Dv VMM_IOC_RESETCPU Fa "struct vm_resetcpu_params *"
 Reset a VCPU to power-on-init state using the provided register state.
 .It Dv VMM_IOC_INTR Fa "struct vm_intr_params *"
@@ -105,6 +119,8 @@ version) for a VM.
 Write paravirtualized hardware parameters (such as
 .Xr pvclock 4
 guest physical address) for a VM.
+.It Dv VMM_IOC_SHAREMEM Fa "struct vm_sharemem_params *"
+Create shared mappings for the VM memory ranges into the calling process.
 .El
 .Sh SEE ALSO
 .Xr cpu 4 ,

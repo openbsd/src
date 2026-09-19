@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.134 2026/09/19 15:40:41 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.135 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -231,10 +231,8 @@ start_vm(struct vmd_vm *vm, int fd)
 			errno = ret;
 			log_warn("could not create vm");
 		}
-
-		/* Let the vmm process know we failed by sending a 0 vm id. */
-		vm->vm_vmmid = 0;
-		atomicio(vwrite, fd, &vm->vm_vmmid, sizeof(vm->vm_vmmid));
+		/* Let the vmm process know we failed by sending the error code. */
+		atomicio(vwrite, fd, &ret, sizeof(ret));
 		return (ret);
 	}
 
@@ -254,14 +252,10 @@ start_vm(struct vmd_vm *vm, int fd)
 		log_warn("failed to set nonblocking mode on console");
 		return (1);
 	}
-
-	/*
-	 * We now let the vmm process know we were successful by sending it our
-	 * vmm(4) assigned vm id.
-	 */
-	if (atomicio(vwrite, fd, &vm->vm_vmmid, sizeof(vm->vm_vmmid)) !=
-	    sizeof(vm->vm_vmmid)) {
-		log_warn("failed to send created vm id to vmm process");
+	/* We now let the vmm process know we were successful. */
+	ret = 0;
+	if (atomicio(vwrite, fd, &ret, sizeof(ret)) != sizeof(ret)) {
+		log_warn("failed to send vm start status to vmm process");
 		return (1);
 	}
 
@@ -536,28 +530,27 @@ unpause_vm(struct vmd_vm *vm)
  * the register state provided
  *
  * Parameters
- *  vmid: VM ID to reset
+ *  fd: vm file descriptor to reset
  *  vcpu_id: VCPU ID to reset
  *  vrs: the register state to initialize
  *
  * Return values:
  *  0: success
- *  !0 : ioctl to vmm(4) failed (eg, ENOENT if the supplied VM ID is not
+ *  !0 : ioctl to vmm(4) failed (eg, ENOENT if the supplied VCPU ID is not
  *      valid)
  */
 int
-vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
+vcpu_reset(int fd, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
 {
 	struct vm_resetcpu_params vrp;
 
 	memset(&vrp, 0, sizeof(vrp));
-	vrp.vrp_vm_id = vmid;
 	vrp.vrp_vcpu_id = vcpu_id;
 	memcpy(&vrp.vrp_init_state, vrs, sizeof(struct vcpu_reg_state));
 
-	log_debug("%s: resetting vcpu %d for vm %d", __func__, vcpu_id, vmid);
+	log_debug("%s: resetting vcpu %d", __func__, vcpu_id);
 
-	if (ioctl(env->vmd_vmm_fd, VMM_IOC_RESETCPU, &vrp) == -1)
+	if (ioctl(fd, VMM_IOC_RESETCPU, &vrp) == -1)
 		return (errno);
 
 	return (0);
@@ -583,6 +576,7 @@ vmm_create_vm(struct vmd_vm *vm)
 	struct vm_create_params		 vcp;
 	struct vmop_create_params	*vmc = &vm->vm_params;
 	size_t				 i;
+	int				 error;
 
 	/* Sanity check arguments */
 	if (vmc->vmc_ncpus == 0 ||
@@ -608,10 +602,16 @@ vmm_create_vm(struct vmd_vm *vm)
 	vcp.vcp_sev = vmc->vmc_sev;
 	vcp.vcp_seves = vmc->vmc_seves;
 
-	if (ioctl(env->vmd_vmm_fd, VMM_IOC_CREATE, &vcp) == -1)
-		return (errno);
+	if (ioctl(env->vmd_vmm_fd, VMM_IOC_CREATE, &vcp) == -1) {
+		error = errno;
+		close_fd(env->vmd_vmm_fd);
+		env->vmd_vmm_fd = -1;
+		return (error);
+	}
+	close_fd(env->vmd_vmm_fd);
+	env->vmd_vmm_fd = -1;
 
-	vm->vm_vmmid = vcp.vcp_id;
+	vm->vm_fd = vcp.vcp_fd;
 	for (i = 0; i < vcp.vcp_ncpus; i++)
 		vm->vm_sev_asid[i] = vcp.vcp_asid[i];
 	for (i = 0; i < vmc->vmc_nmemranges; i++)
@@ -692,22 +692,21 @@ run_vm(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
-		vrp[i]->vrp_vm_id = vm->vm_vmmid;
 		vrp[i]->vrp_vcpu_id = i;
 
 #ifdef __amd64__
 		if (i == 0) {
-			ret = vcpu_reset(vm->vm_vmmid, i, vrs);
+			ret = vcpu_reset(vm->vm_fd, i, vrs);
 			vcpu_runstate[i] = VCPU_RUNSTATE_RUNNING;
 		} else {
 			struct vcpu_reg_state ap_vrs;
 
 			vcpu_init_ap(&ap_vrs);
-			ret = vcpu_reset(vm->vm_vmmid, i, &ap_vrs);
+			ret = vcpu_reset(vm->vm_fd, i, &ap_vrs);
 			vcpu_runstate[i] = VCPU_RUNSTATE_WAIT_SIPI;
 		}
 #else
-		ret = vcpu_reset(vm->vm_vmmid, i, vrs);
+		ret = vcpu_reset(vm->vm_fd, i, vrs);
 		vcpu_runstate[i] = VCPU_RUNSTATE_RUNNING;
 #endif
 		if (ret) {
@@ -909,7 +908,7 @@ lapic_timer_thread(void *arg)
 			if (!lapic_timer_check(i))
 				continue;
 
-			error = vcpu_intr(current_vm->vm_vmmid, i, 1);
+			error = vcpu_intr(current_vm->vm_fd, i, 1);
 			if (error != 0) {
 				log_debug("%s: could not interrupt vcpu %zu: %s",
 				    __func__, i, strerror(error));
@@ -1076,7 +1075,7 @@ vcpu_run_loop(void *arg)
 		vcpu_enter_gen[n] = vcpu_wake_gen[n];
 		mutex_unlock(&vcpu_run_mtx[n]);
 
-		if (ioctl(env->vmd_vmm_fd, VMM_IOC_RUN, vrp) == -1) {
+		if (ioctl(current_vm->vm_fd, VMM_IOC_RUN, vrp) == -1) {
 			/* If run ioctl failed, exit */
 			ret = errno;
 			log_debug("%s: vm %d / vcpu %d run ioctl failed",
@@ -1161,7 +1160,7 @@ vcpu_apply_pending_startup(uint32_t vcpu_id)
 		else
 			vcpu_init_sipi(&vrs, vector);
 
-		ret = vcpu_reset(current_vm->vm_vmmid, vcpu_id, &vrs);
+		ret = vcpu_reset(current_vm->vm_fd, vcpu_id, &vrs);
 		if (ret != 0) {
 			log_warnx("%s: cannot reset vcpu %u: %s", __func__,
 			    vcpu_id, strerror(ret));
@@ -1182,17 +1181,16 @@ vcpu_apply_pending_startup(uint32_t vcpu_id)
 }
 
 int
-vcpu_intr(uint32_t vmm_id, uint32_t vcpu_id, uint8_t intr)
+vcpu_intr(int fd, uint32_t vcpu_id, uint8_t intr)
 {
 	struct vm_intr_params vip;
 
 	memset(&vip, 0, sizeof(vip));
 
-	vip.vip_vm_id = vmm_id;
 	vip.vip_vcpu_id = vcpu_id; /* XXX always 0? */
 	vip.vip_intr = intr;
 
-	if (ioctl(env->vmd_vmm_fd, VMM_IOC_INTR, &vip) == -1)
+	if (ioctl(fd, VMM_IOC_INTR, &vip) == -1)
 		return (errno);
 
 	return (0);
@@ -1347,7 +1345,7 @@ vm_pipe_recv(struct vm_dev_pipe *p)
  * Returns 0 on success or an errno in event of failure.
  */
 int
-remap_guest_mem(struct vmd_vm *vm, int vmm_fd)
+remap_guest_mem(struct vmd_vm *vm, int vm_fd)
 {
 	size_t i;
 	struct vm_sharemem_params vsp;
@@ -1355,19 +1353,14 @@ remap_guest_mem(struct vmd_vm *vm, int vmm_fd)
 	if (vm == NULL)
 		return (EINVAL);
 
-	/* Initialize using our original creation parameters. */
 	memset(&vsp, 0, sizeof(vsp));
-	vsp.vsp_nmemranges = vm->vm_params.vmc_nmemranges;
-	vsp.vsp_vm_id = vm->vm_vmmid;
-	memcpy(&vsp.vsp_memranges, &vm->vm_params.vmc_memranges,
-	    sizeof(vsp.vsp_memranges));
 
 	/* Ask vmm(4) to enter a shared mapping to guest memory. */
-	if (ioctl(vmm_fd, VMM_IOC_SHAREMEM, &vsp) == -1)
+	if (ioctl(vm_fd, VMM_IOC_SHAREMEM, &vsp) == -1)
 		return (errno);
 
 	/* Update with the location of the new mappings. */
-	for (i = 0; i < vsp.vsp_nmemranges; i++)
+	for (i = 0; i < vm->vm_params.vmc_nmemranges; i++)
 		vm->vm_params.vmc_memranges[i].vmr_va = vsp.vsp_va[i];
 
 	return (0);
@@ -1435,7 +1428,7 @@ vcpu_assert_init(uint32_t vcpu_id)
 		fatalx("%s: can't signal vcpu %u (%d)", __func__, vcpu_id,
 		    ret);
 
-	ret = vcpu_intr(current_vm->vm_vmmid, vcpu_id, 1);
+	ret = vcpu_intr(current_vm->vm_fd, vcpu_id, 1);
 	if (ret != 0)
 		log_warnx("%s: cannot kick vcpu %u: %s", __func__, vcpu_id,
 		    strerror(ret));
@@ -1500,7 +1493,7 @@ stop_vm(struct vmd_vm *vm)
 			fatalx("cannot wake paused vcpu %zu (%d)", n, ret);
 
 		/* Running VCPUs must also observe the shutdown request. */
-		ret = vcpu_intr(vm->vm_vmmid, n, 1);
+		ret = vcpu_intr(vm->vm_fd, n, 1);
 		if (ret != 0)
 			log_debug("%s: cannot kick vcpu %zu: %s", __func__, n,
 			    strerror(ret));

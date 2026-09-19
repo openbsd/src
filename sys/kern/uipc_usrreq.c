@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.223 2026/09/15 17:09:59 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.224 2026/09/19 17:21:52 dv Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -1296,8 +1296,8 @@ morespace:
 		if (error)
 			goto fail;
 
-		/* kqueue descriptors cannot be copied */
-		if (fp->f_type == DTYPE_KQUEUE) {
+		/* kqueue and vmm descriptors cannot be copied */
+		if (fp->f_type == DTYPE_KQUEUE || fp->f_type == DTYPE_VMM) {
 			error = EINVAL;
 			goto fail;
 		}

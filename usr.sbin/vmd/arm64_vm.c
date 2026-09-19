@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.13 2026/09/19 15:40:41 mlarkin Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.14 2026/09/19 17:21:52 dv Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -104,19 +104,19 @@ intr_ack(int vcpu_id)
 }
 
 void
-vcpu_assert_vector(uint32_t vm_id, uint32_t vcpu_id, uint8_t vector)
+vcpu_assert_vector(int fd, uint32_t vcpu_id, uint8_t vector)
 {
 	fatalx("%s: unimplemented", __func__);
 }
 
 void
-vcpu_assert_irq(uint32_t vm_id, uint32_t vcpu_id, int vector)
+vcpu_assert_irq(int fd, uint32_t vcpu_id, int vector)
 {
 	fatalx("%s: unimplemented", __func__);
 }
 
 void
-vcpu_deassert_irq(uint32_t vm_id, uint32_t vcpu_id, int vector)
+vcpu_deassert_irq(int fd, uint32_t vcpu_id, int vector)
 {
 	fatalx("%s: unimplemented", __func__);
 }

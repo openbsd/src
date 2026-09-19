@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.41 2026/09/18 05:27:30 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.42 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -404,7 +404,7 @@ pci_msi_deliver(uint64_t address, uint32_t data)
 	dest = (address >> PCI_MSI_ADDR_DEST_SHIFT) &
 	    PCI_MSI_ADDR_DEST_MASK;
 	vector = data & PCI_MSI_DATA_VECTOR_MASK;
-	vcpu_assert_vector(current_vm->vm_vmmid, dest, vector);
+	vcpu_assert_vector(current_vm->vm_fd, dest, vector);
 }
 
 void
@@ -451,7 +451,7 @@ pci_assert_irq(uint8_t id, uint16_t msix_vector)
 	if (deliver)
 		pci_msi_deliver(address, data);
 	else if (legacy && dev->pd_int)
-		vcpu_assert_irq(current_vm->vm_vmmid, 0, dev->pd_irq);
+		vcpu_assert_irq(current_vm->vm_fd, 0, dev->pd_irq);
 }
 
 void
@@ -469,7 +469,7 @@ pci_deassert_irq(uint8_t id)
 	pthread_mutex_unlock(&dev->pd_mtx);
 
 	if (legacy && dev->pd_int)
-		vcpu_deassert_irq(current_vm->vm_vmmid, 0, dev->pd_irq);
+		vcpu_deassert_irq(current_vm->vm_fd, 0, dev->pd_irq);
 }
 
 static void

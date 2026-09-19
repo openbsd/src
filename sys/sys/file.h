@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.66 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: file.h,v 1.67 2026/09/19 17:21:52 dv Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #define	DTYPE_KQUEUE	4	/* event queue */
 #define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
 #define	DTYPE_SYNC	6	/* sync file (for DRM) */
+#define	DTYPE_VMM	7	/* vmm(4) virtual machine */
 
 #ifdef _KERNEL
 struct proc;

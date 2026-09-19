@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.121 2026/09/19 16:11:07 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.122 2026/09/19 17:21:52 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -22,6 +22,8 @@
 #define _MACHINE_VMMVAR_H_
 
 #ifndef _LOCORE
+
+struct vm;
 
 #define VMM_HV_SIGNATURE 	"OpenBSDVMM58"
 
@@ -489,7 +491,6 @@ struct vm_exit {
 
 struct vm_intr_params {
 	/* Input parameters to VMM_IOC_INTR */
-	uint32_t		vip_vm_id;
 	uint32_t		vip_vcpu_id;
 	uint16_t		vip_intr;
 };
@@ -507,7 +508,6 @@ struct vm_rwregs_params {
 	 * Input/output parameters to VMM_IOC_READREGS /
 	 * VMM_IOC_WRITEREGS
 	 */
-	uint32_t		vrwp_vm_id;
 	uint32_t		vrwp_vcpu_id;
 	uint64_t		vrwp_mask;
 	struct vcpu_reg_state	vrwp_regs;
@@ -1069,17 +1069,15 @@ void	vmclear_on_cpu(struct cpu_info *);
 int	vmm_probe_machdep(struct device *, void *, void *);
 void	vmm_attach_machdep(struct device *, struct device *, void *);
 void	vmm_activate_machdep(struct device *, int);
-int	vmmioctl_machdep(dev_t, u_long, caddr_t, int, struct proc *);
-int	pledge_ioctl_vmm_machdep(struct proc *, long);
 int	vmm_start(void);
 int	vmm_stop(void);
 int	vm_impl_init(struct vm *, struct proc *);
 void	vm_impl_deinit(struct vm *);
 int	vcpu_init(struct vcpu *, struct vm_create_params *);
 void	vcpu_deinit(struct vcpu *);
-int	vm_rwregs(struct vm_rwregs_params *, int);
+int	vm_rwregs(struct vm *, struct vm_rwregs_params *, int);
 int	vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
-int	svm_get_vmsa_pa(uint32_t, uint32_t, uint64_t *);
+int	svm_get_vmsa_pa(struct proc *, struct file *, uint32_t, uint64_t *);
 
 #endif /* _KERNEL */
 

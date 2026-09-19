@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.43 2026/09/17 22:20:06 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.44 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -36,7 +36,7 @@ struct ns8250_dev com1_dev;
 static struct vm_dev_pipe dev_pipe;
 
 static void com_rcv_event(int, short, void *);
-static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t);
+static void com_rcv(struct ns8250_dev *, uint32_t);
 static void ns8250_update_iir(struct ns8250_dev *);
 
 static void
@@ -93,12 +93,12 @@ ratelimit(int fd, short type, void *arg)
 		com1_dev.tx_intr_pending = 1;
 	ns8250_update_iir(&com1_dev);
 	if ((com1_dev.regs.iir & IIR_NOPEND) == 0)
-		vcpu_assert_irq(com1_dev.vmid, 0, com1_dev.irq);
+		vcpu_assert_irq(com1_dev.vm_fd, 0, com1_dev.irq);
 	mutex_unlock(&com1_dev.mutex);
 }
 
 void
-ns8250_init(int fd, uint32_t vmid)
+ns8250_init(int fd, int vm_fd)
 {
 	int ret;
 
@@ -110,9 +110,9 @@ ns8250_init(int fd, uint32_t vmid)
 	}
 
 	com1_dev.fd = fd;
+	com1_dev.vm_fd = vm_fd;
 	com1_dev.irq = 4;
 	com1_dev.portid = NS8250_COM1;
-	com1_dev.vmid = vmid;
 	com1_dev.byte_out = 0;
 	com1_dev.regs.divlo = 1;
 	com1_dev.regs.iir = IIR_NOPEND;
@@ -134,7 +134,7 @@ ns8250_init(int fd, uint32_t vmid)
 	com1_dev.pause_ct = (com1_dev.baudrate / 8) / 1000 * 10;
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
-	    com_rcv_event, (void *)(intptr_t)vmid);
+	    com_rcv_event, (void *)(intptr_t)vm_fd);
 
 	/*
 	 * Whenever fd is writable implies that the pty slave is connected.
@@ -142,7 +142,7 @@ ns8250_init(int fd, uint32_t vmid)
 	 * be reached.
 	 */
 	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
-	    com_rcv_event, (void *)(intptr_t)vmid);
+	    com_rcv_event, (void *)(intptr_t)vm_fd);
 	event_add(&com1_dev.wake, NULL);
 
 	/* Rate limiter for simulating baud rate */
@@ -166,12 +166,12 @@ com_rcv_event(int fd, short kind, void *arg)
 	}
 
 	if ((com1_dev.regs.lsr & LSR_RXRDY) == 0)
-		com_rcv(&com1_dev, (uintptr_t)arg, 0);
+		com_rcv(&com1_dev, 0);
 
 	/* If pending interrupt, inject */
 	if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
 		/* XXX: vcpu_id */
-		vcpu_assert_irq((uintptr_t)arg, 0, com1_dev.irq);
+		vcpu_assert_irq(com1_dev.vm_fd, 0, com1_dev.irq);
 	}
 
 	mutex_unlock(&com1_dev.mutex);
@@ -208,7 +208,7 @@ com_rcv_handle_break(struct ns8250_dev *com, uint8_t cmd)
  * Must be called with the mutex of the com device acquired
  */
 static void
-com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
+com_rcv(struct ns8250_dev *com, uint32_t vcpu_id)
 {
 	char buf[2];
 	ssize_t sz;
@@ -258,7 +258,7 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
  *  interrupt to inject, or 0xFF if nothing to inject
  */
 uint8_t
-vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
+vcpu_process_com_data(struct vm_exit *vei, uint32_t vcpu_id)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -624,8 +624,7 @@ vcpu_exit_com(struct vm_run_params *vrp)
 		vcpu_process_com_scr(vei);
 		break;
 	case COM1_DATA:
-		intr = vcpu_process_com_data(vei, vrp->vrp_vm_id,
-		    vrp->vrp_vcpu_id);
+		intr = vcpu_process_com_data(vei, vrp->vrp_vcpu_id);
 		if (vei->vei.vei_dir == VEI_DIR_IN &&
 		    (com1_dev.regs.iir & IIR_NOPEND))
 			deassert = 1;
@@ -634,7 +633,7 @@ vcpu_exit_com(struct vm_run_params *vrp)
 
 	mutex_unlock(&com1_dev.mutex);
 	if (deassert)
-		vcpu_deassert_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id,
+		vcpu_deassert_irq(com1_dev.vm_fd, vrp->vrp_vcpu_id,
 		    com1_dev.irq);
 
 	return (intr);

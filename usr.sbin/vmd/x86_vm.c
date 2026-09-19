@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.24 2026/09/19 16:11:07 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.25 2026/09/19 17:21:52 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -402,7 +402,7 @@ init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
 	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
 
 	/* Init i8253 PIT */
-	i8253_init(vm->vm_vmmid);
+	i8253_init(vm->vm_fd);
 	ioports_map[TIMER_CTRL] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR0] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR1] = vcpu_exit_i8253;
@@ -410,7 +410,7 @@ init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
 	ioports_map[PCKBC_AUX] = vcpu_exit_i8253_misc;
 
 	/* Init mc146818 RTC */
-	mc146818_init(vm->vm_vmmid, memlo, memhi);
+	mc146818_init(vm->vm_fd, memlo, memhi);
 	ioports_map[IO_RTC] = vcpu_exit_mc146818;
 	ioports_map[IO_RTC + 1] = vcpu_exit_mc146818;
 
@@ -424,7 +424,7 @@ init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
 	ioports_map[ELCR1] = vcpu_exit_elcr;
 
 	/* Init ns8250 UART */
-	ns8250_init(con_fd, vm->vm_vmmid);
+	ns8250_init(con_fd, vm->vm_fd);
 	for (i = COM1_DATA; i <= COM1_SCR; i++)
 		ioports_map[i] = vcpu_exit_com;
 
@@ -561,7 +561,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 	vei->vrs.vrs_gprs[VCPU_REGS_RIP] += vei->vei.vei_insn_len;
 
 	if (intr != 0xFF)
-		vcpu_assert_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
+		vcpu_assert_irq(current_vm->vm_fd, vrp->vrp_vcpu_id, intr);
 }
 static int
 vcpu_exit_x2apic(struct vm_run_params *vrp)
@@ -1001,18 +1001,18 @@ hvaddr_mem(paddr_t gpa, size_t len)
  * Injects the specified IRQ on the supplied vcpu/vm
  *
  * Parameters:
- *  vm_id: VMM vm ID to inject to
+ *  fd: vmm(4) vm file descriptor to inject to
  *  vcpu_id: VCPU ID to inject to
  *  irq: IRQ to inject
  */
 void
-vcpu_assert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
+vcpu_assert_irq(int fd, uint32_t vcpu_id, int irq)
 {
 	i8259_assert_irq(irq);
 	i82093aa_assert_pin(irq);
 
 	if (intr_pending(vcpu_id)) {
-		if (vcpu_intr(vmm_id, vcpu_id, 1))
+		if (vcpu_intr(fd, vcpu_id, 1))
 			log_debug("%s: can't assert INTR", __func__);
 
 		vcpu_unhalt(vcpu_id);
@@ -1026,26 +1026,26 @@ vcpu_assert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
  * Clears the specified IRQ on the supplied vcpu/vm
  *
  * Parameters:
- *  vm_id: VMM vm ID to clear in
+ *  fd: vmm(4) vm file descriptor to clear in
  *  vcpu_id: VCPU ID to clear in
  *  irq: IRQ to clear
  */
 void
-vcpu_deassert_irq(uint32_t vmm_id, uint32_t vcpu_id, int irq)
+vcpu_deassert_irq(int fd, uint32_t vcpu_id, int irq)
 {
 	i8259_deassert_irq(irq);
 	i82093aa_deassert_pin(irq);
 
 	if (!intr_pending(vcpu_id)) {
-		if (vcpu_intr(vmm_id, vcpu_id, 0))
-			fatalx("%s: can't deassert INTR for vmm_id %d, "
-			    "vcpu_id %d", __func__, vmm_id, vcpu_id);
+		if (vcpu_intr(fd, vcpu_id, 0))
+			fatalx("%s: can't deassert INTR for vm fd %d, "
+			    "vcpu_id %d", __func__, fd, vcpu_id);
 	}
 }
 
 /* Deliver an edge-triggered interrupt vector directly to a local APIC */
 void
-vcpu_assert_vector(uint32_t vmm_id, uint32_t vcpu_id, uint8_t vector)
+vcpu_assert_vector(int fd, uint32_t vcpu_id, uint8_t vector)
 {
 	if (vcpu_id >= current_vm->vm_params.vmc_ncpus) {
 		log_debug("%s: invalid destination vcpu %u", __func__, vcpu_id);
@@ -1056,7 +1056,7 @@ vcpu_assert_vector(uint32_t vmm_id, uint32_t vcpu_id, uint8_t vector)
 		return;
 
 	if (intr_pending(vcpu_id)) {
-		if (vcpu_intr(vmm_id, vcpu_id, 1))
+		if (vcpu_intr(fd, vcpu_id, 1))
 			fatalx("%s: can't assert vector %u on vcpu %u", __func__,
 			    vector, vcpu_id);
 

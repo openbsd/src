@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.8 2026/02/12 14:24:53 hshoexer Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.9 2026/09/19 17:21:52 dv Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -154,7 +154,7 @@ struct psp_encrypt_state {
 	/* Input parameters state encryption */
 	uint32_t		handle;
 	uint32_t		asid;
-	uint32_t		vmid;
+	int			vmfd;
 	uint32_t		vcpuid;
 } __packed;
 

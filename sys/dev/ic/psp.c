@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.23 2026/02/16 12:39:53 hshoexer Exp $ */
+/*	$OpenBSD: psp.c,v 1.24 2026/09/19 17:21:52 dv Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -19,6 +19,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/pledge.h>
@@ -697,22 +699,29 @@ psp_activate(struct psp_softc *sc, struct psp_activate *uact)
 }
 
 int
-psp_encrypt_state(struct psp_softc *sc, struct psp_encrypt_state *ues)
+psp_encrypt_state(struct psp_softc *sc, struct psp_encrypt_state *ues,
+    struct proc *p)
 {
-	struct psp_launch_update_vmsa	luvmsa;
-	uint64_t			vmsa_paddr;
-	int				error;
+	struct file			*fp;
+	struct psp_launch_update_vmsa	 luvmsa;
+	uint64_t			 vmsa_paddr;
+	int				 error;
 
-	error = svm_get_vmsa_pa(ues->vmid, ues->vcpuid, &vmsa_paddr);
+	fp = fd_getfile(p->p_fd, ues->vmfd);
+	if (fp == NULL)
+		return (EBADF);
+
+	error = svm_get_vmsa_pa(p, fp, ues->vcpuid, &vmsa_paddr);
 	if (error != 0)
-		return (error);
+		goto out;
 
 	bzero(&luvmsa, sizeof(luvmsa));
 	luvmsa.handle = ues->handle;
 	luvmsa.paddr = vmsa_paddr;
 
 	error = psp_launch_update_vmsa(sc, &luvmsa);
-
+out:
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -922,7 +931,8 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    (struct psp_snp_platform_status *)data);
 		break;
 	case PSP_IOC_ENCRYPT_STATE:
-		error = psp_encrypt_state(sc, (struct psp_encrypt_state *)data);
+		error = psp_encrypt_state(sc, (struct psp_encrypt_state *)data,
+		    p);
 		break;
 	default:
 		error = ENOTTY;

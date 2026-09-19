@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.h,v 1.12 2026/09/17 22:20:06 mlarkin Exp $ */
+/* $OpenBSD: ns8250.h,v 1.13 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -68,17 +68,17 @@ struct ns8250_dev {
 	struct timeval rate_tv;
 	enum ns8250_portid portid;
 	int fd;
+	int vm_fd;
 	int irq;
-	uint32_t vmid;
 	uint64_t byte_out;
 	uint32_t baudrate;
 	uint32_t pause_ct;
 	uint8_t tx_intr_pending;
 };
 
-void ns8250_init(int, uint32_t);
+void ns8250_init(int, int);
 uint8_t vcpu_exit_com(struct vm_run_params *);
-uint8_t vcpu_process_com_data(struct vm_exit *, uint32_t, uint32_t);
+uint8_t vcpu_process_com_data(struct vm_exit *, uint32_t);
 void vcpu_process_com_lcr(struct vm_exit *);
 void vcpu_process_com_lsr(struct vm_exit *);
 void vcpu_process_com_ier(struct vm_exit *);

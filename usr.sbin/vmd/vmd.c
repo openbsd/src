@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.184 2026/09/19 14:17:19 jan Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.185 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <event.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -256,7 +257,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			} else {
 				vid.vid_id = vm->vm_vmid;
 			}
-		} else if ((vm = vm_getbyid(vid.vid_id)) == NULL) {
+		} else if ((vm = vm_getbyvmid(vid.vid_id)) == NULL) {
 			res = ENOENT;
 			cmd = type == IMSG_VMDOP_PAUSE_VM
 			    ? IMSG_VMDOP_PAUSE_VM_RESPONSE
@@ -341,7 +342,6 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
 		vm->vm_pid = vmr.vmr_pid;
-		vm->vm_vmmid = vmr.vmr_id;
 
 		/*
 		 * If the peerid is not -1, forward the response back to the
@@ -621,13 +621,13 @@ main(int argc, char **argv)
 			break;
 		case 'V':
 			vm_launch = VMD_LAUNCH_VM;
-			vm_fd = strtonum(optarg, 0, 128, &errp);
+			vm_fd = strtonum(optarg, 0, INT_MAX, &errp);
 			if (errp)
 				fatalx("invalid vm fd");
 			break;
 		case 'X':
 			vm_launch = VMD_LAUNCH_DEV;
-			vm_fd = strtonum(optarg, 0, 128, &errp);
+			vm_fd = strtonum(optarg, 0, INT_MAX, &errp);
 			if (errp)
 				fatalx("invalid device fd");
 			break;
@@ -642,13 +642,13 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'i':
-			vmm_fd = strtonum(optarg, 0, 128, &errp);
+			vmm_fd = strtonum(optarg, 0, INT_MAX, &errp);
 			if (errp)
 				fatalx("invalid vmm fd");
 			break;
 		case 'j':
 			/* -1 means no PSP available */
-			psp_fd = strtonum(optarg, -1, 128, &errp);
+			psp_fd = strtonum(optarg, -1, INT_MAX, &errp);
 			if (errp)
 				fatalx("invalid psp fd");
 			break;
@@ -979,42 +979,6 @@ vm_getbyvmid(uint32_t vmid)
 	return (NULL);
 }
 
-/* Find a vm in the list by it's vmm(4) id. */
-struct vmd_vm *
-vm_getbyid(uint32_t id)
-{
-	struct vmd_vm	*vm;
-
-	if (id == 0)
-		return (NULL);
-	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-		if (vm->vm_vmmid == id)	// XXX check this
-			return (vm);
-	}
-
-	return (NULL);
-}
-
-/* Translate a kernel/vmm(4) vm id to a vmd(8) id. */
-uint32_t
-vm_id2vmid(uint32_t id, struct vmd_vm *vm)
-{
-	if (vm == NULL && (vm = vm_getbyid(id)) == NULL)
-		return (0);
-	DPRINTF("%s: vmm id %u is vmid %u", __func__,
-	    id, vm->vm_vmid);
-	return (vm->vm_vmid);
-}
-
-uint32_t
-vm_vmid2id(uint32_t vmid, struct vmd_vm *vm)
-{
-	if (vm == NULL && (vm = vm_getbyvmid(vmid)) == NULL)
-		return (0);
-	DPRINTF("%s: vmid %u is vmm id %u", __func__, vmid, vm->vm_vmmid);
-	return (vm->vm_vmmid);
-}
-
 struct vmd_vm *
 vm_getbyname(const char *name)
 {
@@ -1241,6 +1205,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_ncpus_config = vmc->vmc_ncpus;
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
+	vm->vm_fd = -1;
 	vm->vm_kernel = -1;
 	vm->vm_state &= ~VM_STATE_PAUSED;
 

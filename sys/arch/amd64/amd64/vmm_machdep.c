@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.87 2026/09/19 16:11:07 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.88 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/file.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -69,12 +70,8 @@ void *l1tf_flush_region;
 void vmx_dump_vmcs_field(uint16_t, const char *);
 int vmm_enabled(void);
 void vmm_activate_machdep(struct device *, int);
-int vmmioctl_machdep(dev_t, u_long, caddr_t, int, struct proc *);
 int vmm_quiesce_vmx(void);
-int vm_run(struct vm_run_params *);
-int vm_intr_pending(struct vm_intr_params *);
-int vm_rwregs(struct vm_rwregs_params *, int);
-int vm_rwvmparams(struct vm_rwvmparams_params *, int);
+int vm_intr_pending(struct vm *, struct vm_intr_params *);
 int vcpu_readregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_writeregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
@@ -149,7 +146,6 @@ void vmx_setmsrbw(struct vcpu *, uint32_t);
 void vmx_setmsrbrw(struct vcpu *, uint32_t);
 void svm_set_clean(struct vcpu *, uint32_t);
 void svm_set_dirty(struct vcpu *, uint32_t);
-int svm_get_vmsa_pa(uint32_t, uint32_t, uint64_t *);
 int vmx_advance_rip(struct vcpu *);
 int svm_advance_rip(struct vcpu *);
 
@@ -444,34 +440,6 @@ vmm_activate_machdep(struct device *self, int act)
 	}
 }
 
-int
-vmmioctl_machdep(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-	int ret;
-
-	switch (cmd) {
-	case VMM_IOC_INTR:
-		ret = vm_intr_pending((struct vm_intr_params *)data);
-		break;
-	default:
-		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
-		ret = ENOTTY;
-	}
-
-	return (ret);
-}
-
-int
-pledge_ioctl_vmm_machdep(struct proc *p, long com)
-{
-	switch (com) {
-	case VMM_IOC_INTR:
-		return (0);
-	}
-
-	return (EPERM);
-}
-
 /*
  * vm_intr_pending
  *
@@ -486,21 +454,13 @@ pledge_ioctl_vmm_machdep(struct proc *p, long com)
  *  ENOENT: if the VM/VCPU defined by 'vip' cannot be found
  */
 int
-vm_intr_pending(struct vm_intr_params *vip)
+vm_intr_pending(struct vm *vm, struct vm_intr_params *vip)
 {
-	struct vm *vm;
 	struct vcpu *vcpu;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 #endif
-	int error, ret = 0;
-
-	/* Find the desired VM */
-	error = vm_find(vip->vip_vm_id, &vm);
-
-	/* Not found? exit. */
-	if (error != 0)
-		return (error);
+	int ret = 0;
 
 	vcpu = vm_find_vcpu(vm, vip->vip_vcpu_id);
 
@@ -527,7 +487,6 @@ vm_intr_pending(struct vm_intr_params *vip)
 #endif
 
 out:
-	refcnt_rele_wake(&vm->vm_refcnt);
 	return (ret);
 }
 
@@ -547,18 +506,10 @@ out:
  *  EINVAL: if an error occurred reading the registers of the guest
  */
 int
-vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir)
+vm_rwvmparams(struct vm *vm, struct vm_rwvmparams_params *vpp, int dir)
 {
-	struct vm *vm;
 	struct vcpu *vcpu;
-	int error, ret = 0;
-
-	/* Find the desired VM */
-	error = vm_find(vpp->vpp_vm_id, &vm);
-
-	/* Not found? exit. */
-	if (error != 0)
-		return (error);
+	int ret = 0;
 
 	vcpu = vm_find_vcpu(vm, vpp->vpp_vcpu_id);
 
@@ -581,7 +532,6 @@ vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir)
 		}
 	}
 out:
-	refcnt_rele_wake(&vm->vm_refcnt);
 	return (ret);
 }
 
@@ -603,19 +553,11 @@ out:
  *  EPERM: if the vm cannot be accessed from the calling process
  */
 int
-vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
+vm_rwregs(struct vm *vm, struct vm_rwregs_params *vrwp, int dir)
 {
-	struct vm *vm;
 	struct vcpu *vcpu;
 	struct vcpu_reg_state *vrs = &vrwp->vrwp_regs;
-	int error, ret = 0;
-
-	/* Find the desired VM */
-	error = vm_find(vrwp->vrwp_vm_id, &vm);
-
-	/* Not found? exit. */
-	if (error != 0)
-		return (error);
+	int ret = 0;
 
 	vcpu = vm_find_vcpu(vm, vrwp->vrwp_vcpu_id);
 
@@ -639,7 +581,6 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 	}
 	rw_exit_write(&vcpu->vc_lock);
 out:
-	refcnt_rele_wake(&vm->vm_refcnt);
 	return (ret);
 }
 
@@ -3406,19 +3347,11 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
  *  0: the run loop exited and no help is needed from vmd(8)
  */
 int
-vm_run(struct vm_run_params *vrp)
+vm_run(struct vm *vm, struct vm_run_params *vrp)
 {
-	struct vm *vm;
 	struct vcpu *vcpu;
 	int ret = 0, vcpu_rv = 0;
 	u_int old, next;
-
-	/*
-	 * Find desired VM
-	 */
-	ret = vm_find(vrp->vrp_vm_id, &vm);
-	if (ret)
-		return (ret);
 
 	vcpu = vm_find_vcpu(vm, vrp->vrp_vcpu_id);
 	if (vcpu == NULL) {
@@ -3478,7 +3411,6 @@ vm_run(struct vm_run_params *vrp)
 out_unlock:
 	rw_exit_write(&vcpu->vc_lock);
 out:
-	refcnt_rele_wake(&vm->vm_refcnt);
 	return (ret);
 }
 
@@ -7691,15 +7623,18 @@ vcpu_state_decode(u_int state)
  * Return physical address of VMSA for specified VCPU.
  */
 int
-svm_get_vmsa_pa(uint32_t vmid, uint32_t vcpuid, uint64_t *vmsapa)
+svm_get_vmsa_pa(struct proc *p, struct file *fp, uint32_t vcpuid,
+    uint64_t *vmsapa)
 {
 	struct vm	*vm;
 	struct vcpu	*vcpu;
-	int		 error, ret = 0;
+	int		 ret = 0;
 
-	error = vm_find(vmid, &vm);
-	if (error)
-		return (error);
+	if (fp->f_type != DTYPE_VMM)
+		return (EBADF);
+
+	vm = (struct vm *)fp->f_data;
+	refcnt_take(&vm->vm_refcnt);
 
 	vcpu = vm_find_vcpu(vm, vcpuid);
 	if (vcpu == NULL || !vcpu->vc_seves) {

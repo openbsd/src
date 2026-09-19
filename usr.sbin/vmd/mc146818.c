@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.33 2026/09/16 03:06:11 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.34 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -50,7 +50,7 @@ struct mc146818 {
 	time_t now;
 	uint8_t idx;
 	uint8_t regs[NVRAM_SIZE];
-	uint32_t vm_id;
+	int vm_fd;
 	struct event sec;
 	struct timeval sec_tv;
 	struct event per;
@@ -140,7 +140,7 @@ rtc_fire1(int fd, short type, void *arg)
  * Parameters:
  *  fd: unused
  *  type: unused
- *  arg: (as uint32_t), VM ID to which this RTC belongs
+ *  arg: (as intptr_t), VM file descriptor to which this RTC belongs
  */
 static void
 rtc_fireper(int fd, short type, void *arg)
@@ -161,12 +161,12 @@ rtc_fireper(int fd, short type, void *arg)
  * Initializes the emulated RTC/NVRAM
  *
  * Parameters:
- *  vm_id: VM ID to which this RTC belongs
+ *  vm_fd: vm file descriptor to which this RTC belongs
  *  memlo: size of memory in bytes between 16MB .. 4GB
  *  memhi: size of memory in bytes after 4GB
  */
 void
-mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
+mc146818_init(int vm_fd, uint64_t memlo, uint64_t memhi)
 {
 	memset(&rtc, 0, sizeof(rtc));
 	time(&rtc.now);
@@ -185,7 +185,7 @@ mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
 	rtc.regs[NVRAM_SMP_COUNT] = 0;
 
 	rtc_updateregs();
-	rtc.vm_id = vm_id;
+	rtc.vm_fd = vm_fd;
 
 	timerclear(&rtc.sec_tv);
 	rtc.sec_tv.tv_sec = 1;
@@ -195,7 +195,7 @@ mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
 
-	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_fd);
 
 	vm_pipe_init(&dev_pipe, mc146818_pipe_dispatch);
 	event_add(&dev_pipe.read_ev, NULL);
@@ -340,7 +340,7 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 				 * and IRQ.
 				 */
 				rtc.regs[MC_REGC] = 0;
-				vcpu_deassert_irq(rtc.vm_id, 0, 8);
+				vcpu_deassert_irq(rtc.vm_fd, 0, 8);
 			}
 		}
 	} else {

@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.11 2025/06/12 21:04:37 dv Exp $ */
+/* $OpenBSD: i8253.h,v 1.12 2026/09/19 17:21:52 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -39,12 +39,12 @@ struct i8253_channel {
 	uint8_t mode;		/* counter mode */
 	uint8_t rbs;		/* channel is in readback status mode */
 	struct event timer;	/* timer event for this counter */
-	uint32_t vm_id;		/* owning VM id */
+	int vm_fd;		/* owning VM fd */
 	int in_use;		/* denotes if this counter was ever used */
 	uint8_t state;		/* 0 if channel is counting, 1 if fired */
 };
 
-void i8253_init(uint32_t);
+void i8253_init(int);
 void i8253_reset(uint8_t);
 void i8253_fire(int, short, void *);
 uint8_t vcpu_exit_i8253(struct vm_run_params *);

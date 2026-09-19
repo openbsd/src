@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.35 2026/09/18 05:27:30 mlarkin Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.36 2026/09/19 17:21:52 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -57,7 +57,7 @@ static uint32_t vioscsi_read(struct virtio_dev *, struct viodev_msg *, int *);
 static int vioscsi_write(struct virtio_dev *, struct viodev_msg *);
 
 __dead void
-vioscsi_main(int fd, int fd_vmm)
+vioscsi_main(int fd, int vm_fd)
 {
 	struct virtio_dev	 dev;
 	struct vioscsi_dev	*vioscsi = NULL;
@@ -90,8 +90,8 @@ vioscsi_main(int fd, int fd_vmm)
 	vioscsi = &dev.vioscsi;
 
 	log_debug("%s: got vioscsi dev. cdrom fd = %d, syncfd = %d, "
-	    "asyncfd = %d, vmm fd = %d", __func__, vioscsi->cdrom_fd,
-	    dev.sync_fd, dev.async_fd, fd_vmm);
+	    "asyncfd = %d, vm fd = %d", __func__, vioscsi->cdrom_fd,
+	    dev.sync_fd, dev.async_fd, vm_fd);
 
 	/* Receive our vm information from the vm process. */
 	memset(&vm, 0, sizeof(vm));
@@ -107,16 +107,16 @@ vioscsi_main(int fd, int fd_vmm)
 	log_procinit("vm/%s/vioscsi", vm.vm_params.vmc_name);
 
 	/* Now that we have our vm information, we can remap memory. */
-	ret = remap_guest_mem(&vm, fd_vmm);
+	ret = remap_guest_mem(&vm, vm_fd);
 	if (ret) {
 		log_warnx("failed to remap guest memory");
 		goto fail;
 	}
 
 	/*
-	 * We no longer need /dev/vmm access.
+	 * We no longer need VM fd access.
 	 */
-	close_fd(fd_vmm);
+	close_fd(vm_fd);
 	if (pledge("stdio", NULL) == -1)
 		fatal("pledge2");
 

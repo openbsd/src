@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.9 2025/05/22 15:00:32 bluhm Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.10 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
@@ -86,15 +87,13 @@ main(int argc, char **argv)
 {
 	struct vm_create_params		 vcp;
 	struct vm_exit			*exit = NULL;
-	struct vm_info_params		 vip;
-	struct vm_info_result		*info = NULL, *ours = NULL;
+	struct stat			 st;
 	struct vm_resetcpu_params	 vresetp;
 	struct vm_run_params		 vrunp;
-	struct vm_terminate_params	 vtp;
 	struct vm_sharemem_params	 vsp;
 
 	struct vm_mem_range		*vmr;
-	int				 fd, ret = 1;
+	int				 fd, dup_fd, vm_fd = -1, ret = 1;
 	size_t				 i;
 	off_t				 off, reset = 0xFFFFFFF0, stack = 0x800;
 	void				*p;
@@ -120,23 +119,20 @@ main(int argc, char **argv)
 
 	if (ioctl(fd, VMM_IOC_CREATE, &vcp) == -1)
 		err(1, "VMM_IOC_CREATE");
-	printf("created vm %d named \"%s\"\n", vcp.vcp_id, vcp.vcp_name);
+	printf("created vm fd %d named \"%s\"\n", vcp.vcp_fd, vcp.vcp_name);
+	vm_fd = vcp.vcp_fd;
 
 	/*
 	 * 2. Check we can create shared memory mappings.
 	 */
 	memset(&vsp, 0, sizeof(vsp));
-	vsp.vsp_nmemranges = vcp.vcp_nmemranges;
-	memcpy(&vsp.vsp_memranges, &vcp.vcp_memranges,
-	    sizeof(vsp.vsp_memranges));
-	vsp.vsp_vm_id = vcp.vcp_id;
 
 	/* Perform the shared mapping. */
-	if (ioctl(fd, VMM_IOC_SHAREMEM, &vsp) == -1)
+	if (ioctl(vm_fd, VMM_IOC_SHAREMEM, &vsp) == -1)
 		err(1, "VMM_IOC_SHAREMEM");
 	printf("created shared memory mappings\n");
 
-	for (i = 0; i < vsp.vsp_nmemranges; i++)
+	for (i = 0; i < vcp.vcp_nmemranges; i++)
 		vcp.vcp_memranges[i].vmr_va = vsp.vsp_va[i];
 
 	for (i = 0; i < vcp.vcp_nmemranges; i++) {
@@ -178,8 +174,8 @@ main(int argc, char **argv)
 	}
 
 	/* We should see our reset vector instructions in the new mappings. */
-	for (i = 0; i < vsp.vsp_nmemranges; i++) {
-		vmr = &vsp.vsp_memranges[i];
+	for (i = 0; i < vcp.vcp_nmemranges; i++) {
+		vmr = &vcp.vcp_memranges[i];
 		p = (void*)vmr->vmr_va;
 
 		if (i == LOW_MEM) {
@@ -199,73 +195,41 @@ main(int argc, char **argv)
 	printf("validated shared memory mappings\n");
 
 	/*
-	 * 3. Check that our VM exists.
+	 * 3. The VM survives closing the control fd and a duplicated VM fd.
 	 */
-	memset(&vip, 0, sizeof(vip));
-	vip.vip_size = 0;
-	info = NULL;
+	dup_fd = fcntl(vm_fd, F_DUPFD_CLOEXEC, 0);
+	if (dup_fd == -1) {
+		warn("duplicate vm fd");
+		goto out;
+	}
+	close(vm_fd);
+	vm_fd = dup_fd;
+	close(fd);
+	fd = -1;
 
-	if (ioctl(fd, VMM_IOC_INFO, &vip) == -1) {
-		warn("VMM_IOC_INFO(1)");
+	if (fstat(vm_fd, &st) == -1) {
+		warn("fstat vm fd");
 		goto out;
 	}
-
-	if (vip.vip_size == 0) {
-		warn("no vms found");
+	if (!S_ISCHR(st.st_mode)) {
+		warnx("unexpected vm fd mode: %o", st.st_mode);
 		goto out;
 	}
-
-	info = malloc(vip.vip_size);
-	if (info == NULL) {
-		warn("malloc");
-		goto out;
-	}
-
-	/* Second request that retrieves the VMs. */
-	vip.vip_info = info;
-	if (ioctl(fd, VMM_IOC_INFO, &vip) == -1) {
-		warn("VMM_IOC_INFO(2)");
-		goto out;
-	}
-
-	for (i = 0; i * sizeof(*info) < vip.vip_size; i++) {
-		if (info[i].vir_id == vcp.vcp_id) {
-			ours = &info[i];
-			break;
-		}
-	}
-	if (ours == NULL) {
-		warn("failed to find vm %uz", vcp.vcp_id);
-		goto out;
-	}
-
-	if (ours->vir_id != vcp.vcp_id) {
-		warnx("expected vm id %uz, got %uz", vcp.vcp_id, ours->vir_id);
-		goto out;
-	}
-	if (strncmp(ours->vir_name, VM_NAME, strlen(VM_NAME)) != 0) {
-		warnx("expected vm name \"%s\", got \"%s\"", VM_NAME,
-		    ours->vir_name);
-		goto out;
-	}
-	printf("found vm %d named \"%s\"\n", vcp.vcp_id, ours->vir_name);
-	ours = NULL;
+	printf("duplicated vm fd %d\n", vm_fd);
 
 	/*
 	 * 4. Reset our VCPU and initialize register state.
 	 */
 	memset(&vresetp, 0, sizeof(vresetp));
-	vresetp.vrp_vm_id = vcp.vcp_id;
 	vresetp.vrp_vcpu_id = 0;	/* XXX SP */
 	memcpy(&vresetp.vrp_init_state, &vcpu_init_flat16,
 	    sizeof(vcpu_init_flat16));
 
-	if (ioctl(fd, VMM_IOC_RESETCPU, &vresetp) == -1) {
+	if (ioctl(vm_fd, VMM_IOC_RESETCPU, &vresetp) == -1) {
 		warn("VMM_IOC_RESETCPU");
 		goto out;
 	}
-	printf("reset vcpu %d for vm %d\n", vresetp.vrp_vcpu_id,
-	    vresetp.vrp_vm_id);
+	printf("reset vcpu %d for vm fd %d\n", vresetp.vrp_vcpu_id, vm_fd);
 
 	/*
 	 * 5. Run the vcpu, expecting an immediate exit for IO assist.
@@ -279,26 +243,19 @@ main(int argc, char **argv)
 	memset(&vrunp, 0, sizeof(vrunp));
 	vrunp.vrp_exit = exit;
 	vrunp.vrp_vcpu_id = 0;		/* XXX SP */
-	vrunp.vrp_vm_id = vcp.vcp_id;
 	vrunp.vrp_irqready = 1;
 
-	if (ioctl(fd, VMM_IOC_RUN, &vrunp) == -1) {
+	if (ioctl(vm_fd, VMM_IOC_RUN, &vrunp) == -1) {
 		warn("VMM_IOC_RUN");
-		goto out;
-	}
-
-	if (vrunp.vrp_vm_id != vcp.vcp_id) {
-		warnx("expected vm id %uz, got %uz", vcp.vcp_id,
-		    vrunp.vrp_vm_id);
 		goto out;
 	}
 
 	switch (vrunp.vrp_exit_reason) {
 	case SVM_VMEXIT_IOIO:
 	case VMX_EXIT_IO:
-		printf("vcpu %d on vm %d exited for io assist @ ip = 0x%llx, "
+		printf("vcpu %d on vm fd %d exited for io assist @ ip = 0x%llx, "
 		    "cs.base = 0x%llx, ss.base = 0x%llx, rsp = 0x%llx\n",
-		    vrunp.vrp_vcpu_id, vrunp.vrp_vm_id,
+		    vrunp.vrp_vcpu_id, vm_fd,
 		    vrunp.vrp_exit->vrs.vrs_gprs[VCPU_REGS_RIP],
 		    vrunp.vrp_exit->vrs.vrs_sregs[VCPU_REGS_CS].vsi_base,
 		    vrunp.vrp_exit->vrs.vrs_sregs[VCPU_REGS_SS].vsi_base,
@@ -333,7 +290,7 @@ main(int argc, char **argv)
 	vrunp.vrp_inject.vie_errorcode = 0x11223344;
 	vrunp.vrp_inject.vie_type = VCPU_INJECT_EX;
 	printf("injecting exception 0x%x\n", vrunp.vrp_inject.vie_vector);
-	if (ioctl(fd, VMM_IOC_RUN, &vrunp) == -1) {
+	if (ioctl(vm_fd, VMM_IOC_RUN, &vrunp) == -1) {
 		warn("VMM_IOC_RUN 2");
 		goto out;
 	}
@@ -341,8 +298,8 @@ main(int argc, char **argv)
 	switch (vrunp.vrp_exit_reason) {
 	case SVM_VMEXIT_IOIO:
 	case VMX_EXIT_IO:
-		printf("vcpu %d on vm %d exited for io assist @ ip = 0x%llx, "
-		    "cs.base = 0x%llx\n", vrunp.vrp_vcpu_id, vrunp.vrp_vm_id,
+		printf("vcpu %d on vm fd %d exited for io assist @ ip = 0x%llx, "
+		    "cs.base = 0x%llx\n", vrunp.vrp_vcpu_id, vm_fd,
 		    vrunp.vrp_exit->vrs.vrs_gprs[VCPU_REGS_RIP],
 		    vrunp.vrp_exit->vrs.vrs_sregs[VCPU_REGS_CS].vsi_base);
 		break;
@@ -372,13 +329,13 @@ out:
 		if (i > 0)
 			printf(" ");
 		printf("%02x", *(uint8_t*)
-		    (vsp.vsp_memranges[UPPER_MEM].vmr_va + off + i));
+		    (vcp.vcp_memranges[UPPER_MEM].vmr_va + off + i));
 	}
 	printf("\n--- STACK @ gpa 0x%llx ---\n", stack);
 	for (i=0; i<16; i++) {
 		if (i > 0)
 			printf(" ");
-		printf("%02x", *(uint8_t*)(vsp.vsp_memranges[LOW_MEM].vmr_va
+		printf("%02x", *(uint8_t*)(vcp.vcp_memranges[LOW_MEM].vmr_va
 			+ stack - i - 1));
 	}
 	printf("\n");
@@ -386,16 +343,11 @@ out:
 	/*
 	 * 6. Terminate our VM and clean up.
 	 */
-	memset(&vtp, 0, sizeof(vtp));
-	vtp.vtp_vm_id = vcp.vcp_id;
-	if (ioctl(fd, VMM_IOC_TERM, &vtp) == -1) {
-		warn("VMM_IOC_TERM");
-		ret = 1;
-	} else
-		printf("terminated vm %d\n", vtp.vtp_vm_id);
+	if (vm_fd != -1)
+		close(vm_fd);
 
-	close(fd);
-	free(info);
+	if (fd != -1)
+		close(fd);
 	free(exit);
 
 	return (ret);

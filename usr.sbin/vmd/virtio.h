@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.65 2026/09/18 05:27:30 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.66 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -350,10 +350,10 @@ struct virtio_dev {
 		/* Multi-process enabled. */
 		struct vioblk_dev vioblk;
 		struct vionet_dev vionet;
+		struct vioscsi_dev vioscsi;
 
 		/* In-process only. */
 		struct vmmci_dev vmmci;
-		struct vioscsi_dev vioscsi;
 	};
 
 	struct virtio_io_cfg		cfg;		/* Virtio 0.9 */
@@ -378,8 +378,8 @@ struct virtio_dev {
 	int sync_fd;				/* fd for synchronous channel */
 	int async_fd;				/* fd for async channel */
 
+	int		vm_fd;			/* vmm(4) vm file descriptor [r] */
 	uint32_t	vm_id;			/* vmd(8) vm identifier [r] */
-	uint32_t	vmm_id;			/* vmm(4) vm identifier [r] */
 	pid_t		dev_pid;		/* pid of emulator process */
 	char		dev_type;		/* device type (as char) */
 	SLIST_ENTRY(virtio_dev) dev_next;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.3 2025/08/03 10:17:33 tb Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.4 2026/09/19 17:21:52 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -63,7 +63,6 @@ struct vm_exit {
 
 struct vm_intr_params {
 	/* Input parameters to VMM_IOC_INTR */
-	uint32_t		vip_vm_id;
 	uint32_t		vip_vcpu_id;
 	uint16_t		vip_intr;
 };
@@ -76,7 +75,6 @@ struct vm_rwregs_params {
 	 * Input/output parameters to VMM_IOC_READREGS /
 	 * VMM_IOC_WRITEREGS
 	 */
-	uint32_t		vrwp_vm_id;
 	uint32_t		vrwp_vcpu_id;
 	uint64_t		vrwp_mask;
 	struct vcpu_reg_state	vrwp_regs;

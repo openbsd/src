@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.9 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: sev.c,v 1.10 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -208,7 +208,7 @@ sev_encrypt_state(struct vmd_vm *vm, int vcpu_id)
 		return (0);
 
 	if (psp_encrypt_state(vm->vm_sev_handle, vm->vm_sev_asid[vcpu_id],
-	    vm->vm_vmmid, vcpu_id)) {
+	    vm->vm_fd, vcpu_id)) {
 		log_warnx("%s: failed to encrypt state: 0x%x 0x%x 0x%0x 0x%0x",
 		    __func__, vm->vm_sev_handle, vm->vm_sev_asid[vcpu_id],
 		    vm->vm_vmid, vcpu_id);

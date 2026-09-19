@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.8 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: psp.c,v 1.9 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -174,15 +174,14 @@ psp_launch_update(uint32_t handle, vaddr_t v, size_t len)
  * log it for now.
  */
 int
-psp_encrypt_state(uint32_t handle, uint32_t asid, uint32_t vmid,
-    uint32_t vcpuid)
+psp_encrypt_state(uint32_t handle, uint32_t asid, int vmfd, uint32_t vcpuid)
 {
 	struct psp_encrypt_state es;
 
 	memset(&es, 0, sizeof(es));
 	es.handle = handle;
 	es.asid = asid;
-	es.vmid = vmid;
+	es.vmfd = vmfd;
 	es.vcpuid = vcpuid;
 
 	if (ioctl(env->vmd_psp_fd, PSP_IOC_ENCRYPT_STATE, &es) < 0) {

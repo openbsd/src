@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.367 2026/09/17 22:09:55 dgl Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.368 2026/09/19 17:21:52 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -79,6 +79,7 @@
 #include "vmm.h"
 #include "psp.h"
 #include <machine/conf.h>
+#include <dev/vmm/vmm.h>
 #endif
 
 #include "drm.h"
@@ -1357,12 +1358,28 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 
 #if NVMM > 0
 	if ((pledge & PLEDGE_VMM)) {
+		if (fp->f_type == DTYPE_VMM) {
+			switch (com) {
+			case VMM_IOC_RUN:
+			case VMM_IOC_RESETCPU:
+			case VMM_IOC_READREGS:
+			case VMM_IOC_WRITEREGS:
+			case VMM_IOC_READVMPARAMS:
+			case VMM_IOC_WRITEVMPARAMS:
+			case VMM_IOC_SHAREMEM:
+			case VMM_IOC_INTR:
+				return (0);
+			default:
+				break;
+			}
+		}
 		if (fp->f_type == DTYPE_VNODE &&
 		    vp->v_type == VCHR &&
 		    cdevsw[major(vp->v_rdev)].d_open == vmmopen) {
-			error = pledge_ioctl_vmm(p, com);
-			if (error == 0)
-				return 0;
+			switch (com) {
+			case VMM_IOC_CREATE:
+				return (0);
+			}
 		}
 	}
 #endif
