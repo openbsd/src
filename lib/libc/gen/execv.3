@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execv.3,v 1.5 2026/09/14 20:59:06 schwarze Exp $
+.\"	$OpenBSD: execv.3,v 1.6 2026/09/19 18:51:59 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2026 $
+.Dd $Mdocdate: September 19 2026 $
 .Dt EXECV 3
 .Os
 .Sh NAME
@@ -45,66 +45,64 @@
 .Ft int
 .Fn execle "const char *path" "const char *arg" ... "char *const envp[]"
 .Sh DESCRIPTION
-This family of functions replace the current process image with a
-new process image.
-The functions described in this manual page are front-ends for the
+These functions replace the current process image with a new process image
+constructed from the file at the specified
+.Fa path .
+They are front-ends for the
 .Xr execve 2
 system call; see that manual page for detailed information
 about the replacement of the current process.
 .Pp
-The initial argument for these functions is the pathname of a file which
-is to be executed.
-.Pp
 The
 .Fn execv
-function provides an array of pointers to
-NUL-terminated strings that
-represent the argument list available to the new program.
+function receives the argument list for the new process in the form of a
+.Dv NULL Ns -terminated
+array of pointers to NUL-terminated strings.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
-The array of pointers
-.Em must
-be terminated by a null pointer itself.
+Calling
+.Fn execv
+is equivalent to calling
+.Xr execve 2
+and passing the
+.Va environ
+array as the last parameter.
 .Pp
 The
-.Fa "const char *arg"
-and subsequent ellipses in the
 .Fn execl
 and
 .Fn execle
-functions can be thought of as
-.Fa arg0 ,
-.Fa arg1 ,
+functions receive each element of the same
+.Dv NULL Ns -terminated
+argument array as a separate function parameter, that is,
+.Fa arg
+and the subsequent ellipsis can be thought of as
+.Fa argv[0] ,
+.Fa argv[1] ,
 \&...,
-.Fa argn .
-Together they describe a list of one or more pointers to
-NUL-terminated
-strings that represent the argument list available to the executed program.
-The first argument, by convention, should point to the file name associated
-with the file being executed.
-The list of arguments
-.Em must
-be terminated by a null pointer.
+.Fa argv[argc] .
+For
+.Fn execl ,
+the environment for the new process image is again taken
+from the external variable
+.Va environ
+in the current process.
 .Pp
 The
 .Fn execle
-function also specifies the environment of the executed process by following
-the null
+function specifies the environment of the new process by following the
+.Dv NULL
 pointer that terminates the list of arguments in the parameter list
-with an additional parameter.
-This additional parameter is an array of pointers to NUL-terminated
-strings and
-.Em must
-be terminated by a null pointer itself.
-The other functions take the environment for the new process image from the
-external variable
-.Va environ
-in the current process.
+with a
+.Dv NULL Ns -terminated
+array of pointers to NUL-terminated strings, each one conventionally
+being of the form
+.Ar name Ns = Ns Ar value .
 .Sh RETURN VALUES
 If any of these functions return, an error has occurred.
 The return value is \-1, and the global variable
 .Va errno
-will be set to indicate the error.
+is set to indicate the error.
 .Sh ERRORS
 .Fn execv
 may fail and set
@@ -115,14 +113,11 @@ for any of the errors specified for the library function
 .Fn execl
 and
 .Fn execle
-may fail and set
+may also fail and set
 .Va errno
-for any of the errors specified for the library functions
-.Xr execve 2
-and
-.Xr malloc 3 .
+for any of the errors specified for the library function
+.Xr mmap 2 .
 .Sh SEE ALSO
-.Xr sh 1 ,
 .Xr execve 2 ,
 .Xr fork 2 ,
 .Xr ktrace 2 ,
