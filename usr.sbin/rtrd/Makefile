@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2026/09/16 16:51:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2026/09/19 17:13:06 deraadt Exp $
 
 PROG=	rtrd
 
@@ -24,6 +24,6 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 CFLAGS+= -Werror=implicit
-CFLAGS+= -Wextra -Wpedantic
+CFLAGS+= -Wextra
 
 .include <bsd.prog.mk>
