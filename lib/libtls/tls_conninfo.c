@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.30 2026/09/18 21:54:54 beck Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.31 2026/09/19 16:48:39 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -16,10 +16,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/pem.h>
 #include <openssl/posix_time.h>
+#include <openssl/safestack.h>
+#include <openssl/ssl.h>
 #include <openssl/x509.h>
 
 #include <tls.h>
