@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: rtrd.c,v 1.5 2026/09/19 17:23:52 schwarze Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -44,7 +44,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-fhvV] "
+	fprintf(stderr, "usage: %s [-fvV] "
 	    "[-b bind_address] [-m max_version] [-p port] [-s socket]\n",
 	    __progname);
 	exit(1);
@@ -95,7 +95,6 @@ main(int argc, char **argv)
 		case 'v':
 			verbose++;
 			break;
-		case 'h':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrctl.c,v 1.4 2026/09/18 22:06:13 job Exp $ */
+/*	$OpenBSD: rtrctl.c,v 1.5 2026/09/19 17:23:52 schwarze Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -1009,7 +1009,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-h] [-s socket] command [argument ...]\n",
+	fprintf(stderr, "usage: %s [-s socket] command [argument ...]\n",
 	    __progname);
 	exit(1);
 }
@@ -1086,7 +1086,6 @@ main(int argc, char **argv)
 		case 's':
 			controller_filename = optarg;
 			break;
-		case 'h':
 		default:
 			usage();
 		}
