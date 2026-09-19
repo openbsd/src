@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.45 2026/05/08 04:28:28 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.46 2026/09/19 06:07:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -624,7 +624,8 @@ check_ca(const X509 *x)
 int
 X509_check_ca(X509 *x)
 {
-	x509v3_cache_extensions(x);
+	if (!x509v3_cache_extensions(x))
+		return 0;
 
 	return check_ca(x);
 }
