@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1290 2026/09/19 16:28:40 dgl Exp $
+#	$OpenBSD: install.sub,v 1.1291 2026/09/19 17:28:04 phessler Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1602,7 +1602,7 @@ unpriv2() {
 }
 
 # Find and list filesystems to store the prefetched sets. Prefer filesystems
-# which are not used during extraction with 512M free space. Otherwise search
+# which are not used during extraction with 1G free space. Otherwise search
 # any other filesystem that has 2 GB free space to prevent overflow during
 # extraction.
 prefetcharea_fs_list() {
@@ -1616,9 +1616,9 @@ prefetcharea_fs_list() {
 	) | (
 		while read a a a a m m; do
 			[[ $m == /mnt/@(tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
-				((a > 524288)) && echo $m && continue
+				((a > 1048576)) && echo $m && continue
 			[[ $m == /mnt@(|/*) ]] &&
-				((a > 524288 * 4)) && echo $m
+				((a > 1048576 * 2)) && echo $m
 		done
 	) | (
 		while read fs; do
