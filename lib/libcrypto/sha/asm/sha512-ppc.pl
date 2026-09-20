@@ -61,7 +61,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour $output" || die "can't call $xlate: $!";
+open STDOUT, "|-", $^X, $xlate, $flavour, $output || die "can't call $xlate: $!";
 
 if ($output =~ /512/) {
 	$func="sha512_block_data_order";

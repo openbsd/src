@@ -25,6 +25,7 @@
 # 4096-bit	+4%
 
 $flavour = shift;
+$output  = shift;
 
 if ($flavour =~ /32/) {
 	$BITS=	32;
@@ -75,7 +76,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
+open STDOUT, "|-", $^X, $xlate, $flavour, $output || die "can't call $xlate: $!";
 
 $sp="r1";
 $toc="r2";

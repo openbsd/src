@@ -30,6 +30,7 @@
 # ppc_AES_decrypt_compact - at 55 (in 64-bit build).
 
 $flavour = shift;
+$output  = shift;
 
 if ($flavour =~ /64/) {
 	$SIZE_T	=8;
@@ -50,7 +51,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
+open STDOUT, "|-", $^X, $xlate, $flavour, $output || die "can't call $xlate: $!";
 
 $FRAME=32*$SIZE_T;
 
