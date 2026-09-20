@@ -794,7 +794,7 @@
 ./usr/lib/libssl.so.60.2
 ./usr/lib/libtermcap.so.16.0
 ./usr/lib/libtermlib.so.16.0
-./usr/lib/libtls.so.33.2
+./usr/lib/libtls.so.33.3
 ./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.22.0
 ./usr/lib/libz.so.7.2
