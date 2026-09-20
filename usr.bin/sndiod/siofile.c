@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.32 2026/08/30 14:35:40 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.33 2026/09/20 19:49:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -226,9 +226,15 @@ dev_sio_open(struct dev *d)
 	sio_onmove(d->sio.hdl, dev_sio_onmove, d);
 	sio_onxrun(d->sio.hdl, dev_sio_onxrun, d);
 	d->sio.file = file_new(&dev_sio_ops, d, "dev", sio_nfds(d->sio.hdl));
+	if (d->sio.file == NULL)
+		goto bad_close;
 	if (d->sioctl.hdl) {
 		d->sioctl.file = file_new(&dev_sioctl_ops, d, "mix",
 		    sioctl_nfds(d->sioctl.hdl));
+		if (d->sioctl.file == NULL) {
+			sioctl_close(d->sioctl.hdl);
+			d->sioctl.hdl = NULL;
+		}
 	}
 	timo_set(&d->sio.watchdog, dev_sio_timeout, d);
 	dev_sioctl_open(d);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.10 2026/06/22 14:15:26 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.11 2026/09/20 19:49:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,6 +52,10 @@ port_mio_open(struct port *p)
 	if (p->mio.hdl == NULL)
 		return 0;
 	p->mio.file = file_new(&port_mio_ops, p, "port", mio_nfds(p->mio.hdl));
+	if (p->mio.file == NULL) {
+		mio_close(p->mio.hdl);
+		return 0;
+	}
 	return 1;
 }
 
