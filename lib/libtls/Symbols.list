@@ -77,6 +77,8 @@ tls_peer_cert_notafter
 tls_peer_cert_notbefore
 tls_peer_cert_provided
 tls_peer_cert_subject
+tls_peer_cert_unverified_bundle_pem
+tls_peer_cert_verified_chain_pem
 tls_peer_ocsp_cert_status
 tls_peer_ocsp_crl_reason
 tls_peer_ocsp_next_update

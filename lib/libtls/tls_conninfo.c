@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.32 2026/09/19 16:56:13 tb Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.33 2026/09/20 17:26:14 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -287,8 +287,13 @@ tls_conninfo_populate(struct tls *ctx)
 	if (tls_get_peer_cert_info(ctx) == -1)
 		goto err;
 
-	if (tls_conninfo_certs_pem(ctx->ssl_peer_chain,
-	    &ctx->conninfo->peer_cert, &ctx->conninfo->peer_cert_len) == -1)
+	if (tls_conninfo_certs_pem(ctx->ssl_peer_unverified_bundle,
+	    &ctx->conninfo->peer_unverified_bundle,
+	    &ctx->conninfo->peer_unverified_bundle_len) == -1)
+		goto err;
+	if (tls_conninfo_certs_pem(ctx->ssl_peer_verified_chain,
+	    &ctx->conninfo->peer_verified_chain,
+	    &ctx->conninfo->peer_verified_chain_len) == -1)
 		goto err;
 
 	if (tls_conninfo_session(ctx) == -1)
@@ -319,7 +324,8 @@ tls_conninfo_free(struct tls_conninfo *conninfo)
 	free(conninfo->issuer);
 	free(conninfo->subject);
 
-	free(conninfo->peer_cert);
+	free(conninfo->peer_unverified_bundle);
+	free(conninfo->peer_verified_chain);
 
 	free(conninfo);
 }

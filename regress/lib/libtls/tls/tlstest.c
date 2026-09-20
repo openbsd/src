@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.17 2025/06/04 10:28:00 tb Exp $ */
+/* $OpenBSD: tlstest.c,v 1.18 2026/09/20 17:26:14 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -667,6 +667,173 @@ do_tls_alpn_tests(void)
 	return failure;
 }
 
+static size_t
+count_pem_certs(const uint8_t *pem, size_t len)
+{
+	const char *marker = "-----BEGIN CERTIFICATE-----";
+	size_t marker_len = strlen(marker);
+	size_t i, n = 0;
+
+	for (i = 0; i + marker_len <= len; i++) {
+		if (memcmp(pem + i, marker, marker_len) == 0)
+			n++;
+	}
+
+	return n;
+}
+
+static int
+check_peer_certs_absent(const char *desc, struct tls *ctx)
+{
+	size_t len;
+
+	if (tls_peer_cert_chain_pem(ctx, &len) != NULL) {
+		printf("FAIL: %s has a peer cert chain\n", desc);
+		return (1);
+	}
+	if (tls_peer_cert_unverified_bundle_pem(ctx, &len) != NULL) {
+		printf("FAIL: %s has a peer unverified bundle\n", desc);
+		return (1);
+	}
+	if (tls_peer_cert_verified_chain_pem(ctx, &len) != NULL) {
+		printf("FAIL: %s has a peer verified chain\n", desc);
+		return (1);
+	}
+
+	return (0);
+}
+
+static int
+check_peer_certs(const char *desc, struct tls *client, struct tls *server_cctx,
+    int verify)
+{
+	const uint8_t *bundle, *chain, *chain_pem;
+	size_t bundle_len, chain_len, chain_pem_len;
+	size_t n;
+
+	if ((bundle = tls_peer_cert_unverified_bundle_pem(client,
+	    &bundle_len)) == NULL) {
+		printf("FAIL: %s client has no peer unverified bundle\n", desc);
+		return (1);
+	}
+	if ((n = count_pem_certs(bundle, bundle_len)) != 2) {
+		printf("FAIL: %s client unverified bundle has %zu certs, "
+		    "want 2\n", desc, n);
+		return (1);
+	}
+
+	chain_pem = tls_peer_cert_chain_pem(client, &chain_pem_len);
+	if (chain_pem != bundle || chain_pem_len != bundle_len) {
+		printf("FAIL: %s client peer cert chain differs from "
+		    "unverified bundle\n", desc);
+		return (1);
+	}
+
+	chain = tls_peer_cert_verified_chain_pem(client, &chain_len);
+	if (!verify) {
+		if (chain != NULL) {
+			printf("FAIL: %s client has a peer verified chain "
+			    "without verification\n", desc);
+			return (1);
+		}
+	} else {
+		if (chain == NULL) {
+			printf("FAIL: %s client has no peer verified chain\n",
+			    desc);
+			return (1);
+		}
+		if ((n = count_pem_certs(chain, chain_len)) != 3) {
+			printf("FAIL: %s client verified chain has %zu certs, "
+			    "want 3\n", desc, n);
+			return (1);
+		}
+		if (chain_len <= bundle_len ||
+		    memcmp(chain, bundle, bundle_len) != 0) {
+			printf("FAIL: %s client verified chain does not start "
+			    "with the unverified bundle\n", desc);
+			return (1);
+		}
+	}
+
+	return check_peer_certs_absent("server", server_cctx);
+}
+
+static int
+test_tls_peer_certs(int verify)
+{
+	struct tls_config *client_cfg, *server_cfg;
+	struct tls *client, *server, *server_cctx;
+	char *desc = verify ? "verified" : "unverified";
+	int failure;
+
+	printf("INFO: peer cert test - %s client\n", desc);
+
+	if ((client = tls_client()) == NULL)
+		errx(1, "failed to create tls client");
+	if ((client_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls client config");
+	tls_config_insecure_noverifyname(client_cfg);
+	if (verify) {
+		if (tls_config_set_ca_file(client_cfg, cafile) == -1)
+			errx(1, "failed to set ca: %s",
+			    tls_config_error(client_cfg));
+	} else
+		tls_config_insecure_noverifycert(client_cfg);
+	if (tls_configure(client, client_cfg) == -1)
+		errx(1, "failed to configure client: %s", tls_error(client));
+
+	if ((server = tls_server()) == NULL)
+		errx(1, "failed to create tls server");
+	if ((server_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls server config");
+	if (tls_config_set_keypair_file(server_cfg, certfile, keyfile) == -1)
+		errx(1, "failed to set keypair: %s",
+		    tls_config_error(server_cfg));
+	if (tls_configure(server, server_cfg) == -1)
+		errx(1, "failed to configure server: %s", tls_error(server));
+
+	circular_init();
+
+	if (tls_accept_cbs(server, &server_cctx, server_read, server_write,
+	    NULL) == -1)
+		errx(1, "failed to accept: %s", tls_error(server));
+
+	if (tls_connect_cbs(client, client_read, client_write, NULL,
+	    "test") == -1)
+		errx(1, "failed to connect: %s", tls_error(client));
+
+	failure = check_peer_certs_absent("pre-handshake client", client);
+
+	if ((failure |= do_client_server_handshake(desc, client,
+	    server_cctx)) == 0) {
+		failure |= check_peer_certs(desc, client, server_cctx, verify);
+		failure |= do_client_server_close(desc, client, server_cctx);
+	}
+
+	tls_free(server_cctx);
+	tls_free(client);
+	tls_free(server);
+	tls_config_free(client_cfg);
+	tls_config_free(server_cfg);
+
+	return (failure);
+}
+
+static int
+do_tls_peer_cert_tests(void)
+{
+	int failure = 0;
+
+	printf("== TLS peer cert tests ==\n");
+
+	failure |= test_tls_peer_certs(1);
+	failure |= test_tls_peer_certs(0);
+
+	printf("\n");
+
+	return (failure);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -686,6 +853,7 @@ main(int argc, char **argv)
 	failure |= do_tls_ordering_tests();
 	failure |= do_tls_version_tests();
 	failure |= do_tls_alpn_tests();
+	failure |= do_tls_peer_cert_tests();
 
 	return (failure);
 }

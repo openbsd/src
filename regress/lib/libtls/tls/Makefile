@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.3 2024/03/20 10:38:05 jsing Exp $
+# $OpenBSD: Makefile,v 1.4 2026/09/20 17:26:14 beck Exp $
 
 PROG=	tlstest
 LDADD=	-lcrypto -lssl -ltls
 DPADD=	${LIBCRYPTO} ${LIBSSL} ${LIBTLS}
 
 WARNINGS=	Yes
-CFLAGS+=	-Werror
+CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
 
 REGRESS_TARGETS= \
 	regress-tlstest

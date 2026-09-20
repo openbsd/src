@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_conn_version.3,v 1.13 2026/06/07 12:06:30 tb Exp $
+.\" $OpenBSD: tls_conn_version.3,v 1.14 2026/09/20 17:26:14 beck Exp $
 .\"
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
 .\" Copyright (c) 2016, 2018 Joel Sing <jsing@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2026 $
+.Dd $Mdocdate: September 20 2026 $
 .Dt TLS_CONN_VERSION 3
 .Os
 .Sh NAME
@@ -28,6 +28,8 @@
 .Nm tls_peer_cert_provided ,
 .Nm tls_peer_cert_contains_name ,
 .Nm tls_peer_cert_chain_pem ,
+.Nm tls_peer_cert_unverified_bundle_pem ,
+.Nm tls_peer_cert_verified_chain_pem ,
 .Nm tls_peer_cert_issuer ,
 .Nm tls_peer_cert_subject ,
 .Nm tls_peer_cert_common_name ,
@@ -59,6 +61,16 @@
 .Fc
 .Ft const uint8_t *
 .Fo tls_peer_cert_chain_pem
+.Fa "struct tls *ctx"
+.Fa "size_t *size"
+.Fc
+.Ft const uint8_t *
+.Fo tls_peer_cert_unverified_bundle_pem
+.Fa "struct tls *ctx"
+.Fa "size_t *size"
+.Fc
+.Ft const uint8_t *
+.Fo tls_peer_cert_verified_chain_pem
 .Fa "struct tls *ctx"
 .Fa "size_t *size"
 .Fc
@@ -123,10 +135,21 @@ has provided a certificate that contains a
 SAN or CN that matches
 .Ar name .
 .Pp
+.Fn tls_peer_cert_unverified_bundle_pem
+returns a pointer to memory containing the PEM-encoded, unverified
+bundle of certificates that was sent by the peer of
+.Ar ctx
+during the TLS handshake.
+.Pp
 .Fn tls_peer_cert_chain_pem
-returns a pointer to memory containing a PEM-encoded certificate chain for the
-peer certificate from
-.Ar ctx .
+is equivalent to
+.Fn tls_peer_cert_unverified_bundle_pem .
+.Pp
+.Fn tls_peer_cert_verified_chain_pem
+returns a pointer to memory containing the PEM-encoded certificate
+chain that was verified for the peer of
+.Ar ctx
+during the TLS handshake.
 .Pp
 .Fn tls_peer_cert_subject
 returns a string
@@ -222,6 +245,21 @@ appeared in
 .Fn tls_peer_cert_common_name
 appeared in
 .Ox 7.7 .
+.Pp
+.Fn tls_peer_cert_unverified_bundle_pem
+and
+.Fn tls_peer_cert_verified_chain_pem
+appeared in
+.Ox 8.0 .
 .Sh AUTHORS
 .An Bob Beck Aq Mt beck@openbsd.org
 .An Joel Sing Aq Mt jsing@openbsd.org
+.Sh BUGS
+.Fn tls_peer_cert_chain_pem
+is poorly named:
+it returns the unverified bundle of certificates sent by the peer,
+not the chain that was verified during the handshake.
+It will be deprecated in a future release in favour of
+.Fn tls_peer_cert_unverified_bundle_pem
+and
+.Fn tls_peer_cert_verified_chain_pem .

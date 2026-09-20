@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.11 2026/09/19 16:56:13 tb Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.12 2026/09/20 17:26:14 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -96,13 +96,30 @@ tls_peer_cert_notafter(struct tls *ctx)
 }
 
 const uint8_t *
-tls_peer_cert_chain_pem(struct tls *ctx, size_t *size)
+tls_peer_cert_unverified_bundle_pem(struct tls *ctx, size_t *size)
 {
 	if (ctx->ssl_peer_cert == NULL)
 		return (NULL);
 	if (ctx->conninfo == NULL)
 		return (NULL);
-	*size = ctx->conninfo->peer_cert_len;
-	return (ctx->conninfo->peer_cert);
+	*size = ctx->conninfo->peer_unverified_bundle_len;
+	return (ctx->conninfo->peer_unverified_bundle);
+}
+
+const uint8_t *
+tls_peer_cert_chain_pem(struct tls *ctx, size_t *size)
+{
+	return tls_peer_cert_unverified_bundle_pem(ctx, size);
+}
+
+const uint8_t *
+tls_peer_cert_verified_chain_pem(struct tls *ctx, size_t *size)
+{
+	if (ctx->ssl_peer_verified_chain == NULL)
+		return (NULL);
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	*size = ctx->conninfo->peer_verified_chain_len;
+	return (ctx->conninfo->peer_verified_chain);
 }
 

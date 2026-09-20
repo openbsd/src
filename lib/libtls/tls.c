@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.108 2026/09/19 16:56:13 tb Exp $ */
+/* $OpenBSD: tls.c,v 1.109 2026/09/20 17:26:14 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -609,9 +609,19 @@ tls_ssl_cert_verify_cb(X509_STORE_CTX *x509_ctx, void *arg)
 		return (0);
 	}
 
+	sk_X509_pop_free(ctx->ssl_peer_verified_chain, X509_free);
+	ctx->ssl_peer_verified_chain = NULL;
+
 	x509_err = X509_STORE_CTX_get_error(x509_ctx);
-	if (x509_err == X509_V_OK)
+	if (x509_err == X509_V_OK) {
+		if ((ctx->ssl_peer_verified_chain =
+		    X509_STORE_CTX_get1_chain(x509_ctx)) == NULL) {
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			    "failed to get verified chain");
+			return (0);
+		}
 		return (1);
+	}
 
 	tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
 	    "certificate verification failed: %s",
@@ -735,12 +745,14 @@ tls_reset(struct tls *ctx)
 	SSL_CTX_free(ctx->ssl_ctx);
 	SSL_free(ctx->ssl_conn);
 	X509_free(ctx->ssl_peer_cert);
-	sk_X509_pop_free(ctx->ssl_peer_chain, X509_free);
+	sk_X509_pop_free(ctx->ssl_peer_unverified_bundle, X509_free);
+	sk_X509_pop_free(ctx->ssl_peer_verified_chain, X509_free);
 
 	ctx->ssl_conn = NULL;
 	ctx->ssl_ctx = NULL;
 	ctx->ssl_peer_cert = NULL;
-	ctx->ssl_peer_chain = NULL;
+	ctx->ssl_peer_unverified_bundle = NULL;
+	ctx->ssl_peer_verified_chain = NULL;
 
 	ctx->socket = -1;
 	ctx->state = 0;
@@ -833,18 +845,18 @@ tls_peer_cert_chain(struct tls *ctx)
 	X509 *cert, *owned_cert = NULL;
 	int i;
 
-	sk_X509_pop_free(ctx->ssl_peer_chain, X509_free);
-	ctx->ssl_peer_chain = NULL;
+	sk_X509_pop_free(ctx->ssl_peer_unverified_bundle, X509_free);
+	ctx->ssl_peer_unverified_bundle = NULL;
 
 	if (ctx->ssl_peer_cert == NULL)
 		return (0);
 
-	if ((ctx->ssl_peer_chain = sk_X509_new_null()) == NULL)
+	if ((ctx->ssl_peer_unverified_bundle = sk_X509_new_null()) == NULL)
 		goto err;
 	if (!X509_up_ref(ctx->ssl_peer_cert))
 		goto err;
 	owned_cert = ctx->ssl_peer_cert;
-	if (!sk_X509_push(ctx->ssl_peer_chain, owned_cert))
+	if (!sk_X509_push(ctx->ssl_peer_unverified_bundle, owned_cert))
 		goto err;
 	owned_cert = NULL;
 
@@ -856,7 +868,7 @@ tls_peer_cert_chain(struct tls *ctx)
 		if (!X509_up_ref(cert))
 			goto err;
 		owned_cert = cert;
-		if (!sk_X509_push(ctx->ssl_peer_chain, owned_cert))
+		if (!sk_X509_push(ctx->ssl_peer_unverified_bundle, owned_cert))
 			goto err;
 		owned_cert = NULL;
 	}
@@ -865,8 +877,8 @@ tls_peer_cert_chain(struct tls *ctx)
 
  err:
 	X509_free(owned_cert);
-	sk_X509_pop_free(ctx->ssl_peer_chain, X509_free);
-	ctx->ssl_peer_chain = NULL;
+	sk_X509_pop_free(ctx->ssl_peer_unverified_bundle, X509_free);
+	ctx->ssl_peer_unverified_bundle = NULL;
 	tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
 	    "failed to build peer certificate chain");
 	return (-1);
