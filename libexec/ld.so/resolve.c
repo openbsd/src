@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.104 2026/09/13 19:30:29 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.105 2026/09/20 16:07:38 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -285,6 +285,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 {
 	elf_object_t *object;
 	Elf_Addr gnu_hash = 0;
+	int subst_needed = 0;
 
 	DL_DEB(("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
 	    objname, dynp, objtype, lbase, obase));
@@ -459,17 +460,23 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	object->grpsym_gen = 0;
 	TAILQ_INIT(&object->grpref_list);
 
-	if (object->dyn.runpath)
+	if (object->dyn.runpath) {
+		if(_dl_strchr(object->dyn.runpath, '$'))
+			subst_needed = 1;
 		object->runpath = _dl_split_path(object->dyn.runpath);
+	}
 	/*
 	 * DT_RPATH is ignored if DT_RUNPATH is present...except in
 	 * the exe, whose DT_RPATH is a fallback for libs that don't
 	 * use DT_RUNPATH
 	 */
 	if (object->dyn.rpath && (object->runpath == NULL ||
-	    objtype == OBJTYPE_EXE))
+	    objtype == OBJTYPE_EXE)) {
+		if (_dl_strchr(object->dyn.rpath, '$'))
+			subst_needed = 1;
 		object->rpath = _dl_split_path(object->dyn.rpath);
-	if ((object->obj_flags & DF_1_ORIGIN) && _dl_trust)
+	}
+	if (subst_needed && _dl_trust)
 		_dl_origin_subst(object);
 
 	_dl_trace_object_setup(object);
