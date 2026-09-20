@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2026/09/16 15:02:25 kurt Exp $
+# $OpenBSD: Makefile,v 1.7 2026/09/20 22:19:13 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -22,7 +22,7 @@ PROG=		prog1
 SRCS=		main.c
 CPPFLAGS+= 	-I$(AA_DIR)
 LDADD+=		-laa
-LDFLAGS+=	-Wl,-z,origin,-rpath,'$$ORIGIN/$${OSNAME}/$$OSREL/$${PLATFORM}'
+LDFLAGS+=	-Wl,-rpath,'$$ORIGIN/$${OSNAME}/$$OSREL/$${PLATFORM}'
 LDFLAGS+=	-L$(AA_OBJDIR)
 
 REGRESS_TARGETS = test1 test2

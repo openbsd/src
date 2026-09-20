@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2026/09/17 16:53:28 kurt Exp $
+# $OpenBSD: Makefile,v 1.4 2026/09/20 22:19:13 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -31,7 +31,7 @@ PROG=		prog3
 SRCS=		main.c
 CPPFLAGS+= 	-I$(YY_DIR)
 LDADD+=		-lyy
-LDFLAGS+=	-Wl,-z,origin,-rpath,'$$ORIGIN/libyy'
+LDFLAGS+=	-Wl,-rpath,'$$ORIGIN/libyy'
 LDFLAGS+=	-L$(YY_OBJDIR)
 
 REGRESS_TARGETS = test1 test2
