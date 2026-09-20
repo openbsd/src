@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.20 2024/10/28 19:57:02 tb Exp $
+#	$OpenBSD: Relayd.pm,v 1.21 2026/09/20 23:00:44 rsadowski Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -82,6 +82,14 @@ sub new {
 	print $fh "${proto}protocol proto-$test {";
 	if ($self->{inspectssl}) {
 		$self->{listenssl} = $self->{forwardssl} = 1;
+	}
+	if ($self->{listenssl}) {
+		my $certbase = $self->{certbase} || $ENV{CERTBASE} ||
+		    $self->{listenaddr};
+		print $fh "\n\ttls keypair '$self->{listenaddr}' cert '$certbase.crt'";
+		print $fh "\n\ttls keypair '$self->{listenaddr}' key '$certbase.key'";
+	}
+	if ($self->{inspectssl}) {
 		print $fh "\n\ttls ca cert ca.crt";
 		print $fh "\n\ttls ca key ca.key password ''";
 	}
