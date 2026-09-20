@@ -100,12 +100,7 @@ while (<IN>)
 	$ln{$Cname} = $myln;
 	$obj{$Cname} = $myoid;
 	if (!defined($nid{$Cname}))
-		{
-		$max_nid++;
-		$nid{$Cname} = $max_nid;
-		$nidn{$max_nid} = $Cname;
-print STDERR "Added OID $Cname\n";
-		}
+		{ die "objects.txt: Missing entry for NID $Cname"; }
 	$Cname="";
 	}
 close IN;
