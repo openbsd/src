@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.134 2026/08/26 05:42:42 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.135 2026/09/20 20:04:03 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -376,17 +376,10 @@ valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
 	const unsigned char *data;
 	int i, length;
 
-	/*
-	 * This warning should be an error by default (not gated behind -vv).
-	 * https://lists.afrinic.net/pipermail/dbwg/2023-March/000436.html
-	 * https://lists.afrinic.net/pipermail/dbwg/2025-November/000546.html
-	 */
-	if (verbose > 1 && ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
+	if (ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
 		warnx("%s: RFC 6487 section 4.5: %s commonName is"
 		    " not PrintableString", fn, descr);
-#if 0
 		return 0;
-#endif
 	}
 
 	data = ASN1_STRING_get0_data(as);
