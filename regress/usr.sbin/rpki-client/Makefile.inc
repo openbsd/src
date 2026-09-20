@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.49 2026/09/03 12:35:19 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.50 2026/09/20 16:27:42 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -13,7 +13,7 @@ PROGS += test-rsc
 PROGS += test-tal
 PROGS += test-rrdp
 PROGS += test-aspa
-PROGS += test-tak
+# PROGS += test-tak	# we currently don't have validly encoded TAKs
 PROGS += test-spl
 PROGS += test-seqnum
 
