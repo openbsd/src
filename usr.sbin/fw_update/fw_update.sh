@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.73 2026/09/16 22:11:00 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.74 2026/09/20 03:12:23 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -773,10 +773,18 @@ if [ "${devices[*]:-}" ]; then
 				fi
 				continue
 			fi
-		elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
-			warn "Cannot download local file $f"
-			exit 1
 		else
+			if ! "$INSTALL"; then
+				check_cfile || {
+					status " failed."
+					exit 1
+				}
+				if ! grep -Fq "($f)" "$CFILE"; then
+					warn "Unable to find $f"
+					continue
+				fi
+			fi
+
 			# Don't verify files specified on the command-line
 			verify_existing=false
 		fi
