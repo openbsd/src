@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.172 2026/09/16 20:09:26 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.173 2026/09/20 02:23:36 dgl Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -292,7 +292,8 @@ _OSrev=${_KERNV[0]%.*}${_KERNV[0]#*.}
 [[ -n ${_OSrev} ]]
 
 _MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
-	print -r -- "${_line}"; done </etc/installurl | tail -1) 2>/dev/null
+	print -r -- "${_line}" | grep -v '[[:cntrl:]"$&;<>\`|'\']
+	done </etc/installurl | tail -1) 2>/dev/null
 [[ ${_MIRROR} == @(file|ftp|http|https)://* ]] ||
 	_MIRROR=https://cdn.openbsd.org/pub/OpenBSD
 _MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"

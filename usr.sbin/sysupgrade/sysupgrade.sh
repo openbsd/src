@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.62 2026/03/21 01:34:25 deraadt Exp $
+# $OpenBSD: sysupgrade.sh,v 1.63 2026/09/20 02:23:36 dgl Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -104,8 +104,10 @@ done
 shift $(( OPTIND -1 ))
 
 case $# in
-0)	MIRROR=$(sed 's/#.*//;/^$/d' /etc/installurl) 2>/dev/null ||
-		MIRROR=https://cdn.openbsd.org/pub/OpenBSD
+0)	MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
+	    print -r -- "${_line}" | grep -v '[[:cntrl:]"$&;<>\`|'\']
+	    done </etc/installurl | tail -1) 2>/dev/null
+	    [[ -z $MIRROR ]] && MIRROR=https://cdn.openbsd.org/pub/OpenBSD
 	;;
 1)	MIRROR=$1
 	;;

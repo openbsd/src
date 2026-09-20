@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.77 2023/11/25 10:18:40 espie Exp $
+# $OpenBSD: State.pm,v 1.78 2026/09/20 02:23:36 dgl Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -137,12 +137,15 @@ OpenBSD::Auto::cache(installpath,
 		return undef if $self->defines('NOINSTALLPATH');
 		require OpenBSD::Paths;
 		open(my $fh, '<', OpenBSD::Paths->installurl) or return undef;
+		my $url = undef;
 		while (<$fh>) {
 			chomp;
 			next if m/^\s*\#/;
 			next if m/^\s*$/;
-			return "$_/%c/packages/%a/";
+			next if m/[\x00-\x20"\$&';<>\\`|]/;
+			$url = "$_/%c/packages/%a/";
 		}
+		return $url;
 	});
 
 OpenBSD::Auto::cache(shlibs,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installurl.5,v 1.8 2019/04/27 22:30:05 tj Exp $
+.\"	$OpenBSD: installurl.5,v 1.9 2026/09/20 02:23:36 dgl Exp $
 .\"
 .\" Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2019 $
+.Dd $Mdocdate: September 20 2026 $
 .Dt INSTALLURL 5
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh DESCRIPTION
 The
 .Pa /etc/installurl
-file contains a single line specifying an
+file contains a line specifying an
 .Ox
 mirror server URL, such as
 .Pp
@@ -34,6 +34,7 @@ It is created by the installer script during installations and upgrades.
 Empty lines and lines beginning with
 .Sq #
 in the file are ignored.
+If multiple valid lines are present the last line is used.
 .Sh FILES
 .Bl -tag -width /etc/installurl -compact
 .It Pa /etc/installurl
