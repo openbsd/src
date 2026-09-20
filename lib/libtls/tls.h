@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.69 2026/09/20 17:26:14 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.70 2026/09/20 17:47:15 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -27,7 +27,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define TLS_API	20200120
+#define TLS_API	20260917
 
 /*
  * Deprecated versions of TLS. Using these effectively selects
@@ -82,6 +82,14 @@ extern "C" {
 #define TLS_ERROR_OUT_OF_MEMORY			0x1000
 #define TLS_ERROR_INVALID_CONTEXT		0x2000
 #define TLS_ERROR_INVALID_ARGUMENT		0x2001
+#endif
+
+#define TLS_DEPRECATED
+#if defined(__has_attribute)
+#if __has_attribute(deprecated)
+#undef TLS_DEPRECATED
+#define TLS_DEPRECATED __attribute__((deprecated))
+#endif
 #endif
 
 struct tls;

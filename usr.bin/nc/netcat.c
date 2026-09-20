@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.238 2026/02/23 16:47:07 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.239 2026/09/20 17:47:16 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1722,7 +1722,7 @@ save_peer_cert(struct tls *tls_ctx, FILE *fp)
 	const char *pem;
 	size_t plen;
 
-	if ((pem = tls_peer_cert_chain_pem(tls_ctx, &plen)) == NULL)
+	if ((pem = tls_peer_cert_unverified_bundle_pem(tls_ctx, &plen)) == NULL)
 		errx(1, "Can't get peer certificate");
 	if (fprintf(fp, "%.*s", (int)plen, pem) < 0)
 		err(1, "unable to save peer cert");

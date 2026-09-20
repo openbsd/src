@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.18 2026/09/20 17:26:14 beck Exp $ */
+/* $OpenBSD: tlstest.c,v 1.19 2026/09/20 17:47:16 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -687,10 +687,6 @@ check_peer_certs_absent(const char *desc, struct tls *ctx)
 {
 	size_t len;
 
-	if (tls_peer_cert_chain_pem(ctx, &len) != NULL) {
-		printf("FAIL: %s has a peer cert chain\n", desc);
-		return (1);
-	}
 	if (tls_peer_cert_unverified_bundle_pem(ctx, &len) != NULL) {
 		printf("FAIL: %s has a peer unverified bundle\n", desc);
 		return (1);
@@ -707,8 +703,8 @@ static int
 check_peer_certs(const char *desc, struct tls *client, struct tls *server_cctx,
     int verify)
 {
-	const uint8_t *bundle, *chain, *chain_pem;
-	size_t bundle_len, chain_len, chain_pem_len;
+	const uint8_t *bundle, *chain;
+	size_t bundle_len, chain_len;
 	size_t n;
 
 	if ((bundle = tls_peer_cert_unverified_bundle_pem(client,
@@ -719,13 +715,6 @@ check_peer_certs(const char *desc, struct tls *client, struct tls *server_cctx,
 	if ((n = count_pem_certs(bundle, bundle_len)) != 2) {
 		printf("FAIL: %s client unverified bundle has %zu certs, "
 		    "want 2\n", desc, n);
-		return (1);
-	}
-
-	chain_pem = tls_peer_cert_chain_pem(client, &chain_pem_len);
-	if (chain_pem != bundle || chain_pem_len != bundle_len) {
-		printf("FAIL: %s client peer cert chain differs from "
-		    "unverified bundle\n", desc);
 		return (1);
 	}
 

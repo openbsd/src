@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.271 2026/08/12 19:24:02 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.272 2026/09/20 17:47:16 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2472,8 +2472,8 @@ relay_tls_handshake(int fd, short event, void *arg)
 			const uint8_t	*servercert;
 			size_t		 len;
 
-			servercert = tls_peer_cert_chain_pem(con->se_out.tls,
-			    &len);
+			servercert = tls_peer_cert_unverified_bundle_pem(
+			    con->se_out.tls, &len);
 			if (servercert != NULL) {
 				con->se_in.tlscert = ssl_update_certificate(
 				    servercert, len,
