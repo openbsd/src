@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.49 2026/05/11 06:41:29 dlg Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.50 2026/09/20 21:18:09 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -785,22 +785,24 @@ wg_socket_close(struct socket **so)
 int
 wg_bind(struct wg_softc *sc, in_port_t *portp, int *rtablep)
 {
-	int		 ret = 0, rtable = *rtablep;
-	in_port_t	 port = *portp;
+	int		 ret = 0, rtable;
+	in_port_t	 port;
 	struct socket	*so4;
 #ifdef INET6
 	struct socket	*so6;
 	int		 retries = 0;
 retry:
 #endif
+	port = *portp;
+	rtable = *rtablep;
 	if ((ret = wg_socket_open(&so4, AF_INET, &port, &rtable, sc)) != 0)
 		return ret;
 
 #ifdef INET6
 	if ((ret = wg_socket_open(&so6, AF_INET6, &port, &rtable, sc)) != 0) {
+		wg_socket_close(&so4);
 		if (ret == EADDRINUSE && *portp == 0 && retries++ < 100)
 			goto retry;
-		wg_socket_close(&so4);
 		return ret;
 	}
 #endif
