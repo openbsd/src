@@ -1248,6 +1248,10 @@ nsec3_prove_nameerror(struct module_env* env, struct val_env* ve,
 	filter_init(&flt, list, num, qinfo); /* init RR iterator */
 	if(!flt.zone)
 		return sec_status_bogus; /* no RRs */
+	if(query_dname_compare(flt.zone, kkey->name) != 0) {
+		verbose(VERB_ALGO, "NSEC3 name is not b32.signer name");
+		return sec_status_bogus;
+	}
 	if(!param_set_same(&flt, NULL))
 		return sec_status_bogus; /* nsec3 params from distinct chains*/
 	if(nsec3_iteration_count_high(ve, &flt, kkey))
@@ -1436,6 +1440,10 @@ nsec3_prove_nodata(struct module_env* env, struct val_env* ve,
 	filter_init(&flt, list, num, qinfo); /* init RR iterator */
 	if(!flt.zone)
 		return sec_status_bogus; /* no RRs */
+	if(query_dname_compare(flt.zone, kkey->name) != 0) {
+		verbose(VERB_ALGO, "NSEC3 name is not b32.signer name");
+		return sec_status_bogus;
+	}
 	if(!param_set_same(&flt, NULL))
 		return sec_status_bogus; /* nsec3 params from distinct chains*/
 	if(nsec3_iteration_count_high(ve, &flt, kkey))
@@ -1461,6 +1469,10 @@ nsec3_prove_wildcard(struct module_env* env, struct val_env* ve,
 	filter_init(&flt, list, num, qinfo); /* init RR iterator */
 	if(!flt.zone)
 		return sec_status_bogus; /* no RRs */
+	if(query_dname_compare(flt.zone, kkey->name) != 0) {
+		verbose(VERB_ALGO, "NSEC3 name is not b32.signer name");
+		return sec_status_bogus;
+	}
 	if(!param_set_same(&flt, NULL))
 		return sec_status_bogus; /* nsec3 params from distinct chains*/
 	if(nsec3_iteration_count_high(ve, &flt, kkey))
@@ -1509,7 +1521,8 @@ static int
 list_is_secure(struct module_env* env, struct val_env* ve, 
 	struct ub_packed_rrset_key** list, size_t num,
 	struct key_entry_key* kkey, char** reason, sldns_ede_code *reason_bogus,
-	struct module_qstate* qstate, char* reasonbuf, size_t reasonlen)
+	struct module_qstate* qstate, struct val_qstate* vq, char* reasonbuf,
+	size_t reasonlen)
 {
 	struct packed_rrset_data* d;
 	size_t i;
@@ -1525,7 +1538,7 @@ list_is_secure(struct module_env* env, struct val_env* ve,
 			continue;
 		d->security = val_verify_rrset_entry(env, ve, list[i], kkey,
 			reason, reason_bogus, LDNS_SECTION_AUTHORITY, qstate,
-			&verified, reasonbuf, reasonlen);
+			vq, &verified, reasonbuf, reasonlen);
 		if(d->security != sec_status_secure) {
 			verbose(VERB_ALGO, "NSEC3 did not verify");
 			return 0;
@@ -1540,7 +1553,8 @@ nsec3_prove_nods(struct module_env* env, struct val_env* ve,
 	struct ub_packed_rrset_key** list, size_t num,
 	struct query_info* qinfo, struct key_entry_key* kkey, char** reason,
 	sldns_ede_code* reason_bogus, struct module_qstate* qstate,
-	struct nsec3_cache_table* ct, char* reasonbuf, size_t reasonlen)
+	struct val_qstate* vq, struct nsec3_cache_table* ct, char* reasonbuf,
+	size_t reasonlen)
 {
 	struct nsec3_filter flt;
 	struct ce_response ce;
@@ -1556,7 +1570,7 @@ nsec3_prove_nods(struct module_env* env, struct val_env* ve,
 		return sec_status_bogus; /* no valid NSEC3s, bogus */
 	}
 	if(!list_is_secure(env, ve, list, num, kkey, reason, reason_bogus,
-		qstate, reasonbuf, reasonlen)) {
+		qstate, vq, reasonbuf, reasonlen)) {
 		*reason = "not all NSEC3 records secure";
 		return sec_status_bogus; /* not all NSEC3 records secure */
 	}
@@ -1564,6 +1578,11 @@ nsec3_prove_nods(struct module_env* env, struct val_env* ve,
 	if(!flt.zone) {
 		*reason = "no NSEC3 records";
 		return sec_status_bogus; /* no RRs */
+	}
+	if(query_dname_compare(flt.zone, kkey->name) != 0) {
+		verbose(VERB_ALGO, "NSEC3 name is not b32.signer name");
+		*reason = "NSEC3 name is not b32.signer name";
+		return sec_status_bogus;
 	}
 	if(!param_set_same(&flt, reason))
 		return sec_status_bogus; /* nsec3 params from distinct chains*/
@@ -1660,6 +1679,10 @@ nsec3_prove_nxornodata(struct module_env* env, struct val_env* ve,
 	filter_init(&flt, list, num, qinfo); /* init RR iterator */
 	if(!flt.zone)
 		return sec_status_bogus; /* no RRs */
+	if(query_dname_compare(flt.zone, kkey->name) != 0) {
+		verbose(VERB_ALGO, "NSEC3 name is not b32.signer name");
+		return sec_status_bogus;
+	}
 	if(!param_set_same(&flt, NULL))
 		return sec_status_bogus; /* nsec3 params from distinct chains*/
 	if(nsec3_iteration_count_high(ve, &flt, kkey))

@@ -1033,8 +1033,11 @@ parse_edns_options_from_query(uint8_t* rdata_ptr, size_t rdata_len,
 			break;
 
 		case LDNS_EDNS_PADDING:
-			if(!cfg || !cfg->pad_responses ||
-					!c || c->type != comm_tcp ||!c->ssl || padding_seen)
+			if(!cfg || !cfg->pad_responses || !c || padding_seen)
+				break;
+			if(!((c->type == comm_tcp && c->ssl) ||
+				(c->type == comm_http && c->ssl) ||
+				c->type == comm_doq))
 				break;
 			padding_seen = 1;
 			if(!edns_opt_list_append(&edns->opt_list_out,
@@ -1089,10 +1092,10 @@ parse_edns_options_from_query(uint8_t* rdata_ptr, size_t rdata_len,
 					cookie_is_v4, server_cookie, now);
 			} else {
 				/* Use the cookie option value to validate. */
-			cookie_val_status = edns_cookie_server_validate(
-				rdata_ptr, opt_len, cfg->cookie_secret,
-				cfg->cookie_secret_len, cookie_is_v4,
-				server_cookie, now);
+				cookie_val_status = edns_cookie_server_validate(
+					rdata_ptr, opt_len, cfg->cookie_secret,
+					cfg->cookie_secret_len, cookie_is_v4,
+					server_cookie, now);
 			}
 			if(cookie_val_status == COOKIE_STATUS_VALID_RENEW)
 				edns->cookie_valid = 1;
@@ -1133,8 +1136,8 @@ parse_edns_options_from_query(uint8_t* rdata_ptr, size_t rdata_len,
 						cookie_is_v4, now);
 					lock_basic_unlock(&cookie_secrets->lock);
 				} else {
-				edns_cookie_server_write(server_cookie,
-					cfg->cookie_secret, cookie_is_v4, now);
+					edns_cookie_server_write(server_cookie,
+						cfg->cookie_secret, cookie_is_v4, now);
 				}
 				if(!edns_opt_list_append(&edns->opt_list_out,
 					LDNS_EDNS_COOKIE, 24, server_cookie,

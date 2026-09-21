@@ -111,6 +111,8 @@ typedef int comm_point_callback_type(struct comm_point*, void*, int,
 
 /** timeout to slow accept calls when not possible, in msec. */
 #define NETEVENT_SLOW_ACCEPT_TIME 2000
+/** timeout to slow accept calls when tcp queue is full, in msec. */
+#define NETEVENT_SLOW_ACCEPT_QUEUE_TIME 50
 /** timeout to slow down log print, so it does not spam the logs, in sec */
 #define SLOW_LOG_TIME 10
 /** for doq, the maximum dcid length, in ngtcp2 it is 20. */
@@ -381,6 +383,9 @@ struct comm_point {
 	 * the callback cleans up netevent can see what it has to do.
 	 * Or leave NULL if it is not used at all. */
 	int* tcp_more_write_again;
+
+	/** resume timer for tcp_more_read_again */
+	struct comm_timer* tcp_more_read_again_timer;
 
 	/** if set, read/write completes:
 		read/write state of tcp is toggled.
@@ -1130,6 +1135,12 @@ void doq_send_pkt(struct comm_point* c, struct doq_pkt_addr* paddr,
 
 /** doq timer callback function. */
 void doq_timer_cb(void* arg);
+
+/** tcp read again callback function. For tcp req info listen. */
+void tcp_read_again_cb(void* arg);
+
+/** tcp more read again callback function. For outside network. */
+void tcp_more_read_again_cb(void* arg);
 
 /**
  * This routine is published for checks and tests, and is only used internally.

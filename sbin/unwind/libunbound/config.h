@@ -36,6 +36,9 @@
 /* Whether daemon is deprecated */
 /* #undef DEPRECATED_DAEMON */
 
+/* Whether X509_NAME_get_text_by_NID is deprecated */
+/* #undef DEPRECATED_X509_NAME_GET_TEXT_BY_NID */
+
 /* Deprecate RSA 1024 bit length, makes that an unsupported key */
 /* #undef DEPRECATE_RSA_1024 */
 
@@ -64,6 +67,9 @@
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1
+
+/* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
+#define HAVE_ASN1_STRING_GET0_DATA 1
 
 /* Whether the C compiler accepts the "fallthrough" attribute */
 #define HAVE_ATTR_FALLTHROUGH 1
@@ -144,6 +150,10 @@
 /* Define to 1 if you have the declaration of `ngtcp2_crypto_encrypt_cb', and
    to 0 if you don't. */
 /* #undef HAVE_DECL_NGTCP2_CRYPTO_ENCRYPT_CB */
+
+/* Define to 1 if you have the declaration of `ngtcp2_crypto_ossl_ctx_new',
+   and to 0 if you don't. */
+/* #undef HAVE_DECL_NGTCP2_CRYPTO_OSSL_CTX_NEW */
 
 /* Define to 1 if you have the declaration of `NID_ED25519', and to 0 if you
    don't. */
@@ -293,6 +303,12 @@
 
 /* Define to 1 if you have the `FIPS_mode' function. */
 #define HAVE_FIPS_MODE 1
+
+/* Define to 1 if you have the `fnmatch' function. */
+#define HAVE_FNMATCH 1
+
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#define HAVE_FNMATCH_H 1
 
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
@@ -518,6 +534,9 @@
 /* Define to 1 if you have the <openssl/bn.h> header file. */
 #define HAVE_OPENSSL_BN_H 1
 
+/* Define to 1 if you have the `OPENSSL_cleanup' function. */
+#define HAVE_OPENSSL_CLEANUP 1
+
 /* Define to 1 if you have the `OPENSSL_config' function. */
 #define HAVE_OPENSSL_CONFIG 1
 
@@ -690,8 +709,15 @@
 /* Define to 1 if you have the `SSL_is_quic' function. */
 /* #undef HAVE_SSL_IS_QUIC */
 
+/* Define to 1 if you have the `SSL_set1_dnsname' function. */
+/* #undef HAVE_SSL_SET1_DNSNAME */
+
 /* Define to 1 if you have the `SSL_set1_host' function. */
 #define HAVE_SSL_SET1_HOST 1
+
+/* Define to 1 if you have the `SSL_set_quic_tls_early_data_enabled' function.
+   */
+/* #undef HAVE_SSL_SET_QUIC_TLS_EARLY_DATA_ENABLED */
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
@@ -857,6 +883,12 @@
 /* Define to 1 if you have the <ws2tcpip.h> header file. */
 /* #undef HAVE_WS2TCPIP_H */
 
+/* Define to 1 if you have the `X509_get_key_usage' function. */
+#define HAVE_X509_GET_KEY_USAGE 1
+
+/* Define to 1 if you have the `X509_NAME_get_text_by_NID' function. */
+#define HAVE_X509_NAME_GET_TEXT_BY_NID 1
+
 /* Define to 1 if you have the `X509_VERIFY_PARAM_set1_host' function. */
 #define HAVE_X509_VERIFY_PARAM_SET1_HOST 1
 
@@ -919,7 +951,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.25.2"
+#define PACKAGE_STRING "unbound 1.26.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -928,7 +960,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.25.2"
+#define PACKAGE_VERSION "1.26.1"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -951,7 +983,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,25,2,0
+#define RSRC_PACKAGE_VERSION 1,26,1,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
