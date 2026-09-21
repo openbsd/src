@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.80 2026/09/18 14:37:52 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.81 2026/09/21 03:34:15 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -1152,7 +1152,7 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 
         if (!x509_verify_cert_cache_extensions(leaf)) {
 		ctx->error = X509_V_ERR_OUT_OF_MEM;	/* XXX */
-		return 0;
+		goto err;
         }
 
 	/*
