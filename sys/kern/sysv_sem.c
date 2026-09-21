@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.71 2026/07/13 15:17:47 cludwig Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.72 2026/09/21 04:26:47 gnezdo Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ struct	pool semu_pool;		/* pool for struct sem_undo (SEMUSZ) */
 unsigned short *semseqs;	/* array of sem sequence numbers */
 
 struct sem_undo *semu_alloc(struct process *);
+void semu_free(struct sem_undo *);
 int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
 void semundo_clear(int, int);
 
@@ -99,32 +100,37 @@ sem_rele(struct semid_ds_kern *semaptr)
 struct sem_undo *
 semu_alloc(struct process *pr)
 {
-	struct sem_undo *suptr, *sutmp;
+	struct sem_undo *suptr;
 
 	if (semutot == seminfo.semmnu)
 		return (NULL);		/* no space */
 
 	/*
-	 * Allocate a semu w/o waiting if possible.
-	 * If we do have to wait, we must check to verify that a semu
-	 * with un_proc == pr has not been allocated in the meantime.
+	 * Must not sleep: sys_semop() has already applied the operations by
+	 * the time it records the undo, and a sleep here lets another process
+	 * remove the set from under it.
 	 */
+	if ((suptr = pool_get(&semu_pool, PR_NOWAIT)) == NULL)
+		return (NULL);
+
 	semutot++;
-	if ((suptr = pool_get(&semu_pool, PR_NOWAIT)) == NULL) {
-		sutmp = pool_get(&semu_pool, PR_WAITOK);
-		SLIST_FOREACH(suptr, &semu_list, un_next) {
-			if (suptr->un_proc == pr) {
-				pool_put(&semu_pool, sutmp);
-				semutot--;
-				return (suptr);
-			}
-		}
-		suptr = sutmp;
-	}
 	suptr->un_cnt = 0;
 	suptr->un_proc = pr;
 	SLIST_INSERT_HEAD(&semu_list, suptr, un_next);
 	return (suptr);
+}
+
+/*
+ * Release an undo structure: off the list, out of the count, then back to the
+ * pool.  pool_put() may sleep per pool(9), so semutot must match semu_list
+ * before it runs.
+ */
+void
+semu_free(struct sem_undo *suptr)
+{
+	SLIST_REMOVE(&semu_list, suptr, sem_undo, un_next);
+	semutot--;
+	pool_put(&semu_pool, suptr);
 }
 
 /*
@@ -175,12 +181,11 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 		if (sunptr->un_adjval != 0)
 			return (0);
 
-		if (--suptr->un_cnt == 0) {
-			*supptr = NULL;
-			SLIST_REMOVE(&semu_list, suptr, sem_undo, un_next);
-			pool_put(&semu_pool, suptr);
-			semutot--;
-		} else if (i < suptr->un_cnt)
+		/*
+		 * Keep an emptied structure: sys_semop()'s rollback may need
+		 * it again, and releases it at done2.
+		 */
+		if (--suptr->un_cnt != 0 && i < suptr->un_cnt)
 			suptr->un_ent[i] =
 			    suptr->un_ent[suptr->un_cnt];
 		return (0);
@@ -203,12 +208,12 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 void
 semundo_clear(int semid, int semnum)
 {
-	struct sem_undo *suptr = SLIST_FIRST(&semu_list);
-	struct sem_undo *suprev = NULL;
+	struct sem_undo *suptr, *sunext;
 	struct undo *sunptr;
 	int i;
+	SLIST_HEAD(, sem_undo) dead = SLIST_HEAD_INITIALIZER(dead);
 
-	while (suptr != NULL) {
+	SLIST_FOREACH_SAFE(suptr, &semu_list, un_next, sunext) {
 		sunptr = &suptr->un_ent[0];
 		for (i = 0; i < suptr->un_cnt; i++, sunptr++) {
 			if (sunptr->un_id == semid) {
@@ -225,19 +230,14 @@ semundo_clear(int semid, int semnum)
 			}
 		}
 		if (suptr->un_cnt == 0) {
-			struct sem_undo *sutmp = suptr;
-
-			if (suptr == SLIST_FIRST(&semu_list))
-				SLIST_REMOVE_HEAD(&semu_list, un_next);
-			else
-				SLIST_REMOVE_AFTER(suprev, un_next);
-			suptr = SLIST_NEXT(suptr, un_next);
-			pool_put(&semu_pool, sutmp);
+			SLIST_REMOVE(&semu_list, suptr, sem_undo, un_next);
 			semutot--;
-		} else {
-			suprev = suptr;
-			suptr = SLIST_NEXT(suptr, un_next);
+			SLIST_INSERT_HEAD(&dead, suptr, un_next);
 		}
+	}
+	while ((suptr = SLIST_FIRST(&dead)) != NULL) {
+		SLIST_REMOVE_HEAD(&dead, un_next);
+		pool_put(&semu_pool, suptr);
 	}
 }
 
@@ -822,6 +822,9 @@ done:
 	DPRINTF(("semop:  done\n"));
 	*retval = 0;
 done2:
+	/* Release an undo structure this call emptied or never used. */
+	if (suptr != NULL && suptr->un_cnt == 0)
+		semu_free(suptr);
 	if (sops != sopbuf)
 		free(sops, M_SEM, nsops * sizeof(struct sembuf));
 	return (error);
@@ -835,18 +838,14 @@ void
 semexit(struct process *pr)
 {
 	struct sem_undo *suptr;
-	struct sem_undo **supptr;
 
 	/*
 	 * Go through the chain of undo vectors looking for one associated with
-	 * this process.  Remember the pointer to the pointer to the element
-	 * to dequeue it later.
+	 * this process.
 	 */
-	supptr = &SLIST_FIRST(&semu_list);
 	SLIST_FOREACH(suptr, &semu_list, un_next) {
 		if (suptr->un_proc == pr)
 			break;
-		supptr = &SLIST_NEXT(suptr, un_next);
 	}
 
 	/*
@@ -899,9 +898,7 @@ semexit(struct process *pr)
 	 * Deallocate the undo vector.
 	 */
 	DPRINTF(("removing vector\n"));
-	*supptr = SLIST_NEXT(suptr, un_next);
-	pool_put(&semu_pool, suptr);
-	semutot--;
+	semu_free(suptr);
 }
 
 /* Expand semsegs and semseqs arrays */
