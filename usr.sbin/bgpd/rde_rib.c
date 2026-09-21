@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.304 2026/08/30 23:43:22 jsg Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.305 2026/09/21 18:47:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1378,7 +1378,7 @@ nexthop_update(struct kroute_nexthop *msg)
 		nh->state = NEXTHOP_UNREACH;
 
 	if (nh->oldstate == NEXTHOP_LOOKUP)
-		/* drop reference which was hold during the lookup */
+		/* drop reference which was held during the lookup */
 		if (nexthop_unref(nh))
 			return;		/* nh lost last ref, no work left */
 
@@ -1394,6 +1394,8 @@ nexthop_update(struct kroute_nexthop *msg)
 
 	if (msg->connected)
 		nh->flags |= NEXTHOP_CONNECTED;
+	else
+		nh->flags &= ~NEXTHOP_CONNECTED;
 
 	nh->true_nexthop = msg->gateway;
 	nh->nexthop_net = msg->net;
