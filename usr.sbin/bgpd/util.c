@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.104 2026/08/04 08:11:05 job Exp $ */
+/*	$OpenBSD: util.c,v 1.105 2026/09/21 19:06:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1364,4 +1364,11 @@ bin_of_adjout_prefixes(unsigned int count)
 {
 	/* 1, 2, 3, 4, 6, 8, 12, 16, 24, ... */
 	return bin_of(count, 1, 1);
+}
+
+unsigned int
+bin_of_sets(unsigned int count)
+{
+	/* 4, 8, 12, ... 60, 64, 72, 80, ... */
+	return bin_of(count, 5, 3);
 }

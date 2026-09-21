@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.547 2026/08/04 08:11:05 job Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.548 2026/09/21 19:06:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1800,6 +1800,7 @@ const char	*get_baudrate(unsigned long long, char *);
 unsigned int	 bin_of_attrs(unsigned int);
 unsigned int	 bin_of_communities(unsigned int);
 unsigned int	 bin_of_adjout_prefixes(unsigned int);
+unsigned int	 bin_of_sets(unsigned int);
 
 /* bgpd_imsg.c */
 int	imsg_send_ctl_peer(struct imsgbuf *, struct peer *,

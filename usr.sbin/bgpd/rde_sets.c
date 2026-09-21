@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.13 2024/09/10 09:38:45 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.14 2026/09/21 19:06:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bgpd.h"
 #include "rde.h"
 
 struct set_table {
@@ -156,13 +157,7 @@ set_add(struct set_table *set, void *elms, size_t nelms)
 		uint32_t *s;
 		size_t new_size;
 
-		if (set->nmemb >= SIZE_MAX - 4096 - nelms) {
-			errno = ENOMEM;
-			return -1;
-		}
-		for (new_size = set->max; new_size < set->nmemb + nelms; )
-			new_size += (new_size < 4096 ? new_size : 4096);
-
+		new_size = bin_of_sets(set->nmemb + nelms);
 		s = reallocarray(set->set, new_size, set->size);
 		if (s == NULL)
 			return -1;
