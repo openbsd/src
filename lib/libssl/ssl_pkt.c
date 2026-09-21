@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.75 2026/09/16 00:24:54 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.76 2026/09/21 23:31:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -834,8 +834,7 @@ ssl3_read_handshake_unexpected(SSL *s)
 		 * renegotiation is already pending or renegotiation is disabled
 		 * via flags.
 		 */
-		if (!SSL_is_init_finished(s) || s->s3->renegotiate ||
-		    (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) != 0)
+		if (!SSL_is_init_finished(s) || s->s3->renegotiate)
 			return 1;
 
 		if (!ssl3_renegotiate(s))
@@ -883,8 +882,7 @@ ssl3_read_handshake_unexpected(SSL *s)
 		}
 
 		/* Client requested renegotiation but it is not permitted. */
-		if (!s->s3->send_connection_binding ||
-		    (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) != 0) {
+		if (!s->s3->send_connection_binding) {
 			ssl3_send_alert(s, SSL3_AL_WARNING,
 			    SSL_AD_NO_RENEGOTIATION);
 			return 1;

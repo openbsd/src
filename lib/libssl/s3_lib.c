@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.263 2026/09/16 00:24:54 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.264 2026/09/21 23:31:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2500,9 +2500,6 @@ ssl3_renegotiate(SSL *s)
 {
 	if (s->handshake_func == NULL)
 		return 1;
-
-	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
-		return 0;
 
 	s->s3->renegotiate = 1;
 

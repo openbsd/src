@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.61 2025/04/18 07:34:01 tb Exp $ */
+/* $OpenBSD: ssl3.h,v 1.62 2026/09/21 23:31:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -314,7 +314,7 @@ extern "C" {
 #define TLS1_HB_REQUEST		1
 #define TLS1_HB_RESPONSE	2
 
-#define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
+#define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0
 #define TLS1_FLAGS_FREEZE_TRANSCRIPT		0x0020
 #define SSL3_FLAGS_CCS_OK			0x0080
 
