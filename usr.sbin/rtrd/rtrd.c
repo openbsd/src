@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.c,v 1.6 2026/09/20 20:38:49 rcovelli Exp $ */
+/*	$OpenBSD: rtrd.c,v 1.7 2026/09/21 03:43:44 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -164,14 +164,11 @@ main(int argc, char **argv)
 	}
 
 	if (daemonize) {
-		close(STDIN_FILENO);
-		close(STDOUT_FILENO);
-		close(STDERR_FILENO);
-
+		if (daemon(0, 0) == -1) {
+			fprintf(stderr, "daemon failed\n");
+			exit(1);
+		}
 		foreground = 0;
-
-		if (fork())
-			exit(0);
 	}
 
 	if (pledge("stdio unix inet", NULL) == -1) {
