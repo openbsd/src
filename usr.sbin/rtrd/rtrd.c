@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.c,v 1.7 2026/09/21 03:43:44 rcovelli Exp $ */
+/*	$OpenBSD: rtrd.c,v 1.8 2026/09/21 20:44:28 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -171,7 +171,7 @@ main(int argc, char **argv)
 		foreground = 0;
 	}
 
-	if (pledge("stdio unix inet", NULL) == -1) {
+	if (pledge("stdio inet", NULL) == -1) {
 		logx(0, "RTR Pledge error\n");
 		exit(1);
 	}
