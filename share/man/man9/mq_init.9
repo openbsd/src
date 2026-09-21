@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.13 2020/08/28 09:15:16 fcambus Exp $
+.\"     $OpenBSD: mq_init.9,v 1.14 2026/09/21 05:29:17 jsg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2020 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
@@ -24,7 +24,6 @@
 .Nm mq_dequeue ,
 .Nm mq_enlist ,
 .Nm mq_delist ,
-.Nm mq_dechain ,
 .Nm mq_len ,
 .Nm mq_empty ,
 .Nm mq_full ,
@@ -48,8 +47,6 @@
 .Fn mq_enlist "struct mbuf_queue *mq" "struct mbuf_list *ml"
 .Ft void
 .Fn mq_delist "struct mbuf_queue *mq" "struct mbuf_list *ml"
-.Ft struct mbuf *
-.Fn mq_dechain "struct mbuf_queue *mq"
 .Ft unsigned int
 .Fn mq_len "struct mbuf_queue *mq"
 .Ft int
@@ -143,10 +140,6 @@ Dequeue all the mbufs on the
 mbuf queue on to the
 .Fa ml
 mbuf list.
-.It Fn mq_dechain "struct mbuf_queue *mq"
-Dequeue all mbufs from the
-.Fa mq
-mbuf queue.
 .It Fn mq_len "struct mbuf_queue *mq"
 Return the number of mbufs on the
 .Fa mq
@@ -189,7 +182,6 @@ already exist on the queue.
 .Fn mq_dequeue ,
 .Fn mq_enlist ,
 .Fn mq_delist ,
-.Fn mq_dechain ,
 .Fn mq_len ,
 .Fn mq_empty ,
 .Fn mq_full ,
@@ -202,13 +194,6 @@ can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn mq_dequeue
 returns the mbuf that was at the head of its queue.
-If the queue was empty,
-.Dv NULL
-is returned.
-.Pp
-.Fn mq_dechain
-returns all the mbufs that were on its queues via a pointer to an mbuf
-with the chain accessible via m_nextpkt members.
 If the queue was empty,
 .Dv NULL
 is returned.
