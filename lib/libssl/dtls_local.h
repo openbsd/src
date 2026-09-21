@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.13 2026/09/21 23:16:29 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.14 2026/09/21 23:43:25 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -151,7 +151,6 @@ struct dtls1_state_st {
 	struct dtls1_timeout_st timeout;
 
 	unsigned int retransmitting;
-	unsigned int change_cipher_spec_ok;
 
 	struct dtls12_handshake_msg *hs_msg;
 };

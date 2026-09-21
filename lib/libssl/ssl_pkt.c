@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.77 2026/09/21 23:37:20 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.78 2026/09/21 23:43:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -686,7 +686,7 @@ ssl3_read_change_cipher_spec(SSL *s)
 	const uint8_t ccs[1] = { SSL3_MT_CCS };
 
 	/*
-	 * 'Change Cipher Spec' is just a single byte, so we know exactly what
+	 * ChangeCipherSpec is just a single byte, so we know exactly what
 	 * the record payload has to look like.
 	 */
 	if (tls_content_remaining(s->s3->rcontent) != sizeof(ccs)) {
@@ -712,27 +712,24 @@ ssl3_read_change_cipher_spec(SSL *s)
 		return -1;
 	}
 
-	/* Check that we should be receiving a Change Cipher Spec. */
-	if (SSL_is_dtls(s)) {
-		if (!s->d1->change_cipher_spec_ok) {
+	/* Check that we should be receiving ChangeCipherSpec. */
+	if ((s->s3->flags & SSL3_FLAGS_CCS_OK) == 0) {
+		if (SSL_is_dtls(s)) {
 			/*
-			 * We can't process a CCS now, because previous
-			 * handshake messages are still missing, so just
-			 * drop it.
+			 * A CCS cannot be processed currently - either we're
+			 * missing earlier handshake messages or it's an
+			 * unexpected message. In both cases just drop it.
 			 */
 			tls_content_clear(s->s3->rcontent);
 			return 1;
-		}
-		s->d1->change_cipher_spec_ok = 0;
-	} else {
-		if ((s->s3->flags & SSL3_FLAGS_CCS_OK) == 0) {
+		} else {
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_UNEXPECTED_MESSAGE);
 			return -1;
 		}
-		s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
 	}
+	s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
 
 	tls_content_clear(s->s3->rcontent);
 

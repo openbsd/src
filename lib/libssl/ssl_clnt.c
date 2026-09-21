@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.179 2026/09/21 23:40:43 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.180 2026/09/21 23:43:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -546,10 +546,8 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CR_FINISHED_A:
 		case SSL3_ST_CR_FINISHED_B:
-			if (SSL_is_dtls(s))
-				s->d1->change_cipher_spec_ok = 1;
-			else
-				s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+
 			ret = ssl3_get_server_finished(s);
 			if (ret <= 0)
 				goto end;

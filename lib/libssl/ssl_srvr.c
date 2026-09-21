@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.176 2026/09/21 23:40:43 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.177 2026/09/21 23:43:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -581,10 +581,7 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_VRFY_A:
 		case SSL3_ST_SR_CERT_VRFY_B:
-			if (SSL_is_dtls(s))
-				s->d1->change_cipher_spec_ok = 1;
-			else
-				s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 
 			/* we should decide if we expected this one */
 			ret = ssl3_get_cert_verify(s);
@@ -596,10 +593,8 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_FINISHED_A:
 		case SSL3_ST_SR_FINISHED_B:
-			if (SSL_is_dtls(s))
-				s->d1->change_cipher_spec_ok = 1;
-			else
-				s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+
 			ret = ssl3_get_client_finished(s);
 			if (ret <= 0)
 				goto end;
