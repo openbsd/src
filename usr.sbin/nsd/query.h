@@ -47,6 +47,9 @@ struct query {
 
 	/* if set, the request came through a proxy */
 	int is_proxied;
+	/* if set, the response may be padded */
+	int may_pad;
+
 	/* the client address
 	 * the same as remote_addr if not proxied */
 #ifdef INET6

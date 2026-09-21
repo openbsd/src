@@ -80,6 +80,8 @@ void nsec3_hash_and_store(struct zone* zone, const struct dname* dname,
 int nsec3_rr_uses_params(struct rr* rr, struct zone* zone);
 /* number of NSEC3s that are in the zone chain */
 int nsec3_in_chain_count(struct domain* domain, struct zone* zone);
+/* if the NSEC3 record is b32.zone name */
+int nsec3_has_owner_for_zone(struct domain* domain, struct zone* zone);
 /* find previous NSEC3, or, lastinzone, or, NULL */
 struct domain* nsec3_chain_find_prev(struct zone* zone, struct domain* domain);
 /* clear nsec3 precompile for the zone */

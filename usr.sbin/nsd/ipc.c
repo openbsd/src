@@ -574,10 +574,19 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		if(!xfrd->reload_failed) {
 			xfrd_check_failed_updates();
 			xfrd->reload_cmd_first_sent = 0;
+			xfrd->num_reload_failed_repeat = 0;
+			xfrd->num_xfrs_in_reload = 0;
 		} else {
+			if(xfrd->num_reload_failed_repeat++ >
+				xfrd->num_xfrs_in_reload) {
+				/* More fails than zones, it may be that
+				 * reload crashes, delete failed updates. */
+				xfrd_check_failed_updates();
+			}
 			/* make reload happen again, right away */
 			xfrd_set_reload_now(xfrd);
 		}
+		xfrd->num_xfrs_in_reload = 0;
 		xfrd_prepare_zones_for_reload();
 		xfrd->reload_failed = 0;
 		break;

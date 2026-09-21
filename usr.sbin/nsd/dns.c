@@ -404,6 +404,14 @@ static const struct nsd_rdata_descriptor dsync_rdata_fields[] = {
 	FIELD("target", RDATA_LITERAL_DNAME)
 };
 
+static const struct nsd_rdata_descriptor hhit_rdata_fields[] = {
+	FIELD("cbor blob", RDATA_REMAINDER)
+};
+
+static const struct nsd_rdata_descriptor brid_rdata_fields[] = {
+	FIELD("cbor blob", RDATA_REMAINDER)
+};
+
 static const struct nsd_rdata_descriptor spf_rdata_fields[] = {
 	FIELD("text", RDATA_REMAINDER)
 };
@@ -780,9 +788,15 @@ const nsd_type_descriptor_type type_descriptors[] = {
 	TYPE("DSYNC", TYPE_DSYNC, TYPE_HAS_LITERAL_DNAME,
 		read_dsync_rdata, write_generic_rdata,
 		print_dsync_rdata, dsync_rdata_fields),
+	/* 67 */
+	TYPE("HHIT", TYPE_HHIT, TYPE_HAS_NO_REFS,
+		read_hhit_rdata, write_generic_rdata,
+		print_hhit_rdata, hhit_rdata_fields),
+	/* 68 */
+	TYPE("BRID", TYPE_BRID, TYPE_HAS_NO_REFS,
+		read_brid_rdata, write_generic_rdata,
+		print_brid_rdata, brid_rdata_fields),
 
-	UNKNOWN_TYPE(67),
-	UNKNOWN_TYPE(68),
 	UNKNOWN_TYPE(69),
 	UNKNOWN_TYPE(70),
 	UNKNOWN_TYPE(71),

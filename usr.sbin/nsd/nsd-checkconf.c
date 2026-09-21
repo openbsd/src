@@ -512,8 +512,14 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 			return;
 		}
 		if(strcasecmp(o, "proxy_protocol_port") == 0) {
-			struct proxy_protocol_port_list* p;
+			struct port_list* p;
 			for(p = opt->proxy_protocol_port; p; p = p->next)
+				printf("%d\n", p->port);
+			return;
+		}
+		if(strcasecmp(o, "udp_padding_port") == 0) {
+			struct port_list* p;
+			for(p = opt->udp_padding_port; p; p = p->next)
 				printf("%d\n", p->port);
 			return;
 		}
@@ -735,9 +741,14 @@ config_test_print_server(nsd_options_type* opt)
 		print_string_var("cookie-secret-file:", "");
 	}
 	if(opt->proxy_protocol_port) {
-		struct proxy_protocol_port_list* p;
+		struct port_list* p;
 		for(p = opt->proxy_protocol_port; p; p = p->next)
 			printf("\tproxy-protocol-port: %d\n", p->port);
+	}
+	if(opt->udp_padding_port) {
+		struct port_list* p;
+		for(p = opt->udp_padding_port; p; p = p->next)
+			printf("\tudp-padding-port: %d\n", p->port);
 	}
 
 #ifdef USE_METRICS

@@ -353,27 +353,37 @@ dt_tls_writer_open(void* obj)
 	}
 	if(connect(dtw->fd, (struct sockaddr*)&addr, addrlen) < 0) {
 		log_msg(LOG_ERR, "dnstap: connect failed: %s", strerror(errno));
+		close(dtw->fd);
+		dtw->fd = -1;
 		return fstrm_res_failure;
 	}
-	dtw->connected = 1;
 
 	/* setup SSL */
 	dtw->ssl = SSL_new(dtw->ctx);
 	if(!dtw->ssl) {
 		log_msg(LOG_ERR, "dnstap: SSL_new failed");
+		close(dtw->fd);
+		dtw->fd = -1;
 		return fstrm_res_failure;
 	}
 	SSL_set_connect_state(dtw->ssl);
 	(void)SSL_set_mode(dtw->ssl, SSL_MODE_AUTO_RETRY);
 	if(!SSL_set_fd(dtw->ssl, dtw->fd)) {
 		log_msg(LOG_ERR, "dnstap: SSL_set_fd failed");
+res_failure:
+		if(dtw->ssl)
+			SSL_shutdown(dtw->ssl);
+		SSL_free(dtw->ssl);
+		dtw->ssl = NULL;
+		close(dtw->fd);
+		dtw->fd = -1;
 		return fstrm_res_failure;
 	}
 	if(dtw->tls_server_name && dtw->tls_server_name[0]) {
 		if(!SSL_set1_host(dtw->ssl, dtw->tls_server_name)) {
 			log_msg(LOG_ERR, "dnstap: TLS setting of hostname %s failed to %s",
 				dtw->tls_server_name, dtw->ip);
-			return fstrm_res_failure;
+			goto res_failure;
 		}
 	}
 
@@ -387,14 +397,14 @@ dt_tls_writer_open(void* obj)
 		if(r != SSL_ERROR_WANT_READ && r != SSL_ERROR_WANT_WRITE) {
 			if(r == SSL_ERROR_ZERO_RETURN) {
 				log_msg(LOG_ERR, "dnstap: EOF on SSL_do_handshake");
-				return fstrm_res_failure;
+				goto res_failure;
 			}
 			if(r == SSL_ERROR_SYSCALL) {
 				log_msg(LOG_ERR, "dnstap: SSL_do_handshake failed: %s", strerror(errno));
-				return fstrm_res_failure;
+				goto res_failure;
 			}
 			log_crypto_err("dnstap: SSL_do_handshake failed");
-			return fstrm_res_failure;
+			goto res_failure;
 		}
 		/* wants to be called again */
 	}
@@ -402,7 +412,7 @@ dt_tls_writer_open(void* obj)
 	/* check authenticity of server */
 	if(SSL_get_verify_result(dtw->ssl) != X509_V_OK) {
 		log_crypto_err("SSL verification failed");
-		return fstrm_res_failure;
+		goto res_failure;
 	}
 #ifdef HAVE_SSL_GET1_PEER_CERTIFICATE
 	x = SSL_get1_peer_certificate(dtw->ssl);
@@ -411,9 +421,10 @@ dt_tls_writer_open(void* obj)
 #endif
 	if(!x) {
 		log_crypto_err("Server presented no peer certificate");
-		return fstrm_res_failure;
+		goto res_failure;
 	}
 	X509_free(x);
+	dtw->connected = 1;
 
 	return fstrm_res_success;
 }

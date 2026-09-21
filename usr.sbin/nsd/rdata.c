@@ -105,6 +105,14 @@ static int print_svcparam_dohpath(struct buffer *output,
 static int print_svcparam_tls_supported_groups(struct buffer *output,
 	uint16_t svcparamkey, const uint8_t* data, uint16_t datalen);
 
+/* Print svcparam docpath */
+static int print_svcparam_docpath(struct buffer *output,
+	uint16_t svcparamkey, const uint8_t* data, uint16_t datalen);
+
+/* Print svcparam oots */
+static int print_svcparam_oots(struct buffer *output,
+	uint16_t svcparamkey, const uint8_t* data, uint16_t datalen);
+
 static const nsd_svcparam_descriptor_type svcparams[] = {
 	{ SVCB_KEY_MANDATORY, "mandatory", print_svcparam_mandatory },
 	{ SVCB_KEY_ALPN, "alpn", print_svcparam_alpn },
@@ -118,6 +126,9 @@ static const nsd_svcparam_descriptor_type svcparams[] = {
 	{ SVCB_KEY_OHTTP, "ohttp", print_svcparam_no_value },
 	{ SVCB_KEY_TLS_SUPPORTED_GROUPS, "tls-supported-groups",
 		print_svcparam_tls_supported_groups },
+	{ SVCB_KEY_DOCPATH, "docpath", print_svcparam_docpath},
+	{ SVCB_KEY_PVD, "pvd", print_svcparam_no_value },
+	{ SVCB_KEY_OOTS, "oots", print_svcparam_oots},
 };
 
 /*
@@ -683,6 +694,7 @@ svcparam_must_have_value(uint16_t svcparamkey)
 	case SVCB_KEY_MANDATORY:
 	case SVCB_KEY_DOHPATH:
 	case SVCB_KEY_TLS_SUPPORTED_GROUPS:
+	case SVCB_KEY_OOTS:
 		return 1;
 	default:
 		break;
@@ -697,6 +709,7 @@ svcparam_must_not_have_value(uint16_t svcparamkey)
 	switch (svcparamkey) {
 	case SVCB_KEY_NO_DEFAULT_ALPN:
 	case SVCB_KEY_OHTTP:
+	case SVCB_KEY_PVD:
 		return 1;
 	default:
 		break;
@@ -948,6 +961,52 @@ print_svcparam_tls_supported_groups(struct buffer *output,
 		buffer_printf(output, ",%d", (int)read_uint16(data));
 		data += 2;
 	}
+	return 1;
+}
+
+static int
+print_svcparam_docpath(struct buffer *output, uint16_t svcparamkey,
+	const uint8_t* data, uint16_t datalen)
+{
+	if(datalen > 0)
+		return print_svcparam_alpn(output, svcparamkey, data, datalen);
+	buffer_print_svcparamkey(output, svcparamkey);
+	return 1;
+}
+
+static int
+print_svcparam_oots(struct buffer *output, uint16_t svcparamkey,
+		const uint8_t* data, uint16_t datalen)
+{
+	assert(datalen > 0); /* Guaranteed by svcparam_print */
+
+	buffer_print_svcparamkey(output, svcparamkey);
+	buffer_printf(output, "=\"");
+	while(((size_t)(*data)) + 2 <= (size_t)datalen) {
+		size_t transport_len = *data;
+		uint8_t percentage = data[transport_len + 1];
+		size_t i;
+
+		if(!transport_len || percentage > 100)
+			return 0;
+
+		for(i=0; i < transport_len; i++) {
+			char ch = data[i + 1];
+			if(!isgraph(ch)
+			|| ch == '"' || ch == '\\' || ch == ',' || ch == ':')
+				return 0;
+
+			buffer_write_u8(output, ch);
+		}
+		buffer_printf(output, ":%d", percentage);
+		data += transport_len + 2;
+		datalen -= transport_len + 2;
+		if(datalen)
+			buffer_write_u8(output, ',');
+	}
+	if(datalen)
+		return 0;
+	buffer_printf(output, "\"");
 	return 1;
 }
 
@@ -3407,6 +3466,50 @@ print_dsync_rdata(struct buffer *output, const struct rr *rr)
 		rrtype_to_string(read_uint16(rr->rdata)), rr->rdata[2],
 		read_uint16(rr->rdata+3));
 	if(!print_name_literal(output, rr->rdlength, rr->rdata, &length))
+		return 0;
+	if(rr->rdlength != length)
+		return 0;
+	return 1;
+}
+
+int32_t
+read_hhit_rdata(struct domain_table *domains, uint16_t rdlength,
+	struct buffer *packet, struct rr **rr)
+{
+	/* A CBOR blob has at least 1 byte */
+	if (rdlength < 1)
+		return MALFORMED;
+	return read_rdata(domains, rdlength, packet, rr);
+}
+
+int
+print_hhit_rdata(struct buffer *output, const struct rr *rr)
+{
+	uint16_t length = 0;
+
+	if (!print_base64(output, rr->rdlength, rr->rdata, &length))
+		return 0;
+	if(rr->rdlength != length)
+		return 0;
+	return 1;
+}
+
+int32_t
+read_brid_rdata(struct domain_table *domains, uint16_t rdlength,
+	struct buffer *packet, struct rr **rr)
+{
+	/* A CBOR blob has at least 1 byte */
+	if (rdlength < 1)
+		return MALFORMED;
+	return read_rdata(domains, rdlength, packet, rr);
+}
+
+int
+print_brid_rdata(struct buffer *output, const struct rr *rr)
+{
+	uint16_t length = 0;
+
+	if (!print_base64(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
 		return 0;

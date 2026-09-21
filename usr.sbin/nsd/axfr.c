@@ -140,8 +140,20 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 							}
 						}
 					}
-					if (!added)
+					if (!added) {
+						if(total_added == 0) {
+							/* RR wire encoding exceeds TCP_MAX_MESSAGE_LEN; cannot transmit. */
+							char apexstr[MAXDOMAINLEN * 5];
+							domain_to_string_buf(query->axfr_zone->apex, apexstr);
+							VERBOSITY(2, (LOG_ERR, "axfr: RR at %s in zone %s too large for any DNS message "
+								"(wire encoding exceeds %d bytes), aborting transfer",
+								domain_to_string(query->axfr_current_rrset->rrs[query->axfr_current_rr]->owner),
+								apexstr, TCP_MAX_MESSAGE_LEN));
+							RCODE_SET(query->packet, RCODE_SERVFAIL);
+							query->axfr_is_done = 1;
+						}
 						goto return_answer;
+					}
 					++total_added;
 					++query->axfr_current_rr;
 				}

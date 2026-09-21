@@ -439,6 +439,7 @@ static int parse_qserial(struct buffer* packet, uint32_t* qserial,
 {
 	unsigned int i;
 	uint16_t type, rdlen;
+	size_t rdpos;
 	/* we must have a SOA in the authority section */
 	if(NSCOUNT(packet) == 0)
 		return 0;
@@ -460,6 +461,7 @@ static int parse_qserial(struct buffer* packet, uint32_t* qserial,
 		type = buffer_read_u16(packet);
 		buffer_skip(packet, 6);
 		rdlen = buffer_read_u16(packet);
+		rdpos = buffer_position(packet);
 		if(!buffer_available(packet, rdlen))
 			return 0;
 		if(type == TYPE_SOA) {
@@ -471,6 +473,9 @@ static int parse_qserial(struct buffer* packet, uint32_t* qserial,
 				return 0; /* malformed rname */
 			if(!buffer_available(packet, 4))
 				return 0;
+			if(buffer_position(packet) + 20 !=
+				rdpos + (size_t)rdlen)
+				return 0; /* malformed SOA rdata */
 			*qserial = buffer_read_u32(packet);
 			return 1;
 		}
@@ -697,6 +702,18 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 			query->ixfr_pos_of_newsoa = buffer_position(query->packet);
 		} else {
 			/* cannot add another RR, so return */
+			if(total_added == 0) {
+				/* RR exceeds TCP_MAX_MESSAGE_LEN (65535 bytes):
+				 * cannot fit in any DNS message. Abort the
+				 * IXFR transfer rather than spinning. */
+				VERBOSITY(2, (LOG_ERR, "ixfr_out: SOA RR in zone %s too large for any DNS message "
+					"(wire encoding exceeds %d bytes), aborting IXFR transfer",
+
+					domain_to_string(query->zone->apex),
+					TCP_MAX_MESSAGE_LEN));
+				RCODE_SET(query->packet, RCODE_SERVFAIL);
+				query->ixfr_is_done = 1;
+			}
 			return total_added;
 		}
 	}
@@ -710,6 +727,18 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 			total_added++;
 		} else {
 			/* cannot add another RR, so return */
+			if(total_added == 0) {
+				/* RR exceeds TCP_MAX_MESSAGE_LEN (65535 bytes):
+				 * cannot fit in any DNS message. Abort the
+				 * IXFR transfer rather than spinning. */
+				VERBOSITY(2, (LOG_ERR, "ixfr_out: SOA RR in zone %s too large for any DNS message "
+					"(wire encoding exceeds %d bytes), aborting IXFR transfer",
+
+					domain_to_string(query->zone->apex),
+					TCP_MAX_MESSAGE_LEN));
+				RCODE_SET(query->packet, RCODE_SERVFAIL);
+				query->ixfr_is_done = 1;
+			}
 			return total_added;
 		}
 	}
@@ -726,6 +755,21 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 		} else {
 			/* the next record does not fit in the remaining
 			 * space of the packet */
+			if(total_added == 0) {
+				/* RR exceeds TCP_MAX_MESSAGE_LEN (65535 bytes):
+				 * cannot fit in any DNS message. Abort the
+				 * IXFR transfer rather than spinning. */
+				char apexstr[MAXDOMAINLEN * 5];
+				char* ownerstr = "";
+				if(rrlen)
+					ownerstr = wiredname2str(query->ixfr_data->del + query->ixfr_count_del);
+				domain_to_string_buf(query->zone->apex, apexstr);
+				VERBOSITY(2, (LOG_ERR, "ixfr_out: RR at %s in zone %s too large for any DNS message "
+					"(wire encoding exceeds %d bytes), aborting IXFR transfer",
+					ownerstr, apexstr, TCP_MAX_MESSAGE_LEN));
+				RCODE_SET(query->packet, RCODE_SERVFAIL);
+				query->ixfr_is_done = 1;
+			}
 			return total_added;
 		}
 	}
@@ -742,6 +786,21 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 		} else {
 			/* the next record does not fit in the remaining
 			 * space of the packet */
+			if(total_added == 0) {
+				/* RR exceeds TCP_MAX_MESSAGE_LEN (65535 bytes):
+				 * cannot fit in any DNS message. Abort the
+				 * IXFR transfer rather than spinning. */
+				char apexstr[MAXDOMAINLEN * 5];
+				char* ownerstr = "";
+				if(rrlen)
+					ownerstr = wiredname2str(query->ixfr_data->add + query->ixfr_count_add);
+				domain_to_string_buf(query->zone->apex, apexstr);
+				VERBOSITY(2, (LOG_ERR, "ixfr_out: RR at %s in zone %s too large for any DNS message "
+					"(wire encoding exceeds %d bytes), aborting IXFR transfer",
+					ownerstr, apexstr, TCP_MAX_MESSAGE_LEN));
+				RCODE_SET(query->packet, RCODE_SERVFAIL);
+				query->ixfr_is_done = 1;
+			}
 			return total_added;
 		}
 	}
@@ -757,8 +816,10 @@ query_state_type query_ixfr(struct nsd *nsd, struct query *query)
 		return QUERY_PROCESSED;
 
 	pktcompression_init(&pcomp);
-	if (query->maxlen > IXFR_MAX_MESSAGE_LEN)
+	if (query->maxlen > IXFR_MAX_MESSAGE_LEN) {
+		buffer_set_position(query->packet, QHEADERSZ);
 		query->maxlen = IXFR_MAX_MESSAGE_LEN;
+	}
 
 	assert(!query_overflow(query));
 	/* only keep running values for most packets */
@@ -883,7 +944,8 @@ query_state_type query_ixfr(struct nsd *nsd, struct query *query)
 
 	total_added = ixfr_copy_rrs_into_packet(query, &pcomp);
 
-	while(query->ixfr_count_add >= query->ixfr_data->add_len) {
+	while(!query->ixfr_is_done &&
+		query->ixfr_count_add >= query->ixfr_data->add_len) {
 		struct ixfr_data* next = ixfr_data_next(query->zone->ixfr,
 			query->ixfr_data);
 		/* finished the ixfr_data */

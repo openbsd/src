@@ -7,7 +7,7 @@ sinclude(dnstap/dnstap.m4)
 
 # autoconf-2.70 is needed for @runstatedir@
 AC_PREREQ([2.70])
-AC_INIT([NSD],[4.15.0],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.15.2],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -987,6 +987,16 @@ AC_ARG_WITH([tcp_timeout],
 AC_DEFINE_UNQUOTED([TCP_TIMEOUT], $tcp_timeout, [Define to the default tcp timeout.])
 
 dnl
+dnl Determine the maximum CNAME chain length to return
+dnl Defaults to 18 as a tribute to our dear colleague
+dnl
+max_cname_chain=18
+AC_ARG_WITH([max_cname_chain],
+	AS_HELP_STRING([--with-max-cname-chain=number],[Limit the maximum number of CNAMEs to follow]),
+	[max_cname_chain=$withval])
+AC_DEFINE_UNQUOTED([MAX_CNAME_CHAIN], $max_cname_chain, [Define to the default maximum number of CNAMEs to follow.])
+
+dnl
 dnl Features
 dnl
 AC_ARG_ENABLE(root-server, AS_HELP_STRING([--enable-root-server],[Configure NSD as a root server (obsolete)]))
@@ -998,6 +1008,15 @@ case "$enable_ipv6" in
         yes|*)
 		AC_DEFINE_UNQUOTED([INET6], [], [Define this to enable IPv6 support.])
 		;;
+esac
+
+AC_ARG_ENABLE(multiple-catalog-zones, AS_HELP_STRING([--enable-multiple-catzones],[Enable experimental support for more than one catalog consumer zone]))
+case "$enable_multiple_catalog_zones" in
+        yes)
+		AC_DEFINE_UNQUOTED([MULTIPLE_CATALOG_CONSUMER_ZONES], [], [Define this to enable experimental support for more than one catalog consumer zone.])
+		;;
+        no|*)
+                ;;
 esac
 
 AC_ARG_ENABLE(bind8-stats, AS_HELP_STRING([--disable-bind8-stats],[Disable BIND8 like NSTATS & XSTATS and statistics in nsd-control]))

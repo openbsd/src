@@ -421,6 +421,20 @@ int32_t read_dsync_rdata(struct domain_table *domains, uint16_t rdlength,
 /* Print rdata for type DSYNC. */
 int print_dsync_rdata(struct buffer *output, const struct rr *rr);
 
+/* Read rdata for type HHIT. */
+int32_t read_hhit_rdata(struct domain_table *domains, uint16_t rdlength,
+	struct buffer *packet, struct rr **rr);
+
+/* Print rdata for type HHIT. */
+int print_hhit_rdata(struct buffer *output, const struct rr *rr);
+
+/* Read rdata for type BRID. */
+int32_t read_brid_rdata(struct domain_table *domains, uint16_t rdlength,
+	struct buffer *packet, struct rr **rr);
+
+/* Print rdata for type BRID. */
+int print_brid_rdata(struct buffer *output, const struct rr *rr);
+
 /* Read rdata for type NID. */
 int32_t read_nid_rdata(struct domain_table *domains, uint16_t rdlength,
 	struct buffer *packet, struct rr **rr);

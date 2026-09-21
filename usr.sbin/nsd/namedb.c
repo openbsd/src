@@ -320,7 +320,10 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 		return;
 	memset(node, 0, sizeof(rbnode_type));
 	node->key = domain;
-	rbtree_insert(*tree, node);
+	if(!rbtree_insert(*tree, node)) {
+		/* collision: clear key to prevent null content key in node. */
+		node->key = NULL;
+	}
 }
 
 domain_table_type *

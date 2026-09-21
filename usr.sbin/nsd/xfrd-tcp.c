@@ -656,6 +656,23 @@ pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	return r;
 }
 
+void
+tcp_zone_waiting_list_remove(xfrd_zone_type* z)
+{
+	if(z->tcp_waiting) {
+		/* delete from tcp waiting list */
+		if(z->tcp_waiting_prev)
+			z->tcp_waiting_prev->tcp_waiting_next =
+				z->tcp_waiting_next;
+		else xfrd->tcp_set->tcp_waiting_first = z->tcp_waiting_next;
+		if(z->tcp_waiting_next)
+			z->tcp_waiting_next->tcp_waiting_prev =
+				z->tcp_waiting_prev;
+		else xfrd->tcp_set->tcp_waiting_last = z->tcp_waiting_prev;
+		z->tcp_waiting = 0;
+	}
+}
+
 /* remove zone from tcp waiting list */
 static void
 tcp_zone_waiting_list_popfirst(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
@@ -1100,6 +1117,8 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 	struct xfrd_tcp* tcp = tp->tcp_w;
 	assert(zone->tcp_conn != -1);
 	assert(zone->tcp_waiting == 0);
+	/* make sure we have a master to query the xfr request to */
+	assert(zone->master);
 	/* start AXFR or IXFR for the zone */
 	if(zone->soa_disk_acquired == 0 || zone->master->use_axfr_only ||
 		zone->master->ixfr_disabled ||
@@ -1252,8 +1271,8 @@ int conn_write(struct xfrd_tcp* tcp)
 		}
 
 		tcp->total_bytes += sent;
-		if(sent > (ssize_t)sizeof(tcp->msglen))
-			buffer_skip(tcp->packet, sent-sizeof(tcp->msglen));
+		if(tcp->total_bytes > (ssize_t)sizeof(tcp->msglen))
+			buffer_skip(tcp->packet, tcp->total_bytes-sizeof(tcp->msglen));
 		if(tcp->total_bytes < sizeof(tcp->msglen)) {
 			/* incomplete write, resume later */
 			return 0;

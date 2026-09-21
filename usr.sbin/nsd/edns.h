@@ -19,12 +19,16 @@ struct query;
 #define OPT_HDR 4U                      /* NSID opt header length */
 #define NSID_CODE       3               /* nsid option code */
 #define COOKIE_CODE    10               /* COOKIE option code */
+#define PADDING_CODE   12               /* Padding option code */
 #define EDE_CODE       15               /* Extended DNS Errors option code */
 #define ZONEVERSION_CODE 19             /* ZONEVERSION option code */
 #define DNSSEC_OK_MASK  0x8000U         /* do bit mask */
 
 /* https://iana.org/assignments/dns-parameters/#zoneversion-type-values */
 #define ZONEVERSION_SOA_SERIAL 0
+
+/* See RFC 8467 */
+#define PADDING_BLOCK_SZ 468
 
 struct edns_data
 {
@@ -64,6 +68,8 @@ struct edns_record
 	int                dnssec_ok;
 	int                nsid;
 	int                zoneversion;
+	int                padding;
+	int		   cookie_seen;
 	cookie_status_type cookie_status;
 	size_t             cookie_len;
 	uint8_t            cookie[40];

@@ -505,7 +505,7 @@ find_rr_num(rrset_type* rrset, uint16_t type, uint16_t klass,
 		}
 	}
 	/* this is odd. Log why rr cannot be found. */
-	if (!add) {
+	if (!add && verbosity >= 3) {
 		debug_find_rr_num(rrset, type, klass, rr);
 	}
 	return -1;
@@ -522,6 +522,7 @@ nsec3_delete_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone)
 	/* see if the domain was an NSEC3-domain in the chain, but no longer */
 	if(rr->type == TYPE_NSEC3 && rr->owner->nsec3 &&
 		rr->owner->nsec3->nsec3_node.key &&
+		nsec3_has_owner_for_zone(rr->owner, zone) &&
 		nsec3_rr_uses_params(rr, zone) &&
 		nsec3_in_chain_count(rr->owner, zone) <= 1) {
 		domain_type* prev = nsec3_chain_find_prev(zone, rr->owner);
@@ -640,6 +641,7 @@ nsec3_add_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone)
 	 * in the udb has been adjusted) */
 	if(zone->nsec3_param && rr->type == TYPE_NSEC3 &&
 		(!rr->owner->nsec3 || !rr->owner->nsec3->nsec3_node.key)
+		&& nsec3_has_owner_for_zone(rr->owner, zone)
 		&& nsec3_rr_uses_params(rr, zone)) {
 		if(!zone->nsec3_last) {
 			/* all nsec3s have previously been deleted, but
@@ -735,8 +737,9 @@ delete_RR(namedb_type* db, const dname_type* dname,
 	rrset = domain_find_rrset_and_prev(domain, zone, type, &rrset_prev);
 #endif
 	if(!rrset) {
-		log_msg(LOG_WARNING, "diff: rrset %s does not exist",
-			dname_to_string(dname,0));
+		VERBOSITY(2, (LOG_WARNING,
+			"diff: RRset to delete from <%s, %s> does not exist",
+			dname_to_string(dname,0), rrtype_to_string(type)));
 		buffer_skip(packet, rdatalen);
 		*softfail = 1;
 		return 1; /* not fatal error */
@@ -776,8 +779,9 @@ delete_RR(namedb_type* db, const dname_type* dname,
 			&& rrset->rr_count != 0)
 			rrnum = 0; /* replace existing SOA if no match */
 		if(rrnum == -1) {
-			log_msg(LOG_WARNING, "diff: RR <%s, %s> does not exist",
-				dname_to_string(dname,0), rrtype_to_string(type));
+			VERBOSITY(2, (LOG_WARNING,
+				"diff: RR to delete from RRset <%s, %s> does not exist",
+				dname_to_string(dname,0), rrtype_to_string(type)));
 			*softfail = 1;
 			return 1; /* not fatal error */
 		}
@@ -1316,7 +1320,7 @@ apply_ixfr(nsd_type* nsd, FILE *in, uint32_t serialno,
 			region_destroy(region);
 			return 0;
 		}
-		if (klass != CLASS_IN) {
+		if (klass != CLASS_IN && type != TYPE_OPT) {
 			log_msg(LOG_ERR, "bad xfr non-IN-class RR %s %s %s",
 				dname_to_string(owner,0),
 				rrclass_to_string(klass),

@@ -260,6 +260,14 @@ buffer_write(buffer_type *buffer, const void *data, size_t count)
 	buffer->_position += count;
 }
 
+static inline void
+buffer_fill(buffer_type *buffer, const int c, size_t count)
+{
+	assert(buffer_available_at(buffer, buffer->_position, count));
+	memset(buffer->_data + buffer->_position, c, count);
+	buffer->_position += count;
+}
+
 static inline int
 try_buffer_write_at(buffer_type *buffer, size_t at, const void *data, size_t count)
 {

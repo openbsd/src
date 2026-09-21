@@ -134,6 +134,7 @@ struct component {
 %token VAR_TLS_AUTH_XFR_ONLY
 %token VAR_TLS_CERT_BUNDLE
 %token VAR_PROXY_PROTOCOL_PORT
+%token VAR_ALLOW_PROXY
 %token VAR_CPU_AFFINITY
 %token VAR_XFRD_CPU_AFFINITY
 %token <llng> VAR_SERVER_CPU_AFFINITY
@@ -144,6 +145,7 @@ struct component {
 %token VAR_METRICS_INTERFACE
 %token VAR_METRICS_PORT
 %token VAR_METRICS_PATH
+%token VAR_UDP_PADDING_PORT
 
 /* dnstap */
 %token VAR_DNSTAP
@@ -539,11 +541,17 @@ server_option:
     { cfg_parser->opt->tls_cert_bundle = region_strdup(cfg_parser->opt->region, $2); }
   | VAR_PROXY_PROTOCOL_PORT number
     {
-      struct proxy_protocol_port_list* elem = region_alloc_zero(
+      struct port_list* elem = region_alloc_zero(
 	cfg_parser->opt->region, sizeof(*elem));
       elem->port = $2;
       elem->next = cfg_parser->opt->proxy_protocol_port;
       cfg_parser->opt->proxy_protocol_port = elem;
+    }
+  | VAR_ALLOW_PROXY STRING
+    {
+      acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2,
+	"NOKEY");
+      append_acl(&cfg_parser->opt->allow_proxy, acl);
     }
   | VAR_ANSWER_COOKIE boolean
     { cfg_parser->opt->answer_cookie = $2; }
@@ -680,6 +688,14 @@ server_option:
 #ifdef USE_METRICS
       cfg_parser->opt->metrics_path = region_strdup(cfg_parser->opt->region, $2);
 #endif /* USE_METRICS */
+    }
+  | VAR_UDP_PADDING_PORT number
+    {
+      struct port_list* elem = region_alloc_zero(
+	cfg_parser->opt->region, sizeof(*elem));
+      elem->port = $2;
+      elem->next = cfg_parser->opt->udp_padding_port;
+      cfg_parser->opt->udp_padding_port = elem;
     }
   ;
 

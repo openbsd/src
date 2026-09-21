@@ -703,6 +703,7 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 	zone_type* dbzone = NULL;
 	xfrd_xfr_type* xfr;
 	xfrd_xfr_type* prev_xfr;
+	int xfr_was_ixfr = 0;
 	enum soainfo_hint hint;
 #ifndef NDEBUG
 	time_t before;
@@ -825,6 +826,10 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 		dbzone = namedb_find_or_create_zone( xfrd->nsd->db, task->zname
 		                                   , consumer_zone->options);
 	}
+	if(zone->latest_xfr) {
+		xfr_was_ixfr = (zone->latest_xfr->query_type == TYPE_IXFR);
+	}
+
 	/* soainfo_gone and soainfo_bad are straightforward, delete all updates
 	   that were transfered, i.e. acquired != 0. soainfo_ok is more
 	   complicated as it is possible that there are subsequent corrupt or
@@ -913,6 +918,28 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 			break;
 		/* fall through */
 	case soainfo_gone:
+		if(hint == soainfo_gone) {
+			/* "rollback" on-disk soa information */
+			zone->soa_disk_acquired = zone->soa_nsd_acquired;
+			zone->soa_disk = zone->soa_nsd;
+		}
+		if(hint == soainfo_gone && !soa_ptr) {
+			if(xfr_was_ixfr) {
+				/* Attempt without IXFR, maybe AXFR works. */
+				xfrd_disable_ixfr(zone);
+				xfrd_set_zone_state(zone, xfrd_zone_refreshing);
+				xfrd_set_refresh_now(zone);
+				break;
+			}
+			/* The zone transfer update failed to apply.
+			 * Okay to fallback from IXFR to AXFR, but after failed
+			 * AXFR, wait for retry instead of immediate fetch */
+			VERBOSITY(2, (LOG_INFO, "xfrd: zone %s transfer "
+				"failed to apply, waiting for retry",
+				zone->apex_str));
+			xfrd_set_timer_retry(zone);
+			break;
+		}
 		xfrd_handle_incoming_soa(zone, soa_ptr, acquired);
 		break;
 	}
@@ -1019,24 +1046,8 @@ xfrd_deactivate_zone(xfrd_zone_type* z)
 }
 
 void
-xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname)
+udp_zone_waiting_list_remove(xfrd_zone_type* z)
 {
-	xfrd_zone_type* z = (xfrd_zone_type*)rbtree_delete(xfrd->zones, dname);
-	if(!z) return;
-	
-	/* io */
-	if(z->tcp_waiting) {
-		/* delete from tcp waiting list */
-		if(z->tcp_waiting_prev)
-			z->tcp_waiting_prev->tcp_waiting_next =
-				z->tcp_waiting_next;
-		else xfrd->tcp_set->tcp_waiting_first = z->tcp_waiting_next;
-		if(z->tcp_waiting_next)
-			z->tcp_waiting_next->tcp_waiting_prev =
-				z->tcp_waiting_prev;
-		else xfrd->tcp_set->tcp_waiting_last = z->tcp_waiting_prev;
-		z->tcp_waiting = 0;
-	}
 	if(z->udp_waiting) {
 		/* delete from udp waiting list */
 		if(z->udp_waiting_prev)
@@ -1048,6 +1059,23 @@ xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname)
 				z->udp_waiting_prev;
 		else	xfrd->udp_waiting_last = z->udp_waiting_prev;
 		z->udp_waiting = 0;
+	}
+}
+
+void
+xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname)
+{
+	xfrd_zone_type* z = (xfrd_zone_type*)rbtree_delete(xfrd->zones, dname);
+	if(!z) return;
+
+	/* io */
+	if(z->tcp_waiting) {
+		/* delete from tcp waiting list */
+		tcp_zone_waiting_list_remove(z);
+	}
+	if(z->udp_waiting) {
+		/* delete from udp waiting list */
+		udp_zone_waiting_list_remove(z);
 	}
 	xfrd_deactivate_zone(z);
 	if(z->tcp_conn != -1) {
@@ -1251,6 +1279,16 @@ xfrd_make_request(xfrd_zone_type* zone)
 		if(zone->round_num >= XFRD_MAX_ROUNDS) {
 			/* tried all servers that many times, wait */
 			zone->round_num = -1;
+			/* Discard NOTIFY serial hint. After one round of
+			 * searching for it, at the upstream primaries, the
+			 * notify hint need no longer be used. The retry
+			 * timer is used, for one, earlier re-attempt. This
+			 * is useful if the upstream is in-progress of loading
+			 * the zone information. After the brief wait it may
+			 * have completed that task. And this may catch the
+			 * case where it notify is sent before the load
+			 * activity has completed at the primary. */
+			zone->soa_notified_acquired = 0;
 			xfrd_set_timer_retry(zone);
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 				"xfrd zone %s makereq wait_retry, rd %d mr %d nx %d",
@@ -2674,6 +2712,7 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 			zone->latest_xfr->xfrfilenumber))
 	{
 		zone->latest_xfr->sent = xfrd->nsd->mytask + 1;
+		xfrd->num_xfrs_in_reload++;
 	}
 	/* reset msg seq nr, so if that is nonnull we know xfr file exists */
 	zone->latest_xfr->msg_seq_nr = 0;
@@ -2994,6 +3033,8 @@ xfrd_prepare_zones_for_reload(void)
 					xfr->msg_old_serial,
 					xfr->msg_new_serial,
 					xfr->xfrfilenumber);
+				if(send)
+					xfrd->num_xfrs_in_reload++;
 				if(send && !reload) {
 					reload = 1;
 					xfrd_set_reload_timeout();

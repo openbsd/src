@@ -70,9 +70,11 @@ cmp_nsec3_tree(const void* x, const void* y)
 	const domain_type* a = (const domain_type*)x;
 	const domain_type* b = (const domain_type*)y;
 	/* labelcount + 32long label */
-	assert(dname_name(domain_dname_const(a))[0] == 32);
-	assert(dname_name(domain_dname_const(b))[0] == 32);
-	return memcmp(dname_name(domain_dname_const(a)), dname_name(domain_dname_const(b)), 33);
+	assert(dname_name(domain_dname_const(a))[0] == NSEC3_OWNER_LABEL_LEN);
+	assert(dname_name(domain_dname_const(b))[0] == NSEC3_OWNER_LABEL_LEN);
+	return memcmp( dname_name(domain_dname_const(a))
+	             , dname_name(domain_dname_const(b))
+	             , NSEC3_OWNER_LABEL_LEN + 1);
 }
 
 void nsec3_zone_trees_create(struct region* region, zone_type* zone)
@@ -244,13 +246,14 @@ check_apex_soa(namedb_type* namedb, zone_type *zone, int nolog)
 		return NULL;
 	}
 	for(j=0; j<nsec3_rrset->rr_count; j++) {
-		if(nsec3_has_soa(nsec3_rrset->rrs[j])) {
+		if(nsec3_has_soa(nsec3_rrset->rrs[j]) &&
+			nsec3_rr_uses_params(nsec3_rrset->rrs[j], zone)) {
 			region_destroy(tmpregion);
 			return nsec3_rrset->rrs[j];
 		}
 	}
 	if(!nolog) {
-		log_msg(LOG_ERR, "%s NSEC3PARAM entry: hash(apex) NSEC3 has no SOA flag.",
+		log_msg(LOG_ERR, "%s NSEC3PARAM entry: hash(apex) NSEC3 has no SOA flag or different params.",
 			domain_to_string(zone->apex));
 		log_msg(LOG_ERR, "hash(apex)= %s",
 			dname_to_string(hashed_apex, NULL));
@@ -342,14 +345,89 @@ nsec3_rdata_params_ok(const rr_type *prr, const rr_type* rr)
 		(memcmp(prr->rdata+2, rr->rdata+2, prr->rdlength-2) == 0);
 }
 
+
+/* Copied verbatim from simdzone/src/generic/base32.h */
+static const uint8_t b32rmap[256] = {
+  0xfd, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /*   0 -   7 */
+  0xff, 0xfe, 0xfe, 0xfe,  0xfe, 0xfe, 0xff, 0xff,  /*   8 -  15 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /*  16 -  23 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /*  24 -  31 */
+  0xfe, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /*  32 -  39 */
+  0xff, 0xff, 0xff, 0x3e,  0xff, 0xff, 0xff, 0x3f,  /*  40 -  47 */
+  0x00, 0x01, 0x02, 0x03,  0x04, 0x05, 0x06, 0x07,  /*  48 -  55 */
+  0x08, 0x09, 0xff, 0xff,  0xff, 0xfd, 0xff, 0xff,  /*  56 -  63 */
+  0xff, 0x0a, 0x0b, 0x0c,  0x0d, 0x0e, 0x0f, 0x10,  /*  64 -  71 */
+  0x11, 0x12, 0x13, 0x14,  0x15, 0x16, 0x17, 0x18,  /*  72 -  79 */
+  0x19, 0x1a, 0x1b, 0x1c,  0x1d, 0x1e, 0x1f, 0xff,  /*  80 -  87 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /*  88 -  95 */
+  0xff, 0x0a, 0x0b, 0x0c,  0x0d, 0x0e, 0x0f, 0x10,  /*  96 - 103 */
+  0x11, 0x12, 0x13, 0x14,  0x15, 0x16, 0x17, 0x18,  /* 104 - 111 */
+  0x19, 0x1a, 0x1b, 0x1c,  0x1d, 0x1e, 0x1f, 0xff,  /* 112 - 119 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 120 - 127 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 128 - 135 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 136 - 143 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 144 - 151 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 152 - 159 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 160 - 167 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 168 - 175 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 176 - 183 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 184 - 191 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 192 - 199 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 200 - 207 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 208 - 215 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 216 - 223 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 224 - 231 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 232 - 239 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 240 - 247 */
+  0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff,  /* 248 - 255 */
+};
+
+
 int
 nsec3_rr_uses_params(rr_type* rr, zone_type* zone)
 {
+	/* TODO: Test validness with base32hex parser from simdzone */
+	const uint8_t* wire;
+
 	if(!rr || rr->rdlength < 6)
 		return 0;
-	if(dname_name(domain_dname_const(rr->owner))[0] != 32)
-		return 0; /* owner label not valid base32hex SHA-1 hash */
-	return nsec3_rdata_params_ok(zone->nsec3_param, rr);
+	wire = dname_name(domain_dname_const(rr->owner));
+	if(wire[0] == NSEC3_OWNER_LABEL_LEN
+	&& b32rmap[wire[ 1]] < 32 && b32rmap[wire[ 2]] < 32
+	&& b32rmap[wire[ 3]] < 32 && b32rmap[wire[ 4]] < 32
+	&& b32rmap[wire[ 5]] < 32 && b32rmap[wire[ 6]] < 32
+	&& b32rmap[wire[ 7]] < 32 && b32rmap[wire[ 8]] < 32
+	&& b32rmap[wire[ 9]] < 32 && b32rmap[wire[10]] < 32
+	&& b32rmap[wire[11]] < 32 && b32rmap[wire[12]] < 32
+	&& b32rmap[wire[13]] < 32 && b32rmap[wire[14]] < 32
+	&& b32rmap[wire[15]] < 32 && b32rmap[wire[16]] < 32
+	&& b32rmap[wire[17]] < 32 && b32rmap[wire[18]] < 32
+	&& b32rmap[wire[19]] < 32 && b32rmap[wire[20]] < 32
+	&& b32rmap[wire[21]] < 32 && b32rmap[wire[22]] < 32
+	&& b32rmap[wire[23]] < 32 && b32rmap[wire[24]] < 32
+	&& b32rmap[wire[25]] < 32 && b32rmap[wire[26]] < 32
+	&& b32rmap[wire[27]] < 32 && b32rmap[wire[28]] < 32
+	&& b32rmap[wire[29]] < 32 && b32rmap[wire[30]] < 32
+	&& b32rmap[wire[31]] < 32 && b32rmap[wire[32]] < 32)
+		return nsec3_rdata_params_ok(zone->nsec3_param, rr);
+	return 0;
+}
+
+int
+nsec3_has_owner_for_zone(domain_type* domain, zone_type* zone)
+{
+	if(dname_name(domain_dname_const(domain))[0] != NSEC3_OWNER_LABEL_LEN)
+		return 0; /* not b32.name */
+	if(!(((size_t)domain_dname(domain)->label_count) ==
+		((size_t)domain_dname(zone->apex)->label_count)+1 &&
+		((size_t)domain_dname(domain)->name_size) ==
+		((size_t)domain_dname(zone->apex)->name_size) +
+		NSEC3_OWNER_LABEL_LEN+1 &&
+		memcmp(dname_name(domain_dname_const(domain))+
+		NSEC3_OWNER_LABEL_LEN+1, dname_name(domain_dname_const(
+		zone->apex)), domain_dname(zone->apex)->name_size) == 0))
+		return 0; /* not b32.zonename */
+	return 1;
 }
 
 int
@@ -360,6 +438,8 @@ nsec3_in_chain_count(domain_type* domain, zone_type* zone)
 	int count = 0;
 	if(!rrset || !zone->nsec3_param)
 		return 0; /* no NSEC3s, none in the chain */
+	if(!nsec3_has_owner_for_zone(domain, zone))
+		return 0; /* wrong owner name */
 	for(i=0; i<rrset->rr_count; i++) {
 		if(nsec3_rr_uses_params(rrset->rrs[i], zone))
 			count++;
@@ -690,20 +770,43 @@ nsec3_precompile_domain_ds(struct namedb* db, struct domain* domain,
 		cmp_dshash_tree, domain, &domain->nsec3->ds_parent_hash->node);
 }
 
-static void
-parse_nsec3_name(const dname_type* dname, uint8_t* hash, size_t buflen)
+static inline int
+b32hex_p8ton5(const uint8_t* p, uint8_t* n)
 {
-	/* first label must be the match, */
-	size_t lablen = (buflen-1) * 8 / 5;
+	uint8_t ofs;
+	if((ofs = b32rmap[p[0]]) > 31) return 0;
+	n[0]  = (uint8_t)(ofs << 3);
+	if((ofs = b32rmap[p[1]]) > 31) return 0;
+	n[0] |= (uint8_t)(ofs >> 2);
+	n[1]  = (uint8_t)(ofs << 6);
+	if((ofs = b32rmap[p[2]]) > 31) return 0;
+	n[1] |= (uint8_t)(ofs << 1);
+	if((ofs = b32rmap[p[3]]) > 31) return 0;
+	n[1] |= (uint8_t)(ofs >> 4);
+	n[2]  = (uint8_t)(ofs << 4);
+	if((ofs = b32rmap[p[4]]) > 31) return 0;
+	n[2] |= (uint8_t)(ofs >> 1);
+	n[3]  = (uint8_t)(ofs << 7);
+	if((ofs = b32rmap[p[5]]) > 31) return 0;
+	n[3] |= (uint8_t)(ofs << 2);
+	if((ofs = b32rmap[p[6]]) > 31) return 0;
+	n[3] |= (uint8_t)(ofs >> 3);
+	n[4]  = (uint8_t)(ofs << 5);
+	if((ofs = b32rmap[p[7]]) > 31) return 0;
+	n[4] |= ofs;
+	return 1;
+}
+
+static int
+parse_nsec3_name(const dname_type* dname, uint8_t* hash)
+{
+	/* TODO: Do this with base32hex parser from simdzone */
 	const uint8_t* wire = dname_name(dname);
-	assert(lablen == 32 && buflen == NSEC3_HASH_LEN+1);
-	/* labels of length 32 for SHA1, and must have space+1 for convert */
-	if(wire[0] != lablen) {
-		/* not NSEC3 */
-		memset(hash, 0, buflen);
-		return;
-	}
-	(void)b32_pton((char*)wire+1, hash, buflen);
+	return wire[0] == NSEC3_OWNER_LABEL_LEN
+	    && b32hex_p8ton5(wire +  1, hash)
+	    && b32hex_p8ton5(wire +  9, hash +  5)
+	    && b32hex_p8ton5(wire + 17, hash + 10)
+	    && b32hex_p8ton5(wire + 25, hash + 15);
 }
 
 void
@@ -904,8 +1007,13 @@ process_range(zone_type* zone, domain_type* start,
 	 * already allocated, and we need not allocate it here */
 	/* set start */
 	if(start) {
-		uint8_t hash[NSEC3_HASH_LEN+1];
-		parse_nsec3_name(domain_dname(start), hash, sizeof(hash));
+		uint8_t hash[NSEC3_HASH_LEN];
+		if(!parse_nsec3_name(domain_dname(start), hash)) {
+			log_msg( LOG_WARNING
+			       , "NSEC3 %s skipped due to invalid owner name"
+			       , dname_to_string(domain_dname(start), 0));
+			return;
+		}
 		/* if exact match on first, set is_exact */
 		if(process_first(zone->hashtree, hash, &p, init_lookup_key_hash_tree)) {
 			((domain_type*)(p->key))->nsec3->nsec3_cover = nsec3;
@@ -930,8 +1038,13 @@ process_range(zone_type* zone, domain_type* start,
 	}
 	/* set end */
 	if(end) {
-		uint8_t hash[NSEC3_HASH_LEN+1];
-		parse_nsec3_name(domain_dname(end), hash, sizeof(hash));
+		uint8_t hash[NSEC3_HASH_LEN];
+		if(!parse_nsec3_name(domain_dname(end), hash)) {
+			log_msg( LOG_WARNING
+			       , "NSEC3 %s skipped due to invalid owner name"
+			       , dname_to_string(domain_dname(end), 0));
+			return;
+		}
 		process_end(zone->hashtree, hash, &p_end, init_lookup_key_hash_tree);
 		process_end(zone->wchashtree, hash, &pwc_end, init_lookup_key_wc_tree);
 		process_end(zone->dshashtree, hash, &pds_end, init_lookup_key_ds_tree);

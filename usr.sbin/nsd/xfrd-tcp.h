@@ -187,6 +187,8 @@ struct xfrd_tcp* xfrd_tcp_create(struct region* region, size_t bufsize);
 void xfrd_tcp_obtain(struct xfrd_tcp_set* set, struct xfrd_zone* zone);
 /* release tcp connection for a zone (starts waiting) */
 void xfrd_tcp_release(struct xfrd_tcp_set* set, struct xfrd_zone* zone);
+/* remove zone from tcp waiting list */
+void tcp_zone_waiting_list_remove(struct xfrd_zone* z);
 /* release tcp pipe entirely (does not stop the zones inside it) */
 void xfrd_tcp_pipe_release(struct xfrd_tcp_set* set,
 	struct xfrd_tcp_pipeline* tp, int conn);

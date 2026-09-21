@@ -85,6 +85,8 @@ struct xfrd_state {
 	uint8_t reload_failed;
 	uint8_t can_send_reload;
 	pid_t reload_pid;
+	int num_reload_failed_repeat;
+	int num_xfrs_in_reload;
 	/* timeout for lost sigchild and reaping children */
 	struct event child_timer;
 	int child_timer_added;
@@ -389,6 +391,8 @@ void xfrd_set_timer(xfrd_zone_type* zone, time_t t);
 void xfrd_set_refresh_now(xfrd_zone_type* zone);
 /* unset the timer - no more timeouts, for when zone is queued */
 void xfrd_unset_timer(xfrd_zone_type* zone);
+/* remove the zone from the udp waiting list */
+void udp_zone_waiting_list_remove(xfrd_zone_type* z);
 /* remove the 'refresh now', remove it from the activated list */
 void xfrd_deactivate_zone(xfrd_zone_type* z);
 

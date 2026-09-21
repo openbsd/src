@@ -152,6 +152,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_SVCB	64	/* RFC 9460 */
 #define TYPE_HTTPS	65	/* RFC 9460 */
 #define TYPE_DSYNC	66	/* RFC 9859 */
+#define TYPE_HHIT	67	/* RFC 9886 */
+#define TYPE_BRID	68	/* RFC 9886 */
 
 #define TYPE_SPF        99      /* RFC 4408 */
 
@@ -193,6 +195,9 @@ typedef enum nsd_rc nsd_rc_type;
 #define SVCB_KEY_DOHPATH		7
 #define SVCB_KEY_OHTTP			8
 #define SVCB_KEY_TLS_SUPPORTED_GROUPS	9
+#define SVCB_KEY_DOCPATH		10
+#define SVCB_KEY_PVD			11
+#define SVCB_KEY_OOTS			12
 
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
@@ -209,6 +214,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define EUI64ADDRLEN	(64/8)
 
 #define NSEC3_HASH_LEN 20
+#define NSEC3_OWNER_LABEL_LEN (NSEC3_HASH_LEN * 8 / 5)
 
 /*
  * The following RDATA values are used in nsd_rdata_descriptor.length to

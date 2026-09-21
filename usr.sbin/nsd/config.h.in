@@ -545,6 +545,9 @@
 /* Define to the maximum message length to pass to syslog. */
 #undef MAXSYSLOGMSGLEN
 
+/* Define to the default maximum number of CNAMEs to follow. */
+#undef MAX_CNAME_CHAIN
+
 /* Define this to cleanup memory at exit (eg. for valgrind, etc.) */
 #undef MEMCLEAN
 
@@ -556,6 +559,10 @@
 
 /* Define if mkdir has one argument. */
 #undef MKDIR_HAS_ONE_ARG
+
+/* Define this to enable experimental support for more than one catalog
+   consumer zone. */
+#undef MULTIPLE_CATALOG_CONSUMER_ZONES
 
 /* Undefine this to enable internal runtime checks. */
 #undef NDEBUG

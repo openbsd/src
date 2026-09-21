@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "jul  7, 2026" "NLnet Labs" "nsd 4.15.0"
+.TH "nsd.conf" "5" "sep  2, 2026" "NLnet Labs" "nsd 4.15.2"
 .\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -631,6 +631,18 @@ The port number for proxy protocol service. If the statement is given multiple
 times, additional port numbers can be used for proxy protocol service. The
 interface definitions that use this port number expect PROXYv2 proxy protocol
 traffic, for UDP, TCP and for TLS service.
+.TP
+.B allow\-proxy:\fR <IP netblock>
+The allowed proxy senders, that can send PROXYv2 traffic. Without an
+allow\-proxy option any IP address is allowed. It can be given multiple times
+to allow multiple netblocks, or with /32 or /128 specific addresses can be
+listed.
+.TP
+.B udp\-padding\-port:\fR <number>
+UDP requests received over this port containing an EDNS0 padding option will,
+unlike ordinary UDP requests, be answered with a padded response. The option
+may be given more than once.
+Listening to the port needs to be configured separately with a \fBip\-address\fR or \fBinterface\fR option.
 .TP
 .B xdp\-interface:\fR <string>
 The interface to use XDP with. This enables the use of AF_XDP sockets for UDP

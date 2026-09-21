@@ -1,8 +1,142 @@
+28 August 2026: Willem
+	- Fix client certificate checking by linking the tls-auth-name
+	  requirement on an access control list item, to the other requirements
+	  (IP address and/or TSIG key) on the same list item.
+	  Thanks to voguemerry for the report
+
+24 August 2026: Willem
+	- Merge #502: An `udp-padding-port` configuration file option to enable
+	  responding to the padding option on UDP, but on specific ports only.
+	  This is convenient for setups where NSD is behind a frontend handling
+	  the DNS over TLS.
+	- `--enable-multiple-catalog-zones` option to configure to enable
+	  experimental support for multiple catalog consumer zones.
+
+19 August 2026: Willem
+	- Continue with 4.15.2 for development
+
+17 August 2026: Willem
+	- Fix for CVE-2026-18664: IP range access control restrictions are
+	  bypassed for some unintended IP.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-18664.txt
+	- Fix for CVE-2026-18916: Any remote client can denial TCP service by
+	  throttling the TCP receive window (down to 1).
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-18916.txt
+	- Fix for CVE-2026-19401: Any remote client can denial UDP service by
+	  sending a specifically crafted query with multiple DNS Cookie options.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-19401.txt
+	- Fix for CVE-2026-19538: Anyone with access to the proxy protocol port
+	  over TCP or TLS can bypass BLOCKED access control items.
+	  Thanks to Qifan Zhang, Palo Alto Networks for the report
+	  https://www.nlnetlabs.nl/downloads/nsd/CVE-2026-19538.txt
+
+14 August 2026: Willem
+	- Fix to ignore NSEC3 records with malformed owner name. In depth fix
+	  to clear key for NSEC3 tree collisions. And a fix to limit the
+	  reenactment of failed reloads, that ordinarily marks transfers as
+	  corrupt, so that for crashes it waits with that zone for retry. This
+	  allows other zones to update in the meantime.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix nsd-control reconfig so that change of a secondary zone while it
+	  is on the udp or tcp waiting list does not crash after that.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to reset the length of the incoming packet buffer after a failed
+	  PROXYv2 header on UDP. It can cause an assertion failure on the next
+	  packet.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix XoT transfer authentication to not fall back to the common name
+	  if a DNS name is present in the certificate. This fixes the RFC6125
+	  conformance.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix dnstap over TLS certificate check for reconnection. Also clean up
+	  file descriptor and SSL state on connection failures.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+3 August 2026: Willem
+	- An `allow-proxy` configuration file option to specify allow access
+	  control list for the PROXYv2 protocol port.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the suggestion.
+	- Fix to prevent a configured primary from hampering loading its own
+	  zone by providing a transfer with the OPT RR in the answer section
+	  and the UDP Payload size (i.e. class) of the OPT RR set to something
+	  else than 1 (IN).
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+29 July 2026: Wouter
+	- Fix that when DNAME is limited due to the maximum CNAME chain
+	  length, it copies the final DNAME with its CNAME into the
+	  packet. Also fix unit test for limit on CNAME chain length.
+
+16 July 2026: Willem
+	- Merge #500: Support for the "oots" SVCB Service Parameter Key
+
+15 July 2026: Willem
+	- Merge #498: Support for the HHIT and BRID RR types
+	- Merge #499: Support for the "docpath" and "pvd"
+	  SVCB Service Parameter Keys
+
+14 July 2026: Willem
+	- Fix that IXFR queries with overly large SOA records do not cause an
+	  assertion failure in the server child process. The malformed SOA
+	  record is rejected with FORMERR.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix that notify ahead of the zone serial does not cause perpetual
+	  retransfer. After one round, and after another retry, it gives up,
+	  and forgets the notified serial number. This allows the primary a
+	  moment to retrieve the new zone version.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix that AXFR out for a zone with an oversize record does not loop.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix that IXFR out for a zone with an oversize record does not loop.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix serve childs crashing when queried for a very long CNAME chain
+	  on ASAN builds. The maximum CNAME chain in responses is set to 18.
+	  The value can be configured with the --with-max-cname-chain=number
+	  option to configure.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to have failed zone transfers retry after a time, instead of in a
+	  loop, for transfers with failed contents.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix that an increase verbosity level is needed to warn about unfound
+	  RRs to be deleted (from IXFR). Verbosity 2 for unfound RRsets and
+	  unfound RDATA. Verbosity 3 to log which RR in the existing set does
+	  not match.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to ignore NSEC3s with wrong non-base32hex chars in owner label.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix Y2038 bug, where the server process would fail with undefined
+	  behaviour, if it was built with address sanitizer undefined checks
+	  enabled, for the timestamp in EDNS cookies.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to not let `nsd-control zonestatus` crash the xfrd processes
+	  when configured with multiple catalog consumers.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+13 July 2026: Wouter
+	- Merge #496 from maertsen: Fix allow-query syntax in catalog
+	  documentation.
+
+8 July 2026: Willem
+	- Merge #494: RFC 7830 EDNS0 padding option support with DoT
+	  With padding suggestions from RFC 8467 for responses
+	  Thanks kdrenard for the suggestion
+
+7 July 2026: Willem
+	- Merge the NSD 4.15.0 release into master.
+	- Continue with 4.15.1 for development
+
+7 July 2026: Wouter
+	- (part of 4.15.1):
+	- Merge #495 from ruuda: Include inttypes.h from metrics.c.
+
 29 June 2026: Jannik
 	- Merge #483 from ruuda: Improve Prometheus metrics: Move zonestats from
 	  metric name to label
 
-26 June 2026: Willem
+2g June 2026: Willem
 	- Fix nsd-control assoc_tsig, if that interrupts a zone transfer in
 	  progress, to not crash. It restarts the transfer from the primary.
 	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.

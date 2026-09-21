@@ -152,6 +152,8 @@ nsd_options_create(region_type* region)
 	opt->tls_cert_bundle = NULL;
 	opt->tls_auth_xfr_only = 0;
 	opt->proxy_protocol_port = NULL;
+	opt->allow_proxy = NULL;
+	opt->udp_padding_port = NULL;
 	opt->answer_cookie = 1;
 	opt->cookie_secret = NULL;
 	opt->cookie_staging_secret = NULL;
@@ -1963,6 +1965,28 @@ key_options_add_modify(struct nsd_options* opt, struct key_options* key)
 }
 
 int
+acl_check_incoming_proxy(struct acl_options* acl, struct query* q,
+	struct acl_options** reason)
+{
+	if(reason)
+		*reason = NULL;
+
+	while(acl)
+	{
+		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "proxy testing allow-proxy acl %s",
+			acl->ip_address_spec));
+		if(acl_addr_matches_proxy(acl, q)) {
+			if(reason)
+				*reason = acl;
+			return 1;
+		}
+		acl = acl->next;
+	}
+
+	return -1;
+}
+
+int
 acl_check_incoming_block_proxy(struct acl_options* acl, struct query* q,
 	struct acl_options** reason)
 {
@@ -2025,7 +2049,11 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 			continue;
 		}
 #endif
-		if(acl_addr_matches(acl, q) && acl_key_matches(acl, q)) {
+		if(acl_addr_matches(acl, q) && acl_key_matches(acl, q)
+#ifdef HAVE_SSL
+		&& acl_tls_auth_name_matches(acl, q)
+#endif
+		) {
 			if(!match)
 			{
 				match = acl; /* remember first match */
@@ -2037,27 +2065,6 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 				return -1;
 			}
 		}
-#ifdef HAVE_SSL
-		/* we are in a acl with tls_auth */
-		if (acl->tls_auth_name) {
-			/* we have auth_domain_name in tls_auth */
-			if (acl->tls_auth_options && acl->tls_auth_options->auth_domain_name) {
-				if (!acl_tls_hostname_matches(q->tls_auth, acl->tls_auth_options->auth_domain_name)) {
-					VERBOSITY(3, (LOG_WARNING,
-							"client cert does not match %s %s",
-							acl->tls_auth_name, acl->tls_auth_options->auth_domain_name));
-					q->cert_cn = NULL;
-					return -1;
-				}
-				VERBOSITY(5, (LOG_INFO, "%s %s verified",
-					acl->tls_auth_name, acl->tls_auth_options->auth_domain_name));
-				q->cert_cn = acl->tls_auth_options->auth_domain_name;
-			} else {
-				/* nsd gives error on start for this, but check just in case */
-				log_msg(LOG_ERR, "auth-domain-name not defined in %s", acl->tls_auth_name);
-			}
-		}
-#endif
 		number++;
 		acl = acl->next;
 	}
@@ -2221,9 +2228,9 @@ acl_addr_match_range_v4(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t 
 	/* check treats x as one huge number */
 
 	/* if outside bounds, we are done */
-	if(*minval > *x)
+	if(ntohl(*minval) > ntohl(*x))
 		return 0;
-	if(*maxval < *x)
+	if(ntohl(*maxval) < ntohl(*x))
 		return 0;
 
 	return 1;
@@ -2244,10 +2251,10 @@ acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t 
 	{
 		/* if outside bounds, we are done */
 		if(checkmin)
-			if(minval[i] > x[i])
+			if(ntohl(minval[i]) > ntohl(x[i]))
 				return 0;
 		if(checkmax)
-			if(maxval[i] < x[i])
+			if(ntohl(maxval[i]) < ntohl(x[i]))
 				return 0;
 		/* if x is equal to a bound, that bound needs further checks */
 		if(checkmin && minval[i]!=x[i])
@@ -2270,13 +2277,18 @@ acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t 
  * Copyright (C) 2012, iSEC Partners.
  * License: MIT License
  * Author:  Alban Diquet
+ *
+ * Modified 20260805 W.C.A. Wijngaards - added san_present for RFC6125
+ * conformance change.
  */
 static int matches_subject_alternative_name(
-	const char *acl_cert_cn, size_t acl_cert_cn_len, const X509 *cert)
+	const char *acl_cert_cn, size_t acl_cert_cn_len, const X509 *cert,
+	int* san_present)
 {
 	int result = 0;
 	int san_names_nb = -1;
 	STACK_OF(GENERAL_NAME) *san_names = NULL;
+	*san_present = 0;
 
 	/* Try to extract the names within the SAN extension from the certificate */
 	san_names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
@@ -2293,6 +2305,7 @@ static int matches_subject_alternative_name(
 		/* Skip non-DNS SAN entries. */
 		if (current_name->type != GEN_DNS)
 			continue;
+		*san_present = 1; /* DNS SAN entry is present */
 #if HAVE_ASN1_STRING_GET0_DATA
 		str = (const char *)ASN1_STRING_get0_data(current_name->d.dNSName);
 #else
@@ -2385,7 +2398,7 @@ static int matches_common_name(
 int
 acl_tls_hostname_matches(SSL* tls_auth, const char *acl_cert_cn)
 {
-	int result = 0;
+	int result = 0, san_present;
 	size_t acl_cert_cn_len;
 	X509 *client_cert;
 
@@ -2413,8 +2426,9 @@ acl_tls_hostname_matches(SSL* tls_auth, const char *acl_cert_cn)
 	 */
 
 	acl_cert_cn_len = strlen(acl_cert_cn);
-	/* semi follow RFC6125#section-6.4.4 check SAN DNS first */
-	if (!(result = matches_subject_alternative_name(acl_cert_cn, acl_cert_cn_len, client_cert)))
+	/* follow RFC6125#section-6.4.4 check SAN DNS first, and
+	 * common name if there is no SAN DNS present. */
+	if (!(result = matches_subject_alternative_name(acl_cert_cn, acl_cert_cn_len, client_cert, &san_present)) && !san_present)
 		result = matches_common_name(acl_cert_cn, acl_cert_cn_len, client_cert);
 
 	X509_free(client_cert);
@@ -2461,6 +2475,35 @@ acl_key_matches(struct acl_options* acl, struct query* q)
 	}
 	return 1;
 }
+
+#ifdef HAVE_SSL
+int
+acl_tls_auth_name_matches(struct acl_options* acl, struct query* q)
+{
+	/* If no name specified, no name is required  */
+	if (!acl->tls_auth_name)
+		return 1;
+
+	/* we have auth_domain_name in tls_auth */
+	if (!acl->tls_auth_options
+	||  !acl->tls_auth_options->auth_domain_name) {
+		/* nsd gives error on start for this, but check just in case */
+		log_msg(LOG_ERR, "auth-domain-name not defined in %s", acl->tls_auth_name);
+		return 0;
+	}
+	if (!acl_tls_hostname_matches(q->tls_auth,
+				acl->tls_auth_options->auth_domain_name)) {
+		VERBOSITY(6, (LOG_DEBUG, "client cert does not match %s %s",
+			acl->tls_auth_name,
+			acl->tls_auth_options->auth_domain_name));
+		return 0;
+	}
+	VERBOSITY(5, (LOG_INFO, "%s %s verified", acl->tls_auth_name,
+		acl->tls_auth_options->auth_domain_name));
+	q->cert_cn = acl->tls_auth_options->auth_domain_name;
+	return 1;
+}
+#endif
 
 int
 acl_same_host(struct acl_options* a, struct acl_options* b)
@@ -3173,10 +3216,8 @@ resolve_interface_names(struct nsd_options* options)
 }
 
 int
-sockaddr_uses_proxy_protocol_port(struct nsd_options* options,
-	struct sockaddr* addr)
+sockaddr_uses_port(struct sockaddr* addr, struct port_list* p)
 {
-	struct proxy_protocol_port_list* p;
 	int port;
 #ifdef INET6
 	struct sockaddr_storage* ss = (struct sockaddr_storage*)addr;
@@ -3196,7 +3237,6 @@ sockaddr_uses_proxy_protocol_port(struct nsd_options* options,
 		return 0; /* unknown family */
 	}
 #endif
-	p = options->proxy_protocol_port;
 	while(p) {
 		if(p->port == port)
 			return 1;

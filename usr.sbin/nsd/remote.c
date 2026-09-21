@@ -982,6 +982,10 @@ force_transfer_zone(xfrd_zone_type* zone)
 		xfrd_tcp_release(xfrd->tcp_set, zone);
 	else if(zone->zone_handler.ev_fd != -1)
 		xfrd_udp_release(zone);
+	if(zone->udp_waiting)
+		udp_zone_waiting_list_remove(zone);
+	if(zone->tcp_waiting)
+		tcp_zone_waiting_list_remove(zone);
 	/* pretend we not longer have it and force any
 	 * zone to be downloaded (even same serial, w AXFR) */
 	zone->soa_disk_acquired = 0;
@@ -1044,8 +1048,10 @@ print_zonestatus(RES* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 	}
 	if(zone_is_catalog_consumer(zo)) {
 		uint32_t serial = 0;
-		zone_type* zone = namedb_find_zone(xfrd->nsd->db,
-				(const dname_type*)zo->node.key);
+		zone_type* zone = xfrd->nsd->db
+			? namedb_find_zone(xfrd->nsd->db,
+				(const dname_type*)zo->node.key)
+			: NULL;
 		struct xfrd_catalog_consumer_zone* consumer_zone =
 			(struct xfrd_catalog_consumer_zone*)
 			rbtree_search( xfrd->catalog_consumer_zones
@@ -1882,6 +1888,18 @@ repat_interrupt_zones(xfrd_state_type* xfrd, struct nsd_options* newopt)
 				xfrd_set_refresh_now(xz);
 			} else if(xz->zone_handler.ev_fd != -1) {
 				xfrd_udp_release(xz);
+				xfrd_set_refresh_now(xz);
+			}
+			if(xz->udp_waiting) {
+				log_msg(LOG_INFO, "udp_waiting for %s",
+					xz->apex_str);
+				udp_zone_waiting_list_remove(xz);
+				xfrd_set_refresh_now(xz);
+			}
+			if(xz->tcp_waiting) {
+				log_msg(LOG_INFO, "tcp_waiting for %s",
+					xz->apex_str);
+				tcp_zone_waiting_list_remove(xz);
 				xfrd_set_refresh_now(xz);
 			}
 			xz->master = 0;
