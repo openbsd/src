@@ -5685,6 +5685,10 @@ usefaststdio (usefaststdio.U):
 	and indicates that Perl should be built to use 'fast stdio'.
 	Defaults to define in Perls 5.8 and earlier, to undef later.
 
+usegetexecpath (usegetexecpath.U):
+	This variable, indicates that we can use getexecpath to get a full
+	path for the executable, and hence convert $^X to an absolute path.
+
 useithreads (usethreads.U):
 	This variable conditionally defines the USE_ITHREADS symbol,
 	and indicates that Perl should be built to use the interpreter-based

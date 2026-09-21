@@ -275,8 +275,8 @@ $$ = $pid; # Tests below use $$
 
 # $^X and $0
 {
-    my $is_abs = $Config{d_procselfexe} || $Config{usekernprocpathname}
-      || $Config{usensgetexecutablepath};
+    my $is_abs = $Config{usegetexecpath} || $Config{d_procselfexe}
+      || $Config{usekernprocpathname} || $Config{usensgetexecutablepath};
     if ($^O eq 'qnx') {
 	chomp($wd = `/usr/bin/fullpath -t`);
     }

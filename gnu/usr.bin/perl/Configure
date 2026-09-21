@@ -1363,6 +1363,7 @@ usedefaultstrict=''
 dtrace=''
 usedtrace=''
 usefaststdio=''
+usegetexecpath=''
 usekernprocpathname=''
 ccflags_uselargefiles=''
 ldflags_uselargefiles=''
@@ -23560,6 +23561,44 @@ esac
 set usedefaultstrict
 eval $setvar
 
+: Determine if we can use getexecpath to find executing program
+echo " "
+echo "Determining whether we can use getexecpath to find executing program..." >&4
+$cat >try.c <<'EOM'
+
+#include <sys/param.h>
+#include <unistd.h>
+
+int
+main(int argc, char **argv) {
+    char buf[MAXPATHLEN];
+
+    if (getexecpath(buf, sizeof(buf)) != 0)
+	return 2;
+
+    return 0;
+}
+EOM
+
+val=$undef
+set try
+if eval $compile; then
+	if $run ./try; then
+		echo "You can use getexecpath to find the executing program." >&4
+		val="$define"
+	else
+		echo "Nope, getexecpath doesn't work here." >&4
+		val="$undef"
+	fi
+else
+	echo "I'm unable to compile the test program." >&4
+	echo "I'll assume no getexecpath here." >&4
+	val="$undef"
+fi
+$rm_try
+set usegetexecpath
+eval $setvar
+
 : Determine if we can use sysctl with KERN_PROC_PATHNAME to find executing program
 echo " "
 echo "Determining whether we can use sysctl with KERN_PROC_PATHNAME to find executing program..." >&4
@@ -26046,6 +26085,7 @@ usedevel='$usedevel'
 usedl='$usedl'
 usedtrace='$usedtrace'
 usefaststdio='$usefaststdio'
+usegetexecpath='$usegetexecpath'
 useithreads='$useithreads'
 usekernprocpathname='$usekernprocpathname'
 uselanginfo='$uselanginfo'

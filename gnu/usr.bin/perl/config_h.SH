@@ -4390,6 +4390,13 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$usefaststdio	USE_FAST_STDIO		/**/
 #endif
 
+/* USE_GETEXECPATH:
+ *	This symbol, if defined, indicates that we can use getexecpath
+ *	to get a full path for the executable, and hence convert $^X to
+ *	an absolute path.
+ */
+#$usegetexecpath	USE_GETEXECPATH	/**/
+
 /* USE_KERN_PROC_PATHNAME:
  *	This symbol, if defined, indicates that we can use sysctl with
  *	KERN_PROC_PATHNAME to get a full path for the executable, and hence

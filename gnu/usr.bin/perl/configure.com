@@ -6823,6 +6823,7 @@ $ WC "usefaststdio='" + usefaststdio + "'"
 $ WC "useieee='" + useieee + "'"                    ! VMS-specific
 $ WC "useithreads='" + useithreads + "'"
 $ WC "usekernelthreads='" + usekernelthreads + "'"	! VMS-specific
+$ WC "usegetexecpath='undef'"
 $ WC "usekernprocpathname='undef'"
 $ WC "usensgetexecutablepath='undef'"
 $ WC "uselargefiles='" + uselargefiles + "'"
