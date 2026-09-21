@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.16 2019/10/06 16:32:56 jmc Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.17 2026/09/21 05:21:41 jsg Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,13 +28,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 6 2019 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt VNSUBR 9
 .Os
 .Sh NAME
 .Nm vnsubr ,
 .Nm vn_close ,
-.Nm vn_default_error ,
 .Nm vn_isunder ,
 .Nm vn_lock ,
 .Nm vn_marktext ,
@@ -49,8 +48,6 @@
 .In sys/vnode.h
 .Ft int
 .Fn vn_close "struct vnode *vp" "int flags" "struct ucred *cred" "struct proc *p"
-.Ft int
-.Fn vn_default_error "void *v"
 .Ft int
 .Fn vn_isunder "struct vnode *dvp" "struct vnode *rvp" "struct proc *p"
 .Ft int
@@ -91,10 +88,6 @@ expects an unlocked, referenced vnode and will dereference the vnode
 prior to returning.
 If the operation is successful, zero is returned;
 otherwise an appropriate error is returned.
-.It Fn vn_default_error "v"
-A generic "default" routine that just returns error.
-It is used by a file system to specify unsupported operations in
-the vnode operations vector.
 .It Fn vn_isunder "dvp" "rvp" "p"
 Common code to check if one directory specified by the vnode
 .Fa rvp
