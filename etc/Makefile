@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.494 2026/08/10 00:51:59 job Exp $
+#	$OpenBSD: Makefile,v 1.495 2026/09/21 16:31:30 job Exp $
 
 .include <bsd.own.mk>
 
@@ -65,7 +65,8 @@ RCDAEMONS=amd apmd bgpd bgplgd bootparamd bpflogd cron \
 	ldattach ldomd ldpd lldpd lockd lpd mopd mountd mrouted \
 	nfsd npppd nsd ntpd \
 	ospf6d ospfd pflogd portmap rad radiusd rarpd rbootd relayd resolvd \
-	ripd route6d sasyncd sensorsd slowcgi slaacd smtpd sndiod snmpd spamd \
+	ripd route6d rtrd \
+	sasyncd sensorsd slowcgi slaacd smtpd sndiod snmpd spamd \
 	spamlogd sshd statd syslogd tftpd tftpproxy unbound \
 	unwind vmd watchdogd wsmoused xenodm ypbind ypldap ypserv
 
