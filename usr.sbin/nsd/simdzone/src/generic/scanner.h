@@ -300,7 +300,7 @@ static really_inline int32_t reindex(parser_t *parser)
   if (left >= ZONE_BLOCK_SIZE) {
     const char *data_limit = parser->file->buffer.data +
                             (parser->file->buffer.length - ZONE_BLOCK_SIZE);
-    while (data <= data_limit && ((uintptr_t)tape_limit - (uintptr_t)tape) >= ZONE_BLOCK_SIZE) {
+   while (data <= data_limit && tape+ZONE_BLOCK_SIZE <= tape_limit) {
       simd_loadu_8x64(&block.input, (const uint8_t *)data);
       scan(parser, &block);
       write_indexes(parser, &block, 0);
@@ -314,11 +314,10 @@ static really_inline int32_t reindex(parser_t *parser)
   }
 
   // only scan partial blocks after reading all data
-  if (parser->file->end_of_file) {
-    assert(left < ZONE_BLOCK_SIZE);
+  if(parser->file->end_of_file && left < ZONE_BLOCK_SIZE) {
     if (!left) {
       parser->file->end_of_file = NO_MORE_DATA;
-    } else if (((uintptr_t)tape_limit - (uintptr_t)tape) >= left) {
+    } else if (tape+left <= tape_limit) {
       // input is required to be padded, but may contain garbage
       uint8_t buffer[ZONE_BLOCK_SIZE] = { 0 };
       memcpy(buffer, data, left);

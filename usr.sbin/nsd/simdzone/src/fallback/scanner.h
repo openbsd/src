@@ -144,7 +144,7 @@ static really_inline int32_t reindex(parser_t *parser)
   if (left >= ZONE_BLOCK_SIZE) {
     const char *data_limit = parser->file->buffer.data +
                             (parser->file->buffer.length - ZONE_BLOCK_SIZE);
-    while (data <= data_limit && ((uintptr_t)tape_limit - (uintptr_t)tape) >= ZONE_BLOCK_SIZE) {
+    while (data <= data_limit && tape+ZONE_BLOCK_SIZE <= tape_limit) {
       scan(parser, data, data + ZONE_BLOCK_SIZE);
       parser->file->buffer.index += ZONE_BLOCK_SIZE;
       data += ZONE_BLOCK_SIZE;
@@ -156,11 +156,10 @@ static really_inline int32_t reindex(parser_t *parser)
   }
 
   // only scan partial blocks after reading all data
-  if (parser->file->end_of_file) {
-    assert(left < ZONE_BLOCK_SIZE);
+  if (parser->file->end_of_file && left < ZONE_BLOCK_SIZE) {
     if (!left) {
       parser->file->end_of_file = NO_MORE_DATA;
-    } else if (((uintptr_t)tape_limit - (uintptr_t)tape) >= left) {
+    } else if(tape+left <= tape_limit) {
       scan(parser, data, data + left);
       parser->file->end_of_file = NO_MORE_DATA;
       parser->file->buffer.index += left;

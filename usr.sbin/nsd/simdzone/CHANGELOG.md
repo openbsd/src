@@ -5,6 +5,21 @@ All notable changes to simdzone will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-09-02
+
+### Added
+
+- Support for the HHIT and BRID RR types.
+- Support for the "docpath", "pvd" and "oots" SVCB Service Parameters
+
+### Fixed
+
+- TXT records with more than 6465 rdata elements, crashes simdzone parsing.
+  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+- Fix unit test implicit conversion change of signedness warning.
+- Fix unit test delimiters_overflow_txt to add block size padding for simd
+  operations.
+
 ## [0.2.5] - 2026-07-07
 
 ### Added

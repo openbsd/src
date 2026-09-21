@@ -420,6 +420,89 @@ static int32_t parse_tls_supported_groups(
 }
 
 nonnull_all
+static int32_t parse_docpath(
+  parser_t *parser,
+  const type_info_t *type,
+  const rdata_info_t *field,
+  uint16_t key,
+  const svc_param_info_t *param,
+  rdata_t *rdata,
+  const token_t *token)
+{
+  return parse_alpn(parser, type, field, key, param, rdata, token);
+}
+
+nonnull_all
+static int32_t parse_oots(
+  parser_t *parser,
+  const type_info_t *type,
+  const rdata_info_t *field,
+  uint16_t key,
+  const svc_param_info_t *param,
+  rdata_t *rdata,
+  const token_t *token)
+{
+  const char *t = token->data, *te = token->data + token->length;
+  const uint8_t *rdata_start = rdata->octets;
+
+  (void)field;
+  (void)key;
+  (void)param;
+
+  while (t < te) {
+    const char *transport = t;
+    const uint8_t *transport_out = rdata->octets;
+    const char *colon = memchr(t, ':', (size_t)(te - t));
+
+    if (!colon)
+      SYNTAX_ERROR(parser, "No colon found in oots DNS transport in %s", NAME(type));
+
+    if(colon == t)
+      SYNTAX_ERROR(parser, "DNS transport name must have at least 1 character in %s", NAME(type));
+
+    if (rdata->octets + (colon - t) + 2 > rdata->limit)
+      SYNTAX_ERROR(parser, "No space for oots DNS transport in %s", NAME(type));
+
+    if (colon - t > 255)
+      SYNTAX_ERROR(parser, "DNS transport name too large in %s", NAME(type));
+
+    *rdata->octets++ = (uint8_t)(colon - t);
+    memcpy(rdata->octets, transport, (size_t)(colon - t));
+    rdata->octets += (colon - t);
+
+    t = colon + 1;
+    uint64_t number = 0;
+    for (;; t++) {
+      const uint64_t digit = (uint8_t)*t - '0';
+      if (digit > 9)
+        break;
+      number = number * 10 + digit;
+    }
+    if(t == colon +1)
+      SYNTAX_ERROR(parser, "Oots percentage missing in %s", NAME(type));
+    if (number > 100)
+      SYNTAX_ERROR(parser, "Invalid oots percentage in %s", NAME(type));
+
+    *rdata->octets++ = (uint8_t)number;
+
+    const uint8_t *g;
+    for (g = rdata_start; g < transport_out; g += ((size_t)(*g)) + 2) {
+      if (memcmp(g, transport_out, ((size_t)(*transport_out)) + 1) == 0)
+        SEMANTIC_ERROR(parser, "Duplicate DNS transport in oots in %s", NAME(type));
+    }
+    if (*t != ',')
+      break;
+    else
+      t++;
+  }
+
+  if (t != te || rdata->octets > rdata->limit)
+    SYNTAX_ERROR(parser, "Invalid oots in %s", NAME(type));
+  return 0;
+}
+
+
+nonnull_all
 static int32_t parse_mandatory_lax(
   parser_t *parser,
   const type_info_t *type,
@@ -481,6 +564,12 @@ static const svc_param_info_t svc_params[] = {
   // draft-ietf-tls-key-share-prediction-01 section 3.1
   SVC_PARAM("tls-supported-groups", 9u, MANDATORY_VALUE,
             parse_tls_supported_groups, parse_tls_supported_groups),
+  // RFC 9953 section 5:
+  SVC_PARAM("docpath", 10u, OPTIONAL_VALUE, parse_docpath, parse_docpath),
+  // draft-ietf-intarea-proxy-config-13 section 2.1:
+  SVC_PARAM("pvd", 11u, NO_VALUE, parse_unknown, parse_unknown),
+  // draft-johani-dnsop-svcb-oots
+  SVC_PARAM("oots", 12u, MANDATORY_VALUE, parse_oots, parse_oots),
 };
 
 static const svc_param_info_t unknown_svc_param =
@@ -546,6 +635,12 @@ static really_inline size_t scan_svc_param(
     return (void)(*param = &svc_params[(*key = ZONE_SVC_PARAM_KEY_OHTTP)]), 5;
   else if (memcmp(data, "tls-supported-groups", 20) == 0)
     return (void)(*param = &svc_params[(*key = ZONE_SVC_PARAM_KEY_TLS_SUPPORTED_GROUPS)]), 20;
+  else if (memcmp(data, "docpath", 7) == 0)
+    return (void)(*param = &svc_params[(*key = ZONE_SVC_PARAM_KEY_DOCPATH)]), 7;
+  else if (memcmp(data, "pvd", 3) == 0)
+    return (void)(*param = &svc_params[(*key = ZONE_SVC_PARAM_KEY_PVD)]), 3;
+  else if (memcmp(data, "oots", 4) == 0)
+    return (void)(*param = &svc_params[(*key = ZONE_SVC_PARAM_KEY_OOTS)]), 4;
   else if (memcmp(data, "key", 3) == 0)
     return scan_unknown_svc_param_key(data, key, param);
   else

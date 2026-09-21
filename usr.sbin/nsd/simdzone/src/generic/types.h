@@ -2340,6 +2340,55 @@ static int32_t parse_dsync_rdata(
 }
 
 nonnull_all
+static int32_t check_hhit_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  // FIXME: It is a CBOR blob with some internal structure, but ignoring the
+  //        internal structure, a minimally sized CBOR blob is 1 byte
+  if ((uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets < 1)
+    SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_hhit_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = parse_base64_sequence(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+
+  return check_hhit_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t check_brid_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  // FIXME: It is a CBOR blob with some internal structure, but ignoring the
+  //        internal structure, a minimally sized CBOR blob is 1 byte
+  if ((uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets < 1)
+    SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_brid_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = parse_base64_sequence(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+
+  return check_brid_rr(parser, type, rdata);
+}
+
+
+nonnull_all
 static int32_t check_nid_rr(
   parser_t *parser, const type_info_t *type, const rdata_t *rdata)
 {
@@ -3281,6 +3330,14 @@ static const rdata_info_t dsync_rdata_fields[] = {
   FIELD("target")
 };
 
+static const rdata_info_t hhit_rdata_fields[] = {
+  FIELD("cbor blob"),
+};
+
+static const rdata_info_t brid_rdata_fields[] = {
+  FIELD("cbor blob"),
+};
+
 static const rdata_info_t spf_rdata_fields[] = {
   FIELD("text")
 };
@@ -3526,8 +3583,10 @@ static const type_info_t types[] = {
                 check_https_rr, parse_https_rdata),
   TYPE("DSYNC", ZONE_TYPE_DSYNC, ZONE_CLASS_ANY, FIELDS(dsync_rdata_fields),
                 check_dsync_rr, parse_dsync_rdata),
-  UNKNOWN_TYPE(67),
-  UNKNOWN_TYPE(68),
+  TYPE("HHIT", ZONE_TYPE_HHIT, ZONE_CLASS_ANY, FIELDS(hhit_rdata_fields),
+                check_hhit_rr, parse_hhit_rdata),
+  TYPE("BRID", ZONE_TYPE_BRID, ZONE_CLASS_ANY, FIELDS(brid_rdata_fields),
+                check_brid_rr, parse_brid_rdata),
   UNKNOWN_TYPE(69),
   UNKNOWN_TYPE(70),
   UNKNOWN_TYPE(71),
