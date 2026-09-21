@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.22 2026/09/21 05:08:19 jsg Exp $
+.\"	$OpenBSD: pmap.9,v 1.23 2026/09/21 05:09:45 jsg Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -48,7 +48,6 @@
 .Nm pmap_steal_memory ,
 .Nm pmap_growkernel ,
 .Nm pmap_update ,
-.Nm pmap_collect ,
 .Nm pmap_populate ,
 .Nm pmap_virtual_space
 .Nd machine dependent interface to the MMU
@@ -363,8 +362,6 @@ it contains no valid mappings.
 .Ft void
 .Fn pmap_update "pmap_t pmap"
 .Ft void
-.Fn pmap_collect "pmap_t pmap"
-.Ft void
 .Fn pmap_populate "pmap_t pmap" "vaddr_t va"
 .Ft void
 .Fn pmap_virtual_space "vaddr_t *vstartp" "vaddr_t *vendp"
@@ -393,18 +390,6 @@ virtual address
 .Fa va
 are allocated in the target physical map
 .Fa pmap .
-.Pp
-The
-.Fn pmap_collect
-function informs the
-.Nm pmap
-module that the given
-.Em pmap
-is not expected to be used for some time, giving the
-.Nm pmap
-module a chance to prioritize.
-The initial bounds of the kernel virtual address space are returned by
-.Fn pmap_virtual_space .
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr uvm_init 9
