@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.17 2022/07/27 17:05:56 bluhm Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.18 2026/09/21 05:14:50 jsg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2022 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -29,7 +29,6 @@
 .Nm srp_leave ,
 .Nm srp_get_locked ,
 .Nm srp_finalize ,
-.Nm srp_gc_finalize ,
 .Nm SRP_INITIALIZER ,
 .Nm SRP_GC_INITIALIZER
 .Nd shared reference pointers
@@ -61,8 +60,6 @@
 .Fn srp_get_locked "struct srp *p"
 .Ft void
 .Fn srp_finalize "void *v" "const char *wmesg"
-.Ft void
-.Fn srp_gc_finalize "struct srp_gc *gc"
 .Fn SRP_INITIALIZER
 .Fo SRP_GC_INITIALIZER
 .Fa "void (*dtor)(void *, void *)"
@@ -169,15 +166,6 @@ if the caller has excluded updates to
 sleeps until there are no longer any references to
 .Fa v
 via any srp structure in the system.
-.Pp
-.Fn srp_gc_finalize
-sleeps until all references to data by srp structures using the
-garbage collector
-.Fa gc
-have completed.
-That in turn means the
-.Fa gc
-structure will no longer be referenced and can itself be destroyed.
 .Pp
 A srp structure declaration can be initialised with the
 .Fn SRP_INITIALIZER
