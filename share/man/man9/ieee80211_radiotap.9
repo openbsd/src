@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_radiotap.9,v 1.15 2020/10/09 08:53:16 mpi Exp $
+.\"	$OpenBSD: ieee80211_radiotap.9,v 1.16 2026/09/21 05:40:37 jsg Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -27,9 +27,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_radiotap.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_radiotap.9,v 1.15 2020/10/09 08:53:16 mpi Exp $
+.\" $Id: ieee80211_radiotap.9,v 1.16 2026/09/21 05:40:37 jsg Exp $
 .\"
-.Dd $Mdocdate: October 9 2020 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt IEEE80211_RADIOTAP 9
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ Radiotap headers are copied to userland via a separate bpf attachment.
 It is necessary for the driver to create this attachment after calling
 .Xr ieee80211_ifattach 9
 by calling
-.Fn bpfattach2
+.Fn bpfattach
 with the data-link type set to
 .Dv DLT_IEEE802_11_RADIO .
 .Pp
@@ -110,7 +110,7 @@ with the data-link type set to
 When the information is available,
 usually immediately before a link-layer transmission or after a receive,
 the driver copies it to the bpf layer using the
-.Fn bpf_mtap2
+.Fn bpf_mtap
 function.
 .Pp
 .\"
