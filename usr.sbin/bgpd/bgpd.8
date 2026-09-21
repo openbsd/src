@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.90 2026/09/20 02:09:18 jsg Exp $
+.\" $OpenBSD: bgpd.8,v 1.91 2026/09/21 19:38:37 job Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2026 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -222,11 +222,19 @@ is the routing domain in which
 has been started.
 .El
 .Sh SEE ALSO
+.Xr mpe 4 ,
+.Xr rdomain 4 ,
+.Xr route 4 ,
 .Xr bgpd.conf 5 ,
 .Xr bgpctl 8 ,
 .Xr bgplg 8 ,
+.Xr bgplgd 8 ,
 .Xr bgplgsh 8 ,
+.Xr ospf6d 8 ,
+.Xr ospfd 8 ,
+.Xr route 8 ,
 .Xr rpki-client 8 ,
+.Xr rtrctl 8 ,
 .Xr rtrd 8
 .Sh STANDARDS
 .Rs

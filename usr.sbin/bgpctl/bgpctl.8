@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.114 2026/09/18 15:46:14 job Exp $
+.\" $OpenBSD: bgpctl.8,v 1.115 2026/09/21 19:38:37 job Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2026 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -451,7 +451,7 @@ Multiple options can be used at the same time and the
 filter can be combined with other filters.
 .It Cm show rtr
 Show a list of all
-.Em RTR
+.Em RPKI-to-Router Pq RTR
 sessions, including information about the session state.
 .It Cm show sets
 Show a list summarizing all
@@ -501,10 +501,17 @@ default
 control socket
 .El
 .Sh SEE ALSO
+.Xr rdomain 4 ,
+.Xr route 4 ,
 .Xr bgpd.conf 5 ,
 .Xr bgpd 8 ,
 .Xr bgplg 8 ,
-.Xr bgplgsh 8
+.Xr bgplgd 8 ,
+.Xr bgplgsh 8 ,
+.Xr route 8 ,
+.Xr rpki-client 8 ,
+.Xr rtrctl 8 ,
+.Xr rtrd 8
 .Sh HISTORY
 The
 .Nm

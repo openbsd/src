@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6ctl.8,v 1.14 2023/06/21 09:47:03 sthen Exp $
+.\"	$OpenBSD: ospf6ctl.8,v 1.15 2026/09/21 19:38:37 job Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2023 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt OSPF6CTL 8
 .Os
 .Sh NAME
@@ -140,8 +140,14 @@ socket used for communication with
 .Xr ospf6d 8 .
 .El
 .Sh SEE ALSO
+.Xr route 4 ,
 .Xr ospf6d.conf 5 ,
-.Xr ospf6d 8
+.Xr ospfd.conf 5 ,
+.Xr bgpd 8 ,
+.Xr ospf6d 8 ,
+.Xr ospfctl 8 ,
+.Xr ospfd 8 ,
+.Xr route 8
 .Sh HISTORY
 The
 .Nm
