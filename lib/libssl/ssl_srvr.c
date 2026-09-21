@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.173 2026/09/17 22:58:23 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.174 2026/09/21 23:25:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1005,7 +1005,7 @@ ssl3_get_client_hello(SSL *s)
 	if (CBS_len(&cbs) != 0)
 		goto decode_err;
 
-	if (!s->s3->renegotiate_seen && s->renegotiate) {
+	if (!tlsext_extension_seen(s, TLSEXT_TYPE_renegotiate) && s->renegotiate) {
 		al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		goto fatal_err;

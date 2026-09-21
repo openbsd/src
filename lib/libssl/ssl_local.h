@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.45 2026/09/16 00:24:54 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.46 2026/09/21 23:25:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1138,9 +1138,6 @@ typedef struct ssl3_state_st {
 	unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
 	unsigned char previous_server_finished_len;
 	int send_connection_binding; /* TODOEKR */
-
-	/* Set if we saw a Renegotiation Indication extension from our peer. */
-	int renegotiate_seen;
 
 	/*
 	 * ALPN information.

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.177 2026/08/29 08:41:17 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.178 2026/09/21 23:25:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1060,7 +1060,7 @@ ssl3_get_server_hello(SSL *s)
 	 * which doesn't support RI so for the immediate future tolerate RI
 	 * absence on initial connect only.
 	 */
-	if (!s->s3->renegotiate_seen &&
+	if (!tlsext_extension_seen(s, TLSEXT_TYPE_renegotiate) &&
 	    !(s->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
 		al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
