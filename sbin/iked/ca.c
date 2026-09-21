@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.107 2026/08/11 13:14:30 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.108 2026/09/21 20:54:38 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -612,8 +612,8 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	size_t			 len;
 	struct iked_static_id	 id;
 	unsigned int		 i;
-	struct iovec		 iov[3];
-	int			 iovcnt = 3, cmd, ret = -1;
+	struct iovec		 iov[4];
+	int			 iovcnt = 4, cmd, ret = -1;
 	struct iked_id		 key;
 
 	ptr = (uint8_t *)imsg->data;
@@ -661,7 +661,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 			    untrusted, &issuer);
 			if (ret == 0) {
 				ret = ocsp_validate_cert(env, ptr, len, sh,
-				    type, issuer);
+				    type, issuer, &id);
 				X509_free(issuer);
 				if (ret == 0) {
 					sk_X509_pop_free(untrusted, X509_free);
@@ -699,8 +699,10 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	iov[0].iov_len = sizeof(sh);
 	iov[1].iov_base = &type;
 	iov[1].iov_len = sizeof(type);
-	iov[2].iov_base = ptr;
-	iov[2].iov_len = len;
+	iov[2].iov_base = &id;
+	iov[2].iov_len = sizeof(id);
+	iov[3].iov_base = ptr;
+	iov[3].iov_len = len;
 
 	ret = proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt);
 	ibuf_free(key.id_buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.26 2026/05/26 11:17:14 hshoexer Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.27 2026/09/21 20:54:38 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -43,6 +43,7 @@ struct iked_ocsp {
 	struct iked		*ocsp_env;	/* back pointer to env */
 	struct iked_sahdr	 ocsp_sh;	/* ike sa */
 	uint8_t			 ocsp_type;	/* auth type */
+	struct iked_static_id	 ocsp_peerid;	/* ikeid under check */
 	struct iked_socket	*ocsp_sock;	/* socket to ocsp responder */
 	BIO			*ocsp_cbio;	/* matching OpenSSL obj */
 	OCSP_CERTID		*ocsp_id;	/* ocsp-id for cert */
@@ -265,7 +266,8 @@ ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc,
 /* validate the certifcate stored in 'data' by querying the ocsp-responder */
 int
 ocsp_validate_cert(struct iked *env, void *data, size_t len,
-    struct iked_sahdr sh, uint8_t type, X509 *issuer)
+    struct iked_sahdr sh, uint8_t type, X509 *issuer,
+    struct iked_static_id *peerid)
 {
 	struct iovec		 iov[2];
 	STACK_OF(OPENSSL_STRING) *aia; /* Authority Information Access */
@@ -289,6 +291,8 @@ ocsp_validate_cert(struct iked *env, void *data, size_t len,
 	ocsp->ocsp_env = env;
 	ocsp->ocsp_sh = sh;
 	ocsp->ocsp_type = type;
+	if (peerid != NULL)
+		ocsp->ocsp_peerid = *peerid;
 
 	if ((rawcert = BIO_new_mem_buf(data, len)) == NULL ||
 	    (cert = d2i_X509_bio(rawcert, NULL)) == NULL ||
@@ -605,13 +609,15 @@ int
 ocsp_validate_finish(struct iked_ocsp *ocsp, int valid)
 {
 	struct iked		*env = ocsp->ocsp_env;
-	struct iovec		 iov[2];
-	int			 iovcnt = 2, ret, cmd;
+	struct iovec		 iov[3];
+	int			 iovcnt = 3, ret, cmd;
 
 	iov[0].iov_base = &ocsp->ocsp_sh;
 	iov[0].iov_len = sizeof(ocsp->ocsp_sh);
 	iov[1].iov_base = &ocsp->ocsp_type;
 	iov[1].iov_len = sizeof(ocsp->ocsp_type);
+	iov[2].iov_base = &ocsp->ocsp_peerid;
+	iov[2].iov_len = sizeof(ocsp->ocsp_peerid);
 
 	cmd = valid ? IMSG_CERTVALID : IMSG_CERTINVALID;
 	ret = proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt);

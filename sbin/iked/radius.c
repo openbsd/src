@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.16 2026/07/08 10:57:33 hshoexer Exp $	*/
+/*	$OpenBSD: radius.c,v 1.17 2026/09/21 20:54:38 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -81,16 +81,40 @@ iked_radius_request(struct iked *env, struct iked_sa *sa,
 	}
 
 	if (eap->eap_type == EAP_TYPE_IDENTITY) {
+		if (sa->sa_radreq != NULL) {
+			log_info("%s: duplicate EAP identity response",
+			    SPI_SA(sa, __func__));
+			return -1;
+		}
+		if (msg->msg_eap.eam_identity == NULL) {
+			log_info("%s: EAP identity already known",
+			    SPI_SA(sa, __func__));
+			return -1;
+		}
 		if ((sa->sa_radreq = calloc(1,
 		    sizeof(struct iked_radserver_req))) == NULL) {
 			log_debug(
 			    "%s: calloc failed for iked_radserver_req: %s",
 			    __func__, strerror(errno));
-			return (-1);
+			return -1;
 		}
 		timer_set(env, &sa->sa_radreq->rr_timer,
 		    iked_radius_request_send, sa->sa_radreq);
 		sa->sa_radreq->rr_user = strdup(msg->msg_eap.eam_identity);
+		if (sa->sa_radreq->rr_user == NULL) {
+			log_warn("%s: strdup failed", __func__);
+			iked_radius_request_free(env, sa->sa_radreq);
+			sa->sa_radreq = NULL;
+			return -1;
+		}
+	} else if (sa->sa_radreq == NULL) {
+		log_info("%s: EAP response received before identity",
+		    SPI_SA(sa, __func__));
+		return -1;
+	} else if (sa->sa_radreq->rr_user == NULL) {
+		log_info("%s: EAP response without pending RADIUS identity",
+		    SPI_SA(sa, __func__));
+		return -1;
 	}
 
 	if ((pkt = radius_new_request_packet(RADIUS_CODE_ACCESS_REQUEST))
