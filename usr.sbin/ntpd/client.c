@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.120 2026/09/17 10:43:23 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.121 2026/09/21 11:49:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -332,7 +332,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	if (cmsg == NULL)
 		fatal("SCM_TIMESTAMP");
 
-	ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg);
+	if (ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg) == -1)
+		return (0);
 
 	if (msg.orgtime.int_partl != p->query.msg.xmttime.int_partl ||
 	    msg.orgtime.fractionl != p->query.msg.xmttime.fractionl)
