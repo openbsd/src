@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.46 2026/09/21 23:25:03 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.47 2026/09/21 23:37:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1132,12 +1132,12 @@ typedef struct ssl3_state_st {
 
 	SSL_HANDSHAKE hs;
 
-	/* Connection binding to prevent renegotiation attacks */
+	/* Renegotiation Indication (RI) - RFC 5746. */
+	int secure_renegotiation;
 	unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
 	unsigned char previous_client_finished_len;
 	unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
 	unsigned char previous_server_finished_len;
-	int send_connection_binding; /* TODOEKR */
 
 	/*
 	 * ALPN information.

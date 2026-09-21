@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.336 2026/08/14 06:44:53 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.337 2026/09/21 23:37:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1394,7 +1394,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return (1);
 	case SSL_CTRL_GET_RI_SUPPORT:
 		if (s->s3)
-			return (s->s3->send_connection_binding);
+			return (s->s3->secure_renegotiation);
 		else return (0);
 	default:
 		if (SSL_is_dtls(s))

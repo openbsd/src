@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.174 2026/09/21 23:25:03 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.175 2026/09/21 23:37:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -281,7 +281,7 @@ ssl3_accept(SSL *s)
 
 				s->s3->hs.state = SSL3_ST_SR_CLNT_HELLO_A;
 				s->ctx->stats.sess_accept++;
-			} else if (!SSL_is_dtls(s) && !s->s3->send_connection_binding) {
+			} else if (!SSL_is_dtls(s) && !s->s3->secure_renegotiation) {
 				/*
 				 * Server attempting to renegotiate with
 				 * client that doesn't support secure

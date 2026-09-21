@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.135 2026/09/21 23:31:06 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.136 2026/09/21 23:37:20 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -475,7 +475,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 		}
 
 		/* Client requested renegotiation but it is not permitted. */
-		if (!s->s3->send_connection_binding) {
+		if (!s->s3->secure_renegotiation) {
 			ssl3_send_alert(s, SSL3_AL_WARNING,
 			    SSL_AD_NO_RENEGOTIATION);
 			return 1;

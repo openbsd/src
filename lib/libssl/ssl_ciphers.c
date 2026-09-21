@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.18 2024/07/22 14:47:15 jsing Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.19 2026/09/21 23:37:20 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -98,7 +98,7 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 	uint16_t cipher_value;
 	unsigned long cipher_id;
 
-	s->s3->send_connection_binding = 0;
+	s->s3->secure_renegotiation = 0;
 
 	if ((ciphers = sk_SSL_CIPHER_new_null()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
@@ -125,7 +125,7 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 
 				goto err;
 			}
-			s->s3->send_connection_binding = 1;
+			s->s3->secure_renegotiation = 1;
 			continue;
 		}
 

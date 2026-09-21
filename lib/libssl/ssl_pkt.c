@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.76 2026/09/21 23:31:06 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.77 2026/09/21 23:37:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -882,7 +882,7 @@ ssl3_read_handshake_unexpected(SSL *s)
 		}
 
 		/* Client requested renegotiation but it is not permitted. */
-		if (!s->s3->send_connection_binding) {
+		if (!s->s3->secure_renegotiation) {
 			ssl3_send_alert(s, SSL3_AL_WARNING,
 			    SSL_AD_NO_RENEGOTIATION);
 			return 1;
