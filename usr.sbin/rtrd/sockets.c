@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: sockets.c,v 1.5 2026/09/21 21:29:24 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -60,8 +60,7 @@ uint8_t rtr_max_version = RTR_MAX_VERSION;
 
 ssize_t sendq_block_size = SENDQ_BLOCK - sizeof(struct rtr_sendq_link);
 
-#define rtr_min(a, b)	(((a) > (b)) ? (b) : (a))
-#define rtr_max(a, b)	(((a) < (b)) ? (b) : (a))
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct rtr_socket *
 fd_to_socket(int fd)
@@ -538,7 +537,7 @@ rtr_sendq_add(struct rtr_socket *s, void *data, int length)
 	while (sendq_read_index < length) {
 		/* check length of input remaining versus */
 		/* length left in this sendq block */
-		sendq_move_length = rtr_min(length - sendq_read_index,
+		sendq_move_length = MINIMUM(length - sendq_read_index,
 		sendq_block_size - s->sendq.tail->length);
 
 		if (sendq_move_length > 0) {
@@ -581,12 +580,12 @@ rtr_sendq_pop(struct rtr_socket *s, int length)
 	assert(s);
 
 	/* trunc length to sendq length */
-	sendq_pop_willing = rtr_min(length, s->sendq.length);
+	sendq_pop_willing = MINIMUM(length, s->sendq.length);
 
 	while (sendq_pop_index < sendq_pop_willing) {
 		/* length of remaining head sendq block versus */
 		/* how much remains to remove */
-		sendq_pop_move = rtr_min(s->sendq.head->length -
+		sendq_pop_move = MINIMUM(s->sendq.head->length -
 		    s->sendq.head->offset,
 		    sendq_pop_willing - sendq_pop_index);
 
@@ -636,7 +635,7 @@ rtr_sendq_flush(struct rtr_socket *s)
 		return 0;
 
 	/* trunc write block remaining length to sendq length */
-	sendq_flush_willing = rtr_min((s->write_block_size > WRITE_BLOCK ?
+	sendq_flush_willing = MINIMUM((s->write_block_size > WRITE_BLOCK ?
 	    WRITE_BLOCK : s->write_block_size) - s->write_length,
 	    s->sendq.length);
 
@@ -644,7 +643,7 @@ rtr_sendq_flush(struct rtr_socket *s)
 		/* length of remaining head sendq block versus */
 		/* how much remains to remove */
 
-		sendq_flush_move = rtr_min(s->sendq.head->length -
+		sendq_flush_move = MINIMUM(s->sendq.head->length -
 		    s->sendq.head->offset,
 		    sendq_flush_willing - sendq_flush_index);
 
@@ -712,7 +711,7 @@ writeto(struct rtr_socket *s, void *pdu)
 		return pdu_length;
 	}
 
-	writeto_move = rtr_min(pdu_length, (s->write_block_size > WRITE_BLOCK ?
+	writeto_move = MINIMUM(pdu_length, (s->write_block_size > WRITE_BLOCK ?
 	    WRITE_BLOCK : s->write_block_size) - s->write_length);
 
 	if (writeto_move > 0) {
@@ -1107,7 +1106,7 @@ core_loop(void)
 				if (s->read_length <
 				    (ssize_t)sizeof(struct pdu_header)) {
 					read_move_length =
-					    rtr_min(
+					    MINIMUM(
 					    (ssize_t)sizeof(struct pdu_header)
 					    - s->read_length,
 					    read_length - read_index);
@@ -1154,7 +1153,7 @@ core_loop(void)
 					break;
 				}
 
-				read_move_length = rtr_min(
+				read_move_length = MINIMUM(
 					pdu_length - s->read_length,
 					read_length - read_index);
 
