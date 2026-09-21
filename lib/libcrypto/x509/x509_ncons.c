@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.12 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.13 2026/09/21 20:05:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -485,9 +485,15 @@ nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 {
 	const char *baseptr = (char *)base->data;
 	const char *emlptr = (char *)eml->data;
-	const char *baseat = strchr(baseptr, '@');
-	const char *emlat = strchr(emlptr, '@');
+	const char *baseat;
+	const char *emlat;
 
+	if (memchr(baseptr, '\0', base->length) != NULL ||
+	    memchr(emlptr, '\0', eml->length) != NULL)
+		return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
+	baseat = strchr(baseptr, '@');
+	emlat = strchr(emlptr, '@');
 	if (!emlat)
 		return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 	/* Special case: initial '.' is RHS match */
