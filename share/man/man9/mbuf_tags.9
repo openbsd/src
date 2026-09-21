@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.44 2025/06/13 18:34:00 schwarze Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.45 2026/09/21 05:04:20 jsg Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt M_TAG_GET 9
 .Os
 .Sh NAME
@@ -25,7 +25,6 @@
 .Nm m_tag_delete ,
 .Nm m_tag_copy ,
 .Nm m_tag_delete_chain ,
-.Nm m_tag_init ,
 .Nm m_tag_copy_chain ,
 .Nm m_tag_first ,
 .Nm m_tag_next
@@ -44,8 +43,6 @@
 .Fn m_tag_copy "struct m_tag *tag"
 .Ft void
 .Fn m_tag_delete_chain "struct mbuf *mbuf"
-.Ft void
-.Fn m_tag_init "struct mbuf *mbuf"
 .Ft int
 .Fn m_tag_copy_chain "struct mbuf *mbuf" "struct mbuf *mbuf2"
 .Ft struct m_tag *
@@ -215,10 +212,6 @@ creates an unlinked copy of tag
 .Pp
 .Fn m_tag_delete_chain
 deletes all tags attached to packet
-.Va mbuf .
-.Pp
-.Fn m_tag_init
-initializes the tag storage for packet
 .Va mbuf .
 .Pp
 .Fn m_tag_copy_chain
