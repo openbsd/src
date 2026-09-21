@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2026/09/20 23:00:44 rsadowski Exp $
+#	$OpenBSD: Makefile,v 1.27 2026/09/21 01:13:12 rsadowski Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -36,6 +36,8 @@ LOCAL_ADDR ?=
 REMOTE_ADDR ?=
 REMOTE_SSH ?=
 
+ARGS_CONFIGS !=		cd ${.CURDIR}/configs && ls *.conf
+
 # Automatically generate regress targets from test cases in directory.
 # TLS tests are run once per cert type (RSA and EC) via CERTBASE.
 
@@ -55,6 +57,17 @@ PERLPATH =
 PERLINC =	-I${.CURDIR}
 PERLPATH =	${.CURDIR}/
 .endif
+
+# syntax checks only
+.for config in ${ARGS_CONFIGS}
+REGRESS_TARGETS +=	run-config-check-${config}
+run-config-check-${config}: ${.CURDIR}/configs/${config} 127.0.0.1.crt 127.0.0.1.key
+.if empty (RELAYD)
+	${SUDO} /usr/sbin/relayd -n -f ${.CURDIR}/configs/${config}
+.else
+	${SUDO} ${RELAYD} -n -f ${.CURDIR}/configs/${config}
+.endif
+.endfor
 
 # The arg tests take a perl hash with arguments controlling the
 # test parameters.  Generally they consist of client, relayd, server.
