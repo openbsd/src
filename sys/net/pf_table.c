@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.149 2026/09/10 12:28:04 deraadt Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.150 2026/09/21 13:58:20 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2576,9 +2576,19 @@ pfr_attach_table(struct pf_ruleset *rs, char *name, int wait)
 		strlcpy(tbl.pfrt_anchor, ac->path, sizeof(tbl.pfrt_anchor));
 	kt = pfr_lookup_table(&tbl);
 	if (kt == NULL) {
+		/*
+		 * Hold rs across the table creation below.  A new table takes
+		 * a reference on the ruleset, and pfr_destroy_ktable() drops
+		 * it again on the failure paths, which lets
+		 * pf_remove_if_empty_ruleset() free the anchor rs points into
+		 * while our caller still holds rs.
+		 */
+		rs->tables++;
 		kt = pfr_create_ktable(&tbl, gettime(), 1, wait);
-		if (kt == NULL)
+		if (kt == NULL) {
+			rs->tables--;
 			return (NULL);
+		}
 		if (ac != NULL) {
 			bzero(tbl.pfrt_anchor, sizeof(tbl.pfrt_anchor));
 			rt = pfr_lookup_table(&tbl);
@@ -2586,6 +2596,7 @@ pfr_attach_table(struct pf_ruleset *rs, char *name, int wait)
 				rt = pfr_create_ktable(&tbl, 0, 1, wait);
 				if (rt == NULL) {
 					pfr_destroy_ktable(kt, 0);
+					rs->tables--;
 					return (NULL);
 				}
 				pfr_insert_ktable(rt);
@@ -2593,6 +2604,7 @@ pfr_attach_table(struct pf_ruleset *rs, char *name, int wait)
 			kt->pfrkt_root = rt;
 		}
 		pfr_insert_ktable(kt);
+		rs->tables--;
 	}
 	if (!kt->pfrkt_refcnt[PFR_REFCNT_RULE]++)
 		pfr_setflags_ktable(kt, kt->pfrkt_flags|PFR_TFLAG_REFERENCED);
