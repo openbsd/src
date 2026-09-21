@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_local.h,v 1.12 2026/09/19 16:06:42 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.13 2026/09/21 23:16:29 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -101,11 +101,6 @@ struct dtls1_timeout_st {
 
 struct _pqueue;
 
-typedef struct rcontent_pqueue_st {
-	unsigned short epoch;
-	struct _pqueue *q;
-} rcontent_pqueue;
-
 typedef struct hm_fragment_st {
 	struct hm_header_st msg_header;
 	unsigned char *fragment;
@@ -145,13 +140,6 @@ struct dtls1_state_st {
 
 	/* Buffered handshake messages */
 	struct _pqueue *buffered_messages;
-
-	/* Buffered application records.
-	 * Only for records between CCS and Finished
-	 * to prevent either protocol violation or
-	 * unnecessary message loss.
-	 */
-	rcontent_pqueue buffered_app_data;
 
 	/* Is set when listening for new connections with dtls1_listen() */
 	unsigned int listen;

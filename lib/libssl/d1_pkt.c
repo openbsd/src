@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.133 2026/09/19 16:06:42 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.134 2026/09/21 23:16:29 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -182,68 +182,6 @@ satsub64be(const unsigned char *v1, const unsigned char *v2)
 static int dtls1_record_replay_check(SSL *s, const unsigned char *seq);
 static void dtls1_record_bitmap_update(SSL *s, const unsigned char *seq);
 static int dtls1_process_record(SSL *s);
-
-static int
-dtls1_buffer_rcontent(SSL *s, rcontent_pqueue *queue, unsigned char *priority)
-{
-	DTLS1_RCONTENT_DATA_INTERNAL *rdata = NULL;
-	pitem *item = NULL;
-
-	/* Limit the size of the queue to prevent DOS attacks */
-	if (pqueue_size(queue->q) >= 16)
-		return 0;
-
-	if ((rdata = malloc(sizeof(*rdata))) == NULL)
-		goto init_err;
-	if ((item = pitem_new(priority, rdata)) == NULL)
-		goto init_err;
-
-	rdata->rcontent = s->s3->rcontent;
-	s->s3->rcontent = NULL;
-
-	item->data = rdata;
-
-	/* insert should not fail, since duplicates are dropped */
-	if (pqueue_insert(queue->q, item) == NULL)
-		goto err;
-
-	if ((s->s3->rcontent = tls_content_new()) == NULL)
-		goto err;
-
-	return (1);
-
- err:
-	tls_content_free(rdata->rcontent);
-
- init_err:
-	SSLerror(s, ERR_R_INTERNAL_ERROR);
-	free(rdata);
-	pitem_free(item);
-	return (-1);
-}
-
-static int
-dtls1_retrieve_buffered_rcontent(SSL *s, rcontent_pqueue *queue)
-{
-	DTLS1_RCONTENT_DATA_INTERNAL *rdata;
-	pitem *item;
-
-	item = pqueue_pop(queue->q);
-	if (item) {
-		rdata = item->data;
-
-		tls_content_free(s->s3->rcontent);
-		s->s3->rcontent = rdata->rcontent;
-		s->s3->rrec.epoch = tls_content_epoch(s->s3->rcontent);
-
-		free(item->data);
-		pitem_free(item);
-
-		return (1);
-	}
-
-	return (0);
-}
 
 static int
 dtls1_process_record(SSL *s)
@@ -679,14 +617,6 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	s->rwstate = SSL_NOTHING;
 
-	/*
-	 * We are not handshaking and have no data yet, so process data buffered
-	 * during the last handshake in advance, if any.
-	 */
-	if (s->s3->hs.state == SSL_ST_OK &&
-	    tls_content_remaining(s->s3->rcontent) == 0)
-		dtls1_retrieve_buffered_rcontent(s, &s->d1->buffered_app_data);
-
 	if (dtls1_handle_timeout(s) > 0)
 		goto start;
 
@@ -708,19 +638,16 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	/* We now have a packet which can be read and processed. */
 
+	/* XXX - should this allow SSL3_RT_ALERT messages? */
 	if (s->s3->change_cipher_spec &&
 	    tls_content_type(s->s3->rcontent) != SSL3_RT_HANDSHAKE) {
 		/*
-		 * We now have application data between CCS and Finished.
-		 * Most likely the packets were reordered on their way, so
-		 * buffer the application data for later processing rather
-		 * than dropping the connection.
+		 * Application data arrived between ChangeCipherSpec and
+		 * Finished, either due to the Finished message being lost or
+		 * out of order delivery. Discard this content and let the
+		 * application deal with it in the same manner it uses to handle
+		 * other packet loss.
 		 */
-		if (dtls1_buffer_rcontent(s, &s->d1->buffered_app_data,
-		    s->s3->rrec.seq_num) < 0) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			return (-1);
-		}
 		tls_content_clear(s->s3->rcontent);
 		s->s3->rrec.length = 0;
 		goto start;

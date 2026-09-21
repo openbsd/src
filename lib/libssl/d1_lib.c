@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.69 2026/09/19 16:06:42 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.70 2026/09/21 23:16:29 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -86,8 +86,6 @@ dtls1_new(SSL *s)
 
 	if ((s->d1->buffered_messages = pqueue_new()) == NULL)
 		goto err;
-	if ((s->d1->buffered_app_data.q = pqueue_new()) == NULL)
-		goto err;
 
 	if (s->server)
 		s->d1->cookie_len = sizeof(s->d1->cookie);
@@ -98,23 +96,6 @@ dtls1_new(SSL *s)
  err:
 	dtls1_free(s);
 	return (0);
-}
-
-static void
-dtls1_drain_rcontents(pqueue queue)
-{
-	DTLS1_RCONTENT_DATA_INTERNAL *rdata;
-	pitem *item;
-
-	if (queue == NULL)
-		return;
-
-	while ((item = pqueue_pop(queue)) != NULL) {
-		rdata = (DTLS1_RCONTENT_DATA_INTERNAL *)item->data;
-		tls_content_free(rdata->rcontent);
-		free(item->data);
-		pitem_free(item);
-	}
 }
 
 static void
@@ -135,7 +116,6 @@ static void
 dtls1_clear_queues(SSL *s)
 {
 	dtls1_drain_fragments(s->d1->buffered_messages);
-	dtls1_drain_rcontents(s->d1->buffered_app_data.q);
 }
 
 void
@@ -153,7 +133,6 @@ dtls1_free(SSL *s)
 	dtls1_clear_flight(s);
 
 	pqueue_free(s->d1->buffered_messages);
-	pqueue_free(s->d1->buffered_app_data.q);
 
 	dtls12_handshake_msg_free(s->d1->hs_msg);
 
@@ -165,12 +144,10 @@ void
 dtls1_clear(SSL *s)
 {
 	pqueue buffered_messages;
-	pqueue buffered_app_data;
 	unsigned int mtu;
 
 	if (s->d1) {
 		buffered_messages = s->d1->buffered_messages;
-		buffered_app_data = s->d1->buffered_app_data.q;
 		mtu = s->d1->mtu;
 
 		dtls12_handshake_msg_free(s->d1->hs_msg);
@@ -190,7 +167,6 @@ dtls1_clear(SSL *s)
 		}
 
 		s->d1->buffered_messages = buffered_messages;
-		s->d1->buffered_app_data.q = buffered_app_data;
 	}
 
 	ssl3_clear(s);
