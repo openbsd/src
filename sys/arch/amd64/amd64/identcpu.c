@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.157 2026/09/08 21:01:59 daniel Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.158 2026/09/21 21:02:15 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -730,6 +730,9 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	printf("\n");
+
+	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && ci->ci_cpuid_level < 0xd)
+		panic("cpuid level too low. check bios setting 'Limit CPUID Maximum'");
 
 	replacemeltdown();
 	x86_print_cacheinfo(ci);
