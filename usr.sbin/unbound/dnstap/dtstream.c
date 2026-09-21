@@ -222,7 +222,7 @@ dt_msg_queue_start_timer(struct dt_msg_queue* mq, int wakeupnow)
 		tv.tv_usec = 0;
 		/* If it is already set, keep it running. */
 		if(!comm_timer_is_set(mq->wakeup_timer))
-	comm_timer_set(mq->wakeup_timer, &tv);
+			comm_timer_set(mq->wakeup_timer, &tv);
 	} else {
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;
@@ -1554,7 +1554,7 @@ void dtio_output_cb(int ATTR_UNUSED(fd), short bits, void* arg)
 					}
 				}
 				if(!dtio->cur_msg)
-				return; /* nothing to do */
+					return; /* nothing to do */
 			}
 		}
 
@@ -2144,7 +2144,7 @@ static void* dnstap_io(void* arg)
 #endif
 		log_thread_set(&dtio->threadnum);
 
-	ub_thread_setname(dtio->tid, name);
+	ub_thread_setname(ub_thread_self(), name);
 
 	/* setup */
 	verbose(VERB_ALGO, "start dnstap io thread");

@@ -1125,7 +1125,7 @@ make_sock_port(int stype, const char* ifname, int port,
 	int use_systemd, int dscp, struct unbound_socket* ub_sock,
 	const char* additional)
 {
-	char* s = strchr(ifname, '@');
+	const char* s = strchr(ifname, '@');
 	if(s) {
 		/* override port with ifspec@port */
 		int port;
@@ -2133,7 +2133,7 @@ void listen_start_accept(struct listen_dnsport* listen)
 }
 
 struct tcp_req_info*
-tcp_req_info_create(struct sldns_buffer* spoolbuf)
+tcp_req_info_create(struct comm_base* base, struct sldns_buffer* spoolbuf)
 {
 	struct tcp_req_info* req = (struct tcp_req_info*)malloc(sizeof(*req));
 	if(!req) {
@@ -2141,6 +2141,12 @@ tcp_req_info_create(struct sldns_buffer* spoolbuf)
 		return NULL;
 	}
 	memset(req, 0, sizeof(*req));
+	req->read_again_timer = comm_timer_create(base, tcp_read_again_cb, req);
+	if(!req->read_again_timer) {
+		log_err("malloc failure");
+		free(req);
+		return NULL;
+	}
 	req->spool_buffer = spoolbuf;
 	return req;
 }
@@ -2150,6 +2156,7 @@ tcp_req_info_delete(struct tcp_req_info* req)
 {
 	if(!req) return;
 	tcp_req_info_clear(req);
+	comm_timer_delete(req->read_again_timer);
 	/* cp is pointer back to commpoint that owns this struct and
 	 * called delete on us */
 	/* spool_buffer is shared udp buffer, not deleted here */
@@ -2167,7 +2174,7 @@ void tcp_req_info_clear(struct tcp_req_info* req)
 	while(open) {
 		nopen = open->next;
 		mesh_state_remove_reply(open->mesh, open->mesh_state, req->cp,
-			NULL);
+			NULL, NULL);
 		free(open);
 		open = nopen;
 	}
@@ -2189,6 +2196,9 @@ void tcp_req_info_clear(struct tcp_req_info* req)
 	req->done_req_list = NULL;
 	req->num_done_req = 0;
 	req->read_is_closed = 0;
+
+	if(comm_timer_is_set(req->read_again_timer))
+		comm_timer_disable(req->read_again_timer);
 }
 
 void
@@ -3617,7 +3627,7 @@ stream_tree_del(rbnode_type* node, void* arg)
 	stream = (struct doq_stream*)node;
 	if(stream->mesh_state) {
 		mesh_state_remove_reply(stream->mesh, stream->mesh_state,
-			args->conn->doq_socket->cp, stream);
+			args->conn->doq_socket->cp, NULL, stream);
 		stream->mesh_state = NULL;
 	}
 	if(stream->in)
@@ -3639,7 +3649,8 @@ doq_conn_delete(struct doq_conn* conn, struct doq_table* table)
 	lock_rw_unlock(&conn->table->conid_lock);
 	/* Remove the app data from ngtcp2 before SSL_free of conn->ssl,
 	 * because the ngtcp2 conn is deleted. */
-	SSL_set_app_data(conn->ssl, NULL);
+	if(conn->ssl)
+		SSL_set_app_data(conn->ssl, NULL);
 	if(conn->stream_tree.count != 0) {
 		struct doq_stream_tree_del_args args;
 		memset(&args, 0, sizeof(args));
@@ -3956,7 +3967,7 @@ doq_stream_close(struct doq_conn* conn, struct doq_stream* stream,
 	stream->is_closed = 1;
 	if(stream->mesh_state) {
 		mesh_state_remove_reply(stream->mesh, stream->mesh_state,
-			conn->doq_socket->cp, stream);
+			conn->doq_socket->cp, NULL, stream);
 		stream->mesh_state = NULL;
 	}
 	doq_stream_off_write_list(conn, stream);
@@ -4503,7 +4514,7 @@ doq_stream_reset_cb(ngtcp2_conn* ATTR_UNUSED(conn), int64_t stream_id,
 			"unknown stream %d", (int)stream_id);
 		return 0;
 	}
-	if(!doq_stream_close(doq_conn, stream, 0))
+	if(!doq_stream_close(doq_conn, stream, 1))
 		return NGTCP2_ERR_CALLBACK_FAILURE;
 	return 0;
 }
@@ -4851,7 +4862,7 @@ doq_ssl_server_setup(SSL_CTX* ctx, struct doq_conn* conn)
 	SSL_set_app_data(ssl, conn);
 #endif
 	SSL_set_accept_state(ssl);
-#ifdef USE_NGTCP2_CRYPTO_OSSL
+#ifdef HAVE_SSL_SET_QUIC_TLS_EARLY_DATA_ENABLED
 	SSL_set_quic_tls_early_data_enabled(ssl, 1);
 #else
 	SSL_set_quic_early_data_enabled(ssl, 1);
@@ -4960,6 +4971,7 @@ doq_conn_setup(struct doq_conn* conn, uint8_t* scid, size_t scidlen,
 	rv = ngtcp2_conn_server_new(&conn->conn, &scid_cid, &sv_scid, &path,
 		conn->version, &callbacks, &settings, &params, NULL, conn);
 	if(rv != 0) {
+		conn->conn = NULL;
 		lock_rw_unlock(&conn->table->conid_lock);
 		log_err("ngtcp2_conn_server_new failed: %s",
 			ngtcp2_strerror(rv));

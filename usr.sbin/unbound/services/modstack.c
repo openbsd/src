@@ -232,7 +232,7 @@ module_func_block* module_factory(const char** str)
         return NULL;
 }
 
-int 
+int
 modstack_call_startup(struct module_stack* stack, const char* module_conf,
 	struct module_env* env)
 {
@@ -301,7 +301,7 @@ modstack_call_init(struct module_stack* stack, const char* module_conf,
 	return 1;
 }
 
-void 
+void
 modstack_call_deinit(struct module_stack* stack, struct module_env* env)
 {
         int i;
@@ -323,7 +323,7 @@ modstack_call_destartup(struct module_stack* stack, struct module_env* env)
         }
 }
 
-int 
+int
 modstack_find(struct module_stack* stack, const char* name)
 {
 	int i;

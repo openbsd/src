@@ -122,6 +122,10 @@
 #define NUM_UDP_PER_SELECT 1
 #endif
 
+/** The number of TCP queries over a TCP connection, per read indication
+ * from select. */
+#define NUM_TCP_PER_SELECT 100
+
 /** timeout in millisec to wait for write to unblock, packets dropped after.*/
 #define SEND_BLOCKED_WAIT_TIMEOUT 200
 /** max number of times to wait for write to unblock, packets dropped after.*/
@@ -951,6 +955,10 @@ static int consume_pp2_header(struct sldns_buffer* buf, struct comm_reply* rep,
 			{
 			struct sockaddr_in* addr =
 				(struct sockaddr_in*)&rep->client_addr;
+			if(ntohs(header->len) < PP2_HEADER_LEN_INET) {
+				verbose(VERB_OPS, "proxy_protocol: header too short for IPv4 address");
+				return 0;
+			}
 			addr->sin_family = AF_INET;
 			addr->sin_addr.s_addr = header->addr.addr4.src_addr;
 			addr->sin_port = header->addr.addr4.src_port;
@@ -963,6 +971,10 @@ static int consume_pp2_header(struct sldns_buffer* buf, struct comm_reply* rep,
 			{
 			struct sockaddr_in6* addr =
 				(struct sockaddr_in6*)&rep->client_addr;
+			if(ntohs(header->len) < PP2_HEADER_LEN_INET6) {
+				verbose(VERB_OPS, "proxy_protocol: header too short for IPv6 address");
+				return 0;
+			}
 			memset(addr, 0, sizeof(*addr));
 			addr->sin6_family = AF_INET6;
 			memcpy(&addr->sin6_addr,
@@ -2932,6 +2944,8 @@ setup_tcp_handler(struct comm_point* c, int fd, int cur, int max)
 	c->tcp_is_reading = 1;
 	c->tcp_byte_count = 0;
 	c->tcp_keepalive = 0;
+	/* reset to configured value before applying load-based reduction */
+	c->tcp_timeout_msec = c->tcp_parent->tcp_timeout_msec;
 	/* if more than half the tcp handlers are in use, use a shorter
 	 * timeout for this TCP connection, we need to make space for
 	 * other connections to be able to get attention */
@@ -2964,6 +2978,62 @@ void comm_base_handle_slow_accept(int ATTR_UNUSED(fd),
 		fptr_ok(fptr_whitelist_start_accept(b->start_accept));
 		(*b->start_accept)(b->cb_arg);
 		b->eb->slow_accept_enabled = 0;
+	}
+}
+
+/** out of resources in the accept path: pause all listening for
+ * NETEVENT_SLOW_ACCEPT_TIME and re-arm via comm_base_handle_slow_accept.
+ *
+ * If the routine fails, the socket is accepted and then closed, draining it
+ * from the waiting list of connections to be accepted.
+ * @param c: the comm point that is a listening socket.
+ * @param msec: if 0: uses the slow accept time. Otherwise, sets the time
+ *		to wait.
+ */
+static void
+comm_point_slow_accept(struct comm_point* c, int msec)
+{
+	struct comm_base* b = c->ev->base;
+	struct timeval tv;
+	struct ub_event* slowev;
+	if(!b->stop_accept)
+		return;
+	if(b->eb->slow_accept_enabled)
+		return;
+	/* Allocate the event */
+	slowev = ub_event_new(b->eb->base, -1, UB_EV_TIMEOUT,
+		comm_base_handle_slow_accept, b);
+	if(!slowev) {
+		/* The slow accept was not enabled yet, to handle
+		 * the allocation failure, instead drain the incoming
+		 * connection. */
+		int new_fd = accept(c->fd, NULL, NULL);
+		if(new_fd != -1) {
+			verbose(VERB_ALGO, "slow accept: event_new failed, "
+				"drop connection");
+			sock_close(new_fd);
+		}
+		return;
+	}
+	ub_comm_base_now(b);
+	if(b->eb->last_slow_log+SLOW_LOG_TIME <= b->eb->secs) {
+		b->eb->last_slow_log = b->eb->secs;
+		verbose(VERB_OPS, "out of resources on accept, "
+			"slow down accept for %d msec",
+			NETEVENT_SLOW_ACCEPT_TIME);
+	}
+	b->eb->slow_accept_enabled = 1;
+	fptr_ok(fptr_whitelist_stop_accept(b->stop_accept));
+	(*b->stop_accept)(b->cb_arg);
+	/* set timeout, no mallocs */
+	if(msec == 0)
+		msec = NETEVENT_SLOW_ACCEPT_TIME;
+	tv.tv_sec = msec/1000;
+	tv.tv_usec = (msec%1000)*1000;
+	b->eb->slow_accept = slowev;
+	if(ub_event_add(b->eb->slow_accept, &tv) != 0) {
+		/* we do not want to log here,
+		 * error: "event_add failed." */
 	}
 }
 
@@ -3000,6 +3070,14 @@ int comm_point_perform_accept(struct comm_point* c,
 			if(c->ev->base->stop_accept) {
 				struct comm_base* b = c->ev->base;
 				struct timeval tv;
+				struct ub_event* slowev = ub_event_new(
+					b->eb->base, -1, UB_EV_TIMEOUT,
+					comm_base_handle_slow_accept, b);
+				if(!slowev) {
+					verbose(VERB_ALGO, "slow accept: "
+						"event_new failed");
+					return -1;
+				}
 				verbose(VERB_ALGO, "out of file descriptors: "
 					"slow accept");
 				ub_comm_base_now(b);
@@ -3019,15 +3097,8 @@ int comm_point_perform_accept(struct comm_point* c,
 				/* set timeout, no mallocs */
 				tv.tv_sec = NETEVENT_SLOW_ACCEPT_TIME/1000;
 				tv.tv_usec = (NETEVENT_SLOW_ACCEPT_TIME%1000)*1000;
-				b->eb->slow_accept = ub_event_new(b->eb->base,
-					-1, UB_EV_TIMEOUT,
-					comm_base_handle_slow_accept, b);
-				if(b->eb->slow_accept == NULL) {
-					/* we do not want to log here, because
-					 * that would spam the logfiles.
-					 * error: "event_base_set failed." */
-				}
-				else if(ub_event_add(b->eb->slow_accept, &tv)
+				b->eb->slow_accept = slowev;
+				if(ub_event_add(b->eb->slow_accept, &tv)
 					!= 0) {
 					/* we do not want to log here,
 					 * error: "event_add failed." */
@@ -3159,6 +3230,26 @@ static int http2_submit_settings(struct http2_session* h2_session)
 }
 #endif /* HAVE_NGHTTP2 */
 
+/** Clear http2 stream mesh states */
+static void http2_session_clear_meshstate(struct http2_session* h2_session)
+{
+#ifdef HAVE_NGHTTP2
+	/* Since the session gets closed, remove the mesh state references. */
+	struct http2_stream* h2_stream;
+	for(h2_stream = h2_session->first_stream; h2_stream;
+		h2_stream = h2_stream->next) {
+		if(h2_stream->mesh_state) {
+			mesh_state_remove_reply(h2_stream->mesh,
+				h2_stream->mesh_state, h2_session->c,
+				h2_stream, NULL);
+			h2_stream->mesh_state = NULL;
+		}
+	}
+#else
+	(void)h2_session;
+#endif /* HAVE_NGHTTP2 */
+}
+
 #ifdef HAVE_NGHTTP2
 /** Delete http2 stream. After session delete or stream close callback */
 static void http2_stream_delete(struct http2_session* h2_session,
@@ -3166,7 +3257,7 @@ static void http2_stream_delete(struct http2_session* h2_session,
 {
 	if(h2_stream->mesh_state) {
 		mesh_state_remove_reply(h2_stream->mesh, h2_stream->mesh_state,
-			h2_session->c, NULL);
+			h2_session->c, h2_stream, NULL);
 		h2_stream->mesh_state = NULL;
 	}
 	http2_req_stream_clear(h2_stream);
@@ -3208,6 +3299,13 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 	/* find free tcp handler. */
 	if(!c->tcp_free) {
 		log_warn("accepted too many tcp, connections full");
+		/* Wait for a short moment (say 50msec) so that other
+		 * TCP connections can complete. Or timeout, at the busy
+		 * timeout of about 200msec. That stops this routine from
+		 * spinning endlessly, and gives time to complete the other
+		 * requests. But it is not as slow as the 2000msec wait
+		 * time for when the kernel is out of buffers. */
+		comm_point_slow_accept(c, NETEVENT_SLOW_ACCEPT_QUEUE_TIME);
 		return;
 	}
 	/* accept incoming connection. */
@@ -3229,6 +3327,7 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 		if(!c_hdl->h2_session ||
 			!http2_session_server_create(c_hdl->h2_session)) {
 			log_warn("failed to create nghttp2");
+			comm_point_slow_accept(c, 0);
 			return;
 		}
 		if(!c_hdl->h2_session ||
@@ -3236,6 +3335,7 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 			log_warn("failed to submit http2 settings");
 			if(c_hdl->h2_session)
 				http2_session_server_delete(c_hdl->h2_session);
+			comm_point_slow_accept(c, 0);
 			return;
 		}
 		if(!c->ssl) {
@@ -3252,11 +3352,12 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 			comm_point_tcp_handle_callback, c_hdl);
 	}
 	if(!c_hdl->ev->ev) {
-		log_warn("could not ub_event_new, dropped tcp");
+		log_warn("could not ub_event_new, for new tcp");
 #ifdef HAVE_NGHTTP2
 		if(c_hdl->type == comm_http && c_hdl->h2_session)
 			http2_session_server_delete(c_hdl->h2_session);
 #endif
+		comm_point_slow_accept(c, 0);
 		return;
 	}
 	log_assert(fd != -1);
@@ -3270,6 +3371,10 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 #endif
 		return;
 	}
+	/* move per-netblock TCP-connection-limit handle to the handler so that
+	 * comm_point_close() on the handler decrements the count on close */
+	c_hdl->tcl_addr = c->tcl_addr;
+	c->tcl_addr = NULL;
 	/* Copy remote_address to client_address.
 	 * Simplest way/time for streams to do that. */
 	c_hdl->repinfo.client_addrlen = c_hdl->repinfo.remote_addrlen;
@@ -4172,8 +4277,8 @@ recv_error:
 	if(errno == EINTR || errno == EAGAIN)
 		return 1;
 #ifdef ECONNRESET
-		if(errno == ECONNRESET && verbosity < 2)
-			return 0; /* silence reset by peer */
+	if(errno == ECONNRESET && verbosity < 2)
+		return 0; /* silence reset by peer */
 #endif
 	if(recv_initial) {
 #ifdef ECONNREFUSED
@@ -4540,6 +4645,10 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 static int
 tcp_req_info_read_again(int fd, struct comm_point* c)
 {
+	/* One event-loop visit drains at most this many pipelined queries;
+	 * the rest is re-queued, so that other file descriptors get
+	 * serviced in between. */
+	int budget = NUM_TCP_PER_SELECT;
 	while(c->tcp_req_info->read_again) {
 		int r;
 		c->tcp_req_info->read_again = 0;
@@ -4556,6 +4665,16 @@ tcp_req_info_read_again(int fd, struct comm_point* c)
 			}
 			return 0;
 		}
+		if(--budget <= 0 && c->tcp_req_info->read_again) {
+			/* Defer the rest of the drain to the next loop turn.
+			 * This uses a zero delay timer. For TLS the undrained
+			 * remainder sits in OpenSSL's user-space buffer. */
+			struct timeval tv;
+			memset(&tv, 0, sizeof(tv));
+			verbose(VERB_ALGO, "Defer tcp_req_info read again");
+			comm_timer_set(c->tcp_req_info->read_again_timer, &tv);
+			return 1;
+		}
 	}
 	return 1;
 }
@@ -4569,6 +4688,7 @@ tcp_more_read_again(int fd, struct comm_point* c)
 	/* this continues until the read routines get EAGAIN or so,
 	 * and thus does not call the callback, and the bool is 0 */
 	int* moreread = c->tcp_more_read_again;
+	int budget = NUM_TCP_PER_SELECT;
 	while(moreread && *moreread) {
 		*moreread = 0;
 		if(!comm_point_tcp_handle_read(fd, c, 0)) {
@@ -4579,6 +4699,30 @@ tcp_more_read_again(int fd, struct comm_point* c)
 				(void)(*c->callback)(c, c->cb_arg,
 					NETEVENT_CLOSED, NULL);
 			}
+			return;
+		}
+		if(--budget <= 0 && *moreread) {
+			/* Defer the rest of the drain to the next loop turn.
+			 * This uses a zero delay timer. For TLS the undrained
+			 * remainder sits in OpenSSL's user-space buffer. */
+			struct timeval tv;
+			memset(&tv, 0, sizeof(tv));
+			if(!c->tcp_more_read_again_timer) {
+				c->tcp_more_read_again_timer = comm_timer_create(c->ev->base, tcp_more_read_again_cb, c);
+				if(!c->tcp_more_read_again_timer) {
+					log_err("out of memory for tcp more read again timer");
+					reclaim_tcp_handler(c);
+					if(!c->tcp_do_close) {
+						fptr_ok(fptr_whitelist_comm_point(
+							c->callback));
+						(void)(*c->callback)(c, c->cb_arg,
+							NETEVENT_CLOSED, NULL);
+					}
+					return;
+				}
+			}
+			verbose(VERB_ALGO, "Defer more read again");
+			comm_timer_set(c->tcp_more_read_again_timer, &tv);
 			return;
 		}
 	}
@@ -4606,6 +4750,23 @@ tcp_more_write_again(int fd, struct comm_point* c)
 			return;
 		}
 	}
+}
+
+void
+tcp_read_again_cb(void* arg)
+{
+	struct tcp_req_info* req = (struct tcp_req_info*)arg;
+	verbose(VERB_ALGO, "tcp_read_again_cb");
+	if(!tcp_req_info_read_again(req->cp->fd, req->cp))
+		return;
+}
+
+void
+tcp_more_read_again_cb(void* arg)
+{
+	struct comm_point* c = (struct comm_point*)arg;
+	verbose(VERB_ALGO, "tcp_more_read_again_cb");
+	tcp_more_read_again(c->fd, c);
 }
 
 void
@@ -5014,6 +5175,14 @@ http_chunked_segment(struct comm_point* c)
 		c->http_stored = 0;
 		sldns_buffer_skip(c->buffer, (ssize_t)c->tcp_byte_count);
 		sldns_buffer_clear(c->http_temp);
+		if(sldns_buffer_remaining(c->buffer) >
+			sldns_buffer_capacity(c->http_temp)) {
+			verbose(VERB_OPS, "http chunked: surplus %d exceeds "
+				"temp buffer %d", (int)sldns_buffer_remaining(
+				c->buffer), (int)sldns_buffer_capacity(
+				c->http_temp));
+			return 0;
+		}
 		sldns_buffer_write(c->http_temp,
 			sldns_buffer_current(c->buffer),
 			sldns_buffer_remaining(c->buffer));
@@ -5344,6 +5513,13 @@ comm_point_http_handle_read(int fd, struct comm_point* c)
 		if(c->http_in_headers || c->http_in_chunk_headers) {
 			/* if header is done, process the header */
 			if(!http_header_done(c->buffer)) {
+				if(sldns_buffer_limit(c->buffer) ==
+					sldns_buffer_capacity(c->buffer)) {
+					verbose(VERB_OPS, "http header line "
+						"exceeds %d bytes, transfer "
+						"failed", (int)sldns_buffer_capacity(c->buffer));
+					return 0;
+				}
 				/* copy remaining data to front of buffer
 				 * and set rest for writing into it */
 				http_moveover_buffer(c->buffer);
@@ -6035,7 +6211,7 @@ comm_point_create_tcp_handler(struct comm_base *base,
 	c->pp2_enabled = parent->pp2_enabled;
 	c->pp2_header_state = pp2_header_none;
 	if(spoolbuf) {
-		c->tcp_req_info = tcp_req_info_create(spoolbuf);
+		c->tcp_req_info = tcp_req_info_create(base, spoolbuf);
 		if(!c->tcp_req_info) {
 			log_err("could not create tcp commpoint");
 			sldns_buffer_free(c->buffer);
@@ -6584,7 +6760,10 @@ comm_point_close(struct comm_point* c)
 			c->event_added = 0;
 		}
 	}
-	tcl_close_connection(c->tcl_addr);
+	if(c->tcl_addr) {
+		tcl_close_connection(c->tcl_addr);
+		c->tcl_addr = NULL;
+	}
 	if(c->tcp_req_info)
 		tcp_req_info_clear(c->tcp_req_info);
 	if(c->h2_session)
@@ -6594,6 +6773,9 @@ comm_point_close(struct comm_point* c)
 		*c->tcp_more_read_again = 0;
 	if(c->tcp_more_write_again && *c->tcp_more_write_again)
 		*c->tcp_more_write_again = 0;
+	if(c->tcp_more_read_again_timer &&
+		comm_timer_is_set(c->tcp_more_read_again_timer))
+		comm_timer_disable(c->tcp_more_read_again_timer);
 
 	/* close fd after removing from event lists, or epoll.. is messed up */
 	if(c->fd != -1 && !c->do_not_close) {
@@ -6633,6 +6815,7 @@ comm_point_delete(struct comm_point* c)
 		free(c->tcp_handlers);
 	}
 	free(c->timeout);
+	comm_timer_delete(c->tcp_more_read_again_timer);
 	if(c->type == comm_tcp || c->type == comm_local || c->type == comm_http) {
 		sldns_buffer_free(c->buffer);
 #ifdef USE_DNSCRYPT
@@ -6773,6 +6956,7 @@ comm_point_drop_reply(struct comm_reply* repinfo)
 	if(repinfo->c->type == comm_http) {
 		if(repinfo->c->h2_session) {
 			repinfo->c->h2_session->is_drop = 1;
+			http2_session_clear_meshstate(repinfo->c->h2_session);
 			if(!repinfo->c->h2_session->postpone_drop)
 				reclaim_http_handler(repinfo->c);
 			return;

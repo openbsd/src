@@ -798,6 +798,10 @@ struct config_file {
 	int iter_scrub_rrsig;
 	/** limit on upstream queries for an incoming query and subqueries. */
 	int max_global_quota;
+	/** limit on validator validation attempts. */
+	int val_validation_attempts;
+	/** limit on validator hash attempts. */
+	int val_hash_attempts;
 	/** Should the iterator scrub promiscuous NS rrsets, from positive
 	 * answers. */
 	int iter_scrub_promiscuous;
@@ -884,6 +888,10 @@ struct config_auth {
 	int zonemd_check;
 	/** Reject absence of ZONEMD records, zone must have one */
 	int zonemd_reject_absence;
+	/** The maximum auth zone transfer size, in bytes. */
+	size_t max_transfer_size;
+	/** The maximum auth zone transfer time taken, in msec. */
+	int max_transfer_time;
 };
 
 /**
