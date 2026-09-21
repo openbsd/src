@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.175 2026/09/21 23:37:20 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.176 2026/09/21 23:40:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1356,7 +1356,7 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 	if (!tls_key_share_peer_security(s, s->s3->hs.key_share)) {
 		SSLerror(s, SSL_R_DH_KEY_TOO_SMALL);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-		return 0;
+		goto err;
 	}
 
 	return 1;
