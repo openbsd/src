@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.153 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.154 2026/09/21 00:46:13 jan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>	/* PAGE_SIZE */
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
@@ -28,6 +29,7 @@
 #include <dev/vmm/vmm.h>
 
 #include <net/if.h>
+#include <net/if_tun.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
@@ -75,6 +77,8 @@ SLIST_HEAD(virtio_dev_head, virtio_dev) virtio_devs;
 
 #define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
 
+#define VIRTIO_NET_F_CSUM	(1<<0)
+#define VIRTIO_NET_F_GUEST_CSUM	(1<<1)
 #define VIRTIO_NET_F_MAC	(1<<5)
 
 #define VMMCI_F_TIMESYNC	(1<<0)
@@ -1173,6 +1177,8 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	/* Virtio 1.x Network Devices */
 	if (vmc->vmc_nnics > 0) {
 		for (i = 0; i < vmc->vmc_nnics; i++) {
+			struct tun_capabilities tcap;
+
 			dev = malloc(sizeof(struct virtio_dev));
 			if (dev == NULL) {
 				log_warn("calloc failure allocating vionet");
@@ -1188,7 +1194,8 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			}
 			virtio_dev_init(vm, dev, id, VIONET_QUEUE_SIZE_DEFAULT,
 			    VIRTIO_NET_QUEUES,
-			    (VIRTIO_NET_F_MAC | VIRTIO_F_VERSION_1));
+			    (VIRTIO_NET_F_CSUM | VIRTIO_NET_F_GUEST_CSUM |
+			     VIRTIO_NET_F_MAC | VIRTIO_F_VERSION_1));
 
 			bar_id = pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io,
 			    dev);
@@ -1212,6 +1219,14 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			dev->dev_type = VMD_DEVTYPE_NET;
 			dev->vm_fd = vm->vm_fd;
 			dev->vionet.data_fd = child_taps[i];
+
+			/*
+			 * IFCAPs are tweaked after feature negotiation with
+			 * the guest later.
+			 */
+			memset(&tcap, 0, sizeof(tcap));
+			if (ioctl(dev->vionet.data_fd, TUNSCAP, &tcap) == -1)
+			    fatal("tap(4) TUNSCAP");
 
 			/* MAC address has been assigned by the parent */
 			memcpy(&dev->vionet.mac, &vmc->vmc_macs[i], 6);
@@ -1718,7 +1733,8 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		}
 
 		/* Close data fds. Only the child device needs them now. */
-		if (virtio_dev_closefds(dev) == -1) {
+		if (dev->dev_type != VMD_DEVTYPE_NET &&
+		    virtio_dev_closefds(dev) == -1) {
 			log_warnx("%s: failed to close device data fds",
 			    __func__);
 			goto err;
@@ -1963,6 +1979,18 @@ handle_dev_msg(struct viodev_msg *msg, struct virtio_dev *gdev)
 	case VIODEV_MSG_ERROR:
 		log_warnx("%s: device reported error", __func__);
 		break;
+	case VIODEV_MSG_TUNSCAP:
+	{
+		struct tun_capabilities tcap;
+
+		memset(&tcap, 0, sizeof(tcap));
+		tcap.tun_if_capabilities = msg->data;
+
+		if (ioctl(gdev->vionet.data_fd, TUNSCAP, &tcap) == -1)
+			fatal("%s: tap(4) TUNSCAP", __func__);
+
+		break;
+	}
 	case VIODEV_MSG_INVALID:
 	case VIODEV_MSG_IO_READ:
 	case VIODEV_MSG_IO_WRITE:

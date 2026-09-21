@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.66 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.67 2026/09/21 00:46:13 jan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -134,6 +134,7 @@ struct viodev_msg {
 #define VIODEV_MSG_IO_WRITE	5
 #define VIODEV_MSG_DUMP		6
 #define VIODEV_MSG_SHUTDOWN	7
+#define VIODEV_MSG_TUNSCAP	8
 
 	uint16_t reg;		/* VirtIO register */
 	uint8_t io_sz;		/* IO instruction size */
@@ -320,6 +321,9 @@ struct virtio_net_hdr {
 	uint16_t padding_reserved;
 	*/
 };
+
+#define VIRTIO_NET_HDR_F_NEEDS_CSUM	1 /* flags */
+#define VIRTIO_NET_HDR_F_DATA_VALID	2 /* flags */
 
 enum vmmci_cmd {
 	VMMCI_NONE = 0,

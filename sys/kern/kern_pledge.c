@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.368 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.369 2026/09/21 00:46:13 jan Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -48,6 +48,7 @@
 #include <net/route.h>
 #include <net/if.h>
 #include <net/if_var.h>
+#include <net/if_tun.h>
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
@@ -1380,6 +1381,12 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			case VMM_IOC_CREATE:
 				return (0);
 			}
+		}
+		if ((fp->f_type == DTYPE_VNODE) &&
+		    (vp->v_type == VCHR) &&
+		    (cdevsw[major(vp->v_rdev)].d_open == tapopen)) {
+			if (com == TUNSCAP)
+				return 0;
 		}
 	}
 #endif
