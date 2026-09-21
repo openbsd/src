@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtable_add.9,v 1.9 2021/03/26 22:41:06 mvs Exp $
+.\"     $OpenBSD: rtable_add.9,v 1.10 2026/09/21 05:16:18 jsg Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2021 $
+.Dd $Mdocdate: September 21 2026 $
 .Dt RTABLE_ADD 9
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ under the routing domain with ID of
 .Fn rtable_loindex ,
 .Fn rtable_l2 ,
 and
-.Fn task_l2set
+.Fn rtable_l2set
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn rtable_add
