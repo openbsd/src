@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.13 2026/09/21 20:05:59 tb Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.14 2026/09/21 20:54:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -458,12 +458,13 @@ nc_dn(X509_NAME *nm, X509_NAME *base)
 static int
 nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 {
-	char *baseptr = (char *)base->data;
-	char *dnsptr = (char *)dns->data;
+	const char *baseptr = (const char *)base->data;
+	const char *dnsptr = (const char *)dns->data;
 
 	/* Empty matches everything */
-	if (!*baseptr)
+	if (base->length == 0)
 		return X509_V_OK;
+
 	/* Otherwise can add zero or more components on the left so
 	 * compare RHS and if dns is longer and expect '.' as preceding
 	 * character.
@@ -472,9 +473,15 @@ nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 		dnsptr += dns->length - base->length;
 		if (baseptr[0] != '.' && dnsptr[-1] != '.')
 			return X509_V_ERR_PERMITTED_VIOLATION;
-	}
+	} else if (dns->length < base->length)
+		return X509_V_ERR_PERMITTED_VIOLATION;
 
-	if (strcasecmp(baseptr, dnsptr))
+	if (memchr(baseptr, '\0', base->length) != NULL)
+		return X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
+	if (memchr(dnsptr, '\0', dns->length) != NULL)
+		return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
+	if (strncasecmp(baseptr, dnsptr, base->length) != 0)
 		return X509_V_ERR_PERMITTED_VIOLATION;
 
 	return X509_V_OK;
