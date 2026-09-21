@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.504 2026/08/30 23:43:22 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.505 2026/09/21 18:45:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -663,12 +663,6 @@ aspa_tas_l	: aspa_tas			{ $$ = $1; }
 		;
 
 aspa_tas	: as4number_any {
-			if (($$ = calloc(1, sizeof(*$$))) == NULL)
-				fatal(NULL);
-			$$->as = $1;
-			$$->num = 1;
-		}
-		| as4number_any af {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				fatal(NULL);
 			$$->as = $1;
