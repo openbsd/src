@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2026/09/19 19:52:30 jan Exp $
+#	$OpenBSD: Makefile,v 1.2 2026/09/21 23:17:57 jan Exp $
 
 .if ${MACHINE} != "amd64"
 regress:
@@ -22,7 +22,6 @@ VMD ?=			/usr/sbin/vmd
 SNMPD ?=		/usr/sbin/snmpd
 SNMP ?=			/usr/bin/snmp
 
-AGENTXSOCK =		${.OBJDIR}/agentx
 SNMPDCONF =		${.OBJDIR}/snmpd.conf
 VMDCONF =		${.OBJDIR}/vmd.conf
 
@@ -33,16 +32,16 @@ REGRESS_ROOT_TARGETS =	start stop cleanup
 REGRESS_SETUP_ONCE =	start
 REGRESS_CLEANUP =	cleanup
 
-CLEANFILES =		agentx snmpd.conf vmd.conf regress.img *.out *.ok
+CLEANFILES =		snmpd.conf vmd.conf
 
 ${SNMPDCONF}:
 	echo 'listen on 127.0.0.1 snmpv2c'	> $@
-	echo 'agentx path "${AGENTXSOCK}"'	>> $@
+	echo 'agentx'				>> $@
 	echo 'read-only community public'	>> $@
 
 # The vm is disabled, so vmd(8) exports it without ever starting it.
 ${VMDCONF}:
-	echo 'agentx path "${AGENTXSOCK}"'	> $@
+	echo 'agentx'				> $@
 	echo 'vm "regress-vm" {'		>> $@
 	echo '	disable'			>> $@
 	echo '	memory 1G'			>> $@
@@ -68,12 +67,10 @@ start: stop ${SNMPDCONF} ${VMDCONF}
 stop:
 	-${SUDO} pkill -xf '${VMD} -f ${VMDCONF}'
 	-${SUDO} pkill -xf '${SNMPD} -f ${SNMPDCONF}'
-	-${SUDO} rm -f ${AGENTXSOCK}
 
 # hand the daemons back to rc(8)
 cleanup: stop
 	-${SUDO} rcctl restart snmpd vmd || true
-	rm -f ${SNMPDCONF} ${VMDCONF}
 
 REGRESS_TARGETS += run-tests
 run-tests:
