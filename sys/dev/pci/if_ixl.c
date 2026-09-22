@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.117 2026/06/23 14:40:40 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.118 2026/09/22 14:53:07 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -901,7 +901,8 @@ struct ixl_rx_wb_desc_32 {
 #define IXL_TX_QUEUE_ALIGN		128
 #define IXL_RX_QUEUE_ALIGN		128
 
-#define IXL_HARDMTU			9712 /* 9726 - ETHER_HDR_LEN */
+#define IXL_HARDMTU			(9728 - ETHER_HDR_LEN - EVL_ENCAPLEN \
+					    - ETHER_CRC_LEN)
 #define IXL_TSO_SIZE			((255 * 1024) - 1)
 #define IXL_MAX_DMA_SEG_SIZE		((16 * 1024) - 1)
 
@@ -3171,7 +3172,7 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	rxq.crcstrip = 1;
 	rxq.l2tsel = IXL_HMC_RXQ_L2TSEL_1ST_TAG_TO_L2TAG1;
 	rxq.showiv = 0;
-	rxq.rxmax = htole16(IXL_HARDMTU);
+	rxq.rxmax = htole16(MCLBYTES * 5);
 	rxq.tphrdesc_ena = 0;
 	rxq.tphwdesc_ena = 0;
 	rxq.tphdata_ena = 0;
