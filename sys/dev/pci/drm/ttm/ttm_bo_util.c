@@ -175,13 +175,13 @@ int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
 
 	dst_iter = ttm_kmap_iter_linear_io_init(&_dst_iter.io, bdev, dst_mem);
 	if (PTR_ERR(dst_iter) == -EINVAL && dst_man->use_tt)
-		dst_iter = ttm_kmap_iter_tt_init(&_dst_iter.tt, bo->ttm);
+		dst_iter = ttm_kmap_iter_tt_init(&_dst_iter.tt, ttm);
 	if (IS_ERR(dst_iter))
 		return PTR_ERR(dst_iter);
 
 	src_iter = ttm_kmap_iter_linear_io_init(&_src_iter.io, bdev, src_mem);
 	if (PTR_ERR(src_iter) == -EINVAL && src_man->use_tt)
-		src_iter = ttm_kmap_iter_tt_init(&_src_iter.tt, bo->ttm);
+		src_iter = ttm_kmap_iter_tt_init(&_src_iter.tt, ttm);
 	if (IS_ERR(src_iter)) {
 		ret = PTR_ERR(src_iter);
 		goto out_src_iter;
@@ -321,9 +321,9 @@ static int ttm_bo_ioremap(struct ttm_buffer_object *bo,
 	int flags;
 	struct ttm_resource *mem = bo->resource;
 
-	if (bo->resource->bus.addr) {
+	if (mem->bus.addr) {
 		map->bo_kmap_type = ttm_bo_map_premapped;
-		map->virtual = ((u8 *)bo->resource->bus.addr) + offset;
+		map->virtual = ((u8 *)mem->bus.addr) + offset;
 	} else {
 		map->bo_kmap_type = ttm_bo_map_iomap;
 		if (mem->bus.caching == ttm_write_combined)
@@ -335,7 +335,7 @@ static int ttm_bo_ioremap(struct ttm_buffer_object *bo,
 		else
 			flags = 0;
 		if (bus_space_map(bo->bdev->memt,
-		    bo->resource->bus.offset + offset,
+		    mem->bus.offset + offset,
 		    size, BUS_SPACE_MAP_LINEAR | flags,
 		    &bo->resource->bus.bsh)) {
 			printf("%s bus_space_map failed\n", __func__);
@@ -360,7 +360,7 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 	};
 	struct ttm_tt *ttm = bo->ttm;
 	struct ttm_resource_manager *man =
-			ttm_manager_type(bo->bdev, bo->resource->mem_type);
+			ttm_manager_type(bo->bdev, mem->mem_type);
 	pgprot_t prot;
 	int ret;
 
@@ -439,20 +439,21 @@ int ttm_bo_kmap(struct ttm_buffer_object *bo,
 		unsigned long start_page, unsigned long num_pages,
 		struct ttm_bo_kmap_obj *map)
 {
+	struct ttm_resource *res = bo->resource;
 	unsigned long offset, size;
 	int ret;
 
 	map->virtual = NULL;
 	map->bo = bo;
-	if (num_pages > PFN_UP(bo->resource->size))
+	if (num_pages > PFN_UP(res->size))
 		return -EINVAL;
-	if ((start_page + num_pages) > PFN_UP(bo->resource->size))
+	if ((start_page + num_pages) > PFN_UP(res->size))
 		return -EINVAL;
 
-	ret = ttm_mem_io_reserve(bo->bdev, bo->resource);
+	ret = ttm_mem_io_reserve(bo->bdev, res);
 	if (ret)
 		return ret;
-	if (!bo->resource->bus.is_iomem) {
+	if (!res->bus.is_iomem) {
 		return ttm_bo_kmap_ttm(bo, start_page, num_pages, map);
 	} else {
 		offset = start_page << PAGE_SHIFT;
@@ -605,7 +606,7 @@ void ttm_bo_vunmap(struct ttm_buffer_object *bo, struct iosys_map *map)
 		    bo->base.size);
 	iosys_map_clear(map);
 
-	ttm_mem_io_free(bo->bdev, bo->resource);
+	ttm_mem_io_free(bo->bdev, mem);
 }
 EXPORT_SYMBOL(ttm_bo_vunmap);
 
@@ -668,10 +669,9 @@ static int ttm_bo_move_to_ghost(struct ttm_buffer_object *bo,
 static void ttm_bo_move_pipeline_evict(struct ttm_buffer_object *bo,
 				       struct dma_fence *fence)
 {
-	struct ttm_device *bdev = bo->bdev;
 	struct ttm_resource_manager *from;
 
-	from = ttm_manager_type(bdev, bo->resource->mem_type);
+	from = ttm_manager_type(bo->bdev, bo->resource->mem_type);
 
 	/**
 	 * BO doesn't have a TTM we need to bind/unbind. Just remember
@@ -743,8 +743,8 @@ EXPORT_SYMBOL(ttm_bo_move_accel_cleanup);
 void ttm_bo_move_sync_cleanup(struct ttm_buffer_object *bo,
 			      struct ttm_resource *new_mem)
 {
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *man = ttm_manager_type(bdev, new_mem->mem_type);
+	struct ttm_resource_manager *man =
+		ttm_manager_type(bo->bdev, new_mem->mem_type);
 	int ret;
 
 	ret = ttm_bo_wait_free_node(bo, man->use_tt);
@@ -848,13 +848,12 @@ static int ttm_lru_walk_ticketlock(struct ttm_bo_lru_cursor *curs,
 				   struct ttm_buffer_object *bo)
 {
 	struct ttm_lru_walk_arg *arg = curs->arg;
-	struct dma_resv *resv = bo->base.resv;
 	int ret;
 
 	if (arg->ctx->interruptible)
-		ret = dma_resv_lock_interruptible(resv, arg->ticket);
+		ret = dma_resv_lock_interruptible(bo->base.resv, arg->ticket);
 	else
-		ret = dma_resv_lock(resv, arg->ticket);
+		ret = dma_resv_lock(bo->base.resv, arg->ticket);
 
 	if (!ret) {
 		curs->needs_unlock = true;
@@ -1098,7 +1097,7 @@ long ttm_bo_shrink(struct ttm_operation_ctx *ctx, struct ttm_buffer_object *bo,
 		.num_placement = 1,
 		.placement = &sys_placement_flags,
 	};
-	struct ttm_tt *tt = bo->ttm;
+	struct ttm_device *bdev = bo->bdev;
 	long lret;
 
 	dma_resv_assert_held(bo->base.resv);
@@ -1120,19 +1119,19 @@ long ttm_bo_shrink(struct ttm_operation_ctx *ctx, struct ttm_buffer_object *bo,
 		return lret;
 
 	if (bo->bulk_move) {
-		spin_lock(&bo->bdev->lru_lock);
+		spin_lock(&bdev->lru_lock);
 		ttm_resource_del_bulk_move(bo->resource, bo);
-		spin_unlock(&bo->bdev->lru_lock);
+		spin_unlock(&bdev->lru_lock);
 	}
 
-	lret = ttm_tt_backup(bo->bdev, tt, (struct ttm_backup_flags)
+	lret = ttm_tt_backup(bdev, bo->ttm, (struct ttm_backup_flags)
 			     {.purge = flags.purge,
 			      .writeback = flags.writeback});
 
 	if (lret <= 0 && bo->bulk_move) {
-		spin_lock(&bo->bdev->lru_lock);
+		spin_lock(&bdev->lru_lock);
 		ttm_resource_add_bulk_move(bo->resource, bo);
-		spin_unlock(&bo->bdev->lru_lock);
+		spin_unlock(&bdev->lru_lock);
 	}
 
 	if (lret < 0 && lret != -EINTR)

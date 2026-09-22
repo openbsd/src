@@ -188,7 +188,6 @@ vm_fault_t ttm_bo_vm_fault_reserved(struct vm_fault *vmf,
 {
 	struct vm_area_struct *vma = vmf->vma;
 	struct ttm_buffer_object *bo = vma->vm_private_data;
-	struct ttm_device *bdev = bo->bdev;
 	unsigned long page_offset;
 	unsigned long page_last;
 	unsigned long pfn;
@@ -207,7 +206,7 @@ vm_fault_t ttm_bo_vm_fault_reserved(struct vm_fault *vmf,
 	if (unlikely(ret != 0))
 		return ret;
 
-	err = ttm_mem_io_reserve(bdev, bo->resource);
+	err = ttm_mem_io_reserve(bo->bdev, bo->resource);
 	if (unlikely(err != 0))
 		return VM_FAULT_SIGBUS;
 
@@ -295,7 +294,6 @@ vm_fault_t ttm_bo_vm_dummy_page(struct vm_fault *vmf, pgprot_t prot)
 {
 	struct vm_area_struct *vma = vmf->vma;
 	struct ttm_buffer_object *bo = vma->vm_private_data;
-	struct drm_device *ddev = bo->base.dev;
 	vm_fault_t ret = VM_FAULT_NOPAGE;
 	unsigned long address;
 	unsigned long pfn;
@@ -307,7 +305,8 @@ vm_fault_t ttm_bo_vm_dummy_page(struct vm_fault *vmf, pgprot_t prot)
 		return VM_FAULT_OOM;
 
 	/* Set the page to be freed using drmm release action */
-	if (drmm_add_action_or_reset(ddev, ttm_bo_release_dummy_page, page))
+	if (drmm_add_action_or_reset(bo->base.dev, ttm_bo_release_dummy_page,
+				     page))
 		return VM_FAULT_OOM;
 
 	pfn = page_to_pfn(page);
@@ -324,10 +323,9 @@ EXPORT_SYMBOL(ttm_bo_vm_dummy_page);
 vm_fault_t ttm_bo_vm_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
-	pgprot_t prot;
 	struct ttm_buffer_object *bo = vma->vm_private_data;
-	struct drm_device *ddev = bo->base.dev;
 	vm_fault_t ret;
+	pgprot_t prot;
 	int idx;
 
 	ret = ttm_bo_vm_reserve(bo, vmf);
@@ -335,7 +333,7 @@ vm_fault_t ttm_bo_vm_fault(struct vm_fault *vmf)
 		return ret;
 
 	prot = vma->vm_page_prot;
-	if (drm_dev_enter(ddev, &idx)) {
+	if (drm_dev_enter(bo->base.dev, &idx)) {
 		ret = ttm_bo_vm_fault_reserved(vmf, prot, TTM_BO_VM_NUM_PREFAULT);
 		drm_dev_exit(idx);
 	} else {
