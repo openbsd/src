@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.19 2026/08/21 17:16:29 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.20 2026/09/22 03:27:08 jsing Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -394,16 +394,16 @@ generate_graphics(void)
 	return 0;
 }
 
-extern enum tls13_message_type	handshakes[][TLS13_NUM_MESSAGE_TYPES];
-extern size_t			handshake_count;
+extern enum tls13_message_type	tls13_handshakes[][TLS13_NUM_MESSAGE_TYPES];
+extern size_t			tls13_handshake_count;
 
 size_t
 count_handshakes(void)
 {
 	size_t	ret = 0, i;
 
-	for (i = 0; i < handshake_count; i++) {
-		if (handshakes[i][0] != INVALID)
+	for (i = 0; i < tls13_handshake_count; i++) {
+		if (tls13_handshakes[i][0] != INVALID)
 			ret++;
 	}
 
@@ -464,7 +464,7 @@ verify_table(enum tls13_message_type table[MAX_FLAGS][TLS13_NUM_MESSAGE_TYPES],
 		num_found++;
 
 		for (i = 0; i < TLS13_NUM_MESSAGE_TYPES; i++) {
-			if (table[flags][i] != handshakes[flags][i]) {
+			if (table[flags][i] != tls13_handshakes[flags][i]) {
 				fprintf(stderr,
 				    "incorrect entry %d of handshake ", i);
 				fprint_flags(stderr, flags);
