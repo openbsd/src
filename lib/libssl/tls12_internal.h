@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_internal.h,v 1.4 2026/09/22 03:45:18 jsing Exp $ */
+/* $OpenBSD: tls12_internal.h,v 1.5 2026/09/22 18:57:11 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -23,7 +23,13 @@
 
 #include <openssl/ssl.h>
 
+#include "bytestring.h"
+#include "tls_internal.h"
+
 __BEGIN_HIDDEN_DECLS
+
+#define TLS12_HS_CLIENT			1
+#define TLS12_HS_SERVER			2
 
 #define TLS12_IO_SUCCESS		 1
 #define TLS12_IO_EOF			 0
@@ -35,6 +41,42 @@ __BEGIN_HIDDEN_DECLS
 #define TLS12_IO_USE_LEGACY		-6
 #define TLS12_IO_RECORD_VERSION		-7
 #define TLS12_IO_RECORD_OVERFLOW	-8
+
+#define TLS12_ALERT_CLOSE_NOTIFY			0
+#define TLS12_ALERT_UNEXPECTED_MESSAGE			10
+#define TLS12_ALERT_BAD_RECORD_MAC			20
+#define TLS12_ALERT_RECORD_OVERFLOW			22
+#define TLS12_ALERT_DECOMPRESSION_FAILURE		30
+#define TLS12_ALERT_HANDSHAKE_FAILURE			40
+#define TLS12_ALERT_BAD_CERTIFICATE			42
+#define TLS12_ALERT_UNSUPPORTED_CERTIFICATE		43
+#define TLS12_ALERT_CERTIFICATE_REVOKED			44
+#define TLS12_ALERT_CERTIFICATE_EXPIRED			45
+#define TLS12_ALERT_CERTIFICATE_UNKNOWN			46
+#define TLS12_ALERT_ILLEGAL_PARAMETER			47
+#define TLS12_ALERT_UNKNOWN_CA				48
+#define TLS12_ALERT_ACCESS_DENIED			49
+#define TLS12_ALERT_DECODE_ERROR			50
+#define TLS12_ALERT_DECRYPT_ERROR			51
+#define TLS12_ALERT_PROTOCOL_VERSION			70
+#define TLS12_ALERT_INSUFFICIENT_SECURITY		71
+#define TLS12_ALERT_INTERNAL_ERROR			80
+#define TLS12_ALERT_USER_CANCELED			90
+#define TLS12_ALERT_NO_RENEGOTIATION			100
+#define TLS12_ALERT_UNSUPPORTED_EXTENSION		110
+
+#define TLS12_INFO_HANDSHAKE_STARTED			SSL_CB_HANDSHAKE_START
+#define TLS12_INFO_HANDSHAKE_COMPLETED			SSL_CB_HANDSHAKE_DONE
+#define TLS12_INFO_ACCEPT_LOOP				SSL_CB_ACCEPT_LOOP
+#define TLS12_INFO_CONNECT_LOOP				SSL_CB_CONNECT_LOOP
+#define TLS12_INFO_ACCEPT_EXIT				SSL_CB_ACCEPT_EXIT
+#define TLS12_INFO_CONNECT_EXIT				SSL_CB_CONNECT_EXIT
+
+typedef void (*tls12_alert_cb)(uint8_t _alert_level, uint8_t _alert_desc,
+    void *_cb_arg);
+typedef void (*tls12_ccs_cb)(void *_cb_arg);
+typedef void (*tls12_handshake_message_cb)(void *_cb_arg);
+typedef void (*tls12_info_cb)(void *_cb_arg, int _state, int _ret);
 
 struct tls12_record_layer;
 
@@ -74,6 +116,39 @@ int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len,
     CBB *out);
 
+ssize_t tls12_send_alert(struct tls12_record_layer *rl, uint8_t alert_desc);
+
+struct tls12_handshake_stage {
+	uint8_t	hs_type;
+	uint8_t	message_number;
+};
+
+struct ssl_handshake_tls12_st;
+
+struct tls12_ctx {
+	SSL *ssl;
+	struct ssl_handshake_st *hs;
+	uint8_t	mode;
+	struct tls12_handshake_stage handshake_stage;
+	int handshake_started;
+	int handshake_completed;
+	int need_flush;
+
+	int close_notify_sent;
+	int close_notify_recv;
+
+	struct tls12_record_layer *rl;
+	uint8_t alert;
+
+	tls12_alert_cb alert_sent_cb;
+	tls12_alert_cb alert_recv_cb;
+	tls12_ccs_cb ccs_sent_cb;
+	tls12_ccs_cb ccs_recv_cb;
+	tls12_handshake_message_cb handshake_message_sent_cb;
+	tls12_handshake_message_cb handshake_message_recv_cb;
+	tls12_info_cb info_cb;
+};
+
 /*
  * Legacy interfaces.
  */
@@ -83,6 +158,55 @@ ssize_t tls12_legacy_wire_write_cb(const void *buf, size_t n, void *arg);
 int tls12_exporter(SSL *s, const uint8_t *label, size_t label_len,
     const uint8_t *context_value, size_t context_value_len, int use_context,
     uint8_t *out, size_t out_len);
+
+/*
+ * Message Types - RFC 5246 section 7.4.
+ */
+#define TLS12_MT_HELLO_REQUEST			0
+#define TLS12_MT_CLIENT_HELLO			1
+#define TLS12_MT_SERVER_HELLO			2
+#define	TLS12_MT_NEW_SESSION_TICKET		4
+#define TLS12_MT_CERTIFICATE			11
+#define TLS12_MT_SERVER_KEY_EXCHANGE		12
+#define TLS12_MT_CERTIFICATE_REQUEST		13
+#define TLS12_MT_SERVER_HELLO_DONE		14
+#define TLS12_MT_CERTIFICATE_VERIFY		15
+#define TLS12_MT_CLIENT_KEY_EXCHANGE		16
+#define TLS12_MT_FINISHED			20
+
+int tls12_handshake_perform(struct tls12_ctx *ctx);
+
+int tls12_client_init(struct tls12_ctx *ctx);
+int tls12_server_init(struct tls12_ctx *ctx);
+int tls12_client_connect(struct tls12_ctx *ctx);
+int tls12_server_accept(struct tls12_ctx *ctx);
+
+int tls12_client_hello_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_client_hello_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_client_certificate_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_client_certificate_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_client_certificate_verify_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_client_certificate_verify_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_client_key_exchange_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_client_key_exchange_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_client_finished_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_client_finished_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_hello_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_hello_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_certificate_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_certificate_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_certificate_request_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_certificate_request_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_certificate_verify_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_certificate_verify_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_key_exchange_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_key_exchange_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_hello_done_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_hello_done_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_new_session_ticket_send(struct tls12_ctx *ctx, CBB *cbb);
+int tls12_server_new_session_ticket_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_finished_recv(struct tls12_ctx *ctx, CBS *cbs);
+int tls12_server_finished_send(struct tls12_ctx *ctx, CBB *cbb);
 
 __END_HIDDEN_DECLS
 

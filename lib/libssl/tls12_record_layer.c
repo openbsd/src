@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.44 2026/09/22 03:45:18 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.45 2026/09/22 18:57:11 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -1319,4 +1319,10 @@ tls12_record_layer_seal_record(struct tls12_record_layer *rl,
 	free(seq_num_data);
 
 	return ret;
+}
+
+ssize_t
+tls12_send_alert(struct tls12_record_layer *rl, uint8_t alert_desc)
+{
+	return TLS12_IO_FAILURE;
 }
