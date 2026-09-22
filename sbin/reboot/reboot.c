@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.39 2026/07/01 00:41:33 jsg Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.40 2026/09/22 15:04:44 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -135,6 +135,9 @@ main(int argc, char *argv[])
 	}
 #endif /* CPU_LIDACTION */
 
+	if (isatty(STDOUT_FILENO))
+		tcdrain(STDOUT_FILENO);
+
 	if (qflag) {
 		reboot(howto);
 		err(1, "reboot");
@@ -217,6 +220,9 @@ main(int argc, char *argv[])
 				howto |= RB_POWERDOWN;
 		}
 	}
+
+	if (isatty(STDOUT_FILENO))
+		tcdrain(STDOUT_FILENO);
 
 	/*
 	 * Point of no return, block all signals so we are sure to
