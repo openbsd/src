@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_internal.h,v 1.6 2026/09/22 19:00:31 jsing Exp $ */
+/* $OpenBSD: tls12_internal.h,v 1.7 2026/09/22 19:29:39 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -129,7 +129,18 @@ struct tls12_handshake_stage {
 
 struct ssl_handshake_tls12_st;
 
+struct tls12_error {
+	int code;
+	int subcode;
+	int errnum;
+	const char *file;
+	int line;
+	char *msg;
+};
+
 struct tls12_ctx {
+	struct tls12_error error;
+
 	SSL *ssl;
 	struct ssl_handshake_st *hs;
 	uint8_t	mode;
@@ -231,6 +242,20 @@ int tls12_server_new_session_ticket_send(struct tls12_ctx *ctx, CBB *cbb);
 int tls12_server_new_session_ticket_recv(struct tls12_ctx *ctx, CBS *cbs);
 int tls12_server_finished_recv(struct tls12_ctx *ctx, CBS *cbs);
 int tls12_server_finished_send(struct tls12_ctx *ctx, CBB *cbb);
+
+void tls12_error_clear(struct tls12_error *error);
+
+int tls12_error_set(struct tls12_error *error, int code, int subcode,
+    const char *file, int line, const char *fmt, ...);
+int tls12_error_setx(struct tls12_error *error, int code, int subcode,
+    const char *file, int line, const char *fmt, ...);
+
+#define tls12_set_error(ctx, code, subcode, fmt, ...) \
+	tls12_error_set(&(ctx)->error, (code), (subcode), OPENSSL_FILE, OPENSSL_LINE, \
+	    (fmt), __VA_ARGS__)
+#define tls12_set_errorx(ctx, code, subcode, fmt, ...) \
+	tls12_error_setx(&(ctx)->error, (code), (subcode), OPENSSL_FILE, OPENSSL_LINE, \
+	    (fmt), __VA_ARGS__)
 
 __END_HIDDEN_DECLS
 
