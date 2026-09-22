@@ -1,4 +1,4 @@
-/* $OpenBSD: renegotiation_test.c,v 1.4 2026/06/14 14:33:36 jsing Exp $ */
+/* $OpenBSD: renegotiation_test.c,v 1.5 2026/09/22 00:57:38 jsing Exp $ */
 /*
  * Copyright (c) 2020,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -424,10 +424,8 @@ tls_client_info_callback(const SSL *ssl, int where, int value)
 		tls_client_alert = value;
 	}
 
-	if (tls_client_disable_ri) {
-		ssl->s3->renegotiate_seen = 0;
-		ssl->s3->send_connection_binding = 0;
-	}
+	if (tls_client_disable_ri)
+		ssl->s3->secure_renegotiation = 0;
 }
 
 static void
@@ -440,10 +438,8 @@ tls_server_info_callback(const SSL *ssl, int where, int value)
 		tls_server_alert = value;
 	}
 
-	if (tls_server_disable_ri) {
-		ssl->s3->renegotiate_seen = 0;
-		ssl->s3->send_connection_binding = 0;
-	}
+	if (tls_server_disable_ri)
+		ssl->s3->secure_renegotiation = 0;
 }
 
 static int
