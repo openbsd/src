@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.89 2026/09/22 08:21:39 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.90 2026/09/22 09:18:41 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4352,8 +4352,13 @@ svm_handle_exit(struct vcpu *vcpu)
 		    vcpu->vc_gueststate.vg_rax == HVCALL_FORCED_ABORT)
 			return (VMM_ACTION_TERMINATE);
 		DPRINTF("SVM_VMEXIT_VMMCALL at cpl=%d\n", guest_cpl);
-		vmm_inject_ud(vcpu);
-		action = VMM_ACTION_INJECT;
+		if (guest_cpl > 0) {
+			vmm_inject_ud(vcpu);
+			action = VMM_ACTION_INJECT;
+			break;
+		}
+		vcpu->vc_gueststate.vg_rax = -1;
+		action = VMM_ACTION_ADVANCE;
 		break;
 	default:
 		DPRINTF("%s: unhandled exit 0x%llx (pa=0x%llx)\n", __func__,
@@ -4825,8 +4830,13 @@ vmx_handle_exit(struct vcpu *vcpu)
 		    vcpu->vc_gueststate.vg_rax == HVCALL_FORCED_ABORT)
 			return (VMM_ACTION_TERMINATE);
 		DPRINTF("VMX_EXIT_VMCALL at cpl=%d\n", guest_cpl);
-		vmm_inject_ud(vcpu);
-		action = VMM_ACTION_INJECT;
+		if (guest_cpl > 0) {
+			vmm_inject_gp(vcpu);
+			action = VMM_ACTION_INJECT;
+			break;
+		}
+		vcpu->vc_gueststate.vg_rax = -1;
+		action = VMM_ACTION_ADVANCE;
 		break;
 	default:
 #ifdef VMM_DEBUG

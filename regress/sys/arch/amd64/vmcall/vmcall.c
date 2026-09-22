@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmcall.c,v 1.1 2026/02/16 13:05:14 hshoexer Exp $ */
+/*	$OpenBSD: vmcall.c,v 1.2 2026/09/22 09:18:41 hshoexer Exp $ */
 /*
  * Copyright (c) 2026 Hans-Joerg Hoexer <hshoexer@yerbouti.franken.de>
  *
@@ -21,8 +21,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* On Intel CPUs we expect #GP(0) */
 static void
-handler(int sig, siginfo_t *sip, void *ctx)
+sigsegv(int sig, siginfo_t *sip, void *ctx)
+{
+	printf("signo %d, code %d, errno %d\n", sip->si_signo, sip->si_code,
+	    sip->si_errno);
+	if (sig != SIGSEGV)
+		errx(1, "expected SIGSEGV: %d", sig);
+	if (sip->si_code != SEGV_MAPERR)
+		errx(1, "expected SEGV_MAPERR: %d", sip->si_code);
+	if (sip->si_errno != 0)
+		errx(1, "expected errno 0: %d", sip->si_errno);
+
+	exit(0);
+}
+
+/* On AMD CPUs we expect #UD */
+static void
+sigill(int sig, siginfo_t *sip, void *ctx)
 {
 	printf("signo %d, code %d, errno %d\n", sip->si_signo, sip->si_code,
 	    sip->si_errno);
@@ -30,6 +47,8 @@ handler(int sig, siginfo_t *sip, void *ctx)
 		errx(1, "expected SIGILL: %d", sig);
 	if (sip->si_code != ILL_PRVOPC)
 		errx(1, "expected ILL_PRVOPC: %d", sip->si_code);
+	if (sip->si_errno != 0)
+		errx(1, "expected errno 0: %d", sip->si_errno);
 
 	exit(0);
 }
@@ -50,8 +69,11 @@ main(int argc, char **argv)
 		usage();
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = sigsegv;
+	if (sigaction(SIGSEGV, &sa, NULL) == -1)
+		err(2, "sigaction");
+	sa.sa_sigaction = sigill;
 	if (sigaction(SIGILL, &sa, NULL) == -1)
 		err(2, "sigaction");
 
