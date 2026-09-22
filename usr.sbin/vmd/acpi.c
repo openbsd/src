@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.3 2026/09/18 04:25:01 dv Exp $ */
+/*	$OpenBSD: acpi.c,v 1.4 2026/09/22 20:20:57 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -254,7 +254,8 @@ acpi_load_dsdt(const char *path)
 		return (-1);
 	}
 
-	if (sb.st_size <= 0 || sb.st_size > VMD_DSDT_MAX_SIZE) {
+	if (sb.st_size <= 0 ||
+	    (uint64_t)sb.st_size > VMD_DSDT_MAX_SIZE) {
 		log_warnx("%s: unreasonable table size %lld", __func__,
 		    (long long)sb.st_size);
 		close(fd);
@@ -362,11 +363,11 @@ acpi_create_fadt(paddr_t pa, paddr_t facs_pa, paddr_t dsdt_pa)
 	memcpy(fadt.hdr_signature, FADT_SIG, 4);
 	fadt.hdr.length = sizeof(fadt);
 
-	/* FACS and DSDT pointers - use both legacy and extended fields. */
+	/* The tables reside below 4GB, so use only the 32-bit pointers. */
 	fadt.firmware_ctl = (uint32_t)facs_pa;
-	fadt.x_firmware_ctl = facs_pa;
-	fadt.dsdt = (uint32_t)dsdt_pa;  /* ACPI 1.0 compatibility */
-	fadt.x_dsdt = dsdt_pa;          /* ACPI 2.0+ 64-bit address */
+	fadt.x_firmware_ctl = 0;
+	fadt.dsdt = (uint32_t)dsdt_pa;
+	fadt.x_dsdt = 0;
 
 	/* System configuration */
 	fadt.pm_profile = FADT_PM_DESKTOP;
@@ -588,7 +589,7 @@ acpi_create_rsdp(paddr_t pa, paddr_t xsdt_pa)
 
 	/* RSDP v2 fields */
 	rsdp.rsdp_length = sizeof(rsdp);
-	rsdp.rsdp_xsdt = VMD_XSDT_PADDR;
+	rsdp.rsdp_xsdt = xsdt_pa;
 
 	/* Checksums */
 	rsdp.rsdp_checksum = acpi_calculate_checksum((uint8_t *)&rsdp.rsdp1,
