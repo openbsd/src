@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record.c,v 1.1 2026/09/16 00:24:54 jsing Exp $ */
+/* $OpenBSD: tls12_record.c,v 1.2 2026/09/22 00:38:51 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019, 2026 Joel Sing <jsing@openbsd.org>
  *
@@ -64,6 +64,20 @@ tls12_record_data(struct tls12_record *rec, CBS *cbs)
 	CBS_init(cbs, rec->data, rec->data_len);
 }
 
+int
+tls12_record_set_data(struct tls12_record *rec, uint8_t *data, size_t data_len)
+{
+	if (data_len > TLS12_RECORD_MAX_LEN)
+		return 0;
+
+	freezero(rec->data, rec->data_len);
+	rec->data = data;
+	rec->data_len = data_len;
+	CBS_init(&rec->cbs, rec->data, rec->data_len);
+
+	return 1;
+}
+
 ssize_t
 tls12_record_recv(struct tls12_record *rec, tls_read_cb wire_read,
     void *wire_arg)
@@ -112,6 +126,27 @@ tls12_record_recv(struct tls12_record *rec, tls_read_cb wire_read,
 
 	if (!tls_buffer_finish(rec->buf, &rec->data, &rec->data_len))
 		return TLS12_IO_FAILURE;
+
+	return rec->data_len;
+}
+
+ssize_t
+tls12_record_send(struct tls12_record *rec, tls_write_cb wire_write,
+    void *wire_arg)
+{
+	ssize_t ret;
+
+	if (rec->data == NULL)
+		return TLS12_IO_FAILURE;
+
+	while (CBS_len(&rec->cbs) > 0) {
+		if ((ret = wire_write(CBS_data(&rec->cbs),
+		    CBS_len(&rec->cbs), wire_arg)) <= 0)
+			return ret;
+
+		if (!CBS_skip(&rec->cbs, ret))
+			return TLS12_IO_FAILURE;
+	}
 
 	return rec->data_len;
 }

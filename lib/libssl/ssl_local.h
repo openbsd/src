@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.47 2026/09/21 23:37:20 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.48 2026/09/22 00:38:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1090,6 +1090,7 @@ typedef struct ssl3_state_st {
 	SSL3_RECORD_INTERNAL rrec;	/* each decoded record goes in here */
 
 	struct tls12_record *tls_rrec;
+	struct tls12_record *tls_wrec;
 
 	struct tls_content *rcontent;	/* Content from opened TLS records. */
 

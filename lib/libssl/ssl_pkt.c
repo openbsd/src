@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.78 2026/09/21 23:43:25 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.79 2026/09/22 00:38:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -476,44 +476,35 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 static int
 do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
-	SSL3_BUFFER_INTERNAL *wb = &(s->s3->wbuf);
-	size_t align, out_len;
+	struct tls12_record *wrec = NULL;
+	uint8_t *data = NULL;
+	size_t data_len = 0;
 	CBB cbb;
 	int ret;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	if (wb->buf == NULL)
-		if (!ssl3_setup_write_buffer(s))
+	/* Send any existing record content. */
+	if (s->s3->tls_wrec != NULL) {
+		if ((ret = tls12_record_send(s->s3->tls_wrec,
+		    tls12_legacy_wire_write_cb, s)) <= 0)
 			return -1;
+		tls12_record_free(s->s3->tls_wrec);
+		s->s3->tls_wrec = NULL;
 
-	/*
-	 * First check if there is a SSL3_BUFFER_INTERNAL still being written
-	 * out.  This will happen with non blocking IO.
-	 */
-	if (wb->left != 0)
-		return (ssl3_write_pending(s, type, buf, len));
+		return s->s3->wpend_ret;
+	}
 
 	/* If we have an alert to send, let's send it. */
 	if (s->s3->alert_dispatch) {
 		if ((ret = ssl3_dispatch_alert(s)) <= 0)
-			return (ret);
-		/* If it went, fall through and send more stuff. */
-
-		/* We may have released our buffer, if so get it again. */
-		if (wb->buf == NULL)
-			if (!ssl3_setup_write_buffer(s))
-				return -1;
+			return ret;
 	}
 
 	if (len == 0)
 		return 0;
 
-	align = (size_t)wb->buf + SSL3_RT_HEADER_LENGTH;
-	align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
-	wb->offset = align;
-
-	if (!CBB_init_fixed(&cbb, wb->buf + align, wb->len - align))
+	if (!CBB_init(&cbb, TLS12_RECORD_MAX_CIPHER_OVERHEAD + len))
 		goto err;
 
 	tls12_record_layer_set_version(s->rl, s->version);
@@ -521,10 +512,19 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	if (!tls12_record_layer_seal_record(s->rl, type, buf, len, &cbb))
 		goto err;
 
-	if (!CBB_finish(&cbb, NULL, &out_len))
+	if (!CBB_finish(&cbb, &data, &data_len))
 		goto err;
 
-	wb->left = out_len;
+	if ((wrec = tls12_record_new()) == NULL)
+		goto err;
+	if (!tls12_record_set_data(wrec, data, data_len))
+		goto err;
+
+	data = NULL;
+	data_len = 0;
+
+	s->s3->tls_wrec = wrec;
+	wrec = NULL;
 
 	/*
 	 * Memorize arguments so that ssl3_write_pending can detect
@@ -535,10 +535,18 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	s->s3->wpend_type = type;
 	s->s3->wpend_ret = len;
 
-	/* We now just need to write the buffer. */
-	return ssl3_write_pending(s, type, buf, len);
+	if ((ret = tls12_record_send(s->s3->tls_wrec,
+	    tls12_legacy_wire_write_cb, s)) <= 0)
+		return -1;
+
+	tls12_record_free(s->s3->tls_wrec);
+	s->s3->tls_wrec = NULL;
+
+	return s->s3->wpend_ret;
 
  err:
+	tls12_record_free(wrec);
+	freezero(data, data_len);
 	CBB_cleanup(&cbb);
 
 	return -1;

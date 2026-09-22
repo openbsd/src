@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.264 2026/09/21 23:31:06 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.265 2026/09/22 00:38:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1259,6 +1259,7 @@ ssl3_free(SSL *s)
 	ssl3_release_write_buffer(s);
 
 	tls12_record_free(s->s3->tls_rrec);
+	tls12_record_free(s->s3->tls_wrec);
 
 	tls_content_free(s->s3->rcontent);
 
@@ -1348,6 +1349,8 @@ ssl3_clear(SSL *s)
 
 	tls12_record_free(s->s3->tls_rrec);
 	s->s3->tls_rrec = NULL;
+	tls12_record_free(s->s3->tls_wrec);
+	s->s3->tls_wrec = NULL;
 
 	tls_content_free(s->s3->rcontent);
 	s->s3->rcontent = NULL;

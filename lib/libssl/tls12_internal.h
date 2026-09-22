@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_internal.h,v 1.2 2026/09/16 00:24:54 jsing Exp $ */
+/* $OpenBSD: tls12_internal.h,v 1.3 2026/09/22 00:38:51 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -40,6 +40,7 @@ __BEGIN_HIDDEN_DECLS
  * Legacy interfaces.
  */
 ssize_t tls12_legacy_wire_read_cb(void *buf, size_t n, void *arg);
+ssize_t tls12_legacy_wire_write_cb(const void *buf, size_t n, void *arg);
 
 int tls12_exporter(SSL *s, const uint8_t *label, size_t label_len,
     const uint8_t *context_value, size_t context_value_len, int use_context,
