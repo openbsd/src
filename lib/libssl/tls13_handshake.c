@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.74 2026/08/21 17:15:22 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.75 2026/09/22 03:26:26 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -147,7 +147,7 @@ static const struct tls13_handshake_action state_machine[] = {
 	},
 };
 
-const enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
+const enum tls13_message_type tls13_handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 	[INITIAL] = {
 		CLIENT_HELLO,
 		SERVER_HELLO_RETRY_REQUEST,
@@ -250,7 +250,8 @@ const enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 	},
 };
 
-const size_t handshake_count = sizeof(handshakes) / sizeof(handshakes[0]);
+const size_t tls13_handshake_count =
+    sizeof(tls13_handshakes) / sizeof(tls13_handshakes[0]);
 
 #ifndef TLS13_DEBUG
 #define DEBUGF(...)
@@ -301,12 +302,12 @@ tls13_handshake_active_state(struct tls13_ctx *ctx)
 {
 	struct tls13_handshake_stage hs = ctx->handshake_stage;
 
-	if (hs.hs_type >= handshake_count)
+	if (hs.hs_type >= tls13_handshake_count)
 		return INVALID;
 	if (hs.message_number >= TLS13_NUM_MESSAGE_TYPES)
 		return INVALID;
 
-	return handshakes[hs.hs_type][hs.message_number];
+	return tls13_handshakes[hs.hs_type][hs.message_number];
 }
 
 static const struct tls13_handshake_action *
