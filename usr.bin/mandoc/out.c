@@ -1,6 +1,6 @@
-/* $OpenBSD: out.c,v 1.59 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: out.c,v 1.60 2026/09/22 18:22:28 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2014, 2015, 2017, 2018, 2019, 2021, 2025
+ * Copyright (c) 2011, 2014, 2015, 2017, 2018, 2019, 2021, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -455,38 +455,42 @@ static size_t
 tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
     const struct tbl_dat *dp, size_t mw)
 {
-	const char	*str;	/* Beginning of the first line. */
-	const char	*beg;	/* Beginning of the current line. */
-	char		*end;	/* End of the current line. */
+	char	*str;	/* Beginning of the first line of the cell. */
+	char	*beg;	/* Beginning of the current word. */
+	char	*end;	/* End of the current word. */
 
 	/* Widths in basic units. */
-	size_t		 lsz;	/* Of the current line. */
-	size_t		 wsz;	/* Of the current word. */
-	size_t		 msz;   /* Of the longest line. */
-	size_t		 enw;	/* Of one EN unit. */
+	size_t	 enw;	/* Of one EN unit before the current word. */
+	size_t	 wsz;	/* Of the current word. */
+	size_t	 lsz;	/* Of the current line. */
+	size_t	 msz;   /* Of the longest line in the cell. */
 
 	if (dp->string == NULL || *dp->string == '\0')
 		return 0;
-	str = mw ? mandoc_strdup(dp->string) : dp->string;
-	msz = lsz = 0;
-	for (beg = str; beg != NULL && *beg != '\0'; beg = end) {
-		end = mw ? strchr(beg, ' ') : NULL;
-		if (end != NULL) {
-			*end++ = '\0';
-			while (*end == ' ')
-				end++;
+
+	if (mw != 0) {	/* Maximum width specified, break into lines. */
+		msz = lsz = 0;
+		str = mandoc_strdup(dp->string);
+		for (beg = str; beg != NULL && *beg != '\0'; beg = end) {
+			end = strchr(beg, ' ');
+			if (end != NULL) {
+				*end++ = '\0';
+				while (*end == ' ')
+					end++;
+			}
+			enw = (*tbl->len)(1, tbl->arg);
+			wsz = (*tbl->slen)(beg, tbl->arg);
+			if (lsz != 0 && lsz + enw + wsz <= mw)
+				lsz += enw + wsz;	/* Continua line. */
+			else
+				lsz = wsz;		/* New line. */
+			if (msz < lsz)
+				msz = lsz;
 		}
-		wsz = (*tbl->slen)(beg, tbl->arg);
-		enw = (*tbl->len)(1, tbl->arg);
-		if (mw && lsz && lsz + enw + wsz <= mw)
-			lsz += enw + wsz;
-		else
-			lsz = wsz;
-		if (msz < lsz)
-			msz = lsz;
-	}
-	if (mw)
-		free((void *)str);
+		free(str);
+	} else
+		msz = (*tbl->slen)(dp->string, tbl->arg);
+
 	if (col != NULL && col->width < msz)
 		col->width = msz;
 	return msz;
