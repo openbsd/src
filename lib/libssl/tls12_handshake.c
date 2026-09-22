@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls12_handshake.c,v 1.1 2026/09/22 18:57:11 jsing Exp $	*/
+/*	$OpenBSD: tls12_handshake.c,v 1.2 2026/09/22 19:00:31 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019, 2026 Joel Sing <jsing@openbsd.org>
@@ -275,6 +275,15 @@ tls12_handshake_end_of_flight(struct tls12_ctx *ctx,
 }
 
 int
+tls12_handshake_msg_record(struct tls12_ctx *ctx)
+{
+	CBS cbs;
+
+	tls12_handshake_msg_data(ctx->hs_msg, &cbs);
+	return tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs));
+}
+
+int
 tls12_handshake_perform(struct tls12_ctx *ctx)
 {
 	const struct tls12_handshake_action *action;
@@ -370,14 +379,81 @@ static int
 tls12_handshake_send_action(struct tls12_ctx *ctx,
     const struct tls12_handshake_action *action)
 {
-	return TLS12_IO_FAILURE;
+	ssize_t ret;
+	CBB cbb;
+
+	/* If we have no handshake message, we need to build one. */
+	if (ctx->hs_msg == NULL) {
+		if ((ctx->hs_msg = tls12_handshake_msg_new()) == NULL)
+			return TLS12_IO_FAILURE;
+		if (!tls12_handshake_msg_start(ctx->hs_msg, &cbb,
+		    action->handshake_type))
+			return TLS12_IO_FAILURE;
+		if (!action->send(ctx, &cbb))
+			return TLS12_IO_FAILURE;
+		if (!tls12_handshake_msg_finish(ctx->hs_msg))
+			return TLS12_IO_FAILURE;
+	}
+
+	if ((ret = tls12_handshake_msg_send(ctx->hs_msg, ctx->rl)) <= 0)
+		return ret;
+
+	if (!tls12_handshake_msg_record(ctx))
+		return TLS12_IO_FAILURE;
+
+	if (ctx->handshake_message_sent_cb != NULL)
+		ctx->handshake_message_sent_cb(ctx);
+
+	tls12_handshake_msg_free(ctx->hs_msg);
+	ctx->hs_msg = NULL;
+
+	if (action->sent != NULL && !action->sent(ctx))
+		return TLS12_IO_FAILURE;
+
+	return TLS12_IO_SUCCESS;
 }
 
 static int
 tls12_handshake_recv_action(struct tls12_ctx *ctx,
     const struct tls12_handshake_action *action)
 {
-	return TLS12_IO_FAILURE;
+	ssize_t ret;
+	CBS cbs;
+
+	if (ctx->hs_msg == NULL) {
+		if ((ctx->hs_msg = tls12_handshake_msg_new()) == NULL)
+			return TLS12_IO_FAILURE;
+	}
+
+	if ((ret = tls12_handshake_msg_recv(ctx->hs_msg, ctx->rl)) <= 0)
+		return ret;
+
+	if (!tls12_handshake_msg_record(ctx))
+		return TLS12_IO_FAILURE;
+
+	if (ctx->handshake_message_recv_cb != NULL)
+		ctx->handshake_message_recv_cb(ctx);
+
+	if (!tls12_handshake_msg_content(ctx->hs_msg, &cbs))
+		return TLS12_IO_FAILURE;
+
+	ret = TLS12_IO_FAILURE;
+	if (!action->recv(ctx, &cbs))
+		goto err;
+
+	if (CBS_len(&cbs) != 0) {
+		/* TLS12_ERR_TRAILING_DATA */
+		ctx->alert = TLS12_ALERT_DECODE_ERROR;
+		goto err;
+	}
+
+	ret = TLS12_IO_SUCCESS;
+
+ err:
+	tls12_handshake_msg_free(ctx->hs_msg);
+	ctx->hs_msg = NULL;
+
+	return ret;
 }
 
 static int

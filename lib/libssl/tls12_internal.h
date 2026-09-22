@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_internal.h,v 1.5 2026/09/22 18:57:11 jsing Exp $ */
+/* $OpenBSD: tls12_internal.h,v 1.6 2026/09/22 19:00:31 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -116,6 +116,10 @@ int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len,
     CBB *out);
 
+ssize_t tls12_read_handshake_data(struct tls12_record_layer *rl, uint8_t *buf, size_t n);
+ssize_t tls12_write_handshake_data(struct tls12_record_layer *rl, const uint8_t *buf,
+    size_t n);
+
 ssize_t tls12_send_alert(struct tls12_record_layer *rl, uint8_t alert_desc);
 
 struct tls12_handshake_stage {
@@ -138,6 +142,7 @@ struct tls12_ctx {
 	int close_notify_recv;
 
 	struct tls12_record_layer *rl;
+	struct tls12_handshake_msg *hs_msg;
 	uint8_t alert;
 
 	tls12_alert_cb alert_sent_cb;
@@ -148,6 +153,24 @@ struct tls12_ctx {
 	tls12_handshake_message_cb handshake_message_recv_cb;
 	tls12_info_cb info_cb;
 };
+
+/*
+ * Handshake Messages.
+ */
+struct tls12_handshake_msg;
+
+struct tls12_handshake_msg *tls12_handshake_msg_new(void);
+void tls12_handshake_msg_free(struct tls12_handshake_msg *msg);
+void tls12_handshake_msg_data(struct tls12_handshake_msg *msg, CBS *cbs);
+uint8_t tls12_handshake_msg_type(struct tls12_handshake_msg *msg);
+int tls12_handshake_msg_content(struct tls12_handshake_msg *msg, CBS *cbs);
+int tls12_handshake_msg_start(struct tls12_handshake_msg *msg, CBB *body,
+    uint8_t msg_type);
+int tls12_handshake_msg_finish(struct tls12_handshake_msg *msg);
+int tls12_handshake_msg_recv(struct tls12_handshake_msg *msg,
+    struct tls12_record_layer *rl);
+int tls12_handshake_msg_send(struct tls12_handshake_msg *msg,
+    struct tls12_record_layer *rl);
 
 /*
  * Legacy interfaces.
@@ -174,6 +197,7 @@ int tls12_exporter(SSL *s, const uint8_t *label, size_t label_len,
 #define TLS12_MT_CLIENT_KEY_EXCHANGE		16
 #define TLS12_MT_FINISHED			20
 
+int tls12_handshake_msg_record(struct tls12_ctx *ctx);
 int tls12_handshake_perform(struct tls12_ctx *ctx);
 
 int tls12_client_init(struct tls12_ctx *ctx);

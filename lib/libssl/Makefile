@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.89 2026/09/22 18:57:11 jsing Exp $
+# $OpenBSD: Makefile,v 1.90 2026/09/22 19:00:31 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -73,6 +73,7 @@ SRCS= \
 	t1_lib.c \
 	tls12_client.c \
 	tls12_handshake.c \
+	tls12_handshake_msg.c \
 	tls12_key_schedule.c \
 	tls12_legacy.c \
 	tls12_lib.c \
