@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.5 2026/09/19 17:21:52 dv Exp $ */
+/*	$OpenBSD: lapic.c,v 1.6 2026/09/22 08:21:39 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -23,6 +23,7 @@
 #include <time.h>
 
 #include <machine/i82489reg.h>
+#include <machine/specialreg.h>
 
 #include "lapic.h"
 #include "i82093aa.h"
@@ -59,6 +60,7 @@ extern struct vmd_vm *current_vm;
 struct lapic {
 	pthread_mutex_t mtx;
 	uint64_t	base;
+	uint64_t	apicbase;
 	uint32_t	ver;
 	uint32_t	tpr;
 	uint32_t	svr;
@@ -102,6 +104,8 @@ static int	lapic_highest_pending(struct lapic *);
 static uint32_t	lapic_ppr(struct lapic *);
 static void	lapic_set_map(uint32_t *, int);
 static void	lapic_clear_map(uint32_t *, int);
+static int	lapic_reg_access(uint32_t, int, paddr_t, uint8_t,
+		    uint64_t *, int);
 static void	lapic_reset_locked(struct lapic *, uint32_t);
 static uint64_t	lapic_icr_targets(uint32_t, uint32_t, uint32_t);
 static uint64_t	lapic_x2apic_targets(uint32_t, uint64_t);
@@ -214,6 +218,9 @@ lapic_init(uint32_t curcpu)
 	memset(lapic, 0, sizeof(*lapic));
 	if (pthread_mutex_init(&lapic->mtx, NULL) != 0)
 		fatalx("%s: could not initialize LAPIC mutex", __func__);
+	lapic->apicbase = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
+	if (curcpu == 0)
+		lapic->apicbase |= APICBASE_BSP;
 	lapic_reset_locked(lapic, curcpu);
 
 	if ((int)curcpu >= lapic_ncpus)
@@ -244,6 +251,39 @@ lapic_reset(uint32_t vcpu_id)
 }
 
 int
+lapic_set_apicbase(uint32_t vcpu_id, uint64_t apicbase)
+{
+	struct lapic *lapic;
+	uint64_t oldmode, newmode;
+
+	if (vcpu_id >= LAPIC_MAX_VCPUS ||
+	    vcpu_id >= (uint32_t)lapic_ncpus)
+		return (EINVAL);
+
+	lapic = &lapics[vcpu_id];
+	pthread_mutex_lock(&lapic->mtx);
+	oldmode = lapic->apicbase &
+	    (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE);
+	newmode = apicbase &
+	    (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE);
+
+	/* Re-enabling from the hardware-disabled state resets APIC state. */
+	if (oldmode == 0 && newmode == APICBASE_GLOBAL_ENABLE)
+		lapic_reset_locked(lapic, vcpu_id);
+	/* These fields are not preserved when entering x2APIC mode. */
+	if (oldmode == APICBASE_GLOBAL_ENABLE &&
+	    newmode == (APICBASE_GLOBAL_ENABLE | APICBASE_ENABLE_X2APIC)) {
+		lapic->ldr = 0;
+		lapic->icrhi = 0;
+		lapic->x2_icr_dest = 0;
+	}
+	lapic->apicbase = apicbase;
+	pthread_mutex_unlock(&lapic->mtx);
+
+	return (0);
+}
+
+int
 lapic_enabled(int vcpu_id)
 {
 	int enabled;
@@ -252,7 +292,8 @@ lapic_enabled(int vcpu_id)
 		return (0);
 
 	pthread_mutex_lock(&lapics[vcpu_id].mtx);
-	enabled = (lapics[vcpu_id].svr & LAPIC_SVR_ENABLE) != 0;
+	enabled = (lapics[vcpu_id].apicbase & APICBASE_GLOBAL_ENABLE) != 0 &&
+	    (lapics[vcpu_id].svr & LAPIC_SVR_ENABLE) != 0;
 	pthread_mutex_unlock(&lapics[vcpu_id].mtx);
 
 	return enabled;
@@ -271,7 +312,8 @@ lapic_extint_enabled(int vcpu_id)
 	lapic = &lapics[vcpu_id];
 	pthread_mutex_lock(&lapic->mtx);
 	lint0 = lapic->lvt[LVT_LINT0];
-	enabled = (lapic->svr & LAPIC_SVR_ENABLE) != 0 &&
+	enabled = (lapic->apicbase & APICBASE_GLOBAL_ENABLE) != 0 &&
+	    (lapic->svr & LAPIC_SVR_ENABLE) != 0 &&
 	    (lint0 & LAPIC_LVT_MASKED) == 0 &&
 	    (lint0 & LAPIC_DLMODE_MASK) == LAPIC_DLMODE_EXTINT;
 	pthread_mutex_unlock(&lapic->mtx);
@@ -283,12 +325,18 @@ int
 lapic_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
     uint64_t *data)
 {
+	return (lapic_reg_access(vcpu_id, dir, addr, size, data, 0));
+}
+
+static int
+lapic_reg_access(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
+    uint64_t *data, int x2apic)
+{
 	struct lapic *lapic;
+	uint64_t mask;
 	uint16_t reg;
 	uint32_t d, icrlo = 0, icrhi = 0;
 	int dispatch_icr = 0, eoi_vector = 0xffff, mapidx;
-
-	(void)size;
 
 	if (vcpu_id >= LAPIC_MAX_VCPUS) {
 		log_warnx("%s: invalid vcpu id %u", __func__, vcpu_id);
@@ -303,6 +351,22 @@ lapic_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
 	}
 
 	pthread_mutex_lock(&lapic->mtx);
+
+	/*
+	 * The legacy MMIO interface is unavailable while the APIC is globally
+	 * disabled, and behaves the same way after entering x2APIC mode. Keep
+	 * the reserved MMIO hole inert instead of exposing the saved xAPIC
+	 * register state through it.
+	 */
+	if (!x2apic && ((lapic->apicbase & APICBASE_GLOBAL_ENABLE) == 0 ||
+	    (lapic->apicbase & APICBASE_ENABLE_X2APIC) != 0)) {
+		if (dir == MMIO_DIR_READ) {
+			mask = size >= sizeof(*data) ? ~0ULL :
+			    (1ULL << (size * 8)) - 1;
+			*data = (*data & ~mask) | mask;
+		}
+		goto out;
+	}
 
 	if (dir == MMIO_DIR_READ && (reg & 0xf) == 0) {
 		if (reg >= LAPIC_ISR && reg < LAPIC_ISR + 0x80) {
@@ -538,14 +602,14 @@ lapic_icr_targets(uint32_t source, uint32_t hi, uint32_t lo)
 
 	switch (shorthand) {
 	case 0:
-		if (lo & LAPIC_DSTMODE_LOG) {
-			log_debug("%s: logical destination IPI from vcpu %u "
-			    "ignored", __func__, source);
-			break;
-		}
+		/* All-ones is broadcast in both physical and logical mode. */
 		if (dest == 0xff) {
 			for (i = 0; i < lapic_ncpus; i++)
 				targets |= 1ULL << i;
+		} else if (lo & LAPIC_DSTMODE_LOG) {
+			log_debug("%s: logical destination IPI from vcpu %u "
+			    "ignored", __func__, source);
+			break;
 		} else if (dest < (uint32_t)lapic_ncpus)
 			targets = 1ULL << dest;
 		break;
@@ -630,7 +694,10 @@ lapic_x2apic_targets(uint32_t source, uint64_t icr)
 		return (lapic_icr_targets(source, 0, lo));
 
 	dest = icr >> 32;
-	if (lo & LAPIC_DSTMODE_LOG) {
+	if (dest == 0xffffffff) {
+		for (i = 0; i < lapic_ncpus; i++)
+			targets |= 1ULL << i;
+	} else if (lo & LAPIC_DSTMODE_LOG) {
 		cluster = dest >> 16;
 		logical = dest & 0xffff;
 		for (i = 0; i < lapic_ncpus; i++) {
@@ -638,9 +705,6 @@ lapic_x2apic_targets(uint32_t source, uint64_t icr)
 			    (logical & (1U << (i & 0xf))))
 				targets |= 1ULL << i;
 		}
-	} else if (dest == 0xffffffff) {
-		for (i = 0; i < lapic_ncpus; i++)
-			targets |= 1ULL << i;
 	} else if (dest < (uint32_t)lapic_ncpus)
 		targets = 1ULL << dest;
 
@@ -660,6 +724,15 @@ lapic_x2apic(uint32_t vcpu_id, int dir, uint32_t msr, uint64_t *data)
 		return (EINVAL);
 
 	lapic = &lapics[vcpu_id];
+	pthread_mutex_lock(&lapic->mtx);
+	if ((lapic->apicbase & (APICBASE_ENABLE_X2APIC |
+	    APICBASE_GLOBAL_ENABLE)) != (APICBASE_ENABLE_X2APIC |
+	    APICBASE_GLOBAL_ENABLE)) {
+		pthread_mutex_unlock(&lapic->mtx);
+		return (EINVAL);
+	}
+	pthread_mutex_unlock(&lapic->mtx);
+
 	switch (msr) {
 	case MSR_X2APIC_ID:	/* x2APIC ID is not shifted. */
 		if (dir != MMIO_DIR_READ)
@@ -700,8 +773,8 @@ lapic_x2apic(uint32_t vcpu_id, int dir, uint32_t msr, uint64_t *data)
 		lapic_icr(vcpu_id, 0, lo);
 		return (0);
 	default:
-		return (lapic_mmio(vcpu_id, dir, LAPIC_BASE +
-		    ((msr - MSR_X2APIC_BASE) << 4), sizeof(uint32_t), data));
+		return (lapic_reg_access(vcpu_id, dir, LAPIC_BASE +
+		    ((msr - MSR_X2APIC_BASE) << 4), sizeof(uint32_t), data, 1));
 	}
 }
 
@@ -757,7 +830,8 @@ lapic_highest_pending(struct lapic *lapic)
 {
 	int vector;
 
-	if (!(lapic->svr & LAPIC_SVR_ENABLE))
+	if (!(lapic->apicbase & APICBASE_GLOBAL_ENABLE) ||
+	    !(lapic->svr & LAPIC_SVR_ENABLE))
 		return 0xffff;
 
 	vector = lapic_highest_in_map(lapic->irr);
@@ -809,7 +883,8 @@ lapic_timer_check(uint32_t vcpu_id)
 	} else
 		lapic->timer_running = 0;
 
-	if (!(lapic->svr & LAPIC_SVR_ENABLE) ||
+	if (!(lapic->apicbase & APICBASE_GLOBAL_ENABLE) ||
+	    !(lapic->svr & LAPIC_SVR_ENABLE) ||
 	    (lapic->lvt[LVT_TIMER] & LAPIC_LVT_MASKED))
 		goto out;
 
@@ -850,7 +925,8 @@ lapic_vector_irq(uint32_t dest_vcpu, int destmode, uint8_t vector,
 
 	lapic = &lapics[dest_vcpu];
 	pthread_mutex_lock(&lapic->mtx);
-	if (!(lapic->svr & LAPIC_SVR_ENABLE)) {
+	if (!(lapic->apicbase & APICBASE_GLOBAL_ENABLE) ||
+	    !(lapic->svr & LAPIC_SVR_ENABLE)) {
 		log_debug("%s: vector irq %d but vcpu %u lapic disabled",
 		    __func__, vector, dest_vcpu);
 		pthread_mutex_unlock(&lapic->mtx);

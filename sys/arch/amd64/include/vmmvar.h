@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.122 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.123 2026/09/22 08:21:39 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -89,6 +89,7 @@ struct vm;
 #define VMX_EXIT_XSAVES				63
 #define VMX_EXIT_XRSTORS			64
 
+#define VM_EXIT_APICBASE			0xFFFC
 #define VM_EXIT_X2APIC				0xFFFD
 #define VM_EXIT_TERMINATED			0xFFFE
 #define VM_EXIT_NONE				0xFFFF
@@ -367,6 +368,11 @@ struct vm_exit_x2apic {
 	uint64_t	vex_data;
 };
 
+/* Guest-visible IA32_APIC_BASE mode change. */
+struct vm_exit_apicbase {
+	uint64_t	vea_value;
+};
+
 /*
  * struct vcpu_inject_event	: describes an exception or interrupt to inject.
  */
@@ -482,6 +488,7 @@ struct vm_exit {
 	union {
 		struct vm_exit_inout		vei;	/* IN/OUT exit */
 		struct vm_exit_eptviolation	vee;	/* EPT VIOLATION exit*/
+		struct vm_exit_apicbase		vea;	/* APICBASE mode exit */
 		struct vm_exit_x2apic		vex;	/* x2APIC MSR exit */
 	};
 

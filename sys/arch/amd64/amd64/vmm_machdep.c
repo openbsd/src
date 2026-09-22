@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.88 2026/09/19 17:21:52 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.89 2026/09/22 08:21:39 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -170,6 +170,7 @@ void vmm_decode_cr4(uint64_t);
 void vmm_decode_msr_value(uint64_t, uint64_t);
 void vmm_decode_apicbase_msr_value(uint64_t);
 static enum vmm_action vmm_write_apicbase(struct vcpu *, uint64_t);
+static int vmm_x2apic_write_valid(uint32_t, uint64_t);
 static enum vmm_action vmm_x2apic_msr(struct vcpu *, uint32_t, int,
     uint64_t);
 void vmm_decode_ia32_fc_value(uint64_t);
@@ -2791,9 +2792,10 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (ret == 0) {
 		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 		vcpu->vc_gueststate.vg_exit_reason = 0;
-		vcpu->vc_apicbase = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
-		if (vcpu->vc_id == 0)
-			vcpu->vc_apicbase |= APICBASE_BSP;
+		/*
+		 * IA32_APIC_BASE is initialized by vcpu_init() and preserved
+		 * across the INIT/SIPI register resets performed here.
+		 */
 		vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		vcpu->vc_intr = 0;
 		atomic_swap_uint(&vcpu->vc_intr_latch, 0);
@@ -2962,6 +2964,9 @@ vcpu_init(struct vcpu *vcpu, struct vm_create_params *vcp)
 	vcpu->vc_vpid = 0;
 	vcpu->vc_pvclock_system_gpa = 0;
 	vcpu->vc_last_pcpu = NULL;
+	vcpu->vc_apicbase = LAPIC_BASE | APICBASE_GLOBAL_ENABLE;
+	if (vcpu->vc_id == 0)
+		vcpu->vc_apicbase |= APICBASE_BSP;
 
 	rw_init(&vcpu->vc_lock, "vcpu");
 
@@ -3679,6 +3684,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	    atomic_swap_uint(&vcpu->vc_intr_latch, 0);
 
 	switch (vcpu->vc_gueststate.vg_exit_reason) {
+	case VM_EXIT_APICBASE:
+		if (vmx_advance_rip(vcpu))
+			return (EINVAL);
+		if (vcpu->vc_gueststate.vg_rflags & PSL_T)
+			vmm_inject_db(vcpu);
+		break;
 	case VM_EXIT_X2APIC:
 		if (!vcpu->vc_exit.vex.vex_write) {
 			vcpu->vc_gueststate.vg_rax =
@@ -3686,6 +3697,10 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			vcpu->vc_gueststate.vg_rdx =
 			    vcpu->vc_exit.vex.vex_data >> 32;
 		}
+		if (vmx_advance_rip(vcpu))
+			return (EINVAL);
+		if (vcpu->vc_gueststate.vg_rflags & PSL_T)
+			vmm_inject_db(vcpu);
 		break;
 	case VMX_EXIT_IO:
 		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN)
@@ -5857,11 +5872,16 @@ vmm_write_apicbase(struct vcpu *vcpu, uint64_t val)
 	    (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE);
 	newmode = val & (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE);
 
-	/* condition checks as per intel sdm */
+	/*
+	 * Reject reserved bits, relocation, BSP-bit changes, invalid mode
+	 * encodings, and the two forbidden direct APIC mode transitions.
+	 */
 	if ((val & ~allowed) != 0 ||
 	    (val & APICBASE_ADDRESS_MASK) != LAPIC_BASE ||
 	    (val & APICBASE_BSP) != (vcpu->vc_apicbase & APICBASE_BSP) ||
 	    newmode == APICBASE_ENABLE_X2APIC ||
+	    (oldmode == 0 && newmode == (APICBASE_ENABLE_X2APIC |
+	    APICBASE_GLOBAL_ENABLE)) ||
 	    (oldmode == (APICBASE_ENABLE_X2APIC | APICBASE_GLOBAL_ENABLE) &&
 	    newmode == APICBASE_GLOBAL_ENABLE)) {
 		vmm_inject_gp(vcpu);
@@ -5869,7 +5889,85 @@ vmm_write_apicbase(struct vcpu *vcpu, uint64_t val)
 	}
 
 	vcpu->vc_apicbase = val;
-	return (VMM_ACTION_ADVANCE);
+	if (oldmode == newmode)
+		return (VMM_ACTION_ADVANCE);
+
+	vcpu->vc_exit.vea.vea_value = val;
+	vcpu->vc_gueststate.vg_exit_reason = VM_EXIT_APICBASE;
+	return (VMM_ACTION_ASSIST);
+}
+
+/* Return zero if a WRMSR sets a reserved x2APIC register bit. */
+static int
+vmm_x2apic_write_valid(uint32_t msr, uint64_t data)
+{
+	uint64_t allowed;
+	uint32_t mode;
+
+	switch (msr) {
+	case MSR_X2APIC_TPR:
+		allowed = LAPIC_TPRI_MASK;
+		break;
+	case MSR_X2APIC_EOI:
+	case MSR_X2APIC_ESR:
+		return (data == 0);
+	case MSR_X2APIC_SVR:
+		allowed = LAPIC_SVR_VECTOR_MASK | LAPIC_SVR_ENABLE;
+		break;
+	case MSR_X2APIC_ICR:
+		allowed = 0xffffffff00000000ULL | LAPIC_LVTT_VEC_MASK |
+		    LAPIC_DLMODE_MASK | LAPIC_DSTMODE_LOG | LAPIC_LVL_ASSERT |
+		    LAPIC_LVL_TRIG | LAPIC_DEST_MASK;
+		if (data & ~allowed)
+			return (0);
+		mode = data & LAPIC_DLMODE_MASK;
+		return (mode == LAPIC_DLMODE_FIXED ||
+		    mode == LAPIC_DLMODE_SMI || mode == LAPIC_DLMODE_NMI ||
+		    mode == LAPIC_DLMODE_INIT ||
+		    mode == LAPIC_DLMODE_STARTUP);
+	case MSR_X2APIC_LVT_TIMER:
+		allowed = LAPIC_LVTT_VEC_MASK | LAPIC_LVTT_DS |
+		    LAPIC_LVT_MASKED | LAPIC_LVTT_TM_PERIODIC;
+		break;
+	case MSR_X2APIC_LVT_THERM:
+	case MSR_X2APIC_LVT_PCINT:
+	case MSR_X2APIC_LVT_CMCI:
+		allowed = LAPIC_LVTT_VEC_MASK | LAPIC_DLMODE_MASK |
+		    LAPIC_LVTT_DS | LAPIC_LVT_MASKED;
+		if (data & ~allowed)
+			return (0);
+		mode = data & LAPIC_DLMODE_MASK;
+		return (mode == LAPIC_DLMODE_FIXED ||
+		    mode == LAPIC_DLMODE_SMI || mode == LAPIC_DLMODE_NMI);
+	case MSR_X2APIC_LVT_LINT0:
+	case MSR_X2APIC_LVT_LINT1:
+		allowed = LAPIC_LVTT_VEC_MASK | LAPIC_DLMODE_MASK |
+		    LAPIC_LVTT_DS | LAPIC_INP_POL | LAPIC_LVT_REMOTE_IRR |
+		    LAPIC_LVT_LEVTRIG | LAPIC_LVT_MASKED;
+		if (data & ~allowed)
+			return (0);
+		mode = data & LAPIC_DLMODE_MASK;
+		return (mode == LAPIC_DLMODE_FIXED ||
+		    mode == LAPIC_DLMODE_SMI || mode == LAPIC_DLMODE_NMI ||
+		    mode == LAPIC_DLMODE_INIT || mode == LAPIC_DLMODE_EXTINT);
+	case MSR_X2APIC_LVT_ERROR:
+		allowed = LAPIC_LVTT_VEC_MASK | LAPIC_LVTT_DS |
+		    LAPIC_LVT_MASKED;
+		break;
+	case MSR_X2APIC_TIMER_ICR:
+		allowed = 0xffffffffULL;
+		break;
+	case MSR_X2APIC_TIMER_DCR:
+		allowed = 0xb;
+		break;
+	case MSR_X2APIC_SELF_IPI:
+		allowed = 0xff;
+		break;
+	default:
+		return (0);
+	}
+
+	return ((data & ~allowed) == 0);
 }
 
 /*
@@ -5915,16 +6013,12 @@ vmm_x2apic_msr(struct vcpu *vcpu, uint32_t msr, int write, uint64_t data)
 		break;
 	case MSR_X2APIC_EOI:
 		writable = 1;
-		if (data != 0)
-			goto fault;
 		break;
 	case MSR_X2APIC_ICR:
 		readable = writable = wide = 1;
 		break;
 	case MSR_X2APIC_SELF_IPI:
 		writable = 1;
-		if ((data & ~0xffULL) != 0)
-			goto fault;
 		break;
 	default:
 		goto fault;
@@ -5932,7 +6026,8 @@ vmm_x2apic_msr(struct vcpu *vcpu, uint32_t msr, int write, uint64_t data)
 
 	/* condition checks */
 	if ((write && !writable) || (!write && !readable) ||
-	    (write && !wide && (data >> 32) != 0))
+	    (write && !wide && (data >> 32) != 0) ||
+	    (write && !vmm_x2apic_write_valid(msr, data)))
 		goto fault;
 
 	memset(vex, 0, sizeof(*vex));
@@ -5940,11 +6035,6 @@ vmm_x2apic_msr(struct vcpu *vcpu, uint32_t msr, int write, uint64_t data)
 	vex->vex_write = (write != 0);
 	vex->vex_data = data;
 	vcpu->vc_gueststate.vg_exit_reason = VM_EXIT_X2APIC;
-	if (vmm_softc->mode == VMM_MODE_EPT) {
-		if (vmx_advance_rip(vcpu))
-			return (VMM_ACTION_TERMINATE);
-	} else if (svm_advance_rip(vcpu))
-		return (VMM_ACTION_TERMINATE);
 	return (VMM_ACTION_ASSIST);
 
 fault:
@@ -6843,6 +6933,12 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * exit data structure.
 	 */
 	switch (vcpu->vc_gueststate.vg_exit_reason) {
+	case VM_EXIT_APICBASE:
+		if (svm_advance_rip(vcpu))
+			return (EINVAL);
+		if (vcpu->vc_gueststate.vg_rflags & PSL_T)
+			vmm_inject_db(vcpu);
+		break;
 	case VM_EXIT_X2APIC:
 		if (!vcpu->vc_exit.vex.vex_write) {
 			vcpu->vc_gueststate.vg_rax = vmcb->v_rax =
@@ -6850,6 +6946,10 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			vcpu->vc_gueststate.vg_rdx =
 			    vcpu->vc_exit.vex.vex_data >> 32;
 		}
+		if (svm_advance_rip(vcpu))
+			return (EINVAL);
+		if (vcpu->vc_gueststate.vg_rflags & PSL_T)
+			vmm_inject_db(vcpu);
 		break;
 	case SVM_VMEXIT_IOIO:
 		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
