@@ -1,4 +1,4 @@
-/*	$OpenBSD: signals.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: signals.c,v 1.5 2026/09/22 01:14:18 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -32,20 +32,22 @@
 
 #include "rtrd.h"
 
-volatile sig_atomic_t sigflags = 0;
-
-#define SIGFLAGS_TERM	0x01
-#define SIGFLAGS_INT	0x02
-#define SIGFLAGS_QUIT	0x04
-#define SIGFLAGS_USR1	0x08
-#define SIGFLAGS_HUP	0x10
+volatile sig_atomic_t sigterm = 0;
+volatile sig_atomic_t sigint = 0;
+volatile sig_atomic_t sigquit = 0;
+volatile sig_atomic_t sigusr1 = 0;
+volatile sig_atomic_t sighup = 0;
 
 /* 1 on fail */
 int
 init_signals(void)
 {
 	struct sigaction sa;
-	sigflags = 0;
+	sigterm = 0;
+	sigint = 0;
+	sigquit = 0;
+	sigusr1 = 0;
+	sighup = 0;
 
 	memset(&sa, 0, sizeof(sa));
 	if (sigfillset(&sa.sa_mask) != 0)
@@ -79,19 +81,19 @@ signal_handler(int sig)
 {
 	switch (sig) {
 	case SIGTERM:
-		sigflags |= SIGFLAGS_TERM;
+		sigterm = 1;
 		break;
 	case SIGINT:
-		sigflags |= SIGFLAGS_INT;
+		sigint = 1;
 		break;
 	case SIGQUIT:
-		sigflags |= SIGFLAGS_QUIT;
+		sigquit = 1;
 		break;
 	case SIGUSR1:
-		sigflags |= SIGFLAGS_USR1;
+		sigusr1 = 1;
 		break;
 	case SIGHUP:
-		sigflags |= SIGFLAGS_HUP;
+		sighup = 1;
 		break;
 	}
 }
@@ -99,28 +101,28 @@ signal_handler(int sig)
 void
 signal_processor(void)
 {
-	if (sigflags & SIGFLAGS_TERM) {
+	if (sigterm) {
 		logx(0, "Received TERM signal\n");
 		rtr_shutdown(0);
+		sigterm = 0;
 	}
-
-	if (sigflags & SIGFLAGS_INT) {
+	if (sigint) {
 		logx(0, "Received INT signal\n");
 		rtr_shutdown(0);
+		sigint = 0;
 	}
-
-	if (sigflags & SIGFLAGS_QUIT) {
+	if (sigquit) {
 		logx(0, "Received QUIT signal\n");
 		rtr_shutdown(0);
+		sigquit = 0;
 	}
-
-	if (sigflags & SIGFLAGS_USR1) {
+	if (sigusr1) {
 		logx(0, "Received USR1 signal\n");
 		rtr_shutdown(1); /* restart */
+		sigusr1 = 0;
 	}
-
-	if (sigflags & SIGFLAGS_HUP) {
+	if (sighup) {
 		logx(0, "Received HUP signal\n");
+		sighup = 0;
 	}
-	sigflags = 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.h,v 1.1 2026/09/18 04:55:39 deraadt Exp $	*/
+/*	$OpenBSD: rtrd.h,v 1.2 2026/09/22 01:14:18 rcovelli Exp $	*/
 
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
@@ -956,7 +956,13 @@ extern void sendclientstatsto_one(struct rtr_socket *);
 extern void sendcacheframestatsto_one(struct rtr_socket *);
 extern ssize_t sendendofstatsto_one(struct rtr_socket *);
 
-extern volatile sig_atomic_t sigflags;
+#define sigflags (sigterm || sigint || sigquit || sigusr1 || sighup)
+
+extern volatile sig_atomic_t sigterm;
+extern volatile sig_atomic_t sigint;
+extern volatile sig_atomic_t sigquit;
+extern volatile sig_atomic_t sigusr1;
+extern volatile sig_atomic_t sighup;
 
 extern int init_signals(void);
 extern void signal_handler(int);
