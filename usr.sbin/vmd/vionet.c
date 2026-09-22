@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.37 2026/09/21 00:46:13 jan Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.38 2026/09/22 23:29:58 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -868,9 +868,19 @@ vionet_tx(struct virtio_dev *dev)
 
 		/* Write our packet to the tap(4). */
 		sz = writev(vionet->data_fd, iov_tx, iov_cnt);
-		if (sz == -1 && errno != ENOBUFS) {
-			log_warn("%s", __func__);
-			goto reset;
+		if (sz == -1) {
+			switch (errno) {
+			case ENOMEM:
+				log_debug("%s: no mbufs, dropping packet",
+				    __func__);
+				goto drop;
+			case EMSGSIZE:
+				log_debug("%s: invalid packet size", __func__);
+				goto drop;
+			default:
+				log_warn("%s", __func__);
+				goto reset;
+			}
 		}
 		chain_len += sizeof(struct virtio_net_hdr);
 drop:
