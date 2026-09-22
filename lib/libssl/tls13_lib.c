@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.79 2026/08/21 17:15:22 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.80 2026/09/22 19:24:04 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -239,8 +239,7 @@ tls13_legacy_ocsp_status_recv_cb(void *arg)
 	if (s->ctx->tlsext_status_cb == NULL)
 		return 1;
 
-	ret = s->ctx->tlsext_status_cb(s,
-	    s->ctx->tlsext_status_arg);
+	ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
 	if (ret < 0) {
 		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
