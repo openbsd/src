@@ -33,6 +33,7 @@
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>
+#include <linux/vgaarb.h>
 
 #if defined(__amd64__) || defined(__i386__)
 #include <dev/isa/isareg.h>
@@ -623,7 +624,8 @@ static bool amdgpu_prefer_rom_resource(struct amdgpu_device *adev)
 #ifdef __linux__
 	struct resource *res = &adev->pdev->resource[PCI_ROM_RESOURCE];
 
-	return (res->flags & IORESOURCE_ROM_SHADOW);
+	return (res->flags & IORESOURCE_ROM_SHADOW) ||
+	       adev->pdev == vga_default_device();
 #else
 	return false;
 #endif
