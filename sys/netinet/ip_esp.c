@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.201 2026/08/12 18:23:14 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.202 2026/09/22 14:20:07 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -916,6 +916,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		/* GCM & friends just require a NONCE (non-repeating!) */
 		if (espx->type == CRYPTO_AES_CTR ||
 		    espx->type == CRYPTO_AES_GCM_16 ||
+		    espx->type == CRYPTO_AES_GMAC ||
 		    espx->type == CRYPTO_CHACHA20_POLY1305)
 			bcopy(&replay64, crde->crd_iv, sizeof(replay64));
 		else
