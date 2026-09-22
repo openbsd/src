@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.43 2026/09/15 19:11:12 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.44 2026/09/22 03:45:18 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -179,6 +179,9 @@ struct tls12_record_layer {
 	struct tls12_record_protection *read_current;
 	struct tls12_record_protection *write_current;
 	struct tls12_record_protection *write_previous;
+
+	/* Content from opened records. */
+	struct tls_content *rcontent;
 };
 
 struct tls12_record_layer *
@@ -188,6 +191,7 @@ tls12_record_layer_new(void)
 
 	if ((rl = calloc(1, sizeof(struct tls12_record_layer))) == NULL)
 		goto err;
+
 	if ((rl->read_current = tls12_record_protection_new()) == NULL)
 		goto err;
 	if ((rl->write_current = tls12_record_protection_new()) == NULL)
@@ -195,6 +199,9 @@ tls12_record_layer_new(void)
 
 	rl->read = rl->read_current;
 	rl->write = rl->write_current;
+
+	if ((rl->rcontent = tls_content_new()) == NULL)
+		goto err;
 
 	return rl;
 
@@ -213,6 +220,8 @@ tls12_record_layer_free(struct tls12_record_layer *rl)
 	tls12_record_protection_free(rl->read_current);
 	tls12_record_protection_free(rl->write_current);
 	tls12_record_protection_free(rl->write_previous);
+
+	tls_content_free(rl->rcontent);
 
 	freezero(rl, sizeof(struct tls12_record_layer));
 }
@@ -290,6 +299,12 @@ tls12_record_layer_set_initial_epoch(struct tls12_record_layer *rl,
     uint16_t epoch)
 {
 	rl->initial_epoch = epoch;
+}
+
+struct tls_content *
+tls12_record_layer_rcontent(struct tls12_record_layer *rl)
+{
+	return rl->rcontent;
 }
 
 uint16_t
@@ -836,18 +851,18 @@ tls12_record_layer_aead_xored_nonce(struct tls12_record_layer *rl,
 
 static int
 tls12_record_layer_open_record_plaintext(struct tls12_record_layer *rl,
-    uint8_t content_type, CBS *fragment, struct tls_content *out)
+    uint8_t content_type, CBS *fragment)
 {
 	if (tls12_record_protection_engaged(rl->read))
 		return 0;
 
-	return tls_content_dup_data(out, content_type, CBS_data(fragment),
-	    CBS_len(fragment));
+	return tls_content_dup_data(rl->rcontent, content_type,
+	    CBS_data(fragment), CBS_len(fragment));
 }
 
 static int
 tls12_record_layer_open_record_protected_aead(struct tls12_record_layer *rl,
-    uint8_t content_type, CBS *seq_num, CBS *fragment, struct tls_content *out)
+    uint8_t content_type, CBS *seq_num, CBS *fragment)
 {
 	struct tls12_record_protection *rp = rl->read;
 	uint8_t *header = NULL;
@@ -907,7 +922,7 @@ tls12_record_layer_open_record_protected_aead(struct tls12_record_layer *rl,
 	if (out_len != content_len)
 		goto err;
 
-	tls_content_set_data(out, content_type, content, content_len);
+	tls_content_set_data(rl->rcontent, content_type, content, content_len);
 	content = NULL;
 	content_len = 0;
 
@@ -922,7 +937,7 @@ tls12_record_layer_open_record_protected_aead(struct tls12_record_layer *rl,
 
 static int
 tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
-    uint8_t content_type, CBS *seq_num, CBS *fragment, struct tls_content *out)
+    uint8_t content_type, CBS *seq_num, CBS *fragment)
 {
 	EVP_CIPHER_CTX *enc = rl->read->cipher_ctx;
 	SSL3_RECORD_INTERNAL rrec;
@@ -1031,12 +1046,12 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 		goto err;
 	}
 
-	tls_content_set_data(out, content_type, content, content_len);
+	tls_content_set_data(rl->rcontent, content_type, content, content_len);
 	content = NULL;
 	content_len = 0;
 
 	/* Actual content is after EIV, minus padding and MAC. */
-	if (!tls_content_set_bounds(out, eiv_len, rrec.length))
+	if (!tls_content_set_bounds(rl->rcontent, eiv_len, rrec.length))
 		goto err;
 
 	ret = 1;
@@ -1051,19 +1066,17 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 }
 
 int
-tls12_record_layer_open_record(struct tls12_record_layer *rl,
-    const uint8_t *buf, size_t buf_len, struct tls_content *out)
+tls12_record_layer_open_record(struct tls12_record_layer *rl, CBS *cbs)
 {
-	CBS cbs, fragment, seq_num;
+	CBS fragment, seq_num;
 	uint16_t version;
 	uint8_t content_type;
 
-	CBS_init(&cbs, buf, buf_len);
 	CBS_init(&seq_num, rl->read->seq_num, sizeof(rl->read->seq_num));
 
-	if (!CBS_get_u8(&cbs, &content_type))
+	if (!CBS_get_u8(cbs, &content_type))
 		return 0;
-	if (!CBS_get_u16(&cbs, &version))
+	if (!CBS_get_u16(cbs, &version))
 		return 0;
 	if (rl->dtls) {
 		/*
@@ -1073,26 +1086,26 @@ tls12_record_layer_open_record(struct tls12_record_layer *rl,
 		 * number. DTLS also uses explicit read sequence numbers, which
 		 * we need to extract from the DTLS record header.
 		 */
-		if (!CBS_get_bytes(&cbs, &seq_num, SSL3_SEQUENCE_SIZE))
+		if (!CBS_get_bytes(cbs, &seq_num, SSL3_SEQUENCE_SIZE))
 			return 0;
 		if (!CBS_write_bytes(&seq_num, rl->read->seq_num,
 		    sizeof(rl->read->seq_num), NULL))
 			return 0;
 	}
-	if (!CBS_get_u16_length_prefixed(&cbs, &fragment))
+	if (!CBS_get_u16_length_prefixed(cbs, &fragment))
 		return 0;
 
 	if (rl->read->aead_ctx != NULL) {
 		if (!tls12_record_layer_open_record_protected_aead(rl,
-		    content_type, &seq_num, &fragment, out))
+		    content_type, &seq_num, &fragment))
 			return 0;
 	} else if (rl->read->cipher_ctx != NULL) {
 		if (!tls12_record_layer_open_record_protected_cipher(rl,
-		    content_type, &seq_num, &fragment, out))
+		    content_type, &seq_num, &fragment))
 			return 0;
 	} else {
 		if (!tls12_record_layer_open_record_plaintext(rl,
-		    content_type, &fragment, out))
+		    content_type, &fragment))
 			return 0;
 	}
 

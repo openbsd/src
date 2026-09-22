@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.48 2026/09/22 00:38:51 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.49 2026/09/22 03:45:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -614,42 +614,6 @@ int tls12_key_block_generate(struct tls12_key_block *kb, SSL *s,
 
 struct tls12_record_layer;
 
-struct tls12_record_layer *tls12_record_layer_new(void);
-void tls12_record_layer_free(struct tls12_record_layer *rl);
-void tls12_record_layer_alert(struct tls12_record_layer *rl,
-    uint8_t *alert_desc);
-int tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
-    size_t *overhead);
-int tls12_record_layer_read_protected(struct tls12_record_layer *rl);
-int tls12_record_layer_write_protected(struct tls12_record_layer *rl);
-void tls12_record_layer_set_aead(struct tls12_record_layer *rl,
-    const EVP_AEAD *aead);
-void tls12_record_layer_set_cipher_hash(struct tls12_record_layer *rl,
-    const EVP_CIPHER *cipher, const EVP_MD *handshake_hash,
-    const EVP_MD *mac_hash);
-void tls12_record_layer_set_version(struct tls12_record_layer *rl,
-    uint16_t version);
-void tls12_record_layer_set_initial_epoch(struct tls12_record_layer *rl,
-    uint16_t epoch);
-uint16_t tls12_record_layer_read_epoch(struct tls12_record_layer *rl);
-uint16_t tls12_record_layer_write_epoch(struct tls12_record_layer *rl);
-int tls12_record_layer_use_write_epoch(struct tls12_record_layer *rl,
-    uint16_t epoch);
-void tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl,
-    uint16_t epoch);
-void tls12_record_layer_clear_read_state(struct tls12_record_layer *rl);
-void tls12_record_layer_clear_write_state(struct tls12_record_layer *rl);
-void tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl);
-int tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
-    CBS *mac_key, CBS *key, CBS *iv);
-int tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
-    CBS *mac_key, CBS *key, CBS *iv);
-int tls12_record_layer_open_record(struct tls12_record_layer *rl,
-    const uint8_t *buf, size_t buf_len, struct tls_content *out);
-int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
-    uint8_t content_type, const uint8_t *content, size_t content_len,
-    CBB *out);
-
 typedef void (ssl_info_callback_fn)(const SSL *s, int type, int val);
 typedef void (ssl_msg_callback_fn)(int is_write, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg);
@@ -1091,8 +1055,6 @@ typedef struct ssl3_state_st {
 
 	struct tls12_record *tls_rrec;
 	struct tls12_record *tls_wrec;
-
-	struct tls_content *rcontent;	/* Content from opened TLS records. */
 
 	/* we allow one fatal and one warning alert to be outstanding,
 	 * send close alert via the warning alert */

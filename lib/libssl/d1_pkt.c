@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.136 2026/09/21 23:37:20 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.137 2026/09/22 03:45:18 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -188,11 +188,13 @@ dtls1_process_record(SSL *s)
 {
 	SSL3_RECORD_INTERNAL *rr = &(s->s3->rrec);
 	uint8_t alert_desc;
+	CBS cbs;
+
+	CBS_init(&cbs, s->packet, s->packet_length);
 
 	tls12_record_layer_set_version(s->rl, s->version);
 
-	if (!tls12_record_layer_open_record(s->rl, s->packet, s->packet_length,
-	    s->s3->rcontent)) {
+	if (!tls12_record_layer_open_record(s->rl, &cbs)) {
 		tls12_record_layer_alert(s->rl, &alert_desc);
 
 		if (alert_desc == 0)
@@ -212,7 +214,7 @@ dtls1_process_record(SSL *s)
 	}
 
 	/* XXX move to record layer. */
-	tls_content_set_epoch(s->s3->rcontent, rr->epoch);
+	tls_content_set_epoch(tls12_record_layer_rcontent(s->rl), rr->epoch);
 
  done:
 	s->packet_length = 0;
@@ -356,6 +358,7 @@ static int
 dtls1_read_handshake_unexpected(SSL *s)
 {
 	struct hm_header_st hs_msg_hdr;
+	struct tls_content *rcontent;
 	CBS cbs;
 	int ret;
 
@@ -364,15 +367,16 @@ dtls1_read_handshake_unexpected(SSL *s)
 		return -1;
 	}
 
+	rcontent = tls12_record_layer_rcontent(s->rl);
+
 	/* Parse handshake message header. */
-	CBS_dup(tls_content_cbs(s->s3->rcontent), &cbs);
+	CBS_dup(tls_content_cbs(rcontent), &cbs);
 	if (!dtls1_get_message_header(&cbs, &hs_msg_hdr))
 		return -1; /* XXX - probably should drop/continue. */
 
 	/* This may just be a stale retransmit. */
-	if (tls_content_epoch(s->s3->rcontent) !=
-	    tls12_record_layer_read_epoch(s->rl)) {
-		tls_content_clear(s->s3->rcontent);
+	if (tls_content_epoch(rcontent) != tls12_record_layer_read_epoch(s->rl)) {
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 		return 1;
 	}
@@ -399,9 +403,9 @@ dtls1_read_handshake_unexpected(SSL *s)
 		}
 
 		ssl_msg_callback_cbs(s, 0, SSL3_RT_HANDSHAKE,
-		    tls_content_cbs(s->s3->rcontent));
+		    tls_content_cbs(rcontent));
 
-		tls_content_clear(s->s3->rcontent);
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 
 		if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0) {
@@ -499,7 +503,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 			dtls1_retransmit_buffered_messages(s);
 		}
 
-		tls_content_clear(s->s3->rcontent);
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 
 		return 1;
@@ -561,17 +565,15 @@ dtls1_read_handshake_unexpected(SSL *s)
 int
 dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
+	struct tls_content *rcontent;
 	int rrcount = 0;
 	ssize_t ssret;
 	int ret;
 
+	rcontent = tls12_record_layer_rcontent(s->rl);
+
 	if (s->s3->rbuf.buf == NULL) {
 		if (!ssl3_setup_buffers(s))
-			return -1;
-	}
-
-	if (s->s3->rcontent == NULL) {
-		if ((s->s3->rcontent = tls_content_new()) == NULL)
 			return -1;
 	}
 
@@ -618,7 +620,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	if (dtls1_handle_timeout(s) > 0)
 		goto start;
 
-	if (tls_content_remaining(s->s3->rcontent) == 0) {
+	if (tls_content_remaining(rcontent) == 0) {
 		if ((ret = dtls1_get_record(s)) <= 0) {
 			/* Anything other than a timeout is an error. */
 			if ((ret = dtls1_read_failed(s, ret)) <= 0)
@@ -628,8 +630,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	}
 
 	if (s->d1->listen &&
-	    tls_content_type(s->s3->rcontent) != SSL3_RT_HANDSHAKE) {
-		tls_content_clear(s->s3->rcontent);
+	    tls_content_type(rcontent) != SSL3_RT_HANDSHAKE) {
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 		goto start;
 	}
@@ -638,7 +640,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	/* XXX - should this allow SSL3_RT_ALERT messages? */
 	if (s->s3->change_cipher_spec &&
-	    tls_content_type(s->s3->rcontent) != SSL3_RT_HANDSHAKE) {
+	    tls_content_type(rcontent) != SSL3_RT_HANDSHAKE) {
 		/*
 		 * Application data arrived between ChangeCipherSpec and
 		 * Finished, either due to the Finished message being lost or
@@ -646,7 +648,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		 * application deal with it in the same manner it uses to handle
 		 * other packet loss.
 		 */
-		tls_content_clear(s->s3->rcontent);
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 		goto start;
 	}
@@ -657,13 +659,13 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	 */
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
 		s->rwstate = SSL_NOTHING;
-		tls_content_clear(s->s3->rcontent);
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 		return 0;
 	}
 
 	/* SSL3_RT_APPLICATION_DATA or SSL3_RT_HANDSHAKE */
-	if (tls_content_type(s->s3->rcontent) == type) {
+	if (tls_content_type(rcontent) == type) {
 		/*
 		 * Make sure that we are not getting application data when we
 		 * are doing a handshake for the first time.
@@ -680,22 +682,22 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			return len;
 
 		if (peek) {
-			ssret = tls_content_peek(s->s3->rcontent, buf, len);
+			ssret = tls_content_peek(rcontent, buf, len);
 		} else {
-			ssret = tls_content_read(s->s3->rcontent, buf, len);
+			ssret = tls_content_read(rcontent, buf, len);
 		}
 		if (ssret < INT_MIN || ssret > INT_MAX)
 			return -1;
 		if (ssret < 0)
 			return (int)ssret;
 
-		if (tls_content_remaining(s->s3->rcontent) == 0)
+		if (tls_content_remaining(rcontent) == 0)
 			s->rstate = SSL_ST_READ_HEADER;
 
 		return (int)ssret;
 	}
 
-	if (tls_content_type(s->s3->rcontent) == SSL3_RT_ALERT) {
+	if (tls_content_type(rcontent) == SSL3_RT_ALERT) {
 		if ((ret = ssl3_read_alert(s)) <= 0)
 			return ret;
 		goto start;
@@ -703,12 +705,12 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	if (s->shutdown & SSL_SENT_SHUTDOWN) {
 		s->rwstate = SSL_NOTHING;
-		tls_content_clear(s->s3->rcontent);
+		tls_content_clear(rcontent);
 		s->s3->rrec.length = 0;
 		return (0);
 	}
 
-	if (tls_content_type(s->s3->rcontent) == SSL3_RT_APPLICATION_DATA) {
+	if (tls_content_type(rcontent) == SSL3_RT_APPLICATION_DATA) {
 		/*
 		 * At this point, we were expecting handshake data, but have
 		 * application data. If the library was running inside
@@ -734,13 +736,13 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 	}
 
-	if (tls_content_type(s->s3->rcontent) == SSL3_RT_CHANGE_CIPHER_SPEC) {
+	if (tls_content_type(rcontent) == SSL3_RT_CHANGE_CIPHER_SPEC) {
 		if ((ret = ssl3_read_change_cipher_spec(s)) <= 0)
 			return ret;
 		goto start;
 	}
 
-	if (tls_content_type(s->s3->rcontent) == SSL3_RT_HANDSHAKE) {
+	if (tls_content_type(rcontent) == SSL3_RT_HANDSHAKE) {
 		if ((ret = dtls1_read_handshake_unexpected(s)) <= 0)
 			return ret;
 		goto start;
