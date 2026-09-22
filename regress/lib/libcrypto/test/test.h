@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.5 2025/12/25 02:40:53 tb Exp $ */
+/*	$OpenBSD: test.h,v 1.6 2026/09/22 20:21:46 joshua Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -17,6 +17,8 @@
 
 #ifndef HEADER_TEST_H
 #define HEADER_TEST_H
+
+#include <openssl/opensslfeatures.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -51,6 +53,13 @@ typedef void (test_run_func)(struct test *_t, const void *_arg);
 void test_fail(struct test *_t);
 
 /*
+ * test_skipnow marks the test as skipped. Once called, the test should return.
+ *
+ * If a test fails and is then skipped, it is still considered to have failed.
+ */
+void test_skipnow(struct test *_t);
+
+/*
  * test_printf prints a test log message. When in verbose mode, the log message
  * will be written to stderr, otherwise it will be buffered and only written to
  * stderr if the test fails.
@@ -78,7 +87,7 @@ void test_logf_internal(struct test *_t, const char *_label, const char *_func,
     __attribute__((__nonnull__ (6)));
 
 /*
- * test_logf prints an informational log message. When in verbose mode, the log
+ * test_logf records an informational log message. When in verbose mode, the log
  * will be written to stderr, otherwise it will be buffered and only written to
  * stderr if the test fails.
  */
@@ -88,7 +97,7 @@ void test_logf_internal(struct test *_t, const char *_label, const char *_func,
     } while (0)
 
 /*
- * test_errorf prints an error message. It will also cause the test to fail.
+ * test_errorf records an error message and marks the test as failed.
  * If the test cannot proceed, it is recommended to return or goto a cleanup
  * label.
  *
@@ -104,15 +113,18 @@ void test_logf_internal(struct test *_t, const char *_label, const char *_func,
 /*
  * test_skip marks the test as skipped. Once called, the test should return.
  */
-void test_skip(struct test *_t, const char *_reason);
+#define test_skip(t, reason) \
+    test_skipf(t, "%s", reason)
 
 /*
  * test_skipf marks the test as skipped with a formatted reason. Once called,
  * the test should return.
  */
-void test_skipf(struct test *_t, const char *_fmt, ...)
-    __attribute__((__format__ (printf, 2, 3)))
-    __attribute__((__nonnull__ (2)));
+#define test_skipf(t, fmt, ...) \
+    do { \
+	test_logf_internal(t, "SKIP", __func__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+	test_skipnow(t); \
+    } while (0)
 
 /*
  * test_run runs a test function. It will create a new test struct with the
