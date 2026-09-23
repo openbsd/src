@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.42 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.43 2026/09/23 15:35:43 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -31,9 +31,12 @@
 #include "vmd.h"
 #include "pci.h"
 #include "atomicio.h"
+#include "lapic.h"
 #include "mmio.h"
 
 struct pci pci;
+static pthread_mutex_t pci_msi_mtx = PTHREAD_MUTEX_INITIALIZER;
+static uint32_t pci_msi_arb_next;
 
 extern struct vmd_vm *current_vm;
 
@@ -46,6 +49,7 @@ extern struct vmd_vm *current_vm;
 #define PCI_MSI_DATA_DELIVERY_SHIFT	8
 #define PCI_MSI_DATA_DELIVERY_MASK	0x7
 #define PCI_MSI_DELIVERY_FIXED		0
+#define PCI_MSI_DELIVERY_LOPRI		1
 
 struct pci_msi_cap {
 	uint8_t pmc_id;
@@ -379,8 +383,11 @@ pci_msix_enabled(struct pci_dev *dev)
 static void
 pci_msi_deliver(uint64_t address, uint32_t data)
 {
+	uint64_t targets;
 	uint32_t dest;
+	uint32_t i;
 	uint8_t delivery, vector;
+	int target;
 
 	if ((address & PCI_MSI_ADDR_MASK) != PCI_MSI_ADDR_BASE ||
 	    (address >> 32) != 0) {
@@ -388,14 +395,10 @@ pci_msi_deliver(uint64_t address, uint32_t data)
 		    address);
 		return;
 	}
-	if (address & PCI_MSI_ADDR_DESTMODE) {
-		log_debug("%s: logical MSI destination unsupported", __func__);
-		return;
-	}
-
 	delivery = (data >> PCI_MSI_DATA_DELIVERY_SHIFT) &
 	    PCI_MSI_DATA_DELIVERY_MASK;
-	if (delivery != PCI_MSI_DELIVERY_FIXED) {
+	if (delivery != PCI_MSI_DELIVERY_FIXED &&
+	    delivery != PCI_MSI_DELIVERY_LOPRI) {
 		log_debug("%s: MSI delivery mode %u unsupported", __func__,
 		    delivery);
 		return;
@@ -404,7 +407,27 @@ pci_msi_deliver(uint64_t address, uint32_t data)
 	dest = (address >> PCI_MSI_ADDR_DEST_SHIFT) &
 	    PCI_MSI_ADDR_DEST_MASK;
 	vector = data & PCI_MSI_DATA_VECTOR_MASK;
-	vcpu_assert_vector(current_vm->vm_fd, dest, vector);
+	targets = lapic_targets(dest,
+	    (address & PCI_MSI_ADDR_DESTMODE) != 0);
+	if (delivery == PCI_MSI_DELIVERY_LOPRI) {
+		/* Lowest priority selects one eligible LAPIC, not a multicast. */
+		pthread_mutex_lock(&pci_msi_mtx);
+		target = lapic_lowest_priority(targets, pci_msi_arb_next);
+		if (target != -1) {
+			pci_msi_arb_next = target + 1;
+			if (pci_msi_arb_next >=
+			    current_vm->vm_params.vmc_ncpus)
+				pci_msi_arb_next = 0;
+		}
+		pthread_mutex_unlock(&pci_msi_mtx);
+		if (target == -1)
+			return;
+		targets = 1ULL << target;
+	}
+	for (i = 0; i < current_vm->vm_params.vmc_ncpus; i++) {
+		if (targets & (1ULL << i))
+			vcpu_assert_vector(current_vm->vm_fd, i, vector);
+	}
 }
 
 void
@@ -588,6 +611,7 @@ pci_init(void)
 	uint8_t id;
 
 	memset(&pci, 0, sizeof(pci));
+	pci_msi_arb_next = 0;
 
 	/* Check if changes to struct pci_dev create an invalid config space. */
 	CTASSERT(sizeof(pci.pci_devices[0].pd_cfg_space) <= 256);

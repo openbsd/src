@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.6 2026/09/22 08:21:39 mlarkin Exp $ */
+/*	$OpenBSD: lapic.c,v 1.7 2026/09/23 15:35:43 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -602,16 +602,8 @@ lapic_icr_targets(uint32_t source, uint32_t hi, uint32_t lo)
 
 	switch (shorthand) {
 	case 0:
-		/* All-ones is broadcast in both physical and logical mode. */
-		if (dest == 0xff) {
-			for (i = 0; i < lapic_ncpus; i++)
-				targets |= 1ULL << i;
-		} else if (lo & LAPIC_DSTMODE_LOG) {
-			log_debug("%s: logical destination IPI from vcpu %u "
-			    "ignored", __func__, source);
-			break;
-		} else if (dest < (uint32_t)lapic_ncpus)
-			targets = 1ULL << dest;
+		targets = lapic_targets(dest,
+		    (lo & LAPIC_DSTMODE_LOG) != 0);
 		break;
 	case LAPIC_DEST_SELF:
 		targets = 1ULL << source;
@@ -629,6 +621,77 @@ lapic_icr_targets(uint32_t source, uint32_t hi, uint32_t lo)
 	}
 
 	return (targets);
+}
+
+/* Resolve an xAPIC physical or flat/cluster logical destination. */
+uint64_t
+lapic_targets(uint8_t dest, int logical)
+{
+	uint64_t targets = 0;
+	uint32_t dfr, dlid;
+	int i;
+
+	/* All-ones is broadcast in both physical and logical mode. */
+	if (dest == 0xff) {
+		for (i = 0; i < lapic_ncpus; i++)
+			targets |= 1ULL << i;
+		return (targets);
+	}
+
+	if (!logical) {
+		if (dest < (uint32_t)lapic_ncpus)
+			targets = 1ULL << dest;
+		return (targets);
+	}
+
+	for (i = 0; i < lapic_ncpus; i++) {
+		pthread_mutex_lock(&lapics[i].mtx);
+		dfr = lapics[i].dfr;
+		dlid = lapics[i].ldr >> LAPIC_ID_SHIFT;
+		pthread_mutex_unlock(&lapics[i].mtx);
+
+		/* Flat model: destination and logical ID are bitmaps. */
+		if (dfr == 0xffffffff) {
+			if (dlid & dest)
+				targets |= 1ULL << i;
+		/* Cluster model: high nibble is cluster, low is bitmap. */
+		} else if ((dlid & 0xf0) == (dest & 0xf0) &&
+		    (dlid & dest & 0x0f))
+			targets |= 1ULL << i;
+	}
+
+	return (targets);
+}
+
+/* Pick the lowest-PPR enabled target, rotating equal-priority ties. */
+int
+lapic_lowest_priority(uint64_t targets, uint32_t start)
+{
+	uint32_t ppr, best_ppr = UINT32_MAX;
+	int best = -1, i, n;
+
+	if (lapic_ncpus == 0)
+		return (-1);
+	start %= lapic_ncpus;
+	for (n = 0; n < lapic_ncpus; n++) {
+		i = (start + n) % lapic_ncpus;
+		if ((targets & (1ULL << i)) == 0)
+			continue;
+		pthread_mutex_lock(&lapics[i].mtx);
+		if ((lapics[i].apicbase & APICBASE_GLOBAL_ENABLE) == 0 ||
+		    (lapics[i].svr & LAPIC_SVR_ENABLE) == 0) {
+			pthread_mutex_unlock(&lapics[i].mtx);
+			continue;
+		}
+		ppr = lapic_ppr(&lapics[i]) & LAPIC_TPRI_INT_MASK;
+		pthread_mutex_unlock(&lapics[i].mtx);
+		if (ppr < best_ppr) {
+			best = i;
+			best_ppr = ppr;
+		}
+	}
+
+	return (best);
 }
 
 /*

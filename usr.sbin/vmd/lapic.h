@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.h,v 1.4 2026/09/22 08:21:39 mlarkin Exp $ */
+/*	$OpenBSD: lapic.h,v 1.5 2026/09/23 15:35:43 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2025 Mike Larkin <mlarkin@openbsd.org>
@@ -32,6 +32,8 @@ int lapic_is_pending(int);
 int lapic_ack(int);
 int lapic_enabled(int);
 int lapic_extint_enabled(int);
+uint64_t lapic_targets(uint8_t, int);
+int lapic_lowest_priority(uint64_t, uint32_t);
 int lapic_timer_check(uint32_t);
 
 #endif /* !_LAPIC_H_ */

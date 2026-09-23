@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093aa.c,v 1.3 2026/09/18 04:46:25 dv Exp $ */
+/*	$OpenBSD: i82093aa.c,v 1.4 2026/09/23 15:35:43 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2024 Mike Larkin <mlarkin@openbsd.org>
@@ -39,6 +39,8 @@ struct i82093aa {
 	uint32_t	redtbl[I82093AA_REDTBL_DWORDS];
 	int		pin_level[I82093AA_PIN_COUNT];
 	int		last_level[I82093AA_PIN_COUNT];
+	uint32_t	ncpus;
+	uint32_t	arb_next;
 	pthread_mutex_t mtx;
 };
 
@@ -207,6 +209,8 @@ i82093aa_init(int numcpus)
 
 	ioapic.reg = 0;
 	ioapic.id = (numcpus + 1) & 0xf;
+	ioapic.ncpus = numcpus;
+	ioapic.arb_next = 0;
 	for (pin = 0; pin < I82093AA_PIN_COUNT; pin++) {
 		ioapic.redtbl[pin * 2] = IOAPIC_REDLO_MASK;
 		ioapic.redtbl[pin * 2 + 1] = 0;
@@ -289,25 +293,38 @@ static int
 i82093aa_deliver(uint8_t dest, int dest_mode, int delivery_mode,
     uint8_t vector, int level)
 {
-	if (dest_mode) {
-		log_debug("%s: logical destination 0x%x unsupported", __func__,
-		    dest);
-		return 0;
-	}
+	uint64_t targets;
+	uint32_t i;
+	int delivered = 0, target;
+
 	if (delivery_mode != IOAPIC_REDLO_DEL_FIXED &&
 	    delivery_mode != IOAPIC_REDLO_DEL_LOPRI) {
 		log_debug("%s: delivery mode %d unsupported", __func__,
 		    delivery_mode);
 		return 0;
 	}
-	if (vector < 32 || !lapic_enabled(dest))
+	if (vector < 32)
 		return 0;
 
-	DPRINTF("%s: vector %u to physical APIC %u", __func__, vector,
-	    dest);
-	lapic_vector_irq(dest, 0, vector, level);
+	targets = lapic_targets(dest, dest_mode);
+	if (delivery_mode == IOAPIC_REDLO_DEL_LOPRI) {
+		target = lapic_lowest_priority(targets, ioapic.arb_next);
+		if (target == -1)
+			return 0;
+		targets = 1ULL << target;
+		ioapic.arb_next = target + 1;
+		if (ioapic.arb_next >= ioapic.ncpus)
+			ioapic.arb_next = 0;
+	}
 
-	return 1;
+	for (i = 0; i < ioapic.ncpus; i++) {
+		if ((targets & (1ULL << i)) == 0 || !lapic_enabled(i))
+			continue;
+		lapic_vector_irq(i, dest_mode, vector, level);
+		delivered = 1;
+	}
+
+	return delivered;
 }
 
 void
