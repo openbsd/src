@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.32 2021/05/16 15:12:37 deraadt Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.33 2026/09/23 13:29:14 krw Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -768,7 +768,7 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 {
 	int64_t strip_no, strip_size, strip_bits, i, restart;
 	int64_t chunk_count, chunk_strips, chunk_lba, chunk_size, row_size;
-	struct sr_workunit *wu_r, *wu_w;
+	struct sr_workunit *wu_r = NULL, *wu_w = NULL;
 	int s, slept, percent = 0, old_percent = -1;
 	int rebuild_chunk = -1;
 	void *xorbuf;
@@ -864,6 +864,7 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 
 		sr_scsi_wu_put(sd, wu_r);
 		sr_scsi_wu_put(sd, wu_w);
+		wu_r = wu_w = NULL;
 
 		sd->sd_meta->ssd_rebuild = chunk_lba * chunk_count;
 
@@ -900,6 +901,10 @@ abort:
 		printf("%s: could not save metadata to %s\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 bad:
+	if (wu_r)
+		sr_scsi_wu_put(sd, wu_r);
+	if (wu_w)
+		sr_scsi_wu_put(sd, wu_w);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.438 2025/10/18 15:33:19 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.439 2026/09/23 13:29:14 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4679,7 +4679,7 @@ sr_rebuild(struct sr_discipline *sd)
 	struct sr_softc		*sc = sd->sd_sc;
 	u_int64_t		sz, whole_blk, partial_blk, blk, restart;
 	daddr_t			lba;
-	struct sr_workunit	*wu_r, *wu_w;
+	struct sr_workunit	*wu_r = NULL, *wu_w = NULL;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;
 	int			c, s, slept, percent = 0, old_percent = -1;
@@ -4795,6 +4795,7 @@ sr_rebuild(struct sr_discipline *sd)
 
 		sr_scsi_wu_put(sd, wu_r);
 		sr_scsi_wu_put(sd, wu_w);
+		wu_r = wu_w = NULL;
 
 		sd->sd_meta->ssd_rebuild = lba;
 
@@ -4828,6 +4829,10 @@ abort:
 		    DEVNAME(sc), sd->sd_meta->ssd_devname);
 fail:
 	dma_free(buf, SR_REBUILD_IO_SIZE << DEV_BSHIFT);
+	if (wu_r)
+		sr_scsi_wu_put(sd, wu_r);
+	if (wu_w)
+		sr_scsi_wu_put(sd, wu_w);
 }
 
 struct sr_discipline *
