@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.178 2025/06/01 00:45:39 bentley Exp $
+# $OpenBSD: PackageRepository.pm,v 1.179 2026/09/24 10:46:55 sthen Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -406,8 +406,10 @@ sub uncompress($self, $object, @p)
 		my $h = $fh->getHeaderInfo;
 		if ($h) {
 			for my $line (split /\n/, $h->{Comment}) {
-				if ($line =~ m/^key=.*\/(.*)\.sec$/) {
-					$object->{signer} = $1;
+				if ($line =~ m/^key=(.*)\.sec$/) {
+					my $path = $1;
+					$path =~ s,.*/,,;
+					$object->{signer} = $path;
 				} elsif ($line =~ m/^date=(.*)$/) {
 					$object->{signdate} = $1;
 				}
