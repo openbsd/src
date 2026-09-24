@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.10 2025/11/21 04:44:26 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.11 2026/09/24 08:57:31 jsg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -646,6 +646,7 @@ etherbridge_rtfind(struct etherbridge *eb, struct ifbaconf *baconf)
 		if (nlen > baconf->ifbac_len)
 			break;
 
+		memset(&bareq, 0, sizeof(bareq));
 		strlcpy(bareq.ifba_name, eb->eb_name,
 		    sizeof(bareq.ifba_name));
 		eb_port_ifname(eb,
@@ -653,7 +654,6 @@ etherbridge_rtfind(struct etherbridge *eb, struct ifbaconf *baconf)
 		    ebe->ebe_port);
 		ether_e64_to_addr(&bareq.ifba_dst, ebe->ebe_addr);
 
-		memset(&bareq.ifba_dstsa, 0, sizeof(bareq.ifba_dstsa));
 		eb_port_sa(eb, &bareq.ifba_dstsa, ebe->ebe_port);
 
 		switch (ebe->ebe_type) {
@@ -707,6 +707,7 @@ etherbridge_vareq(struct etherbridge *eb, struct ifbaconf *baconf)
 		if (nlen > baconf->ifbac_len)
 			break;
 
+		memset(&bvareq, 0, sizeof(bvareq));
 		strlcpy(bvareq.ifbva_name, eb->eb_name,
 		    sizeof(bvareq.ifbva_name));
 		eb_port_ifname(eb,
@@ -718,7 +719,6 @@ etherbridge_vareq(struct etherbridge *eb, struct ifbaconf *baconf)
 		bvareq.ifbva_vid = ebe->ebe_vs;
 		ether_e64_to_addr(&bvareq.ifbva_dst, ebe->ebe_addr);
 
-		memset(&bvareq.ifbva_dstsa, 0, sizeof(bvareq.ifbva_dstsa));
 		eb_port_sa(eb, &bvareq.ifbva_dstsa, ebe->ebe_port);
 
 		switch (ebe->ebe_type) {
