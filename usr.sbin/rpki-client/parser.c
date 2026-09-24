@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.186 2026/09/24 08:37:38 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.187 2026/09/24 10:52:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -624,11 +624,6 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
-
-	if (strcmp(cert->crl, crl->mftcrldp) != 0) {
-		warnx("%s: invalid CRLDP pointer", file);
-		goto out;
-	}
 
 	if (!valid_x509(file, ctx, cert, a, crl, &errstr) ||
 	    !valid_cert(file, a, cert)) {
