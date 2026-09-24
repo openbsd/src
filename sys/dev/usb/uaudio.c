@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.187 2026/09/01 12:02:37 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.188 2026/09/24 09:53:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2415,6 +2415,14 @@ uaudio_process_as_ep(struct uaudio_softc *sc,
 	}
 
 	/*
+	 * For isoc endpoints ival can't be 0. If it's 0, assume that the
+	 * descriptor is not set and the ival correspoinds to 1ms, which works
+	 * for most (all?) devices
+	 */
+	if (ival == 0)
+		ival = (sc->ufps == 1000) ? 1 : 4;
+
+	/*
 	 * For each AS interface setting, there's a single data
 	 * endpoint and an optional feedback endpoint. The
 	 * synchronization type is non-zero and must be set in the data
@@ -2432,6 +2440,14 @@ uaudio_process_as_ep(struct uaudio_softc *sc,
 
 		if (a->data_addr && addr != a->data_addr) {
 			printf("%s: skipped extra data endpt.\n", DEVNAME(sc));
+			return 1;
+		}
+
+		/*
+		 * interval of more than 10ms makes no sense for audio
+		 */
+		if ((1 << (ival - 1)) > sc->ufps / 100) {
+			printf("%s: skipped endpt with huge ival\n", DEVNAME(sc));
 			return 1;
 		}
 
