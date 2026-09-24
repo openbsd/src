@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.139 2026/07/18 09:47:52 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.140 2026/09/24 17:16:20 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -9817,6 +9817,9 @@ qwx_hal_srng_access_begin(struct qwx_softc *sc, struct hal_srng *srng)
 	} else {
 		srng->u.dst_ring.cached_hp =
 			*(volatile uint32_t *)srng->u.dst_ring.hp_addr;
+
+		bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(sc->hal.rdpmem), 0,
+		    QWX_DMA_LEN(sc->hal.rdpmem), BUS_DMASYNC_POSTREAD);
 	}
 }
 
@@ -9826,12 +9829,14 @@ qwx_hal_srng_access_end(struct qwx_softc *sc, struct hal_srng *srng)
 #ifdef notyet
 	lockdep_assert_held(&srng->lock);
 #endif
-	/* TODO: See if we need a write memory barrier here */
 	if (srng->flags & HAL_SRNG_FLAGS_LMAC_RING) {
 		/* For LMAC rings, ring pointer updates are done through FW and
 		 * hence written to a shared memory location that is read by FW
 		 */
 		if (srng->ring_dir == HAL_SRNG_DIR_SRC) {
+			bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(sc->hal.wrpmem), 0,
+			    QWX_DMA_LEN(sc->hal.wrpmem), BUS_DMASYNC_POSTWRITE);
+
 			srng->u.src_ring.last_tp =
 			    *(volatile uint32_t *)srng->u.src_ring.tp_addr;
 			*srng->u.src_ring.hp_addr = srng->u.src_ring.hp;
