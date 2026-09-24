@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.188 2026/09/24 09:53:43 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.189 2026/09/24 13:57:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2529,6 +2529,11 @@ uaudio_process_as_general(struct uaudio_softc *sc,
 			return 0;
 		if (!uaudio_getnum(p, 1, &nch))
 			return 0;
+		if (nch == 0) {
+			printf("%s: skipped 0-chan v2 alt\n", DEVNAME(sc));
+			*rispcm = 0;
+			return 1;
+		}
 		a->nch = nch;
 		*rispcm = (fmt_type == 1) && (fmt_map & UAUDIO_V2_FMT_PCM);
 	}
@@ -2589,6 +2594,11 @@ uaudio_process_as_format(struct uaudio_softc *sc,
 				}
 			}
 		}
+		if (nch == 0) {
+			printf("%s: skipped 0-chan v1 alt\n", DEVNAME(sc));
+			*ispcm = 0;
+			return 1;
+		}
 		a->v1_rates = rates;
 		a->nch = nch;
 		break;
@@ -2618,6 +2628,11 @@ uaudio_process_as_format(struct uaudio_softc *sc,
 		 * clock source, so we're done.
 		 */
 		break;
+	}
+	if (bps == 0 || bps > 4 || bits == 0 || bits > bps * 8) {
+		printf("%s: s%ule%u: fmt skipped\n",  DEVNAME(sc), bits, bps);
+		*ispcm = 0;
+		return 0;
 	}
 	a->bps = bps;
 	a->bits = bits;
