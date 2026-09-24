@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.12 2024/01/20 08:00:59 kettenis Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.13 2026/09/24 13:35:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -275,6 +275,9 @@ struct apldchidev_softc {
 
 	bus_dma_tag_t		sc_dmat;
 	int			sc_node;
+
+	bus_dmamap_t		sc_fw_map;
+	bus_dma_segment_t	sc_fw_seg;
 
 	void			*sc_rx_ih;
 
@@ -919,8 +922,6 @@ int
 apldchidev_send_firmware(struct apldchidev_softc *sc, int iface,
     void *ucode, size_t ucode_size)
 {
-	bus_dmamap_t map;
-	bus_dma_segment_t seg;
 	uint8_t cmd[16] = {};
 	uint64_t addr;
 	uint32_t size;
@@ -930,44 +931,45 @@ apldchidev_send_firmware(struct apldchidev_softc *sc, int iface,
 	int error;
 
 	error = bus_dmamap_create(sc->sc_dmat, ucode_size, 1, ucode_size, 0,
-	    BUS_DMA_WAITOK, &map);
+	    BUS_DMA_WAITOK, &sc->sc_fw_map);
 	if (error)
 		return error;
 
 	error = bus_dmamem_alloc(sc->sc_dmat, ucode_size, 4 * PAGE_SIZE, 0,
-	    &seg, 1, &nsegs, BUS_DMA_WAITOK);
+	    &sc->sc_fw_seg, 1, &nsegs, BUS_DMA_WAITOK);
 	if (error) {
-		bus_dmamap_destroy(sc->sc_dmat, map);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_fw_map);
 		return error;
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &seg, 1, ucode_size, &buf,
-	    BUS_DMA_WAITOK);
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_fw_seg, 1, ucode_size,
+	    &buf, BUS_DMA_WAITOK);
 	if (error) {
-		bus_dmamem_free(sc->sc_dmat, &seg, 1);
-		bus_dmamap_destroy(sc->sc_dmat, map);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_fw_seg, 1);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_fw_map);
 		return error;
 	}
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, map, &seg, 1,
-	    ucode_size, BUS_DMA_WAITOK);
+	error = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_fw_map, &sc->sc_fw_seg,
+	    1, ucode_size, BUS_DMA_WAITOK);
 	if (error) {
 		bus_dmamem_unmap(sc->sc_dmat, buf, ucode_size);
-		bus_dmamem_free(sc->sc_dmat, &seg, 1);
-		bus_dmamap_destroy(sc->sc_dmat, map);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_fw_seg, 1);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_fw_map);
 		return error;
 	}
 
 	memcpy(buf, ucode, ucode_size);
-	bus_dmamap_sync(sc->sc_dmat, map, 0, ucode_size, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_fw_map, 0, ucode_size,
+	    BUS_DMASYNC_PREWRITE);
 
 	cmd[0] = MTP_CMD_SEND_FIRMWARE;
 	cmd[1] = 2;
 	cmd[2] = 0;
 	cmd[3] = iface;
-	addr = map->dm_segs[0].ds_addr;
+	addr = sc->sc_fw_map->dm_segs[0].ds_addr;
 	memcpy(&cmd[4], &addr, sizeof(addr));
-	size = map->dm_segs[0].ds_len;
+	size = sc->sc_fw_map->dm_segs[0].ds_len;
 	memcpy(&cmd[12], &size, sizeof(size));
 
 	flags = MTP_GROUP_CMD << MTP_GROUP_SHIFT;
@@ -975,10 +977,11 @@ apldchidev_send_firmware(struct apldchidev_softc *sc, int iface,
 	apldchidev_cmd(sc, MTP_IFACE_COMM, flags, cmd, sizeof(cmd));
 	apldchidev_wait(sc);
 
-	bus_dmamap_unload(sc->sc_dmat, map);
+	/*
+	 * The device needs access to the firmware image beyond this
+	 * point, so keep the allocated memory around.
+	 */
 	bus_dmamem_unmap(sc->sc_dmat, buf, ucode_size);
-	bus_dmamem_free(sc->sc_dmat, &seg, 1);
-	bus_dmamap_destroy(sc->sc_dmat, map);
 
 	return 0;
 }
