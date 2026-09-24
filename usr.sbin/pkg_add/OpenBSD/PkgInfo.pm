@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.54 2023/11/25 11:02:23 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.55 2026/09/24 10:43:52 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -430,8 +430,9 @@ sub print_info($self, $state, $pkg, $handle)
 			if ($plist->is_signed) {
 				my $sig = $plist->get('digital-signature');
 				if ($sig->{key} eq 'signify2') {
+					my $signer = $plist->get('signer');
 					$state->say("reportedly signed by #1",
-					    $plist->get('signer')->name);
+					    $signer->name) if defined $signer;
 				} else {
 					$state->say("\@digital-signature #1: no currently supported signature", 	
 					    $sig->{key});
