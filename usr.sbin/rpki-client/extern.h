@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.297 2026/09/24 08:37:38 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.298 2026/09/24 13:58:36 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -825,7 +825,6 @@ void		 crl_tree_free(struct crl_tree *);
 
 /* Validation of our objects. */
 
-int		 valid_cert(const char *, struct auth *, const struct cert *);
 int		 valid_roa(const char *, struct cert *, struct roa *);
 int		 valid_filehash(int, const char *, size_t);
 int		 valid_hash(unsigned char *, size_t, const char *, size_t);
