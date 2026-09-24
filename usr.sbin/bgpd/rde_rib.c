@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.305 2026/09/21 18:47:26 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.306 2026/09/24 18:41:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -955,17 +955,23 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 
 			/* no change, update last change */
 			p->lastchange = getmonotime();
-			p->validation_state = state->vstate;
 			p_filtered = (p->flags & PREFIX_FLAG_FILTERED) != 0;
-			/* check if filtered flag changed */
-			if (p_filtered != filtered) {
+			/* check if filtered flag or validation state changed */
+			if (p_filtered != filtered ||
+			    p->validation_state != state->vstate) {
 				struct rib_entry	*re;
 
 				re = rib_get_addr(rib, prefix, prefixlen);
 				/* remove prefix from rib */
 				prefix_evaluate(re, NULL, p);
-				/* toggle filtered flag */
-				p->flags ^= PREFIX_FLAG_FILTERED;
+
+				/* adjust filtered flag and vstate */
+				if (filtered)
+					p->flags |= PREFIX_FLAG_FILTERED;
+				else
+					p->flags &= ~PREFIX_FLAG_FILTERED;
+				p->validation_state = state->vstate;
+
 				/* redo route decision */
 				prefix_evaluate(re, p, NULL);
 			}
