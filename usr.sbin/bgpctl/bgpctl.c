@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.324 2026/07/24 05:01:57 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.325 2026/09/24 11:41:41 job Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1034,6 +1034,8 @@ fmt_community(uint16_t a, uint16_t v)
 			return "NO_PEER";
 		case COMMUNITY_BLACKHOLE:
 			return "BLACKHOLE";
+		case COMMUNITY_DOWNGRADE:
+			return "DOWNGRADE";
 		default:
 			break;
 		}

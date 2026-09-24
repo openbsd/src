@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.140 2026/05/07 12:35:03 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.141 2026/09/24 11:41:41 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1215,6 +1215,10 @@ parsecommunity(struct community *c, char *s)
 	} else if (strcasecmp(s, "BLACKHOLE") == 0) {
 		setcommunity(c, COMMUNITY_WELLKNOWN,
 		    COMMUNITY_BLACKHOLE, 0, 0);
+		return;
+	} else if (strcasecmp(s, "DOWNGRADE") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_DOWNGRADE, 0, 0);
 		return;
 	}
 
