@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.90 2026/09/22 09:18:41 hshoexer Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.91 2026/09/24 15:39:14 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1125,7 +1125,8 @@ vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		gprs[VCPU_REGS_RBP] = vcpu->vc_gueststate.vg_rbp;
 		gprs[VCPU_REGS_RIP] = vmcb->v_rip;
 		gprs[VCPU_REGS_RSP] = vmcb->v_rsp;
-		gprs[VCPU_REGS_RFLAGS] = vmcb->v_rflags;
+		gprs[VCPU_REGS_RFLAGS] = (vmcb->v_rflags & ~PSL_I) |
+		    (svm_get_iflag(vcpu, vmcb->v_rflags) ? PSL_I : 0);
 	}
 
 	if (regmask & VM_RWREGS_SREGS) {
