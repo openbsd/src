@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.87 2026/09/03 17:16:51 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.88 2026/09/24 08:37:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -219,7 +219,7 @@ parse_load_certchain(char *uri)
 		uri = filestack[i - 1];
 
 		crl = crl_get(&crls, a);
-		if (!valid_x509(uri, ctx, cert->x509, a, crl, &errstr) ||
+		if (!valid_x509(uri, ctx, cert, a, crl, &errstr) ||
 		    !valid_cert(uri, a, cert)) {
 			if (errstr != NULL)
 				warnx("%s: %s", uri, errstr);
@@ -591,7 +591,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		a = parse_load_certchain(aia);
 		c = crl_get(&crls, a);
 
-		if ((status = valid_x509(file, ctx, cert->x509, a, c, &errstr))) {
+		if ((status = valid_x509(file, ctx, cert, a, c, &errstr))) {
 			switch (type) {
 			case RTYPE_ASPA:
 				status = aspa->valid;
