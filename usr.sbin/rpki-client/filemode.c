@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.88 2026/09/24 08:37:38 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.89 2026/09/24 10:48:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -100,7 +100,7 @@ static void
 parse_load_crl(char *uri)
 {
 	struct crl *crl;
-	char *f;
+	char *f, *file;
 	size_t flen;
 
 	if (uri == NULL)
@@ -109,17 +109,22 @@ parse_load_crl(char *uri)
 		warnx("bad CRL distribution point URI %s", uri);
 		return;
 	}
-	uri += RSYNC_PROTO_LEN;
+	file = uri + RSYNC_PROTO_LEN;
 
-	f = load_file(uri, &flen);
+	f = load_file(file, &flen);
 	if (f == NULL) {
-		warn("parse file %s", uri);
+		warn("parse file %s", file);
 		return;
 	}
 
-	crl = crl_parse(uri, f, flen);
-	if (crl != NULL && !crl_insert(&crls, crl))
-		crl_free(crl);
+	crl = crl_parse(file, f, flen);
+	if (crl != NULL) {
+		assert(crl->mftcrldp == NULL);
+		if ((crl->mftcrldp = strdup(uri)) == NULL)
+			err(1, NULL);
+		if (!crl_insert(&crls, crl))
+			crl_free(crl);
+	}
 
 	free(f);
 }
