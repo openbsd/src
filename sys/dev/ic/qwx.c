@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.140 2026/09/24 17:16:20 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.141 2026/09/24 17:17:19 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23022,10 +23022,6 @@ qwx_ce_completed_recv_next(struct qwx_ce_pipe *pipe,
 	}
 
 	*nbytes = qwx_hal_ce_dst_status_get_length(desc);
-	if (*nbytes == 0) {
-		ret = EIO;
-		goto err;
-	}
 
 	if (per_transfer_contextp) {
 		*per_transfer_contextp =
@@ -23049,6 +23045,8 @@ int
 qwx_ce_recv_process_cb(struct qwx_ce_pipe *pipe)
 {
 	struct qwx_softc *sc = pipe->sc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct mbuf *m;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	void *transfer_context;
@@ -23064,9 +23062,8 @@ qwx_ce_recv_process_cb(struct qwx_ce_pipe *pipe)
 		rx_data->m = NULL;
 
 		max_nbytes = m->m_pkthdr.len;
-		if (max_nbytes < nbytes) {
-			printf("%s: received more than expected (nbytes %d, "
-			    "max %d)", __func__, nbytes, max_nbytes);
+		if (nbytes == 0 || max_nbytes < nbytes) {
+			ifp->if_ierrors++;
 			m_freem(m);
 			continue;
 		}
