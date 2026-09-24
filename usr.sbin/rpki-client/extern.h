@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.298 2026/09/24 13:58:36 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.299 2026/09/24 14:44:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -831,7 +831,7 @@ int		 valid_hash(unsigned char *, size_t, const char *, size_t);
 int		 valid_filename(const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
-int		 valid_x509(char *, X509_STORE_CTX *, struct cert *,
+int		 valid_cert(char *, X509_STORE_CTX *, struct cert *,
 		    struct auth *, struct crl *, const char **);
 int		 valid_rsc(const char *, struct cert *, struct rsc *);
 int		 valid_econtent_version(const char *, const ASN1_INTEGER *,

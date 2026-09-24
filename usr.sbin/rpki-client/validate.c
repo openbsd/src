@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.89 2026/09/24 13:58:36 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.90 2026/09/24 14:44:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -408,7 +408,7 @@ pretty_revocation_time(X509 *x509, X509_CRL *crl, const char **errstr)
  * returned by X509_verify_cert_error_string().
  */
 int
-valid_x509(char *file, X509_STORE_CTX *store_ctx, struct cert *cert,
+valid_cert(char *file, X509_STORE_CTX *store_ctx, struct cert *cert,
     struct auth *a, struct crl *crl, const char **errstr)
 {
 	X509			*x509 = cert->x509;

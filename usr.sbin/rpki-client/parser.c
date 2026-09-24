@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.188 2026/09/24 13:58:36 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.189 2026/09/24 14:44:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -220,7 +220,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, cert, a, crl, &errstr)) {
+	if (!valid_cert(file, ctx, cert, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
@@ -262,7 +262,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, cert, a, crl, &errstr)) {
+	if (!valid_cert(file, ctx, cert, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
@@ -440,7 +440,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	a = find_issuer(file, entp->certid, mft->aki, NULL);
 	if (a == NULL)
 		goto err;
-	if (!valid_x509(file, ctx, cert, a, *crl, errstr))
+	if (!valid_cert(file, ctx, cert, a, *crl, errstr))
 		goto err;
 	cert_free(cert);
 	cert = NULL;
@@ -625,7 +625,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, cert, a, crl, &errstr)) {
+	if (!valid_cert(file, ctx, cert, a, crl, &errstr)) {
 		if (errstr != NULL)
 			warnx("%s: %s", file, errstr);
 		goto out;
@@ -786,7 +786,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, cert, a, crl, &errstr)) {
+	if (!valid_cert(file, ctx, cert, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
@@ -827,7 +827,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, cert, a, crl, &errstr)) {
+	if (!valid_cert(file, ctx, cert, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
