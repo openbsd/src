@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.9 2026/09/14 08:51:47 claudio Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.10 2026/09/24 09:19:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -330,7 +330,7 @@ aspa_validation(struct rde_aspa *ra, struct aspath *a,
 /*
  * Preallocate all data structures needed for the aspa table.
  * There are entries number of rde_aspa_sets with data_size bytes of
- * extra data (used to store SPAS and optional AFI bitmasks).
+ * extra data used to store SPAS.
  */
 struct rde_aspa *
 aspa_table_prep(uint32_t entries, size_t datasize)
@@ -374,7 +374,6 @@ aspa_table_prep(uint32_t entries, size_t datasize)
  * For hash conflict resolution insertion must happen in reverse order (biggest
  * customer asnum first). On conflict objects in the sets array are moved
  * around so that conflicting elements are direct neighbors.
- * The per AID information is (if required) stored as 2bits per provider.
  */
 void
 aspa_add_set(struct rde_aspa *ra, uint32_t cas, const uint32_t *pas,
