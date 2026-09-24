@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.69 2026/05/11 06:24:47 jsg Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.70 2026/09/24 17:57:24 kirill Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -964,8 +964,16 @@ pmap_clean_page(struct vm_page *pg)
 		if (pv->pv_pmap != pmap_kernel() && pv->pv_pmap != pm)
 			continue;
 
-		if (PV_BEEN_EXECD(pv->pv_flags))
+		if (PV_BEEN_EXECD(pv->pv_flags)) {
+			pd_entry_t l1pd;
+
+			l1pd = pv->pv_pmap->pm_l1->l1_kva[L1_IDX(pv->pv_va)];
+			if ((l1pd & L1_TYPE_MASK) == L1_TYPE_INV) {
+				cpu_idcache_wbinv_all();
+				return;
+			}
 			cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
+		}
 	}
 }
 
