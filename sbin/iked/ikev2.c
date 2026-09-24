@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.403 2026/09/21 20:54:38 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.404 2026/09/24 15:52:05 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3133,7 +3133,7 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 	FILE			*spif;
 	char			*spibuf = NULL;
 	uint64_t		*localspi = NULL;
-	uint64_t		 spi64, spi = 0;
+	uint64_t		 spi = 0;
 	uint32_t		 spi32;
 	uint8_t			*buf;
 	size_t			 found = 0;
@@ -3152,7 +3152,6 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 
 	switch (sz) {
 	case 4:
-	case 8:
 		break;
 	case 0:
 		if (msg->msg_del_protoid != IKEV2_SAPROTO_IKE) {
@@ -3189,16 +3188,8 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 
 	buf = ibuf_data(msg->msg_del_buf);
 	for (i = 0; i < cnt; i++) {
-		switch (sz) {
-		case 4:
-			memcpy(&spi32, buf + (i * sz), sizeof(spi32));
-			spi = betoh32(spi32);
-			break;
-		case 8:
-			memcpy(&spi64, buf + (i * sz), sizeof(spi64));
-			spi = betoh64(spi64);
-			break;
-		}
+		memcpy(&spi32, buf + (i * sz), sizeof(spi32));
+		spi = betoh32(spi32);
 
 		log_debug("%s: spi %s", __func__, print_spi(spi, sz));
 
@@ -3250,20 +3241,11 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 		for (i = 0; i < cnt; i++) {
 			if (localspi[i] == 0)	/* happens if found < cnt */
 				continue;
-			switch (sz) {
-			case 4:
-				spi32 = htobe32(localspi[i]);
-				if (ibuf_add(resp, &spi32, sizeof(spi32)) != 0)
-					goto done;
-				ret += sizeof(spi32);
-				break;
-			case 8:
-				spi64 = htobe64(localspi[i]);
-				if (ibuf_add(resp, &spi64, sizeof(spi64)) != 0)
-					goto done;
-				ret += sizeof(spi64);
-				break;
-			}
+
+			spi32 = htobe32(localspi[i]);
+			if (ibuf_add(resp, &spi32, sizeof(spi32)) != 0)
+				goto done;
+			ret += sizeof(spi32);
 		}
 		fflush(spif);
 		if (!ferror(spif)) {
