@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.43 2025/08/15 04:21:00 guenther Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.44 2026/09/25 04:55:43 gnezdo Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -309,7 +309,6 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 	if (upp->pr_cdir == NULL) {
 		struct vnode *dirvp;
 
-		upp->pr_ucred = crhold(p->p_ucred);
 		if (SCARG(uap, dirfd) != -1) {
 			struct filedesc *fdp = p->p_fd;
 			struct file *fp;
@@ -321,10 +320,22 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 				FRELE(fp, p);
 				return (ENOTDIR);
 			}
-		} else
+			vref(dirvp);
+			FRELE(fp, p);
+		} else {
 			dirvp = p->p_fd->fd_cdir;
-		upp->pr_cdir = dirvp;
-		vref(upp->pr_cdir);
+			vref(dirvp);
+		}
+		/*
+		 * fd_getfile() and FRELE() can both sleep, so a sibling
+		 * thread may have published while we were in here.  First
+		 * one to arrive wins; drop what this one took.
+		 */
+		if (upp->pr_cdir == NULL) {
+			upp->pr_cdir = dirvp;
+			upp->pr_ucred = crhold(p->p_ucred);
+		} else
+			vrele(dirvp);
 	}
 
 #if 0
