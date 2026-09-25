@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.549 2026/09/24 11:41:41 job Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.550 2026/09/25 20:45:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -471,6 +471,7 @@ enum capa_codes {
 #define	CAPA_GR_RESTART		0x02
 #define	CAPA_GR_FORWARD		0x04
 #define	CAPA_GR_RESTARTING	0x08
+#define	CAPA_GR_FINISHED	0x10
 #define	CAPA_GR_TIMEMASK	0x0fff
 #define	CAPA_GR_R_FLAG		0x8000
 #define	CAPA_GR_N_FLAG		0x4000

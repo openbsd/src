@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.13 2026/08/30 23:43:23 jsg Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.14 2026/09/25 20:45:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -769,16 +769,12 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 			peer->remote_role = capa2role(role);
 			break;
 		case CAPA_RESTART:
-			if (capa_len == 2) {
-				/* peer only supports EoR marker */
-				peer->capa.peer.grestart.restart = 1;
-				peer->capa.peer.grestart.timeout = 0;
-				break;
-			} else if (capa_len % 4 != 2) {
+			memset(&peer->capa.peer.grestart, 0,
+			    sizeof(peer->capa.peer.grestart));
+
+			if (capa_len % 4 != 2) {
 				log_peer_warnx(&peer->conf,
 				    "Bad graceful restart capability");
-				peer->capa.peer.grestart.restart = 0;
-				peer->capa.peer.grestart.timeout = 0;
 				break;
 			}
 
@@ -786,8 +782,17 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
  bad_gr_restart:
 				log_peer_warnx(&peer->conf,
 				    "Bad graceful restart capability");
-				peer->capa.peer.grestart.restart = 0;
-				peer->capa.peer.grestart.timeout = 0;
+				memset(&peer->capa.peer.grestart, 0,
+				    sizeof(peer->capa.peer.grestart));
+				break;
+			}
+
+			if (gr_header & CAPA_GR_N_FLAG)
+				peer->capa.peer.grestart.grnotification = 1;
+
+			if (capa_len == 2) {
+				/* peer only supports EoR marker */
+				peer->capa.peer.grestart.restart = 1;
 				break;
 			}
 
@@ -796,7 +801,8 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 			if (peer->capa.peer.grestart.timeout == 0) {
 				log_peer_warnx(&peer->conf, "Received "
 				    "graceful restart with zero timeout");
-				peer->capa.peer.grestart.restart = 0;
+				memset(&peer->capa.peer.grestart, 0,
+				    sizeof(peer->capa.peer.grestart));
 				break;
 			}
 
@@ -812,7 +818,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 					    afi, safi);
 					continue;
 				}
-				peer->capa.peer.grestart.flags[aid] |=
+				peer->capa.peer.grestart.flags[aid] =
 				    CAPA_GR_PRESENT;
 				if (flags & CAPA_GR_F_FLAG)
 					peer->capa.peer.grestart.flags[aid] |=
@@ -822,8 +828,6 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 					    CAPA_GR_RESTART;
 				peer->capa.peer.grestart.restart = 2;
 			}
-			if (gr_header & CAPA_GR_N_FLAG)
-				peer->capa.peer.grestart.grnotification = 1;
 			break;
 		case CAPA_AS4BYTE:
 			if (capa_len != 4 ||
@@ -1318,24 +1322,26 @@ capa_neg_calc(struct peer *p)
 	 */
 
 	for (i = AID_MIN; i < AID_MAX; i++) {
-		int8_t	negflags;
+		int8_t	negflags, peerflags;
 
 		/* disable GR if the AFI/SAFI is not present */
-		if ((p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
-		    p->capa.neg.mp[i] == 0))
+		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
+		    p->capa.neg.mp[i] == 0)
 			p->capa.peer.grestart.flags[i] = 0;	/* disable */
 		/* look at current GR state and decide what to do */
 		negflags = p->capa.neg.grestart.flags[i];
-		p->capa.neg.grestart.flags[i] = p->capa.peer.grestart.flags[i];
-		if (negflags & CAPA_GR_RESTARTING) {
+		peerflags = p->capa.peer.grestart.flags[i];
+		if ((negflags & (CAPA_GR_RESTARTING | CAPA_GR_FINISHED)) ==
+		    CAPA_GR_RESTARTING) {
 			if (p->capa.ann.grestart.restart != 0 &&
-			    p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD) {
-				p->capa.neg.grestart.flags[i] |=
-				    CAPA_GR_RESTARTING;
+			    peerflags & CAPA_GR_FORWARD) {
+				peerflags |= CAPA_GR_RESTARTING;
 			} else {
 				session_graceful_flush(p, i, "not restarted");
 			}
 		}
+		if (p->capa.ann.grestart.restart != 0)
+			p->capa.neg.grestart.flags[i] = peerflags;
 	}
 	p->capa.neg.grestart.timeout = p->capa.peer.grestart.timeout;
 	p->capa.neg.grestart.restart = p->capa.peer.grestart.restart;

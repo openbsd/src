@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.541 2026/09/14 13:27:14 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.542 2026/09/25 20:45:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1058,6 +1058,7 @@ session_graceful_restart(struct peer *p)
 	timer_set(&p->timers, Timer_SessionDown,
 	    staletime + INTERVAL_STALE);
 
+	/* remember which AFI/SAFI do a restart */
 	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.grestart.flags[i] & CAPA_GR_PRESENT) {
 			imsg_rde(IMSG_SESSION_STALE, p->conf.id,
@@ -1065,13 +1066,14 @@ session_graceful_restart(struct peer *p)
 			log_peer_warnx(&p->conf,
 			    "graceful restart of %s, keeping routes",
 			    aid2str(i));
-			p->capa.neg.grestart.flags[i] |= CAPA_GR_RESTARTING;
+			p->capa.neg.grestart.flags[i] = CAPA_GR_RESTARTING;
 		} else if (p->capa.neg.mp[i]) {
 			imsg_rde(IMSG_SESSION_NOGRACE, p->conf.id,
 			    &i, sizeof(i));
 			log_peer_warnx(&p->conf,
 			    "graceful restart of %s, flushing routes",
 			    aid2str(i));
+			p->capa.neg.grestart.flags[i] = 0;
 		}
 	}
 }
@@ -1087,9 +1089,10 @@ session_graceful_stop(struct peer *p)
 		 * In all other cases the session was already flushed when the
 		 * session went down or when the new open message was parsed.
 		 */
-		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
+		if ((p->capa.neg.grestart.flags[i] & (CAPA_GR_RESTARTING |
+		    CAPA_GR_FINISHED)) == CAPA_GR_RESTARTING)
 			session_graceful_flush(p, i, "time-out");
-		p->capa.neg.grestart.flags[i] &= ~CAPA_GR_RESTARTING;
+		p->capa.neg.grestart.flags[i] |= CAPA_GR_FINISHED;
 	}
 }
 
@@ -1552,18 +1555,18 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			}
 			if (aid < AID_MIN || aid >= AID_MAX)
 				fatalx("IMSG_SESSION_RESTARTED: bad AID");
-			if (p->capa.neg.grestart.flags[aid] &
+			if ((p->capa.neg.grestart.flags[aid] &
+			    (CAPA_GR_RESTARTING | CAPA_GR_FINISHED)) ==
 			    CAPA_GR_RESTARTING) {
 				log_peer_warnx(&p->conf,
 				    "graceful restart of %s finished",
 				    aid2str(aid));
-				p->capa.neg.grestart.flags[aid] &=
-				    ~CAPA_GR_RESTARTING;
-				timer_stop(&p->timers, Timer_RestartTimeout);
-
 				/* signal back to RDE to cleanup stale routes */
 				imsg_rde(IMSG_SESSION_RESTARTED,
 				    peerid, &aid, sizeof(aid));
+
+				p->capa.neg.grestart.flags[aid] |=
+				    CAPA_GR_FINISHED;
 			}
 			break;
 		default:
