@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.6 2024/12/05 19:57:37 tb Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.7 2026/09/25 08:08:57 tb Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -467,7 +467,7 @@ int CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents);
 int CBB_add_u32_length_prefixed(CBB *cbb, CBB *out_contents);
 
 /*
- * CBB_add_asn sets |*out_contents| to a |CBB| into which the contents of an
+ * CBB_add_asn1 sets |*out_contents| to a |CBB| into which the contents of an
  * ASN.1 object can be written. The |tag| argument will be used as the tag for
  * the object. Passing in |tag| number 31 will return in an error since only
  * single octet identifiers are supported. It returns one on success or zero
