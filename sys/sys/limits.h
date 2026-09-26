@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.10 2012/06/30 20:21:10 guenther Exp $ */
+/* $OpenBSD: limits.h,v 1.11 2026/09/26 15:02:53 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -77,11 +77,6 @@
 					/* max value for a signed long long */
 # define LLONG_MIN	(-0x7fffffffffffffffLL-1)	
 					/* min value for a signed long long */
-#endif
-
-#if __BSD_VISIBLE
-# define UID_MAX	UINT_MAX	/* max value for a uid_t */
-# define GID_MAX	UINT_MAX	/* max value for a gid_t */
 #endif
 
 #if __XPG_VISIBLE || __POSIX_VISIBLE >= 200809
