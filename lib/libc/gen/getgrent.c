@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.52 2026/05/07 18:22:26 deraadt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.53 2026/09/26 15:04:51 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -405,7 +405,7 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				if (name) {
 					ul = strtoul(cp, &endp, 10);
 					if (*endp != '\0' || endp == cp ||
-					    ul >= GID_MAX)
+					    ul == -1 || ul >= UINT_MAX)
 						continue;
 					p_gr->gr_gid = ul;
 				} else
@@ -459,7 +459,7 @@ parse:
 		if (!(cp = strsep(&bp, ":\n")))
 			continue;
 		ul = strtoul(cp, &endp, 10);
-		if (endp == cp || *endp != '\0' || ul >= GID_MAX)
+		if (endp == cp || *endp != '\0' || ul >= UINT_MAX)
 			continue;
 		p_gr->gr_gid = ul;
 		if (search && name == NULL && p_gr->gr_gid != gid)

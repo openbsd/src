@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.74 2026/05/07 18:21:27 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.75 2026/09/26 15:04:51 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -199,13 +199,13 @@ __ypparse(struct passwd *pw, char *s, int yp_pw_flags)
 	if (!(cp = strsep(&bp, ":\n")))
 		return (1);
 	ul = strtoul(cp, &endp, 10);
-	if (endp == cp || *endp != '\0' || ul >= UID_MAX)
+	if (endp == cp || *endp != '\0' || ul >= UINT_MAX)
 		return (1);
 	pw->pw_uid = (uid_t)ul;
 	if (!(cp = strsep(&bp, ":\n")))
 		return (1);
 	ul = strtoul(cp, &endp, 10);
-	if (endp == cp || *endp != '\0' || ul >= GID_MAX)
+	if (endp == cp || *endp != '\0' || ul >= UINT_MAX)
 		return (1);
 	pw->pw_gid = (gid_t)ul;
 	if (count == 9) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.32 2026/03/10 00:06:39 deraadt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.33 2026/09/26 15:04:51 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -74,7 +74,7 @@ _parse_netid(char *netid, uid_t uid, gid_t *groups, int *ngroups,
 	if (!p)
 		return (0);
 	*p++ = '\0';
-	tuid = (uid_t)strtonum(netid, 0, UID_MAX, &errstr);
+	tuid = (uid_t)strtonum(netid, 0, UINT_MAX - 1, &errstr);
 	if (errstr || tuid != uid)
 		return (0);
 
@@ -84,7 +84,7 @@ _parse_netid(char *netid, uid_t uid, gid_t *groups, int *ngroups,
 		p = strchr(start, ',');
 		if (p)
 			*p++ = '\0';
-		gid = (gid_t)strtonum(start, 0, GID_MAX, &errstr);
+		gid = (gid_t)strtonum(start, 0, UINT_MAX - 1, &errstr);
 		if (errstr)
 			continue;
 
