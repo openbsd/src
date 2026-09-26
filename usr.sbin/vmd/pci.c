@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.43 2026/09/23 15:35:43 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.44 2026/09/26 17:51:57 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -35,7 +35,9 @@
 #include "mmio.h"
 
 struct pci pci;
+#ifdef __amd64__
 static pthread_mutex_t pci_msi_mtx = PTHREAD_MUTEX_INITIALIZER;
+#endif /* __amd64__ */
 static uint32_t pci_msi_arb_next;
 
 extern struct vmd_vm *current_vm;
@@ -74,8 +76,10 @@ static int pci_msix_mmio(uint32_t, int, uint32_t, uint8_t, uint64_t *,
 static void pci_msi_deliver(uint64_t, uint32_t);
 static int pci_msi_enabled(struct pci_dev *);
 static int pci_msix_enabled(struct pci_dev *);
+#ifdef __amd64__
 static void pci_config_write(struct pci_dev *, uint8_t, uint8_t, uint8_t,
     uint32_t);
+#endif /* __amd64__ */
 static void pci_msix_drain(struct pci_dev *);
 
 /* PIC IRQs, assigned to devices in order */
@@ -383,6 +387,7 @@ pci_msix_enabled(struct pci_dev *dev)
 static void
 pci_msi_deliver(uint64_t address, uint32_t data)
 {
+#ifdef __amd64__
 	uint64_t targets;
 	uint32_t dest;
 	uint32_t i;
@@ -428,6 +433,7 @@ pci_msi_deliver(uint64_t address, uint32_t data)
 		if (targets & (1ULL << i))
 			vcpu_assert_vector(current_vm->vm_fd, i, vector);
 	}
+#endif /* __amd64__ */
 }
 
 void
