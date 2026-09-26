@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.68 2026/07/15 18:49:57 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.69 2026/09/26 05:57:03 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -637,12 +637,17 @@ m8820x_initialize_cpu(cpuid_t cpu)
 		 */
 		cmmu->cmmu_regs[CMMU_SCTR] = CMMU_SCTR_SE;
 
-		cmmu->cmmu_regs[CMMU_SAPR] = cmmu->cmmu_regs[CMMU_UAPR] = apr;
+		cmmu->cmmu_regs[CMMU_SAPR] = apr;
+		cmmu->cmmu_regs[CMMU_UAPR] = apr;
 
-		cmmu->cmmu_regs[CMMU_BWP0] = cmmu->cmmu_regs[CMMU_BWP1] =
-		cmmu->cmmu_regs[CMMU_BWP2] = cmmu->cmmu_regs[CMMU_BWP3] =
-		cmmu->cmmu_regs[CMMU_BWP4] = cmmu->cmmu_regs[CMMU_BWP5] =
-		cmmu->cmmu_regs[CMMU_BWP6] = cmmu->cmmu_regs[CMMU_BWP7] = 0;
+		cmmu->cmmu_regs[CMMU_BWP0] = 0;
+		cmmu->cmmu_regs[CMMU_BWP1] = 0;
+		cmmu->cmmu_regs[CMMU_BWP2] = 0;
+		cmmu->cmmu_regs[CMMU_BWP3] = 0;
+		cmmu->cmmu_regs[CMMU_BWP4] = 0;
+		cmmu->cmmu_regs[CMMU_BWP5] = 0;
+		cmmu->cmmu_regs[CMMU_BWP6] = 0;
+		cmmu->cmmu_regs[CMMU_BWP7] = 0;
 		cmmu->cmmu_regs[CMMU_SCR] = CMMU_FLUSH_CACHE_INV_ALL;
 		(void)cmmu->cmmu_regs[CMMU_SSR];
 		cmmu->cmmu_regs[CMMU_SCR] = CMMU_FLUSH_SUPER_ALL;
@@ -680,18 +685,20 @@ m8820x_shutdown()
 {
 	u_int cmmu_num;
 	const struct m8820x_cmmu *cmmu;
+	apr_t apr;
 
 	CMMU_LOCK;
 
+	apr = ((0x00000 << PG_BITS) | CACHE_INH) &
+	    ~(CACHE_WT | CACHE_GLOBAL | APR_V);
 	cmmu = m8820x_cmmu;
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++, cmmu++) {
 #ifdef M88200_HAS_ASYMMETRICAL_ASSOCIATION
 		if (cmmu->cmmu_regs == NULL)
 			continue;
 #endif
-		cmmu->cmmu_regs[CMMU_SAPR] = cmmu->cmmu_regs[CMMU_UAPR] =
-		    ((0x00000 << PG_BITS) | CACHE_INH) &
-		    ~(CACHE_WT | CACHE_GLOBAL | APR_V);
+		cmmu->cmmu_regs[CMMU_SAPR] = apr;
+		cmmu->cmmu_regs[CMMU_UAPR] = apr;
 	}
 
 	CMMU_UNLOCK;
