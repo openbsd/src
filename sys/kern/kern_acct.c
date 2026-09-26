@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.50 2026/06/01 16:33:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.51 2026/09/26 15:03:48 deraadt Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 	 */
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, 0, 0, UIO_USERSPACE, SCARG(uap, path), p);
-		nd.ni_unveil = UNVEIL_READ;
+		nd.ni_unveil = UNVEIL_WRITE;
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		VOP_UNLOCK(nd.ni_vp);
