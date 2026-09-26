@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.141 2026/03/08 17:07:31 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.142 2026/09/26 05:53:59 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -327,8 +327,9 @@ lose:
 			frame->tf_dmt0 = 0;
 			frame->tf_dpfsr = 0;
 			return;
-		case CMMU_PFSR_SFAULT:
-		case CMMU_PFSR_PFAULT:
+		case CMMU_PFSR_BERROR:
+			break;
+		default:
 			p->p_addr->u_pcb.pcb_onfault = 0;
 			KERNEL_LOCK();
 			result = uvm_fault(map, va, 0, access_type);
