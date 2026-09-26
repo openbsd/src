@@ -80,7 +80,6 @@ int	readtimes(struct quotause *, int);
 char *	cvtstoa(time_t);
 int	cvtatos(long long, char *, time_t *);
 void	freeprivs(struct quotause *);
-int	alldigits(char *s);
 int	hasquota(struct fstab *, int, char **);
 
 void
@@ -191,28 +190,27 @@ main(int argc, char *argv[])
 int
 getentry(char *name, int quotatype, u_int *idp)
 {
+	const char *errstr;
 	u_int id;
 
 	switch(quotatype) {
 	case USRQUOTA:
-		if (uid_from_user(name, idp) != -1) {
+		if (uid_from_user(name, idp) != -1)
 			return 0;
-		} else if (alldigits(name)) {
-			if ((id = strtoul(name, NULL, 10)) < UINT_MAX) {
-				*idp = id;
-				return 0;
-			}
+		id = strtonum(name, 0, UINT_MAX - 1, &errstr);
+		if (errstr == NULL) {
+			*idp = id;
+			return 0;
 		}
 		warnx("%s: no such user", name);
 		break;
 	case GRPQUOTA:
-		if (gid_from_group(name, idp) != -1) {
+		if (gid_from_group(name, idp) != -1)
 			return 0;
-		} else if (alldigits(name)) {
-			if ((id = strtoul(name, NULL, 10)) < UINT_MAX) {
-				*idp = id;
-				return (0);
-			}
+		id = strtonum(name, 0, UINT_MAX - 1, &errstr);
+		if (errstr == NULL) {
+			*idp = id;
+			return (0);
 		}
 		warnx("%s: no such group", name);
 		break;
@@ -688,22 +686,6 @@ freeprivs(struct quotause *quplist)
 		nextqup = qup->next;
 		free(qup);
 	}
-}
-
-/*
- * Check whether a string is completely composed of digits.
- */
-int
-alldigits(char *s)
-{
-	int c;
-
-	c = (unsigned char)*s++;
-	do {
-		if (!isdigit(c))
-			return(0);
-	} while ((c = (unsigned char)*s++));
-	return(1);
 }
 
 /*
