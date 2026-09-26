@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.105 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.106 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 				uid_t uid;
 
 				if (uid_from_user(optarg, &uid) == -1) {
-					uid = strtonum(optarg, 0, UID_MAX,
+					uid = strtonum(optarg, 0, UINT_MAX - 1,
 					    &errstr);
 					if (errstr != NULL) {
 						errx(1, "%s: unknown uid",

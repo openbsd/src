@@ -198,7 +198,7 @@ getentry(char *name, int quotatype, u_int *idp)
 		if (uid_from_user(name, idp) != -1) {
 			return 0;
 		} else if (alldigits(name)) {
-			if ((id = strtoul(name, NULL, 10)) <= UID_MAX) {
+			if ((id = strtoul(name, NULL, 10)) < UINT_MAX) {
 				*idp = id;
 				return 0;
 			}
@@ -209,7 +209,7 @@ getentry(char *name, int quotatype, u_int *idp)
 		if (gid_from_group(name, idp) != -1) {
 			return 0;
 		} else if (alldigits(name)) {
-			if ((id = strtoul(name, NULL, 10)) <= GID_MAX) {
+			if ((id = strtoul(name, NULL, 10)) < UINT_MAX) {
 				*idp = id;
 				return (0);
 			}

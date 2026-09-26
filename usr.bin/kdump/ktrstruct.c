@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.32 2024/07/26 19:16:31 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.33 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -187,7 +187,7 @@ uidname(int uid)
 		printf("-1");
 	else {
 		printf("%u<", (unsigned)uid);
-		if (uid > UID_MAX || (name = user_from_uid(uid, 1)) == NULL)
+		if (uid >= UINT_MAX || (name = user_from_uid(uid, 1)) == NULL)
 			printf("unknown>");
 		else
 			printf("\"%s\">", name);
@@ -203,7 +203,7 @@ gidname(int gid)
 		printf("-1");
 	else {
 		printf("%u<", (unsigned)gid);
-		if (gid > GID_MAX || (name = group_from_gid(gid, 1)) == NULL)
+		if (gid >= UINT_MAX || (name = group_from_gid(gid, 1)) == NULL)
 			printf("unknown>");
 		else
 			printf("\"%s\">", name);

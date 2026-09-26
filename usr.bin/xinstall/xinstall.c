@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.79 2026/08/24 15:48:03 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.80 2026/09/26 15:00:42 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -156,12 +156,12 @@ main(int argc, char *argv[])
 
 	/* get group and owner id's */
 	if (group != NULL && gid_from_group(group, &gid) == -1) {
-		gid = strtonum(group, 0, GID_MAX, &errstr);
+		gid = strtonum(group, 0, UINT_MAX - 1, &errstr);
 		if (errstr != NULL)
 			errx(1, "unknown group %s", group);
 	}
 	if (owner != NULL && uid_from_user(owner, &uid) == -1) {
-		uid = strtonum(owner, 0, UID_MAX, &errstr);
+		uid = strtonum(owner, 0, UINT_MAX - 1, &errstr);
 		if (errstr != NULL)
 			errx(1, "unknown user %s", owner);
 	}

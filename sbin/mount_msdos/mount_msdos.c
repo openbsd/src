@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.36 2022/12/04 23:50:47 cheloha Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.37 2026/09/26 15:00:42 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ a_gid(char *s)
 
 	if ((gr = getgrnam(s)) != NULL)
 		return gr->gr_gid;
-	gid = strtonum(s, 0, GID_MAX, &errstr);
+	gid = strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		errx(1, "group is %s: %s", errstr, s);
 	return (gid);
@@ -174,7 +174,7 @@ a_uid(char *s)
 
 	if ((pw = getpwnam(s)) != NULL)
 		return pw->pw_uid;
-	uid = strtonum(s, 0, UID_MAX, &errstr);
+	uid = strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		errx(1, "user is %s: %s", errstr, s);
 	return (uid);

@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.99 2024/02/15 18:57:58 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.100 2026/09/26 15:00:42 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -52,11 +52,11 @@ parseuid(const char *s, uid_t *uid)
 
 	if ((pw = getpwnam(s)) != NULL) {
 		*uid = pw->pw_uid;
-		if (*uid == UID_MAX)
+		if (*uid == -1)
 			return -1;
 		return 0;
 	}
-	*uid = strtonum(s, 0, UID_MAX - 1, &errstr);
+	*uid = strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		return -1;
 	return 0;
@@ -82,11 +82,11 @@ parsegid(const char *s, gid_t *gid)
 
 	if ((gr = getgrnam(s)) != NULL) {
 		*gid = gr->gr_gid;
-		if (*gid == GID_MAX)
+		if (*gid == -1)
 			return -1;
 		return 0;
 	}
-	*gid = strtonum(s, 0, GID_MAX - 1, &errstr);
+	*gid = strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		return -1;
 	return 0;

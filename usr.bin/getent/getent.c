@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.23 2021/10/11 14:28:26 deraadt Exp $	*/
+/*	$OpenBSD: getent.c,v 1.24 2026/09/26 15:00:42 deraadt Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ group(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if ((gr = getgrnam(argv[i])) == NULL) {
-				gid = strtonum(argv[i], 0, GID_MAX, &err);
+				gid = strtonum(argv[i], 0, UINT_MAX - 1, &err);
 				if (err == NULL)
 					gr = getgrgid(gid);
 			}
@@ -303,7 +303,7 @@ passwd(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if ((pw = getpwnam(argv[i])) == NULL) {
-				uid = strtonum(argv[i], 0, UID_MAX, &err);
+				uid = strtonum(argv[i], 0, UINT_MAX - 1, &err);
 				if (err == NULL)
 					pw = getpwuid(uid);
 			}

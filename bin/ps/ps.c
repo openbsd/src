@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.84 2025/07/02 13:24:48 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.85 2026/09/26 15:00:42 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 			else {
 				const char *errstr;
 
-				uid = strtonum(optarg, 0, UID_MAX, &errstr);
+				uid = strtonum(optarg, 0, UINT_MAX - 1, &errstr);
 				if (errstr == NULL &&
 				    user_from_uid(uid, 1) != NULL)
 					found = 1;

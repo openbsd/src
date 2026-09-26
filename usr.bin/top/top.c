@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.109 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: top.c,v 1.110 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -179,7 +179,7 @@ filteruser(char buf[])
 	if (uid_from_user(bufp, uidp) == 0)
 		return 0;
 
-	uid = strtonum(bufp, 0, UID_MAX, &errstr);
+	uid = strtonum(bufp, 0, UINT_MAX - 1, &errstr);
 	if (errstr == NULL && user_from_uid(uid, 1) != NULL) {
 		*uidp = uid;
 		return 0;

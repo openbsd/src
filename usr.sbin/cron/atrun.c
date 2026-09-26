@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.55 2025/05/31 14:31:15 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.56 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <millert@openbsd.org>
@@ -274,7 +274,7 @@ parse_header(FILE *fp, uid_t *nuid, gid_t *ngid, char *mailto, int *always_mail)
 			if ((ep = strchr(cp, ' ')) == NULL)
 				goto done;
 			*ep++ = '\0';
-			*nuid = strtonum(cp, 0, UID_MAX - 1, &errstr);
+			*nuid = strtonum(cp, 0, UINT_MAX - 1, &errstr);
 			if (errstr != NULL)
 				goto done;
 
@@ -282,7 +282,7 @@ parse_header(FILE *fp, uid_t *nuid, gid_t *ngid, char *mailto, int *always_mail)
 			if (strncmp(ep, "gid=", 4) != 0)
 				goto done;
 			cp = ep + 4;
-			*ngid = strtonum(cp, 0, GID_MAX - 1, &errstr);
+			*ngid = strtonum(cp, 0, UINT_MAX - 1, &errstr);
 			if (errstr != NULL)
 				goto done;
 			break;

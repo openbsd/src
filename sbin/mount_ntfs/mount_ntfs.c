@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.19 2022/08/20 07:03:24 tb Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.20 2026/09/26 15:00:42 deraadt Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -140,7 +140,7 @@ a_gid(char *s)
 
 	if ((gr = getgrnam(s)) != NULL)
 		return gr->gr_gid;
-	gid = strtonum(s, 0, GID_MAX, &errstr);
+	gid = strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		errx(1, "group is %s: %s", errstr, s);
 	return (gid);
@@ -155,7 +155,7 @@ a_uid(char *s)
 
 	if ((pw = getpwnam(s)) != NULL)
 		return pw->pw_uid;
-	uid = strtonum(s, 0, UID_MAX, &errstr);
+	uid = strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		errx(1, "user is %s: %s", errstr, s);
 	return (uid);

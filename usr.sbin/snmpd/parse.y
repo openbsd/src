@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.92 2025/12/24 13:36:38 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.93 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -186,7 +186,7 @@ typedef struct {
 %token	HANDLE DEFAULT SRCADDR TCP UDP BLOCKLIST PORT
 %token	MIB DIRECTORY
 %token	<v.string>	STRING
-%token	<v.number>	NUMBER
+1%token	<v.number>	NUMBER
 %type	<v.string>	usmuser community optcommunity
 %type	<v.number>	listenproto listenflag listenflags
 %type	<v.string>	srcaddr port
@@ -499,7 +499,7 @@ agentxopt	: PATH STRING			{
 			$$.axm_opts = AXM_PATH;
 		}
 		| OWNER NUMBER			{
-			if ($2 > UID_MAX) {
+			if ($2 >= UINT_MAX) {
 				yyerror("agentx owner: too large");
 				YYERROR;
 			}
@@ -510,7 +510,7 @@ agentxopt	: PATH STRING			{
 			struct passwd *pw;
 			const char *errstr;
 
-			$$.axm_owner = strtonum($2, 0, UID_MAX, &errstr);
+			$$.axm_owner = strtonum($2, 0, UINT_MAX - 1, &errstr);
 			if (errstr != NULL && errno == ERANGE) {
 				yyerror("agentx owner: %s", errstr);
 				YYERROR;
@@ -523,7 +523,7 @@ agentxopt	: PATH STRING			{
 			$$.axm_opts = AXM_OWNER;
 		}
 		| GROUP NUMBER			{
-			if ($2 > GID_MAX) {
+			if ($2 >= UINT_MAX) {
 				yyerror("agentx group: too large");
 				YYERROR;
 			}
@@ -534,7 +534,7 @@ agentxopt	: PATH STRING			{
 			struct group *gr;
 			const char *errstr;
 
-			$$.axm_group = strtonum($2, 0, GID_MAX, &errstr);
+			$$.axm_group = strtonum($2, 0, UINT_MAX - 1, &errstr);
 			if (errstr != NULL && errno == ERANGE) {
 				yyerror("agentx group: %s", errstr);
 				YYERROR;

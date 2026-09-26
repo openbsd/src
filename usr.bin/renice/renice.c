@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.22 2022/08/12 00:24:07 cheloha Exp $	*/
+/*	$OpenBSD: renice.c,v 1.23 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2015 Todd C. Miller <millert@openbsd.org>
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 		p->pri_type = pri_type;
 		if (id_type == PRIO_USER) {
 			if ((pw = getpwnam(idstr)) == NULL) {
-				uid_t id = strtonum(idstr, 0, UID_MAX, &errstr);
+				uid_t id = strtonum(idstr, 0, UINT_MAX - 1, &errstr);
 				if (!errstr)
 					pw = getpwuid(id);
 			}

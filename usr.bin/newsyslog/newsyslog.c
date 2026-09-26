@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.121 2026/05/27 05:56:57 rsadowski Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.122 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -516,7 +516,7 @@ nextline:
 			if (*q == '\0') {
 				working->uid = (uid_t)-1;
 			} else if (isnumberstr(q)) {
-				working->uid = strtonum(q, 0, UID_MAX, &errstr);
+				working->uid = strtonum(q, 0, UINT_MAX - 1, &errstr);
 				if (errstr) {
 					warnx("%s:%d: invalid user %s (%s)"
 					    " --> skipping", conf, lineno, q,
@@ -535,7 +535,7 @@ nextline:
 			if (*q == '\0') {
 				working->gid = (gid_t)-1;
 			} else if (isnumberstr(q)) {
-				working->gid = strtonum(q, 0, GID_MAX, &errstr);
+				working->gid = strtonum(q, 0, UINT_MAX - 1, &errstr);
 				if (errstr) {
 					warnx("%s:%d: invalid group %s (%s)"
 					    " --> skipping", conf, lineno, q,

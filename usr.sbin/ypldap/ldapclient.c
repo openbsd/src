@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.56 2026/08/07 21:06:39 claudio Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.57 2026/09/26 15:00:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -433,11 +433,11 @@ client_build_req(struct idm *idm, struct idm_req *ir, struct aldap_message *m,
 			if (i == ATTR_UID) {
 				ir->ir_key.ik_uid = strtonum(
 				    idm->idm_attrs[i], 0,
-				    UID_MAX, NULL);
+				    UINT_MAX - 1, NULL);
 			} else if (i == ATTR_GR_GID) {
 				ir->ir_key.ik_gid = strtonum(
 				    idm->idm_attrs[i], 0,
-				    GID_MAX, NULL);
+				    UINT_MAX - 1, NULL);
 			}
 		} else if (idm->idm_list & F_LIST(i)) {
 			aldap_match_attr(m, idm->idm_attrs[i], &ldap_attrs);
@@ -466,11 +466,11 @@ client_build_req(struct idm *idm, struct idm_req *ir, struct aldap_message *m,
 			}
 			if (i == ATTR_UID) {
 				ir->ir_key.ik_uid = strtonum(
-				    ldap_attrs->str[0].ostr_val, 0, UID_MAX,
+				    ldap_attrs->str[0].ostr_val, 0, UINT_MAX - 1,
 				    NULL);
 			} else if (i == ATTR_GR_GID) {
 				ir->ir_key.ik_uid = strtonum(
-				    ldap_attrs->str[0].ostr_val, 0, GID_MAX,
+				    ldap_attrs->str[0].ostr_val, 0, UINT_MAX - 1,
 				    NULL);
 			}
 			aldap_free_attr(ldap_attrs);

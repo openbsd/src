@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.22 2023/07/18 13:06:33 claudio Exp $ */
+/*	$OpenBSD: yp.c,v 1.23 2026/09/26 15:00:42 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -468,7 +468,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 		return (&res);
 	} else if (strcmp(arg->map, "passwd.byuid") == 0 ||
 		   strcmp(arg->map, "master.passwd.byuid") == 0) {
-		ukey.ue_uid = strtonum(key, 0, UID_MAX, &estr); 
+		ukey.ue_uid = strtonum(key, 0, UINT_MAX - 1, &estr); 
 		if (estr) {
 			res.stat = YP_BADARGS;
 			return (&res);
@@ -483,7 +483,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 		yp_make_val(&res, ue->ue_line, 1);
 		return (&res);
 	} else if (strcmp(arg->map, "group.bygid") == 0) {
-		gkey.ge_gid = strtonum(key, 0, GID_MAX, &estr); 
+		gkey.ge_gid = strtonum(key, 0, UINT_MAX - 1, &estr); 
 		if (estr) {
 			res.stat = YP_BADARGS;
 			return (&res);
@@ -531,7 +531,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 			return (&res);
 		}
 
-		ukey.ue_uid = strtonum(cp, 0, UID_MAX, &estr); 
+		ukey.ue_uid = strtonum(cp, 0, UINT_MAX - 1, &estr); 
 		if (estr) {
 			res.stat = YP_BADARGS;
 			return (&res);

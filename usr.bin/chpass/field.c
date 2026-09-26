@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.15 2023/03/08 04:43:10 guenther Exp $	*/
+/*	$OpenBSD: field.c,v 1.16 2026/09/26 15:00:42 deraadt Exp $	*/
 /*	$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ p_uid(char *p, struct passwd *pw, ENTRY *ep)
 		warnx("empty uid field");
 		return (1);
 	}
-	id = (uid_t)strtonum(p, 0, UID_MAX, &errstr);
+	id = (uid_t)strtonum(p, 0, UINT_MAX - 1, &errstr);
 	if (errstr) {
 		warnx("uid is %s", errstr);
 		return (1);
@@ -125,7 +125,7 @@ p_gid(char *p, struct passwd *pw, ENTRY *ep)
 		pw->pw_gid = gr->gr_gid;
 		return (0);
 	}
-	id = (uid_t)strtonum(p, 0, GID_MAX, &errstr);
+	id = (uid_t)strtonum(p, 0, UINT_MAX - 1, &errstr);
 	if (errstr) {
 		warnx("gid is %s", errstr);
 		return (1);

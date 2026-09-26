@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.31 2024/11/04 21:59:15 jca Exp $	*/
+/*	$OpenBSD: id.c,v 1.32 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -351,7 +351,7 @@ who(char *u)
 	 */
 	if ((pw = getpwnam(u)))
 		return(pw);
-	uid = strtonum(u, 0, UID_MAX, &errstr);
+	uid = strtonum(u, 0, UINT_MAX - 1, &errstr);
 	if (!errstr && (pw = getpwuid(uid)))
 		return(pw);
 	errx(1, "%s: No such user", u);

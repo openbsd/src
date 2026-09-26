@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.57 2026/05/25 04:40:36 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.58 2026/09/26 15:00:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -956,7 +956,7 @@ c_group(char *gname, char ***ignored, int unused)
 	if (gid_from_group(gname, &gid) == -1) {
 		const char *errstr;
 
-		gid = strtonum(gname, 0, GID_MAX, &errstr);
+		gid = strtonum(gname, 0, UINT_MAX - 1, &errstr);
 		if (errstr)
 			errx(1, "-group: %s: no such group", gname);
 	}
@@ -1561,7 +1561,7 @@ c_user(char *username, char ***ignored, int unused)
 	if (uid_from_user(username, &uid) == -1) {
 		const char *errstr;
 
-		uid = strtonum(username, 0, UID_MAX, &errstr);
+		uid = strtonum(username, 0, UINT_MAX - 1, &errstr);
 		if (errstr)
 			errx(1, "-user: %s: no such user", username);
 	}

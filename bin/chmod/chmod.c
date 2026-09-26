@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.44 2026/05/06 12:54:27 deraadt Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.45 2026/09/26 15:00:42 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ a_uid(const char *s, int silent)
 		return (uid);
 
 	/* UID was given. */
-	uid = (uid_t)strtonum(s, 0, UID_MAX, &errstr);
+	uid = (uid_t)strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr) {
 		if (silent)
 			return ((uid_t)-1);
@@ -333,7 +333,7 @@ a_gid(const char *s)
 		return (gid);
 
 	/* GID was given. */
-	gid = (gid_t)strtonum(s, 0, GID_MAX, &errstr);
+	gid = (gid_t)strtonum(s, 0, UINT_MAX - 1, &errstr);
 	if (errstr)
 		errx(1, "group is %s: %s", errstr, s);
 

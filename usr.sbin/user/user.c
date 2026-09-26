@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.132 2025/02/27 01:32:55 millert Exp $ */
+/* $OpenBSD: user.c,v 1.133 2026/09/26 15:00:42 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1011,7 +1011,7 @@ find_user_info(const char *name)
 	uid_t		uid;
 
 	if ((pwp = getpwnam(name)) == NULL) {
-		uid = strtonum(name, -1, UID_MAX, &errstr);
+		uid = strtonum(name, -1, UINT_MAX - 1, &errstr);
 		if (errstr == NULL)
 			pwp = getpwuid(uid);
 	}
@@ -1027,7 +1027,7 @@ find_group_info(const char *name)
 	gid_t		gid;
 
 	if ((grp = getgrnam(name)) == NULL) {
-		gid = strtonum(name, -1, GID_MAX, &errstr);
+		gid = strtonum(name, -1, UINT_MAX - 1, &errstr);
 		if (errstr == NULL)
 			grp = getgrgid(gid);
 	}
@@ -1923,7 +1923,7 @@ useradd(int argc, char **argv)
 			strsave(&u.u_shell, optarg);
 			break;
 		case 'u':
-			u.u_uid = strtonum(optarg, -1, UID_MAX, &errstr);
+			u.u_uid = strtonum(optarg, -1, UINT_MAX - 1, &errstr);
 			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-u uid], the uid must be numeric");
 			}
@@ -2061,7 +2061,7 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_SHELL;
 			break;
 		case 'u':
-			u.u_uid = strtonum(optarg, -1, UID_MAX, &errstr);
+			u.u_uid = strtonum(optarg, -1, UINT_MAX - 1, &errstr);
 			u.u_flags |= F_UID;
 			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-u uid], the uid must be numeric");
@@ -2185,7 +2185,7 @@ groupadd(int argc, char **argv)
 	while ((c = getopt(argc, argv, "g:ov")) != -1) {
 		switch(c) {
 		case 'g':
-			gid = strtonum(optarg, -1, GID_MAX, &errstr);
+			gid = strtonum(optarg, -1, UINT_MAX - 1, &errstr);
 			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-g gid], the gid must be numeric");
 			}
@@ -2283,7 +2283,7 @@ groupmod(int argc, char **argv)
 	while ((c = getopt(argc, argv, "g:n:ov")) != -1) {
 		switch(c) {
 		case 'g':
-			gid = strtonum(optarg, -1, GID_MAX, &errstr);
+			gid = strtonum(optarg, -1, UINT_MAX - 1, &errstr);
 			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-g gid], the gid must be numeric");
 			}
