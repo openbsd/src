@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.138 2026/09/01 05:22:00 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.139 2026/09/27 11:02:24 kn Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -406,13 +406,6 @@ server_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	if (pledge("stdio rpath inet unix recvfd", NULL) == -1)
 		fatal("pledge");
-
-#if 0
-	/* Schedule statistics timer */
-	evtimer_set(&ps->ps_env->sc_statev, server_statistics, NULL);
-	memcpy(&tv, &ps->ps_env->sc_statinterval, sizeof(tv));
-	evtimer_add(&ps->ps_env->sc_statev, &tv);
-#endif
 }
 
 int
