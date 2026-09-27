@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmca.c,v 1.8 2025/09/30 14:29:54 kettenis Exp $	*/
+/*	$OpenBSD: aplmca.c,v 1.9 2026/09/27 19:49:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -200,7 +200,7 @@ aplmca_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 	sc->sc_phandle = OF_getpropint(faa->fa_node, "phandle", 0);
 
-	sc->sc_nclusters = OF_getpropint(faa->fa_node, "apple,nclusters", 6);
+	sc->sc_nclusters = faa->fa_reg[0].size / MCA_CL_STRIDE;
 	sc->sc_ad = mallocarray(sc->sc_nclusters, sizeof(*sc->sc_ad),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
