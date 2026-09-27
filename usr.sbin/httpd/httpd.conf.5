@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.135 2026/07/25 05:48:39 rsadowski Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.136 2026/09/27 10:16:36 kn Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2026 $
+.Dd $Mdocdate: September 27 2026 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -171,6 +171,7 @@ If not specified, it defaults to
 within the
 .Xr chroot 2
 directory.
+.Tg banner
 .It Ic no banner
 Do not send the
 .Va Server
@@ -229,6 +230,7 @@ the
 using pattern matching instead of shell globbing rules,
 see
 .Xr patterns 7 .
+.Tg authenticate
 .It Oo Ic no Oc Ic authenticate Oo Ar realm Oc Ic with Pa htpasswd
 Authenticate a remote user for
 .Ar realm
@@ -240,6 +242,7 @@ and must be readable by the www user.
 Use the
 .Ic no authenticate
 directive to disable authentication in a location.
+.Tg banner
 .It Oo Ic no Oc Ic banner
 When prefixed with the
 .Ic no
@@ -254,6 +257,7 @@ If
 is omitted, enable the banner for the current
 .Ic server
 if it was disabled globally.
+.Tg static-cache-control
 .It Oo Ic no Oc Ic static-cache-control
 Send
 .Dq Cache-Control: no-cache
@@ -350,6 +354,7 @@ Set the specified options when serving or accessing directories.
 Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
+.Tg auto
 .It Oo Ic no Oc Ic auto index
 If no index file is found, automatically generate a directory listing.
 This is disabled by default.
@@ -362,12 +367,14 @@ Disable the directory index.
 .Xr httpd 8
 will neither display nor generate a directory index.
 .El
+.Tg errdocs
 .It Oo Ic no Oc Ic errdocs Ar directory
 Overrides or, if the
 .Ic no
 keyword is given, disables globally defined custom error documents for the
 current
 .Ic server .
+.Tg fastcgi
 .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
 Enable FastCGI instead of serving files.
 Multiple options may be specified within curly braces.
@@ -596,6 +603,7 @@ The pattern may contain captures that can be used in an enclosed
 or
 .Ic request rewrite
 option.
+.Tg log
 .It Oo Ic no Oc Ic log Op Ar option
 Set the specified logging options.
 Logging is enabled by default using the standard
@@ -654,6 +662,7 @@ similar to the format that is used by
 .Xr relayd 8 .
 If not specified, the default is
 .Cm common .
+.Tg syslog
 .It Oo Ic no Oc Ic syslog
 Enable or disable logging to
 .Xr syslog 3
@@ -668,6 +677,7 @@ Configure the options for the request path.
 Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
+.Tg rewrite
 .It Oo Ic no Oc Ic rewrite Ar path
 Enable or disable rewriting of the request.
 Unlike the redirection with
@@ -720,9 +730,11 @@ Generalized TTL Security Mechanism (GTSM)
 according to RFC 5082.
 .It Ic ip ttl Ar number
 Change the default time-to-live value in the IP headers.
+.Tg nodelay
 .It Oo Ic no Oc Ic nodelay
 Enable the TCP NODELAY option for this connection.
 This is recommended to avoid delays in the data stream.
+.Tg sack
 .It Oo Ic no Oc Ic sack
 Use selective acknowledgements for this connection.
 .It Ic socket buffer Ar number
