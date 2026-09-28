@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.206 2026/05/14 01:39:38 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.207 2026/09/28 04:50:24 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1253,7 +1253,8 @@ cpu_fix_msrs(struct cpu_info *ci)
 			msr |= MISC_ENABLE_FAST_STRINGS;
 			wrmsr(MSR_MISC_ENABLE, msr);
 			DPRINTF("%s: enabled fast strings\n", ci->ci_dev->dv_xname);
-	
+		}
+
 		/*
 		 * Attempt to disable Silicon Debug and lock the configuration
 		 * if it's enabled and unlocked.
@@ -1265,7 +1266,7 @@ cpu_fix_msrs(struct cpu_info *ci)
 				msr &= IA32_DEBUG_INTERFACE_MASK;
 				msr |= IA32_DEBUG_INTERFACE_LOCK;
 				wrmsr(IA32_DEBUG_INTERFACE, msr);
-			} else if (msr & IA32_DEBUG_INTERFACE_ENABLE)
+			} else if (msr & IA32_DEBUG_INTERFACE_ENABLE) {
 				printf("%s: cannot disable silicon debug\n",
 				    ci->ci_dev->dv_xname);
 			}
