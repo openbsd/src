@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.40 2026/09/28 09:34:36 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.41 2026/09/28 09:35:46 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -743,6 +743,12 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 		return ret;
 	}
 
+	if (test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags) ||
+	    (ic->ic_if.if_flags & IFF_RUNNING) == 0 ||
+	    ic->ic_state != IEEE80211_S_RUN ||
+	    sc->ns_nstate != IEEE80211_S_RUN)
+		return ESHUTDOWN;
+
 	ret = qwz_dp_peer_rx_pn_replay_config(sc, arvif, ni, k, 0);
 	if (ret) {
 		printf("%s: failed to offload PN replay detection %d\n",
@@ -767,6 +773,12 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 			return ret;
 		}
 
+		if (test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags) ||
+		    (ic->ic_if.if_flags & IFF_RUNNING) == 0 ||
+		    ic->ic_state != IEEE80211_S_RUN ||
+		    sc->ns_nstate != IEEE80211_S_RUN)
+			return ESHUTDOWN;
+
 		ni->ni_port_valid = 1;
 		ieee80211_set_link_state(ic, LINK_STATE_UP);
 	}
@@ -778,6 +790,7 @@ int
 qwz_del_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwz_node *nq = (struct qwz_node *)ni;
 	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	int ret = 0;
@@ -788,6 +801,12 @@ qwz_del_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
+
+	if (test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags) ||
+	    (ic->ic_if.if_flags & IFF_RUNNING) == 0 ||
+	    ic->ic_state != IEEE80211_S_RUN ||
+	    sc->ns_nstate != IEEE80211_S_RUN)
+		return ESHUTDOWN;
 
 	ret = qwz_dp_peer_rx_pn_replay_config(sc, arvif, ni, k, 1);
 	if (ret) {
@@ -809,26 +828,30 @@ qwz_setkey_task(void *arg)
 {
 	struct qwz_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct qwz_setkey_task_arg *a;
+	struct qwz_setkey_task_arg a;
+	struct ieee80211_key k;
 	int err = 0, s = splnet();
 
 	while (sc->setkey_nkeys > 0) {
 		if (err || test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags))
 			break;
-		a = &sc->setkey_arg[sc->setkey_tail];
-		KASSERT(a->cmd == QWZ_ADD_KEY || a->cmd == QWZ_DEL_KEY);
-		if (ic->ic_state == IEEE80211_S_RUN) {
-			if (a->cmd == QWZ_ADD_KEY)
-				err = qwz_add_sta_key(sc, a->ni, a->k);
-			else
-				err = qwz_del_sta_key(sc, a->ni, a->k);
-		}
-		ieee80211_release_node(ic, a->ni);
-		a->ni = NULL;
-		a->k = NULL;
+		a = sc->setkey_arg[sc->setkey_tail];
+		memset(&sc->setkey_arg[sc->setkey_tail], 0,
+		    sizeof(sc->setkey_arg[sc->setkey_tail]));
 		sc->setkey_tail = (sc->setkey_tail + 1) %
 		    nitems(sc->setkey_arg);
 		sc->setkey_nkeys--;
+		KASSERT(a.cmd == QWZ_ADD_KEY || a.cmd == QWZ_DEL_KEY);
+		if (ic->ic_state == IEEE80211_S_RUN &&
+		    sc->ns_nstate == IEEE80211_S_RUN) {
+			k = *a.k;
+			if (a.cmd == QWZ_ADD_KEY)
+				err = qwz_add_sta_key(sc, a.ni, &k);
+			else
+				err = qwz_del_sta_key(sc, a.ni, &k);
+			explicit_bzero(&k, sizeof(k));
+		}
+		ieee80211_release_node(ic, a.ni);
 	}
 
 	refcnt_rele_wake(&sc->task_refs);
