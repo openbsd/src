@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.45 2026/09/28 09:39:47 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.46 2026/09/28 09:40:56 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15547,7 +15547,8 @@ qwz_dp_rx_process_msdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 		m_adj(msdu->m, hal_rx_desc_sz);
 		msdu->m->m_len = msdu->m->m_pkthdr.len = msdu_len;
 	} else if (!msdu->is_continuation) {
-		if ((msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE) {
+		if (msdu_len + hal_rx_desc_sz + l3_pad_bytes >
+		    DP_RX_BUFFER_SIZE) {
 #if 0
 			uint8_t *hdr_status;
 
