@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.47 2026/09/28 09:41:59 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.48 2026/09/28 09:42:50 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1008,7 +1008,8 @@ next_scan:
 		break;
 	}
 out:
-	if (!test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
+	if (!test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags) &&
+	    (ifp->if_flags & IFF_RUNNING)) {
 		if (err)
 			task_add(systq, &sc->init_task);
 		else
