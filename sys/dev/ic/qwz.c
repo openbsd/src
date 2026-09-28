@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.48 2026/09/28 09:42:50 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.49 2026/09/28 09:43:25 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -22165,7 +22165,16 @@ qwz_init_task(void *arg)
 	struct qwz_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s = splnet();
-	rw_enter_write(&sc->ioctl_rwl);
+
+	/*
+	 * Do not sleep for this lock. The init task is a one-shot
+	 * recovery mechanism. If the ioctl handler is busy then
+	 * we are being reconfigured or reset already.
+	 */
+	if (rw_enter(&sc->ioctl_rwl, RW_WRITE | RW_NOSLEEP) != 0) {
+		splx(s);
+		return;
+	}
 
 	if (ifp->if_flags & IFF_RUNNING)
 		qwz_stop(ifp);
