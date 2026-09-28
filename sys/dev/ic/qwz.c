@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.39 2026/06/07 16:13:08 mglocker Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.40 2026/09/28 09:34:36 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -858,6 +858,11 @@ qwz_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct qwz_softc *sc = ifp->if_softc;
+
+	/* We may get triggered by received frames during qwz_stop(). */
+	if (test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags) ||
+	    !(ifp->if_flags & IFF_RUNNING))
+		return 0;
 
 	/*
 	 * Prevent attempts to transition towards the same state, unless
