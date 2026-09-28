@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.44 2026/09/28 09:38:52 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.45 2026/09/28 09:39:47 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15162,7 +15162,7 @@ qwz_dp_rx_h_ppdu(struct qwz_softc *sc, struct hal_rx_desc *rx_desc,
 	qwz_dp_rx_h_rate(sc, rx_desc, rxi);
 }
 
-void
+int
 qwz_dp_rx_h_undecap_nwifi(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
     uint8_t *first_hdr, enum hal_encrypt_type enctype)
 {
@@ -15174,12 +15174,12 @@ qwz_dp_rx_h_undecap_nwifi(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	uint16_t qos_ctl;
 
 	if (m == NULL)
-		return;
+		return ENOBUFS;
 
 	if (m->m_len < sizeof(*wh) &&
 	    (m = m_pullup(m, sizeof(*wh))) == NULL) {
 		msdu->m = NULL;
-		return;
+		return ENOBUFS;
 	}
 	msdu->m = m;
 
@@ -15187,23 +15187,23 @@ qwz_dp_rx_h_undecap_nwifi(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((le32toh(mpdu->info6) & RX_MPDU_START_INFO6_NON_QOS) ||
 	    ieee80211_has_qos(wh))
-		return;
+		return 0;
 
 	hdrlen = ieee80211_get_hdrlen(wh);
 	if (hdrlen > sizeof(decap_hdr))
-		return;
+		return EINVAL;
 
 	if (m->m_len < hdrlen &&
 	    (m = m_pullup(m, hdrlen)) == NULL) {
 		msdu->m = NULL;
-		return;
+		return ENOBUFS;
 	}
 	msdu->m = m;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	if (hdrlen > sizeof(decap_hdr))
-		return;
+		return EINVAL;
 
 	memcpy(decap_hdr, wh, hdrlen);
 	wh = (struct ieee80211_frame *)decap_hdr;
@@ -15217,17 +15217,18 @@ qwz_dp_rx_h_undecap_nwifi(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	M_PREPEND(m, sizeof(qos_ctl), M_DONTWAIT);
 	if (m == NULL) {
 		msdu->m = NULL;
-		return;
+		return ENOBUFS;
 	}
 	memcpy(mtod(m, void *), &qos_ctl, sizeof(qos_ctl));
 
 	M_PREPEND(m, hdrlen, M_DONTWAIT);
 	if (m == NULL) {
 		msdu->m = NULL;
-		return;
+		return ENOBUFS;
 	}
 	msdu->m = m;
 	memcpy(mtod(m, void *), decap_hdr, hdrlen);
+	return 0;
 }
 
 void
@@ -15304,7 +15305,7 @@ qwz_dp_rx_h_msdu_start_decap_type(struct qwz_softc *sc, struct hal_rx_desc *desc
 	return sc->hal_rx_ops->rx_desc_get_decap_type(desc);
 }
 
-void
+int
 qwz_dp_rx_h_undecap_eth(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
     struct hal_rx_desc *rx_desc)
 {
@@ -15318,7 +15319,7 @@ qwz_dp_rx_h_undecap_eth(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	struct mbuf *m = msdu->m;
 
 	if (m->m_pkthdr.len < ETHER_HDR_LEN)
-		return;
+		return EINVAL;
 
 	eth = mtod(m, struct ether_header *);
 	memcpy(da, eth->ether_dhost, IEEE80211_ADDR_LEN);
@@ -15341,7 +15342,7 @@ qwz_dp_rx_h_undecap_eth(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	M_PREPEND(m, 8, M_DONTWAIT);
 	if (m == NULL) {
 		msdu->m = NULL;
-		return;
+		return ENOBUFS;
 	}
 	msdu->m = m;
 	memcpy(mtod(m, void *), llc, 8);
@@ -15350,7 +15351,7 @@ qwz_dp_rx_h_undecap_eth(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	M_PREPEND(m, hdrlen, M_DONTWAIT);
 	if (m == NULL) {
 		msdu->m = NULL;
-		return;
+		return ENOBUFS;
 	}
 	msdu->m = m;
 	p = mtod(m, uint8_t *);
@@ -15373,9 +15374,10 @@ qwz_dp_rx_h_undecap_eth(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	/* Override addr1/addr3 with actual DA/SA from Ethernet header. */
 	memcpy(p + 4, da, IEEE80211_ADDR_LEN);
 	memcpy(p + 16, sa, IEEE80211_ADDR_LEN);
+	return 0;
 }
 
-void
+int
 qwz_dp_rx_h_undecap(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
     struct hal_rx_desc *rx_desc, enum hal_encrypt_type enctype,
     int decrypted)
@@ -15386,15 +15388,14 @@ qwz_dp_rx_h_undecap(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 
 	switch (decap) {
 	case DP_RX_DECAP_TYPE_NATIVE_WIFI:
-		qwz_dp_rx_h_undecap_nwifi(sc, msdu, NULL, enctype);
-		break;
+		return qwz_dp_rx_h_undecap_nwifi(sc, msdu, NULL, enctype);
 	case DP_RX_DECAP_TYPE_RAW:
 		qwz_dp_rx_h_undecap_raw(sc, msdu, enctype, decrypted);
 		break;
 	case DP_RX_DECAP_TYPE_ETHERNET2_DIX:
-		qwz_dp_rx_h_undecap_eth(sc, msdu, rx_desc);
-		break;
+		return qwz_dp_rx_h_undecap_eth(sc, msdu, rx_desc);
 	}
+	return 0;
 }
 
 int
@@ -15404,7 +15405,7 @@ qwz_dp_rx_h_mpdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	struct ieee80211com *ic = &sc->sc_ic;
 	int fill_crypto_hdr = 0;
 	enum hal_encrypt_type enctype;
-	int is_decrypted = 0;
+	int is_decrypted = 0, ret;
 #if 0
 	struct ath12k_skb_rxcb *rxcb;
 #endif
@@ -15479,7 +15480,9 @@ qwz_dp_rx_h_mpdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 #if 0
 	ath12k_dp_rx_h_csum_offload(ar, msdu);
 #endif
-	qwz_dp_rx_h_undecap(sc, msdu, rx_desc, enctype, is_decrypted);
+	ret = qwz_dp_rx_h_undecap(sc, msdu, rx_desc, enctype, is_decrypted);
+	if (ret)
+		return ret;
 
 	if (is_decrypted && !fill_crypto_hdr &&
 	    qwz_dp_rx_h_msdu_start_decap_type(sc, rx_desc) !=
