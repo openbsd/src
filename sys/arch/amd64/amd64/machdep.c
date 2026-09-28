@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.313 2026/09/08 00:47:00 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.314 2026/09/28 14:14:03 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -800,8 +800,10 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Copy in the FPU state to restore */
 	if (__predict_true(ksc.sc_fpstate != NULL)) {
-		if ((error = copyin(ksc.sc_fpstate, sfp, fpu_save_len)))
+		if ((error = copyin(ksc.sc_fpstate, sfp, fpu_save_len))) {
+			memcpy(sfp, fpu_cleandata, fpu_save_len);
 			return error;
+		}
 		if (xrstor_user(sfp, xsave_mask)) {
 			memcpy(sfp, fpu_cleandata, fpu_save_len);
 			return EINVAL;
