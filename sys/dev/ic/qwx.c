@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.141 2026/09/24 17:17:19 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.142 2026/09/28 14:42:00 gnezdo Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -25793,7 +25793,7 @@ qwx_wmi_start_scan_init(struct qwx_softc *sc, struct scan_req_params *arg)
 	/* fill bssid_list[0] with 0xff, otherwise bssid and RA will be
 	 * ZEROs in probe request
 	 */
-	IEEE80211_ADDR_COPY(arg->bssid_list[0].addr, etheranyaddr);
+	IEEE80211_ADDR_COPY(arg->bssid_list[0].addr, etherbroadcastaddr);
 }
 
 int
