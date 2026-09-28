@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.25 2025/12/05 14:12:32 tb Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.26 2026/09/28 02:18:36 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,6 +99,8 @@ bn_bn2binpad_internal(const BIGNUM *bn, uint8_t *out, int out_len,
 		out_len = n;
 	if (out_len < n)
 		return -1;
+	if (out_len == 0)
+		return 0;
 
 	if (bn->dmax == 0) {
 		explicit_bzero(out, out_len);

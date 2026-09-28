@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.56 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.57 2026/09/28 02:18:36 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -428,6 +428,7 @@ i2t_ASN1_OBJECT_cbb(const ASN1_OBJECT *aobj, CBB *cbb, int no_name)
 int
 i2t_ASN1_OBJECT_internal(const ASN1_OBJECT *aobj, char *buf, int buf_len, int no_name)
 {
+	char throwaway;
 	uint8_t *data = NULL;
 	size_t data_len;
 	CBB cbb;
@@ -435,6 +436,13 @@ i2t_ASN1_OBJECT_internal(const ASN1_OBJECT *aobj, char *buf, int buf_len, int no
 
 	if (buf_len < 0)
 		return 0;
+
+	if (buf == NULL) {
+		if (buf_len != 0)
+			return 0;
+		buf = &throwaway;
+	}
+
 	if (buf_len > 0)
 		buf[0] = '\0';
 

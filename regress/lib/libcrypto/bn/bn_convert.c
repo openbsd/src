@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.9 2024/11/05 18:20:08 tb Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.10 2026/09/28 02:18:36 kenjiro Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -62,7 +62,7 @@ check_bin_output(size_t test_no, const char *label, const uint8_t *bin,
 		    "want %d\n", test_no, label, ret, out_len);
 		goto failure;
 	}
-	if (memcmp(out, bin, bin_len) != 0) {
+	if (out_len > 0 && memcmp(out, bin, bin_len) != 0) {
 		fprintf(stderr, "FAIL: Test %zu %s - output from "
 		    "BN_bn2bin() differs\n", test_no, label);
 		fprintf(stderr, "Got:\n");

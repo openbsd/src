@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.29 2025/05/25 04:53:05 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.30 2026/09/28 02:18:36 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,6 +169,20 @@ BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		rn = b->top;
 	if (rn == INT_MAX)
 		return 0;
+
+	if (a->top == 0) {
+		if (!bn_copy(r, b))
+			return 0;
+		r->neg = 0;
+		return 1;
+	}
+	if (b->top == 0) {
+		if (!bn_copy(r, a))
+			return 0;
+		r->neg = 0;
+		return 1;
+	}
+
 	if (!bn_wexpand(r, rn + 1))
 		return 0;
 
@@ -192,6 +206,14 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		BNerror(BN_R_ARG2_LT_ARG3);
 		return 0;
 	}
+
+	if (b->top == 0) {
+		if (!bn_copy(r, a))
+			return 0;
+		r->neg = 0;
+		return 1;
+	}
+
 	rn = a->top;
 
 	if (!bn_wexpand(r, rn))
