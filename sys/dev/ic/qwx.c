@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.143 2026/09/28 14:42:11 gnezdo Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.144 2026/09/28 14:42:22 gnezdo Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -13099,6 +13099,64 @@ qwx_init_channels(struct qwx_softc *sc, struct cur_regulatory_info *reg_info)
 	}
 }
 
+/*
+ * Populate a conservative channel list if no regulatory information
+ * could be processed yet.  Channels configured by an earlier event are
+ * kept as they are.
+ */
+void
+qwx_init_channels_world(struct qwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_channel *chan;
+	uint32_t supported_bands = 0;
+	int i;
+
+	/* Same world fallback channels as ath11k reg.c. */
+	static const uint8_t channels_2ghz[] = {
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+	};
+	static const uint8_t channels_5ghz[] = {
+		36, 40, 44, 48, 52, 56, 60, 64,
+		149, 153, 157, 161, 165
+	};
+
+	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
+		if (ic->ic_channels[i].ic_flags != 0)
+			return;
+	}
+
+	for (i = 0; i < sc->num_radios; i++)
+		supported_bands |= sc->pdevs[i].cap.supported_bands;
+
+	if (!(supported_bands & (WMI_HOST_WLAN_2G_CAP | WMI_HOST_WLAN_5G_CAP)))
+		supported_bands = WMI_HOST_WLAN_2G_CAP | WMI_HOST_WLAN_5G_CAP;
+
+	if (supported_bands & WMI_HOST_WLAN_2G_CAP) {
+		for (i = 0; i < nitems(channels_2ghz); i++) {
+			chan = &ic->ic_channels[channels_2ghz[i]];
+			chan->ic_freq = ieee80211_ieee2mhz(channels_2ghz[i],
+			    IEEE80211_CHAN_2GHZ);
+			chan->ic_flags = IEEE80211_CHAN_CCK |
+			    IEEE80211_CHAN_OFDM |
+			    IEEE80211_CHAN_DYN |
+			    IEEE80211_CHAN_2GHZ |
+			    IEEE80211_CHAN_HT;
+		}
+	}
+
+	if (supported_bands & WMI_HOST_WLAN_5G_CAP) {
+		for (i = 0; i < nitems(channels_5ghz); i++) {
+			chan = &ic->ic_channels[channels_5ghz[i]];
+			chan->ic_freq = ieee80211_ieee2mhz(channels_5ghz[i],
+			    IEEE80211_CHAN_5GHZ);
+			chan->ic_flags = IEEE80211_CHAN_A |
+			    IEEE80211_CHAN_HT |
+			    IEEE80211_CHAN_PASSIVE;
+		}
+	}
+}
+
 int
 qwx_reg_chan_list_event(struct qwx_softc *sc, struct mbuf *m,
     enum wmi_reg_chan_list_cmd_type id)
@@ -13225,6 +13283,7 @@ fallback:
 	 * reverted at the fw and the old SCAN_CHAN_LIST cmd needs to be sent.
 	 */
 	/* TODO: This is rare, but still should also be handled */
+	qwx_init_channels_world(sc);
 mem_free:
 	if (reg_info) {
 		free(reg_info->reg_rules_2ghz_ptr, M_DEVBUF,
