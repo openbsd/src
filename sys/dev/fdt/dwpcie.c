@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.64 2026/08/14 19:51:54 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.65 2026/09/28 19:00:05 tobhe Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -191,6 +191,15 @@
 #define  PCIE_CLIENT_LTSSM_MASK			(0x1f << 0)
 #define  PCIE_CLIENT_LTSSM_UP			(0x11 << 0)
 
+/* Qualcomm registers */
+#define PARF_DBI_BASE_ADDR_V2		0x350
+#define PARF_DBI_BASE_ADDR_V2_HI	0x354
+#define PARF_SLV_ADDR_SPACE_SIZE_V2	0x358
+#define PARF_SLV_ADDR_SPACE_SIZE_V2_HI	0x35c
+#define PARF_ATU_BASE_ADDR		0x634
+#define PARF_ATU_BASE_ADDR_HI		0x638
+#define PARF_SLV_ADDR_SPACE_SZ		0x80000000
+
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -325,6 +334,7 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "qcom,pcie-sc7280") ||
 	    OF_is_compatible(faa->fa_node, "qcom,pcie-sc8280xp") ||
 	    OF_is_compatible(faa->fa_node, "qcom,pcie-x1e80100") ||
+	    OF_is_compatible(faa->fa_node, "qcom,glymur-pcie") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-pcie") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu740-pcie") ||
@@ -465,6 +475,17 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_glue_size = faa->fa_reg[glue].size;
 	}
 
+	if (OF_is_compatible(faa->fa_node, "qcom,glymur-pcie")) {
+		glue = OF_getindex(faa->fa_node, "parf", "reg-names");
+		if (glue < 0 || glue >= faa->fa_nreg) {
+			printf(": no parf registers\n");
+			return;
+		}
+
+		sc->sc_glue_base = faa->fa_reg[glue].addr;
+		sc->sc_glue_size = faa->fa_reg[glue].size;
+	}
+
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_node = faa->fa_node;
@@ -563,7 +584,8 @@ dwpcie_attach_deferred(struct device *self)
 		error = dwpcie_imx8mq_init(sc);
 	if (OF_is_compatible(sc->sc_node, "qcom,pcie-sc7280") ||
 	    OF_is_compatible(sc->sc_node, "qcom,pcie-sc8280xp") ||
-	    OF_is_compatible(sc->sc_node, "qcom,pcie-x1e80100"))
+	    OF_is_compatible(sc->sc_node, "qcom,pcie-x1e80100") ||
+	    OF_is_compatible(sc->sc_node, "qcom,glymur-pcie"))
 		error = dwpcie_sc7280_init(sc);
 	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie") ||
 	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-pcie"))
@@ -1851,6 +1873,29 @@ int
 dwpcie_sc7280_init(struct dwpcie_softc *sc)
 {
 	sc->sc_num_viewport = 8;
+
+	if (OF_is_compatible(sc->sc_node, "qcom,glymur-pcie")) {
+		if (bus_space_map(sc->sc_iot, sc->sc_glue_base,
+		    sc->sc_glue_size, 0, &sc->sc_glue_ioh))
+			return ENOMEM;
+
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PARF_DBI_BASE_ADDR_V2, (uint32_t)sc->sc_ctrl_base);
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PARF_DBI_BASE_ADDR_V2_HI,
+		    (uint32_t)(sc->sc_ctrl_base >> 32));
+
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PARF_ATU_BASE_ADDR, (uint32_t)sc->sc_atu_base);
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PARF_ATU_BASE_ADDR_HI,
+		    (uint32_t)(sc->sc_atu_base >> 32));
+
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PARF_SLV_ADDR_SPACE_SIZE_V2, 0);
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PARF_SLV_ADDR_SPACE_SIZE_V2_HI, PARF_SLV_ADDR_SPACE_SZ);
+	}
 
 	if (OF_getproplen(sc->sc_node, "msi-map") <= 0)
 		return dwpcie_msi_init(sc);
