@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.46 2026/09/28 09:40:56 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.47 2026/09/28 09:41:59 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -350,6 +350,11 @@ qwz_stop(struct ifnet *ifp)
 
 	qwz_setkey_clear(sc);
 
+	ifp->if_timer = sc->sc_tx_timer = 0;
+
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
+
 	clear_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
 	/* Tear down firmware-side association so we can re-associate. */
@@ -359,11 +364,6 @@ qwz_stop(struct ifnet *ifp)
 		if (ic->ic_state >= IEEE80211_S_AUTH)
 			qwz_deauth(sc);
 	}
-
-	ifp->if_timer = sc->sc_tx_timer = 0;
-
-	ifp->if_flags &= ~IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 	sc->ns_nstate = IEEE80211_S_INIT;
