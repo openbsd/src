@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrctl.c,v 1.5 2026/09/19 17:23:52 schwarze Exp $ */
+/*	$OpenBSD: rtrctl.c,v 1.6 2026/09/28 05:02:21 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -50,8 +50,6 @@ void read_sock_print_ometric(int);
 void process_import(char *, char *);
 void process_stats(char *);
 
-#define PACKED __attribute__((packed))
-
 #define RTR_VERSION		2
 
 #define PDU_MAX_LENGTH		65535
@@ -81,7 +79,7 @@ struct pdu_header {
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t len;
-} PACKED;
+} __packed;
 
 struct pdu_open_controller {
 	uint8_t version;
@@ -90,14 +88,14 @@ struct pdu_open_controller {
 	uint32_t length;
 	uint32_t controller_version;
 	uint32_t controller_flags;
-} PACKED;
+} __packed;
 
 struct pdu_start_of_import {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pdu_ipv4_prefix_import {
 	uint8_t version;
@@ -111,7 +109,7 @@ struct pdu_ipv4_prefix_import {
 	uint8_t zero;
 	struct in_addr prefix;
 	uint32_t asn;
-} PACKED;
+} __packed;
 
 struct pdu_ipv6_prefix_import {
 	uint8_t version;
@@ -125,7 +123,7 @@ struct pdu_ipv6_prefix_import {
 	uint8_t zero;
 	struct in6_addr prefix;
 	uint32_t asn;
-} PACKED;
+} __packed;
 
 #define VAP_MAX_PROVIDERS       16378	/* 65532 bytes */
 struct pdu_aspa_import {
@@ -137,28 +135,28 @@ struct pdu_aspa_import {
 	time_t expire;
 	uint32_t customer_asn;
 	uint32_t provider_asns[];
-} PACKED;
+} __packed;
 
 struct pdu_end_of_import {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pdu_query_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pdu_start_of_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 #define NODENAME_SIZE   256
 #define DOMAINNAME_SIZE 256
@@ -177,7 +175,7 @@ struct pdu_global_stats {
 	int64_t total_bytes_out;
 	int64_t total_client_connects;
 	int64_t total_controller_connects;
-} PACKED;
+} __packed;
 
 #define CLIENT_STATE_REGISTERED 0x01
 #define CLIENT_STATE_CLOSED     0x02
@@ -211,7 +209,7 @@ struct pdu_client_stats {
 	int64_t vap_advertised;
 	int64_t reset_query_count;
 	int64_t serial_query_count;
-} PACKED;
+} __packed;
 
 struct pdu_cache_frame_stats {
 	uint8_t version;
@@ -231,14 +229,14 @@ struct pdu_cache_frame_stats {
 	time_t brk_creation_time;
 	int64_t vap_count;
 	time_t vap_creation_time;
-} PACKED;
+} __packed;
 
 struct pdu_end_of_stats {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pollfd pfd;
 
