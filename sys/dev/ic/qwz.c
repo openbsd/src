@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.55 2026/09/29 11:45:48 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.56 2026/09/29 11:46:39 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15775,9 +15775,6 @@ try_again:
 #ifdef notyet
 	spin_unlock_bh(&srng->lock);
 #endif
-	if (!total_msdu_reaped)
-		goto exit;
-
 	for (i = 0; i < sc->num_radios; i++) {
 		if (!num_buffs_reaped[i])
 			continue;
@@ -15787,7 +15784,6 @@ try_again:
 		qwz_dp_rxbufs_replenish(sc, &dp->rx_refill_buf_ring,
 		    &rx_desc_used_list, num_buffs_reaped[i]);
 	}
-exit:
 	return total_msdu_reaped;
 }
 
