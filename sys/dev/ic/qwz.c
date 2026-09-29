@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.54 2026/09/29 11:44:48 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.55 2026/09/29 11:45:48 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -13443,6 +13443,10 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
 	while (num_remain > 0) {
 		const size_t size = DP_RX_BUFFER_SIZE;
 
+		rx_desc = TAILQ_FIRST(used_list);
+		if (rx_desc == NULL)
+			break;
+
 		m = m_gethdr(M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			goto fail_free_mbuf;
@@ -13455,10 +13459,6 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
 			goto fail_free_mbuf;
 
 		m->m_len = m->m_pkthdr.len = size;
-
-		rx_desc = TAILQ_FIRST(used_list);
-		if (rx_desc == NULL)
-			goto fail_free_mbuf;
 
 		ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_desc->map, m,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT);
