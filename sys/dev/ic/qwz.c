@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.53 2026/09/29 11:41:40 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.54 2026/09/29 11:44:48 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -13405,7 +13405,7 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
 	int num_free;
 	int num_remain;
 	int num_cut;
-	int ret, i;
+	int ret = 0;
 	uint32_t cookie;
 	uint64_t paddr;
 	struct ath12k_rx_desc_info *rx_desc;
@@ -13426,21 +13426,18 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
 	req_entries = MIN(num_free, req_entries);
 	num_remain = req_entries;
 
-	if (!num_remain) {
-		qwz_hal_srng_access_end(sc, srng);
-#ifdef notyet
-		spin_unlock_bh(&srng->lock);
-#endif
-		return 0;
-	}
+	if (!num_remain)
+		goto done;
 
-	for (i = 0, num_cut = 0; i < num_remain; i++) {
-		if (TAILQ_EMPTY(&dp->rx_desc_free_list))
-			break;
-		rx_desc = TAILQ_FIRST(&dp->rx_desc_free_list);
-		TAILQ_REMOVE(&dp->rx_desc_free_list, rx_desc, entry);
-		TAILQ_INSERT_TAIL(used_list, rx_desc, entry);
-		num_cut++;
+	if (TAILQ_EMPTY(used_list)) {
+		for (num_cut = 0; num_cut < num_remain; num_cut++) {
+			rx_desc = TAILQ_FIRST(&dp->rx_desc_free_list);
+			if (rx_desc == NULL)
+				break;
+			TAILQ_REMOVE(&dp->rx_desc_free_list, rx_desc, entry);
+			TAILQ_INSERT_TAIL(used_list, rx_desc, entry);
+		}
+		num_remain = num_cut;
 	}
 
 	while (num_remain > 0) {
@@ -13496,22 +13493,20 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
 		qwz_hal_rx_buf_addr_info_set(desc, paddr, cookie, mgr);
 	}
 
-	qwz_hal_srng_access_end(sc, srng);
-#ifdef notyet
-	spin_unlock_bh(&srng->lock);
-#endif
-	return 0;
+	goto done;
 
 fail_dma_unmap:
 	bus_dmamap_unload(sc->sc_dmat, rx_desc->map);
 fail_free_mbuf:
 	m_free(m);
-
+	ret = ENOBUFS;
+done:
 	qwz_hal_srng_access_end(sc, srng);
+	TAILQ_CONCAT(&dp->rx_desc_free_list, used_list, entry);
 #ifdef notyet
 	spin_unlock_bh(&srng->lock);
 #endif
-	return ENOBUFS;
+	return ret;
 }
 
 int
