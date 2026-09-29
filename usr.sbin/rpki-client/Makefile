@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2026/06/22 21:25:44 job Exp $
+#	$OpenBSD: Makefile,v 1.42 2026/09/29 21:59:14 rcovelli Exp $
 
 PROG=	rpki-client
 
@@ -26,6 +26,7 @@ SRCS+=	output-bird.c
 SRCS+=	output-csv.c
 SRCS+=	output-json.c
 SRCS+=	output-ometric.c
+SRCS+=	output-rtrx.c
 SRCS+=	output.c
 SRCS+=	parser.c
 SRCS+=	print.c

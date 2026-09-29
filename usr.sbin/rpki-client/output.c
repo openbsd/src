@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.47 2026/07/15 07:53:06 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.48 2026/09/29 21:59:14 rcovelli Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -161,6 +161,17 @@ outputfiles(struct validation_data *vd, struct stats *st, int exit_code)
 			output_cleantmp();
 			rc = 1;
 			continue;
+		}
+	}
+
+	/* The output functions after this do not need filesystem access */
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
+	if ((outformats & FORMAT_RTRX) && exit_code == 0) {
+		if (output_rtrx(NULL, vd, st) != 0) {
+			warn("unix socket for rtrx format failed");
+			rc = 1;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.299 2026/09/24 14:44:03 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.300 2026/09/29 21:59:14 rcovelli Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1022,6 +1022,10 @@ void		 aspa_print(const struct cert *, const struct aspa *);
 void		 tak_print(const struct cert *, const struct tak *);
 void		 spl_print(const struct cert *, const struct spl *);
 
+/* RTRx */
+
+void		 rtrx_connect(void);
+
 /* Output! */
 
 extern int	 outformats;
@@ -1031,6 +1035,7 @@ extern int	 outformats;
 #define FORMAT_JSON	0x08
 #define FORMAT_OMETRIC	0x10
 #define FORMAT_CCR	0x20
+#define FORMAT_RTRX	0x40
 
 int		 outputfiles(struct validation_data *, struct stats *, int);
 int		 outputheader(FILE *, struct validation_data *, struct stats *);
@@ -1041,6 +1046,7 @@ int		 output_csv(FILE *, struct validation_data *, struct stats *);
 int		 output_json(FILE *, struct validation_data *, struct stats *);
 int		 output_ometric(FILE *, struct validation_data *,
 		    struct stats *);
+int		 output_rtrx(FILE *, struct validation_data *, struct stats *);
 
 /*
  * Canonical Cache Representation

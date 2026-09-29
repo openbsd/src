@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.313 2026/07/16 03:53:28 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.314 2026/09/29 21:59:14 rcovelli Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1064,11 +1064,11 @@ main(int argc, char *argv[])
 	skiplistfile = DEFAULT_SKIPLIST_FILE;
 
 	if (pledge("stdio rpath wpath cpath inet fattr dns sendfd recvfd "
-	    "proc exec unveil", NULL) == -1)
+	    "proc exec unix unveil", NULL) == -1)
 		err(1, "pledge");
 
 	while ((c =
-	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmNnop:P:Rs:S:t:vVx")) != -1)
+	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmNnop:P:rRs:S:t:vVx")) != -1)
 		switch (c) {
 		case '0':
 			excludeas0 = 0;
@@ -1124,6 +1124,9 @@ main(int argc, char *argv[])
 			    X509_TIME_MAX, &errs);
 			if (errs)
 				errx(1, "-P: time in seconds %s", errs);
+			break;
+		case 'r':
+			outformats |= FORMAT_RTRX;
 			break;
 		case 'R':
 			rrdpon = 0;
@@ -1292,6 +1295,10 @@ main(int argc, char *argv[])
 		/* give up a bit before the hard timeout and try to finish up */
 		if (!noop)
 			deadline = getmonotime() + timeout - repo_timeout / 2;
+	}
+	if (outformats & FORMAT_RTRX) {
+		/* Open RTRx socket before we drop priv */
+		rtrx_connect();
 	}
 
 	if (pledge("stdio rpath wpath cpath fattr sendfd unveil", NULL) == -1)
@@ -1649,7 +1656,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-0ABcjmNnoRVvx] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-0ABcjmNnoRrVvx] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-H fqdn] [-P posix-seconds] [-p threads]"
 	    " [-S skiplist]\n"
