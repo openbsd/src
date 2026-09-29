@@ -21,7 +21,7 @@ ndelay(unsigned long nsecs)
 static inline void
 usleep_range(unsigned long min, unsigned long max)
 {
-	tsleep_nsec(&nowake, PWAIT, "usleep", USEC_TO_NSEC(min));
+	DELAY((min + max) / 2);
 }
 
 /* XXX assumes state is TASK_UNINTERRUPTIBLE */
@@ -39,19 +39,12 @@ mdelay(unsigned long msecs)
 		DELAY(1000);
 }
 
-static inline void
-drm_msleep(unsigned int msecs)
-{
-	tsleep_nsec(&nowake, PWAIT, "drmmsleep", MSEC_TO_NSEC(msecs));
-}
+#define drm_msleep(x)		mdelay(x)
 
 static inline void
 fsleep(unsigned long usecs)
 {
-	if (usecs <= 10)
-		DELAY(usecs);
-	else
-		tsleep_nsec(&nowake, PWAIT, "fsleep", USEC_TO_NSEC(usecs));
+	DELAY(usecs);
 }
 
 static inline unsigned int
