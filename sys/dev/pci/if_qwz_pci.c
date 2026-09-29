@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.15 2026/09/29 11:43:20 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.16 2026/09/29 11:44:03 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -462,11 +462,11 @@ void	qwz_pci_intr_ctrl_event_ee(struct qwz_pci_softc *, uint32_t);
 void	qwz_pci_intr_ctrl_event_cmd_complete(struct qwz_pci_softc *,
 	    uint64_t, uint32_t);
 int	qwz_pci_intr_ctrl_event(struct qwz_pci_softc *,
-	    struct qwz_pci_event_ring *);
+	    struct qwz_pci_event_ring *, int);
 void	qwz_pci_intr_data_event_tx(struct qwz_pci_softc *,
 	    struct qwz_mhi_ring_element *);
 int	qwz_pci_intr_data_event(struct qwz_pci_softc *,
-	    struct qwz_pci_event_ring *);
+	    struct qwz_pci_event_ring *, int);
 int	qwz_pci_intr_mhi_ctrl(void *);
 int	qwz_pci_intr_mhi_data(void *);
 int	qwz_pci_intr(void *);
@@ -2279,9 +2279,77 @@ struct qwz_dma_vec_entry {
 	uint64_t size;
 };
 
+int
+qwz_mhi_stop_channel(struct qwz_pci_softc *psc, struct qwz_pci_xfer_ring *ring)
+{
+	struct qwz_softc *sc = &psc->sc_sc;
+	int ret = 0;
+
+	if (ring->mhi_chan_state != MHI_CH_STATE_ENABLED)
+		return 0;
+
+	DNPRINTF(QWZ_D_MHI, "%s: stop MHI channel %d in state %d\n", __func__,
+	    ring->mhi_chan_id, ring->mhi_chan_state);
+
+	bus_dmamap_sync(sc->sc_dmat, QWZ_DMA_MAP(psc->chan_ctxt), 0,
+	    QWZ_DMA_LEN(psc->chan_ctxt), BUS_DMASYNC_PREWRITE);
+
+	ring->cmd_status = MHI_EV_CC_INVALID;
+	if (qwz_mhi_send_cmd(psc, MHI_CMD_STOP_CHAN, ring->mhi_chan_id))
+		return 1;
+
+	while (ring->cmd_status != MHI_EV_CC_SUCCESS) {
+		ret = tsleep_nsec(&ring->cmd_status, 0, "qwzcmd",
+		    SEC_TO_NSEC(5));
+		if (ret)
+			break;
+	}
+
+	if (ret) {
+		printf("%s: could not stop MHI channel %d in state %d: status 0x%x\n",
+		    sc->sc_dev.dv_xname, ring->mhi_chan_id,
+		    ring->mhi_chan_state, ring->cmd_status);
+		return 1;
+	}
+
+	ring->mhi_chan_state = MHI_CH_STATE_DISABLED;
+	return 0;
+}
+
+void
+qwz_mhi_stop_channels(struct qwz_pci_softc *psc)
+{
+	struct qwz_pci_xfer_ring *ring;
+
+	if (psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_OUTBOUND].mhi_chan_state
+	    != MHI_CH_STATE_ENABLED &&
+	    psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_INBOUND].mhi_chan_state
+	    != MHI_CH_STATE_ENABLED)
+		return;
+
+	qwz_mhi_device_wake(&psc->sc_sc);
+
+	ring = &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_OUTBOUND];
+	qwz_mhi_stop_channel(psc, ring);
+
+	ring = &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_INBOUND];
+	qwz_mhi_stop_channel(psc, ring);
+
+	qwz_mhi_device_zzz(&psc->sc_sc);
+}
+
+void
+qwz_mhi_flush_mhi_event_rings(struct qwz_pci_softc *psc)
+{
+	qwz_pci_intr_ctrl_event(psc, &psc->event_rings[0], 1);
+	qwz_pci_intr_data_event(psc, &psc->event_rings[1], 1);
+}
+
 void
 qwz_pci_power_down(struct qwz_softc *sc)
 {
+	struct qwz_pci_softc *psc = (struct qwz_pci_softc *)sc;
+	struct qwz_pci_xfer_ring *ring;
 	uint32_t state;
 	int i;
 
@@ -2289,6 +2357,9 @@ qwz_pci_power_down(struct qwz_softc *sc)
 	qwz_pci_aspm_restore(sc);
 
 	qwz_pci_force_wake(sc);
+
+	qwz_mhi_stop_channels(psc);
+	qwz_mhi_flush_mhi_event_rings(psc);
 
 	/*
 	 * Ask firmware to transition to M3 before resetting the device
@@ -2318,6 +2389,23 @@ qwz_pci_power_down(struct qwz_softc *sc)
 	qwz_mhi_stop(sc);
 	clear_bit(ATH12K_FLAG_DEVICE_INIT_DONE, sc->sc_flags);
 	qwz_pci_sw_reset(sc, false);
+
+	for (i = 0; i < nitems(psc->xfer_rings); i++)
+		psc->xfer_rings[i].mhi_chan_state = MHI_CH_STATE_DISABLED;
+
+	ring = &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_OUTBOUND];
+	for (i = 0; i < ring->num_elements; i++) {
+		struct qwz_xfer_data *xfer = &ring->data[i];
+
+		if (xfer->m == NULL)
+			continue;
+		bus_dmamap_sync(sc->sc_dmat, xfer->map, 0,
+		    xfer->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, xfer->map);
+		m_freem(xfer->m);
+		xfer->m = NULL;
+	}
+	ring->queued = 0;
 }
 
 void
@@ -2729,6 +2817,7 @@ qwz_mhi_start_channel(struct qwz_pci_softc *psc,
 		qwz_mhi_ring_doorbell(sc, ring->db_addr, ring->wp);
 	}
 
+	ring->mhi_chan_state = MHI_CH_STATE_ENABLED;
 	return 0;
 }
 
@@ -3708,7 +3797,8 @@ qwz_pci_intr_ctrl_event_cmd_complete(struct qwz_pci_softc *psc,
 }
 
 int
-qwz_pci_intr_ctrl_event(struct qwz_pci_softc *psc, struct qwz_pci_event_ring *ring)
+qwz_pci_intr_ctrl_event(struct qwz_pci_softc *psc,
+    struct qwz_pci_event_ring *ring, int flush)
 {
 	struct qwz_softc *sc = &psc->sc_sc;
 	struct qwz_mhi_event_ctxt *c;
@@ -3760,21 +3850,23 @@ qwz_pci_intr_ctrl_event(struct qwz_pci_softc *psc, struct qwz_pci_event_ring *ri
 		DNPRINTF(QWZ_D_MHI, "%s: len=%u code=0x%x type=0x%x chid=%d\n",
 		    __func__, len, code, type, chid);
 
-		switch (type) {
-		case MHI_PKT_TYPE_STATE_CHANGE_EVENT:
-			qwz_pci_intr_ctrl_event_mhi(psc, code);
-			break;
-		case MHI_PKT_TYPE_EE_EVENT:
-			qwz_pci_intr_ctrl_event_ee(psc, code);
-			break;
-		case MHI_PKT_TYPE_CMD_COMPLETION_EVENT:
-			qwz_pci_intr_ctrl_event_cmd_complete(psc,
-			    le64toh(e->ptr), code);
-			break;
-		default:
-			printf("%s: unhandled event type 0x%x\n",
-			    __func__, type);
-			break;
+		if (!flush) {
+			switch (type) {
+			case MHI_PKT_TYPE_STATE_CHANGE_EVENT:
+				qwz_pci_intr_ctrl_event_mhi(psc, code);
+				break;
+			case MHI_PKT_TYPE_EE_EVENT:
+				qwz_pci_intr_ctrl_event_ee(psc, code);
+				break;
+			case MHI_PKT_TYPE_CMD_COMPLETION_EVENT:
+				qwz_pci_intr_ctrl_event_cmd_complete(psc,
+				    le64toh(e->ptr), code);
+				break;
+			default:
+				printf("%s: unhandled event type 0x%x\n",
+				    __func__, type);
+				break;
+			}
 		}
 
 		if (ring->rp + sizeof(*e) >= base + ring->size)
@@ -3931,7 +4023,8 @@ qwz_pci_intr_data_event_tx(struct qwz_pci_softc *psc, struct qwz_mhi_ring_elemen
 }
 
 int
-qwz_pci_intr_data_event(struct qwz_pci_softc *psc, struct qwz_pci_event_ring *ring)
+qwz_pci_intr_data_event(struct qwz_pci_softc *psc,
+    struct qwz_pci_event_ring *ring, int flush)
 {
 	struct qwz_softc *sc = &psc->sc_sc;
 	struct qwz_mhi_event_ctxt *c;
@@ -3981,14 +4074,16 @@ qwz_pci_intr_data_event(struct qwz_pci_softc *psc, struct qwz_pci_event_ring *ri
 		DNPRINTF(QWZ_D_MHI, "%s: len=%u code=0x%x type=0x%x chid=%d\n",
 		    __func__, len, code, type, chid);
 
-		switch (type) {
-		case MHI_PKT_TYPE_TX_EVENT:
-			qwz_pci_intr_data_event_tx(psc, e);
-			break;
-		default:
-			printf("%s: unhandled event type 0x%x\n",
-			    __func__, type);
-			break;
+		if (!flush) {
+			switch (type) {
+			case MHI_PKT_TYPE_TX_EVENT:
+				qwz_pci_intr_data_event_tx(psc, e);
+				break;
+			default:
+				printf("%s: unhandled event type 0x%x\n",
+				    __func__, type);
+				break;
+			}
 		}
 
 		if (ring->rp + sizeof(*e) >= base + ring->size)
@@ -4016,7 +4111,7 @@ qwz_pci_intr_mhi_ctrl(void *arg)
 {
 	struct qwz_pci_softc *psc = arg;
 
-	if (qwz_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
+	if (qwz_pci_intr_ctrl_event(psc, &psc->event_rings[0], 0))
 		return 1;
 
 	return 0;
@@ -4027,7 +4122,7 @@ qwz_pci_intr_mhi_data(void *arg)
 {
 	struct qwz_pci_softc *psc = arg;
 
-	if (qwz_pci_intr_data_event(psc, &psc->event_rings[1]))
+	if (qwz_pci_intr_data_event(psc, &psc->event_rings[1], 0))
 		return 1;
 
 	return 0;
@@ -4096,9 +4191,9 @@ qwz_pci_intr(void *arg)
 	if (!test_bit(ATH12K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags)) {
 		int i;
 
-		if (qwz_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
+		if (qwz_pci_intr_ctrl_event(psc, &psc->event_rings[0], 0))
 			ret = 1;
-		if (qwz_pci_intr_data_event(psc, &psc->event_rings[1]))
+		if (qwz_pci_intr_data_event(psc, &psc->event_rings[1], 0))
 			ret = 1;
 
 		for (i = 0; i < sc->hw_params.ce_count; i++) {
