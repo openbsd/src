@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.14 2026/09/29 11:42:34 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.15 2026/09/29 11:43:20 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2445,6 +2445,7 @@ qwz_mhi_init_cmd_ring(struct qwz_pci_softc *psc)
 	len = ring->size;
 
 	ring->rp = ring->wp = paddr;
+	ring->queued = 0;
 
 	c = (struct qwz_mhi_cmd_ctxt *)QWZ_DMA_KVA(psc->cmd_ctxt);
 	c->rbase = htole64(paddr);
@@ -2668,6 +2669,7 @@ qwz_mhi_start_channel(struct qwz_pci_softc *psc,
 
 	paddr = QWZ_DMA_DVA(ring->dmamem);
 	ring->rp = ring->wp = paddr;
+	ring->queued = 0;
 	c->rbase = htole64(paddr);
 	c->rp = htole64(ring->rp);
 	c->wp = htole64(ring->wp);
