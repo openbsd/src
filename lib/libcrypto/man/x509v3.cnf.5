@@ -1,4 +1,4 @@
-.\" $OpenBSD: x509v3.cnf.5,v 1.8 2022/03/31 17:27:17 naddy Exp $
+.\" $OpenBSD: x509v3.cnf.5,v 1.9 2026/09/29 14:03:40 tb Exp $
 .\" full merge up to:
 .\" OpenSSL man5/x509v3_config a41815f0 Mar 17 18:43:53 2017 -0700
 .\" selective merge up to: OpenSSL 36cf10cf Oct 4 02:11:08 2017 -0400
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: September 29 2026 $
 .Dt X509V3.CNF 5
 .Os
 .Sh NAME
@@ -363,11 +363,6 @@ If the name is
 .Ic fullname ,
 the value field should contain the full name of the distribution
 point in the same format as subject alternative name.
-.Pp
-If the name is
-.Ic relativename ,
-then the value field should contain a section name whose contents
-represent a DN fragment to be placed in this field.
 .Pp
 The name
 .Ic CRLIssuer ,
