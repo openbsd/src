@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.1 2026/09/29 21:59:14 rcovelli Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.2 2026/09/29 22:01:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -29,8 +29,6 @@
 #define PDU_MAX_LENGTH		65535
 #define PDU_HEADER_LENGTH	8
 
-#define PACKED __attribute__((packed))
-
 int rtrx_sock = -1;
 char *rtrx_filename = "/var/run/rtrd.sock";
 
@@ -51,7 +49,7 @@ struct pdu_header {
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t len;
-} PACKED;
+} __packed;
 
 struct pdu_open_controller {
 	uint8_t version;
@@ -60,21 +58,21 @@ struct pdu_open_controller {
 	uint32_t length;
 	uint32_t controller_version;
 	uint32_t controller_flags;
-} PACKED;
+} __packed;
 
 struct pdu_close_controller {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pdu_start_of_import {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pdu_ipv4_prefix_import {
 	uint8_t version;
@@ -88,7 +86,7 @@ struct pdu_ipv4_prefix_import {
 	uint8_t zero;
 	struct in_addr prefix;
 	uint32_t asn;
-} PACKED;
+} __packed;
 
 struct pdu_ipv6_prefix_import {
 	uint8_t version;
@@ -102,7 +100,7 @@ struct pdu_ipv6_prefix_import {
 	uint8_t zero;
 	struct in6_addr prefix;
 	uint32_t asn;
-} PACKED;
+} __packed;
 
 #define SKI_LENGTH 20
 #define SPKI_LENGTH_P256 91
@@ -118,7 +116,7 @@ struct pdu_router_key_import
 	unsigned char ski[SKI_LENGTH];
 	uint32_t asn;
 	unsigned char spki[];
-} PACKED;
+} __packed;
 
 #define VAP_MAX_PROVIDERS	16378	/* 65532 bytes */
 
@@ -131,21 +129,21 @@ struct pdu_aspa_import {
 	time_t expire;
 	uint32_t customer_asn;
 	uint32_t provider_asns[];
-} PACKED;
+} __packed;
 
 struct pdu_end_of_import {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 struct pdu_push_import {
 	uint8_t version;
 	uint8_t type;
 	uint16_t reserved;
 	uint32_t length;
-} PACKED;
+} __packed;
 
 int rtrx_write(char *, int);
 int rtrx_read(char *, int);
