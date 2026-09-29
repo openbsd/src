@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.439 2026/09/23 13:29:14 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.440 2026/09/29 22:49:58 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4678,13 +4678,15 @@ sr_rebuild(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	u_int64_t		sz, whole_blk, partial_blk, blk, restart;
-	daddr_t			lba;
+	u_int64_t		lba;
+	u_int32_t		lbasz, sec_size;
 	struct sr_workunit	*wu_r = NULL, *wu_w = NULL;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;
 	int			c, s, slept, percent = 0, old_percent = -1;
 	u_int8_t		*buf;
 
+	sec_size = sd->sd_meta->ssdi.ssd_secsize;
 	whole_blk = sd->sd_meta->ssdi.ssd_size / SR_REBUILD_IO_SIZE;
 	partial_blk = sd->sd_meta->ssdi.ssd_size % SR_REBUILD_IO_SIZE;
 
@@ -4712,13 +4714,14 @@ sr_rebuild(struct sr_discipline *sd)
 	/* currently this is 64k therefore we can use dma_alloc */
 	buf = dma_alloc(SR_REBUILD_IO_SIZE << DEV_BSHIFT, PR_WAITOK);
 	for (blk = restart; blk <= whole_blk; blk++) {
-		lba = blk * SR_REBUILD_IO_SIZE;
 		sz = SR_REBUILD_IO_SIZE;
 		if (blk == whole_blk) {
 			if (partial_blk == 0)
 				break;
 			sz = partial_blk;
 		}
+		lba = (blk * SR_REBUILD_IO_SIZE) / (sec_size / DEV_BSIZE);
+		lbasz = (sz << DEV_BSHIFT) / sec_size;
 
 		/* get some wu */
 		wu_r = sr_scsi_wu_get(sd, 0);
@@ -4736,7 +4739,7 @@ sr_rebuild(struct sr_discipline *sd)
 		xs_r.cmdlen = sizeof(*cr);
 		cr = (struct scsi_rw_16 *)&xs_r.cmd;
 		cr->opcode = READ_16;
-		_lto4b(sz, cr->length);
+		_lto4b(lbasz, cr->length);
 		_lto8b(lba, cr->addr);
 		wu_r->swu_state = SR_WU_CONSTRUCT;
 		wu_r->swu_flags |= SR_WUF_REBUILD;
@@ -4756,7 +4759,7 @@ sr_rebuild(struct sr_discipline *sd)
 		xs_w.cmdlen = sizeof(*cw);
 		cw = (struct scsi_rw_16 *)&xs_w.cmd;
 		cw->opcode = WRITE_16;
-		_lto4b(sz, cw->length);
+		_lto4b(lbasz, cw->length);
 		_lto8b(lba, cw->addr);
 		wu_w->swu_state = SR_WU_CONSTRUCT;
 		wu_w->swu_flags |= SR_WUF_REBUILD | SR_WUF_WAKEUP;
@@ -4797,7 +4800,7 @@ sr_rebuild(struct sr_discipline *sd)
 		sr_scsi_wu_put(sd, wu_w);
 		wu_r = wu_w = NULL;
 
-		sd->sd_meta->ssd_rebuild = lba;
+		sd->sd_meta->ssd_rebuild = lba * (sec_size / DEV_BSIZE);
 
 		/* XXX - this should be based on size, not percentage. */
 		/* save metadata every percent */
