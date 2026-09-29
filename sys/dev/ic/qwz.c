@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.52 2026/09/29 11:40:46 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.53 2026/09/29 11:41:40 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12962,6 +12962,9 @@ struct ath12k_peer *
 qwz_peer_find_by_id(struct qwz_softc *sc, uint16_t peer_id)
 {
 	struct ath12k_peer *peer;
+
+	if (peer_id == HAL_INVALID_PEERID)
+		return NULL;
 
 	TAILQ_FOREACH(peer, &sc->peers, entry) {
 		if (peer->peer_id == peer_id)
