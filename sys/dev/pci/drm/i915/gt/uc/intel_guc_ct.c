@@ -522,6 +522,8 @@ corrupted:
 	return -EPIPE;
 }
 
+static void ct_try_receive_message(struct intel_guc_ct *);
+
 /**
  * wait_for_ct_request_update - Wait for CT request state update.
  * @ct:		pointer to CT
@@ -557,7 +559,13 @@ static int wait_for_ct_request_update(struct intel_guc_ct *ct, struct ct_request
 	 GUC_HXG_ORIGIN_GUC)
 	err = wait_for_us(done, GUC_CTB_RESPONSE_TIMEOUT_SHORT_MS);
 	if (err)
+#ifdef __linux__
 		err = wait_for(done, GUC_CTB_RESPONSE_TIMEOUT_LONG_MS);
+#else
+		/* process responses while waiting */
+		err = __wait_for(ct_try_receive_message(ct), done,
+		    GUC_CTB_RESPONSE_TIMEOUT_LONG_MS * 1000, 10, 1000);
+#endif
 #undef done
 	if (!ct_enabled)
 		err = -ENODEV;
