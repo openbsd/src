@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.50 2026/09/29 11:39:08 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.51 2026/09/29 11:39:59 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -184,6 +184,7 @@ qwz_init(struct ifnet *ifp)
 	int error;
 	struct qwz_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s = splnet();
 
 	/* Firmware stays running across ifconfig down/up; only re-scan. */
 	if (sc->fw_initialized) {
@@ -196,6 +197,7 @@ qwz_init(struct ifnet *ifp)
 			ifp->if_flags |= IFF_RUNNING;
 			ieee80211_begin_scan(ifp);
 		}
+		splx(s);
 		return 0;
 	}
 
@@ -246,8 +248,10 @@ qwz_init(struct ifnet *ifp)
 	sc->vdev_id_11d_scan = QWZ_11D_INVALID_VDEV_ID;
 
 	error = qwz_core_init(sc);
-	if (error)
+	if (error) {
+		splx(s);
 		return error;
+	}
 
 	memset(&sc->qrtr_server, 0, sizeof(sc->qrtr_server));
 	sc->qrtr_server.node = QRTR_NODE_BCAST;
@@ -258,13 +262,16 @@ qwz_init(struct ifnet *ifp)
 		    SEC_TO_NSEC(5));
 		if (error) {
 			printf("%s: qrtr init timeout\n", sc->sc_dev.dv_xname);
+			splx(s);
 			return error;
 		}
 	}
 
 	error = qwz_qmi_event_server_arrive(sc);
-	if (error)
+	if (error) {
+		splx(s);
 		return error;
+	}
 
 	if (sc->attached) {
 		/* Update MAC in case the upper layers changed it. */
@@ -294,13 +301,16 @@ qwz_init(struct ifnet *ifp)
 		ifp->if_flags |= IFF_RUNNING;
 
 		error = qwz_mac_start(sc);
-		if (error)
+		if (error) {
+			splx(s);
 			return error;
+		}
 
 		ieee80211_begin_scan(ifp);
 	}
 
 	sc->fw_initialized = 1;
+	splx(s);
 	return 0;
 }
 
