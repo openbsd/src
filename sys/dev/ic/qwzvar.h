@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.18 2026/05/26 14:55:16 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.19 2026/09/29 11:40:46 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1915,6 +1915,45 @@ struct qwz_ba_task_data {
 	uint32_t		stop_tidmask;
 };
 
+struct ath12k_peer {
+	TAILQ_ENTRY(ath12k_peer) entry;
+#if 0
+	struct ieee80211_sta *sta;
+#endif
+	int vdev_id;
+	uint8_t addr[IEEE80211_ADDR_LEN];
+	int peer_id;
+	uint16_t ast_hash;
+	uint8_t pdev_id;
+	uint16_t hw_peer_id;
+	int is_mapped;
+	int delete_pending;
+	int delete_done;
+#if 0
+	/* protected by ab->data_lock */
+	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
+#endif
+	struct dp_rx_tid rx_tid[IEEE80211_NUM_TID + 1];
+#if 0
+	/* peer id based rhashtable list pointer */
+	struct rhash_head rhash_id;
+	/* peer addr based rhashtable list pointer */
+	struct rhash_head rhash_addr;
+
+	/* Info used in MMIC verification of
+	 * RX fragments
+	 */
+	struct crypto_shash *tfm_mmic;
+	u8 mcast_keyidx;
+	u8 ucast_keyidx;
+	u16 sec_type;
+	u16 sec_type_grp;
+	bool is_authorized;
+	bool dp_setup_done;
+#endif
+};
+TAILQ_HEAD(qwz_peer_list, ath12k_peer);
+
 struct qwz_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -2020,7 +2059,9 @@ struct qwz_softc {
 	int				num_started_vdevs;
 	uint32_t			allocated_vdev_map;
 	uint32_t			free_vdev_map;
+	struct qwz_peer_list		peers;
 	int				num_peers;
+	int				bss_peer_id;
 	int				peer_mapped;
 	int				peer_delete_done;
 	int				vdev_setup_done;
@@ -2120,50 +2161,16 @@ void	qwz_init_task(void *);
 int	qwz_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	qwz_newstate_task(void *);
 
-struct ath12k_peer {
-#if 0
-	struct list_head list;
-	struct ieee80211_sta *sta;
-#endif
-	int vdev_id;
-#if 0
-	u8 addr[ETH_ALEN];
-#endif
-	int peer_id;
-	uint16_t ast_hash;
-	uint8_t pdev_id;
-	uint16_t hw_peer_id;
-#if 0
-	/* protected by ab->data_lock */
-	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
-#endif
-	struct dp_rx_tid rx_tid[IEEE80211_NUM_TID + 1];
-#if 0
-	/* peer id based rhashtable list pointer */
-	struct rhash_head rhash_id;
-	/* peer addr based rhashtable list pointer */
-	struct rhash_head rhash_addr;
-
-	/* Info used in MMIC verification of
-	 * RX fragments
-	 */
-	struct crypto_shash *tfm_mmic;
-	u8 mcast_keyidx;
-	u8 ucast_keyidx;
-	u16 sec_type;
-	u16 sec_type_grp;
-	bool is_authorized;
-	bool dp_setup_done;
-#endif
-};
-
 struct qwz_node {
 	struct ieee80211_node ni;
-	struct ath12k_peer peer;
+	uint16_t peer_id;
 	unsigned int flags;
 #define QWZ_NODE_FLAG_HAVE_PAIRWISE_KEY	0x01
 #define QWZ_NODE_FLAG_HAVE_GROUP_KEY	0x02
 };
+
+struct ath12k_peer *qwz_peer_find_by_id(struct qwz_softc *, uint16_t);
+struct ath12k_peer *qwz_peer_find_by_addr(struct qwz_softc *, const uint8_t *);
 
 struct ieee80211_node *qwz_node_alloc(struct ieee80211com *);
 int	qwz_set_key(struct ieee80211com *, struct ieee80211_node *,

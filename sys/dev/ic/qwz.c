@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.51 2026/09/29 11:39:59 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.52 2026/09/29 11:40:46 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -174,8 +174,40 @@ qwz_node_alloc(struct ieee80211com *ic)
 
 	nq = malloc(sizeof(struct qwz_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (nq != NULL)
-		nq->peer.peer_id = HAL_INVALID_PEERID;
+		nq->peer_id = HAL_INVALID_PEERID;
 	return (struct ieee80211_node *)nq;
+}
+
+void
+qwz_node_clear_peer_id(struct qwz_softc *sc, struct ath12k_peer *peer)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwz_node *nq = (struct qwz_node *)ni;
+
+	if (nq != NULL && nq->peer_id == peer->peer_id)
+		nq->peer_id = HAL_INVALID_PEERID;
+	RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
+		nq = (struct qwz_node *)ni;
+		if (nq->peer_id == peer->peer_id)
+			nq->peer_id = HAL_INVALID_PEERID;
+	}
+	if (sc->bss_peer_id == peer->peer_id)
+		sc->bss_peer_id = HAL_INVALID_PEERID;
+}
+
+void
+qwz_free_peers(struct qwz_softc *sc)
+{
+	struct ath12k_peer *peer;
+
+	while ((peer = TAILQ_FIRST(&sc->peers)) != NULL) {
+		TAILQ_REMOVE(&sc->peers, peer, entry);
+		qwz_node_clear_peer_id(sc, peer);
+		free(peer, M_DEVBUF, sizeof(*peer));
+		sc->num_peers--;
+	}
+	KASSERT(sc->num_peers == 0);
 }
 
 int
@@ -188,6 +220,13 @@ qwz_init(struct ifnet *ifp)
 
 	/* Firmware stays running across ifconfig down/up; only re-scan. */
 	if (sc->fw_initialized) {
+		if (!TAILQ_EMPTY(&sc->peers) || sc->num_started_vdevs > 0) {
+			error = qwz_deauth(sc);
+			if (error) {
+				splx(s);
+				return error;
+			}
+		}
 		ic->ic_state = IEEE80211_S_INIT;
 		sc->ns_nstate = IEEE80211_S_INIT;
 		sc->scan.state = ATH12K_SCAN_IDLE;
@@ -728,12 +767,16 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	int ret = 0;
 	uint32_t flags = 0;
 	const int want_keymask = (QWZ_NODE_FLAG_HAVE_PAIRWISE_KEY |
 	    QWZ_NODE_FLAG_HAVE_GROUP_KEY);
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return EINVAL;
 
 	/*
 	 * Flush the fragments cache during key (re)install to
@@ -10341,6 +10384,7 @@ void
 qwz_peer_delete_resp_event(struct qwz_softc *sc, struct mbuf *m)
 {
 	struct wmi_peer_delete_resp_event peer_del_resp;
+	struct ath12k_peer *peer;
 
 	if (qwz_pull_peer_del_resp_ev(sc, m, &peer_del_resp) != 0) {
 		printf("%s: failed to extract peer delete resp",
@@ -10348,6 +10392,11 @@ qwz_peer_delete_resp_event(struct qwz_softc *sc, struct mbuf *m)
 		return;
 	}
 
+	peer = qwz_peer_find_by_addr(sc, peer_del_resp.peer_macaddr.addr);
+	if (peer == NULL || peer->vdev_id != peer_del_resp.vdev_id ||
+	    !peer->delete_pending)
+		return;
+	peer->delete_done = 1;
 	sc->peer_delete_done = 1;
 	wakeup(&sc->peer_delete_done);
 
@@ -12876,49 +12925,30 @@ qwz_peer_map_event(struct qwz_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 	struct ieee80211_node *ni;
 	struct qwz_node *nq;
 	struct ath12k_peer *peer;
-#ifdef notyet
-	spin_lock_bh(&ab->base_lock);
-#endif
-	/*
-	 * For STA mode the only peer is the AP, and the per-peer state
-	 * we care about (FW-assigned ast_hash / hw_peer_id) is consumed
-	 * later via ic->ic_bss in qwz_peer_create.  ieee80211_find_node
-	 * may return a DIFFERENT node from the RB-tree (a stale scan
-	 * entry for the same BSSID), and updating that wrong node
-	 * leaves ic_bss's qwz_peer with ast_hash=0 / hw_peer_id=0
-	 * forever -- causing the FW to AST-look-up slot 0 on the first
-	 * protected post-AUTHORIZE frame and dlpager-fault.  Prefer
-	 * ic_bss whenever the MAC matches.
-	 */
+	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list);
+
+	peer = qwz_peer_find_by_addr(sc, mac_addr);
+	if (peer == NULL || peer->vdev_id != vdev_id)
+		return;
+
+	peer->peer_id = peer_id;
+	peer->is_mapped = 1;
+	peer->ast_hash = ast_hash;
+	peer->hw_peer_id = hw_peer_id;
 	if (ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss != NULL &&
 	    IEEE80211_ADDR_EQ(ic->ic_bss->ni_macaddr, mac_addr))
 		ni = ic->ic_bss;
 	else
 		ni = ieee80211_find_node(ic, mac_addr);
-	if (ni == NULL) {
-		printf("%s: peer_map: no node for %s\n", sc->sc_dev.dv_xname,
-		    ether_sprintf(mac_addr));
-		return;
+	if (ni != NULL) {
+		nq = (struct qwz_node *)ni;
+		nq->peer_id = peer_id;
 	}
-	nq = (struct qwz_node *)ni;
-	peer = &nq->peer;
-
-	peer->vdev_id = vdev_id;
-	peer->peer_id = peer_id;
-	peer->ast_hash = ast_hash;
-	peer->hw_peer_id = hw_peer_id;
-#if 0
-	ether_addr_copy(peer->addr, mac_addr);
-	list_add(&peer->list, &ab->peers);
-#endif
-	/* Propagate FW-assigned AST values to STA arvif for qwz_dp_tx(). */
-	{
-		struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list);
-		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    arvif != NULL && arvif->vdev_id == vdev_id) {
-			arvif->ast_hash = ast_hash;
-			arvif->ast_idx = hw_peer_id;
-		}
+	if (ic->ic_opmode == IEEE80211_M_STA && arvif != NULL &&
+	    arvif->vdev_id == vdev_id) {
+		arvif->ast_hash = ast_hash;
+		arvif->ast_idx = hw_peer_id;
+		sc->bss_peer_id = peer_id;
 	}
 
 	sc->peer_mapped = 1;
@@ -12926,61 +12956,47 @@ qwz_peer_map_event(struct qwz_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 
 	DNPRINTF(QWZ_D_HTT, "%s: peer map vdev %d peer %s id %d\n",
 	    __func__, vdev_id, ether_sprintf(mac_addr), peer_id);
-#ifdef notyet
-	spin_unlock_bh(&ab->base_lock);
-#endif
 }
 
-struct ieee80211_node *
+struct ath12k_peer *
 qwz_peer_find_by_id(struct qwz_softc *sc, uint16_t peer_id)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = NULL;
-	int s;
+	struct ath12k_peer *peer;
 
-	s = splnet();
-	RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
-		struct qwz_node *nq = (struct qwz_node *)ni;
-		if (nq->peer.peer_id == peer_id)
-			break;
+	TAILQ_FOREACH(peer, &sc->peers, entry) {
+		if (peer->peer_id == peer_id)
+			return peer;
 	}
-	splx(s);
+	return NULL;
+}
 
-	return ni;
+struct ath12k_peer *
+qwz_peer_find_by_addr(struct qwz_softc *sc, const uint8_t *addr)
+{
+	struct ath12k_peer *peer;
+
+	TAILQ_FOREACH(peer, &sc->peers, entry) {
+		if (IEEE80211_ADDR_EQ(peer->addr, addr))
+			return peer;
+	}
+	return NULL;
 }
 
 void
 qwz_peer_unmap_event(struct qwz_softc *sc, uint16_t peer_id)
 {
-	struct ieee80211_node *ni;
-#ifdef notyet
-	spin_lock_bh(&ab->base_lock);
-#endif
-	ni = qwz_peer_find_by_id(sc, peer_id);
-	if (ni) {
-		DNPRINTF(QWZ_D_HTT, "%s: peer unmap peer %s id %d\n",
-		    __func__, ether_sprintf(ni->ni_macaddr), peer_id);
-	} else {
-		/*
-		 * The node may already have been removed from ic_tree
-		 * by ieee80211 cleanup before this event arrived (e.g.
-		 * during a soft ifconfig down/up cycle).  The unmap
-		 * event is FW's confirmation that the peer is gone, so
-		 * still signal the waiter in qwz_peer_delete().
-		 */
-		DNPRINTF(QWZ_D_HTT, "%s: peer unmap for unknown id %d\n",
-		    __func__, peer_id);
-	}
+	struct ath12k_peer *peer;
 
-#if 0
-	list_del(&peer->list);
-	kfree(peer);
-#endif
+	peer = qwz_peer_find_by_id(sc, peer_id);
+	if (peer == NULL)
+		return;
+
+	DNPRINTF(QWZ_D_HTT, "%s: peer unmap peer %s id %d\n",
+	    __func__, ether_sprintf(peer->addr), peer_id);
+
+	peer->is_mapped = 0;
 	sc->peer_mapped = 1;
 	wakeup(&sc->peer_mapped);
-#ifdef notyet
-	spin_unlock_bh(&ab->base_lock);
-#endif
 }
 
 void
@@ -18749,6 +18765,7 @@ qwz_core_deinit(struct qwz_softc *sc)
 	mutex_unlock(&ab->core_lock);
 #endif
 	sc->ops.power_down(sc);
+	qwz_free_peers(sc);
 #if 0
 	ath12k_mac_destroy(ab);
 	ath12k_debugfs_soc_destroy(ab);
@@ -21639,6 +21656,9 @@ qwz_mac_vdev_stop(struct qwz_softc *sc, struct qwz_vif *arvif, int pdev_id)
 #if 0
 	reinit_completion(&ar->vdev_setup_done);
 #endif
+	if (!arvif->is_started)
+		return 0;
+
 	sc->vdev_setup_done = 0;
 	ret = qwz_wmi_vdev_stop(sc, arvif->vdev_id, pdev_id);
 	if (ret) {
@@ -21654,6 +21674,7 @@ qwz_mac_vdev_stop(struct qwz_softc *sc, struct qwz_vif *arvif, int pdev_id)
 		return ret;
 	}
 
+	arvif->is_started = 0;
 	if (sc->num_started_vdevs > 0)
 		sc->num_started_vdevs--;
 
@@ -21778,6 +21799,7 @@ qwz_mac_vdev_start_restart(struct qwz_softc *sc, struct qwz_vif *arvif,
 
 	if (!restart)
 		sc->num_started_vdevs++;
+	arvif->is_started = 1;
 
 	DNPRINTF(QWZ_D_MAC, "%s: vdev %d started\n", __func__, arvif->vdev_id);
 
@@ -22365,21 +22387,24 @@ qwz_mac_get_rate_hw_value(struct ieee80211com *ic,
 
 int
 qwz_peer_delete(struct qwz_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
-    uint8_t *addr)
+    struct ath12k_peer *peer)
 {
 	int ret;
 
-	sc->peer_mapped = 0;
-	sc->peer_delete_done = 0;
-
-	ret = qwz_wmi_send_peer_delete_cmd(sc, addr, vdev_id, pdev_id);
-	if (ret) {
-		printf("%s: failed to delete peer vdev_id %d addr %s ret %d\n",
-		    sc->sc_dev.dv_xname, vdev_id, ether_sprintf(addr), ret);
-		return ret;
+	if (!peer->delete_pending) {
+		peer->delete_pending = 1;
+		ret = qwz_wmi_send_peer_delete_cmd(sc, peer->addr, vdev_id,
+		    pdev_id);
+		if (ret) {
+			peer->delete_pending = 0;
+			printf("%s: failed to delete peer vdev_id %d addr %s "
+			    "ret %d\n", sc->sc_dev.dv_xname, vdev_id,
+			    ether_sprintf(peer->addr), ret);
+			return ret;
+		}
 	}
 
-	while (!sc->peer_mapped) {
+	while (peer->is_mapped) {
 		ret = tsleep_nsec(&sc->peer_mapped, 0, "qwzpeer",
 		    SEC_TO_NSEC(3));
 		if (ret) {
@@ -22389,7 +22414,7 @@ qwz_peer_delete(struct qwz_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
 		}
 	}
 
-	while (!sc->peer_delete_done) {
+	while (!peer->delete_done) {
 		ret = tsleep_nsec(&sc->peer_delete_done, 0, "qwzpeerd",
 		    SEC_TO_NSEC(3));
 		if (ret) {
@@ -22399,6 +22424,9 @@ qwz_peer_delete(struct qwz_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
 		}
 	}
 
+	TAILQ_REMOVE(&sc->peers, peer, entry);
+	qwz_node_clear_peer_id(sc, peer);
+	free(peer, M_DEVBUF, sizeof(*peer));
 	sc->num_peers--;
 	return 0;
 }
@@ -22407,123 +22435,49 @@ int
 qwz_peer_create(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
     struct ieee80211_node *ni, struct peer_create_params *param)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwz_node *nq = (struct qwz_node *)ni;
 	struct ath12k_peer *peer;
 	int ret;
-#ifdef notyet
-	lockdep_assert_held(&ar->conf_mutex);
-#endif
-	if (sc->num_peers > (qwz_core_get_max_peers_per_radio(sc) - 1)) {
-		DPRINTF("%s: failed to create peer due to insufficient "
-		    "peer entry resource in firmware\n", __func__);
+
+	if (sc->num_peers >= qwz_core_get_max_peers_per_radio(sc))
 		return ENOBUFS;
-	}
-#ifdef notyet
-	mutex_lock(&ar->ab->tbl_mtx_lock);
-	spin_lock_bh(&ar->ab->base_lock);
-#endif
-	peer = &nq->peer;
-	/*
-	 * Reset stale peer state from any prior attempt.  After a
-	 * fatal_firmware_error the FW peer table is wiped but the
-	 * host-side qwz_node persists with peer->peer_id and
-	 * peer->vdev_id from the last attempt.  Without this reset
-	 * the subsequent peer_create returns EINVAL and we get stuck
-	 * in a recovery loop (peer_create fail -> wlan mode off fail
-	 * -> mhi_start -> repeat).  The stale ast_hash / hw_peer_id
-	 * are also reset because they will be re-populated by the
-	 * next peer_map_event.
-	 */
+	if (!TAILQ_EMPTY(&sc->peers))
+		return EBUSY;
+
+	peer = malloc(sizeof(*peer), M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (peer == NULL)
+		return ENOMEM;
 	peer->peer_id = HAL_INVALID_PEERID;
-	peer->vdev_id = 0;
-	peer->ast_hash = 0;
-	peer->hw_peer_id = 0;
-#ifdef notyet
-	spin_unlock_bh(&ar->ab->base_lock);
-	mutex_unlock(&ar->ab->tbl_mtx_lock);
-#endif
+	peer->vdev_id = param->vdev_id;
+	peer->pdev_id = pdev_id;
+	IEEE80211_ADDR_COPY(peer->addr, param->peer_addr);
+	TAILQ_INSERT_TAIL(&sc->peers, peer, entry);
+	sc->num_peers++;
 	sc->peer_mapped = 0;
 
 	ret = qwz_wmi_send_peer_create_cmd(sc, pdev_id, param);
 	if (ret) {
+		TAILQ_REMOVE(&sc->peers, peer, entry);
+		sc->num_peers--;
+		free(peer, M_DEVBUF, sizeof(*peer));
 		printf("%s: failed to send peer create vdev_id %d ret %d\n",
 		    sc->sc_dev.dv_xname, param->vdev_id, ret);
 		return ret;
 	}
 
-	while (!sc->peer_mapped) {
+	while (peer->peer_id == HAL_INVALID_PEERID) {
 		ret = tsleep_nsec(&sc->peer_mapped, 0, "qwzpeer",
 		    SEC_TO_NSEC(3));
 		if (ret) {
+			/* Firmware may still own this peer after a timeout. */
 			printf("%s: peer create command timeout\n",
 			    sc->sc_dev.dv_xname);
 			return ret;
 		}
 	}
 
-#ifdef notyet
-	mutex_lock(&ar->ab->tbl_mtx_lock);
-	spin_lock_bh(&ar->ab->base_lock);
-#endif
-#if 0
-	peer = ath12k_peer_find(ar->ab, param->vdev_id, param->peer_addr);
-	if (!peer) {
-		spin_unlock_bh(&ar->ab->base_lock);
-		mutex_unlock(&ar->ab->tbl_mtx_lock);
-		ath12k_warn(ar->ab, "failed to find peer %pM on vdev %i after creation\n",
-			    param->peer_addr, param->vdev_id);
-
-		ret = -ENOENT;
-		goto cleanup;
-	}
-
-	ret = ath12k_peer_rhash_add(ar->ab, peer);
-	if (ret) {
-		spin_unlock_bh(&ar->ab->base_lock);
-		mutex_unlock(&ar->ab->tbl_mtx_lock);
-		goto cleanup;
-	}
-#endif
-	peer->pdev_id = pdev_id;
-#if 0
-	peer->sta = sta;
-#endif
-	if (ic->ic_opmode == IEEE80211_M_STA) {
-		arvif->ast_hash = peer->ast_hash;
-		arvif->ast_idx = peer->hw_peer_id;
-	}
-#if 0
-	peer->sec_type = HAL_ENCRYPT_TYPE_OPEN;
-	peer->sec_type_grp = HAL_ENCRYPT_TYPE_OPEN;
-
-	if (sta) {
-		struct ath12k_sta *arsta = (struct ath12k_sta *)sta->drv_priv;
-		arsta->tcl_metadata |= FIELD_PREP(HTT_TCL_META_DATA_TYPE, 0) |
-				       FIELD_PREP(HTT_TCL_META_DATA_PEER_ID,
-						  peer->peer_id);
-
-		/* set HTT extension valid bit to 0 by default */
-		arsta->tcl_metadata &= ~HTT_TCL_META_DATA_VALID_HTT;
-	}
-#endif
-	sc->num_peers++;
-#ifdef notyet
-	spin_unlock_bh(&ar->ab->base_lock);
-	mutex_unlock(&ar->ab->tbl_mtx_lock);
-#endif
+	nq->peer_id = peer->peer_id;
 	return 0;
-#if 0
-cleanup:
-	int fbret = qwz_peer_delete(sc, param->vdev_id, param->peer_addr);
-	if (fbret) {
-		printf("%s: failed peer %s delete vdev_id %d fallback ret %d\n",
-		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_macaddr),
-		    param->vdev_id, fbret);
-	}
-
-	return ret;
-#endif
 }
 
 int
@@ -22923,8 +22877,13 @@ qwz_dp_rx_tid_mem_free(struct qwz_softc *sc, struct ieee80211_node *ni,
     int vdev_id, uint8_t tid)
 {
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	struct dp_rx_tid *rx_tid;
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return;
+
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
@@ -22949,12 +22908,17 @@ qwz_peer_rx_tid_setup(struct qwz_softc *sc, struct ieee80211_node *ni,
 {
 	struct qwz_dp *dp = &sc->dp;
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 	uint32_t hw_desc_sz;
 	void *vaddr;
 	uint64_t paddr;
 	int ret;
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return ENOENT;
+
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
@@ -23041,13 +23005,18 @@ qwz_peer_rx_frag_setup(struct qwz_softc *sc, struct ieee80211_node *ni,
     int vdev_id)
 {
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 	int i;
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return ENOENT;
+
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
-	for (i = 0; i <= nitems(peer->rx_tid); i++) {
+	for (i = 0; i < nitems(peer->rx_tid); i++) {
 		rx_tid = &peer->rx_tid[i];
 #if 0
 		rx_tid->ab = ab;
@@ -23068,9 +23037,13 @@ qwz_dp_peer_setup(struct qwz_softc *sc, int vdev_id, int pdev_id,
     struct ieee80211_node *ni)
 {
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	uint32_t reo_dest;
 	int ret = 0, tid;
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return ENOENT;
 
 	/* reo_dest ring id starts from 1 unlike mac_id which starts from 0 */
 	reo_dest = sc->pdev_dp.mac_id + 1;
@@ -23131,10 +23104,14 @@ qwz_dp_peer_rx_pn_replay_config(struct qwz_softc *sc, struct qwz_vif *arvif,
 {
 	struct ath12k_hal_reo_cmd cmd = {0};
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 	uint8_t tid;
 	int ret = 0;
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return ENOENT;
 
 	/*
 	 * NOTE: Enable PN/TSC replay check offload only for unicast frames.
@@ -23544,15 +23521,13 @@ qwz_dp_tx(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 
 int
 qwz_mac_station_remove(struct qwz_softc *sc, struct qwz_vif *arvif,
-    uint8_t pdev_id, struct ieee80211_node *ni)
+    uint8_t pdev_id, struct ath12k_peer *peer)
 {
-	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
 	int ret;
 
 	qwz_peer_rx_tid_cleanup(sc, peer);
 
-	ret = qwz_peer_delete(sc, arvif->vdev_id, pdev_id, ni->ni_macaddr);
+	ret = qwz_peer_delete(sc, arvif->vdev_id, pdev_id, peer);
 	if (ret) {
 		printf("%s: unable to delete BSS peer: %d\n",
 		   sc->sc_dev.dv_xname, ret);
@@ -23567,6 +23542,7 @@ qwz_mac_station_add(struct qwz_softc *sc, struct qwz_vif *arvif,
     uint8_t pdev_id, struct ieee80211_node *ni)
 {
 	struct peer_create_params peer_param;
+	struct ath12k_peer *peer;
 	int ret;
 #ifdef notyet
 	lockdep_assert_held(&ar->conf_mutex);
@@ -23597,7 +23573,9 @@ qwz_mac_station_add(struct qwz_softc *sc, struct qwz_vif *arvif,
 	return 0;
 
 free_peer:
-	qwz_peer_delete(sc, arvif->vdev_id, pdev_id, ni->ni_macaddr);
+	peer = qwz_peer_find_by_addr(sc, ni->ni_macaddr);
+	if (peer != NULL)
+		qwz_peer_delete(sc, arvif->vdev_id, pdev_id, peer);
 	return ret;
 }
 
@@ -24246,10 +24224,9 @@ qwz_auth(struct qwz_softc *sc)
 int
 qwz_deauth(struct qwz_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct ath12k_peer *peer = TAILQ_FIRST(&sc->peers);
 	int ret;
 
 	ret = qwz_mac_vdev_stop(sc, arvif, pdev_id);
@@ -24259,7 +24236,10 @@ qwz_deauth(struct qwz_softc *sc)
 		return ret;
 	}
 
-	ret = qwz_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
+	if (peer == NULL)
+		return 0;
+
+	ret = qwz_wmi_set_peer_param(sc, peer->addr, arvif->vdev_id,
 	    pdev_id, WMI_PEER_AUTHORIZE, 0);
 	if (ret) {
 		printf("%s: unable to deauthorize BSS peer: %d\n",
@@ -24267,12 +24247,12 @@ qwz_deauth(struct qwz_softc *sc)
 		return ret;
 	}
 
-	ret = qwz_mac_station_remove(sc, arvif, pdev_id, ni);
+	ret = qwz_mac_station_remove(sc, arvif, pdev_id, peer);
 	if (ret)
 		return ret;
 
 	DNPRINTF(QWZ_D_MAC, "%s: disassociated from bssid %s aid %d\n",
-	    __func__, ether_sprintf(ni->ni_bssid), arvif->aid);
+	    __func__, ether_sprintf(arvif->bssid), arvif->aid);
 
 	return 0;
 }
@@ -24562,9 +24542,13 @@ qwz_rx_agg_stop(struct qwz_softc *sc, struct ieee80211_node *ni, uint8_t tid)
 	struct qwz_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* XXX derive pdev ID somehow */
 	struct qwz_node *nq = (struct qwz_node *)ni;
-	struct ath12k_peer *peer = &nq->peer;
+	struct ath12k_peer *peer;
 	uint64_t paddr;
 	int ret;
+
+	peer = qwz_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return;
 
 	if (peer->peer_id == HAL_INVALID_PEERID)
 		return;
@@ -24829,6 +24813,8 @@ qwz_attach(struct qwz_softc *sc)
 		sc->pdevs[i].sc = sc;
 
 	TAILQ_INIT(&sc->vif_list);
+	TAILQ_INIT(&sc->peers);
+	sc->bss_peer_id = HAL_INVALID_PEERID;
 
 	error = qwz_init(ifp);
 	if (error)
