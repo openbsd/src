@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.13 2026/05/26 14:55:16 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.14 2026/09/29 11:42:34 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3388,20 +3388,24 @@ qwz_rddm_prepare(struct qwz_pci_softc *psc)
 		return;
 	}
 
-	data_adm = qwz_dmamem_alloc(sc->sc_dmat, len, 0);
-	if (data_adm == NULL) {
-		printf("%s: could not allocate BHIE DMA data buffer\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
 	vec_size = nseg * sizeof(*vec);
-	vec_adm = qwz_dmamem_alloc(sc->sc_dmat, vec_size, 0);
-	if (vec_adm == NULL) {
-		printf("%s: could not allocate BHIE DMA vector buffer\n",
-		    sc->sc_dev.dv_xname);
-		qwz_dmamem_free(sc->sc_dmat, data_adm);
-		return;
+	data_adm = psc->rddm_data;
+	vec_adm = psc->rddm_vec;
+	if (data_adm == NULL) {
+		data_adm = qwz_dmamem_alloc(sc->sc_dmat, len, 0);
+		if (data_adm == NULL) {
+			printf("%s: could not allocate BHIE DMA data buffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		vec_adm = qwz_dmamem_alloc(sc->sc_dmat, vec_size, 0);
+		if (vec_adm == NULL) {
+			printf("%s: could not allocate BHIE DMA vector buffer\n",
+			    sc->sc_dev.dv_xname);
+			qwz_dmamem_free(sc->sc_dmat, data_adm);
+			return;
+		}
 	}
 
 	/* Create vector which controls chunk-wise DMA copy from hardware. */
