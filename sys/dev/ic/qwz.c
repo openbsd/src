@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.68 2026/09/30 18:46:23 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.69 2026/09/30 18:47:07 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -410,11 +410,15 @@ qwz_stop(struct ifnet *ifp)
 
 	clear_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
+	if (sc->scan.state != ATH12K_SCAN_IDLE)
+		qwz_scan_abort(sc);
+
 	/* Tear down firmware-side association so we can re-associate. */
 	if (sc->num_created_vdevs != 0) {
 		if (ic->ic_state == IEEE80211_S_RUN)
 			qwz_run_stop(sc);
-		if (ic->ic_state >= IEEE80211_S_AUTH)
+		if (ic->ic_state >= IEEE80211_S_AUTH ||
+		    sc->num_started_vdevs > 0 || !TAILQ_EMPTY(&sc->peers))
 			qwz_deauth(sc);
 	}
 
@@ -24089,11 +24093,11 @@ qwz_scan_abort(struct qwz_softc *sc)
 		 * abortion while scan completion was being processed.
 		 */
 		break;
-	case ATH12K_SCAN_STARTING:
 	case ATH12K_SCAN_ABORTING:
 		printf("%s: refusing scan abortion due to invalid "
 		    "scan state: %d\n", sc->sc_dev.dv_xname, sc->scan.state);
 		break;
+	case ATH12K_SCAN_STARTING:
 	case ATH12K_SCAN_RUNNING:
 		sc->scan.state = ATH12K_SCAN_ABORTING;
 #ifdef notyet
