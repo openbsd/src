@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.4 2026/09/30 04:00:09 rcovelli Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.5 2026/09/30 13:02:35 tb Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -15,13 +15,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <netinet/in.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <fcntl.h>
 #include <sys/un.h>
-#include <string.h>
-#include <unistd.h>
+#include <sys/tree.h>
+#include <netinet/in.h>
+
+#include <endian.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "extern.h"
 
