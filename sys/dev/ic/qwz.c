@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.58 2026/09/30 10:57:50 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.59 2026/09/30 10:58:37 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -19174,10 +19174,12 @@ qwz_hal_srng_create_config_wcn7850(struct qwz_softc *sc)
 	struct ath12k_hal *hal = &sc->hal;
 	struct hal_srng_config *s;
 
-	hal->srng_config = malloc(sizeof(hw_srng_config_templ),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (!hal->srng_config)
-		return ENOMEM;
+	if (hal->srng_config == NULL) {
+		hal->srng_config = malloc(sizeof(hw_srng_config_templ),
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (hal->srng_config == NULL)
+			return ENOMEM;
+	}
 
 	memcpy(hal->srng_config, hw_srng_config_templ,
 	    sizeof(hw_srng_config_templ));
@@ -19442,7 +19444,8 @@ qwz_hal_alloc_cont_rdp(struct qwz_softc *sc)
 			return ENOMEM;
 
 		}
-	}
+	} else
+		memset(QWZ_DMA_KVA(hal->rdpmem), 0, size);
 
 	hal->rdp.vaddr = QWZ_DMA_KVA(hal->rdpmem);
 	hal->rdp.paddr = QWZ_DMA_DVA(hal->rdpmem);
@@ -19478,7 +19481,8 @@ qwz_hal_alloc_cont_wrp(struct qwz_softc *sc)
 			return ENOMEM;
 
 		}
-	}
+	} else
+		memset(QWZ_DMA_KVA(hal->wrpmem), 0, size);
 
 	hal->wrp.vaddr = QWZ_DMA_KVA(hal->wrpmem);
 	hal->wrp.paddr = QWZ_DMA_DVA(hal->wrpmem);
@@ -19504,8 +19508,8 @@ qwz_hal_srng_init(struct qwz_softc *sc)
 {
 	struct ath12k_hal *hal = &sc->hal;
 	int ret;
-
-	memset(hal, 0, sizeof(*hal));
+	int new_config = hal->srng_config == NULL;
+	int new_rdp = hal->rdpmem == NULL;
 
 	ret = sc->hw_params.hal_ops->create_srng_config(sc);
 	if (ret)
@@ -19525,11 +19529,14 @@ qwz_hal_srng_init(struct qwz_softc *sc)
 
 	return 0;
 err_free_cont_rdp:
-	qwz_hal_free_cont_rdp(sc);
+	if (new_rdp)
+		qwz_hal_free_cont_rdp(sc);
 
 err_hal:
-	if (hal->srng_config)
+	if (new_config && hal->srng_config) {
 		free(hal->srng_config, M_DEVBUF, 0);
+		hal->srng_config = NULL;
+	}
 	return ret;
 }
 
