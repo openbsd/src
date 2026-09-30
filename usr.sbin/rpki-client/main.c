@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.314 2026/09/29 21:59:14 rcovelli Exp $ */
+/*	$OpenBSD: main.c,v 1.315 2026/09/30 17:15:25 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1046,26 +1046,10 @@ main(int argc, char *argv[])
 	RB_INIT(&vd.ccr.vrps);
 	RB_INIT(&vd.ccr.tas);
 
-	/* If started as root, priv-drop to _rpki-client */
-	if (getuid() == 0) {
-		struct passwd *pw;
-
-		pw = getpwnam("_rpki-client");
-		if (!pw)
-			errx(1, "no _rpki-client user to revoke to");
-		if (setgroups(1, &pw->pw_gid) == -1 ||
-		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
-		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			err(1, "unable to revoke privs");
-	}
 	cachedir = RPKI_PATH_BASE_DIR;
 	outputdir = RPKI_PATH_OUT_DIR;
 	repo_timeout = timeout / 4;
 	skiplistfile = DEFAULT_SKIPLIST_FILE;
-
-	if (pledge("stdio rpath wpath cpath inet fattr dns sendfd recvfd "
-	    "proc exec unix unveil", NULL) == -1)
-		err(1, "pledge");
 
 	while ((c =
 	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmNnop:P:rRs:S:t:vVx")) != -1)
@@ -1163,6 +1147,28 @@ main(int argc, char *argv[])
 
 	argv += optind;
 	argc -= optind;
+
+	if (outformats & FORMAT_RTRX) {
+		/* Open RTRx socket before we drop priv */
+		rtrx_connect();
+	}
+
+	/* If started as root, priv-drop to _rpki-client */
+	if (getuid() == 0) {
+		struct passwd *pw;
+
+		pw = getpwnam("_rpki-client");
+		if (!pw)
+			errx(1, "no _rpki-client user to revoke to");
+		if (setgroups(1, &pw->pw_gid) == -1 ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+			err(1, "unable to revoke privs");
+	}
+
+	if (pledge("stdio rpath wpath cpath inet fattr dns sendfd recvfd "
+	    "proc exec unix unveil", NULL) == -1)
+		err(1, "pledge");
 
 	if (!filemode) {
 		if (argc == 1)
@@ -1295,10 +1301,6 @@ main(int argc, char *argv[])
 		/* give up a bit before the hard timeout and try to finish up */
 		if (!noop)
 			deadline = getmonotime() + timeout - repo_timeout / 2;
-	}
-	if (outformats & FORMAT_RTRX) {
-		/* Open RTRx socket before we drop priv */
-		rtrx_connect();
 	}
 
 	if (pledge("stdio rpath wpath cpath fattr sendfd unveil", NULL) == -1)
