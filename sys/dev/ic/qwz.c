@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.64 2026/09/30 11:02:55 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.65 2026/09/30 11:03:51 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -20511,14 +20511,30 @@ void
 qwz_ce_cleanup_pipes(struct qwz_softc *sc)
 {
 	struct qwz_ce_pipe *pipe;
-	int pipe_num;
+	int pipe_num, i;
 
 	for (pipe_num = 0; pipe_num < sc->hw_params.ce_count; pipe_num++) {
 		pipe = &sc->ce.ce_pipe[pipe_num];
 		qwz_ce_rx_pipe_cleanup(pipe);
 
 		/* Cleanup any src CE's which have interrupts disabled */
-		qwz_ce_poll_send_completed(sc, pipe_num);
+		if (sc->ce_initialized)
+			qwz_ce_poll_send_completed(sc, pipe_num);
+		else if (pipe->src_ring) {
+			for (i = 0; i < pipe->src_ring->nentries; i++) {
+				struct qwz_tx_data *tx_data =
+				    pipe->src_ring->per_transfer_context[i];
+
+				if (tx_data == NULL || tx_data->m == NULL)
+					continue;
+				bus_dmamap_sync(sc->sc_dmat, tx_data->map, 0,
+				    tx_data->map->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
+				bus_dmamap_unload(sc->sc_dmat, tx_data->map);
+				m_freem(tx_data->m);
+				tx_data->m = NULL;
+			}
+		}
 	}
 }
 
@@ -20644,6 +20660,8 @@ qwz_ce_init_pipes(struct qwz_softc *sc)
 	int i;
 	int ret;
 
+	sc->ce_initialized = 0;
+
 	qwz_ce_get_shadow_config(sc, &sc->qmi_ce_cfg.shadow_reg_v3,
 	    &sc->qmi_ce_cfg.shadow_reg_v3_len);
 
@@ -20696,6 +20714,7 @@ qwz_ce_init_pipes(struct qwz_softc *sc)
 		}
 	}
 
+	sc->ce_initialized = 1;
 	return 0;
 }
 

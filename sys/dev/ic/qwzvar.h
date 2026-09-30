@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.21 2026/09/30 11:02:55 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.22 2026/09/30 11:03:51 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2006,6 +2006,7 @@ struct qwz_softc {
 
 	int			attached;
 	int			fw_initialized;
+	int			ce_initialized;
 	struct {
 		u_char *data;
 		size_t size;
