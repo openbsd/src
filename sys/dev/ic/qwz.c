@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.71 2026/09/30 18:48:41 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.72 2026/09/30 18:49:45 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14432,9 +14432,13 @@ qwz_dp_tx_complete_msdu(struct qwz_softc *sc, struct dp_tx_ring *tx_ring,
 
 	pkt_type = FIELD_GET(HAL_TX_RATE_STATS_INFO0_PKT_TYPE, ts->rate_stats);
 	mcs = FIELD_GET(HAL_TX_RATE_STATS_INFO0_MCS, ts->rate_stats);
-	if (qwz_mac_hw_ratecode_to_legacy_rate(tx_data->ni, mcs, pkt_type,
-	    &rateidx, &rate) == 0)
-		tx_data->ni->ni_txrate = rateidx;
+	if (pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11A ||
+	    pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11B) {
+		if (qwz_mac_hw_ratecode_to_legacy_rate(tx_data->ni, mcs, pkt_type,
+		    &rateidx, &rate) == 0)
+			tx_data->ni->ni_txrate = rateidx;
+	} else if (pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N)
+		tx_data->ni->ni_txmcs = mcs;
 
 	ieee80211_release_node(ic, tx_data->ni);
 	tx_data->ni = NULL;
