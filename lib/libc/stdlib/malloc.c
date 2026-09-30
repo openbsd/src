@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.300 2025/10/23 18:49:46 miod Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.301 2026/09/30 05:44:16 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1633,6 +1633,10 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 			/* shifted towards the end */
 			if (p != MALLOC_MOVE(r->p, sz))
 				wrterror(pool, "bogus moved pointer %p", p);
+			if (clear) {
+				explicit_bzero(p, argsz);
+				clear = 0;
+			}
 			p = r->p;
 		}
 		if (mopts.malloc_guard) {
