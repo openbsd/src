@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.45 2026/09/30 15:47:16 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.46 2026/09/30 15:54:48 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -791,8 +791,10 @@ ccr_insert_mft(struct ccr_mft_tree *tree, const struct mft *mft)
 	ccr_mft->size = mft->mftsize;
 	ccr_mft->thisupdate = mft->thisupdate;
 
-	if (RB_INSERT(ccr_mft_tree, tree, ccr_mft) != NULL)
-		errx(1, "CCR MFT tree corrupted");
+	if (RB_INSERT(ccr_mft_tree, tree, ccr_mft) != NULL) {
+		warnx("duplicate CCR MFT at %s", ccr_mft->sia);
+		ccr_mft_free(ccr_mft);
+	}
 }
 
 void
