@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.61 2026/09/30 11:00:01 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.62 2026/09/30 11:00:58 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -286,14 +286,14 @@ qwz_init(struct ifnet *ifp)
 	sc->scan.state = ATH12K_SCAN_IDLE;
 	sc->vdev_id_11d_scan = QWZ_11D_INVALID_VDEV_ID;
 
+	memset(&sc->qrtr_server, 0, sizeof(sc->qrtr_server));
+	sc->qrtr_server.node = QRTR_NODE_BCAST;
+
 	error = qwz_core_init(sc);
 	if (error) {
 		splx(s);
 		return error;
 	}
-
-	memset(&sc->qrtr_server, 0, sizeof(sc->qrtr_server));
-	sc->qrtr_server.node = QRTR_NODE_BCAST;
 
 	/* wait for QRTR init to be done */
 	while (sc->qrtr_server.node == QRTR_NODE_BCAST) {
