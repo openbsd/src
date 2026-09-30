@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.70 2026/09/30 18:47:53 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.71 2026/09/30 18:48:41 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1002,6 +1002,11 @@ qwz_newstate_task(void *arg)
 			}
 			/* FALLTHROUGH */
 		case IEEE80211_S_SCAN:
+			if (sc->scan.state == ATH12K_SCAN_RUNNING)
+				qwz_scan_abort(sc);
+			if (nstate == IEEE80211_S_SCAN)
+				ieee80211_free_allnodes(ic, 0);
+			break;
 		case IEEE80211_S_INIT:
 			break;
 		}
