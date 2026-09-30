@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.73 2026/09/30 18:50:36 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.74 2026/09/30 18:51:26 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -781,7 +781,6 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 	struct qwz_vif *arvif = &sc->sc_vif;
 	int ret = 0;
 	uint32_t flags = 0;
-	uint16_t *sec_type, old_sec_type;
 	const int want_keymask = (QWZ_NODE_FLAG_HAVE_PAIRWISE_KEY |
 	    QWZ_NODE_FLAG_HAVE_GROUP_KEY);
 
@@ -797,17 +796,14 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
 		flags |= WMI_KEY_GROUP;
-		sec_type = &peer->sec_type_grp;
+		peer->sec_type_grp = qwz_dp_tx_get_encrypt_type(k->k_cipher);
 	} else {
 		flags |= WMI_KEY_PAIRWISE;
-		sec_type = &peer->sec_type;
+		peer->sec_type = qwz_dp_tx_get_encrypt_type(k->k_cipher);
 	}
-	old_sec_type = *sec_type;
-	*sec_type = qwz_dp_tx_get_encrypt_type(k->k_cipher);
 
 	ret = qwz_wmi_install_key_cmd(sc, arvif, ni->ni_macaddr, k, flags, 0);
 	if (ret) {
-		*sec_type = old_sec_type;
 		printf("%s: installing crypto key failed (%d)\n",
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
