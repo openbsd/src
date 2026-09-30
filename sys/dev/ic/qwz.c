@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.72 2026/09/30 18:49:45 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.73 2026/09/30 18:50:36 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -752,6 +752,25 @@ qwz_wmi_install_key_cmd(struct qwz_softc *sc, struct qwz_vif *arvif,
 	return sc->install_key_status;
 }
 
+enum hal_encrypt_type
+qwz_dp_tx_get_encrypt_type(enum ieee80211_cipher cipher)
+{
+	switch (cipher) {
+	case IEEE80211_CIPHER_NONE:
+		return HAL_ENCRYPT_TYPE_OPEN;
+	case IEEE80211_CIPHER_WEP40:
+		return HAL_ENCRYPT_TYPE_WEP_40;
+	case IEEE80211_CIPHER_WEP104:
+		return HAL_ENCRYPT_TYPE_WEP_104;
+	case IEEE80211_CIPHER_TKIP:
+		return HAL_ENCRYPT_TYPE_TKIP_MIC;
+	case IEEE80211_CIPHER_CCMP:
+		return HAL_ENCRYPT_TYPE_CCMP_128;
+	default:
+		panic("unknown cipher 0x%x", cipher);
+	}
+}
+
 int
 qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
     struct ieee80211_key *k)
@@ -762,6 +781,7 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 	struct qwz_vif *arvif = &sc->sc_vif;
 	int ret = 0;
 	uint32_t flags = 0;
+	uint16_t *sec_type, old_sec_type;
 	const int want_keymask = (QWZ_NODE_FLAG_HAVE_PAIRWISE_KEY |
 	    QWZ_NODE_FLAG_HAVE_GROUP_KEY);
 
@@ -775,13 +795,19 @@ qwz_add_sta_key(struct qwz_softc *sc, struct ieee80211_node *ni,
 	 */
 	qwz_peer_frags_flush(sc, peer);
 
-	if (k->k_flags & IEEE80211_KEY_GROUP)
+	if (k->k_flags & IEEE80211_KEY_GROUP) {
 		flags |= WMI_KEY_GROUP;
-	else
+		sec_type = &peer->sec_type_grp;
+	} else {
 		flags |= WMI_KEY_PAIRWISE;
+		sec_type = &peer->sec_type;
+	}
+	old_sec_type = *sec_type;
+	*sec_type = qwz_dp_tx_get_encrypt_type(k->k_cipher);
 
 	ret = qwz_wmi_install_key_cmd(sc, arvif, ni->ni_macaddr, k, flags, 0);
 	if (ret) {
+		*sec_type = old_sec_type;
 		printf("%s: installing crypto key failed (%d)\n",
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
@@ -1776,8 +1802,8 @@ const struct hal_rx_ops hal_rx_wcn7850_ops = {
 #ifdef notyet
 	.rx_desc_get_mesh_ctl = qwz_hw_wcn7850_rx_desc_get_mesh_ctl,
 	.rx_desc_get_mpdu_seq_ctl_vld = qwz_hw_wcn7850_rx_desc_get_mpdu_seq_ctl_vld,
-	.rx_desc_get_mpdu_start_seq_no = qwz_hw_wcn7850_rx_desc_get_mpdu_start_seq_no,
 #endif
+	.rx_desc_get_mpdu_start_seq_no = qwz_hw_wcn7850_rx_desc_get_mpdu_start_seq_no,
 	.rx_desc_get_mpdu_fc_valid = qwz_hw_wcn7850_rx_desc_get_mpdu_fc_valid,
 	.rx_desc_get_msdu_len = qwz_hw_wcn7850_rx_desc_get_msdu_len,
 #ifdef notyet
@@ -15419,38 +15445,28 @@ qwz_dp_rx_h_mpdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	int fill_crypto_hdr = 0;
 	enum hal_encrypt_type enctype;
 	int is_decrypted = 0, ret;
-#if 0
-	struct ath12k_skb_rxcb *rxcb;
-#endif
 	struct ieee80211_frame *wh;
-#if 0
 	struct ath12k_peer *peer;
-#endif
 	uint32_t err_bitmap;
 
 	/* PN for multicast packets will be checked in net80211 */
 	fill_crypto_hdr = qwz_dp_rx_h_is_da_mcbc(sc, rx_desc);
 	msdu->is_mcbc = fill_crypto_hdr;
-#if 0
-	if (rxcb->is_mcbc) {
-		rxcb->peer_id = ath12k_dp_rx_h_mpdu_start_peer_id(ar->ab, rx_desc);
-		rxcb->seq_no = ath12k_dp_rx_h_mpdu_start_seq_no(ar->ab, rx_desc);
+	if (msdu->is_mcbc) {
+		msdu->peer_id = sc->hal_rx_ops->rx_desc_get_mpdu_peer_id(rx_desc);
+		msdu->seq_no = sc->hal_rx_ops->rx_desc_get_mpdu_start_seq_no(
+		    rx_desc);
 	}
 
-	spin_lock_bh(&ar->ab->base_lock);
-	peer = ath12k_dp_rx_h_find_peer(ar->ab, msdu);
+	peer = qwz_peer_find_by_id(sc, msdu->peer_id);
 	if (peer) {
-		if (rxcb->is_mcbc)
+		if (msdu->is_mcbc)
 			enctype = peer->sec_type_grp;
 		else
 			enctype = peer->sec_type;
-	} else {
-#endif
+	} else
 		enctype = qwz_dp_rx_h_enctype(sc, rx_desc);
-#if 0
-	}
-	spin_unlock_bh(&ar->ab->base_lock);
-#endif
+
 	err_bitmap = qwz_dp_rx_h_h_mpdu_err(sc, rx_desc);
 	if (enctype != HAL_ENCRYPT_TYPE_OPEN && !err_bitmap)
 		is_decrypted = qwz_dp_rx_h_is_decrypted(sc, rx_desc);
@@ -22476,6 +22492,8 @@ qwz_peer_create(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 	if (peer == NULL)
 		return ENOMEM;
 	peer->peer_id = HAL_INVALID_PEERID;
+	peer->sec_type = HAL_ENCRYPT_TYPE_OPEN;
+	peer->sec_type_grp = HAL_ENCRYPT_TYPE_OPEN;
 	peer->vdev_id = param->vdev_id;
 	peer->pdev_id = pdev_id;
 	IEEE80211_ADDR_COPY(peer->addr, param->peer_addr);

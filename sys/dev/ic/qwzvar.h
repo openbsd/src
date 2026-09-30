@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.24 2026/09/30 18:45:30 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.25 2026/09/30 18:50:36 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -283,8 +283,8 @@ struct hal_rx_ops {
 #ifdef notyet
 	uint8_t (*rx_desc_get_mesh_ctl)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_seq_ctl_vld)(struct hal_rx_desc *desc);
-	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
 #endif
+	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_fc_valid)(struct hal_rx_desc *desc);
 	uint16_t (*rx_desc_get_msdu_len)(struct hal_rx_desc *desc);
 #ifdef notyet
@@ -1941,8 +1941,10 @@ struct ath12k_peer {
 	struct crypto_shash *tfm_mmic;
 	u8 mcast_keyidx;
 	u8 ucast_keyidx;
-	u16 sec_type;
-	u16 sec_type_grp;
+#endif
+	uint16_t sec_type;
+	uint16_t sec_type_grp;
+#if 0
 	bool is_authorized;
 	bool dp_setup_done;
 #endif
