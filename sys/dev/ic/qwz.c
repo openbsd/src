@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.63 2026/09/30 11:02:01 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.64 2026/09/30 11:02:55 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -24723,7 +24723,7 @@ qwz_radiotap_attach(struct qwz_softc *sc)
 }
 #endif
 
-int
+void
 qwz_attach(struct qwz_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -24744,24 +24744,18 @@ qwz_attach(struct qwz_softc *sc)
 	TAILQ_INIT(&sc->peers);
 	sc->bss_peer_id = HAL_INVALID_PEERID;
 
-	error = qwz_vif_alloc(sc);
-	if (error)
-		return error;
-
 	error = qwz_init(ifp);
 	if (error)
-		return error;
+		return;
 
 	/* Turn device off until interface comes up. */
 	qwz_core_deinit(sc);
-
-	return 0;
 }
 
 void
 qwz_detach(struct qwz_softc *sc)
 {
-	qwz_vif_free(sc);
+	qwz_vif_purge(sc);
 
 	if (sc->fwmem) {
 		qwz_dmamem_free(sc->sc_dmat, sc->fwmem);

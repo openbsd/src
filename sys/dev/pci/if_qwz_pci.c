@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.16 2026/09/29 11:44:03 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.17 2026/09/30 11:02:55 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -858,12 +858,16 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (error)
 		goto err_pci_disable_msi;
 
+	error = qwz_vif_alloc(sc);
+	if (error)
+		goto err_pci_disable_msi;
+
 	psc->chan_ctxt = qwz_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct qwz_mhi_chan_ctxt) * psc->max_chan, 0);
 	if (psc->chan_ctxt == NULL) {
 		printf("%s: could not allocate channel context array\n",
 		    sc->sc_dev.dv_xname);
-		goto err_pci_disable_msi;
+		goto err_vif_free;
 	}
 
 	if (psc->sc_pci_ops->alloc_xfer_rings(psc)) {
@@ -1037,6 +1041,8 @@ err_pci_free_xfer_rings:
 err_pci_free_chan_ctxt:
 	qwz_dmamem_free(sc->sc_dmat, psc->chan_ctxt);
 	psc->chan_ctxt = NULL;
+err_vif_free:
+	qwz_vif_free(sc);
 err_pci_disable_msi:
 err_pci_free_region:
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih[0]);
@@ -1048,6 +1054,14 @@ qwz_pci_detach(struct device *self, int flags)
 {
 	struct qwz_pci_softc *psc = (struct qwz_pci_softc *)self;
 	struct qwz_softc *sc = &psc->sc_sc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	rw_enter_write(&sc->ioctl_rwl);
+	if (ifp->if_flags & IFF_RUNNING)
+		qwz_stop(ifp);
+	if (sc->fw_initialized)
+		qwz_core_deinit(sc);
+	rw_exit(&sc->ioctl_rwl);
 
 	if (psc->sc_ih[0]) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih[0]);
@@ -1055,6 +1069,7 @@ qwz_pci_detach(struct device *self, int flags)
 	}
 
 	qwz_detach(sc);
+	qwz_vif_free(sc);
 
 	qwz_pci_free_event_rings(psc);
 	qwz_pci_free_xfer_rings(psc);

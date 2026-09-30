@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.20 2026/09/30 11:02:01 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.21 2026/09/30 11:02:55 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2141,7 +2141,9 @@ int	qwz_ext_intr(void *);
 int	qwz_dp_service_srng(struct qwz_softc *, int);
 
 int	qwz_init_hw_params(struct qwz_softc *);
-int	qwz_attach(struct qwz_softc *);
+int	qwz_vif_alloc(struct qwz_softc *);
+void	qwz_vif_free(struct qwz_softc *);
+void	qwz_attach(struct qwz_softc *);
 void	qwz_detach(struct qwz_softc *);
 int	qwz_activate(struct device *, int);
 
@@ -2150,6 +2152,7 @@ void	qwz_ce_cleanup_pipes(struct qwz_softc *);
 
 int	qwz_ioctl(struct ifnet *, u_long, caddr_t);
 void	qwz_start(struct ifnet *);
+void	qwz_stop(struct ifnet *);
 void	qwz_watchdog(struct ifnet *);
 int	qwz_media_change(struct ifnet *);
 void	qwz_init_task(void *);
