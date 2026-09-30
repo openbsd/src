@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.69 2026/09/30 18:47:07 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.70 2026/09/30 18:47:53 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -11314,10 +11314,11 @@ qwz_wmi_event_scan_started(struct qwz_softc *sc)
 	switch (sc->scan.state) {
 	case ATH12K_SCAN_IDLE:
 	case ATH12K_SCAN_RUNNING:
-	case ATH12K_SCAN_ABORTING:
 		printf("%s: received scan started event in an invalid "
 		"scan state: %s (%d)\n", sc->sc_dev.dv_xname,
 		qwz_scan_state_str(sc->scan.state), sc->scan.state);
+		break;
+	case ATH12K_SCAN_ABORTING:
 		break;
 	case ATH12K_SCAN_STARTING:
 		sc->scan.state = ATH12K_SCAN_RUNNING;
@@ -11411,12 +11412,12 @@ qwz_wmi_event_scan_start_failed(struct qwz_softc *sc)
 	switch (sc->scan.state) {
 	case ATH12K_SCAN_IDLE:
 	case ATH12K_SCAN_RUNNING:
-	case ATH12K_SCAN_ABORTING:
 		printf("%s: received scan start failed event in an invalid "
 		    "scan state: %s (%d)\n", sc->sc_dev.dv_xname,
 		    qwz_scan_state_str(sc->scan.state), sc->scan.state);
 		break;
 	case ATH12K_SCAN_STARTING:
+	case ATH12K_SCAN_ABORTING:
 		wakeup(&sc->scan.state);
 		qwz_mac_scan_finish(sc);
 		break;
