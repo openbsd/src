@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.59 2026/09/30 10:58:37 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.60 2026/09/30 10:59:16 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -334,16 +334,15 @@ qwz_init(struct ifnet *ifp)
 	}
 
 	if (ifp->if_flags & IFF_UP) {
-		refcnt_init(&sc->task_refs);
-
-		ifq_clr_oactive(&ifp->if_snd);
-		ifp->if_flags |= IFF_RUNNING;
-
 		error = qwz_mac_start(sc);
 		if (error) {
 			splx(s);
 			return error;
 		}
+
+		refcnt_init(&sc->task_refs);
+		ifq_clr_oactive(&ifp->if_snd);
+		ifp->if_flags |= IFF_RUNNING;
 
 		ieee80211_begin_scan(ifp);
 	}
