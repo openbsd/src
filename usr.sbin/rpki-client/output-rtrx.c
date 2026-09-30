@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.3 2026/09/29 22:02:59 deraadt Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.4 2026/09/30 04:00:09 rcovelli Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -21,6 +21,7 @@
 #include <sys/un.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "extern.h"
 
@@ -30,6 +31,7 @@
 #define PDU_HEADER_LENGTH	8
 
 int rtrx_sock = -1;
+int rtrx_errno = 0;
 char *rtrx_filename = "/var/run/rtrd.sock";
 
 enum pdu_type {
@@ -207,8 +209,10 @@ rtrx_connect(void)
 	int sockfd, val;
 
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sockfd < 0)
+	if (sockfd < 0) {
+		rtrx_errno = errno;
 		return;
+	}
 
 	val = fcntl(sockfd, F_GETFL, 0);
 	fcntl(sockfd, F_SETFL, val | O_NONBLOCK);
@@ -221,8 +225,11 @@ rtrx_connect(void)
 
 	if (connect(sockfd, (struct sockaddr *) &serv_addr,
 	    sizeof serv_addr) < 0) {
-		close(sockfd);
-		return;
+		if (errno != EINPROGRESS) {
+			rtrx_errno = errno;
+			close(sockfd);
+			return;
+		}
 	}
 
 	rtrx_sock = sockfd;
@@ -499,8 +506,16 @@ output_rtrx(FILE *out, struct validation_data *vd, struct stats *st)
 	struct brk	*rpki_brk;
 	struct vap	*rpki_vap;
 	int val;
+	struct sockaddr_storage	ss;
+	socklen_t		len;
 
-	if (rtrx_sock < 0)
+	if (rtrx_sock < 0) {
+		errno = rtrx_errno;
+		return -1;
+	}
+
+	len = sizeof(ss);
+	if (getpeername(rtrx_sock, (struct sockaddr *)&ss, &len) == -1)
 		return -1;
 
 	val = fcntl(rtrx_sock, F_GETFL, 0);
