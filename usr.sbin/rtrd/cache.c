@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: cache.c,v 1.5 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -20,11 +20,8 @@
 #include <netinet/in.h>
 #include <assert.h>
 #include <err.h>
-#include <errno.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
 
 #include "rtr_config.h"
 #include "rtrd.h"
@@ -276,8 +273,7 @@ update_cache(struct vrp4_tree *vrp4tree, struct vrp6_tree *vrp6tree,
 		sn.serial_number = cf->serial_number;
 		sendto_allregisteredclientsversion(&sn, sn.version);
 
-		logx(0, "Updated v0 cache to serial %u\n",
-		    cf->serial_number);
+		logx(0, "Updated v0 cache to serial %u\n", cf->serial_number);
 	}
 
 	/* VERSION 1 */

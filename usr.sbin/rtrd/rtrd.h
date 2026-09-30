@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.h,v 1.4 2026/09/28 05:14:44 deraadt Exp $	*/
+/*	$OpenBSD: rtrd.h,v 1.5 2026/09/30 17:08:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
@@ -946,7 +946,7 @@ extern void poll_remove(int);
 extern int poll_isset_events(int, short);
 extern int poll_isset_revents(int, short);
 extern void init_socket(int, int, uint32_t, ssize_t, ssize_t, ssize_t, uint8_t);
-extern int init_socket_table(FILE *, char *, uint16_t);
+extern int init_socket_table(char *, uint16_t);
 extern int rtr_errno_ignore(int);
 extern ssize_t rtr_flush_write(struct rtr_socket *);
 extern void rtr_flushall_write(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logs.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: logs.c,v 1.5 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -18,12 +18,11 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 #include <assert.h>
+#include <netdb.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <errno.h>
-#include <syslog.h>
 #include <stdio.h>
-#include <netdb.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "rtr_config.h"

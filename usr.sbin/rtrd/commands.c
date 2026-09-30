@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.3 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: commands.c,v 1.4 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -19,12 +19,9 @@
 #include <sys/tree.h>
 #include <arpa/inet.h>
 #include <assert.h>
-#include <errno.h>
 #include <netdb.h>
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "rtr_config.h"
 #include "rtrd.h"

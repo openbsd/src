@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtrd.c,v 1.8 2026/09/21 20:44:28 rcovelli Exp $ */
+/*	$OpenBSD: rtrd.c,v 1.9 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -53,22 +53,17 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int c;
 	char *bind_str = NULL;
 	uint16_t port = DEFAULT_PORT;
 	int daemonize = 1;
 	struct passwd *pw;
-	int i;
+	int i, c;
 
 	if (pledge("stdio rpath cpath unix inet proc id chown fattr",
-	    NULL) == -1) {
-		fprintf(stderr, "pledge error\n");
-		exit(1);
-	}
+	    NULL) == -1)
+		errx(1, "pledge");
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
-
-	controller_filename = CONTROLLER_FILENAME;
 
 	while ((c = getopt(argc, argv, "b:fhm:p:s:Vv")) != -1) {
 		switch (c) {
@@ -103,78 +98,50 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 
-	if (getuid() != 0) {
-		fprintf(stderr, "must run as root\n");
-		exit(1);
-	}
+	if (getuid() != 0)
+		errx(1, "must run as root");
 
 	init_masks();
+	if (init_stats() != 0)
+		errx(1, "could not initialize stats");
 
-	if (init_stats() != 0) {
-		fprintf(stderr, "couldnt initialize stats\n");
-		exit(1);
-	}
-
-	if (clock_gettime(CLOCK_REALTIME, (struct timespec *)&now) != 0) {
-		fprintf(stderr, "couldnt get the clock\n");
-		exit(1);
-	}
+	if (clock_gettime(CLOCK_REALTIME, (struct timespec *)&now) != 0)
+		errx(1, "could not get the clock");
 	now.tv_usec /= 1000; /* nsec -> usec */
 	global_stats.start_time = now.tv_sec;
 
 	sched_init();
 
-	if (init_cache_array(CACHE_FRAME_COUNT) != 0) {
-		fprintf(stderr, "couldnt initialize cache\n");
+	if (init_cache_array(CACHE_FRAME_COUNT) != 0)
+		errx(1, "could not initialize cache");
+	if (init_socket_table(bind_str, port) != 0)
 		exit(1);
-	}
-
-	if (init_socket_table(stderr, bind_str, port) != 0)
-		exit(1);
-
-	if (init_signals() != 0) {
-		fprintf(stderr, "couldnt initialize signals\n");
-		exit(1);
-	}
+	if (init_signals() != 0)
+		errx(1, "could not initialize signals");
 
 	pw = getpwnam(RTRD_USER);
-	if (pw == NULL) {
-		fprintf(stderr,
-		    "couldnt get user %s to drop root privileges\n",
+	if (pw == NULL)
+		errx(1, "could not get user %s to drop root privileges",
 		    RTRD_USER);
-		exit(1);
-	}
 
-	if (chown(controller_filename, pw->pw_uid, pw->pw_gid) == -1) {
-		fprintf(stderr, "couldnt chown control socket\n");
-		exit(1);
-	}
-
+	if (chown(controller_filename, pw->pw_uid, pw->pw_gid) == -1)
+		errx(1, "could not chown control socket");
 	if (chmod(controller_filename, S_IRUSR | S_IWUSR |
-	    S_IRGRP | S_IWGRP) == -1) {
-		fprintf(stderr, "couldnt chmod control socket\n");
-		exit(1);
-	}
-
+	    S_IRGRP | S_IWGRP) == -1)
+		errx(1, "could not chmod control socket");
 	if (setgroups(1, &pw->pw_gid) == -1 ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1) {
-		fprintf(stderr, "couldnt drop root privileges\n");
-		exit(1);
-	}
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+		errx(1, "could not drop root privileges");
 
 	if (daemonize) {
-		if (daemon(0, 0) == -1) {
-			fprintf(stderr, "daemon failed\n");
-			exit(1);
-		}
+		if (daemon(0, 0) == -1)
+			errx(1, "daemon failed");
 		foreground = 0;
 	}
 
-	if (pledge("stdio inet", NULL) == -1) {
-		logx(0, "RTR Pledge error\n");
-		exit(1);
-	}
+	if (pledge("stdio inet", NULL) == -1)
+		errx(1, "pledge");
 
 	logx(0, "OpenRTRd %s server starting...\n", RTRD_VERSION);
 	logx(0, "Max RTR version supported is %d\n", rtr_max_version);

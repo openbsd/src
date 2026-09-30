@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: send.c,v 1.5 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -19,16 +19,12 @@
 #include <sys/tree.h>
 #include <assert.h>
 #include <err.h>
-#include <errno.h>
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "rtr_config.h"

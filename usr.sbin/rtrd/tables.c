@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.4 2026/09/18 04:55:39 deraadt Exp $ */
+/*	$OpenBSD: tables.c,v 1.5 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -21,7 +21,6 @@
 #include <assert.h>
 #include <err.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

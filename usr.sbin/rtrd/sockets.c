@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.5 2026/09/21 21:29:24 rcovelli Exp $ */
+/*	$OpenBSD: sockets.c,v 1.6 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -26,16 +26,12 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "rtr_config.h"
@@ -44,7 +40,7 @@
 int listener = -1;
 int controller = -1;
 
-char *controller_filename = NULL;
+char *controller_filename = CONTROLLER_FILENAME;
 
 int client_count = 0;
 int max_clients = 0;
@@ -254,40 +250,36 @@ init_socket(int fd, int type, uint32_t flags, ssize_t read_block_size,
 
 /* 1 if error */
 int
-init_socket_table(FILE *fp, char *bind_str, uint16_t port)
+init_socket_table(char *bind_str, uint16_t port)
 {
 	int val;
+	mode_t omask;
 	struct sockaddr_in server;
 	struct sockaddr_un local;
 
-	assert (fp);
-
 	max_sockets = getdtablesize();
-
 	if (max_sockets < 0) {
-		fprintf(fp, "error: couldnt get max sockets");
+		err(1, "could not get max sockets");
 		return 1;
 	}
-
 	if (max_sockets < MINIMUM_SOCKETS) {
-		fprintf(fp, "error: limit too low");
+		warn("limit too low");
 		return 1;
 	}
-
 	max_clients = max_sockets - CONTROLLER_SOCKETS;
 
 	rtr_socket_table = calloc(max_sockets,
 	    sizeof(struct rtr_socket));
 
 	if (rtr_socket_table == NULL) {
-		fprintf(fp, "error: could not allocate socket table");
+		warn("could not allocate socket table");
 		return 1;
 	}
 
 	poll_table = calloc(max_sockets, sizeof(struct pollfd));
 
 	if (poll_table == NULL) {
-		fprintf(fp, "error: could not allocate poll table");
+		warn("could not allocate poll table");
 		return 1;
 	}
 	poll_table_count = 0;
@@ -295,20 +287,18 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	/* listener */
 
 	listener = socket(AF_INET, SOCK_STREAM, 0);
-
 	if (listener < 0) {
-		fprintf(fp, "error: could not create listener socket\n");
+		warn("could not create listener socket");
 		return 1;
 	}
-
 	if (listener >= max_sockets) {
-		fprintf(fp, "error: listener socket out of bounds");
+		warn("listener socket out of bounds");
 		return 1;
 	}
 
 	val = 1;
 	if (setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(val))) {
-		fprintf(fp, "error: unable to set reuse port on socket\n");
+		warn("unable to set reuse port on socket");
 		return 1;
 	}
 
@@ -324,17 +314,17 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	if (bind_str) {
 		server.sin_addr.s_addr = inet_addr(bind_str);
 	} else {
-		server.sin_addr.s_addr = htobe32(INADDR_ANY);
+		server.sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 	server.sin_port = htobe16(port);
 
 	if (bind(listener, (struct sockaddr *) &server, sizeof(server)) < 0) {
-		fprintf(fp, "error: could not bind socket to listener port\n");
+		warn("could not bind socket to listener port");
 		return 1;
 	}
 
 	if (listen(listener, SOMAXCONN) < 0) {
-		fprintf(fp, "error: could not listen on listener port\n");
+		warn("could not listen on listener port");
 		return 1;
 	}
 
@@ -343,14 +333,13 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	/* controller */
 
 	controller = socket(AF_UNIX, SOCK_STREAM, 0);
-
 	if (controller < 0) {
-		fprintf(fp, "error: could not create controller socket\n");
+		warn("could not create controller socket");
 		return 1;
 	}
 
 	if (controller >= max_sockets) {
-		fprintf(fp, "error: controller socket out of bounds");
+		warn("controller socket out of bounds");
 		return 1;
 	}
 
@@ -363,23 +352,19 @@ init_socket_table(FILE *fp, char *bind_str, uint16_t port)
 	unlink(controller_filename ? controller_filename : CONTROLLER_FILENAME);
 
 	memset(&local, 0, sizeof(struct sockaddr_un));
-
 	local.sun_family = AF_UNIX;
+	strlcpy(local.sun_path, controller_filename, sizeof(local.sun_path));
 
-	strncpy(local.sun_path,
-	    controller_filename ? controller_filename : CONTROLLER_FILENAME,
-	    sizeof(local.sun_path) - 1);
-
-	umask(S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
-
-	if (bind(controller, (struct sockaddr *) &local, sizeof(local)) < 0) {
-		fprintf(fp, "error: could not bind controller socket (%s)\n",
+	omask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+	if (bind(controller, (struct sockaddr *)&local, sizeof(local)) < 0) {
+		warn("could not bind controller socket (%s)",
 		    local.sun_path);
 		return 1;
 	}
+	umask(omask);
 
 	if (listen(controller, SOMAXCONN) < 0) {
-		fprintf(fp, "error: could not listen on controller socket\n");
+		warn("could not listen on controller socket");
 		return 1;
 	}
 

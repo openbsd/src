@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.c,v 1.5 2026/09/19 16:14:17 deraadt Exp $ */
+/*	$OpenBSD: sched.c,v 1.6 2026/09/30 17:08:29 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -19,15 +19,9 @@
 #include <sys/tree.h>
 #include <assert.h>
 #include <err.h>
-#include <errno.h>
 #include <netdb.h>
 #include <signal.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "rtr_config.h"
@@ -39,7 +33,7 @@ void
 rtr_gettime(void)
 {
 	if (clock_gettime(CLOCK_REALTIME, (struct timespec *)&now) != 0) {
-		logx(0, "couldnt get the clock\n");
+		logx(0, "could not get the clock\n");
 		exit(1);
 	}
 	now.tv_usec /= 1000; /* nsec -> usec */
