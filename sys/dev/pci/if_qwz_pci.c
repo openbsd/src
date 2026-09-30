@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.18 2026/09/30 11:04:31 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.19 2026/09/30 18:45:30 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -995,7 +995,7 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
-	ieee80211_media_init(ifp, qwz_media_change, ieee80211_media_status);
+	ieee80211_media_init(ifp, ieee80211_media_change, ieee80211_media_status);
 
 	ic->ic_node_alloc = qwz_node_alloc;
 

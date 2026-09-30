@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.66 2026/09/30 11:04:31 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.67 2026/09/30 18:45:30 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -331,7 +331,7 @@ qwz_init(struct ifnet *ifp)
 			    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr),
 			    error);
 
-		ieee80211_media_init(ifp, qwz_media_change,
+		ieee80211_media_init(ifp, ieee80211_media_change,
 		    ieee80211_media_status);
 	}
 
@@ -605,23 +605,6 @@ qwz_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-int
-qwz_media_change(struct ifnet *ifp)
-{
-	int err;
-
-	err = ieee80211_media_change(ifp);
-	if (err != ENETRESET)
-		return err;
-
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-	    (IFF_UP | IFF_RUNNING)) {
-		qwz_stop(ifp);
-		err = qwz_init(ifp);
-	}
-
-	return err;
-}
 
 int
 qwz_queue_setkey_cmd(struct ieee80211com *ic, struct ieee80211_node *ni,

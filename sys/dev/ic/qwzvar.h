@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.23 2026/09/30 11:04:31 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.24 2026/09/30 18:45:30 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2156,7 +2156,6 @@ int	qwz_ioctl(struct ifnet *, u_long, caddr_t);
 void	qwz_start(struct ifnet *);
 void	qwz_stop(struct ifnet *);
 void	qwz_watchdog(struct ifnet *);
-int	qwz_media_change(struct ifnet *);
 void	qwz_init_task(void *);
 int	qwz_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	qwz_newstate_task(void *);
