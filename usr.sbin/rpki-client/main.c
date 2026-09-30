@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.315 2026/09/30 17:15:25 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.316 2026/09/30 20:48:11 rcovelli Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1167,7 +1167,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pledge("stdio rpath wpath cpath inet fattr dns sendfd recvfd "
-	    "proc exec unix unveil", NULL) == -1)
+	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
 	if (!filemode) {
