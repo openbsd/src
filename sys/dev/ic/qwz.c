@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.60 2026/09/30 10:59:16 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.61 2026/09/30 11:00:01 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -18838,7 +18838,7 @@ err_firmware_stop:
 	return ret;
 }
 
-void
+int
 qwz_qmi_fw_ready(struct qwz_softc *sc)
 {
 	int ret = 0;
@@ -18850,8 +18850,8 @@ qwz_qmi_fw_ready(struct qwz_softc *sc)
 	ret = qwz_core_qmi_firmware_ready(sc);
 	if (ret) {
 		set_bit(ATH12K_FLAG_QMI_FAIL, sc->sc_flags);
-		return;
 	}
+	return ret;
 }
 
 int
@@ -18919,8 +18919,7 @@ qwz_qmi_event_server_arrive(struct qwz_softc *sc)
 		}
 	}
 
-	qwz_qmi_fw_ready(sc);
-	return 0;
+	return qwz_qmi_fw_ready(sc);
 }
 
 int
