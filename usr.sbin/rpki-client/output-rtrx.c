@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.5 2026/09/30 13:02:35 tb Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.6 2026/09/30 13:42:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -30,6 +30,8 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -234,6 +236,7 @@ rtrx_connect(void)
 	if (connect(sockfd, (struct sockaddr *) &serv_addr,
 	    sizeof serv_addr) < 0) {
 		if (errno != EINPROGRESS) {
+			warnx("cannot connect to rtrd");
 			rtrx_errno = errno;
 			close(sockfd);
 			return;
