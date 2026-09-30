@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.67 2026/09/30 18:45:30 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.68 2026/09/30 18:46:23 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23919,6 +23919,7 @@ qwz_scan(struct qwz_softc *sc)
 	struct ieee80211_channel *chan, *lastc;
 	int ret = 0, num_channels, i;
 	uint32_t scan_timeout;
+	int scan_2ghz = 1, scan_5ghz = 1;
 
 	/*
 	 * TODO Will we need separate scan iterations on devices with
@@ -23981,10 +23982,21 @@ qwz_scan(struct qwz_softc *sc)
 	} else
 		arg->scan_flags |= WMI_SCAN_FLAG_PASSIVE;
 
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO) {
+		if (ic->ic_curmode == IEEE80211_MODE_11A)
+			scan_2ghz = 0;
+		if (ic->ic_curmode == IEEE80211_MODE_11B ||
+		    ic->ic_curmode == IEEE80211_MODE_11G)
+			scan_5ghz = 0;
+	}
+
 	lastc = &ic->ic_channels[IEEE80211_CHAN_MAX];
 	num_channels = 0;
 	for (chan = &ic->ic_channels[1]; chan <= lastc; chan++) {
 		if (chan->ic_flags == 0)
+			continue;
+		if ((!scan_2ghz && IEEE80211_IS_CHAN_2GHZ(chan)) ||
+		    (!scan_5ghz && IEEE80211_IS_CHAN_5GHZ(chan)))
 			continue;
 		num_channels++;
 	}
@@ -24001,6 +24013,9 @@ qwz_scan(struct qwz_softc *sc)
 		i = 0;
 		for (chan = &ic->ic_channels[1]; chan <= lastc; chan++) {
 			if (chan->ic_flags == 0)
+				continue;
+			if ((!scan_2ghz && IEEE80211_IS_CHAN_2GHZ(chan)) ||
+			    (!scan_5ghz && IEEE80211_IS_CHAN_5GHZ(chan)))
 				continue;
 			arg->chan_list[i++] = chan->ic_freq;
 		}
@@ -24035,7 +24050,7 @@ qwz_scan(struct qwz_softc *sc)
 		 * The current mode might have been fixed during association.
 		 * Ensure all channels get scanned.
 		 */
-		if (IFM_SUBTYPE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+		if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
 			ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
 	}
 #if 0
