@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.56 2026/09/29 11:46:39 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.57 2026/09/30 10:57:02 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8332,15 +8332,13 @@ qwz_dp_tx_ring_alloc_tx_data(struct qwz_softc *sc, struct dp_tx_ring *tx_ring)
 	int i, ret;
 
 	tx_ring->data = mallocarray(sc->hw_params.tx_ring_size,
-	   sizeof(struct qwz_tx_data), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (tx_ring->data == NULL)
-		return ENOMEM;
+	   sizeof(struct qwz_tx_data), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < sc->hw_params.tx_ring_size; i++) {
 		struct qwz_tx_data *tx_data = &tx_ring->data[i];
 
 		ret = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_NOWAIT, &tx_data->map);
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &tx_data->map);
 		if (ret)
 			return ret;
 	}
@@ -8941,11 +8939,7 @@ qwz_dp_alloc(struct qwz_softc *sc)
 		dp->tx_ring[i].tx_status_head = 0;
 		dp->tx_ring[i].tx_status_tail = DP_TX_COMP_RING_SIZE - 1;
 		dp->tx_ring[i].tx_status = malloc(size, M_DEVBUF,
-		    M_NOWAIT | M_ZERO);
-		if (!dp->tx_ring[i].tx_status) {
-			ret = ENOMEM;
-			goto fail_cmn_reoq_cleanup;
-		}
+		    M_WAITOK | M_ZERO);
 	}
 
 	for (i = 0; i < HAL_DSCP_TID_MAP_TBL_NUM_ENTRIES_MAX; i++)
@@ -9095,9 +9089,7 @@ qwz_qmi_wlanfw_wlan_cfg_send(struct qwz_softc *sc)
 	ce_cfg	= sc->hw_params.target_ce_config;
 	svc_cfg	= sc->hw_params.svc_to_ce_map;
 
-	req = malloc(sizeof(*req), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (!req)
-		return ENOMEM;
+	req = malloc(sizeof(*req), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	req->host_version_valid = 1;
 	strlcpy(req->host_version, ATH12K_HOST_VERSION_STRING,
@@ -20326,9 +20318,7 @@ qwz_ce_alloc_src_ring_transfer_contexts(struct qwz_ce_pipe *pipe,
 
 	/* Allocate an array of qwz_tx_data structures. */
 	txdata = mallocarray(pipe->src_ring->nentries, sizeof(*txdata),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (txdata == NULL)
-		return ENOMEM;
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	size = sizeof(*txdata) * pipe->src_ring->nentries;
 
@@ -20336,7 +20326,8 @@ qwz_ce_alloc_src_ring_transfer_contexts(struct qwz_ce_pipe *pipe,
 	for (i = 0; i < pipe->src_ring->nentries; i++) {
 		struct qwz_tx_data *ctx = &txdata[i];
 		ret = bus_dmamap_create(sc->sc_dmat, attr->src_sz_max, 1,
-		    attr->src_sz_max, 0, BUS_DMA_NOWAIT, &ctx->map);
+		    attr->src_sz_max, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ctx->map);
 		if (ret) {
 			int j;
 			for (j = 0; j < i; j++) {
@@ -20363,9 +20354,7 @@ qwz_ce_alloc_dest_ring_transfer_contexts(struct qwz_ce_pipe *pipe,
 
 	/* Allocate an array of qwz_rx_data structures. */
 	rxdata = mallocarray(pipe->dest_ring->nentries, sizeof(*rxdata),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (rxdata == NULL)
-		return ENOMEM;
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	size = sizeof(*rxdata) * pipe->dest_ring->nentries;
 
@@ -20373,7 +20362,8 @@ qwz_ce_alloc_dest_ring_transfer_contexts(struct qwz_ce_pipe *pipe,
 	for (i = 0; i < pipe->dest_ring->nentries; i++) {
 		struct qwz_rx_data *ctx = &rxdata[i];
 		ret = bus_dmamap_create(sc->sc_dmat, attr->src_sz_max, 1,
-		    attr->src_sz_max, 0, BUS_DMA_NOWAIT, &ctx->map);
+		    attr->src_sz_max, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ctx->map);
 		if (ret) {
 			int j;
 			for (j = 0; j < i; j++) {
@@ -20397,36 +20387,34 @@ qwz_ce_alloc_ring(struct qwz_softc *sc, int nentries, size_t desc_sz)
 	    (nentries * sizeof(ce_ring->per_transfer_context[0]));
 	bus_size_t dsize;
 
-	ce_ring = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ce_ring == NULL)
-		return NULL;
+	ce_ring = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ce_ring->nentries = nentries;
 	ce_ring->nentries_mask = nentries - 1;
 	ce_ring->desc_sz = desc_sz;
 
 	dsize = nentries * desc_sz;
-	if (bus_dmamap_create(sc->sc_dmat, dsize, 1, dsize, 0, BUS_DMA_NOWAIT,
-	    &ce_ring->dmap)) {
+	if (bus_dmamap_create(sc->sc_dmat, dsize, 1, dsize, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ce_ring->dmap)) {
 		free(ce_ring, M_DEVBUF, size);
 		return NULL;
 	}
 
 	if (bus_dmamem_alloc(sc->sc_dmat, dsize, CE_DESC_RING_ALIGN, 0,
 	    &ce_ring->dsegs, 1, &ce_ring->nsegs,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO)) {
 		qwz_ce_free_ring(sc, ce_ring);
 		return NULL;
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &ce_ring->dsegs, 1, dsize,
-	    &ce_ring->base_addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
+	    &ce_ring->base_addr, BUS_DMA_WAITOK | BUS_DMA_COHERENT)) {
 		qwz_ce_free_ring(sc, ce_ring);
 		return NULL;
 	}
 
 	if (bus_dmamap_load(sc->sc_dmat, ce_ring->dmap, ce_ring->base_addr,
-	    dsize, NULL, BUS_DMA_NOWAIT)) {
+	    dsize, NULL, BUS_DMA_WAITOK)) {
 		qwz_ce_free_ring(sc, ce_ring);
 		return NULL;
 	}
