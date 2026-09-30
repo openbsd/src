@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.57 2026/09/30 10:57:02 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.58 2026/09/30 10:57:50 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8481,14 +8481,7 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 	/* First ATH12K_NUM_RX_SPT_PAGES of allocated SPT pages are used for RX */
 	for (i = 0; i < ATH12K_NUM_RX_SPT_PAGES; i++) {
 		rx_descs = mallocarray(ATH12K_MAX_SPT_ENTRIES, sizeof(*rx_descs),
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
-
-		if (!rx_descs) {
-#ifdef notyet
-			spin_unlock_bh(&dp->rx_desc_lock);
-#endif
-			return ENOMEM;
-		}
+		    M_DEVBUF, M_WAITOK | M_ZERO);
 
 		ppt_idx = ATH12K_RX_SPT_PAGE_OFFSET + i;
 		dp->spt_info->rxbaddr[i] = &rx_descs[0];
@@ -8500,7 +8493,8 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 			    &rx_descs[j], entry);
 
 			ret = bus_dmamap_create(sc->sc_dmat, size, 1, size,
-			    0, BUS_DMA_WAITOK, &rx_descs[j].map);
+			    0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+			    &rx_descs[j].map);
 			if (ret)
 				return ret;
 
@@ -8519,16 +8513,8 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 		spin_lock_bh(&dp->tx_desc_lock[pool_id]);
 #endif
 		for (i = 0; i < ATH12K_TX_SPT_PAGES_PER_POOL; i++) {
-			tx_descs = mallocarray(ATH12K_MAX_SPT_ENTRIES, sizeof(*tx_descs),
-			    M_DEVBUF, M_NOWAIT | M_ZERO);
-
-			if (!tx_descs) {
-#ifdef notyet
-				spin_unlock_bh(&dp->tx_desc_lock[pool_id]);
-#endif
-				/* Caller takes care of TX pending and RX desc cleanup */
-				return ENOMEM;
-			}
+			tx_descs = mallocarray(ATH12K_MAX_SPT_ENTRIES,
+			    sizeof(*tx_descs), M_DEVBUF, M_WAITOK | M_ZERO);
 
 			tx_spt_page = i + pool_id * ATH12K_TX_SPT_PAGES_PER_POOL;
 			ppt_idx = ATH12K_TX_SPT_PAGE_OFFSET + tx_spt_page;
@@ -8660,12 +8646,7 @@ qwz_dp_cc_init(struct qwz_softc *sc)
 
 	dp->spt_info = mallocarray(dp->num_spt_pages,
 	    sizeof(struct ath12k_spt_info),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (!dp->spt_info) {
-		printf("%s: SPT page allocation failure\n",
-		    sc->sc_dev.dv_xname);
-		return ENOMEM;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < dp->num_spt_pages; i++) {
 		dp->spt_info[i].mem = qwz_dmamem_alloc(sc->sc_dmat,
@@ -8718,9 +8699,7 @@ qwz_dp_init_bank_profiles(struct qwz_softc *sc)
 	dp->num_bank_profiles = sc->hw_params.num_tcl_banks;
 	dp->bank_profiles = mallocarray(dp->num_bank_profiles,
 	    sizeof(struct ath12k_dp_tx_bank_profile), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (!dp->bank_profiles)
-		return ENOMEM;
+	    M_WAITOK | M_ZERO);
 
 	return 0;
 }
