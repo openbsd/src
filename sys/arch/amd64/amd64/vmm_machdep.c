@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.91 2026/09/24 15:39:14 hshoexer Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.92 2026/09/30 17:34:33 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3654,7 +3654,7 @@ int
 vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
 	enum vmm_action action;
-	int error, exitinfo, ret = 0, vmx_ret = 0;
+	int error, exitinfo, inject_blocked = 0, ret = 0, vmx_ret = 0;
 	struct region_descriptor gdt;
 	struct cpu_info *ci = NULL;
 	uint64_t exit_reason, cr3, msr, insn_error;
@@ -3736,7 +3736,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			return (EINVAL);
 		}
 
-		/* Interruptibility state 0x3 covers NMIs and STI */
+		/* Bits 0 and 1 block interrupts after STI and MOV SS. */
 		if (!(int_st & 0x3) && vcpu->vc_irqready) {
 			eii = (uint64_t)vcpu->vc_inject.vie_vector;
 			eii |= (1ULL << 31);	/* Valid */
@@ -3747,22 +3747,38 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			}
 
 			vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
-		}
-	} else if (!(vcpu->vc_intr || READ_ONCE(vcpu->vc_intr_latch))) {
-		/*
-		 * Disable window exiting
-		 */
+		} else
+			inject_blocked = 1;
+	}
+
+	/*
+	 * handle case where we need to inject but are blocked due to the
+	 * guest being in an interrupt shadow due to mov ss or sti
+	 */
+	if (inject_blocked || vcpu->vc_intr ||
+	    READ_ONCE(vcpu->vc_intr_latch)) {
 		if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
-			printf("%s: can't read procbased ctls on exit\n",
+			printf("%s: can't read procbased controls for interrupt "
+			    "window\n", __func__);
+			return (EINVAL);
+		}
+		procbased |= IA32_VMX_INTERRUPT_WINDOW_EXITING;
+		if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+			printf("%s: can't enable interrupt-window exiting\n",
 			    __func__);
 			return (EINVAL);
-		} else {
-			procbased &= ~IA32_VMX_INTERRUPT_WINDOW_EXITING;
-			if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
-				printf("%s: can't write procbased ctls "
-				    "on exit\n", __func__);
-				return (EINVAL);
-			}
+		}
+	} else {
+		if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
+			printf("%s: can't read procbased controls for interrupt "
+			    "window\n", __func__);
+			return (EINVAL);
+		}
+		procbased &= ~IA32_VMX_INTERRUPT_WINDOW_EXITING;
+		if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+			printf("%s: can't disable interrupt-window exiting\n",
+			    __func__);
+			return (EINVAL);
 		}
 	}
 
@@ -4047,10 +4063,15 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			/* Handle the exit and determine what to do next. */
 			action = vmx_handle_exit(vcpu);
 
-			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
-				vcpu->vc_irqready = 1;
-			else
-				vcpu->vc_irqready = 0;
+			if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST, &int_st)) {
+				printf("%s: can't read interruptibility state\n",
+				    __func__);
+				ret = EINVAL;
+				goto out;
+			}
+			vcpu->vc_irqready =
+			    (vcpu->vc_gueststate.vg_rflags & PSL_I) != 0 &&
+			    (int_st & 0x3) == 0;
 
 			/*
 			 * If not ready for interrupts, but interrupts pending,
