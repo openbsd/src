@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.17 2026/09/30 11:02:55 kirill Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.18 2026/09/30 11:04:31 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1662,7 +1662,8 @@ qwz_pcic_ce_irq_disable_sync(struct qwz_softc *sc)
 void
 qwz_pci_stop(struct qwz_softc *sc)
 {
-	qwz_pcic_ce_irq_disable_sync(sc);
+	if (sc->powered)
+		qwz_pcic_ce_irq_disable_sync(sc);
 	qwz_ce_cleanup_pipes(sc);
 }
 
@@ -2371,6 +2372,7 @@ qwz_pci_power_down(struct qwz_softc *sc)
 	/* Restore ASPM in case firmware bootup fails. */
 	qwz_pci_aspm_restore(sc);
 
+	qwz_pcic_ce_irq_disable_sync(sc);
 	qwz_pci_force_wake(sc);
 
 	qwz_mhi_stop_channels(psc);
