@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.80 2026/10/01 10:16:43 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.81 2026/10/01 10:17:30 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -11886,7 +11886,7 @@ qwz_mgmt_rx_event(struct qwz_softc *sc, struct mbuf *m)
 
 		tap->wr_ihdr.it_present = htole32(QWZ_RX_RADIOTAP_PRESENT);
 		tap->wr_flags = 0;
-		freq = le32toh(rx_ev.chan_freq);
+		freq = rx_ev.chan_freq;
 		tap->wr_chan_freq = htole16(freq);
 		chan_flags = ic->ic_channels[rx_ev.channel & 0xff].ic_flags;
 		if (ic->ic_curmode != IEEE80211_MODE_11N &&
