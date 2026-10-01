@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.87 2026/10/01 17:30:30 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.88 2026/10/01 17:37:59 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -169,6 +169,7 @@ int qwz_dp_rx_h_null_q_desc(struct qwz_softc *, struct qwz_rx_msdu *,
     struct qwz_rx_msdu_list *);
 void qwz_dp_service_mon_ring(void *);
 void qwz_peer_frags_flush(struct qwz_softc *, struct ath12k_peer *);
+int qwz_peer_rx_tid_cleanup(struct qwz_softc *, struct ath12k_peer *);
 int qwz_wmi_vdev_install_key(struct qwz_softc *,
     struct wmi_vdev_install_key_arg *, uint8_t);
 int qwz_dp_peer_rx_pn_replay_config(struct qwz_softc *, struct qwz_vif *,
@@ -8219,14 +8220,19 @@ qwz_hal_reo_cmd_update_rx_queue(struct hal_tlv_64_hdr *tlv,
 
 int
 qwz_hal_reo_cmd_send(struct qwz_softc *sc, struct hal_srng *srng,
-    enum hal_reo_cmd_type type, struct ath12k_hal_reo_cmd *cmd)
+    enum hal_reo_cmd_type type, struct ath12k_hal_reo_cmd *cmd,
+    struct dp_reo_cmd *dp_cmd)
 {
 	struct hal_tlv_64_hdr *reo_desc;
+	struct dp_reo_cmd *pending;
+	uint32_t hp, reap_hp;
 	int ret;
 #ifdef notyet
 	spin_lock_bh(&srng->lock);
 #endif
 	qwz_hal_srng_access_begin(sc, srng);
+	hp = srng->u.src_ring.hp;
+	reap_hp = srng->u.src_ring.reap_hp;
 	reo_desc = (struct hal_tlv_64_hdr *)
 	    qwz_hal_srng_src_get_next_entry(sc, srng);
 	if (!reo_desc) {
@@ -8258,6 +8264,26 @@ qwz_hal_reo_cmd_send(struct qwz_softc *sc, struct hal_srng *srng,
 		break;
 	}
 
+	if (ret <= 0) {
+		if (ret == 0)
+			ret = EINVAL;
+		goto rollback;
+	}
+	TAILQ_FOREACH(pending, &sc->dp.reo_cmd_list, entry) {
+		if (pending->cmd_num == ret) {
+			ret = EBUSY;
+			goto rollback;
+		}
+	}
+	if (dp_cmd != NULL) {
+		dp_cmd->cmd_num = ret;
+		TAILQ_INSERT_TAIL(&sc->dp.reo_cmd_list, dp_cmd, entry);
+	}
+	goto out;
+
+rollback:
+	srng->u.src_ring.hp = hp;
+	srng->u.src_ring.reap_hp = reap_hp;
 out:
 	qwz_hal_srng_access_end(sc, srng);
 #ifdef notyet
@@ -8978,13 +9004,11 @@ qwz_dp_alloc(struct qwz_softc *sc)
 	dp->sc = sc;
 
 	TAILQ_INIT(&dp->reo_cmd_list);
-	TAILQ_INIT(&dp->reo_cmd_cache_flush_list);
 #if 0
 	INIT_LIST_HEAD(&dp->dp_full_mon_mpdu_list);
 	spin_lock_init(&dp->reo_cmd_lock);
 #endif
 
-	dp->reo_cmd_cache_flush_count = 0;
 	dp->idle_link_rbm = qwz_dp_get_idle_link_rbm(sc);
 
 	ret = qwz_wbm_idle_ring_setup(sc, &n_link_desc);
@@ -9092,7 +9116,6 @@ qwz_dp_reo_cmd_list_cleanup(struct qwz_softc *sc)
 {
 	struct qwz_dp *dp = &sc->dp;
 	struct dp_reo_cmd *cmd, *tmp;
-	struct dp_reo_cache_flush_elem *cmd_cache, *tmp_cache;
 	struct dp_rx_tid *rx_tid;
 #ifdef notyet
 	spin_lock_bh(&dp->reo_cmd_lock);
@@ -9102,15 +9125,6 @@ qwz_dp_reo_cmd_list_cleanup(struct qwz_softc *sc)
 		rx_tid = &cmd->data;
 		qwz_dp_rx_tid_clear(sc, rx_tid);
 		free(cmd, M_DEVBUF, sizeof(*cmd));
-	}
-
-	TAILQ_FOREACH_SAFE(cmd_cache, &dp->reo_cmd_cache_flush_list,
-	    entry, tmp_cache) {
-		TAILQ_REMOVE(&dp->reo_cmd_cache_flush_list, cmd_cache, entry);
-		dp->reo_cmd_cache_flush_count--;
-		rx_tid = &cmd_cache->data;
-		qwz_dp_rx_tid_clear(sc, rx_tid);
-		free(cmd_cache, M_DEVBUF, sizeof(*cmd_cache));
 	}
 #ifdef notyet
 	spin_unlock_bh(&dp->reo_cmd_lock);
@@ -9152,6 +9166,8 @@ qwz_dp_free(struct qwz_softc *sc)
 			dp->rx_tid_mem[i] = NULL;
 		}
 	}
+
+	memset(dp->rx_tid_retire, 0, sizeof(dp->rx_tid_retire));
 
 	/* Deinit any SOC level resource */
 }
@@ -16557,7 +16573,6 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 	struct hal_reo_status reo_status;
 
 	srng = &sc->hal.srng_list[dp->reo_status_ring.ring_id];
-	memset(&reo_status, 0, sizeof(reo_status));
 #ifdef notyet
 	spin_lock_bh(&srng->lock);
 #endif
@@ -16565,6 +16580,7 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 
 	while ((reo_desc = qwz_hal_srng_dst_get_next_entry(sc, srng))) {
 		ret = 1;
+		memset(&reo_status, 0, sizeof(reo_status));
 
 		tlv = (struct hal_tlv_64_hdr *)reo_desc;
 		tag = FIELD_GET(HAL_SRNG_TLV_HDR_TAG, le64toh(tlv->tl));
@@ -16580,6 +16596,10 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 		case HAL_REO_FLUSH_CACHE_STATUS:
 			qwz_hal_reo_flush_cache_status(sc, reo_desc,
 			    &reo_status);
+			if (reo_status.u.flush_cache.err_detected ||
+			    reo_status.u.flush_cache.err_code ||
+			    reo_status.u.flush_cache.cache_controller_flush_status_err)
+				reo_status.uniform_hdr.cmd_status = HAL_REO_CMD_FAILED;
 			break;
 		case HAL_REO_UNBLOCK_CACHE_STATUS:
 			qwz_hal_reo_unblk_cache_status(sc, reo_desc,
@@ -16616,8 +16636,9 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 		spin_unlock_bh(&dp->reo_cmd_lock);
 #endif
 		if (found) {
-			cmd->handler(dp, (void *)&cmd->data,
-			    reo_status.uniform_hdr.cmd_status);
+			if (cmd->handler != NULL)
+				cmd->handler(dp, (void *)&cmd->data,
+				    reo_status.uniform_hdr.cmd_status);
 			free(cmd, M_DEVBUF, sizeof(*cmd));
 		}
 		found = 0;
@@ -22593,6 +22614,13 @@ qwz_peer_delete(struct qwz_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
 		}
 	}
 
+	ret = qwz_peer_rx_tid_cleanup(sc, peer);
+	if (ret) {
+		printf("%s: failed to retire peer RX queues: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
 	TAILQ_REMOVE(&sc->peers, peer, entry);
 	qwz_node_clear_peer_id(sc, peer);
 	free(peer, M_DEVBUF, sizeof(*peer));
@@ -22657,44 +22685,27 @@ qwz_dp_tx_send_reo_cmd(struct qwz_softc *sc, struct dp_rx_tid *rx_tid,
     void (*cb)(struct qwz_dp *, void *, enum hal_reo_cmd_status))
 {
 	struct qwz_dp *dp = &sc->dp;
-	struct dp_reo_cmd *dp_cmd;
+	struct dp_reo_cmd *dp_cmd = NULL;
 	struct hal_srng *cmd_ring;
 	int cmd_num;
 
 	if (test_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags))
 		return ESHUTDOWN;
 
+	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS) {
+		dp_cmd = malloc(sizeof(*dp_cmd), M_DEVBUF, M_ZERO | M_NOWAIT);
+		if (dp_cmd == NULL)
+			return ENOMEM;
+		memcpy(&dp_cmd->data, rx_tid, sizeof(*rx_tid));
+		dp_cmd->handler = cb;
+	}
+
 	cmd_ring = &sc->hal.srng_list[dp->reo_cmd_ring.ring_id];
-	cmd_num = qwz_hal_reo_cmd_send(sc, cmd_ring, type, cmd);
-	/* cmd_num should start from 1, during failure return the error code */
-	if (cmd_num < 0)
+	cmd_num = qwz_hal_reo_cmd_send(sc, cmd_ring, type, cmd, dp_cmd);
+	if (cmd_num < 0) {
+		free(dp_cmd, M_DEVBUF, sizeof(*dp_cmd));
 		return cmd_num;
-
-	/* reo cmd ring descriptors has cmd_num starting from 1 */
-	if (cmd_num == 0)
-		return EINVAL;
-
-	if (!cb)
-		return 0;
-
-	/* Can this be optimized so that we keep the pending command list only
-	 * for tid delete command to free up the resource on the command status
-	 * indication?
-	 */
-	dp_cmd = malloc(sizeof(*dp_cmd), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (!dp_cmd)
-		return ENOMEM;
-
-	memcpy(&dp_cmd->data, rx_tid, sizeof(struct dp_rx_tid));
-	dp_cmd->cmd_num = cmd_num;
-	dp_cmd->handler = cb;
-#ifdef notyet
-	spin_lock_bh(&dp->reo_cmd_lock);
-#endif
-	TAILQ_INSERT_TAIL(&dp->reo_cmd_list, dp_cmd, entry);
-#ifdef notyet
-	spin_unlock_bh(&dp->reo_cmd_lock);
-#endif
+	}
 	return 0;
 }
 
@@ -22809,141 +22820,131 @@ qwz_hal_reo_qdesc_setup(void *vaddr, int tid, uint32_t ba_window_size,
 }
 
 void
-qwz_dp_reo_cmd_free(struct qwz_dp *dp, void *ctx,
+qwz_dp_rx_tid_retire_done(struct qwz_dp *dp, void *ctx,
     enum hal_reo_cmd_status status)
 {
-	struct qwz_softc *sc = dp->sc;
 	struct dp_rx_tid *rx_tid = ctx;
+	struct qwz_rx_tid_retire *retire = &dp->rx_tid_retire[rx_tid->tid];
 
-	if (status != HAL_REO_CMD_SUCCESS)
-		printf("%s: failed to flush rx tid hw desc, tid %d status %d\n",
-		    sc->sc_dev.dv_xname, rx_tid->tid, status);
+	KASSERT(retire->data.mem == rx_tid->mem);
+	KASSERT(retire->state == QWZ_RX_TID_DELETE_PENDING ||
+	    retire->state == QWZ_RX_TID_FLUSH_PENDING);
 
-	qwz_dp_rx_tid_clear(sc, rx_tid);
+	if (status != HAL_REO_CMD_SUCCESS) {
+		retire->state = QWZ_RX_TID_RETIRE_FAILED;
+		printf("%s: RX queue retirement failed, tid %u status %d\n",
+		    dp->sc->sc_dev.dv_xname, rx_tid->tid, status);
+	} else if (retire->state == QWZ_RX_TID_DELETE_PENDING) {
+		retire->flush_offset = retire->data.size;
+		retire->state = QWZ_RX_TID_FLUSH_READY;
+	} else if (retire->flush_offset != 0) {
+		retire->state = QWZ_RX_TID_FLUSH_READY;
+	} else {
+		memset(retire, 0, sizeof(*retire));
+	}
+	wakeup(dp->rx_tid_retire);
 }
 
-void
-qwz_dp_reo_cache_flush(struct qwz_softc *sc, struct dp_rx_tid *rx_tid)
+int
+qwz_dp_rx_tid_retire_submit(struct qwz_softc *sc,
+    struct qwz_rx_tid_retire *retire)
 {
 	struct ath12k_hal_reo_cmd cmd = {0};
-	unsigned long tot_desc_sz, desc_sz;
+	enum qwz_rx_tid_retire_state state = retire->state;
+	enum hal_reo_cmd_type type;
+	uint32_t offset = retire->flush_offset;
+	uint64_t paddr = retire->data.paddr;
 	int ret;
 
-	tot_desc_sz = rx_tid->size;
-	desc_sz = qwz_hal_reo_qdesc_size(0, HAL_DESC_REO_NON_QOS_TID);
-
-	while (tot_desc_sz > desc_sz) {
-		tot_desc_sz -= desc_sz;
-		cmd.addr_lo = (rx_tid->paddr + tot_desc_sz) & 0xffffffff;
-		cmd.addr_hi = rx_tid->paddr >> 32;
-		ret = qwz_dp_tx_send_reo_cmd(sc, rx_tid,
-		    HAL_REO_CMD_FLUSH_CACHE, &cmd, NULL);
-		if (ret) {
-			printf("%s: failed to send HAL_REO_CMD_FLUSH_CACHE, "
-			    "tid %d (%d)\n", sc->sc_dev.dv_xname, rx_tid->tid,
-			    ret);
-		}
+	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
+	if (state == QWZ_RX_TID_DELETE_READY) {
+		/* WCN7850 requires VLD to remain set until the cache flush. */
+		cmd.upd0 = HAL_REO_CMD_UPD0_VLD;
+		cmd.upd1 = HAL_REO_CMD_UPD1_VLD;
+		type = HAL_REO_CMD_UPDATE_RX_QUEUE;
+		retire->state = QWZ_RX_TID_DELETE_PENDING;
+	} else {
+		KASSERT(state == QWZ_RX_TID_FLUSH_READY);
+		KASSERT(offset >= sizeof(struct hal_rx_reo_queue));
+		retire->flush_offset -= sizeof(struct hal_rx_reo_queue);
+		paddr += retire->flush_offset;
+		if (retire->flush_offset == 0)
+			cmd.flag |= HAL_REO_CMD_FLG_FLUSH_FWD_ALL_MPDUS;
+		type = HAL_REO_CMD_FLUSH_CACHE;
+		retire->state = QWZ_RX_TID_FLUSH_PENDING;
 	}
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.addr_lo = rx_tid->paddr & 0xffffffff;
-	cmd.addr_hi = rx_tid->paddr >> 32;
-	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
-	ret = qwz_dp_tx_send_reo_cmd(sc, rx_tid, HAL_REO_CMD_FLUSH_CACHE,
-	    &cmd, qwz_dp_reo_cmd_free);
+	cmd.addr_lo = paddr & 0xffffffff;
+	cmd.addr_hi = paddr >> 32;
+	ret = qwz_dp_tx_send_reo_cmd(sc, &retire->data, type, &cmd,
+	    qwz_dp_rx_tid_retire_done);
 	if (ret) {
-		printf("%s: failed to send HAL_REO_CMD_FLUSH_CACHE cmd, "
-		    "tid %d (%d)\n", sc->sc_dev.dv_xname, rx_tid->tid, ret);
-		qwz_dp_rx_tid_clear(sc, rx_tid);
+		retire->state = state;
+		retire->flush_offset = offset;
 	}
+	return ret;
 }
 
-void
-qwz_dp_rx_tid_del_func(struct qwz_dp *dp, void *ctx,
-    enum hal_reo_cmd_status status)
+int
+qwz_dp_rx_tid_retire_wait(struct qwz_softc *sc)
 {
-	struct qwz_softc *sc = dp->sc;
-	struct dp_rx_tid *rx_tid = ctx;
-	struct dp_reo_cache_flush_elem *elem, *tmp;
+	struct qwz_dp *dp = &sc->dp;
+	struct qwz_rx_tid_retire *retire;
+	uint64_t deadline = getnsecuptime() + SEC_TO_NSEC(3);
 	uint64_t now;
+	int i, pending, error, ret;
 
-	if (status == HAL_REO_CMD_DRAIN) {
-		qwz_dp_rx_tid_clear(sc, rx_tid);
-		return;
-	} else if (status != HAL_REO_CMD_SUCCESS) {
-		/* Shouldn't happen! Cleanup in case of other failure? */
-		printf("%s: failed to delete rx tid %d hw descriptor %d\n",
-		    sc->sc_dev.dv_xname, rx_tid->tid, status);
-		return;
-	}
-
-	elem = malloc(sizeof(*elem), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (!elem) {
-		qwz_dp_rx_tid_clear(sc, rx_tid);
-		return;
-	}
-
-	now = getnsecuptime();
-	elem->ts = now;
-	memcpy(&elem->data, rx_tid, sizeof(*rx_tid));
-
-	qwz_dp_rx_tid_clear(sc, rx_tid);
-
-#ifdef notyet
-	spin_lock_bh(&dp->reo_cmd_lock);
-#endif
-	TAILQ_INSERT_TAIL(&dp->reo_cmd_cache_flush_list, elem, entry);
-	dp->reo_cmd_cache_flush_count++;
-
-	/* Flush and invalidate aged REO desc from HW cache */
-	TAILQ_FOREACH_SAFE(elem, &dp->reo_cmd_cache_flush_list, entry, tmp) {
-		if (dp->reo_cmd_cache_flush_count > DP_REO_DESC_FREE_THRESHOLD ||
-		    now >= elem->ts + MSEC_TO_NSEC(DP_REO_DESC_FREE_TIMEOUT_MS)) {
-			TAILQ_REMOVE(&dp->reo_cmd_cache_flush_list, elem, entry);
-			dp->reo_cmd_cache_flush_count--;
-#ifdef notyet
-			spin_unlock_bh(&dp->reo_cmd_lock);
-#endif
-			qwz_dp_reo_cache_flush(sc, &elem->data);
-			free(elem, M_DEVBUF, sizeof(*elem));
-#ifdef notyet
-			spin_lock_bh(&dp->reo_cmd_lock);
-#endif
+	for (;;) {
+		pending = 0;
+		error = 0;
+		for (i = 0; i < nitems(dp->rx_tid_retire); i++) {
+			retire = &dp->rx_tid_retire[i];
+			switch (retire->state) {
+			case QWZ_RX_TID_REUSABLE:
+				break;
+			case QWZ_RX_TID_DELETE_READY:
+			case QWZ_RX_TID_FLUSH_READY:
+				ret = qwz_dp_rx_tid_retire_submit(sc, retire);
+				if (ret && !error)
+					error = ret;
+				pending = 1;
+				break;
+			case QWZ_RX_TID_DELETE_PENDING:
+			case QWZ_RX_TID_FLUSH_PENDING:
+				pending = 1;
+				break;
+			case QWZ_RX_TID_RETIRE_FAILED:
+				error = EIO;
+				break;
+			}
 		}
+		if (error)
+			return error;
+		if (!pending)
+			return 0;
+		now = getnsecuptime();
+		if (now >= deadline)
+			return ETIMEDOUT;
+		ret = tsleep_nsec(dp->rx_tid_retire, 0, "qwzreo",
+		    deadline - now);
+		if (ret)
+			return ret;
 	}
-#ifdef notyet
-	spin_unlock_bh(&dp->reo_cmd_lock);
-#endif
 }
 
 void
 qwz_peer_rx_tid_delete(struct qwz_softc *sc, struct ath12k_peer *peer,
     uint8_t tid)
 {
-	struct ath12k_hal_reo_cmd cmd = {0};
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
-	int ret;
+	struct qwz_rx_tid_retire *retire = &sc->dp.rx_tid_retire[tid];
 
 	if (!rx_tid->active)
 		return;
 
+	KASSERT(retire->state == QWZ_RX_TID_REUSABLE);
+	retire->data = *rx_tid;
+	retire->state = QWZ_RX_TID_DELETE_READY;
 	rx_tid->active = 0;
-
-	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
-	cmd.addr_lo = rx_tid->paddr & 0xffffffff;
-	cmd.addr_hi = rx_tid->paddr >> 32;
-	cmd.upd0 |= HAL_REO_CMD_UPD0_VLD;
-	ret = qwz_dp_tx_send_reo_cmd(sc, rx_tid, HAL_REO_CMD_UPDATE_RX_QUEUE,
-	    &cmd, qwz_dp_rx_tid_del_func);
-	if (ret) {
-		if (ret != ESHUTDOWN) {
-			printf("%s: failed to send "
-			    "HAL_REO_CMD_UPDATE_RX_QUEUE cmd, tid %d (%d)\n",
-			    sc->sc_dev.dv_xname, tid, ret);
-		}
-
-		qwz_dp_rx_tid_clear(sc, rx_tid);
-	}
 }
 
 void
@@ -22990,11 +22991,11 @@ qwz_peer_frags_flush(struct qwz_softc *sc, struct ath12k_peer *peer)
 	}
 }
 
-void
+int
 qwz_peer_rx_tid_cleanup(struct qwz_softc *sc, struct ath12k_peer *peer)
 {
 	struct dp_rx_tid *rx_tid;
-	int i;
+	int i, ret;
 #ifdef notyet
 	lockdep_assert_held(&ar->ab->base_lock);
 #endif
@@ -23009,6 +23010,12 @@ qwz_peer_rx_tid_cleanup(struct qwz_softc *sc, struct ath12k_peer *peer)
 		spin_lock_bh(&ar->ab->base_lock);
 #endif
 	}
+	ret = qwz_dp_rx_tid_retire_wait(sc);
+	if (ret)
+		return ret;
+	for (i = 0; i <= HAL_DESC_REO_NON_QOS_TID; i++)
+		qwz_dp_rx_tid_clear(sc, &peer->rx_tid[i]);
+	return 0;
 }
 
 int
@@ -23089,6 +23096,9 @@ qwz_peer_rx_tid_setup(struct qwz_softc *sc, struct ieee80211_node *ni,
 	peer = qwz_peer_find_by_id(sc, nq->peer_id);
 	if (peer == NULL)
 		return ENOENT;
+	if (peer->delete_pending || !peer->is_mapped ||
+	    dp->rx_tid_retire[tid].state != QWZ_RX_TID_REUSABLE)
+		return EBUSY;
 
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
@@ -23695,8 +23705,6 @@ qwz_mac_station_remove(struct qwz_softc *sc, struct qwz_vif *arvif,
     uint8_t pdev_id, struct ath12k_peer *peer)
 {
 	int ret;
-
-	qwz_peer_rx_tid_cleanup(sc, peer);
 
 	ret = qwz_peer_delete(sc, arvif->vdev_id, pdev_id, peer);
 	if (ret) {
