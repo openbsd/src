@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.82 2026/10/01 17:26:06 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.83 2026/10/01 17:26:51 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -24372,10 +24372,17 @@ qwz_auth(struct qwz_softc *sc)
 int
 qwz_deauth(struct qwz_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwz_node *nq = (struct qwz_node *)ic->ic_bss;
 	struct qwz_vif *arvif = &sc->sc_vif;
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct ath12k_peer *peer = TAILQ_FIRST(&sc->peers);
 	int ret;
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		ic->ic_bss->ni_txrate = 0;
+		nq->flags = 0;
+	}
 
 	ret = qwz_mac_vdev_stop(sc, arvif, pdev_id);
 	if (ret) {
