@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-client.c,v 1.187 2026/09/07 20:24:22 job Exp $ */
+/* $OpenBSD: sftp-client.c,v 1.188 2026/10/01 03:11:49 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -782,7 +782,8 @@ sftp_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 			 * These can be used to attack recursive ops
 			 * (e.g. send '../../../../etc/passwd')
 			 */
-			if (strchr(filename, '/') != NULL) {
+			if (*filename == '\0' ||
+			    strchr(filename, '/') != NULL) {
 				error("Server sent suspect path \"%s\" "
 				    "during readdir of \"%s\"", filename, path);
 			} else if (dir) {
