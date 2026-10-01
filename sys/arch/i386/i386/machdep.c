@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.680 2026/05/14 01:39:38 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.681 2026/10/01 23:51:29 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2013,7 +2013,8 @@ identifycpu(struct cpu_info *ci)
  	 * where LFENCE is always serializing.
 	 */
 	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
-		if (ci->ci_family >= 0x10 && ci->ci_family != 0x11) {
+		if (ci->ci_family >= 0x10 && ci->ci_family != 0x11 &&
+		    (cpu_ecxfeature & CPUIDECX_HV) == 0) {
 			nmsr = msr = rdmsr(MSR_DE_CFG);
 			nmsr |= DE_CFG_SERIALIZE_LFENCE;
 			if (msr != nmsr)

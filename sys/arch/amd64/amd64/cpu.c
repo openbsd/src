@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.207 2026/09/28 04:50:24 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.208 2026/10/01 23:51:29 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1287,7 +1287,8 @@ cpu_fix_msrs(struct cpu_info *ci)
 		 * This MSR is available on all AMD families >= 10h, except 11h
 		 * where LFENCE is always serializing.
 		 */
-		if (family >= 0x10 && family != 0x11) {
+		if (family >= 0x10 && family != 0x11 &&
+		    (cpu_ecxfeature & CPUIDECX_HV) == 0) {
 			nmsr = msr = rdmsr(MSR_DE_CFG);
 			nmsr |= DE_CFG_SERIALIZE_LFENCE;
 			if (msr != nmsr)
