@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.74 2026/09/30 18:51:26 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.75 2026/10/01 10:11:41 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15417,19 +15417,43 @@ qwz_dp_rx_h_undecap(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
     struct hal_rx_desc *rx_desc, enum hal_encrypt_type enctype,
     int decrypted)
 {
-	uint8_t decap;
+	struct ieee80211_frame *wh;
+	uint8_t decap, *qos;
+	int ret;
 
 	decap = qwz_dp_rx_h_msdu_start_decap_type(sc, rx_desc);
 
 	switch (decap) {
 	case DP_RX_DECAP_TYPE_NATIVE_WIFI:
-		return qwz_dp_rx_h_undecap_nwifi(sc, msdu, NULL, enctype);
-	case DP_RX_DECAP_TYPE_RAW:
-		qwz_dp_rx_h_undecap_raw(sc, msdu, enctype, decrypted);
+		ret = qwz_dp_rx_h_undecap_nwifi(sc, msdu, NULL, enctype);
 		break;
 	case DP_RX_DECAP_TYPE_ETHERNET2_DIX:
-		return qwz_dp_rx_h_undecap_eth(sc, msdu, rx_desc);
+		ret = qwz_dp_rx_h_undecap_eth(sc, msdu, rx_desc);
+		break;
+	case DP_RX_DECAP_TYPE_RAW:
+		qwz_dp_rx_h_undecap_raw(sc, msdu, enctype, decrypted);
+		return 0;
+	default:
+		return 0;
 	}
+	if (ret)
+		return ret;
+
+	wh = mtod(msdu->m, struct ieee80211_frame *);
+	if (msdu->m->m_len < ieee80211_get_hdrlen(wh))
+		return EINVAL;
+	if (ieee80211_has_qos(wh)) {
+		if (ieee80211_has_addr4(wh))
+			qos = ((struct ieee80211_qosframe_addr4 *)wh)->i_qos;
+		else
+			qos = ((struct ieee80211_qosframe *)wh)->i_qos;
+		qos[0] &= ~IEEE80211_QOS_AMSDU;
+	}
+
+	/* Hardware has deaggregated and reordered these frames. */
+	if (!msdu->is_first_msdu)
+		msdu->rxi.rxi_flags |= IEEE80211_RXI_SAME_SEQ;
+	msdu->rxi.rxi_flags |= IEEE80211_RXI_AMPDU_DONE;
 	return 0;
 }
 
