@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.83 2026/10/01 17:26:51 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.84 2026/10/01 17:27:39 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -250,6 +250,7 @@ qwz_init(struct ifnet *ifp)
 			refcnt_init(&sc->task_refs);
 			ifq_clr_oactive(&ifp->if_snd);
 			ifp->if_flags |= IFF_RUNNING;
+			sc->ops.irq_enable(sc);
 			ieee80211_begin_scan(ifp);
 		}
 		splx(s);
@@ -357,6 +358,7 @@ qwz_init(struct ifnet *ifp)
 		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_flags |= IFF_RUNNING;
 
+		sc->ops.irq_enable(sc);
 		ieee80211_begin_scan(ifp);
 	}
 
@@ -18953,10 +18955,6 @@ qwz_core_qmi_firmware_ready(struct qwz_softc *sc)
 		goto err_core_stop;
 	}
 
-#if 0 /* TODO: Is this in the right spot for OpenBSD? */
-	sc->ops.irq_enable(sc);
-#endif
-
 #if 0
 	mutex_unlock(&ab->core_lock);
 #endif
@@ -24899,8 +24897,6 @@ qwz_run(struct qwz_softc *sc)
 	DNPRINTF(QWZ_D_MAC, "%s: vdev %d up (associated) bssid %s aid %d\n",
 	    __func__, arvif->vdev_id, ether_sprintf(ni->ni_bssid), arvif->aid);
 
-	/* Enable "ext" IRQs for datapath. */
-	sc->ops.irq_enable(sc);
 
 	return 0;
 }
@@ -24913,8 +24909,6 @@ qwz_run_stop(struct qwz_softc *sc)
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct qwz_node *nq = (void *)ic->ic_bss;
 	int ret;
-
-	sc->ops.irq_disable(sc);
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		ic->ic_bss->ni_txrate = 0;
