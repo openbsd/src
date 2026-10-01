@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.76 2026/10/01 10:13:03 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.77 2026/10/01 10:13:53 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14943,8 +14943,6 @@ qwz_hal_wbm_desc_parse_err(struct qwz_softc *sc, void *desc,
 	    RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
 	rel_info->peer_id = FIELD_GET(RX_MPDU_DESC_META_DATA_PEER_ID,
 	    le32toh(wbm_desc->rx_mpdu_info.meta_data));
-	rel_info->seq_no = FIELD_GET(RX_MPDU_DESC_INFO0_SEQ_NUM,
-	    le32toh(wbm_desc->rx_mpdu_info.info0));
 	return 0;
 }
 
@@ -15076,7 +15074,8 @@ qwz_dp_rx_process_wbm_err(struct qwz_softc *sc)
 		msdu->is_last_msdu = err_info.last_msdu;
 		msdu->is_continuation = err_info.continuation;
 		msdu->peer_id = err_info.peer_id;
-		msdu->seq_no = err_info.seq_no;
+		msdu->seq_no = sc->hal_rx_ops->rx_desc_get_mpdu_start_seq_no(
+		    msdu->rx_desc);
 		msdu->tid = sc->hal_rx_ops->rx_desc_get_mpdu_tid(msdu->rx_desc);
 		TAILQ_INSERT_TAIL(&msdu_list, msdu, entry);
 	}
@@ -15797,9 +15796,10 @@ try_again:
 		    RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
 		msdu->peer_id = FIELD_GET(RX_MPDU_DESC_META_DATA_PEER_ID,
 		    desc->rx_mpdu_info.meta_data);
-		msdu->seq_no = FIELD_GET(RX_MPDU_DESC_INFO0_SEQ_NUM,
-		    desc->rx_mpdu_info.info0);
-		msdu->tid = 0; /* no RX_QUEUE_NUM in wifi7 */
+		msdu->rx_desc = mtod(m, struct hal_rx_desc *);
+		msdu->seq_no = sc->hal_rx_ops->rx_desc_get_mpdu_start_seq_no(
+		    msdu->rx_desc);
+		msdu->tid = sc->hal_rx_ops->rx_desc_get_mpdu_tid(msdu->rx_desc);
 
 		msdu->mac_id = mac_id;
 		TAILQ_INSERT_TAIL(&msdu_list[mac_id], msdu, entry);
