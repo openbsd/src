@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.77 2026/10/01 10:13:53 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.78 2026/10/01 10:14:55 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14595,10 +14595,11 @@ qwz_hal_rx_reo_ent_paddr_get(struct qwz_softc *sc, void *desc, uint64_t *paddr,
 	struct ath12k_buffer_addr *buff_addr = desc;
 
 	*paddr = ((uint64_t)(FIELD_GET(BUFFER_ADDR_INFO1_ADDR,
-	    buff_addr->info1)) << 32) |
-	    FIELD_GET(BUFFER_ADDR_INFO0_ADDR, buff_addr->info0);
+	    le32toh(buff_addr->info1))) << 32) |
+	    FIELD_GET(BUFFER_ADDR_INFO0_ADDR, le32toh(buff_addr->info0));
 
-	*desc_bank = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE, buff_addr->info1);
+	*desc_bank = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+	    le32toh(buff_addr->info1));
 }
 
 int
@@ -14607,15 +14608,9 @@ qwz_hal_desc_reo_parse_err(struct qwz_softc *sc, uint32_t *rx_desc,
 {
 	struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
 	enum hal_reo_dest_ring_push_reason push_reason;
-	enum hal_reo_dest_ring_error_code err_code;
 
 	push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
-	    desc->info0);
-	err_code = FIELD_GET(HAL_REO_DEST_RING_INFO0_ERROR_CODE,
-	    desc->info0);
-#if 0
-	ab->soc_stats.reo_error[err_code]++;
-#endif
+	    le32toh(desc->info0));
 	if (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED &&
 	    push_reason != HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
 		printf("%s: expected error push reason code, received %d\n",
@@ -14623,7 +14618,8 @@ qwz_hal_desc_reo_parse_err(struct qwz_softc *sc, uint32_t *rx_desc,
 		return EINVAL;
 	}
 
-	if (FIELD_GET(HAL_REO_DEST_RING_INFO0_BUFFER_TYPE, desc->info0) !=
+	if (FIELD_GET(HAL_REO_DEST_RING_INFO0_BUFFER_TYPE,
+	    le32toh(desc->info0)) !=
 	    HAL_REO_DEST_RING_BUFFER_TYPE_LINK_DESC) {
 		printf("%s: expected buffer type link_desc",
 		    sc->sc_dev.dv_xname);
@@ -14631,6 +14627,7 @@ qwz_hal_desc_reo_parse_err(struct qwz_softc *sc, uint32_t *rx_desc,
 	}
 
 	qwz_hal_rx_reo_ent_paddr_get(sc, rx_desc, paddr, desc_bank);
+	*desc_bank = FIELD_GET(DP_LINK_DESC_BANK_MASK, *desc_bank);
 
 	return 0;
 }
@@ -14647,18 +14644,18 @@ qwz_hal_rx_msdu_link_info_get(void *link_desc, uint32_t *num_msdus,
 
 	msdu = &link->msdu_link[0];
 	*rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
-	    msdu->buf_addr_info.info1);
+	    le32toh(msdu->buf_addr_info.info1));
 
 	for (i = 0; i < *num_msdus; i++) {
 		msdu = &link->msdu_link[i];
 
 		if (!FIELD_GET(BUFFER_ADDR_INFO0_ADDR,
-		    msdu->buf_addr_info.info0)) {
+		    le32toh(msdu->buf_addr_info.info0))) {
 			*num_msdus = i;
 			break;
 		}
 		*msdu_cookies = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
-		    msdu->buf_addr_info.info1);
+		    le32toh(msdu->buf_addr_info.info1));
 		msdu_cookies++;
 	}
 }
@@ -14670,12 +14667,13 @@ qwz_hal_rx_msdu_link_desc_set(struct qwz_softc *sc, void *desc,
 	struct hal_wbm_release_ring *dst_desc = desc;
 	struct hal_wbm_release_ring *src_desc = link_desc;
 
+	memset(dst_desc, 0, sizeof(*dst_desc));
 	dst_desc->buf_addr_info = src_desc->buf_addr_info;
-	dst_desc->info0 |= FIELD_PREP(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE,
+	dst_desc->info0 = htole32(FIELD_PREP(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE,
 	    HAL_WBM_REL_SRC_MODULE_SW) |
 	    FIELD_PREP(HAL_WBM_RELEASE_INFO0_BM_ACTION, action) |
 	    FIELD_PREP(HAL_WBM_RELEASE_INFO0_DESC_TYPE,
-	    HAL_WBM_REL_DESC_TYPE_MSDU_LINK);
+	    HAL_WBM_REL_DESC_TYPE_MSDU_LINK));
 }
 
 int
@@ -14724,166 +14722,113 @@ qwz_dp_rx_h_msdu_start_msdu_len(struct qwz_softc *sc, struct hal_rx_desc *desc)
 	return sc->hal_rx_ops->rx_desc_get_msdu_len(desc);
 }
 
-void
-qwz_dp_process_rx_err_buf(struct qwz_softc *sc, uint32_t *ring_desc,
-    int buf_id, int drop)
+int
+qwz_dp_process_rx_err_buf(struct qwz_softc *sc, uint32_t cookie, void *list)
 {
-#if 0
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
-	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
-	struct mbuf *m;
-	struct qwz_rx_data *rx_data;
-	struct hal_rx_desc *rx_desc;
-	uint16_t msdu_len;
-	uint32_t hal_rx_desc_sz = sc->hal.hal_desc_sz;
+	struct qwz_rx_msdu *msdu;
 
-	if (buf_id >= rx_ring->bufs_max || isset(rx_ring->freemap, buf_id))
-		return;
+	msdu = qwz_dp_rx_reap_desc(sc, cookie, list);
+	if (msdu == NULL)
+		return 0;
 
-	rx_data = &rx_ring->rx_data[buf_id];
-	bus_dmamap_unload(sc->sc_dmat, rx_data->map);
-	m = rx_data->m;
-	rx_data->m = NULL;
-	setbit(rx_ring->freemap, buf_id);
-
-	if (drop) {
-		m_freem(m);
-		return;
-	}
-
-	rx_desc = mtod(m, struct hal_rx_desc *);
-	msdu_len = qwz_dp_rx_h_msdu_start_msdu_len(sc, rx_desc);
-	if ((msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE) {
-#if 0
-		uint8_t *hdr_status = ath12k_dp_rx_h_80211_hdr(ar->ab, rx_desc);
-		ath12k_warn(ar->ab, "invalid msdu leng %u", msdu_len);
-		ath12k_dbg_dump(ar->ab, ATH12K_DBG_DATA, NULL, "", hdr_status,
-				sizeof(struct ieee80211_hdr));
-		ath12k_dbg_dump(ar->ab, ATH12K_DBG_DATA, NULL, "", rx_desc,
-				sizeof(struct hal_rx_desc));
-#endif
-		m_freem(m);
-		return;
-	}
-
-	if (qwz_dp_rx_frag_h_mpdu(sc, m, ring_desc)) {
-		qwz_dp_rx_link_desc_return(sc, ring_desc,
-		    HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
-	}
-
-	m_freem(m);
-#endif
-	printf("%s:%d\n", __func__, __LINE__);
+	m_freem(msdu->m);
+	msdu->m = NULL;
+	return 1;
 }
 
 int
 qwz_dp_process_rx_err(struct qwz_softc *sc)
 {
-#if 0
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	uint32_t msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
-	struct dp_link_desc_bank *link_desc_banks;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct qwz_dp *dp = &sc->dp;
+	TAILQ_HEAD(, ath12k_rx_desc_info) used_list;
+	struct hal_srng *srng, *release_srng;
+	struct hal_reo_dest_ring *reo_desc;
+	struct dp_link_desc_bank *bank;
+	struct hal_rx_msdu_link *link;
 	enum hal_rx_buf_return_buf_manager rbm;
-	int tot_n_bufs_reaped, ret, i;
-	int n_bufs_reaped[MAX_RADIOS] = {0};
-	struct dp_rxdma_ring *rx_ring;
-	struct dp_srng *reo_except;
-	uint32_t desc_bank, num_msdus;
-	struct hal_srng *srng;
-	struct qwz_dp *dp;
-	void *link_desc_va;
-	int buf_id, mac_id;
+	enum hal_wbm_rel_bm_act action;
+	uint32_t cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
+	uint32_t desc_bank, num_msdus, cookie;
 	uint64_t paddr;
-	uint32_t *desc;
-	int is_frag;
-	uint8_t drop = 0;
+	bus_size_t offset;
+	void *release_desc;
+	int num_buffs_reaped = 0;
+	int n, i;
 
-	tot_n_bufs_reaped = 0;
-
-	dp = &sc->dp;
-	reo_except = &dp->reo_except_ring;
-	link_desc_banks = dp->link_desc_banks;
-
-	srng = &sc->hal.srng_list[reo_except->ring_id];
-#ifdef notyet
-	spin_lock_bh(&srng->lock);
-#endif
+	TAILQ_INIT(&used_list);
+	srng = &sc->hal.srng_list[dp->reo_except_ring.ring_id];
+	release_srng = &sc->hal.srng_list[dp->wbm_desc_rel_ring.ring_id];
 	qwz_hal_srng_access_begin(sc, srng);
+	qwz_hal_srng_access_begin(sc, release_srng);
 
-	while ((desc = qwz_hal_srng_dst_get_next_entry(sc, srng))) {
-		struct hal_reo_dest_ring *reo_desc =
-		    (struct hal_reo_dest_ring *)desc;
-#if 0
-		ab->soc_stats.err_ring_pkts++;
-#endif
-		ret = qwz_hal_desc_reo_parse_err(sc, desc, &paddr, &desc_bank);
-		if (ret) {
-			printf("%s: failed to parse error reo desc %d\n",
-			    sc->sc_dev.dv_xname, ret);
-			continue;
-		}
-		link_desc_va = link_desc_banks[desc_bank].vaddr +
-		    (paddr - link_desc_banks[desc_bank].paddr);
-		qwz_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus,
-		    msdu_cookies, &rbm);
-		if (rbm != HAL_RX_BUF_RBM_WBM_DEV0_IDLE_DESC_LIST &&
-		    rbm != HAL_RX_BUF_RBM_SW3_BM) {
-#if 0
-			ab->soc_stats.invalid_rbm++;
-#endif
-			printf("%s: invalid return buffer manager %d\n",
-			    sc->sc_dev.dv_xname, rbm);
-			qwz_dp_rx_link_desc_return(sc, desc,
-			    HAL_WBM_REL_BM_ACT_REL_MSDU);
+	while (qwz_hal_srng_src_num_free(sc, release_srng, 1) > 0 &&
+	    (reo_desc = (struct hal_reo_dest_ring *)
+	    qwz_hal_srng_dst_get_next_entry(sc, srng))) {
+		if (FIELD_GET(HAL_REO_DEST_RING_INFO0_BUFFER_TYPE,
+		    le32toh(reo_desc->info0)) ==
+		    HAL_REO_DEST_RING_BUFFER_TYPE_MSDU) {
+			cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+			    le32toh(reo_desc->buf_addr_info.info1));
+			n = qwz_dp_process_rx_err_buf(sc, cookie, &used_list);
+			num_buffs_reaped += n;
+			if (!n)
+				ifp->if_ierrors++;
 			continue;
 		}
 
-		is_frag = !!(reo_desc->rx_mpdu_info.info0 &
-		    RX_MPDU_DESC_INFO0_FRAG_FLAG);
-
-		/* Process only rx fragments with one msdu per link desc below,
-		 * and drop msdu's indicated due to error reasons.
-		 */
-		if (!is_frag || num_msdus > 1) {
-			drop = 1;
-			/* Return the link desc back to wbm idle list */
-			qwz_dp_rx_link_desc_return(sc, desc,
-			   HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
+		if (qwz_hal_desc_reo_parse_err(sc, (uint32_t *)reo_desc,
+		    &paddr, &desc_bank)) {
+			ifp->if_ierrors++;
+			continue;
 		}
-
-		for (i = 0; i < num_msdus; i++) {
-			buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
-			    msdu_cookies[i]);
-
-			mac_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_PDEV_ID,
-			    msdu_cookies[i]);
-
-			qwz_dp_process_rx_err_buf(sc, desc, buf_id, drop);
-			n_bufs_reaped[mac_id]++;
-			tot_n_bufs_reaped++;
+		if (desc_bank >= nitems(dp->link_desc_banks)) {
+			ifp->if_ierrors++;
+			continue;
 		}
+		bank = &dp->link_desc_banks[desc_bank];
+		if (bank->mem == NULL || bank->size < sizeof(*link) ||
+		    paddr < bank->paddr ||
+		    paddr - bank->paddr > bank->size - sizeof(*link)) {
+			ifp->if_ierrors++;
+			continue;
+		}
+		offset = paddr - bank->paddr;
+		link = (struct hal_rx_msdu_link *)
+		    ((uint8_t *)bank->vaddr + offset);
+		bus_dmamap_sync(sc->sc_dmat, bank->mem->map, offset,
+		    sizeof(*link), BUS_DMASYNC_POSTREAD);
+		qwz_hal_rx_msdu_link_info_get(link, &num_msdus, cookies, &rbm);
+		action = HAL_WBM_REL_BM_ACT_PUT_IN_IDLE;
+		if (rbm != dp->idle_link_rbm && rbm != HAL_RX_BUF_RBM_SW3_BM &&
+		    rbm != sc->hw_params.hal_params->rx_buf_rbm) {
+			action = HAL_WBM_REL_BM_ACT_REL_MSDU;
+			ifp->if_ierrors++;
+		} else {
+			/* Fragment reassembly is not implemented. */
+			for (i = 0; i < num_msdus; i++) {
+				n = qwz_dp_process_rx_err_buf(sc, cookies[i],
+				    &used_list);
+				num_buffs_reaped += n;
+				if (!n)
+					ifp->if_ierrors++;
+			}
+		}
+		bus_dmamap_sync(sc->sc_dmat, bank->mem->map, offset,
+		    sizeof(*link), BUS_DMASYNC_PREREAD);
+
+		release_desc = qwz_hal_srng_src_get_next_entry(sc, release_srng);
+		KASSERT(release_desc != NULL);
+		qwz_hal_rx_msdu_link_desc_set(sc, release_desc, reo_desc, action);
 	}
 
+	qwz_hal_srng_access_end(sc, release_srng);
 	qwz_hal_srng_access_end(sc, srng);
-#ifdef notyet
-	spin_unlock_bh(&srng->lock);
-#endif
-	for (i = 0; i < sc->num_radios; i++) {
-		if (!n_bufs_reaped[i])
-			continue;
-
-		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
-
-		qwz_dp_rxbufs_replenish(sc, i, rx_ring, n_bufs_reaped[i],
-		    sc->hw_params.hal_params->rx_buf_rbm);
-	}
-
-	ifp->if_ierrors += tot_n_bufs_reaped;
-
-	return tot_n_bufs_reaped;
-#endif
-	return 0;
+	if (num_buffs_reaped)
+		qwz_dp_rxbufs_replenish(sc, &dp->rx_refill_buf_ring,
+		    &used_list, num_buffs_reaped);
+	ifp->if_ierrors += num_buffs_reaped;
+	return num_buffs_reaped;
 }
 
 int

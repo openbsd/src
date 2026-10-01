@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.17 2026/10/01 10:13:03 kirill Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.18 2026/10/01 10:14:55 kirill Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -9881,9 +9881,14 @@ struct hal_rx_mpdu_link_ptr {
 	struct ath12k_buffer_addr addr_info;
 } __packed;
 
+struct rx_msdu_ext_desc {
+	uint32_t info0;
+} __packed;
+
 struct hal_rx_msdu_details {
 	struct ath12k_buffer_addr buf_addr_info;
 	struct rx_msdu_desc rx_msdu_info;
+	struct rx_msdu_ext_desc rx_msdu_ext_info;
 } __packed;
 
 #define HAL_RX_MSDU_LNK_INFO0_RX_QUEUE_NUMBER		GENMASK(15, 0)
