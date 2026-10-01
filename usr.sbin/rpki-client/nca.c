@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.11 2026/07/09 12:02:23 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.12 2026/10/01 13:25:54 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -32,6 +32,21 @@
 #include "extern.h"
 
 extern int rrdpon;
+
+static void
+nonfunc_ca_free(struct nonfunc_ca *nca)
+{
+	if (nca == NULL)
+		return;
+
+	free(nca->aki);
+	free(nca->ski);
+	free(nca->location);
+	free(nca->carepo);
+	free(nca->mfturi);
+	free(nca->notify);
+	free(nca);
+}
 
 /*
  * Add a given CA cert into the non-functional CA tree.
@@ -102,13 +117,7 @@ nca_tree_remove_cert(struct nca_tree *tree, int cid)
 
 	if ((found = RB_FIND(nca_tree, tree, &needle)) != NULL) {
 		RB_REMOVE(nca_tree, tree, found);
-		free(found->aki);
-		free(found->ski);
-		free(found->location);
-		free(found->carepo);
-		free(found->mfturi);
-		free(found->notify);
-		free(found);
+		nonfunc_ca_free(found);
 	}
 }
 
