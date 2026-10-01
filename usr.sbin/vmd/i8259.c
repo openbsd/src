@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.24 2025/06/12 21:04:37 dv Exp $ */
+/* $OpenBSD: i8259.c,v 1.25 2026/10/01 21:49:49 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -304,7 +304,7 @@ i8259_write_datareg(uint8_t n, uint8_t data)
 			}
 
 			if (data & ICW4_AEOI) {
-				log_warnx("%s: %s pic: aeoi mode set",
+				log_debug("%s: %s pic: aeoi mode set",
 				    __func__, i8259_pic_name(n));
 				pic->auto_eoi = 1;
 				return;
