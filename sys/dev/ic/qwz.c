@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.75 2026/10/01 10:11:41 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.76 2026/10/01 10:13:03 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -154,6 +154,8 @@ int qwz_dp_tx_send_reo_cmd(struct qwz_softc *, struct dp_rx_tid *,
     enum hal_reo_cmd_type , struct ath12k_hal_reo_cmd *,
     void (*func)(struct qwz_dp *, void *, enum hal_reo_cmd_status));
 void qwz_dp_rx_deliver_msdu(struct qwz_softc *, struct qwz_rx_msdu *);
+int qwz_dp_rx_h_null_q_desc(struct qwz_softc *, struct qwz_rx_msdu *,
+    struct qwz_rx_msdu_list *);
 void qwz_dp_service_mon_ring(void *);
 void qwz_peer_frags_flush(struct qwz_softc *, struct ath12k_peer *);
 int qwz_wmi_vdev_install_key(struct qwz_softc *,
@@ -8487,6 +8489,32 @@ qwz_dp_get_rx_desc(struct qwz_softc *sc, uint32_t cookie)
 	return *desc_addr_ptr;
 }
 
+struct qwz_rx_msdu *
+qwz_dp_rx_reap_desc(struct qwz_softc *sc, uint32_t cookie, void *list)
+{
+	TAILQ_HEAD(, ath12k_rx_desc_info) *used_list = list;
+	struct ath12k_rx_desc_info *desc_info;
+	struct qwz_rx_msdu *msdu;
+
+	desc_info = qwz_dp_get_rx_desc(sc, cookie);
+	if (desc_info == NULL || desc_info->magic != ATH12K_DP_RX_DESC_MAGIC ||
+	    !desc_info->in_use || desc_info->m == NULL)
+		return NULL;
+
+	bus_dmamap_sync(sc->sc_dmat, desc_info->map, 0,
+	    desc_info->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_unload(sc->sc_dmat, desc_info->map);
+
+	msdu = &desc_info->rx_msdu;
+	memset(msdu, 0, sizeof(*msdu));
+	msdu->m = desc_info->m;
+	msdu->rx_desc = mtod(msdu->m, struct hal_rx_desc *);
+	desc_info->m = NULL;
+	desc_info->in_use = 0;
+	TAILQ_INSERT_TAIL(used_list, desc_info, entry);
+	return msdu;
+}
+
 int
 qwz_dp_cc_desc_init(struct qwz_softc *sc)
 {
@@ -14859,63 +14887,65 @@ qwz_dp_process_rx_err(struct qwz_softc *sc)
 }
 
 int
-qwz_hal_wbm_desc_parse_err(void *desc, struct hal_rx_wbm_rel_info *rel_info)
+qwz_hal_wbm_desc_parse_err(struct qwz_softc *sc, void *desc,
+    struct hal_rx_wbm_rel_info *rel_info)
 {
-	struct hal_wbm_release_ring *wbm_desc = desc;
+	struct hal_wbm_release_ring_rx *wbm_desc = desc;
+	struct hal_wbm_release_ring_cc_rx *cc_desc = desc;
 	enum hal_wbm_rel_desc_type type;
 	enum hal_wbm_rel_src_module rel_src;
-	enum hal_rx_buf_return_buf_manager ret_buf_mgr;
+	enum hal_rx_buf_return_buf_manager rbm;
+	uint32_t info0 = le32toh(wbm_desc->info0);
+	uint32_t msdu_info = le32toh(wbm_desc->rx_msdu_info.info0);
 
-	type = FIELD_GET(HAL_WBM_RELEASE_INFO0_DESC_TYPE, wbm_desc->info0);
-
-	/* We expect only WBM_REL buffer type */
+	type = FIELD_GET(HAL_WBM_RELEASE_INFO0_DESC_TYPE, info0);
 	if (type != HAL_WBM_REL_DESC_TYPE_REL_MSDU)
-		return -EINVAL;
+		return EINVAL;
 
-	rel_src = FIELD_GET(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE,
-	    wbm_desc->info0);
+	rel_src = FIELD_GET(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE, info0);
 	if (rel_src != HAL_WBM_REL_SRC_MODULE_RXDMA &&
 	    rel_src != HAL_WBM_REL_SRC_MODULE_REO)
 		return EINVAL;
 
-	ret_buf_mgr = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
-	    wbm_desc->buf_addr_info.info1);
-	if (ret_buf_mgr != HAL_RX_BUF_RBM_SW3_BM) {
-#if 0
-		ab->soc_stats.invalid_rbm++;
-#endif
-		return EINVAL;
+	/* Cookie conversion changes both the cookie and RBM locations. */
+	if (info0 & HAL_WBM_RELEASE_RX_INFO0_CC_STATUS) {
+		rbm = FIELD_GET(HAL_WBM_RELEASE_RX_CC_INFO0_RBM, info0);
+		rel_info->cookie = FIELD_GET(HAL_WBM_RELEASE_RX_CC_INFO1_COOKIE,
+		    le32toh(cc_desc->info1));
+	} else {
+		rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
+		    le32toh(wbm_desc->buf_addr_info.info1));
+		rel_info->cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+		    le32toh(wbm_desc->buf_addr_info.info1));
 	}
+	if (rbm != HAL_RX_BUF_RBM_SW3_BM &&
+	    rbm != sc->hw_params.hal_params->rx_buf_rbm)
+		return EINVAL;
 
-	rel_info->cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
-	    wbm_desc->buf_addr_info.info1);
 	rel_info->err_rel_src = rel_src;
 	if (rel_src == HAL_WBM_REL_SRC_MODULE_REO) {
 		rel_info->push_reason = FIELD_GET(
-		    HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON, wbm_desc->info0);
+		    HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON, info0);
 		rel_info->err_code = FIELD_GET(
-		    HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE, wbm_desc->info0);
+		    HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE, info0);
 	} else {
 		rel_info->push_reason = FIELD_GET(
-		    HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON, wbm_desc->info0);
+		    HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON, info0);
 		rel_info->err_code = FIELD_GET(
-		    HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE, wbm_desc->info0);
+		    HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE, info0);
 	}
 
-	rel_info->first_msdu = FIELD_GET(HAL_WBM_RELEASE_INFO2_FIRST_MSDU,
-	    wbm_desc->info2);
-	rel_info->last_msdu = FIELD_GET(HAL_WBM_RELEASE_INFO2_LAST_MSDU,
-	    wbm_desc->info2);
-
+	rel_info->first_msdu = !!(msdu_info &
+	    RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU);
+	rel_info->last_msdu = !!(msdu_info &
+	    RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU);
+	rel_info->continuation = !!(msdu_info &
+	    RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
+	rel_info->peer_id = FIELD_GET(RX_MPDU_DESC_META_DATA_PEER_ID,
+	    le32toh(wbm_desc->rx_mpdu_info.meta_data));
+	rel_info->seq_no = FIELD_GET(RX_MPDU_DESC_INFO0_SEQ_NUM,
+	    le32toh(wbm_desc->rx_mpdu_info.info0));
 	return 0;
-}
-
-int
-qwz_dp_rx_h_null_q_desc(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
-    struct qwz_rx_msdu_list *msdu_list)
-{
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
 }
 
 int
@@ -14997,113 +15027,72 @@ qwz_dp_rx_wbm_err(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	}
 
 	qwz_dp_rx_deliver_msdu(sc, msdu);
+	msdu->m = NULL;
 }
 
 int
 qwz_dp_rx_process_wbm_err(struct qwz_softc *sc)
 {
-#if 0
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct qwz_dp *dp = &sc->dp;
-	struct dp_rxdma_ring *rx_ring;
 	struct hal_rx_wbm_rel_info err_info;
 	struct hal_srng *srng;
-	struct qwz_rx_msdu_list msdu_list[MAX_RADIOS];
+	struct qwz_rx_msdu_list msdu_list;
+	TAILQ_HEAD(, ath12k_rx_desc_info) used_list;
 	struct qwz_rx_msdu *msdu;
-	struct mbuf *m;
-	struct qwz_rx_data *rx_data;
-	uint32_t *rx_desc;
-	int idx, mac_id;
-	int num_buffs_reaped[MAX_RADIOS] = {0};
-	int total_num_buffs_reaped = 0;
-	int ret, i;
+	void *rx_desc;
+	int num_buffs_reaped = 0;
 
-	for (i = 0; i < sc->num_radios; i++)
-		TAILQ_INIT(&msdu_list[i]);
-
+	TAILQ_INIT(&msdu_list);
+	TAILQ_INIT(&used_list);
 	srng = &sc->hal.srng_list[dp->rx_rel_ring.ring_id];
-#ifdef notyet
-	spin_lock_bh(&srng->lock);
-#endif
 	qwz_hal_srng_access_begin(sc, srng);
 
 	while ((rx_desc = qwz_hal_srng_dst_get_next_entry(sc, srng))) {
-		ret = qwz_hal_wbm_desc_parse_err(rx_desc, &err_info);
-		if (ret) {
-			printf("%s: failed to parse rx error in wbm_rel "
-			    "ring desc %d\n", sc->sc_dev.dv_xname, ret);
+		if (qwz_hal_wbm_desc_parse_err(sc, rx_desc, &err_info)) {
+			ifp->if_ierrors++;
 			continue;
 		}
 
-		idx = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, err_info.cookie);
-		mac_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_PDEV_ID, err_info.cookie);
-
-		if (mac_id >= MAX_RADIOS)
+		msdu = qwz_dp_rx_reap_desc(sc, err_info.cookie, &used_list);
+		if (msdu == NULL) {
+			ifp->if_ierrors++;
 			continue;
-
-		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
-		if (idx >= rx_ring->bufs_max || isset(rx_ring->freemap, idx))
-			continue;
-
-		rx_data = &rx_ring->rx_data[idx];
-		bus_dmamap_unload(sc->sc_dmat, rx_data->map);
-		m = rx_data->m;
-		rx_data->m = NULL;
-		setbit(rx_ring->freemap, idx);
-
-		num_buffs_reaped[mac_id]++;
-		total_num_buffs_reaped++;
+		}
+		num_buffs_reaped++;
 
 		if (err_info.push_reason !=
-		    HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
-			m_freem(m);
+		    HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED ||
+		    test_bit(ATH12K_CAC_RUNNING, sc->sc_flags)) {
+			m_freem(msdu->m);
+			msdu->m = NULL;
+			ifp->if_ierrors++;
 			continue;
 		}
 
-		msdu = &rx_data->rx_msdu;
-		memset(&msdu->rxi, 0, sizeof(msdu->rxi));
-		msdu->m = m;
 		msdu->err_rel_src = err_info.err_rel_src;
 		msdu->err_code = err_info.err_code;
-		msdu->rx_desc = mtod(m, struct hal_rx_desc *);
-		TAILQ_INSERT_TAIL(&msdu_list[mac_id], msdu, entry);
+		msdu->is_first_msdu = err_info.first_msdu;
+		msdu->is_last_msdu = err_info.last_msdu;
+		msdu->is_continuation = err_info.continuation;
+		msdu->peer_id = err_info.peer_id;
+		msdu->seq_no = err_info.seq_no;
+		msdu->tid = sc->hal_rx_ops->rx_desc_get_mpdu_tid(msdu->rx_desc);
+		TAILQ_INSERT_TAIL(&msdu_list, msdu, entry);
 	}
 
 	qwz_hal_srng_access_end(sc, srng);
-#ifdef notyet
-	spin_unlock_bh(&srng->lock);
-#endif
-	if (!total_num_buffs_reaped)
-		goto done;
 
-	for (i = 0; i < sc->num_radios; i++) {
-		if (!num_buffs_reaped[i])
-			continue;
-
-		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
-		qwz_dp_rxbufs_replenish(sc, i, rx_ring, num_buffs_reaped[i],
-		    sc->hw_params.hal_params->rx_buf_rbm);
+	while ((msdu = TAILQ_FIRST(&msdu_list))) {
+		TAILQ_REMOVE(&msdu_list, msdu, entry);
+		qwz_dp_rx_wbm_err(sc, msdu, &msdu_list);
 	}
 
-	for (i = 0; i < sc->num_radios; i++) {
-		while ((msdu = TAILQ_FIRST(msdu_list))) {
-			TAILQ_REMOVE(msdu_list, msdu, entry);
-			if (test_bit(ATH12K_CAC_RUNNING, sc->sc_flags)) {
-				m_freem(msdu->m);
-				msdu->m = NULL;
-				continue;
-			}
-			qwz_dp_rx_wbm_err(sc, msdu, &msdu_list[i]);
-			msdu->m = NULL;
-		}
-	}
-done:
-	ifp->if_ierrors += total_num_buffs_reaped;
+	if (num_buffs_reaped)
+		qwz_dp_rxbufs_replenish(sc, &dp->rx_refill_buf_ring,
+		    &used_list, num_buffs_reaped);
 
-	return total_num_buffs_reaped;
-#endif
-	return 0;
+	return num_buffs_reaped;
 }
 
 struct qwz_rx_msdu *
@@ -15629,6 +15618,45 @@ qwz_dp_rx_process_msdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	qwz_dp_rx_h_ppdu(sc, rx_desc, &msdu->rxi);
 
 	return qwz_dp_rx_h_mpdu(sc, msdu, rx_desc);
+}
+
+int
+qwz_dp_rx_h_null_q_desc(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
+    struct qwz_rx_msdu_list *msdu_list)
+{
+	struct qwz_rx_msdu *next, *tmp;
+	uint32_t desc_sz = sc->hal.hal_desc_sz;
+	uint16_t msdu_len;
+	uint8_t l3pad;
+	int nbufs;
+
+	msdu_len = qwz_dp_rx_h_msdu_start_msdu_len(sc, msdu->rx_desc);
+	if (msdu_len + desc_sz > DP_RX_BUFFER_SIZE) {
+		nbufs = howmany(msdu_len - (DP_RX_BUFFER_SIZE - desc_sz),
+		    DP_RX_BUFFER_SIZE - desc_sz);
+		TAILQ_FOREACH_SAFE(next, msdu_list, entry, tmp) {
+			if (!nbufs)
+				break;
+			if (next->err_rel_src != HAL_WBM_REL_SRC_MODULE_REO ||
+			    next->err_code !=
+			    HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO)
+				continue;
+			TAILQ_REMOVE(msdu_list, next, entry);
+			m_freem(next->m);
+			next->m = NULL;
+			sc->sc_ic.ic_if.if_ierrors++;
+			nbufs--;
+		}
+		return EINVAL;
+	}
+	if (msdu->is_continuation)
+		return EINVAL;
+
+	l3pad = qwz_dp_rx_h_msdu_end_l3pad(sc, msdu->rx_desc);
+	if (desc_sz + l3pad + msdu_len > DP_RX_BUFFER_SIZE)
+		return EINVAL;
+
+	return qwz_dp_rx_process_msdu(sc, msdu, msdu_list);
 }
 
 void

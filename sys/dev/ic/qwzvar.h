@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.25 2026/09/30 18:50:36 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.26 2026/10/01 10:13:03 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1644,6 +1644,9 @@ struct hal_rx_wbm_rel_info {
 	uint32_t err_code;
 	int first_msdu;
 	int last_msdu;
+	int continuation;
+	uint16_t peer_id;
+	uint16_t seq_no;
 };
 
 #define HAL_INVALID_PEERID 0xffff

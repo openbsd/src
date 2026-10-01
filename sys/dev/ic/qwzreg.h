@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.16 2026/05/26 14:54:32 kirill Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.17 2026/10/01 10:13:03 kirill Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -9630,6 +9630,29 @@ struct hal_wbm_release_ring {
 	uint32_t info2;
 	struct hal_tx_rate_stats rate_stats;
 	uint32_t info3;
+} __packed;
+
+#define HAL_WBM_RELEASE_RX_INFO0_CC_STATUS		BIT(16)
+#define HAL_WBM_RELEASE_RX_CC_INFO0_RBM		GENMASK(12, 9)
+#define HAL_WBM_RELEASE_RX_CC_INFO1_COOKIE		GENMASK(27, 8)
+
+struct hal_wbm_release_ring_rx {
+	struct ath12k_buffer_addr buf_addr_info;
+	uint32_t info0;
+	struct rx_mpdu_desc rx_mpdu_info;
+	struct rx_msdu_desc rx_msdu_info;
+	uint32_t info1;
+	uint32_t info2;
+} __packed;
+
+struct hal_wbm_release_ring_cc_rx {
+	uint32_t buf_va_lo;
+	uint32_t buf_va_hi;
+	uint32_t info0;
+	struct rx_mpdu_desc rx_mpdu_info;
+	struct rx_msdu_desc rx_msdu_info;
+	uint32_t buf_pa_lo;
+	uint32_t info1;
 } __packed;
 
 /* hal_wbm_release_ring
