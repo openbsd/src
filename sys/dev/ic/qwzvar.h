@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.27 2026/10/01 10:13:53 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.28 2026/10/01 10:16:43 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -289,9 +289,9 @@ struct hal_rx_ops {
 	uint16_t (*rx_desc_get_msdu_len)(struct hal_rx_desc *desc);
 #ifdef notyet
 	uint8_t (*rx_desc_get_msdu_sgi)(struct hal_rx_desc *desc);
-	uint8_t (*rx_desc_get_msdu_rate_mcs)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_rx_bw)(struct hal_rx_desc *desc);
 #endif
+	uint8_t (*rx_desc_get_msdu_rate_mcs)(struct hal_rx_desc *desc);
 	uint32_t (*rx_desc_get_msdu_freq)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_pkt_type)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_nss)(struct hal_rx_desc *desc);
@@ -1889,15 +1889,31 @@ struct qwz_ext_irq_grp {
 
 struct qwz_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	int8_t		wr_dbm_antsignal;
 } __packed;
 
-#define IWX_RX_RADIOTAP_PRESENT	0 /* TODO add more information */
+#define QWZ_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL))
 
 struct qwz_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint8_t		wt_rate;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
 } __packed;
 
-#define IWX_TX_RADIOTAP_PRESENT	0 /* TODO add more information */
+#define QWZ_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct qwz_setkey_task_arg {
 	struct ieee80211_node *ni;

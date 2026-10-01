@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.79 2026/10/01 10:15:51 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.80 2026/10/01 10:16:43 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -104,6 +104,17 @@
 #define container_of(ptr, type, member) ({			\
 	const __typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
+
+#if NBPFILTER > 0
+static inline uint8_t
+hweight8(uint8_t x)
+{
+	x = (x & 0x55) + ((x & 0xaa) >> 1);
+	x = (x & 0x33) + ((x & 0xcc) >> 2);
+	x = (x + (x >> 4)) & 0x0f;
+	return (x);
+}
+#endif
 
 /* #define QWZ_DEBUG */
 
@@ -515,6 +526,33 @@ qwz_tx(struct qwz_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct qwz_tx_radiotap_header *tap = &sc->sc_txtap;
+		struct ieee80211com *ic = &sc->sc_ic;
+		uint16_t chan_flags;
+
+		tap->wt_flags = 0;
+		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
+		chan_flags = ni->ni_chan->ic_flags;
+		if (ic->ic_curmode != IEEE80211_MODE_11N &&
+		    ic->ic_curmode != IEEE80211_MODE_11AC) {
+			chan_flags &= ~IEEE80211_CHAN_HT;
+			chan_flags &= ~IEEE80211_CHAN_40MHZ;
+		}
+		if (ic->ic_curmode != IEEE80211_MODE_11AC)
+			chan_flags &= ~IEEE80211_CHAN_VHT;
+		tap->wt_chan_flags = htole16(chan_flags);
+		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+		    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+		    frame_type == IEEE80211_FC0_TYPE_DATA) {
+			tap->wt_rate = (0x80 | ni->ni_txmcs);
+		} else {
+			struct ieee80211_rateset *rs = &ni->ni_rates;
+			uint8_t rate = rs->rs_rates[ni->ni_txrate];
+
+			tap->wt_rate = rate & IEEE80211_RATE_VAL;
+		}
+		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
+		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
+			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
 		    m, BPF_DIRECTION_OUT);
@@ -1806,9 +1844,9 @@ const struct hal_rx_ops hal_rx_wcn7850_ops = {
 	.rx_desc_get_msdu_len = qwz_hw_wcn7850_rx_desc_get_msdu_len,
 #ifdef notyet
 	.rx_desc_get_msdu_sgi = qwz_hw_wcn7850_rx_desc_get_msdu_sgi,
-	.rx_desc_get_msdu_rate_mcs = qwz_hw_wcn7850_rx_desc_get_msdu_rate_mcs,
 	.rx_desc_get_msdu_rx_bw = qwz_hw_wcn7850_rx_desc_get_msdu_rx_bw,
 #endif
+	.rx_desc_get_msdu_rate_mcs = qwz_hw_wcn7850_rx_desc_get_msdu_rate_mcs,
 	.rx_desc_get_msdu_freq = qwz_hw_wcn7850_rx_desc_get_msdu_freq,
 	.rx_desc_get_msdu_pkt_type = qwz_hw_wcn7850_rx_desc_get_msdu_pkt_type,
 	.rx_desc_get_msdu_nss = qwz_hw_wcn7850_rx_desc_get_msdu_nss,
@@ -11843,6 +11881,23 @@ qwz_mgmt_rx_event(struct qwz_softc *sc, struct mbuf *m)
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct qwz_rx_radiotap_header *tap = &sc->sc_rxtap;
+		uint16_t chan_flags;
+		uint32_t freq;
+
+		tap->wr_ihdr.it_present = htole32(QWZ_RX_RADIOTAP_PRESENT);
+		tap->wr_flags = 0;
+		freq = le32toh(rx_ev.chan_freq);
+		tap->wr_chan_freq = htole16(freq);
+		chan_flags = ic->ic_channels[rx_ev.channel & 0xff].ic_flags;
+		if (ic->ic_curmode != IEEE80211_MODE_11N &&
+		    ic->ic_curmode != IEEE80211_MODE_11AC) {
+			chan_flags &= ~IEEE80211_CHAN_HT;
+			chan_flags &= ~IEEE80211_CHAN_VHT;
+			chan_flags &= ~IEEE80211_CHAN_40MHZ;
+		}
+		tap->wr_rate = rx_ev.rate / 500;
+		tap->wr_chan_flags = htole16(chan_flags);
+		tap->wr_dbm_antsignal = rxi.rxi_rssi;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
 		    m, BPF_DIRECTION_IN);
@@ -14434,7 +14489,7 @@ qwz_mac_hw_ratecode_to_legacy_rate(struct ieee80211_node *ni, uint8_t hw_rc,
 				*rate = 96;
 				break;
 			case ATH12K_HW_RATE_OFDM_54M:
-				*rate = 104;
+				*rate = 108;
 				break;
 			default:
 				return EINVAL;
@@ -15618,6 +15673,42 @@ qwz_dp_rx_deliver_msdu(struct qwz_softc *sc, struct qwz_rx_msdu *msdu)
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct qwz_rx_radiotap_header *tap = &sc->sc_rxtap;
+		uint8_t mcs, pkt_type, nss;
+		uint16_t chan_flags;
+		uint32_t freq;
+
+		mcs = sc->hal_rx_ops->rx_desc_get_msdu_rate_mcs(msdu->rx_desc);
+		pkt_type = sc->hal_rx_ops->rx_desc_get_msdu_pkt_type(
+		    msdu->rx_desc);
+		nss = hweight8(sc->hal_rx_ops->rx_desc_get_msdu_nss(
+		    msdu->rx_desc));
+		freq = qwz_dp_rx_h_msdu_start_freq(sc, msdu->rx_desc);
+
+		tap->wr_ihdr.it_present = htole32(QWZ_RX_RADIOTAP_PRESENT &
+		    ~(1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL));
+		tap->wr_flags = 0;
+		tap->wr_chan_freq = htole16(ic->ic_channels[freq & 0xff].ic_freq);
+		chan_flags = ic->ic_channels[freq & 0xff].ic_flags;
+		if (pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N) {
+			if (nss > 1)
+				mcs += 8 * (nss - 1);
+			tap->wr_rate = (0x80 | mcs);
+		} else {
+			uint8_t rateidx;
+			uint16_t rate;
+
+			if (qwz_mac_hw_ratecode_to_legacy_rate(ni, mcs,
+			    pkt_type, &rateidx, &rate) == 0)
+				tap->wr_rate = rate;
+			else
+				tap->wr_rate = 0;
+
+			chan_flags &= ~IEEE80211_CHAN_HT;
+			chan_flags &= ~IEEE80211_CHAN_VHT;
+			chan_flags &= ~IEEE80211_CHAN_40MHZ;
+		}
+		tap->wr_chan_flags = htole16(chan_flags);
+		tap->wr_dbm_antsignal = 0;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
 		    msdu->m, BPF_DIRECTION_IN);
@@ -24833,11 +24924,11 @@ qwz_radiotap_attach(struct qwz_softc *sc)
 
 	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
-	sc->sc_rxtap.wr_ihdr.it_present = htole32(IWX_RX_RADIOTAP_PRESENT);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(QWZ_RX_RADIOTAP_PRESENT);
 
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
-	sc->sc_txtap.wt_ihdr.it_present = htole32(IWX_TX_RADIOTAP_PRESENT);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(QWZ_TX_RADIOTAP_PRESENT);
 }
 #endif
 
