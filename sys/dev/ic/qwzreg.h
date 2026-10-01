@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.18 2026/10/01 10:14:55 kirill Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.19 2026/10/01 17:30:30 kirill Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -7888,7 +7888,7 @@ enum hal_tlv_tag {
 	HAL_MPDU_INFO                          = 150 /* 0x96 */,
 	HAL_PDG_USER_SETUP                     = 151 /* 0x97 */,
 	HAL_TX_11AH_SETUP                      = 152 /* 0x98 */,
-	HAL_REO_UPDATE_RX_REO_QUEUE_STATUS     = 153 /* 0x99 */,
+	HAL_REO_UPDATE_RX_REO_QUEUE_STATUS     = 172 /* 0xac */,
 	HAL_TX_PEER_ENTRY                      = 154 /* 0x9a */,
 	HAL_TX_RAW_OR_NATIVE_FRAME_SETUP       = 155 /* 0x9b */,
 	HAL_EXAMPLE_STRUCT_NAME                = 156 /* 0x9c */,
@@ -8041,15 +8041,15 @@ enum hal_tlv_tag {
 	HAL_NO_ACK_REPORT                      = 303 /* 0x12f */,
 	HAL_ACK_REPORT                         = 304 /* 0x130 */,
 	HAL_UNIFORM_REO_CMD_HEADER             = 305 /* 0x131 */,
-	HAL_REO_GET_QUEUE_STATS                = 306 /* 0x132 */,
-	HAL_REO_FLUSH_QUEUE                    = 307 /* 0x133 */,
-	HAL_REO_FLUSH_CACHE                    = 308 /* 0x134 */,
-	HAL_REO_UNBLOCK_CACHE                  = 309 /* 0x135 */,
+	HAL_REO_GET_QUEUE_STATS                = 281 /* 0x119 */,
+	HAL_REO_FLUSH_QUEUE                    = 282 /* 0x11a */,
+	HAL_REO_FLUSH_CACHE                    = 283 /* 0x11b */,
+	HAL_REO_UNBLOCK_CACHE                  = 284 /* 0x11c */,
 	HAL_UNIFORM_REO_STATUS_HEADER          = 310 /* 0x136 */,
-	HAL_REO_GET_QUEUE_STATS_STATUS         = 311 /* 0x137 */,
-	HAL_REO_FLUSH_QUEUE_STATUS             = 312 /* 0x138 */,
-	HAL_REO_FLUSH_CACHE_STATUS             = 313 /* 0x139 */,
-	HAL_REO_UNBLOCK_CACHE_STATUS           = 314 /* 0x13a */,
+	HAL_REO_GET_QUEUE_STATS_STATUS         = 285 /* 0x11d */,
+	HAL_REO_FLUSH_QUEUE_STATUS             = 286 /* 0x11e */,
+	HAL_REO_FLUSH_CACHE_STATUS             = 287 /* 0x11f */,
+	HAL_REO_UNBLOCK_CACHE_STATUS           = 288 /* 0x120 */,
 	HAL_TQM_FLUSH_CACHE                    = 315 /* 0x13b */,
 	HAL_TQM_UNBLOCK_CACHE                  = 316 /* 0x13c */,
 	HAL_TQM_FLUSH_CACHE_STATUS             = 317 /* 0x13d */,
@@ -8076,11 +8076,11 @@ enum hal_tlv_tag {
 	HAL_TQM_SYNC_CMD_STATUS                = 338 /* 0x152 */,
 	HAL_TQM_THRESHOLD_DROP_NOTIFICATION_STATUS = 339 /* 0x153 */,
 	HAL_TQM_DESCRIPTOR_THRESHOLD_REACHED_STATUS = 340 /* 0x154 */,
-	HAL_REO_FLUSH_TIMEOUT_LIST             = 341 /* 0x155 */,
-	HAL_REO_FLUSH_TIMEOUT_LIST_STATUS      = 342 /* 0x156 */,
+	HAL_REO_FLUSH_TIMEOUT_LIST             = 305 /* 0x131 */,
+	HAL_REO_FLUSH_TIMEOUT_LIST_STATUS      = 306 /* 0x132 */,
 	HAL_REO_TO_PPE_RING                    = 343 /* 0x157 */,
 	HAL_RX_MPDU_INFO                       = 344 /* 0x158 */,
-	HAL_REO_DESCRIPTOR_THRESHOLD_REACHED_STATUS = 345 /* 0x159 */,
+	HAL_REO_DESCRIPTOR_THRESHOLD_REACHED_STATUS = 307 /* 0x133 */,
 	HAL_SCHEDULER_RX_SIFS_RESPONSE_TRIGGER_STATUS = 346 /* 0x15a */,
 	HAL_EXAMPLE_USER_TLV_32_NAME           = 347 /* 0x15b */,
 	HAL_RX_PPDU_START_USER_INFO            = 348 /* 0x15c */,
@@ -8154,7 +8154,7 @@ enum hal_tlv_tag {
 	HAL_TQM_UPDATE_TX_MPDU_QUEUE_HEAD      = 416 /* 0x1a0 */,
 	HAL_TQM_UPDATE_TX_MSDU_FLOW_STATUS     = 417 /* 0x1a1 */,
 	HAL_TQM_UPDATE_TX_MPDU_QUEUE_HEAD_STATUS = 418 /* 0x1a2 */,
-	HAL_REO_UPDATE_RX_REO_QUEUE            = 419 /* 0x1a3 */,
+	HAL_REO_UPDATE_RX_REO_QUEUE            = 339 /* 0x153 */,
 	HAL_CE_DST_DESC			       = 420 /* 0x1a4 */,
 	HAL_TLV_BASE                           = 511 /* 0x1ff */,
 };
@@ -10163,7 +10163,7 @@ struct hal_reo_status_hdr {
  *		enum %HAL_REO_EXEC_STATUS_.
  */
 #define HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_SSN		GENMASK(11, 0)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_CUR_IDX		GENMASK(19, 12)
+#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_CUR_IDX		GENMASK(21, 12)
 
 #define HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MPDU_COUNT		GENMASK(6, 0)
 #define HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MSDU_COUNT		GENMASK(31, 7)
@@ -10177,7 +10177,7 @@ struct hal_reo_status_hdr {
 
 #define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_LATE_RX_MPDU	GENMASK(11, 0)
 #define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_WINDOW_JMP2K	GENMASK(15, 12)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_HOLE_COUNT		GENMASK(31, 16)
+#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_HOLE_COUNT		GENMASK(27, 12)
 
 #define HAL_REO_GET_QUEUE_STATS_STATUS_INFO5_LOOPING_CNT	GENMASK(31, 28)
 
@@ -10187,7 +10187,7 @@ struct hal_reo_get_queue_stats_status {
 	uint32_t pn[4];
 	uint32_t last_rx_enqueue_timestamp;
 	uint32_t last_rx_dequeue_timestamp;
-	uint32_t rx_bitmap[8];
+	uint32_t rx_bitmap[9];
 	uint32_t info1;
 	uint32_t info2;
 	uint32_t info3;

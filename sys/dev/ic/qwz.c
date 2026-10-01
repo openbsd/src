@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.86 2026/10/01 17:29:43 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.87 2026/10/01 17:30:30 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -7988,7 +7988,7 @@ void
 qwz_hal_reo_init_cmd_ring(struct qwz_softc *sc, struct hal_srng *srng)
 {
 	struct hal_srng_params params;
-	struct hal_tlv_hdr *tlv;
+	struct hal_tlv_64_hdr *tlv;
 	struct hal_reo_get_queue_stats *desc;
 	int i, cmd_num = 1;
 	int entry_size;
@@ -8001,39 +8001,44 @@ qwz_hal_reo_init_cmd_ring(struct qwz_softc *sc, struct hal_srng *srng)
 	entry = (uint8_t *)params.ring_base_vaddr;
 
 	for (i = 0; i < params.num_entries; i++) {
-		tlv = (struct hal_tlv_hdr *)entry;
+		tlv = (struct hal_tlv_64_hdr *)entry;
 		desc = (struct hal_reo_get_queue_stats *)tlv->value;
-		desc->cmd.info0 = FIELD_PREP(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER,
-		    cmd_num++);
+		desc->cmd.info0 = htole32(FIELD_PREP(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER,
+		    cmd_num++));
 		entry += entry_size;
 	}
 }
 
 int
-qwz_hal_reo_cmd_queue_stats(struct hal_tlv_hdr *tlv, struct ath12k_hal_reo_cmd *cmd)
+qwz_hal_reo_cmd_queue_stats(struct hal_tlv_64_hdr *tlv,
+    struct ath12k_hal_reo_cmd *cmd)
 {
 	struct hal_reo_get_queue_stats *desc;
 
-	tlv->tl = FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_GET_QUEUE_STATS) |
-	    FIELD_PREP(HAL_TLV_HDR_LEN, sizeof(*desc));
+	tlv->tl = htole64(FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_GET_QUEUE_STATS) |
+	    FIELD_PREP(HAL_TLV_HDR_LEN, sizeof(*desc)));
 
 	desc = (struct hal_reo_get_queue_stats *)tlv->value;
+	memset(&desc->queue_addr_lo, 0,
+	    sizeof(*desc) - offsetof(struct hal_reo_get_queue_stats, queue_addr_lo));
 
-	desc->cmd.info0 &= ~HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+	desc->cmd.info0 &= ~htole32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS)
-		desc->cmd.info0 |= HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+		desc->cmd.info0 |= htole32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 
-	desc->queue_addr_lo = cmd->addr_lo;
+	desc->queue_addr_lo = htole32(cmd->addr_lo);
 	desc->info0 = FIELD_PREP(HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI,
 	    cmd->addr_hi);
 	if (cmd->flag & HAL_REO_CMD_FLG_STATS_CLEAR)
 		desc->info0 |= HAL_REO_GET_QUEUE_STATS_INFO0_CLEAR_STATS;
 
-	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER, desc->cmd.info0);
+	desc->info0 = htole32(desc->info0);
+	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER,
+	    le32toh(desc->cmd.info0));
 }
 
 int
-qwz_hal_reo_cmd_flush_cache(struct ath12k_hal *hal, struct hal_tlv_hdr *tlv,
+qwz_hal_reo_cmd_flush_cache(struct ath12k_hal *hal, struct hal_tlv_64_hdr *tlv,
     struct ath12k_hal_reo_cmd *cmd)
 {
 	struct hal_reo_flush_cache *desc;
@@ -8046,16 +8051,18 @@ qwz_hal_reo_cmd_flush_cache(struct ath12k_hal *hal, struct hal_tlv_hdr *tlv,
 		hal->current_blk_index = avail_slot;
 	}
 
-	tlv->tl = FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_FLUSH_CACHE) |
-	    FIELD_PREP(HAL_TLV_HDR_LEN, sizeof(*desc));
+	tlv->tl = htole64(FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_FLUSH_CACHE) |
+	    FIELD_PREP(HAL_TLV_HDR_LEN, sizeof(*desc)));
 
 	desc = (struct hal_reo_flush_cache *)tlv->value;
+	memset(&desc->cache_addr_lo, 0,
+	    sizeof(*desc) - offsetof(struct hal_reo_flush_cache, cache_addr_lo));
 
-	desc->cmd.info0 &= ~HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+	desc->cmd.info0 &= ~htole32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS)
-		desc->cmd.info0 |= HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+		desc->cmd.info0 |= htole32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 
-	desc->cache_addr_lo = cmd->addr_lo;
+	desc->cache_addr_lo = htole32(cmd->addr_lo);
 	desc->info0 = FIELD_PREP(HAL_REO_FLUSH_CACHE_INFO0_CACHE_ADDR_HI,
 	    cmd->addr_hi);
 
@@ -8075,25 +8082,29 @@ qwz_hal_reo_cmd_flush_cache(struct ath12k_hal *hal, struct hal_tlv_hdr *tlv,
 	if (cmd->flag & HAL_REO_CMD_FLG_FLUSH_ALL)
 		desc->info0 |= HAL_REO_FLUSH_CACHE_INFO0_FLUSH_ALL;
 
-	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER, desc->cmd.info0);
+	desc->info0 = htole32(desc->info0);
+	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER,
+	    le32toh(desc->cmd.info0));
 }
 
 int
-qwz_hal_reo_cmd_update_rx_queue(struct hal_tlv_hdr *tlv,
+qwz_hal_reo_cmd_update_rx_queue(struct hal_tlv_64_hdr *tlv,
     struct ath12k_hal_reo_cmd *cmd)
 {
 	struct hal_reo_update_rx_queue *desc;
 
-	tlv->tl = FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_UPDATE_RX_REO_QUEUE) |
-	    FIELD_PREP(HAL_TLV_HDR_LEN, sizeof(*desc));
+	tlv->tl = htole64(FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_UPDATE_RX_REO_QUEUE) |
+	    FIELD_PREP(HAL_TLV_HDR_LEN, sizeof(*desc)));
 
 	desc = (struct hal_reo_update_rx_queue *)tlv->value;
+	memset(&desc->queue_addr_lo, 0,
+	    sizeof(*desc) - offsetof(struct hal_reo_update_rx_queue, queue_addr_lo));
 
-	desc->cmd.info0 &= ~HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+	desc->cmd.info0 &= ~htole32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS)
-		desc->cmd.info0 |= HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+		desc->cmd.info0 |= htole32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 
-	desc->queue_addr_lo = cmd->addr_lo;
+	desc->queue_addr_lo = htole32(cmd->addr_lo);
 	desc->info0 =
 		FIELD_PREP(HAL_REO_UPD_RX_QUEUE_INFO0_QUEUE_ADDR_HI,
 		    cmd->addr_hi) |
@@ -8199,20 +8210,25 @@ qwz_hal_reo_cmd_update_rx_queue(struct hal_tlv_hdr *tlv,
 	    FIELD_PREP(HAL_REO_UPD_RX_QUEUE_INFO2_PN_ERR,
 	        !!(cmd->upd2 & HAL_REO_CMD_UPD2_PN_ERR));
 
-	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER, desc->cmd.info0);
+	desc->info0 = htole32(desc->info0);
+	desc->info1 = htole32(desc->info1);
+	desc->info2 = htole32(desc->info2);
+	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER,
+	    le32toh(desc->cmd.info0));
 }
 
 int
 qwz_hal_reo_cmd_send(struct qwz_softc *sc, struct hal_srng *srng,
     enum hal_reo_cmd_type type, struct ath12k_hal_reo_cmd *cmd)
 {
-	struct hal_tlv_hdr *reo_desc;
+	struct hal_tlv_64_hdr *reo_desc;
 	int ret;
 #ifdef notyet
 	spin_lock_bh(&srng->lock);
 #endif
 	qwz_hal_srng_access_begin(sc, srng);
-	reo_desc = (struct hal_tlv_hdr *)qwz_hal_srng_src_get_next_entry(sc, srng);
+	reo_desc = (struct hal_tlv_64_hdr *)
+	    qwz_hal_srng_src_get_next_entry(sc, srng);
 	if (!reo_desc) {
 		ret = ENOBUFS;
 		goto out;
@@ -16308,14 +16324,16 @@ void
 qwz_hal_reo_status_queue_stats(struct qwz_softc *sc, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_get_queue_stats_status *desc =
 	    (struct hal_reo_get_queue_stats_status *)tlv->value;
 
 	status->uniform_hdr.cmd_num =
-	    FIELD_GET(HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	    FIELD_GET(HAL_REO_STATUS_HDR_INFO0_STATUS_NUM,
+	    le32toh(desc->hdr.info0));
 	status->uniform_hdr.cmd_status =
-	    FIELD_GET(HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	    FIELD_GET(HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS,
+	    le32toh(desc->hdr.info0));
 #if 0
 	ath12k_dbg(ab, ATH12K_DBG_HAL, "Queue stats status:\n");
 	ath12k_dbg(ab, ATH12K_DBG_HAL, "header: cmd_num %d status %d\n",
@@ -16374,16 +16392,16 @@ void
 qwz_hal_reo_flush_queue_status(struct qwz_softc *sc, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_flush_queue_status *desc =
 	    (struct hal_reo_flush_queue_status *)tlv->value;
 
 	status->uniform_hdr.cmd_num = FIELD_GET(
-	   HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	   HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, le32toh(desc->hdr.info0));
 	status->uniform_hdr.cmd_status = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, le32toh(desc->hdr.info0));
 	status->u.flush_queue.err_detected = FIELD_GET(
-	    HAL_REO_FLUSH_QUEUE_INFO0_ERR_DETECTED, desc->info0);
+	    HAL_REO_FLUSH_QUEUE_INFO0_ERR_DETECTED, le32toh(desc->info0));
 }
 
 void
@@ -16391,37 +16409,39 @@ qwz_hal_reo_flush_cache_status(struct qwz_softc *sc, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
 	struct ath12k_hal *hal = &sc->hal;
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_flush_cache_status *desc =
 	    (struct hal_reo_flush_cache_status *)tlv->value;
 
 	status->uniform_hdr.cmd_num = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, le32toh(desc->hdr.info0));
 	status->uniform_hdr.cmd_status = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, le32toh(desc->hdr.info0));
 
 	status->u.flush_cache.err_detected = FIELD_GET(
-	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_IS_ERR, desc->info0);
+	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_IS_ERR, le32toh(desc->info0));
 	status->u.flush_cache.err_code = FIELD_GET(
-	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_BLOCK_ERR_CODE, desc->info0);
+	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_BLOCK_ERR_CODE,
+	    le32toh(desc->info0));
 	if (!status->u.flush_cache.err_code)
 		hal->avail_blk_resource |= BIT(hal->current_blk_index);
 
 	status->u.flush_cache.cache_controller_flush_status_hit = FIELD_GET(
-	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_STATUS_HIT, desc->info0);
+	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_STATUS_HIT,
+	    le32toh(desc->info0));
 
 	status->u.flush_cache.cache_controller_flush_status_desc_type =
 	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_DESC_TYPE,
-	    desc->info0);
+	    le32toh(desc->info0));
 	status->u.flush_cache.cache_controller_flush_status_client_id =
 	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_CLIENT_ID,
-	    desc->info0);
+	    le32toh(desc->info0));
 	status->u.flush_cache.cache_controller_flush_status_err =
 	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_ERR,
-	    desc->info0);
+	    le32toh(desc->info0));
 	status->u.flush_cache.cache_controller_flush_status_cnt =
 	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_COUNT,
-	    desc->info0);
+	    le32toh(desc->info0));
 }
 
 void
@@ -16429,19 +16449,19 @@ qwz_hal_reo_unblk_cache_status(struct qwz_softc *sc, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
 	struct ath12k_hal *hal = &sc->hal;
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_unblock_cache_status *desc =
 	   (struct hal_reo_unblock_cache_status *)tlv->value;
 
 	status->uniform_hdr.cmd_num = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, le32toh(desc->hdr.info0));
 	status->uniform_hdr.cmd_status = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, le32toh(desc->hdr.info0));
 
 	status->u.unblock_cache.err_detected = FIELD_GET(
-	    HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_IS_ERR, desc->info0);
+	    HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_IS_ERR, le32toh(desc->info0));
 	status->u.unblock_cache.unblock_type = FIELD_GET(
-	    HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_TYPE, desc->info0);
+	    HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_TYPE, le32toh(desc->info0));
 
 	if (!status->u.unblock_cache.err_detected &&
 	    status->u.unblock_cache.unblock_type ==
@@ -16453,68 +16473,75 @@ void
 qwz_hal_reo_flush_timeout_list_status(struct qwz_softc *ab, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_flush_timeout_list_status *desc =
 	    (struct hal_reo_flush_timeout_list_status *)tlv->value;
 
 	status->uniform_hdr.cmd_num = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, le32toh(desc->hdr.info0));
 	status->uniform_hdr.cmd_status = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, le32toh(desc->hdr.info0));
 
 	status->u.timeout_list.err_detected = FIELD_GET(
-	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_IS_ERR, desc->info0);
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_IS_ERR, le32toh(desc->info0));
 	status->u.timeout_list.list_empty = FIELD_GET(
-	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_LIST_EMPTY, desc->info0);
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_LIST_EMPTY,
+	    le32toh(desc->info0));
 
 	status->u.timeout_list.release_desc_cnt = FIELD_GET(
-	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_REL_DESC_COUNT, desc->info1);
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_REL_DESC_COUNT,
+	    le32toh(desc->info1));
 	status->u.timeout_list.fwd_buf_cnt = FIELD_GET(
-	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_FWD_BUF_COUNT, desc->info1);
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_FWD_BUF_COUNT,
+	    le32toh(desc->info1));
 }
 
 void
 qwz_hal_reo_desc_thresh_reached_status(struct qwz_softc *sc, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_desc_thresh_reached_status *desc =
 	    (struct hal_reo_desc_thresh_reached_status *)tlv->value;
 
 	status->uniform_hdr.cmd_num = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, le32toh(desc->hdr.info0));
 	status->uniform_hdr.cmd_status = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, le32toh(desc->hdr.info0));
 
 	status->u.desc_thresh_reached.threshold_idx = FIELD_GET(
-	    HAL_REO_DESC_THRESH_STATUS_INFO0_THRESH_INDEX, desc->info0);
+	    HAL_REO_DESC_THRESH_STATUS_INFO0_THRESH_INDEX,
+	    le32toh(desc->info0));
 
 	status->u.desc_thresh_reached.link_desc_counter0 = FIELD_GET(
-	    HAL_REO_DESC_THRESH_STATUS_INFO1_LINK_DESC_COUNTER0, desc->info1);
+	    HAL_REO_DESC_THRESH_STATUS_INFO1_LINK_DESC_COUNTER0,
+	    le32toh(desc->info1));
 
 	status->u.desc_thresh_reached.link_desc_counter1 = FIELD_GET(
-	    HAL_REO_DESC_THRESH_STATUS_INFO2_LINK_DESC_COUNTER1, desc->info2);
+	    HAL_REO_DESC_THRESH_STATUS_INFO2_LINK_DESC_COUNTER1,
+	    le32toh(desc->info2));
 
 	status->u.desc_thresh_reached.link_desc_counter2 = FIELD_GET(
-	    HAL_REO_DESC_THRESH_STATUS_INFO3_LINK_DESC_COUNTER2, desc->info3);
+	    HAL_REO_DESC_THRESH_STATUS_INFO3_LINK_DESC_COUNTER2,
+	    le32toh(desc->info3));
 
 	status->u.desc_thresh_reached.link_desc_counter_sum = FIELD_GET(
 	    HAL_REO_DESC_THRESH_STATUS_INFO4_LINK_DESC_COUNTER_SUM,
-	    desc->info4);
+	    le32toh(desc->info4));
 }
 
 void
 qwz_hal_reo_update_rx_reo_queue_status(struct qwz_softc *ab, uint32_t *reo_desc,
     struct hal_reo_status *status)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_status_hdr *desc =
 	    (struct hal_reo_status_hdr *)tlv->value;
 
 	status->uniform_hdr.cmd_num = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->info0);
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, le32toh(desc->info0));
 	status->uniform_hdr.cmd_status = FIELD_GET(
-	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->info0);
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, le32toh(desc->info0));
 }
 
 int
@@ -16525,6 +16552,7 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 	struct dp_reo_cmd *cmd, *tmp;
 	int found = 0, ret = 0;
 	uint32_t *reo_desc;
+	struct hal_tlv_64_hdr *tlv;
 	uint16_t tag;
 	struct hal_reo_status reo_status;
 
@@ -16538,7 +16566,8 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 	while ((reo_desc = qwz_hal_srng_dst_get_next_entry(sc, srng))) {
 		ret = 1;
 
-		tag = FIELD_GET(HAL_SRNG_TLV_HDR_TAG, *reo_desc);
+		tlv = (struct hal_tlv_64_hdr *)reo_desc;
+		tag = FIELD_GET(HAL_SRNG_TLV_HDR_TAG, le64toh(tlv->tl));
 		switch (tag) {
 		case HAL_REO_GET_QUEUE_STATS_STATUS:
 			qwz_hal_reo_status_queue_stats(sc, reo_desc,
