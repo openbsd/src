@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.78 2026/10/01 10:14:55 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.79 2026/10/01 10:15:51 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14966,6 +14966,7 @@ qwz_dp_rx_wbm_err(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 	if (drop) {
 		m_freem(msdu->m);
 		msdu->m = NULL;
+		sc->sc_ic.ic_if.if_ierrors++;
 		return;
 	}
 
@@ -15640,6 +15641,7 @@ qwz_dp_rx_process_received_packets(struct qwz_softc *sc,
 			DNPRINTF(QWZ_D_MAC, "Unable to process msdu: %d", ret);
 			m_freem(msdu->m);
 			msdu->m = NULL;
+			sc->sc_ic.ic_if.if_ierrors++;
 			continue;
 		}
 
