@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.81 2026/10/01 10:17:30 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.82 2026/10/01 17:26:06 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14544,6 +14544,16 @@ qwz_dp_tx_complete_msdu(struct qwz_softc *sc, struct dp_tx_ring *tx_ring,
 			tx_data->ni->ni_txrate = rateidx;
 	} else if (pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N)
 		tx_data->ni->ni_txmcs = mcs;
+
+	if (ts->status == HAL_WBM_TQM_REL_REASON_FRAME_ACKED &&
+	    ts->ack_rssi != 0) {
+		int8_t rssi_dbm = (int8_t)ts->ack_rssi;
+
+		if (!isset(sc->wmi.svc_map,
+		    WMI_TLV_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT))
+			rssi_dbm += ATH12K_DEFAULT_NOISE_FLOOR;
+		tx_data->ni->ni_rssi = rssi_dbm;
+	}
 
 	ieee80211_release_node(ic, tx_data->ni);
 	tx_data->ni = NULL;
