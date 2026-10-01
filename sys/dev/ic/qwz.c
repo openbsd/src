@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.88 2026/10/01 17:37:59 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.89 2026/10/01 22:35:08 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -17585,7 +17585,7 @@ qwz_wmi_vdev_install_key(struct qwz_softc *sc,
 
 	m = qwz_wmi_alloc_mbuf(len);
 	if (m == NULL)
-		return -ENOMEM;
+		return ENOMEM;
 
 	cmd = (struct wmi_vdev_install_key_cmd *)(mtod(m, uint8_t *) +
 	    sizeof(struct ath12k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
