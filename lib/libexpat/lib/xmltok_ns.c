@@ -64,14 +64,14 @@ static const ENCODING *const NS(encodings)[] = {
     &ns(utf8_encoding).enc /* NO_ENC */
 };
 
-static int PTRCALL
+static int
 NS(initScanProlog)(const ENCODING *enc, const char *ptr, const char *end,
                    const char **nextTokPtr) {
   return initScan(NS(encodings), (const INIT_ENCODING *)enc, XML_PROLOG_STATE,
                   ptr, end, nextTokPtr);
 }
 
-static int PTRCALL
+static int
 NS(initScanContent)(const ENCODING *enc, const char *ptr, const char *end,
                     const char **nextTokPtr) {
   return initScan(NS(encodings), (const INIT_ENCODING *)enc, XML_CONTENT_STATE,

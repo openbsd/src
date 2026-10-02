@@ -998,6 +998,50 @@ START_TEST(test_xmldecl_empty_version) {
 }
 END_TEST
 
+/* Regression test for GH #967: Expat only implements XML 1.0 Fourth
+   Edition, so a declared version outside the "1.x" family must be
+   rejected rather than silently accepted. A version matching the Fifth
+   Edition's VersionNum production ("1." followed by one or more digits)
+   is accepted even though Expat itself only implements 1.0 Fourth
+   Edition, per GH #967's review thread: rejecting "1.1" now would just
+   have to be reverted once Expat tracks the Fifth Edition, so it's let
+   through rather than blocked twice. */
+START_TEST(test_xmldecl_wrong_version_number) {
+  const char *const badVersions[] = {"2.3", "0.9", "10", "1.", "1", " 1.0 "};
+
+  for (size_t i = 0; i < sizeof(badVersions) / sizeof(badVersions[0]); i++) {
+    char doc[64];
+    snprintf(doc, sizeof(doc), "<?xml version='%s'?>\n<doc/>", badVersions[i]);
+    set_subtest("version='%s'", badVersions[i]);
+
+    XML_Parser parser = XML_ParserCreate(NULL);
+    assert_true(_XML_Parse_SINGLE_BYTES(parser, doc, (int)strlen(doc), XML_TRUE)
+                == XML_STATUS_ERROR);
+    assert_true(XML_GetErrorCode(parser) == XML_ERROR_XML_DECL);
+    XML_ParserFree(parser);
+  }
+}
+END_TEST
+
+/* GH #967's review pointed out that XML 1.0 Fifth Edition relaxed
+   VersionNum to "1." followed by one or more digits, so versions like
+   "1.1" and "1.123" should parse rather than being rejected. */
+START_TEST(test_xmldecl_accepts_1_x_version) {
+  const char *const goodVersions[] = {"1.1", "1.123"};
+
+  for (size_t i = 0; i < sizeof(goodVersions) / sizeof(goodVersions[0]); i++) {
+    char doc[64];
+    snprintf(doc, sizeof(doc), "<?xml version='%s'?>\n<doc/>", goodVersions[i]);
+    set_subtest("version='%s'", goodVersions[i]);
+
+    XML_Parser parser = XML_ParserCreate(NULL);
+    assert_true(_XML_Parse_SINGLE_BYTES(parser, doc, (int)strlen(doc), XML_TRUE)
+                == XML_STATUS_OK);
+    XML_ParserFree(parser);
+  }
+}
+END_TEST
+
 /* Regression test for SF bug #584832. */
 START_TEST(test_unknown_encoding_internal_entity) {
   const char *text = "<?xml version='1.0' encoding='unsupported-encoding'?>\n"
@@ -1843,6 +1887,301 @@ START_TEST(test_utf16_bad_surrogate_pair) {
     fail("Reversed UTF-16 surrogate pair not faulted");
   if (XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN)
     xml_failure(g_parser);
+}
+END_TEST
+
+// Helper that creates a UTF-16LE copy of UTF-16BE literal input and vice versa
+static char *
+utf16_dup_flipped(const char *text, size_t lenBytes) {
+  assert_true(lenBytes < SIZE_MAX);
+  assert_true(lenBytes % 2 == 0);
+  char *const buffer = malloc(lenBytes + 1);
+  assert_true(buffer != NULL);
+
+  for (size_t i = 0; i < lenBytes; i++) {
+    // This maps 0 -> 1, 1 -> 0, 2 -> 3, 3 -> 2, 4 -> 5, ..
+    size_t j = i + ((i % 2 == 0) ? +1 : -1);
+    assert_true(j < lenBytes);
+    buffer[j] = text[i];
+  }
+
+  buffer[lenBytes] = '\0';
+
+  return buffer;
+}
+
+/* Tests that invalid combinations of surrogates are detected when decoding
+   UTF-16, both little-endian and big-endian.
+   Previously, a high surrogate not followed by a low surrogate slipped
+   through.  Without validation the high would consume the next
+   code unit as a fake low, hiding e.g. a following '<' from the
+   tokenizer. */
+START_TEST(test_utf16_surrogate_pairs) {
+  struct TestCase {
+    const char *idea;
+    const char *content;
+    bool expectedSuccess;
+  };
+
+  struct TestCase testCases[] = {
+      // Group {smallest high - 1}{*}
+      {"{smallest high - 1}{smallest high - 1}",
+       "\0<\0a\0>"
+       "\xD7\xFF"
+       "\xD7\xFF"
+       "\0<\0/\0a\0>",
+       true},
+      {"{smallest high - 1}{smallest high}",
+       "\0<\0a\0>"
+       "\xD7\xFF"
+       "\xD8\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high - 1}{largest high}",
+       "\0<\0a\0>"
+       "\xD7\xFF"
+       "\xDB\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high - 1}{smallest low}",
+       "\0<\0a\0>"
+       "\xD7\xFF"
+       "\xDC\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high - 1}{largest low}",
+       "\0<\0a\0>"
+       "\xD7\xFF"
+       "\xDF\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high - 1}{largest low + 1}",
+       "\0<\0a\0>"
+       "\xD7\xFF"
+       "\xE0\x00"
+       "\0<\0/\0a\0>",
+       true},
+      // Group {smallest high}{*}
+      {"{smallest high}{smallest high - 1}",
+       "\0<\0a\0>"
+       "\xD8\x00"
+       "\xD7\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high}{smallest high}",
+       "\0<\0a\0>"
+       "\xD8\x00"
+       "\xD8\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high}{largest high}",
+       "\0<\0a\0>"
+       "\xD8\x00"
+       "\xDB\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest high}{smallest low}",
+       "\0<\0a\0>"
+       "\xD8\x00"
+       "\xDC\x00"
+       "\0<\0/\0a\0>",
+       true},
+      {"{smallest high}{largest low}",
+       "\0<\0a\0>"
+       "\xD8\x00"
+       "\xDF\xFF"
+       "\0<\0/\0a\0>",
+       true},
+      {"{smallest high}{largest low + 1}",
+       "\0<\0a\0>"
+       "\xD8\x00"
+       "\xE0\x00"
+       "\0<\0/\0a\0>",
+       false},
+      // Group {largest high}{*}
+      {"{largest high}{smallest high - 1}",
+       "\0<\0a\0>"
+       "\xDB\xFF"
+       "\xD7\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest high}{smallest high}",
+       "\0<\0a\0>"
+       "\xDB\xFF"
+       "\xD8\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest high}{largest high}",
+       "\0<\0a\0>"
+       "\xDB\xFF"
+       "\xDB\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest high}{smallest low}",
+       "\0<\0a\0>"
+       "\xDB\xFF"
+       "\xDC\x00"
+       "\0<\0/\0a\0>",
+       true},
+      {"{largest high}{largest low}",
+       "\0<\0a\0>"
+       "\xDB\xFF"
+       "\xDF\xFF"
+       "\0<\0/\0a\0>",
+       true},
+      {"{largest high}{largest low + 1}",
+       "\0<\0a\0>"
+       "\xDB\xFF"
+       "\xE0\x00"
+       "\0<\0/\0a\0>",
+       false},
+      // Group {smallest low}{*}
+      {"{smallest low}{smallest high - 1}",
+       "\0<\0a\0>"
+       "\xDC\x00"
+       "\xD7\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest low}{smallest high}",
+       "\0<\0a\0>"
+       "\xDC\x00"
+       "\xD8\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest low}{largest high}",
+       "\0<\0a\0>"
+       "\xDC\x00"
+       "\xDB\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest low}{smallest low}",
+       "\0<\0a\0>"
+       "\xDC\x00"
+       "\xDC\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest low}{largest low}",
+       "\0<\0a\0>"
+       "\xDC\x00"
+       "\xDF\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{smallest low}{largest low + 1}",
+       "\0<\0a\0>"
+       "\xDC\x00"
+       "\xE0\x00"
+       "\0<\0/\0a\0>",
+       false},
+      // Group {largest low}{*}
+      {"{largest low}{smallest high - 1}",
+       "\0<\0a\0>"
+       "\xDF\xFF"
+       "\xD7\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low}{smallest high}",
+       "\0<\0a\0>"
+       "\xDF\xFF"
+       "\xD8\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low}{largest high}",
+       "\0<\0a\0>"
+       "\xDF\xFF"
+       "\xDB\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low}{smallest low}",
+       "\0<\0a\0>"
+       "\xDF\xFF"
+       "\xDC\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low}{largest low}",
+       "\0<\0a\0>"
+       "\xDF\xFF"
+       "\xDF\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low}{largest low + 1}",
+       "\0<\0a\0>"
+       "\xDF\xFF"
+       "\xE0\x00"
+       "\0<\0/\0a\0>",
+       false},
+      // Group {largest low + 1}{*}
+      {"{largest low + 1}{smallest high - 1}",
+       "\0<\0a\0>"
+       "\xE0\x00"
+       "\xD7\xFF"
+       "\0<\0/\0a\0>",
+       true},
+      {"{largest low + 1}{smallest high}",
+       "\0<\0a\0>"
+       "\xE0\x00"
+       "\xD8\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low + 1}{largest high}",
+       "\0<\0a\0>"
+       "\xE0\x00"
+       "\xDB\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low + 1}{smallest low}",
+       "\0<\0a\0>"
+       "\xE0\x00"
+       "\xDC\x00"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low + 1}{largest low}",
+       "\0<\0a\0>"
+       "\xE0\x00"
+       "\xDF\xFF"
+       "\0<\0/\0a\0>",
+       false},
+      {"{largest low + 1}{largest low + 1}",
+       "\0<\0a\0>"
+       "\xE0\x00"
+       "\xE0\x00"
+       "\0<\0/\0a\0>",
+       true},
+  };
+
+  for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); i++) {
+    set_subtest("%s", testCases[i].idea);
+
+    const int lenBytes = /*<a>*/ 6 + /*first*/ 2 + /*second*/ 2 + /*</a>*/ 8;
+    const bool expectedSuccess = testCases[i].expectedSuccess;
+    const enum XML_Status expectedStatus
+        = (expectedSuccess ? XML_STATUS_OK : XML_STATUS_ERROR);
+
+    const char *const bigEndian = testCases[i].content;
+    char *const littleEndian = utf16_dup_flipped(bigEndian, lenBytes);
+    assert_true(littleEndian != NULL);
+    const char *endianCases[] = {bigEndian, littleEndian};
+
+    for (size_t j = 0; j < sizeof(endianCases) / sizeof(endianCases[0]); j++) {
+      const char *text = endianCases[j];
+
+      assert_true(text[lenBytes] == '\0'); // self-test
+      assert_true((text[0] == '\0')
+                  != (text[lenBytes - 1] == '\0')); // self-test
+
+      XML_Parser parser = XML_ParserCreate(NULL);
+      assert_true(parser != NULL);
+
+      assert_true(_XML_Parse_SINGLE_BYTES(parser, text, lenBytes, XML_TRUE)
+                  == expectedStatus);
+      if (! expectedSuccess) {
+        assert_true(XML_GetErrorCode(parser) == XML_ERROR_INVALID_TOKEN);
+      }
+
+      XML_ParserFree(parser);
+    }
+
+    free(littleEndian);
+  }
 }
 END_TEST
 
@@ -6760,6 +7099,8 @@ make_basic_test_case(Suite *s) {
   tcase_add_test(tc_basic, test_xmldecl_missing_attr);
   tcase_add_test(tc_basic, test_xmldecl_missing_value);
   tcase_add_test(tc_basic, test_xmldecl_empty_version);
+  tcase_add_test(tc_basic, test_xmldecl_wrong_version_number);
+  tcase_add_test(tc_basic, test_xmldecl_accepts_1_x_version);
   tcase_add_test__if_xml_ge(tc_basic, test_unknown_encoding_internal_entity);
   tcase_add_test(tc_basic, test_unrecognised_encoding_internal_entity);
   tcase_add_test__ifdef_xml_dtd(tc_basic, test_ext_entity_set_encoding);
@@ -6793,6 +7134,7 @@ make_basic_test_case(Suite *s) {
   tcase_add_test(tc_basic, test_long_cdata_utf16);
   tcase_add_test(tc_basic, test_multichar_cdata_utf16);
   tcase_add_test(tc_basic, test_utf16_bad_surrogate_pair);
+  tcase_add_test(tc_basic, test_utf16_surrogate_pairs);
   tcase_add_test(tc_basic, test_bad_cdata);
   tcase_add_test(tc_basic, test_bad_cdata_utf16);
   tcase_add_test(tc_basic, test_stop_parser_between_cdata_calls);

@@ -117,7 +117,7 @@ tracking_free(void *ptr) {
     if (entry->next != NULL)
       entry->next->prev = entry->prev;
     else
-      alloc_tail = entry->next;
+      alloc_tail = entry->prev;
     free(entry);
   } else {
     printf("Attempting to free unallocated memory at %p\n", ptr);

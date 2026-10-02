@@ -16,6 +16,33 @@
 !!                                   Sebastian Pipping -- Berlin, 2026-08-03 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+Tue September 22 2026
+        Security fixes:
+           #1282  CVE-2026-93990 -- Reject high surrogates not followed by a
+                    low surrogate during UTF-16 decoding; previously, malformed
+                    UTF-16 could be smuggled into the application using Expat
+                    and could cause arbitrary damage there, depending on how
+                    malformed UTF-16 was handled inside the application;
+                    validation was not their job but Expat's. This is similar
+                    to past vulnerability CVE-2022-25235.
+                    Upstream CVSS 3.1 vector:
+                    AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H (CVSS score: 9.8)
+
+        Bug fixes:
+           #1346  lib: Fix OOM-related memory leak on a failed overflow check
+           #1371  lib: Fix memory alignment for architectures with 128bit
+                    pointers like CHERI-RISC-V
+
+        Other changes:
+           #1354  lib: Reject an XML declaration version other than `1.[0-9]+`
+                    (which is less strict than XML 1.0r4 (fourth edition)
+                    and matches XML 1.0r5 (fifth edition))
+           #1357  lib: Drop internal macros FASTCALL, PTRCALL, PTRFASTCALL
+           #1349  Replace some internal use of XML_Bool with standard bool
+           #1360  tests|xmlwf: Add `#include "expat_config.h"` where missing
+           #1378  tests: Fix tail pointer when unlinking the last tracked
+                    allocation
+
 Release 2.8.4 Mon August 31 2026
         Security fixes:
      #1321 #1331  CVE-2026-66046, CVE-2026-76641 -- Fix quadratic runtime from

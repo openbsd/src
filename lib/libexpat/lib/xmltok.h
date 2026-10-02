@@ -163,8 +163,8 @@ typedef struct {
 struct encoding;
 typedef struct encoding ENCODING;
 
-typedef int(PTRCALL *SCANNER)(const ENCODING *, const char *, const char *,
-                              const char **);
+typedef int (*SCANNER)(const ENCODING *, const char *, const char *,
+                       const char **);
 
 enum XML_Convert_Result {
   XML_CONVERT_COMPLETED = 0,
@@ -176,28 +176,27 @@ enum XML_Convert_Result {
 struct encoding {
   SCANNER scanners[XML_N_STATES];
   SCANNER literalScanners[XML_N_LITERAL_TYPES];
-  int(PTRCALL *nameMatchesAscii)(const ENCODING *, const char *, const char *,
-                                 const char *);
-  int(PTRFASTCALL *nameLength)(const ENCODING *, const char *);
-  const char *(PTRFASTCALL *skipS)(const ENCODING *, const char *);
-  int(PTRCALL *getAtts)(const ENCODING *enc, const char *ptr, int attsMax,
-                        ATTRIBUTE *atts);
-  int(PTRFASTCALL *charRefNumber)(const ENCODING *enc, const char *ptr);
-  int(PTRCALL *predefinedEntityName)(const ENCODING *, const char *,
-                                     const char *);
-  void(PTRCALL *updatePosition)(const ENCODING *, const char *ptr,
-                                const char *end, POSITION *);
-  int(PTRCALL *isPublicId)(const ENCODING *enc, const char *ptr,
-                           const char *end, const char **badPtr);
-  enum XML_Convert_Result(PTRCALL *utf8Convert)(const ENCODING *enc,
-                                                const char **fromP,
-                                                const char *fromLim, char **toP,
-                                                const char *toLim);
-  enum XML_Convert_Result(PTRCALL *utf16Convert)(const ENCODING *enc,
-                                                 const char **fromP,
-                                                 const char *fromLim,
-                                                 unsigned short **toP,
-                                                 const unsigned short *toLim);
+  int (*nameMatchesAscii)(const ENCODING *, const char *, const char *,
+                          const char *);
+  int (*nameLength)(const ENCODING *, const char *);
+  const char *(*skipS)(const ENCODING *, const char *);
+  int (*getAtts)(const ENCODING *enc, const char *ptr, int attsMax,
+                 ATTRIBUTE *atts);
+  int (*charRefNumber)(const ENCODING *enc, const char *ptr);
+  int (*predefinedEntityName)(const ENCODING *, const char *, const char *);
+  void (*updatePosition)(const ENCODING *, const char *ptr, const char *end,
+                         POSITION *);
+  int (*isPublicId)(const ENCODING *enc, const char *ptr, const char *end,
+                    const char **badPtr);
+  enum XML_Convert_Result (*utf8Convert)(const ENCODING *enc,
+                                         const char **fromP,
+                                         const char *fromLim, char **toP,
+                                         const char *toLim);
+  enum XML_Convert_Result (*utf16Convert)(const ENCODING *enc,
+                                          const char **fromP,
+                                          const char *fromLim,
+                                          unsigned short **toP,
+                                          const unsigned short *toLim);
   int minBytesPerChar;
   char isUtf8;
   char isUtf16;
@@ -297,8 +296,8 @@ int XmlInitEncoding(INIT_ENCODING *p, const ENCODING **encPtr,
                     const char *name);
 const ENCODING *XmlGetUtf8InternalEncoding(void);
 const ENCODING *XmlGetUtf16InternalEncoding(void);
-int FASTCALL XmlUtf8Encode(int charNumber, char *buf);
-int FASTCALL XmlUtf16Encode(int charNumber, unsigned short *buf);
+int XmlUtf8Encode(int charNumber, char *buf);
+int XmlUtf16Encode(int charNumber, unsigned short *buf);
 int XmlSizeOfUnknownEncoding(void);
 
 typedef int(XMLCALL *CONVERTER)(void *userData, const char *p);
