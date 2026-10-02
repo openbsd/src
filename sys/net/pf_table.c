@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.150 2026/09/21 13:58:20 gnezdo Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.151 2026/10/02 09:40:22 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1144,6 +1144,8 @@ pfr_insert_kentry(struct pfr_ktable *kt, struct pfr_addr *ad, time_t tzero)
 {
 	struct pfr_kentry	*p;
 	int			 rv;
+
+	PF_ASSERT_LOCKED();
 
 	p = pfr_lookup_addr(kt, ad, 1);
 	if (p != NULL)

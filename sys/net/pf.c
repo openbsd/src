@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1241 2026/09/10 12:28:04 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.1242 2026/10/02 09:40:22 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -757,9 +757,12 @@ pf_src_connlimit(struct pf_state **stp)
 	int			 bad = 0;
 	struct pf_src_node	*sn;
 	u_int32_t		 sn_conn;
+	int			 rv = 0;
+
+	PF_LOCK();
 
 	if ((sn = pf_get_src_node((*stp), PF_SN_NONE)) == NULL)
-		return (0);
+		goto done;
 
 	/*
 	 * Note: conn limit is bumped on SYN_SENT->ESTBLISHED
@@ -784,7 +787,7 @@ pf_src_connlimit(struct pf_state **stp)
 	}
 
 	if (!bad)
-		return (0);
+		goto done;
 
 	if ((*stp)->rule.ptr->overload_tbl) {
 		struct pfr_addr p;
@@ -822,6 +825,7 @@ pf_src_connlimit(struct pf_state **stp)
 			struct pf_state *st;
 
 			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
+			PF_STATE_ENTER_READ();
 			RBT_FOREACH(st, pf_state_tree_id, &tree_id) {
 				sk = st->key[PF_SK_WIRE];
 				/*
@@ -844,6 +848,7 @@ pf_src_connlimit(struct pf_state **stp)
 					killed++;
 				}
 			}
+			PF_STATE_EXIT_READ();
 			if (pf_status.debug >= LOG_NOTICE)
 				addlog(", %u states killed", killed);
 		}
@@ -854,7 +859,12 @@ pf_src_connlimit(struct pf_state **stp)
 	/* kill this state */
 	pf_update_state_timeout(*stp, PFTM_PURGE);
 	pf_set_protostate(*stp, PF_PEER_BOTH, TCPS_CLOSED);
-	return (1);
+
+	rv = 1;
+done:
+	PF_UNLOCK();
+
+	return (rv);
 }
 
 int
