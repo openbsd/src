@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.168 2026/09/08 00:24:30 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.169 2026/10/02 13:18:07 kirill Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -539,7 +539,7 @@ usbd_parse_idesc(struct usbd_device *dev, struct usbd_interface *ifc)
 			    	return (-1);
 		}
 
-		if (p >= end)
+		if (p >= end || ed->bLength < USB_ENDPOINT_DESCRIPTOR_SIZE)
 			return (-1);
 
 		pp = p + ed->bLength;
@@ -665,6 +665,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	if (cd.bDescriptorType != UDESC_CONFIG)
 		return (USBD_INVAL);
 	cdplen = UGETW(cd.wTotalLength);
+	if (cdplen < USB_CONFIG_DESCRIPTOR_SIZE)
+		return (USBD_INVAL);
 	cdp = malloc(cdplen, M_USB, M_NOWAIT);
 	if (cdp == NULL)
 		return (USBD_NOMEM);
@@ -681,6 +683,10 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	if (cdp->bDescriptorType != UDESC_CONFIG) {
 		DPRINTFN(-1,("%s: bad desc %d\n", __func__,
 		    cdp->bDescriptorType));
+		err = USBD_INVAL;
+		goto bad;
+	}
+	if (UGETW(cdp->wTotalLength) != cdplen) {
 		err = USBD_INVAL;
 		goto bad;
 	}
