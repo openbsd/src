@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.90 2026/10/02 12:28:20 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.91 2026/10/02 12:41:35 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -7424,7 +7424,8 @@ qwz_hal_srng_access_end(struct qwz_softc *sc, struct hal_srng *srng)
 			    *(volatile uint32_t *)srng->u.src_ring.tp_addr;
 			*srng->u.src_ring.hp_addr = srng->u.src_ring.hp;
 		} else {
-			srng->u.dst_ring.last_hp = *srng->u.dst_ring.hp_addr;
+			srng->u.dst_ring.last_hp =
+			    *(volatile uint32_t *)srng->u.dst_ring.hp_addr;
 			*srng->u.dst_ring.tp_addr = srng->u.dst_ring.tp;
 		}
 	} else {
@@ -7437,7 +7438,8 @@ qwz_hal_srng_access_end(struct qwz_softc *sc, struct hal_srng *srng)
 			    (unsigned long)srng->u.src_ring.hp_addr -
 			    (unsigned long)sc->mem, srng->u.src_ring.hp);
 		} else {
-			srng->u.dst_ring.last_hp = *srng->u.dst_ring.hp_addr;
+			srng->u.dst_ring.last_hp =
+			    *(volatile uint32_t *)srng->u.dst_ring.hp_addr;
 			sc->ops.write32(sc,
 			    (unsigned long)srng->u.dst_ring.tp_addr -
 			    (unsigned long)sc->mem, srng->u.dst_ring.tp);
