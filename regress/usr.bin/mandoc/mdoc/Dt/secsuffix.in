@@ -1,0 +1,9 @@
+.\" $OpenBSD: secsuffix.in,v 1.1 2026/10/02 16:48:01 schwarze Exp $
+.Dd $Mdocdate: October 2 2026 $
+.Dt DT-SECSUFFIX 1x
+.Os
+.Sh NAME
+.Nm Dt-secsuffix
+.Nd suffix on the section number
+.Sh DESCRIPTION
+some text

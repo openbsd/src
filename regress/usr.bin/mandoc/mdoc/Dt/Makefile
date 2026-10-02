@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.11 2025/07/26 13:39:48 schwarze Exp $
+# $OpenBSD: Makefile,v 1.12 2026/10/02 16:48:01 schwarze Exp $
 
 REGRESS_TARGETS	 = badsec case dupe fourargs late
-REGRESS_TARGETS	+= missing noarg nobody nosec order
+REGRESS_TARGETS	+= missing noarg nobody nosec order secsuffix
 LINT_TARGETS	 = badsec case dupe fourargs late
 LINT_TARGETS	+= missing noarg nobody nosec order
 
@@ -27,5 +27,9 @@ SKIP_TMAN	+= fourargs
 #    with what the header uses.
 
 SKIP_GROFF	 = dupe late order
+
+# groff-1.22.4 to 1.25.0 does not recognise section numbers with suffixes
+
+SKIP_GROFF	+= secsuffix
 
 .include <bsd.regress.mk>
