@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.106 2026/10/02 04:18:48 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.107 2026/10/02 18:06:20 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1618,7 +1618,7 @@ relay_httpurl_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 	host = kv_find(&desc->http_headers, &key);
 
 	if (host == NULL || host->kv_value == NULL)
-		return (0);
+		return (RES_BAD);
 	else if (rule->rule_action != RULE_ACTION_BLOCK &&
 	    kv->kv_option == KEY_OPTION_LOG &&
 	    kv_match_key(kv, match->kv_key, FNM_CASEFOLD)) {
