@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.145 2026/10/01 13:39:35 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.146 2026/10/02 11:24:18 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -9847,6 +9847,8 @@ qwx_hal_srng_access_end(struct qwx_softc *sc, struct hal_srng *srng)
 		}
 	} else {
 		if (srng->ring_dir == HAL_SRNG_DIR_SRC) {
+			bus_dmamap_sync(sc->sc_dmat, QWX_DMA_MAP(sc->hal.wrpmem), 0,
+			    QWX_DMA_LEN(sc->hal.wrpmem), BUS_DMASYNC_POSTWRITE);
 			srng->u.src_ring.last_tp =
 			    *(volatile uint32_t *)srng->u.src_ring.tp_addr;
 			sc->ops.write32(sc,
