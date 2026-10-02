@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.104 2026/09/16 00:16:10 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.105 2026/10/02 04:03:47 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -215,6 +215,16 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	for (;;) {
 		line = evbuffer_readln(src, &linelen, EVBUFFER_EOL_CRLF);
 		if (line == NULL) {
+			/*
+			 * Do not buffer an unterminated line beyond
+			 * the header limit.
+			 */
+			if (EVBUFFER_LENGTH(src) >
+			    proto->httpheaderlen - cre->headerlen) {
+				relay_abort_http(con, 413,
+				    "request headers too large", 0);
+				goto abort;
+			}
 			/*
 			 * We do not process the last header on premature
 			 * EOF as it may not be complete.
