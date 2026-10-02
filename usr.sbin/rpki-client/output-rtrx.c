@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.6 2026/09/30 13:42:04 deraadt Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.7 2026/10/02 14:13:44 tb Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -117,8 +117,7 @@ struct pdu_ipv6_prefix_import {
 #define SKI_LENGTH 20
 #define SPKI_LENGTH_P256 91
 
-struct pdu_router_key_import
-{
+struct pdu_router_key_import {
 	uint8_t version;
 	uint8_t type;
 	uint8_t flags;
