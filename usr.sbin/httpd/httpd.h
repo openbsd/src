@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.184 2026/09/10 12:31:09 deraadt Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.185 2026/10/02 04:47:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -190,6 +190,7 @@ enum imsg_type {
 	IMSG_CFG_AUTH,
 	IMSG_CFG_FCGI,
 	IMSG_CFG_HEADERS,
+	IMSG_CFG_HEADER_RULES,
 	IMSG_CFG_DONE,
 	IMSG_LOG_ACCESS,
 	IMSG_LOG_ERROR,
@@ -413,6 +414,12 @@ enum log_format {
 	LOG_FORMAT_FORWARDED
 };
 
+enum header_action {
+	HEADER_ACTION_DROP,
+	HEADER_ACTION_RETURN,
+	HEADER_ACTION_RDR
+};
+
 #define HEADER_REMOVE		0x01
 #define HEADER_ADD		0x02
 #define HEADER_SET		0x04
@@ -423,6 +430,15 @@ struct header_imsg {
 	uint32_t	flags;
 	uint16_t	namelen;
 	uint16_t	vallen;
+};
+
+struct header_rule_imsg {
+	uint32_t		id;		/* server conf id */
+	uint32_t		namelen;
+	uint32_t		vallen;
+	uint32_t		action;
+	uint32_t		return_code;
+	uint32_t		urilen;
 };
 
 struct log_file {
@@ -477,6 +493,17 @@ struct custom_header {
 	TAILQ_ENTRY(custom_header)	 entry;
 };
 TAILQ_HEAD(server_headers, custom_header);
+
+struct header_rule {
+	char				*name;
+	char				*value;
+	enum header_action		 action;
+	u_int32_t			 return_code;
+	char				*return_uri;
+
+	TAILQ_ENTRY(header_rule)	 entry;
+};
+TAILQ_HEAD(server_header_rules, header_rule);
 
 struct server_config {
 	uint32_t			 id;
@@ -549,6 +576,7 @@ struct server_config {
 	struct server_fcgiparams	 fcgiparams;
 	int				 fcgistrip;
 	int				 fcgiallowchunked;
+	struct server_header_rules	 header_rules;
 	struct server_headers		 headers;
 	char				 errdocroot[HTTPD_ERRDOCROOT_MAX];
 
@@ -634,6 +662,7 @@ int			 server_privinit(struct server *);
 void			 server_purge(struct server *);
 void			 serverconfig_free(struct server_config *);
 void			 server_headers_free(struct server_headers *);
+void			 server_header_rules_free(struct server_header_rules *);
 void			 serverconfig_reset(struct server_config *);
 int			 server_socket_af(struct sockaddr_storage *, in_port_t);
 in_port_t		 server_socket_getport(struct sockaddr_storage *);
@@ -678,6 +707,8 @@ void			 server_abort_http(struct client *, unsigned int,
     const char *);
 int			 server_custom_headers(struct server_config *,
     struct kvtree *, unsigned int);
+struct header_rule	*server_match_header_rule(struct server_config *,
+    struct http_descriptor *);
 enum httpmethod		 server_httpmethod_byname(const char *);
 const char		*server_httpmethod_byid(unsigned int);
 const char		*server_httperror_byid(unsigned int);
@@ -762,6 +793,7 @@ void			 print_custom_header(const char *,
     const struct custom_header *);
 int			 header_exists(struct server_config *, const char *);
 struct custom_header	*header_dup(const struct custom_header *);
+struct header_rule	*header_rule_dup(const struct header_rule *);
 
 extern struct httpd *httpd_env;
 
@@ -810,10 +842,13 @@ int	 config_setserver(struct httpd *, struct server *);
 int	 config_setserver_tls(struct httpd *, struct server *);
 int	 config_setserver_fcgiparams(struct httpd *, struct server *);
 int	 config_setserver_headers(struct httpd *, struct server *);
+int	 config_setserver_header_rules(struct httpd *, struct server *);
 void	 config_inherit_headers(struct httpd *, struct server *);
+void	 config_inherit_header_rules(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
 int	 config_getserver_tls(struct httpd *, struct imsg *);
 int	 config_getserver_fcgiparams(struct httpd *, struct imsg *);
+int	 config_getserver_header_rules(struct httpd *, struct imsg *);
 int	 config_getserver_headers(struct httpd *, struct imsg *);
 int	 config_setmedia(struct httpd *, struct media_type *);
 int	 config_getmedia(struct httpd *, struct imsg *);

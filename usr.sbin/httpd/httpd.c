@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.84 2026/09/17 17:55:06 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.85 2026/10/02 04:47:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1283,4 +1283,23 @@ header_dup(const struct custom_header *src)
 		fatal("out of memory");
 	h->flags = src->flags;
 	return (h);
+}
+
+struct header_rule *
+header_rule_dup(const struct header_rule *src)
+{
+	struct header_rule *r;
+
+	if ((r = calloc(1, sizeof(*r))) == NULL)
+		fatal("out of memory");
+	if ((r->name = strdup(src->name)) == NULL ||
+	    (r->value = strdup(src->value)) == NULL)
+		fatal("out of memory");
+
+	r->action = src->action;
+	r->return_code = src->return_code;
+	if ((r->return_uri = strdup(src->return_uri)) == NULL)
+		fatal("out of memory");
+
+	return (r);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.77 2026/07/26 14:46:32 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.78 2026/10/02 04:47:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -198,6 +198,7 @@ clear_config_server_ptrs(struct server_config *cfg)
 	/* clear TAILQ_HEAD */
 	memset(&cfg->fcgiparams, 0, sizeof(cfg->fcgiparams));
 	memset(&cfg->headers, 0, sizeof(cfg->headers));
+	memset(&cfg->header_rules, 0, sizeof(cfg->header_rules));
 
 	/* clear TAILQ_ENTRY */
 	memset(&cfg->entry, 0, sizeof(cfg->entry));
@@ -293,6 +294,11 @@ config_setserver(struct httpd *env, struct server *srv)
 	/* Configure custom headers if necessary. */
 	config_inherit_headers(env, srv);
 	if (config_setserver_headers(env, srv) == -1)
+		return (-1);
+
+	/* Configure headers rules if necessary. */
+	config_inherit_header_rules(env, srv);
+	if (config_setserver_header_rules(env, srv) == -1)
 		return (-1);
 
 	/* Close server socket early to prevent fd exhaustion in the parent. */
@@ -519,6 +525,124 @@ config_inherit_headers(struct httpd *env, struct server *srv)
 	}
 
 	TAILQ_CONCAT(&srv_conf->headers, &inherited, entry);
+}
+
+int
+config_getserver_header_rules(struct httpd *env, struct imsg *imsg)
+{
+	struct server_config	*srv_conf;
+	struct header_rule	*rule;
+	struct header_rule_imsg	 hmsg;
+	struct ibuf		 ibuf;
+
+	if (imsg_get_ibuf(imsg, &ibuf) == -1 ||
+	    ibuf_get(&ibuf, &hmsg, sizeof(hmsg)) == -1) {
+		log_debug("%s: invalid message", __func__);
+		return (-1);
+	}
+
+	if ((srv_conf = serverconfig_byid(hmsg.id)) == NULL) {
+		log_debug("%s: invalid config id", __func__);
+		return (-1);
+	}
+
+	if ((rule = calloc(1, sizeof(*rule))) == NULL)
+		fatal("header rule out of memory");
+
+	rule->name = ibuf_get_string(&ibuf, hmsg.namelen);
+	rule->value = ibuf_get_string(&ibuf, hmsg.vallen);
+	rule->return_uri = ibuf_get_string(&ibuf, hmsg.urilen);
+
+	if (rule->name == NULL || rule->value == NULL ||
+	    rule->return_uri == NULL) {
+		free(rule->name);
+		free(rule->value);
+		free(rule->return_uri);
+		free(rule);
+		return (-1);
+	}
+	rule->action = hmsg.action;
+	rule->return_code = hmsg.return_code;
+
+	TAILQ_INSERT_TAIL(&srv_conf->header_rules, rule, entry);
+	return (0);
+}
+
+/*
+ * Inherit header rules from parent server
+ */
+void
+config_inherit_header_rules(struct httpd *env, struct server *srv)
+{
+	struct server			*parent_srv;
+	struct server_config		*srv_conf = &srv->srv_conf;
+	struct header_rule		*rule, *nrule;
+	struct server_header_rules	 inherited;
+
+	if (!(srv_conf->flags & SRVFLAG_LOCATION))
+		return;
+
+	/* Find parent server by parent_id */
+	TAILQ_FOREACH(parent_srv, env->sc_servers, srv_entry) {
+		if (parent_srv->srv_conf.id == srv_conf->parent_id)
+			break;
+	}
+
+	if (parent_srv == NULL)
+		return;
+
+	TAILQ_INIT(&inherited);
+
+	TAILQ_FOREACH(rule, &parent_srv->srv_conf.header_rules, entry) {
+		nrule = header_rule_dup(rule);
+		TAILQ_INSERT_TAIL(&inherited, nrule, entry);
+		DPRINTF("%s: inheriting header rule \"%s\" from parent \"%s\" "
+		    "to location \"%s\"", __func__, rule->name,
+		    parent_srv->srv_conf.name, srv_conf->location);
+	}
+
+	TAILQ_CONCAT(&srv_conf->header_rules, &inherited, entry);
+}
+
+int
+config_setserver_header_rules(struct httpd *env, struct server *srv)
+{
+	struct privsep		*ps = env->sc_ps;
+	struct server_config	*srv_conf = &srv->srv_conf;
+	struct header_rule	*rule;
+	struct header_rule_imsg	 hmsg;
+	struct iovec		 iov[4];
+
+	DPRINTF("%s: sending header rules for \"%s[%u]\" to %s fd %d",
+	    __func__, srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
+	    srv->srv_s);
+
+	TAILQ_FOREACH(rule, &srv_conf->header_rules, entry) {
+		hmsg.id = srv_conf->id;
+
+		hmsg.namelen = strlen(rule->name);
+		hmsg.vallen = strlen(rule->value);
+		hmsg.return_code = rule->return_code;
+		hmsg.action = rule->action;
+		hmsg.urilen = strlen(rule->return_uri);
+
+		iov[0].iov_base = &hmsg;
+		iov[0].iov_len = sizeof(hmsg);
+		iov[1].iov_base = rule->name;
+		iov[1].iov_len = hmsg.namelen;
+		iov[2].iov_base = rule->value;
+		iov[2].iov_len = hmsg.vallen;
+		iov[3].iov_base = rule->return_uri;
+		iov[3].iov_len = hmsg.urilen;
+
+		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_HEADER_RULES,
+		    iov, 4) != 0) {
+			log_warn("%s: failed to compose IMSG_CFG_HEADER_RULES "
+			    "for `%s'", __func__, srv_conf->name);
+			return (-1);
+		}
+	}
+	return (0);
 }
 
 int
@@ -842,6 +966,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	srv->srv_s = fd;
 
 	TAILQ_INIT(&srv->srv_conf.headers);
+	TAILQ_INIT(&srv->srv_conf.header_rules);
 	TAILQ_INIT(&srv->srv_conf.fcgiparams);
 
 	if (config_getserver_auth(env, &srv->srv_conf) != 0)

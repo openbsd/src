@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.136 2026/09/27 10:16:36 kn Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.137 2026/10/02 04:47:07 rsadowski Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2026 $
+.Dd $Mdocdate: October 2 2026 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -542,6 +542,39 @@ block are inherited from the
 context and override defined headers with the same name.
 If you do not wish to inherit these, you can remove them again with
 .Ic remove .
+.Pp
+Incoming requests can also be rejected based on the value of a request
+header.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic block Ar name Ar value Ar code Op Ar arg
+Close the connection with an error response when a request header
+matches.
+Both
+.Ar name
+and
+.Ar value
+are shell-style patterns and are matched case-insensitively against
+the header name and value.
+.Ar code
+must be a valid HTTP status code.
+For codes in the 3xx range,
+.Ar arg
+is required and sent as the
+.Qq Location
+header.
+It must start with
+.Qq http://
+or
+.Qq https:// .
+For all other codes,
+.Ar arg
+is optional and used as the log message identifying the rule.
+.It Ic drop Ar name Ar value
+Silently close the connection without sending a response when a request
+header matches, using the same pattern rules as
+.Ic block .
+.El
 .It Ic hsts Oo Ar option Oc
 Enable HTTP Strict Transport Security.
 Valid options are:

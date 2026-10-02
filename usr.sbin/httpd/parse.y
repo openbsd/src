@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.138 2026/07/25 08:58:14 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.139 2026/10/02 04:47:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -341,6 +341,7 @@ server		: SERVER optmatch STRING	{
 			TAILQ_INIT(&srv->srv_hosts);
 			TAILQ_INIT(&srv_conf->fcgiparams);
 			TAILQ_INIT(&srv_conf->headers);
+			TAILQ_INIT(&srv_conf->header_rules);
 
 			TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 		} '{' optnl serveropts_l '}'	{
@@ -664,6 +665,7 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			srv_conf = &srv->srv_conf;
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INIT(&srv_conf->headers);
+			TAILQ_INIT(&srv_conf->header_rules);
 			TAILQ_INIT(&srv_conf->fcgiparams);
 		} '{' optnl serveropts_l '}'	{
 			struct server	*s = NULL;
@@ -831,6 +833,91 @@ header		: HEADER REMOVE STRING optalways	{
 			if ($5)
 				hdr->flags |= HEADER_ALWAYS;
 			TAILQ_INSERT_TAIL(&srv->srv_conf.headers, hdr, entry);
+		}
+		| HEADER BLOCK STRING STRING NUMBER optstring {
+			struct header_rule	*hrule;
+
+			if ((hrule= calloc(1, sizeof(*hrule))) == NULL)
+				fatal("out of memory");
+
+			hrule->action = HEADER_ACTION_RETURN;
+
+			hrule->name = $3;
+			hrule->value = $4;
+
+			if ($5 < 100 || $5 >= 600) {
+				log_warn("header rule return code number is "
+				"outside of a valid range");
+			}
+
+			hrule->return_code = $5;
+
+			if (hrule->return_code >= 300 &&
+			    hrule->return_code <= 399) {
+				hrule->action = HEADER_ACTION_RDR;
+			}
+
+			switch (hrule->action) {
+			case HEADER_ACTION_DROP:
+				/* Handeled in header drop sysntax */
+				break;
+			case HEADER_ACTION_RDR:
+				if ($6 == NULL) {
+					yyerror("missing return URI");
+					free($6);
+					free(hrule->name);
+					free(hrule->value);
+					free(hrule);
+					YYERROR;
+				}
+				hrule->return_uri = $6;
+				break;
+			case HEADER_ACTION_RETURN:
+				hrule->return_uri = ($6 != NULL) ? $6 :
+				strdup("blocked");
+				if (hrule->return_uri == NULL) {
+					yyerror("out of memory");
+					free(hrule->name);
+					free(hrule->value);
+					free(hrule);
+					YYERROR;
+				}
+				break;
+			default:
+				break;
+			}
+
+			if (hrule->action == HEADER_ACTION_RDR &&
+			    (strncmp(hrule->return_uri, "http://", 7) != 0 &&
+			     strncmp(hrule->return_uri, "https://", 8) != 0)) {
+				yyerror("Redirect URI does not start with "
+				"http:// or https://");
+				free(hrule->name);
+				free(hrule->value);
+				free(hrule->return_uri);
+				free(hrule);
+				YYERROR;
+			}
+
+			TAILQ_INSERT_TAIL(&srv->srv_conf.header_rules, hrule, entry);
+		}
+		| HEADER DROP STRING STRING {
+			struct header_rule	*hrule;
+
+			if ((hrule= calloc(1, sizeof(*hrule))) == NULL)
+				fatal("out of memory");
+
+			hrule->action = HEADER_ACTION_DROP;
+			if ((hrule->return_uri = strdup("dropped")) == NULL) {
+				yyerror("out of memory");
+				free(hrule);
+				YYERROR;
+			}
+
+			hrule->name = $3;
+			hrule->value = $4;
+
+			TAILQ_INSERT_TAIL(&srv->srv_conf.header_rules, hrule, entry);
 		}
 		;
 
@@ -2480,6 +2567,7 @@ server_inherit(struct server *src, struct server_config *alias,
 {
 	struct server	*dst, *s, *dstl;
 	struct custom_header	*hdr, *nhdr;
+	struct header_rule *rule, *nrule;
 
 	if ((dst = calloc(1, sizeof(*dst))) == NULL)
 		fatal("out of memory");
@@ -2491,6 +2579,12 @@ server_inherit(struct server *src, struct server_config *alias,
 	TAILQ_FOREACH(hdr, &src->srv_conf.headers, entry) {
 		nhdr = header_dup(hdr);
 		TAILQ_INSERT_TAIL(&dst->srv_conf.headers, nhdr, entry);
+	}
+
+	TAILQ_INIT(&dst->srv_conf.header_rules);
+	TAILQ_FOREACH(rule, &src->srv_conf.header_rules, entry) {
+		nrule = header_rule_dup(rule);
+		TAILQ_INSERT_TAIL(&dst->srv_conf.header_rules, nrule, entry);
 	}
 
 	if ((dst->srv_conf.tls_cert_file =
@@ -2588,6 +2682,13 @@ server_inherit(struct server *src, struct server_config *alias,
 		TAILQ_FOREACH(hdr, &s->srv_conf.headers, entry) {
 			nhdr = header_dup(hdr);
 			TAILQ_INSERT_TAIL(&dstl->srv_conf.headers, nhdr, entry);
+		}
+
+		/* Copy header rules from source location */
+		TAILQ_INIT(&dstl->srv_conf.header_rules);
+		TAILQ_FOREACH(rule, &s->srv_conf.header_rules, entry) {
+			nrule = header_rule_dup(rule);
+			TAILQ_INSERT_TAIL(&dstl->srv_conf.header_rules, nrule, entry);
 		}
 
 		strlcpy(dstl->srv_conf.name, alias->name,

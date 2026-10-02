@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.171 2026/09/17 17:53:31 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.172 2026/10/02 04:47:07 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -52,6 +52,8 @@ int		 server_http_authenticate(struct server_config *,
     struct client *);
 static int	 http_version_num(char *);
 static int	 http_is_success(unsigned int code);
+static int	 match_header_rule(struct header_rule *, const char *,
+    const char *);
 char		*server_expand_http(struct client *, const char *,
     char *, size_t);
 char		*replace_var(char *, const char *, const char *);
@@ -227,6 +229,37 @@ static int
 http_is_success(unsigned int code)
 {
 	return (code >= 200 && code < 400);
+}
+
+static int
+match_header_rule(struct header_rule *rule, const char *key, const char *value)
+{
+	return (fnmatch(rule->name, key, FNM_CASEFOLD) == 0 &&
+	    fnmatch(rule->value, value, FNM_CASEFOLD) == 0);
+}
+
+struct header_rule *
+server_match_header_rule(struct server_config *srv_conf,
+    struct http_descriptor *desc)
+{
+	struct header_rule	*rule;
+	struct kv		*hdr = NULL;
+	struct kv		*kv = NULL;
+
+	RB_FOREACH(hdr, kvtree, &desc->http_headers) {
+		TAILQ_FOREACH(rule, &srv_conf->header_rules, entry) {
+			if (match_header_rule(rule, hdr->kv_key, hdr->kv_value))
+				return (rule);
+		}
+		TAILQ_FOREACH(kv, &hdr->kv_children, kv_entry) {
+			TAILQ_FOREACH(rule, &srv_conf->header_rules, entry) {
+				if (match_header_rule(rule, kv->kv_key,
+				    kv->kv_value))
+					return (rule);
+			}
+		}
+	}
+	return (NULL);
 }
 
 void
@@ -1354,6 +1387,7 @@ server_response(struct httpd *httpd, struct client *clt)
 	int			 portval = -1, ret;
 	char			*hostval, *query;
 	const char		*errstr = NULL;
+	struct header_rule	*mrule = NULL;
 
 	/* Preserve original path */
 	if (desc->http_path == NULL ||
@@ -1473,6 +1507,21 @@ server_response(struct httpd *httpd, struct client *clt)
 	if ((srv_conf = server_getlocation(clt, desc->http_path)) == NULL) {
 		server_abort_http(clt, 500, desc->http_path);
 		return (-1);
+	}
+	if ((mrule = server_match_header_rule(srv_conf, desc)) != NULL) {
+		switch (mrule->action) {
+		case HEADER_ACTION_DROP:
+			(void)server_log_http(clt, 0, 0);
+			server_close(clt, mrule->return_uri);
+			return (-1);
+		case HEADER_ACTION_RDR:
+		case HEADER_ACTION_RETURN:
+			server_abort_http(clt, mrule->return_code,
+			    mrule->return_uri);
+			return (-1);
+		default:
+			break;
+		}
 	}
 
 	/* Optional rewrite */
