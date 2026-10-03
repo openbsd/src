@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.6 2026/09/30 17:08:29 deraadt Exp $ */
+/*	$OpenBSD: sockets.c,v 1.7 2026/10/03 01:32:37 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -286,7 +286,7 @@ init_socket_table(char *bind_str, uint16_t port)
 
 	/* listener */
 
-	listener = socket(AF_INET, SOCK_STREAM, 0);
+	listener = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (listener < 0) {
 		warn("could not create listener socket");
 		return 1;
@@ -301,9 +301,6 @@ init_socket_table(char *bind_str, uint16_t port)
 		warn("unable to set reuse port on socket");
 		return 1;
 	}
-
-	val = fcntl(listener, F_GETFL, 0);
-	fcntl(listener, F_SETFL, val | O_NONBLOCK);
 
 	init_socket(listener, RTR_SOCKET_TYPE_UNKNOWN, 0, 0, 0, 0,
 	    RTR_DEFAULT_VERSION);
@@ -332,7 +329,7 @@ init_socket_table(char *bind_str, uint16_t port)
 
 	/* controller */
 
-	controller = socket(AF_UNIX, SOCK_STREAM, 0);
+	controller = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (controller < 0) {
 		warn("could not create controller socket");
 		return 1;
@@ -342,9 +339,6 @@ init_socket_table(char *bind_str, uint16_t port)
 		warn("controller socket out of bounds");
 		return 1;
 	}
-
-	val = fcntl(controller, F_GETFL, 0);
-	fcntl(controller, F_SETFL, val | O_NONBLOCK);
 
 	init_socket(controller, RTR_SOCKET_TYPE_UNKNOWN, 0, 0, 0, 0,
 	    RTR_DEFAULT_VERSION);
@@ -894,8 +888,22 @@ core_loop(void)
 
 			client.sin_port = be16toh(client.sin_port);
 
-			val = fcntl(fd, F_GETFL, 0);
-			fcntl(fd, F_SETFL, val | O_NONBLOCK);
+			if ((val = fcntl(fd, F_GETFL, 0)) == -1) {
+				logx(0, "Rejecting client connection %s:%u "
+				    "(could not get socket flags)\n",
+				    inet_ntoa(client.sin_addr),
+				    client.sin_port);
+				close(fd);
+				continue;
+			}
+			if (fcntl(fd, F_SETFL, val | O_NONBLOCK) == -1) {
+				logx(0, "Rejecting client connection %s:%u "
+				    "(could not set socket non-block)\n",
+				    inet_ntoa(client.sin_addr),
+				    client.sin_port);
+				close(fd);
+				continue;
+			}
 
 			logx(0, "Opening client connection from %s:%u on "
 			    "socket %d\n", inet_ntoa(client.sin_addr),
@@ -966,8 +974,22 @@ core_loop(void)
 			if (fd < 0)
 				continue;
 
-			val = fcntl(fd, F_GETFL, 0);
-			fcntl(fd, F_SETFL, val | O_NONBLOCK);
+			if ((val = fcntl(fd, F_GETFL, 0)) == -1) {
+				logx(0, "Rejecting controller connection "
+				    "on socket %d "
+				    "(could not get socket flags)\n",
+				    fd);
+				close(fd);
+				continue;
+			}
+			if (fcntl(fd, F_SETFL, val | O_NONBLOCK) == -1) {
+				logx(0, "Rejecting controller connection "
+				    "on socket %d "
+				    "(could not set socket non-block)\n",
+				    fd);
+				close(fd);
+				continue;
+			}
 
 			logx(0, "Opening controller connection on socket %d\n",
 			    fd);
