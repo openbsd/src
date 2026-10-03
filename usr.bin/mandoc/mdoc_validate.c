@@ -1,6 +1,6 @@
-/* $OpenBSD: mdoc_validate.c,v 1.312 2026/09/10 16:16:11 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.313 2026/10/03 14:03:49 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2022, 2025, 2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
@@ -61,8 +61,8 @@ static	void	 check_text(struct roff_man *, int, int, char *);
 static	void	 check_text_em(struct roff_man *, int, int, char *);
 static	void	 check_toptext(struct roff_man *, int, int, const char *);
 static	int	 child_an(const struct roff_node *);
-static	size_t		macro2len(enum roff_tok);
-static	void	 rewrite_macro2len(struct roff_man *, char **);
+static	size_t	 macro2len(enum roff_tok);
+static	void	 rewrite_macro2len(struct roff_man *, char **, int);
 static	int	 similar(const char *, const char *);
 
 static	void	 post_abort(POST_ARGS) __attribute__((__noreturn__));
@@ -709,7 +709,7 @@ post_bl_norm(POST_ARGS)
 				mandoc_msg(MANDOCERR_ARG_REP,
 				    argv->line, argv->pos,
 				    "Bl -width %s", argv->value[0]);
-			rewrite_macro2len(mdoc, argv->value);
+			rewrite_macro2len(mdoc, argv->value, 1);
 			n->norm->Bl.width = argv->value[0];
 			break;
 		case MDOC_Offset:
@@ -722,7 +722,7 @@ post_bl_norm(POST_ARGS)
 				mandoc_msg(MANDOCERR_ARG_REP,
 				    argv->line, argv->pos,
 				    "Bl -offset %s", argv->value[0]);
-			rewrite_macro2len(mdoc, argv->value);
+			rewrite_macro2len(mdoc, argv->value, 0);
 			n->norm->Bl.offs = argv->value[0];
 			break;
 		default:
@@ -844,7 +844,7 @@ post_bd(POST_ARGS)
 				mandoc_msg(MANDOCERR_ARG_REP,
 				    argv->line, argv->pos,
 				    "Bd -offset %s", argv->value[0]);
-			rewrite_macro2len(mdoc, argv->value);
+			rewrite_macro2len(mdoc, argv->value, 0);
 			n->norm->Bd.offs = argv->value[0];
 			break;
 		case MDOC_Compact:
@@ -1829,24 +1829,43 @@ post_bl_block(POST_ARGS)
 /*
  * If the argument of -offset or -width is a macro,
  * replace it with the associated default width.
+ * If a -width is of the form ".macro text", keep the text only.
  */
 static void
-rewrite_macro2len(struct roff_man *mdoc, char **arg)
+rewrite_macro2len(struct roff_man *mdoc, char **arg, int iswidth)
 {
+	char		 *cp;
 	size_t		  width;
 	enum roff_tok	  tok;
 
+	cp = NULL;
 	if (*arg == NULL)
 		return;
-	else if ( ! strcmp(*arg, "Ds"))
+	else if (strcmp(*arg, "Ds") == 0)
 		width = 6;
-	else if ((tok = roffhash_find(mdoc->mdocmac, *arg, 0)) == TOKEN_NONE)
-		return;
-	else
+	else if ((tok = roffhash_find(mdoc->mdocmac, *arg, 0)) != TOKEN_NONE)
 		width = macro2len(tok);
+	else if (iswidth && **arg == '.') {
+		cp = *arg + 1;
+		while (*cp == ' ')
+			cp++;
+		while (isalnum((unsigned char)*cp))
+			cp++;
+		if (*cp != ' ')
+			return;  /* Syntax error, so use *arg as-is. */
+		while (*cp == ' ')
+			cp++;
+		if (*cp == '\0')
+			return;  /* No text, so use *arg as-is. */
+		cp = mandoc_strdup(cp);
+	} else
+		return;
 
 	free(*arg);
-	mandoc_asprintf(arg, "%zun", width);
+	if (cp == NULL)
+		mandoc_asprintf(arg, "%zun", width);
+	else
+		*arg = cp;
 }
 
 static void
