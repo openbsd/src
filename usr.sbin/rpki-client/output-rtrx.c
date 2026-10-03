@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.7 2026/10/02 14:13:44 tb Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.8 2026/10/03 02:45:47 rcovelli Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -215,16 +215,13 @@ void
 rtrx_connect(void)
 {
 	struct sockaddr_un  serv_addr;
-	int sockfd, val;
+	int sockfd;
 
-	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (sockfd < 0) {
 		rtrx_errno = errno;
 		return;
 	}
-
-	val = fcntl(sockfd, F_GETFL, 0);
-	fcntl(sockfd, F_SETFL, val | O_NONBLOCK);
 
 	memset(&serv_addr, 0, sizeof serv_addr);
 
@@ -523,42 +520,40 @@ output_rtrx(FILE *out, struct validation_data *vd, struct stats *st)
 		errno = rtrx_errno;
 		return -1;
 	}
-
 	len = sizeof(ss);
 	if (getpeername(rtrx_sock, (struct sockaddr *)&ss, &len) == -1)
-		return -1;
-
-	val = fcntl(rtrx_sock, F_GETFL, 0);
-	fcntl(rtrx_sock, F_SETFL, val & ~O_NONBLOCK);
+		goto failure;
+	if ((val = fcntl(rtrx_sock, F_GETFL, 0)) == -1)
+		goto failure;
+	if (fcntl(rtrx_sock, F_SETFL, val & ~O_NONBLOCK) == -1)
+		goto failure;
 
 	if (rtrx_open_controller() < 0)
 		return -1;
-
 	if (rtrx_start_of_import() < 0)
 		return -1;
-
 	RB_FOREACH(rpki_vrp, vrp_tree, &vd->vrps) {
 		if (rtrx_vrp_import(rpki_vrp) < 0)
 			return -1;
 	}
-
 	RB_FOREACH(rpki_brk, brk_tree, &vd->brks) {
 		if (rtrx_brk_import(rpki_brk) < 0)
 			return -1;
 	}
-
 	if (!excludeaspa) {
 		RB_FOREACH(rpki_vap, vap_tree, &vd->vaps) {
 			if (rtrx_vap_import(rpki_vap) < 0)
 				return -1;
 		}
 	}
-
 	if (rtrx_end_of_import() < 0)
 		return -1;
 
 	close(rtrx_sock);
 	rtrx_sock = -1;
-
 	return 0;
+failure:
+	close(rtrx_sock);
+	rtrx_sock = -1;
+	return -1;
 }
