@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.105 2026/10/03 01:06:40 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.106 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1948,7 +1948,7 @@ policy_init(void)
 		policy_file = CONF_DFLT_POLICY_FILE;
 
 	/* Open policy file.  */
-	fd = monitor_open(policy_file, O_RDONLY, 0);
+	fd = monitor_open(policy_file, O_RDONLY);
 	if (fd == -1)
 		log_fatal("policy_init: open (\"%s\", O_RDONLY) failed",
 		    policy_file);
@@ -2181,7 +2181,7 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		return 0;
 	}
 
-	fd = monitor_open(file, O_RDONLY, 0);
+	fd = monitor_open(file, O_RDONLY);
 	if (fd < 0) {
 		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: "
 		    "failed to open \"%s\"", file));

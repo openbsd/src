@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.39 2021/01/28 01:18:44 mortimer Exp $	 */
+/* $OpenBSD: transport.c,v 1.40 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -115,41 +115,6 @@ transport_release(struct transport *t)
 
 	LOG_DBG((LOG_TRANSPORT, 70, "transport_release: freeing %p", t));
 	t->vtbl->remove(t);
-}
-
-void
-transport_report(void)
-{
-	struct virtual_transport *v;
-	struct transport *t;
-	struct message *msg;
-
-	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
-		LOG_DBG((LOG_REPORT, 0,
-		    "transport_report: transport %p flags %x refcnt %d", t,
-		    t->flags, t->refcnt));
-
-		/* XXX Report sth on the virtual transport?  */
-		t->vtbl->report(t);
-
-		/*
-		 * This is the reason message_dump_raw lives outside
-		 * message.c.
-		 */
-		v = (struct virtual_transport *)t->virtual;
-		if ((v->encap_is_active && v->encap == t) ||
-		    (!v->encap_is_active && v->main == t)) {
-			for (msg = TAILQ_FIRST(&t->virtual->prio_sendq); msg;
-			    msg = TAILQ_NEXT(msg, link))
-				message_dump_raw("udp_report(prio)", msg,
-				    LOG_REPORT);
-
-			for (msg = TAILQ_FIRST(&t->virtual->sendq); msg;
-			    msg = TAILQ_NEXT(msg, link))
-				message_dump_raw("udp_report", msg,
-				    LOG_REPORT);
-		}
-	}
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.30 2024/05/21 05:00:47 jsg Exp $	 */
+/* $OpenBSD: message.h,v 1.31 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -180,7 +180,6 @@ extern struct message *message_alloc(struct transport *, u_int8_t *, size_t);
 extern struct message *message_alloc_reply(struct message *);
 extern u_int8_t *message_copy(struct message *, size_t, size_t *);
 extern void     message_drop(struct message *, int, struct proto *, int, int);
-extern void     message_dump_raw(char *, struct message *, int);
 extern void     message_free(struct message *);
 extern int	message_negotiate_sa(struct message *,
 		    int (*)(struct exchange *, struct sa *, struct sa *));

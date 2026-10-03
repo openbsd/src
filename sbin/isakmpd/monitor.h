@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.19 2008/12/22 14:30:04 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.20 2026/10/03 01:31:30 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -40,9 +40,7 @@ enum monitor_reqtypes {
 	MONITOR_SETSOCKOPT,
 	MONITOR_BIND,
 	MONITOR_REQ_READDIR,
-	MONITOR_MKFIFO,
-	MONITOR_INIT_DONE,
-	MONITOR_SHUTDOWN
+	MONITOR_INIT_DONE
 };
 
 pid_t           monitor_init(int);
@@ -51,9 +49,7 @@ void            monitor_loop(int);
 int             mm_send_fd(int, int);
 int             mm_receive_fd(int);
 
-FILE           *monitor_fopen(const char *, const char *);
-int             monitor_open(const char *, int, mode_t);
-int             monitor_stat(const char *, struct stat *);
+int             monitor_open(const char *, int);
 int             monitor_setsockopt(int, int, int, const void *, socklen_t);
 int             monitor_bind(int, const struct sockaddr *, socklen_t);
 int		monitor_req_readdir(const char *);

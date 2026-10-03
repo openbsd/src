@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.108 2025/04/30 03:53:21 tb Exp $	 */
+/* $OpenBSD: conf.c,v 1.109 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -613,10 +613,10 @@ conf_reinit(void)
 	size_t	 sz;
 	char	*new_conf_addr = 0;
 
-	fd = monitor_open(conf_path, O_RDONLY, 0);
+	fd = monitor_open(conf_path, O_RDONLY);
 	if (fd == -1 || check_file_secrecy_fd(fd, conf_path, &sz) == -1) {
 		if (fd == -1 && errno != ENOENT)
-			log_error("conf_reinit: open(\"%s\", O_RDONLY, 0) "
+			log_error("conf_reinit: open(\"%s\", O_RDONLY) "
 			    "failed", conf_path);
 		if (fd != -1)
 			close(fd);
@@ -945,97 +945,4 @@ conf_end(int transaction, int commit)
 		}
 	}
 	return 0;
-}
-
-/*
- * Dump running configuration upon SIGUSR1.
- * Configuration is "stored in reverse order", so reverse it again.
- */
-struct dumper {
-	char	*s, *v;
-	struct dumper *next;
-};
-
-static void
-conf_report_dump(struct dumper *node)
-{
-	/* Recursive, cleanup when we're done.  */
-
-	if (node->next)
-		conf_report_dump(node->next);
-
-	if (node->v)
-		LOG_DBG((LOG_REPORT, 0, "%s=\t%s", node->s, node->v));
-	else if (node->s) {
-		LOG_DBG((LOG_REPORT, 0, "%s", node->s));
-		if (strlen(node->s) > 0)
-			free(node->s);
-	}
-	free(node);
-}
-
-void
-conf_report(void)
-{
-	struct conf_binding *cb, *last = 0;
-	unsigned int	i;
-	char           *current_section = NULL;
-	struct dumper  *dumper, *dnode;
-
-	dumper = dnode = calloc(1, sizeof *dumper);
-	if (!dumper)
-		goto mem_fail;
-
-	LOG_DBG((LOG_REPORT, 0, "conf_report: dumping running configuration"));
-
-	for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0]; i++)
-		for (cb = LIST_FIRST(&conf_bindings[i]); cb;
-		    cb = LIST_NEXT(cb, link)) {
-			if (!cb->is_default) {
-				/* Dump this entry.  */
-				if (!current_section || strcmp(cb->section,
-				    current_section)) {
-					if (current_section) {
-						if (asprintf(&dnode->s, "[%s]",
-						    current_section) == -1)
-							goto mem_fail;
-						dnode->next = calloc(1,
-						    sizeof(struct dumper));
-						dnode = dnode->next;
-						if (!dnode)
-							goto mem_fail;
-
-						dnode->s = "";
-						dnode->next = calloc(1,
-						    sizeof(struct dumper));
-						dnode = dnode->next;
-						if (!dnode)
-							goto mem_fail;
-					}
-					current_section = cb->section;
-				}
-				dnode->s = cb->tag;
-				dnode->v = cb->value;
-				dnode->next = calloc(1, sizeof(struct dumper));
-				dnode = dnode->next;
-				if (!dnode)
-					goto mem_fail;
-				last = cb;
-			}
-		}
-
-	if (last)
-		if (asprintf(&dnode->s, "[%s]", last->section) == -1)
-			goto mem_fail;
-	conf_report_dump(dumper);
-
-	return;
-
-mem_fail:
-	log_error("conf_report: malloc/calloc failed");
-	while ((dnode = dumper) != 0) {
-		dumper = dumper->next;
-		free(dnode->s);
-		free(dnode);
-	}
 }

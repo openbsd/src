@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.37 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: exchange.h,v 1.38 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -242,7 +242,6 @@ extern void     exchange_init(void);
 extern struct exchange *exchange_lookup(u_int8_t *, int);
 extern struct exchange *exchange_lookup_by_name(char *, int);
 extern struct exchange *exchange_lookup_from_icookie(u_int8_t *);
-extern void     exchange_report(void);
 extern void     exchange_run(struct message *);
 extern int      exchange_save_nonce(struct message *);
 extern int      exchange_save_certreq(struct message *);

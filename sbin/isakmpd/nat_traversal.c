@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.25 2017/12/05 20:31:45 jca Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.26 2026/10/03 01:31:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -282,7 +282,7 @@ nat_t_add_nat_d(struct message *msg, struct sockaddr *sa)
 		    buf, buflen, 1);
 	else
 		ret = -1;
-		
+
 	if (ret) {
 		free(buf);
 		return -1;

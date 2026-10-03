@@ -1,4 +1,4 @@
-/* $OpenBSD: log.h,v 1.26 2026/08/14 14:57:42 hshoexer Exp $	 */
+/* $OpenBSD: log.h,v 1.27 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	 */
 
 /*
@@ -69,13 +69,6 @@ extern void	log_debug(int, int, const char *,...)
 extern void     log_debug_buf(int, int, const char *, const u_int8_t *, size_t);
 extern void     log_debug_cmd(int, int);
 extern void     log_debug_toggle(void);
-
-#define PCAP_FILE_DEFAULT "/var/run/isakmpd.pcap"
-extern void     log_packet_init(char *);
-extern void     log_packet_iov(struct sockaddr *, struct sockaddr *,
-				                       struct iovec *, int);
-extern void     log_packet_restart(char *);
-extern void     log_packet_stop(void);
 
 extern FILE    *log_current(void);
 extern void	log_error(const char *,...)

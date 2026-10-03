@@ -1,4 +1,4 @@
-/* $OpenBSD: field.h,v 1.6 2004/05/23 18:17:55 hshoexer Exp $	 */
+/* $OpenBSD: field.h,v 1.7 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: field.h,v 1.3 1998/08/02 20:25:01 niklas Exp $	 */
 
 /*
@@ -44,8 +44,6 @@ struct field {
 	struct constant_map **maps;
 };
 
-extern void     field_dump_field(struct field *, u_int8_t *);
-extern void     field_dump_payload(struct field *, u_int8_t *);
 extern u_int32_t field_get_num(struct field *, u_int8_t *);
 extern void     field_get_raw(struct field *, u_int8_t *, u_int8_t *);
 extern void     field_set_num(struct field *, u_int8_t *, u_int32_t);

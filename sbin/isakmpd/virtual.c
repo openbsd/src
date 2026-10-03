@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.33 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.34 2026/10/03 01:31:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -66,7 +66,6 @@ static void		 virtual_get_src(struct transport *,
 static void		 virtual_handle_message(struct transport *);
 static void		 virtual_reinit(void);
 static void		 virtual_remove(struct transport *);
-static void		 virtual_report(struct transport *);
 static int		 virtual_send_message(struct message *,
 			     struct transport *);
 
@@ -75,7 +74,6 @@ static struct transport_vtbl virtual_transport_vtbl = {
 	virtual_create,
 	virtual_reinit,
 	virtual_remove,
-	virtual_report,
 	0,
 	0,
 	virtual_handle_message,
@@ -630,11 +628,6 @@ virtual_remove(struct transport *t)
 
 	LOG_DBG((LOG_TRANSPORT, 90, "virtual_remove: removed %p", v));
 	free(t);
-}
-
-static void
-virtual_report(struct transport *t)
-{
 }
 
 static void

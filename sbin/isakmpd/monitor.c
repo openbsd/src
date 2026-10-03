@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.84 2026/08/14 14:57:42 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.85 2026/10/03 01:31:30 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -58,8 +58,6 @@ struct monitor_state {
 	char            root[PATH_MAX];
 } m_state;
 
-extern char *pid_file;
-
 extern void	set_slave_signals(void);
 
 /* Private functions.  */
@@ -71,7 +69,6 @@ static void	m_priv_setsockopt(void);
 static void	m_priv_req_readdir(void);
 static void	m_priv_bind(void);
 static void	m_priv_pfkey_open(void);
-static int	m_priv_local_sanitize_path(const char *, size_t, int);
 static int	m_priv_check_sockopt(int, int);
 static int	m_priv_check_bind(const struct sockaddr *, socklen_t);
 
@@ -101,45 +98,45 @@ monitor_init(int debug)
 	strlcpy(m_state.root, pw->pw_dir, sizeof m_state.root);
 
 	set_monitor_signals();
-	m_state.pid = fork();
 
-	if (m_state.pid == -1)
+	switch ((m_state.pid = fork())) {
+	case -1:
 		log_fatal("monitor_init: fork of unprivileged child failed");
-	if (m_state.pid == 0) {
+		break;
+	case 0:
 		/* The child process drops privileges. */
 		set_slave_signals();
 
 		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
-			log_fatal("monitor_init: chroot failed");
+			log_fatal("monitor_init: chroot in child failed");
 
 		if (setgroups(1, &pw->pw_gid) == -1 ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			log_fatal("monitor_init: can't drop privileges");
 
+		if (pledge("stdio sendfd route recvfd inet", NULL) == -1)
+			log_fatal("monitor_init: pledge in child failed");
+
 		m_state.s = p[0];
 		close(p[1]);
 
 		LOG_DBG((LOG_MISC, 10,
 		    "monitor_init: privileges dropped for child process"));
-	} else {
+		break;
+	default:
 		/* Privileged monitor. */
 		setproctitle("monitor [priv]");
 
+		if (unveil(ISAKMPD_ROOT, "r") == -1)
+			log_fatal("monitor_init: unveil %s", ISAKMPD_ROOT);
+		if (unveil(NULL, NULL) == -1)
+			log_fatal("monitor_init: unveil");
+
 		m_state.s = p[1];
 		close(p[0]);
+		break;
 	}
-
-	/* With "-dd", stop and wait here. For gdb "attach" etc.  */
-	if (debug > 1) {
-		log_print("monitor_init: stopped %s PID %d fd %d%s",
-		    m_state.pid ? "priv" : "child", getpid(), m_state.s,
-		    m_state.pid ? ", waiting for SIGCONT" : "");
-		kill(getpid(), SIGSTOP);	/* Wait here for SIGCONT.  */
-		if (m_state.pid)
-			kill(m_state.pid, SIGCONT); /* Continue child.  */
-	}
-
 	return m_state.pid;
 }
 
@@ -161,7 +158,6 @@ monitor_exit(int code)
 
 		/* Remove FIFO and pid files.  */
 		unlink(ui_fifo);
-		unlink(pid_file);
 	}
 
 	close(m_state.s);
@@ -195,27 +191,19 @@ monitor_pf_key_v2_open(void)
 }
 
 int
-monitor_open(const char *path, int flags, mode_t mode)
+monitor_open(const char *path, int flags)
 {
 	size_t	len;
 	int	fd, err, cmd;
-	char	pathreal[PATH_MAX];
-
-	if (path[0] == '/')
-		strlcpy(pathreal, path, sizeof pathreal);
-	else
-		snprintf(pathreal, sizeof pathreal, "%s/%s", m_state.root,
-		    path);
 
 	cmd = MONITOR_GET_FD;
 	must_write(&cmd, sizeof cmd);
 
-	len = strlen(pathreal);
+	len = strlen(path);
 	must_write(&len, sizeof len);
-	must_write(&pathreal, len);
+	must_write(path, len);
 
 	must_write(&flags, sizeof flags);
-	must_write(&mode, sizeof mode);
 
 	must_read(&err, sizeof err);
 	if (err != 0) {
@@ -230,71 +218,6 @@ monitor_open(const char *path, int flags, mode_t mode)
 	}
 
 	return fd;
-}
-
-FILE *
-monitor_fopen(const char *path, const char *mode)
-{
-	FILE	*fp;
-	int	 fd, flags = 0, saved_errno;
-	mode_t	 mask, cur_umask;
-
-	/* Only the child process is supposed to run this.  */
-	if (m_state.pid)
-		log_fatal("[priv] bad call to monitor_fopen");
-
-	switch (mode[0]) {
-	case 'r':
-		flags = (mode[1] == '+' ? O_RDWR : O_RDONLY);
-		break;
-	case 'w':
-		flags = (mode[1] == '+' ? O_RDWR : O_WRONLY) | O_CREAT |
-		    O_TRUNC;
-		break;
-	case 'a':
-		flags = (mode[1] == '+' ? O_RDWR : O_WRONLY) | O_CREAT |
-		    O_APPEND;
-		break;
-	default:
-		log_fatal("monitor_fopen: bad call");
-	}
-
-	cur_umask = umask(0);
-	(void)umask(cur_umask);
-	mask = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-	mask &= ~cur_umask;
-
-	fd = monitor_open(path, flags, mask);
-	if (fd < 0)
-		return NULL;
-
-	/* Got the fd, attach a FILE * to it.  */
-	fp = fdopen(fd, mode);
-	if (!fp) {
-		log_error("monitor_fopen: fdopen() failed");
-		saved_errno = errno;
-		close(fd);
-		errno = saved_errno;
-		return NULL;
-	}
-	return fp;
-}
-
-int
-monitor_stat(const char *path, struct stat *sb)
-{
-	int	fd, r, saved_errno;
-
-	/* O_NONBLOCK is needed for stat'ing fifos. */
-	fd = monitor_open(path, O_RDONLY | O_NONBLOCK, 0);
-	if (fd < 0)
-		return -1;
-
-	r = fstat(fd, sb);
-	saved_errno = errno;
-	close(fd);
-	errno = saved_errno;
-	return r;
 }
 
 int
@@ -422,7 +345,7 @@ sig_pass_to_chld(int sig)
 void
 monitor_loop(int debug)
 {
-	int	 msgcode;
+	int	 msgcode, init_done = 0;
 
 	if (!debug)
 		log_to(0);
@@ -438,6 +361,8 @@ monitor_loop(int debug)
 		case MONITOR_PFKEY_OPEN:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_PFKEY_OPEN"));
+			if (init_done)
+				log_fatal("monitor_loop: not allowed");
 			m_priv_pfkey_open();
 			break;
 
@@ -462,15 +387,13 @@ monitor_loop(int debug)
 		case MONITOR_INIT_DONE:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_INIT_DONE"));
-			break;
-
-		case MONITOR_SHUTDOWN:
-			LOG_DBG((LOG_MISC, 80,
-			    "monitor_loop: MONITOR_SHUTDOWN"));
+			if (init_done)
+				log_fatal("monitor_loop: not allowed");
+			init_done = 1;
 			break;
 
 		default:
-			log_print("monitor_loop: got unknown code %d",
+			log_error("monitor_loop: got unknown code %d",
 			    msgcode);
 		}
 	}
@@ -504,10 +427,10 @@ static void
 m_priv_getfd(void)
 {
 	char	path[PATH_MAX];
+	struct stat sb;
 	size_t	len;
-	int	v, flags, ret;
+	int	fd, flags;
 	int	err = 0;
-	mode_t	mode;
 
 	must_read(&len, sizeof len);
 	if (len == 0 || len >= sizeof path)
@@ -519,25 +442,26 @@ m_priv_getfd(void)
 		log_fatal("m_priv_getfd: invalid pathname");
 
 	must_read(&flags, sizeof flags);
-	must_read(&mode, sizeof mode);
+	if (flags != O_RDONLY)
+		log_fatal("m_priv_getfd: invalid open flags");
 
-	if ((ret = m_priv_local_sanitize_path(path, sizeof path, flags))
-	    != 0) {
-		if (errno != ENOENT)
-			log_print("m_priv_getfd: illegal path \"%s\"", path);
+	flags |= O_NOFOLLOW;
+	if ((fd = open(path, flags)) == -1)
 		err = errno;
-		v = -1;
-	} else {
-		if ((v = open(path, flags, mode)) == -1)
-			err = errno;
+
+	if (fd != -1 && (fstat(fd, &sb) == -1 || S_ISREG(sb.st_mode) == 0)) {
+		log_error("m_priv_getfd: not an actual file %s", path);
+		close(fd);
+		fd = -1;
+		err = EPERM;
 	}
 
 	must_write(&err, sizeof err);
 
-	if (v != -1) {
-		if (mm_send_fd(m_state.s, v) == -1)
+	if (fd != -1) {
+		if (mm_send_fd(m_state.s, fd) == -1)
 			log_error("m_priv_getfd: sending fd failed");
-		close(v);
+		close(fd);
 	}
 }
 
@@ -680,55 +604,6 @@ must_write(const void *buf, size_t n)
         }
 }
 
-/* Check that path/mode is permitted.  */
-static int
-m_priv_local_sanitize_path(const char *path, size_t pmax, int flags)
-{
-	char new_path[PATH_MAX], var_run[PATH_MAX], *enddir;
-
-	/*
-	 * We only permit paths starting with
-	 *  /etc/isakmpd/	(read only)
-	 *  /var/run/		(rw)
-	 */
-
-	if (realpath(path, new_path) == NULL) {
-		if (errno != ENOENT)
-			return 1;
-		/*
-		 * It is ok if the directory exists,
-		 * but the file should be created.
-		 */
-		if (strlcpy(new_path, path, sizeof(new_path)) >=
-		    sizeof(new_path))
-			return 1;
-		enddir = strrchr(new_path, '/');
-		if (enddir == NULL || enddir[1] == '\0')
-			return 1;
-		enddir[1] = '\0';
-		if (realpath(new_path, new_path) == NULL) {
-			errno = ENOENT;
-			return 1;
-		}
-		enddir = strrchr(path, '/');
-		strlcat(new_path, enddir, sizeof(new_path));
-	}
-
-	if (realpath("/var/run/", var_run) == NULL)
-		return 1;
-	strlcat(var_run, "/", sizeof(var_run));
-
-	if (strncmp(var_run, new_path, strlen(var_run)) == 0)
-		return 0;
-
-	if (strncmp(ISAKMPD_ROOT, new_path, strlen(ISAKMPD_ROOT)) == 0 &&
-	    (flags & O_ACCMODE) == O_RDONLY)
-		return 0;
-
-	errno = EACCES;
-	return 1;
-}
-
 /* Check setsockopt */
 static int
 m_priv_check_sockopt(int level, int name)
@@ -816,24 +691,21 @@ static void
 m_priv_req_readdir(void)
 {
 	size_t len;
-	char path[PATH_MAX];
+	char dirpath[PATH_MAX], filepath[PATH_MAX];
 	DIR *dp;
 	struct dirent *file;
 	struct stat sb;
-	int off, size, fd, ret, serrno;
+	int fd, ret, serrno;
 
 	must_read(&len, sizeof len);
-	if (len == 0 || len >= sizeof path)
+	if (len == 0 || len >= sizeof dirpath)
 		log_fatal("m_priv_req_readdir: invalid pathname length");
-	must_read(path, len);
-	path[len] = '\0';
-	if (strlen(path) != len)
+	must_read(dirpath, len);
+	dirpath[len] = '\0';
+	if (strlen(dirpath) != len)
 		log_fatal("m_priv_req_readdir: invalid pathname");
 
-	off = strlen(path);
-	size = sizeof path - off;
-
-	if ((dp = opendir(path)) == NULL) {
+	if ((dp = opendir(dirpath)) == NULL) {
 		serrno = errno;
 		ret = -1;
 		must_write(&ret, sizeof ret);
@@ -846,26 +718,31 @@ m_priv_req_readdir(void)
 	must_write(&ret, sizeof ret);
 
 	while ((file = readdir(dp)) != NULL) {
-		strlcpy(path + off, file->d_name, size);
-
-		if (m_priv_local_sanitize_path(path, sizeof path, O_RDONLY)
-		    != 0)
+		if (strcmp(file->d_name, ".") == 0 ||
+		    strcmp(file->d_name, "..") == 0)
 			continue;
-		fd = open(path, O_RDONLY);
+		fd = openat(dirfd(dp), file->d_name, O_RDONLY|O_NOFOLLOW);
 		if (fd == -1) {
 			log_error("m_priv_req_readdir: open "
-			    "(\"%s\", O_RDONLY, 0) failed", path);
+			    "(\"%s\", O_RDONLY) failed", dirpath);
+			close(fd);
 			continue;
 		}
-		if ((fstat(fd, &sb) == -1) ||
-		    !(S_ISREG(sb.st_mode) || S_ISLNK(sb.st_mode))) {
+		if (fstat(fd, &sb) == -1 || S_ISREG(sb.st_mode) == 0) {
+			close(fd);
+			fd = -1;
+			continue;
+		}
+
+		if ((len = snprintf(filepath, sizeof filepath,
+		    "%s/%s", dirpath, file->d_name)) >= sizeof(filepath)) {
+			/* Long filenames are silently skipped */
 			close(fd);
 			continue;
 		}
 
-		len = strlen(path);
 		must_write(&len, sizeof len);
-		must_write(path, len);
+		must_write(filepath, len);
 
 		mm_send_fd(m_state.s, fd);
 		close(fd);

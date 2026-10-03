@@ -1,4 +1,4 @@
-/* $OpenBSD: timer.c,v 1.18 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: timer.c,v 1.19 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	 */
 
 /*
@@ -122,19 +122,4 @@ timer_remove_event(struct event *ev)
 	    ev->name, ev->arg));
 	TAILQ_REMOVE(&events, ev, link);
 	free(ev);
-}
-
-void
-timer_report(void)
-{
-	struct event   *ev;
-	struct timespec now;
-
-	clock_gettime(CLOCK_MONOTONIC, &now);
-
-	for (ev = TAILQ_FIRST(&events); ev; ev = TAILQ_NEXT(ev, link))
-		LOG_DBG((LOG_REPORT, 0,
-		    "timer_report: event %s(%p) scheduled in %d seconds",
-		    (ev->name ? ev->name : "<unknown>"), ev,
-		    (int) (ev->expiration.tv_sec - now.tv_sec)));
 }

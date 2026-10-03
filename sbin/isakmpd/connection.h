@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.h,v 1.5 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: connection.h,v 1.6 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: connection.h,v 1.6 1999/06/07 00:10:48 ho Exp $	 */
 
 /*
@@ -43,7 +43,6 @@ extern int      connection_exist(char *);
 extern void     connection_init(void);
 extern char    *connection_passive_lookup_by_ids(u_int8_t *, u_int8_t *);
 extern void     connection_reinit(void);
-extern void     connection_report(void);
 extern int      connection_setup(char *);
 extern int      connection_record_passive(char *);
 extern void     connection_teardown(char *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.h,v 1.24 2022/01/28 05:24:15 guenther Exp $	 */
+/* $OpenBSD: transport.h,v 1.25 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
@@ -66,9 +66,6 @@ struct transport_vtbl {
 
 	/* Remove a transport instance of this method.  */
 	void            (*remove) (struct transport *);
-
-	/* Report status of given transport */
-	void            (*report) (struct transport *);
 
 	/* Let the given transport set its bit in the fd_set passed in.  */
 	int             (*fd_set) (struct transport *, fd_set *, int);
@@ -155,7 +152,6 @@ extern int      transport_prio_sendqs_empty(void);
 extern void     transport_reference(struct transport *);
 extern void     transport_reinit(void);
 extern void     transport_release(struct transport *);
-extern void     transport_report(void);
 extern void     transport_send_messages(fd_set *);
 extern void     transport_setup(struct transport *, int);
 #endif				/* _TRANSPORT_H_ */

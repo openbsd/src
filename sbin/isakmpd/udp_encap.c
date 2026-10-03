@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.25 2026/06/23 13:56:58 hshoexer Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.26 2026/10/03 01:31:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -70,7 +70,6 @@ char		 *udp_decode_ids(struct transport *);
 void		  udp_remove(struct transport *);
 
 static struct transport *udp_encap_create(char *);
-static void		 udp_encap_report(struct transport *);
 static void		 udp_encap_handle_message(struct transport *);
 static struct transport *udp_encap_make(struct sockaddr *);
 static int		 udp_encap_send_message(struct message *,
@@ -81,7 +80,6 @@ static struct transport_vtbl udp_encap_transport_vtbl = {
 	udp_encap_create,
 	0,
 	udp_remove,
-	udp_encap_report,
 	udp_fd_set,
 	udp_fd_isset,
 	udp_encap_handle_message,
@@ -150,7 +148,7 @@ udp_encap_make(struct sockaddr *laddr)
 	 * SO_REUSEPORT.
 	 */
 	on = 1;
-	if (setsockopt(s, SOL_SOCKET,
+	if (monitor_setsockopt(s, SOL_SOCKET,
 	    wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
 	    (void *)&on, sizeof on) == -1) {
 		log_error("udp_encap_make: setsockopt (%d, %d, %d, %p, %lu)",
@@ -312,29 +310,6 @@ ret:
 		conf_free_list(addr_list);
 	free(dst);
 	return rv;
-}
-
-/* Report transport-method specifics of the T transport.  */
-void
-udp_encap_report(struct transport *t)
-{
-	struct udp_transport *u = (struct udp_transport *)t;
-	char	 *src = NULL, *dst = NULL;
-	in_port_t sport, dport;
-
-	if (sockaddr2text(u->src, &src, 0))
-		return;
-	sport = sockaddr_port(u->src);
-
-	if (!u->dst || sockaddr2text(u->dst, &dst, 0))
-		dst = 0;
-	dport = dst ? sockaddr_port(u->dst) : 0;
-
-	LOG_DBG ((LOG_REPORT, 0, "udp_encap_report: fd %d src %s:%u dst %s:%u",
-	    u->s, src, ntohs(sport), dst ? dst : "*", ntohs(dport)));
-
-	free(dst);
-	free(src);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.72 2019/06/28 13:32:44 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.73 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -50,12 +50,6 @@
 #include "monitor.h"
 #include "transport.h"
 #include "util.h"
-
-/*
- * Set if -N is given, allowing name lookups to be done, possibly stalling
- * the daemon for quite a while.
- */
-int	allow_name_lookups = 0;
 
 /*
  * XXX These might be turned into inlines or macros, maybe even
@@ -206,8 +200,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 	pid_t pid;
 
 	bzero(&hints, sizeof hints);
-	if (!allow_name_lookups)
-		hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_flags = AI_NUMERICHOST;
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
@@ -356,7 +349,7 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 	long	val;
 
 	if (getnameinfo(sa, SA_LEN(sa), buf, sizeof buf, 0, 0,
-			allow_name_lookups ? 0 : NI_NUMERICHOST))
+	    NI_NUMERICHOST))
 		return -1;
 
 	if (zflag == 0) {

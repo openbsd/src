@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.58 2021/10/24 21:24:21 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.59 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -59,11 +59,6 @@
 
 /* from isakmpd.c */
 void		 daemon_shutdown_now(int);
-
-/* Report all SA configuration information. */
-void		 ui_report_sa(char *);
-
-static FILE	*ui_open_result(void);
 
 char		*ui_fifo = FIFO;
 int		 ui_socket;
@@ -224,24 +219,9 @@ ui_config(char *cmd)
 	char	 subcmd[201], section[201], tag[201], value[201], tmp[201];
 	char	*v, *nv;
 	int	 trans = 0, items, skip = 0, ret;
-	FILE	*fp;
 
 	if (sscanf(cmd, "C %200s", subcmd) != 1)
 		goto fail;
-
-	if (strcasecmp(subcmd, "get") == 0) {
-		if (sscanf(cmd, "C %*s [%200[^]]]:%200s", section, tag) != 2)
-			goto fail;
-		v = conf_get_str(section, tag);
-		fp = ui_open_result();
-		if (fp) {
-			if (v)
-				fprintf(fp, "%s\n", v);
-			fclose(fp);
-		}
-		LOG_DBG((LOG_UI, 30, "ui_config: \"%s\"", cmd));
-		return;
-	}
 
 	trans = conf_begin();
 	if (strcasecmp(subcmd, "set") == 0) {
@@ -413,67 +393,6 @@ ui_debug(char *cmd)
 }
 
 static void
-ui_packetlog(char *cmd)
-{
-	char	subcmd[201];
-
-	if (sscanf(cmd, "p %200s", subcmd) != 1)
-		goto fail;
-
-	if (strncasecmp(subcmd, "on=", 3) == 0) {
-		/* Start capture to a new file.  */
-		if (subcmd[strlen(subcmd) - 1] == '\n')
-			subcmd[strlen(subcmd) - 1] = 0;
-		log_packet_restart(subcmd + 3);
-	} else if (strcasecmp(subcmd, "on") == 0)
-		log_packet_restart(NULL);
-	else if (strcasecmp(subcmd, "off") == 0)
-		log_packet_stop();
-	return;
-
-fail:
-	log_print("ui_packetlog: command \"%s\" malformed", cmd);
-}
-
-static void
-ui_shutdown_daemon(char *cmd)
-{
-	if (strlen(cmd) == 1) {
-		log_print("ui_shutdown_daemon: received shutdown command");
-		daemon_shutdown_now(0);
-	} else
-		log_print("ui_shutdown_daemon: command \"%s\" malformed", cmd);
-}
-
-/* Report SAs and ongoing exchanges.  */
-void
-ui_report(char *cmd)
-{
-	/* XXX Skip 'cmd' as arg? */
-	sa_report();
-	exchange_report();
-	transport_report();
-	connection_report();
-	timer_report();
-	conf_report();
-}
-
-/* Report all SA configuration information.  */
-void
-ui_report_sa(char *cmd)
-{
-	FILE *fp = ui_open_result();
-
-	/* Skip 'cmd' as arg? */
-	if (!fp)
-		return;
-
-	sa_report_all(fp);
-
-	fclose(fp);
-}
-
-static void
 ui_setmode(char *cmd)
 {
 	char	arg[11];
@@ -481,19 +400,19 @@ ui_setmode(char *cmd)
 	if (sscanf(cmd, "M %10s", arg) != 1)
 		goto fail;
 	if (strncmp(arg, "active", 6) == 0) {
-		if (ui_daemon_passive) 
+		if (ui_daemon_passive)
 			LOG_DBG((LOG_UI, 20,
 			    "ui_setmode: switching to active mode"));
 		ui_daemon_passive = 0;
 	} else if (strncmp(arg, "passive", 7) == 0) {
-		if (!ui_daemon_passive) 
+		if (!ui_daemon_passive)
 			LOG_DBG((LOG_UI, 20,
 			    "ui_setmode: switching to passive mode"));
 		ui_daemon_passive = 1;
 	} else
 		goto fail;
 	return;
-	
+
   fail:
 	log_print("ui_setmode: command \"%s\" malformed", cmd);
 }
@@ -528,24 +447,8 @@ ui_handle_command(char *line)
 		ui_setmode(line);
 		break;
 
-	case 'p':
-		ui_packetlog(line);
-		break;
-
-	case 'Q':
-		ui_shutdown_daemon(line);
-		break;
-
 	case 'R':
 		reinit();
-		break;
-
-	case 'S':
-		ui_report_sa(line);
-		break;
-
-	case 'r':
-		ui_report(line);
 		break;
 
 	case 't':
@@ -628,14 +531,4 @@ ui_handler(void)
 		}
 		p++;
 	}
-}
-
-static FILE *
-ui_open_result(void)
-{
-	FILE *fp = monitor_fopen(RESULT_FILE, "w");
-
-	if (!fp)
-		log_error("ui_open_result: fopen() failed");
-	return fp;
 }

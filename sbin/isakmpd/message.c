@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.136 2026/10/03 01:14:34 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.137 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -73,7 +73,6 @@ static int	message_index_payload(struct message *, struct payload *,
 		    u_int8_t ,u_int8_t *);
 static int	message_parse_transform(struct message *, struct payload *,
 		    u_int8_t, u_int8_t *);
-static struct field *message_get_field(u_int8_t);
 static int	message_validate_payload(struct message *, struct payload *,
 		    u_int8_t);
 static u_int16_t message_payload_sz(u_int8_t);
@@ -93,8 +92,6 @@ static int      message_validate_sa(struct message *, struct payload *);
 static int      message_validate_sig(struct message *, struct payload *);
 static int      message_validate_transform(struct message *, struct payload *);
 static int      message_validate_vendor(struct message *, struct payload *);
-
-static void     message_packet_log(struct message *);
 
 /*
  * Fields used for checking monotonic increasing of proposal and transform
@@ -396,56 +393,6 @@ message_parse_transform(struct message *msg, struct payload *p,
 	    msg->exchange->doi->debug_attribute, msg);
 
 	return 0;
-}
-
-static struct field *
-message_get_field(u_int8_t payload)
-{
-	switch (payload) {
-	case ISAKMP_PAYLOAD_SA:
-		return isakmp_sa_fld;
-	case ISAKMP_PAYLOAD_PROPOSAL:
-		return isakmp_prop_fld;
-	case ISAKMP_PAYLOAD_TRANSFORM:
-		return isakmp_transform_fld;
-	case ISAKMP_PAYLOAD_KEY_EXCH:
-		return isakmp_ke_fld;
-	case ISAKMP_PAYLOAD_ID:
-		return isakmp_id_fld;
-	case ISAKMP_PAYLOAD_CERT:
-		return isakmp_cert_fld;
-	case ISAKMP_PAYLOAD_CERT_REQ:
-		return isakmp_certreq_fld;
-	case ISAKMP_PAYLOAD_HASH:
-		return isakmp_hash_fld;
-	case ISAKMP_PAYLOAD_SIG:
-		return isakmp_sig_fld;
-	case ISAKMP_PAYLOAD_NONCE:
-		return isakmp_nonce_fld;
-	case ISAKMP_PAYLOAD_NOTIFY:
-		return isakmp_notify_fld;
-	case ISAKMP_PAYLOAD_DELETE:
-		return isakmp_delete_fld;
-	case ISAKMP_PAYLOAD_VENDOR:
-		return isakmp_vendor_fld;
-	case ISAKMP_PAYLOAD_ATTRIBUTE:
-		return isakmp_attribute_fld;
-	case ISAKMP_PAYLOAD_NAT_D:
-	case ISAKMP_PAYLOAD_NAT_D_DRAFT:
-		return isakmp_nat_d_fld;
-	case ISAKMP_PAYLOAD_NAT_OA:
-	case ISAKMP_PAYLOAD_NAT_OA_DRAFT:
-		return isakmp_nat_oa_fld;
-	/* Not yet supported and any other unknown payloads. */
-	case ISAKMP_PAYLOAD_SAK:
-	case ISAKMP_PAYLOAD_SAT:
-	case ISAKMP_PAYLOAD_KD:
-	case ISAKMP_PAYLOAD_SEQ:
-	case ISAKMP_PAYLOAD_POP:
-	default:
-		break;
-	}
-	return NULL;
 }
 
 static int
@@ -1261,15 +1208,12 @@ message_validate_payloads(struct message *msg)
 {
 	int             i;
 	struct payload *p;
-	struct field   *f;
 
 	for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_MAX; i++)
 		TAILQ_FOREACH(p, &msg->payload[i], link) {
 			LOG_DBG((LOG_MESSAGE, 60, "message_validate_payloads: "
 			    "payload %s at %p of message %p",
 			    constant_name(isakmp_payload_cst, i), p->p, msg));
-			if ((f = message_get_field(i)) != NULL)
-				field_dump_payload(f, p->p);
 			if (message_validate_payload(msg, p, i))
 				return -1;
 		}
@@ -1300,8 +1244,6 @@ message_recv(struct message *msg)
 		message_drop(msg, 0, 0, 1, 1);
 		return -1;
 	}
-	/* Possibly dump a raw hex image of the message to the log channel.  */
-	message_dump_raw("message_recv", msg, LOG_MESSAGE);
 
 	/*
 	 * If the responder cookie is zero, this is a request to setup an
@@ -1481,9 +1423,6 @@ message_recv(struct message *msg)
 		msg->orig = buf;
 	msg->orig_sz = sz;
 
-	/* IKE packet capture */
-	message_packet_log(msg);
-
 	/*
 	 * Check the overall payload structure at the same time as indexing
 	 * them by type.
@@ -1594,8 +1533,6 @@ message_send(struct message *msg)
 		timer_remove_event(msg->retrans);
 		msg->retrans = 0;
 	}
-	/* IKE packet capture */
-	message_packet_log(msg);
 
 	/*
 	 * If the ISAKMP SA has set up encryption, encrypt the message.
@@ -1621,7 +1558,6 @@ message_send(struct message *msg)
 		    GET_ISAKMP_HDR_FLAGS(msg->iov[0].iov_base)
 		    | ISAKMP_FLAGS_COMMIT);
 
-	message_dump_raw("message_send", msg, LOG_MESSAGE);
 	msg->flags |= MSG_IN_TRANSIT;
 	exchange->in_transit = msg;
 
@@ -1959,61 +1895,6 @@ message_drop(struct message *msg, int notify, struct proto *proto,
 		    incoming);
 	if (clean)
 		message_free(msg);
-}
-
-/*
- * If the user demands debug printouts, printout MSG with as much detail
- * as we can without resorting to per-payload handling.
- */
-void
-message_dump_raw(char *header, struct message *msg, int class)
-{
-	u_int32_t	i, j, k = 0;
-	char            buf[80], *p = buf;
-
-	LOG_DBG((class, 70, "%s: message %p", header, msg));
-	field_dump_payload(isakmp_hdr_fld, msg->iov[0].iov_base);
-	for (i = 0; i < msg->iovlen; i++)
-		for (j = 0; j < msg->iov[i].iov_len; j++) {
-			snprintf(p, sizeof buf - (int) (p - buf), "%02x",
-			    ((u_int8_t *) msg->iov[i].iov_base)[j]);
-			p += strlen(p);
-			if (++k % 32 == 0) {
-				*p = '\0';
-				LOG_DBG((class, 70, "%s: %s", header, buf));
-				p = buf;
-			} else if (k % 4 == 0)
-				*p++ = ' ';
-		}
-	*p = '\0';
-	if (p != buf)
-		LOG_DBG((class, 70, "%s: %s", header, buf));
-}
-
-static void
-message_packet_log(struct message *msg)
-{
-	struct sockaddr *src, *dst;
-	struct transport *t = msg->transport;
-
-	/* Don't log retransmissions. Redundant for incoming packets... */
-	if (msg->xmits > 0)
-		return;
-
-	if (msg->exchange && msg->exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE)
-		t = ((struct virtual_transport *)msg->transport)->encap;
-
-	/* Figure out direction. */
-	if (msg->exchange &&
-	    msg->exchange->initiator ^ (msg->exchange->step % 2)) {
-		t->vtbl->get_src(t, &src);
-		t->vtbl->get_dst(t, &dst);
-	} else {
-		t->vtbl->get_src(t, &dst);
-		t->vtbl->get_dst(t, &src);
-	}
-
-	log_packet_iov(src, dst, msg->iov, msg->iovlen);
 }
 
 /*

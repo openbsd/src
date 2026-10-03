@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.123 2019/08/30 17:51:47 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.124 2026/10/03 01:31:30 deraadt Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: October 3 2026 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -42,11 +42,9 @@
 .Op Fl c Ar config-file
 .Op Fl D Ar class Ns = Ns Ar level
 .Op Fl f Ar fifo
-.Op Fl i Ar pid-file
 .Op Fl l Ar packetlog-file
 .Op Fl N Ar udpencap-port
 .Op Fl p Ar listen-port
-.Op Fl R Ar report-file
 .Sh DESCRIPTION
 The
 .Nm
@@ -219,15 +217,6 @@ If the path given is a dash
 .Pq Sq \&- ,
 .Nm
 will listen to stdin instead.
-.It Fl i Ar pid-file
-By default the PID of the daemon process will be written to
-.Pa /var/run/isakmpd.pid .
-This path can be overridden by specifying another one as the argument to the
-.Fl i
-option.
-Note that only paths beginning with
-.Pa /var/run
-are allowed.
 .It Fl K
 When this option is given,
 .Nm
@@ -239,24 +228,6 @@ arranged by other programs like
 .Xr ipsecctl 8
 or
 .Xr bgpd 8 .
-.It Fl L
-Enable IKE packet capture.
-When this option is given,
-.Nm
-will write an unencrypted copy of the negotiation packets it
-is sending and receiving to the file
-.Pa /var/run/isakmpd.pcap ,
-which can later be read by
-.Xr tcpdump 8
-and other utilities using
-.Xr pcap_open_offline 3 .
-.It Fl l Ar packetlog-file
-As option
-.Fl L
-above, but capture to a specified file.
-Note that only paths beginning with
-.Pa /var/run
-are allowed.
 .It Fl N Ar udpencap-port
 The
 .Fl N
@@ -272,20 +243,6 @@ SAs in the IPsec stack.
 The
 .Fl p
 option specifies the listen port the daemon will bind to.
-.It Fl R Ar report-file
-When you signal
-.Nm
-a
-.Dv SIGUSR1 ,
-it will report its internal state to a report file, normally
-.Pa /var/run/isakmpd.report ,
-but this can be changed by feeding
-the file name as an argument to the
-.Fl R
-flag.
-Note that only paths beginning with
-.Pa /var/run
-are allowed.
 .It Fl S
 This option is used for setups using
 .Xr sasyncd 8
@@ -356,12 +313,6 @@ NOTE: Sending
 a
 .Dv SIGHUP
 or an "R" through the FIFO will void any updates done to the configuration.
-.Pp
-.It Ic C get Oo Ar section Oc : Ns Ar tag
-Get the configuration value of the specified section and tag.
-The result is stored in
-.Pa /var/run/isakmpd.result .
-.Pp
 .It Ic c Ar name
 Start the named connection, if stopped or inactive.
 .Pp
@@ -399,22 +350,6 @@ to active or passive mode.
 In passive mode no packets are sent to peers.
 .Pp
 .It Ic p on Ns Op = Ns Ar path
-.It Ic p off
-Enable or disable cleartext IKE packet capture.
-When enabling, optionally specify which file
-.Nm
-should capture the packets to
-(the default is
-.Pa /var/run/isakmpd.pcap ) .
-Note that only paths beginning with
-.Pa /var/run
-are allowed.
-.Pp
-.It Ic Q
-Cleanly shutdown the daemon, as when sent a
-.Dv SIGTERM
-signal.
-.Pp
 .It Ic R
 Reinitialize
 .Nm isakmpd ,
@@ -433,11 +368,6 @@ option.
 Same as when sent a
 .Dv SIGUSR1
 signal.
-.Pp
-.It Ic S
-Report information on all known SAs to the
-.Pa /var/run/isakmpd.result
-file.
 .Pp
 .It Ic T
 Tear down all active quick mode connections.
@@ -729,26 +659,10 @@ The directory in which trusted public keys are kept.
 The keys must be named in the fashion described above.
 .It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
-.Nm isakmpd .
-.It Pa /var/run/isakmpd.pcap
-The default IKE packet capture file.
-.It Pa /var/run/isakmpd.pid
-The PID of the current daemon.
-.It Pa /var/run/isakmpd.report
-The report file written when
-.Dv SIGUSR1
-is received.
-.It Pa /var/run/isakmpd.result
-The report file written when the
-.Sq S
-or
-.Sq "C get"
-command is issued in the command FIFO.
 .El
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr getnameinfo 3 ,
-.Xr pcap_open_offline 3 ,
 .Xr ipsec 4 ,
 .Xr ipsec.conf 5 ,
 .Xr isakmpd.conf 5 ,
@@ -756,7 +670,6 @@ command is issued in the command FIFO.
 .Xr iked 8 ,
 .Xr sasyncd 8 ,
 .Xr ssl 8 ,
-.Xr tcpdump 8
 .Sh STANDARDS
 .Rs
 .%A D. Piper

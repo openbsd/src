@@ -1,4 +1,4 @@
-/* $OpenBSD: util.h,v 1.33 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: util.h,v 1.34 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
@@ -49,7 +49,7 @@ extern u_int32_t decode_32(u_int8_t *);
 extern void     encode_16(u_int8_t *, u_int16_t);
 extern void     encode_32(u_int8_t *, u_int32_t);
 extern int      hex2raw(char *, u_int8_t *, size_t);
-extern char 	*raw2hex(u_int8_t *, size_t);
+extern char	*raw2hex(u_int8_t *, size_t);
 extern int      sockaddr2text(struct sockaddr *, char **, int);
 extern u_int8_t *sockaddr_addrdata(struct sockaddr *);
 extern int      sockaddr_addrlen(struct sockaddr *);

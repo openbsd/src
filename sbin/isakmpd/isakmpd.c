@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.109 2023/03/08 04:43:06 guenther Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.110 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -90,7 +90,6 @@ volatile sig_atomic_t sighupped = 0;
  * via the -R parameter.
  */
 volatile sig_atomic_t sigusr1ed = 0;
-static char    *report_file = "/var/run/isakmpd.report";
 
 /*
  * If we receive a TERM signal, perform a "clean shutdown" of the daemon.
@@ -100,13 +99,6 @@ static char    *report_file = "/var/run/isakmpd.report";
 volatile sig_atomic_t sigtermed = 0;
 void            daemon_shutdown_now(int);
 void		set_slave_signals(void);
-void		sanitise_stdfd(void);
-
-/* The default path of the PID file.  */
-char	       *pid_file = "/var/run/isakmpd.pid";
-
-/* The path of the IKE packet capture log file.  */
-static char    *pcap_file = 0;
 
 static void
 usage(void)
@@ -114,9 +106,8 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-46adKLnSTv] [-c config-file] [-D class=level] [-f fifo]\n"
-	    "          [-i pid-file] [-l packetlog-file] [-N udpencap-port]\n"
-	    "          [-p listen-port] [-R report-file]\n",
+	    "usage: %s [-46adKnSTv] [-c config-file] [-D class=level] [-f fifo]\n"
+	    "          [-N udpencap-port] [-p listen-port]\n",
 	    __progname);
 	exit(1);
 }
@@ -126,9 +117,8 @@ parse_args(int argc, char *argv[])
 {
 	int             ch;
 	int             cls, level;
-	int             do_packetlog = 0;
 
-	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:R:STv")) != -1) {
+	while ((ch = getopt(argc, argv, "46ac:dD:f:KnN:p:STv")) != -1) {
 		switch (ch) {
 		case '4':
 			bind_family |= BIND_FAMILY_INET4;
@@ -167,10 +157,6 @@ parse_args(int argc, char *argv[])
 			ui_fifo = optarg;
 			break;
 
-		case 'i':
-			pid_file = optarg;
-			break;
-
 		case 'K':
 			ignore_policy++;
 			break;
@@ -185,18 +171,6 @@ parse_args(int argc, char *argv[])
 
 		case 'p':
 			udp_default_port = optarg;
-			break;
-
-		case 'l':
-			pcap_file = optarg;
-			/* FALLTHROUGH */
-
-		case 'L':
-			do_packetlog++;
-			break;
-
-		case 'R':
-			report_file = optarg;
 			break;
 
 		case 'S':
@@ -219,40 +193,14 @@ parse_args(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)	
+	if (argc > 0)
 		usage();
-
-	if (do_packetlog && !pcap_file)
-		pcap_file = PCAP_FILE_DEFAULT;
 }
 
 static void
 sighup(int sig)
 {
 	sighupped = 1;
-}
-
-/* Report internal state on SIGUSR1.  */
-static void
-report(void)
-{
-	FILE	*rfp, *old;
-	mode_t	old_umask;
-
-	old_umask = umask(S_IRWXG | S_IRWXO);
-	rfp = monitor_fopen(report_file, "w");
-	umask(old_umask);
-
-	if (!rfp) {
-		log_error("report: fopen (\"%s\", \"w\") failed", report_file);
-		return;
-	}
-	/* Divert the log channel to the report file during the report.  */
-	old = log_current();
-	log_to(rfp);
-	ui_report("r");
-	log_to(old);
-	fclose(rfp);
 }
 
 static void
@@ -296,6 +244,7 @@ set_slave_signals(void)
 	signal(SIGUSR1, sigusr1);
 }
 
+/* XXX reverse signal race */
 static void
 daemon_shutdown(void)
 {
@@ -327,59 +276,16 @@ daemon_shutdown(void)
 		 * the DELETE notifications have been sent, we can shutdown.
 		 */
 
-		log_packet_stop();
 		log_print("isakmpd: exit");
 		exit(0);
 	}
 }
 
-/* Called on SIGTERM, SIGINT or by ui_shutdown_daemon().  */
+/* Called on SIGTERM or SIGINT */
 void
 daemon_shutdown_now(int sig)
 {
 	sigtermed = 1;
-}
-
-/* Write pid file.  */
-static void
-write_pid_file(void)
-{
-	FILE	*fp;
-
-	unlink(pid_file);
-
-	fp = fopen(pid_file, "w");
-	if (fp != NULL) {
-		if (fprintf(fp, "%ld\n", (long) getpid()) < 0)
-			log_error("write_pid_file: failed to write PID to "
-			    "\"%.100s\"", pid_file);
-		fclose(fp);
-	} else
-		log_fatal("write_pid_file: fopen (\"%.100s\", \"w\") failed",
-		    pid_file);
-}
-
-void
-sanitise_stdfd(void)
-{
-	int nullfd, dupfd;
-
-	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
-		fprintf(stderr, "Couldn't open /dev/null: %s\n",
-		    strerror(errno));
-		exit(1);
-	}
-	while (++dupfd <= STDERR_FILENO) {
-		/* Only populate closed fds */
-		if (fcntl(dupfd, F_GETFL) == -1 && errno == EBADF) {
-			if (dup2(nullfd, dupfd) == -1) {
-				fprintf(stderr, "dup2: %s\n", strerror(errno));
-				exit(1);
-			}
-		}
-	}
-	if (nullfd > STDERR_FILENO)
-		close(nullfd);
 }
 
 int
@@ -389,14 +295,6 @@ main(int argc, char *argv[])
 	int             n, m;
 	size_t          mask_size;
 	struct timespec ts, *timeout;
-
-	closefrom(STDERR_FILENO + 1);
-
-	/*
-	 * Make sure init() won't alloc fd 0, 1 or 2, as daemon() will close
-	 * them.
-	 */
-	sanitise_stdfd();
 
 	/* Log cmd line parsing and initialization errors to stderr.  */
 	log_to(stderr);
@@ -420,8 +318,6 @@ main(int argc, char *argv[])
 	/* Set timezone before priv'separation */
 	tzset();
 
-	write_pid_file();
-
 	if (monitor_init(debug)) {
 		/* The parent, with privileges enters infinite monitor loop. */
 		monitor_loop(debug);
@@ -430,10 +326,6 @@ main(int argc, char *argv[])
 	/* Child process only from this point on, no privileges left.  */
 
 	init();
-
-	/* If we wanted IKE packet capture to file, initialize it now.  */
-	if (pcap_file != 0)
-		log_packet_init(pcap_file);
 
 	/* Allocate the file descriptor sets just big enough.  */
 	n = getdtablesize();
@@ -460,7 +352,6 @@ main(int argc, char *argv[])
 		if (sigusr1ed) {
 			sigusr1ed = 0;
 			log_print("SIGUSR1 received");
-			report();
 		}
 		/*
 		 * and if someone set 'sigtermed' (SIGTERM, SIGINT or via the

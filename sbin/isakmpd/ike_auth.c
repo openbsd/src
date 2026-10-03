@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.119 2026/06/24 09:57:32 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.120 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -195,7 +195,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			}
 			keyfile = privkeyfile;
 
-			fd = monitor_open(keyfile, O_RDONLY, 0);
+			fd = monitor_open(keyfile, O_RDONLY);
 			if (fd < 0) {
 				free(keyfile);
 				goto ignorekeynote;
@@ -275,7 +275,7 @@ ignorekeynote:
 			    local_id);
 			keyfile = privkeyfile;
 
-			fd = monitor_open(keyfile, O_RDONLY, 0);
+			fd = monitor_open(keyfile, O_RDONLY);
 			if (fd == -1 && errno != ENOENT) {
 				log_print("ike_auth_get_key: failed opening "
 				    "\"%s\"", keyfile);
@@ -290,7 +290,7 @@ ignorekeynote:
 			keyfile = conf_get_str("X509-certificates",
 			    "Private-key");
 
-			fd = monitor_open(keyfile, O_RDONLY, 0);
+			fd = monitor_open(keyfile, O_RDONLY);
 			if (fd == -1) {
 				log_print("ike_auth_get_key: failed opening "
 				    "\"%s\"", keyfile);
@@ -1129,6 +1129,7 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	char            filename[FILENAME_MAX];
 	char           *fstr;
 	FILE           *keyfp;
+	int		keyfd;
 
 	if (type != IKE_AUTH_RSA_SIG) {	/* XXX More types? */
 		LOG_DBG((LOG_NEGOTIATION, 20, "get_raw_key_from_file: "
@@ -1155,8 +1156,11 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	free(fstr);
 
 	/* If the file does not exist, fail silently.  */
-	keyfp = monitor_fopen(filename, "r");
-	if (keyfp) {
+	keyfd = monitor_open(filename, O_RDONLY);
+	if (keyfd != -1) {
+		keyfp = fdopen(keyfd, "r");
+		if (keyfp == NULL)
+			return -1;
 		*rsa = PEM_read_RSA_PUBKEY(keyfp, NULL, NULL, NULL);
 		if (!*rsa) {
 			rewind(keyfp);
@@ -1167,7 +1171,7 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 			    "public key %s", filename);
 		fclose(keyfp);
 	} else if (errno != ENOENT) {
-		log_error("get_raw_key_from_file: monitor_fopen "
+		log_error("get_raw_key_from_file: monitor_open "
 		    "(\"%s\", \"r\") failed", filename);
 		return -1;
 	} else

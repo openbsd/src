@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.34 2006/08/30 16:56:56 hshoexer Exp $	 */
+/* $OpenBSD: conf.h,v 1.35 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
@@ -100,6 +100,5 @@ extern void     conf_reinit(void);
 extern int      conf_remove(int, char *, char *);
 extern int      conf_remove_section(int, char *);
 extern int      conf_set(int, char *, char *, char *, int, int);
-extern void     conf_report(void);
 
 #endif				/* _CONF_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.41 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: connection.c,v 1.42 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -398,30 +398,6 @@ connection_passive_teardown(char *name)
 	free(conn->local_id);
 	free(conn->remote_id);
 	free(conn);
-}
-
-void
-connection_report(void)
-{
-	struct connection *conn;
-	struct timespec  now;
-	struct connection_passive *pconn;
-	struct doi     *doi = doi_lookup(ISAKMP_DOI_ISAKMP);
-
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	for (conn = TAILQ_FIRST(&connections); conn;
-	    conn = TAILQ_NEXT(conn, link))
-		LOG_DBG((LOG_REPORT, 0,
-		    "connection_report: connection %s next check %lld seconds",
-		    (conn->name ? conn->name : "<unnamed>"),
-		    (long long)(conn->ev->expiration.tv_sec - now.tv_sec)));
-	for (pconn = TAILQ_FIRST(&connections_passive); pconn;
-	    pconn = TAILQ_NEXT(pconn, link))
-		LOG_DBG((LOG_REPORT, 0,
-		    "connection_report: passive connection %s %s", pconn->name,
-		    doi->decode_ids("local_id: %s, remote_id: %s",
-		    pconn->local_id, pconn->local_sz,
-		    pconn->remote_id, pconn->remote_sz, 1)));
 }
 
 /* Reinitialize all connections (SIGHUP handling).  */

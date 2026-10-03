@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.145 2026/06/24 09:57:32 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.146 2026/10/03 01:31:30 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -73,7 +73,6 @@
  */
 #define MAX_BUCKET_BITS 16
 
-static void     exchange_dump(char *, struct exchange *);
 static void     exchange_free_aux(void *);
 static struct exchange *exchange_lookup_active(char *, int);
 
@@ -813,7 +812,6 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 	exchange_add_finalization(exchange, finalize, arg);
 	cookie_gen(t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
 	exchange_enter(exchange);
-	exchange_dump("exchange_establish_p1", exchange);
 
 	msg = message_alloc(t, 0, ISAKMP_HDR_SZ);
 	if (!msg) {
@@ -929,7 +927,6 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
 	if (isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
 	exchange_enter(exchange);
-	exchange_dump("exchange_establish_p2", exchange);
 
 	/*
 	 * Do not create SA's for informational exchanges.
@@ -1102,7 +1099,6 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 	    ISAKMP_HDR_ICOOKIE_LEN, ISAKMP_HDR_RCOOKIE_LEN);
 	GET_ISAKMP_HDR_ICOOKIE(msg->iov[0].iov_base, exchange->cookies);
 	exchange_enter(exchange);
-	exchange_dump("exchange_setup_p1", exchange);
 	return exchange;
 }
 
@@ -1125,64 +1121,7 @@ exchange_setup_p2(struct message *msg, u_int8_t doi)
 	if (msg->isakmp_sa && (msg->isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE))
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
 	exchange_enter(exchange);
-	exchange_dump("exchange_setup_p2", exchange);
 	return exchange;
-}
-
-/* Dump interesting data about an exchange.  */
-static void
-exchange_dump_real(char *header, struct exchange *exchange, int class,
-    int level)
-{
-	struct sa	*sa;
-	char             buf[LOG_SIZE];
-	/* Don't risk overflowing the final log buffer.  */
-	size_t           bufsize_max = LOG_SIZE - strlen(header) - 32;
-
-	LOG_DBG((class, level,
-	    "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
-	    header, exchange, exchange->name ? exchange->name : "<unnamed>",
-	    exchange->policy ? exchange->policy : "<no policy>",
-	    exchange->initiator ? "initiator" : "responder", exchange->phase,
-	    exchange->doi->id, exchange->type, exchange->step));
-	LOG_DBG((class, level, "%s: icookie %08x%08x rcookie %08x%08x", header,
-	    decode_32(exchange->cookies), decode_32(exchange->cookies + 4),
-	    decode_32(exchange->cookies + 8),
-	    decode_32(exchange->cookies + 12)));
-
-	/* Include phase 2 SA list for this exchange */
-	if (exchange->phase == 2) {
-		snprintf(buf, bufsize_max, "sa_list ");
-		for (sa = TAILQ_FIRST(&exchange->sa_list);
-		    sa && strlen(buf) < bufsize_max; sa = TAILQ_NEXT(sa, next))
-			snprintf(buf + strlen(buf), bufsize_max - strlen(buf),
-			    "%p ", sa);
-		if (sa)
-			strlcat(buf, "...", bufsize_max);
-	} else
-		buf[0] = '\0';
-
-	LOG_DBG((class, level, "%s: msgid %08x %s", header,
-	    decode_32(exchange->message_id), buf));
-}
-
-static void
-exchange_dump(char *header, struct exchange *exchange)
-{
-	exchange_dump_real(header, exchange, LOG_EXCHANGE, 10);
-}
-
-void
-exchange_report(void)
-{
-	struct exchange	*exchange;
-	int	i;
-
-	for (i = 0; i <= bucket_mask; i++)
-		for (exchange = LIST_FIRST(&exchange_tab[i]); exchange;
-		    exchange = LIST_NEXT(exchange, link))
-			exchange_dump_real("exchange_report", exchange,
-			    LOG_REPORT, 0);
 }
 
 /*
@@ -1329,8 +1268,6 @@ exchange_finalize(struct message *msg)
 	int	 i;
 	char	*id_doi, *id_trp;
 
-	exchange_dump("exchange_finalize", exchange);
-
 	/* Copy the ID from phase 1 to exchange or phase 2 SA.  */
 	if (msg->isakmp_sa) {
 		if (exchange->id_i && exchange->id_r) {
@@ -1469,12 +1406,6 @@ exchange_finalize(struct message *msg)
 		exchange->finalize(exchange, exchange->finalize_arg, 0);
 	exchange->finalize = 0;
 
-	/*
-	 * There is no reason to keep the SAs connected to us anymore, in fact
-	 * it can hurt us if we have short lifetimes on the SAs and we try
-	 * to call exchange_report, where the SA list will be walked and
-	 * references to freed SAs can occur.
-	 */
 	while (TAILQ_FIRST(&exchange->sa_list)) {
 		sa = TAILQ_FIRST(&exchange->sa_list);
 

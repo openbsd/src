@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.207 2026/06/24 09:57:32 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.208 2026/10/03 01:31:30 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -899,6 +899,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	char           *addr_str, *s;
 	char		iface_str[32];
 
+	bzero(&iface_str, sizeof(iface_str));
 	msg.sadb_msg_type = incoming ? SADB_UPDATE : SADB_ADD;
 	switch (proto->proto) {
 	case IPSEC_PROTO_IPSEC_ESP:
@@ -3109,7 +3110,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				goto fail;
 			}
 		}
-	} else 
+	} else
 		pf_key_v2_conf_refinc(af, configname);
 
 	/* Set the ISAKMP-peer section. */
