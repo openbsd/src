@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.116 2026/06/24 09:36:35 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.117 2026/10/03 01:14:34 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1052,6 +1052,13 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	size_t          rest_len;
 	struct sockaddr *src, *dst;
 
+	if (hash == NULL || GET_ISAKMP_GEN_LENGTH(hashp->p) !=
+	    ISAKMP_HASH_SZ + hash->hashsize) {
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1,
+		    0);
+		return -1;
+	}
+
 	/* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "initiator_recv_HASH_SA_NONCE: "
 	    "SKEYID_a", (u_int8_t *)isa->skeyid_a, isa->skeyid_len));
@@ -1492,6 +1499,7 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	struct sa      *sa;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa = isakmp_sa->data;
+	struct hash    *hashfunc = hash_get(isa->hash);
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
 	struct prf     *prf;
@@ -1515,6 +1523,12 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 		goto cleanup;
 	}
 	hash_len = GET_ISAKMP_GEN_LENGTH(hash);
+	if (hashfunc == NULL || hash_len !=
+	    ISAKMP_HASH_SZ + hashfunc->hashsize) {
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1,
+		    0);
+		goto cleanup;
+	}
 	my_hash = malloc(hash_len - ISAKMP_GEN_SZ);
 	if (!my_hash) {
 		log_error("responder_recv_HASH_SA_NONCE: malloc (%lu) failed",
@@ -1960,6 +1974,7 @@ responder_recv_HASH(struct message *msg)
 	struct exchange *exchange = msg->exchange;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa = isakmp_sa->data;
+	struct hash    *hashfunc = hash_get(isa->hash);
 	struct prf     *prf;
 	u_int8_t       *hash, *my_hash = 0;
 	size_t          hash_len;
@@ -1970,6 +1985,12 @@ responder_recv_HASH(struct message *msg)
 	hash = hashp->p;
 	hashp->flags |= PL_MARK;
 	hash_len = GET_ISAKMP_GEN_LENGTH(hash);
+	if (hashfunc == NULL || hash_len !=
+	    ISAKMP_HASH_SZ + hashfunc->hashsize) {
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1,
+		    0);
+		goto cleanup;
+	}
 	my_hash = malloc(hash_len - ISAKMP_GEN_SZ);
 	if (!my_hash) {
 		log_error("responder_recv_HASH: malloc (%lu) failed",

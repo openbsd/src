@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.135 2026/06/24 09:57:32 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.136 2026/10/03 01:14:34 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -761,6 +761,9 @@ message_validate_hash(struct message *msg, struct payload *p)
 	isa = isakmp_sa->data;
 	hash = hash_get(isa->hash);
 	if (hash == NULL)
+		goto invalid;
+	if (GET_ISAKMP_GEN_LENGTH(hashp->p) !=
+	    ISAKMP_HASH_SZ + hash->hashsize)
 		goto invalid;
 
 	/* If no SKEYID_a, we can not do anything (should not happen).  */
