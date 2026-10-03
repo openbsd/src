@@ -1,0 +1,20 @@
+.\" $OpenBSD: width.in,v 1.1 2026/10/03 14:20:33 schwarze Exp $
+.Dd $Mdocdate: October 3 2026 $
+.Dt BL-WIDTH 1
+.Os
+.Sh NAME
+.Nm Bl-width
+.Nd macros in width arguments of list macros
+.Sh DESCRIPTION
+.Bl -tag -width ".No head"
+.It head
+body
+.El
+.Bl -tag -width ".  No head"
+.It head
+space characters before macro
+.El
+.Bl -tag -width ".No   head"
+.It head
+space characters after macro
+.El

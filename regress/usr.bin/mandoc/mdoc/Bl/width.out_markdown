@@ -1,0 +1,21 @@
+BL-WIDTH(1) - General Commands Manual
+
+# NAME
+
+**Bl-width** - macros in width arguments of list macros
+
+# DESCRIPTION
+
+head
+
+> body
+
+head
+
+> space characters before macro
+
+head
+
+> space characters after macro
+
+OpenBSD - October 3, 2026 - BL-WIDTH(1)

@@ -1,7 +1,7 @@
 BD-OFFSET-EMPTY(1)          General Commands Manual         BD-OFFSET-EMPTY(1)
 
 NNAAMMEE
-     BBdd--ooffffsseett--eemmppttyy - no argument specified to Bd offset
+     BBdd--ooffffsseett--eemmppttyy - various offset arguments in display macros
 
 DDEESSCCRRIIPPTTIIOONN
      Bd literal offset empty
@@ -16,8 +16,10 @@ DDEESSCCRRIIPPTTIIOONN
 
              Bd literal offset mystring
 
+          Bd literal offset with macro
+
            Bd literal offset Ds
 
                                                                                    Bd literal offset 78n
 
-OpenBSD                          July 4, 2017               BD-OFFSET-EMPTY(1)
+OpenBSD                         October 3, 2026             BD-OFFSET-EMPTY(1)
