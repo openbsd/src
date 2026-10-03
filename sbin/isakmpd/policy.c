@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.106 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.107 2026/10/03 01:38:25 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2164,6 +2164,14 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
+		/* The ID becomes exactly one pathname component. */
+		if (id_len == 0 || memchr(id, '\0', id_len) != NULL ||
+		    memchr(id, '/', id_len) != NULL ||
+		    (id_len == 1 && id[0] == '.') ||
+		    (id_len == 2 && memcmp(id, "..", 2) == 0)) {
+			log_print("keynote_cert_obtain: invalid textual ID");
+			return 0;
+		}
 		file = calloc(len + id_len, sizeof(char));
 		if (file == NULL) {
 			log_error("keynote_cert_obtain: "
