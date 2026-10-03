@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.128 2025/12/05 19:35:40 tb Exp $	 */
+/* $OpenBSD: x509.c,v 1.129 2026/10/03 01:15:47 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -422,7 +422,7 @@ x509_generate_kn(int id, X509 *cert)
 		    "failed to allocate memory for KeyNote credential");
 		goto fail;
 	}
-	
+
 	free(ikey);
 	ikey = NULL;
 	free(skey);
