@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.6 2026/03/31 06:25:39 tb Exp $ */
+/*	$OpenBSD: unistd.h,v 1.7 2026/10/03 19:15:49 tb Exp $ */
 /*
  * Public domain
  * compatibility shim for OpenSSL 3
@@ -12,6 +12,7 @@
 
 #include <openssl/cms.h>
 #include <openssl/stack.h>
+#include <openssl/x509.h>
 
 #ifndef DECLARE_STACK_OF
 #define DECLARE_STACK_OF DEFINE_STACK_OF
