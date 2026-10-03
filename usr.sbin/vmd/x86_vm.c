@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.27 2026/09/22 20:20:57 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.28 2026/10/03 04:10:50 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -729,6 +729,7 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 				    "bytes from 0x%llx", __func__, pa);
 				break;
 			}
+			ve->vee.vee_insn_len = len;
 		}
 
 		ret = insn_decode(ve, &insn);
