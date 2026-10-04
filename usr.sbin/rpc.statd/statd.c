@@ -1,4 +1,4 @@
-/*	$OpenBSD: statd.c,v 1.6 2023/01/04 14:42:46 jsg Exp $	*/
+/*	$OpenBSD: statd.c,v 1.7 2026/10/04 13:33:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -489,7 +489,7 @@ init_file(char *filename)
 {
 	DBT data;
 
-	db = dbopen(filename, O_RDWR|O_CREAT|O_NDELAY|O_EXLOCK, 0644, DB_HASH,
+	db = dbopen(filename, O_RDWR|O_CREAT|O_NONBLOCK|O_EXLOCK, 0644, DB_HASH,
 	    NULL);
 	if (db == NULL)
 		err(1, "Cannot open `%s'", filename);
