@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.91 2026/09/19 15:44:42 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.92 2026/10/04 04:45:55 gnezdo Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -259,13 +259,6 @@ allocated:
 		    (SCARG(uap, shmflg) & SHM_RDONLY) ? IPC_R : IPC_R|IPC_W);
 	if (error)
 		return (error);
-	for (i = 0, shmmap_s = shmmap_h->state; i < shmmap_h->shmseg; i++) {
-		if (shmmap_s->shmid == -1)
-			break;
-		shmmap_s++;
-	}
-	if (i >= shmmap_h->shmseg)
-		return (EMFILE);
 	size = round_page(shmseg->shm_segsz);
 	prot = PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
@@ -292,15 +285,22 @@ allocated:
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
 	    MAP_INHERIT_SHARE, MADV_RANDOM, flags));
 	if (error) {
-		if ((--shmseg->shm_nattch == 0) &&
-		    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
-			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
-			shmsegs[shm_last_free] = NULL;
-			shm_deallocate_segment(shmseg);
-		} else {
-			uao_detach(shm_handle->shm_object);
-		}
-		return (error);
+		/* A failed uvm_map() did not consume the reference. */
+		uao_detach(shm_handle->shm_object);
+		goto unwind;
+	}
+
+	/* Nothing below here sleeps in success path. */
+	for (i = 0, shmmap_s = shmmap_h->state; i < shmmap_h->shmseg; i++) {
+		if (shmmap_s->shmid == -1)
+			break;
+		shmmap_s++;
+	}
+	if (i == shmmap_h->shmseg) {
+		/* Undo the sucessful uvm_map if have nowhere to save. */
+		uvm_unmap(&p->p_vmspace->vm_map, attach_va, attach_va + size);
+		error = EMFILE;
+		goto unwind;
 	}
 
 	shmmap_s->va = attach_va;
@@ -309,6 +309,15 @@ allocated:
 	shmseg->shm_atime = gettime();
 	*retval = attach_va;
 	return (0);
+
+unwind:
+	if ((--shmseg->shm_nattch == 0) &&
+	    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
+		shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
+		shmsegs[shm_last_free] = NULL;
+		shm_deallocate_segment(shmseg);
+	}
+	return (error);
 }
 
 int
