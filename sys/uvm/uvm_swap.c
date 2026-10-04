@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.183 2026/07/11 13:13:16 kettenis Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.184 2026/10/04 21:12:18 krw Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -895,19 +895,18 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	/*
 	 * for block special files, we want to make sure that leave
 	 * the disklabel and bootblocks alone, so we arrange to skip
-	 * over them (arbitrarily choosing to skip PAGE_SIZE bytes).
+	 * over them (arbitrarily choosing to skip 32 * DEV_BSIZE bytes).
 	 * note that because of this the "size" can be less than the
 	 * actual number of blocks on the device.
 	 */
 	if (vp->v_type == VBLK) {
-		/* we use pages 1 to (size - 1) [inclusive] */
-		size = npages - 1;
-		addr = 1;
+		addr = dbtob((u_int64_t)32) >> PAGE_SHIFT;
 	} else {
-		/* we use pages 0 to (size - 1) [inclusive] */
-		size = npages;
 		addr = 0;
 	}
+	/* we use pages addr to (size - 1) [inclusive] */
+	size = npages - addr;
+	sdp->swd_nblks -= btodb((u_int64_t)addr << PAGE_SHIFT);
 
 	/*
 	 * make sure we have enough blocks for a reasonable sized swap
