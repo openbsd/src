@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.8 2023/05/23 11:06:52 tb Exp $ */
+/* $OpenBSD: objectstest.c,v 1.9 2026/10/04 10:18:12 tb Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -407,7 +407,7 @@ obj_txt_early_nul_test(void)
 	buf[1] = '\0';
 
 	if (OBJ_obj2txt(buf, sizeof(buf), NULL, 1) != 0) {
-		fprintf(stderr, "FAIL: OBJ_obj2txt(NULL) succeded\n");
+		fprintf(stderr, "FAIL: OBJ_obj2txt(NULL) succeeded\n");
 		goto failed;
 	}
 	if (buf[0] != '\0') {
