@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.3 2026/09/30 17:08:29 deraadt Exp $ */
+/*	$OpenBSD: hash.c,v 1.4 2026/10/04 13:31:56 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -48,6 +48,5 @@ fnv32_hash(void *buffer, size_t length, uint32_t hash)
 		hash *= FNV_32_PRIME;
 		hash ^= (uint32_t)p[i];
 	}
-
 	return hash;
 }

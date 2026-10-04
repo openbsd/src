@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.4 2026/09/30 17:08:29 deraadt Exp $ */
+/*	$OpenBSD: commands.c,v 1.5 2026/10/04 13:31:56 deraadt Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -64,21 +64,15 @@ int
 m_serial_query(struct rtr_socket *s, struct pdu_header *ph)
 {
 	struct pdu_serial_query *sq;
-	struct cache_frame *old_frame;
-	struct cache_frame *new_frame;
-
+	struct cache_frame *old_frame, *new_frame;
 	struct vrp4 *vrp4;
 	struct vrp6 *vrp6;
 	struct brk *brk;
-	struct vap *vap;
-	struct vap *node;
-
-	int initial_command;
+	struct vap *vap, *node;
+	int initial_command = 0;
 
 	assert(s);
 	assert(ph);
-
-	initial_command = 0;
 
 	sq = (struct pdu_serial_query *)ph;
 
@@ -312,7 +306,6 @@ int
 m_reset_query(struct rtr_socket *s, struct pdu_header *ph)
 {
 	struct cache_frame *frame;
-
 	struct vrp4 *vrp4;
 	struct vrp6 *vrp6;
 	struct brk *brk;
@@ -994,9 +987,7 @@ int
 m_router_key_import(struct rtr_socket *s, struct pdu_header *ph)
 {
 	struct pdu_router_key_import *router_key_import;
-
 	uint32_t spki_length;
-
 	unsigned char buffer[PDU_MAX_LENGTH];
 	struct brk *brk;
 	uint8_t flags;
@@ -1071,9 +1062,8 @@ int
 m_aspa_pdu_import(struct rtr_socket *s, struct pdu_header *ph)
 {
 	struct pdu_aspa_import *aspa_import;
-	int provider_count;
+	int provider_count, i;
 	struct vap_buffer vap_buf;
-	int i;
 	uint8_t flags;
 
 	assert(s);
