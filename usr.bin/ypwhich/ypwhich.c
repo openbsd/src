@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.24 2024/08/19 06:00:18 florian Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.25 2026/10/04 19:53:46 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -240,7 +240,6 @@ main(int argc, char *argv[])
 	else
 		r = yp_maplist(domain, &ypml);
 
-	r = 0;
 	switch (r) {
 	case 0:
 		for (y = ypml; y; ) {
