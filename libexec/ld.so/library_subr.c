@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.55 2023/04/27 12:27:56 robert Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.56 2026/10/04 14:24:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -40,6 +40,7 @@
 #include "sod.h"
 
 char * _dl_default_path[2] = { "/usr/lib", NULL };
+char * _dl_system_path[] = { "/usr/lib", "/usr/X11R6/lib", "/usr/local/lib", NULL };
 
 
 /* STATIC DATA */
@@ -131,6 +132,13 @@ _dl_find_shlib(struct sod *sodp, char **searchpath, int nohints)
 	_dl_DIR *dd;
 	struct sod tsod, bsod;		/* transient and best sod */
 
+	/*
+	 * For setuid binaries don't trust the hints file, but search
+	 * in specific directories known to be system-controlled.
+	 */
+	if (_dl_trust)
+		goto nohints;
+
 	/* if we are to search default directories, and hints
 	 * are not to be used, search the standard path from ldconfig
 	 * (_dl_hint_search_path) or use the default path
@@ -163,7 +171,9 @@ _dl_find_shlib(struct sod *sodp, char **searchpath, int nohints)
 	 */
 nohints:
 	if (searchpath == NULL) {
-		if (_dl_hint_search_path != NULL)
+		if (_dl_trust)
+			searchpath = _dl_system_path;
+		else if (_dl_hint_search_path != NULL)
 			searchpath = _dl_hint_search_path;
 		else
 			searchpath = _dl_default_path;
