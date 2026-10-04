@@ -1,10 +1,13 @@
-#	$OpenBSD: Makefile,v 1.42 2026/09/29 21:59:14 rcovelli Exp $
+#	$OpenBSD: Makefile,v 1.43 2026/10/04 09:39:02 tb Exp $
 
 PROG=	rpki-client
 
 SRCS+=	as.c
 SRCS+=	asn1_bit_string.c
 SRCS+=	aspa.c
+SRCS+=	bs_ber.c
+SRCS+=	bs_cbb.c
+SRCS+=	bs_cbs.c
 SRCS+=	ccr.c
 SRCS+=	cert.c
 SRCS+=	cms.c
