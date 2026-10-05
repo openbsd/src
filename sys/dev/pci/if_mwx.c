@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.39 2026/10/05 12:05:40 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.40 2026/10/05 13:47:05 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -4533,7 +4533,7 @@ mt7925_mcu_hw_scan(struct mwx_softc *sc, int bgscan)
 	hdr = mtod(m, struct mt7925_scan_hdr_tlv *);
 	hdr->seq_num = sc->sc_scan_seq_num;
 	hdr->bss_idx = sc->sc_vif.idx;
-	//hdr->tlv_num = 5;
+	hdr->tlv_num = 5;
 
 	req = (struct mt7925_scan_req_tlv *)(hdr + 1);
 	req->tag = htole16(UNI_SCAN_REQ);
@@ -4572,15 +4572,13 @@ mt7925_mcu_hw_scan(struct mwx_softc *sc, int bgscan)
 
 		if (c->ic_flags == 0)
 			continue;
-		if (!IEEE80211_IS_CHAN_2GHZ(c))
-			continue;
 		ieee = ieee80211_chan2ieee(ic, c);
 		if (!isset(ic->ic_chan_active, ieee))
 			continue;
 
 		chan = &chan_info->channels[nchan];
 		channel_num = ieee80211_mhz2ieee(c->ic_freq, 0);
-		chan->band = 1;
+		chan->band = IEEE80211_IS_CHAN_2GHZ(c) ? 1 : 2;
 		chan->channel_num = channel_num;
 		if (scan0 == NULL)
 			scan0 = c;
@@ -4611,6 +4609,16 @@ mt7925_mcu_hw_scan(struct mwx_softc *sc, int bgscan)
 			ie->len = htole16(sizeof(*ie) + ie_len);
 			ie->ies_len = htole16(ie_len);
 			ie->band = 1;
+			m_copydata(probe, 0, ie_len, ie->ies);
+			ptr += sizeof(*ie) + ie_len;
+			hdr->tlv_num++;
+
+			/* XXX append 5Ghz probe all the time */
+			ie = (struct mt7925_scan_ie_tlv *)ptr;
+			ie->tag = htole16(UNI_SCAN_IE);
+			ie->len = htole16(sizeof(*ie) + ie_len);
+			ie->ies_len = htole16(ie_len);
+			ie->band = 2;
 			m_copydata(probe, 0, ie_len, ie->ies);
 			ptr += sizeof(*ie) + ie_len;
 			hdr->tlv_num++;
