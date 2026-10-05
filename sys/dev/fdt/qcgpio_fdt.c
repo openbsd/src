@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.9 2026/09/04 18:06:36 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.10 2026/10/05 20:27:37 kirill Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -189,7 +189,7 @@ qcgpio_fdt_activate(struct device *self, int act)
 
 			sc->sc_pin_intr_cfg[pin] =
 			    HREAD4(sc, TLMM_GPIO_INTR_CFG(pin));
-			if (sc->sc_pin_ih[pin].ih_wakeup) {
+			if (!sc->sc_pin_ih[pin].ih_wakeup) {
 				HCLR4(sc, TLMM_GPIO_INTR_CFG(pin),
 				    TLMM_GPIO_INTR_CFG_INTR_ENABLE);
 			}
