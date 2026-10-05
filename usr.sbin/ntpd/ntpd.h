@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.156 2026/09/10 15:06:22 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.157 2026/10/05 14:13:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -427,7 +427,6 @@ int			 control_accept(int);
 struct ctl_conn		*control_connbyfd(int);
 int			 control_close(int);
 int			 control_dispatch_msg(struct pollfd *, u_int *);
-void			 session_socket_nonblockmode(int);
 void			 build_show_status(struct ctl_show_status *);
 void			 build_show_peer(struct ctl_show_peer *,
 			     struct ntp_peer *);
