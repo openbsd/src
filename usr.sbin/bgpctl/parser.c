@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.141 2026/09/24 11:41:41 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.142 2026/10/05 07:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1000,8 +1000,8 @@ parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
     uint8_t *prefixlen)
 {
 	struct bgpd_addr tmp;
-	char		*p, *ps;
-	const char	*errstr;
+	const char	*p, *errstr;
+	char		*ps;
 	int		 mask = -1;
 
 	if (word == NULL)
