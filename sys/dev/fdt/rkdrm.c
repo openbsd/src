@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.25 2026/08/10 06:11:43 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.26 2026/10/05 08:20:26 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -338,7 +338,7 @@ rkdrm_doswitch(void *v)
 	struct rkdrm_softc *sc = ri->ri_hw;
 
 	rasops_show_screen(ri, sc->switchcookie, 0, NULL, NULL);
-	drm_fb_helper_restore_fbdev_mode_unlocked(&sc->helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(&sc->helper, false);
 
 	if (sc->switchcb)
 		(sc->switchcb)(sc->switchcbarg, 0, 0);
@@ -426,7 +426,7 @@ rkdrm_attachhook(struct device *dev)
 
 	task_set(&sc->switchtask, rkdrm_doswitch, ri);
 
-	drm_fb_helper_restore_fbdev_mode_unlocked(&sc->helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(&sc->helper, false);
 
 	sfb = to_rkdrm_framebuffer(helper->fb);
 	ri->ri_bits = sfb->obj->vaddr;

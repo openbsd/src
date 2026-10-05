@@ -869,7 +869,8 @@ radeondrm_doswitch(void *v)
 #else
 	radeondrm_setpal(rdev, ri);
 #endif
-	drm_fb_helper_restore_fbdev_mode_unlocked(rdev_to_drm(rdev)->fb_helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(rdev_to_drm(rdev)->fb_helper,
+	    false);
 
 	if (rdev->switchcb)
 		(rdev->switchcb)(rdev->switchcbarg, 0, 0);

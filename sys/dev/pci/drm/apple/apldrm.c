@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldrm.c,v 1.2 2024/01/29 14:52:25 kettenis Exp $	*/
+/*	$OpenBSD: apldrm.c,v 1.3 2026/10/05 08:20:26 jsg Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -201,7 +201,7 @@ apldrm_doswitch(void *v)
 	struct drm_fb_helper *fb_helper = sc->sc_ddev.fb_helper;
 
 	rasops_show_screen(ri, sc->sc_switchcookie, 0, NULL, NULL);
-	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper, false);
 
 	if (sc->sc_switchcb)
 		(sc->sc_switchcb)(sc->sc_switchcbarg, 0, 0);

@@ -2080,7 +2080,7 @@ inteldrm_doswitch(void *v)
 	struct rasops_info *ri = &dev_priv->ro;
 
 	rasops_show_screen(ri, dev_priv->switchcookie, 0, NULL, NULL);
-	drm_client_dev_restore(dev);
+	drm_client_dev_restore(dev, false);
 
 	if (dev_priv->switchcb)
 		(*dev_priv->switchcb)(dev_priv->switchcbarg, 0, 0);
@@ -2097,7 +2097,7 @@ inteldrm_enter_ddb(void *v, void *cookie)
 		return;
 
 	rasops_show_screen(ri, cookie, 0, NULL, NULL);
-	drm_client_dev_restore(dev);
+	drm_client_dev_restore(dev, true);
 }
 
 int
@@ -2570,7 +2570,7 @@ inteldrm_activate(struct device *self, int act)
 			i915_pm_resume(self);
 		}
 		rasops_show_screen(ri, ri->ri_active, 0, NULL, NULL);
-		drm_client_dev_restore(dev);
+		drm_client_dev_restore(dev, false);
 		rv = config_suspend(dev->dev, act);
 		break;
 	}

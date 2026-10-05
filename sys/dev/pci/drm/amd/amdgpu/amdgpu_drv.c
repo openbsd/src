@@ -3775,7 +3775,8 @@ amdgpu_doswitch(void *v)
 	struct amdgpu_device *adev = ri->ri_hw;
 
 	rasops_show_screen(ri, adev->switchcookie, 0, NULL, NULL);
-	drm_fb_helper_restore_fbdev_mode_unlocked(adev_to_drm(adev)->fb_helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(adev_to_drm(adev)->fb_helper,
+	    false);
 
 	if (adev->switchcb)
 		(adev->switchcb)(adev->switchcbarg, 0, 0);
@@ -3793,7 +3794,7 @@ amdgpu_enter_ddb(void *v, void *cookie)
 
 	rasops_show_screen(ri, cookie, 0, NULL, NULL);
 	drm_fb_helper_debug_enter(fb_helper->info);
-	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper, true);
 }
 
 void
