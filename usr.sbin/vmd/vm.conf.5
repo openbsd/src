@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.70 2026/09/18 02:35:55 mlarkin Exp $
+.\" $OpenBSD: vm.conf.5,v 1.71 2026/10/05 23:07:37 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2026 $
+.Dd $Mdocdate: October 5 2026 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -453,6 +453,23 @@ drops packets with altered source addresses that do not match the
 link layer addresses (MAC addresses) of the VM interfaces in this switch.
 .It Ic disable
 Do not automatically configure this switch.
+.It Ic description Op Ar string
+Set the description of the underlying
+.Xr bridge 4
+or
+.Xr veb 4
+interface.
+If
+.Ar string
+is omitted,
+.Xr vmd 8
+generates a description containing the switch identifier and name.
+If the
+.Ic description
+option is omitted, the existing interface description is left unchanged.
+An empty
+.Ar string
+clears the interface description.
 .It Ic group Ar group-name
 Assign each interface to a specific interface
 .Dq group .

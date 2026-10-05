@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2026/09/18 02:35:55 mlarkin Exp $	*/
+/*	$OpenBSD: parse.y,v 1.76 2026/10/05 23:07:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -119,7 +119,8 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD AGENTX ALLOW BOOT CDROM CONTEXT CPUS DEVICE DISABLE DISK DOWN ENABLE
+%token	ADD AGENTX ALLOW BOOT CDROM CONTEXT CPUS DESCRIPTION DEVICE DISABLE
+%token	DISK DOWN ENABLE
 %token	FORMAT GROUP
 %token	INET6 INSTANCE INTERFACE LLADDR LOCAL LOCKED MEMORY NET NIFS OWNER
 %token	PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP VM VMID STAGGERED START
@@ -299,6 +300,21 @@ switch_opts	: disable			{
 		}
 		| LOCKED LLADDR			{
 			vsw->sw_flags |= VMIFF_LOCKED;
+		}
+		| DESCRIPTION			{
+			free(vsw->sw_description);
+			vsw->sw_description = NULL;
+			vsw->sw_flags |= VMSWF_DESCRIPTION;
+		}
+		| DESCRIPTION string		{
+			if (strlen($2) >= IFDESCRSIZE) {
+				yyerror("switch description too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free(vsw->sw_description);
+			vsw->sw_description = $2;
+			vsw->sw_flags |= VMSWF_DESCRIPTION;
 		}
 		| RDOMAIN NUMBER		{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
@@ -842,6 +858,7 @@ lookup(char *s)
 		{ "context",		CONTEXT},
 		{ "cpus",		CPUS },
 		{ "delay",		DELAY },
+		{ "description",	DESCRIPTION },
 		{ "device",		DEVICE },
 		{ "disable",		DISABLE },
 		{ "disk",		DISK },

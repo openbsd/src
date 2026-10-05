@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.185 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.186 2026/10/05 23:07:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1703,6 +1703,7 @@ switch_remove(struct vmd_switch *vsw)
 
 	TAILQ_REMOVE(env->vmd_switches, vsw, sw_entry);
 
+	free(vsw->sw_description);
 	free(vsw->sw_group);
 	free(vsw->sw_name);
 	free(vsw);

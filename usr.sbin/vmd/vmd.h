@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.153 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.154 2026/10/05 23:07:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -293,6 +293,8 @@ struct vmd_switch {
 	uint32_t		 sw_id;
 	char			*sw_name;
 	char			 sw_ifname[IF_NAMESIZE];
+#define VMSWF_DESCRIPTION	0x10
+	char			*sw_description;
 	char			*sw_group;
 	unsigned int		 sw_rdomain;
 	unsigned int		 sw_flags;

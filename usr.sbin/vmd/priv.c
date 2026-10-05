@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.31 2026/07/17 13:09:18 dv Exp $	*/
+/*	$OpenBSD: priv.c,v 1.32 2026/10/05 23:07:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -495,7 +495,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
  * Called from the Parent process to setup underlying switch interface
  * - ensure the interface exists
  * - ensure the interface has the correct rdomain set
- * - ensure the interface has the description set (tracking purposes)
+ * - optionally set the interface description
  * - ensure the interface is up/down
  */
 int
@@ -526,15 +526,22 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
 	    &vfr, sizeof(vfr));
 
-	/* Description can be truncated */
-	(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
-	    "switch%u-%s", vsw->sw_id, vsw->sw_name);
+	if (vsw->sw_flags & VMSWF_DESCRIPTION) {
+		if (vsw->sw_description != NULL)
+			(void)strlcpy(vfr.vfr_value, vsw->sw_description,
+			    sizeof(vfr.vfr_value));
+		else {
+			/* The generated description can be truncated. */
+			(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
+			    "switch%u-%s", vsw->sw_id, vsw->sw_name);
+		}
 
-	log_debug("%s: interface %s description %s", __func__,
-	    vfr.vfr_name, vfr.vfr_value);
+		log_debug("%s: interface %s description %s", __func__,
+		    vfr.vfr_name, vfr.vfr_value);
 
-	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
-	    &vfr, sizeof(vfr));
+		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFDESCR,
+		    &vfr, sizeof(vfr));
+	}
 
 	/* Set the new interface status to up or down */
 	proc_compose(ps, PROC_PRIV, (vsw->sw_flags & VMIFF_UP) ?
