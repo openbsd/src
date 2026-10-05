@@ -1676,7 +1676,7 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend,
 	}
 
 	if (notify_clients)
-		drm_client_dev_suspend(dev, false);
+		drm_client_dev_suspend(dev);
 
 	return 0;
 }
@@ -1786,7 +1786,7 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool notify_clients)
 		radeon_pm_compute_clocks(rdev);
 
 	if (notify_clients)
-		drm_client_dev_resume(dev, false);
+		drm_client_dev_resume(dev);
 
 	return 0;
 }
