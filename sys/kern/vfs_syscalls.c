@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.388 2026/08/15 22:07:04 gnezdo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.389 2026/10/05 00:53:57 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2632,7 +2632,6 @@ int
 doutimensat(struct proc *p, int fd, const char *path,
     struct timespec ts[2], int flag)
 {
-	struct vnode *vp;
 	int error, follow;
 	struct nameidata nd;
 
@@ -2645,9 +2644,7 @@ doutimensat(struct proc *p, int fd, const char *path,
 	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = nd.ni_vp;
-
-	return (dovutimens(p, vp, ts));
+	return (dovutimens(p, nd.ni_vp, ts));
 }
 
 int
