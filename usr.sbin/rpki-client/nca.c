@@ -1,7 +1,6 @@
-/*	$OpenBSD: nca.c,v 1.13 2026/10/01 13:31:14 tb Exp $ */
+/*	$OpenBSD: nca.c,v 1.14 2026/10/05 07:10:24 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
- * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
