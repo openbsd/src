@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.77 2026/07/28 08:26:51 jsg Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.78 2026/10/05 13:53:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -860,7 +860,7 @@ client_init(struct addrinfo *aitop, int nconn, struct addrinfo *aib)
 {
 	struct statctx *sc;
 	struct addrinfo *ai;
-	int i, r, sock;
+	int i, sock;
 
 	for (i = 0; i < nconn; i++) {
 		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
@@ -870,7 +870,8 @@ client_init(struct addrinfo *aitop, int nconn, struct addrinfo *aib)
 			    sizeof(tmp));
 			if (ptb->vflag && i == 0)
 				fprintf(stderr, "Trying %s\n", tmp);
-			if ((sock = socket(ai->ai_family, ai->ai_socktype,
+			if ((sock = socket(ai->ai_family,
+			    ai->ai_socktype | SOCK_NONBLOCK,
 			    ai->ai_protocol)) == -1) {
 				if (ai->ai_next == NULL)
 					err(1, "socket");
@@ -921,11 +922,6 @@ client_init(struct addrinfo *aitop, int nconn, struct addrinfo *aib)
 		}
 		if (sock == -1)
 			errx(1, "No host found");
-		if ((r = fcntl(sock, F_GETFL)) == -1)
-			err(1, "fcntl(F_GETFL)");
-		r |= O_NONBLOCK;
-		if (fcntl(sock, F_SETFL, r) == -1)
-			err(1, "fcntl(F_SETFL, O_NONBLOCK)");
 		/* Alloc and prepare stats */
 		if (TCP_MODE) {
 			if ((sc = calloc(1, sizeof(*sc))) == NULL)
