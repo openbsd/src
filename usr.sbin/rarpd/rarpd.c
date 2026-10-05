@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.81 2026/09/16 04:24:52 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.82 2026/10/05 00:51:56 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ rarp_bootable(u_int32_t addr)
 {
 	struct dirent *dent;
 	char    ipname[40];
-	static DIR *dd = 0;
+	static DIR *dd = NULL;
 	DIR *d;
 
 	(void) snprintf(ipname, sizeof ipname, "%08X", addr);
