@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.149 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.150 2026/10/05 18:43:46 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -2084,7 +2084,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		iwi_update_edca(ic);
 
 		frm = ieee80211_add_qos_capability(buf, ic);
-		DPRINTF(("Setting QoS Capability IE length %d\n", frm - buf));
+		DPRINTF(("Setting QoS Capability IE length %td\n", frm - buf));
 		error = iwi_cmd(sc, IWI_CMD_SET_QOS_CAP, buf, frm - buf, 1);
 		if (error != 0)
 			return error;
@@ -2095,7 +2095,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 			frm = ieee80211_add_rsn(buf, ic, ni);
 		else
 			frm = ieee80211_add_wpa(buf, ic, ni);
-		DPRINTF(("Setting RSN IE length %d\n", frm - buf));
+		DPRINTF(("Setting RSN IE length %td\n", frm - buf));
 		error = iwi_cmd(sc, IWI_CMD_SET_OPTIE, buf, frm - buf, 1);
 		if (error != 0)
 			return error;
