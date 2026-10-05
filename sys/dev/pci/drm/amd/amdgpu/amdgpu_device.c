@@ -5235,7 +5235,7 @@ void amdgpu_device_fini_hw(struct amdgpu_device *adev)
 
 void amdgpu_device_fini_sw(struct amdgpu_device *adev)
 {
-	int i, idx;
+	int i;
 	bool px;
 
 	amdgpu_device_ip_fini(adev);
@@ -5277,19 +5277,19 @@ void amdgpu_device_fini_sw(struct amdgpu_device *adev)
 	if ((adev->pdev->class >> 8) == PCI_CLASS_DISPLAY_VGA)
 		vga_client_unregister(adev->pdev);
 
-	if (drm_dev_enter(adev_to_drm(adev), &idx)) {
 #ifdef __linux__
+	if (adev->rmmio) {
 		iounmap(adev->rmmio);
 		adev->rmmio = NULL;
+	}
 #else
-		if (adev->rmmio_size > 0)
-			bus_space_unmap(adev->rmmio_bst, adev->rmmio_bsh,
-			    adev->rmmio_size);
+	if (adev->rmmio_size > 0) {
+		bus_space_unmap(adev->rmmio_bst, adev->rmmio_bsh,
+		    adev->rmmio_size);
 		adev->rmmio_size = 0;
 		adev->rmmio = NULL;
-#endif
-		drm_dev_exit(idx);
 	}
+#endif
 
 	if (IS_ENABLED(CONFIG_PERF_EVENTS))
 		amdgpu_pmu_fini(adev);
