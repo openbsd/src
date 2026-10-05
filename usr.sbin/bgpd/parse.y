@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.506 2026/09/24 11:41:41 job Exp $ */
+/*	$OpenBSD: parse.y,v 1.507 2026/10/05 07:17:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5656,7 +5656,8 @@ static int
 parse_flags(char *s)
 {
 	const char *flags = FLOWSPEC_TCP_FLAG_STRING;
-	char *p, *q;
+	const char *q;
+	char *p;
 	uint8_t f = 0;
 
 	if (curflow->type == FLOWSPEC_TYPE_FRAG) {
