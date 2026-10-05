@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2026/03/04 05:45:55 tb Exp $
+# $OpenBSD: Makefile,v 1.7 2026/10/05 20:15:20 tb Exp $
 
 # compile and run zlib test files from upstream
 # https://github.com/madler/zlib/tree/master/test
@@ -37,7 +37,7 @@ run-${stategy}-level${level}-zero${zero}-rand${rand}: minigzip
 .endfor
 .endfor
 
-.for tst in 0 1 2 3 4 5 6 7
+.for tst in 0 1 2 3 4 5 6 7 8
 
 REGRESS_TARGETS+=	run-utils_unittest-${tst}
 

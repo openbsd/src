@@ -1,4 +1,4 @@
-// $OpenBSD: utils_unittest.cc,v 1.6 2026/03/04 05:45:55 tb Exp $
+// $OpenBSD: utils_unittest.cc,v 1.7 2026/10/05 20:15:20 tb Exp $
 //
 // Copyright 2020 The Chromium Authors. All rights reserved.
 //
@@ -34,6 +34,12 @@
 
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <zlib.h>
 
 #define TEST(a, b)		void b(void)
@@ -1690,6 +1696,48 @@ TEST(ZlibTest, CRCCombineInfiniteLoop) {
   EXPECT_EQ(crc32_combine_op(crc1, crc2, len2), 0);
 }
 
+// pipe PoC for the memmove overflow
+// https://gist.github.com/thesmartshadow/e0b9481792afb7c31e86fee1ff084490
+#define WRITE_SIZE (1024 * 1024)
+
+static void drain(int fd) {
+    char buf[65536];
+    while (read(fd, buf, sizeof buf) > 0);
+}
+
+TEST(ZlibTest, PipeOutOfBounds) {
+  unsigned char *big_buf = (unsigned char *)malloc(WRITE_SIZE);
+  int p[2];
+  gzFile gz;
+
+  ASSERT_TRUE(big_buf);
+  arc4random_buf(big_buf, WRITE_SIZE);
+
+  ASSERT_TRUE(pipe2(p, O_CLOEXEC) == 0);
+  ASSERT_TRUE(fcntl(p[1], F_SETFL, O_NONBLOCK) == 0);
+  ASSERT_TRUE(fcntl(p[0], F_SETFL, O_NONBLOCK) == 0);
+
+  ASSERT_TRUE(gz = gzdopen(p[1], "wb"));
+  {
+    unsigned char probe = 0x42;
+
+    ASSERT_TRUE(gzwrite(gz, &probe, 1) == 1);
+    ASSERT_TRUE(gzflush(gz, Z_SYNC_FLUSH) == Z_OK);
+    drain(p[0]);
+  }
+
+  char fill[4096]; memset(fill, 0x55, sizeof fill);
+  while (write(p[1], fill, sizeof fill) == (ssize_t)sizeof fill);
+
+  int written = gzwrite(gz, big_buf, WRITE_SIZE);
+  ASSERT_TRUE(written < WRITE_SIZE);
+  drain(p[0]);
+  gzclearerr(gz);
+  gzprintf(gz, "x");
+
+  free(big_buf); gzclose(gz); close(p[0]);
+}
+
 typedef void(*testfunc)(void);
 testfunc ZlibTest[] = {
 	StreamingInflate,
@@ -1700,6 +1748,7 @@ testfunc ZlibTest[] = {
 	DeflateZFixedCorruption,
 	DeflateZDefaultCorruption,
 	CRCCombineInfiniteLoop,
+	PipeOutOfBounds,
 };
 
 int
