@@ -1,4 +1,4 @@
-// $OpenBSD: utils_unittest.cc,v 1.7 2026/10/05 20:15:20 tb Exp $
+// $OpenBSD: utils_unittest.cc,v 1.8 2026/10/05 20:34:28 tb Exp $
 //
 // Copyright 2020 The Chromium Authors. All rights reserved.
 //
@@ -1696,7 +1696,7 @@ TEST(ZlibTest, CRCCombineInfiniteLoop) {
   EXPECT_EQ(crc32_combine_op(crc1, crc2, len2), 0);
 }
 
-// pipe PoC for the memmove overflow
+// pipe PoC for the memmove overflow fixed in gzwrite.c -r1.7
 // https://gist.github.com/thesmartshadow/e0b9481792afb7c31e86fee1ff084490
 #define WRITE_SIZE (1024 * 1024)
 
