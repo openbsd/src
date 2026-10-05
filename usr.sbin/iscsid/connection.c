@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.25 2025/01/28 20:41:44 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.26 2026/10/05 14:25:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -87,14 +87,10 @@ conn_new(struct session *s, struct connection_config *cc)
 	}
 
 	/* create socket */
-	c->fd = socket(c->config.TargetAddr.ss_family, SOCK_STREAM, 0);
+	c->fd = socket(c->config.TargetAddr.ss_family,
+	    SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (c->fd == -1) {
 		log_warn("conn_new: socket");
-		conn_free(c);
-		return;
-	}
-	if (socket_setblockmode(c->fd, 1)) {
-		log_warn("conn_new: socket_setblockmode");
 		conn_free(c);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2025/01/16 16:19:39 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.11 2026/10/05 14:25:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -102,24 +102,6 @@ pdu_free(struct pdu *p)
 	for (j = 0; j < PDU_MAXIOV; j++)
 		free(p->iov[j].iov_base);
 	free(p);
-}
-
-int
-socket_setblockmode(int fd, int nonblocking)
-{
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFL)) == -1)
-		return -1;
-
-	if (nonblocking)
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		return -1;
-	return 0;
 }
 
 const char *

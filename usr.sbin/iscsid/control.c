@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: control.c,v 1.12 2026/10/05 14:25:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -64,7 +64,7 @@ control_init(char *path)
 		return -1;
 	}
 
-	if ((fd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0)) == -1) {
 		log_warn("control_init: socket");
 		return -1;
 	}
@@ -108,7 +108,6 @@ control_init(char *path)
 		return -1;
 	}
 
-	socket_setblockmode(fd, 1);
 	control_state->fd = fd;
 
 	return 0;

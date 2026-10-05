@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.24 2025/01/28 20:41:44 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.25 2026/10/05 14:25:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -392,7 +392,7 @@ void	*pdu_dup(void *, size_t);
 int	pdu_addbuf(struct pdu *, void *, size_t, unsigned int);
 void	*pdu_getbuf(struct pdu *, size_t *, unsigned int);
 void	pdu_free(struct pdu *);
-int	socket_setblockmode(int, int);
+
 const char *log_sockaddr(void *);
 void	kvp_free(struct kvp *);
 
