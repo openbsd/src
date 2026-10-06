@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.41 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.42 2026/10/06 09:58:54 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -635,8 +635,8 @@ cfg_verify_hash(struct message *msg)
 	struct payload *hashp = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
 	struct prf     *prf;
-	u_int8_t       *hash, *comp_hash;
-	size_t          hash_len;
+	u_int8_t       *hash, *comp_hash, *rest, *end;
+	size_t          hash_len, rest_len;
 
 	if (!hashp) {
 		log_print("cfg_verify_hash: phase 2 message missing HASH");
@@ -646,6 +646,16 @@ cfg_verify_hash(struct message *msg)
 	}
 	hash = hashp->p;
 	hash_len = GET_ISAKMP_GEN_LENGTH(hash);
+
+	end = (u_int8_t *)msg->iov[0].iov_base + msg->iov[0].iov_len;
+	rest = hash + hash_len;
+	if (hash_len < ISAKMP_GEN_SZ || rest < hash || rest > end) {
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
+		    0, 1, 0);
+		return -1;
+	}
+	rest_len = end - rest;
+
 	comp_hash = malloc(hash_len - ISAKMP_GEN_SZ);
 	if (!comp_hash) {
 		log_error("cfg_verify_hash: malloc (%lu) failed",
@@ -662,8 +672,7 @@ cfg_verify_hash(struct message *msg)
 	prf->Init(prf->prfctx);
 	prf->Update(prf->prfctx, msg->exchange->message_id,
 	    ISAKMP_HDR_MESSAGE_ID_LEN);
-	prf->Update(prf->prfctx, hash + hash_len,
-	    msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len);
+	prf->Update(prf->prfctx, rest, rest_len);
 	prf->Final(comp_hash, prf->prfctx);
 	prf_free(prf);
 
