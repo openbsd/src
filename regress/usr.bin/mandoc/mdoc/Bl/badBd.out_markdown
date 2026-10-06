@@ -1,0 +1,17 @@
+BL-BADBD(1) - General Commands Manual
+
+# NAME
+
+**Bl-badBd** - bad unfilled display inside list
+
+# DESCRIPTION
+
+BEGINTEST
+
+head
+
+> body
+
+ENDTEST
+
+OpenBSD - October 6, 2026 - BL-BADBD(1)

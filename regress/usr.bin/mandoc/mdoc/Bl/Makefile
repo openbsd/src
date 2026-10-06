@@ -1,18 +1,20 @@
-# $OpenBSD: Makefile,v 1.43 2026/10/03 14:20:33 schwarze Exp $
+# $OpenBSD: Makefile,v 1.44 2026/10/06 20:31:54 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column column_nogroff colNoIt colEQ
 REGRESS_TARGETS += esc extend nested offset secstart vert width
 
-REGRESS_TARGETS += notype multitype badargs
+REGRESS_TARGETS += notype multitype badargs badBd
 REGRESS_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
 REGRESS_TARGETS += bareIt bareTa unclosed break breakingIt breakingTa broken
 
 UTF8_TARGETS	 = dash
 
-LINT_TARGETS	 = inset diag column column_nogroff notype badargs tag
+LINT_TARGETS	 = inset diag tag column column_nogroff notype badargs badBd
 LINT_TARGETS	+= empty noIt emptyhead emptytag emptyitem
 LINT_TARGETS	+= bareIt bareTa break breakingIt broken
+
+HTML_TARGETS	 = badBd
 
 # groff-mandoc differences:
 # - groff allows enclosures to span Ta, mandoc does not

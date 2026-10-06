@@ -1,0 +1,16 @@
+.\" $OpenBSD: badBd.in,v 1.1 2026/10/06 20:31:54 schwarze Exp $
+.Dd $Mdocdate: October 6 2026 $
+.Dt BL-BADBD 1
+.Os
+.Sh NAME
+.Nm Bl-badBd
+.Nd bad unfilled display inside list
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.Bd -unfilled
+.It head
+body
+.Ed
+.El
+ENDTEST
