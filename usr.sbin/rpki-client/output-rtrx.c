@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.8 2026/10/03 02:45:47 rcovelli Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.9 2026/10/06 06:55:41 claudio Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -242,6 +242,15 @@ rtrx_connect(void)
 	rtrx_sock = sockfd;
 
 	return;
+}
+
+void
+rtrx_close(void)
+{
+	if (rtrx_sock != -1) {
+		close(rtrx_sock);
+		rtrx_sock = -1;
+	}
 }
 
 int

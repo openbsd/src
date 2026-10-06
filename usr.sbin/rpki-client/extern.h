@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.300 2026/09/29 21:59:14 rcovelli Exp $ */
+/*	$OpenBSD: extern.h,v 1.301 2026/10/06 06:55:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1025,6 +1025,7 @@ void		 spl_print(const struct cert *, const struct spl *);
 /* RTRx */
 
 void		 rtrx_connect(void);
+void		 rtrx_close(void);
 
 /* Output! */
 

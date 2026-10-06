@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.316 2026/09/30 20:48:11 rcovelli Exp $ */
+/*	$OpenBSD: main.c,v 1.317 2026/10/06 06:55:41 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -995,6 +995,7 @@ process_start(const char *title, int *fd)
 			err(1, "fchdir");
 		if (!filemode && timeout > 0)
 			alarm(timeout);
+		rtrx_close();
 		close(pair[1]);
 		*fd = pair[0];
 	} else {
