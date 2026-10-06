@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.63 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: usb.h,v 1.64 2026/10/06 12:31:56 stsp Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -297,8 +297,9 @@ struct usb_string_descriptor {
 	uWord		bString[126];
 } __packed;
 typedef struct usb_string_descriptor usb_string_descriptor_t;
-#define USB_MAX_STRING_LEN 127
-#define USB_LANGUAGE_TABLE 0	/* # of the string language id table */
+#define USB_MAX_STRING_LEN  127
+#define USB_LANGUAGE_TABLE  0	/* # of the string language id table */
+#define USB_LANGID_EN_US    0x0409	/* English (United States) */
 
 /* Hub specific request */
 #define UR_GET_BUS_STATE	0x02

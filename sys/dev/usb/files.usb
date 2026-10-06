@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.150 2022/11/11 06:48:38 anton Exp $
+#	$OpenBSD: files.usb,v 1.151 2026/10/06 12:31:56 stsp Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -259,6 +259,11 @@ file	dev/usb/if_cdce.c		cdce
 device urndis: ether, ifnet, ifmedia
 attach urndis at uhub
 file	dev/usb/if_urndis.c		urndis
+
+# NCM Ethernet
+device uncm: ether, ifnet, ifmedia
+attach uncm at uhub
+file    dev/usb/if_uncm.c       uncm
 
 # Moschip MCS7x30 Ethernet
 device	mos: ether, ifnet, mii, ifmedia

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbim.h,v 1.6 2021/03/30 15:59:04 patrick Exp $ */
+/*	$OpenBSD: mbim.h,v 1.7 2026/10/06 12:31:56 stsp Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -599,97 +599,6 @@ struct mbim_descriptor {
 	uByte	bMaxFilterSize;
 	uWord	wMaxSegmentSize;
 	uByte	bmNetworkCapabilities;
-} __packed;
-
-/*
- * NCM Parameters
- */
-#define NCM_GET_NTB_PARAMETERS	0x80
-#define NCM_GET_NTB_FORMAT	0x83	/* Current format returned as uWord */
-#define NCM_SET_NTB_FORMAT	0x84	/* Desired format is in wValue */
-
-#define NCM_FORMAT_NTB16	0x00
-#define NCM_FORMAT_NTB32	0x01
-
-struct ncm_ntb_parameters {
-	uWord	wLength;
-	uWord	bmNtbFormatsSupported;
-#define NCM_FORMAT_NTB16_MASK	(1U << NCM_FORMAT_NTB16)
-#define NCM_FORMAT_NTB32_MASK	(1U << NCM_FORMAT_NTB32)
-	uDWord	dwNtbInMaxSize;
-	uWord	wNdpInDivisor;
-	uWord	wNdpInPayloadRemainder;
-	uWord	wNdpInAlignment;
-	uWord	wReserved1;
-	uDWord	dwNtbOutMaxSize;
-	uWord	wNdpOutDivisor;
-	uWord	wNdpOutPayloadRemainder;
-	uWord	wNdpOutAlignment;
-	uWord	wNtbOutMaxDatagrams;
-} __packed;
-
-/*
- * NCM Encoding
- */
-struct ncm_header16 {
-#define NCM_HDR16_SIG		0x484d434e
-	uDWord	dwSignature;
-	uWord	wHeaderLength;
-	uWord	wSequence;
-	uWord	wBlockLength;
-	uWord	wNdpIndex;
-} __packed;
-
-struct ncm_header32 {
-#define NCM_HDR32_SIG		0x686d636e
-	uDWord	dwSignature;
-	uWord	wHeaderLength;
-	uWord	wSequence;
-	uDWord	dwBlockLength;
-	uDWord	dwNdpIndex;
-} __packed;
-
-
-#define MBIM_NCM_NTH_SIDSHIFT	24
-#define MBIM_NCM_NTH_GETSID(s)	(((s) > MBIM_NCM_NTH_SIDSHIFT) & 0xff)
-
-struct ncm_pointer16_dgram {
-	uWord	wDatagramIndex;
-	uWord	wDatagramLen;
-} __packed;
-
-struct ncm_pointer16 {
-#define MBIM_NCM_NTH16_IPS	 0x00535049
-#define MBIM_NCM_NTH16_ISISG(s) (((s) & 0x00ffffff) == MBIM_NCM_NTH16_IPS)
-#define MBIM_NCM_NTH16_SIG(s)	\
-		((((s) & 0xff) << MBIM_NCM_NTH_SIDSHIFT) | MBIM_NCM_NTH16_IPS)
-	uDWord	dwSignature;
-	uWord	wLength;
-	uWord	wNextNdpIndex;
-
-	/* Minimum is two datagrams, but can be more */
-	struct ncm_pointer16_dgram dgram[1];
-} __packed;
-
-struct ncm_pointer32_dgram {
-	uDWord	dwDatagramIndex;
-	uDWord	dwDatagramLen;
-} __packed;
-
-struct ncm_pointer32 {
-#define MBIM_NCM_NTH32_IPS	0x00737069
-#define MBIM_NCM_NTH32_ISISG(s)	\
-		(((s) & 0x00ffffff) == MBIM_NCM_NTH32_IPS)
-#define MBIM_NCM_NTH32_SIG(s)		\
-		((((s) & 0xff) << MBIM_NCM_NTH_SIDSHIFT) | MBIM_NCM_NTH32_IPS)
-	uDWord	dwSignature;
-	uWord	wLength;
-	uWord	wReserved6;
-	uDWord	dwNextNdpIndex;
-	uDWord	dwReserved12;
-
-	/* Minimum is two datagrams, but can be more */
-	struct ncm_pointer32_dgram dgram[1];
 } __packed;
 
 #endif /* _KERNEL */

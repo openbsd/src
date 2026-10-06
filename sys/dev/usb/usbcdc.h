@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbcdc.h,v 1.10 2022/01/09 05:43:02 jsg Exp $ */
+/*	$OpenBSD: usbcdc.h,v 1.11 2026/10/06 12:31:56 stsp Exp $ */
 /*	$NetBSD: usbcdc.h,v 1.8 2001/02/16 20:15:57 kenh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
@@ -52,6 +52,7 @@
 #define UDESCSUB_CDC_CCMF	14 /* CAPI Control Management */
 #define UDESCSUB_CDC_ENF	15 /* Ethernet Networking */
 #define UDESCSUB_CDC_ANF	16 /* ATM Networking */
+#define UDESCSUB_CDC_NCM	26 /* Network Control Model */
 
 struct usb_cdc_header_descriptor {
 	uByte		bLength;
@@ -98,6 +99,20 @@ struct usb_cdc_ethernet_descriptor {
 	uWord		wMaxSegmentSize;
 	uWord		wNumberMCFilters;
 	uByte		bNumberPowerFilters;
+} __packed;
+
+struct usb_cdc_ncm_descriptor {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uWord		bcdNcmVersion;
+	uByte		bmNetworkCapabilities;
+#define UCDC_NCM_NCAP_ETH_FILTER	0x01
+#define UCDC_NCM_NCAP_NET_ADDRESS	0x02
+#define UCDC_NCM_NCAP_ENCAP_COMMAND	0x04
+#define UCDC_NCM_NCAP_MAX_DATAGRAM	0x08
+#define UCDC_NCM_NCAP_CRC_MODE		0x10
+#define UCDC_NCM_NCAP_NTB_INPUT_SIZE	0x20
 } __packed;
 
 #define UCDC_SEND_ENCAPSULATED_COMMAND	0x00
@@ -176,4 +191,105 @@ struct usb_cdc_connection_speed {
 #define UCDC_N_SERIAL_DSR		0x02
 #define UCDC_N_SERIAL_DCD		0x01
 
+/*
+ * Network Control Model (NCM 1.0)
+ */
+
+#define NCM_GET_NTB_PARAMETERS		0x80
+#define NCM_GET_NET_ADDRESS		0x81
+#define NCM_SET_NET_ADDRESS		0x82
+#define NCM_GET_NTB_FORMAT	    0x83	/* Current format returned as uWord */
+#define NCM_SET_NTB_FORMAT	    0x84	/* Desired format is in wValue */
+#define NCM_GET_NTB_INPUT_SIZE		0x85
+#define NCM_SET_NTB_INPUT_SIZE		0x86
+#define NCM_GET_MAX_DATAGRAM_SIZE	0x87
+#define NCM_SET_MAX_DATAGRAM_SIZE	0x88
+#define NCM_GET_CRC_MODE		0x89
+#define NCM_SET_CRC_MODE		0x8a
+
+#define NCM_NDP16_SIG_NOCRC	0x304d434e
+#define NCM_NDP16_SIG_CRC	0x314d434e
+#define NCM_NDP32_SIG_NOCRC	0x306d636e
+#define NCM_NDP32_SIG_CRC	0x316d636e
+
+#define NCM_FORMAT_NTB16	0x00
+#define NCM_FORMAT_NTB32	0x01
+
+struct ncm_ntb_parameters {
+	uWord	wLength;
+	uWord	bmNtbFormatsSupported;
+#define NCM_FORMAT_NTB16_MASK	(1U << NCM_FORMAT_NTB16)
+#define NCM_FORMAT_NTB32_MASK	(1U << NCM_FORMAT_NTB32)
+	uDWord	dwNtbInMaxSize;
+	uWord	wNdpInDivisor;
+	uWord	wNdpInPayloadRemainder;
+	uWord	wNdpInAlignment;
+	uWord	wReserved1;
+	uDWord	dwNtbOutMaxSize;
+	uWord	wNdpOutDivisor;
+	uWord	wNdpOutPayloadRemainder;
+	uWord	wNdpOutAlignment;
+	uWord	wNtbOutMaxDatagrams;
+} __packed;
+
+struct ncm_header16 {
+#define NCM_HDR16_SIG		0x484d434e
+	uDWord	dwSignature;
+	uWord	wHeaderLength;
+	uWord	wSequence;
+	uWord	wBlockLength;
+	uWord	wNdpIndex;
+} __packed;
+
+struct ncm_header32 {
+#define NCM_HDR32_SIG		0x686d636e
+	uDWord	dwSignature;
+	uWord	wHeaderLength;
+	uWord	wSequence;
+	uDWord	dwBlockLength;
+	uDWord	dwNdpIndex;
+} __packed;
+
+
+#define MBIM_NCM_NTH_SIDSHIFT	24
+#define MBIM_NCM_NTH_GETSID(s)	(((s) > MBIM_NCM_NTH_SIDSHIFT) & 0xff)
+
+struct ncm_pointer16_dgram {
+	uWord	wDatagramIndex;
+	uWord	wDatagramLen;
+} __packed;
+
+struct ncm_pointer16 {
+#define MBIM_NCM_NTH16_IPS	 0x00535049
+#define MBIM_NCM_NTH16_ISISG(s) (((s) & 0x00ffffff) == MBIM_NCM_NTH16_IPS)
+#define MBIM_NCM_NTH16_SIG(s)	\
+		((((s) & 0xff) << MBIM_NCM_NTH_SIDSHIFT) | MBIM_NCM_NTH16_IPS)
+	uDWord	dwSignature;
+	uWord	wLength;
+	uWord	wNextNdpIndex;
+
+	/* Minimum is two datagrams, but can be more */
+	struct ncm_pointer16_dgram dgram[1];
+} __packed;
+
+struct ncm_pointer32_dgram {
+	uDWord	dwDatagramIndex;
+	uDWord	dwDatagramLen;
+} __packed;
+
+struct ncm_pointer32 {
+#define MBIM_NCM_NTH32_IPS	0x00737069
+#define MBIM_NCM_NTH32_ISISG(s)	\
+		(((s) & 0x00ffffff) == MBIM_NCM_NTH32_IPS)
+#define MBIM_NCM_NTH32_SIG(s)		\
+		((((s) & 0xff) << MBIM_NCM_NTH_SIDSHIFT) | MBIM_NCM_NTH32_IPS)
+	uDWord	dwSignature;
+	uWord	wLength;
+	uWord	wReserved6;
+	uDWord	dwNextNdpIndex;
+	uDWord	dwReserved12;
+
+	/* Minimum is two datagrams, but can be more */
+	struct ncm_pointer32_dgram dgram[1];
+} __packed;
 #endif /* _USBCDC_H_ */
