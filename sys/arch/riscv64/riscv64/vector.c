@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.c,v 1.1 2026/05/09 17:38:50 jsing Exp $	*/
+/*	$OpenBSD: vector.c,v 1.2 2026/10/06 11:10:05 jca Exp $	*/
 
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
@@ -157,8 +157,8 @@ vector_load(struct proc *p)
 		"r"(&v->v_vdata[24 * riscv_vlenb]) : "memory"
 	);
 
-	__asm volatile ("csrw vstart, %0" : "=r"(v->v_vstart));
-	__asm volatile ("csrw vcsr, %0" : "=r"(v->v_vcsr));
+	__asm volatile ("csrw vstart, %0" :: "r"(v->v_vstart));
+	__asm volatile ("csrw vcsr, %0" :: "r"(v->v_vcsr));
 
 	vector_disable();
 
