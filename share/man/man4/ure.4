@@ -1,4 +1,4 @@
-.\" $OpenBSD: ure.4,v 1.11 2025/05/23 03:06:09 kevlo Exp $
+.\" $OpenBSD: ure.4,v 1.12 2026/10/07 09:39:37 kirill Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
 .\" All rights reserved.
@@ -26,13 +26,13 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd $Mdocdate: May 23 2025 $
+.Dd $Mdocdate: October 7 2026 $
 .Dt URE 4
 .Os
 .Sh NAME
 .Nm ure
-.Nd Realtek RTL8152/RTL8153/RTL8156/RTL8157 10/100/1Gb/2.5Gb/5Gb \
-USB Ethernet device
+.Nd Realtek RTL8152/RTL8153/RTL8156/RTL8157/RTL8159 \
+10/100/1Gb/2.5Gb/5Gb/10Gb USB Ethernet device
 .Sh SYNOPSIS
 .Cd "ure*   at uhub?"
 .Cd "rgephy* at mii?"
@@ -41,7 +41,8 @@ USB Ethernet device
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the Realtek
-RTL8152, RTL8153, RTL8153B, RTL8153D, RTL8156, RTL8156B and RTL8157 chipsets.
+RTL8152, RTL8153, RTL8153B, RTL8153D, RTL8156, RTL8156B, RTL8157 and
+RTL8159 chipsets.
 .Pp
 The RTL8152 contains an integrated Fast Ethernet MAC, which supports
 both 10 and 100Mbps speeds in either full or half duplex.
@@ -50,6 +51,8 @@ support 1000Mbps speeds.
 NICs based on the RTL8156 and RTL8156B are capable of 10, 100, 1000 and
 2500Mbps operation.
 The RTL8157 is a USB 3.0 device, which contains a 10/100/1Gb/2.5Gb/5Gb
+Ethernet MAC.
+The RTL8159 is a USB 3.2 device with a 10/100/1Gb/2.5Gb/5Gb/10Gb
 Ethernet MAC.
 .Pp
 For more information on configuring this device, see
@@ -75,3 +78,8 @@ The
 .Nm
 driver was written by
 .An Kevin Lo Aq Mt kevlo@FreeBSD.org .
+.Sh CAVEATS
+RTL8159 adapters require firmware for 10Gb operation.
+The
+.Nm
+driver does not support loading this firmware.
