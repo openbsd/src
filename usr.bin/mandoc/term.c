@@ -1,4 +1,4 @@
-/* $OpenBSD: term.c,v 1.156 2026/10/07 12:39:12 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.157 2026/10/07 15:56:51 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022, 2025, 2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -724,7 +724,7 @@ term_word(struct termp *p, const char *word)
 				lsz = p->tcol->rmargin - p->tcol->offset;
 			} else
 				lsz = bu;
-			if (*cp == seq[-1])
+			if (cp == seq + sz)
 				uc = -1;
 			else if (*cp == '\\') {
 				seq = cp + 1;
