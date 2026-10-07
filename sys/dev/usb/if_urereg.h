@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.14 2025/05/23 03:06:09 kevlo Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.15 2026/10/07 09:36:53 kirill Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -371,6 +371,7 @@
 #define URE_PHYSTATUS_1000MBPS	0x0010
 #define URE_PHYSTATUS_2500MBPS	0x0400
 #define URE_PHYSTATUS_5000MBPS	0x1000
+#define URE_PHYSTATUS_10000MBPS	0x4000
 
 /* URE_PLA_CONFIG6 */
 #define	URE_LANWAKE_CLR_EN	0x01
@@ -476,6 +477,8 @@
 #define	URE_CDC_ECM_EN		0x0008
 #define	URE_RX_AGG_DISABLE	0x0010
 #define	URE_RX_ZERO_EN		0x0080
+#define	URE_RX_DESC_16B		0x0400
+#define	URE_RX_END_TRANSFER_EN	0x0800
 
 /* URE_USB_U2P3_CTRL */
 #define	URE_U2P3_ENABLE		0x0001
@@ -552,6 +555,7 @@
 
 #define URE_ADV_2500TFDX	0x0080
 #define URE_ADV_5000TFDX	0x0100
+#define URE_ADV_10000TFDX	0x1000
 
 #define	URE_MCU_TYPE_PLA	0x0100
 #define	URE_MCU_TYPE_USB	0x0000
@@ -697,7 +701,8 @@ struct ure_softc {
 #define	URE_FLAG_8156		0x0040	/* RTL8156 */
 #define	URE_FLAG_8156B		0x0080	/* RTL8156B */
 #define	URE_FLAG_8157		0x0100	/* RTL8157 */
-#define	URE_FLAG_CHIP_MASK	0x01f0
+#define	URE_FLAG_8159		0x0200	/* RTL8159 */
+#define	URE_FLAG_CHIP_MASK	0x03f0
 
 	u_int			ure_chip;
 #define	URE_CHIP_VER_4C00	0x01
