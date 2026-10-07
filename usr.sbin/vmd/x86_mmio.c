@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_mmio.c,v 1.6 2026/09/18 21:26:16 dv Exp $	*/
+/*	$OpenBSD: x86_mmio.c,v 1.7 2026/10/07 21:08:34 dv Exp $	*/
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
  *
@@ -56,6 +56,7 @@ enum decode_result {
 	DECODE_ERROR = 0,	/* Something went wrong. */
 	DECODE_DONE,		/* Decode success and no more work needed. */
 	DECODE_MORE,		/* Decode success and more work required. */
+	DECODE_TRUNC,		/* Still decoding, but not enough bytes. */
 };
 
 const char *str_cpu_mode(int);
@@ -80,10 +81,11 @@ static enum decode_result decode_sib(struct x86_decode_state *,
 static enum decode_result decode_imm(struct x86_decode_state *,
     struct x86_insn *);
 static int get_operand_size(struct x86_insn *);
+static int get_address_size(struct x86_insn *);
 
-static enum decode_result peek_byte(struct x86_decode_state *, uint8_t *);
-static enum decode_result next_byte(struct x86_decode_state *, uint8_t *);
-static enum decode_result next_value(struct x86_decode_state *, size_t,
+static int next_byte(struct x86_decode_state *, uint8_t *);
+static int rewind_byte(struct x86_decode_state *);
+static int next_value(struct x86_decode_state *, size_t,
     uint64_t *);
 static int is_valid_state(struct x86_decode_state *, const char *);
 __dead static void mmio_fatal(struct x86_insn *, struct vm_exit *, uint64_t);
@@ -212,88 +214,72 @@ mmio_fatal(struct x86_insn *insn, struct vm_exit *exit, uint64_t gpa)
 }
 
 /*
- * peek_byte
- *
- * Fetch the next byte from the instruction bytes without advancing the
- * position in the stream.
- *
- * Return values:
- *  DECODE_DONE: byte was found and is the last in the stream
- *  DECODE_MORE: byte was found and there are more remaining to be read
- *  DECODE_ERROR: state is invalid and not byte was found, *byte left unchanged
- */
-static enum decode_result
-peek_byte(struct x86_decode_state *state, uint8_t *byte)
-{
-	enum decode_result res;
-
-	if (state == NULL)
-		return (DECODE_ERROR);
-
-	if (state->s_idx == state->s_len)
-		return (DECODE_ERROR);
-
-	if (state->s_idx + 1 == state->s_len)
-		res = DECODE_DONE;
-	else
-		res = DECODE_MORE;
-
-	if (byte != NULL)
-		*byte = state->s_bytes[state->s_idx];
-	return (res);
-}
-
-/*
  * next_byte
  *
  * Fetch the next byte from the instruction bytes, advancing the position in the
  * stream and mutating decode state.
  *
  * Return values:
- *  DECODE_DONE: byte was found and is the last in the stream
- *  DECODE_MORE: byte was found and there are more remaining to be read
- *  DECODE_ERROR: state is invalid and not byte was found, *byte left unchanged
+ * 0: the next byte was fetched into *byte and state advanced
+ * -1: no more bytes available to process
  */
-static enum decode_result
+static int
 next_byte(struct x86_decode_state *state, uint8_t *byte)
 {
-	uint8_t next;
+	if (state->s_idx == state->s_len)
+		return (-1);
 
-	/* Cheat and see if we're going to fail. */
-	if (peek_byte(state, &next) == DECODE_ERROR)
-		return (DECODE_ERROR);
+	*byte = state->s_bytes[state->s_idx++];
 
-	if (byte != NULL)
-		*byte = next;
-	state->s_idx++;
-
-	return (state->s_idx < state->s_len ? DECODE_MORE : DECODE_DONE);
+	return (0);
 }
 
 /*
- * Fetch the next `n' bytes as a single uint64_t value.
+ * rewind_byte
+ *
+ * Move back one byte in the instruction stream.
+ *
+ * Return values:
+ * 0: state was rewound one byte
+ * -1: already at the beginning of the stream, state left unchanged
  */
-static enum decode_result
+static int
+rewind_byte(struct x86_decode_state *state)
+{
+	if (state->s_idx == 0)
+		return (-1);
+
+	state->s_idx--;
+
+	return (0);
+}
+
+/*
+ * next_value
+ *
+ * Fetch the next `n' bytes as a single value.
+ *
+ * Return values:
+ * 0: successfully fetched data into *value
+ * -1: invalid size or not enough bytes available to fetch a full value
+ */
+static int
 next_value(struct x86_decode_state *state, size_t n, uint64_t *value)
 {
 	uint8_t bytes[8];
 	size_t i;
-	enum decode_result res;
-
-	if (value == NULL)
-		return (DECODE_ERROR);
 
 	if (n == 0 || n > sizeof(bytes))
-		return (DECODE_ERROR);
+		return (-1);
 
 	memset(bytes, 0, sizeof(bytes));
 	for (i = 0; i < n; i++)
-		if ((res = next_byte(state, &bytes[i])) == DECODE_ERROR)
-			return (DECODE_ERROR);
+		if (next_byte(state, &bytes[i]) == -1)
+			return (-1);
 
 	*value = *((uint64_t*)bytes);
 
-	return (res);
+	return (0);
 }
 
 /*
@@ -318,7 +304,8 @@ is_valid_state(struct x86_decode_state *state, const char *fn_name)
 		log_warnx("%s: invalid length", s);
 		return (0);
 	}
-	if (state->s_idx + 1 > state->s_len) {
+
+	if (state->s_idx > state->s_len) {
 		log_warnx("%s: invalid index", s);
 		return (0);
 	}
@@ -510,12 +497,11 @@ detect_cpu_mode(struct vcpu_reg_state *vrs)
 static enum decode_result
 decode_prefix(struct x86_decode_state *state, struct x86_insn *insn)
 {
-	enum decode_result res = DECODE_ERROR;
 	struct x86_prefix *prefix;
 	uint8_t byte;
 
 	if (!is_valid_state(state, __func__) || insn == NULL)
-		return (-1);
+		return (DECODE_ERROR);
 
 	prefix = &insn->insn_prefix;
 	memset(prefix, 0, sizeof(*prefix));
@@ -524,7 +510,7 @@ decode_prefix(struct x86_decode_state *state, struct x86_insn *insn)
 	 * Decode prefixes. The last of its kind wins. The behavior is undefined
 	 * in the Intel SDM (see Vol 2, 2.1.1 Instruction Prefixes.)
 	 */
-	while ((res = peek_byte(state, &byte)) != DECODE_ERROR) {
+	while (next_byte(state, &byte) == 0) {
 		switch (byte) {
 		case LEG_1_LOCK:
 		case LEG_1_REPNE:
@@ -556,14 +542,14 @@ decode_prefix(struct x86_decode_state *state, struct x86_insn *insn)
 			log_warnx("%s: VEX not supported", __func__);
 			return (DECODE_ERROR);
 		default:
-			/* Something other than a valid prefix. */
+			/* Leave the opcode for decode_opcode(). */
+			if (rewind_byte(state) == -1)
+				return (DECODE_ERROR);
 			return (DECODE_MORE);
 		}
-		/* Advance our position. */
-		next_byte(state, NULL);
 	}
 
-	return (res);
+	return (DECODE_TRUNC);
 }
 
 static enum decode_result
@@ -585,13 +571,11 @@ decode_modrm(struct x86_decode_state *state, struct x86_insn *insn)
 	case OP_ENC_MR:
 	case OP_ENC_RM:
 	case OP_ENC_MI:
-		res = next_byte(state, &byte);
-		if (res == DECODE_ERROR) {
-			log_warnx("%s: failed to get modrm byte", __func__);
-			break;
-		}
+		if (next_byte(state, &byte) == -1)
+			return (DECODE_TRUNC);
 		insn->insn_modrm = byte;
 		insn->insn_modrm_valid = 1;
+		res = DECODE_MORE;
 		break;
 	case OP_ENC_I:
 	case OP_ENC_OI:
@@ -599,14 +583,16 @@ decode_modrm(struct x86_decode_state *state, struct x86_insn *insn)
 		    __func__);
 		res = DECODE_ERROR;
 		break;
+	case OP_ENC_FD:
+	case OP_ENC_TD:
+		res = DECODE_MORE;
+		break;
 	case OP_ENC_ZO:
 		res = DECODE_DONE;
 		break;
 	default:
-		/* Peek to see if we're done decode. */
-		res = peek_byte(state, NULL);
-		DPRINTF("%s: decoding modrm res=%s", __func__,
-		    str_decode_res(res));
+		res = DECODE_ERROR;
+		break;
 	}
 
 	return (res);
@@ -689,8 +675,8 @@ static enum decode_result
 decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
     struct x86_insn *insn)
 {
-	enum decode_result res = DECODE_ERROR;
 	int64_t disp = 0;
+	int addrsize, rv;
 
 	if (!is_valid_state(state, __func__) || insn == NULL) {
 		log_warnx("%s: invalid state", __func__);
@@ -704,18 +690,17 @@ decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
 		/*     op size */
 		switch (insn->insn_cpu_mode) {
 		case VMM_CPU_MODE_PROT32:
+			if (next_value(state, 4, &disp) == -1)
+				return (DECODE_TRUNC);
+
 			insn->insn_disp_type = DISP_4;
-			res = next_value(state, 4, &disp);
-			if (res == DECODE_ERROR) {
-				log_warnx("%s: decode error in next_value for "
-				    "disp %d", __func__, insn->insn_disp_type);
-				return (res);
-			}
 			insn->insn_disp = disp;
 			insn->insn_gva = disp;
-			return (res);
+			return (DECODE_MORE);
+
 		case VMM_CPU_MODE_LONG:
 		case VMM_CPU_MODE_COMPAT:
+			/* fallthrough */
 		default:
 			log_warnx("%s: unimplemented displacement decode",
 			    __func__);
@@ -727,6 +712,7 @@ decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
 		log_warnx("%s: invalid modrm", __func__);
 		return (DECODE_ERROR);
 	}
+	addrsize = get_address_size(insn);
 
 	/*
 	 * In 32- and 64-bit addressing, mod=00 with a SIB base of 101
@@ -737,36 +723,32 @@ decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
 	if (insn->insn_sib_valid && MODRM_MOD(insn->insn_modrm) == 0 &&
 	    SIB_BASE(insn->insn_sib) == 5) {
 		insn->insn_disp_type = DISP_4;
-		res = next_value(state, 4, &disp);
-		if (res == DECODE_ERROR) {
-			log_warnx("%s: decode error in SIB disp32 processing",
-			    __func__);
-			return (res);
-		}
+		if (next_value(state, 4, &disp) == -1)
+			return (DECODE_TRUNC);
+
 		insn->insn_disp = disp;
 		if (insn->insn_cpu_mode == VMM_CPU_MODE_LONG)
 			insn->insn_disp = (int64_t)(int32_t)insn->insn_disp;
 		insn->insn_gva += insn->insn_disp;
-		return (res);
+
+		return (DECODE_MORE);
 	}
 
 	/* Disp8 / Disp32 / %rip + Disp32 displacement */
-	if (MODRM_RM(insn->insn_modrm) == 0x5) {
+	if (addrsize != 2 && MODRM_RM(insn->insn_modrm) == 0x5) {
 		if (MODRM_MOD(insn->insn_modrm) == 1) {
 			/* Disp8 */
 			insn->insn_disp_type = DISP_1;
-			res = next_value(state, 1, &disp);
+			rv = next_value(state, 1, &disp);
 		} else {
 			/* Disp32 */
 			insn->insn_disp_type = DISP_4;
-			res = next_value(state, 4, &disp);
+			rv = next_value(state, 4, &disp);
 		}
 
-		if (res == DECODE_ERROR) {
-			log_warnx("%s: decode error in Disp32 processing",
-			    __func__);
-			return (res);
-		}
+		if (rv == -1)
+			return (DECODE_TRUNC);
+
 		insn->insn_disp = disp;
 
 		/* Sign-extend 32-bit displacement to 64 bits in long mode */
@@ -785,45 +767,46 @@ decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
 			 */
 			insn->insn_needs_rip_fixup = 1;
 			insn->insn_gva += (int32_t)insn->insn_disp;
-			return (res);
+			return (DECODE_MORE);
 		}
 
 		insn->insn_gva += insn->insn_disp;
 
-		return (res);
+		return (DECODE_MORE);
 	}
 
 	DPRINTF("%s: mod = %d", __func__, MODRM_MOD(insn->insn_modrm));
 
 	switch (MODRM_MOD(insn->insn_modrm)) {
 	case 0x00:
+		if (addrsize == 2 && MODRM_RM(insn->insn_modrm) == 6) {
+			insn->insn_disp_type = DISP_2;
+			if (next_value(state, 2, &disp) == -1)
+				return (DECODE_TRUNC);
+			insn->insn_disp = disp;
+			insn->insn_gva = disp;
+			return (DECODE_MORE);
+		}
 		insn->insn_disp_type = DISP_0;
-		res = DECODE_MORE;
 		DPRINTF("%s: returning DECODE_MORE", __func__);
 		break;
 	case 0x01:
 		insn->insn_disp_type = DISP_1;
-		res = next_value(state, 1, &disp);
-		if (res == DECODE_ERROR) {
-			log_warnx("%s: decode error in next_value for disp 0x1",
-			    __func__);
-			return (res);
-		}
+		if (next_value(state, 1, &disp) == -1)
+			return (DECODE_TRUNC);
 		insn->insn_disp = disp;
 		break;
 	case 0x02:
-		if (insn->insn_prefix.pfx_group4 == LEG_4_ADDRSZ) {
+		if (addrsize == 2) {
 			insn->insn_disp_type = DISP_2;
-			res = next_value(state, 2, &disp);
+			rv = next_value(state, 2, &disp);
 		} else {
 			insn->insn_disp_type = DISP_4;
-			res = next_value(state, 4, &disp);
+			rv = next_value(state, 4, &disp);
 		}
-		if (res == DECODE_ERROR) {
-			log_warnx("%s: decode error in next_value for disp %d",
-			    __func__, insn->insn_disp_type);
-			return (res);
-		}
+		if (rv == -1)
+			return (DECODE_TRUNC);
+
 		insn->insn_disp = disp;
 		/* Sign-extend 32-bit displacement to 64 bits in long mode */
 		if (insn->insn_disp_type == DISP_4 &&
@@ -832,7 +815,6 @@ decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
 		break;
 	default:
 		insn->insn_disp_type = DISP_NONE;
-		res = DECODE_MORE;
 		log_warnx("%s: ?? DISP_NONE fallthrough", __func__);
 	}
 
@@ -841,7 +823,7 @@ decode_disp(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
 	DPRINTF("%s: returning calculated displacement of 0x%llx", __func__,
 	    insn->insn_disp);
 
-	return (res);
+	return (DECODE_MORE);
 }
 
 static enum decode_result
@@ -850,17 +832,17 @@ decode_opcode(struct x86_decode_state *state, struct x86_insn *insn)
 	enum decode_result res;
 	enum x86_opcode_type type;
 	enum x86_operand_enc enc;
-	struct x86_opcode *opcode = &insn->insn_opcode;
+	struct x86_opcode *opcode;
 	uint8_t byte, byte2;
 
 	if (!is_valid_state(state, __func__) || insn == NULL)
-		return (-1);
+		return (DECODE_ERROR);
 
+	opcode = &insn->insn_opcode;
 	memset(opcode, 0, sizeof(*opcode));
 
-	res = next_byte(state, &byte);
-	if (res == DECODE_ERROR)
-		return (res);
+	if (next_byte(state, &byte) == -1)
+		return (DECODE_TRUNC);
 
 	type = x86_1byte_opcode_tbl[byte];
 	switch(type) {
@@ -870,9 +852,8 @@ decode_opcode(struct x86_decode_state *state, struct x86_insn *insn)
 		return (DECODE_ERROR);
 
 	case OP_TWO_BYTE:
-		res = next_byte(state, &byte2);
-		if (res == DECODE_ERROR)
-			return (res);
+		if (next_byte(state, &byte2) == -1)
+			return (DECODE_TRUNC);
 
 		type = x86_2byte_opcode_tbl[byte2];
 		if (type == OP_UNKNOWN || type == OP_UNSUPPORTED) {
@@ -885,6 +866,7 @@ decode_opcode(struct x86_decode_state *state, struct x86_insn *insn)
 		opcode->op_bytes[1] = byte2;
 		opcode->op_bytes_len = 2;
 		enc = x86_2byte_operand_enc_table[byte2];
+		res = DECODE_MORE;
 		break;
 
 	default:
@@ -892,6 +874,8 @@ decode_opcode(struct x86_decode_state *state, struct x86_insn *insn)
 		opcode->op_bytes[0] = byte;
 		opcode->op_bytes_len = 1;
 		enc = x86_1byte_operand_enc_tbl[byte];
+		res = DECODE_MORE;
+		break;
 	}
 
 	if (enc == OP_ENC_UNKNOWN)
@@ -907,73 +891,66 @@ static enum decode_result
 decode_sib(struct x86_decode_state *state, struct vcpu_reg_state *vrs,
     struct x86_insn *insn)
 {
-	enum decode_result res;
 	uint8_t byte, mod, scale, index, base, index_reg, base_reg;
 	uint64_t scale_val;
 	vaddr_t addr = 0;
 
 	if (!is_valid_state(state, __func__) || insn == NULL)
-		return (-1);
-
-	/* SIB is optional, so assume we will be continuing. */
-	res = DECODE_MORE;
+		return (DECODE_ERROR);
 
 	insn->insn_sib_valid = 0;
-	if (!insn->insn_modrm_valid)
-		return (res);
+	if (!insn->insn_modrm_valid || get_address_size(insn) == 2)
+		return (DECODE_MORE);
 
 	mod = MODRM_MOD(insn->insn_modrm);
 
-	/* XXX is SIB valid in all cpu modes? */
 	if (MODRM_RM(insn->insn_modrm) == 0b100) {
-		res = next_byte(state, &byte);
-		if (res != DECODE_ERROR) {
-			insn->insn_sib_valid = 1;
-			insn->insn_sib = byte;
+		if (next_byte(state, &byte) == -1)
+			return (DECODE_TRUNC);
 
-			scale = SIB_SCALE(byte);
-			index = SIB_INDEX(byte);
-			base = SIB_BASE(byte);
-			base_reg = base;
-			if (insn->insn_prefix.pfx_rex & REX_B)
-				base_reg += 8;
-			index_reg = index;
-			if (insn->insn_prefix.pfx_rex & REX_X)
-				index_reg += 8;
+		insn->insn_sib_valid = 1;
+		insn->insn_sib = byte;
 
-			/* Calculate scale factor: 0->1, 1->2, 2->4, 3->8 */
-			scale_val = 1ULL << scale;
+		scale = SIB_SCALE(byte);
+		index = SIB_INDEX(byte);
+		base = SIB_BASE(byte);
+		base_reg = base;
+		if (insn->insn_prefix.pfx_rex & REX_B)
+			base_reg += 8;
+		index_reg = index;
+		if (insn->insn_prefix.pfx_rex & REX_X)
+			index_reg += 8;
 
-			/* Add base register value (unless special case) */
-			if (base != 0b101 || mod != 0b00) {
-				addr += vrs->vrs_gprs[base_reg];
-			}
+		/* Calculate scale factor: 0->1, 1->2, 2->4, 3->8 */
+		scale_val = 1ULL << scale;
 
-			/* index=100 is no index unless REX.X extends it to R12. */
-			if (index != 0b100 ||
-			    (insn->insn_prefix.pfx_rex & REX_X)) {
-				addr += vrs->vrs_gprs[index_reg] * scale_val;
-			}
+		/* Add base register value (unless special case) */
+		if (base != 0b101 || mod != 0b00)
+			addr += vrs->vrs_gprs[base_reg];
 
-			insn->insn_gva = addr;
-
-			DPRINTF("%s: SIB calc: scale=%llu, index=%s, base=%s, "
-			    "addr=0x%lx", __func__, scale_val,
-			    index == 0b100 &&
-			    !(insn->insn_prefix.pfx_rex & REX_X) ? "none" :
-			    str_reg(index_reg),
-			    base == 0b101 && mod == 0b00 ? "none" :
-			    str_reg(base_reg), addr);
+		/* index=100 is no index unless REX.X extends it to R12. */
+		if (index != 0b100 ||
+		    (insn->insn_prefix.pfx_rex & REX_X)) {
+			addr += vrs->vrs_gprs[index_reg] * scale_val;
 		}
+
+		insn->insn_gva = addr;
+
+		DPRINTF("%s: SIB calc: scale=%llu, index=%s, base=%s, "
+		    "addr=0x%lx", __func__, scale_val,
+		    index == 0b100 && !(insn->insn_prefix.pfx_rex & REX_X) ?
+		        "none" : str_reg(index_reg),
+		    base == 0b101 && mod == 0b00 ?
+		        "none" : str_reg(base_reg), addr);
 	}
 
-	return (res);
+	/* SIB is optional, so assume we will be continuing. */
+	return (DECODE_MORE);
 }
 
 static enum decode_result
 decode_imm(struct x86_decode_state *state, struct x86_insn *insn)
 {
-	enum decode_result res;
 	size_t num_bytes;
 	uint64_t value;
 
@@ -991,10 +968,7 @@ decode_imm(struct x86_decode_state *state, struct x86_insn *insn)
 			num_bytes = 1;
 			break;
 		case 0xC7:
-			if (insn->insn_cpu_mode == VMM_CPU_MODE_REAL)
-				num_bytes = 2;
-			else
-				num_bytes = 4;
+			num_bytes = get_operand_size(insn) == 2 ? 2 : 4;
 			break;
 		default:
 			log_warnx("%s: cannot decode immediate bytes for MOV",
@@ -1038,13 +1012,13 @@ decode_imm(struct x86_decode_state *state, struct x86_insn *insn)
 			num_bytes = 8;
 	}
 
-	res = next_value(state, num_bytes, &value);
-	if (res != DECODE_ERROR) {
-		insn->insn_immediate = value;
-		insn->insn_immediate_len = num_bytes;
-	}
+	if (next_value(state, num_bytes, &value) == -1)
+		return (DECODE_TRUNC);
 
-	return (res);
+	insn->insn_immediate = value;
+	insn->insn_immediate_len = num_bytes;
+
+	return (DECODE_DONE);
 }
 
 
@@ -1061,16 +1035,17 @@ int
 insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 {
 	enum decode_result res;
-	struct vcpu_reg_state *vrs = &exit->vrs;
+	struct vcpu_reg_state *vrs;
 	struct x86_decode_state state;
 	uint8_t *bytes, len;
 	int mode;
 
 	if (exit == NULL || insn == NULL) {
 		log_warnx("%s: invalid input", __func__);
-		return (DECODE_ERROR);
+		return (-1);
 	}
 
+	vrs = &exit->vrs;
 	bytes = exit->vee.vee_insn_bytes;
 	len = exit->vee.vee_insn_len;
 
@@ -1078,6 +1053,10 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 	memset(insn, 0, sizeof(*insn));
 	memset(&state, 0, sizeof(state));
 	state.s_len = len;
+	if (len > sizeof(state.s_bytes)) {
+		log_warnx("%s: invalid length", __func__);
+		return (-1);
+	}
 	memcpy(&state.s_bytes, bytes, len);
 
 	/* 1. Detect CPU mode. */
@@ -1101,11 +1080,19 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 
 	/* 2. Decode prefixes. */
 	res = decode_prefix(&state, insn);
-	if (res == DECODE_ERROR) {
+	switch (res) {
+	case DECODE_DONE:
+		log_warnx("%s: impossible state after prefix decode", __func__);
+		goto err;
+	case DECODE_TRUNC:
+		log_warnx("%s: truncated decoding prefixes", __func__);
+		goto err;
+	case DECODE_ERROR:
 		log_warnx("%s: error decoding prefixes", __func__);
 		goto err;
-	} else if (res == DECODE_DONE)
-		goto done;
+	case DECODE_MORE:
+		break;
+	}
 
 	DPRINTF("%s: prefixes {g1: 0x%02x, g2: 0x%02x, g3: 0x%02x, g4: 0x%02x,"
 	    " rex: 0x%02x }", __progname, insn->insn_prefix.pfx_group1,
@@ -1114,11 +1101,18 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 
 	/* 3. Pick apart opcode. Here we can start short-circuiting. */
 	res = decode_opcode(&state, insn);
-	if (res == DECODE_ERROR) {
+	switch (res) {
+	case DECODE_DONE:
+		goto done;
+	case DECODE_TRUNC:
+		log_warnx("%s: truncated decoding opcode", __func__);
+		goto err;
+	case DECODE_ERROR:
 		log_warnx("%s: error decoding opcode", __func__);
 		goto err;
-	} else if (res == DECODE_DONE)
-		goto done;
+	case DECODE_MORE:
+		break;
+	}
 
 	DPRINTF("%s: found opcode %s (operand encoding %s) (%s)", __progname,
 	    str_opcode(&insn->insn_opcode), str_operand_enc(&insn->insn_opcode),
@@ -1126,16 +1120,22 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 
 	/* Process optional ModR/M byte. */
 	res = decode_modrm(&state, insn);
-	if (res == DECODE_ERROR) {
-		log_warnx("%s: error decoding modrm", __func__);
-		goto err;
-	}
-	if (get_modrm_addr(insn, vrs) != 0)
-		goto err;
-	if (get_modrm_reg(insn) != 0)
-		goto err;
-	if (res == DECODE_DONE)
+	switch (res) {
+	case DECODE_DONE:
 		goto done;
+	case DECODE_TRUNC:
+		log_warnx("%s: truncated decoding ModRM", __func__);
+		goto err;
+	case DECODE_ERROR:
+		log_warnx("%s: error decoding ModRM", __func__);
+		goto err;
+	case DECODE_MORE:
+		if (get_modrm_addr(insn, vrs) != 0)
+			goto err;
+		if (get_modrm_reg(insn) != 0)
+			goto err;
+		break;
+	}
 
 	if (insn->insn_modrm_valid)
 		DPRINTF("%s: found ModRM 0x%02x (%s)", __progname,
@@ -1143,11 +1143,19 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 
 	/* Process optional SIB byte. */
 	res = decode_sib(&state, vrs, insn);
-	if (res == DECODE_ERROR) {
-		log_warnx("%s: error decoding sib", __func__);
+	switch (res) {
+	case DECODE_DONE:
+		log_warnx("%s: impossible state after SIB decode", __func__);
 		goto err;
-	} else if (res == DECODE_DONE)
-		goto done;
+	case DECODE_TRUNC:
+		log_warnx("%s: truncated decoding SIB", __func__);
+		goto err;
+	case DECODE_ERROR:
+		log_warnx("%s: error decoding SIB", __func__);
+		goto err;
+	case DECODE_MORE:
+		break;
+	}
 
 	if (insn->insn_sib_valid)
 		DPRINTF("%s: found SIB 0x%02x (%s)", __progname,
@@ -1155,25 +1163,42 @@ insn_decode(struct vm_exit *exit, struct x86_insn *insn)
 
 	/* Process any Displacement bytes. */
 	res = decode_disp(&state, vrs, insn);
-	if (res == DECODE_ERROR) {
+	switch (res) {
+	case DECODE_DONE:
+		log_warnx("%s: impossible state after displacement decode",
+		    __func__);
+		goto err;
+	case DECODE_TRUNC:
+		log_warnx("%s: truncated decoding displacement", __func__);
+		goto err;
+	case DECODE_ERROR:
 		log_warnx("%s: error decoding displacement", __func__);
 		goto err;
-	} else if (res == DECODE_DONE)
-		goto done;
+	case DECODE_MORE:
+		break;
+	}
 
 	/* Process any Immediate data bytes. */
 	res = decode_imm(&state, insn);
-	if (res == DECODE_ERROR) {
-		log_warnx("%s: error decoding immediate bytes", __func__);
+	switch (res) {
+	case DECODE_DONE:
+		goto done;
+	case DECODE_TRUNC:
+		log_warnx("%s: truncated decoding immediate value", __func__);
+		goto err;
+	case DECODE_ERROR:
+		log_warnx("%s: error decoding immediate value", __func__);
+		goto err;
+	case DECODE_MORE:
+		log_warnx("%s: impossible state after decoding immediate value",
+		    __func__);
 		goto err;
 	}
 
 done:
 	insn->insn_bytes_len = state.s_idx;
-
-	if (insn->insn_needs_rip_fixup) {
+	if (insn->insn_needs_rip_fixup)
 		insn->insn_gva += insn->insn_bytes_len;
-	}
 
 	DPRINTF("%s: final instruction length is %u", __func__,
 		insn->insn_bytes_len);
@@ -1194,6 +1219,18 @@ err:
 }
 
 static int
+get_address_size(struct x86_insn *insn)
+{
+	int override = insn->insn_prefix.pfx_group4 == LEG_4_ADDRSZ;
+
+	if (insn->insn_cpu_mode == VMM_CPU_MODE_LONG)
+		return (override ? 4 : 8);
+	if (insn->insn_cpu_mode == VMM_CPU_MODE_PROT32)
+		return (override ? 2 : 4);
+	return (override ? 4 : 2);
+}
+
+static int
 get_operand_size(struct x86_insn *insn)
 {
 	uint8_t opcode;
@@ -1204,6 +1241,10 @@ get_operand_size(struct x86_insn *insn)
 	    (opcode == 0x88 || opcode == 0x8a || opcode == 0xa0 ||
 	    opcode == 0xa2 || opcode == 0xc6))
 		return (1);
+	/* Segment-register stores to memory are always 16 bits. */
+	if (insn->insn_opcode.op_type == OP_MOV && opcode == 0x8c &&
+	    MODRM_MOD(insn->insn_modrm) != 3)
+		return (2);
 	if (insn->insn_opcode.op_type == OP_CMP && opcode == 0x80)
 		return (1);
 	if (insn->insn_opcode.op_type == OP_MOVS && opcode == 0xa4)
@@ -1220,6 +1261,8 @@ get_operand_size(struct x86_insn *insn)
 			return 2;
 		return 4;
 	}
+	if (insn->insn_prefix.pfx_group3 == LEG_3_OPSZ)
+		return 4;
 	return 2;
 }
 
