@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.36 2026/09/19 17:21:52 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.37 2026/10/07 23:06:26 mlarkin Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -2236,7 +2236,12 @@ vioscsi_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 			goto out;
 		}
 
-		acct.req_idx = acct.avail->ring[acct.idx] & vq_info->mask;
+		acct.req_idx = acct.avail->ring[acct.idx];
+		if (!virtio_desc_chain_valid(vq_info, acct.desc,
+		    acct.req_idx)) {
+			log_warnx("%s: invalid descriptor chain", __func__);
+			goto out;
+		}
 		acct.req_desc = &(acct.desc[acct.req_idx]);
 
 		/* Clear resp for next message */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.38 2026/09/22 23:29:58 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.39 2026/10/07 23:06:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -382,7 +382,11 @@ vionet_rx(struct virtio_dev *dev, int fd)
 
 	while (idx != avail->idx) {
 		hdr_idx = avail->ring[idx & vq_info->mask];
-		desc = &table[hdr_idx & vq_info->mask];
+		if (!virtio_desc_chain_valid(vq_info, table, hdr_idx)) {
+			log_warnx("%s: invalid descriptor chain", __func__);
+			goto reset;
+		}
+		desc = &table[hdr_idx];
 		if (!DESC_WRITABLE(desc)) {
 			log_warnx("%s: invalid descriptor state", __func__);
 			goto reset;
@@ -754,7 +758,11 @@ vionet_tx(struct virtio_dev *dev)
 
 	while (idx != avail->idx) {
 		hdr_idx = avail->ring[idx & vq_info->mask];
-		desc = &table[hdr_idx & vq_info->mask];
+		if (!virtio_desc_chain_valid(vq_info, table, hdr_idx)) {
+			log_warnx("%s: invalid descriptor chain", __func__);
+			goto reset;
+		}
+		desc = &table[hdr_idx];
 		if (DESC_WRITABLE(desc)) {
 			log_warnx("%s: invalid descriptor state", __func__);
 			goto reset;

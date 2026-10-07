@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.154 2026/09/21 00:46:13 jan Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.155 2026/10/07 23:06:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -178,6 +178,33 @@ vring_size(uint32_t vq_size)
 	return allocsize1 + allocsize2;
 }
 
+int
+virtio_desc_chain_valid(const struct virtio_vq_info *vq_info,
+    const struct vring_desc *desc, uint16_t head)
+{
+	uint16_t flags, next;
+	size_t ndesc;
+
+	if (vq_info == NULL || desc == NULL || vq_info->qs == 0 ||
+	    head >= vq_info->qs)
+		return (0);
+
+	for (ndesc = 0; ndesc < vq_info->qs; ndesc++) {
+		flags = le16toh(desc[head].flags);
+		if (flags & VRING_DESC_F_INDIRECT)
+			return (0);
+		if ((flags & VRING_DESC_F_NEXT) == 0)
+			return (1);
+		next = le16toh(desc[head].next);
+		if (next >= vq_info->qs)
+			return (0);
+		head = next;
+	}
+
+	/* A chain longer than the table necessarily contains a cycle. */
+	return (0);
+}
+
 /* Update queue select */
 void
 virtio_update_qs(struct virtio_dev *dev)
@@ -218,6 +245,7 @@ virtio_update_qa(struct virtio_dev *dev)
 	struct virtio_vq_info *vq_info = NULL;
 	void *hva = NULL, *avail_hva = NULL, *used_hva = NULL;
 	uint64_t descsz, availsz, usedsz;
+	uint16_t qsize;
 
 	if (dev->device_feature & VIRTIO_F_VERSION_1) {
 		if (dev->pci_cfg.queue_select >= dev->num_queues) {
@@ -232,21 +260,16 @@ virtio_update_qa(struct virtio_dev *dev)
 		vq_info->q_avail_hva = NULL;
 		vq_info->q_used_hva = NULL;
 
-		/*
-		 * Queue size is adjustable by the guest in Virtio 1.x.
-		 * We validate the max size at time of write and not here.
-		 */
-		vq_info->qs = dev->pci_cfg.queue_size;
-		vq_info->mask = vq_info->qs - 1;
+		/* Queue size is adjustable by the guest in Virtio 1.x. */
+		qsize = dev->pci_cfg.queue_size;
 
 		if (vq_info->q_gpa == 0 || vq_info->q_avail_gpa == 0 ||
-		    vq_info->q_used_gpa == 0 || vq_info->qs == 0 ||
-		    (vq_info->qs & 1) != 0 ||
+		    vq_info->q_used_gpa == 0 || qsize == 0 ||
+		    qsize > dev->queue_size || qsize > VIRTIO_QUEUE_SIZE_MAX ||
+		    (qsize & (qsize - 1)) != 0 ||
 		    (vq_info->q_gpa & 15) != 0 ||
 		    (vq_info->q_avail_gpa & 1) != 0 ||
-		    (vq_info->q_used_gpa & 3) != 0 ||
-		    vq_info->qs > VIRTIO_QUEUE_SIZE_MAX ||
-		    (vq_info->qs & (vq_info->qs - 1)) != 0) {
+		    (vq_info->q_used_gpa & 3) != 0) {
 			if (dev->pci_cfg.queue_enable == 1)
 				log_warnx("%s: invalid queue %u layout: "
 				    "desc=0x%llx avail=0x%llx used=0x%llx "
@@ -255,10 +278,12 @@ virtio_update_qa(struct virtio_dev *dev)
 				    (unsigned long long)vq_info->q_gpa,
 				    (unsigned long long)vq_info->q_avail_gpa,
 				    (unsigned long long)vq_info->q_used_gpa,
-				    vq_info->qs);
+				    qsize);
 			vq_info->vq_enabled = 0;
 			return;
 		}
+		vq_info->qs = qsize;
+		vq_info->mask = vq_info->qs - 1;
 
 		descsz = sizeof(struct vring_desc) * vq_info->qs;
 		availsz = sizeof(uint16_t) * (2 + vq_info->qs);
@@ -330,11 +355,11 @@ virtio_update_qa(struct virtio_dev *dev)
 static int
 viornd_notifyq(struct virtio_dev *dev, uint16_t idx)
 {
-	size_t sz;
-	int dxx, ret = 0;
-	uint16_t aidx, uidx;
+	size_t off, sz;
+	int ret = 0;
+	uint16_t dxx, flags, next, pending, uidx;
 	char *vr, *rnd_data;
-	struct vring_desc *desc = NULL;
+	struct vring_desc *desc = NULL, *table;
 	struct vring_avail *avail = NULL;
 	struct vring_used *used = NULL;
 	struct virtio_vq_info *vq_info = NULL;
@@ -358,42 +383,81 @@ viornd_notifyq(struct virtio_dev *dev, uint16_t idx)
 	    vq_info->q_used_hva == NULL)
 		fatalx("%s: null vring", __func__);
 
-	desc = (struct vring_desc *)(vr);
+	table = (struct vring_desc *)(vr);
 	avail = vq_info->q_avail_hva;
 	used = vq_info->q_used_hva;
 
-	aidx = avail->idx & vq_info->mask;
-	uidx = used->idx & vq_info->mask;
-
-	dxx = avail->ring[aidx] & vq_info->mask;
-
-	sz = desc[dxx].len;
-	if (sz > MAXPHYS) {
-		log_warnx("viornd descriptor size too large (%zu)", sz);
-		return (0);
+	pending = (uint16_t)(avail->idx - vq_info->last_avail);
+	if (pending > vq_info->qs) {
+		log_warnx("%s: invalid available ring index", __func__);
+		goto reset;
 	}
 
-	rnd_data = malloc(sz);
-	if (rnd_data == NULL)
-		fatal("memory allocation error for viornd data");
+	while (vq_info->last_avail != avail->idx) {
+		dxx = avail->ring[vq_info->last_avail & vq_info->mask];
+		if (!virtio_desc_chain_valid(vq_info, table, dxx)) {
+			log_warnx("%s: invalid descriptor chain", __func__);
+			goto reset;
+		}
 
-	arc4random_buf(rnd_data, sz);
-	if (write_mem(desc[dxx].addr, rnd_data, sz)) {
-		log_warnx("viornd: can't write random data @ 0x%llx",
-		    desc[dxx].addr);
-	} else {
-		/* ret == 1 -> interrupt needed */
-		/* XXX check VIRTIO_F_NO_INTR */
-		ret = 1;
-		viornd.isr = 1;
+		sz = 0;
+		desc = &table[dxx];
+		for (;;) {
+			flags = le16toh(desc->flags);
+			if (!DESC_WRITABLE(desc) || desc->len > MAXPHYS - sz) {
+				log_warnx("%s: invalid descriptor", __func__);
+				goto reset;
+			}
+			sz += desc->len;
+			if ((flags & VRING_DESC_F_NEXT) == 0)
+				break;
+			next = le16toh(desc->next);
+			desc = &table[next];
+		}
+
+		rnd_data = malloc(sz == 0 ? 1 : sz);
+		if (rnd_data == NULL)
+			fatal("memory allocation error for viornd data");
+		arc4random_buf(rnd_data, sz);
+
+		off = 0;
+		desc = &table[dxx];
+		for (;;) {
+			flags = le16toh(desc->flags);
+			if (write_mem(desc->addr, rnd_data + off, desc->len)) {
+				log_warnx("viornd: can't write random data @ 0x%llx",
+				    desc->addr);
+				free(rnd_data);
+				goto reset;
+			}
+			off += desc->len;
+			if ((flags & VRING_DESC_F_NEXT) == 0)
+				break;
+			next = le16toh(desc->next);
+			desc = &table[next];
+		}
+		free(rnd_data);
+
+		uidx = used->idx & vq_info->mask;
 		used->ring[uidx].id = dxx;
 		used->ring[uidx].len = sz;
 		__sync_synchronize();
 		used->idx++;
+		vq_info->last_avail++;
+		ret = 1;
 	}
-	free(rnd_data);
+
+	if (ret && !(avail->flags & VRING_AVAIL_F_NO_INTERRUPT))
+		viornd.isr = 1;
+	else
+		ret = 0;
 
 	return (ret);
+
+reset:
+	dev->status |= DEVICE_NEEDS_RESET;
+	dev->isr |= VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
+	return (1);
 }
 
 static int
@@ -596,12 +660,18 @@ virtio_io_cfg(struct virtio_dev *dev, int dir, uint8_t reg, uint32_t data,
 			virtio_update_qs(dev);
 			break;
 		case VIO1_PCI_QUEUE_SIZE:
-			if (data <= VIRTIO_QUEUE_SIZE_MAX)
-				pci_cfg->queue_size = data;
-			else {
-				log_warnx("%s: clamping queue size", __func__);
-				pci_cfg->queue_size = VIRTIO_QUEUE_SIZE_MAX;
+			if (pci_cfg->queue_select >= dev->num_queues) {
+				log_warnx("%s: invalid queue index", __func__);
+				break;
 			}
+			if (data == 0 || data > dev->queue_size ||
+			    data > VIRTIO_QUEUE_SIZE_MAX ||
+			    (data & (data - 1)) != 0) {
+				log_warnx("%s: invalid queue size %u (maximum %u)",
+				    __func__, data, dev->queue_size);
+				break;
+			}
+			pci_cfg->queue_size = data;
 			virtio_update_qa(dev);
 			break;
 		case VIO1_PCI_QUEUE_MSIX_VECTOR:

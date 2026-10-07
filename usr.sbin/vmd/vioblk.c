@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.36 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.37 2026/10/07 23:06:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -288,6 +288,10 @@ vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 		if (cmd_desc_idx >= vq_info->qs) {
 			log_warnx("%s: invalid head descriptor index",
 			    __func__);
+			goto reset;
+		}
+		if (!virtio_desc_chain_valid(vq_info, table, cmd_desc_idx)) {
+			log_warnx("%s: invalid descriptor chain", __func__);
 			goto reset;
 		}
 		desc = &table[cmd_desc_idx];
