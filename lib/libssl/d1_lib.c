@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.70 2026/09/21 23:16:29 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.71 2026/10/07 07:09:51 sashan Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -305,7 +305,8 @@ dtls1_check_timeout_num(SSL *s)
 	s->d1->timeout.num_alerts++;
 
 	/* Reduce MTU after 2 unsuccessful retransmissions */
-	if (s->d1->timeout.num_alerts > 2) {
+	if (s->d1->timeout.num_alerts > 2 &&
+	    !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)) {
 		s->d1->mtu = BIO_ctrl(SSL_get_wbio(s),
 		    BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
 
