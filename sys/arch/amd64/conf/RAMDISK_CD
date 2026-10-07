@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.217 2026/10/06 13:04:09 stsp Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.218 2026/10/07 11:14:53 stsp Exp $
 
 machine		amd64
 maxusers	4
@@ -146,6 +146,7 @@ uath*		at uhub?		# Atheros AR5005UG/AR5005UX
 otus*		at uhub?		# Atheros AR9001U
 athn*		at uhub?		# Atheros AR9002U
 bwfm*		at uhub?		# Broadcom FullMAC
+urndis*		at uhub?		# Remote NDIS Ethernet
 uncm*		at uhub?		# Network Control Model
 
 pckbc0		at isa?			# PC keyboard controller
