@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.23 2026/10/05 12:05:40 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.24 2026/10/07 12:05:51 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -593,9 +593,27 @@ struct mt76_txwi {
 #define	UNI_EFUSE_ACCESS			1
 #define	UNI_EFUSE_BUFFER_MODE			2
 
-#define	UNI_WSYS_CONFIG_FW_LOG_CTRL		0
+#define	UNI_EVENT_SCAN_DONE_BASIC		0
+#define	UNI_EVENT_SCAN_DONE_CHNLINFO		2
+#define	UNI_EVENT_SCAN_DONE_NLO			3
 
 #define	UNI_HIF_CTRL_BASIC			0
+
+#define	UNI_SCAN_REQ				1
+#define	UNI_SCAN_CANCEL				2
+#define	UNI_SCAN_SCHED_REQ			3
+#define	UNI_SCAN_SCHED_ENABLE			4
+#define	UNI_SCAN_SSID				10
+#define	UNI_SCAN_BSSID				11
+#define	UNI_SCAN_CHANNEL			12
+#define	UNI_SCAN_IE				13
+#define	UNI_SCAN_MISC				14
+#define	UNI_SCAN_SSID_MATCH_SETS		15
+
+#define	UNI_SNIFFER_ENABLE			0
+#define	UNI_SNIFFER_CONFIG			1
+
+#define	UNI_WSYS_CONFIG_FW_LOG_CTRL		0
 
 /* offload mcu commands */
 #define	MCU_CE_CMD_TEST_CTRL			0x00040001
@@ -1305,25 +1323,6 @@ struct mt76_connac_hw_scan_done {
 	uint32_t	beacon_2g_num;
 	uint32_t	beacon_5g_num;
 } __packed;
-
-enum {
-	UNI_EVENT_SCAN_DONE_BASIC = 0,
-	UNI_EVENT_SCAN_DONE_CHNLINFO = 2,
-	UNI_EVENT_SCAN_DONE_NLO = 3,
-};
-
-enum {
-	UNI_SCAN_REQ = 1,
-	UNI_SCAN_CANCEL = 2,
-	UNI_SCAN_SCHED_REQ = 3,
-	UNI_SCAN_SCHED_ENABLE = 4,
-	UNI_SCAN_SSID = 10,
-	UNI_SCAN_BSSID,
-	UNI_SCAN_CHANNEL,
-	UNI_SCAN_IE,
-	UNI_SCAN_MISC,
-	UNI_SCAN_SSID_MATCH_SETS,
-};
 
 #define	MT7925_RNR_SCAN_MAX_BSSIDS	10
 
