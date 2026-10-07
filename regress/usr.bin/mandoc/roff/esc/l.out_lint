@@ -1,30 +1,30 @@
-mandoc: l.in:23:17: ERROR: invalid escape argument delimiter: \l-
-mandoc: l.in:25:20: UNSUPP: unsupported escape sequence: \!
-mandoc: l.in:25:23: UNSUPP: unsupported escape sequence: \!
-mandoc: l.in:27:20: UNSUPP: unsupported escape sequence: \r
-mandoc: l.in:27:18: ERROR: invalid escape argument delimiter: \l\r
-mandoc: l.in:35:14: ERROR: invalid escape argument delimiter: \l\,
-mandoc: l.in:39:14: ERROR: invalid escape argument delimiter: \l\^
-mandoc: l.in:41:14: ERROR: invalid escape argument delimiter: \l\a
-mandoc: l.in:43:14: ERROR: invalid escape argument delimiter: \l\d
-mandoc: l.in:45:14: ERROR: invalid escape argument delimiter: \l\t
-mandoc: l.in:47:14: ERROR: invalid escape argument delimiter: \l\u
-mandoc: l.in:51:14: ERROR: invalid escape argument delimiter: \l\|
-mandoc: l.in:55:14: ERROR: invalid escape argument delimiter: \l\.
-mandoc: l.in:59:16: WARNING: undefined escape, printing literally: \G
-mandoc: l.in:61:15: ERROR: invalid escape argument delimiter: \l\ 
-mandoc: l.in:67:14: ERROR: invalid escape argument delimiter: \l\0
-mandoc: l.in:77:14: ERROR: invalid escape argument delimiter: \l\~
-mandoc: l.in:89:21: ERROR: invalid escape argument delimiter: \l1
-mandoc: l.in:91:14: ERROR: invalid escape argument delimiter: \l\O1
-mandoc: l.in:93:14: ERROR: invalid escape argument delimiter: \l\Y[mystr]
-mandoc: l.in:99:14: ERROR: invalid escape argument delimiter: \l\D't 1'
-mandoc: l.in:101:14: ERROR: invalid escape argument delimiter: \l\L'3'
-mandoc: l.in:103:14: ERROR: invalid escape argument delimiter: \l\X'foo'
-mandoc: l.in:105:14: ERROR: invalid escape argument delimiter: \l\Z'foo'
-mandoc: l.in:107:14: ERROR: invalid escape argument delimiter: \l\b'3'
-mandoc: l.in:109:14: ERROR: invalid escape argument delimiter: \l\v'3'
-mandoc: l.in:111:14: ERROR: invalid escape argument delimiter: \l\x'3'
-mandoc: l.in:113:20: ERROR: invalid escape argument delimiter: \l\h'1'
-mandoc: l.in:115:18: ERROR: invalid escape argument delimiter: \l\l'4'
-mandoc: l.in:117:13: ERROR: invalid escape argument delimiter: \l\o'ab'
+mandoc: l.in:37:17: ERROR: invalid escape argument delimiter: \l-
+mandoc: l.in:39:20: UNSUPP: unsupported escape sequence: \!
+mandoc: l.in:39:23: UNSUPP: unsupported escape sequence: \!
+mandoc: l.in:41:20: UNSUPP: unsupported escape sequence: \r
+mandoc: l.in:41:18: ERROR: invalid escape argument delimiter: \l\r
+mandoc: l.in:49:14: ERROR: invalid escape argument delimiter: \l\,
+mandoc: l.in:53:14: ERROR: invalid escape argument delimiter: \l\^
+mandoc: l.in:55:14: ERROR: invalid escape argument delimiter: \l\a
+mandoc: l.in:57:14: ERROR: invalid escape argument delimiter: \l\d
+mandoc: l.in:59:14: ERROR: invalid escape argument delimiter: \l\t
+mandoc: l.in:61:14: ERROR: invalid escape argument delimiter: \l\u
+mandoc: l.in:65:14: ERROR: invalid escape argument delimiter: \l\|
+mandoc: l.in:69:14: ERROR: invalid escape argument delimiter: \l\.
+mandoc: l.in:73:16: WARNING: undefined escape, printing literally: \G
+mandoc: l.in:75:15: ERROR: invalid escape argument delimiter: \l\ 
+mandoc: l.in:81:14: ERROR: invalid escape argument delimiter: \l\0
+mandoc: l.in:91:14: ERROR: invalid escape argument delimiter: \l\~
+mandoc: l.in:103:21: ERROR: invalid escape argument delimiter: \l1
+mandoc: l.in:105:14: ERROR: invalid escape argument delimiter: \l\O1
+mandoc: l.in:107:14: ERROR: invalid escape argument delimiter: \l\Y[mystr]
+mandoc: l.in:111:14: ERROR: invalid escape argument delimiter: \l\D't 1'
+mandoc: l.in:113:14: ERROR: invalid escape argument delimiter: \l\L'3'
+mandoc: l.in:115:14: ERROR: invalid escape argument delimiter: \l\X'foo'
+mandoc: l.in:117:14: ERROR: invalid escape argument delimiter: \l\Z'foo'
+mandoc: l.in:119:14: ERROR: invalid escape argument delimiter: \l\b'3'
+mandoc: l.in:121:14: ERROR: invalid escape argument delimiter: \l\v'3'
+mandoc: l.in:123:14: ERROR: invalid escape argument delimiter: \l\x'3'
+mandoc: l.in:125:20: ERROR: invalid escape argument delimiter: \l\h'1'
+mandoc: l.in:127:18: ERROR: invalid escape argument delimiter: \l\l'4'
+mandoc: l.in:129:13: ERROR: invalid escape argument delimiter: \l\o'ab'

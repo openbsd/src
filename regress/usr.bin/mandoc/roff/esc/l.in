@@ -1,5 +1,5 @@
-.\" $OpenBSD: l.in,v 1.4 2022/06/08 13:08:00 schwarze Exp $
-.Dd $Mdocdate: June 8 2022 $
+.\" $OpenBSD: l.in,v 1.5 2026/10/07 16:31:46 schwarze Exp $
+.Dd $Mdocdate: October 7 2026 $
 .Dt ESC-L 1
 .Os
 .Sh NAME
@@ -19,6 +19,20 @@ explicit scaling unit and escape sequence: >\l'6n\(+-'<
 default unit and escape char: >\l'7n\(at'<
 .br
 rounding: >\l'0.26ix'<
+.Ss All argument forms with special characters as delimiters
+explicit scaling unit and fill char: >\l\(hy2nf\(hy<
+.br
+explicit scaling unit and default char: >\l\(hy3n\(hy<
+.br
+default unit and explicit fill char: >\l\(hy4x\(hy<
+.br
+default unit and char: >\l\(hy5\(hy<
+.br
+explicit scaling unit and escape sequence: >\l\(hy6n\(+-\(hy<
+.br
+default unit and escape char: >\l\(hy7n\(at\(hy<
+.br
+rounding: >\l\(hy0.26ix\(hy<
 .Ss Argument delimiters
 invalid ASCII: >\l-<
 .br
@@ -90,11 +104,9 @@ register expansion: \l\n[myreg]u
 .br
 ignored \eO: \l\O12\O2u
 .br
-ignored \eY: \l\Y[mystr]2\Y[mystr]u
+ignored \eY: \l\Y[mystr]2\Y[mystr2]u
 .br
-ignored \ek: \l\k[myreg]2\k[myreg]u
-.br
-special character: \l\(hy2nx\(hyu
+ignored \ek: \l\k[myreg]2\k[myreg2]u
 .br
 ignored \eD: \l\D't 1'2\D't 3'u
 .br
