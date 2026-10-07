@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.256 2026/07/16 21:30:40 daniel Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.257 2026/10/07 03:46:12 sthen Exp $
 
 machine		i386
 maxusers	4
@@ -103,6 +103,8 @@ url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 ural*		at uhub?		# Ralink RT2500
+urndis*		at uhub?		# Remote NDIS Ethernet
+uncm*		at uhub?		# Network Control Model
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 run*		at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 mtw*		at uhub?		# MediaTek MT7601U
