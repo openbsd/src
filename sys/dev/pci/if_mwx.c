@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.41 2026/10/07 10:59:36 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.42 2026/10/07 12:14:36 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -247,6 +247,8 @@ struct mwx_queue {
 
 	struct mwx_desc			*mq_desc;
 	struct mwx_queue_data		*mq_data;
+	struct mbuf			*mq_mbuf;
+	struct mbuf			*mq_mtail;
 
 	bus_dmamap_t			mq_map;
 	bus_dma_segment_t		mq_seg;
@@ -606,7 +608,8 @@ void		mwx_mac_reset_counters(struct mwx_softc *);
 void		mt7921_mac_set_timing(struct mwx_softc *);
 int		mwx_mcu_uni_add_dev(struct mwx_softc *, struct mwx_vif *,
 		    struct mwx_node *, int);
-int		mt7921_mcu_set_sniffer(struct mwx_softc *, int);
+int		mwx_mcu_set_sniffer(struct mwx_softc *, int);
+int		mt7925_mcu_config_sniffer(struct mwx_softc *);
 int		mt7921_mcu_set_beacon_filter(struct mwx_softc *, int);
 int		mt7921_mcu_set_bss_pm(struct mwx_softc *, int);
 int		mt7921_mcu_set_tx(struct mwx_softc *, struct mwx_vif *);
@@ -821,28 +824,32 @@ mwx_init(struct ifnet *ifp)
 		return rv;
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
-		rv = mt7921_mcu_set_chan_info(sc, MCU_EXT_CMD_SET_RX_PATH);
-		if (rv)
-			return rv;
-		if (sc->sc_hwtype == MWX_HW_MT7925)
-			rv = mt7925_set_channel(sc);
-		else
+		if (sc->sc_hwtype != MWX_HW_MT7925) {
+			rv = mt7921_mcu_set_chan_info(sc,
+			    MCU_EXT_CMD_SET_RX_PATH);
+			if (rv)
+				return rv;
 			rv = mt7921_set_channel(sc);
+			if (rv)
+				return rv;
+		}
+
+		rv = mwx_mcu_set_sniffer(sc, 1);
 		if (rv)
 			return rv;
 
-		rv = mt7921_mcu_set_sniffer(sc, 1);
-		if (rv)
-			return rv;
-
-		rv = mt7921_mcu_set_beacon_filter(sc, 0);
+		if (sc->sc_hwtype == MWX_HW_MT7925) {
+			rv = mt7925_mcu_config_sniffer(sc);
+		} else {
+			rv = mt7921_mcu_set_beacon_filter(sc, 0);
+		}
 		if (rv)
 			return rv;
 
 		mwx_set(sc, MT_DMA_DCR0(0), MT_DMA_DCR0_RXD_G5_EN);
 	} else {
 		// Linux MT7925 does not send SNIFFER during normal STA bring-up
-		// XXX mt7921_mcu_set_sniffer(sc, 0);
+		// XXX mwx_mcu_set_sniffer(sc, 0);
 		mwx_clear(sc, MT_DMA_DCR0(0), MT_DMA_DCR0_RXD_G5_EN);
 	}
 
@@ -2769,7 +2776,7 @@ mwx_dma_rx_dequeue(struct mwx_softc *sc, struct mwx_queue *q,
 {
 	struct mwx_queue_data *md;
 	struct mwx_desc *desc;
-	struct mbuf *m, *m0 = NULL, *mtail = NULL;
+	struct mbuf *m, *m0, *mtail;
 	int idx, last;
 
 	idx = q->mq_cons;
@@ -2780,6 +2787,9 @@ mwx_dma_rx_dequeue(struct mwx_softc *sc, struct mwx_queue *q,
 
 	bus_dmamap_sync(sc->sc_dmat, q->mq_map, 0, q->mq_map->dm_mapsize,
 	     BUS_DMASYNC_PREREAD);
+
+	m0 = q->mq_mbuf;
+	mtail = q->mq_mtail;
 
 	while (idx != last) {
 		uint32_t ctrl;
@@ -2825,8 +2835,8 @@ mwx_dma_rx_dequeue(struct mwx_softc *sc, struct mwx_queue *q,
 			last = mwx_read(sc, q->mq_regbase + MT_DMA_DMA_IDX);
 	}
 
-	/* XXX make sure we don't have half processed data */
-	KASSERT(m0 == NULL);
+	q->mq_mbuf = m0;
+	q->mq_mtail = mtail;
 
 	bus_dmamap_sync(sc->sc_dmat, q->mq_map, 0, q->mq_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
@@ -3066,8 +3076,6 @@ mwx_mcu_rx_event(struct mwx_softc *sc, struct mbuf *m)
 	rxd = mtod(m, struct mwx_mcu_rxd *);
 	m_adj(m, sizeof(*rxd));
 
-printf("%s: mcu rx event, seq %x eid %x ext_eid %x opt %x len %u\n", DEVNAME(sc), rxd->seq, rxd->eid, rxd->ext_eid, rxd->option, le16toh(rxd->len));
-
 	switch (rxd->eid) {
 	case MCU_EVENT_SCHED_SCAN_DONE:
 	case MCU_EVENT_SCAN_DONE:
@@ -3101,6 +3109,8 @@ printf("%s: mcu rx event, seq %x eid %x ext_eid %x opt %x len %u\n", DEVNAME(sc)
 	case 0x6:
 		printf("%s: MAGIC COMMAND\n", DEVNAME(sc));
 	default:
+printf("%s: mcu rx event, seq %x eid %x ext_eid %x opt %x len %u\n", DEVNAME(sc), rxd->seq, rxd->eid, rxd->ext_eid, rxd->option, le16toh(rxd->len));
+
 		if (rxd->option & MCU_UNI_CMD_UNSOLICITED_EVENT) {
 			mwx_mcu_rx_unsolicited_event(sc, rxd, m);
 			break;
@@ -3173,6 +3183,9 @@ mwx_mcu_rx_unsolicited_event(struct mwx_softc *sc, struct mwx_mcu_rxd *rxd,
 	switch (rxd->eid) {
 	case MCU_UNI_EVENT_SCAN_DONE:
 		mt7925_mcu_scan_event(sc, m);
+		break;
+	case MCU_UNI_EVENT_TX_DONE:
+		/* ignore for now */
 		break;
 	default:
 		printf("%s: mcu rx unsolicited event, eid %x "
@@ -5359,7 +5372,7 @@ printf("%s: %s cmd %x wcid %d\n", DEVNAME(sc), __func__, cmd, mn->wcid);
 }
 
 int
-mt7921_mcu_set_sniffer(struct mwx_softc *sc, int enable)
+mwx_mcu_set_sniffer(struct mwx_softc *sc, int enable)
 {
 	struct {
 		uint8_t		band_idx;
@@ -5373,11 +5386,62 @@ mt7921_mcu_set_sniffer(struct mwx_softc *sc, int enable)
 	} req = {
 		.band_idx = 0,
 		.enable = {
-			.tag = htole16(0),
+			.tag = htole16(UNI_SNIFFER_ENABLE),
 			.len = htole16(sizeof(struct sniffer_enable_tlv)),
 			.enable = enable,
 		},
 	};
+
+	return mwx_mcu_send_wait(sc, MCU_UNI_CMD_SNIFFER, &req, sizeof(req));
+}
+
+int
+mt7925_mcu_config_sniffer(struct mwx_softc *sc)
+{
+	struct {
+		uint8_t		band_idx;
+		uint8_t		pad[3];
+		struct sniffer_config_tlv {
+			uint16_t	tag;
+			uint16_t	len;
+			uint16_t	aid;
+			uint8_t		ch_band;
+			uint8_t		bw;
+			uint8_t		control_ch;
+			uint8_t		sco;
+			uint8_t		center_ch;
+			uint8_t		center_ch2;
+			uint8_t		drop_err;
+			uint8_t		pad[3];
+		}		tlv;
+	} req = {
+		.band_idx = 0,
+		.tlv = {
+			.tag = htole16(UNI_SNIFFER_CONFIG),
+			.len = htole16(sizeof(struct sniffer_config_tlv)),
+			.drop_err = 1,
+		},
+	};
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_channel *chan = ic->ic_des_chan;
+	uint8_t ctrl_ch;
+
+	if (chan == IEEE80211_CHAN_ANYC)
+		chan = ic->ic_ibss_chan;
+	if (chan == IEEE80211_CHAN_ANYC) {
+		printf("%s: monitor: no channel set\n", sc->sc_dev.dv_xname);
+		return EINVAL;
+	}
+
+	if (IEEE80211_IS_CHAN_2GHZ(chan))
+		req.tlv.ch_band = 1;
+	else if (IEEE80211_IS_CHAN_5GHZ(chan))
+		req.tlv.ch_band = 2;
+	else
+		req.tlv.ch_band = 3; /* 6Ghz */
+
+	ctrl_ch = ieee80211_chan2ieee(ic, chan);
+	req.tlv.control_ch = req.tlv.center_ch = ctrl_ch;
 
 	return mwx_mcu_send_wait(sc, MCU_UNI_CMD_SNIFFER, &req, sizeof(req));
 }
@@ -6520,8 +6584,10 @@ mwx_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
 
 	count = MT_TX_FREE0_MSDU_CNT_GET(txval);
 
+#if 0
 	printf("%s: val %x count %d\n", __func__, txval, count);
 	pkt_hex_dump(m);
+#endif
 
 	if (count * sizeof(txval) > m->m_len)
 		goto out;
