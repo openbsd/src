@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.40 2026/10/05 13:47:05 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.41 2026/10/07 10:59:36 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -215,6 +215,7 @@ struct mwx_tx_radiotap_header {
 struct mwx_txwi {
 	struct mt76_txwi		*mt_desc;
 	struct mbuf			*mt_mbuf;
+	struct ieee80211_node		*mt_ni;
 	bus_dmamap_t			mt_map;
 	LIST_ENTRY(mwx_txwi)		mt_entry;
 	u_int32_t			mt_addr;
@@ -513,7 +514,7 @@ void		mwx_txwi_free(struct mwx_softc *);
 struct mwx_txwi	*mwx_txwi_get(struct mwx_softc *);
 void		mwx_txwi_put(struct mwx_softc *, struct mwx_txwi *);
 int		mwx_txwi_enqueue(struct mwx_softc *, struct mwx_txwi *,
-		    struct mbuf *);
+		    struct mbuf *, struct ieee80211_node *);
 int		mwx_queue_alloc(struct mwx_softc *, struct mwx_queue *, int,
 		    uint32_t);
 void		mwx_queue_free(struct mwx_softc *, struct mwx_queue *);
@@ -526,7 +527,7 @@ int		mwx_dma_reset(struct mwx_softc *, int);
 void		mwx_dma_free(struct mwx_softc *);
 int		mwx_dma_tx_enqueue(struct mwx_softc *, struct mwx_queue *,
 		    struct mbuf *);
-int		mwx_dma_txwi_enqueue(struct mwx_softc *, struct mwx_queue *,
+void		mwx_dma_txwi_enqueue(struct mwx_softc *, struct mwx_queue *,
 		    struct mwx_txwi *);
 void		mwx_dma_tx_cleanup(struct mwx_softc *, struct mwx_queue *);
 void		mwx_dma_tx_done(struct mwx_softc *);
@@ -720,6 +721,16 @@ mt7925_map_reg_l1(struct mwx_softc *sc, uint32_t reg)
 	mwx_barrier(sc);
 
 	return MT7925_HIF_REMAP_BASE_L1 + offset;
+}
+
+static inline int
+mwx_dma_available_slots(struct mwx_queue *q)
+{
+	int free = q->mq_count - 1;
+	free += q->mq_cons;
+	free -= q->mq_prod;
+	free %= q->mq_count;
+	return free;
 }
 
 /*
@@ -1350,6 +1361,8 @@ mwx_bgscan_done_task(void *arg)
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 	}
 
+printf("%s: %s: XXX %s refcnt %u\n", DEVNAME(sc), __func__, ether_sprintf(ni->ni_macaddr), ni->ni_refcnt);
+
         /*
 	 * Tx queues have been flushed and Tx agg has been stopped.
 	 * Allow roaming to proceed.
@@ -1457,6 +1470,11 @@ mwx_tx(struct mwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	if ((mt = mwx_txwi_get(sc)) == NULL)
 		return ENOBUFS;
+
+	/* check if there is enough space */
+	if (mwx_dma_available_slots(&sc->sc_txq) < 1)
+		return EBUSY;
+
 	/* XXX DMA memory access without BUS_DMASYNC_PREWRITE */
 	txp = mt->mt_desc;
 	memset(txp, 0, sizeof(*txp));
@@ -1465,7 +1483,7 @@ mwx_tx(struct mwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	else
 		mt7921_mac_write_txwi(sc, m, ni, txp);
 
-	rv = mwx_txwi_enqueue(sc, mt, m);
+	rv = mwx_txwi_enqueue(sc, mt, m, ni);
 	if (rv != 0)
 		return rv;
 
@@ -1480,7 +1498,8 @@ printf("%s: TX hw txp %d %d %d %d %04x %04x %04x %04x\n", DEVNAME(sc),
     txp->ptr[0].len0, txp->ptr[0].len1, txp->ptr[1].len0, txp->ptr[1].len1);
 #endif
 
-	return mwx_dma_txwi_enqueue(sc, &sc->sc_txq, mt);
+	mwx_dma_txwi_enqueue(sc, &sc->sc_txq, mt);
+	return 0;
 }
 
 void
@@ -2117,6 +2136,11 @@ mwx_txwi_put(struct mwx_softc *sc, struct mwx_txwi *mt)
 		m_freem(mt->mt_mbuf);
 		mt->mt_mbuf = NULL;
 	}
+	if (mt->mt_ni != NULL) {
+		ieee80211_release_node(&sc->sc_ic, mt->mt_ni);
+		mt->mt_ni = NULL;
+	}
+
 
 	memset(mt->mt_desc, 0, sizeof(*mt->mt_desc));
 	mt->mt_busy = 0;
@@ -2127,7 +2151,8 @@ mwx_txwi_put(struct mwx_softc *sc, struct mwx_txwi *mt)
 }
 
 int
-mwx_txwi_enqueue(struct mwx_softc *sc, struct mwx_txwi *mt, struct mbuf *m)
+mwx_txwi_enqueue(struct mwx_softc *sc, struct mwx_txwi *mt, struct mbuf *m,
+    struct ieee80211_node *ni)
 {
 	struct mwx_txwi_desc *q = &sc->sc_txwi;
 	struct mt76_txwi *txp = mt->mt_desc;
@@ -2151,6 +2176,7 @@ mwx_txwi_enqueue(struct mwx_softc *sc, struct mwx_txwi *mt, struct mbuf *m)
 
 	txp->msdu_id[0] = htole16(mt->mt_idx | MT_MSDU_ID_VALID);
 	mt->mt_mbuf = m;
+	mt->mt_ni = ni;
 
 	bus_dmamap_sync(sc->sc_dmat, q->mt_map, 0, q->mt_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -2494,16 +2520,6 @@ mwx_dma_free(struct mwx_softc *sc)
 	mwx_queue_free(sc, &sc->sc_rxfwdlq);
 }
 
-static inline int
-mwx_dma_free_slots(struct mwx_queue *q)
-{
-	int free = q->mq_count - 1;
-	free += q->mq_cons;
-	free -= q->mq_prod;
-	free %= q->mq_count;
-	return free;
-}
-
 int
 mwx_dma_tx_enqueue(struct mwx_softc *sc, struct mwx_queue *q, struct mbuf *m)
 {
@@ -2526,7 +2542,7 @@ mwx_dma_tx_enqueue(struct mwx_softc *sc, struct mwx_queue *q, struct mbuf *m)
 	nsegs = md->md_map->dm_nsegs;
 
 	/* check if there is enough space */
-	if ((nsegs + 1)/2 > mwx_dma_free_slots(q)) {
+	if ((nsegs + 1)/2 > mwx_dma_available_slots(q)) {
 		bus_dmamap_unload(sc->sc_dmat, md->md_map);
 		return EBUSY;
 	}
@@ -2580,7 +2596,7 @@ mwx_dma_tx_enqueue(struct mwx_softc *sc, struct mwx_queue *q, struct mbuf *m)
 	return 0;
 }
 
-int
+void
 mwx_dma_txwi_enqueue(struct mwx_softc *sc, struct mwx_queue *q,
     struct mwx_txwi *mt)
 {
@@ -2592,12 +2608,6 @@ mwx_dma_txwi_enqueue(struct mwx_softc *sc, struct mwx_queue *q,
 	idx = q->mq_prod;
 	md = &q->mq_data[idx];
 	desc = &q->mq_desc[idx];
-
-	/* check if there is enough space */
-	if (1 > mwx_dma_free_slots(q)) {
-		bus_dmamap_unload(sc->sc_dmat, md->md_map);
-		return EBUSY;
-	}
 
 	md->md_txwi = mt;
 	md->md_mbuf = NULL;
@@ -2624,8 +2634,6 @@ mwx_dma_txwi_enqueue(struct mwx_softc *sc, struct mwx_queue *q,
 	q->mq_prod = idx;
 
 	mwx_write(sc, q->mq_regbase + MT_DMA_CPU_IDX, q->mq_prod);
-
-	return 0;
 }
 
 void
