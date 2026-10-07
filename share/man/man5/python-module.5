@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.24 2026/03/22 13:56:06 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.25 2026/10/07 19:59:11 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2026 $
+.Dd $Mdocdate: October 7 2026 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -177,26 +177,35 @@ and
 .Ev MODPY_SETUPTOOLS
 should not be used for new ports.
 .Pp
-Ports using pytest should set
-.Ev MODPY_PYTEST
-to Yes unless
+It is assumed that pytest is used for tests if
 .Ev MODPY_PYBUILD
-is used, when it is already set by default.
-Arguments can be passed to pytest during
+is used.
+In other cases, set
+.Ev MODPY_PYTEST
+to Yes or No as appropriate.
+Arguments can be passed to
+.Xr pytest 1
+during
 .Cm test
 with
 .Ev MODPY_PYTEST_ARGS ,
 for example to list names of test scripts if the automatic
-detection fails,
-to disable certain test scripts with
-.Sq --ignore ,
-or to disable certain individual tests with
-.Sq -k .
+detection fails, to disable or select certain tests, or
+disable plugins.
+As a shortcut, test scripts can be disabled by listing them in
+.Ev MODPY_PYTEST_IGNORE ;
+these will be added to 
+.Ev MODPY_PYTEST_ARGS
+with
+.Sq --ignore .
+.Pp
 User setting
 .Ev MODPY_PYTEST_USERARGS ,
 if present, is passed on the command line.
 This allows setting pytest flags to increase verbosity,
 show test durations, enable colours, etc.
+This would be set in
+.Xr mk.conf 5 .
 .Pp
 If
 .Ev MODPY_TEST_LINK_SO
