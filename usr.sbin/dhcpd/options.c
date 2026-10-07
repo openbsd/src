@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.38 2026/06/29 20:48:05 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.39 2026/10/07 15:51:55 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -46,6 +46,7 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -538,8 +539,16 @@ do_packet(struct interface_info *interface, struct dhcp_packet *packet,
 	struct packet tp;
 	int i;
 
-	if (packet->hlen > sizeof(packet->chaddr)) {
-		log_info("Discarding packet with invalid hlen.");
+	switch (packet->htype) {
+	case HTYPE_ETHER:
+	case HTYPE_IPSEC_TUNNEL:
+		if (packet->hlen != ETHER_ADDR_LEN) {
+			log_info("Discarding packet with invalid hlen.");
+			return;
+		}
+		break;
+	default:
+		log_info("Discarding packet with invalid htype.");
 		return;
 	}
 
