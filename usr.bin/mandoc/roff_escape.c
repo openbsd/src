@@ -1,6 +1,6 @@
-/* $OpenBSD: roff_escape.c,v 1.17 2026/08/29 16:57:20 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.18 2026/10/07 16:26:15 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
+ * Copyright (c) 2011-2015, 2017, 2018, 2020, 2022, 2024, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -72,7 +72,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	int		 iendarg;	/* index right after the argument */
 	int		 iend;		/* index right after the sequence */
 	int		 sesc, snam, sarg, sendarg, send; /* for sub-escape */
-	int		 escterm;	/* whether term is escaped */
+	int		 dnam;		/* index of name of delimiting esc */
 	int		 maxl;		/* expected length of the argument */
 	int		 argl;		/* actual length of the argument */
 	int		 c, i;		/* for \[char...] parsing */
@@ -275,7 +275,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 	/* Decide how to end the argument. */
 
-	escterm = 0;
+	dnam = 0;
 	stype = ESCAPE_EXPAND;
 	if ((term == '\b' || (term == '\0' && maxl == INT_MAX)) &&
 	    buf[iarg] == buf[iesc]) {
@@ -297,9 +297,9 @@ roff_escape(const char *buf, const int ln, const int aesc,
 				iarg = iendarg = sesc;
 				goto out;
 			}
-			escterm = 1;
+			dnam = snam;
 			iarg = send;
-			term = buf[snam];
+			term = buf[dnam];
 		} else if (strchr("BDHLRSvxNhl", buf[inam]) != NULL &&
 		    strchr(" %&()*+-./0123456789:<=>", buf[iarg]) != NULL) {
 			err = MANDOCERR_ESC_DELIM;
@@ -350,7 +350,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 				iendarg = iarg;
 			break;
 		}
-		if (escterm == 0 && buf[iendarg] == term) {
+		if (dnam == 0 && buf[iendarg] == term) {
 			iend = iendarg + 1;
 			break;
 		}
@@ -360,9 +360,16 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			if (stype == ESCAPE_EXPAND)
 				goto out_sub;
 			iend = send;
-			if (escterm == 1 &&
-			    (buf[snam] == term || buf[inam] == 'N'))
-				break;
+			if (dnam != 0) {
+				if (buf[inam] == 'N')
+					break;
+				if (stype != ESCAPE_SPECIAL &&
+				    buf[snam] == term)
+					break;
+				if (send - snam == iarg - dnam && !strncmp(
+				    buf + snam, buf + dnam, iarg - dnam))
+					break;
+			}
 			if (stype != ESCAPE_UNDEF)
 				valid_A = 0;
 			iendarg = send;
