@@ -1,0 +1,145 @@
+.\" $OpenBSD: mwx.4,v 1.1 2026/10/08 09:33:56 claudio Exp $
+.\"
+.\" Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 8 2026 $
+.Dt MWX 4
+.Os
+.Sh NAME
+.Nm mwx
+.Nd Mediatek IEEE 802.11a/ac/ax/b/g/n wireless network device
+.Sh SYNOPSIS
+.Cd "mwx* at pci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for MediaTek MT7920, MT7921, MT7922, and MT7925
+WI-FI 6 and WI-FI 7 devices.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+The
+.Nm
+driver can be configured to use
+Wired Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA1 and WPA2).
+WPA2 is currently the most secure encryption standard for wireless networks
+supported by
+.Ox .
+It is strongly recommended that neither WEP nor WPA1
+are used as the sole mechanism to secure wireless communication,
+due to serious weaknesses.
+WPA1 is disabled by default and may be enabled using the option
+.Qq Cm wpaprotos Ar wpa1,wpa2 .
+For standard WPA networks which use pre-shared keys (PSK),
+keys are configured using the
+.Qq Cm wpakey
+option.
+WPA-Enterprise networks require use of the wpa_supplicant package.
+The
+.Nm
+driver offloads both encryption and decryption of unicast data frames to the
+hardware for all ciphers.
+.Pp
+In BSS mode the driver supports background scanning;
+see
+.Xr ifconfig 8 .
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5 .
+.Sh FILES
+The driver needs the following firmware files,
+which are loaded when an interface is brought up:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/mwx-mt7922_patch_mcu_1_1_hdr
+.It Pa /etc/firmware/mwx-mt7922_ram_code_1
+.It Pa /etc/firmware/mwx-mt7925_patch_mcu_1_1_hdr
+.It Pa /etc/firmware/mwx-mt7925_ram_code_1_1
+.It Pa /etc/firmware/mwx-mt7961_patch_mcu_1_2_hdr
+.It Pa /etc/firmware/mwx-mt7961_patch_mcu_1a_2_hdr
+.It Pa /etc/firmware/mwx-mt7961_ram_code_1
+.It Pa /etc/firmware/mwx-mt7961_ram_code_1a
+.El
+.Pp
+These firmware files are not free because Mediatek refuses to grant
+distribution rights without contractual obligations.
+As a result, even though
+.Ox
+includes the driver, the firmware files cannot be included and
+users have to download these files on their own.
+.Pp
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 8 .
+.Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig mwx0 scan
+.Pp
+The following
+.Xr hostname.if 5
+example configures mwx0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+join mynwid wpakey mywpakey
+inet autoconf
+.Ed
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 8.1 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Claudio Jeker Aq Mt claudio@openbsd.org .
+.Sh CAVEATS
+The
+.Nm
+driver does not support any of the 802.11n, 802.11ac and 802.11ax
+capabilities offered by the hardware.
