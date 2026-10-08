@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.25 2026/10/08 09:31:34 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.26 2026/10/08 14:32:35 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -1540,6 +1540,26 @@ struct sta_rec_sec_key {
 	uint8_t		key[32];
 } __packed;
 
+#define	STA_REC_KEY_V3			0x27
+struct sta_rec_sec_v3 {
+	uint16_t	tag;
+	uint16_t	len;
+	uint8_t		add;
+	uint8_t		tx_key;
+	uint8_t		key_type;
+	uint8_t		is_authenticator;
+	uint8_t		peer_addr[IEEE80211_ADDR_LEN];
+	uint8_t		bss_idx;
+	uint8_t		cipher_id;
+	uint8_t		key_id;
+	uint8_t		key_len;
+	uint8_t		wlan_idx;
+	uint8_t		mgmt_prot;
+	uint8_t		key[32];
+	uint8_t		key_rsc[16];
+} __packed;
+
+
 enum mcu_cipher_type {
 	MCU_CIPHER_NONE = 0,
 	MCU_CIPHER_WEP40,
@@ -1559,6 +1579,20 @@ enum mcu_cipher_type {
 	MCU_CIPHER_BCN_PROT_GMAC_256,
 	MCU_CIPHER_BIP_GMAC_128,
 	MCU_CIPHER_BIP_GMAC_256,
+};
+
+enum mt7925_cipher_type {
+	MT7925_CIPHER_NONE = 0,
+	MT7925_CIPHER_WEP40 = 1,
+	MT7925_CIPHER_TKIP = 2,
+	MT7925_CIPHER_AES_CCMP = 4,
+	MT7925_CIPHER_WEP104 = 5,
+	MT7925_CIPHER_BIP_CMAC_128 = 6,
+	MT7925_CIPHER_WEP128 = 7,
+	MT7925_CIPHER_WAPI = 8,
+	MT7925_CIPHER_CCMP_256 = 10,
+	MT7925_CIPHER_GCMP = 11,
+	MT7925_CIPHER_GCMP_256 = 12,
 };
 
 

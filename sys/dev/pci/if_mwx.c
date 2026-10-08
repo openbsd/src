@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.44 2026/10/08 09:31:34 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.45 2026/10/08 14:32:35 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -657,9 +657,12 @@ int		 mt7925_mac_sta_update(struct mwx_softc *,
 		    struct ieee80211_node *, int);
 void		 mt7921_mcu_add_key_tlv(struct mbuf *, uint16_t *,
 		    struct ieee80211_key *, int);
-int		 mt7921_mcu_sta_key_update(struct mwx_softc *,
+void		 mt7925_mcu_add_key_tlv(struct mbuf *, uint16_t *,
+		    struct ieee80211_key *, struct ieee80211_node *,
+		    uint16_t, int);
+int		 mwx_mcu_sta_key_update(struct mwx_softc *,
 		    struct ieee80211_node *, struct ieee80211_key *);
-void		 mt7921_mcu_sta_key_delete(struct mwx_softc *,
+void		 mwx_mcu_sta_key_delete(struct mwx_softc *,
 		    struct ieee80211_node *, struct ieee80211_key *);
 
 static inline uint32_t
@@ -1429,7 +1432,7 @@ mwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	DPRINTF("%s: delete_key: ni %p, k_id %d, k_flags %x k_cipher %d\n",
 	    DEVNAME(sc), ni, k->k_id, k->k_flags, k->k_cipher);
 
-	mt7921_mcu_sta_key_delete(sc, ni, k);
+	mwx_mcu_sta_key_delete(sc, ni, k);
 }
 
 void
@@ -1441,7 +1444,7 @@ mwx_setkey_task(void *arg)
 
 	while (sc->sc_setkey_tail != sc->sc_setkey_cur) {
 		a = &sc->sc_setkey_arg[sc->sc_setkey_tail];
-		mt7921_mcu_sta_key_update(sc, a->ni, a->k);
+		mwx_mcu_sta_key_update(sc, a->ni, a->k);
 		a->ni = NULL;
 		a->k = NULL;
 
@@ -7444,17 +7447,36 @@ mt7921_key_to_cipher_id(struct ieee80211_key *k)
 {
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_CCMP:
-		 return MCU_CIPHER_AES_CCMP;
+		return MCU_CIPHER_AES_CCMP;
 	case IEEE80211_CIPHER_TKIP:
 		return MCU_CIPHER_TKIP;
 	case IEEE80211_CIPHER_WEP40:
 		return MCU_CIPHER_WEP40;
 	case IEEE80211_CIPHER_WEP104:
-		 return MCU_CIPHER_WEP104;
+		return MCU_CIPHER_WEP104;
 	case IEEE80211_CIPHER_BIP:
 		return MCU_CIPHER_BIP_CMAC_128;
 	default:
 		return MCU_CIPHER_NONE;
+	}
+}
+
+static int
+mt7925_key_to_cipher_id(struct ieee80211_key *k)
+{
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_CCMP:
+		return MT7925_CIPHER_AES_CCMP;
+	case IEEE80211_CIPHER_TKIP:
+		return MT7925_CIPHER_TKIP;
+	case IEEE80211_CIPHER_WEP40:
+		return MT7925_CIPHER_WEP40;
+	case IEEE80211_CIPHER_WEP104:
+		return MT7925_CIPHER_WEP104;
+	case IEEE80211_CIPHER_BIP:
+		return MT7925_CIPHER_BIP_CMAC_128;
+	default:
+		return MT7925_CIPHER_NONE;
 	}
 }
 
@@ -7481,7 +7503,7 @@ mt7921_mcu_add_key_tlv(struct mbuf *m, uint16_t *tlvnum,
 		CTASSERT(sizeof(k->k_key) == sizeof(key->key));
 		memcpy(key->key, k->k_key, k->k_len);
 
-		if (key->cipher_id == MCU_CIPHER_TKIP &&
+		if (k->k_cipher == IEEE80211_CIPHER_TKIP &&
 		    k->k_len == sizeof(key->key)) {
 			/* Rx/Tx MIC keys are swapped */
 			memcpy(key->key + 16, k->k_key + 24, 8);
@@ -7493,8 +7515,50 @@ mt7921_mcu_add_key_tlv(struct mbuf *m, uint16_t *tlvnum,
 	}
 }
 
+void
+mt7925_mcu_add_key_tlv(struct mbuf *m, uint16_t *tlvnum,
+    struct ieee80211_key *k, struct ieee80211_node *ni, uint16_t wcid, int add)
+{
+	struct sta_rec_sec_v3 *sec;
+	int is_unicast;
+
+	sec = mwx_append_tlv(m, tlvnum, STA_REC_KEY_V3, sizeof(*sec));
+	is_unicast = (k->k_flags & IEEE80211_KEY_GROUP) == 0;
+
+	sec->tx_key = is_unicast ? 1 : 0;
+	sec->key_type = 1;
+	if (is_unicast && ni != NULL)
+		memcpy(sec->peer_addr, ni->ni_macaddr,
+		    IEEE80211_ADDR_LEN);
+	else if (ni != NULL)
+		memcpy(sec->peer_addr, ni->ni_bssid,
+		    IEEE80211_ADDR_LEN);
+	sec->key_id = k->k_id;
+	sec->wlan_idx = wcid;
+	sec->mgmt_prot = 1;
+
+	if (add) {
+		sec->add = 1;
+
+		sec->cipher_id = mt7925_key_to_cipher_id(k);
+		sec->key_len = k->k_len;
+
+		CTASSERT(sizeof(k->k_key) == sizeof(sec->key));
+		memcpy(sec->key, k->k_key, k->k_len);
+
+		if (k->k_cipher == IEEE80211_CIPHER_TKIP &&
+		    k->k_len == sizeof(sec->key)) {
+			/* Rx/Tx MIC keys are swapped */
+			memcpy(sec->key + 16, k->k_key + 24, 8);
+			memcpy(sec->key + 24, k->k_key + 16, 8);
+		}
+	} else {
+		sec->add = 0;
+	}
+}
+
 int
-mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
+mwx_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct mwx_vif *mvif = &sc->sc_vif;
@@ -7521,7 +7585,10 @@ mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
 	DPRINTF("%s: %s: ni %p, k_id %d, k_flags %x k_cipher %d wcid %d\n",
 	    DEVNAME(sc), "add key", ni, k->k_id, k->k_flags, k->k_cipher, wcid);
 
-	mt7921_mcu_add_key_tlv(m, &tlvnum, k, 1);
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		mt7925_mcu_add_key_tlv(m, &tlvnum, k, ni, wcid, 1);
+	else
+		mt7921_mcu_add_key_tlv(m, &tlvnum, k, 1);
 	mwx_fill_sta_req_hdr(m, mvif, muar_idx, wcid, tlvnum);
 
 	rv = mwx_mcu_send_mbuf_wait(sc, MCU_UNI_CMD_STA_REC_UPDATE, m);
@@ -7547,7 +7614,7 @@ mt7921_mcu_sta_key_update(struct mwx_softc *sc, struct ieee80211_node *ni,
 }
 
 void
-mt7921_mcu_sta_key_delete(struct mwx_softc *sc, struct ieee80211_node *ni,
+mwx_mcu_sta_key_delete(struct mwx_softc *sc, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct mwx_vif *mvif = &sc->sc_vif;
@@ -7572,7 +7639,10 @@ mt7921_mcu_sta_key_delete(struct mwx_softc *sc, struct ieee80211_node *ni,
 	    DEVNAME(sc), "delete key", ni, k->k_id, k->k_flags, k->k_cipher,
 	    wcid);
 
-	mt7921_mcu_add_key_tlv(m, &tlvnum, k, 0);
+	if (sc->sc_hwtype == MWX_HW_MT7925)
+		mt7925_mcu_add_key_tlv(m, &tlvnum, k, ni, wcid, 0);
+	else
+		mt7921_mcu_add_key_tlv(m, &tlvnum, k, 0);
 	mwx_fill_sta_req_hdr(m, mvif, muar_idx, wcid, tlvnum);
 
 	mwx_mcu_send_mbuf(sc, MCU_UNI_CMD_STA_REC_UPDATE, m, NULL);
