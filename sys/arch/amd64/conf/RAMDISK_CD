@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.218 2026/10/07 11:14:53 stsp Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.219 2026/10/08 18:54:03 claudio Exp $
 
 machine		amd64
 maxusers	4
@@ -307,6 +307,7 @@ pgt*		at cardbus?		# Prism54 Full-MAC
 malo*		at pci?			# Marvell 88W8385
 malo*		at cardbus?		# Marvell Libertas
 malo*		at pcmcia?		# Marvell 88W8385
+mwx*		at pci?			# Mediatek 802.11ax/be
 
 exphy*		at mii?			# 3Com internal PHYs
 inphy*		at mii?			# Intel 82555 PHYs
