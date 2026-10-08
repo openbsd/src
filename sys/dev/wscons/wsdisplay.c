@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.157 2026/10/05 16:13:15 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.158 2026/10/08 18:19:31 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1352,6 +1352,8 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			return (EINVAL);
 		if (d->fontheight > 64 || d->stride > 8) /* 64x64 pixels */
 			return (EINVAL);
+		if (d->firstchar < 0 || d->numchars <= 0)
+			return (EINVAL);
 		if (d->numchars > 65536) /* unicode plane */
 			return (EINVAL);
 		/*
@@ -1365,7 +1367,9 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		if (fontsz > WSDISPLAY_MAXFONTSZ)
 			return (EINVAL);
 
-		buf = malloc(fontsz, M_DEVBUF, M_WAITOK);
+		buf = malloc(fontsz, M_DEVBUF, M_WAITOK | M_CANFAIL);
+		if (buf == NULL)
+			return (ENOMEM);
 		error = copyin(d->data, buf, fontsz);
 		if (error) {
 			free(buf, M_DEVBUF, fontsz);
