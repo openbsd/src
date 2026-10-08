@@ -1,4 +1,4 @@
-.\" $OpenBSD: mwx.4,v 1.1 2026/10/08 09:33:56 claudio Exp $
+.\" $OpenBSD: mwx.4,v 1.2 2026/10/08 12:42:37 jsg Exp $
 .\"
 .\" Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
 .\"
@@ -93,13 +93,6 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/mwx-mt7961_ram_code_1
 .It Pa /etc/firmware/mwx-mt7961_ram_code_1a
 .El
-.Pp
-These firmware files are not free because Mediatek refuses to grant
-distribution rights without contractual obligations.
-As a result, even though
-.Ox
-includes the driver, the firmware files cannot be included and
-users have to download these files on their own.
 .Pp
 A prepackaged version of the firmware can be installed using
 .Xr fw_update 8 .
