@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.25 2026/10/07 19:59:11 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.26 2026/10/08 14:31:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 7 2026 $
+.Dd $Mdocdate: October 8 2026 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd lang/python port module
 .Sh DESCRIPTION
 This manual page documents the behavior of setting
-.Li MODULES=lang/python
+.Ev MODULES Ns = Ns Cm lang/python
 in the
 .Xr ports 7
 tree.
@@ -65,22 +65,28 @@ The module also adds a dependency on the Python interpreter to
 .Ev RUN_DEPENDS
 unless
 .Ev MODPY_RUNDEP
-is set to No,
+is set to
+.Cm \&No ,
 .It
 .Ev BUILD_DEPENDS
 unless
 .Ev MODPY_BUILDDEP
-is set to No or
+is set to
+.Cm \&No
+or
 .Ev NO_BUILD
-is set to Yes,
+is set to
+.Cm Yes ,
 .It
 .Ev TEST_DEPENDS
 if
 .Ev MODPY_PYTEST
-is set to Yes
+is set to
+.Cm Yes
 unless
 .Ev MODPY_TESTDEP
-is set to No.
+is set to
+.Cm \&No .
 .El
 .Pp
 It also appends
@@ -110,7 +116,9 @@ is provided then it most likely uses setuptools.
 Checks for some common
 .Ev MODPY_PYBUILD
 misconfigurations are performed during build and, if found, warnings are
-displayed after fake-install.
+displayed after
+.Cm fake
+install.
 .Pp
 .Nm
 currently supports
@@ -136,7 +144,7 @@ In cases where an uncommon backend is used, or where the build backend is
 distributed with the software itself,
 .Ev MODPY_PYBUILD
 can be set to
-.Sq other
+.Cm other
 to use the PEP 517 build mechanism without adding a dependency
 for a backend.
 .Pp
@@ -160,13 +168,17 @@ in
 .Pp
 Python 2 ports using setuptools set
 .Ev MODPY_SETUPTOOLS
-to Yes, which appends to
+to
+.Cm Yes ,
+which appends to
 .Ev MODPY_BUILD_DEPENDS
 and calls the relevant commands to build (these ports are built
 using the deprecated mechanism of calling
 .Pa setup.py
 directly).
-Arguments can be passed to setup.py during
+Arguments can be passed to
+.Pa setup.py
+during
 .Cm configure
 with
 .Ev MODPY_SETUP_ARGS .
@@ -182,7 +194,11 @@ It is assumed that pytest is used for tests if
 is used.
 In other cases, set
 .Ev MODPY_PYTEST
-to Yes or No as appropriate.
+to
+.Cm Yes
+or
+.Cm \&No
+as appropriate.
 Arguments can be passed to
 .Xr pytest 1
 during
@@ -194,10 +210,10 @@ detection fails, to disable or select certain tests, or
 disable plugins.
 As a shortcut, test scripts can be disabled by listing them in
 .Ev MODPY_PYTEST_IGNORE ;
-these will be added to 
+these will be added to
 .Ev MODPY_PYTEST_ARGS
 with
-.Sq --ignore .
+.Fl \-ignore .
 .Pp
 User setting
 .Ev MODPY_PYTEST_USERARGS ,
@@ -236,9 +252,14 @@ For ports not using standard Python build infrastructure,
 it may be necessary to bytecode-compile installed .py files.
 This can be done by using
 .Ev ${MODPY_COMPILEALL} ,
-usually in a post-install target.
-This passes flags to use MAKE_JOBS, strip off WRKINST, and use
-standard optimization passes.
+usually in a
+.Cm post-install
+target.
+This passes flags to use
+.Ev MAKE_JOBS ,
+strip off
+.Ev WRKINST ,
+and use standard optimization passes.
 File or directory names can be given.
 Directories are handled recursively.
 .Pp
@@ -255,7 +276,7 @@ target.
 If
 .Ev MODPY_PI
 is set to
-.Sq Yes ,
+.Cm Yes ,
 the module will provide a default for
 .Ev HOMEPAGE
 and set
