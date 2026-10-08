@@ -7,7 +7,7 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd $Mdocdate: August 7 2026 $
+.Dd $Mdocdate: October 8 2026 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -117,8 +117,7 @@ options:
 .It
 Single-module output options:
 .Fl -path ,
-.Fl -print-variables ,
-.Fl -variable :
+.Fl -print-variables :
 If any of these options is specified, only the first
 .Ar module
 argument is used, all other arguments are silently ignored,
@@ -128,8 +127,9 @@ Depth-one output options:
 .Fl -print-provides ,
 .Fl -modversion ,
 .Fl -print-requires ,
+.Fl -print-requires-private ,
 and
-.Fl -print-requires-private :
+.Fl -variable :
 If any of these options is specified, only modules
 explicitly specified on the command line are inspected
 and no dependency resolution is attempted.
@@ -591,12 +591,11 @@ This option implies
 and
 .Fl -errors-to-stdout .
 .It Fl -variable Ns = Ns Ar varname
-For the first
-.Ar module
-given on the command line, print the value of the variable with the name
+For each specified
+.Ar module ,
+print the value of the variable with the name
 .Ar varname
-to standard output.
-Any subsequent arguments are silently ignored.
+to standard output in command-line order.
 This option implies
 .Fl -maximum-traverse-depth Ns =1
 and overrides and disables all

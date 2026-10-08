@@ -984,9 +984,9 @@ register_builtins(pkgconf_client_t *client, const pkgconf_cross_personality_t *p
 	pkgconf_buffer_t pc_system_libdirs_buf = PKGCONF_BUFFER_INITIALIZER;
 	pkgconf_buffer_t pc_system_includedirs_buf = PKGCONF_BUFFER_INITIALIZER;
 
-	if (!path_list_to_buffer(&personality->dir_list, &pc_path_buf, ':') ||
-		!path_list_to_buffer(&personality->filter_libdirs, &pc_system_libdirs_buf, ':') ||
-		!path_list_to_buffer(&personality->filter_includedirs, &pc_system_includedirs_buf, ':'))
+	if (!path_list_to_buffer(&personality->dir_list, &pc_path_buf, PKG_CONFIG_PATH_SEP_S[0]) ||
+		!path_list_to_buffer(&personality->filter_libdirs, &pc_system_libdirs_buf, PKG_CONFIG_PATH_SEP_S[0]) ||
+		!path_list_to_buffer(&personality->filter_includedirs, &pc_system_includedirs_buf, PKG_CONFIG_PATH_SEP_S[0]))
 		goto error;
 
 	if (!register_builtin(client, "pkg-config", &pc_path_buf, &pc_system_libdirs_buf, &pc_system_includedirs_buf) ||
