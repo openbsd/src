@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.24 2026/10/07 12:05:51 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.25 2026/10/08 09:31:34 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -566,6 +566,7 @@ struct mt76_txwi {
 #define	MCU_UNI_CMD_SUSPEND			0x00020005
 #define	MCU_UNI_CMD_OFFLOAD			0x00020006
 #define	MCU_UNI_CMD_HIF_CTRL			0x00020007
+#define	MCU_UNI_CMD_BAND_CONFIG			0x00020008
 #define	MCU_UNI_CMD_WSYS_CONFIG			0x0002000b
 #define	MCU_UNI_CMD_CHIP_CONFIG			0x0002000e
 #define	MCU_UNI_CMD_SET_DOMAIN_INFO		0x00020015
@@ -589,6 +590,8 @@ struct mt76_txwi {
 
 #define	UNI_CHIP_CONFIG_CHIP_CFG		2
 #define	UNI_CHIP_CONFIG_NIC_CAPA		3
+
+#define	UNI_BAND_CONFIG_RTS_THRESHOLD		8
 
 #define	UNI_EFUSE_ACCESS			1
 #define	UNI_EFUSE_BUFFER_MODE			2
@@ -734,23 +737,36 @@ struct mt76_txwi {
 #define	MT_TX_MCU_PORT_RX_Q3			0x23
 #define	MT_TX_MCU_PORT_RX_FWDL			0x3e
 
-#define MT_TX_FREE0_MSDU_CNT_MASK		0x03ff0000
-#define MT_TX_FREE0_MSDU_CNT_SHIFT		16
-#define MT_TX_FREE0_MSDU_CNT_GET(x)	\
+#define	MT_TX_FREE0_MSDU_CNT_MASK		0x03ff0000
+#define	MT_TX_FREE0_MSDU_CNT_SHIFT		16
+#define	MT_TX_FREE0_MSDU_CNT_GET(x)	\
 	(((x) & MT_TX_FREE0_MSDU_CNT_MASK) >> MT_TX_FREE0_MSDU_CNT_SHIFT)
-#define MT_TX_FREE0_LEN_MASK			0x0000ffff
+#define	MT_TX_FREE0_LEN_MASK			0x0000ffff
+
+#define	MT_TX_FREE1_VER_MASK			0x000f0000
+#define	MT_TX_FREE1_VER_SHIFT			16
+#define	MT_TX_FREE1_VER_GET(x)		\
+	(((x) & MT_TX_FREE1_VER_MASK) >> MT_TX_FREE1_VER_SHIFT)
+
 #define	MT_TX_FREE_PAIR				(1U << 31)
-#define MT_TX_FREE_WLAN_ID_MASK			0x00ffc000
-#define MT_TX_FREE_WLAN_ID_SHIFT		14
-#define MT_TX_FREE_WLAN_ID_GET(x)	\
+#define	MT_TX_FREE_WLAN_ID_MASK			0x00ffc000
+#define	MT_TX_FREE_WLAN_ID_SHIFT		14
+#define	MT_TX_FREE_WLAN_ID_GET(x)	\
 	(((x) & MT_TX_FREE_WLAN_ID_MASK) >> MT_TX_FREE_WLAN_ID_SHIFT)
-#define MT_TX_FREE_MSDU_ID_MASK			0x7fff0000
-#define MT_TX_FREE_MSDU_ID_SHIFT		16
-#define MT_TX_FREE_MSDU_ID_GET(x)	\
+#define	MT_TX_FREE_MSDU_ID_MASK			0x7fff0000
+#define	MT_TX_FREE_MSDU_ID_SHIFT		16
+#define	MT_TX_FREE_MSDU_ID_GET(x)	\
 	(((x) & MT_TX_FREE_MSDU_ID_MASK) >> MT_TX_FREE_MSDU_ID_SHIFT)
-#define MT_TX_FREE_STATUS_MASK			0x00006000	/* 0 = sent */
+#define	MT_TX_FREE_STATUS_MASK			0x00006000	/* 0 = sent */
 #define	MT_TX_FREE_COUNT_MASK			0x00001fff
 #define	MT_TX_FREE_RATE_MASK			0x00003fff
+
+#define	MT7925_TX_FREE_INFO_PAIR		(1U << 31)
+#define	MT7925_TX_FREE_INFO_HEADER		(1U << 30)
+#define	MT7925_TX_FREE_INFO_WLAN_ID		GENMASK(23, 12)
+#define	MT7925_TX_FREE_INFO_MSDU_ID		0x00007fff
+#define	MT7925_TX_FREE_INFO_COUNT		GENMASK(27, 24)
+#define	MT7925_TX_FREE_INFO_STAT		GENMASK(29, 28)
 
 #define	MT_TXD0_Q_IDX_MASK			0xfe000000
 #define	MT_TXD0_Q_IDX(x)		(((x) << 25) & MT_TXD0_Q_IDX_MASK)
@@ -1507,7 +1523,7 @@ struct sta_rec_wtbl {
 	uint8_t		rsv[3];
 } __packed;
 
-#define STA_REC_KEY			0x11
+#define	STA_REC_KEY			0x11
 struct sta_rec_sec {
 	uint16_t	tag;
 	uint16_t	len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.43 2026/10/08 07:14:36 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.44 2026/10/08 09:31:34 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -585,6 +585,7 @@ int		mt7921_mcu_set_eeprom(struct mwx_softc *);
 int		mt7925_mcu_set_eeprom(struct mwx_softc *);
 int		mt7921_mcu_set_rts_thresh(struct mwx_softc *, uint32_t,
 		    uint8_t);
+int		mt7925_mcu_set_rts_thresh(struct mwx_softc *, uint32_t);
 int		mwx_mcu_set_deep_sleep(struct mwx_softc *, int);
 void		mt7921_mcu_low_power_event(struct mwx_softc *, struct mbuf *);
 void		mt7921_mcu_tx_done_event(struct mwx_softc *, struct mbuf *);
@@ -628,7 +629,8 @@ void		mt7925_mac_write_txwi_80211(struct mwx_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct mt76_txwi *);
 void		mt7925_mac_write_txwi(struct mwx_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct mt76_txwi *);
-void		mwx_mac_tx_free(struct mwx_softc *, struct mbuf *);
+void		mt7921_mac_tx_free(struct mwx_softc *, struct mbuf *);
+void		mt7925_mac_tx_free(struct mwx_softc *, struct mbuf *);
 int		mt7921_set_channel(struct mwx_softc *);
 int		mt7925_set_channel(struct mwx_softc *);
 int		mt7925_mcu_add_bss_info(struct mwx_softc *,
@@ -1221,7 +1223,10 @@ mwx_newstate_task(void *ptr)
 		else
 			mt7921_mcu_hw_scan_cancel(sc); /* XXX */
 		mwx_mcu_set_deep_sleep(sc, 0);
-		mt7921_mcu_set_rts_thresh(sc, 0x92b, 0);
+		if (sc->sc_hwtype == MWX_HW_MT7925)
+			mt7925_mcu_set_rts_thresh(sc, 0x92b);
+		else
+			mt7921_mcu_set_rts_thresh(sc, 0x92b, 0);
 		break;
 	}
 
@@ -2740,7 +2745,10 @@ mwx_dma_rx_process(struct mwx_softc *sc, struct mbuf_list *ml)
 			mwx_mcu_rx_event(sc, m);
 			break;
 		case PKT_TYPE_TXRX_NOTIFY:
-			mwx_mac_tx_free(sc, m);
+			if (sc->sc_hwtype == MWX_HW_MT7925)
+				mt7925_mac_tx_free(sc, m);
+			else
+				mt7921_mac_tx_free(sc, m);
 			break;
 		case PKT_TYPE_TXS:
 #if TODO
@@ -4280,6 +4288,28 @@ mt7921_mcu_set_rts_thresh(struct mwx_softc *sc, uint32_t val, uint8_t band)
 	};
 
 	return mwx_mcu_send_wait(sc, MCU_EXT_CMD_PROTECT_CTRL, &req,
+	    sizeof(req));
+}
+
+int
+mt7925_mcu_set_rts_thresh(struct mwx_softc *sc, uint32_t val)
+{
+	struct {
+		uint8_t		band_idx;
+		uint8_t		rsv[3];
+		uint16_t	tag;
+		uint16_t	len;
+		uint16_t	len_thresh;
+		uint16_t	pkt_thresh;
+	} __packed req = {
+		.band_idx = sc->sc_vif.band_idx,
+		.tag = htole16(UNI_BAND_CONFIG_RTS_THRESHOLD),
+		.len = htole16(sizeof(req) - 4),
+		.len_thresh = htole32(val),
+		.pkt_thresh = htole32(0x2),
+	};
+
+	return mwx_mcu_send_wait(sc, MCU_UNI_CMD_BAND_CONFIG, &req,
 	    sizeof(req));
 }
 
@@ -6560,7 +6590,7 @@ mt7925_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 }
 
 void
-mwx_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
+mt7921_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
 {
 	struct mwx_txwi *mt;
 	uint32_t *txfree;
@@ -6594,6 +6624,8 @@ mwx_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
 		txval = le32toh(txfree[i]);
 		if (txval & MT_TX_FREE_PAIR) {
 			count++;
+			if (count * sizeof(txval) > m->m_len)
+				goto out;
 			/* TODO any wcid fumbling */
 			/* wcid = MT_TX_FREE_WLAN_ID_GET(txval); */
 			continue;
@@ -6610,10 +6642,68 @@ mwx_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
 		if (msdu >= sc->sc_txwi.mt_count)
 			continue;
 		mt = &sc->sc_txwi.mt_data[msdu];
-		if (mt->mt_busy == 0)
-			continue;
 		mwx_txwi_put(sc, mt);
+	}
 
+ out:
+	m_freem(m);
+}
+
+void
+mt7925_mac_tx_free(struct mwx_softc *sc, struct mbuf *m)
+{
+	struct mwx_txwi *mt;
+	uint32_t *txfree, *txend;
+	uint32_t  txval;
+	int total, count, i;
+
+	/* first cleanup the TX dma rings */
+	mwx_dma_tx_cleanup(sc, &sc->sc_txq);
+
+	if ((m = m_pullup(m, m->m_pkthdr.len)) == NULL)
+		return;
+
+	txfree = mtod(m, uint32_t *);
+	txval = le32toh(txfree[0]);
+
+	if (MT_TX_FREE1_VER_GET(le32toh(txfree[1])) < 4) {
+		printf("%s: %s: bad version in txfree1 %08x\n",
+		    DEVNAME(sc), __func__, le32toh(txfree[1]));
+		goto out;
+	}
+
+	m_adj(m, 2 * sizeof(txval));
+
+	total = MT_TX_FREE0_MSDU_CNT_GET(txval);
+
+	txfree = mtod(m, uint32_t *);
+	txend = txfree + m->m_len / sizeof(txval);
+	count = 0;
+	while (txfree < txend) {
+		uint16_t msdu;
+
+		if (count >= total)
+			break;
+
+		txval = le32toh(*txfree++);
+		if (txval & MT7925_TX_FREE_INFO_PAIR) {
+			continue;
+		}
+		if (txval & MT7925_TX_FREE_INFO_HEADER) {
+			continue;
+		}
+
+		for (i = 0; i < 2; i++) {
+			msdu = (txval >> (15 * i)) &
+			    MT7925_TX_FREE_INFO_MSDU_ID;
+			if (msdu == MT7925_TX_FREE_INFO_MSDU_ID)
+				continue;
+			count++;
+			if (msdu >= sc->sc_txwi.mt_count)
+				continue;
+			mt = &sc->sc_txwi.mt_data[msdu];
+			mwx_txwi_put(sc, mt);
+		}
 	}
 
  out:
@@ -6650,7 +6740,7 @@ mt7925_set_channel(struct mwx_softc *sc)
 	rv = mt7925_mcu_set_chctx(sc, ni->ni_chan);
 	if (rv)
 		return rv;
-	return mt7925_mcu_add_bss_info(sc, ni, 0);
+	return mt7925_mcu_add_bss_info(sc, ni, 1);
 }
 
 int
