@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.45 2026/10/08 14:32:35 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.46 2026/10/08 18:49:06 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -5349,7 +5349,9 @@ mwx_mcu_uni_add_dev(struct mwx_softc *sc, struct mwx_vif *mvif,
 
 	switch (sc->sc_ic.ic_opmode) {
 	case IEEE80211_M_MONITOR:
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
+#endif
 		basic_req.basic.conn_type =
 		    htole32(STA_TYPE_AP | NETWORK_INFRA);
 		break;
@@ -5357,10 +5359,12 @@ mwx_mcu_uni_add_dev(struct mwx_softc *sc, struct mwx_vif *mvif,
 		basic_req.basic.conn_type =
 		    htole32(STA_TYPE_STA | NETWORK_INFRA);
 		break;
+#ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_IBSS:
 		basic_req.basic.conn_type =
 		    htole32(STA_TYPE_ADHOC | NETWORK_IBSS);
 		break;
+#endif
 	default:
 		panic("%s: unknown operation mode", DEVNAME(sc));
 	}
@@ -7147,18 +7151,20 @@ mt7921_mcu_add_basic_tlv(struct mbuf *m, uint16_t *tlvnum, struct mwx_softc *sc,
 	}
 
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_HOSTAP:
-		basic->conn_type = htole32(STA_TYPE_STA | NETWORK_INFRA);
-		break;
 	case IEEE80211_M_STA:
 		basic->conn_type = htole32(STA_TYPE_AP | NETWORK_INFRA);
+		break;
+	case IEEE80211_M_MONITOR:
+		panic("mt7921_mcu_sta_basic_tlv unexpected operation mode");
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
+		basic->conn_type = htole32(STA_TYPE_STA | NETWORK_INFRA);
 		break;
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
 		basic->conn_type = htole32(STA_TYPE_ADHOC | NETWORK_IBSS);
 		break;
-	case IEEE80211_M_MONITOR:
-		panic("mt7921_mcu_sta_basic_tlv unexpected operation mode");
+#endif
 	}
 
 	basic->aid = htole16(IEEE80211_AID(ni->ni_associd));
@@ -7274,9 +7280,9 @@ int
 mt7921_mcu_wtbl_generic_tlv(struct mbuf *m, uint16_t *tlvnum,
     struct mwx_softc *sc, struct ieee80211_node *ni)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct wtbl_generic *generic;
 	struct wtbl_rx *rx;
+	int rca1 = 1;
 
 	generic = mwx_append_tlv(m, tlvnum, WTBL_GENERIC,
 	    sizeof(*generic));
@@ -7292,7 +7298,12 @@ mt7921_mcu_wtbl_generic_tlv(struct mbuf *m, uint16_t *tlvnum,
 	}
 
 	rx = mwx_append_tlv(m, tlvnum, WTBL_RX, sizeof(*rx));
-	rx->rca1 = ni ? ic->ic_opmode != IEEE80211_M_HOSTAP : 1;
+#ifndef IEEE80211_STA_ONLY
+	if (ni != NULL)
+		rca1 = sc->sc_ic.ic_opmode != IEEE80211_M_HOSTAP;
+#endif
+
+	rx->rca1 = rca1;
 	rx->rca2 = 1;
 	rx->rv = 1;
 
