@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.42 2026/10/07 12:14:36 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.43 2026/10/08 07:14:36 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1211,7 +1211,6 @@ mwx_newstate_task(void *ptr)
 		}
 		break;
 	case IEEE80211_S_ASSOC:
-		mwx_mcu_set_deep_sleep(sc, 1);
 		break;
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
@@ -2723,10 +2722,6 @@ mwx_dma_rx_process(struct mwx_softc *sc, struct mbuf_list *ml)
 
 		type = MT_RXD0_PKT_TYPE_GET(rxd);
 		flag = (rxd & MT_RXD0_PKT_FLAG_MASK) >> MT_RXD0_PKT_FLAG_SHIFT;
-
-if (DEVDEBUG(sc)) {
-printf("%s: rx process pkt type %u flag %u len %u rxd %8x\n", DEVNAME(sc), type, flag, m->m_len, rxd);
-}
 
 		if (sc->sc_hwtype == MWX_HW_MT7925 && type != PKT_TYPE_NORMAL) {
 			uint32_t sw_type;
