@@ -66,7 +66,7 @@ STRIP = strip
 libpkgconf/config.h:
 	@echo '#define PACKAGE_NAME "pkgconf-lite"' >> $@
 	@echo '#define PACKAGE_BUGREPORT "https://git.dereferenced.org/pkgconf/pkgconf/issues"' >> $@
-	@echo '#define PACKAGE_VERSION "3.0.6"' >> $@
+	@echo '#define PACKAGE_VERSION "3.0.8"' >> $@
 	@echo '#define PACKAGE PACKAGE_NAME " " PACKAGE_VERSION' >> $@
 
 

@@ -40,6 +40,28 @@ oom_setup(void)
 	spdxtool_util_set_spdx_license(g_client, "CC0-1.0");
 }
 
+
+/*
+ * ==============================================
+ * util / url
+ * ==============================================
+ */
+
+static void
+test_oom_util_id_string(void)
+{
+	char *id_str = NULL;
+	OOM_TEST_PTR(id_str, spdxtool_util_get_spdx_id_string(g_client, "test", "test1"), free(id_str));
+}
+
+static void
+test_oom_util_id_int(void)
+{
+	char *id_str = NULL;
+	OOM_TEST_PTR(id_str, spdxtool_util_get_spdx_id_int(g_client, "test"), free(id_str));
+}
+
+
 /*
  * ==============================================
  * core / software / simplelicensing constructors
@@ -189,6 +211,8 @@ main(int argc, const char **argv)
 
 	oom_setup();
 
+	TEST_RUN(basename, test_oom_util_id_string);
+	TEST_RUN(basename, test_oom_util_id_int);
 	TEST_RUN(basename, test_oom_agent_new);
 	TEST_RUN(basename, test_oom_tool_new);
 	TEST_RUN(basename, test_oom_creation_info_new);
