@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1243 2026/10/07 20:01:17 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1244 2026/10/08 20:37:05 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7706,7 +7706,7 @@ int
 pf_walk_header(struct pf_pdesc *pd, struct ip *h, u_short *reason)
 {
 	struct ip6_ext		 ext;
-	u_int32_t		 hlen, end;
+	u_int32_t		 hlen, end, extlen;
 	int			 hdr_cnt;
 
 	hlen = h->ip_hl << 2;
@@ -7755,7 +7755,16 @@ pf_walk_header(struct pf_pdesc *pd, struct ip *h, u_short *reason)
 				DPFPRINTF(LOG_NOTICE, "IP short exthdr");
 				return (PF_DROP);
 			}
-			pd->off += (ext.ip6e_len + 2) * 4;
+			extlen = (ext.ip6e_len + 2) * 4;
+			if (end < pd->off + extlen) {
+				if ((h->ip_off & htons(IP_MF | IP_OFFMASK))
+				    != 0)
+					return (PF_PASS);
+				DPFPRINTF(LOG_NOTICE, "IP long exthdr");
+				REASON_SET(reason, PFRES_SHORT);
+				return (PF_DROP);
+			}
+			pd->off += extlen;
 			pd->proto = ext.ip6e_nxt;
 			break;
 		default:
@@ -7965,7 +7974,7 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 					pd->proto = IPPROTO_FRAGMENT;
 					return (PF_PASS);
 				}
-				DPFPRINTF(LOG_NOTICE, "IPv6 short exthdr");
+				DPFPRINTF(LOG_NOTICE, "IPv6 long exthdr");
 				REASON_SET(reason, PFRES_SHORT);
 				return (PF_DROP);
 			}
