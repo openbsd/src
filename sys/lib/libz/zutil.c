@@ -25,6 +25,7 @@ z_const char * const z_errmsg[10] = {
 };
 
 
+#if 0
 const char * ZEXPORT zlibVersion(void) {
     return ZLIB_VERSION;
 }
@@ -120,6 +121,7 @@ uLong ZEXPORT zlibCompileFlags(void) {
 #endif
     return flags;
 }
+#endif
 
 #ifdef ZLIB_DEBUG
 #include <stdlib.h>
