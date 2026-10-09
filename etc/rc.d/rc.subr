@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.168 2026/09/16 00:52:19 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.169 2026/10/09 06:25:07 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -143,13 +143,6 @@ _rc_exit() {
 	exit ${_ret}
 }
 
-_rc_alarm()
-{
-	trap - ALRM
-	kill -ALRM ${_TIMERSUB} 2>/dev/null # timer may not be running anymore
-	kill $! 2>/dev/null # kill last job if it's running
-}
-
 _rc_printname()
 {
 	local _n
@@ -162,15 +155,20 @@ _rc_sendsig() {
 }
 
 _rc_wait_for_start() {
-	trap "_rc_alarm" ALRM
+	# catch SIGALRM, it's only needed for the process spawned by rc_start;
+	trap : ALRM
+	trap 'exit' TERM
 	while ((SECONDS < daemon_timeout)); do
 		if _rc_do rc_check; then
 			[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
 		fi
-		sleep .5
-	done & wait
+		sleep .5 & wait
+	done
 	pkill -ALRM -P $$
-	return
+	# wait for rc_cmd() signal
+	while kill -0 $$ 2>/dev/null; do
+		sleep .5 & wait
+	done
 }
 
 rc_exec() {
@@ -257,10 +255,10 @@ rc_cmd() {
 			fi
 			# prevent hanging the boot sequence
 			_rc_do _rc_wait_for_start & _TIMERSUB=$!
-			trap "_rc_alarm" ALRM
+			trap : ALRM
 			_rc_do rc_start; _ret=$?
-			kill -ALRM ${_TIMERSUB}
-			wait ${_TIMERSUB} 2>/dev/null # don't print Alarm clock
+			kill -TERM ${_TIMERSUB}
+			wait ${_TIMERSUB} 2>/dev/null # don't print Terminated
 			# XXX for unknown reason, rc_check can fail (e.g. redis)
 			# while it just succeeded in _rc_wait_for_start;
 			# check to cope with failing daemons returning 0
@@ -292,7 +290,7 @@ rc_cmd() {
 				break
 			${_1stloop} && _1stloop=false || sleep .5
 		done
-		kill -ALRM ${_timer} 2>/dev/null
+		pkill -ALRM -P $$
 		wait ${_timer} # don't print Alarm clock
 		[[ $? == 0 ]] || _exit=failed
 		# KILL the process
@@ -314,7 +312,7 @@ rc_cmd() {
 			pkill -0 -P "$$" 2>/dev/null || break
 			${_1stloop} && _1stloop=false || sleep .5
 		done
-		kill -ALRM ${_timer} 2>/dev/null
+		pkill -ALRM -P $$
 		wait ${_timer} # don't print Alarm clock
 		_ret=$?
 		[[ ${_ret} == 142 ]] && _exit=timeout || [[ ${_ret} == 0 ]] ||
