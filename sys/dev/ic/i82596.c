@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.56 2025/04/06 00:37:07 jsg Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.57 2026/10/09 20:03:07 miod Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1592,7 +1592,7 @@ ie_cfg_setup(struct ie_softc *sc, int cmd, int promiscuous, int manchester)
 	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SLOT_LOW(cmd), 0);
 	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SLOT_HIGH(cmd), 0xf2);
 	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_PROMISC(cmd),
-					  !!promiscuous | manchester << 2);
+					  (!!promiscuous) | manchester << 2);
 	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_CRSCDT(cmd), 0);
 	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_MINLEN(cmd), 64);
 	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_JUNK(cmd), 0xff);
