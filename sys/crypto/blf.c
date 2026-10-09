@@ -1,4 +1,4 @@
-/*	$OpenBSD: blf.c,v 1.9 2022/08/28 11:11:25 jsg Exp $	*/
+/*	$OpenBSD: blf.c,v 1.10 2026/10/09 16:33:14 miod Exp $	*/
 
 /*
  * Blowfish block cipher for OpenBSD
@@ -438,48 +438,6 @@ Blowfish_expand0state(blf_ctx *c, const u_int8_t *key, u_int16_t keybytes)
 	}
 }
 
-
-void
-Blowfish_expandstate(blf_ctx *c, const u_int8_t *data, u_int16_t databytes,
-    const u_int8_t *key, u_int16_t keybytes)
-{
-	u_int16_t i;
-	u_int16_t j;
-	u_int16_t k;
-	u_int32_t temp;
-	u_int32_t d[2];
-
-	j = 0;
-	for (i = 0; i < BLF_N + 2; i++) {
-		/* Extract 4 int8 to 1 int32 from keystream */
-		temp = Blowfish_stream2word(key, keybytes, &j);
-		c->P[i] = c->P[i] ^ temp;
-	}
-
-	j = 0;
-	d[0] = 0x00000000;
-	d[1] = 0x00000000;
-	for (i = 0; i < BLF_N + 2; i += 2) {
-		d[0] ^= Blowfish_stream2word(data, databytes, &j);
-		d[1] ^= Blowfish_stream2word(data, databytes, &j);
-		Blowfish_encipher(c, d);
-
-		c->P[i] = d[0];
-		c->P[i + 1] = d[1];
-	}
-
-	for (i = 0; i < 4; i++) {
-		for (k = 0; k < 256; k += 2) {
-			d[0]^= Blowfish_stream2word(data, databytes, &j);
-			d[1] ^= Blowfish_stream2word(data, databytes, &j);
-			Blowfish_encipher(c, d);
-
-			c->S[i][k] = d[0];
-			c->S[i][k + 1] = d[1];
-		}
-	}
-
-}
 
 void
 blf_key(blf_ctx *c, const u_int8_t *k, u_int16_t len)
