@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.2 2021/05/27 18:18:41 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2026/10/09 13:56:57 bluhm Exp $
 
-SUBDIR=	runtests runtestspp benchmark entropy
+SUBDIR=	runtests benchmark entropy
 
 .include <bsd.subdir.mk>
