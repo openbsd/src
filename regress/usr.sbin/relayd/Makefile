@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2026/09/21 01:13:12 rsadowski Exp $
+#	$OpenBSD: Makefile,v 1.28 2026/10/09 18:51:40 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -43,7 +43,7 @@ ARGS_CONFIGS !=		cd ${.CURDIR}/configs && ls *.conf
 
 ARGS_TLS !=		cd ${.CURDIR} && ls args-*.pl | grep -E 'ssl|https'
 ARGS !=			cd ${.CURDIR} && ls args-*.pl | grep -vE 'ssl|https'
-CERTBASES =		127.0.0.1 127.0.0.1-ec
+CERTTYPES =		rsa ec
 CLEANFILES +=		*.log relayd.conf ktrace.out stamp-*
 CLEANFILES +=		*.pem *.req *.crt *.key *.srl
 
@@ -61,7 +61,7 @@ PERLPATH =	${.CURDIR}/
 # syntax checks only
 .for config in ${ARGS_CONFIGS}
 REGRESS_TARGETS +=	run-config-check-${config}
-run-config-check-${config}: ${.CURDIR}/configs/${config} 127.0.0.1.crt 127.0.0.1.key
+run-config-check-${config}: ${.CURDIR}/configs/${config} server.crt server.key
 .if empty (RELAYD)
 	${SUDO} /usr/sbin/relayd -n -f ${.CURDIR}/configs/${config}
 .else
@@ -92,24 +92,25 @@ run-${test}: ${test}
 
 # TLS tests run once per cert type.  CERTBASE selects the keypair files.
 .for test in ${ARGS_TLS}
-.for cert in ${CERTBASES}
+.for cert in ${CERTTYPES}
 REGRESS_TARGETS +=	run-${cert}-${test}
 run-${cert}-${test}: ${test}
 .if empty (REMOTE_SSH)
-	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} CERTBASE=${cert} \
-		perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}${test}
-	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} CERTBASE=${cert} \
-		perl ${PERLINC} ${PERLPATH}relayd.pl splice ${PERLPATH}${test}
+	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} \
+	    CERTBASE=127.0.0.1-${cert} \
+	    perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}${test}
+	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} \
+	    CERTBASE=127.0.0.1-${cert} \
+	    perl ${PERLINC} ${PERLPATH}relayd.pl splice ${PERLPATH}${test}
 .else
-	scp ${cert}.crt ${REMOTE_SSH}:${cert}.crt
-	scp ${cert}.key ${REMOTE_SSH}:${cert}.key
-	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} CERTBASE=${cert} \
-		perl ${PERLINC} ${PERLPATH}remote.pl copy ${LOCAL_ADDR} \
-		${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}${test}
-
-	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} CERTBASE=${cert} \
-		perl ${PERLINC} ${PERLPATH}remote.pl splice ${LOCAL_ADDR} \
-		${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}${test}
+	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} \
+	    CERTBASE=${REMOTE_ADDR}-${cert} \
+	    perl ${PERLINC} ${PERLPATH}remote.pl copy ${LOCAL_ADDR} \
+	    ${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}${test}
+	time SUDO="${SUDO}" KTRACE=${KTRACE} RELAYD=${RELAYD} \
+	    CERTBASE=${REMOTE_ADDR}-${cert} \
+	    perl ${PERLINC} ${PERLPATH}remote.pl splice ${LOCAL_ADDR} \
+	    ${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}${test}
 .endif
 .endfor
 .endfor
@@ -117,14 +118,14 @@ run-${cert}-${test}: ${test}
 # create certificates for TLS
 
 .for ip in ${REMOTE_ADDR} 127.0.0.1
-${ip}.crt: ca.crt client-ca.crt
+${ip}-rsa.crt: ca.crt client-ca.crt
 	openssl req -batch -new \
 	    -subj /L=OpenBSD/O=relayd-regress/OU=relayd/CN=${ip}/ \
-	    -nodes -newkey rsa -keyout ${ip}.key -x509 \
+	    -nodes -newkey rsa -keyout ${ip}-rsa.key -x509 \
 	    -out $@
 .if !empty (REMOTE_SSH)
-	scp ${REMOTE_ADDR}.crt ${REMOTE_SSH}:
-	scp ${REMOTE_ADDR}.key ${REMOTE_SSH}:
+	scp ${REMOTE_ADDR}-rsa.crt ${REMOTE_SSH}:
+	scp ${REMOTE_ADDR}-rsa.key ${REMOTE_SSH}:
 	scp ca.crt ca.key ${REMOTE_SSH}:
 	scp client-ca.crt client-ca.key ${REMOTE_SSH}:
 .endif
@@ -164,11 +165,11 @@ client.crt: client-ca.crt client.req
 
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server.crt client.crt
 .if empty (REMOTE_SSH)
-${REGRESS_TARGETS:M*127.0.0.1-args-*}: 127.0.0.1.crt
-${REGRESS_TARGETS:M*127.0.0.1-ec-args-*}: 127.0.0.1-ec.crt
+${REGRESS_TARGETS:M*-rsa-args-*}: 127.0.0.1-rsa.crt
+${REGRESS_TARGETS:M*-ec-args-*}: 127.0.0.1-ec.crt
 .else
-${REGRESS_TARGETS:M*127.0.0.1-args-*}: ${REMOTE_ADDR}.crt
-${REGRESS_TARGETS:M*127.0.0.1-ec-args-*}: ${REMOTE_ADDR}-ec.crt
+${REGRESS_TARGETS:M*-rsa-args-*}: ${REMOTE_ADDR}-rsa.crt
+${REGRESS_TARGETS:M*-ec-args-*}: ${REMOTE_ADDR}-ec.crt
 .endif
 
 # make perl syntax check for all args files
