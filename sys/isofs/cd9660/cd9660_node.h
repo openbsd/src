@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.23 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.24 2026/10/09 16:33:50 miod Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -99,8 +99,6 @@ int	cd9660_getattr(void *);
 int	cd9660_setattr(void *);
 int	cd9660_read(void *);
 int	cd9660_ioctl(void *);
-int	cd9660_mmap(void *);
-int	cd9660_seek(void *);
 int	cd9660_readdir(void *);
 int	cd9660_readlink(void *);
 int	cd9660_inactive(void *);
