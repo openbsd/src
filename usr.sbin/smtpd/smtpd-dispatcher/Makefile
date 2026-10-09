@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2026/06/04 05:43:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2026/10/09 00:49:50 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=		smtpd-dispatcher
 RELINK=		"./${PROG} -V > /dev/null"
 BINDIR=		/usr/libexec
+BINMODE?=	511
 NOMAN=
 
 SRCS=	aliases.c bounce.c ca.c compress_backend.c config.c control.c \

@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.116 2026/06/04 05:43:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.117 2026/10/09 00:49:50 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=		smtpd
 RELINK=		"./${PROG} -V > /dev/null"
 BINDIR=		/usr/sbin
+BINMODE?=	511
 
 SRCS=	aliases.c bounce.c ca.c compress_backend.c config.c control.c \
 	crypto.c dict.c dns.c unpack_dns.c envelope.c esc.c expand.c \

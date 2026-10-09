@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2018/07/03 01:34:43 mortimer Exp $
+#	$OpenBSD: Makefile,v 1.48 2026/10/09 00:49:50 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -6,7 +6,7 @@ PROG=	smtpctl
 BINOWN=	root
 BINGRP=	_smtpq
 
-BINMODE?=2555
+BINMODE?=2511
 
 BINDIR=	/usr/sbin
 MAN=	smtpctl.8 aliases.5 forward.5 makemap.8 newaliases.8

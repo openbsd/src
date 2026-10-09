@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.33 2026/07/01 18:15:46 martijn Exp $
+#	$OpenBSD: Makefile,v 1.34 2026/10/09 00:49:50 deraadt Exp $
 
 PROG=		httpd
+BINMODE=	511
 RELINK=		"./${PROG} -n -f /etc/examples/httpd.conf 2> /dev/null"
 SRCS=		parse.y
 SRCS+=		config.c httpd.c log.c logger.c proc.c
