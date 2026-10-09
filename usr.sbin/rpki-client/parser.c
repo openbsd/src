@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.190 2026/10/09 08:34:38 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.191 2026/10/09 08:36:50 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -226,6 +226,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	}
 
 	roa->talid = a->cert->talid;
+	roa->issuerid = entp->certid;
 
 	roa->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
@@ -268,6 +269,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	}
 
 	spl->talid = a->cert->talid;
+	spl->issuerid = entp->certid;
 
 	spl->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
@@ -632,6 +634,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	}
 
 	cert->talid = a->cert->talid;
+	cert->issuerid = a->cert->certid;
 
 	cert->path = parse_filepath(entp->repoid, entp->path, entp->file,
 	    DIR_VALID);
@@ -742,6 +745,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 		free(file2);
 
 		cert1->talid = entp->talid;
+		cert1->issuerid = entp->talid;
 		auth_insert(file1, &auths, cert1, NULL, NULL);
 
 		*out_cert = cert1;
@@ -754,6 +758,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 
 		if (cert2 != NULL) {
 			cert2->talid = entp->talid;
+			cert2->issuerid = entp->talid;
 			if ((cert2->path = strdup(file2)) == NULL)
 				err(1, NULL);
 			auth_insert(file2, &auths, cert2, NULL, NULL);
@@ -792,6 +797,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	}
 
 	aspa->talid = a->cert->talid;
+	aspa->issuerid = entp->certid;
 
 	aspa->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);

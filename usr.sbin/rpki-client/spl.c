@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.20 2026/09/03 17:19:30 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.21 2026/10/09 08:36:50 job Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -303,6 +303,7 @@ spl_buffer(struct ibuf *b, const struct spl *s)
 	io_simple_buffer(b, &s->valid, sizeof(s->valid));
 	io_simple_buffer(b, &s->asid, sizeof(s->asid));
 	io_simple_buffer(b, &s->talid, sizeof(s->talid));
+	io_simple_buffer(b, &s->issuerid, sizeof(s->talid));
 	io_simple_buffer(b, &s->num_prefixes, sizeof(s->num_prefixes));
 	io_simple_buffer(b, &s->expires, sizeof(s->expires));
 
@@ -326,6 +327,7 @@ spl_read(struct ibuf *b)
 	io_read_buf(b, &s->valid, sizeof(s->valid));
 	io_read_buf(b, &s->asid, sizeof(s->asid));
 	io_read_buf(b, &s->talid, sizeof(s->talid));
+	io_read_buf(b, &s->issuerid, sizeof(s->issuerid));
 	io_read_buf(b, &s->num_prefixes, sizeof(s->num_prefixes));
 	io_read_buf(b, &s->expires, sizeof(s->expires));
 

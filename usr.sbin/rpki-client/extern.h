@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.302 2026/10/09 08:34:38 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.303 2026/10/09 08:36:50 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,6 +137,7 @@ struct cert {
 	struct cert_as	*ases;	/* list of AS numbers and ranges */
 	size_t		 num_ases;
 	int		 talid; /* cert is covered by which TAL */
+	int		 issuerid; /* certid of the issuer */
 	int		 certid;
 	unsigned int	 repoid; /* repository of this cert file */
 	char		*path; /* filename without .rrdp and .rsync prefix */
@@ -289,6 +290,7 @@ struct mft {
 	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
 	int		 talid;
+	int		 issuerid; /* certid of the issuer */
 	int		 certid;
 	int		 seqnum_gap; /* was there a gap compared to prev mft? */
 };
@@ -315,6 +317,7 @@ struct roa {
 	struct roa_ip	*ips;	/* IP prefixes */
 	size_t		 num_ips;
 	int		 talid; /* ROAs are covered by which TAL */
+	int		 issuerid; /* certid of the issuer */
 	int		 valid; /* validated resources */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* when the signature path expires */
@@ -330,6 +333,7 @@ struct rscfile {
  */
 struct rsc {
 	int		 talid; /* RSC covered by what TAL */
+			 /* No issuerid. RSC aren't distributed through repos */
 	int		 valid; /* eContent resources covered by EE's 3779? */
 	struct cert_ip	*ips;	/* IP prefixes */
 	size_t		 num_ips;
@@ -358,6 +362,7 @@ struct spl {
 	struct spl_pfx	*prefixes;
 	size_t		 num_prefixes;
 	int		 talid;
+	int		 issuerid; /* certid of the issuer */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* when the certification path expires */
 	int		 valid;
@@ -381,6 +386,7 @@ struct takey {
  */
 struct tak {
 	int		 talid; /* TAK covered by what TAL */
+			 /* No issuerid. The issuer is the TA itself. */
 	struct takey	*current;
 	struct takey	*predecessor;
 	struct takey	*successor;
@@ -394,6 +400,7 @@ struct tak {
 struct aspa {
 	int			 valid; /* contained in issuer auth */
 	int			 talid; /* TAL the ASPA is chained up to */
+	int			 issuerid; /* certid of the issuer */
 	uint32_t		 custasid; /* the customerASID */
 	uint32_t		*providers; /* the providers */
 	size_t			 num_providers;

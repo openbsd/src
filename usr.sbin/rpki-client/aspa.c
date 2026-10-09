@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.47 2026/09/14 09:21:41 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.48 2026/10/09 08:36:50 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -245,6 +245,7 @@ aspa_buffer(struct ibuf *b, const struct aspa *aspa)
 	io_simple_buffer(b, &aspa->valid, sizeof(aspa->valid));
 	io_simple_buffer(b, &aspa->custasid, sizeof(aspa->custasid));
 	io_simple_buffer(b, &aspa->talid, sizeof(aspa->talid));
+	io_simple_buffer(b, &aspa->issuerid, sizeof(aspa->issuerid));
 	io_simple_buffer(b, &aspa->expires, sizeof(aspa->expires));
 
 	io_simple_buffer(b, &aspa->num_providers, sizeof(size_t));
@@ -268,6 +269,7 @@ aspa_read(struct ibuf *b)
 	io_read_buf(b, &aspa->valid, sizeof(aspa->valid));
 	io_read_buf(b, &aspa->custasid, sizeof(aspa->custasid));
 	io_read_buf(b, &aspa->talid, sizeof(aspa->talid));
+	io_read_buf(b, &aspa->issuerid, sizeof(aspa->issuerid));
 	io_read_buf(b, &aspa->expires, sizeof(aspa->expires));
 
 	io_read_buf(b, &aspa->num_providers, sizeof(size_t));

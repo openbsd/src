@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.93 2026/09/14 09:21:41 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.94 2026/10/09 08:36:50 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -302,6 +302,7 @@ roa_buffer(struct ibuf *b, const struct roa *roa)
 	io_simple_buffer(b, &roa->valid, sizeof(roa->valid));
 	io_simple_buffer(b, &roa->asid, sizeof(roa->asid));
 	io_simple_buffer(b, &roa->talid, sizeof(roa->talid));
+	io_simple_buffer(b, &roa->issuerid, sizeof(roa->issuerid));
 	io_simple_buffer(b, &roa->num_ips, sizeof(roa->num_ips));
 	io_simple_buffer(b, &roa->expires, sizeof(roa->expires));
 
@@ -324,6 +325,7 @@ roa_read(struct ibuf *b)
 	io_read_buf(b, &roa->valid, sizeof(roa->valid));
 	io_read_buf(b, &roa->asid, sizeof(roa->asid));
 	io_read_buf(b, &roa->talid, sizeof(roa->talid));
+	io_read_buf(b, &roa->issuerid, sizeof(roa->issuerid));
 	io_read_buf(b, &roa->num_ips, sizeof(roa->num_ips));
 	io_read_buf(b, &roa->expires, sizeof(roa->expires));
 

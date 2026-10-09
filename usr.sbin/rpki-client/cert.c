@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.245 2026/10/09 08:34:38 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.246 2026/10/09 08:36:50 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1823,6 +1823,7 @@ cert_buffer(struct ibuf *b, const struct cert *cert)
 	io_simple_buffer(b, &cert->notafter, sizeof(cert->notafter));
 	io_simple_buffer(b, &cert->purpose, sizeof(cert->purpose));
 	io_simple_buffer(b, &cert->talid, sizeof(cert->talid));
+	io_simple_buffer(b, &cert->issuerid, sizeof(cert->issuerid));
 	io_simple_buffer(b, &cert->certid, sizeof(cert->certid));
 	io_simple_buffer(b, &cert->repoid, sizeof(cert->repoid));
 	io_simple_buffer(b, &cert->num_ips, sizeof(cert->num_ips));
@@ -1878,6 +1879,7 @@ cert_read(struct ibuf *b)
 	io_read_buf(b, &cert->notafter, sizeof(cert->notafter));
 	io_read_buf(b, &cert->purpose, sizeof(cert->purpose));
 	io_read_buf(b, &cert->talid, sizeof(cert->talid));
+	io_read_buf(b, &cert->issuerid, sizeof(cert->issuerid));
 	io_read_buf(b, &cert->certid, sizeof(cert->certid));
 	io_read_buf(b, &cert->repoid, sizeof(cert->repoid));
 	io_read_buf(b, &cert->num_ips, sizeof(cert->num_ips));
