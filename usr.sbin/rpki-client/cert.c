@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.244 2026/07/13 10:53:12 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.245 2026/10/09 08:34:38 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1983,10 +1983,12 @@ auth_find(struct auth_tree *auths, int id)
 
 struct auth *
 auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
-    struct auth *issuer)
+    struct auth *issuer, struct crl *crl)
 {
 	struct auth *na;
 	int error;
+
+	cert->expires = x509_find_expires(cert->notafter, issuer, crl);
 
 	na = calloc(1, sizeof(*na));
 	if (na == NULL)

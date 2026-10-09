@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.91 2026/09/24 14:44:03 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.92 2026/10/09 08:34:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -230,7 +230,7 @@ parse_load_certchain(char *uri)
 			goto fail;
 		}
 		cert->talid = a->cert->talid;
-		a = auth_insert(uri, &auths, cert, a);
+		a = auth_insert(uri, &auths, cert, a, crl);
 		uripath_add(uri, cert);
 		stack[i - 1] = NULL;
 	}
@@ -270,7 +270,7 @@ parse_load_ta(struct tal *tal)
 		goto out;
 
 	cert->talid = tal->id;
-	auth_insert(file, &auths, cert, NULL);
+	auth_insert(file, &auths, cert, NULL, NULL);
 	for (i = 0; i < tal->num_uris; i++) {
 		if (strncasecmp(tal->uri[i], RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
 			continue;
@@ -434,7 +434,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 	time_t *notbefore = NULL, *expires = NULL, *notafter = NULL;
 	time_t now;
 	struct auth *a = NULL;
-	struct crl *c;
+	struct crl *c = NULL;
 	const char *errstr = NULL, *valid;
 	int status = 0;
 	char filehash[SHA256_DIGEST_LENGTH];
@@ -645,7 +645,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 
 	if (expires != NULL) {
 		if ((status && aia != NULL) || is_ta)
-			*expires = x509_find_expires(*notafter, a, &crls);
+			*expires = x509_find_expires(*notafter, a, c);
 
 		switch (type) {
 		case RTYPE_ASPA:

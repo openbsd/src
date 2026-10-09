@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.135 2026/09/20 20:04:03 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.136 2026/10/09 08:34:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -604,20 +604,15 @@ x509_check_tbs_sigalg(const char *fn, const X509_ALGOR *tbsalg)
  * Find the closest expiry moment by walking the chain of authorities.
  */
 time_t
-x509_find_expires(time_t notafter, struct auth *a, struct crl_tree *crls)
+x509_find_expires(time_t notafter, struct auth *a, struct crl *crl)
 {
-	struct crl	*crl;
 	time_t		 expires;
 
 	expires = notafter;
-
-	for (; a != NULL; a = a->issuer) {
-		if (expires > a->cert->notafter)
-			expires = a->cert->notafter;
-		crl = crl_get(crls, a);
-		if (crl != NULL && expires > crl->nextupdate)
-			expires = crl->nextupdate;
-	}
+	if (a != NULL && expires > a->cert->expires)
+		expires = a->cert->expires;
+	if (crl != NULL && expires > crl->nextupdate)
+		expires = crl->nextupdate;
 
 	return expires;
 }

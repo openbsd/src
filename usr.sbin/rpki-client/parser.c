@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.189 2026/09/24 14:44:03 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.190 2026/10/09 08:34:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -227,7 +227,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 
 	roa->talid = a->cert->talid;
 
-	roa->expires = x509_find_expires(cert->notafter, a, &crls);
+	roa->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
 
 	return roa;
@@ -269,7 +269,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 
 	spl->talid = a->cert->talid;
 
-	spl->expires = x509_find_expires(cert->notafter, a, &crls);
+	spl->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
 
 	return spl;
@@ -653,7 +653,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 			errx(1, "%s: corrupted entity", file);
 
 		memcpy(cert->mfthash, entp->data, entp->datasz);
-		auth_insert(file, &auths, cert, a);
+		auth_insert(file, &auths, cert, a, crl);
 	}
 
 	return cert;
@@ -742,7 +742,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 		free(file2);
 
 		cert1->talid = entp->talid;
-		auth_insert(file1, &auths, cert1, NULL);
+		auth_insert(file1, &auths, cert1, NULL, NULL);
 
 		*out_cert = cert1;
 		return file1;
@@ -756,7 +756,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 			cert2->talid = entp->talid;
 			if ((cert2->path = strdup(file2)) == NULL)
 				err(1, NULL);
-			auth_insert(file2, &auths, cert2, NULL);
+			auth_insert(file2, &auths, cert2, NULL, NULL);
 		}
 
 		*out_cert = cert2;
@@ -793,7 +793,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 
 	aspa->talid = a->cert->talid;
 
-	aspa->expires = x509_find_expires(cert->notafter, a, &crls);
+	aspa->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
 
 	return aspa;
@@ -838,7 +838,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 
 	tak->talid = a->cert->talid;
 
-	tak->expires = x509_find_expires(cert->notafter, a, &crls);
+	tak->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
 
 	return tak;

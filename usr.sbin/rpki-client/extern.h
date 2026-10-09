@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.301 2026/10/06 06:55:41 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.302 2026/10/09 08:34:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -573,7 +573,7 @@ RB_HEAD(auth_tree, auth);
 
 struct auth	*auth_find(struct auth_tree *, int);
 struct auth	*auth_insert(const char *, struct auth_tree *, struct cert *,
-		    struct auth *);
+		    struct auth *, struct crl *);
 
 enum http_result {
 	HTTP_FAILED,	/* anything else */
@@ -1005,7 +1005,7 @@ int		 x509_inherits(X509 *);
 int		 x509_any_inherits(X509 *);
 int		 x509_valid_subject_name(const char *, const X509_NAME *);
 int		 x509_valid_issuer_name(const char *, const X509_NAME *);
-time_t		 x509_find_expires(time_t, struct auth *, struct crl_tree *);
+time_t		 x509_find_expires(time_t, struct auth *, struct crl *);
 
 /* printers */
 char		*nid2str(int);
