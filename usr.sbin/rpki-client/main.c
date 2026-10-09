@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.317 2026/10/06 06:55:41 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.318 2026/10/09 10:05:12 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -470,7 +470,7 @@ queue_add_from_mft(const struct mft *mft)
 			err(1, NULL);
 
 		entityq_add(npath, nfile, f->type, f->location, rp,
-		    data, datasz, mft->talid, mft->certid, mftaki);
+		    data, datasz, mft->talid, mft->issuerid, mftaki);
 	}
 }
 
@@ -690,7 +690,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		nca_tree_remove_cert(&vd->ncas, mft->certid);
+		nca_tree_remove_cert(&vd->ncas, mft->issuerid);
 		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.191 2026/10/09 08:36:50 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.192 2026/10/09 10:05:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -449,7 +449,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 
 	mft->repoid = entp->repoid;
 	mft->talid = a->cert->talid;
-	mft->certid = entp->certid;
+	mft->issuerid = entp->certid;
 
 	now = get_current_time();
 	/* check that now is not before from */

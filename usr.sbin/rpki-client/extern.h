@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.303 2026/10/09 08:36:50 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.304 2026/10/09 10:05:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -291,7 +291,6 @@ struct mft {
 	unsigned int	 repoid;
 	int		 talid;
 	int		 issuerid; /* certid of the issuer */
-	int		 certid;
 	int		 seqnum_gap; /* was there a gap compared to prev mft? */
 };
 
