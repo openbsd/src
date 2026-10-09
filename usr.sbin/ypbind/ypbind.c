@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.81 2026/06/20 11:29:43 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.82 2026/10/09 15:12:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -340,10 +340,8 @@ main(int argc, char *argv[])
 	DIR *dirp;
 	struct dirent *dent;
 
-	if (yp_get_default_domain(&domain) != 0 || domain[0] == '\0') {
-		fprintf(stderr, "domainname not set. Aborting.\n");
-		exit(1);
-	}
+	if (yp_get_default_domain(&domain) != 0 || domain[0] == '\0')
+		errx(1, "domainname not set. Aborting.");
 
 	while (--argc) {
 		++argv;
@@ -374,28 +372,18 @@ main(int argc, char *argv[])
 	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
 
 	udptransp = svcudp_create(RPC_ANYSOCK);
-	if (udptransp == NULL) {
-		fprintf(stderr, "cannot create udp service.\n");
-		exit(1);
-	}
+	if (udptransp == NULL)
+		errx(1, "cannot create udp service.");
 	if (!svc_register(udptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
-	    IPPROTO_UDP)) {
-		fprintf(stderr,
-		    "unable to register (YPBINDPROG, YPBINDVERS, udp).\n");
-		exit(1);
-	}
+	    IPPROTO_UDP))
+		errx(1, "unable to register (YPBINDPROG, YPBINDVERS, udp).");
 
 	tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0);
-	if (tcptransp == NULL) {
-		fprintf(stderr, "cannot create tcp service.\n");
-		exit(1);
-	}
+	if (tcptransp == NULL)
+		errx(1, "cannot create tcp service.");
 	if (!svc_register(tcptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
-	    IPPROTO_TCP)) {
-		fprintf(stderr,
-		    "unable to register (YPBINDPROG, YPBINDVERS, tcp).\n");
-		exit(1);
-	}
+	    IPPROTO_TCP))
+		errx(1, "unable to register (YPBINDPROG, YPBINDVERS, tcp).");
 
 	if (ypsetmode == YPSET_LOCAL) {
 		/* build UDP local port */
@@ -417,10 +405,9 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "cannot bind local udp: %m");
 			exit(1);
 		}
-		if ((ludptransp = svcudp_create(lsock)) == NULL) {
-			fprintf(stderr, "cannot create udp service.\n");
+		if ((ludptransp = svcudp_create(lsock)) == NULL)
+			errx(1, "cannot create udp service.");
 			exit(1);
-		}
 
 		/* build TCP local port */
 		if ((lsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
@@ -441,14 +428,12 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "cannot bind local tcp: %m");
 			exit(1);
 		}
-		if ((ltcptransp = svctcp_create(lsock, 0, 0)) == NULL) {
-			fprintf(stderr, "cannot create tcp service.\n");
-			exit(1);
-		}
+		if ((ltcptransp = svctcp_create(lsock, 0, 0)) == NULL)
+			errx(1, "cannot create tcp service.");
 	}
 
 	if ((rpcsock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0)) == -1) {
-		perror("socket");
+		warn("socket");
 		return -1;
 	}
 	memset(&sin, 0, sizeof sin);
@@ -458,7 +443,7 @@ main(int argc, char *argv[])
 	bindresvport(rpcsock, &sin);
 
 	if ((pingsock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0)) == -1) {
-		perror("socket");
+		warn("socket");
 		return -1;
 	}
 	memset(&sin, 0, sizeof sin);
@@ -521,7 +506,7 @@ main(int argc, char *argv[])
 			break;
 		case -1:
 			if (errno != EINTR)
-				perror("poll");
+				warn("poll");
 			break;
 		default:
 			/* No need to check for POLLHUP on UDP sockets. */
@@ -630,7 +615,7 @@ ping(struct _dom_binding *ypdb)
 	if (sendto(pingsock, buf, outlen, 0,
 	    (struct sockaddr *)&ypdb->dom_server_addr,
 	    (socklen_t)sizeof ypdb->dom_server_addr) == -1)
-		perror("sendto");
+		warn("sendto");
 	return 0;
 
 }
@@ -709,7 +694,7 @@ pings(struct _dom_binding *ypdb)
 		bindsin.sin_addr = ypdb->dom_server_addr.sin_addr;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 		    (socklen_t)sizeof bindsin) == -1)
-			perror("sendto");
+			warn("sendto");
 	}
 	if (ypdb->dom_servlistfp)
 		return direct(ypdb, buf, outlen);
@@ -729,7 +714,7 @@ broadcast(struct _dom_binding *ypdb, char *buf, int outlen)
 	bindsin.sin_port = htons(PMAPPORT);
 
 	if (getifaddrs(&ifap) != 0) {
-		perror("getifaddrs");
+		warn("getifaddrs");
 		return -1;
 	}
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
@@ -757,7 +742,7 @@ broadcast(struct _dom_binding *ypdb, char *buf, int outlen)
 		bindsin.sin_addr = in;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 		    (socklen_t)bindsin.sin_len) == -1)
-			perror("sendto");
+			warn("sendto");
 	}
 	freeifaddrs(ifap);
 	return 0;
@@ -814,7 +799,7 @@ direct(struct _dom_binding *ypdb, char *buf, int outlen)
 			if (sendto(rpcsock, buf, outlen, 0,
 			    (struct sockaddr *)&bindsin,
 			    (socklen_t)sizeof bindsin) == -1) {
-				perror("sendto");
+				warn("sendto");
 				continue;
 			}
 		}
@@ -1042,7 +1027,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 
 	if (writev(ypdb->dom_lockfd, iov, sizeof(iov)/sizeof(iov[0])) !=
 	    iov[0].iov_len + iov[1].iov_len + iov[2].iov_len) {
-		perror("write");
+		warn("writev");
 		close(ypdb->dom_lockfd);
 		unlink(path);
 		ypdb->dom_lockfd = -1;
