@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.53 2025/08/06 14:00:33 mvs Exp $	*/
+/*	$OpenBSD: param.c,v 1.54 2026/10/09 16:31:32 miod Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/utsname.h>
 #ifdef SYSVSHM
 #include <machine/vmparam.h>
 #include <sys/shm.h>
@@ -124,10 +123,3 @@ struct	seminfo seminfo = {
 	SEMAEM		/* adjust on exit max value */
 };
 #endif
-
-/*
- * This has to be allocated somewhere; allocating
- * them here forces loader errors if this file is omitted
- * (if they've been externed everywhere else; hah!).
- */
-struct	utsname utsname;
