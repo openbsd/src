@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.11 2013/12/05 14:20:53 jca Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.12 2026/10/09 18:50:30 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -63,7 +63,7 @@ struct member_entry *mtable[TABLESIZE];
 static void
 usage(void)
 {
-	fprintf (stderr,"usage: revnetgroup -h | -u [-f netgroup_file]\n");
+	fprintf(stderr,"usage: revnetgroup -h | -u [-f netgroup_file]\n");
 	exit(1);
 }
 

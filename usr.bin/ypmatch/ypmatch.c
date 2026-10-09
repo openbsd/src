@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.17 2021/06/22 20:14:25 jmc Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.18 2026/10/09 18:50:30 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
+#include <err.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -61,22 +61,19 @@ usage(void)
 	fprintf(stderr,
 	    "usage: ypmatch [-kt] [-d domain] key ... mapname\n"
 	    "       ypmatch -x\n");
-
 	exit(1);
 }
 
 int
 main(int argc, char *argv[])
 {
-	char *domainname, *inkey, *inmap, *outbuf;
+	char *domainname = NULL, *inkey, *inmap, *outbuf;
 	extern char *optarg;
 	extern int optind;
-	int outbuflen, key, notrans, rval;
+	int outbuflen, key = 0, notrans = 0;
 	int c, r, i;
 
-	domainname = NULL;
-	notrans = key = 0;
-	while ((c=getopt(argc, argv, "xd:kt")) != -1)
+	while ((c = getopt(argc, argv, "xd:kt")) != -1)
 		switch (c) {
 		case 'x':
 			for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
@@ -100,23 +97,21 @@ main(int argc, char *argv[])
 	if ((argc-optind) < 2 )
 		usage();
 
-	if (!domainname) {
+	if (!domainname)
 		yp_get_default_domain(&domainname);
-	}
 
 	inmap = argv[argc-1];
 	if (!notrans) {
-		for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+		for(i = 0; i < sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if (strcmp(inmap, ypaliases[i].alias) == 0)
 				inmap = ypaliases[i].name;
 	}
 
-	rval = 0;
 	for(; optind < argc-1; optind++) {
 		inkey = argv[optind];
 
 		r = yp_match(domainname, inmap, inkey,
-			strlen(inkey), &outbuf, &outbuflen);
+		    strlen(inkey), &outbuf, &outbuflen);
 		switch (r) {
 		case 0:
 			if (key)
@@ -124,14 +119,11 @@ main(int argc, char *argv[])
 			printf("%*.*s\n", outbuflen, outbuflen, outbuf);
 			break;
 		case YPERR_YPBIND:
-			fprintf(stderr, "yp_match: not running ypbind\n");
-			exit(1);
+			errx(1, "yp_match: not running ypbind");
 		default:
-			fprintf(stderr, "Can't match key %s in map %s. Reason: %s\n",
+			errx(1, "Can't match key %s in map %s. Reason: %s",
 			    inkey, inmap, yperr_string(r));
-			rval = 1;
-			break;
 		}
 	}
-	exit(rval);
+	exit (0);
 }

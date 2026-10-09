@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.25 2026/10/04 19:53:46 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.26 2026/10/09 18:50:30 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -33,13 +33,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <ctype.h>
-#include <err.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -93,7 +92,7 @@ bind_host(char *dom, struct sockaddr_in *sin)
 	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
 
 	if (client == NULL) {
-		fprintf(stderr, "ypwhich: host is not bound to a ypmaster\n");
+		warnx("host is not bound to a ypmaster");
 		return YPERR_YPBIND;
 	}
 
@@ -103,13 +102,12 @@ bind_host(char *dom, struct sockaddr_in *sin)
 	r = clnt_call(client, YPBINDPROC_DOMAIN,
 	    xdr_domainname, &dom, xdr_ypbind_resp, &ypbr, tv);
 	if (r != RPC_SUCCESS) {
-		fprintf(stderr, "can't clnt_call: %s\n",
-		    yperr_string(YPERR_YPBIND));
+		warnx("can't clnt_call: %s", yperr_string(YPERR_YPBIND));
 		clnt_destroy(client);
 		return YPERR_YPBIND;
 	} else {
 		if (ypbr.ypbind_status != YPBIND_SUCC_VAL) {
-			fprintf(stderr, "can't yp_bind: Reason: %s\n",
+			warnx("can't yp_bind: Reason: %s",
 			    yperr_string(ypbr.ypbind_status));
 			clnt_destroy(client);
 			return r;
@@ -122,11 +120,7 @@ bind_host(char *dom, struct sockaddr_in *sin)
 
 	hent = gethostbyaddr((char *)&ss_addr.s_addr, sizeof(ss_addr.s_addr),
 	    AF_INET);
-	if (hent != NULL)
-		printf("%s\n", hent->h_name);
-	else
-		printf("%s\n", inet_ntoa(ss_addr));
-
+	printf("%s\n", hent ? hent->h_name : inet_ntoa(ss_addr));
 	return 0;
 }
 
@@ -135,7 +129,7 @@ main(int argc, char *argv[])
 {
 	char *domain, *master, *map = NULL, *host = NULL;
 	int notrans = 0, mode = 0, c, r, i;
-	struct ypmaplist *ypml, *y;
+	struct ypmaplist *ypml = NULL, *y;
 	struct sockaddr_in sin;
 	struct addrinfo hints, *res;
 	CLIENT *client = NULL;
@@ -184,11 +178,8 @@ main(int argc, char *argv[])
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = AF_INET;
 			sin.sin_family = AF_INET;
-			if (getaddrinfo(argv[0], NULL, &hints, &res) != 0) {
-				fprintf(stderr, "ypwhich: host %s unknown\n",
-				    argv[0]);
-				exit(1);
-			}
+			if (getaddrinfo(argv[0], NULL, &hints, &res) != 0)
+				errx(1, "host %s unknown", argv[0]);
 			sin.sin_addr =
 			    ((struct sockaddr_in *)res->ai_addr)->sin_addr;
 			freeaddrinfo(res);
@@ -224,17 +215,14 @@ main(int argc, char *argv[])
 			free(master);
 			break;
 		case YPERR_YPBIND:
-			fprintf(stderr, "ypwhich: not running ypbind\n");
-			exit(1);
+			errx(1, "not running ypbind");
 		default:
-			fprintf(stderr, "Can't find master for map %s. Reason: %s\n",
+			errx(1, "Can't find master for map %s. Reason: %s",
 			    map, yperr_string(r));
-			exit(1);
 		}
 		exit(0);
 	}
 
-	ypml = NULL;
 	if (host != NULL)
 		r = yp_maplist_host(client, domain, &ypml);
 	else
@@ -244,20 +232,18 @@ main(int argc, char *argv[])
 	case 0:
 		for (y = ypml; y; ) {
 			ypml = y;
-			if (host != NULL) {
+			if (host != NULL)
 				r = yp_master_host(client,
-						   domain, ypml->map, &master);
-			} else {
+				    domain, ypml->map, &master);
+			else
 				r = yp_master(domain, ypml->map, &master);
-			}
 			switch (r) {
 			case 0:
 				printf("%s %s\n", ypml->map, master);
 				free(master);
 				break;
 			default:
-				fprintf(stderr,
-				    "YP: can't find the master of %s: Reason: %s\n",
+				warnx("YP: can't find the master of %s: Reason: %s",
 				    ypml->map, yperr_string(r));
 				break;
 			}
@@ -266,12 +252,10 @@ main(int argc, char *argv[])
 		}
 		break;
 	case YPERR_YPBIND:
-		fprintf(stderr, "ypwhich: not running ypbind\n");
-		exit(1);
+		errx(1, "not running ypbind");
 	default:
-		fprintf(stderr, "Can't get map list for domain %s. Reason: %s\n",
+		errx(1, "Can't get map list for domain %s. Reason: %s",
 		    domain, yperr_string(r));
-		exit(1);
 	}
 	exit(0);
 }

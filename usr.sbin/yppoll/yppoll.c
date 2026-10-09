@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.16 2024/08/27 06:03:20 florian Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.17 2026/10/09 18:50:30 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -33,14 +33,15 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <err.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -76,10 +77,8 @@ get_remote_info(char *indomain, char *inmap, char *server, int *outorder,
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 
-	if (getaddrinfo(server, NULL, &hints, &res) != 0) {
-		fprintf(stderr, "unknown host %s\n", server);
-		exit(1);
-	}
+	if (getaddrinfo(server, NULL, &hints, &res) != 0)
+		errx(1, "unknown host %s", server);
 	rsrv_sin.sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
 	freeaddrinfo(res);
 
@@ -87,11 +86,9 @@ get_remote_info(char *indomain, char *inmap, char *server, int *outorder,
 	tv.tv_usec = 0;
 
 	client = clntudp_create(&rsrv_sin, YPPROG, YPVERS, tv, &rsrv_sock);
-	if (client == NULL) {
-		fprintf(stderr, "clntudp_create: no contact with host %s.\n",
+	if (client == NULL)
+		errx(1, "clntudp_create: no contact with host %s.",
 		    server);
-		exit(1);
-	}
 
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
@@ -134,7 +131,7 @@ main(int argc, char *argv[])
 
 	yp_get_default_domain(&domainname);
 
-	while ((c=getopt(argc, argv, "h:d:")) != -1)
+	while ((c = getopt(argc, argv, "h:d:")) != -1)
 		switch (c) {
 		case 'd':
 			domainname = optarg;
@@ -159,12 +156,9 @@ main(int argc, char *argv[])
 		if (r == 0)
 			r = yp_master(domainname, inmap, &master);
 	}
-
-	if (r != 0) {
-		fprintf(stderr, "No such map %s. Reason: %s\n",
+	if (r != 0)
+		errx(1, "No such map %s. Reason: %s",
 		    inmap, yperr_string(r));
-		exit(1);
-	}
 
 	torder = order;
 	printf("Map %s has order number %lld. %s", inmap,

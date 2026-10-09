@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.32 2024/05/20 02:00:25 jsg Exp $ */
+/*	$OpenBSD: yppush.c,v 1.33 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <ctype.h>
+#include <err.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -77,7 +78,7 @@ my_svc_run(void)
 			newp = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
 			if (newp == NULL) {
 				free(pfd);
-				perror("svc_run: - realloc failed");
+				warnx("realloc");
 				return;
 			}
 			pfd = newp;
@@ -90,11 +91,11 @@ my_svc_run(void)
 		case -1:
 			if (errno == EINTR)
 				continue;
-			perror("yppush: my_svc_run: poll failed");
+			warnx("yppush: my_svc_run: poll failed");
 			free(pfd);
 			return;
 		case 0:
-			fprintf(stderr, "yppush: Callback timed out.\n");
+			warnx("yppush: Callback timed out.");
 			exit(0);
 		default:
 			svc_getreq_poll(pfd, nready);
@@ -154,19 +155,19 @@ push(int inlen, char *indata)
 	client = clnt_create(host, YPPROG, YPVERS, "tcp");
 	if (client == NULL) {
 		if (Verbose)
-			fprintf(stderr, "Target Host: %s\n", host);
+			warnx("Target Host: %s", host);
 		clnt_pcreateerror("yppush: Cannot create client");
 		return;
 	}
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
-		fprintf(stderr, "yppush: Cannot create callback transport.\n");
+		warnx("yppush: Cannot create callback transport.");
 		return;
 	}
 	if (transp->xp_port >= IPPORT_RESERVED) {
 		SVC_DESTROY(transp);
-		fprintf(stderr, "yppush: Cannot allocate reserved port.\n");
+		warnx("yppush: Cannot allocate reserved port.");
 		return;
 	}
 
@@ -177,14 +178,13 @@ push(int inlen, char *indata)
 	}
 
 	if (!sts) {
-		fprintf(stderr, "yppush: Cannot register callback.\n");
+		warnx("yppush: Cannot register callback.");
 		return;
 	}
 
 	switch (pid=fork()) {
 	case -1:
-		fprintf(stderr, "yppush: Cannot fork.\n");
-		exit(1);
+		err(1, "yppush: Cannot fork.");
 	case 0:
 		my_svc_run();
 		exit(0);
@@ -257,33 +257,28 @@ main(int argc, char *argv[])
 
 	/* Check domain */
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
-	if (!((stat(map_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))) {
-		fprintf(stderr, "yppush: Map does not exist.\n");
-		exit(1);
-	}
+	if (!((stat(map_path, &finfo) == 0) && S_ISDIR(finfo.st_mode)))
+		err(1, "yppush: Map does not exist.");
 
 	/* Check map */
 	snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
 	    YP_DB_PATH, domain, Map, YPDB_SUFFIX);
-	if (!(stat(map_path, &finfo) == 0)) {
-		fprintf(stderr, "yppush: Map does not exist.\n");
-		exit(1);
-	}
+	if (!(stat(map_path, &finfo) == 0))
+		errx(1, "yppush: Map does not exist.");
 
 	snprintf(map_path, sizeof map_path, "%s/%s/%s",
 	    YP_DB_PATH, domain, Map);
 	yp_databas = ypdb_open(map_path, 0, O_RDONLY);
 	OrderNum=0xffffffff;
 	if (yp_databas == 0) {
-		fprintf(stderr, "yppush: %s%s: Cannot open database\n",
+		warnx("yppush: %s%s: Cannot open database",
 		    map_path, YPDB_SUFFIX);
 	} else {
 		o.dptr = (char *) &order_key;
 		o.dsize = YP_LAST_LEN;
 		o = ypdb_fetch(yp_databas, o);
 		if (o.dptr == NULL) {
-			fprintf(stderr,
-			    "yppush: %s: Cannot determine order number\n",
+			warnx("yppush: %s: Cannot determine order number",
 			    Map);
 		} else {
 			OrderNum=0;
@@ -292,8 +287,7 @@ main(int argc, char *argv[])
 					OrderNum=0xffffffff;
 			}
 			if (OrderNum != 0) {
-				fprintf(stderr,
-				    "yppush: %s: Invalid order number '%s'\n",
+				warnx("yppush: %s: Invalid order number '%s'",
 				    Map, o.dptr);
 			} else {
 				OrderNum = atoi(o.dptr);
@@ -304,10 +298,8 @@ main(int argc, char *argv[])
 	yp_bind(Domain);
 
 	r = yp_master(Domain, ypmap, &master);
-	if (r != 0) {
-		fprintf(stderr, "yppush: could not get ypservers map\n");
-		exit(1);
-	}
+	if (r != 0)
+		errx(1, "yppush: could not get ypservers map");
 
 	if (hostname != NULL) {
 		push(strlen(hostname), hostname);

@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.15 2024/10/09 01:52:11 jsg Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.16 2026/10/09 18:50:30 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -190,7 +190,7 @@ parse_netgrp(char *group)
 		 * spewing it out from inside libc can actually hose
 		 * certain programs.
 		 */
-		fprintf(stderr, "Cycle in netgroup %s\n", lp->l_groupname);
+		warnx("cycle in netgroup %s", lp->l_groupname);
 #endif
 		return (1);
 	} else
@@ -243,13 +243,14 @@ parse_netgrp(char *group)
 			 * stay silent by default for compatibility's sake.
 			 */
 			if (fields < 3)
-					fprintf(stderr, "Bad entry (%s%s%s%s%s) in netgroup \"%s\"\n",
-						grp->ng_str[NG_HOST] == NULL ? "" : grp->ng_str[NG_HOST],
-						grp->ng_str[NG_USER] == NULL ? "" : ",",
-						grp->ng_str[NG_USER] == NULL ? "" : grp->ng_str[NG_USER],
-						grp->ng_str[NG_DOM] == NULL ? "" : ",",
-						grp->ng_str[NG_DOM] == NULL ? "" : grp->ng_str[NG_DOM],
-						lp->l_groupname);
+					warnx("Bad entry (%s%s%s%s%s) in "
+					    "netgroup \"%s\"",
+					    grp->ng_str[NG_HOST] == NULL ? "" : grp->ng_str[NG_HOST],
+					    grp->ng_str[NG_USER] == NULL ? "" : ",",
+					    grp->ng_str[NG_USER] == NULL ? "" : grp->ng_str[NG_USER],
+					    grp->ng_str[NG_DOM] == NULL ? "" : ",",
+					    grp->ng_str[NG_DOM] == NULL ? "" : grp->ng_str[NG_DOM],
+					    lp->l_groupname);
 #endif
 		} else {
 			spos = strsep(&pos, ", \t");

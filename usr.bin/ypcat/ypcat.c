@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.20 2015/11/11 02:52:46 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.21 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <err.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -86,18 +86,15 @@ main(int argc, char *argv[])
 	struct ypall_callback ypcb;
 	extern char *optarg;
 	extern int optind;
-	int notrans, c, r, i;
+	int notrans = 0, c, r, i;
 
-	if (pledge("stdio rpath inet getpw", NULL) == -1) {
-		perror("pledge");
-		exit(1);
-	}
+	if (pledge("stdio rpath inet getpw", NULL) == -1)
+		err(1, "pledge");
 
-	notrans = key = 0;
-	while ((c=getopt(argc, argv, "xd:kt")) != -1)
+	while ((c = getopt(argc, argv, "xd:kt")) != -1)
 		switch (c) {
 		case 'x':
-			for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			for (i = 0; i < sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
 				    ypaliases[i].alias, ypaliases[i].name);
 			exit(0);
@@ -122,7 +119,7 @@ main(int argc, char *argv[])
 
 	inmap = argv[optind];
 	if (!notrans) {
-		for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+		for (i = 0; i < sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if (strcmp(inmap, ypaliases[i].alias) == 0)
 				inmap = ypaliases[i].name;
 	}
@@ -134,12 +131,10 @@ main(int argc, char *argv[])
 	case 0:
 		break;
 	case YPERR_YPBIND:
-		fprintf(stderr, "ypcat: not running ypbind\n");
-		exit(1);
+		errx(1, "ypcat: not running ypbind");
 	default:
-		fprintf(stderr, "No such map %s. Reason: %s\n",
+		errx(1, "No such map %s. Reason: %s",
 		    inmap, yperr_string(r));
-		exit(1);
 	}
 	exit(0);
 }

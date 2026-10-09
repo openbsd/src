@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.45 2023/03/08 04:43:15 guenther Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.46 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -41,6 +41,7 @@
 #include <util.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <err.h>
 #include <rpc/pmap_clnt.h>
 #include <ndbm.h>
 #include <syslog.h>
@@ -352,7 +353,7 @@ my_svc_run(void)
 			newp = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
 			if (newp == NULL) {
 				free(pfd);
-				perror("svc_run: - realloc failed");
+				warnx("svc_run: - realloc failed");
 				return;
 			}
 			pfd = newp;
@@ -365,7 +366,7 @@ my_svc_run(void)
 		case -1:
 			if (errno == EINTR)
 				continue;
-			perror("svc_run: - poll failed");
+			warnx("svc_run: - poll failed");
 			free(pfd);
 			return;
 		case 0:
@@ -411,10 +412,8 @@ main(int argc, char *argv[])
 			break;
 		}
 
-	if (geteuid() != 0) {
-		(void)fprintf(stderr, "ypserv: must be root to run.\n");
-		exit(1);
-	}
+	if (geteuid() != 0)
+		errx(1, "ypserv: must be root to run.");
 
 	if (aclfile != NULL)
 		(void)acl_init(aclfile);
@@ -442,10 +441,8 @@ main(int argc, char *argv[])
 		pid_t pid;
 
 		pid = fork();
-		if (pid < 0) {
-			perror("cannot fork");
-			exit(1);
-		}
+		if (pid < 0)
+			err(1, "fork");
 		if (pid)
 			exit(0);
 		closefrom(0);

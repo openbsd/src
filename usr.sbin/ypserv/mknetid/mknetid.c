@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.22 2015/02/09 23:00:15 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.23 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -183,7 +183,7 @@ read_passwd(FILE *pfile, char *fname)
 		 * Check if we have the whole line
 		 */
 		if (line[len-1] != '\n') {
-			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			warnx("line %d in \"%s\" is too long",
 			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
@@ -211,7 +211,7 @@ read_passwd(FILE *pfile, char *fname)
 		}
 
 		if (colon < 4) {
-			fprintf(stderr, "syntax error at line %d in \"%s\"\n",
+			warnx("syntax error at line %d in \"%s\"",
 			    line_no, fname);
 			continue;
 		}
@@ -270,7 +270,7 @@ read_group(FILE *gfile, char *fname)
 		 * Check if we have the whole line
 		 */
 		if (line[len-1] != '\n') {
-			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			warnx("line %d in \"%s\" is too long",
 			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
@@ -298,7 +298,7 @@ read_group(FILE *gfile, char *fname)
 		}
 
 		if (colon < 3) {
-			fprintf(stderr, "syntax error at line %d in \"%s\"\n",
+			warnx("syntax error at line %d in \"%s\"",
 			    line_no, fname);
 			continue;
 		}
@@ -347,9 +347,10 @@ print_passwd_group(int qflag, char *domain)
 
 		if (p != u) {
 			if (!qflag) {
-				fprintf(stderr, "mknetid: unix.%d@%s %s\n",
-				    u->usr_uid, domain,
-				    "multiply defined, other definitions ignored");
+				warnx("mknetid: unix.%d@%s multiply "
+				    "defined, other definitions ignored",
+				    u->usr_uid, domain);
+				    
 			}
 		} else {
 			printf("unix.%d@%s %d:%d",
@@ -386,7 +387,7 @@ print_hosts(FILE *pfile, char *fname, char *domain)
 		 * Check if we have the whole line
 		 */
 		if (line[len-1] != '\n') {
-			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			warnx("line %d in \"%s\" is too long",
 			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
@@ -436,7 +437,7 @@ print_netid(FILE *mfile, char *fname)
 		 * Check if we have the whole line
 		 */
 		if (line[len-1] != '\n') {
-			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			warnx("line %d in \"%s\" is too long",
 			    line_no, fname);
 		} else {
 			line[len-1] = '\0';

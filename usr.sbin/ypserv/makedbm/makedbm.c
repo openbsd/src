@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.33 2015/02/09 23:00:15 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.34 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 #include "ypdb.h"
 #include "ypdef.h"
 #include "db.h"
@@ -114,10 +115,8 @@ file_date(char *filename)
 		    (long long)time(0));
 	} else {
 		status = stat(filename, &finfo);
-		if (status < 0) {
-			fprintf(stderr, "%s: can't stat %s\n", __progname, filename);
-			exit(1);
-		}
+		if (status < 0)
+			err(1, "stat %s\n", filename);
 		snprintf(datestr, sizeof datestr, "%010lld",
 		    (long long)finfo.st_mtime);
 	}
@@ -136,10 +135,7 @@ list_database(char *database, int Uflag)
 		if (Uflag != 0)
 			if (db_hash_list_database(database))
 				return;
-
-		fprintf(stderr, "%s: can't open database %s: %s\n", __progname,
-		    database, strerror(errno));
-		exit(1);
+		err(1, "can't open database %s", database);
 	}
 
 	key = ypdb_firstkey(db);
@@ -173,18 +169,13 @@ create_database(char *infile, char *database, char *yp_input_file,
 		data_file = stdin;
 	} else {
 		data_file = fopen(infile, "r");
-		if (errno != 0) {
-			(void)fprintf(stderr,"%s: ", __progname);
-			perror(infile);
-			exit(1);
-		}
+		if (errno != 0)
+			err(1, "%s", infile);
 	}
 
-	if (strlen(database) + strlen(YPDB_SUFFIX) > PATH_MAX) {
-		fprintf(stderr,"%s: %s: file name too long\n",
-		    __progname, database);
-		exit(1);
-	}
+	if (strlen(database) + strlen(YPDB_SUFFIX) > PATH_MAX)
+		errx(1, "%s: file name too long", database);
+
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
 
 	slash = strrchr(database, '/');
@@ -196,11 +187,8 @@ create_database(char *infile, char *database, char *yp_input_file,
 	/* note: database is now directory where map goes ! */
 
 	if (strlen(database) + strlen(mapname) +
-	    strlen(YPDB_SUFFIX) > PATH_MAX) {
-		fprintf(stderr,"%s: %s: directory name too long\n",
-		    __progname, database);
-		exit(1);
-	}
+	    strlen(YPDB_SUFFIX) > PATH_MAX)
+		errx(1, "%s: directory name too long", database);
 
 	snprintf(db_mapname, sizeof(db_mapname), "%s%s%s",
 	    database, mapname, YPDB_SUFFIX);
@@ -209,11 +197,8 @@ create_database(char *infile, char *database, char *yp_input_file,
 	db_tempname[strlen(db_tempname) - sizeof(YPDB_SUFFIX) + 1] = '\0';
 
 	new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
-	if (new_db == NULL) {
-		fprintf(stderr, "%s: Unable to open output database %s\n",
-		    __progname, db_outfile);
-		exit(1);
-	}
+	if (new_db == NULL)
+		errx(1, "Unable to open output database %s", db_outfile);
 
 	while (read_line(data_file, data_line, sizeof(data_line))) {
 		line_no++;
@@ -222,8 +207,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 		/* Check if we have the whole line */
 
 		if (data_line[len-1] != '\n') {
-			fprintf(stderr, "line %d in \"%s\" is too long",
-			    line_no, infile);
+			warnx("line %d in \"%s\" is too long", line_no, infile);
 		} else {
 			data_line[len-1] = '\0';
 		}
@@ -275,20 +259,16 @@ create_database(char *infile, char *database, char *yp_input_file,
 		add_record(new_db, YP_SECURE_KEY, empty_str, FALSE);
 
 	ypdb_close(new_db);
-	if (rename(db_mapname, db_outfile) < 0) {
-		perror("rename");
-		fprintf(stderr,"rename %s -> %s failed!\n", db_mapname,
-		    db_outfile);
-		exit(1);
-	}
+	if (rename(db_mapname, db_outfile) < 0)
+		err(1, "rename %s -> %s", db_mapname, db_outfile);
 
 }
 
 static void
 usage(void)
 {
-	fprintf(stderr,"usage: makedbm [-blsUu] [-d yp_domain_name] "
-	    "[-i yp_input_file]\n"
+	fprintf(stderr,
+	    "usage: makedbm [-blsUu] [-d yp_domain_name] [-i yp_input_file]\n"
 	    "\t[-m yp_master_name] [-o yp_output_file] infile outfile\n");
 	exit(1);
 }

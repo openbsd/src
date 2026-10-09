@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.39 2015/02/09 23:00:15 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.40 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <netdb.h>
+#include <err.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -90,8 +91,7 @@ get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
 	if (!((stat(map_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))) {
-		fprintf(stderr, "ypxfr: domain %s not found locally\n",
-		    domain);
+		warnx("ypxfr: domain %s not found locally", domain);
 		status = YPPUSH_NODOM;
 		goto bail;
 	}

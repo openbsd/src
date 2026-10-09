@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.17 2022/12/28 21:30:19 jmc Exp $ */
+/*	$OpenBSD: acl.c,v 1.18 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <netdb.h>
+#include <err.h>
 #include "acl.h"
 
 #define TRUE 1
@@ -348,51 +349,42 @@ acl_init(char *file)
 
 		switch (state) {
 		case ACLE_NONETMASK:
-			fprintf(stderr,
-			    "acl: expected \"netmask\" missing at line %d\n",
+			warnx("acl: expected \"netmask\" missing at line %d",
 			    line_no);
 			break;
 		case ACLE_NONET:
 			error_cnt++;
-			fprintf(stderr, "acl: unknown network at line %d\n",
-			    line_no);
+			warnx("acl: unknown network at line %d", line_no);
 			break;
 		case ACLE_NOHOST:
 			error_cnt++;
-			fprintf(stderr, "acl: unknown host at line %d\n",
-			    line_no);
+			warnx("acl: unknown host at line %d", line_no);
 			break;
 		case ACLE_UVERB:
 			error_cnt++;
-			fprintf(stderr, "acl: unknown verb at line %d\n",
-			    line_no);
+			warnx("acl: unknown verb at line %d", line_no);
 			break;
 		case ACLE_U2VERB:
 			error_cnt++;
-			fprintf(stderr,
-			    "acl: unknown secondary verb at line %d\n",
+			warnx("acl: unknown secondary verb at line %d",
 			    line_no);
 			break;
 		case ACLE_UEOL:
 			error_cnt++;
-			fprintf(stderr,
-			    "acl: unexpected end of line at line %d\n",
+			warnx("acl: unexpected end of line at line %d",
 			    line_no);
 			break;
 		case ACLE_OK:
 			break;
 		default:
 			error_cnt++;
-			fprintf(stderr, "acl: unexpected state %d %s\n",
-			    state, k);
+			warnx("acl: unexpected state %d %s", state, k);
 		}
 
 	}
 
-	if (data_file != NULL) {
-		(void)fflush(stderr);
+	if (data_file != NULL)
 		(void)fclose(data_file);
-	}
 
 	/* Always add a last allow all if file don't exists or */
 	/* the file doesn't cover all cases. */
@@ -489,27 +481,23 @@ acl_securenet(char *file)
 		switch (state) {
 		case ACLE_NONET:
 			error_cnt++;
-			fprintf(stderr,
-			    "securenet: unknown network at line %d\n",
+			warnx("securenet: unknown network at line %d",
 			    line_no);
 			break;
 		case ACLE_UEOL:
 			error_cnt++;
-			fprintf(stderr,
-			    "securenet: unexpected end of line at line %d\n",
+			warnx("securenet: unexpected end of line at line %d",
 			    line_no);
 			break;
 		case ACLE_OK:
 			break;
 		default:
 			error_cnt++;
-			fprintf(stderr, "securenet: unexpected state %d %s\n",
-			    state, k);
+			warnx("securenet: unexpected state %d %s", state, k);
 		}
 	}
 
 	if (data_file != NULL) {
-		(void)fflush(stderr);
 		(void)fclose(data_file);
 
 		/* Always add a last deny all if file exists */

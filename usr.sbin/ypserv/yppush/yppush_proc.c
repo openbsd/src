@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_proc.c,v 1.9 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: yppush_proc.c,v 1.10 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <rpcsvc/yp.h>
 #include <stdio.h>
+#include <err.h>
 #include "yppush.h"
 
 extern int Verbose;
@@ -54,7 +55,6 @@ yppushproc_xfrresp_1_svc(void *v, struct svc_req *rqstp)
 	 * insert server code here
 	 */
 	if ((argp->status < YPPUSH_SUCC) || Verbose)
-		fprintf(stderr, "yppush: %s\n",
-		    yppush_err_string(argp->status));
+		warnx("yppush: %s", yppush_err_string(argp->status));
 	return((yppushresp_xfr *) &result);
 }

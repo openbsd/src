@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.21 2024/08/27 06:04:03 florian Exp $ */
+/*	$OpenBSD: ypset.c,v 1.22 2026/10/09 18:50:30 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -113,6 +113,11 @@ main(int argc, char *argv[])
 	char *domainname;
 	int c;
 
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath inet dns", "r") == -1)
+		err(1, "unveil");
+
 	yp_get_default_domain(&domainname);
 
 	bzero(&sin, sizeof sin);
@@ -129,7 +134,7 @@ main(int argc, char *argv[])
 			hints.ai_family = AF_INET;
 
 			if (getaddrinfo(optarg, NULL, &hints, &res) != 0)
-				errx(1, "host %s unknown\n", optarg);
+				errx(1, "host %s unknown", optarg);
 
 			sin.sin_addr =
 			    ((struct sockaddr_in *)res->ai_addr)->sin_addr;

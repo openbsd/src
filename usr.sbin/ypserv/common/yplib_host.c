@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.20 2018/04/26 12:42:51 guenther Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.21 2026/10/09 18:50:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/socket.h>
-
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
+#include <err.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
@@ -60,18 +61,13 @@ yp_bind_host(char *server, u_long program, u_long version, u_short port,
 		rsrv_sin.sin_port = htons(port);
 
 	if (*server >= '0' && *server <= '9') {
-		if (inet_aton(server, &rsrv_sin.sin_addr) == 0) {
-			fprintf(stderr, "inet_aton: invalid address %s.\n",
-			    server);
-			exit(1);
-		}
+		if (inet_aton(server, &rsrv_sin.sin_addr) == 0)
+			errx(1, "inet_aton: invalid address %s", server);
 	} else {
 		h = gethostbyname(server);
-		if (h == NULL) {
-			fprintf(stderr, "gethostbyname: unknown host %s.\n",
+		if (h == NULL)
+			errx(1, "gethostbyname: unknown host %s",
 			    server);
-			exit(1);
-		}
 		rsrv_sin.sin_addr.s_addr = *(u_int32_t *)h->h_addr;
 	}
 
@@ -85,11 +81,8 @@ yp_bind_host(char *server, u_long program, u_long version, u_short port,
 		client = clntudp_create(&rsrv_sin, program, version, tv,
 		    &rsrv_sock);
 
-	if (client == NULL) {
-		fprintf(stderr, "clntudp_create: no contact with host %s.\n",
-		    server);
-		exit(1);
-	}
+	if (client == NULL)
+		errx(1, "clntudp_create: no contact with host %s", server);
 	return(client);
 }
 
@@ -111,10 +104,8 @@ yp_bind_local(u_long program, u_long version)
 	tv.tv_usec = 0;
 
 	client = clntudp_create(&rsrv_sin, program, version, tv, &rsrv_sock);
-	if (client == NULL) {
-		fprintf(stderr,"clntudp_create: no contact with localhost.\n");
-		exit(1);
-	}
+	if (client == NULL)
+		errx(1, "clntudp_create: no contact with localhost");
 	return(client);
 }
 
