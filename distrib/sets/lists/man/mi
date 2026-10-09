@@ -1894,6 +1894,7 @@
 ./usr/share/man/man4/mvsw.4
 ./usr/share/man/man4/mvtemp.4
 ./usr/share/man/man4/mvuart.4
+./usr/share/man/man4/mwx.4
 ./usr/share/man/man4/myx.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/neo.4
@@ -2295,6 +2296,7 @@
 ./usr/share/man/man4/umsm.4
 ./usr/share/man/man4/umstc.4
 ./usr/share/man/man4/umt.4
+./usr/share/man/man4/uncm.4
 ./usr/share/man/man4/unix.4
 ./usr/share/man/man4/uoaklux.4
 ./usr/share/man/man4/uoakrh.4
