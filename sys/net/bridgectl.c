@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.25 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.26 2026/10/09 16:36:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -837,14 +837,6 @@ bridge_tunneltag(struct mbuf *m)
 	}
 
 	return ((struct bridge_tunneltag *)(mtag + 1));
-}
-
-void
-bridge_tunneluntag(struct mbuf *m)
-{
-	struct m_tag    *mtag;
-	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) != NULL)
-		m_tag_delete(m, mtag);
 }
 
 void

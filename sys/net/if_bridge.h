@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.77 2025/11/21 04:44:26 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.78 2026/10/09 16:36:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -539,7 +539,6 @@ void	bridge_rtdelete(struct bridge_softc *, struct ifnet *, int);
 void	bridge_rtagenode(struct ifnet *, int);
 struct bridge_tunneltag *bridge_tunnel(struct mbuf *);
 struct bridge_tunneltag *bridge_tunneltag(struct mbuf *);
-void	bridge_tunneluntag(struct mbuf *);
 void	bridge_copyaddr(struct sockaddr *, struct sockaddr *);
 void	bridge_copytag(struct bridge_tunneltag *, struct bridge_tunneltag *);
 
