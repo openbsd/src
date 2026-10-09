@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.53 2026/09/12 12:46:04 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.54 2026/10/09 14:15:30 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -29,8 +29,7 @@
 static pthread_rwlock_t	 crl_lk = PTHREAD_RWLOCK_INITIALIZER;
 
 /*
- * Check CRL Number is present, non-critical and in [0, 2^159-1].
- * Otherwise ignore it per draft-spaghetti-sidrops-rpki-crl-numbers.
+ * Check CRL Number is present, non-critical and in [0, 2^159-1] per RFC 9829.
  */
 static int
 crl_check_crl_number(const char *fn, const X509_CRL *x509_crl)
