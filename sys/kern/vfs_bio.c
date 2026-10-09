@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.219 2026/06/12 06:34:19 jsg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.220 2026/10/09 16:35:28 miod Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1304,6 +1304,7 @@ bufcache_adjust(void)
 		continue;
 }
 
+#ifdef HIBERNATE
 /*
  * Get a clean buffer from the cache. if "discard" is set do not promote
  * previously warm buffers as normal, because we are tossing everything
@@ -1349,6 +1350,7 @@ bufcache_getcleanbuf(int discard)
 	}
 	return bp;
 }
+#endif	/* HIBERNATE */
 
 
 void

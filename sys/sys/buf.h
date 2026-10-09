@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.123 2026/08/03 03:27:45 jsg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.124 2026/10/09 16:35:28 miod Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -260,7 +260,6 @@ struct buf *incore(struct vnode *, daddr_t);
 void bufcache_take(struct buf *);
 void bufcache_release(struct buf *);
 
-struct buf *bufcache_getcleanbuf(int);
 struct buf *bufcache_getdirtybuf(void);
 
 /*
