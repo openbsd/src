@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.18 2024/05/20 19:16:48 sobrado Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.19 2026/10/09 15:06:56 deraadt Exp $	*/
 /*	$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1042,6 +1042,13 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 	
+	if (unveil("/", "rw") == -1)
+		err(1, "unveil");
+	if (unveil(outfile, "crw") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	infile = argv[0];
 
 	/*
