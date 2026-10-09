@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.17 2026/03/15 10:05:09 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.18 2026/10/09 14:51:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -259,16 +259,12 @@ listen_in(void *arg)
 	int sock, opt;
 
 	caddrlen = sizeof(caddrlen);
-	while ((sock = accept(f->fd, &caddr, &caddrlen)) == -1) {
+	while ((sock = accept4(f->fd, &caddr, &caddrlen, SOCK_NONBLOCK)) == -1) {
 		if (errno == EINTR)
 			continue;
 		if (errno == ENFILE || errno == EMFILE)
 			file_slowaccept = 1;
 		return;
-	}
-	if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
-		logx(0, "%s: failed to set non-blocking mode", f->file->name);
-		goto bad_close;
 	}
 	if (caddr.sa_family == AF_INET || caddr.sa_family == AF_INET6) {
 		opt = 1;
