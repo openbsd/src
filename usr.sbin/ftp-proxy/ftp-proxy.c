@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.41 2025/05/21 09:42:21 kn Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.42 2026/10/09 15:09:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -376,7 +376,7 @@ handle_connection(const int listen_fd, short event, void *arg)
 	struct sockaddr *proxy_to_server_sa;
 	struct session *s;
 	socklen_t len;
-	int client_fd, fc, on;
+	int client_fd, on;
 
 	event_add(&listen_ev, NULL);
 
@@ -463,8 +463,8 @@ handle_connection(const int listen_fd, short event, void *arg)
 	/*
 	 * Setup socket and connect to server.
 	 */
-	if ((s->server_fd = socket(server_sa->sa_family, SOCK_STREAM,
-	    IPPROTO_TCP)) == -1) {
+	if ((s->server_fd = socket(server_sa->sa_family,
+	    SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) == -1) {
 		logmsg(LOG_CRIT, "#%d server socket failed: %s", s->id,
 		    strerror(errno));
 		goto fail;
@@ -477,12 +477,6 @@ handle_connection(const int listen_fd, short event, void *arg)
 	}
 
 	/* Use non-blocking connect(), see CONNECT_TIMEOUT below. */
-	if ((fc = fcntl(s->server_fd, F_GETFL)) == -1 ||
-	    fcntl(s->server_fd, F_SETFL, fc | O_NONBLOCK) == -1) {
-		logmsg(LOG_CRIT, "#%d cannot mark socket non-blocking: %s",
-		    s->id, strerror(errno));
-		goto fail;
-	}
 	if (connect(s->server_fd, server_sa, server_sa->sa_len) == -1 &&
 	    errno != EINPROGRESS) {
 		logmsg(LOG_CRIT, "#%d proxy cannot connect to server %s: %s",
