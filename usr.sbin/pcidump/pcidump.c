@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.73 2025/12/25 10:59:26 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.74 2026/10/09 16:42:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -673,6 +673,9 @@ dump_pcie_enhanced_caplist(int bus, int dev, int func)
 
 	do {
 		if (pci_read(bus, dev, func, ptr, &reg) != 0)
+			return;
+
+		if (reg == 0xffffffffU)
 			return;
 
 		if (PCI_PCIE_ECAP_ID(reg) == 0xffff &&
