@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.82 2026/10/09 15:12:06 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.83 2026/10/09 15:13:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -996,10 +996,11 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 
 	snprintf(path, sizeof path, "%s/%s.%d", BINDINGDIR,
 	    ypdb->dom_domain, (int)ypdb->dom_vers);
-	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
+	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC|O_NOFOLLOW,
+	    0644)) == -1) {
 		(void)mkdir(BINDINGDIR, 0755);
-		if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC,
-		    0644)) == -1)
+		if ((fd = open(path,
+		    O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC|O_NOFOLLOW, 0644)) == -1)
 			return;
 	}
 
