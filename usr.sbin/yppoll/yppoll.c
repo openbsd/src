@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.17 2026/10/09 18:50:30 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.18 2026/10/09 18:59:39 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -130,6 +130,11 @@ main(int argc, char *argv[])
 	time_t torder;
 
 	yp_get_default_domain(&domainname);
+
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	while ((c = getopt(argc, argv, "h:d:")) != -1)
 		switch (c) {

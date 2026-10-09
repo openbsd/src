@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.18 2026/10/09 18:50:30 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.19 2026/10/09 18:59:39 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -72,6 +72,11 @@ main(int argc, char *argv[])
 	extern int optind;
 	int outbuflen, key = 0, notrans = 0;
 	int c, r, i;
+
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath getpw inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	while ((c = getopt(argc, argv, "xd:kt")) != -1)
 		switch (c) {

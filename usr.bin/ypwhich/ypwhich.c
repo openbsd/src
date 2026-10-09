@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.26 2026/10/09 18:50:30 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.27 2026/10/09 18:59:39 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -133,6 +133,11 @@ main(int argc, char *argv[])
 	struct sockaddr_in sin;
 	struct addrinfo hints, *res;
 	CLIENT *client = NULL;
+
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	yp_get_default_domain(&domain);
 	if (domain == NULL)
