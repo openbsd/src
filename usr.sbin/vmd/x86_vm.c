@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.28 2026/10/03 04:10:50 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.29 2026/10/09 15:42:51 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -65,9 +65,20 @@ static int	vcpu_exit_eptviolation(struct vm_run_params *);
 static int	vcpu_exit_apicbase(struct vm_run_params *);
 static int	vcpu_exit_x2apic(struct vm_run_params *);
 static void	vcpu_exit_inout(struct vm_run_params *);
+static int	unassigned_mmio(uint32_t, int, paddr_t, uint8_t, uint64_t *);
 
 extern struct vmd_vm	*current_vm;
 extern int		 con_fd;
+
+static int
+unassigned_mmio(uint32_t vcpu_id, int dir, paddr_t addr, uint8_t size,
+    uint64_t *data)
+{
+	if (dir == MMIO_DIR_READ)
+		*data = UINT64_MAX;
+
+	return (0);
+}
 
 /*
  * Represents a standard register set for an OS to be booted
@@ -188,8 +199,9 @@ void
 create_memory_map(struct vmd_vm *vm)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	size_t len, mem_bytes;
+	size_t i, len, mem_bytes;
 	size_t above_1m = 0, above_4g = 0;
+	paddr_t hole_start;
 
 	mem_bytes = vmc->vmc_memranges[0].vmr_size;
 	vmc->vmc_nmemranges = 0;
@@ -250,31 +262,45 @@ create_memory_map(struct vmd_vm *vm)
 	vmc->vmc_memranges[2].vmr_gpa = MB(1);
 	vmc->vmc_memranges[2].vmr_size = above_1m;
 	vmc->vmc_memranges[2].vmr_type = VM_MEM_RAM;
+	i = 3;
 
-	/* Fourth region: ACPI payload tables */
-	vmc->vmc_memranges[3].vmr_gpa = VMD_ACPI_BASE_PADDR;
-	vmc->vmc_memranges[3].vmr_size = VMD_ACPI_AREA_SIZE;
-	vmc->vmc_memranges[3].vmr_type = VM_MEM_RESERVED;
+	/* Unassigned physical addresses behave as an open MMIO bus. */
+	hole_start = MB(1) + above_1m;
+	if (hole_start < VMD_ACPI_BASE_PADDR) {
+		vmc->vmc_memranges[i].vmr_gpa = hole_start;
+		vmc->vmc_memranges[i].vmr_size =
+		    VMD_ACPI_BASE_PADDR - hole_start;
+		vmc->vmc_memranges[i].vmr_type = VM_MEM_MMIO;
+		i++;
+	}
 
-	/* Fifth region: PCI MMIO range */
-	vmc->vmc_memranges[4].vmr_gpa = PCI_MMIO_BAR_BASE;
-	vmc->vmc_memranges[4].vmr_size = PCI_MMIO_BAR_END -
+	/* ACPI payload tables */
+	vmc->vmc_memranges[i].vmr_gpa = VMD_ACPI_BASE_PADDR;
+	vmc->vmc_memranges[i].vmr_size = VMD_ACPI_AREA_SIZE;
+	vmc->vmc_memranges[i].vmr_type = VM_MEM_RESERVED;
+	i++;
+
+	/* PCI MMIO range */
+	vmc->vmc_memranges[i].vmr_gpa = PCI_MMIO_BAR_BASE;
+	vmc->vmc_memranges[i].vmr_size = PCI_MMIO_BAR_END -
 	    PCI_MMIO_BAR_BASE + 1;
-	vmc->vmc_memranges[4].vmr_type = VM_MEM_MMIO;
+	vmc->vmc_memranges[i].vmr_type = VM_MEM_MMIO;
+	i++;
 
-	/* Sixth region: 2nd copy of BIOS above MMIO ending at 4GB */
-	vmc->vmc_memranges[5].vmr_gpa = PCI_MMIO_BAR_END + 1;
-	vmc->vmc_memranges[5].vmr_size = MB(4);
-	vmc->vmc_memranges[5].vmr_type = VM_MEM_RESERVED;
+	/* 2nd copy of BIOS above MMIO ending at 4GB */
+	vmc->vmc_memranges[i].vmr_gpa = PCI_MMIO_BAR_END + 1;
+	vmc->vmc_memranges[i].vmr_size = MB(4);
+	vmc->vmc_memranges[i].vmr_type = VM_MEM_RESERVED;
+	i++;
 
-	/* Seventh region: any remainder above 4GB */
+	/* Any remainder above 4GB */
 	if (above_4g > 0) {
-		vmc->vmc_memranges[6].vmr_gpa = GB(4);
-		vmc->vmc_memranges[6].vmr_size = above_4g;
-		vmc->vmc_memranges[6].vmr_type = VM_MEM_RAM;
-		vmc->vmc_nmemranges = 7;
-	} else
-		vmc->vmc_nmemranges = 6;
+		vmc->vmc_memranges[i].vmr_gpa = GB(4);
+		vmc->vmc_memranges[i].vmr_size = above_4g;
+		vmc->vmc_memranges[i].vmr_type = VM_MEM_RAM;
+		i++;
+	}
+	vmc->vmc_nmemranges = i;
 }
 
 int
@@ -449,6 +475,17 @@ init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
 	pci_init();
 
 	mmio_init();
+	for (i = 0; i < vmc->vmc_nmemranges; i++) {
+		if (vmc->vmc_memranges[i].vmr_type != VM_MEM_MMIO ||
+		    vmc->vmc_memranges[i].vmr_gpa >= VMD_ACPI_BASE_PADDR)
+			continue;
+		if (mmio_dev_add(vmc->vmc_memranges[i].vmr_gpa,
+		    vmc->vmc_memranges[i].vmr_gpa +
+		    vmc->vmc_memranges[i].vmr_size - 1,
+		    unassigned_mmio) != 0)
+			fatalx("%s: cannot register unassigned MMIO window",
+			    __func__);
+	}
 	if (mmio_dev_add(PCI_MMIO_BAR_BASE, PCI_MMIO_BAR_END,
 	    pci_handle_mmio) != 0)
 		fatalx("%s: cannot register PCI MMIO window", __func__);
