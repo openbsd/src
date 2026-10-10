@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.169 2026/10/09 06:25:07 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.170 2026/10/10 12:47:00 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,6 +45,11 @@ _rc_parse_conf() {
 		savecore_flags spamd_black
 
 	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
+	# when parsing an rc.d runfile, add extra allowed keys to ensure we use
+	# values from the original rc.d script (and not the current one)
+	[ "$1" = "${_RC_RUNFILE}" ] &&
+		set -A _allowed_keys -- "${_allowed_keys[@]}" \
+			rc_reload rc_reload_signal rc_stop_signal rc_usercheck
 	for _rcfile; do
 		[[ -f $_rcfile ]] || continue
 		while IFS=' 	' read -r _l; do
@@ -214,6 +219,8 @@ rc_cmd() {
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
+	[[ ${1} == start ]] || _rc_do _rc_parse_conf ${_RC_RUNFILE}
+
 	[ "$(id -u)" -eq 0 ] ||
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] ||
 		_rc_err "$0: need root privileges"
@@ -222,8 +229,6 @@ rc_cmd() {
 		[ -n "${INRC}" ] && exit 1
 		_rc_err "$0: $1 is not supported"
 	fi
-
-	[[ ${1} == start ]] || _rc_do _rc_parse_conf ${_RC_RUNFILE}
 
 	case "$1" in
 	check)
