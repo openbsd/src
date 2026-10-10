@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.80 2026/09/08 20:07:52 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.81 2026/10/10 14:17:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -568,7 +568,7 @@ check_tty_name(char *tty, size_t ttysize)
 	return;
 
 bad_path:
-	warnx ("%s: invalid attempt to open %s: rewriting to /dev/null",
+	warnx("%s: invalid attempt to open %s: rewriting to /dev/null",
 	    "check_tty_name", tty);
 	strlcpy(tty, "/dev/null", ttysize);
 }
