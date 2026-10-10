@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.172 2026/10/10 13:25:51 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.173 2026/10/10 13:32:13 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -194,7 +194,7 @@ rc_exec() {
 	${_rcexec} "${_set_monitor}; \
 		${daemon_logger:+set -o pipefail; } \
 		${daemon_execdir:+cd ${daemon_execdir} && } \
-		$@ \
+		$* \
 		${daemon_logger:+ 2>&1 |
 			logger -isp ${daemon_logger} -t ${_name}}"
 }
