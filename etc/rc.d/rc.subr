@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.173 2026/10/10 13:32:13 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.174 2026/10/10 13:36:52 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -163,7 +163,7 @@ _rc_sendsig() {
 }
 
 _rc_wait_for_start() {
-	# catch SIGALRM, it's only needed for the process spawned by rc_start;
+	# catch SIGALRM, it's only needed for the process spawned by rc_start
 	trap : ALRM
 	trap 'exit' TERM
 	while ((SECONDS < daemon_timeout)); do
@@ -173,7 +173,7 @@ _rc_wait_for_start() {
 		sleep .5 & wait
 	done
 	pkill -ALRM -P $$
-	# wait for rc_cmd() signal
+	# never exit on our own: rc_cmd() signals us once rc_start returns
 	while kill -0 $$ 2>/dev/null; do
 		sleep .5 & wait
 	done
@@ -263,6 +263,8 @@ rc_cmd() {
 			fi
 			# prevent hanging the boot sequence
 			_rc_do _rc_wait_for_start & _TIMERSUB=$!
+			# catch, don't ignore: rc_start children need the
+			# default action
 			trap : ALRM
 			_rc_do rc_start; _ret=$?
 			kill -TERM ${_TIMERSUB}
