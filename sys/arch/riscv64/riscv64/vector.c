@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.c,v 1.2 2026/10/06 11:10:05 jca Exp $	*/
+/*	$OpenBSD: vector.c,v 1.3 2026/10/10 12:34:27 jca Exp $	*/
 
 /*
  * Copyright (c) 2026 Joel Sing <jsing@openbsd.org>
@@ -110,7 +110,7 @@ vector_save(struct proc *p, struct trapframe *tf)
 	    "vs8r.v v16, (%2) \n"
 	    "vs8r.v v24, (%3) \n"
 	    ".option pop \n"
-	    : : "r"(&v->v_vdata[0 * riscv_vlenb]),
+	    :: "r"(&v->v_vdata[0 * riscv_vlenb]),
 		"r"(&v->v_vdata[8 * riscv_vlenb]),
 		"r"(&v->v_vdata[16 * riscv_vlenb]),
 		"r"(&v->v_vdata[24 * riscv_vlenb]) : "memory"
@@ -150,7 +150,7 @@ vector_load(struct proc *p)
 	    "vl8r.v v16, (%4) \n"
 	    "vl8r.v v24, (%5) \n"
 	    ".option pop \n"
-	    : : "r"(v->v_vl), "r"(v->v_vtype),
+	    :: "r"(v->v_vl), "r"(v->v_vtype),
 		"r"(&v->v_vdata[0 * riscv_vlenb]),
 		"r"(&v->v_vdata[8 * riscv_vlenb]),
 		"r"(&v->v_vdata[16 * riscv_vlenb]),

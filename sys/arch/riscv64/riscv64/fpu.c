@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.12 2024/10/17 01:57:18 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.13 2026/10/10 12:34:27 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -49,7 +49,7 @@ fpu_save(struct proc *p, struct trapframe *tf)
 	__asm volatile("frcsr	%0" : "=r"(fp->fp_fcsr));
 
 #define STFx(x) \
-	__asm volatile ("fsd f" #x ", %1(%0)" : : "r"(fp->fp_f), "i"(x * 8))
+	__asm volatile ("fsd f" #x ", %1(%0)" :: "r"(fp->fp_f), "i"(x * 8))
 
 	STFx(0);
 	STFx(1);
@@ -106,10 +106,10 @@ fpu_load(struct proc *p)
 
 	fpu_enable_clean();
 
-	__asm volatile("fscsr %0" : : "r"(fp->fp_fcsr));
+	__asm volatile("fscsr %0" :: "r"(fp->fp_fcsr));
 
 #define RDFx(x) \
-	__asm volatile ("fld f" #x ", %1(%0)" : : "r"(fp->fp_f), "i"(x * 8))
+	__asm volatile ("fld f" #x ", %1(%0)" :: "r"(fp->fp_f), "i"(x * 8))
 
 	RDFx(0);
 	RDFx(1);
