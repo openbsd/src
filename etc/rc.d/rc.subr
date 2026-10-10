@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.178 2026/10/10 14:12:49 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.179 2026/10/10 14:24:22 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,7 +20,7 @@ _rc_actions="check configtest reload restart start stop"
 readonly _rc_actions
 
 _rc_check_name() {
-	[[ $1 == +([_[:alpha:]])+(|[_[:alnum:]]) ]]
+	[[ $1 == [_[:alpha:]]*([_[:alnum:]]) ]]
 }
 
 _rc_do() {
