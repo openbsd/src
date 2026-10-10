@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.176 2026/10/10 13:51:23 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.177 2026/10/10 14:08:00 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -167,9 +167,7 @@ _rc_wait_for_start() {
 	trap : ALRM
 	trap 'exit' TERM
 	while ((SECONDS < daemon_timeout)); do
-		if _rc_do rc_check; then
-			[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
-		fi
+		[ X"${rc_bg}" = X"YES" ] && _rc_do rc_check && break
 		sleep .5 & wait
 	done
 	pkill -ALRM -P $$
