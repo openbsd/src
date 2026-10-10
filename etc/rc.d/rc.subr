@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.170 2026/10/10 12:47:00 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.171 2026/10/10 13:13:34 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,7 +46,9 @@ _rc_parse_conf() {
 
 	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
 	# when parsing an rc.d runfile, add extra allowed keys to ensure we use
-	# values from the original rc.d script (and not the current one)
+	# values from the original rc.d script (and not the current one);
+	# rc_stop is left out on purpose, it is a fringe case only used by a few
+	# base system daemons
 	[ "$1" = "${_RC_RUNFILE}" ] &&
 		set -A _allowed_keys -- "${_allowed_keys[@]}" \
 			rc_reload rc_reload_signal rc_stop_signal rc_usercheck
