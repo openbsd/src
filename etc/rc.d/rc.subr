@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.171 2026/10/10 13:13:34 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.172 2026/10/10 13:25:51 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -60,7 +60,8 @@ _rc_parse_conf() {
 			[[ $_key == *_@(execdir|flags|logger|rtable|timeout|user) ]] ||
 				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] ||
 				continue
-			[[ $_key == "" ]] && continue
+			# the key is eval'ed below: make sure it's a valid name
+			_rc_check_name "${_key}" || continue
 			_val=${_l##*([!=])=*([[:blank:]])}
 			_val=${_val%%#*}
 			_val=${_val%%*([[:blank:]])}
