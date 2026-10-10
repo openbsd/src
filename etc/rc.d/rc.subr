@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.175 2026/10/10 13:47:49 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.176 2026/10/10 13:51:23 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -220,7 +220,8 @@ rc_cmd() {
 	# optim: don't sleep(1) in the first loop
 	_1stloop=true
 
-	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
+	[[ ${1} != *[[:blank:]]* && " ${_rc_actions} " == *" ${1} "* ]] ||
+		_rc_usage
 
 	[[ ${1} == start ]] || _rc_do _rc_parse_conf ${_RC_RUNFILE}
 
