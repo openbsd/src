@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.29 2026/04/17 02:01:29 dgl Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.30 2026/10/10 14:33:52 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -681,6 +681,9 @@ ipcs_kvm(void)
 	if ((kd = kvm_openfiles(namelist, core, NULL, O_RDONLY,
 	    errbuf)) == NULL)
 		errx(1, "can't open kvm: %s", errbuf);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	switch (kvm_nlist(kd, symbols)) {
 	case 0:
