@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.174 2026/10/10 13:36:52 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.175 2026/10/10 13:47:49 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -301,7 +301,7 @@ rc_cmd() {
 			${_1stloop} && _1stloop=false || sleep .5
 		done
 		pkill -ALRM -P $$
-		wait ${_timer} # don't print Alarm clock
+		wait ${_timer} 2>/dev/null # don't print Alarm clock
 		[[ $? == 0 ]] || _exit=failed
 		# KILL the process
 		_rc_do rc_check && _rc_do _rc_sendsig KILL && _exit="killed"
@@ -323,7 +323,7 @@ rc_cmd() {
 			${_1stloop} && _1stloop=false || sleep .5
 		done
 		pkill -ALRM -P $$
-		wait ${_timer} # don't print Alarm clock
+		wait ${_timer} 2>/dev/null # don't print Alarm clock
 		_ret=$?
 		[[ ${_ret} == 142 ]] && _exit=timeout || [[ ${_ret} == 0 ]] ||
 			_exit=failed
