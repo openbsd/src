@@ -1,6 +1,6 @@
-/* $OpenBSD: mandoc.h,v 1.226 2026/04/17 15:30:27 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.227 2026/10/11 21:47:30 schwarze Exp $ */
 /*
- * Copyright (c) 2012-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2022, 2025, 2026 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -259,6 +259,8 @@ enum	mandocerr {
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 	MANDOCERR_TBL_TMAN, /* skipping tbl in -Tman mode */
 	MANDOCERR_EQN_TMAN, /* skipping eqn in -Tman mode */
+	MANDOCERR_TBL_TMARKDOWN, /* skipping tbl in -Tmarkdown mode */
+	MANDOCERR_EQN_TMARKDOWN, /* skipping eqn in -Tmarkdown mode */
 
 	MANDOCERR_BADARG, /* ===== start of bad invocations ===== */
 

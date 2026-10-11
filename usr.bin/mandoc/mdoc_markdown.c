@@ -1,6 +1,6 @@
-/* $OpenBSD: mdoc_markdown.c,v 1.39 2025/06/26 16:59:35 schwarze Exp $ */
+/* $OpenBSD: mdoc_markdown.c,v 1.40 2026/10/11 21:47:30 schwarze Exp $ */
 /*
- * Copyright (c) 2017, 2018, 2020, 2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2017,2018,2020,2025,2026 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -314,7 +314,7 @@ static void
 md_node(struct roff_node *n)
 {
 	const struct md_act	*act;
-	int			 cond, process_children;
+	int			 cond, process_children, saveflags;
 
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;
@@ -331,7 +331,24 @@ md_node(struct roff_node *n)
 	process_children = 1;
 	n->flags &= ~NODE_ENDED;
 
-	if (n->type == ROFFT_TEXT) {
+	if (n->type == ROFFT_EQN || n->type == ROFFT_TBL) {
+		mandoc_msg(n->type == ROFFT_EQN ? MANDOCERR_EQN_TMARKDOWN :
+		    MANDOCERR_TBL_TMARKDOWN, n->line, n->pos, NULL);
+		saveflags = outflags & (MD_Sm | MD_Bk | MD_An_split |
+		    MD_An_nosplit);
+		outflags = MD_sp;
+		md_word("The");
+		outflags |= MD_spc;
+		md_rawword("**");
+		md_word("-T markdown");
+		outflags |= MD_Sm;
+		md_rawword("**");
+		md_word("output mode does not support");
+		md_word(n->type == ROFFT_EQN ? "eqn(7)" : "tbl(7)");
+		md_word("input.");
+		outflags = saveflags | MD_sp;
+		return;
+	} else if (n->type == ROFFT_TEXT) {
 		if (n->flags & NODE_DELIMC)
 			outflags &= ~(MD_spc | MD_spc_force);
 		else if (outflags & MD_Sm)
