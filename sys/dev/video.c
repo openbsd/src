@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.61 2025/04/15 06:44:37 kirill Exp $	*/
+/*	$OpenBSD: video.c,v 1.62 2026/10/11 13:31:51 jca Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -61,7 +61,6 @@ struct video_softc {
 	struct mutex		 sc_mtx;
 	int			 sc_fsize;
 	uint8_t			*sc_fbuffer;
-	caddr_t			 sc_fbuffer_mmap;
 	size_t			 sc_fbufferlen;
 	int			 sc_vidmode;	/* access mode */
 #define		VIDMODE_NONE	0
@@ -143,6 +142,12 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	sc = (struct video_softc *)device_lookup(&video_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
+
+	/* Fake lack of permission to open the device */
+	if (!atomic_load_int(&video_record_enable)) {
+		error = EACCES;
+		goto done;
+	}
 
 	if (sc->sc_open) {
 		DPRINTF(1, "%s: device already open\n", __func__);
@@ -250,8 +255,6 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* move no more than 1 frame to userland, as per specification */
 	size = ulmin(uio->uio_resid, sc->sc_fsize);
-	if (!atomic_load_int(&video_record_enable))
-		bzero(sc->sc_fbuffer, size);
 	error = uiomove(sc->sc_fbuffer, size, uio);
 	if (error)
 		goto done;
@@ -268,7 +271,6 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	int unit = VIDEOUNIT(dev);
 	struct video_softc *sc;
-	struct v4l2_buffer *vb = (struct v4l2_buffer *)data;
 	int error;
 
 	KERNEL_ASSERT_LOCKED();
@@ -394,8 +396,6 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		}
 		error = (sc->hw_if->dqbuf)(sc->hw_hdl,
 		    (struct v4l2_buffer *)data);
-		if (!atomic_load_int(&video_record_enable))
-			bzero(sc->sc_fbuffer_mmap + vb->m.offset, vb->length);
 		mtx_enter(&sc->sc_mtx);
 		sc->sc_frames_ready--;
 		mtx_leave(&sc->sc_mtx);
@@ -461,10 +461,6 @@ videommap(dev_t dev, off_t off, int prot)
 	if (pmap_extract(pmap_kernel(), (vaddr_t)p, &pa) == FALSE)
 		panic("videommap: invalid page");
 	sc->sc_vidmode = VIDMODE_MMAP;
-
-	/* store frame buffer base address for later blanking */
-	if (off == 0)
-		sc->sc_fbuffer_mmap = p;
 
 	device_unref(&sc->dev);
 	return (pa);
