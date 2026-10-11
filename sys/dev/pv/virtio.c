@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.39 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.40 2026/10/11 13:46:08 jan Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -152,6 +152,8 @@ virtio_reset(struct virtio_softc *sc)
 {
 	virtio_device_reset(sc);
 	sc->sc_active_features = 0;
+	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
+	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 }
 
 int
@@ -180,8 +182,6 @@ virtio_reinit_start(struct virtio_softc *sc)
 {
 	int i;
 
-	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
-	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 	virtio_negotiate_features(sc, NULL);
 	sc->sc_ops->setup_intrs(sc);
 	for (i = 0; i < sc->sc_nvqs; i++) {

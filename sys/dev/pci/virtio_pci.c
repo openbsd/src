@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.53 2025/12/22 20:24:49 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.54 2026/10/11 13:46:08 jan Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -664,9 +664,7 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto free;
 	}
 
-	virtio_device_reset(vsc);
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
+	virtio_reset(vsc);
 
 	printf("\n");
 	vpa.vpa_va.va_devid = id;

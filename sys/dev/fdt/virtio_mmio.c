@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.24 2025/12/22 20:24:49 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.25 2026/10/11 13:46:08 jan Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -305,9 +305,7 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_dmat = sc->sc_dmat;
 	sc->sc_config_offset = VIRTIO_MMIO_CONFIG;
 
-	virtio_device_reset(vsc);
-	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
-	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
+	virtio_reset(vsc);
 
 	vma.vma_va.va_devid = id;
 	vma.vma_va.va_nintr = 1;
