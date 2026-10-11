@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.57 2026/10/09 20:03:07 miod Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.58 2026/10/11 20:17:51 miod Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -817,7 +817,7 @@ i82596_get_rbd_list(struct ie_softc *sc, u_int16_t *start, u_int16_t *end,
 #ifdef I82596_DEBUG
 			print_rbd(sc, rbindex);
 #endif
-			log(LOG_ERR,
+			log(LOG_DEBUG,
 			    "%s: receive descriptors out of sync at %d\n",
 			    sc->sc_dev.dv_xname, rbindex);
 			return (0);
@@ -904,7 +904,7 @@ i82596_chk_rx_ring(struct ie_softc *sc)
 		val = sc->ie_bus_read16(sc, off);
 		if ((n == sc->rbtail) ^ ((val & IE_RBD_EOL) != 0)) {
 			/* `rbtail' and EOL flag out of sync */
-			log(LOG_ERR,
+			log(LOG_DEBUG,
 			    "%s: rx buffer descriptors out of sync at %d\n",
 			    sc->sc_dev.dv_xname, n);
 			return (1);
@@ -918,7 +918,7 @@ i82596_chk_rx_ring(struct ie_softc *sc)
 		val = sc->ie_bus_read16(sc, off);
 		if ((n == sc->rftail) ^ ((val & (IE_FD_EOL|IE_FD_SUSP)) != 0)) {
 			/* `rftail' and EOL flag out of sync */
-			log(LOG_ERR,
+			log(LOG_DEBUG,
 			    "%s: rx frame list out of sync at %d\n",
 			    sc->sc_dev.dv_xname, n);
 			return (1);
@@ -1398,13 +1398,17 @@ ie_run_tdr(struct ie_softc *sc, int cmd)
 #ifdef I82596_DEBUG
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
 #endif
-	} else if (result & IE_TDR_OPEN)
+	} else if (result & IE_TDR_OPEN) {
+#if 0
 		printf("%s: TDR detected an open %d clock%s away\n",
 		    sc->sc_dev.dv_xname, clocks, clocks == 1? "":"s");
-	else if (result & IE_TDR_SHORT)
+#endif
+	} else if (result & IE_TDR_SHORT) {
+#if 0
 		printf("%s: TDR detected a short %d clock%s away\n",
 		    sc->sc_dev.dv_xname, clocks, clocks == 1? "":"s");
-	else
+#endif
+	} else
 		printf("%s: TDR returned unknown status 0x%x\n",
 		    sc->sc_dev.dv_xname, result);
 }
