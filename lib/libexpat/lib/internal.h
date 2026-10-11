@@ -27,6 +27,8 @@
    Copyright (c) 2023-2024 Sony Corporation / Snild Dolkow <snild@sony.com>
    Copyright (c) 2024      Taichi Haradaguchi <20001722@ymail.ne.jp>
    Copyright (c) 2026      Matthew Wozniczka <mattheww@simba.com>
+   Copyright (c) 2026      Braian Plaku <braianplaku@gmail.com>
+   Copyright (c) 2026      Florian Schmaus <florian.schmaus@codasip.com>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -51,61 +53,68 @@
    SPDX-License-Identifier: MIT
 */
 
-#ifndef XML_MIN_SIZE
-#  if ! defined(__cplusplus) && ! defined(inline)
-#    ifdef __GNUC__
-#      define inline __inline
-#    endif /* __GNUC__ */
-#  endif
-#endif /* XML_MIN_SIZE */
+#if ! defined(INTERNAL_H)
+#  define INTERNAL_H 1
 
-#ifdef __cplusplus
-#  define inline inline
-#else
+#  ifndef XML_MIN_SIZE
+#    if ! defined(inline)
+#      ifdef __GNUC__
+#        define inline __inline
+#      endif /* __GNUC__ */
+#    endif
+#  endif /* XML_MIN_SIZE */
+
 #  ifndef inline
 #    define inline
 #  endif
-#endif
 
-#include <limits.h> // ULONG_MAX
-#include <stddef.h> // size_t
-
-#if defined(_WIN32)                                                            \
-    && (! defined(__USE_MINGW_ANSI_STDIO)                                      \
-        || (1 - __USE_MINGW_ANSI_STDIO - 1 == 0))
-#  define EXPAT_FMT_LLX(midpart) "%" midpart "I64x"
-#  define EXPAT_FMT_ULL(midpart) "%" midpart "I64u"
-#  if defined(_WIN64) // Note: modifiers "td" and "zu" do not work for MinGW
-#    define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart "I64d"
-#    define EXPAT_FMT_SIZE_T(midpart) "%" midpart "I64u"
-#  else
-#    define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart "d"
-#    define EXPAT_FMT_SIZE_T(midpart) "%" midpart "u"
+#  if ! defined(XML_NONTESTING_STATIC)
+#    if defined(XML_TESTING)
+#      define XML_NONTESTING_STATIC // empty i.e. not static
+#    else
+#      define XML_NONTESTING_STATIC static
+#    endif
 #  endif
-#else
-#  include <inttypes.h> // PRIdPTR, PRIuPTR
-#  define EXPAT_FMT_LLX(midpart) "%" midpart "llx"
-#  define EXPAT_FMT_ULL(midpart) "%" midpart "llu"
-#  define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart PRIdPTR
-#  define EXPAT_FMT_SIZE_T(midpart) "%" midpart PRIuPTR
-#endif
 
-#ifndef UNUSED_P
-#  define UNUSED_P(p) (void)p
-#endif
+#  include <limits.h> // ULONG_MAX
+#  include <stddef.h> // size_t
+
+#  if defined(_WIN32)                                                          \
+      && (! defined(__USE_MINGW_ANSI_STDIO)                                    \
+          || (1 - __USE_MINGW_ANSI_STDIO - 1 == 0))
+#    define EXPAT_FMT_LLX(midpart) "%" midpart "I64x"
+#    define EXPAT_FMT_ULL(midpart) "%" midpart "I64u"
+#    if defined(_WIN64) // Note: modifiers "td" and "zu" do not work for MinGW
+#      define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart "I64d"
+#      define EXPAT_FMT_SIZE_T(midpart) "%" midpart "I64u"
+#    else
+#      define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart "d"
+#      define EXPAT_FMT_SIZE_T(midpart) "%" midpart "u"
+#    endif
+#  else
+#    include <inttypes.h> // PRIdPTR, PRIuPTR
+#    define EXPAT_FMT_LLX(midpart) "%" midpart "llx"
+#    define EXPAT_FMT_ULL(midpart) "%" midpart "llu"
+#    define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart PRIdPTR
+#    define EXPAT_FMT_SIZE_T(midpart) "%" midpart PRIuPTR
+#  endif
+
+#  ifndef UNUSED_P
+#    define UNUSED_P(p) (void)p
+#  endif
 
 /* NOTE BEGIN If you ever patch these defaults to greater values
               for non-attack XML payload in your environment,
               please file a bug report with libexpat.  Thank you!
 */
-#define EXPAT_BILLION_LAUGHS_ATTACK_PROTECTION_MAXIMUM_AMPLIFICATION_DEFAULT   \
-  100.0f
-#define EXPAT_BILLION_LAUGHS_ATTACK_PROTECTION_ACTIVATION_THRESHOLD_DEFAULT    \
-  8388608 // 8 MiB, 2^23
+#  define EXPAT_BILLION_LAUGHS_ATTACK_PROTECTION_MAXIMUM_AMPLIFICATION_DEFAULT \
+    100.0f
+#  define EXPAT_BILLION_LAUGHS_ATTACK_PROTECTION_ACTIVATION_THRESHOLD_DEFAULT  \
+    8388608 // 8 MiB, 2^23
 
-#define EXPAT_ALLOC_TRACKER_MAXIMUM_AMPLIFICATION_DEFAULT 100.0f
-#define EXPAT_ALLOC_TRACKER_ACTIVATION_THRESHOLD_DEFAULT                       \
-  67108864 // 64 MiB, 2^26
+#  define EXPAT_ALLOC_TRACKER_MAXIMUM_AMPLIFICATION_DEFAULT 100.0f
+#  define EXPAT_ALLOC_TRACKER_ACTIVATION_THRESHOLD_DEFAULT                     \
+    67108864 // 64 MiB, 2^26
 
 // NOTE: If function expat_alloc was user facing, EXPAT_MALLOC_ALIGNMENT would
 //       have to take sizeof(long double) into account
@@ -113,38 +122,35 @@ union expat_align {
   long long l;
   void *p;
 };
-#define EXPAT_MALLOC_ALIGNMENT sizeof(union expat_align)
-#define EXPAT_MALLOC_PADDING ((EXPAT_MALLOC_ALIGNMENT) - sizeof(size_t))
+#  define EXPAT_MALLOC_ALIGNMENT sizeof(union expat_align)
+#  define EXPAT_MALLOC_PADDING ((EXPAT_MALLOC_ALIGNMENT) - sizeof(size_t))
 
 /* NOTE END */
 
-#include "expat.h" // so we can use type XML_Parser below
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#  include "expat.h" // so we can use type XML_Parser below
 
 void _INTERNAL_trim_to_complete_utf8_characters(const char *from,
                                                 const char **fromLimRef);
 
-#if defined(XML_GE) && XML_GE == 1
+#  if defined(XML_GE) && XML_GE == 1
 unsigned long long testingAccountingGetCountBytesDirect(XML_Parser parser);
 unsigned long long testingAccountingGetCountBytesIndirect(XML_Parser parser);
 const char *unsignedCharToPrintable(unsigned char c);
-#endif
+#  endif
 
 extern
-#if ! defined(XML_TESTING)
+#  if ! defined(XML_TESTING)
     const
-#endif
+#  endif
     XML_Bool g_reparseDeferralEnabledDefault; // written ONLY in runtests.c
-#if defined(XML_TESTING)
+#  if defined(XML_TESTING)
+
+int xmlSetHashSalt(XML_Parser parser, unsigned long hash_salt);
+
 void *expat_malloc(XML_Parser parser, size_t size, int sourceLine);
 void expat_free(XML_Parser parser, void *ptr, int sourceLine);
 void *expat_realloc(XML_Parser parser, void *ptr, size_t size, int sourceLine);
 extern unsigned int g_bytesScanned; // used for testing only
-#endif
+#  endif
 
-#ifdef __cplusplus
-}
-#endif
+#endif // not defined INTERNAL_H

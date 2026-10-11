@@ -41,10 +41,6 @@
 
 #  include <stdint.h> // uint64_t
 
-#  ifdef __cplusplus
-extern "C" {
-#  endif
-
 /* The following token may be returned by XmlContentTok */
 #  define XML_TOK_TRAILING_RSQB                                                \
     -5 /* ] or ]] at the end of the scan; might be                             \
@@ -317,8 +313,5 @@ const ENCODING *XmlGetUtf8InternalEncodingNS(void);
 const ENCODING *XmlGetUtf16InternalEncodingNS(void);
 ENCODING *XmlInitUnknownEncodingNS(void *mem, const int *table,
                                    CONVERTER convert, void *userData);
-#  ifdef __cplusplus
-}
-#  endif
 
 #endif /* not XmlTok_INCLUDED */
