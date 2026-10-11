@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.29 2026/09/15 15:40:08 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.30 2026/10/11 14:54:41 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -22,6 +22,7 @@
 #include <sys/syscall.h>
 #include <sys/timetc.h>		/* timekeep */
 #include <sys/auxv.h>		/* _hwcap */
+#include <sys/stat.h>
 
 #ifndef PIC
 #include <sys/mman.h>
@@ -32,6 +33,7 @@
 #include <link.h>
 #include <stdlib.h>		/* atexit */
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "init.h"
@@ -43,6 +45,8 @@
 #else
 # define TIB_ALIGN	__alignof__(struct tib)
 #endif
+
+mode_t	_permit_setugid __attribute__((weak));
 
 /* XXX should be in an include file shared with csu */
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));

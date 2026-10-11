@@ -19,6 +19,7 @@ __data_start
 __bss_start
 _edata
 __end
+_permit_setugid
 
 /* sys */
 __get_tcb
