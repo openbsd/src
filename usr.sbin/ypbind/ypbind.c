@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.84 2026/10/09 15:15:43 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.85 2026/10/11 14:01:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -343,13 +343,6 @@ main(int argc, char *argv[])
 	if (yp_get_default_domain(&domain) != 0 || domain[0] == '\0')
 		errx(1, "domainname not set. Aborting.");
 
-	if (unveil(SERVERSDIR, "r") == -1)
-		err(1, "unveil");
-	if (unveil(BINDINGDIR, "crw") == -1)
-		err(1, "unveil");
-	if (pledge("stdio rpath wpath inet dns", NULL) == -1)
-		err(1, "pledge");
-
 	while (--argc) {
 		++argv;
 		if (!strcmp("-insecure", *argv))
@@ -375,6 +368,13 @@ main(int argc, char *argv[])
 	} else {
 		(void)mkdir(BINDINGDIR, 0755);
 	}
+
+	if (unveil(SERVERSDIR, "r") == -1)
+		err(1, "unveil");
+	if (unveil(BINDINGDIR, "crw") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath wpath inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
 
