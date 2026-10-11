@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uncm.c,v 1.2 2026/10/10 14:43:45 deraadt Exp $ */
+/*	$OpenBSD: if_uncm.c,v 1.3 2026/10/11 13:42:42 stsp Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -82,6 +82,7 @@ struct uncm_softc {
 	struct usbd_interface	*sc_ctrl_iface;
 	struct usbd_pipe	*sc_ctrl_pipe;
 	struct usb_cdc_notification sc_intr_msg;
+	int			 sc_intr_size;
 	struct usbd_interface	*sc_data_iface;
 
 	int			 sc_data_ifaceidx;
@@ -190,7 +191,7 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 	int	current_ifaceno = -1;
 	int	data_ifaceno = -1;
 	int	mac_idx = -1;
-	int	ctrl_ep;
+	int	ctrl_ep, ctrl_maxpkt = 0;
 	int	altnum, i, s;
 	uint32_t maxpktlen;
 
@@ -282,8 +283,10 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL)
 			break;
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT &&
-		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
+		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
 			ctrl_ep = ed->bEndpointAddress;
+			ctrl_maxpkt = UE_GET_SIZE(UGETW(ed->wMaxPacketSize));
+		}
 	}
 
 	if (ctrl_ep == -1) {
@@ -338,8 +341,18 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 	    UE_GET_ADDR(ctrl_ep), data_ifaceno,
 	    UE_GET_ADDR(sc->sc_rx_ep), UE_GET_ADDR(sc->sc_tx_ep));
 
+	/*
+	 * Read one packet per transfer.  Otherwise a full-sized
+	 * SPEED_CHANGE (16 bytes) and the following NETWORK_CONNECTION
+	 * get merged into one transfer and the latter is lost.
+	 */
+	sc->sc_intr_size = sizeof(sc->sc_intr_msg);
+	if (ctrl_maxpkt >= UCDC_NOTIFICATION_LENGTH &&
+	    ctrl_maxpkt < sc->sc_intr_size)
+		sc->sc_intr_size = ctrl_maxpkt;
+
 	if (usbd_open_pipe_intr(sc->sc_ctrl_iface, ctrl_ep, USBD_SHORT_XFER_OK,
-	    &sc->sc_ctrl_pipe, sc, &sc->sc_intr_msg, sizeof(sc->sc_intr_msg),
+	    &sc->sc_ctrl_pipe, sc, &sc->sc_intr_msg, sc->sc_intr_size,
 	    uncm_intr, USBD_DEFAULT_INTERVAL)) {
 		printf("%s: failed to open control pipe\n", DEVNAM(sc));
 		goto fail;
