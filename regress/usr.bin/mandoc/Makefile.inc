@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile.inc,v 1.30 2025/06/26 17:29:46 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.31 2026/10/11 22:37:39 schwarze Exp $
 
 .include "Makefile.sub"
 
 # --- programs ---
 
 DIFF	 = diff -au
-MAN	?= man
-MANDOC	?= mandoc
+MAN	?= man -C /dev/null
+MANDOC	?= mandoc -C /dev/null
 MOPTS	?= -mandoc
 
 # --- lists of targets ---
