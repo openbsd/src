@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.176 2026/10/11 14:49:37 mglocker Exp $
+.\"	$OpenBSD: afterboot.8,v 1.177 2026/10/11 15:54:12 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -394,12 +394,11 @@ Consult
 and
 .Xr printcap 5
 if needed.
-
 .Ss Audio recording
 The
 .Xr audio 4
-driver by default record only silence and blanked images.
-Normal recording can be enabled by adding the following directives to
+driver by default records only silence.
+Normal recording can be enabled by adding the following directive to
 .Xr sysctl.conf 5 :
 .Bd -literal -offset indent
 kern.audio.record=1
@@ -408,7 +407,7 @@ kern.audio.record=1
 The
 .Xr video 4
 driver by default denies recording.
-Recording can be allowed by adding the following directives to
+Recording can be allowed by adding the following directive to
 .Xr sysctl.conf 5 :
 .Bd -literal -offset indent
 kern.video.record=1
