@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd-comp.c,v 1.18 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: bsd-comp.c,v 1.19 2026/10/11 03:02:17 tb Exp $	*/
 /*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -909,7 +909,7 @@ bsd_decompress(void *state, struct mbuf *cmp, struct mbuf **dmpp)
 	    break;
 	}
 
-	if (incode > max_ent + 2 || incode > db->maxmaxcode
+	if (incode > max_ent + 1 || incode > db->maxmaxcode
 	    || (incode > max_ent && oldcode == CLEAR)) {
 	    m_freem(mret);
 	    if (db->debug) {
