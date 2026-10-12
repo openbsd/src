@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.55 2026/09/06 19:01:42 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.56 2026/10/12 17:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -85,7 +85,7 @@ snmpd_sig_handler(int sig, short event, void *arg)
 
 			if (len == -1)
 				fatal("asprintf");
-			
+
 			for (id = 0; id < PROC_MAX; id++) {
 				if (pid == ps->ps_pid[id] &&
 				    check_child(ps->ps_pid[id],

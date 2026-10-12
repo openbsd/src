@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2026/09/26 15:00:42 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.94 2026/10/12 17:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -397,7 +397,7 @@ main		: LISTEN ON listen_udptcp
 		;
 
 listenproto	: /* empty */			{ $$ = SOCK_DGRAM; }
-		| UDP 				{ $$ = SOCK_DGRAM; }
+		| UDP				{ $$ = SOCK_DGRAM; }
 		| TCP				{ $$ = SOCK_STREAM; }
 		;
 
@@ -903,7 +903,7 @@ sysmib		: CONTACT STRING		{
 		}
 		;
 
-object		: OBJECTID oid NAME STRING optwrite 	{
+object		: OBJECTID oid NAME STRING optwrite	{
 			struct object_sym *tobjects;
 
 			if ((tobjects = recallocarray(objects, nobjects,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.45 2026/08/30 12:37:10 jsg Exp $	*/
+/*	$OpenBSD: application.c,v 1.46 2026/10/12 17:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -658,7 +658,7 @@ appl_register(const char *ctxname, uint32_t timeout, uint8_t priority,
 	search.ar_oid = *oid;
 	if (search.ar_oid.bo_id[range_subid] == lower_bound)
 		return error;
-	
+
 	for (search.ar_oid.bo_id[range_subid]--;
 	    search.ar_oid.bo_id[range_subid] != lower_bound;
 	    search.ar_oid.bo_id[range_subid]--) {
@@ -1840,7 +1840,7 @@ appl_report(struct snmp_message *statereference, int32_t requestid,
 	ureq->aru_vblist[0].avi_request_downstream = NULL;
 	ureq->aru_vblist[0].avi_next = NULL;
 	ureq->aru_vblist[0].avi_sub = NULL;
-	
+
 	appl_request_upstream_resolve(ureq);
 }
 

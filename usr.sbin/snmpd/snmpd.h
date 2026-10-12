@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.125 2026/09/06 19:01:42 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.126 2026/10/12 17:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -47,7 +47,7 @@
  */
 
 #define CONF_FILE		"/etc/snmpd.conf"
-#define SNMPD_BACKEND		"/usr/libexec/snmpd"                                                                                                                                                                                                                                                                        
+#define SNMPD_BACKEND		"/usr/libexec/snmpd"
 #define SNMPD_USER		"_snmpd"
 #define SNMP_PORT		"161"
 #define SNMPTRAP_PORT		"162"
