@@ -1392,6 +1392,13 @@ int radeon_device_init(struct radeon_device *rdev,
 	}
 	rdev->need_swiotlb = drm_need_swiotlb(dma_bits);
 
+	/* disabling sparc64 iommu requires 64 bits */
+#ifdef __sparc64__
+	rdev->dma_limited = true;
+#else
+	rdev->dma_limited = dma_bits <= 32;
+#endif
+
 	/* Registers mapping */
 	/* TODO: block userspace mapping of io register */
 	mtx_init(&rdev->mmio_idx_lock, IPL_TTY);

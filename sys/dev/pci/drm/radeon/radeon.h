@@ -2326,6 +2326,7 @@ struct radeon_device {
 	bus_space_tag_t			memt;
 	bus_dma_tag_t			dmat;
 	void				*irqh;
+	bool				dma_limited;
 
 	void				(*switchcb)(void *, int, int);
 	void				*switchcbarg;
