@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.39 2026/04/28 13:25:04 millert Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.40 2026/10/12 21:04:02 cludwig Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ main(int argc, char **argv)
 	int             c, p[2], pid;
 	int		family = PF_UNSPEC;
 
-	while ((c = getopt(argc, argv, "46psanov")) != -1) {
+	while ((c = getopt(argc, argv, "46psanv")) != -1) {
 		switch (c) {
 		case '4':
 			family = PF_INET;
