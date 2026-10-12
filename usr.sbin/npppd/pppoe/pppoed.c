@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.26 2025/02/03 07:46:06 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.27 2026/10/12 23:54:04 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementation.
- * $Id: pppoed.c,v 1.26 2025/02/03 07:46:06 yasuoka Exp $
+ * $Id: pppoed.c,v 1.27 2026/10/12 23:54:04 yasuoka Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -629,6 +629,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	struct pppoe_header *pppoe;
 	struct pppoe_tlv *tlv;
 	u_char tlvspace[2048], *p_tlvspace;
+	size_t padding;
 	int session_id;
 	slist tag_list;
 	const char *reason;
@@ -718,7 +719,13 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 			pkt += tlv->length;
 			lpkt -= tlv->length;
 			p_tlvspace += tlv->length;
-			p_tlvspace = (u_char *)ALIGN(p_tlvspace);
+			padding = (ALIGNBYTES + 1 -
+			    ((uintptr_t)p_tlvspace & ALIGNBYTES)) & ALIGNBYTES;
+			if (padding > tlvspace_remaining()) {
+				reason = "parsing TAGs reached the buffer size limit.";
+				goto fail;
+			}
+			p_tlvspace += padding;
 		}
 #ifdef	PPPOED_DEBUG
 		if (debuglevel >= 2)
@@ -873,6 +880,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 
 	tlv_hostuniq = NULL;
 	tlv_service_name = NULL;
+	sn[0] = '\0';
 
 	service_name = "";
 	if (_this->conf->service_name != NULL)
