@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.14 2026/10/05 07:10:24 tb Exp $ */
+/*	$OpenBSD: nca.c,v 1.15 2026/10/12 17:14:01 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -33,18 +33,18 @@
 extern int rrdpon;
 
 static void
-nonfunc_ca_free(struct nonfunc_ca *nca)
+ca_free(struct ca *ca)
 {
-	if (nca == NULL)
+	if (ca == NULL)
 		return;
 
-	free(nca->aki);
-	free(nca->ski);
-	free(nca->location);
-	free(nca->carepo);
-	free(nca->mfturi);
-	free(nca->notify);
-	free(nca);
+	free(ca->aki);
+	free(ca->ski);
+	free(ca->location);
+	free(ca->carepo);
+	free(ca->mfturi);
+	free(ca->notify);
+	free(ca);
 }
 
 /*
@@ -52,81 +52,81 @@ nonfunc_ca_free(struct nonfunc_ca *nca)
  * Return 1 if a synchronization attempt is to be made, 0 otherwise.
  */
 static int
-nca_tree_insert_cert(struct nca_tree *tree, const struct cert *cert,
+nca_tree_insert_cert(struct ca_tree *tree, const struct cert *cert,
     const struct nca_hist *nca_hist)
 {
-	struct nonfunc_ca *nca;
+	struct ca *ca;
 	time_t now = get_current_time();
 
-	if ((nca = calloc(1, sizeof(*nca))) == NULL)
+	if ((ca = calloc(1, sizeof(*ca))) == NULL)
 		err(1, NULL);
-	if ((nca->aki = strdup(cert->aki)) == NULL)
+	if ((ca->aki = strdup(cert->aki)) == NULL)
 		err(1, NULL);
-	if ((nca->ski = strdup(cert->ski)) == NULL)
+	if ((ca->ski = strdup(cert->ski)) == NULL)
 		err(1, NULL);
-	if ((nca->location = strdup(cert->path)) == NULL)
+	if ((ca->location = strdup(cert->path)) == NULL)
 		err(1, NULL);
-	if ((nca->carepo = strdup(cert->repo)) == NULL)
+	if ((ca->carepo = strdup(cert->repo)) == NULL)
 		err(1, NULL);
-	if ((nca->mfturi = strdup(cert->mft)) == NULL)
+	if ((ca->mfturi = strdup(cert->mft)) == NULL)
 		err(1, NULL);
 	if (cert->notify != NULL) {
-		if ((nca->notify = strdup(cert->notify)) == NULL)
+		if ((ca->notify = strdup(cert->notify)) == NULL)
 			err(1, NULL);
 	}
-	nca->repoid = cert->repoid;
-	nca->certid = cert->certid;
-	nca->talid = cert->talid;
+	ca->repoid = cert->repoid;
+	ca->certid = cert->certid;
+	ca->talid = cert->talid;
 
 	/* default initial state */
-	nca->since = now;
-	nca->last_attempt = now;
-	nca->attempts = 1;
-	nca->defer = 0;
+	ca->since = now;
+	ca->last_attempt = now;
+	ca->attempts = 1;
+	ca->defer = 0;
 
 	if (nca_hist != NULL) {
-		nca->since = nca_hist->since;
-		nca->last_attempt = nca_hist->last_attempt;
-		nca->attempts = nca_hist->attempts;
-		nca->defer = nca_hist->defer;
+		ca->since = nca_hist->since;
+		ca->last_attempt = nca_hist->last_attempt;
+		ca->attempts = nca_hist->attempts;
+		ca->defer = nca_hist->defer;
 
-		if (retry_all_ncas || nca->defer == 0) {
+		if (retry_all_ncas || ca->defer == 0) {
 			if (verbose) {
 				warnx("%s: retrying, non-functional since %s",
-				    cert->path, time2str(nca->since));
+				    cert->path, time2str(ca->since));
 			}
-			nca->attempts++;
-			nca->last_attempt = now;
+			ca->attempts++;
+			ca->last_attempt = now;
 		} else if (verbose > 1) {
 			warnx("%s: deferring sync, non-functional since"
-			    " %s", cert->path, time2str(nca->since));
+			    " %s", cert->path, time2str(ca->since));
 		}
 	}
 
-	if (RB_INSERT(nca_tree, tree, nca) != NULL) {
-		int defer = nca->defer;
+	if (RB_INSERT(ca_tree, tree, ca) != NULL) {
+		int defer = ca->defer;
 
-		warnx("duplicate non-functional CA at %s", nca->location);
-		nonfunc_ca_free(nca);
+		warnx("duplicate non-functional CA at %s", ca->location);
+		ca_free(ca);
 		return defer;
 	}
 
-	return nca->defer;
+	return ca->defer;
 }
 
 void
-nca_tree_remove_cert(struct nca_tree *tree, int cid)
+nca_tree_remove_cert(struct ca_tree *tree, int cid)
 {
-	struct nonfunc_ca *found, needle = { .certid = cid };
+	struct ca *found, needle = { .certid = cid };
 
-	if ((found = RB_FIND(nca_tree, tree, &needle)) != NULL) {
-		RB_REMOVE(nca_tree, tree, found);
-		nonfunc_ca_free(found);
+	if ((found = RB_FIND(ca_tree, tree, &needle)) != NULL) {
+		RB_REMOVE(ca_tree, tree, found);
+		ca_free(found);
 	}
 }
 
 static inline int
-certidcmp(const struct nonfunc_ca *a, const struct nonfunc_ca *b)
+certidcmp(const struct ca *a, const struct ca *b)
 {
 	if (a->certid < b->certid)
 		return -1;
@@ -136,7 +136,7 @@ certidcmp(const struct nonfunc_ca *a, const struct nonfunc_ca *b)
 	return 0;
 }
 
-RB_GENERATE(nca_tree, nonfunc_ca, entry, certidcmp);
+RB_GENERATE(ca_tree, ca, entry, certidcmp);
 
 static struct strlist batchlist = LIST_HEAD_INITIALIZER(batchlist);
 
@@ -426,7 +426,7 @@ nca_history_load(void)
  * Return 1 to skip the synchronization attempt, otherwise 0.
  */
 int
-nca_skip_sync(struct nca_tree *ncas, const struct cert *cert)
+nca_skip_sync(struct ca_tree *ncas, const struct cert *cert)
 {
 	struct nca_hist *nca_hist, needle;
 
@@ -446,8 +446,8 @@ static int
 ncas_sorted_cmp(const void *a, const void *b)
 {
 	int cmp;
-	const struct nonfunc_ca *na = *(const struct nonfunc_ca **)a;
-	const struct nonfunc_ca *nb = *(const struct nonfunc_ca **)b;
+	const struct ca *na = *(const struct ca **)a;
+	const struct ca *nb = *(const struct ca **)b;
 
 	cmp = strcmp(na->aki, nb->aki);
 	if (cmp > 0)
@@ -477,12 +477,12 @@ ncas_sorted_cmp(const void *a, const void *b)
 }
 
 void
-nca_history_save(struct nca_tree *ncas, time_t buildtime)
+nca_history_save(struct ca_tree *ncas, time_t buildtime)
 {
 	char temp[] = NCA_HISTORY ".XXXXXXXX";
 	FILE *f = NULL;
 	int fd;
-	struct nonfunc_ca *nca, **ncas_sorted = NULL;
+	struct ca *ca, **ncas_sorted = NULL;
 	size_t ncas_num = 0, idx = 0;
 	struct timespec ts[2];
 
@@ -498,30 +498,30 @@ nca_history_save(struct nca_tree *ncas, time_t buildtime)
 	if ((f = fdopen(fd, "w")) == NULL)
 		err(1, "fopen");
 
-	RB_FOREACH(nca, nca_tree, ncas)
+	RB_FOREACH(ca, ca_tree, ncas)
 		ncas_num++;
 
 	if ((ncas_sorted = calloc(ncas_num, sizeof(ncas_sorted[0]))) == NULL)
 		err(1, NULL);
 
-	RB_FOREACH(nca, nca_tree, ncas)
-		ncas_sorted[idx++] = nca;
+	RB_FOREACH(ca, ca_tree, ncas)
+		ncas_sorted[idx++] = ca;
 
 	qsort(ncas_sorted, ncas_num, sizeof(ncas_sorted[0]), ncas_sorted_cmp);
 
 	for (idx = 0; idx < ncas_num; idx++) {
-		nca = ncas_sorted[idx];
+		ca = ncas_sorted[idx];
 
-		if (fprintf(f, "%s %s %lld %lld %d %s %s", nca->aki, nca->ski,
-		    (long long)nca->since, (long long)nca->last_attempt,
-		    nca->attempts, nca->location, nca->mfturi) < 0)
+		if (fprintf(f, "%s %s %lld %lld %d %s %s", ca->aki, ca->ski,
+		    (long long)ca->since, (long long)ca->last_attempt,
+		    ca->attempts, ca->location, ca->mfturi) < 0)
 			goto err;
 
-		if (nca->notify == NULL) {
+		if (ca->notify == NULL) {
 			if (fprintf(f, " -\n") < 0)
 				goto err;
 		} else {
-			if (fprintf(f, " %s\n", nca->notify) < 0)
+			if (fprintf(f, " %s\n", ca->notify) < 0)
 				goto err;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.318 2026/10/09 10:05:12 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.319 2026/10/12 17:14:01 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -536,7 +536,7 @@ queue_add_from_tal(struct tal *tal)
  * Add a manifest (MFT) found in an X509 certificate, RFC 6487.
  */
 static void
-queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
+queue_add_from_cert(const struct cert *cert, struct ca_tree *ncas)
 {
 	struct repo		*repo;
 	char			*nfile, *npath, *host;
@@ -663,11 +663,11 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		cert = cert_read(b);
 		switch (cert->purpose) {
 		case CERT_PURPOSE_TA:
-			queue_add_from_cert(cert, &vd->ncas);
+			queue_add_from_cert(cert, &vd->cas);
 			ccr_insert_tas(&vd->ccr.tas, cert);
 			break;
 		case CERT_PURPOSE_CA:
-			queue_add_from_cert(cert, &vd->ncas);
+			queue_add_from_cert(cert, &vd->cas);
 			ccr_insert_mft_sub(&vd->ccr.mfts, cert);
 			break;
 		case CERT_PURPOSE_BGPSEC_ROUTER:
@@ -690,7 +690,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		nca_tree_remove_cert(&vd->ncas, mft->issuerid);
+		nca_tree_remove_cert(&vd->cas, mft->issuerid);
 		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
 		break;
@@ -1034,7 +1034,7 @@ main(int argc, char *argv[])
 	struct rusage	 ru;
 	struct timespec	 start_time, now_time;
 	struct validation_data vd = { 0 };
-	struct nonfunc_ca *nca;
+	struct ca	 *ca;
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
@@ -1042,7 +1042,7 @@ main(int argc, char *argv[])
 	RB_INIT(&vd.brks);
 	RB_INIT(&vd.vaps);
 	RB_INIT(&vd.vsps);
-	RB_INIT(&vd.ncas);
+	RB_INIT(&vd.cas);
 	RB_INIT(&vd.ccr.mfts);
 	RB_INIT(&vd.ccr.vrps);
 	RB_INIT(&vd.ccr.tas);
@@ -1558,8 +1558,8 @@ main(int argc, char *argv[])
 	if (filemode)
 		return rc;
 
-	RB_FOREACH(nca, nca_tree, &vd.ncas)
-		repo_stat_add_nca(nca);
+	RB_FOREACH(ca, ca_tree, &vd.cas)
+		repo_stat_add_nca(ca);
 
 	logx("all files parsed: generating output");
 
@@ -1584,7 +1584,7 @@ main(int argc, char *argv[])
 	vd.buildtime = get_current_time();
 
 	if (!noop && rc == 0)
-		nca_history_save(&vd.ncas, vd.buildtime);
+		nca_history_save(&vd.cas, vd.buildtime);
 
 	/* change working directory to the output directory */
 	if (fchdir(outdirfd) == -1)

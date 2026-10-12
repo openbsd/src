@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.304 2026/10/09 10:05:12 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.305 2026/10/12 17:14:01 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -177,8 +177,8 @@ struct nca_hist {
  * Initially all CA and TA certs are added to this tree.
  * They are removed once they are the issuer of a valid mft.
  */
-struct nonfunc_ca {
-	RB_ENTRY(nonfunc_ca)	 entry;
+struct ca {
+	RB_ENTRY(ca)		 entry;
 	char			*aki;
 	char			*ski;
 	char			*location;
@@ -197,8 +197,8 @@ struct nonfunc_ca {
 /*
  * Tree of nonfunc CAs, sorted by certid.
  */
-RB_HEAD(nca_tree, nonfunc_ca);
-RB_PROTOTYPE(nca_tree, nonfunc_ca, entry, ncacmp);
+RB_HEAD(ca_tree, ca);
+RB_PROTOTYPE(ca_tree, ca, entry, certidcmp);
 
 /*
  * The TAL file conforms to RFC 8630.
@@ -539,7 +539,7 @@ struct validation_data {
 	struct brk_tree	brks;
 	struct vap_tree	vaps;
 	struct vsp_tree	vsps;
-	struct nca_tree ncas;
+	struct ca_tree cas;
 	struct ccr ccr;
 };
 
@@ -780,9 +780,9 @@ struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
 void		 nca_history_load(void);
-void		 nca_history_save(struct nca_tree *, time_t);
-int		 nca_skip_sync(struct nca_tree *, const struct cert *);
-void		 nca_tree_remove_cert(struct nca_tree *, int);
+void		 nca_history_save(struct ca_tree *, time_t);
+int		 nca_skip_sync(struct ca_tree *, const struct cert *);
+void		 nca_tree_remove_cert(struct ca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
@@ -942,7 +942,7 @@ void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
 void		 repostats_new_files_inc(struct repo *, const char *);
 void		 repo_stat_inc(struct repo *, int, enum rtype, enum stype);
-void		 repo_stat_add_nca(struct nonfunc_ca *);
+void		 repo_stat_add_nca(struct ca *);
 void		 repo_tal_stats_collect(void (*)(const struct repo *,
 		    const struct repotalstats *, void *), int, void *);
 void		 repo_stats_collect(void (*)(const struct repo *,

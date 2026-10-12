@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.61 2026/07/07 13:38:54 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.62 2026/10/12 17:14:01 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -155,7 +155,7 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 	char			 buf[64];
 	struct vrp		*v;
 	struct brk		*b;
-	struct nonfunc_ca	*nca;
+	struct ca		*ca;
 
 	json_do_start(out);
 	outputheader_json(vd, st);
@@ -187,19 +187,19 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 	json_do_end();
 
 	json_do_array("nonfunc_cas");
-	RB_FOREACH(nca, nca_tree, &vd->ncas) {
+	RB_FOREACH(ca, ca_tree, &vd->cas) {
 		json_do_object("nca", 1);
-		json_do_string("location", nca->location);
-		json_do_string("ta", taldescs[nca->talid]);
-		json_do_string("caRepository", nca->carepo);
-		json_do_string("rpkiManifest", nca->mfturi);
-		if (nca->notify != NULL)
-			json_do_string("rpkiNotify", nca->notify);
-		json_do_string("aki", nca->aki);
-		json_do_string("ski", nca->ski);
-		json_do_int("since", (long long)nca->since);
-		json_do_int("last_attempt", (long long)nca->last_attempt);
-		json_do_int("total_attempts", nca->attempts);
+		json_do_string("location", ca->location);
+		json_do_string("ta", taldescs[ca->talid]);
+		json_do_string("caRepository", ca->carepo);
+		json_do_string("rpkiManifest", ca->mfturi);
+		if (ca->notify != NULL)
+			json_do_string("rpkiNotify", ca->notify);
+		json_do_string("aki", ca->aki);
+		json_do_string("ski", ca->ski);
+		json_do_int("since", (long long)ca->since);
+		json_do_int("last_attempt", (long long)ca->last_attempt);
+		json_do_int("total_attempts", ca->attempts);
 		json_do_end();
 	}
 	json_do_end();

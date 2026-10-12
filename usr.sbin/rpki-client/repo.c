@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.92 2026/10/01 13:06:56 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.93 2026/10/12 17:14:01 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1547,16 +1547,16 @@ repostats_new_files_inc(struct repo *rp, const char *file)
 }
 
 void
-repo_stat_add_nca(struct nonfunc_ca *nca)
+repo_stat_add_nca(struct ca *ca)
 {
 	struct repo *rp;
 
 	SLIST_FOREACH(rp, &repos, entry) {
-		if (rp->id == nca->repoid) {
-			rp->stats[nca->talid].certs_nonfunc++;
+		if (rp->id == ca->repoid) {
+			rp->stats[ca->talid].certs_nonfunc++;
 
-			if (nca->defer)
-				rp->stats[nca->talid].certs_nonfunc_deferred++;
+			if (ca->defer)
+				rp->stats[ca->talid].certs_nonfunc_deferred++;
 
 			break;
 		}
