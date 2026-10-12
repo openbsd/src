@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2020/08/24 15:33:33 florian Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 2026/10/12 17:39:27 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -39,7 +39,7 @@ MAN=	doc/unbound.8 \
 	doc/unbound-host.1
 
 all:	${.OBJDIR}/config.status
-	exec ${MAKE}
+	@exec ${MAKE}		# in objdir
 
 ${MAN}: ${.OBJDIR}/config.status
 
