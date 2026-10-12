@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.114 2026/10/12 18:14:13 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.115 2026/10/12 19:35:00 kettenis Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -63,7 +63,6 @@ extern char *__progname;
 
 void usage(void);
 int power_status(int fd, int force, struct apm_power_info *pinfo);
-int hasbattery(struct apm_power_info *);
 int bind_socket(const char *sn);
 void handle_client(int sock_fd, int ctl_fd);
 void warnlow(void);
@@ -415,15 +414,6 @@ resumed(int ctl_fd)
 #define WARNING_GRACE_PERIOD	(2*60)	/* 2 minutes after last warning */
 
 int
-hasbattery(struct apm_power_info *pinfo)
-{
-	if (pinfo->battery_state == APM_BATTERY_ABSENT ||
-	    pinfo->battery_state == APM_BATT_UNKNOWN)
-		return 0;
-	return 1;
-}
-
-int
 main(int argc, char *argv[])
 {
 	const char *fname = _PATH_APM_CTLDEV;
@@ -628,6 +618,14 @@ main(int argc, char *argv[])
 				powerchange = 1;
 			}
 
+			/*
+			 * No further action if there is no battery or
+			 * if its status isn't know.
+			 */
+			if (pinfo.battery_state == APM_BATTERY_ABSENT ||
+			    pinfo.battery_state == APM_BATT_UNKNOWN)
+				break;
+
 			if (!powerstatus && autoaction &&
 			    autolimit > (int)pinfo.battery_life) {
 				struct timespec graceperiod, now;
@@ -646,7 +644,6 @@ main(int argc, char *argv[])
 				);
 
 				if (!autoaction_inflight &&
-				    hasbattery(&pinfo) &&
 				    timespeccmp(&now, &graceperiod, >)) {
 					if (autoaction == AUTO_SUSPEND)
 						suspends++;
