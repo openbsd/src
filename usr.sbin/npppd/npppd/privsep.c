@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.30 2026/08/04 13:18:21 claudio Exp $ */
+/*	$OpenBSD: privsep.c,v 1.31 2026/10/12 08:54:01 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <glob.h>
 #include <imsg.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -154,6 +155,7 @@ static int	 privsep_npppd_check_sendto (struct PRIVSEP_SENDTO_ARG *);
 static int	 privsep_npppd_check_unlink (struct PRIVSEP_UNLINK_ARG *);
 static int	 privsep_npppd_check_get_user_info (
 		    struct PRIVSEP_GET_USER_INFO_ARG *);
+static int	 privsep_npppd_check_ifname(const char *);
 static int	 privsep_npppd_check_get_if_addr (
 		    struct PRIVSEP_GET_IF_ADDR_ARG *);
 static int	 privsep_npppd_check_set_if_addr (
@@ -567,6 +569,28 @@ static void
 privsep_priv_main(int sock)
 {
 	struct imsgbuf	 ibuf;
+	glob_t		 paths = { 0 };
+	char		 ifname[IFNAMSIZ];
+	size_t		 i;
+	int		 error;
+
+	/* Device nodes must exist before the filesystem view is locked. */
+	error = glob("/dev/{tun,pppac,pppx}[0-9]*", GLOB_BRACE | GLOB_MARK,
+	    NULL, &paths);
+	if (error != 0 && error != GLOB_NOMATCH)
+		fatalx("glob /dev");
+	if (unveil(NPPPD_DIR, "r") == -1 || unveil("/dev/bpf", "rw") == -1)
+		fatal("unveil");
+	for (i = 0; i < paths.gl_pathc; i++) {
+		if (strlcpy(ifname, paths.gl_pathv[i] + 5, sizeof(ifname)) >=
+		    sizeof(ifname) || privsep_npppd_check_ifname(ifname))
+			continue;
+		if (unveil(paths.gl_pathv[i], "rw") == -1)
+			fatal("unveil");
+	}
+	globfree(&paths);
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
 
 	if (imsgbuf_init(&ibuf, sock) == -1)
 		fatal("imsgbuf_init");
@@ -988,15 +1012,17 @@ privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 	} const allow_paths[] = {
 		{ NPPPD_DIR "/",	1,	1 },
 		{ "/dev/bpf",		0,	0 },
-		{ "/etc/resolv.conf",	0,	1 },
-		{ "/dev/tun",		1,	0 },
-		{ "/dev/pppac",		1,	0 },
-		{ "/dev/pppx",		1,	0 }
 	};
+
+	if (memchr(arg->path, '\0', sizeof(arg->path)) == NULL)
+		return (1);
 
 	/* O_NONBLOCK is the only 'extra' flag permitted */
 	if (arg->flags & ~(O_ACCMODE | O_NONBLOCK))
 		return (1);
+	if (startswith(arg->path, "/dev/") &&
+	    privsep_npppd_check_ifname(arg->path + 5) == 0)
+		return (0);
 	for (i = 0; i < (int)nitems(allow_paths); i++) {
 		if (allow_paths[i].path_is_prefix) {
 			if (!startswith(arg->path, allow_paths[i].path))
@@ -1066,6 +1092,9 @@ privsep_npppd_check_get_user_info(struct PRIVSEP_GET_USER_INFO_ARG *arg)
 {
 	int l;
 
+	if (memchr(arg->path, '\0', sizeof(arg->path)) == NULL ||
+	    memchr(arg->username, '\0', sizeof(arg->username)) == NULL)
+		return (1);
 	l = strlen(NPPPD_DIR "/");
 	if (strncmp(arg->path, NPPPD_DIR "/", l) == 0)
 		return (0);
@@ -1076,10 +1105,24 @@ privsep_npppd_check_get_user_info(struct PRIVSEP_GET_USER_INFO_ARG *arg)
 static int
 privsep_npppd_check_ifname(const char *ifname)
 {
-	if (startswith(ifname, "tun") ||
-	    startswith(ifname, "pppac") ||
-	    startswith(ifname, "pppx"))
-		return (0);
+	const char *unit, *errstr;
+
+	if (memchr(ifname, '\0', IFNAMSIZ) == NULL)
+		return (1);
+	if (startswith(ifname, "tun"))
+		unit = ifname + 3;
+	else if (startswith(ifname, "pppac"))
+		unit = ifname + 5;
+	else if (startswith(ifname, "pppx"))
+		unit = ifname + 4;
+	else
+		return (1);
+	if (*unit == '\0')
+		return (1);
+
+	(void)strtonum(unit, 0, USHRT_MAX, &errstr);
+	if (errstr != NULL)
+		return (1);
 
 	return (0);
 }

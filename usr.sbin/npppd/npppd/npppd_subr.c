@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.23 2024/09/20 02:00:46 jsg Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.24 2026/10/12 08:54:01 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -72,59 +72,6 @@ skip_space(const char *s)
 		; /* skip */
 
 	return r;
-}
-
-/**
- * Read and store IPv4 address of name server from resolv.conf.
- * The path of resolv.conf is taken from _PATH_RESCONF in resolv.h.
- */
-int
-load_resolv_conf(struct in_addr *pri, struct in_addr *sec)
-{
-	FILE *filep;
-	int i;
-	struct in_addr *addr;
-	char *ap, *line, buf[BUFSIZ];
-
-	pri->s_addr = INADDR_NONE;
-	sec->s_addr = INADDR_NONE;
-
-	filep = NULL;
-	if ((filep = priv_fopen(_PATH_RESCONF)) == NULL)
-		return 1;
-
-	i = 0;
-	while (fgets(buf, sizeof(buf), filep) != NULL) {
-		line = (char *)skip_space(buf);
-		if (strncmp(line, "nameserver", 10) != 0)
-			continue;
-		line += 10;
-		if (!isspace((unsigned char)*line))
-			continue;
-		while ((ap = strsep(&line, " \t\r\n")) != NULL) {
-			if (*ap == '\0')
-				continue;
-			if (i == 0)
-				addr = pri;
-			else
-				addr = sec;
-			if (inet_pton(AF_INET, ap, addr) != 1) {
-				/*
-				 * FIXME: If configured IPv6, it may have IPv6
-				 * FIXME: address.  For the present, continue.
-				 */
-				continue;
-			}
-			addr->s_addr = addr->s_addr;
-			if (++i >= 2)
-				goto end_loop;
-		}
-	}
-end_loop:
-	if (filep != NULL)
-		fclose(filep);
-
-	return 0;
 }
 
 /* Add and delete routing entry. */

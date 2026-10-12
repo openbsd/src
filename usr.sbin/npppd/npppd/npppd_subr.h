@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.h,v 1.4 2013/03/14 10:21:07 mpi Exp $ */
+/*	$OpenBSD: npppd_subr.h,v 1.5 2026/10/12 08:54:01 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -32,7 +32,6 @@
 extern "C" {
 #endif
 
-int   load_resolv_conf (struct in_addr *, struct in_addr *);
 int   in_host_route_add (struct in_addr *, struct in_addr *, const char *, int);
 int   in_host_route_delete (struct in_addr *, struct in_addr *);
 int   in_route_add (struct in_addr *, struct in_addr *, struct in_addr *, const char *, uint32_t, int);
