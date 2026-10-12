@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.6 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: ipcp.c,v 1.7 2026/10/12 09:25:47 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -32,7 +32,7 @@
 /*
  * RFC 1332, 1877
  */
-/* $Id: ipcp.c,v 1.6 2019/02/27 04:52:19 denis Exp $ */
+/* $Id: ipcp.c,v 1.7 2026/10/12 09:25:47 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -194,7 +194,7 @@ static int
 ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 {
 	int type, len, rcode, lrej, lnak;
-	u_char rejbuf0[256], nakbuf0[256], *nakbuf, *rejbuf, *pktp0;
+	u_char rejbuf[256], nakbuf0[256], *nakbuf, *pktp0;
 	char buf0[256];
 	struct in_addr ip_addr, *ip_addrp;
 	npppd_ppp *ppp;
@@ -207,7 +207,6 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 	_npppd = ppp->pppd;
 
 	nakbuf = nakbuf0;
-	rejbuf = rejbuf0;
 	lrej = 0;
 	lnak = 0;
 	pktp0 = pktp;
@@ -215,9 +214,8 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 
 	if (*lpktp > 128) {
 		rcode = CONFREJ;
-		rejbuf = pktp;
-		lrej = *lpktp;
-		goto fail;
+		/* Reject the whole CI in place */
+		return rcode;
 	}
 
 #define	remlen()	(*lpktp - (pktp - pktp0))
@@ -333,7 +331,7 @@ fail:
 	switch (rcode) {
 	case CONFREJ:
 		IPCP_DBG((f, LOG_DEBUG, "SendConfRej"));
-		memmove(pktp0, rejbuf0, lrej);
+		memmove(pktp0, rejbuf, lrej);
 		*lpktp = lrej;
 		break;
 	case CONFNAK:
