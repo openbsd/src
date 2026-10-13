@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.192 2026/10/09 10:05:12 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.193 2026/10/13 16:06:18 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -197,9 +197,9 @@ parse_filepath(unsigned int repoid, const char *path, const char *file,
 }
 
 /*
- * Parse and validate a ROA.
- * This is standard stuff.
- * Returns the roa on success, NULL on failure.
+ * Parse and validate an RFC 9582 ROA object.
+ * Returns a pointer to an internal representation, NULL on failure.
+ * Caller must free the returned object.
  */
 static struct roa *
 proc_parser_roa(char *file, const unsigned char *der, size_t len,
