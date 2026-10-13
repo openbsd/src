@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.30 2026/10/11 14:54:41 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.31 2026/10/13 12:43:38 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -87,6 +87,7 @@ void
 _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 {
 	AuxInfo	*aux;
+	char sugidmsg[400], *suid = NULL, *sgid = NULL;
 #ifndef PIC
 	Elf_Phdr *phdr = NULL;
 	int phnum = 0;
@@ -138,6 +139,30 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 			break;
 		case AUX_openbsd_execpath:
 			_execpath = (void *)aux->au_v;
+			break;
+		case AUX_openbsd_execmode:
+			if ((aux->au_v & S_ISUID) && !(_permit_setugid & S_ISUID))
+				suid = "setuid";
+			if ((aux->au_v & S_ISGID) && !(_permit_setugid & S_ISGID))
+				sgid = "setgid";
+			if (!suid && !sgid)
+				break;
+
+			strlcpy(sugidmsg, _execpath ? _execpath : argv[0],
+			    sizeof sugidmsg);
+			strlcat(sugidmsg, ": not supposed to be ",
+			    sizeof sugidmsg);
+			if (suid) {
+				strlcat(sugidmsg, suid, sizeof sugidmsg);
+				if (sgid)
+					strlcat(sugidmsg, "+", sizeof sugidmsg);
+			}
+			if (sgid)
+				strlcat(sugidmsg, sgid, sizeof sugidmsg);
+			strlcat(sugidmsg, ", aborting\n", sizeof sugidmsg);
+			sendsyslog(sugidmsg, strlen(sugidmsg), 0);
+			write(STDERR_FILENO, sugidmsg, strlen(sugidmsg));
+			/* SOON THIS WILL ABORT */
 			break;
 		}
 	}
