@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.22 2026/10/09 18:50:30 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.23 2026/10/13 23:55:44 jmatthew Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -115,8 +115,8 @@ main(int argc, char *argv[])
 
 	if (unveil("/etc", "r") == -1)
 		err(1, "unveil");
-	if (pledge("stdio rpath inet dns", "r") == -1)
-		err(1, "unveil");
+	if (pledge("stdio rpath inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	yp_get_default_domain(&domainname);
 
