@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.207 2026/10/10 22:05:36 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.208 2026/10/13 12:24:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -922,9 +922,9 @@ int
 exec_elf_fixup(struct proc *p, struct exec_package *epp)
 {
 	char	*interp = NULL;
-	int	error = 0;
+	int	error = 0, i = 0;
 	Elf_Ehdr *eh = epp->ep_hdr;
-	AuxInfo ai[ELF_AUX_ENTRIES], *a;
+	AuxInfo ai[ELF_AUX_ENTRIES];
 
 	interp = epp->ep_interp;
 
@@ -950,65 +950,77 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	 */
 	if (error == 0) {
 		memset(&ai, 0, sizeof ai);
-		a = ai;
 
-		a->au_id = AUX_phdr;
-		a->au_v = epp->ep_phdraddr;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_phdr;
+		ai[i].au_v = epp->ep_phdraddr;
+		i++;
 
-		a->au_id = AUX_phent;
-		a->au_v = eh->e_phentsize;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_phent;
+		ai[i].au_v = eh->e_phentsize;
+		i++;
 
-		a->au_id = AUX_phnum;
-		a->au_v = eh->e_phnum;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_phnum;
+		ai[i].au_v = eh->e_phnum;
+		i++;
 
-		a->au_id = AUX_pagesz;
-		a->au_v = PAGE_SIZE;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_pagesz;
+		ai[i].au_v = PAGE_SIZE;
+		i++;
 
-		a->au_id = AUX_base;
-		a->au_v = epp->ep_interpaddr;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_base;
+		ai[i].au_v = epp->ep_interpaddr;
+		i++;
 
-		a->au_id = AUX_flags;
-		a->au_v = 0;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_flags;
+		ai[i].au_v = 0;
+		i++;
 
-		a->au_id = AUX_entry;
-		a->au_v = epp->ep_entrymain;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_entry;
+		ai[i].au_v = epp->ep_entrymain;
+		i++;
 
 #ifdef __HAVE_CPU_HWCAP
-		a->au_id = AUX_hwcap;
-		a->au_v = hwcap;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_hwcap;
+		ai[i].au_v = hwcap;
+		i++;
 #endif /* __HAVE_CPU_HWCAP */
 
 #ifdef __HAVE_CPU_HWCAP2
-		a->au_id = AUX_hwcap2;
-		a->au_v = hwcap2;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_hwcap2;
+		ai[i].au_v = hwcap2;
+		i++;
 #endif /* __HAVE_CPU_HWCAP2 */
 
-		a->au_id = AUX_openbsd_timekeep;
-		a->au_v = p->p_p->ps_timekeep;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_openbsd_timekeep;
+		ai[i].au_v = p->p_p->ps_timekeep;
+		i++;
 
-		a->au_id = AUX_openbsd_execpath;
-		a->au_v = (vaddr_t)epp->ep_execpath;
-    		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_openbsd_execpath;
+		ai[i].au_v = (vaddr_t)epp->ep_execpath;
+		i++;
 
-		a->au_id = AUX_openbsd_execmode;
-		a->au_v = (mode_t)epp->ep_execmode;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_openbsd_execmode;
+		ai[i].au_v = (mode_t)epp->ep_execmode;
+		i++;
 
-		a->au_id = AUX_null;
-		a->au_v = 0;
-		a++;
+		KASSERT(i < nitems(ai));
+		ai[i].au_id = AUX_null;
+		ai[i].au_v = 0;
+		i++;
 
-		error = copyout(ai, epp->ep_auxinfo, sizeof ai);
+		error = copyout(ai, epp->ep_auxinfo, i * sizeof(AuxInfo));
 	}
 	if (interp)
 		pool_put(&namei_pool, interp);
