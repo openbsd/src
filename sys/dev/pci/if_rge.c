@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_rge.c,v 1.45 2026/07/09 05:12:34 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.46 2026/10/13 00:20:11 kevlo Exp $	*/
 
 /*
- * Copyright (c) 2019, 2020, 2023-2025
+ * Copyright (c) 2019, 2020, 2023-2026
  *	Kevin Lo <kevlo@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,12 +28,17 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/intrmap.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/toeplitz.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -65,6 +70,9 @@ int		rge_match(struct device *, void *, void *);
 void		rge_attach(struct device *, struct device *, void *);
 int		rge_activate(struct device *, int);
 int		rge_intr(void *);
+int		rge_intr_link(void *);
+int		rge_intr_queue(void *);
+int		rge_intr_tx_queue(void *);
 int		rge_ioctl(struct ifnet *, u_long, caddr_t);
 void		rge_start(struct ifqueue *);
 void		rge_watchdog(struct ifnet *);
@@ -72,15 +80,25 @@ void		rge_init(struct ifnet *);
 void		rge_stop(struct ifnet *);
 int		rge_ifmedia_upd(struct ifnet *);
 void		rge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-int		rge_allocmem(struct rge_softc *);
+int		rge_rx_dma_alloc(struct rge_softc *, struct rge_queues *);
+int		rge_tx_dma_alloc(struct rge_softc *, struct rge_queues *);
 int		rge_newbuf(struct rge_queues *);
+int		rge_rxrinfo(struct rge_softc *, struct if_rxrinfo *);
 void		rge_rx_list_init(struct rge_queues *);
 void		rge_tx_list_init(struct rge_queues *);
 void		rge_fill_rx_ring(struct rge_queues *);
+void		rge_fill_rx_desc_addr(struct rge_queues *, int);
+void		rge_fill_tx_desc_addr(struct rge_queues *, int);
+void		rge_free_rx_ring(struct rge_softc *, struct rge_queues *);
+void		rge_free_tx_ring(struct rge_softc *, struct rge_queues *);
+void		rge_rxcsum(struct rge_softc *, uint32_t, uint32_t,
+		    struct mbuf *);
+void		rge_tx_offload(struct mbuf *, uint32_t *, uint32_t *);
 int		rge_rxeof(struct rge_queues *);
 int		rge_txeof(struct rge_queues *);
 int		rge_reset(struct rge_softc *);
 void		rge_iff(struct rge_softc *);
+void		rge_init_rss(struct rge_softc *);
 int		rge_chipinit(struct rge_softc *);
 void		rge_set_phy_power(struct rge_softc *, int);
 void		rge_ephy_config(struct rge_softc *);
@@ -110,7 +128,10 @@ void		rge_add_media_types(struct rge_softc *);
 void		rge_config_imtype(struct rge_softc *, int);
 void		rge_disable_aspm_clkreq(struct rge_softc *);
 void		rge_disable_hw_im(struct rge_softc *);
+void		rge_disable_queue(struct rge_softc *, uint32_t);
 void		rge_disable_sim_im(struct rge_softc *);
+void		rge_enable_queue(struct rge_softc *, uint32_t);
+void		rge_enable_queues(struct rge_softc *);
 void		rge_setup_sim_im(struct rge_softc *);
 void		rge_setup_intr(struct rge_softc *, int);
 void		rge_switch_mcu_ram_page(struct rge_softc *, int);
@@ -127,6 +148,7 @@ void		rge_write_phy(struct rge_softc *, uint16_t, uint16_t, uint16_t);
 uint16_t	rge_read_phy(struct rge_softc *, uint16_t, uint16_t);
 void		rge_write_phy_ocp(struct rge_softc *, uint16_t, uint16_t);
 uint16_t	rge_read_phy_ocp(struct rge_softc *, uint16_t);
+uint32_t	rge_rxstatus_mask(struct rge_softc *, int);
 int		rge_get_link_status(struct rge_softc *);
 void		rge_txstart(void *);
 void		rge_tick(void *);
@@ -181,13 +203,13 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
 	struct ifnet *ifp;
-	struct rge_queues *q;
+	int (*isr)(void *);
+	const char *intrstr = NULL;
 	pcireg_t reg;
 	uint32_t hwrev;
 	uint8_t eaddr[ETHER_ADDR_LEN];
-	int offset;
+	int i, nmsix, offset;
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
@@ -208,39 +230,6 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 	}
-
-	q = malloc(sizeof(struct rge_queues), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (q == NULL) {
-		printf(": unable to allocate queue memory\n");
-		return;
-	}
-	q->q_sc = sc;
-	q->q_index = 0;
-
-	sc->sc_queues = q;
-	sc->sc_nqueues = 1;
-
-	/*
-	 * Allocate interrupt.
-	 */
-	if (pci_intr_map_msix(pa, 0, &ih) == 0 ||
-	    pci_intr_map_msi(pa, &ih) == 0)
-		sc->rge_flags |= RGE_FLAG_MSI;
-	else if (pci_intr_map(pa, &ih) != 0) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE, rge_intr,
-	    sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf(": %s", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pc = pa->pa_pc;
@@ -271,14 +260,80 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 		printf(": RTL8125D");
 		break;
 	case 0x6c900000:
-		sc->rge_type = MAC_R27;
+		if (rge_read_mac_ocp(sc, 0xd006) == 0x0007) {
+			sc->rge_type = MAC_R27ATF;
+			printf(": RTL8127ATF");
+		} else
+			sc->rge_type = MAC_R27;
+		sc->sc_linkvec = RGE_LINK_VECTOR_8127;
+		sc->rge_min_msix = RGE_MIN_MSIX_VECTORS_8127;
+		sc->rge_flags |= RGE_FLAG_DESCV2;
 		break;
 	default:
 		printf(": unknown version 0x%08x\n", hwrev);
 		return;
 	}
 
-	rge_config_imtype(sc, RGE_IMTYPE_SIM);
+	sc->sc_nqueues = sc->sc_ntxqs = 1;
+	isr = rge_intr;
+
+	if (RGE_TYPE_R27(sc)) {
+		nmsix = pci_intr_msix_count(pa);
+		if (nmsix >= sc->rge_min_msix) {
+			sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
+			    MIN(RGE_MAX_VECTORS_8127, IF_MAX_VECTORS),
+			    INTRMAP_POWEROF2);
+			if (sc->sc_intrmap == NULL) {
+				printf(": unable to create interrupt map\n");
+				return;
+			}
+
+			if (pci_intr_map_msix(pa, sc->sc_linkvec, &ih)) {
+				printf(": unable to map link vector\n");
+				goto intrunmap;
+			}
+
+			sc->rge_flags |= RGE_FLAG_MULTIVEC;
+			sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
+			isr = rge_intr_link;
+		}
+	}
+
+	sc->sc_queues = mallocarray(sc->sc_nqueues, sizeof(struct rge_queues),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	if (sc->sc_queues == NULL) {
+		printf(": unable to create queues\n");
+		goto intrunmap;
+        }
+
+	/*
+	 * Allocate interrupt.
+	 */
+	if (!(sc->rge_flags & RGE_FLAG_MULTIVEC)) {
+		if (pci_intr_map_msix(pa, 0, &ih) == 0 ||
+		    pci_intr_map_msi(pa, &ih) == 0)
+			sc->rge_flags |= RGE_FLAG_MSI;
+		else if (pci_intr_map(pa, &ih) != 0) {
+			printf(": couldn't map interrupt\n");
+			return;
+		}
+	}
+
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE, isr, sc,
+	    sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto intrunmap;
+	}
+	printf(": %s", intrstr);
+
+	if (sc->sc_nqueues > 1)
+		printf(", %d rx queue%s",
+		    sc->sc_nqueues, sc->sc_nqueues > 1 ? "s" : "");
 
 	/*
 	 * PCI Express check.
@@ -295,15 +350,19 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (rge_chipinit(sc))
-		return;
+		goto intrunmap;
 
 	rge_get_macaddr(sc, eaddr);
 	printf(", address %s\n", ether_sprintf(eaddr));
 
 	memcpy(sc->sc_arpcom.ac_enaddr, eaddr, ETHER_ADDR_LEN);
 
-	if (rge_allocmem(sc))
-		return;
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		if (rge_rx_dma_alloc(sc, &sc->sc_queues[i]))
+			goto intrunmap;
+	}
+	if (rge_tx_dma_alloc(sc, &sc->sc_queues[0]))
+		goto intrunmap;
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -317,8 +376,11 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_hardmtu = RGE_JUMBO_MTU;
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
-	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 |
+	    IFCAP_CSUM_UDPv6;
 
+	if (RGE_TYPE_R27(sc))
+		ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
@@ -329,7 +391,6 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	rge_wol(ifp, 0);
 #endif
 	timeout_set(&sc->sc_timeout, rge_tick, sc);
-	task_set(&sc->sc_task, rge_txstart, sc);
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, IFM_IMASK, rge_ifmedia_upd,
@@ -342,9 +403,99 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	if_attach_iqueues(ifp, sc->sc_nqueues);
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct ifiqueue *ifiq = ifp->if_iqs[i];
+		struct rge_queues *q = &sc->sc_queues[i];
+		struct rge_rx *rx = &q->q_rx;
+
+		q->q_sc = sc;
+		q->q_index = i;
+
+		rx->rge_rx_ifiq = ifiq;
+		ifiq->ifiq_softc = q;
+
+		if (sc->sc_intrmap) {
+			if (pci_intr_map_msix(pa, i, &ih)) {
+				printf("%s: unable to map msi-x vector %d\n",
+				    sc->sc_dev.dv_xname, i);
+				goto intrdisestablish;
+			}
+			snprintf(q->q_name, sizeof(q->q_name), "%s:rx%d",
+			    sc->sc_dev.dv_xname, i);
+
+			q->q_ihc = pci_intr_establish_cpu(sc->sc_pc, ih,
+			    IPL_NET | IPL_MPSAFE,
+			    intrmap_cpu(sc->sc_intrmap, i),
+			    rge_intr_queue, q, q->q_name);
+			if (q->q_ihc == NULL) {
+				printf("%s: unable to establish interrupt %d\n",
+				    sc->sc_dev.dv_xname, i);
+				goto intrdisestablish;
+			}
+		}
+	}
+
+	if_attach_queues(ifp, sc->sc_ntxqs);
+	for (i = 0; i < sc->sc_ntxqs; i++) {
+		struct ifqueue *ifq = ifp->if_ifqs[i];
+		struct rge_queues *q = &sc->sc_queues[i];
+		struct rge_tx *tx = &q->q_tx;
+
+		q->q_tx_index = RGE_TX_VECTOR_8127(i);
+		task_set(&q->q_task, rge_txstart, q);
+		tx->rge_tx_ifq = ifq;
+		ifq->ifq_softc = q;
+
+		if (sc->sc_intrmap) {
+			if (pci_intr_map_msix(pa, q->q_tx_index, &ih)) {
+				printf("%s: unable to map msi-x vector %d\n",
+				    sc->sc_dev.dv_xname, i);
+				goto intrdisestablish;
+			}
+			snprintf(q->q_tx_name, sizeof(q->q_tx_name), "%s:tx%d",
+			    sc->sc_dev.dv_xname, i);
+
+			q->q_tx_ihc = pci_intr_establish_cpu(sc->sc_pc, ih,
+			    IPL_NET | IPL_MPSAFE,
+			    intrmap_cpu(sc->sc_intrmap, i),
+			    rge_intr_tx_queue, q, q->q_tx_name);
+			if (q->q_tx_ihc == NULL) {
+				printf("%s: unable to establish interrupt %d\n",
+				    sc->sc_dev.dv_xname, i);
+				goto intrdisestablish;
+			}
+		}
+	}
+
 #if NKSTAT > 0
 	rge_kstat_attach(sc);
 #endif
+	return;
+
+intrdisestablish:
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct rge_queues *q = &sc->sc_queues[i];
+
+		if (q->q_ihc != NULL) {
+			pci_intr_disestablish(sc->sc_pc, q->q_ihc);
+			q->q_ihc = NULL;
+		}
+	}
+	for (i = 0; i < sc->sc_ntxqs; i++) {
+		struct rge_queues *q = &sc->sc_queues[i];
+
+		if (q->q_tx_ihc != NULL) {
+			pci_intr_disestablish(sc->sc_pc, q->q_tx_ihc);
+			q->q_tx_ihc = NULL;
+		}
+	}
+	free(sc->sc_queues, M_DEVBUF, sc->sc_nqueues * sizeof(*sc->sc_queues));
+intrunmap:
+	if (sc->rge_flags & RGE_FLAG_MULTIVEC) {
+		intrmap_destroy(sc->sc_intrmap);
+		sc->sc_intrmap = NULL;
+	}
 }
 
 int
@@ -368,7 +519,7 @@ int
 rge_intr(void *arg)
 {
 	struct rge_softc *sc = arg;
-	struct rge_queues *q = sc->sc_queues;
+	struct rge_queues *q = &sc->sc_queues[0];
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint32_t status;
 	int claimed = 0, rv;
@@ -435,13 +586,67 @@ rge_intr(void *arg)
 	return (claimed);
 }
 
+int
+rge_intr_link(void *arg)
+{
+	struct rge_softc *sc = arg;
+
+	rge_disable_queue(sc, sc->sc_linkvec);
+	rge_link_state(sc);
+	rge_enable_queue(sc, sc->sc_linkvec);
+
+	return (1);
+}
+
+int
+rge_intr_queue(void *arg)
+{
+	struct rge_queues *q = arg;
+	struct rge_softc *sc = q->q_sc;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int claimed = 0;
+
+	rge_disable_queue(sc, q->q_index);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		rge_rxeof(q);
+		claimed = 1;
+	}
+
+	rge_enable_queue(sc, q->q_index);
+
+	return (claimed);
+}
+
+int
+rge_intr_tx_queue(void *arg)
+{
+	struct rge_queues *q = arg;
+	struct rge_softc *sc = q->q_sc;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int claimed = 0;
+
+	rge_disable_queue(sc, q->q_tx_index);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		rge_txeof(q);
+		claimed = 1;
+	}
+
+	rge_enable_queue(sc, q->q_tx_index);
+
+	return (claimed);
+}
+
 static inline void
 rge_tx_list_sync(struct rge_softc *sc, struct rge_queues *q,
     unsigned int idx, unsigned int len, int ops)
 {
+	int descsz = (sc->rge_flags & RGE_FLAG_DESCV2) ?
+	    sizeof(struct rge_tx_desc_v2) : sizeof(struct rge_tx_desc);
+
 	bus_dmamap_sync(sc->sc_dmat, q->q_tx.rge_tx_list_map,
-	    idx * sizeof(struct rge_tx_desc), len * sizeof(struct rge_tx_desc),
-	    ops);
+	    idx * descsz, len * descsz, ops);
 }
 
 static int
@@ -449,9 +654,10 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 {
 	struct rge_softc *sc = q->q_sc;
 	struct rge_tx_desc *d = NULL;
+	struct rge_tx_desc_v2 *dv2 = NULL;
 	struct rge_txq *txq;
 	bus_dmamap_t txmap;
-	uint32_t cmdsts, cflags = 0;
+	uint32_t cmdsts, cflags = 0, tflags = 0;
 	int cur, error, i;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
@@ -484,31 +690,13 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 	bus_dmamap_sync(sc->sc_dmat, txmap, 0, txmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	/*
-	 * Set RGE_TDEXTSTS_IPCSUM if any checksum offloading is requested.
-	 * Otherwise, RGE_TDEXTSTS_TCPCSUM / RGE_TDEXTSTS_UDPCSUM does not
-	 * take affect.
-	 */
-	if ((m->m_pkthdr.csum_flags &
-	    (M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) != 0) {
-		cflags |= RGE_TDEXTSTS_IPCSUM;
-		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-			cflags |= RGE_TDEXTSTS_TCPCSUM;
-		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
-			cflags |= RGE_TDEXTSTS_UDPCSUM;
-	}
-
-	/* Set up hardware VLAN tagging. */
-#if NVLAN > 0
-	if (m->m_flags & M_VLANTAG)
-		cflags |= swap16(m->m_pkthdr.ether_vtag) | RGE_TDEXTSTS_VTAG;
-#endif
+	rge_tx_offload(m, &cflags, &tflags);
 
 	cur = idx;
 	for (i = 1; i < txmap->dm_nsegs; i++) {
 		cur = RGE_NEXT_TX_DESC(cur);
 
-		cmdsts = RGE_TDCMDSTS_OWN;
+		cmdsts = RGE_TDCMDSTS_OWN | tflags;
 		cmdsts |= txmap->dm_segs[i].ds_len;
 
 		if (cur == RGE_TX_LIST_CNT - 1)
@@ -516,17 +704,24 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 		if (i == txmap->dm_nsegs - 1)
 			cmdsts |= RGE_TDCMDSTS_EOF;
 
-		d = &q->q_tx.rge_tx_list[cur];
-		d->rge_cmdsts = htole32(cmdsts);
-		d->rge_extsts = htole32(cflags);
-		d->rge_addr = htole64(txmap->dm_segs[i].ds_addr);
+		if (sc->rge_flags & RGE_FLAG_DESCV2) {
+			dv2 = &q->q_tx.rge_tx_list_v2[cur];
+			dv2->rge_cmdsts = htole32(cmdsts);
+			dv2->rge_extsts = htole32(cflags);
+			dv2->rge_addr = htole64(txmap->dm_segs[i].ds_addr);
+		} else {
+			d = &q->q_tx.rge_tx_list[cur];
+			d->rge_cmdsts = htole32(cmdsts);
+			d->rge_extsts = htole32(cflags);
+			d->rge_addr = htole64(txmap->dm_segs[i].ds_addr);
+		}
 	}
 
 	/* Update info of TX queue and descriptors. */
 	txq->txq_mbuf = m;
 	txq->txq_descidx = cur;
 
-	cmdsts = RGE_TDCMDSTS_SOF;
+	cmdsts = RGE_TDCMDSTS_SOF | tflags;
 	cmdsts |= txmap->dm_segs[0].ds_len;
 
 	if (idx == RGE_TX_LIST_CNT - 1)
@@ -534,10 +729,17 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 	if (txmap->dm_nsegs == 1)
 		cmdsts |= RGE_TDCMDSTS_EOF;
 
-	d = &q->q_tx.rge_tx_list[idx];
-	d->rge_cmdsts = htole32(cmdsts);
-	d->rge_extsts = htole32(cflags);
-	d->rge_addr = htole64(txmap->dm_segs[0].ds_addr);
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		dv2 = &q->q_tx.rge_tx_list_v2[idx];
+		dv2->rge_cmdsts = htole32(cmdsts);
+		dv2->rge_extsts = htole32(cflags);
+		dv2->rge_addr = htole64(txmap->dm_segs[0].ds_addr);
+	} else {
+		d = &q->q_tx.rge_tx_list[idx];
+		d->rge_cmdsts = htole32(cmdsts);
+		d->rge_extsts = htole32(cflags);
+		d->rge_addr = htole64(txmap->dm_segs[0].ds_addr);
+	}
 
 	if (cur >= idx) {
 		rge_tx_list_sync(sc, q, idx, txmap->dm_nsegs,
@@ -552,7 +754,10 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 	/* Transfer ownership of packet to the chip. */
 	cmdsts |= RGE_TDCMDSTS_OWN;
 	rge_tx_list_sync(sc, q, idx, 1, BUS_DMASYNC_POSTWRITE);
-	d->rge_cmdsts = htole32(cmdsts);
+	if (sc->rge_flags & RGE_FLAG_DESCV2)
+		dv2->rge_cmdsts = htole32(cmdsts);
+	else
+		d->rge_cmdsts = htole32(cmdsts);
 	rge_tx_list_sync(sc, q, idx, 1, BUS_DMASYNC_PREWRITE);
 
 	return (txmap->dm_nsegs);
@@ -589,8 +794,7 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCGIFRXR:
-		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, MCLBYTES, &sc->sc_queues->q_rx.rge_rx_ring);
+		error = rge_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
@@ -610,8 +814,7 @@ void
 rge_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
-	struct rge_softc *sc = ifp->if_softc;
-	struct rge_queues *q = sc->sc_queues;
+	struct rge_queues *q = ifq->ifq_softc;
 	struct mbuf *m;
 	int free, idx, used;
 	int queued = 0;
@@ -630,7 +833,7 @@ rge_start(struct ifqueue *ifq)
 
 	for (;;) {
 		if (free < RGE_TX_NSEGS + 2) {
-			ifq_set_oactive(&ifp->if_snd);
+			ifq_set_oactive(ifq);
 			break;
 		}
 
@@ -661,7 +864,7 @@ rge_start(struct ifqueue *ifq)
 	ifp->if_timer = 5;
 
 	q->q_tx.rge_txq_prodidx = idx;
-	ifq_serialize(ifq, &sc->sc_task);
+	ifq_serialize(ifq, &q->q_task);
 }
 
 void
@@ -679,7 +882,7 @@ void
 rge_init(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
-	struct rge_queues *q = sc->sc_queues;
+	pcireg_t reg;
 	uint32_t rxconf, val;
 	int i, num_miti;
 
@@ -689,8 +892,9 @@ rge_init(struct ifnet *ifp)
 	rge_set_macaddr(sc, sc->sc_arpcom.ac_enaddr);
 
 	/* Initialize RX and TX descriptors lists. */
-	rge_rx_list_init(q);
-	rge_tx_list_init(q);
+	for (i = 0; i < sc->sc_nqueues; i++)
+		rge_rx_list_init(&sc->sc_queues[i]);
+	rge_tx_list_init(&sc->sc_queues[0]);
 
 	if (rge_chipinit(sc))
 		return;
@@ -706,14 +910,9 @@ rge_init(struct ifnet *ifp)
 	    RGE_JUMBO_MTU + ETHER_HDR_LEN + 32);
 
 	/* Load the addresses of the RX and TX lists into the chip. */
-	RGE_WRITE_4(sc, RGE_RXDESC_ADDR_LO,
-	    RGE_ADDR_LO(q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr));
-	RGE_WRITE_4(sc, RGE_RXDESC_ADDR_HI,
-	    RGE_ADDR_HI(q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr));
-	RGE_WRITE_4(sc, RGE_TXDESC_ADDR_LO,
-	    RGE_ADDR_LO(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
-	RGE_WRITE_4(sc, RGE_TXDESC_ADDR_HI,
-	    RGE_ADDR_HI(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
+	for (i = 0; i < sc->sc_nqueues; i++)
+		rge_fill_rx_desc_addr(&sc->sc_queues[i], i);
+	rge_fill_tx_desc_addr(&sc->sc_queues[0], 0);
 
 	/* Set the initial RX and TX configurations. */
 	if (sc->rge_type == MAC_R25)
@@ -724,20 +923,25 @@ rge_init(struct ifnet *ifp)
 		rxconf = RGE_RXCFG_CONFIG_8125D;
 	else
 		rxconf = RGE_RXCFG_CONFIG_8126;
+	if (sc->rge_flags & RGE_FLAG_DESCV2)
+		rxconf &= ~RGE_RXCFG_ENBDESCV1;
 	RGE_WRITE_4(sc, RGE_RXCFG, rxconf);
 	RGE_WRITE_4(sc, RGE_TXCFG, RGE_TXCFG_CONFIG);
 
-	val = rge_read_csi(sc, 0x70c) & ~0x3f000000;
-	rge_write_csi(sc, 0x70c, val | 0x27000000);
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, 0x70c) & ~0x3f000000;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, 0x70c, reg | 0x27000000);
 
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27) {
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc)) {
 		/* Disable L1 timeout. */
-		val = rge_read_csi(sc, 0x890) & ~0x00000001;
-		rge_write_csi(sc, 0x890, val);
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, 0x890) & ~0x00000001;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, 0x890, reg);
 	} else if (!RGE_TYPE_R25D(sc))
 		RGE_WRITE_2(sc, 0x0382, 0x221b);
 
-	RGE_WRITE_1(sc, RGE_RSS_CTRL, 0);
+	if (sc->sc_nqueues > 1)
+		rge_init_rss(sc);
+	else
+		RGE_WRITE_4(sc, RGE_RSS_CTRL, 0);
 
 	val = RGE_READ_2(sc, RGE_RXQUEUE_CTRL) & ~0x001c;
 	RGE_WRITE_2(sc, RGE_RXQUEUE_CTRL, val | (fls(sc->sc_nqueues) - 1) << 2);
@@ -747,19 +951,25 @@ rge_init(struct ifnet *ifp)
 	rge_write_mac_ocp(sc, 0xc140, 0xffff);
 	rge_write_mac_ocp(sc, 0xc142, 0xffff);
 
-	RGE_MAC_SETBIT(sc, 0xeb58, 0x0001);
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		val = rge_read_mac_ocp(sc, 0xeb58) & ~0x0003;
+		rge_write_mac_ocp(sc, 0xeb58, val | 0x0002);
+	} else
+		RGE_MAC_SETBIT(sc, 0xeb58, 0x0001);
 
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27) {
-		RGE_CLRBIT_1(sc, 0xd8, 0x02);
-		if (sc->rge_type == MAC_R27) {
-			RGE_CLRBIT_1(sc, 0x20e4, 0x04);
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc)) {
+		if (sc->rge_flags & RGE_FLAG_DESCV2)
+			RGE_SETBIT_1(sc, 0xd8, 0x02);
+		else
+			RGE_CLRBIT_1(sc, 0xd8, 0x02);
+		if (RGE_TYPE_R27(sc)) {
 			RGE_MAC_CLRBIT(sc, 0xe00c, 0x1000);
 			RGE_MAC_CLRBIT(sc, 0xc0c2, 0x0040);
 		}
 	}
 
 	val = rge_read_mac_ocp(sc, 0xe614);
-	val &= (sc->rge_type == MAC_R27) ? ~0x0f00 : ~0x0700;
+	val &= RGE_TYPE_R27(sc) ? ~0x0f00 : ~0x0700;
 	if (sc->rge_type == MAC_R25 || RGE_TYPE_R25D(sc))
 		rge_write_mac_ocp(sc, 0xe614, val | 0x0300);
 	else if (sc->rge_type == MAC_R25B)
@@ -771,7 +981,7 @@ rge_init(struct ifnet *ifp)
 
 	val = rge_read_mac_ocp(sc, 0xe63e) & ~0x0c00;
 	rge_write_mac_ocp(sc, 0xe63e, val |
-	    ((fls(sc->sc_nqueues) - 1) & 0x03) << 10);
+	    ((fls(sc->sc_ntxqs) - 1) & 0x03) << 10);
 
 	val = rge_read_mac_ocp(sc, 0xe63e) & ~0x0030;
 	rge_write_mac_ocp(sc, 0xe63e, val | 0x0020);
@@ -808,6 +1018,7 @@ rge_init(struct ifnet *ifp)
 	rge_write_mac_ocp(sc, 0xd430, val | 0x045f);
 
 	RGE_SETBIT_1(sc, RGE_DLLPR, RGE_DLLPR_PFM_EN | RGE_DLLPR_TX_10M_PS_EN);
+	RGE_SETBIT_1(sc, RGE_PPSW, 0x40);
 
 	if (sc->rge_type == MAC_R25)
 		RGE_SETBIT_1(sc, RGE_MCUCMD, 0x01);
@@ -817,7 +1028,7 @@ rge_init(struct ifnet *ifp)
 		RGE_MAC_CLRBIT(sc, 0xe080, 0x0002);
 	}
 
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc))
 		RGE_MAC_CLRBIT(sc, 0xea1c, 0x0304);
 	else
 		RGE_MAC_CLRBIT(sc, 0xea1c, 0x0004);
@@ -829,15 +1040,20 @@ rge_init(struct ifnet *ifp)
 
 	RGE_CLRBIT_2(sc, 0x1880, 0x0030);
 
-	if (sc->rge_type == MAC_R27) {
+	if (RGE_TYPE_R27(sc)) {
 		val = rge_read_mac_ocp(sc, 0xd40c) & ~0xe038;
-		rge_write_phy_ocp(sc, 0xd40c, val | 0x8020);
+		rge_write_mac_ocp(sc, 0xd40c, val | 0x8020);
 	}
 
 	/* Config interrupt type. */
-	if (sc->rge_type == MAC_R27)
-		RGE_CLRBIT_1(sc, RGE_INT_CFG0, RGE_INT_CFG0_AVOID_MISS_INTR);
-	else if (sc->rge_type != MAC_R25)
+	if (RGE_TYPE_R27(sc)) {
+		val = RGE_READ_1(sc, RGE_INT_CFG0);
+		val &= ~(RGE_INT_CFG0_EN | RGE_INT_CFG0_AUTO_CLEAR_IMR |
+		    RGE_INT_CFG0_AVOID_MISS_INTR);
+		if (sc->rge_flags & RGE_FLAG_MULTIVEC)
+			val |= RGE_INT_CFG0_EN;
+		RGE_WRITE_1(sc, RGE_INT_CFG0, val);
+	} else if (sc->rge_type != MAC_R25)
 		RGE_CLRBIT_1(sc, RGE_INT_CFG0, RGE_INT_CFG0_EN);
 
 	/* Clear timer interrupts. */
@@ -859,6 +1075,15 @@ rge_init(struct ifnet *ifp)
 		RGE_WRITE_2(sc, RGE_INT_CFG1, 0);
 	}
 
+	if (sc->rge_flags & RGE_FLAG_MULTIVEC) {
+		for (i = 0; i < sc->sc_nqueues; i++) {
+			RGE_WRITE_1(sc, RGE_RX_MULTIVEC_INTMITI(i),
+			    RGE_TIMER_VALUE);
+			RGE_WRITE_1(sc, RGE_TX_MULTIVEC_INTMITI(i),
+			    RGE_TIMER_VALUE);
+		}
+	}
+
 	RGE_MAC_SETBIT(sc, 0xc0ac, 0x1f80);
 
 	rge_write_mac_ocp(sc, 0xe098, 0xc302);
@@ -866,6 +1091,7 @@ rge_init(struct ifnet *ifp)
 	RGE_MAC_CLRBIT(sc, 0xe032, 0x0003);
 	val = rge_read_csi(sc, 0x98) & ~0x0000ff00;
 	rge_write_csi(sc, 0x98, val);
+	DELAY(20);
 
 	if (RGE_TYPE_R25D(sc)) {
 		val = rge_read_mac_ocp(sc, 0xe092) & ~0x00ff;
@@ -880,16 +1106,19 @@ rge_init(struct ifnet *ifp)
 	RGE_READ_2(sc, RGE_CPLUSCMD);
 
 	/* Set Maximum frame size. */
-	RGE_WRITE_2(sc, RGE_RXMAXSIZE, RGE_JUMBO_FRAMELEN);
+	if (sc->rge_type == MAC_R25 || sc->rge_type == MAC_R25B)
+		RGE_WRITE_2(sc, RGE_RXMAXSIZE, RGE_JUMBO_FRAMELEN);
+	else
+		RGE_WRITE_2(sc, RGE_RXMAXSIZE,
+		    RGE_JUMBO_FRAMELEN | RGE_RXCFG_VLANPHYS);
 
 	/* Disable RXDV gate. */
 	RGE_CLRBIT_1(sc, RGE_PPSW, 0x08);
-	DELAY(2000);
 
 	/* Program promiscuous mode and multicast filters. */
 	rge_iff(sc);
 
-	if (sc->rge_type == MAC_R27)
+	if (RGE_TYPE_R27(sc))
 		RGE_CLRBIT_1(sc, RGE_RADMFIFO_PROTECT, 0x2001);
 
 	rge_disable_aspm_clkreq(sc);
@@ -903,10 +1132,13 @@ rge_init(struct ifnet *ifp)
 	RGE_WRITE_1(sc, RGE_CMD, RGE_CMD_TXENB | RGE_CMD_RXENB);
 
 	/* Enable interrupts. */
-	rge_setup_intr(sc, RGE_IMTYPE_SIM);
+	if (sc->rge_flags & RGE_FLAG_MULTIVEC)
+		rge_enable_queues(sc);
+	else
+		rge_setup_intr(sc, RGE_IMTYPE_SIM);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
+	ifq_clr_oactive(ifp->if_ifqs[0]);
 
 	timeout_add_sec(&sc->sc_timeout, 1);
 }
@@ -918,7 +1150,6 @@ void
 rge_stop(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
-	struct rge_queues *q = sc->sc_queues;
 	int i;
 
 	timeout_del(&sc->sc_timeout);
@@ -936,34 +1167,9 @@ rge_stop(struct ifnet *ifp)
 	RGE_MAC_CLRBIT(sc, 0xc0ac, 0x1f80);
 
 	intr_barrier(sc->sc_ih);
-	ifq_barrier(&ifp->if_snd);
-	ifq_clr_oactive(&ifp->if_snd);
-
-	if (q->q_rx.rge_head != NULL) {
-		m_freem(q->q_rx.rge_head);
-		q->q_rx.rge_head = NULL;
-		q->q_rx.rge_tail = &q->q_rx.rge_head;
-	}
-
-	/* Free the TX list buffers. */
-	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
-		if (q->q_tx.rge_txq[i].txq_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    q->q_tx.rge_txq[i].txq_dmamap);
-			m_freem(q->q_tx.rge_txq[i].txq_mbuf);
-			q->q_tx.rge_txq[i].txq_mbuf = NULL;
-		}
-	}
-
-	/* Free the RX list buffers. */
-	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
-		if (q->q_rx.rge_rxq[i].rxq_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    q->q_rx.rge_rxq[i].rxq_dmamap);
-			m_freem(q->q_rx.rge_rxq[i].rxq_mbuf);
-			q->q_rx.rge_rxq[i].rxq_mbuf = NULL;
-		}
-	}
+	for (i = 0; i < sc->sc_nqueues; i++)
+		rge_free_rx_ring(sc, &sc->sc_queues[i]);
+	rge_free_tx_ring(sc, &sc->sc_queues[0]);
 }
 
 /*
@@ -981,9 +1187,10 @@ rge_ifmedia_upd(struct ifnet *ifp)
 
 	/* Disable Gigabit Lite. */
 	RGE_PHY_CLRBIT(sc, 0xa428, 0x0200);
-	RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0001);
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc))
 		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0007);
+	else
+		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0001);
 
 	val = rge_read_phy_ocp(sc, 0xa5d4);
 	switch (sc->rge_type) {
@@ -1092,78 +1299,31 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 }
 
-/*
- * Allocate memory for RX/TX rings.
- */
 int
-rge_allocmem(struct rge_softc *sc)
+rge_rx_dma_alloc(struct rge_softc *sc, struct rge_queues *q)
 {
-	struct rge_queues *q = sc->sc_queues;
-	int error, i;
+	void **desc;
+	int descsz, error, i;
 
-	/* Allocate DMA'able memory for the TX ring. */
-	error = bus_dmamap_create(sc->sc_dmat, RGE_TX_LIST_SZ, 1,
-	    RGE_TX_LIST_SZ, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
-	    &q->q_tx.rge_tx_list_map);
-	if (error) {
-		printf("%s: can't create TX list map\n", sc->sc_dev.dv_xname);
-		return (error);
-	}
-	error = bus_dmamem_alloc(sc->sc_dmat, RGE_TX_LIST_SZ, RGE_ALIGN, 0,
-	    &q->q_tx.rge_tx_listseg, 1, &q->q_tx.rge_tx_listnseg,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT);
-	if (error) {
-		printf("%s: can't alloc TX list\n", sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	/* Load the map for the TX ring. */
-	error = bus_dmamem_map(sc->sc_dmat, &q->q_tx.rge_tx_listseg,
-	    q->q_tx.rge_tx_listnseg, RGE_TX_LIST_SZ,
-	    (caddr_t *)&q->q_tx.rge_tx_list, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: can't map TX dma buffers\n", sc->sc_dev.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, &q->q_tx.rge_tx_listseg,
-		    q->q_tx.rge_tx_listnseg);
-		return (error);
-	}
-	error = bus_dmamap_load(sc->sc_dmat, q->q_tx.rge_tx_list_map,
-	    q->q_tx.rge_tx_list, RGE_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load TX dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmat, q->q_tx.rge_tx_list_map);
-		bus_dmamem_unmap(sc->sc_dmat,
-		    (caddr_t)q->q_tx.rge_tx_list, RGE_TX_LIST_SZ);
-		bus_dmamem_free(sc->sc_dmat, &q->q_tx.rge_tx_listseg,
-		    q->q_tx.rge_tx_listnseg);
-		return (error);
-	}
-
-	/* Create DMA maps for TX buffers. */
-	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, RGE_JUMBO_FRAMELEN,
-		    RGE_TX_NSEGS, RGE_JUMBO_FRAMELEN, 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
-		    &q->q_tx.rge_txq[i].txq_dmamap);
-		if (error) {
-			printf("%s: can't create DMA map for TX\n",
-			    sc->sc_dev.dv_xname);
-			return (error);
-		}
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		desc = (void **)&q->q_rx.rge_rx_list_v2;
+		descsz = sizeof(struct rge_rx_desc_v2);
+	} else {
+		desc = (void **)&q->q_rx.rge_rx_list;
+		descsz = sizeof(struct rge_rx_desc);
 	}
 
 	/* Allocate DMA'able memory for the RX ring. */
-	error = bus_dmamap_create(sc->sc_dmat, RGE_RX_LIST_SZ, 1,
-	    RGE_RX_LIST_SZ, 0,
+	error = bus_dmamap_create(sc->sc_dmat, RGE_RX_LIST_CNT * descsz, 1,
+	    RGE_RX_LIST_CNT * descsz, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 	    &q->q_rx.rge_rx_list_map);
 	if (error) {
 		printf("%s: can't create RX list map\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
-	error = bus_dmamem_alloc(sc->sc_dmat, RGE_RX_LIST_SZ, RGE_ALIGN, 0,
-	    &q->q_rx.rge_rx_listseg, 1, &q->q_rx.rge_rx_listnseg,
+	error = bus_dmamem_alloc(sc->sc_dmat, RGE_RX_LIST_CNT * descsz,
+	    RGE_ALIGN, 0, &q->q_rx.rge_rx_listseg, 1, &q->q_rx.rge_rx_listnseg,
 	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT);
 	if (error) {
 		printf("%s: can't alloc RX list\n", sc->sc_dev.dv_xname);
@@ -1172,21 +1332,21 @@ rge_allocmem(struct rge_softc *sc)
 
 	/* Load the map for the RX ring. */
 	error = bus_dmamem_map(sc->sc_dmat, &q->q_rx.rge_rx_listseg,
-	    q->q_rx.rge_rx_listnseg, RGE_RX_LIST_SZ,
-	    (caddr_t *)&q->q_rx.rge_rx_list, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    q->q_rx.rge_rx_listnseg, RGE_RX_LIST_CNT * descsz,
+	    (caddr_t *)desc, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: can't map RX dma buffers\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &q->q_rx.rge_rx_listseg,
 		    q->q_rx.rge_rx_listnseg);
 		return (error);
 	}
-	error = bus_dmamap_load(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-	    q->q_rx.rge_rx_list, RGE_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, q->q_rx.rge_rx_list_map, *desc,
+	    RGE_RX_LIST_CNT * descsz, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load RX dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamap_destroy(sc->sc_dmat, q->q_rx.rge_rx_list_map);
-		bus_dmamem_unmap(sc->sc_dmat,
-		    (caddr_t)q->q_rx.rge_rx_list, RGE_RX_LIST_SZ);
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)*desc,
+		    RGE_RX_LIST_CNT * descsz);
 		bus_dmamem_free(sc->sc_dmat, &q->q_rx.rge_rx_listseg,
 		    q->q_rx.rge_rx_listnseg);
 		return (error);
@@ -1195,11 +1355,80 @@ rge_allocmem(struct rge_softc *sc)
 	/* Create DMA maps for RX buffers. */
 	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, RGE_JUMBO_FRAMELEN, 1,
-		    RGE_JUMBO_FRAMELEN, 0, 
+		    RGE_JUMBO_FRAMELEN, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &q->q_rx.rge_rxq[i].rxq_dmamap);
 		if (error) {
 			printf("%s: can't create DMA map for RX\n",
+			    sc->sc_dev.dv_xname);
+			return (error);
+		}
+	}
+
+	return (error);
+}
+
+int
+rge_tx_dma_alloc(struct rge_softc *sc, struct rge_queues *q)
+{
+	void **desc;
+	int descsz, error, i;
+
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		desc = (void **)&q->q_tx.rge_tx_list_v2;
+		descsz = sizeof(struct rge_tx_desc_v2);
+	} else {
+		desc = (void **)&q->q_tx.rge_tx_list;
+		descsz = sizeof(struct rge_tx_desc);
+	}
+
+	/* Allocate DMA'able memory for the TX ring. */
+	error = bus_dmamap_create(sc->sc_dmat, RGE_TX_LIST_CNT * descsz, 1,
+	    RGE_TX_LIST_CNT * descsz, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+	    &q->q_tx.rge_tx_list_map);
+	if (error) {
+		printf("%s: can't create TX list map\n", sc->sc_dev.dv_xname);
+		return (error);
+	}
+	error = bus_dmamem_alloc(sc->sc_dmat, RGE_TX_LIST_CNT * descsz,
+	    RGE_ALIGN, 0, &q->q_tx.rge_tx_listseg, 1, &q->q_tx.rge_tx_listnseg,
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT);
+	if (error) {
+		printf("%s: can't alloc TX list\n", sc->sc_dev.dv_xname);
+		return (error);
+	}
+
+	/* Load the map for the TX ring. */
+	error = bus_dmamem_map(sc->sc_dmat, &q->q_tx.rge_tx_listseg,
+	    q->q_tx.rge_tx_listnseg, RGE_TX_LIST_CNT * descsz,
+	    (caddr_t *)desc, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	if (error) {
+		printf("%s: can't map TX dma buffers\n", sc->sc_dev.dv_xname);
+		bus_dmamem_free(sc->sc_dmat, &q->q_tx.rge_tx_listseg,
+		    q->q_tx.rge_tx_listnseg);
+		return (error);
+	}
+	error = bus_dmamap_load(sc->sc_dmat, q->q_tx.rge_tx_list_map, *desc,
+	    RGE_TX_LIST_CNT * descsz, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load TX dma map\n", sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmat, q->q_tx.rge_tx_list_map);
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)*desc,
+		    RGE_TX_LIST_CNT * descsz);
+		bus_dmamem_free(sc->sc_dmat, &q->q_tx.rge_tx_listseg,
+		    q->q_tx.rge_tx_listnseg);
+		return (error);
+	}
+
+	/* Create DMA maps for TX buffers. */
+	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MAXMCLBYTES,
+		    RGE_TX_NSEGS, RGE_JUMBO_FRAMELEN, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &q->q_tx.rge_txq[i].txq_dmamap);
+		if (error) {
+			printf("%s: can't create DMA map for TX\n",
 			    sc->sc_dev.dv_xname);
 			return (error);
 		}
@@ -1217,10 +1446,11 @@ rge_newbuf(struct rge_queues *q)
 	struct rge_softc *sc = q->q_sc;
 	struct mbuf *m;
 	struct rge_rx_desc *r;
+	struct rge_rx_desc_v2 *rv2;
 	struct rge_rxq *rxq;
 	bus_dmamap_t rxmap;
 	uint32_t cmdsts;
-	int idx;
+	int descsz, idx;
 
 	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (m == NULL)
@@ -1241,41 +1471,83 @@ rge_newbuf(struct rge_queues *q)
 	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	/* Map the segments into RX descriptors. */
-	r = &q->q_rx.rge_rx_list[idx];
-
 	rxq->rxq_mbuf = m;
 
 	cmdsts = rxmap->dm_segs[0].ds_len;
 	if (idx == RGE_RX_LIST_CNT - 1)
 		cmdsts |= RGE_RDCMDSTS_EOR;
 
-	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
-	r->hi_qword1.rx_qword4.rge_extsts = htole32(0);
-	r->hi_qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		descsz = sizeof(struct rge_rx_desc_v2);
+		rv2 = &q->q_rx.rge_rx_list_v2[idx];
+		rv2->rx_qword0.rge_cmdsts = htole32(cmdsts);
+		rv2->rx_qword0.rge_extsts = htole32(0);
+		rv2->qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
+	} else {
+		descsz = sizeof(struct rge_rx_desc);
+		r = &q->q_rx.rge_rx_list[idx];
+		r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
+		r->hi_qword1.rx_qword4.rge_extsts = htole32(0);
+		r->hi_qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
+	}
+	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map, idx * descsz,
+	    descsz, BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-	    BUS_DMASYNC_PREWRITE);
-
-	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map, idx * descsz,
+	    descsz, BUS_DMASYNC_POSTWRITE);
 	cmdsts |= RGE_RDCMDSTS_OWN;
-	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
-	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if (sc->rge_flags & RGE_FLAG_DESCV2)
+		rv2->rx_qword0.rge_cmdsts = htole32(cmdsts);
+	else
+		r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
+	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map, idx * descsz,
+	    descsz, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	q->q_rx.rge_rxq_prodidx = RGE_NEXT_RX_DESC(idx);
 
 	return (0);
 }
 
+int
+rge_rxrinfo(struct rge_softc *sc, struct if_rxrinfo *ifri)
+{
+        struct if_rxring_info *ifr;
+        int i;
+        int error;
+
+        ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_TEMP,
+            M_WAITOK | M_ZERO | M_CANFAIL);
+        if (ifr == NULL)
+                return (ENOMEM);
+
+        for (i = 0; i < sc->sc_nqueues; i++) {
+                ifr[i].ifr_size = MCLBYTES;
+                ifr[i].ifr_info = sc->sc_queues[i].q_rx.rge_rx_ring;
+        }
+
+        error = if_rxr_info_ioctl(ifri, sc->sc_nqueues, ifr);
+        free(ifr, M_TEMP, sc->sc_nqueues * sizeof(*ifr));
+
+        return (error);
+}
+
 void
 rge_rx_list_init(struct rge_queues *q)
 {
-	memset(q->q_rx.rge_rx_list, 0, RGE_RX_LIST_SZ);
+	struct rge_softc *sc = q->q_sc;
+	void *desc;
+	int descsz;
+
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		desc = q->q_rx.rge_rx_list_v2;
+		descsz = sizeof(struct rge_rx_desc_v2);
+	} else {
+		desc = q->q_rx.rge_rx_list;
+		descsz = sizeof(struct rge_rx_desc);
+	}
+
+	memset(desc, 0, RGE_RX_LIST_CNT * descsz);
 
 	q->q_rx.rge_rxq_prodidx = q->q_rx.rge_rxq_considx = 0;
 	q->q_rx.rge_head = NULL;
@@ -1299,25 +1571,205 @@ rge_fill_rx_ring(struct rge_queues *q)
 }
 
 void
+rge_fill_rx_desc_addr(struct rge_queues *q, int queue)
+{
+	struct rge_softc *sc = q->q_sc;
+
+	if (queue == 0) {
+		RGE_WRITE_4(sc, RGE_RXDESC_ADDR_LO,
+		    RGE_ADDR_LO(q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr));
+		RGE_WRITE_4(sc, RGE_RXDESC_ADDR_HI,
+		    RGE_ADDR_HI(q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr));
+	} else {
+		RGE_WRITE_4(sc, RGE_RXDESC_ADDR_LO_V2(queue),
+		    RGE_ADDR_LO(q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr));
+		RGE_WRITE_4(sc, RGE_RXDESC_ADDR_HI_V2(queue),
+		    RGE_ADDR_HI(q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr));
+	}
+}
+
+void
+rge_fill_tx_desc_addr(struct rge_queues *q, int queue)
+{
+	struct rge_softc *sc = q->q_sc;
+
+	if (queue == 0) {
+		RGE_WRITE_4(sc, RGE_TXDESC_ADDR_LO,
+		    RGE_ADDR_LO(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
+		RGE_WRITE_4(sc, RGE_TXDESC_ADDR_HI,
+		    RGE_ADDR_HI(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
+	} else {
+		RGE_WRITE_4(sc, RGE_TXDESC_ADDR_LO_V2(queue),
+		    RGE_ADDR_LO(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
+		RGE_WRITE_4(sc, RGE_TXDESC_ADDR_HI_V2(queue),
+		    RGE_ADDR_HI(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
+	}
+}
+
+void
 rge_tx_list_init(struct rge_queues *q)
 {
 	struct rge_softc *sc = q->q_sc;
 	struct rge_tx_desc *d;
-	int i;
+	struct rge_tx_desc_v2 *dv2;
+	void *desc;
+	int descsz, i;
 
-	memset(q->q_tx.rge_tx_list, 0, RGE_TX_LIST_SZ);
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		desc = q->q_tx.rge_tx_list_v2;
+		descsz = sizeof(struct rge_tx_desc_v2);
+	} else {
+		desc = q->q_tx.rge_tx_list;
+		descsz = sizeof(struct rge_tx_desc);
+	}
+
+	memset(desc, 0, RGE_TX_LIST_CNT * descsz);
 
 	for (i = 0; i < RGE_TX_LIST_CNT; i++)
 		q->q_tx.rge_txq[i].txq_mbuf = NULL;
 
-	d = &q->q_tx.rge_tx_list[RGE_TX_LIST_CNT - 1];
-	d->rge_cmdsts = htole32(RGE_TDCMDSTS_EOR);
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		dv2 = &q->q_tx.rge_tx_list_v2[RGE_TX_LIST_CNT - 1];
+		dv2->rge_cmdsts = htole32(RGE_TDCMDSTS_EOR);
+	} else {
+		d = &q->q_tx.rge_tx_list[RGE_TX_LIST_CNT - 1];
+		d->rge_cmdsts = htole32(RGE_TDCMDSTS_EOR);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, q->q_tx.rge_tx_list_map, 0,
 	    q->q_tx.rge_tx_list_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	q->q_tx.rge_txq_prodidx = q->q_tx.rge_txq_considx = 0;
+}
+
+void
+rge_free_rx_ring(struct rge_softc *sc, struct rge_queues *q)
+{
+	int i;
+
+	if (sc->sc_intrmap)
+		intr_barrier(q->q_ihc);
+
+	if (q->q_rx.rge_head != NULL) {
+		m_freem(q->q_rx.rge_head);
+		q->q_rx.rge_head = NULL;
+		q->q_rx.rge_tail = &q->q_rx.rge_head;
+	}
+
+	/* Free the RX list buffers. */
+	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
+		if (q->q_rx.rge_rxq[i].rxq_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    q->q_rx.rge_rxq[i].rxq_dmamap);
+			m_freem(q->q_rx.rge_rxq[i].rxq_mbuf);
+			q->q_rx.rge_rxq[i].rxq_mbuf = NULL;
+		}
+	}
+}
+
+void
+rge_free_tx_ring(struct rge_softc *sc, struct rge_queues *q)
+{
+	int i;
+
+	ifq_barrier(q->q_tx.rge_tx_ifq);
+	ifq_clr_oactive(q->q_tx.rge_tx_ifq);
+
+	if (sc->sc_intrmap)
+		intr_barrier(q->q_tx_ihc);
+
+	/* Free the TX list buffers. */
+	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
+		if (q->q_tx.rge_txq[i].txq_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    q->q_tx.rge_txq[i].txq_dmamap);
+			m_freem(q->q_tx.rge_txq[i].txq_mbuf);
+			q->q_tx.rge_txq[i].txq_mbuf = NULL;
+		}
+	}
+}
+
+void
+rge_rxcsum(struct rge_softc *sc, uint32_t cmdsts, uint32_t extsts,
+    struct mbuf *m)
+{
+	if (sc->rge_flags & RGE_FLAG_DESCV2) {
+		/* Check IP header checksum. */
+		if (!(cmdsts & RGE_RDCMDSTS_IPCSUMERR_V2) &&
+		    (extsts & RGE_RDEXTSTS_IPV4))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+		/* Check TCP/UDP checksum. */
+		if ((extsts & (RGE_RDEXTSTS_IPV4 | RGE_RDEXTSTS_IPV6)) &&
+		    (((cmdsts & RGE_RDCMDSTS_TCPPKT_V2) &&
+		    !(cmdsts & RGE_RDCMDSTS_TCPCSUMERR_V2)) ||
+		    ((cmdsts & RGE_RDCMDSTS_UDPPKT_V2) &&
+		    !(cmdsts & RGE_RDCMDSTS_UDPCSUMERR_V2))))
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
+			    M_UDP_CSUM_IN_OK;
+	} else {
+		/* Check IP header checksum. */
+		if (!(extsts & RGE_RDEXTSTS_IPCSUMERR) &&
+		    (extsts & RGE_RDEXTSTS_IPV4))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+		/* Check TCP/UDP checksum. */
+		if ((extsts & (RGE_RDEXTSTS_IPV4 | RGE_RDEXTSTS_IPV6)) &&
+		    (((extsts & RGE_RDEXTSTS_TCPPKT) &&
+		    !(extsts & RGE_RDEXTSTS_TCPCSUMERR)) ||
+		    ((extsts & RGE_RDEXTSTS_UDPPKT) &&
+		    !(extsts & RGE_RDEXTSTS_UDPCSUMERR))))
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
+			    M_UDP_CSUM_IN_OK;
+	}
+}
+
+void
+rge_tx_offload(struct mbuf *m, uint32_t *cflags, uint32_t *tflags)
+{
+	struct ether_extracted ext;
+	uint32_t hdrlen;
+
+	/* Set up hardware VLAN tagging. */
+#if NVLAN > 0
+	if (m->m_flags & M_VLANTAG)
+		*cflags |= swap16(m->m_pkthdr.ether_vtag) | RGE_TDEXTSTS_VTAG;
+#endif
+
+	ether_extract_headers(m, &ext);
+	hdrlen = sizeof(*ext.eh) + ext.iphlen;
+
+	if (m->m_pkthdr.csum_flags & M_TCP_TSO) {
+		uint32_t outlen;
+
+		if (ext.tcp && m->m_pkthdr.ph_mss > 0 &&
+		    hdrlen <= RGE_TDCMDSTS_TCPHO_MAX) {
+			*tflags = hdrlen << RGE_TDCMDSTS_TCPHO_SHIFT;
+			outlen = MIN(m->m_pkthdr.ph_mss, RGE_TDEXTSTS_MAX_MSS);
+			*cflags |= outlen << RGE_TDEXTSTS_MSS_SHIFT;
+			*cflags |= RGE_TDEXTSTS_TSOENB_V2 |
+			    RGE_TDEXTSTS_TSOTCP_V2;
+			*cflags |= (ext.ip4) ?
+			    RGE_TDEXTSTS_TSOIPV4_V2 : RGE_TDEXTSTS_TSOIPV6_V2;
+
+			tcpstat_add(tcps_outpkttso,
+			    (ext.paylen + outlen - 1) / outlen);
+		} else
+			tcpstat_inc(tcps_outbadtso);
+	} else if (m->m_pkthdr.csum_flags &
+	    (M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) {
+		if (ext.ip4)
+			*cflags |= RGE_TDEXTSTS_IPCSUM;
+#ifdef INET6
+		else if (ext.ip6)
+			*tflags = hdrlen << RGE_TDCMDSTS_TCPHO_SHIFT;
+#endif
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+			*cflags |= RGE_TDEXTSTS_TCPCSUM;
+		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
+			*cflags |= RGE_TDEXTSTS_UDPCSUM;
+	}
 }
 
 int
@@ -1329,24 +1781,37 @@ rge_rxeof(struct rge_queues *q)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct if_rxring *rxr = &q->q_rx.rge_rx_ring;
 	struct rge_rx_desc *cur_rx;
+	struct rge_rx_desc_v2 *cur_rx_v2;
 	struct rge_rxq *rxq;
-	uint32_t rxstat, extsts;
-	int i, mlen, rx = 0;
-	int cons;
+	uint32_t extsts, rxstat;
+	uint32_t hash = 0, hashtype = 0;
+	int cons, descsz, i, mlen, rx = 0;
 
 	i = cons = q->q_rx.rge_rxq_considx;
 
-	while (if_rxr_inuse(rxr) > 0) {
-		cur_rx = &q->q_rx.rge_rx_list[i];
+	descsz = (sc->rge_flags & RGE_FLAG_DESCV2) ?
+	    sizeof(*cur_rx_v2) : sizeof(*cur_rx);
 
+	while (if_rxr_inuse(rxr) > 0) {
 		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-		    i * sizeof(*cur_rx), sizeof(*cur_rx),
-		    BUS_DMASYNC_POSTREAD);
-		rxstat = letoh32(cur_rx->hi_qword1.rx_qword4.rge_cmdsts);
+		    i * descsz, descsz, BUS_DMASYNC_POSTREAD);
+
+		if (sc->rge_flags & RGE_FLAG_DESCV2) {
+			cur_rx_v2 = &q->q_rx.rge_rx_list_v2[i];
+			rxstat = letoh32(cur_rx_v2->rx_qword0.rge_cmdsts);
+			hash = letoh32(cur_rx_v2->qword0.rx_rss.rge_rss);
+			hashtype =
+			    letoh32(cur_rx_v2->qword0.rx_rss.rge_hdr_info) &
+			    RGE_RDHDRINFO_RSSTYPE_MASK;
+		} else {
+			cur_rx = &q->q_rx.rge_rx_list[i];
+			rxstat =
+			    letoh32(cur_rx->hi_qword1.rx_qword4.rge_cmdsts);
+		}
+
 		if (rxstat & RGE_RDCMDSTS_OWN) {
 			bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-			    i * sizeof(*cur_rx), sizeof(*cur_rx),
-			    BUS_DMASYNC_PREREAD);
+			    i * descsz, descsz, BUS_DMASYNC_PREREAD);
 			break;
 		}
 
@@ -1361,7 +1826,7 @@ rge_rxeof(struct rge_queues *q)
 		if_rxr_put(rxr, 1);
 		rx = 1;
 
-		if (ISSET(rxstat, RGE_RDCMDSTS_SOF)) {
+		if (ISSET(rxstat, rge_rxstatus_mask(sc, CMDSTS_SOF))) {
 			if (q->q_rx.rge_head != NULL) {
 				ifp->if_ierrors++;
 				m_freem(q->q_rx.rge_head);
@@ -1384,7 +1849,7 @@ rge_rxeof(struct rge_queues *q)
 		m = q->q_rx.rge_head;
 		m->m_pkthdr.len += mlen;
 
-		if (rxstat & RGE_RDCMDSTS_RXERRSUM) {
+		if (rxstat & rge_rxstatus_mask(sc, CMDSTS_RXERRSUM)) {
 			ifp->if_ierrors++;
 			m_freem(m);
 			q->q_rx.rge_head = NULL;
@@ -1392,7 +1857,7 @@ rge_rxeof(struct rge_queues *q)
 			continue;
 		}
 
-		if (!ISSET(rxstat, RGE_RDCMDSTS_EOF))
+		if (!ISSET(rxstat, rge_rxstatus_mask(sc, CMDSTS_EOF)))
 			continue;
 
 		q->q_rx.rge_head = NULL;
@@ -1400,21 +1865,16 @@ rge_rxeof(struct rge_queues *q)
 
 		m_adj(m, -ETHER_CRC_LEN);
 
-		extsts = letoh32(cur_rx->hi_qword1.rx_qword4.rge_extsts);
+		extsts = (sc->rge_flags & RGE_FLAG_DESCV2) ?
+		    letoh32(cur_rx_v2->rx_qword0.rge_extsts) :
+		    letoh32(cur_rx->hi_qword1.rx_qword4.rge_extsts);
 
-		/* Check IP header checksum. */
-		if (!(extsts & RGE_RDEXTSTS_IPCSUMERR) &&
-		    (extsts & RGE_RDEXTSTS_IPV4))
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+		rge_rxcsum(sc, rxstat, extsts, m);
 
-		/* Check TCP/UDP checksum. */
-		if ((extsts & (RGE_RDEXTSTS_IPV4 | RGE_RDEXTSTS_IPV6)) &&
-		    (((extsts & RGE_RDEXTSTS_TCPPKT) &&
-		    !(extsts & RGE_RDEXTSTS_TCPCSUMERR)) ||
-		    ((extsts & RGE_RDEXTSTS_UDPPKT) &&
-		    !(extsts & RGE_RDEXTSTS_UDPCSUMERR))))
-			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
-			    M_UDP_CSUM_IN_OK;
+		if (hashtype != RGE_RDHDRINFO_RSSTYPE_NONE) {
+			m->m_pkthdr.ph_flowid = hash;
+			m->m_pkthdr.csum_flags |= M_FLOWID;
+		}
 
 #if NVLAN > 0
 		if (extsts & RGE_RDEXTSTS_VTAG) {
@@ -1432,21 +1892,18 @@ rge_rxeof(struct rge_queues *q)
 
 	if (i >= cons) {
 		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-		    cons * sizeof(*cur_rx), (i - cons) * sizeof(*cur_rx),
-		    BUS_DMASYNC_POSTWRITE);
+		    cons * descsz, (i - cons) * descsz, BUS_DMASYNC_POSTWRITE);
 	} else {
 		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-		    cons * sizeof(*cur_rx),
-		    (RGE_RX_LIST_CNT - cons) * sizeof(*cur_rx),
+		    cons * descsz, (RGE_RX_LIST_CNT - cons) * descsz,
 		    BUS_DMASYNC_POSTWRITE);
 		if (i > 0) {
 			bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-			    0, i * sizeof(*cur_rx),
-			    BUS_DMASYNC_POSTWRITE);
+			    0, i * descsz, BUS_DMASYNC_POSTWRITE);
 		}
 	}
 
-	if (ifiq_input(&ifp->if_rcv, &ml))
+	if (ifiq_input(q->q_rx.rge_rx_ifiq, &ml))
 		if_rxr_livelocked(rxr);
 
 	q->q_rx.rge_rxq_considx = i;
@@ -1474,7 +1931,9 @@ rge_txeof(struct rge_queues *q)
 		cur = txq->txq_descidx;
 
 		rge_tx_list_sync(sc, q, cur, 1, BUS_DMASYNC_POSTREAD);
-		txstat = q->q_tx.rge_tx_list[cur].rge_cmdsts;
+		txstat = (sc->rge_flags & RGE_FLAG_DESCV2) ?
+		    q->q_tx.rge_tx_list_v2[cur].rge_cmdsts :
+		    q->q_tx.rge_tx_list[cur].rge_cmdsts;
 		rge_tx_list_sync(sc, q, cur, 1, BUS_DMASYNC_PREREAD);
 		if (ISSET(txstat, htole32(RGE_TDCMDSTS_OWN))) {
 			free = 2;
@@ -1512,10 +1971,10 @@ rge_txeof(struct rge_queues *q)
 
 	q->q_tx.rge_txq_considx = idx;
 
-	if (ifq_is_oactive(&ifp->if_snd))
-		ifq_restart(&ifp->if_snd);
+	if (ifq_is_oactive(q->q_tx.rge_tx_ifq))
+		ifq_restart(q->q_tx.rge_tx_ifq);
 	else if (free == 2)
-		ifq_serialize(&ifp->if_snd, &sc->sc_task);
+		ifq_serialize(q->q_tx.rge_tx_ifq, &q->q_task);
 	else
 		ifp->if_timer = 0;
 
@@ -1620,6 +2079,43 @@ rge_iff(struct rge_softc *sc)
 	RGE_WRITE_4(sc, RGE_RXCFG, rxfilt);
 	RGE_WRITE_4(sc, RGE_MAR0, swap32(hashes[1]));
 	RGE_WRITE_4(sc, RGE_MAR4, swap32(hashes[0]));
+}
+
+void
+rge_init_rss(struct rge_softc *sc)
+{
+	uint32_t rss_key[RGE_RSS_KEY_SIZE / sizeof(uint32_t)];
+	uint32_t ctrl, reta = 0;
+	int i, qid;
+
+	stoeplitz_to_key(rss_key, sizeof(rss_key));
+
+	ctrl = (fls(sc->sc_nqueues) - 1) << 16;
+	ctrl |= (RGE_RSS_CTRL_IPV4 | RGE_RSS_CTRL_IPV6);
+	ctrl |= (RGE_RSS_CTRL_TCP_IPV4 | RGE_RSS_CTRL_TCP_IPV6);
+	ctrl |= (RGE_RSS_CTRL_IPV6_EXT | RGE_RSS_CTRL_TCP_IPV6_EXT);
+	ctrl |= (fls(RGE_RSS_MAX_INDTBL_SIZE) - 1) << 8;
+	RGE_WRITE_4(sc, RGE_RSS_CTRL, ctrl);
+
+	/* Set up the redirection table. */
+	for (i = 0; i < RGE_RSS_MAX_INDTBL_SIZE; i++) {
+		qid = (i % sc->sc_nqueues);
+
+		/*
+		 * The low 8 bits are for hash value (n+0);
+		 * The next 8 bits are for hash value (n+1), etc.
+		 */
+		reta = reta >> 8;
+		reta |= (((uint32_t)qid) << 24);
+		if ((i & 3) == 3) {
+			RGE_WRITE_4(sc, RGE_RSS_INDTBL(i >> 2), reta);
+			reta = 0;
+		}
+	}
+
+	/* Now fill our hash function seeds. */
+	for (i = 0; i < nitems(rss_key); i++)
+		RGE_WRITE_4(sc, RGE_RSS_KEY(i), letoh32(rss_key[i]));
 }
 
 int
@@ -1831,7 +2327,7 @@ rge_mac_config_ext_mcu(struct rge_softc *sc, enum rge_mac_type type)
 		rge_write_mac_ocp(sc, 0xfc32, 0x4298);
 		rge_write_mac_ocp(sc, 0xfc3a, 0x234a);
 		rge_write_mac_ocp(sc, 0xfc48, 0x023c);
-	} else if (type == MAC_R27) {
+	} else {
 		bps = &rtl8127_mac_bps;
 		mcodever =
 		    rge_mcu_get_bin_version(rtl8127_mac_bps_vals, bps->count);
@@ -1843,6 +2339,11 @@ rge_mac_config_ext_mcu(struct rge_softc *sc, enum rge_mac_type type)
 				    bps->vals[i]);
 		    	/* Switch to page 1. */
 			rge_switch_mcu_ram_page(sc, 1);
+			for (; i < 512; i++)
+				rge_write_mac_ocp(sc, bps->regs[i],
+				    bps->vals[i]);
+		    	/* Switch to page 2. */
+			rge_switch_mcu_ram_page(sc, 2);
 			for (; i < bps->count; i++)
 				rge_write_mac_ocp(sc, bps->regs[i],
 				    bps->vals[i]);
@@ -1856,7 +2357,8 @@ rge_mac_config_ext_mcu(struct rge_softc *sc, enum rge_mac_type type)
 		rge_write_mac_ocp(sc, 0xfc32, 0x0166);
 		rge_write_mac_ocp(sc, 0xfc34, 0x1a6a);
 		rge_write_mac_ocp(sc, 0xfc36, 0x1a2c);
-		rge_write_mac_ocp(sc, 0xfc48, 0x00ff);
+		rge_write_mac_ocp(sc, 0xfc3c, 0x1598);
+		rge_write_mac_ocp(sc, 0xfc48, 0x04ff);
 	}
 
 	/* Write microcode version. */
@@ -1905,6 +2407,7 @@ rge_ephy_config(struct rge_softc *sc)
 		rge_ephy_config_mac_r25b(sc);
 		break;
 	case MAC_R27:
+	case MAC_R27ATF:
 		rge_ephy_config_mac_r27(sc);
 		break;
 	default:
@@ -1976,6 +2479,7 @@ rge_phy_config(struct rge_softc *sc)
 	    ~(GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX));
 	switch (sc->rge_type) {
 	case MAC_R27:
+	case MAC_R27ATF:
 		val |= RGE_ADV_10000TFDX;
 		/* fallthrough */
 	case MAC_R26_1:
@@ -2023,6 +2527,7 @@ rge_phy_config(struct rge_softc *sc)
 		rge_phy_config_mac_r26_2(sc);
 		break;
 	case MAC_R27:
+	case MAC_R27ATF:
 		rge_phy_config_mac_r27(sc);
 		break;
 	default:
@@ -2030,6 +2535,8 @@ rge_phy_config(struct rge_softc *sc)
 	}
 
 	RGE_PHY_CLRBIT(sc, 0xa5b4, 0x8000);
+
+	/* kevlo FIBER PHY */
 
 	/* Disable EEE. */
 	RGE_MAC_CLRBIT(sc, 0xe040, 0x0003);
@@ -2039,10 +2546,11 @@ rge_phy_config(struct rge_softc *sc)
 	} else if (sc->rge_type == MAC_R25B || RGE_TYPE_R25D(sc))
 		RGE_PHY_SETBIT(sc, 0xa432, 0x0010);
 
-	RGE_PHY_CLRBIT(sc, 0xa5d0, (sc->rge_type == MAC_R27) ? 0x000e : 0x0006);
-	RGE_PHY_CLRBIT(sc, 0xa6d4, 0x0001);
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
-		RGE_PHY_CLRBIT(sc, 0xa6d4, 0x0002);
+	RGE_PHY_CLRBIT(sc, 0xa5d0, RGE_TYPE_R27(sc) ? 0x000e : 0x0006);
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc))
+		RGE_PHY_CLRBIT(sc, 0xa6d4, 0x0003);
+	else
+		RGE_PHY_CLRBIT(sc, 0xa6d4, 0x0001);
 	RGE_PHY_CLRBIT(sc, 0xa6d8, 0x0010);
 	RGE_PHY_CLRBIT(sc, 0xa428, 0x0080);
 	RGE_PHY_CLRBIT(sc, 0xa4a2, 0x0200);
@@ -2117,16 +2625,16 @@ rge_phy_config_mac_r27(struct rge_softc *sc)
 	RGE_PHY_SETBIT(sc, 0xa438, 0x2000);
 	rge_write_phy_ocp(sc, 0xa436, 0x8187);
 	RGE_PHY_SETBIT(sc, 0xa438, 0x2000);
-	rge_write_phy_ocp(sc, 0xA436, 0x8192);
-	RGE_PHY_SETBIT(sc, 0xA438, 0x2000);
-	rge_write_phy_ocp(sc, 0xA436, 0x819D);
-	RGE_PHY_SETBIT(sc, 0xA438, 0x2000);
-	rge_write_phy_ocp(sc, 0xA436, 0x81A8);
-	RGE_PHY_CLRBIT(sc, 0xA438, 0x2000);
-	rge_write_phy_ocp(sc, 0xA436, 0x81B3);
-	RGE_PHY_CLRBIT(sc, 0xA438, 0x2000);
-	rge_write_phy_ocp(sc, 0xA436, 0x81BE);
-	RGE_PHY_SETBIT(sc, 0xA438, 0x2000);
+	rge_write_phy_ocp(sc, 0xa436, 0x8192);
+	RGE_PHY_SETBIT(sc, 0xa438, 0x2000);
+	rge_write_phy_ocp(sc, 0xa436, 0x819d);
+	RGE_PHY_SETBIT(sc, 0xa438, 0x2000);
+	rge_write_phy_ocp(sc, 0xa436, 0x81a8);
+	RGE_PHY_CLRBIT(sc, 0xa438, 0x2000);
+	rge_write_phy_ocp(sc, 0xa436, 0x81b3);
+	RGE_PHY_CLRBIT(sc, 0xa438, 0x2000);
+	rge_write_phy_ocp(sc, 0xa436, 0x81be);
+	RGE_PHY_SETBIT(sc, 0xa438, 0x2000);
 	rge_write_phy_ocp(sc, 0xa436, 0x817d);
 	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
 	rge_write_phy_ocp(sc, 0xa438, val | 0xa600);
@@ -2200,6 +2708,18 @@ rge_phy_config_mac_r27(struct rge_softc *sc)
 	rge_write_phy_ocp(sc, 0xb87c, 0x82ce);
 	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xf000;
 	rge_write_phy_ocp(sc, 0xb87e, val | 0x4000);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83a5);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0400);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83a6);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0400);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83a7);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0400);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83a8);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0400);
 	rge_write_phy_ocp(sc, 0xb87c, 0x84ac);
 	rge_write_phy_ocp(sc, 0xb87e, 0x0000);
 	rge_write_phy_ocp(sc, 0xb87c, 0x84ae);
@@ -2212,7 +2732,7 @@ rge_phy_config_mac_r27(struct rge_softc *sc)
 	rge_write_phy_ocp(sc, 0xb87c, 0x8ffc);
 	rge_write_phy_ocp(sc, 0xb87e, 0x6008);
 	rge_write_phy_ocp(sc, 0xb87c, 0x8ffe);
-	rge_write_phy_ocp(sc, 0xb87e, 0xf450);
+	rge_write_phy_ocp(sc, 0xb87e, 0xf4ff);
 	rge_write_phy_ocp(sc, 0xb87c, 0x8015);
 	RGE_PHY_SETBIT(sc, 0xb87e, 0x0200);
 	rge_write_phy_ocp(sc, 0xb87c, 0x8016);
@@ -2323,6 +2843,8 @@ rge_phy_config_mac_r27(struct rge_softc *sc)
 	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
 	rge_write_phy_ocp(sc, 0xa438, val | 0x1600);
 	RGE_PHY_SETBIT(sc, 0xa430, 0x0003);
+	RGE_PHY_SETBIT(sc, 0xa442, 0x0080);
+	RGE_PHY_CLRBIT(sc, 0xa430, 0x1000);
 }
 
 void
@@ -3196,8 +3718,8 @@ rge_phy_config_mcu(struct rge_softc *sc, uint16_t rcodever)
 			for (i = 0; i < nitems(mac_r26_2_mcu); i++)
 				rge_write_phy_ocp(sc,
 				    mac_r26_2_mcu[i].reg, mac_r26_2_mcu[i].val);
-		} else if (sc->rge_type == MAC_R27) {
-			for (i = 0; i < 1887; i++)
+		} else if (RGE_TYPE_R27(sc)) {
+			for (i = 0; i < 4097; i++)
 				rge_write_phy_ocp(sc,
 				    mac_r27_mcu[i].reg, mac_r27_mcu[i].val);
 			rge_patch_phy_mcu(sc, 0);
@@ -3260,7 +3782,7 @@ rge_hw_init(struct rge_softc *sc)
 	DELAY(3000);
 	rge_write_mac_ocp(sc, 0xfc26, 0);
 
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc))
 		rge_mac_config_ext_mcu(sc, sc->rge_type);
 	else
 		rge_mac_config_mcu(sc, sc->rge_type);
@@ -3278,8 +3800,15 @@ void
 rge_hw_reset(struct rge_softc *sc)
 {
 	/* Disable interrupts */
-	RGE_WRITE_4(sc, RGE_IMR, 0);
-	RGE_WRITE_4(sc, RGE_ISR, RGE_READ_4(sc, RGE_ISR));
+	if (sc->rge_flags & RGE_FLAG_MULTIVEC) {
+		RGE_WRITE_4(sc, RGE_IMR_CLR_V2, 0xffffffff);
+		RGE_WRITE_4(sc, RGE_IMR_V4, 0xffffffff);
+		RGE_WRITE_4(sc, RGE_ISR_V2, 0xffffffff);
+		RGE_WRITE_4(sc, RGE_ISR_V4, 0xffffffff);
+	} else {
+		RGE_WRITE_4(sc, RGE_IMR, 0);
+		RGE_WRITE_4(sc, RGE_ISR, RGE_READ_4(sc, RGE_ISR));
+	}
 
 	/* Clear timer interrupts. */
 	RGE_WRITE_4(sc, RGE_TIMERINT0, 0);
@@ -3376,7 +3905,7 @@ rge_disable_aspm_clkreq(struct rge_softc *sc)
 	if (unlock)
 		RGE_SETBIT_1(sc, RGE_EECMD, RGE_EECMD_WRITECFG);
 
-	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
+	if (RGE_TYPE_R26(sc) || RGE_TYPE_R27(sc))
 		RGE_CLRBIT_1(sc, RGE_INT_CFG0, 0x08);
 	else
 		RGE_CLRBIT_1(sc, RGE_CFG2, RGE_CFG2_CLKREQ_EN);
@@ -3393,10 +3922,41 @@ rge_disable_hw_im(struct rge_softc *sc)
 }
 
 void
+rge_disable_queue(struct rge_softc *sc, uint32_t vector)
+{
+	uint32_t mask = 1 << vector;
+
+	RGE_WRITE_4(sc, RGE_IMR_CLR_V2, mask);
+	RGE_WRITE_4(sc, RGE_ISR_V2, mask);
+}
+
+void
 rge_disable_sim_im(struct rge_softc *sc)
 {
 	RGE_WRITE_4(sc, RGE_TIMERINT0, 0);
 	sc->rge_timerintr = 0;
+}
+
+void
+rge_enable_queue(struct rge_softc *sc, uint32_t vector)
+{
+	uint32_t mask = 1 << vector;
+
+	RGE_WRITE_4(sc, RGE_IMR_SET_V2, mask);
+}
+
+void
+rge_enable_queues(struct rge_softc *sc)
+{
+	struct rge_queues *q;
+	int i;
+
+	for (i = 0, q = sc->sc_queues; i < sc->sc_nqueues; i++, q++) {
+		rge_enable_queue(sc, q->q_index);
+		if (i < sc->sc_ntxqs)
+			rge_enable_queue(sc, q->q_tx_index);
+	}
+	rge_enable_queue(sc, sc->sc_linkvec);
 }
 
 void
@@ -3668,6 +4228,22 @@ rge_read_phy_ocp(struct rge_softc *sc, uint16_t reg)
 	return (val & RGE_PHYOCP_DATA_MASK);
 }
 
+uint32_t
+rge_rxstatus_mask(struct rge_softc *sc, int status)
+{
+	switch (status) {
+	case CMDSTS_EOF:
+		return (sc->rge_flags & RGE_FLAG_DESCV2) ?
+		    RGE_RDCMDSTS_EOF_V2 : RGE_RDCMDSTS_EOF;
+	case CMDSTS_SOF:
+		return (sc->rge_flags & RGE_FLAG_DESCV2) ?
+		    RGE_RDCMDSTS_SOF_V2 : RGE_RDCMDSTS_SOF;
+	default:
+		return (sc->rge_flags & RGE_FLAG_DESCV2) ?
+		    RGE_RDCMDSTS_RXERRSUM_V2 : RGE_RDCMDSTS_RXERRSUM;
+	}
+}
+
 int
 rge_get_link_status(struct rge_softc *sc)
 {
@@ -3677,7 +4253,8 @@ rge_get_link_status(struct rge_softc *sc)
 void
 rge_txstart(void *arg)
 {
-	struct rge_softc *sc = arg;
+	struct rge_queues *q = arg;
+	struct rge_softc *sc = q->q_sc;
 
 	RGE_WRITE_2(sc, RGE_TXSTART, RGE_TXSTART_START);
 }
@@ -3748,7 +4325,6 @@ rge_wol_power(struct rge_softc *sc)
 {
 	/* Disable RXDV gate. */
 	RGE_CLRBIT_1(sc, RGE_PPSW, 0x08);
-	DELAY(2000);
 
 	RGE_SETBIT_1(sc, RGE_CFG1, RGE_CFG1_PM_EN);
 	RGE_SETBIT_1(sc, RGE_CFG2, RGE_CFG2_PMSTS_EN);
