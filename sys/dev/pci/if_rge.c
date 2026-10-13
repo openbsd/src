@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.46 2026/10/13 00:20:11 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.47 2026/10/13 01:35:47 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2026
@@ -58,6 +58,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_rgereg.h>
+#include <dev/microcode/rge/rgemcode.h>
 
 #ifdef RGE_DEBUG
 #define DPRINTF(x)	do { if (rge_debug > 0) printf x; } while (0)
