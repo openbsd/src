@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.85 2026/10/11 14:01:16 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.86 2026/10/13 06:55:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
+#include <paths.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
@@ -331,12 +332,11 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	char path[PATH_MAX];
+	char path[PATH_MAX], c;
 	struct sockaddr_in sin;
 	struct pollfd *pfd = NULL;
-	int width = 0, nready, lsock;
+	int width = 0, nready, lsock, parentp[2], fd, one = 1;
 	socklen_t len;
-	int evil = 0, one = 1;
 	DIR *dirp;
 	struct dirent *dent;
 
@@ -369,11 +369,41 @@ main(int argc, char *argv[])
 		(void)mkdir(BINDINGDIR, 0755);
 	}
 
+	/* make parent hang around until the child has bound */
+	if (pipe(parentp) == -1)
+		err(1, "pipe");
+	switch (fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		close(parentp[0]);
+
+		if (setsid() == -1)
+			err(1, "setsid");
+		(void)chdir("/");
+		if ((fd = open(_PATH_DEVNULL, O_RDWR)) != -1) {
+			(void)dup2(fd, STDIN_FILENO);
+			(void)dup2(fd, STDOUT_FILENO);
+			(void)dup2(fd, STDERR_FILENO);
+			if (fd > 2)
+				(void)close(fd);
+		}
+		/* child binds, then closes pipe */
+		break;
+	default:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+		close(parentp[1]);
+		/* wait until child establishes bind, or fails */
+		read(parentp[0], &c, 1);
+		_exit(0);
+	}
+
 	if (unveil(SERVERSDIR, "r") == -1)
 		err(1, "unveil");
 	if (unveil(BINDINGDIR, "crw") == -1)
 		err(1, "unveil");
-	if (pledge("stdio rpath wpath inet dns", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath flock inet dns", NULL) == -1)
 		err(1, "pledge");
 
 	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
@@ -531,12 +561,11 @@ main(int argc, char *argv[])
 			break;
 		}
 
-#ifdef DAEMON
-		if (!evil && ypbindlist->dom_alive) {
-			evil = 1;
-			daemon(0, 0);
+		/* Release the parent, who will exit */
+		if (ypbindlist->dom_alive && parentp[1] != -1) {
+			close(parentp[1]);
+			parentp[1] = -1;
 		}
-#endif
 	}
 }
 

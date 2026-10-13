@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 2015/09/09 15:33:18 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2026/10/13 06:55:15 deraadt Exp $
 
 PROG=	ypbind
 MAN=	ypbind.8
-CFLAGS+=-DDAEMON -DHEURISTIC
+CFLAGS+=-DHEURISTIC
 
 LDADD=-lrpcsvc
 DPADD=${LIBRPCSVC}
