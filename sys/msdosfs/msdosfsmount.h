@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.23 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.24 2026/10/13 12:03:27 krw Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -195,7 +195,7 @@ struct msdosfsmount {
 
 /* Calculate size of fsinfo block */
 #define fsi_size(pmp) \
-	(1024 << ((pmp)->pm_BlkPerSec >> 2))
+	roundup(sizeof(struct fsinfo), (pmp)->pm_BytesPerSec)
 
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
