@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.320 2026/10/13 15:40:14 job Exp $ */
+/*	$OpenBSD: main.c,v 1.321 2026/10/13 16:10:24 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1589,6 +1589,7 @@ main(int argc, char *argv[])
 	/* change working directory to the output directory */
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
+	close(outdirfd);
 
 	for (i = 0; i < talsz; i++) {
 		repo_tal_stats_collect(sum_stats, i, &talstats[i]);
