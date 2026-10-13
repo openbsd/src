@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.16 2026/10/13 15:40:14 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.17 2026/10/13 17:31:16 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -83,6 +83,7 @@ nca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert,
 	ca->last_attempt = now;
 	ca->attempts = 1;
 	ca->defer = 0;
+	ca->nonfunc = 1;
 
 	if (nca_hist != NULL) {
 		ca->since = nca_hist->since;
@@ -115,14 +116,12 @@ nca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert,
 }
 
 void
-nca_tree_remove_cert(struct ca_tree *ca_tree, int cid)
+nca_tree_clear_nonfunc(struct ca_tree *ca_tree, int cid)
 {
 	struct ca *found, needle = { .certid = cid };
 
-	if ((found = RB_FIND(ca_tree, ca_tree, &needle)) != NULL) {
-		RB_REMOVE(ca_tree, ca_tree, found);
-		ca_free(found);
-	}
+	if ((found = RB_FIND(ca_tree, ca_tree, &needle)) != NULL)
+		found->nonfunc = 0;
 }
 
 static inline int
@@ -480,7 +479,7 @@ ncas_sorted_cmp(const void *a, const void *b)
 }
 
 void
-nca_history_save(struct ca_tree *ncas, time_t buildtime)
+nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 {
 	char temp[] = NCA_HISTORY ".XXXXXXXX";
 	FILE *f = NULL;
@@ -489,7 +488,12 @@ nca_history_save(struct ca_tree *ncas, time_t buildtime)
 	size_t ncas_num = 0, idx = 0;
 	struct timespec ts[2];
 
-	if (RB_EMPTY(ncas)) {
+	RB_FOREACH(ca, ca_tree, ca_tree) {
+		if (ca->nonfunc)
+			ncas_num++;
+	}
+
+	if (ncas_num == 0) {
 		unlink(NCA_HISTORY);
 		return;
 	}
@@ -501,14 +505,13 @@ nca_history_save(struct ca_tree *ncas, time_t buildtime)
 	if ((f = fdopen(fd, "w")) == NULL)
 		err(1, "fopen");
 
-	RB_FOREACH(ca, ca_tree, ncas)
-		ncas_num++;
-
 	if ((ncas_sorted = calloc(ncas_num, sizeof(ncas_sorted[0]))) == NULL)
 		err(1, NULL);
 
-	RB_FOREACH(ca, ca_tree, ncas)
-		ncas_sorted[idx++] = ca;
+	RB_FOREACH(ca, ca_tree, ca_tree) {
+		if (ca->nonfunc)
+			ncas_sorted[idx++] = ca;
+	}
 
 	qsort(ncas_sorted, ncas_num, sizeof(ncas_sorted[0]), ncas_sorted_cmp);
 

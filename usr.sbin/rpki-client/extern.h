@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.305 2026/10/12 17:14:01 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.306 2026/10/13 17:31:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -188,6 +188,9 @@ struct ca {
 	int			 certid;
 	unsigned int		 repoid;
 	int			 talid;
+
+	/* non-functional CA handling */
+	int			 nonfunc;
 	time_t			 since;
 	time_t			 last_attempt;
 	unsigned int		 attempts;
@@ -782,7 +785,7 @@ void		 cert_insert_brks(struct brk_tree *, struct cert *);
 void		 nca_history_load(void);
 void		 nca_history_save(struct ca_tree *, time_t);
 int		 nca_skip_sync(struct ca_tree *, const struct cert *);
-void		 nca_tree_remove_cert(struct ca_tree *, int);
+void		 nca_tree_clear_nonfunc(struct ca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
@@ -942,7 +945,7 @@ void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
 void		 repostats_new_files_inc(struct repo *, const char *);
 void		 repo_stat_inc(struct repo *, int, enum rtype, enum stype);
-void		 repo_stat_add_nca(struct ca *);
+void		 repo_stat_count_nonfunc(struct ca *);
 void		 repo_tal_stats_collect(void (*)(const struct repo *,
 		    const struct repotalstats *, void *), int, void *);
 void		 repo_stats_collect(void (*)(const struct repo *,

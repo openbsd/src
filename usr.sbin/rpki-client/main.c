@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.321 2026/10/13 16:10:24 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.322 2026/10/13 17:31:16 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -690,7 +690,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		nca_tree_remove_cert(&vd->cas, mft->issuerid);
+		nca_tree_clear_nonfunc(&vd->cas, mft->issuerid);
 		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
 		break;
@@ -1559,7 +1559,7 @@ main(int argc, char *argv[])
 		return rc;
 
 	RB_FOREACH(ca, ca_tree, &vd.cas)
-		repo_stat_add_nca(ca);
+		repo_stat_count_nonfunc(ca);
 
 	logx("all files parsed: generating output");
 
