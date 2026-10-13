@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.38 2026/08/25 01:18:03 jcs Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.39 2026/10/13 03:47:07 dlg Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1384,6 +1384,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_qstart = aq_start;
 	ifp->if_watchdog = aq_watchdog;
 	ifp->if_hardmtu = 9000;
+	ifp->if_link_state = LINK_STATE_DOWN;
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6 | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_TCPv6;
