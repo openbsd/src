@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.33 2026/07/26 10:25:31 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.34 2026/10/13 12:30:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -141,6 +141,7 @@ struct aplsmc_softc {
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
 	int			sc_nsensors;
 	struct ksensordev	sc_sensordev;
+	int			sc_nbatteries;
 	uint32_t		sc_suspend_pstr;
 };
 
@@ -661,8 +662,10 @@ aplsmc_apminfo(struct apm_power_info *info)
 	struct aplsmc_softc *sc = aplsmc_sc; 
 	int remaining = -1, capacity = -1, i;
 
-	info->battery_state = APM_BATT_UNKNOWN;
-	info->ac_state = APM_AC_UNKNOWN;
+	info->battery_state =
+		sc->sc_nbatteries ? APM_BATT_UNKNOWN : APM_BATTERY_ABSENT;
+	info->ac_state =
+		sc->sc_nbatteries ? APM_AC_UNKNOWN : APM_AC_ON;
 	info->battery_life = 0;
 	info->minutes_left = -1;
 
@@ -828,7 +831,15 @@ void
 aplsmc_battery_init(struct aplsmc_softc *sc)
 {
 	uint8_t ch0i, ch0c, chwa;
+	uint16_t b0dc;
 	int error, stop;
+
+	error = aplsmc_read_key(sc, SMC_KEY("B0DC"), &b0dc, sizeof(b0dc));
+	if (error)
+		return;
+
+	/* We have a battery!  Now check if we have charging control. */
+	sc->sc_nbatteries = 1;
 
 	error = aplsmc_read_key(sc, SMC_KEY("CH0I"), &ch0i, sizeof(ch0i));
 	if (error)
