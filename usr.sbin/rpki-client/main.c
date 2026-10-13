@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.319 2026/10/12 17:14:01 job Exp $ */
+/*	$OpenBSD: main.c,v 1.320 2026/10/13 15:40:14 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -536,7 +536,7 @@ queue_add_from_tal(struct tal *tal)
  * Add a manifest (MFT) found in an X509 certificate, RFC 6487.
  */
 static void
-queue_add_from_cert(const struct cert *cert, struct ca_tree *ncas)
+queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 {
 	struct repo		*repo;
 	char			*nfile, *npath, *host;
@@ -559,7 +559,7 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ncas)
 		return;
 	}
 
-	if (nca_skip_sync(ncas, cert))
+	if (nca_skip_sync(ca_tree, cert))
 		return;
 
 	repo = repo_lookup(cert->talid, cert->repo,

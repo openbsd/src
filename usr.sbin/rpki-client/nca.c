@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.15 2026/10/12 17:14:01 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.16 2026/10/13 15:40:14 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -52,7 +52,7 @@ ca_free(struct ca *ca)
  * Return 1 if a synchronization attempt is to be made, 0 otherwise.
  */
 static int
-nca_tree_insert_cert(struct ca_tree *tree, const struct cert *cert,
+nca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert,
     const struct nca_hist *nca_hist)
 {
 	struct ca *ca;
@@ -103,7 +103,7 @@ nca_tree_insert_cert(struct ca_tree *tree, const struct cert *cert,
 		}
 	}
 
-	if (RB_INSERT(ca_tree, tree, ca) != NULL) {
+	if (RB_INSERT(ca_tree, ca_tree, ca) != NULL) {
 		int defer = ca->defer;
 
 		warnx("duplicate non-functional CA at %s", ca->location);
@@ -115,12 +115,12 @@ nca_tree_insert_cert(struct ca_tree *tree, const struct cert *cert,
 }
 
 void
-nca_tree_remove_cert(struct ca_tree *tree, int cid)
+nca_tree_remove_cert(struct ca_tree *ca_tree, int cid)
 {
 	struct ca *found, needle = { .certid = cid };
 
-	if ((found = RB_FIND(ca_tree, tree, &needle)) != NULL) {
-		RB_REMOVE(ca_tree, tree, found);
+	if ((found = RB_FIND(ca_tree, ca_tree, &needle)) != NULL) {
+		RB_REMOVE(ca_tree, ca_tree, found);
 		ca_free(found);
 	}
 }
@@ -140,7 +140,8 @@ RB_GENERATE(ca_tree, ca, entry, certidcmp);
 
 static struct strlist batchlist = LIST_HEAD_INITIALIZER(batchlist);
 
-static RB_HEAD(nca_hist_tree, nca_hist) ncas_hist = RB_INITIALIZER(&ncas_hist);
+static RB_HEAD(nca_hist_tree, nca_hist) nca_hist_tree = \
+    RB_INITIALIZER(&nca_hist_tree);
 
 static inline int
 nca_hist_cmp(const struct nca_hist *a, const struct nca_hist *b)
@@ -196,8 +197,8 @@ nca_hist_tree_free(void)
 {
 	struct nca_hist *nca_hist, *nca_hist_tmp;
 
-	RB_FOREACH_SAFE(nca_hist, nca_hist_tree, &ncas_hist, nca_hist_tmp) {
-		RB_REMOVE(nca_hist_tree, &ncas_hist, nca_hist);
+	RB_FOREACH_SAFE(nca_hist, nca_hist_tree, &nca_hist_tree, nca_hist_tmp) {
+		RB_REMOVE(nca_hist_tree, &nca_hist_tree, nca_hist);
 		nca_hist_free(nca_hist);
 	}
 }
@@ -247,7 +248,7 @@ ncas_plan_retries(void)
 	struct nca_hist *nca_hist;
 	struct strlistentry *sle, *sle_tmp;
 
-	RB_FOREACH(nca_hist, nca_hist_tree, &ncas_hist) {
+	RB_FOREACH(nca_hist, nca_hist_tree, &nca_hist_tree) {
 		if (nca_decide_retry(nca_hist) == 0) {
 			nca_hist->defer = 1;
 			continue;
@@ -259,7 +260,7 @@ ncas_plan_retries(void)
 			strlist_insert(&batchlist, nca_hist->notify);
 	}
 
-	RB_FOREACH(nca_hist, nca_hist_tree, &ncas_hist) {
+	RB_FOREACH(nca_hist, nca_hist_tree, &nca_hist_tree) {
 		if (strlist_find(&batchlist, nca_hist->baseuri,
 		    strlen(nca_hist->baseuri))) {
 			nca_hist->defer = 0;
@@ -391,8 +392,9 @@ nca_history_load(void)
 				err(1, NULL);
 		}
 
-		if (RB_INSERT(nca_hist_tree, &ncas_hist, nca_hist) != NULL) {
-			warnx("duplicate entry for ncas_hist_tree at %s",
+		if (RB_INSERT(nca_hist_tree, &nca_hist_tree,
+		    nca_hist) != NULL) {
+			warnx("duplicate entry for nca_hist_tree_tree at %s",
 			    nca_hist->location);
 			nca_hist_free(nca_hist);
 			nca_hist = NULL;
@@ -426,20 +428,21 @@ nca_history_load(void)
  * Return 1 to skip the synchronization attempt, otherwise 0.
  */
 int
-nca_skip_sync(struct ca_tree *ncas, const struct cert *cert)
+nca_skip_sync(struct ca_tree *ca_tree, const struct cert *cert)
 {
-	struct nca_hist *nca_hist, needle;
+	struct nca_hist *nca_hist, nca_hist_needle;
 
 	if (cert->purpose == CERT_PURPOSE_TA)
 		return 0;
 
-	needle.aki = cert->aki;
-	needle.ski = cert->ski;
-	needle.location = cert->path;
-	needle.mfturi = cert->mft;
-	nca_hist = RB_FIND(nca_hist_tree, &ncas_hist, &needle);
+	nca_hist_needle.aki = cert->aki;
+	nca_hist_needle.ski = cert->ski;
+	nca_hist_needle.location = cert->path;
+	nca_hist_needle.mfturi = cert->mft;
 
-	return nca_tree_insert_cert(ncas, cert, nca_hist);
+	nca_hist = RB_FIND(nca_hist_tree, &nca_hist_tree, &nca_hist_needle);
+
+	return nca_tree_insert_cert(ca_tree, cert, nca_hist);
 }
 
 static int
