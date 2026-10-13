@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.7 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.8 2026/10/13 13:45:30 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -88,10 +88,11 @@ sub child {
 	my @sudo = $ENV{SUDO} ? "SUDO=$ENV{SUDO}" : ();
 	my @ktrace = $ENV{KTRACE} ? "KTRACE=$ENV{KTRACE}" : ();
 	my @relayd = $ENV{RELAYD} ? "RELAYD=$ENV{RELAYD}" : ();
+	my @certbase = $ENV{CERTBASE} ? "CERTBASE=$ENV{CERTBASE}" : ();
 	my $dir = dirname($0);
 	$dir = getcwd() if ! $dir || $dir eq ".";
 	my @cmd = ("ssh", @opts, $self->{remotessh},
-	    @sudo, @ktrace, @relayd, "perl",
+	    @sudo, @ktrace, @relayd, @certbase, "perl",
 	    "-I", $dir, "$dir/".basename($0), $self->{forward},
 	    $self->{listenaddr}, $self->{connectaddr}, $self->{connectport},
 	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) : ()));
