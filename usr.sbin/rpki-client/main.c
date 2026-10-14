@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.326 2026/10/14 16:47:42 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.327 2026/10/14 16:51:51 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -270,7 +270,7 @@ entity_new(char *path, char *file, enum rtype type, enum location loc,
 {
 	struct entity *ent;
 
-	if ((ent = calloc(1, sizeof(struct entity))) == NULL)
+	if ((ent = calloc(1, sizeof(*ent))) == NULL)
 		err(1, NULL);
 
 	ent->type = type;
