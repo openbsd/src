@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.308 2026/10/14 06:52:16 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.309 2026/10/14 07:44:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -188,6 +188,7 @@ struct ca {
 	int			 certid;
 	unsigned int		 repoid;
 	int			 talid;
+	enum cert_purpose	 purpose;
 
 	/* non-functional CA handling */
 	int			 nonfunc;
@@ -785,8 +786,9 @@ void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
 void		 nca_history_load(void);
 void		 nca_history_save(struct ca_tree *, time_t);
-int		 nca_skip_sync(struct ca_tree *, const struct cert *);
+int		 nca_skip_sync(struct ca *);
 void		 nca_tree_clear_nonfunc(struct ca_tree *, int);
+struct ca	*ca_tree_insert_cert(struct ca_tree *, const struct cert *);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);

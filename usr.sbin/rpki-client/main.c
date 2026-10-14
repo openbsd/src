@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.322 2026/10/13 17:31:16 job Exp $ */
+/*	$OpenBSD: main.c,v 1.323 2026/10/14 07:44:44 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -538,6 +538,7 @@ queue_add_from_tal(struct tal *tal)
 static void
 queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 {
+	struct ca		*ca;
 	struct repo		*repo;
 	char			*nfile, *npath, *host;
 	const char		*uri, *repouri, *file;
@@ -559,7 +560,8 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 		return;
 	}
 
-	if (nca_skip_sync(ca_tree, cert))
+	ca = ca_tree_insert_cert(ca_tree, cert);
+	if (nca_skip_sync(ca))
 		return;
 
 	repo = repo_lookup(cert->talid, cert->repo,

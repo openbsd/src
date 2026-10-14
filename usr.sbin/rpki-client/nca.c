@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.17 2026/10/13 17:31:16 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.18 2026/10/14 07:44:44 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -48,20 +48,22 @@ ca_free(struct ca *ca)
 }
 
 /*
- * Add a given CA cert into the non-functional CA tree.
- * Return 1 if a synchronization attempt is to be made, 0 otherwise.
+ * Add metadata for a given CA cert into the CA tree.
  */
-static int
-nca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert,
-    const struct nca_hist *nca_hist)
+struct ca *
+ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 {
-	struct ca *ca;
+	struct ca *ca, *old_ca;
 	time_t now = get_current_time();
 
 	if ((ca = calloc(1, sizeof(*ca))) == NULL)
 		err(1, NULL);
-	if ((ca->aki = strdup(cert->aki)) == NULL)
-		err(1, NULL);
+
+	if (cert->purpose != CERT_PURPOSE_TA) {
+		if ((ca->aki = strdup(cert->aki)) == NULL)
+			err(1, NULL);
+	}
+
 	if ((ca->ski = strdup(cert->ski)) == NULL)
 		err(1, NULL);
 	if ((ca->location = strdup(cert->path)) == NULL)
@@ -77,6 +79,7 @@ nca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert,
 	ca->repoid = cert->repoid;
 	ca->certid = cert->certid;
 	ca->talid = cert->talid;
+	ca->purpose = cert->purpose;
 
 	/* default initial state */
 	ca->since = now;
@@ -85,34 +88,13 @@ nca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert,
 	ca->defer = 0;
 	ca->nonfunc = 1;
 
-	if (nca_hist != NULL) {
-		ca->since = nca_hist->since;
-		ca->last_attempt = nca_hist->last_attempt;
-		ca->attempts = nca_hist->attempts;
-		ca->defer = nca_hist->defer;
-
-		if (retry_all_ncas || ca->defer == 0) {
-			if (verbose) {
-				warnx("%s: retrying, non-functional since %s",
-				    cert->path, time2str(ca->since));
-			}
-			ca->attempts++;
-			ca->last_attempt = now;
-		} else if (verbose > 1) {
-			warnx("%s: deferring sync, non-functional since"
-			    " %s", cert->path, time2str(ca->since));
-		}
-	}
-
-	if (RB_INSERT(ca_tree, ca_tree, ca) != NULL) {
-		int defer = ca->defer;
-
-		warnx("duplicate non-functional CA at %s", ca->location);
+	if ((old_ca = RB_INSERT(ca_tree, ca_tree, ca)) != NULL) {
+		warnx("duplicate CA at %s", ca->location);
 		ca_free(ca);
-		return defer;
+		return old_ca;
 	}
 
-	return ca->defer;
+	return ca;
 }
 
 void
@@ -427,21 +409,43 @@ nca_history_load(void)
  * Return 1 to skip the synchronization attempt, otherwise 0.
  */
 int
-nca_skip_sync(struct ca_tree *ca_tree, const struct cert *cert)
+nca_skip_sync(struct ca *ca)
 {
-	struct nca_hist *nca_hist, nca_hist_needle;
+	struct nca_hist *nca_hist, needle;
 
-	if (cert->purpose == CERT_PURPOSE_TA)
+	if (ca->purpose == CERT_PURPOSE_TA)
 		return 0;
 
-	nca_hist_needle.aki = cert->aki;
-	nca_hist_needle.ski = cert->ski;
-	nca_hist_needle.location = cert->path;
-	nca_hist_needle.mfturi = cert->mft;
+	needle.aki = ca->aki;
+	needle.ski = ca->ski;
+	needle.location = ca->location;
+	needle.mfturi = ca->mfturi;
 
-	nca_hist = RB_FIND(nca_hist_tree, &nca_hist_tree, &nca_hist_needle);
+	nca_hist = RB_FIND(nca_hist_tree, &nca_hist_tree, &needle);
+	if (nca_hist == NULL)
+		return 0;
 
-	return nca_tree_insert_cert(ca_tree, cert, nca_hist);
+	/* determined by ncas_plan_retries */
+	ca->defer = nca_hist->defer;
+
+	/* state from the previous run */
+	ca->since = nca_hist->since;
+	ca->last_attempt = nca_hist->last_attempt;
+	ca->attempts = nca_hist->attempts;
+
+	if (retry_all_ncas || ca->defer == 0) {
+		if (verbose) {
+			warnx("%s: retrying, non-functional since %s",
+			    ca->location, time2str(ca->since));
+		}
+		ca->attempts++;
+		ca->last_attempt = get_current_time();
+	} else if (verbose > 1) {
+		warnx("%s: deferring sync, non-functional since %s",
+		    ca->location, time2str(ca->since));
+	}
+
+	return ca->defer;
 }
 
 static int
