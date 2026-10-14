@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.323 2026/10/14 07:44:44 job Exp $ */
+/*	$OpenBSD: main.c,v 1.324 2026/10/14 14:30:52 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1561,7 +1561,7 @@ main(int argc, char *argv[])
 		return rc;
 
 	RB_FOREACH(ca, ca_tree, &vd.cas)
-		repo_stat_count_nonfunc(ca);
+		repo_stat_count_ca(ca);
 
 	logx("all files parsed: generating output");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.94 2026/10/13 17:31:16 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.95 2026/10/14 14:30:52 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1547,7 +1547,7 @@ repostats_new_files_inc(struct repo *rp, const char *file)
 }
 
 void
-repo_stat_count_nonfunc(struct ca *ca)
+repo_stat_count_ca(struct ca *ca)
 {
 	struct repo *rp;
 

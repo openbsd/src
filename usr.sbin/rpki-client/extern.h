@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.309 2026/10/14 07:44:44 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.310 2026/10/14 14:30:52 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -950,7 +950,7 @@ void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
 void		 repostats_new_files_inc(struct repo *, const char *);
 void		 repo_stat_inc(struct repo *, int, enum rtype, enum stype);
-void		 repo_stat_count_nonfunc(struct ca *);
+void		 repo_stat_count_ca(struct ca *);
 void		 repo_tal_stats_collect(void (*)(const struct repo *,
 		    const struct repotalstats *, void *), int, void *);
 void		 repo_stats_collect(void (*)(const struct repo *,
