@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.32 2026/06/30 14:04:04 kirill Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.33 2026/10/14 09:44:30 kirill Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -88,15 +88,21 @@ ufs_ihashget(dev_t dev, ufsino_t inum)
 	struct ihashhead *ipp;
 	struct inode *ip;
 	struct vnode *vp;
+	u_int vpid;
 loop:
 	/* XXXLOCKING lock hash list */
 	ipp = INOHASH(dev, inum);
 	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
+			vpid = vp->v_id;
 			/* XXXLOCKING unlock hash list? */
 			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
+			if (vpid != vp->v_id) {
+				vput(vp);
+				goto loop;
+			}
 			/*
 			* Check if the inode is valid.
 			* The condition has been adapted from ufs_inactive().
