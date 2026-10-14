@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.140 2026/10/02 04:47:07 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.141 2026/10/14 04:43:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1379,7 +1379,7 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct server			*srv;
 	struct server_tls_ticket	 key;
 
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_MEDIA:
 		if (config_getmedia(httpd_env, imsg) != 0)
 			return (-1);
@@ -1444,7 +1444,7 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 server_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	default:
 		return (-1);
 	}

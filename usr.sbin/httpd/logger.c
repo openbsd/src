@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.27 2026/07/26 14:46:32 rsadowski Exp $	*/
+/*	$OpenBSD: logger.c,v 1.28 2026/10/14 04:43:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -254,7 +254,7 @@ logger_log(struct imsg *imsg)
 	if ((srv_conf = serverconfig_byid(id)) == NULL)
 		fatalx("invalid logging requestr");
 
-	if (imsg->hdr.type == IMSG_LOG_ACCESS)
+	if (imsg_get_type(imsg) == IMSG_LOG_ACCESS)
 		log = srv_conf->logaccess;
 	else
 		log = srv_conf->logerror;
@@ -281,7 +281,7 @@ logger_log(struct imsg *imsg)
 int
 logger_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CFG_SERVER:
 		config_getserver(httpd_env, imsg);
 		break;
@@ -307,7 +307,7 @@ logger_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 logger_dispatch_server(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	switch (imsg->hdr.type) {
+	switch (imsg_get_type(imsg)) {
 	case IMSG_LOG_ACCESS:
 	case IMSG_LOG_ERROR:
 		logger_log(imsg);
