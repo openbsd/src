@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.325 2026/10/14 15:57:19 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.326 2026/10/14 16:47:42 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -252,14 +252,14 @@ entity_write_repo(const struct repo *rp)
 void
 entityq_flush(struct entityq *q, struct repo *rp)
 {
-	struct entity	*p, *np;
+	struct entity *ent, *nent;
 
 	entity_write_repo(rp);
 
-	TAILQ_FOREACH_SAFE(p, q, entries, np) {
-		entity_write_req(p);
-		TAILQ_REMOVE(q, p, entries);
-		entity_free(p);
+	TAILQ_FOREACH_SAFE(ent, q, entries, nent) {
+		entity_write_req(ent);
+		TAILQ_REMOVE(q, ent, entries);
+		entity_free(ent);
 	}
 }
 
@@ -268,24 +268,24 @@ entity_new(char *path, char *file, enum rtype type, enum location loc,
     struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
     char *mftaki)
 {
-	struct entity	*p;
+	struct entity *ent;
 
-	if ((p = calloc(1, sizeof(struct entity))) == NULL)
+	if ((ent = calloc(1, sizeof(struct entity))) == NULL)
 		err(1, NULL);
 
-	p->type = type;
-	p->location = loc;
-	p->talid = talid;
-	p->certid = certid;
-	p->mftaki = mftaki;
-	p->path = path;
+	ent->type = type;
+	ent->location = loc;
+	ent->talid = talid;
+	ent->certid = certid;
+	ent->mftaki = mftaki;
+	ent->path = path;
 	if (rp != NULL)
-		p->repoid = repo_id(rp);
-	p->file = file;
-	p->data = data;
-	p->datasz = (data != NULL) ? datasz : 0;
+		ent->repoid = repo_id(rp);
+	ent->file = file;
+	ent->data = data;
+	ent->datasz = (data != NULL) ? datasz : 0;
 
-	return p;
+	return ent;
 }
 
 /*
@@ -296,9 +296,9 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
     struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
     char *mftaki)
 {
-	struct entity	*p;
+	struct entity *ent;
 
-	p = entity_new(path, file, type, loc, rp, data, datasz, talid, certid,
+	ent = entity_new(path, file, type, loc, rp, data, datasz, talid, certid,
 	    mftaki);
 
 	entity_queue++;
@@ -308,9 +308,9 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
 	 * been loaded else enqueue it for later.
 	 */
 
-	if (rp == NULL || !repo_queued(rp, p)) {
-		entity_write_req(p);
-		entity_free(p);
+	if (rp == NULL || !repo_queued(rp, ent)) {
+		entity_write_req(ent);
+		entity_free(ent);
 	}
 }
 
