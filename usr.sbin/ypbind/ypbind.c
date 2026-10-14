@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.86 2026/10/13 06:55:15 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.87 2026/10/14 02:05:18 jsg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -444,7 +444,6 @@ main(int argc, char *argv[])
 		}
 		if ((ludptransp = svcudp_create(lsock)) == NULL)
 			errx(1, "cannot create udp service.");
-			exit(1);
 
 		/* build TCP local port */
 		if ((lsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
