@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.324 2026/10/14 14:30:52 job Exp $ */
+/*	$OpenBSD: main.c,v 1.325 2026/10/14 15:57:19 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -263,11 +263,8 @@ entityq_flush(struct entityq *q, struct repo *rp)
 	}
 }
 
-/*
- * Add the heap-allocated file to the queue for processing.
- */
-static void
-entityq_add(char *path, char *file, enum rtype type, enum location loc,
+static struct entity *
+entity_new(char *path, char *file, enum rtype type, enum location loc,
     struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
     char *mftaki)
 {
@@ -287,6 +284,22 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
 	p->file = file;
 	p->data = data;
 	p->datasz = (data != NULL) ? datasz : 0;
+
+	return p;
+}
+
+/*
+ * Add the heap-allocated file to the queue for processing.
+ */
+static void
+entityq_add(char *path, char *file, enum rtype type, enum location loc,
+    struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
+    char *mftaki)
+{
+	struct entity	*p;
+
+	p = entity_new(path, file, type, loc, rp, data, datasz, talid, certid,
+	    mftaki);
 
 	entity_queue++;
 
