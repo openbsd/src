@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.186 2026/10/13 09:52:21 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.187 2026/10/14 04:47:42 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -164,10 +164,6 @@ struct imsgev {
 	short			 events;
 };
 
-#define IMSG_SIZE_CHECK(imsg, p) do {				\
-	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))			\
-		fatalx("bad length imsg received");		\
-} while (0)
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
 #define MAX_IMSG_DATA_SIZE	(MAX_IMSGSIZE - IMSG_HEADER_SIZE)
 
