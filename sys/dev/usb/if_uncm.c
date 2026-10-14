@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uncm.c,v 1.3 2026/10/11 13:42:42 stsp Exp $ */
+/*	$OpenBSD: if_uncm.c,v 1.4 2026/10/14 11:04:09 stsp Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1174,8 +1174,10 @@ uncm_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uncm_softc *sc = priv;
 	struct ifnet *ifp = GET_IFP(sc);
+	struct usb_cdc_notification *msg;
 	uint32_t up, down;
-	int	total_len;
+	uint8_t *buf;
+	int	total_len, off, dlen;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
@@ -1198,35 +1200,60 @@ uncm_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_intr_msg.bmRequestType != UCDC_NOTIFICATION) {
-		DPRINTF("%s: unexpected notification (type=0x%02x)\n",
-		    DEVNAM(sc), sc->sc_intr_msg.bmRequestType);
-		return;
-	}
+	DPRINTFN(4, "%s: recv %d bytes of notifications\n", DEVNAM(sc),
+	    total_len);
 
-	switch (sc->sc_intr_msg.bNotification) {
-	case UCDC_N_NETWORK_CONNECTION:
-		if (ifp->if_flags & IFF_DEBUG)
-			log(LOG_DEBUG, "%s: network %sconnected\n", DEVNAM(sc),
-			    UGETW(sc->sc_intr_msg.wValue) ? "" : "dis");
-		sc->sc_link = UGETW(sc->sc_intr_msg.wValue) ?
-		    LINK_STATE_UP : LINK_STATE_DOWN;
-		usb_add_task(sc->sc_udev, &sc->sc_link_task);
-		break;
-	case UCDC_N_CONNECTION_SPEED_CHANGE:
-		if (total_len >= UCDC_NOTIFICATION_LENGTH + 8) {
-			down = UGETDW(&sc->sc_intr_msg.data[0]);
-			up = UGETDW(&sc->sc_intr_msg.data[4]);
-			sc->sc_baudrate = MIN(up, down);
-			DPRINTFN(2, "%s: speed down %u up %u\n", DEVNAM(sc),
-			    down, up);
-			usb_add_task(sc->sc_udev, &sc->sc_link_task);
+	/*
+	 * A transfer may contain more than one notification: a packet
+	 * of exactly wMaxPacketSize does not end the transfer, and a
+	 * device with a large wMaxPacketSize may also pack several
+	 * notifications into one packet.  Use each notification's
+	 * wLength to find the next one.
+	 */
+	buf = (uint8_t *)&sc->sc_intr_msg;
+	for (off = 0; off + UCDC_NOTIFICATION_LENGTH <= total_len;
+	    off += UCDC_NOTIFICATION_LENGTH + dlen) {
+		msg = (struct usb_cdc_notification *)(buf + off);
+		dlen = UGETW(msg->wLength);
+
+		if (off + UCDC_NOTIFICATION_LENGTH + dlen > total_len) {
+			DPRINTF("%s: truncated notification at offset %d\n",
+			    DEVNAM(sc), off);
+			break;
 		}
-		break;
-	default:
-		DPRINTF("%s: unexpected notification (0x%02x)\n",
-		    DEVNAM(sc), sc->sc_intr_msg.bNotification);
-		break;
+
+		/* Framing is lost; do not parse the rest. */
+		if (msg->bmRequestType != UCDC_NOTIFICATION) {
+			DPRINTF("%s: unexpected notification (type=0x%02x)\n",
+			    DEVNAM(sc), msg->bmRequestType);
+			break;
+		}
+
+		switch (msg->bNotification) {
+		case UCDC_N_NETWORK_CONNECTION:
+			if (ifp->if_flags & IFF_DEBUG)
+				log(LOG_DEBUG, "%s: network %sconnected\n",
+				    DEVNAM(sc),
+				    UGETW(msg->wValue) ? "" : "dis");
+			sc->sc_link = UGETW(msg->wValue) ?
+			    LINK_STATE_UP : LINK_STATE_DOWN;
+			usb_add_task(sc->sc_udev, &sc->sc_link_task);
+			break;
+		case UCDC_N_CONNECTION_SPEED_CHANGE:
+			if (dlen >= 8) {
+				down = UGETDW(&msg->data[0]);
+				up = UGETDW(&msg->data[4]);
+				sc->sc_baudrate = MIN(up, down);
+				DPRINTFN(2, "%s: speed down %u up %u\n",
+				    DEVNAM(sc), down, up);
+				usb_add_task(sc->sc_udev, &sc->sc_link_task);
+			}
+			break;
+		default:
+			DPRINTF("%s: unexpected notification (0x%02x)\n",
+			    DEVNAM(sc), msg->bNotification);
+			break;
+		}
 	}
 }
 
