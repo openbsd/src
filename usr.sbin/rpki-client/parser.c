@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.193 2026/10/13 16:06:18 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.194 2026/10/14 06:18:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -646,6 +646,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		if (!constraints_validate(file, cert))
 			goto out;
+		cert->expires = x509_find_expires(cert->notafter, a, crl);
 	}
 
 	/*

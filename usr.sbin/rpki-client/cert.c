@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.246 2026/10/09 08:36:50 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.247 2026/10/14 06:18:35 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1821,6 +1821,7 @@ void
 cert_buffer(struct ibuf *b, const struct cert *cert)
 {
 	io_simple_buffer(b, &cert->notafter, sizeof(cert->notafter));
+	io_simple_buffer(b, &cert->expires, sizeof(cert->expires));
 	io_simple_buffer(b, &cert->purpose, sizeof(cert->purpose));
 	io_simple_buffer(b, &cert->talid, sizeof(cert->talid));
 	io_simple_buffer(b, &cert->issuerid, sizeof(cert->issuerid));
@@ -1877,6 +1878,7 @@ cert_read(struct ibuf *b)
 		err(1, NULL);
 
 	io_read_buf(b, &cert->notafter, sizeof(cert->notafter));
+	io_read_buf(b, &cert->expires, sizeof(cert->expires));
 	io_read_buf(b, &cert->purpose, sizeof(cert->purpose));
 	io_read_buf(b, &cert->talid, sizeof(cert->talid));
 	io_read_buf(b, &cert->issuerid, sizeof(cert->issuerid));
@@ -2043,7 +2045,7 @@ insert_brk(struct brk_tree *tree, struct cert *cert, uint32_t asid)
 		err(1, NULL);
 
 	b->asid = asid;
-	b->expires = cert->notafter;
+	b->expires = cert->expires;
 	b->talid = cert->talid;
 	if ((b->ski = strdup(cert->ski)) == NULL)
 		err(1, NULL);
