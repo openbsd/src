@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.307 2026/10/14 06:41:29 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.308 2026/10/14 06:52:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -853,6 +853,8 @@ int		 valid_spl(const char *, struct cert *, struct spl *);
 /* Working with CMS. */
 void		*signed_object_parse(struct cert **, const char *, enum rtype,
 		    int, const unsigned char *, size_t);
+enum rtype	 cms_rtype_from_der(const char *, const unsigned char *,
+		    size_t);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 

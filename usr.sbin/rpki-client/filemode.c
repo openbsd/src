@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.92 2026/10/09 08:34:38 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.93 2026/10/14 06:52:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -32,7 +32,6 @@
 #include <imsg.h>
 
 #include <openssl/asn1.h>
-#include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -339,50 +338,14 @@ print_signature_path(const char *crl, const char *aia, const struct auth *a)
 static enum rtype
 rtype_from_der(const char *fn, const unsigned char *der, size_t len)
 {
-	CMS_ContentInfo		*cms = NULL;
 	X509			*x509 = NULL;
 	X509_CRL		*crl = NULL;
 	const unsigned char	*p;
 	enum rtype		 rtype = RTYPE_INVALID;
 
 	/* Does der parse as a CMS ContentInfo? Is it a known signed object? */
-	p = der;
-	if ((cms = d2i_CMS_ContentInfo(NULL, &p, len)) != NULL) {
-		const ASN1_OBJECT *obj;
-
-		if ((obj = CMS_get0_type(cms)) != NULL) {
-			if (OBJ_cmp(obj, ccr_oid) == 0) {
-				rtype = RTYPE_CCR;
-				goto out;
-			}
-		}
-
-		if (CMS_get0_SignerInfos(cms) == NULL) {
-			warnx("%s: CMS object not signedData", fn);
-			goto out;
-		}
-
-		if ((obj = CMS_get0_eContentType(cms)) == NULL) {
-			warnx("%s: RFC 6488, section 2.1.3.1: eContentType: "
-			    "OID object is NULL", fn);
-			goto out;
-		}
-
-		if (OBJ_cmp(obj, aspa_oid) == 0)
-			rtype = RTYPE_ASPA;
-		else if (OBJ_cmp(obj, mft_oid) == 0)
-			rtype = RTYPE_MFT;
-		else if (OBJ_cmp(obj, roa_oid) == 0)
-			rtype = RTYPE_ROA;
-		else if (OBJ_cmp(obj, rsc_oid) == 0)
-			rtype = RTYPE_RSC;
-		else if (OBJ_cmp(obj, spl_oid) == 0)
-			rtype = RTYPE_SPL;
-		else if (OBJ_cmp(obj, tak_oid) == 0)
-			rtype = RTYPE_TAK;
-
+	if ((rtype = cms_rtype_from_der(fn, der, len)) != RTYPE_INVALID)
 		goto out;
-	}
 
 	/* Does der parse as a certificate? */
 	p = der;
@@ -405,7 +368,6 @@ rtype_from_der(const char *fn, const unsigned char *der, size_t len)
 	 */
 
  out:
-	CMS_ContentInfo_free(cms);
 	X509_free(x509);
 	X509_CRL_free(crl);
 

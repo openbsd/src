@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.71 2026/10/14 06:48:24 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.72 2026/10/14 06:52:16 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -979,4 +979,61 @@ signed_object_parse(struct cert **out_cert, const char *fn, enum rtype rtype,
     int talid, const unsigned char *der, size_t len)
 {
 	return cms_parse_validate(out_cert, fn, rtype, talid, der, len);
+}
+
+/*
+ * filemode CMS rtype prober. If this is the DER of a CMS object, try
+ * to determine its rtype from the contentType or the eContentType.
+ * Returns rtype if heuristics succeed and RTYPE_INVALID on error.
+ */
+enum rtype
+cms_rtype_from_der(const char *fn, const unsigned char *der, size_t len)
+{
+	CBS cbs, contentType, content, eContentType;
+	struct cms_signedData signedData;
+	uint8_t *buf = NULL;
+	size_t buf_len;
+	enum rtype rtype = RTYPE_INVALID;
+
+	CBS_init(&cbs, der, len);
+
+	/* ARIN special. See cms_parse_validate(). */
+	if (!CBS_asn1_indefinite_to_definite(&cbs, &buf, &buf_len))
+		goto out;
+	if (buf != NULL)
+		CBS_init(&cbs, buf, buf_len);
+
+	if (!cms_get_contentInfo(&cbs, &contentType, &content))
+		goto out;
+
+	if (cbs_oid_value_matches_obj(&contentType, ccr_oid)) {
+		rtype = RTYPE_CCR;
+		goto out;
+	}
+
+	if (!cbs_oid_value_matches_nid(&contentType, NID_pkcs7_signed))
+		goto out;
+	if (!cms_get_signedData(&content, &signedData))
+		goto out;
+	if (!cms_get_encapContentInfo(fn, &signedData, &eContentType,
+	    NULL))
+		goto out;
+
+	if (cbs_oid_value_matches_obj(&eContentType, aspa_oid))
+		rtype = RTYPE_ASPA;
+	else if (cbs_oid_value_matches_obj(&eContentType, mft_oid))
+		rtype = RTYPE_MFT;
+	else if (cbs_oid_value_matches_obj(&eContentType, roa_oid))
+		rtype = RTYPE_ROA;
+	else if (cbs_oid_value_matches_obj(&eContentType, rsc_oid))
+		rtype = RTYPE_RSC;
+	else if (cbs_oid_value_matches_obj(&eContentType, spl_oid))
+		rtype = RTYPE_SPL;
+	else if (cbs_oid_value_matches_obj(&eContentType, tak_oid))
+		rtype = RTYPE_TAK;
+
+ out:
+	free(buf);
+
+	return rtype;
 }
