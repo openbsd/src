@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.78 2026/10/02 04:47:07 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.79 2026/10/14 04:41:35 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -143,11 +143,10 @@ config_getcfg(struct httpd *env, struct imsg *imsg)
 {
 	struct ctl_flags	 cf;
 
-	if (IMSG_DATA_SIZE(imsg) != sizeof(cf))
-		return (0); /* ignore */
+	if (imsg_get_data(imsg, &cf, sizeof(cf)) == -1)
+		fatalx("%s: imsg_get_data", __func__);
 
 	/* Update runtime flags */
-	memcpy(&cf, imsg->data, sizeof(cf));
 	env->sc_opts = cf.cf_opts;
 	env->sc_flags = cf.cf_flags;
 	memcpy(env->sc_tls_sid, cf.cf_tls_sid, sizeof(env->sc_tls_sid));
