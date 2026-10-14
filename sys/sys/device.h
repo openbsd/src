@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.72 2026/09/07 21:30:59 kettenis Exp $	*/
+/*	$OpenBSD: device.h,v 1.73 2026/10/14 23:51:44 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ enum devclass {
 
 /*
  * Actions for ca_activate.
+ * *** SLEEP IS NOT ALLOWED DURING DVACT_SUSPEND or DVACT_RESUME ***
  */
 #define	DVACT_DEACTIVATE	1	/* deactivate the device */
 #define	DVACT_QUIESCE		2	/* warn the device about suspend */
