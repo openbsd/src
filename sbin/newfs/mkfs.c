@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.102 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.103 2026/10/14 16:37:35 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -1165,7 +1165,7 @@ ilog2(int val)
 		if (1 << n == val)
 			return (n);
 
-	errx(1, "ilog2: %d is not a power of 2\n", val);
+	errx(1, "ilog2: %d is not a power of 2", val);
 }
 
 struct inoinfo {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.34 2026/10/09 18:50:30 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.35 2026/10/14 16:37:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -116,7 +116,7 @@ file_date(char *filename)
 	} else {
 		status = stat(filename, &finfo);
 		if (status < 0)
-			err(1, "stat %s\n", filename);
+			err(1, "stat %s", filename);
 		snprintf(datestr, sizeof datestr, "%010lld",
 		    (long long)finfo.st_mtime);
 	}

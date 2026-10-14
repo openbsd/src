@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.50 2026/02/25 05:37:25 op Exp $	*/
+/*	$OpenBSD: misc.c,v 1.51 2026/10/14 16:37:35 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ void
 release_input(struct input_file *f)
 {
 	if (ferror(f->file))
-		errx(1, "Fatal error reading from %s\n", f->name);
+		errx(1, "Fatal error reading from %s", f->name);
 	if (f->file != stdin)
 	    fclose(f->file);
 	f->c = EOF;

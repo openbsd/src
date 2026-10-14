@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.56 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.57 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -377,7 +377,7 @@ dirindir(ufsino_t ino, daddr_t blkno, int ind_level, off_t *filesizep,
 	void *idblk;
 
 	if ((idblk = malloc(sblock->fs_bsize)) == NULL)
-		errx(1, "dirindir: cannot allocate indirect memory.\n");
+		errx(1, "dirindir: cannot allocate indirect memory.");
 	bread(fsbtodb(sblock, blkno), idblk, (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		for (i = 0; *filesizep > 0 && i < NINDIR(sblock); i++) {

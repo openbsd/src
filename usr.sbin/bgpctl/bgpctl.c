@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.325 2026/09/24 11:41:41 job Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.326 2026/10/14 16:37:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1160,7 +1160,7 @@ network_bulk(struct parse_result *res)
 	FILE *f;
 
 	if ((f = fdopen(STDIN_FILENO, "r")) == NULL)
-		err(1, "Failed to open stdin\n");
+		err(1, "Failed to open stdin");
 
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
 		char *b, *buf = line;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.85 2026/09/26 15:00:42 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.86 2026/10/14 16:37:35 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 				int r = snprintf(pathbuf, sizeof(pathbuf), "%s%s",
 				    _PATH_TTY, optarg);
 				if (r < 0 || r > sizeof(pathbuf))
-					errx(1, "%s: too long\n", optarg);
+					errx(1, "%s: too long", optarg);
 				ttypath = pathbuf;
 			} else
 				ttypath = optarg;

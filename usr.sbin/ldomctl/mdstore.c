@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.14 2021/02/01 16:27:06 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.15 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -221,7 +221,7 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 			errx(1, "No such configuration");
 			break;
 		default:
-			errx(1, "Unexpected result 0x%x\n", mr->result);
+			errx(1, "Unexpected result 0x%x", mr->result);
 			break;
 		}
 	}

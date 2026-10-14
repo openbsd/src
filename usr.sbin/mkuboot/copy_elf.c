@@ -1,4 +1,4 @@
-/*      $OpenBSD: copy_elf.c,v 1.7 2020/04/28 04:17:42 deraadt Exp $       */
+/*      $OpenBSD: copy_elf.c,v 1.8 2026/10/14 16:37:35 deraadt Exp $       */
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -284,7 +284,7 @@ ELFNAME(copy_elf)(int ifd, const char *iname, int ofd, const char *oname,
 	}
 
 	if (vaddr != esymval)
-		warnx("esymval and vaddr mismatch %llx %llx\n",
+		warnx("esymval and vaddr mismatch %llx %llx",
 		    (long long)esymval, (long long)vaddr);
 
 	return crc;

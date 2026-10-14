@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.18 2019/07/01 07:17:26 kevlo Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.19 2026/10/14 16:37:35 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -197,27 +197,27 @@ mke2fs(const char *fsys, int f)
 	 */
 	if (!powerof2(bsize)) {
 		errx(EXIT_FAILURE,
-		    "block size must be a power of 2, not %u\n",
+		    "block size must be a power of 2, not %u",
 		    bsize);
 	}
 	if (!powerof2(fsize)) {
 		errx(EXIT_FAILURE,
-		    "fragment size must be a power of 2, not %u\n",
+		    "fragment size must be a power of 2, not %u",
 		    fsize);
 	}
 	if (fsize < sectorsize) {
 		errx(EXIT_FAILURE,
-		    "fragment size %u is too small, minimum is %u\n",
+		    "fragment size %u is too small, minimum is %u",
 		    fsize, sectorsize);
 	}
 	if (bsize < MINBSIZE) {
 		errx(EXIT_FAILURE,
-		    "block size %u is too small, minimum is %u\n",
+		    "block size %u is too small, minimum is %u",
 		    bsize, MINBSIZE);
 	}
 	if (bsize > EXT2_MAXBSIZE) {
 		errx(EXIT_FAILURE,
-		    "block size %u is too large, maximum is %u\n",
+		    "block size %u is too large, maximum is %u",
 		    bsize, MAXBSIZE);
 	}
 	if (bsize != fsize) {
@@ -228,14 +228,14 @@ mke2fs(const char *fsys, int f)
 		 */
 		errx(EXIT_FAILURE,
 		    "block size (%u) can't be different from "
-		    "fragment size (%u)\n",
+		    "fragment size (%u)",
 		    bsize, fsize);
 	}
 
 	/* variable inodesize is REV1 feature */
 	if (Oflag == 0 && inodesize != EXT2_REV0_DINODE_SIZE) {
 		errx(EXIT_FAILURE, "GOOD_OLD_REV file system format"
-		    " doesn't support %d byte inode\n", inodesize);
+		    " doesn't support %d byte inode", inodesize);
 	}
 
 	sblock.e2fs.e2fs_log_bsize = ilog2(bsize) - LOG_MINBSIZE;
@@ -271,7 +271,7 @@ mke2fs(const char *fsys, int f)
 
 	if (fssize < minfssize)
 		errx(EXIT_FAILURE, "Filesystem size %" PRId64
-		    " < minimum size of %" PRId64 "\n", fssize, minfssize);
+		    " < minimum size of %" PRId64, fssize, minfssize);
 
 	bcount = dbtofsb(&sblock, fssize);
 
@@ -534,7 +534,7 @@ mke2fs(const char *fsys, int f)
 	iobuf = mmap(0, iobufsize, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (iobuf == MAP_FAILED)
-		errx(EXIT_FAILURE, "Cannot allocate I/O buffer\n");
+		errx(EXIT_FAILURE, "Cannot allocate I/O buffer");
 
 	/*
 	 * We now start writing to the filesystem
@@ -549,7 +549,7 @@ mke2fs(const char *fsys, int f)
 		 * Convert to file system fragment sized units.
 		 */
 		if (fssize <= 0)
-			errx(EXIT_FAILURE, "Preposterous size %" PRId64 "\n",
+			errx(EXIT_FAILURE, "Preposterous size %" PRId64,
 			    fssize);
 		wtfs(fssize - 1, sectorsize, iobuf);
 
@@ -1107,7 +1107,7 @@ init_resizeino(const struct timeval *tv)
 	     EXT2F_ROCOMPAT_LARGE_FILE) == 0) {
 		/* XXX should enable it here and update all backups? */
 		errx(EXIT_FAILURE, "%s: large_file rocompat feature is "
-		    "required to enable resize feature for this filesystem\n",
+		    "required to enable resize feature for this filesystem",
 		    __func__);
 	}
 	/* upper 32bit is stored into e2di_size_hi on REV1 feature */
@@ -1272,7 +1272,7 @@ alloc(uint32_t size, uint16_t mode)
 	
  gotit:
 	if (isset(bbp, bno))
-		errx(EXIT_FAILURE, "%s: inconsistent bitmap\n", __func__);
+		errx(EXIT_FAILURE, "%s: inconsistent bitmap", __func__);
 
 	setbit(bbp, bno);
 	wtfs(fsbtodb(&sblock, gd[0].ext2bgd_b_bitmap), sblock.e2fs_bsize, bbp);
@@ -1301,7 +1301,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	bp = malloc(sblock.e2fs_bsize);
 	if (bp == NULL)
-		errx(EXIT_FAILURE, "%s: can't allocate buffer for inode\n",
+		errx(EXIT_FAILURE, "%s: can't allocate buffer for inode",
 		    __func__);
 
 	/*
@@ -1314,7 +1314,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		/* sanity check */
 		if (gd[c].ext2bgd_nifree == 0)
 			errx(EXIT_FAILURE,
-			    "%s: no free inode %" PRIu64 " in block group %u\n",
+			    "%s: no free inode %" PRIu64 " in block group %u",
 			    __func__, (uint64_t)ino, c);
 
 		/* update inode bitmap */
@@ -1324,7 +1324,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		/* more sanity */
 		if (isset(bp, EXT2_INO_INDEX(ino)))
 			errx(EXIT_FAILURE, "%s: inode %" PRIu64
-			    " already in use\n", __func__, (uint64_t)ino);
+			    " already in use", __func__, (uint64_t)ino);
 		setbit(bp, EXT2_INO_INDEX(ino));
 		wtfs(fsbtodb(&sblock, gd[0].ext2bgd_i_bitmap),
 		    sblock.e2fs_bsize, bp);
@@ -1334,7 +1334,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	if (ino >= sblock.e2fs.e2fs_ipg * sblock.e2fs_ncg)
 		errx(EXIT_FAILURE, "%s: inode value out of range (%" PRIu64
-		    ").\n", __func__, (uint64_t)ino);
+		    ").", __func__, (uint64_t)ino);
 
 	/* update an inode entry in the table */
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
@@ -1394,7 +1394,7 @@ ilog2(uint val)
 {
 
 	if (val == 0 || !powerof2(val))
-		errx(EXIT_FAILURE, "%s: %u is not a power of 2\n",
+		errx(EXIT_FAILURE, "%s: %u is not a power of 2",
 		    __func__, val);
 
 	return ffs(val) - 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.16 2026/08/04 13:19:07 claudio Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.17 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -144,7 +144,7 @@ show_clear_session(struct parse_result *result, FILE *out)
 	u_int                  ppp_id[NMAX_DISCONNECT];
 
 	if (imsg_compose(&ctl_ibuf, IMSG_CTL_WHO, 0, 0, -1, NULL, 0) == -1)
-		err(EXIT_FAILURE, "failed to compose a message\n");
+		err(EXIT_FAILURE, "failed to compose a message");
 	if (imsg_wait_command_completion() < 0)
 		errx(EXIT_FAILURE, "failed to get response");
 	if (ctl_imsg.hdr.type != IMSG_CTL_OK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.165 2026/04/21 14:44:29 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.166 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1211,7 +1211,7 @@ get_maxfiles(void)
 	if (sysctl(mib, 2, &maxfiles, &len, NULL, 0) == -1)
 		return(MAXCON);
 	if ((maxfiles - 200) < 10)
-		errx(1, "kern.maxfiles is only %d, can not continue\n",
+		errx(1, "kern.maxfiles is only %d, can not continue",
 		    maxfiles);
 	else
 		return(maxfiles - 200);

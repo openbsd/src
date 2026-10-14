@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.11 2025/09/22 07:49:43 sashan Exp $ */
+/*	$OpenBSD: ksyms.c,v 1.12 2026/10/14 16:37:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -170,7 +170,7 @@ read_syms(Elf *elf, const void *offset, const void *dtrv_va)
 
 	data = elf_rawdata(symtab, data);
 	if (data == NULL) {
-		warnx("%s elf_rwadata() unable to read syms from\n", __func__);
+		warnx("%s elf_rwadata() unable to read syms from", __func__);
 		return sls;
 	}
 
@@ -270,7 +270,7 @@ load_syms(int dtdev, pid_t pid, caddr_t pc)
 	dtrv.dtrv_va = pc;
 	dtrv.dtrv_fd = 0;
 	if (ioctl(dtdev, DTIOCRDVNODE, &dtrv)) {
-		warn("DTIOCRDVNODE fails for %p\n", pc);
+		warn("DTIOCRDVNODE fails for %p", pc);
 		return NULL;
 	}
 

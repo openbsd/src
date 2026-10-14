@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.87 2016/05/28 22:26:13 tb Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.88 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -111,7 +111,7 @@ main(int argc, char **argv)
 	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
 		err(1, "can't get disklabel for %s", *argv);
 	if (dl.d_secsize != DEV_BSIZE)
-		errx(1, "disk sector size (%d) != 512\n", dl.d_secsize);
+		errx(1, "disk sector size (%d) != 512", dl.d_secsize);
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");

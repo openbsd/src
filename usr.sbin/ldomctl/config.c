@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.43 2022/10/06 21:35:52 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.44 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -163,7 +163,7 @@ pri_link_core(struct md *md, struct md_node *node, struct core *core)
 
 			cpu = pri_find_cpu(pid);
 			if (cpu == NULL)
-				errx(1, "couldn't determine core for VCPU %lld\n", pid);
+				errx(1, "couldn't determine core for VCPU %lld", pid);
 			cpu->core = core;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcrm.c,v 1.13 2023/03/08 04:43:11 guenther Exp $*/
+/*	$OpenBSD: ipcrm.c,v 1.14 2026/10/14 16:37:35 deraadt Exp $*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 		case 's':
 			target_id = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr)
-				errx(1, "-%c %s: %s\n", c, optarg, errstr);
+				errx(1, "-%c %s: %s", c, optarg, errstr);
 			if (c == 'q')
 				result = msgrm(0, target_id);
 			else if (c == 'm')

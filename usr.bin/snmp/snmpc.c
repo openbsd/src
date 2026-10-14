@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.41 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.42 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -811,7 +811,7 @@ snmpc_trap(int argc, char *argv[])
 		ts.tv_nsec = (lval % 100) * 10000000;
 	}
 	if (smi_string2oid(argv[2], &trapoid) == -1)
-		errx(1, "Invalid oid: %s\n", argv[2]);
+		errx(1, "Invalid oid: %s", argv[2]);
 
 	argc -= 3;
 	argv += 3;
@@ -1396,7 +1396,7 @@ snmpc_varbindparse(int argc, char *argv[])
 		usage();
 	for (i = 0; i < argc; i += 3) {
 		if (smi_string2oid(argv[i], &oid) == -1)
-			errx(1, "Invalid oid: %s\n", argv[i]);
+			errx(1, "Invalid oid: %s", argv[i]);
 		switch (argv[i + 1][0]) {
 		case 'a':
 			ret = inet_pton(AF_INET, argv[i + 2], &addr4);

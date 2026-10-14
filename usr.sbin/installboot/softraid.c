@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.10 2025/09/17 16:12:10 deraadt Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.11 2026/10/14 16:37:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -177,7 +177,7 @@ sr_open_chunk(int devfd, int vol, int disk, struct bioc_disk *bd,
 		errx(1, "invalid disk name");
 	*part = bd->bd_vendor[strlen(bd->bd_vendor) - 1];
 	if (DL_PARTNAME2NUM(*part) == -1)
-		errx(1, "invalid partition %c\n", *part);
+		errx(1, "invalid partition %c", *part);
 	bd->bd_vendor[strlen(bd->bd_vendor) - 1] = '\0';
 
 	/* Open device. */

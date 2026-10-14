@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.74 2026/10/09 16:42:33 miod Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.75 2026/10/14 16:37:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -933,7 +933,7 @@ dump_type2(int bus, int dev, int func)
 	u_int32_t reg;
 
 	if (pci_read(bus, dev, func, PCI_MAPREG_START, &reg) != 0)
-		warn("unable to read PCI_MAPREG\n");
+		warn("unable to read PCI_MAPREG");
 	printf("\t0x%04x: Cardbus Control Registers Base Address: %08x\n",
 	    PCI_MAPREG_START, reg);
 
@@ -945,35 +945,35 @@ dump_type2(int bus, int dev, int func)
 	    (reg >> 16) & 0xff, (reg >> 24) & 0xff);
 
 	if (pci_read(bus, dev, func, PCI_MEMBASE0_2, &reg) != 0)
-		warn("unable to read PCI_MEMBASE0_2\n");
+		warn("unable to read PCI_MEMBASE0_2");
 	printf("\t0x%04x: Memory Base 0: %08x\n", PCI_MEMBASE0_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_MEMLIMIT0_2, &reg) != 0)
-		warn("unable to read PCI_MEMLIMIT0_2\n");
+		warn("unable to read PCI_MEMLIMIT0_2");
 	printf("\t0x%04x: Memory Limit 0: %08x\n", PCI_MEMLIMIT0_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_MEMBASE1_2, &reg) != 0)
-		warn("unable to read PCI_MEMBASE1_2\n");
+		warn("unable to read PCI_MEMBASE1_2");
 	printf("\t0x%04x: Memory Base 1: %08x\n", PCI_MEMBASE1_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_MEMLIMIT1_2, &reg) != 0)
-		warn("unable to read PCI_MEMLIMIT1_2\n");
+		warn("unable to read PCI_MEMLIMIT1_2");
 	printf("\t0x%04x: Memory Limit 1: %08x\n", PCI_MEMLIMIT1_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_IOBASE0_2, &reg) != 0)
-		warn("unable to read PCI_IOBASE0_2\n");
+		warn("unable to read PCI_IOBASE0_2");
 	printf("\t0x%04x: I/O Base 0: %08x\n", PCI_IOBASE0_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_IOLIMIT0_2, &reg) != 0)
-		warn("unable to read PCI_IOLIMIT0_2\n");
+		warn("unable to read PCI_IOLIMIT0_2");
 	printf("\t0x%04x: I/O Limit 0: %08x\n", PCI_IOLIMIT0_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_IOBASE1_2, &reg) != 0)
-		warn("unable to read PCI_IOBASE1_2\n");
+		warn("unable to read PCI_IOBASE1_2");
 	printf("\t0x%04x: I/O Base 1: %08x\n", PCI_IOBASE1_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_IOLIMIT1_2, &reg) != 0)
-		warn("unable to read PCI_IOLIMIT1_2\n");
+		warn("unable to read PCI_IOLIMIT1_2");
 	printf("\t0x%04x: I/O Limit 1: %08x\n", PCI_IOLIMIT1_2, reg);
 
 	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
@@ -989,7 +989,7 @@ dump_type2(int bus, int dev, int func)
 	    PCI_SUBVEND_2, PCI_VENDOR(reg), PCI_PRODUCT(reg));
 
 	if (pci_read(bus, dev, func, PCI_PCCARDIF_2, &reg) != 0)
-		warn("unable to read PCI_PCCARDIF_2\n");
+		warn("unable to read PCI_PCCARDIF_2");
 	printf("\t0x%04x: 16-bit Legacy Mode Base Address: %08x\n",
 	    PCI_PCCARDIF_2, reg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.32 2022/12/04 23:50:47 cheloha Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.33 2026/10/14 16:37:35 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ static char *mode_lookup(int page)
 		while (match != 0) {
 			c = getc(modes);
 			if (c == EOF)
-				fprintf(stderr, "Expected %c.\n", END_ENTRY);
+				fprintf(stderr, "Expected %c.", END_ENTRY);
 
 			if (c == START_ENTRY) {
 				match++;
@@ -496,7 +496,7 @@ static char *mode_lookup(int page)
 			}
 			if (found && c != '\n') {
 				if (next >= sizeof(fmt)) {
-					errx(1, "Stupid program: Buffer overflow.\n");
+					errx(1, "Stupid program: Buffer overflow.");
 				}
 
 				fmt[next++] = (u_char)c;
@@ -572,7 +572,7 @@ static void
 edit_check(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (letter != 'i' && letter != 'b') {
-		errx(1, "Can't edit format %c.\n", letter);
+		errx(1, "Can't edit format %c.", letter);
 	}
 
 	if (editind >= sizeof(editinfo) / sizeof(editinfo[0])) {
@@ -586,7 +586,7 @@ static void
 edit_defaults(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (letter != 'i' && letter != 'b') {
-		errx(1, "Can't edit format %c.\n", letter);
+		errx(1, "Can't edit format %c.", letter);
 	}
 
 	editinfo[editind].default_value = ((long)arg);
@@ -598,7 +598,7 @@ edit_report(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (editinfo[editind].can_edit) {
 		if (letter != 'i' && letter != 'b') {
-			errx(1, "Can't report format %c.\n", letter);
+			errx(1, "Can't report format %c.", letter);
 		}
 
 		fprintf(edit_file, "%s:  %ld\n", name, (long)arg);
@@ -623,7 +623,7 @@ edit_get(void *hook, char *name)
 			line[len - 1] = '\0';
 
 		if (strncmp(name, line, strlen(name)) != 0) {
-			errx(1, "Expected \"%s\" and read \"%s\"\n",
+			errx(1, "Expected \"%s\" and read \"%s\"",
 			    name, line);
 		}
 
@@ -723,12 +723,12 @@ mode_edit(int fd, int page, int edit, int argc, char *argv[])
 
 	if (edit) {
 		if (!fmt) {
-			errx(1, "Sorry: can't edit without a format.\n");
+			errx(1, "Sorry: can't edit without a format.");
 		}
 
 		if (pagectl != 0 && pagectl != 3) {
 			errx(1,
-"It only makes sense to edit page 0 (current) or page 3 (saved values)\n");
+"It only makes sense to edit page 0 (current) or page 3 (saved values)");
 		}
 
 		verbose = 1;

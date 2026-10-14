@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.11 2025/05/25 08:57:50 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.12 2026/10/14 16:37:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 		len = rv;
 
 		if (len < sizeof(msgtype)) {
-			warnx("too short for msgtype\n");
+			warnx("too short for msgtype");
 			continue;
 		}
 		if (msgtype == LLDP_CTL_MSG_MSAP_END)
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 		len -= sizeof(msgtype);
 
 		if (len < sizeof(msg_msap)) {
-			warnx("too short for msg_msap\n");
+			warnx("too short for msg_msap");
 			continue;
 		}
 		len -= sizeof(msg_msap);
