@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.7 2026/10/03 19:15:49 tb Exp $ */
+/*	$OpenBSD: unistd.h,v 1.8 2026/10/14 06:42:35 tb Exp $ */
 /*
  * Public domain
  * compatibility shim for OpenSSL 3
@@ -10,27 +10,12 @@
 
 #include_next <unistd.h>
 
-#include <openssl/cms.h>
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 
 #ifndef DECLARE_STACK_OF
 #define DECLARE_STACK_OF DEFINE_STACK_OF
 #endif
-
-static inline int
-CMS_get_version(CMS_ContentInfo *cms, long *version)
-{
-	*version = 3;
-	return 1;
-}
-
-static inline int
-CMS_SignerInfo_get_version(CMS_SignerInfo *si, long *version)
-{
-	*version = 3;
-	return 1;
-}
 
 #if !HAVE_X509_CRL_GET0_TBS_SIGALG
 static inline const X509_ALGOR *
