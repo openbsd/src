@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcdpc.c,v 1.2 2026/03/09 23:57:53 jsg Exp $	*/
+/*	$OpenBSD: qcdpc.c,v 1.3 2026/10/14 15:27:35 kirill Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -45,6 +45,24 @@
     (DP_INTR_WRONG_ADDR | DP_INTR_TIMEOUT | DP_INTR_NACK_DEFER | \
      DP_INTR_WRONG_DATA_CNT | DP_INTR_AUX_ERROR)
 
+#define DP_INTR_STATUS2			0x24
+#define  DP_INTR_READY_FOR_VIDEO		(1U << 0)
+#define  DP_INTR_IDLE_PATTERN_SENT	(1U << 3)
+#define  DP_INTR_FRAME_END		(1U << 6)
+#define  DP_INTR_CRC_UPDATED		(1U << 9)
+#define  DP_INTR_STATUS2_MASK \
+    ((DP_INTR_READY_FOR_VIDEO | DP_INTR_IDLE_PATTERN_SENT | \
+      DP_INTR_FRAME_END | DP_INTR_CRC_UPDATED) << DP_INTR_STATUS_MASK_SHIFT)
+
+#define DP_MAINLINK_CTRL		0x00
+#define  DP_MAINLINK_ENABLE		(1U << 0)
+#define  DP_MAINLINK_RESET		(1U << 1)
+#define DP_STATE_CTRL			0x04
+#define  DP_STATE_SEND_VIDEO		(1U << 7)
+#define  DP_STATE_PUSH_IDLE		(1U << 8)
+#define DP_MAINLINK_READY		0x40
+#define  DP_MAINLINK_READY_FOR_VIDEO	(1U << 0)
+
 #define DP_AUX_CTRL			0x30
 #define DP_AUX_DATA			0x34
 #define  DP_AUX_DATA_SHIFT		8
@@ -64,22 +82,41 @@ struct qcdpc_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ahb_ioh;
 	bus_space_handle_t	sc_aux_ioh;
+	bus_space_handle_t	sc_link_ioh;
+	int			sc_panel_reinit;
 	void			*sc_ih;
 
 	struct drm_dp_aux	sc_aux;
 	uint32_t		sc_intr_status;
+	uint32_t		sc_tx_intr_status;
 
 	struct drm_edp_backlight_info sc_bl;
 	uint32_t		sc_bl_level;
+
+	uint8_t			sc_link_bandwidth;
+	uint8_t			sc_link_lane_count;
+	uint8_t			sc_link_lane_flags;
+	uint8_t			sc_link_rate_index;
+	uint8_t			sc_link_downspread;
+	uint8_t			sc_link_coding;
+	uint8_t			sc_link_edp_config;
+	uint8_t			sc_link_fec_config;
+	uint8_t			sc_link_dsc_enable;
+
+	/* Keep byte sequences in AUX order for replay. */
+	uint32_t		sc_link_lane_settings;
+	uint32_t		sc_link_source_oui;
 };
 
 struct qcdpc_softc *qcdpc_bl;
 
 int	qcdpc_match(struct device *, void *, void *);
 void	qcdpc_attach(struct device *, struct device *, void *);
+int	qcdpc_activate(struct device *, int);
 
 const struct cfattach qcdpc_ca = {
-	sizeof(struct qcdpc_softc), qcdpc_match, qcdpc_attach
+	sizeof(struct qcdpc_softc), qcdpc_match, qcdpc_attach,
+	NULL, qcdpc_activate
 };
 
 struct cfdriver qcdpc_cd = {
@@ -87,7 +124,13 @@ struct cfdriver qcdpc_cd = {
 };
 
 int	qcdpc_print(void *, const char *);
+int	qcdpc_map_link(struct qcdpc_softc *, struct fdt_attach_args *);
 void	qcdpc_attach_backlight(struct qcdpc_softc *);
+void	qcdpc_read_link_config(struct qcdpc_softc *);
+void	qcdpc_configure_sink(struct qcdpc_softc *);
+void	qcdpc_wait_link(struct qcdpc_softc *, uint8_t);
+int	qcdpc_check_source(struct qcdpc_softc *);
+void	qcdpc_set_state(struct qcdpc_softc *, uint32_t);
 int	qcdpc_intr(void *);
 ssize_t	qcdpc_dp_aux_transfer(struct drm_dp_aux *, struct drm_dp_aux_msg *);
 
@@ -166,6 +209,11 @@ qcdpc_attach(struct device *parent, struct device *self, void *aux)
 
 	node = OF_getnodebyname(node, "panel");
 	if (node) {
+		if (qcdpc_map_link(sc, faa) == 0) {
+			if (OF_is_compatible(node, "edo,edo1455"))
+				sc->sc_panel_reinit = 1;
+		}
+
 		/* We have a panel.  Try to enable its backlight control. */
 		qcdpc_attach_backlight(sc);
 
@@ -173,6 +221,252 @@ qcdpc_attach(struct device *parent, struct device *self, void *aux)
 		fa.fa_name = "";
 		fa.fa_node = node;
 		config_found(self, &fa, qcdpc_print);
+	}
+}
+
+int
+qcdpc_map_link(struct qcdpc_softc *sc, struct fdt_attach_args *faa)
+{
+	int error;
+
+	if (faa->fa_nreg < 3 ||
+	    faa->fa_reg[0].size < DP_INTR_STATUS2 + 4 ||
+	    faa->fa_reg[2].size < DP_MAINLINK_READY + 4) {
+		printf("%s: no LINK registers\n", sc->sc_sbus.sc_dev.dv_xname);
+		return ENXIO;
+	}
+
+	error = bus_space_map(sc->sc_iot, faa->fa_reg[2].addr,
+	    faa->fa_reg[2].size, 0, &sc->sc_link_ioh);
+	if (error)
+		printf("%s: can't map LINK registers\n",
+		    sc->sc_sbus.sc_dev.dv_xname);
+	return error;
+}
+
+int
+qcdpc_activate(struct device *self, int act)
+{
+	struct qcdpc_softc *sc = (struct qcdpc_softc *)self;
+	int ret = 0;
+
+	if (!sc->sc_panel_reinit)
+		return config_activate_children(self, act);
+
+	/* AUX access requires panel power, which the child controls. */
+	switch (act) {
+	case DVACT_QUIESCE:
+		ret = config_activate_children(self, act);
+		if (ret)
+			break;
+
+		if (qcdpc_check_source(sc))
+			break;
+		if (!(bus_space_read_4(sc->sc_iot, sc->sc_link_ioh,
+		    DP_MAINLINK_READY) & DP_MAINLINK_READY_FOR_VIDEO))
+			break;
+
+		qcdpc_read_link_config(sc);
+
+		if (qcdpc_bl == sc)
+			(void)drm_edp_backlight_disable(&sc->sc_aux, &sc->sc_bl);
+
+		qcdpc_set_state(sc, DP_STATE_PUSH_IDLE);
+		break;
+
+	case DVACT_WAKEUP:
+		if (sc->sc_link_lane_count != 0) {
+			(void)drm_dp_dpcd_write_data(&sc->sc_aux, DP_SOURCE_OUI,
+			    &sc->sc_link_source_oui, 3);
+			if (bus_space_read_4(sc->sc_iot, sc->sc_link_ioh,
+			    DP_STATE_CTRL) != DP_STATE_PUSH_IDLE)
+				qcdpc_set_state(sc, DP_STATE_PUSH_IDLE);
+			qcdpc_configure_sink(sc);
+			qcdpc_set_state(sc, DP_STATE_SEND_VIDEO);
+			qcdpc_wait_link(sc, sc->sc_link_lane_count);
+
+			if (qcdpc_bl == sc)
+				(void)drm_edp_backlight_enable(&sc->sc_aux,
+				    &sc->sc_bl, sc->sc_bl_level);
+
+			sc->sc_link_lane_count = 0;
+		}
+		ret = config_activate_children(self, act);
+		break;
+
+	default:
+		ret = config_activate_children(self, act);
+		break;
+	}
+
+	return (ret);
+}
+
+int
+qcdpc_check_source(struct qcdpc_softc *sc)
+{
+	uint32_t control;
+
+	if (!sc->sc_panel_reinit)
+		return ENXIO;
+	control = bus_space_read_4(sc->sc_iot, sc->sc_link_ioh,
+	    DP_MAINLINK_CTRL);
+	if (!(control & DP_MAINLINK_ENABLE) || (control & DP_MAINLINK_RESET))
+		return EIO;
+	return 0;
+}
+
+void
+qcdpc_set_state(struct qcdpc_softc *sc, uint32_t state)
+{
+	uint64_t deadline, now;
+	uint32_t intr, mask, status;
+	int s, timeout;
+
+	if (qcdpc_check_source(sc))
+		return;
+	if (state == DP_STATE_PUSH_IDLE) {
+		intr = DP_INTR_IDLE_PATTERN_SENT;
+		timeout = 30;
+	} else {
+		intr = DP_INTR_READY_FOR_VIDEO;
+		timeout = 500;
+	}
+
+	s = splbio();
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ahb_ioh,
+	    DP_INTR_STATUS2);
+	mask = status & DP_INTR_STATUS2_MASK;
+	sc->sc_tx_intr_status &= ~intr;
+	bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh, DP_INTR_STATUS2,
+	    mask | ((status & intr) << DP_INTR_STATUS_ACK_SHIFT));
+	bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh, DP_INTR_STATUS2,
+	    mask | (intr << DP_INTR_STATUS_MASK_SHIFT));
+	bus_space_write_4(sc->sc_iot, sc->sc_link_ioh, DP_STATE_CTRL, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_link_ioh, DP_STATE_CTRL, state);
+
+	deadline = nsecuptime() + MSEC_TO_NSEC(timeout);
+	for (;;) {
+		status = bus_space_read_4(sc->sc_iot, sc->sc_ahb_ioh,
+		    DP_INTR_STATUS2);
+		if (status & intr) {
+			sc->sc_tx_intr_status |= intr;
+			bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh,
+			    DP_INTR_STATUS2,
+			    mask | (intr << DP_INTR_STATUS_MASK_SHIFT) |
+			    (intr << DP_INTR_STATUS_ACK_SHIFT));
+		}
+		if (sc->sc_tx_intr_status & intr)
+			break;
+		now = nsecuptime();
+		if (now >= deadline)
+			break;
+		tsleep_nsec(&sc->sc_tx_intr_status, PWAIT, "qcdpctx",
+		    deadline - now);
+	}
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ahb_ioh,
+	    DP_INTR_STATUS2);
+	bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh, DP_INTR_STATUS2,
+	    mask | ((status & intr) << DP_INTR_STATUS_ACK_SHIFT));
+	splx(s);
+}
+
+void
+qcdpc_read_link_config(struct qcdpc_softc *sc)
+{
+	uint8_t config[DP_EDP_CONFIGURATION_SET - DP_LINK_BW_SET + 1];
+	uint8_t lane_count;
+
+	if (drm_dp_dpcd_read_data(&sc->sc_aux, DP_LINK_BW_SET,
+	    config, sizeof(config)))
+		return;
+	sc->sc_link_bandwidth = config[0];
+	lane_count = config[DP_LANE_COUNT_SET - DP_LINK_BW_SET] &
+	    DP_LANE_COUNT_MASK;
+	sc->sc_link_lane_flags = config[DP_LANE_COUNT_SET - DP_LINK_BW_SET] &
+	    ~DP_LANE_COUNT_MASK;
+	memcpy(&sc->sc_link_lane_settings,
+	    &config[DP_TRAINING_LANE0_SET - DP_LINK_BW_SET],
+	    sizeof(sc->sc_link_lane_settings));
+	sc->sc_link_downspread = config[DP_DOWNSPREAD_CTRL - DP_LINK_BW_SET];
+	sc->sc_link_coding =
+	    config[DP_MAIN_LINK_CHANNEL_CODING_SET - DP_LINK_BW_SET];
+	sc->sc_link_edp_config =
+	    config[DP_EDP_CONFIGURATION_SET - DP_LINK_BW_SET];
+	if (lane_count != 1 && lane_count != 2 && lane_count != 4)
+		return;
+	if (sc->sc_link_coding != DP_SET_ANSI_8B10B)
+		return;
+
+	switch (sc->sc_link_bandwidth) {
+	case DP_LINK_RATE_TABLE:
+		if (drm_dp_dpcd_read_byte(&sc->sc_aux, DP_LINK_RATE_SET,
+		    &sc->sc_link_rate_index))
+			return;
+		if (sc->sc_link_rate_index & ~DP_LINK_RATE_SET_MASK)
+			return;
+		break;
+	case DP_LINK_BW_1_62:
+	case DP_LINK_BW_2_7:
+	case DP_LINK_BW_5_4:
+	case DP_LINK_BW_8_1:
+		break;
+	default:
+		return;
+	}
+	if (drm_dp_dpcd_read_byte(&sc->sc_aux, DP_FEC_CONFIGURATION,
+	    &sc->sc_link_fec_config))
+		return;
+	if (drm_dp_dpcd_read_byte(&sc->sc_aux, DP_DSC_ENABLE,
+	    &sc->sc_link_dsc_enable))
+		return;
+	if (drm_dp_dpcd_read_data(&sc->sc_aux, DP_SOURCE_OUI,
+	    &sc->sc_link_source_oui, 3))
+		return;
+
+	sc->sc_link_lane_count = lane_count;
+}
+
+void
+qcdpc_configure_sink(struct qcdpc_softc *sc)
+{
+	if (sc->sc_link_bandwidth == DP_LINK_RATE_TABLE)
+		(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_LINK_RATE_SET,
+		    sc->sc_link_rate_index);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_LANE_COUNT_SET,
+	    sc->sc_link_lane_count | sc->sc_link_lane_flags);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_LINK_BW_SET,
+	    sc->sc_link_bandwidth);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_DOWNSPREAD_CTRL,
+	    sc->sc_link_downspread);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux,
+	    DP_MAIN_LINK_CHANNEL_CODING_SET, sc->sc_link_coding);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_EDP_CONFIGURATION_SET,
+	    sc->sc_link_edp_config);
+	(void)drm_dp_dpcd_write_data(&sc->sc_aux, DP_TRAINING_LANE0_SET,
+	    &sc->sc_link_lane_settings, sc->sc_link_lane_count);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_TRAINING_PATTERN_SET,
+	    DP_TRAINING_PATTERN_DISABLE);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_FEC_CONFIGURATION,
+	    sc->sc_link_fec_config);
+	(void)drm_dp_dpcd_write_byte(&sc->sc_aux, DP_DSC_ENABLE,
+	    sc->sc_link_dsc_enable);
+}
+
+void
+qcdpc_wait_link(struct qcdpc_softc *sc, uint8_t lanes)
+{
+	uint8_t status[DP_LINK_STATUS_SIZE];
+	uint64_t deadline;
+
+	deadline = nsecuptime() + MSEC_TO_NSEC(100);
+	for (;;) {
+		if (drm_dp_dpcd_read_link_status(&sc->sc_aux, status))
+			return;
+		if (drm_dp_channel_eq_ok(status, lanes) ||
+		    nsecuptime() >= deadline)
+			return;
+		delay(1000);
 	}
 }
 
@@ -263,16 +557,32 @@ qcdpc_intr(void *arg)
 {
 	struct qcdpc_softc *sc = arg;
 	int handled = 0;
-	uint32_t status;
+	uint32_t status, pending;
 
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ahb_ioh, DP_INTR_STATUS);
 	if (status & (DP_INTR_AUX_XFER_DONE | DP_INTR_ERROR)) {
 		sc->sc_intr_status = status;
+		bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh, DP_INTR_STATUS,
+		    DP_INTR_AUX_XFER_DONE << DP_INTR_STATUS_ACK_SHIFT |
+		    DP_INTR_ERROR << DP_INTR_STATUS_ACK_SHIFT);
+		wakeup(&sc->sc_intr_status);
 		handled = 1;
 	}
-	bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh, DP_INTR_STATUS,
-	    DP_INTR_AUX_XFER_DONE << DP_INTR_STATUS_ACK_SHIFT |
-	    DP_INTR_ERROR << DP_INTR_STATUS_ACK_SHIFT);
+
+	if (sc->sc_panel_reinit) {
+		status = bus_space_read_4(sc->sc_iot, sc->sc_ahb_ioh,
+		    DP_INTR_STATUS2);
+		pending = status & (DP_INTR_READY_FOR_VIDEO |
+		    DP_INTR_IDLE_PATTERN_SENT);
+		if (pending) {
+			sc->sc_tx_intr_status |= pending;
+			bus_space_write_4(sc->sc_iot, sc->sc_ahb_ioh,
+			    DP_INTR_STATUS2, (status & DP_INTR_STATUS2_MASK) |
+			    (pending << DP_INTR_STATUS_ACK_SHIFT));
+			wakeup(&sc->sc_tx_intr_status);
+			handled = 1;
+		}
+	}
 
 	return handled;
 }
