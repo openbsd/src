@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.70 2026/10/14 06:41:29 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.71 2026/10/14 06:48:24 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -913,33 +913,65 @@ cms_parse_validate(struct cert **out_cert, const char *fn, enum rtype rtype,
 {
 	CBS cbs, contentType, content;
 	struct cms_signedData signedData;
+	uint8_t *buf = NULL;
+	size_t buf_len;
+	void *ret = NULL;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
-		return NULL;
+		goto out;
 
 	CBS_init(&cbs, der, len);
+
+	/*
+	 * ARIN special. In filemode re-encode the "der" buffer into definite
+	 * length encoding. The DER parser can then deserialize the signed
+	 * object. This miraculously works because of the way CMS signatures
+	 * are computed: signedAttrs MUST be DER encoded (per RFC 5652, 5.3)
+	 * and the value octets of the eContent do not use the invalid encoding
+	 * (but its length octets do!). The signature and the message-digest
+	 * attribute therefore check out despite this modification.
+	 */
+	if (filemode) {
+		if (!CBS_asn1_indefinite_to_definite(&cbs, &buf, &buf_len))
+			goto out;
+		if (buf != NULL) {
+			warnx("%s: RFC 6488: indefinite length encoding "
+			    "disallowed in DER", fn);
+			CBS_init(&cbs, buf, buf_len);
+		}
+	}
+
 	if (!cms_get_contentInfo(&cbs, &contentType, &content)) {
 		warnx("%s: RFC 6488: failed to parse outermost DER", fn);
-		return NULL;
+		goto out;
 	}
 	if (CBS_len(&cbs) != 0) {
 		warnx("%s: RFC 6488: trailing garbage", fn);
-		return NULL;
+		goto out;
 	}
 
 	/* We only support RFC 6488, which yields a few simplifications. */
 	if (!cbs_oid_value_matches_nid(&contentType, NID_pkcs7_signed)) {
 		warnx("%s: RFC 6488, 3.1.a: CMS content not signedData", fn);
-		return NULL;
+		goto out;
 	}
 	if (!cms_get_signedData(&content, &signedData)) {
 		warnx("%s: RFC 6488, failed to parse signedData DER", fn);
-		return NULL;
+		goto out;
 	}
 
-	return cms_validate_rfc6488_object(out_cert, fn, rtype, talid, len,
+	/*
+	 * In filemode we pass the original len, not buf_len. This is only
+	 * used for mft->mftsize, for which we want the actual file size.
+	 */
+	ret = cms_validate_rfc6488_object(out_cert, fn, rtype, talid, len,
 	    &signedData);
+
+ out:
+	free(buf);
+
+	return ret;
 }
 
 void *
