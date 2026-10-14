@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.7 2026/10/03 01:32:37 rcovelli Exp $ */
+/*	$OpenBSD: sockets.c,v 1.8 2026/10/14 00:54:42 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -25,7 +25,6 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
@@ -881,29 +880,12 @@ core_loop(void)
 
 			client_len = sizeof(struct sockaddr_in);
 
-			fd = accept(listener, (struct sockaddr *)&client,
-			    &client_len);
+			fd = accept4(listener, (struct sockaddr *)&client,
+			    &client_len, SOCK_NONBLOCK);
 			if (fd < 0)
 				continue;
 
 			client.sin_port = be16toh(client.sin_port);
-
-			if ((val = fcntl(fd, F_GETFL, 0)) == -1) {
-				logx(0, "Rejecting client connection %s:%u "
-				    "(could not get socket flags)\n",
-				    inet_ntoa(client.sin_addr),
-				    client.sin_port);
-				close(fd);
-				continue;
-			}
-			if (fcntl(fd, F_SETFL, val | O_NONBLOCK) == -1) {
-				logx(0, "Rejecting client connection %s:%u "
-				    "(could not set socket non-block)\n",
-				    inet_ntoa(client.sin_addr),
-				    client.sin_port);
-				close(fd);
-				continue;
-			}
 
 			logx(0, "Opening client connection from %s:%u on "
 			    "socket %d\n", inet_ntoa(client.sin_addr),
@@ -970,26 +952,9 @@ core_loop(void)
 		if (controller >= 0 && poll_isset_revents(controller, POLLIN)) {
 			/* we have a new controller */
 
-			fd = accept(controller, NULL, NULL);
+			fd = accept4(controller, NULL, NULL, SOCK_NONBLOCK);
 			if (fd < 0)
 				continue;
-
-			if ((val = fcntl(fd, F_GETFL, 0)) == -1) {
-				logx(0, "Rejecting controller connection "
-				    "on socket %d "
-				    "(could not get socket flags)\n",
-				    fd);
-				close(fd);
-				continue;
-			}
-			if (fcntl(fd, F_SETFL, val | O_NONBLOCK) == -1) {
-				logx(0, "Rejecting controller connection "
-				    "on socket %d "
-				    "(could not set socket non-block)\n",
-				    fd);
-				close(fd);
-				continue;
-			}
 
 			logx(0, "Opening controller connection on socket %d\n",
 			    fd);
