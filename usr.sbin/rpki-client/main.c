@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.327 2026/10/14 16:51:51 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.328 2026/10/15 08:27:03 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1380,7 +1380,8 @@ main(int argc, char *argv[])
 	if (fchdir(cachefd) == -1)
 		err(1, "fchdir");
 
-	nca_history_load();
+	if (!noop)
+		nca_history_load();
 
 	while (entity_queue > 0 && !killme) {
 		int polltim;
