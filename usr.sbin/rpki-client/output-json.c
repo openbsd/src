@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.63 2026/10/13 17:31:16 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.64 2026/10/15 09:17:11 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -198,7 +198,8 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 		json_do_string("rpkiManifest", ca->mfturi);
 		if (ca->notify != NULL)
 			json_do_string("rpkiNotify", ca->notify);
-		json_do_string("aki", ca->aki);
+		if (ca->aki != NULL)
+			json_do_string("aki", ca->aki);
 		json_do_string("ski", ca->ski);
 		json_do_int("since", (long long)ca->since);
 		json_do_int("last_attempt", (long long)ca->last_attempt);
