@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.64 2026/10/15 09:17:11 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.65 2026/10/15 09:29:55 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -188,7 +188,7 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 
 	json_do_array("nonfunc_cas");
 	RB_FOREACH(ca, ca_tree, &vd->cas) {
-		if (!ca->nonfunc)
+		if (!ca->nonfunc || ca->purpose != CERT_PURPOSE_CA)
 			continue;
 
 		json_do_object("nca", 1);
