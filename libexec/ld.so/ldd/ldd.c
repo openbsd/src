@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.26 2023/08/15 13:50:53 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.27 2026/10/15 04:04:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -169,15 +169,13 @@ doit(char *name)
 			if (pledge("stdio rpath prot_exec", NULL) == -1)
 				err(1, "pledge");
 			if (realpath(name, buf) == NULL) {
-				printf("realpath(%s): %s", name,
-				    strerror(errno));
-				fflush(stdout);
+				dprintf(STDERR_FILENO, "realpath(%s): %s",
+				    name, strerror(errno));
 				_exit(1);
 			}
 			dlhandle = dlopen(buf, RTLD_TRACE);
 			if (dlhandle == NULL) {
-				printf("%s\n", dlerror());
-				fflush(stdout);
+				dprintf(STDERR_FILENO, "%s\n", dlerror());
 				_exit(1);
 			}
 			_exit(0);
@@ -186,8 +184,8 @@ doit(char *name)
 		if (pledge("stdio rpath exec", "stdio rpath") == -1)
 			err(1, "pledge");
 		if (i == ehdr.e_phnum) {
-			printf("not a dynamic executable\n");
-			fflush(stdout);
+			dprintf(STDERR_FILENO,
+			    "%s: not a dynamic executable\n", name);
 			_exit(0);
 		}
 		execl(name, name, (char *)NULL);
