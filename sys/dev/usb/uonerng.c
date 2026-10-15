@@ -1,4 +1,4 @@
-/*	$OpenBSD: uonerng.c,v 1.7 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: uonerng.c,v 1.8 2026/10/15 22:32:21 dgl Exp $ */
 /*
  * Copyright (C) 2015 Devin Reade <gdr@gno.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
@@ -151,6 +151,9 @@ uonerng_match(struct device *parent, void *match, void *aux)
 	    uaa->product != USB_PRODUCT_OPENMOKO2_ONERNG)
 		return UMATCH_NONE;
 
+	if (uaa->ifaceno != ONERNG_IFACE_CTRL_INDEX)
+		return UMATCH_NONE;
+
 	return UMATCH_VENDOR_PRODUCT;
 }
 
@@ -192,6 +195,7 @@ uonerng_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc));
 		goto fail;
 	}
+	usbd_claim_iface(sc->sc_udev, ONERNG_IFACE_CTRL_INDEX);
 
 	err = usbd_device2interface_handle(sc->sc_udev,
 	    ONERNG_IFACE_DATA_INDEX, &sc->sc_data_iface);
@@ -200,6 +204,7 @@ uonerng_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc), usbd_errstr(err));
 		goto fail;
 	}
+	usbd_claim_iface(sc->sc_udev, ONERNG_IFACE_DATA_INDEX);
 
 	/* Find the bulk endpoints */
 	id = usbd_get_interface_descriptor(sc->sc_data_iface);
