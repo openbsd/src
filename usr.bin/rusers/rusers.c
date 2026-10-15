@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.43 2020/12/29 19:52:16 benno Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.44 2026/10/15 04:29:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <millert@openbsd.org>
@@ -117,6 +117,11 @@ main(int argc, char **argv)
 	char *cp;
 	int ch;
 	
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath getpw inet dns", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "ahilu")) != -1)
 		switch (ch) {
 		case 'a':

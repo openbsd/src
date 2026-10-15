@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.31 2017/03/20 16:10:10 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.32 2026/10/15 04:29:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -243,17 +243,13 @@ onehost(char *host)
 	extern char *__progname;
 
 	rstat_clnt = clnt_create(host, RSTATPROG, RSTATVERS_TIME, "udp");
-	if (rstat_clnt == NULL) {
-		fprintf(stderr, "%s: %s", __progname,
-		    clnt_spcreateerror(host));
-		return;
-	}
+	if (rstat_clnt == NULL)
+		warnx("%s", clnt_spcreateerror(host));
 
 	bzero((char *)&host_stat, sizeof(host_stat));
 	if (clnt_call(rstat_clnt, RSTATPROC_STATS, xdr_void, NULL,
 	    xdr_statstime, &host_stat, timeout) != RPC_SUCCESS) {
-		fprintf(stderr, "%s: %s", __progname,
-		    clnt_sperror(rstat_clnt, host));
+		warnx("%s", clnt_sperror(rstat_clnt, host));
 		clnt_destroy(rstat_clnt);
 		return;
 	}
@@ -280,10 +276,8 @@ allhosts(void)
 
 	clnt_stat = clnt_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
 	    xdr_void, NULL, xdr_statstime, (char *)&host_stat, rstat_reply);
-	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT) {
-		fprintf(stderr, "%s: %s\n", __progname, clnt_sperrno(clnt_stat));
-		exit(1);
-	}
+	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT)
+		errx(1, "%s", clnt_sperrno(clnt_stat));
 }
 
 int
@@ -292,6 +286,11 @@ main(int argc, char *argv[])
 	int ch;
 	size_t i;
 	extern int optind;
+
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	sort_type = SORT_NONE;
 	while ((ch = getopt(argc, argv, "dhlt")) != -1)

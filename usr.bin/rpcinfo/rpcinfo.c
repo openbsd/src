@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.20 2024/09/15 07:14:58 jsg Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.21 2026/10/15 04:29:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -512,11 +512,9 @@ pmapdump(int argc, char **argv)
 		exit(1);
 	}
 	if (clnt_call(client, PMAPPROC_DUMP, xdr_void, NULL,
-	    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS) {
-		fprintf(stderr, "rpcinfo: can't contact portmapper: ");
-		clnt_perror(client, "rpcinfo");
-		exit(1);
-	}
+	    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS)
+		errx(1, "can't contact portmapper: %s",
+		    clnt_sperror(client, "localhost"));
 	if (head == NULL) {
 		printf("No remote programs registered.\n");
 	} else {
@@ -573,11 +571,9 @@ brdcst(int argc, char **argv)
 
 	rpc_stat = clnt_broadcast(prognum, vers_num, NULLPROC, xdr_void,
 	    (char *)NULL, xdr_void, (char *)NULL, reply_proc);
-	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT)) {
-		fprintf(stderr, "rpcinfo: broadcast failed: %s\n",
+	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT))
+		errx(1, "rpcinfo: broadcast failed: %s",
 		    clnt_sperrno(rpc_stat));
-		exit(1);
-	}
 	exit(0);
 }
 
@@ -593,12 +589,9 @@ deletereg(int argc, char **argv)
 	if (getul(argv[1], &version_num))
 		usage("version number out of range");
 
-	if ((pmap_unset(prog_num, version_num)) == 0) {
-		fprintf(stderr, "rpcinfo: Could not delete "
-		    "registration for prog %s version %s\n",
+	if ((pmap_unset(prog_num, version_num)) == 0)
+		errx(1, "Could not delete registration for prog %s version %s",
 		    argv[0], argv[1]);
-		exit(1);
-	}
 }
 
 void
@@ -618,19 +611,15 @@ setreg(int argc, char **argv)
 		usage("port number out of range");
 
 	if ((pmap_set(prog_num, version_num, IPPROTO_TCP,
-	    (u_short)port_num)) == 0) {
-		fprintf(stderr, "rpcinfo: Could not set registration "
-		    "for prog %s version %s port %s protocol IPPROTO_TCP\n",
+	    (u_short)port_num)) == 0)
+		errx(1, "Could not set registration for prog %s version %s "
+		    "port %s protocol IPPROTO_TCP",
 		    argv[0], argv[1], argv[2]);
-		exit(1);
-	}
 	if ((pmap_set(prog_num, version_num, IPPROTO_UDP,
-	    (u_short)port_num)) == 0) {
-		fprintf(stderr, "rpcinfo: Could not set registration "
-		    "for prog %s version %s port %s protocol IPPROTO_UDP\n",
+	    (u_short)port_num)) == 0)
+		errx(1, "Could not set registration for for prog %s version %s "
+		    "port %s protocol IPPROTO_UDP",
 		    argv[0], argv[1], argv[2]);
-		exit(1);
-	}
 }
 
 void
@@ -657,11 +646,8 @@ getprognum(char *arg, u_long *ulp)
 
 	if (isalpha(*arg)) {
 		rpc = getrpcbyname(arg);
-		if (rpc == NULL) {
-			fprintf(stderr, "rpcinfo: %s is unknown service\n",
-			    arg);
-			exit(1);
-		}
+		if (rpc == NULL)
+			errx(1, "%s is unknown service", arg);
 		*ulp = rpc->r_number;
 		return 0;
 	}
@@ -698,11 +684,9 @@ get_inet_address(struct sockaddr_in *addr, char *host)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 
-	if ((error = getaddrinfo(host, NULL, &hints, &res))) {
-		fprintf(stderr, "rpcinfo: %s is unknown host: %s\n",
+	if ((error = getaddrinfo(host, NULL, &hints, &res)))
+		errx(1, "%s is unknown host: %s",
 		    host, gai_strerror(error));
-		exit(1);
-	}
 
 	addr->sin_family = AF_INET;
 	addr->sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;

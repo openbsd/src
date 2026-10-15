@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.13 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.14 2026/10/15 04:29:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -62,6 +62,13 @@ main(int argc, char *argv[])
 	extern char *__progname;
 	char *wallhost, res;
 	CLIENT *cl;
+
+	if (unveil("/tmp", "rw") == -1)
+		err(1, "unveil");
+	if (unveil("/etc", "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath wpath getpw inet dns", NULL) == -1)
+		err(1, "pledge");
 
 	if ((argc < 2) || (argc > 3)) {
 		fprintf(stderr, "usage: %s host [file]\n", __progname);
