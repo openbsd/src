@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.328 2026/10/15 08:27:03 job Exp $ */
+/*	$OpenBSD: main.c,v 1.329 2026/10/15 08:33:45 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1124,6 +1124,7 @@ main(int argc, char *argv[])
 			    X509_TIME_MAX, &errs);
 			if (errs)
 				errx(1, "-P: time in seconds %s", errs);
+			noop = 1;
 			break;
 		case 'r':
 			outformats |= FORMAT_RTRX;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.144 2026/09/29 21:59:14 rcovelli Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.145 2026/10/15 08:33:45 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 29 2026 $
+.Dd $Mdocdate: October 15 2026 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -182,7 +182,8 @@ options are not specified this is the default.
 Specify the time for the evaluation in
 .Ar posix-seconds
 seconds from the unix epoch.
-This overrides the default of using the current system time.
+This option overrides the default of using the current system time and implies
+.Fl n .
 .It Fl p Ar threads
 Validate using the specified number of threads.
 The default is two.
