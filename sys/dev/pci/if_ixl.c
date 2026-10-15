@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.118 2026/09/22 14:53:07 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.119 2026/10/15 21:17:21 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2898,21 +2898,21 @@ ixl_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		offload = ixl_tx_setup_offload(m, txr, prod);
-
 		txm = &txr->txr_maps[prod];
 		map = txm->txm_map;
-
-		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
-			prod++;
-			prod &= mask;
-			free--;
-		}
 
 		if (ixl_load_mbuf(sc->sc_dmat, map, m) != 0) {
 			ifq->ifq_errors++;
 			m_freem(m);
 			continue;
+		}
+
+		offload = ixl_tx_setup_offload(m, txr, prod);
+
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			prod++;
+			prod &= mask;
+			free--;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,

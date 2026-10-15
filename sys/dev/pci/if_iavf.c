@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.29 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.30 2026/10/15 21:17:21 jan Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2062,21 +2062,21 @@ iavf_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		offload = iavf_tx_offload(m, txr, prod);
-
 		txm = &txr->txr_maps[prod];
 		map = txm->txm_map;
-
-		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
-			prod++;
-			prod &= mask;
-			free--;
-		}
 
 		if (iavf_load_mbuf(sc->sc_dmat, map, m) != 0) {
 			ifq->ifq_errors++;
 			m_freem(m);
 			continue;
+		}
+
+		offload = iavf_tx_offload(m, txr, prod);
+
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			prod++;
+			prod &= mask;
+			free--;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
