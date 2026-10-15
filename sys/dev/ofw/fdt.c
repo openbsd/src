@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.41 2026/07/19 03:15:38 jsg Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.42 2026/10/15 00:17:34 kirill Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1150,7 +1150,7 @@ OF_is_enabled(int handle)
 int
 OF_getindex(int handle, const char *entry, const char *prop)
 {
-	char *names;
+	char names[1024];
 	char *name;
 	char *end;
 	int idx = 0;
@@ -1163,19 +1163,18 @@ OF_getindex(int handle, const char *entry, const char *prop)
 	if (len <= 0)
 		return -1;
 
-	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(handle, (char *)prop, names, len);
+	KASSERT(len <= sizeof(names));
+	if (len > sizeof(names))
+		return -1;
+	OF_getprop(handle, (char *)prop, names, sizeof(names));
 	end = names + len;
 	name = names;
 	while (name < end) {
-		if (strcmp(name, entry) == 0) {
-			free(names, M_TEMP, len);
+		if (strcmp(name, entry) == 0)
 			return idx;
-		}
 		name += strlen(name) + 1;
 		idx++;
 	}
-	free(names, M_TEMP, len);
 	return -1;
 }
 

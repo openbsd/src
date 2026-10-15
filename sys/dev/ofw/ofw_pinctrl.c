@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_pinctrl.c,v 1.3 2020/06/06 16:59:43 patrick Exp $	*/
+/*	$OpenBSD: ofw_pinctrl.c,v 1.4 2026/10/15 00:17:34 kirill Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -80,7 +80,7 @@ int
 pinctrl_byid(int node, int id)
 {
 	char pinctrl[32];
-	uint32_t *phandles;
+	uint32_t phandles[128];
 	int len, i;
 
 	snprintf(pinctrl, sizeof(pinctrl), "pinctrl-%d", id);
@@ -88,11 +88,12 @@ pinctrl_byid(int node, int id)
 	if (len <= 0)
 		return -1;
 
-	phandles = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, pinctrl, phandles, len);
+	KASSERT(len <= sizeof(phandles));
+	if (len > sizeof(phandles))
+		return -1;
+	OF_getpropintarray(node, pinctrl, phandles, sizeof(phandles));
 	for (i = 0; i < len / sizeof(uint32_t); i++)
 		pinctrl_byphandle(phandles[i]);
-	free(phandles, M_TEMP, len);
 	return 0;
 }
 

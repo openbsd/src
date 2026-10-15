@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.20 2024/06/14 20:00:32 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.21 2026/10/15 00:17:35 kirill Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -108,7 +108,7 @@ regulator_type(int node)
 int
 regulator_fixed_set(int node, int enable)
 {
-	uint32_t *gpio;
+	uint32_t gpio[4];
 	uint32_t startup_delay;
 	int len;
 	char *prop = "gpio";
@@ -145,14 +145,13 @@ regulator_fixed_set(int node, int enable)
 	 * tree maintainers.
 	 */
 
-	gpio = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, prop, gpio, len);
+	KASSERT(len <= sizeof(gpio));
+	OF_getpropintarray(node, prop, gpio, sizeof(gpio));
 	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
 	if (enable)
 		gpio_controller_set_pin(gpio, 1);
 	else
 		gpio_controller_set_pin(gpio, 0);
-	free(gpio, M_TEMP, len);
 
 	startup_delay = OF_getpropint(node, "startup-delay-us", 0);
 	if (enable && startup_delay > 0)
