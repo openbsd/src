@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.142 2026/10/14 04:47:42 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.143 2026/10/15 10:59:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1421,8 +1421,8 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (-1);
 		break;
 	case IMSG_TLSTICKET_REKEY:
-		if (imsg_get_data(imsg, &key, sizeof(key)) == -1)
-			fatalx("%s: imsg_get_data", __func__);
+		IMSG_SIZE_CHECK(imsg, (&key));
+		memcpy(&key, imsg->data, sizeof(key));
 		/* apply to the right server */
 		if ((srv = server_byid(key.tt_id)) == NULL) {
 			log_debug("%s: invalid sever id", __func__);

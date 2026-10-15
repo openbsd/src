@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.80 2026/10/14 04:47:41 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.81 2026/10/15 10:59:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -130,8 +130,8 @@ config_getreset(struct httpd *env, struct imsg *imsg)
 {
 	unsigned int	 mode;
 
-	if (imsg_get_data(imsg, &mode, sizeof(mode)) == -1)
-		fatalx("%s: imsg_get_data", __func__);
+	IMSG_SIZE_CHECK(imsg, &mode);
+	memcpy(&mode, imsg->data, sizeof(mode));
 
 	config_purge(env, mode);
 
@@ -744,9 +744,8 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
 		return (-1);
 
-	if (imsg_get_data(imsg, srv_conf, sizeof(*srv_conf)) == -1)
-		fatalx("%s: imsg_get_data", __func__);
-
+	IMSG_SIZE_CHECK(imsg, srv_conf);
+	memcpy(srv_conf, p, sizeof(*srv_conf));
 	s = sizeof(*srv_conf);
 
 	/* Reset these variables to avoid free'ing invalid pointers */
@@ -928,9 +927,8 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	size_t			 s;
 	int			 fd;
 
-	if (imsg_get_data(imsg, &srv_conf, sizeof(srv_conf)) == -1)
-		fatalx("%s: imsg_get_data", __func__);
-
+	IMSG_SIZE_CHECK(imsg, &srv_conf);
+	memcpy(&srv_conf, p, sizeof(srv_conf));
 	s = sizeof(srv_conf);
 
 	/* Reset these variables to avoid free'ing invalid pointers */
@@ -1054,27 +1052,22 @@ config_gettls(struct httpd *env, struct server_config *srv_conf,
 int
 config_getserver_tls(struct httpd *env, struct imsg *imsg)
 {
-	struct ibuf		 ibuf;
 	struct server_config	*srv_conf = NULL;
 	struct tls_config	 tls_conf;
-	uint8_t			*data;
+	uint8_t			*p = imsg->data;
 	size_t			 len;
 
-	if (imsg_get_ibuf(imsg, &ibuf) == -1) {
-		log_warn("%s: imsg_get_ibuf", __func__);
-		return (-1);
-	}
+	IMSG_SIZE_CHECK(imsg, &tls_conf);
+	memcpy(&tls_conf, p, sizeof(tls_conf));
 
-	if (ibuf_get(&ibuf, &tls_conf, sizeof(tls_conf)) == -1)
-		fatalx("%s: ibuf_get", __func__);
+	len = tls_conf.tls_chunk_len;
 
-	if (ibuf_size(&ibuf) != tls_conf.tls_chunk_len) {
+	if ((IMSG_DATA_SIZE(imsg) - sizeof(tls_conf)) < len) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
 
-	data = ibuf_data(&ibuf);
-	len = tls_conf.tls_chunk_len;
+	p += sizeof(tls_conf);
 
 	if ((srv_conf = serverconfig_byid(tls_conf.id)) == NULL) {
 		log_debug("%s: server not found", __func__);
@@ -1083,32 +1076,32 @@ config_getserver_tls(struct httpd *env, struct imsg *imsg)
 
 	switch (tls_conf.tls_type) {
 	case TLS_CFG_CA:
-		if (config_gettls(env, srv_conf, &tls_conf, "ca", data, len,
+		if (config_gettls(env, srv_conf, &tls_conf, "ca", p, len,
 		    &srv_conf->tls_ca, &srv_conf->tls_ca_len) != 0)
 			goto fail;
 		break;
 
 	case TLS_CFG_CERT:
-		if (config_gettls(env, srv_conf, &tls_conf, "cert", data, len,
+		if (config_gettls(env, srv_conf, &tls_conf, "cert", p, len,
 		    &srv_conf->tls_cert, &srv_conf->tls_cert_len) != 0)
 			goto fail;
 		break;
 
 	case TLS_CFG_CRL:
-		if (config_gettls(env, srv_conf, &tls_conf, "crl", data, len,
+		if (config_gettls(env, srv_conf, &tls_conf, "crl", p, len,
 		    &srv_conf->tls_crl, &srv_conf->tls_crl_len) != 0)
 			goto fail;
 		break;
 
 	case TLS_CFG_KEY:
-		if (config_gettls(env, srv_conf, &tls_conf, "key", data, len,
+		if (config_gettls(env, srv_conf, &tls_conf, "key", p, len,
 		    &srv_conf->tls_key, &srv_conf->tls_key_len) != 0)
 			goto fail;
 		break;
 
 	case TLS_CFG_OCSP_STAPLE:
 		if (config_gettls(env, srv_conf, &tls_conf, "ocsp staple",
-		    data, len, &srv_conf->tls_ocsp_staple,
+		    p, len, &srv_conf->tls_ocsp_staple,
 		    &srv_conf->tls_ocsp_staple_len) != 0)
 			goto fail;
 		break;
@@ -1160,9 +1153,10 @@ config_getmedia(struct httpd *env, struct imsg *imsg)
 	struct privsep		*ps = env->sc_ps;
 #endif
 	struct media_type	 media;
+	uint8_t			*p = imsg->data;
 
-	if (imsg_get_data(imsg, &media, sizeof(media)) == -1)
-		fatalx("%s: imsg_get_data", __func__);
+	IMSG_SIZE_CHECK(imsg, &media);
+	memcpy(&media, p, sizeof(media));
 
 	if (media_add(env->sc_mediatypes, &media) == NULL) {
 		log_debug("%s: failed to add media \"%s\"",
@@ -1215,9 +1209,10 @@ config_getauth(struct httpd *env, struct imsg *imsg)
 	struct privsep		*ps = env->sc_ps;
 #endif
 	struct auth		 auth;
+	uint8_t			*p = imsg->data;
 
-	if (imsg_get_data(imsg, &auth, sizeof(auth)) == -1)
-		fatalx("%s: imsg_get_data", __func__);
+	IMSG_SIZE_CHECK(imsg, &auth);
+	memcpy(&auth, p, sizeof(auth));
 
 	if (auth_add(env->sc_auth, &auth) == NULL) {
 		log_debug("%s: failed to add auth \"%s[%u]\"",

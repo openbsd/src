@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.88 2026/10/14 04:47:42 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.89 2026/10/15 10:59:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -430,8 +430,8 @@ parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg_get_type(imsg)) {
 	case IMSG_CTL_RESET:
-		if (imsg_get_data(imsg, &v, sizeof(v)) == -1)
-			fatalx("%s: imsg_get_data", __func__);
+		IMSG_SIZE_CHECK(imsg, &v);
+		memcpy(&v, imsg->data, sizeof(v));
 		parent_reload(env, v, NULL);
 		break;
 	case IMSG_CTL_SHUTDOWN:
