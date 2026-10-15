@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnm_test.c,v 1.3 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: fnm_test.c,v 1.4 2026/10/15 06:18:03 deraadt Exp $	*/
 
 /*
  * Public domain, 2008, Todd C. Miller <millert@openbsd.org>
@@ -53,7 +53,7 @@ main(int argc, char **argv)
 				errors++;
 			}
 		} else {
-			warnx("unrecognized line '%s'\n", line);
+			warnx("unrecognized line '%s'", line);
 			errors++;
 		}
 		free(line);

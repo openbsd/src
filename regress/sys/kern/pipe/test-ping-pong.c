@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-ping-pong.c,v 1.2 2021/10/22 05:03:57 anton Exp $	*/
+/*	$OpenBSD: test-ping-pong.c,v 1.3 2026/10/15 06:18:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -65,7 +65,7 @@ test_ping_pong(void)
 			if (n != sizeof(buf))
 				errx(1, "[c] read: %ld < %zu", n, sizeof(buf));
 			if (strcmp(ping, buf))
-				errx(1, "[c] read: %s != %s\n", ping, buf);
+				errx(1, "[c] read: %s != %s", ping, buf);
 
 			n = write(wp, pong, sizeof(pong));
 			if (n == -1)
@@ -113,7 +113,7 @@ test_ping_pong(void)
 			if (n != sizeof(buf))
 				errx(1, "[p] read: %ld < %zu", n, sizeof(buf));
 			if (strcmp(pong, buf))
-				errx(1, "[p] read: %s != %s\n", pong, buf);
+				errx(1, "[p] read: %s != %s", pong, buf);
 
 			if (--nrounds == 0)
 				break;

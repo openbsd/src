@@ -1,4 +1,4 @@
-/* $OpenBSD: changerule.c,v 1.2 2024/08/23 12:56:26 anton Exp $ */
+/* $OpenBSD: changerule.c,v 1.3 2026/10/15 06:18:03 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Alexandr Nedvedicky <sashan@openbsd.org>
  *
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 		case 'i':
 			rule_no = strtonum(optarg, -1, 0x7fffffff, &errstr);
 			if (errstr != NULL) {
-				warnx("Rule number outside of range <%d, %d\n",
+				warnx("Rule number outside of range <%d, %d",
 				    -1, 0x7fffffff);
 				exit(1);
 			}
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 		case 'r':
 			rule_no = strtonum(optarg, -1, 0x7fffffff, &errstr);
 			if (errstr != NULL) {
-				warnx("Rule number outside of range <%d, %d\n",
+				warnx("Rule number outside of range <%d, %d",
 				    -1, 0x7fffffff);
 				exit(1);
 			}

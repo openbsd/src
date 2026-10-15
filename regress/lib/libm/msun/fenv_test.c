@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv_test.c,v 1.7 2021/12/13 18:04:28 deraadt Exp $	*/
+/*	$OpenBSD: fenv_test.c,v 1.8 2026/10/15 06:18:03 deraadt Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -474,7 +474,7 @@ ATF_TC_BODY(masking, tc)
 				 * to examine a failed child's core dump.
 				 */
 				if (!WIFEXITED(status))
-					errx(1, "child aborted\n");
+					errx(1, "child aborted");
 				ATF_CHECK_EQ(0, WEXITSTATUS(status));
 				break;
 			case -1:	/* error */
@@ -551,7 +551,7 @@ ATF_TC_BODY(feholdupdate, tc)
 				 * to examine a failed child's core dump.
 				 */
 				if (!WIFEXITED(status))
-					errx(1, "child aborted\n");
+					errx(1, "child aborted");
 				ATF_CHECK_EQ(0, WEXITSTATUS(status));
 				break;
 			case -1:	/* error */

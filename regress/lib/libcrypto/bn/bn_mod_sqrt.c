@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.11 2024/08/23 12:56:26 anton Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.12 2026/10/15 06:18:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -4480,7 +4480,7 @@ bn_mod_sqrt_p_is_1_mod_8_test(const struct p_is_1_mod_8_tests *test,
 			errx(1, "BN_hex2bn");
 
 		if (!BN_mod_sub(diff, want, got, p, ctx))
-			errx(1, "BN_mod_sub() failed\n");
+			errx(1, "BN_mod_sub() failed");
 
 		if (!BN_is_zero(diff)) {
 			fprintf(stderr, "a: %d\n", i);

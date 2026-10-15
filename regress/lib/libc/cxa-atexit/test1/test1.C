@@ -1,4 +1,4 @@
-/*      $OpenBSD: test1.C,v 1.1 2007/09/03 14:42:44 millert Exp $	*/
+/*      $OpenBSD: test1.C,v 1.2 2026/10/15 06:18:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Kurt Miller <kurt@openbsd.org>
@@ -34,21 +34,21 @@ main()
 
 		libgd1 = dlopen(LIBGD1, RTLD_LAZY);
 		if (libgd1 == NULL)
-                	errx(1, "dlopen(%s, RTLD_LAZY) FAILED\n", LIBGD1);
+                	errx(1, "dlopen(%s, RTLD_LAZY) FAILED", LIBGD1);
 
         	gd_test = (void (*)())dlsym(libgd1, "gd_test1");
 		if (gd_test == NULL)
-			errx(1, "dlsym(libgd1, \"gd_test1\") FAILED\n");
+			errx(1, "dlsym(libgd1, \"gd_test1\") FAILED");
 
 		(*gd_test)();
 
 		libgd2 = dlopen(LIBGD2, RTLD_LAZY);
 		if (libgd2 == NULL)
-                	errx(1, "dlopen(%s, RTLD_LAZY) FAILED\n", LIBGD2);
+                	errx(1, "dlopen(%s, RTLD_LAZY) FAILED", LIBGD2);
 
         	gd_test = (void (*)())dlsym(libgd2, "gd_test2");
 		if (gd_test == NULL)
-			errx(1, "dlsym(libgd2, \"gd_test2\") FAILED\n");
+			errx(1, "dlsym(libgd2, \"gd_test2\") FAILED");
 
 		(*gd_test)();
 
@@ -56,7 +56,7 @@ main()
 		dlclose(libgd2);
 
 		if (check1 || check2)
-			errx(1, "global destructors not called\n");
+			errx(1, "global destructors not called");
 	}
 
 	return (0);

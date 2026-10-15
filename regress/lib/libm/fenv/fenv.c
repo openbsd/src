@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.8 2021/06/17 12:55:38 kettenis Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.9 2026/10/15 06:18:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
@@ -381,7 +381,7 @@ test_masking(void)
 				 * to examine a failed child's core dump.
 				 */
 				if (!WIFEXITED(status))
-					errx(1, "child aborted\n");
+					errx(1, "child aborted");
 				assert(WEXITSTATUS(status) == 0);
 				break;
 			case -1:	/* error */
@@ -458,7 +458,7 @@ test_feholdupdate(void)
 				 * to examine a failed child's core dump.
 				 */
 				if (!WIFEXITED(status))
-					errx(1, "child aborted\n");
+					errx(1, "child aborted");
 				assert(WEXITSTATUS(status) == 0);
 				break;
 			case -1:	/* error */

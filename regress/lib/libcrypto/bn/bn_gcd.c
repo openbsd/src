@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_gcd.c,v 1.3 2023/04/07 17:09:54 tb Exp $ */
+/*	$OpenBSD: bn_gcd.c,v 1.4 2026/10/15 06:18:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -3559,7 +3559,7 @@ bn_binomial_gcd_test(const struct gcd_test_fn *test, int k, BIGNUM *a,
 			BN_set_negative(b, (signs >> 1) & 1);
 
 			if (!test->fn(gcd, a, b, ctx)) {
-				errx(1, "%s(), k: %d, shift: %d, signs %d\n",
+				errx(1, "%s(), k: %d, shift: %d, signs %d",
 				    test->name, k, shift, signs);
 			}
 
