@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.21 2026/10/09 08:36:50 job Exp $ */
+/*	$OpenBSD: spl.c,v 1.22 2026/10/15 20:43:32 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -284,13 +284,13 @@ spl_obj(void)
 }
 
 void
-spl_free(struct spl *s)
+spl_free(struct spl *spl)
 {
-	if (s == NULL)
+	if (spl == NULL)
 		return;
 
-	free(s->prefixes);
-	free(s);
+	free(spl->prefixes);
+	free(spl);
 }
 
 /*
@@ -298,17 +298,17 @@ spl_free(struct spl *s)
  * See spl_read() for reader.
  */
 void
-spl_buffer(struct ibuf *b, const struct spl *s)
+spl_buffer(struct ibuf *b, const struct spl *spl)
 {
-	io_simple_buffer(b, &s->valid, sizeof(s->valid));
-	io_simple_buffer(b, &s->asid, sizeof(s->asid));
-	io_simple_buffer(b, &s->talid, sizeof(s->talid));
-	io_simple_buffer(b, &s->issuerid, sizeof(s->talid));
-	io_simple_buffer(b, &s->num_prefixes, sizeof(s->num_prefixes));
-	io_simple_buffer(b, &s->expires, sizeof(s->expires));
+	io_simple_buffer(b, &spl->valid, sizeof(spl->valid));
+	io_simple_buffer(b, &spl->asid, sizeof(spl->asid));
+	io_simple_buffer(b, &spl->talid, sizeof(spl->talid));
+	io_simple_buffer(b, &spl->issuerid, sizeof(spl->talid));
+	io_simple_buffer(b, &spl->num_prefixes, sizeof(spl->num_prefixes));
+	io_simple_buffer(b, &spl->expires, sizeof(spl->expires));
 
-	io_simple_buffer(b, s->prefixes,
-	    s->num_prefixes * sizeof(s->prefixes[0]));
+	io_simple_buffer(b, spl->prefixes,
+	    spl->num_prefixes * sizeof(spl->prefixes[0]));
 }
 
 /*
@@ -319,27 +319,27 @@ spl_buffer(struct ibuf *b, const struct spl *s)
 struct spl *
 spl_read(struct ibuf *b)
 {
-	struct spl *s;
+	struct spl *spl;
 
-	if ((s = calloc(1, sizeof(struct spl))) == NULL)
+	if ((spl = calloc(1, sizeof(struct spl))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &s->valid, sizeof(s->valid));
-	io_read_buf(b, &s->asid, sizeof(s->asid));
-	io_read_buf(b, &s->talid, sizeof(s->talid));
-	io_read_buf(b, &s->issuerid, sizeof(s->issuerid));
-	io_read_buf(b, &s->num_prefixes, sizeof(s->num_prefixes));
-	io_read_buf(b, &s->expires, sizeof(s->expires));
+	io_read_buf(b, &spl->valid, sizeof(spl->valid));
+	io_read_buf(b, &spl->asid, sizeof(spl->asid));
+	io_read_buf(b, &spl->talid, sizeof(spl->talid));
+	io_read_buf(b, &spl->issuerid, sizeof(spl->issuerid));
+	io_read_buf(b, &spl->num_prefixes, sizeof(spl->num_prefixes));
+	io_read_buf(b, &spl->expires, sizeof(spl->expires));
 
-	if (s->num_prefixes > 0) {
-		if ((s->prefixes = calloc(s->num_prefixes,
-		    sizeof(s->prefixes[0]))) == NULL)
+	if (spl->num_prefixes > 0) {
+		if ((spl->prefixes = calloc(spl->num_prefixes,
+		    sizeof(spl->prefixes[0]))) == NULL)
 			err(1, NULL);
-		io_read_buf(b, s->prefixes,
-		    s->num_prefixes * sizeof(s->prefixes[0]));
+		io_read_buf(b, spl->prefixes,
+		    spl->num_prefixes * sizeof(spl->prefixes[0]));
 	}
 
-	return s;
+	return spl;
 }
 
 static int
