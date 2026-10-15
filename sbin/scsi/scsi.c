@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.33 2026/10/14 16:37:35 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.34 2026/10/15 14:16:20 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ static char *mode_lookup(int page)
 		while (match != 0) {
 			c = getc(modes);
 			if (c == EOF)
-				fprintf(stderr, "Expected %c.", END_ENTRY);
+				fprintf(stderr, "Expected %c.\n", END_ENTRY);
 
 			if (c == START_ENTRY) {
 				match++;
