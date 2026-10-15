@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.197 2026/10/15 09:09:22 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.198 2026/10/15 09:12:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1266,7 +1266,7 @@ proc_parser(int fd, int nthreads)
 				errx(1, "ibuf_read: connection closed");
 			}
 			while ((b = io_buf_get(inbufq)) != NULL) {
-				ent = calloc(1, sizeof(struct entity));
+				ent = calloc(1, sizeof(*ent));
 				if (ent == NULL)
 					err(1, NULL);
 				entity_read_req(b, ent);

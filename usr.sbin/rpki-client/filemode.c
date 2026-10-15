@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.94 2026/10/15 09:09:22 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.95 2026/10/15 09:12:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -806,7 +806,7 @@ proc_filemode(int fd)
 				errx(1, "ibuf_read: connection closed");
 			}
 			while ((b = io_buf_get(msgq)) != NULL) {
-				ent = calloc(1, sizeof(struct entity));
+				ent = calloc(1, sizeof(*ent));
 				if (ent == NULL)
 					err(1, NULL);
 				entity_read_req(b, ent);
