@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.34 2026/09/03 17:19:30 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.35 2026/10/15 20:54:00 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -67,41 +67,41 @@ parse_takey(const char *fn, const TAKey *takey)
 	const ASN1_UTF8STRING	*comment;
 	const ASN1_IA5STRING	*certURI;
 	X509_PUBKEY		*pubkey;
-	struct takey		*res = NULL;
+	struct takey		*tak = NULL;
 	const unsigned char	*data;
 	unsigned char		*der = NULL;
 	size_t			 i;
 	int			 der_len, length;
 
-	if ((res = calloc(1, sizeof(struct takey))) == NULL)
+	if ((tak = calloc(1, sizeof(struct takey))) == NULL)
 		err(1, NULL);
 
-	res->num_comments = sk_ASN1_UTF8STRING_num(takey->comments);
-	if (res->num_comments > 0) {
-		res->comments = calloc(res->num_comments, sizeof(char *));
-		if (res->comments == NULL)
+	tak->num_comments = sk_ASN1_UTF8STRING_num(takey->comments);
+	if (tak->num_comments > 0) {
+		tak->comments = calloc(tak->num_comments, sizeof(char *));
+		if (tak->comments == NULL)
 			err(1, NULL);
 
-		for (i = 0; i < res->num_comments; i++) {
+		for (i = 0; i < tak->num_comments; i++) {
 			comment = sk_ASN1_UTF8STRING_value(takey->comments, i);
 			data = ASN1_STRING_get0_data(comment);
 			length = ASN1_STRING_length(comment);
-			res->comments[i] = calloc(length + 1, 4);
-			if (res->comments[i] == NULL)
+			tak->comments[i] = calloc(length + 1, 4);
+			if (tak->comments[i] == NULL)
 				err(1, NULL);
-			(void)strvisx(res->comments[i], data, length, VIS_SAFE);
+			(void)strvisx(tak->comments[i], data, length, VIS_SAFE);
 		}
 	}
 
-	res->num_uris = sk_ASN1_IA5STRING_num(takey->certificateURIs);
-	if (res->num_uris == 0) {
+	tak->num_uris = sk_ASN1_IA5STRING_num(takey->certificateURIs);
+	if (tak->num_uris == 0) {
 		warnx("%s: Signed TAL requires at least 1 CertificateURI", fn);
 		goto err;
 	}
-	if ((res->uris = calloc(res->num_uris, sizeof(char *))) == NULL)
+	if ((tak->uris = calloc(tak->num_uris, sizeof(char *))) == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < res->num_uris; i++) {
+	for (i = 0; i < tak->num_uris; i++) {
 		certURI = sk_ASN1_IA5STRING_value(takey->certificateURIs, i);
 		data = ASN1_STRING_get0_data(certURI);
 		length = ASN1_STRING_length(certURI);
@@ -112,26 +112,26 @@ parse_takey(const char *fn, const TAKey *takey)
 			goto err;
 		}
 
-		res->uris[i] = strndup(data, length);
-		if (res->uris[i] == NULL)
+		tak->uris[i] = strndup(data, length);
+		if (tak->uris[i] == NULL)
 			err(1, NULL);
 	}
 
 	pubkey = takey->subjectPublicKeyInfo;
-	if ((res->ski = x509_pubkey_get_ski(pubkey, fn)) == NULL)
+	if ((tak->ski = x509_pubkey_get_ski(pubkey, fn)) == NULL)
 		goto err;
 
 	if ((der_len = i2d_X509_PUBKEY(pubkey, &der)) <= 0) {
 		warnx("%s: i2d_X509_PUBKEY failed", fn);
 		goto err;
 	}
-	res->pubkey = der;
-	res->pubkeysz = der_len;
+	tak->pubkey = der;
+	tak->pubkeysz = der_len;
 
-	return res;
+	return tak;
 
  err:
-	takey_free(res);
+	takey_free(tak);
 	return NULL;
 }
 
@@ -254,24 +254,24 @@ tak_obj(void)
  * Free TAKey pointer.
  */
 void
-takey_free(struct takey *t)
+takey_free(struct takey *tak)
 {
 	size_t	i;
 
-	if (t == NULL)
+	if (tak == NULL)
 		return;
 
-	for (i = 0; i < t->num_comments; i++)
-		free(t->comments[i]);
+	for (i = 0; i < tak->num_comments; i++)
+		free(tak->comments[i]);
 
-	for (i = 0; i < t->num_uris; i++)
-		free(t->uris[i]);
+	for (i = 0; i < tak->num_uris; i++)
+		free(tak->uris[i]);
 
-	free(t->comments);
-	free(t->uris);
-	free(t->ski);
-	free(t->pubkey);
-	free(t);
+	free(tak->comments);
+	free(tak->uris);
+	free(tak->ski);
+	free(tak->pubkey);
+	free(tak);
 }
 
 /*
@@ -279,13 +279,13 @@ takey_free(struct takey *t)
  * Safe to call with NULL.
  */
 void
-tak_free(struct tak *t)
+tak_free(struct tak *tak)
 {
-	if (t == NULL)
+	if (tak == NULL)
 		return;
 
-	takey_free(t->current);
-	takey_free(t->predecessor);
-	takey_free(t->successor);
-	free(t);
+	takey_free(tak->current);
+	takey_free(tak->predecessor);
+	takey_free(tak->successor);
+	free(tak);
 }
