@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.19 2026/10/15 08:43:34 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.20 2026/10/15 08:45:38 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -494,7 +494,7 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 	struct timespec ts[2];
 
 	RB_FOREACH(ca, ca_tree, ca_tree) {
-		if (ca->nonfunc)
+		if (ca->nonfunc && ca->purpose == CERT_PURPOSE_CA)
 			ncas_num++;
 	}
 
@@ -514,7 +514,7 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 		err(1, NULL);
 
 	RB_FOREACH(ca, ca_tree, ca_tree) {
-		if (ca->nonfunc)
+		if (ca->nonfunc && ca->purpose == CERT_PURPOSE_CA)
 			ncas_sorted[idx++] = ca;
 	}
 
