@@ -66,7 +66,7 @@ static really_inline int32_t scan_string(
     goto escaped;
 
   if (length < 32)
-    return (int32_t)count;
+    return octets + count <= limit ? (int32_t)count : -1;
 
   text += count;
   wire += count;

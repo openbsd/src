@@ -52,8 +52,11 @@ static really_inline int32_t parse_name(
   // a freestanding "@" denotes the current origin
   if (unlikely(token->length == 1 && token->data[0] == '@'))
     goto relative;
-  switch (scan_name(token->data, token->length, rdata->octets, &length)) {
+  switch (scan_name(token->data, token->length, rdata->octets, rdata->limit, &length)) {
     case 0:
+      if (rdata->octets + length > rdata->limit)
+        SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
+
       rdata->octets += length;
       return 0;
     case 1:
@@ -63,7 +66,8 @@ static really_inline int32_t parse_name(
   SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
 
 relative:
-  if (length > 255 - parser->file->origin.length)
+  if (length > 255 - parser->file->origin.length
+  ||  rdata->octets + length + parser->file->origin.length > rdata->limit)
     SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
   memcpy(rdata->octets + length, parser->file->origin.octets, parser->file->origin.length);
   rdata->octets += length + parser->file->origin.length;
@@ -85,7 +89,7 @@ static really_inline int32_t parse_owner(
   // a freestanding "@" denotes the origin
   if (unlikely(token->length == 1 && token->data[0] == '@'))
     goto relative;
-  switch (scan_name(token->data, token->length, octets, &length)) {
+  switch (scan_name(token->data, token->length, octets, NULL, &length)) {
     case 0:
       parser->file->owner.length = length;
       parser->owner = &parser->file->owner;
@@ -263,7 +267,7 @@ static really_inline int32_t parse_dollar_include(
   // $INCLUDE directive MAY specify an origin
   take(parser, token);
   if (is_contiguous(token)) {
-    if (scan_name(token->data, token->length, name.octets, &name.length) != 0) {
+    if (scan_name(token->data, token->length, name.octets, NULL, &name.length) != 0) {
       zone_close_file(parser, file);
       SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[1]), NAME(&include));
     }
@@ -329,7 +333,7 @@ static inline int32_t parse_dollar_origin(
 
   if ((code = take_contiguous_or_quoted(parser, &origin, &fields[0], token)) < 0)
     return code;
-  if (scan_name(token->data, token->length, parser->file->origin.octets, &parser->file->origin.length) != 0)
+  if (scan_name(token->data, token->length, parser->file->origin.octets, NULL, &parser->file->origin.length) != 0)
     SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[0]), NAME(&origin));
   if ((code = take_delimiter(parser, &origin, token)) < 0)
     return code;

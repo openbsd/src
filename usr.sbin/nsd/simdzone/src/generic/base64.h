@@ -701,9 +701,12 @@ static really_inline int32_t parse_base64_sequence(
     struct base64_state state = { .eof = 0, .bytes = 0, .carry = 0 };
 
     do {
-      size_t length = token->length / 4;
-      if (((uintptr_t)rdata->limit - (uintptr_t)rdata->octets) / 3 < length)
+      /* reserve the maximum any token can emit, regardless of entry phase */
+      const size_t reserve = (token->length + 3) / 4 * 3;
+      if (rdata->octets > rdata->limit ||
+          (size_t)(rdata->limit - rdata->octets) < reserve)
         SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(item), NAME(type));
+      size_t length;
       if (!base64_stream_decode(&state, token->data, token->length, rdata->octets, &length))
         SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(item), NAME(type));
       rdata->octets += length;
@@ -726,9 +729,12 @@ static really_inline int32_t parse_base64(
   rdata_t *rdata,
   const token_t *token)
 {
-  size_t length = token->length / 4;
-  if (((uintptr_t)rdata->limit - (uintptr_t)rdata->octets) / 3 < length)
+  /* reserve the maximum any token can emit, regardless of entry phase */
+  const size_t reserve = (token->length + 3) / 4 * 3;
+  if (rdata->octets > rdata->limit ||
+      (size_t)(rdata->limit - rdata->octets) < reserve)
     SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(item), NAME(type));
+  size_t length;
   if (!base64_decode(token->data, token->length, rdata->octets, &length))
     SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(item), NAME(type));
   rdata->octets += length;

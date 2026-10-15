@@ -1075,6 +1075,8 @@ static really_inline int32_t parse_svc_params(
     if (likely(key > highest_key)) {
       highest_key = key;
       octets = rdata->octets;
+      if (rdata->limit - rdata->octets < 4)
+        SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
       rdata->octets += 4;
       if ((code = parse_svc_param(
            parser, type, field, key, param, param->parse, rdata, value)))

@@ -26,18 +26,23 @@ static really_inline void copy_name_block(
   block->dots = simd_find_8x32(&input, '.');
 }
 
-nonnull_all
+nonnull((1,3,5))
 static really_inline int32_t scan_name(
   const char *data,
   size_t tlength,
   uint8_t octets[255 + ZONE_BLOCK_SIZE],
+  const uint8_t *limit,
   size_t *lengthp)
 {
   uint64_t label = 0;
   const char *text = data;
   uint8_t *wire = octets + 1;
   name_block_t block;
+  size_t max_length = limit && ((uintptr_t)limit - (uintptr_t)octets) < 255
+                    ? ((uintptr_t)limit - (uintptr_t)octets) : 255;
 
+  if(max_length == 0)
+	  return -1;
   octets[0] = 0;
 
   // real world domain names quickly exceed 16 octets (www.example.com is
@@ -146,9 +151,9 @@ escaped:
     }
 
     octets[label] = (uint8_t)(length - label);
-  } while (left && length < 255);
+  } while (left && length < max_length);
 
-  if (length >= 255)
+  if (length >= max_length)
     return -1;
 
   *lengthp = length + 1;

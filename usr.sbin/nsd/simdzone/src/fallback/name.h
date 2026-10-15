@@ -9,15 +9,17 @@
 #ifndef NAME_H
 #define NAME_H
 
-nonnull_all
+nonnull((1,3,5))
 static really_inline int32_t scan_name(
   const char *data,
   size_t length,
   uint8_t octets[255 + ZONE_BLOCK_SIZE],
+  const uint8_t *limit,
   size_t *lengthp)
 {
   uint8_t *l = octets, *w = octets + 1;
-  const uint8_t *we = octets + 255;
+  const uint8_t *we = limit && limit < octets + 255
+                    ? limit : octets + 255;
   const char *t = data, *te = t + length;
 
   l[0] = 0;
