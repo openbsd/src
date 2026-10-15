@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.93 2026/10/14 06:52:16 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.94 2026/10/15 09:09:22 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -710,39 +710,39 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 static void
 parse_file(struct entityq *q, struct msgbuf *msgq)
 {
-	struct entity	*entp;
+	struct entity	*ent;
 	struct ibuf	*b;
 	struct tal	*tal;
 	time_t		 dummy = 0;
 
-	while ((entp = TAILQ_FIRST(q)) != NULL) {
-		TAILQ_REMOVE(q, entp, entries);
+	while ((ent = TAILQ_FIRST(q)) != NULL) {
+		TAILQ_REMOVE(q, ent, entries);
 
-		switch (entp->type) {
+		switch (ent->type) {
 		case RTYPE_FILE:
-			proc_parser_file(entp->file, entp->data, entp->datasz);
+			proc_parser_file(ent->file, ent->data, ent->datasz);
 			break;
 		case RTYPE_TAL:
-			if ((tal = tal_parse(entp->file, entp->data,
-			    entp->datasz)) == NULL)
+			if ((tal = tal_parse(ent->file, ent->data,
+			    ent->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
-				    entp->file);
-			tal->id = entp->talid;
+				    ent->file);
+			tal->id = ent->talid;
 			talobj[tal->id] = tal;
 			parse_load_ta(tal);
 			break;
 		default:
-			errx(1, "unhandled entity type %d", entp->type);
+			errx(1, "unhandled entity type %d", ent->type);
 		}
 
 		b = io_new_buffer();
-		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-		io_simple_buffer(b, &entp->repoid, sizeof(entp->repoid));
-		io_simple_buffer(b, &entp->talid, sizeof(entp->talid));
-		io_str_buffer(b, entp->file);
+		io_simple_buffer(b, &ent->type, sizeof(ent->type));
+		io_simple_buffer(b, &ent->repoid, sizeof(ent->repoid));
+		io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
+		io_str_buffer(b, ent->file);
 		io_simple_buffer(b, &dummy, sizeof(dummy));
 		io_close_buffer(msgq, b);
-		entity_free(entp);
+		entity_free(ent);
 	}
 }
 
@@ -759,7 +759,7 @@ proc_filemode(int fd)
 	struct entityq	 q;
 	struct pollfd	 pfd;
 	struct msgbuf	*msgq;
-	struct entity	*entp;
+	struct entity	*ent;
 	struct ibuf	*b, *inbuf = NULL;
 
 	/* Only allow access to the cache directory. */
@@ -806,11 +806,11 @@ proc_filemode(int fd)
 				errx(1, "ibuf_read: connection closed");
 			}
 			while ((b = io_buf_get(msgq)) != NULL) {
-				entp = calloc(1, sizeof(struct entity));
-				if (entp == NULL)
+				ent = calloc(1, sizeof(struct entity));
+				if (ent == NULL)
 					err(1, NULL);
-				entity_read_req(b, entp);
-				TAILQ_INSERT_TAIL(&q, entp, entries);
+				entity_read_req(b, ent);
+				TAILQ_INSERT_TAIL(&q, ent, entries);
 				ibuf_free(b);
 			}
 		}
@@ -828,9 +828,9 @@ proc_filemode(int fd)
 	}
 
 	msgbuf_free(msgq);
-	while ((entp = TAILQ_FIRST(&q)) != NULL) {
-		TAILQ_REMOVE(&q, entp, entries);
-		entity_free(entp);
+	while ((ent = TAILQ_FIRST(&q)) != NULL) {
+		TAILQ_REMOVE(&q, ent, entries);
+		entity_free(ent);
 	}
 
 	auth_tree_free(&auths);

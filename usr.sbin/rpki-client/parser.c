@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.196 2026/10/15 02:21:02 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.197 2026/10/15 09:09:22 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -203,7 +203,7 @@ parse_filepath(unsigned int repoid, const char *path, const char *file,
  */
 static struct roa *
 proc_parser_roa(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp, X509_STORE_CTX *ctx)
+    const struct entity *ent, X509_STORE_CTX *ctx)
 {
 	struct roa		*roa;
 	struct cert		*cert = NULL;
@@ -211,11 +211,11 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	struct crl		*crl;
 	const char		*errstr;
 
-	if ((roa = signed_object_parse(&cert, file, RTYPE_ROA, entp->talid,
+	if ((roa = signed_object_parse(&cert, file, RTYPE_ROA, ent->talid,
 	    der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
+	a = find_issuer(file, ent->certid, cert->aki, ent->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -226,7 +226,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	}
 
 	roa->talid = a->cert->talid;
-	roa->issuerid = entp->certid;
+	roa->issuerid = ent->certid;
 
 	roa->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
@@ -246,7 +246,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
  */
 static struct spl *
 proc_parser_spl(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp, X509_STORE_CTX *ctx)
+    const struct entity *ent, X509_STORE_CTX *ctx)
 {
 	struct spl		*spl;
 	struct cert		*cert = NULL;
@@ -254,11 +254,11 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	struct crl		*crl;
 	const char		*errstr;
 
-	if ((spl = signed_object_parse(&cert, file, RTYPE_SPL, entp->talid,
+	if ((spl = signed_object_parse(&cert, file, RTYPE_SPL, ent->talid,
 	    der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
+	a = find_issuer(file, ent->certid, cert->aki, ent->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -269,7 +269,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	}
 
 	spl->talid = a->cert->talid;
-	spl->issuerid = entp->certid;
+	spl->issuerid = ent->certid;
 
 	spl->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
@@ -338,7 +338,7 @@ proc_parser_mft_check(const char *fn, struct mft *mft)
  * Load the CRL from loc using the info from the MFT.
  */
 static struct crl *
-parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
+parse_load_crl_from_mft(struct entity *ent, struct mft *mft, enum location loc,
     char **crlfile)
 {
 	struct crl	*crl = NULL;
@@ -348,7 +348,7 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
 
 	*crlfile = NULL;
 
-	fn = parse_filepath(entp->repoid, entp->path, mft->crl, loc);
+	fn = parse_filepath(ent->repoid, ent->path, mft->crl, loc);
 	if (fn == NULL)
 		goto out;
 
@@ -396,7 +396,7 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
  * Return the mft on success, or NULL on failure.
  */
 static struct mft *
-proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
+proc_parser_mft_pre(struct entity *ent, char *file, struct crl **crl,
     char **crlfile, struct mft *cached_mft, const char **errstr,
     X509_STORE_CTX *ctx, BN_CTX *bn_ctx)
 {
@@ -419,14 +419,14 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	if (der == NULL && errno != ENOENT)
 		warn("parse file %s", file);
 
-	if ((mft = signed_object_parse(&cert, file, RTYPE_MFT, entp->talid,
+	if ((mft = signed_object_parse(&cert, file, RTYPE_MFT, ent->talid,
 	    der, len)) == NULL) {
 		free(der);
 		return NULL;
 	}
 
-	if (entp->path != NULL) {
-		if ((mft->path = strdup(entp->path)) == NULL)
+	if (ent->path != NULL) {
+		if ((mft->path = strdup(ent->path)) == NULL)
 			err(1, NULL);
 	}
 
@@ -435,11 +435,11 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 
 	free(der);
 
-	*crl = parse_load_crl_from_mft(entp, mft, DIR_TEMP, crlfile);
+	*crl = parse_load_crl_from_mft(ent, mft, DIR_TEMP, crlfile);
 	if (*crl == NULL)
-		*crl = parse_load_crl_from_mft(entp, mft, DIR_VALID, crlfile);
+		*crl = parse_load_crl_from_mft(ent, mft, DIR_VALID, crlfile);
 
-	a = find_issuer(file, entp->certid, mft->aki, NULL);
+	a = find_issuer(file, ent->certid, mft->aki, NULL);
 	if (a == NULL)
 		goto err;
 	if (!valid_cert(file, ctx, cert, a, *crl, errstr))
@@ -447,9 +447,9 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	cert_free(cert);
 	cert = NULL;
 
-	mft->repoid = entp->repoid;
+	mft->repoid = ent->repoid;
 	mft->talid = a->cert->talid;
-	mft->issuerid = entp->certid;
+	mft->issuerid = ent->certid;
 
 	now = get_current_time();
 	/* check that now is not before from */
@@ -529,7 +529,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
  * Load the most recent MFT by opening both options and comparing the two.
  */
 static char *
-proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
+proc_parser_mft(struct entity *ent, struct mft **mp, char **crlfile,
     time_t *crlmtime, X509_STORE_CTX *ctx, BN_CTX *bn_ctx)
 {
 	struct mft	*mft1 = NULL, *mft2 = NULL;
@@ -541,14 +541,14 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	*mp = NULL;
 	*crlmtime = 0;
 
-	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
-	mft2 = proc_parser_mft_pre(entp, file2, &crl2, &crl2file, NULL,
+	file2 = parse_filepath(ent->repoid, ent->path, ent->file, DIR_VALID);
+	mft2 = proc_parser_mft_pre(ent, file2, &crl2, &crl2file, NULL,
 	    &err2, ctx, bn_ctx);
 
 	if (!noop) {
-		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
+		file1 = parse_filepath(ent->repoid, ent->path, ent->file,
 		    DIR_TEMP);
-		mft1 = proc_parser_mft_pre(entp, file1, &crl1, &crl1file, mft2,
+		mft1 = proc_parser_mft_pre(ent, file1, &crl1, &crl1file, mft2,
 		    &err1, ctx, bn_ctx);
 	}
 
@@ -609,7 +609,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
  */
 static struct cert *
 proc_parser_cert(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp, X509_STORE_CTX *ctx)
+    const struct entity *ent, X509_STORE_CTX *ctx)
 {
 	struct cert	*cert;
 	struct crl	*crl;
@@ -622,7 +622,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (cert == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
+	a = find_issuer(file, ent->certid, cert->aki, ent->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -636,7 +636,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	cert->talid = a->cert->talid;
 	cert->issuerid = a->cert->certid;
 
-	cert->path = parse_filepath(entp->repoid, entp->path, entp->file,
+	cert->path = parse_filepath(ent->repoid, ent->path, ent->file,
 	    DIR_VALID);
 	if (cert->path == NULL) {
 		warnx("%s: failed to create file path", file);
@@ -653,10 +653,10 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	 * Add validated CA certs to the RPKI auth tree.
 	 */
 	if (cert->purpose == CERT_PURPOSE_CA) {
-		if (sizeof(cert->mfthash) != entp->datasz)
+		if (sizeof(cert->mfthash) != ent->datasz)
 			errx(1, "%s: corrupted entity", file);
 
-		memcpy(cert->mfthash, entp->data, entp->datasz);
+		memcpy(cert->mfthash, ent->data, ent->datasz);
 		auth_insert(file, &auths, cert, a, crl);
 	}
 
@@ -715,23 +715,23 @@ proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
  * name of the chosen TA.
  */
 static char *
-proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
+proc_parser_root_cert(struct entity *ent, struct cert **out_cert)
 {
 	struct cert		*cert1 = NULL, *cert2 = NULL;
 	char			*file1 = NULL, *file2 = NULL;
-	unsigned char		*der = NULL, *spki = entp->data;
-	size_t			 der_len = 0, spkisz = entp->datasz;
+	unsigned char		*der = NULL, *spki = ent->data;
+	size_t			 der_len = 0, spkisz = ent->datasz;
 	int			 cmp;
 
 	*out_cert = NULL;
 
-	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
+	file2 = parse_filepath(ent->repoid, ent->path, ent->file, DIR_VALID);
 	der = load_file(file2, &der_len);
 	cert2 = cert_parse_ta(file2, der, der_len, spki, spkisz);
 	free(der);
 
 	if (!noop) {
-		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
+		file1 = parse_filepath(ent->repoid, ent->path, ent->file,
 		    DIR_TEMP);
 		der = load_file(file1, &der_len);
 		cert1 = cert_parse_ta(file1, der, der_len, spki, spkisz);
@@ -745,21 +745,21 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 		cert_free(cert2);
 		free(file2);
 
-		cert1->talid = entp->talid;
-		cert1->issuerid = entp->talid;
+		cert1->talid = ent->talid;
+		cert1->issuerid = ent->talid;
 		auth_insert(file1, &auths, cert1, NULL, NULL);
 
 		*out_cert = cert1;
 		return file1;
 	} else {
 		if (cmp < 0 && cert1 != NULL && cert2 != NULL)
-			warnx("%s: cached TA is newer", entp->file);
+			warnx("%s: cached TA is newer", ent->file);
 		cert_free(cert1);
 		free(file1);
 
 		if (cert2 != NULL) {
-			cert2->talid = entp->talid;
-			cert2->issuerid = entp->talid;
+			cert2->talid = ent->talid;
+			cert2->issuerid = ent->talid;
 			if ((cert2->path = strdup(file2)) == NULL)
 				err(1, NULL);
 			auth_insert(file2, &auths, cert2, NULL, NULL);
@@ -775,7 +775,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
  */
 static struct aspa *
 proc_parser_aspa(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp, X509_STORE_CTX *ctx)
+    const struct entity *ent, X509_STORE_CTX *ctx)
 {
 	struct aspa	*aspa;
 	struct cert	*cert = NULL;
@@ -783,11 +783,11 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	struct crl	*crl;
 	const char	*errstr;
 
-	if ((aspa = signed_object_parse(&cert, file, RTYPE_ASPA, entp->talid,
+	if ((aspa = signed_object_parse(&cert, file, RTYPE_ASPA, ent->talid,
 	    der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
+	a = find_issuer(file, ent->certid, cert->aki, ent->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -798,7 +798,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	}
 
 	aspa->talid = a->cert->talid;
-	aspa->issuerid = entp->certid;
+	aspa->issuerid = ent->certid;
 
 	aspa->expires = x509_find_expires(cert->notafter, a, crl);
 	cert_free(cert);
@@ -817,7 +817,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
  */
 static struct tak *
 proc_parser_tak(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp, X509_STORE_CTX *ctx)
+    const struct entity *ent, X509_STORE_CTX *ctx)
 {
 	struct tak	*tak;
 	struct cert	*cert = NULL;
@@ -825,11 +825,11 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	struct auth	*a;
 	const char	*errstr;
 
-	if ((tak = signed_object_parse(&cert, file, RTYPE_TAK, entp->talid,
+	if ((tak = signed_object_parse(&cert, file, RTYPE_TAK, ent->talid,
 	    der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
+	a = find_issuer(file, ent->certid, cert->aki, ent->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -861,12 +861,12 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
  * Load the file specified by the entity information.
  */
 static char *
-parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
+parse_load_file(struct entity *ent, unsigned char **f, size_t *flen)
 {
 	char *file;
 
-	file = parse_filepath(entp->repoid, entp->path, entp->file,
-	    entp->location);
+	file = parse_filepath(ent->repoid, ent->path, ent->file,
+	    ent->location);
 	if (file == NULL)
 		errx(1, "no path to file");
 
@@ -884,7 +884,7 @@ static void
 parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
     BN_CTX *bn_ctx)
 {
-	struct entity	*entp;
+	struct entity	*ent;
 	struct tal	*tal;
 	struct cert	*cert;
 	struct mft	*mft;
@@ -899,44 +899,44 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 	char		*file, *crlfile;
 	int		 c;
 
-	while ((entp = TAILQ_FIRST(q)) != NULL) {
-		TAILQ_REMOVE(q, entp, entries);
+	while ((ent = TAILQ_FIRST(q)) != NULL) {
+		TAILQ_REMOVE(q, ent, entries);
 
 		/* pass back at least type, repoid and filename */
 		b = io_new_buffer();
-		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-		io_simple_buffer(b, &entp->repoid, sizeof(entp->repoid));
-		io_simple_buffer(b, &entp->talid, sizeof(entp->talid));
+		io_simple_buffer(b, &ent->type, sizeof(ent->type));
+		io_simple_buffer(b, &ent->repoid, sizeof(ent->repoid));
+		io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
 
 		file = NULL;
 		f = NULL;
 		mtime = 0;
 		crlmtime = 0;
 
-		switch (entp->type) {
+		switch (ent->type) {
 		case RTYPE_TAL:
-			io_str_buffer(b, entp->file);
+			io_str_buffer(b, ent->file);
 			io_simple_buffer(b, &mtime, sizeof(mtime));
-			if ((tal = tal_parse(entp->file, entp->data,
-			    entp->datasz)) == NULL)
+			if ((tal = tal_parse(ent->file, ent->data,
+			    ent->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
-				    entp->file);
-			tal->id = entp->talid;
+				    ent->file);
+			tal->id = ent->talid;
 			tal_buffer(b, tal);
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
 			/*
-			 * If entp->datasz == SHA256_DIGEST_LENGTH, we have a
+			 * If ent->datasz == SHA256_DIGEST_LENGTH, we have a
 			 * cert added from a manifest, so it is not a root cert.
 			 * proc_parser_cert() will also make sure of this.
 			 */
-			if (entp->data != NULL &&
-			    entp->datasz != SHA256_DIGEST_LENGTH) {
-				file = proc_parser_root_cert(entp, &cert);
+			if (ent->data != NULL &&
+			    ent->datasz != SHA256_DIGEST_LENGTH) {
+				file = proc_parser_root_cert(ent, &cert);
 			} else {
-				file = parse_load_file(entp, &f, &flen);
-				cert = proc_parser_cert(file, f, flen, entp,
+				file = parse_load_file(ent, &f, &flen);
+				cert = proc_parser_cert(file, f, flen, ent,
 				    ctx);
 			}
 			io_str_buffer(b, file);
@@ -946,7 +946,7 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (cert != NULL) {
-				cert->repoid = entp->repoid;
+				cert->repoid = ent->repoid;
 				cert_buffer(b, cert);
 			}
 			/*
@@ -956,7 +956,7 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			 */
 			break;
 		case RTYPE_MFT:
-			file = proc_parser_mft(entp, &mft, &crlfile, &crlmtime,
+			file = proc_parser_mft(ent, &mft, &crlfile, &crlmtime,
 			    ctx, bn_ctx);
 			io_str_buffer(b, file);
 			if (mft != NULL)
@@ -975,10 +975,10 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 				b2 = io_new_buffer();
 				type = RTYPE_CRL;
 				io_simple_buffer(b2, &type, sizeof(type));
-				io_simple_buffer(b2, &entp->repoid,
-				    sizeof(entp->repoid));
-				io_simple_buffer(b2, &entp->talid,
-				    sizeof(entp->talid));
+				io_simple_buffer(b2, &ent->repoid,
+				    sizeof(ent->repoid));
+				io_simple_buffer(b2, &ent->talid,
+				    sizeof(ent->talid));
 				io_str_buffer(b2, crlfile);
 				io_simple_buffer(b2, &crlmtime,
 				    sizeof(crlmtime));
@@ -989,9 +989,9 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			mft_free(mft);
 			break;
 		case RTYPE_ROA:
-			file = parse_load_file(entp, &f, &flen);
+			file = parse_load_file(ent, &f, &flen);
 			io_str_buffer(b, file);
-			roa = proc_parser_roa(file, f, flen, entp, ctx);
+			roa = proc_parser_roa(file, f, flen, ent, ctx);
 			if (roa != NULL)
 				mtime = roa->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -1002,9 +1002,9 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			roa_free(roa);
 			break;
 		case RTYPE_ASPA:
-			file = parse_load_file(entp, &f, &flen);
+			file = parse_load_file(ent, &f, &flen);
 			io_str_buffer(b, file);
-			aspa = proc_parser_aspa(file, f, flen, entp, ctx);
+			aspa = proc_parser_aspa(file, f, flen, ent, ctx);
 			if (aspa != NULL)
 				mtime = aspa->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -1015,19 +1015,19 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			aspa_free(aspa);
 			break;
 		case RTYPE_TAK:
-			file = parse_load_file(entp, &f, &flen);
+			file = parse_load_file(ent, &f, &flen);
 			io_str_buffer(b, file);
-			tak = proc_parser_tak(file, f, flen, entp, ctx);
+			tak = proc_parser_tak(file, f, flen, ent, ctx);
 			if (tak != NULL)
 				mtime = tak->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
 			tak_free(tak);
 			break;
 		case RTYPE_SPL:
-			file = parse_load_file(entp, &f, &flen);
+			file = parse_load_file(ent, &f, &flen);
 			io_str_buffer(b, file);
 			if (experimental) {
-				spl = proc_parser_spl(file, f, flen, entp, ctx);
+				spl = proc_parser_spl(file, f, flen, ent, ctx);
 				if (spl != NULL)
 					mtime = spl->signtime;
 			} else {
@@ -1044,18 +1044,18 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			break;
 		case RTYPE_CRL:
 		default:
-			file = parse_filepath(entp->repoid, entp->path,
-			    entp->file, entp->location);
+			file = parse_filepath(ent->repoid, ent->path,
+			    ent->file, ent->location);
 			io_str_buffer(b, file);
 			io_simple_buffer(b, &mtime, sizeof(mtime));
-			warnx("%s: unhandled type %d", file, entp->type);
+			warnx("%s: unhandled type %d", file, ent->type);
 			break;
 		}
 
 		free(f);
 		free(file);
 		io_close_queue(msgq, b);
-		entity_free(entp);
+		entity_free(ent);
 	}
 
 }
@@ -1064,7 +1064,7 @@ static void *
 parse_worker(void *arg)
 {
 	struct entityq q = TAILQ_HEAD_INITIALIZER(q);
-	struct entity *entp;
+	struct entity *ent;
 	struct ibufqueue *myq;
 	X509_STORE_CTX *ctx;
 	BN_CTX *bn_ctx;
@@ -1093,9 +1093,9 @@ parse_worker(void *arg)
 			break;
 		}
 		n = 0;
-		while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
-			TAILQ_REMOVE(&globalq, entp, entries);
-			TAILQ_INSERT_TAIL(&q, entp, entries);
+		while ((ent = TAILQ_FIRST(&globalq)) != NULL) {
+			TAILQ_REMOVE(&globalq, ent, entries);
+			TAILQ_INSERT_TAIL(&q, ent, entries);
 			if (++n > 16)
 				break;
 		}
@@ -1211,7 +1211,7 @@ proc_parser(int fd, int nthreads)
 	struct entityq	 myq = TAILQ_HEAD_INITIALIZER(myq);
 	struct pollfd	 pfd;
 	struct msgbuf	*inbufq;
-	struct entity	*entp;
+	struct entity	*ent;
 	struct ibuf	*b;
 	pthread_t	 writer, *workers;
 	int		 error, i;
@@ -1266,21 +1266,21 @@ proc_parser(int fd, int nthreads)
 				errx(1, "ibuf_read: connection closed");
 			}
 			while ((b = io_buf_get(inbufq)) != NULL) {
-				entp = calloc(1, sizeof(struct entity));
-				if (entp == NULL)
+				ent = calloc(1, sizeof(struct entity));
+				if (ent == NULL)
 					err(1, NULL);
-				entity_read_req(b, entp);
+				entity_read_req(b, ent);
 				ibuf_free(b);
 
 				/* handle RTYPE_REPO first */
-				if (entp->type == RTYPE_REPO) {
-					repo_add(entp->repoid, entp->path,
-					    entp->file);
-					entity_free(entp);
+				if (ent->type == RTYPE_REPO) {
+					repo_add(ent->repoid, ent->path,
+					    ent->file);
+					entity_free(ent);
 					continue;
 				}
 
-				TAILQ_INSERT_TAIL(&myq, entp, entries);
+				TAILQ_INSERT_TAIL(&myq, ent, entries);
 			}
 			if (!TAILQ_EMPTY(&myq)) {
 				error = pthread_mutex_lock(&globalq_mtx);
@@ -1314,9 +1314,9 @@ proc_parser(int fd, int nthreads)
 	if ((error = pthread_mutex_unlock(&globalmsgq_mtx)) != 0)
 		errx(1, "pthread_mutex_unlock: %s", strerror(error));
 
-	while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
-		TAILQ_REMOVE(&globalq, entp, entries);
-		entity_free(entp);
+	while ((ent = TAILQ_FIRST(&globalq)) != NULL) {
+		TAILQ_REMOVE(&globalq, ent, entries);
+		entity_free(ent);
 	}
 	if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
 		errx(1, "pthread_mutex_unlock: %s", strerror(error));

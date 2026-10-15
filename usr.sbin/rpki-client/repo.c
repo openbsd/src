@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.95 2026/10/14 14:30:52 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.96 2026/10/15 09:09:22 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1432,10 +1432,10 @@ repo_talid(const struct repo *rp)
 }
 
 int
-repo_queued(struct repo *rp, struct entity *p)
+repo_queued(struct repo *rp, struct entity *ent)
 {
 	if (repo_state(rp) == REPO_LOADING) {
-		TAILQ_INSERT_TAIL(&rp->queue, p, entries);
+		TAILQ_INSERT_TAIL(&rp->queue, ent, entries);
 		return 1;
 	}
 	return 0;
