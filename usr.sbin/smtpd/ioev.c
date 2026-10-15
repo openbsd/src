@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.49 2023/02/08 08:20:54 tb Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.50 2026/10/15 04:27:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -737,10 +737,9 @@ io_connect(struct io *io, const struct sockaddr *sa, const struct sockaddr *bsa)
 {
 	int	sock, errno_save;
 
-	if ((sock = socket(sa->sa_family, SOCK_STREAM, 0)) == -1)
+	if ((sock = socket(sa->sa_family, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
 		goto fail;
 
-	io_set_nonblocking(sock);
 	io_set_nolinger(sock);
 
 	if (bsa && bind(sock, bsa, bsa->sa_len) == -1)

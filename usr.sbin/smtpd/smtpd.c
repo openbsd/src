@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.364 2026/09/09 00:34:13 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.365 2026/10/15 04:27:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -832,11 +832,9 @@ start_child(int save_argc, char **save_argv, char *rexec)
 	if (save_argc >= SMTPD_MAXARG - 2)
 		fatalx("too many arguments");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK,
+	    PF_UNSPEC, sp) == -1)
 		fatal("socketpair");
-
-	io_set_nonblocking(sp[0]);
-	io_set_nonblocking(sp[1]);
 
 	if (getexecpath(execpath, sizeof execpath) != 0)
 		fatal("getexecpath");
@@ -887,11 +885,9 @@ setup_peers(struct mproc *a, struct mproc *b)
 {
 	int sp[2];
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK,
+	    PF_UNSPEC, sp) == -1)
 		fatal("socketpair");
-
-	io_set_nonblocking(sp[0]);
-	io_set_nonblocking(sp[1]);
 
 	if (imsg_compose(&a->imsgbuf, IMSG_SETUP_PEER, b->proc, b->pid, sp[0],
 	    NULL, 0) == -1)
