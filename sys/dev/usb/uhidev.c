@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.112 2025/11/13 23:04:48 jmatthew Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.113 2026/10/15 00:41:41 thfr Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -1006,6 +1006,8 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 		default:
 			return EINVAL;
 		}
+		if (size > sizeof(re->ucr_data))
+			return EINVAL;
 		if (uhidev_get_report(sc->sc_parent, re->ucr_report,
 		    sc->sc_report_id, re->ucr_data, size) != size)
 			return EIO;
@@ -1025,6 +1027,8 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 		default:
 			return EINVAL;
 		}
+		if (size > sizeof(re->ucr_data))
+			return EINVAL;
 		if (uhidev_set_report(sc->sc_parent, re->ucr_report,
 		    sc->sc_report_id, re->ucr_data, size) != size)
 			return EIO;
