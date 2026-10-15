@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.18 2026/10/14 07:44:44 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.19 2026/10/15 08:43:34 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -86,7 +86,8 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 	ca->last_attempt = now;
 	ca->attempts = 1;
 	ca->defer = 0;
-	ca->nonfunc = 1;
+	if (cert->purpose != CERT_PURPOSE_TA)
+		ca->nonfunc = 1;
 
 	if ((old_ca = RB_INSERT(ca_tree, ca_tree, ca)) != NULL) {
 		warnx("duplicate CA at %s", ca->location);
