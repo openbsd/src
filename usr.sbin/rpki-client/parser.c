@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.194 2026/10/14 06:18:35 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.195 2026/10/15 02:18:33 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -303,8 +303,8 @@ proc_parser_mft_check(const char *fn, struct mft *p)
 		int try, fd = -1, noent = 0, valid = 0;
 
 		for (try = 0; try < 2 && !valid; try++) {
-			if ((path = parse_filepath(p->repoid, p->path, m->file,
-			    loc[try])) == NULL)
+			if ((path = parse_filepath(p->repoid, p->path,
+			    m->file, loc[try])) == NULL)
 				continue;
 			fd = open(path, O_RDONLY);
 			if (fd == -1 && errno == ENOENT)
