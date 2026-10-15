@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.10 2026/10/15 11:22:07 claudio Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.11 2026/10/15 11:26:57 claudio Exp $	*/
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -217,26 +217,23 @@ rtrx_connect(void)
 	struct sockaddr_un  serv_addr;
 	int sockfd;
 
-	sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sockfd == -1) {
 		rtrx_errno = errno;
 		return;
 	}
 
-	memset(&serv_addr, 0, sizeof serv_addr);
+	memset(&serv_addr, 0, sizeof(serv_addr));
 
 	serv_addr.sun_family = AF_UNIX;
 	strncpy(serv_addr.sun_path, rtrx_filename,
 	    sizeof(serv_addr.sun_path) - 1);
 
-	if (connect(sockfd, (struct sockaddr *) &serv_addr,
-	    sizeof serv_addr) == -1) {
-		if (errno != EINPROGRESS) {
-			warnx("cannot connect to rtrd");
-			rtrx_errno = errno;
-			close(sockfd);
-			return;
-		}
+	if (connect(sockfd, (struct sockaddr *)&serv_addr,
+	    sizeof(serv_addr)) == -1) {
+		rtrx_errno = errno;
+		close(sockfd);
+		return;
 	}
 
 	rtrx_sock = sockfd;
@@ -518,12 +515,11 @@ rtrx_push_import(void)
 int
 output_rtrx(FILE *out, struct validation_data *vd, struct stats *st)
 {
-	struct vrp	*rpki_vrp;
-	struct brk	*rpki_brk;
-	struct vap	*rpki_vap;
-	int val;
-	struct sockaddr_storage	ss;
-	socklen_t		len;
+	struct vrp *rpki_vrp;
+	struct brk *rpki_brk;
+	struct vap *rpki_vap;
+	struct sockaddr_storage ss;
+	socklen_t len;
 
 	if (rtrx_sock == -1) {
 		errno = rtrx_errno;
@@ -531,10 +527,6 @@ output_rtrx(FILE *out, struct validation_data *vd, struct stats *st)
 	}
 	len = sizeof(ss);
 	if (getpeername(rtrx_sock, (struct sockaddr *)&ss, &len) == -1)
-		goto failure;
-	if ((val = fcntl(rtrx_sock, F_GETFL, 0)) == -1)
-		goto failure;
-	if (fcntl(rtrx_sock, F_SETFL, val & ~O_NONBLOCK) == -1)
 		goto failure;
 
 	if (rtrx_open_controller() < 0)
