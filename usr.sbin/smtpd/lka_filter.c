@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.83 2026/10/15 04:27:37 deraadt Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.84 2026/10/15 14:15:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -563,9 +563,10 @@ lka_filter_data_begin(uint64_t reqid)
 
 	fs = tree_xget(&sessions, reqid);
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK,
-	    PF_UNSPEC, sp) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
 		goto end;
+	io_set_nonblocking(sp[0]);
+	io_set_nonblocking(sp[1]);
 	fd = sp[0];
 	fs->io = io_new();
 	io_set_fd(fs->io, sp[1]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.133 2026/10/15 04:27:37 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.134 2026/10/15 14:15:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -161,7 +161,7 @@ control_create_socket(void)
 	int			fd;
 	mode_t			old_umask;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		fatal("control: socket");
 
 	memset(&s_un, 0, sizeof(s_un));
@@ -190,6 +190,7 @@ control_create_socket(void)
 		fatal("control: chmod");
 	}
 
+	io_set_nonblocking(fd);
 	control_state.fd = fd;
 
 	return fd;
@@ -285,8 +286,7 @@ control_accept(int listenfd, short event, void *arg)
 		goto pause;
 
 	len = sizeof(s_un);
-	if ((connfd = accept4(listenfd, (struct sockaddr *)&s_un,
-	    &len, SOCK_NONBLOCK)) == -1) {
+	if ((connfd = accept(listenfd, (struct sockaddr *)&s_un, &len)) == -1) {
 		if (errno == ENFILE || errno == EMFILE)
 			goto pause;
 		if (errno == EINTR || errno == EWOULDBLOCK ||
@@ -294,6 +294,8 @@ control_accept(int listenfd, short event, void *arg)
 			return;
 		fatal("control_accept: accept");
 	}
+
+	io_set_nonblocking(connfd);
 
 	if (getpeereid(connfd, &euid, &egid) == -1)
 		fatal("getpeereid");

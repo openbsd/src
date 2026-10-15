@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.51 2026/10/15 04:27:37 deraadt Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.52 2026/10/15 14:15:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -31,9 +31,11 @@ mproc_fork(struct mproc *p, const char *path, char *argv[])
 {
 	int sp[2];
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK,
-	    PF_UNSPEC, sp) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
 		return (-1);
+
+	io_set_nonblocking(sp[0]);
+	io_set_nonblocking(sp[1]);
 
 	if ((p->pid = fork()) == -1)
 		goto err;
