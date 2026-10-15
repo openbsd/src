@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.195 2026/10/15 02:18:33 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.196 2026/10/15 02:21:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -288,22 +288,22 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
  * Return zero on failure, non-zero on success.
  */
 static int
-proc_parser_mft_check(const char *fn, struct mft *p)
+proc_parser_mft_check(const char *fn, struct mft *mft)
 {
 	const enum location loc[2] = { DIR_TEMP, DIR_VALID };
 	size_t	 i;
 	int	 rc = 1;
 	char	*path;
 
-	if (p == NULL)
+	if (mft == NULL)
 		return 0;
 
-	for (i = 0; i < p->filesz; i++) {
-		struct mftfile *m = &p->files[i];
+	for (i = 0; i < mft->filesz; i++) {
+		struct mftfile *m = &mft->files[i];
 		int try, fd = -1, noent = 0, valid = 0;
 
 		for (try = 0; try < 2 && !valid; try++) {
-			if ((path = parse_filepath(p->repoid, p->path,
+			if ((path = parse_filepath(mft->repoid, mft->path,
 			    m->file, loc[try])) == NULL)
 				continue;
 			fd = open(path, O_RDONLY);
@@ -325,7 +325,7 @@ proc_parser_mft_check(const char *fn, struct mft *p)
 					continue;
 			}
 			warnx("%s#%s: bad message digest for %s", fn,
-			    p->seqnum, m->file);
+			    mft->seqnum, m->file);
 			rc = 0;
 			continue;
 		}
