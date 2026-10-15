@@ -66,4 +66,5 @@ _slaacd:*:115:115::0:0:SLAAC Daemon:/var/empty:/sbin/nologin
 _dhcp6leased:*:116:116::0:0:DHCP6Lease Daemon:/var/empty:/sbin/nologin
 _lldpd:*:119:119::0:0:LLDP Daemon:/var/empty:/sbin/nologin
 _rtrd:*:121:121::0:0:RPKI-to-Router Daemon:/var/empty:/sbin/nologin
+_ypbind:*:122:122::0:0:ypbind Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin

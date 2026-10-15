@@ -86,5 +86,6 @@ dialer:*:117:
 _shutdown:*:118:
 _lldpd:*:119:
 _rtrd:*:121:
+_ypbind:*:122:
 nogroup:*:32766:
 nobody:*:32767:
