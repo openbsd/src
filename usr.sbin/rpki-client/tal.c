@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.46 2026/06/17 08:47:28 tb Exp $ */
+/*	$OpenBSD: tal.c,v 1.47 2026/10/15 20:48:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -164,12 +164,12 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 struct tal *
 tal_parse(const char *fn, char *buf, size_t len)
 {
-	struct tal	*p;
+	struct tal	*tal;
 	const char	*d;
 	size_t		 dlen;
 
-	p = tal_parse_buffer(fn, buf, len);
-	if (p == NULL)
+	tal = tal_parse_buffer(fn, buf, len);
+	if (tal == NULL)
 		return NULL;
 
 	/* extract the TAL basename (without .tal suffix) */
@@ -181,10 +181,10 @@ tal_parse(const char *fn, char *buf, size_t len)
 	dlen = strlen(d);
 	if (dlen > 4 && strcasecmp(d + dlen - 4, ".tal") == 0)
 		dlen -= 4;
-	if ((p->descr = strndup(d, dlen)) == NULL)
+	if ((tal->descr = strndup(d, dlen)) == NULL)
 		err(1, NULL);
 
-	return p;
+	return tal;
 }
 
 /*
@@ -192,21 +192,21 @@ tal_parse(const char *fn, char *buf, size_t len)
  * Safe to call with NULL.
  */
 void
-tal_free(struct tal *p)
+tal_free(struct tal *tal)
 {
 	size_t	 i;
 
-	if (p == NULL)
+	if (tal == NULL)
 		return;
 
-	if (p->uri != NULL)
-		for (i = 0; i < p->num_uris; i++)
-			free(p->uri[i]);
+	if (tal->uri != NULL)
+		for (i = 0; i < tal->num_uris; i++)
+			free(tal->uri[i]);
 
-	free(p->spki);
-	free(p->uri);
-	free(p->descr);
-	free(p);
+	free(tal->spki);
+	free(tal->uri);
+	free(tal->descr);
+	free(tal);
 }
 
 /*
@@ -214,17 +214,17 @@ tal_free(struct tal *p)
  * See tal_read() for the other side of the pipe.
  */
 void
-tal_buffer(struct ibuf *b, const struct tal *p)
+tal_buffer(struct ibuf *b, const struct tal *tal)
 {
 	size_t	 i;
 
-	io_simple_buffer(b, &p->id, sizeof(p->id));
-	io_buf_buffer(b, p->spki, p->spkisz);
-	io_str_buffer(b, p->descr);
-	io_simple_buffer(b, &p->num_uris, sizeof(p->num_uris));
+	io_simple_buffer(b, &tal->id, sizeof(tal->id));
+	io_buf_buffer(b, tal->spki, tal->spkisz);
+	io_str_buffer(b, tal->descr);
+	io_simple_buffer(b, &tal->num_uris, sizeof(tal->num_uris));
 
-	for (i = 0; i < p->num_uris; i++)
-		io_str_buffer(b, p->uri[i]);
+	for (i = 0; i < tal->num_uris; i++)
+		io_str_buffer(b, tal->uri[i]);
 }
 
 /*
@@ -236,23 +236,23 @@ struct tal *
 tal_read(struct ibuf *b)
 {
 	size_t		 i;
-	struct tal	*p;
+	struct tal	*tal;
 
-	if ((p = calloc(1, sizeof(struct tal))) == NULL)
+	if ((tal = calloc(1, sizeof(struct tal))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &p->id, sizeof(p->id));
-	io_read_buf_alloc(b, (void **)&p->spki, &p->spkisz);
-	io_read_str(b, &p->descr);
-	io_read_buf(b, &p->num_uris, sizeof(p->num_uris));
-	if (p->spkisz <= 0 || p->num_uris <= 0)
+	io_read_buf(b, &tal->id, sizeof(tal->id));
+	io_read_buf_alloc(b, (void **)&tal->spki, &tal->spkisz);
+	io_read_str(b, &tal->descr);
+	io_read_buf(b, &tal->num_uris, sizeof(tal->num_uris));
+	if (tal->spkisz <= 0 || tal->num_uris <= 0)
 		errx(1, "tal_read: bad message");
 
-	if ((p->uri = calloc(p->num_uris, sizeof(char *))) == NULL)
+	if ((tal->uri = calloc(tal->num_uris, sizeof(char *))) == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < p->num_uris; i++)
-		io_read_str(b, &p->uri[i]);
+	for (i = 0; i < tal->num_uris; i++)
+		io_read_str(b, &tal->uri[i]);
 
-	return p;
+	return tal;
 }
