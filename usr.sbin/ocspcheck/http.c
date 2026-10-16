@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.20 2026/10/16 06:34:27 kenjiro Exp $ */
+/*	$Id: http.c,v 1.21 2026/10/16 06:42:46 kenjiro Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,6 +35,8 @@
 #include "http.h"
 
 #define HTTP_MAXHEADERLENGTH	(64 * 1024)
+
+#define HTTP_MAX_BODY_SIZE	(20 * 1024)
 
 /*
  * A buffer for transferring HTTP/S data.
@@ -418,6 +420,11 @@ http_body_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 		else if (ssz == 0)
 			break;
 
+		if (trans->bbufsz > HTTP_MAX_BODY_SIZE ||
+		    (size_t)ssz > HTTP_MAX_BODY_SIZE - trans->bbufsz) {
+			warnx("%s: body too large", http->src.ip);
+			return NULL;
+		}
 		pp = recallocarray(trans->bbuf,
 		    trans->bbufsz, trans->bbufsz + ssz, 1);
 		if (pp == NULL) {
