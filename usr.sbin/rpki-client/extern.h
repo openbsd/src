@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.310 2026/10/14 14:30:52 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.311 2026/10/16 19:39:31 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -158,8 +158,8 @@ struct cert {
 	unsigned char	 mfthash[SHA256_DIGEST_LENGTH]; /* of the parent mft */
 };
 
-struct nca_hist {
-	RB_ENTRY(nca_hist)	 entry;
+struct ca_state {
+	RB_ENTRY(ca_state)	 entry;
 	char			*aki;
 	char			*ski;
 	char			*location;
@@ -787,7 +787,7 @@ void		 cert_insert_brks(struct brk_tree *, struct cert *);
 void		 nca_history_load(void);
 void		 nca_history_save(struct ca_tree *, time_t);
 int		 nca_skip_sync(struct ca *);
-void		 nca_tree_clear_nonfunc(struct ca_tree *, int);
+void		 ca_clear_nonfunc(struct ca_tree *, int);
 struct ca	*ca_tree_insert_cert(struct ca_tree *, const struct cert *);
 
 enum rtype	 rtype_from_file_extension(const char *);
