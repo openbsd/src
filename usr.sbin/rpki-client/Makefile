@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2026/10/04 09:39:02 tb Exp $
+#	$OpenBSD: Makefile,v 1.44 2026/10/16 16:17:27 job Exp $
 
 PROG=	rpki-client
 
@@ -8,6 +8,7 @@ SRCS+=	aspa.c
 SRCS+=	bs_ber.c
 SRCS+=	bs_cbb.c
 SRCS+=	bs_cbs.c
+SRCS+=	ca.c
 SRCS+=	ccr.c
 SRCS+=	cert.c
 SRCS+=	cms.c
@@ -22,7 +23,6 @@ SRCS+=	json.c
 SRCS+=	main.c
 SRCS+=	mft.c
 SRCS+=	mkdir.c
-SRCS+=	nca.c
 SRCS+=	ometric.c
 SRCS+=	output-bgpd.c
 SRCS+=	output-bird.c

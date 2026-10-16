@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.21 2026/10/16 15:53:47 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.1 2026/10/16 16:17:27 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
