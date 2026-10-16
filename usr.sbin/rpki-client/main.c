@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.329 2026/10/15 08:33:45 job Exp $ */
+/*	$OpenBSD: main.c,v 1.330 2026/10/16 09:20:09 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1008,6 +1008,9 @@ process_start(const char *title, int *fd)
 		/* change working directory to the cache directory */
 		if (fchdir(cachefd) == -1)
 			err(1, "fchdir");
+		close(cachefd);
+		if (!filemode)
+			close(outdirfd);
 		if (!filemode && timeout > 0)
 			alarm(timeout);
 		rtrx_close();
@@ -1380,6 +1383,8 @@ main(int argc, char *argv[])
 	/* change working directory to the cache directory */
 	if (fchdir(cachefd) == -1)
 		err(1, "fchdir");
+	if (filemode || noop)
+		close(cachefd);
 
 	if (!noop)
 		nca_history_load();
@@ -1580,8 +1585,10 @@ main(int argc, char *argv[])
 
 	logx("all files parsed: generating output");
 
-	if (!noop)
+	if (!noop) {
 		repo_cleanup(&fpt, cachefd);
+		close(cachefd);
+	}
 
 	clock_gettime(CLOCK_MONOTONIC, &now_time);
 	timespecsub(&now_time, &start_time, &stats.elapsed_time);
