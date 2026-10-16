@@ -1,4 +1,4 @@
-/*	$OpenBSD: nca.c,v 1.20 2026/10/15 08:45:38 job Exp $ */
+/*	$OpenBSD: nca.c,v 1.21 2026/10/16 15:53:47 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -17,7 +17,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/tree.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -32,19 +34,26 @@
 
 extern int rrdpon;
 
-static void
-ca_free(struct ca *ca)
-{
-	if (ca == NULL)
-		return;
+static void ca_free(struct ca *);
 
-	free(ca->aki);
-	free(ca->ski);
-	free(ca->location);
-	free(ca->carepo);
-	free(ca->mfturi);
-	free(ca->notify);
-	free(ca);
+static inline int
+certidcmp(const struct ca *a, const struct ca *b)
+{
+	if (a->certid < b->certid)
+		return -1;
+	if (a->certid > b->certid)
+		return 1;
+	return 0;
+}
+
+RB_GENERATE(ca_tree, ca, entry, certidcmp);
+
+static struct ca *
+ca_lookup_by_certid(struct ca_tree *ca_tree, int certid)
+{
+	struct ca needle = { .certid = certid };
+
+	return RB_FIND(ca_tree, ca_tree, &needle);
 }
 
 /*
@@ -81,7 +90,6 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 	ca->talid = cert->talid;
 	ca->purpose = cert->purpose;
 
-	/* default initial state */
 	ca->since = now;
 	ca->last_attempt = now;
 	ca->attempts = 1;
@@ -98,32 +106,29 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 	return ca;
 }
 
+static void
+ca_free(struct ca *ca)
+{
+	if (ca == NULL)
+		return;
+
+	free(ca->aki);
+	free(ca->ski);
+	free(ca->location);
+	free(ca->carepo);
+	free(ca->mfturi);
+	free(ca->notify);
+	free(ca);
+}
+
 void
 nca_tree_clear_nonfunc(struct ca_tree *ca_tree, int cid)
 {
-	struct ca *found, needle = { .certid = cid };
+	struct ca *found;
 
-	if ((found = RB_FIND(ca_tree, ca_tree, &needle)) != NULL)
+	if ((found = ca_lookup_by_certid(ca_tree, cid)) != NULL)
 		found->nonfunc = 0;
 }
-
-static inline int
-certidcmp(const struct ca *a, const struct ca *b)
-{
-	if (a->certid < b->certid)
-		return -1;
-	if (a->certid > b->certid)
-		return 1;
-
-	return 0;
-}
-
-RB_GENERATE(ca_tree, ca, entry, certidcmp);
-
-static struct strlist batchlist = LIST_HEAD_INITIALIZER(batchlist);
-
-static RB_HEAD(nca_hist_tree, nca_hist) nca_hist_tree = \
-    RB_INITIALIZER(&nca_hist_tree);
 
 static inline int
 nca_hist_cmp(const struct nca_hist *a, const struct nca_hist *b)
@@ -156,6 +161,9 @@ nca_hist_cmp(const struct nca_hist *a, const struct nca_hist *b)
 
 	return 0;
 }
+
+static RB_HEAD(nca_hist_tree, nca_hist) nca_hist_tree = \
+    RB_INITIALIZER(&nca_hist_tree);
 
 RB_GENERATE_STATIC(nca_hist_tree, nca_hist, entry, nca_hist_cmp);
 
@@ -218,6 +226,8 @@ nca_decide_retry(const struct nca_hist *nca_hist)
 
 	return 0;
 }
+
+static struct strlist batchlist = LIST_HEAD_INITIALIZER(batchlist);
 
 /*
  * Determine which non-functioncal CAs are eligible for retry.
@@ -450,31 +460,34 @@ nca_skip_sync(struct ca *ca)
 }
 
 static int
-ncas_sorted_cmp(const void *a, const void *b)
+ncas_sorted_cmp(const void *ca_a, const void *ca_b)
 {
 	int cmp;
-	const struct ca *na = *(const struct ca **)a;
-	const struct ca *nb = *(const struct ca **)b;
+	const struct ca *a = *(const struct ca **)ca_a;
+	const struct ca *b = *(const struct ca **)ca_b;
 
-	cmp = strcmp(na->aki, nb->aki);
+	assert(a->purpose == CERT_PURPOSE_CA);
+	assert(b->purpose == CERT_PURPOSE_CA);
+
+	cmp = strcmp(a->aki, b->aki);
 	if (cmp > 0)
 		return 1;
 	if (cmp < 0)
 		return -1;
 
-	cmp = strcmp(na->mfturi, nb->mfturi);
+	cmp = strcmp(a->mfturi, b->mfturi);
 	if (cmp > 0)
 		return 1;
 	if (cmp < 0)
 		return -1;
 
-	cmp = strcmp(na->location, nb->location);
+	cmp = strcmp(a->location, b->location);
 	if (cmp > 0)
 		return 1;
 	if (cmp < 0)
 		return -1;
 
-	cmp = strcmp(na->ski, nb->ski);
+	cmp = strcmp(a->ski, b->ski);
 	if (cmp > 0)
 		return 1;
 	if (cmp < 0)
