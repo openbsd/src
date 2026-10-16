@@ -9,6 +9,5 @@ MAN=		lldp.8
 
 CFLAGS+=	-I${.CURDIR} -I${OLLDPD_DIR}
 CFLAGS+=	-Wall -Werror
-DEBUG=		-g
 
 .include <bsd.prog.mk>

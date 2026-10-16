@@ -4,7 +4,6 @@ SRCS+=		log.c
 MAN=		lldpd.8
 
 CFLAGS+=	-Wall -Werror
-DEBUG=		-g
 
 LDADD+=		-levent
 DPADD+=		${LIBEVENT}
