@@ -57,4 +57,7 @@ msleep_interruptible(unsigned int msecs)
 	return 0;
 }
 
+/* INT_MAX / 1000, delay() has an int microseconds arg */
+#define MAX_UDELAY_MS 2147483
+
 #endif
