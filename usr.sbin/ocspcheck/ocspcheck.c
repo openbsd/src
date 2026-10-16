@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.38 2026/10/16 06:18:23 kenjiro Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.39 2026/10/16 06:54:01 kenjiro Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -479,6 +479,10 @@ validate_response(char *buf, size_t size, ocsp_request *request,
 		warnx("Invalid OCSP reply: certificate is revoked");
 		if (rev_t != -1)
 			warnx("Certificate revoked at: %s", ctime(&rev_t));
+		goto err;
+	}
+	if (cert_status != V_OCSP_CERTSTATUS_GOOD) {
+		warnx("Invalid OCSP reply: certificate status is not good");
 		goto err;
 	}
 	if ((this_t = parse_ocsp_time(thisupd)) == -1) {
