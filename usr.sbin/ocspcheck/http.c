@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.19 2026/10/16 06:21:12 kenjiro Exp $ */
+/*	$Id: http.c,v 1.20 2026/10/16 06:34:27 kenjiro Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,6 +33,8 @@
 #include <unistd.h>
 
 #include "http.h"
+
+#define HTTP_MAXHEADERLENGTH	(64 * 1024)
 
 /*
  * A buffer for transferring HTTP/S data.
@@ -611,6 +613,10 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 			return NULL;
 		else if (ssz == 0)
 			break;
+		if ((size_t)ssz > HTTP_MAXHEADERLENGTH - trans->hbufsz) {
+			warnx("%s: header too large", http->src.ip);
+			return NULL;
+		}
 		pp = realloc(trans->hbuf, trans->hbufsz + ssz);
 		if (pp == NULL) {
 			warn("realloc");
