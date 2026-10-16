@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.105 2025/08/20 03:10:45 tb Exp $	*/
+/*	$OpenBSD: dired.c,v 1.106 2026/10/16 04:05:51 jsg Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -58,7 +58,7 @@ static int	 gotofile(char*);
 static struct buffer	*refreshbuffer(struct buffer *);
 static int	 createlist(struct buffer *);
 static void	 redelete(struct buffer *);
-static char 	 *findfname(struct line *, char *);
+static char 	 *findfname(struct line *);
 
 extern struct KEYMAPE (2) helpmap;
 extern struct KEYMAPE (6) cXmap;
@@ -1024,7 +1024,7 @@ redelete(struct buffer *bp)
 
 	for (lp = bfirstlp(bp); lp != bp->b_headp; lp = nlp) {	
 		bp->b_dotp = lp;
-		if ((p = findfname(lp, p)) == NULL) {
+		if ((p = findfname(lp)) == NULL) {
 			nlp = lforw(lp);
 			continue;
 		}
@@ -1073,7 +1073,7 @@ createlist(struct buffer *bp)
 		 * filename can be extracted from it.
 		 */
 		if (((lp->l_text[0] != DDELCHAR)) ||
-		    ((p = findfname(lp, p)) == NULL)) {
+		    ((p = findfname(lp)) == NULL)) {
 			nlp = lforw(lp);
 			continue;
 		}
@@ -1187,7 +1187,7 @@ gotofile(char *fpth)
 	tmp = 0;
 	for (lp = bfirstlp(curbp); lp != curbp->b_headp; lp = nlp) {
 		tmp++;
-		if ((p = findfname(lp, p)) == NULL) {
+		if ((p = findfname(lp)) == NULL) {
 			nlp = lforw(lp);
 			continue;
 		}
@@ -1213,13 +1213,12 @@ gotofile(char *fpth)
  * Look for and extract a file name on a dired buffer line.
  */
 char *
-findfname(struct line *lp, char *fn)
+findfname(struct line *lp)
 {
 	int start;
 
 	(void)d_warpdot(lp, &start);
 	if (start < 1)
 		return NULL;
-	fn = &lp->l_text[start];
-	return fn;
+	return &lp->l_text[start];
 }
