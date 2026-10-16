@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.37 2026/06/17 17:02:03 bket Exp $
+.\"	$OpenBSD: pppoe.4,v 1.38 2026/10/16 05:35:11 renaud Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 17 2026 $
+.Dd $Mdocdate: October 16 2026 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -126,7 +126,8 @@ the gateway will be changed to the suggested address as well.
 .Pp
 Otherwise, PPP negotiation will only agree to exactly the IPv4 addresses
 which are configured on the interface.
-.Sh KERNEL OPTIONS
+.Pp
+By default,
 .Nm
 does not interfere with other PPPoE implementations
 running on the same machine.
@@ -137,13 +138,22 @@ reestablish a new PPPoE connection
 because there is already an open session.
 This would be indicated by the client sending a high number of PADI packets
 before successfully connecting.
-The
+Setting
+.Em link2
+makes
 .Nm
-driver can be told to kill all unknown PPPoE sessions
-by sending a PADT packet to explicitly terminate the old session.
-Add the following to the kernel config file:
-.Pp
-.Dl option PPPOE_TERM_UNKNOWN_SESSIONS
+answer packets for unknown sessions on its Ethernet interface
+with a PADT packet to explicitly terminate the old session,
+as long as no
+.Nm
+interface has an established session.
+Sessions of other PPPoE implementations
+using the same Ethernet interface are unknown to
+.Nm
+and would be terminated as well,
+so
+.Em link2
+should not be set in that case.
 .Sh PPPOE AND MTU/MSS
 PPPoE has an 8-byte header.
 When run over a network interface with the

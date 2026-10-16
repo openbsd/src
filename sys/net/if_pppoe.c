@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.91 2026/06/17 17:02:03 bket Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.92 2026/10/16 05:35:11 renaud Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -834,17 +834,14 @@ pppoe_data_input(struct mbuf *m)
 	struct pppoe_softc *sc;
 	struct pppoehdr *ph;
 	u_int16_t session, plen;
-#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 	u_int8_t shost[ETHER_ADDR_LEN];
-#endif
+
 	if (LIST_EMPTY(&pppoe_softc_list))
 		goto drop;
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
-#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 	memcpy(shost, mtod(m, struct ether_header*)->ether_shost, ETHER_ADDR_LEN);
-#endif
 	m_adj(m, sizeof(struct ether_header));
 	if (m->m_pkthdr.len <= PPPOE_HEADERLEN) {
 		printf("pppoe (data): dropping too short packet: %d bytes\n",
@@ -870,11 +867,20 @@ pppoe_data_input(struct mbuf *m)
 	session = ntohs(ph->session);
 	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.ph_ifidx);
 	if (sc == NULL) {
-#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-		printf("pppoe (data): input for unknown session 0x%x, sending PADT\n",
-		    session);
-		pppoe_send_padt(m->m_pkthdr.ph_ifidx, session, shost, 0);
-#endif
+		/*
+		 * The peer may still hold a session from before a crash and
+		 * refuse to open a new one. If link2 is set, terminate it.
+		 */
+		LIST_FOREACH(sc, &pppoe_softc_list, sc_list)
+			if (sc->sc_eth_ifidx == m->m_pkthdr.ph_ifidx &&
+			    (sc->sc_sppp.pp_if.if_flags & IFF_LINK2))
+				break;
+		if (sc != NULL) {
+			PPPOEDEBUG(("%s: input for unknown session 0x%x, "
+			    "sending PADT\n", sc->sc_sppp.pp_if.if_xname,
+			    session));
+			pppoe_send_padt(m->m_pkthdr.ph_ifidx, session, shost, 0);
+		}
 		goto drop;
 	}
 

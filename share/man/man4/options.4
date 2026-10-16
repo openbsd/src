@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.273 2025/06/01 00:32:54 rsadowski Exp $
+.\"	$OpenBSD: options.4,v 1.274 2026/10/16 05:35:11 renaud Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 1 2025 $
+.Dd $Mdocdate: October 16 2026 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -385,10 +385,6 @@ Enables BSD compressor for PPP connections.
 .It Cd option PPP_DEFLATE
 For use in conjunction with PPP_BSDCOMP; provides an interface to zlib for PPP
 for deflate compression/decompression.
-.It Cd option PPPOE_TERM_UNKNOWN_SESSIONS
-Send PADT to terminate open sessions before connecting.
-See
-.Xr pppoe 4 .
 .It Cd option SOCKET_SPLICE
 Enables zero-copy socket splicing in the kernel.
 See
