@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.74 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.75 2026/10/16 09:47:28 stsp Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -124,7 +124,8 @@ const struct urndis_class {
 } urndis_class[] = {
 	{ UICLASS_CDC, UISUBCLASS_ABSTRACT_CONTROL_MODEL, 0xff, "Vendor" },
 	{ UICLASS_WIRELESS, UISUBCLASS_RF, UIPROTO_RNDIS, "RNDIS" },
-	{ UICLASS_MISC, UISUBCLASS_SYNC, UIPROTO_ACTIVESYNC, "Activesync" }
+	{ UICLASS_MISC, UISUBCLASS_SYNC, UIPROTO_ACTIVESYNC, "Activesync" },
+	{ UICLASS_MISC, UISUBCLASS_RNDIS, UIPROTO_RNDIS_ETHERNET, "RNDIS over Ethernet"}
 };
 
 usbd_status

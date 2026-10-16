@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.64 2026/10/06 12:31:56 stsp Exp $ */
+/*	$OpenBSD: usb.h,v 1.65 2026/10/16 09:47:28 stsp Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -588,6 +588,8 @@ typedef struct usb_port_status usb_port_status_t;
 #define UICLASS_MISC		0xef
 #define  UISUBCLASS_SYNC		0x01
 #define   UIPROTO_ACTIVESYNC		0x01
+#define  UISUBCLASS_RNDIS		0x04
+#define   UIPROTO_RNDIS_ETHERNET	0x01
 
 #define UICLASS_APPL_SPEC	0xfe
 #define  UISUBCLASS_FIRMWARE_DOWNLOAD	1
