@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.37 2026/09/19 01:18:07 tb Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.38 2026/10/16 06:18:23 kenjiro Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -126,19 +126,21 @@ host_dns(const char *s, struct addr vec[MAX_SERVERS_DNS])
  * This returns NULL on failure.
  */
 static char *
-url2host(const char *host, short *port, char **path)
+url2host(const char *host, short *port, char **path, int *use_tls)
 {
 	char	*url, *ep;
 
 	/* We only understand HTTP and HTTPS. */
 
 	if (strncmp(host, "https://", 8) == 0) {
+		*use_tls = 1;
 		*port = 443;
 		if ((url = strdup(host + 8)) == NULL) {
 			warn("strdup");
 			return (NULL);
 		}
 	} else if (strncmp(host, "http://", 7) == 0) {
+		*use_tls = 0;
 		*port = 80;
 		if ((url = strdup(host + 7)) == NULL) {
 			warn("strdup");
@@ -552,7 +554,8 @@ main(int argc, char **argv)
 	    *instaple = NULL, *infile = NULL;
 	struct addr addrs[MAX_SERVERS_DNS] = {{0}};
 	struct source sources[MAX_SERVERS_DNS];
-	int i, ch, staplefd = -1, infd = -1, nonce = 1;
+	int i, ch, use_tls;
+	int staplefd = -1, infd = -1, nonce = 1;
 	ocsp_request *request = NULL;
 	size_t rescount, instaplesz = 0;
 	struct httpget *hget;
@@ -641,7 +644,7 @@ main(int argc, char **argv)
 
 	dspew("Built an %zu byte ocsp request\n", request->size);
 
-	if ((host = url2host(request->url, &port, &path)) == NULL)
+	if ((host = url2host(request->url, &port, &path, &use_tls)) == NULL)
 		errx(1, "Invalid OCSP url %s from %s", request->url,
 		    certfile);
 
@@ -649,7 +652,7 @@ main(int argc, char **argv)
 		/* Get a new OCSP response from the indicated server */
 
 		vspew("Using %s to host %s, port %d, path %s\n",
-		    port == 443 ? "https" : "http", host, port, path);
+		    use_tls ? "https" : "http", host, port, path);
 
 		rescount = host_dns(host, addrs);
 		for (i = 0; i < rescount; i++) {
@@ -661,7 +664,7 @@ main(int argc, char **argv)
 		 * Do an HTTP post to send our request to the OCSP
 		 * server, and hopefully get an answer back
 		 */
-		hget = http_get(sources, rescount, host, port, path,
+		hget = http_get(sources, rescount, host, port, use_tls, path,
 		    request->data, request->size);
 		if (hget == NULL)
 			errx(1, "http_get");

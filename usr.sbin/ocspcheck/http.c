@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.17 2023/04/19 12:58:16 jsg Exp $ */
+/*	$Id: http.c,v 1.18 2026/10/16 06:18:23 kenjiro Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -218,7 +218,7 @@ http_free(struct http *http)
 
 struct http *
 http_alloc(const struct source *addrs, size_t addrsz,
-    const char *host, short port, const char *path)
+    const char *host, short port, int use_tls, const char *path)
 {
 	struct sockaddr_storage ss;
 	int		 family, fd, c;
@@ -296,7 +296,7 @@ again:
 
 	/* If necessary, do our TLS setup. */
 
-	if (port != 443) {
+	if (!use_tls) {
 		http->writer = dosyswrite;
 		http->reader = dosysread;
 		return http;
@@ -672,7 +672,7 @@ http_get_free(struct httpget *g)
 
 struct httpget *
 http_get(const struct source *addrs, size_t addrsz, const char *domain,
-    short port, const char *path, const void *post, size_t postsz)
+    short port, int use_tls, const char *path, const void *post, size_t postsz)
 {
 	struct http	*h;
 	struct httpxfer	*x;
@@ -682,7 +682,7 @@ http_get(const struct source *addrs, size_t addrsz, const char *domain,
 	int		 code;
 	char		*bod, *headr;
 
-	h = http_alloc(addrs, addrsz, domain, port, path);
+	h = http_alloc(addrs, addrsz, domain, port, use_tls, path);
 	if (h == NULL)
 		return NULL;
 
@@ -756,9 +756,10 @@ main(void)
 		errx(EXIT_FAILURE, "http_init");
 
 #if 0
-	g = http_get(addrs, addrsz, "localhost", 80, "/index.html");
+	g = http_get(addrs, addrsz, "localhost", 80, 0, "/index.html",
+	    NULL, 0);
 #else
-	g = http_get(addrs, addrsz, "www.google.ch", 80, "/index.html",
+	g = http_get(addrs, addrsz, "www.google.ch", 80, 0, "/index.html",
 	    NULL, 0);
 #endif
 
