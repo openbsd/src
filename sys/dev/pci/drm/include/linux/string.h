@@ -49,6 +49,11 @@ memset_p(void **p, void *v, size_t n)
 #endif
 }
 
+#define memset_after(type, c, member) ({ \
+	memset(((uint8_t *)(type)) + offsetofend(typeof(*(type)), member), c, \
+	    sizeof(*(type)) - offsetofend(typeof(*(type)), member)); \
+})
+
 static inline void *
 kmemdup(const void *src, size_t len, int flags)
 {
