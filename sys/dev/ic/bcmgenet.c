@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.12 2026/01/24 05:33:11 mvs Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.13 2026/10/16 22:17:00 mvs Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -744,7 +744,7 @@ genet_txintr(struct genet_softc *sc, int qid)
 	struct genet_bufmap *bmap;
 	uint32_t queued;
 
-	queued = (RD4(sc, GENET_TX_DMA_PROD_INDEX(qid)) -
+	queued = (RD4(sc, GENET_TX_DMA_CONS_INDEX(qid)) -
 	    sc->sc_tx.cidx) & 0xffff;
 
 	while (queued > 0) {
