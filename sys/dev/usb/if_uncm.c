@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uncm.c,v 1.4 2026/10/14 11:04:09 stsp Exp $ */
+/*	$OpenBSD: if_uncm.c,v 1.5 2026/10/16 09:39:35 stsp Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -403,11 +403,13 @@ uncm_detach(struct device *self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		uncm_stop(sc);
 
-	usb_rem_wait_task(sc->sc_udev, &sc->sc_link_task);
 	if (sc->sc_ctrl_pipe) {
 		usbd_close_pipe(sc->sc_ctrl_pipe);
 		sc->sc_ctrl_pipe = NULL;
 	}
+
+	usb_rem_wait_task(sc->sc_udev, &sc->sc_link_task);
+
 	if (ifp->if_softc != NULL) {
 		ether_ifdetach(ifp);
 		if_detach(ifp);
@@ -480,10 +482,10 @@ uncm_ntb_setup(struct uncm_softc *sc)
 		sc->sc_ndp_div = UGETW(np.wNdpOutDivisor);
 		sc->sc_ndp_remainder = UGETW(np.wNdpOutPayloadRemainder);
 
-		if (!powerof2(sc->sc_align) || sc->sc_align == 0 ||
+		if (!powerof2(sc->sc_align) || sc->sc_align < 4 ||
 		    sc->sc_align >= sc->sc_tx_bufsz)
 			sc->sc_align = sizeof(uint32_t);
-		if (!powerof2(sc->sc_ndp_div) || sc->sc_ndp_div == 0 ||
+		if (!powerof2(sc->sc_ndp_div) || sc->sc_ndp_div < 4 ||
 		    sc->sc_ndp_div >= sc->sc_tx_bufsz)
 			sc->sc_ndp_div = sizeof(uint32_t);
 		if (sc->sc_ndp_remainder >= sc->sc_ndp_div)
@@ -544,9 +546,9 @@ uncm_ntb_setup_format(struct uncm_softc *sc)
 	if (usbd_do_request(sc->sc_udev, &req, wFmt) != USBD_NORMAL_COMPLETION)
 		goto fail;
 	fmt = UGETW(wFmt);
-	if ((sc->sc_ncm_supported_formats & (1UL << fmt)) == 0)
-		goto fail;
 	if (fmt != NCM_FORMAT_NTB16 && fmt != NCM_FORMAT_NTB32)
+		goto fail;
+	if ((sc->sc_ncm_supported_formats & (1UL << fmt)) == 0)
 		goto fail;
 	sc->sc_ncm_format = fmt;
 
@@ -785,6 +787,14 @@ uncm_start(struct ifnet *ifp)
 			break;
 
 		mlen = maxoverhead + m->m_pkthdr.len;
+		if (ndgram == 0 && offs + mlen > sc->sc_tx_bufsz) {
+			/* Drop packets that are too big for an NTB. */
+			ifq_deq_commit(&ifp->if_snd, m);
+			m_freem(m);
+			ifp->if_oerrors++;
+			DPRINTF("%s: packet too large for NTB\n", DEVNAM(sc));
+			continue;
+		}
 		if ((sc->sc_maxdgram != 0 && ndgram >= sc->sc_maxdgram) ||
 		    (offs + len + mlen > sc->sc_tx_bufsz)) {
 			ifq_deq_rollback(&ifp->if_snd, m);
@@ -803,9 +813,11 @@ uncm_start(struct ifnet *ifp)
 	}
 	if (ml_empty(&sc->sc_tx_ml))
 		return;
-	if (uncm_encap(sc, ndgram)) {
-		ifq_set_oactive(&ifp->if_snd);
-		ifp->if_timer = (2 * uncm_xfer_tout) / 1000;
+	ifq_set_oactive(&ifp->if_snd);
+	ifp->if_timer = (2 * uncm_xfer_tout) / 1000;
+	if (!uncm_encap(sc, ndgram)) {
+		ifp->if_timer = 0;
+		ifq_clr_oactive(&ifp->if_snd);
 	}
 }
 
@@ -988,10 +1000,7 @@ uncm_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uncm_softc *sc = priv;
 	struct ifnet *ifp = GET_IFP(sc);
-	int	 s;
 
-	s = splnet();
-	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -1003,10 +1012,9 @@ uncm_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				usbd_clear_endpoint_stall_async(sc->sc_tx_pipe);
 		}
 	}
-	if (ifq_empty(&ifp->if_snd) == 0)
-		uncm_start(ifp);
 
-	splx(s);
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 /*
@@ -1017,7 +1025,6 @@ void
 uncm_decap(struct uncm_softc *sc, struct usbd_xfer *xfer)
 {
 	struct ifnet *ifp = GET_IFP(sc);
-	int	s;
 	void *buf;
 	uint32_t len;
 	char *dp;
@@ -1034,7 +1041,6 @@ uncm_decap(struct uncm_softc *sc, struct usbd_xfer *xfer)
 
 	usbd_get_xfer_status(xfer, NULL, &buf, &len, NULL);
 	DPRINTFN(4, "%s: recv %d bytes\n", DEVNAM(sc), len);
-	s = splnet();
 	if (len < sizeof(*hdr16))
 		goto toosmall;
 
@@ -1160,13 +1166,11 @@ uncm_decap(struct uncm_softc *sc, struct usbd_xfer *xfer)
 	}
 done:
 	if_input(ifp, &ml);
-	splx(s);
 	return;
 toosmall:
 	DPRINTF("%s: packet too small (%d)\n", DEVNAM(sc), len);
 fail:
 	ifp->if_ierrors++;
-	splx(s);
 }
 
 void
@@ -1262,12 +1266,10 @@ uncm_link_task(void *arg)
 {
 	struct uncm_softc *sc = arg;
 	struct ifnet *ifp = GET_IFP(sc);
-	int	 s;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
-	s = splnet();
 	ifp->if_baudrate = sc->sc_baudrate;
 	if (sc->sc_link != LINK_STATE_UNKNOWN &&
 	    ifp->if_link_state != sc->sc_link) {
@@ -1281,7 +1283,6 @@ uncm_link_task(void *arg)
 		if_link_state_change(ifp);
 		if (LINK_STATE_IS_UP(sc->sc_link) &&
 		    (ifp->if_flags & IFF_RUNNING) && !ifq_empty(&ifp->if_snd))
-			uncm_start(ifp);
+			ifq_start(&ifp->if_snd);
 	}
-	splx(s);
 }
