@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.h,v 1.7 2024/02/26 08:25:51 yasuoka Exp $ */
+/*	$OpenBSD: fsm.h,v 1.8 2026/10/16 11:29:34 bket Exp $ */
 /*	$NetBSD: fsm.h,v 1.10 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ typedef struct fsm_callbacks {
 			evtimer_set(&(f)->timerctx.ev, fsm_evtimer_timeout,\
 			    &(f)->timerctx);				\
 		(f)->timerctx.func = fn;				\
-		evtimer_del(&(f)->timerctx.ev);				\
 		evtimer_add(&(f)->timerctx.ev, &tv0);			\
 	}
 
