@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.13 2021/03/29 03:54:40 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.14 2026/10/17 10:45:20 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.13 2021/03/29 03:54:40 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.14 2026/10/17 10:45:20 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -430,6 +430,14 @@ pptp_ctrl_io_event(int fd, short evmask, void *ctx)
 				break;	/* read again */
 
 			hdrlen = pkt[0] << 8 | pkt[1];
+			if (hdrlen < sizeof(struct pptp_ctrl_header)) {
+				pptp_ctrl_log(_this, LOG_ERR,
+				    "Received a short control packet: %d",
+				    hdrlen);
+				pptp_ctrl_fini(_this);
+				bytebuffer_compact(_this->recv_buf);
+				goto fail;
+			}
 			if (lpkt < hdrlen)
 				break;	/* read again */
 
