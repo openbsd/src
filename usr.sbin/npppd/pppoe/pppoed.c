@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.28 2026/10/17 09:06:23 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.29 2026/10/17 09:53:05 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementation.
- * $Id: pppoed.c,v 1.28 2026/10/17 09:06:23 yasuoka Exp $
+ * $Id: pppoed.c,v 1.29 2026/10/17 09:53:05 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -969,14 +969,10 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	 * Tag - ac-cookie
 	 */
 	if (_this->self->acookie_hash != NULL) {
-		/*
-		 * search next ac-cookie.
-		 * (XXX it will loop in uint32_t boundaly)
-		 */
+		/* search next ac-cookie.  */
 		do {
-			_this->self->acookie_next += 1;
-		}
-		while(hash_lookup(_this->self->acookie_hash,
+			_this->self->acookie_next++;
+		} while(hash_lookup(_this->self->acookie_hash,
 		    (void *)(intptr_t)_this->self->acookie_next) != NULL);
 
 		tlv.type = htons(PPPOE_TAG_AC_COOKIE);

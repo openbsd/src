@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe_session.c,v 1.12 2021/03/29 03:54:40 yasuoka Exp $ */
+/*	$OpenBSD: pppoe_session.c,v 1.13 2026/10/17 09:53:05 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.12 2021/03/29 03:54:40 yasuoka Exp $
+ * $Id: pppoe_session.c,v 1.13 2026/10/17 09:53:05 yasuoka Exp $
  */
 
 #include <sys/types.h>
@@ -377,11 +377,12 @@ pppoe_session_recv_PADR(pppoe_session *_this, slist *tag_list)
 	}
 
 	if (ac_cookie) {
+		if (ac_cookie->length != sizeof(uint32_t))
+			goto fail;
 		/* avoid a session which has already has cookie. */
 		if (hash_lookup(pppoed0->acookie_hash,
-		    (void *)ac_cookie->value) != NULL)
+		    (void *)(intptr_t)*(uint32_t *)ac_cookie->value) != NULL)
 			goto fail;
-
 		_this->acookie = *(uint32_t *)(ac_cookie->value);
 		hash_insert(pppoed0->acookie_hash,
 			(void *)(intptr_t)_this->acookie, _this);
