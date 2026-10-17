@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.46 2026/10/08 18:49:06 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.47 2026/10/17 16:12:45 deraadt Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -3461,7 +3461,7 @@ mwx_reg_addr(struct mwx_softc *sc, uint32_t reg)
 			return mt7921_map_reg_l1(sc, reg);
 	}
 
-	panic("%s: Access to currently unsupported address %08x\n",
+	panic("%s: Access to currently unsupported address %08x",
 	    DEVNAME(sc), reg);
 }
 

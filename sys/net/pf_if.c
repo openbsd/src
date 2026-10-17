@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.114 2026/09/08 18:42:14 bluhm Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.115 2026/10/17 16:12:45 deraadt Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -853,7 +853,7 @@ pfi_set_flags(const char *name, int flags)
 				if (ISSET(p->pfik_flags_new, PFI_IFLAG_SKIP))
 					pfi_kif_ref(p, PFI_KIF_REF_FLAG);
 			} else
-				panic("%s pfi_kif_get() returned NULL\n",
+				panic("%s pfi_kif_get() returned NULL",
 				    __func__);
 		} else {
 			/*

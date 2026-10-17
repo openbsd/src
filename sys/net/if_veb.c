@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.73 2026/08/30 05:38:26 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.74 2026/10/17 16:12:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -2308,7 +2308,7 @@ veb_add_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
 
 		ovp = RBT_INSERT(veb_pvlan_vp, &sc->sc_pvlans_vp, v);
 		if (ovp != NULL) {
-			panic("%s: %s %p pvlans and pvlans_vp inconsistency\n",
+			panic("%s: %s %p pvlans and pvlans_vp inconsistency",
 			    __func__, sc->sc_if.if_xname, sc);
 		}
 
@@ -2330,7 +2330,7 @@ veb_add_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
 
 		vp = RBT_FIND(veb_pvlan_vp, &sc->sc_pvlans_vp, v);
 		if (vp == NULL) {
-			panic("%s: %s %p pvlans and pvlans_vp inconsistency\n",
+			panic("%s: %s %p pvlans and pvlans_vp inconsistency",
 			    __func__, sc->sc_if.if_xname, sc);
 		}
 
@@ -2352,7 +2352,7 @@ veb_add_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
 
 		ovs = RBT_INSERT(veb_pvlan_vs, &sc->sc_pvlans_vs, v);
 		if (ovs != NULL) {
-			panic("%s: %s %p pvlans and pvlans_vs inconsistency\n",
+			panic("%s: %s %p pvlans and pvlans_vs inconsistency",
 			    __func__, sc->sc_if.if_xname, sc);
 		}
 
@@ -2440,7 +2440,7 @@ veb_del_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
 
 		pve = VEB_PVLAN_T_PRIMARY | v->v_primary;
 		if (sc->sc_pvlans[v->v_primary] != pve) {
-			panic("%s: %s %p pvlans and pvlans_vp inconsistency\n",
+			panic("%s: %s %p pvlans and pvlans_vp inconsistency",
 			    __func__, sc->sc_if.if_xname, sc);
 		}
 
@@ -2472,7 +2472,7 @@ veb_del_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
 		}
 
 		if (sc->sc_pvlans[v->v_secondary] != pve) {
-			panic("%s: %s %p pvlans and pvlans_vs inconsistency\n",
+			panic("%s: %s %p pvlans and pvlans_vs inconsistency",
 			    __func__, sc->sc_if.if_xname, sc);
 		}
 

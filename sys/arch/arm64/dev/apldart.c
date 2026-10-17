@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.23 2026/09/05 20:36:56 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.24 2026/10/17 16:12:45 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -778,7 +778,7 @@ apldart_t8020_intr(void *arg)
 {
 	struct apldart_softc *sc = arg;
 
-	panic("%s: error 0x%08x addr 0x%08x%08x\n",
+	panic("%s: error 0x%08x addr 0x%08x%08x",
 	    sc->sc_dev.dv_xname, HREAD4(sc, DART_T8020_ERROR),
 	    HREAD4(sc, DART_T8020_ERROR_ADDR_HI),
 	    HREAD4(sc, DART_T8020_ERROR_ADDR_LO));
@@ -789,7 +789,7 @@ apldart_t8110_intr(void *arg)
 {
 	struct apldart_softc *sc = arg;
 
-	panic("%s: error 0x%08x addr 0x%08x%08x\n",
+	panic("%s: error 0x%08x addr 0x%08x%08x",
 	    sc->sc_dev.dv_xname, HREAD4(sc, DART_T8110_ERROR),
 	    HREAD4(sc, DART_T8110_ERROR_ADDR_HI),
 	    HREAD4(sc, DART_T8110_ERROR_ADDR_LO));

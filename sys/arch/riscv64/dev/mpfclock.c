@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpfclock.c,v 1.1 2022/01/05 03:32:44 visa Exp $	*/
+/*	$OpenBSD: mpfclock.c,v 1.2 2026/10/17 16:12:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2022 Visa Hankala
@@ -180,7 +180,7 @@ mpfclock_get_frequency(void *cookie, uint32_t *cells)
 		shift = CLOCK_CONFIG_CR_AHB_DIV_SHIFT;
 		break;
 	default:
-		panic("%s: invalid idx %u\n", __func__, idx);
+		panic("%s: invalid idx %u", __func__, idx);
 	}
 
 	div = 1U << ((sc->sc_clkcfg >> shift) & CLOCK_CONFIG_CR_DIV_MASK);
