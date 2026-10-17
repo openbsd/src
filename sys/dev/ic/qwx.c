@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.146 2026/10/02 11:24:18 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.147 2026/10/17 08:00:39 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21740,16 +21740,13 @@ qwx_hal_alloc_cont_rdp(struct qwx_softc *sc)
 	struct ath11k_hal *hal = &sc->hal;
 	size_t size = sizeof(uint32_t) * HAL_SRNG_RING_ID_MAX;
 
+	hal->rdpmem = qwx_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
 	if (hal->rdpmem == NULL) {
-		hal->rdpmem = qwx_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
-		if (hal->rdpmem == NULL) {
-			printf("%s: could not allocate RDP DMA memory\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
+		printf("%s: could not allocate RDP DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
 
-		}
-	} else
-		memset(QWX_DMA_KVA(hal->rdpmem), 0, size);
+	}
 
 	hal->rdp.vaddr = QWX_DMA_KVA(hal->rdpmem);
 	hal->rdp.paddr = QWX_DMA_DVA(hal->rdpmem);
@@ -21776,16 +21773,13 @@ qwx_hal_alloc_cont_wrp(struct qwx_softc *sc)
 	struct ath11k_hal *hal = &sc->hal;
 	size_t size = sizeof(uint32_t) * HAL_SRNG_NUM_LMAC_RINGS;
 
+	hal->wrpmem = qwx_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
 	if (hal->wrpmem == NULL) {
-		hal->wrpmem = qwx_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
-		if (hal->wrpmem == NULL) {
-			printf("%s: could not allocate WDP DMA memory\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
+		printf("%s: could not allocate WDP DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
 
-		}
-	} else
-		memset(QWX_DMA_KVA(hal->wrpmem), 0, size);
+	}
 
 	hal->wrp.vaddr = QWX_DMA_KVA(hal->wrpmem);
 	hal->wrp.paddr = QWX_DMA_DVA(hal->wrpmem);
@@ -21809,30 +21803,26 @@ qwx_hal_free_cont_wrp(struct qwx_softc *sc)
 int
 qwx_hal_srng_init(struct qwx_softc *sc)
 {
+	struct ath11k_hal *hal = &sc->hal;
 	int ret;
 
 	ret = qwx_hal_srng_create_config(sc);
 	if (ret)
-		goto err_hal;
+		return ret;
 
-	ret = qwx_hal_alloc_cont_rdp(sc);
-	if (ret)
-		goto err_hal;
+	memset(QWX_DMA_KVA(hal->rdpmem), 0, QWX_DMA_LEN(hal->rdpmem));
+	hal->rdp.vaddr = QWX_DMA_KVA(hal->rdpmem);
+	hal->rdp.paddr = QWX_DMA_DVA(hal->rdpmem);
 
-	ret = qwx_hal_alloc_cont_wrp(sc);
-	if (ret)
-		goto err_free_cont_rdp;
+	memset(QWX_DMA_KVA(hal->wrpmem), 0, QWX_DMA_LEN(hal->wrpmem));
+	hal->wrp.vaddr = QWX_DMA_KVA(hal->wrpmem);
+	hal->wrp.paddr = QWX_DMA_DVA(hal->wrpmem);
 
 #ifdef notyet
 	qwx_hal_register_srng_key(sc);
 #endif
 
 	return 0;
-err_free_cont_rdp:
-	qwx_hal_free_cont_rdp(sc);
-
-err_hal:
-	return ret;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.40 2026/07/18 09:47:52 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.41 2026/10/17 08:00:40 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1029,14 +1029,22 @@ unsupported_wcn6855_soc:
 		goto err_pci_free_cmd_ring;
 	}
 
-	error = qwx_hal_srng_init(sc);
+	error = qwx_hal_alloc_cont_rdp(sc);
 	if (error)
 		goto err_mhi_unregister;
+
+	error = qwx_hal_alloc_cont_wrp(sc);
+	if (error)
+		goto err_free_hal_cont_rdp;
+
+	error = qwx_hal_srng_init(sc);
+	if (error)
+		goto err_free_hal_cont_wrp;
 
 	error = qwx_ce_alloc_pipes(sc);
 	if (error) {
 		printf(": failed to allocate ce pipes: %d\n", error);
-		goto err_hal_srng_deinit;
+		goto err_free_hal_cont_wrp;
 	}
 
 	sc->sc_nswq = taskq_create("qwxns", 1, IPL_NET, 0);
@@ -1150,7 +1158,10 @@ unsupported_wcn6855_soc:
 
 err_ce_free:
 	qwx_ce_free_pipes(sc);
-err_hal_srng_deinit:
+err_free_hal_cont_wrp:
+	qwx_hal_free_cont_wrp(sc);
+err_free_hal_cont_rdp:
+	qwx_hal_free_cont_rdp(sc);
 err_mhi_unregister:
 err_pci_free_cmd_ring:
 	qwx_pci_free_cmd_ring(psc);
@@ -1189,6 +1200,8 @@ qwx_pci_detach(struct device *self, int flags)
 
 	qwx_pci_free_event_rings(psc);
 	qwx_pci_free_xfer_rings(psc);
+	qwx_hal_free_cont_rdp(sc);
+	qwx_hal_free_cont_wrp(sc);
 	qwx_pci_free_cmd_ring(psc);
 
 	if (psc->event_ctxt) {
