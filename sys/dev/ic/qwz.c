@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.91 2026/10/02 12:41:35 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.92 2026/10/17 08:01:29 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -19398,17 +19398,32 @@ static const struct hal_srng_config hw_srng_config_templ[] = {
 };
 
 int
+qwz_hal_srng_alloc_config(struct qwz_softc *sc)
+{
+	struct ath12k_hal *hal = &sc->hal;
+
+	hal->srng_config = malloc(sizeof(hw_srng_config_templ),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (hal->srng_config == NULL)
+		return ENOMEM;
+
+	return 0;
+}
+
+void
+qwz_hal_srng_free_config(struct qwz_softc *sc)
+{
+	struct ath12k_hal *hal = &sc->hal;
+
+	free(hal->srng_config, M_DEVBUF, sizeof(hw_srng_config_templ));
+	hal->srng_config = NULL;
+}
+
+int
 qwz_hal_srng_create_config_wcn7850(struct qwz_softc *sc)
 {
 	struct ath12k_hal *hal = &sc->hal;
 	struct hal_srng_config *s;
-
-	if (hal->srng_config == NULL) {
-		hal->srng_config = malloc(sizeof(hw_srng_config_templ),
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (hal->srng_config == NULL)
-			return ENOMEM;
-	}
 
 	memcpy(hal->srng_config, hw_srng_config_templ,
 	    sizeof(hw_srng_config_templ));
@@ -19665,16 +19680,13 @@ qwz_hal_alloc_cont_rdp(struct qwz_softc *sc)
 	struct ath12k_hal *hal = &sc->hal;
 	size_t size = sizeof(uint32_t) * HAL_SRNG_RING_ID_MAX;
 
+	hal->rdpmem = qwz_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
 	if (hal->rdpmem == NULL) {
-		hal->rdpmem = qwz_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
-		if (hal->rdpmem == NULL) {
-			printf("%s: could not allocate RDP DMA memory\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
+		printf("%s: could not allocate RDP DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
 
-		}
-	} else
-		memset(QWZ_DMA_KVA(hal->rdpmem), 0, size);
+	}
 
 	hal->rdp.vaddr = QWZ_DMA_KVA(hal->rdpmem);
 	hal->rdp.paddr = QWZ_DMA_DVA(hal->rdpmem);
@@ -19702,16 +19714,13 @@ qwz_hal_alloc_cont_wrp(struct qwz_softc *sc)
 	size_t size = sizeof(uint32_t) *
 	    (HAL_SRNG_NUM_PMAC_RINGS + HAL_SRNG_NUM_DMAC_RINGS);
 
+	hal->wrpmem = qwz_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
 	if (hal->wrpmem == NULL) {
-		hal->wrpmem = qwz_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE);
-		if (hal->wrpmem == NULL) {
-			printf("%s: could not allocate WDP DMA memory\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
+		printf("%s: could not allocate WDP DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
 
-		}
-	} else
-		memset(QWZ_DMA_KVA(hal->wrpmem), 0, size);
+	}
 
 	hal->wrp.vaddr = QWZ_DMA_KVA(hal->wrpmem);
 	hal->wrp.paddr = QWZ_DMA_DVA(hal->wrpmem);
@@ -19738,35 +19747,26 @@ qwz_hal_srng_init(struct qwz_softc *sc)
 	struct ath12k_hal *hal = &sc->hal;
 	int ret;
 	int new_config = hal->srng_config == NULL;
-	int new_rdp = hal->rdpmem == NULL;
 
 	ret = sc->hw_params.hal_ops->create_srng_config(sc);
-	if (ret)
-		goto err_hal;
+	if (ret && new_config && hal->srng_config) {
+		free(hal->srng_config, M_DEVBUF, 0);
+		hal->srng_config = NULL;
+		return ret;
+	}
 
-	ret = qwz_hal_alloc_cont_rdp(sc);
-	if (ret)
-		goto err_hal;
+	memset(QWZ_DMA_KVA(hal->rdpmem), 0, QWZ_DMA_LEN(hal->rdpmem));
+	hal->rdp.vaddr = QWZ_DMA_KVA(hal->rdpmem);
+	hal->rdp.paddr = QWZ_DMA_DVA(hal->rdpmem);
 
-	ret = qwz_hal_alloc_cont_wrp(sc);
-	if (ret)
-		goto err_free_cont_rdp;
+	memset(QWZ_DMA_KVA(hal->wrpmem), 0, QWZ_DMA_LEN(hal->wrpmem));
+	hal->wrp.vaddr = QWZ_DMA_KVA(hal->wrpmem);
+	hal->wrp.paddr = QWZ_DMA_DVA(hal->wrpmem);
 
 #ifdef notyet
 	qwz_hal_register_srng_key(sc);
 #endif
-
 	return 0;
-err_free_cont_rdp:
-	if (new_rdp)
-		qwz_hal_free_cont_rdp(sc);
-
-err_hal:
-	if (new_config && hal->srng_config) {
-		free(hal->srng_config, M_DEVBUF, 0);
-		hal->srng_config = NULL;
-	}
-	return ret;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.29 2026/10/01 17:37:59 kirill Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.30 2026/10/17 08:01:29 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2207,6 +2207,12 @@ int	qwz_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
 
 void	qwz_qrtr_recv_msg(struct qwz_softc *, struct mbuf *);
 
+int	qwz_hal_alloc_cont_rdp(struct qwz_softc *);
+void	qwz_hal_free_cont_rdp(struct qwz_softc *);
+int	qwz_hal_alloc_cont_wrp(struct qwz_softc *);
+void	qwz_hal_free_cont_wrp(struct qwz_softc *);
+int	qwz_hal_srng_alloc_config(struct qwz_softc *);
+void	qwz_hal_srng_free_config(struct qwz_softc *);
 int	qwz_hal_srng_init(struct qwz_softc *);
 
 int	qwz_ce_alloc_pipes(struct qwz_softc *);
