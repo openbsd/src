@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.27 2026/10/12 23:54:04 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.28 2026/10/17 09:06:23 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,9 +28,8 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementation.
- * $Id: pppoed.c,v 1.27 2026/10/12 23:54:04 yasuoka Exp $
+ * $Id: pppoed.c,v 1.28 2026/10/17 09:06:23 yasuoka Exp $
  */
-#include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -70,6 +69,7 @@
 #include "pppoe_local.h"
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define ROUNDUP(a, b)	((((a) + (b) - 1) / (b)) * (b))
 
 static int pppoed_seqno = 0;
 
@@ -636,7 +636,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 #define tlvspace_remaining() (sizeof(tlvspace) - (p_tlvspace - tlvspace))
 
 	reason = "";
-	p_tlvspace = tlvspace;
+	p_tlvspace = (u_char *)ROUNDUP((uintptr_t)tlvspace, sizeof(uint32_t));
 	session = NULL;
 
 	pppoe = (struct pppoe_header *)pkt;
@@ -719,10 +719,11 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 			pkt += tlv->length;
 			lpkt -= tlv->length;
 			p_tlvspace += tlv->length;
-			padding = (ALIGNBYTES + 1 -
-			    ((uintptr_t)p_tlvspace & ALIGNBYTES)) & ALIGNBYTES;
+			padding = ROUNDUP((uintptr_t)p_tlvspace,
+			    sizeof(uint32_t)) - (uintptr_t)p_tlvspace;
 			if (padding > tlvspace_remaining()) {
-				reason = "parsing TAGs reached the buffer size limit.";
+				reason = "parsing TAGs reached the buffer "
+				    "size limit.";
 				goto fail;
 			}
 			p_tlvspace += padding;
