@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.113 2026/10/15 00:41:41 thfr Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.114 2026/10/17 17:57:25 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -525,6 +525,9 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		return;
 	}
 
+	if (cc == 0)
+		return;
+
 	p = sc->sc_ibuf;
 	if (sc->sc_nrepid != 1)
 		rep = *p++, cc--;
@@ -883,8 +886,12 @@ uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
 			len = xfer->actlen;
 			buf = KERNADDR(&xfer->dmabuf, 0);
 			if (info->id > 0) {
-				len--;
-				memcpy(info->data, buf + 1, len);
+				if (len == 0)
+					len = -1;
+				else {
+					len--;
+					memcpy(info->data, buf + 1, len);
+				}
 			} else {
 				memcpy(info->data, buf, len);
 			}
