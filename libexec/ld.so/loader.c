@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.226 2026/10/10 22:18:01 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.227 2026/10/17 21:57:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -566,6 +566,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl_argc++;
 	_dl_setup_env(argv[0], envp);
 
+	if (_dl_traceld)
+		_dl_pledge("stdio rpath", NULL);
+
 	/*
 	 * Make read-only the GOT and PLT and variables initialized
 	 * during the ld.so setup above.
@@ -763,11 +766,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	if (!_dl_traceld)
 		failed = _dl_rtld(_dl_objects);
 
-	if (_dl_debug || _dl_traceld) {
-		if (_dl_traceld)
-			_dl_pledge("stdio rpath", NULL);
+	if (_dl_debug || _dl_traceld)
 		_dl_show_objects(NULL);
-	}
 
 	DL_DEB(("dynamic loading done, %s.\n",
 	    (failed == 0) ? "success":"failed"));
