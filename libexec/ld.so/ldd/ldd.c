@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.27 2026/10/15 04:04:04 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.28 2026/10/17 21:55:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -181,7 +181,7 @@ doit(char *name)
 			_exit(0);
 		}
 
-		if (pledge("stdio rpath exec", "stdio rpath") == -1)
+		if (pledge("stdio rpath exec", NULL) == -1)
 			err(1, "pledge");
 		if (i == ehdr.e_phnum) {
 			dprintf(STDERR_FILENO,
