@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.63 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.64 2026/10/17 10:05:12 kettenis Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ int	cs4280_activate(struct device *, int);
 void	cs4280_attachhook(struct device *);
 int	cs4280_intr(void *);
 void	cs4280_reset(void *);
-int	cs4280_download_image(struct cs4280_softc *);
+int	cs4280_download_image(struct cs4280_softc *, int);
 
 int cs4280_download(struct cs4280_softc *, const u_int32_t *, u_int32_t, u_int32_t);
 int cs4280_allocmem(struct cs4280_softc *, size_t, size_t,
@@ -827,12 +827,15 @@ cs4280_download(struct cs4280_softc *sc, const u_int32_t *src, u_int32_t offset,
 struct BA1struct *BA1Struct;
 
 int
-cs4280_download_image(struct cs4280_softc *sc)
+cs4280_download_image(struct cs4280_softc *sc, int init)
 {
 	int idx, err = 0;
 	u_int32_t offset = 0;
 	static u_char *cs4280_firmware;
 	static size_t cs4280_firmwarelen;
+
+	if (!init && cs4280_firmware == NULL)
+		return (-1);
 
 	if (cs4280_firmware == NULL) {
 		err = loadfirmware("cs4280", &cs4280_firmware,
@@ -1488,7 +1491,7 @@ cs4280_init2(struct cs4280_softc *sc, int init)
 	u_int32_t mem;
 
 	/* Download the image to the processor */
-	if (cs4280_download_image(sc) != 0) {
+	if (cs4280_download_image(sc, init) != 0) {
 		printf("%s: image download error\n", sc->sc_dev.dv_xname);
 		return(1);
 	}
