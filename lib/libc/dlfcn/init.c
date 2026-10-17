@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.31 2026/10/13 12:43:38 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.32 2026/10/17 21:45:34 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -162,7 +162,7 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 			strlcat(sugidmsg, ", aborting\n", sizeof sugidmsg);
 			sendsyslog(sugidmsg, strlen(sugidmsg), 0);
 			write(STDERR_FILENO, sugidmsg, strlen(sugidmsg));
-			/* SOON THIS WILL ABORT */
+			abort();
 			break;
 		}
 	}
