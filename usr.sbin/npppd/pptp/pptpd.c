@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.35 2025/02/03 07:46:06 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.36 2026/10/17 10:51:58 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.35 2025/02/03 07:46:06 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.36 2026/10/17 10:51:58 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.35 2025/02/03 07:46:06 yasuoka Exp $
+ * $Id: pptpd.c,v 1.36 2026/10/17 10:51:58 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -619,10 +619,10 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 			peerlen = sizeof(peer);
 			if ((newsock = accept(listener->sock,
 			    (struct sockaddr *)&peer, &peerlen)) < 0) {
-				if (errno != EAGAIN && errno == EINTR &&
+				if (errno == EMFILE || errno == ENFILE)
+					accept_pause();
+				else if (errno != EAGAIN && errno != EINTR &&
 				    errno != ECONNABORTED) {
-					if (errno == EMFILE || errno == ENFILE)
-						accept_pause();
 					pptpd_log(_this, LOG_ERR,
 					    "accept() failed at %s(): %m",
 						__func__);
