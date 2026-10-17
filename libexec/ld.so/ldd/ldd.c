@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.28 2026/10/17 21:55:39 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.29 2026/10/17 22:00:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -159,8 +159,6 @@ doit(char *name)
 		}
 	free(phdr);
 
-	printf("%s:\n", name);
-	fflush(stdout);
 	switch (fork()) {
 	case -1:
 		err(1, "fork");

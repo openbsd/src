@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.117 2024/01/22 02:08:31 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.118 2026/10/17 22:00:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -514,8 +514,9 @@ _dl_show_objects(elf_object_t *trace)
 	    "\t%x %e %t %O    %r   %g      %p\n";
 
 	if (_dl_tracefmt1 == NULL && _dl_tracefmt2 == NULL)
-		_dl_dprintf(outputfd, "\tStart   %s End     %s Type  Open Ref GrpRef Name\n",
-		    pad, pad);
+		_dl_dprintf(outputfd, "%s:\n"
+		    "\tStart   %s End     %s Type  Open Ref GrpRef Name\n",
+		    _dl_execpath, pad, pad);
 
 	if (trace != NULL) {
 		for (; object != NULL; object = object->next) {
