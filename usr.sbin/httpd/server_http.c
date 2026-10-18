@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.172 2026/10/02 04:47:07 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.173 2026/10/18 23:20:15 dgl Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1453,15 +1453,13 @@ server_response(struct httpd *httpd, struct client *clt)
 #endif
 			if (srv_conf->flags & SRVFLAG_LOCATION)
 				continue;
-			else if (srv_conf->flags & SRVFLAG_SERVER_MATCH) {
-				str_find(hostname, srv_conf->name,
-				    &sm, 1, &errstr);
-				ret = errstr == NULL ? 0 : -1;
-			} else {
+			else if (srv_conf->flags & SRVFLAG_SERVER_MATCH)
+				ret = str_find(hostname, srv_conf->name,
+				    &sm, 1, &errstr) > 0 ? 0 : -1;
+			else
 				ret = fnmatch(srv_conf->name,
 				    hostname, FNM_CASEFOLD);
-			}
-			if (ret == 0 &&
+			if (ret == 0 && errstr == NULL &&
 			    (portval == -1 || portval == srv_conf->port)) {
 				/* Replace host configuration */
 				clt->clt_srv_conf = srv_conf;
