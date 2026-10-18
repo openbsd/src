@@ -456,15 +456,15 @@
         (plus:DI (match_operand:DI 1 "reg_no_subreg_operand" "r,r,r")
 		 (match_operand:DI 2 "const_int_operand" "K,L,n")))]
   "NONSTRICT_REG_OK_FP_BASE_P (operands[1])
-   && INTVAL (operands[2]) >= 0
-   /* This is the largest constant an lda+ldah pair can add, minus
+   && INTVAL (operands[2]) < 0
+   /* This is the largest constant an lda+ldah pair can subtract, minus
       an upper bound on the displacement between SP and AP during
       register elimination.  See INITIAL_ELIMINATION_OFFSET.  */
    && INTVAL (operands[2])
-	< (0x7fff8000
-	   - FIRST_PSEUDO_REGISTER * UNITS_PER_WORD
-	   - ALPHA_ROUND(current_function_outgoing_args_size)
-	   - (ALPHA_ROUND (get_frame_size ()
+	>= ((HOST_WIDE_INT) -0x7fffffff /* - (HOST_WIDE_INT) 0x8000 */
+	   + FIRST_PSEUDO_REGISTER * UNITS_PER_WORD
+	   + ALPHA_ROUND(current_function_outgoing_args_size)
+	   + (ALPHA_ROUND (get_frame_size ()
 			   + max_reg_num () * UNITS_PER_WORD
 			   + current_function_pretend_args_size)
 	      - current_function_pretend_args_size))"
