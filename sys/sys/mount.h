@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.154 2026/06/10 00:04:38 beck Exp $	*/
+/*	$OpenBSD: mount.h,v 1.155 2026/10/18 13:24:28 kettenis Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -484,11 +484,7 @@ struct bcachestats {
 };
 #ifdef _KERNEL
 extern struct bcachestats bcstats;
-extern long buflowpages, bufhighpages, bufbackpages;
-#define BUFPAGES_DEFICIT (((buflowpages - bcstats.numbufpages) < 0) ? 0 \
-    : buflowpages - bcstats.numbufpages)
-#define BUFPAGES_INACT (((bcstats.numcleanpages - buflowpages) < 0) ? 0 \
-    : bcstats.numcleanpages - buflowpages)
+extern long bufhighpages;
 extern int bufcachepercent;
 extern void bufadjust(int);
 struct uvm_constraint_range;

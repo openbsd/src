@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.83 2026/07/24 15:03:50 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.84 2026/10/18 13:24:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -952,10 +952,10 @@ retry:		/* Return point after sleeping. */
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
 	 */
-	if ((atomic_load_sint(&uvmexp.free) - BUFPAGES_DEFICIT) < uvmexp.freemin ||
-	    ((atomic_load_sint(&uvmexp.free) - BUFPAGES_DEFICIT) <
+	if (atomic_load_sint(&uvmexp.free) < uvmexp.freemin ||
+	    (atomic_load_sint(&uvmexp.free) <
 	    atomic_load_sint(&uvmexp.freetarg) &&
-	    (atomic_load_sint(&uvmexp.inactive) + BUFPAGES_INACT) <
+	    atomic_load_sint(&uvmexp.inactive) <
 	    atomic_load_sint(&uvmexp.inactarg)))
 		wakeup(&uvm.pagedaemon);
 

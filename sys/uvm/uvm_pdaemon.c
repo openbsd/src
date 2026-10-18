@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.162 2026/08/31 17:06:54 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.163 2026/10/18 13:24:28 kettenis Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -227,8 +227,7 @@ uvm_pageout(void *arg)
 		size = MAX(size, 128);
 
 		/* How many pages do we need to free during this round? */
-		shortage = uvmexp.freetarg - atomic_load_sint(&uvmexp.free) +
-		    BUFPAGES_DEFICIT;
+		shortage = uvmexp.freetarg - atomic_load_sint(&uvmexp.free);
 		uvm_unlock_fpageq();
 
 		/*
@@ -243,7 +242,7 @@ uvm_pageout(void *arg)
 		}
 		inactive_shortage =
 		    atomic_load_sint(&uvmexp.inactarg) -
-		    atomic_load_sint(&uvmexp.inactive) - BUFPAGES_INACT;
+		    atomic_load_sint(&uvmexp.inactive);
 		uvm_unlock_pageq();
 
 		/* Reclaim pages from the buffer cache if possible. */
