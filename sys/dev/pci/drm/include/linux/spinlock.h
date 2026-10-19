@@ -82,4 +82,9 @@ class_spinlock_irqsave_destructor(struct mutex **p)
 
 typedef struct mutex * class_spinlock_irqsave_t;
 
+#define raw_spin_lock_irqsave(mtx, flags) \
+	spin_lock_irqsave(mtx, flags)
+#define raw_spin_unlock_irqrestore(mtx, flags) \
+	spin_unlock_irqrestore(mtx, flags)
+
 #endif

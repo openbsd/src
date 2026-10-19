@@ -498,7 +498,7 @@ struct drm_mode_config {
 	 * printing code must be protected against. See drm_panic_trylock(),
 	 * drm_panic_lock() and drm_panic_unlock().
 	 */
-	struct raw_spinlock panic_lock;
+	struct mutex panic_lock;
 
 	/**
 	 * @num_crtc:
