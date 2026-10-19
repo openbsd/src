@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.713 2026/08/30 23:43:22 jsg Exp $ */
+/*	$OpenBSD: rde.c,v 1.714 2026/10/19 12:19:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2421,6 +2421,7 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			a->flags |= F_ATTR_OTC_LEAK;
 			break;
 		case ROLE_PEER:
+		case ROLE_RS_CLIENT:
 			ibuf_from_ibuf(&tmpbuf, &attrbuf);
 			if (ibuf_get_n32(&tmpbuf, &tmp32) == -1)
 				goto bad_len;
