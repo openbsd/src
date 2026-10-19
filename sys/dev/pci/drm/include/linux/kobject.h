@@ -9,7 +9,7 @@
 
 struct kobject {
 	struct kref kref;
-	struct kobj_type *type;
+	const struct kobj_type *type;
 };
 
 struct kobj_type {
@@ -20,14 +20,14 @@ struct kobj_attribute {
 };
 
 static inline void
-kobject_init(struct kobject *obj, struct kobj_type *type)
+kobject_init(struct kobject *obj, const struct kobj_type *type)
 {
 	kref_init(&obj->kref);
 	obj->type = type;
 }
 
 static inline int
-kobject_init_and_add(struct kobject *obj, struct kobj_type *type,
+kobject_init_and_add(struct kobject *obj, const struct kobj_type *type,
     struct kobject *parent, const char *fmt, ...)
 {
 	kobject_init(obj, type);
