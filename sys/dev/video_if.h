@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.19 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.20 2026/10/19 18:33:50 kirill Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -69,5 +69,6 @@ struct video_attach_args {
 
 struct device  *video_attach_mi(const struct video_hw_if *, void *,
 	    struct device *);
+void	video_mmap_revoke(caddr_t, size_t);
 
 #endif /* _SYS_DEV_VIDEO_IF_H */

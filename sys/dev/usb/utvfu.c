@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.23 2025/02/25 22:10:39 kirill Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.24 2026/10/19 18:33:50 kirill Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -1411,7 +1411,7 @@ utvfu_mappage(void *v, off_t off, int prot)
 	struct utvfu_softc *sc = v;
 	caddr_t p = NULL;
 
-	if (off < sc->sc_mmap_bufsz) {
+	if (sc->sc_mmap_buffer != NULL && off < sc->sc_mmap_bufsz) {
 		if ((sc->sc_flags & UTVFU_FLAG_MMAP) == 0)
 			sc->sc_flags |= UTVFU_FLAG_MMAP;
 
@@ -1535,6 +1535,8 @@ void
 utvfu_vs_free_frame(struct utvfu_softc *sc)
 {
 	struct utvfu_frame_buf *fb = &sc->sc_fb;
+	uint8_t *mmap_buffer;
+	size_t mmap_bufsz;
 
 	if (fb->buf != NULL) {
 		free(fb->buf, M_USBDEV, fb->size);
@@ -1542,8 +1544,12 @@ utvfu_vs_free_frame(struct utvfu_softc *sc)
 	}
 
 	if (sc->sc_mmap_buffer != NULL) {
-		free(sc->sc_mmap_buffer, M_USBDEV, sc->sc_mmap_bufsz);
+		mmap_buffer = sc->sc_mmap_buffer;
+		mmap_bufsz = sc->sc_mmap_bufsz;
 		sc->sc_mmap_buffer = NULL;
+		sc->sc_mmap_bufsz = 0;
+		video_mmap_revoke(mmap_buffer, mmap_bufsz);
+		free(mmap_buffer, M_USBDEV, mmap_bufsz);
 		memset(sc->sc_mmap, 0, sizeof(sc->sc_mmap));
 	}
 

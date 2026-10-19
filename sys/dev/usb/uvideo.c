@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.266 2026/06/02 20:33:29 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.267 2026/10/19 18:33:50 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2190,6 +2190,8 @@ void
 uvideo_vs_free_frame(struct uvideo_softc *sc)
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
+	uint8_t *mmap_buffer;
+	size_t mmap_buffer_size;
 
 	if (fb->buf != NULL) {
 		free(fb->buf, M_USBDEV, fb->buf_size);
@@ -2197,9 +2199,12 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 	}
 
 	if (sc->sc_mmap_buffer != NULL) {
-		free(sc->sc_mmap_buffer, M_USBDEV, sc->sc_mmap_buffer_size);
+		mmap_buffer = sc->sc_mmap_buffer;
+		mmap_buffer_size = sc->sc_mmap_buffer_size;
 		sc->sc_mmap_buffer = NULL;
 		sc->sc_mmap_buffer_size = 0;
+		video_mmap_revoke(mmap_buffer, mmap_buffer_size);
+		free(mmap_buffer, M_USBDEV, mmap_buffer_size);
 	}
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_mmap_q))
@@ -3983,7 +3988,8 @@ int
 uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 {
 	struct uvideo_softc *sc = v;
-	int i, buf_size, buf_size_total;
+	uint32_t buf_size;
+	int i, buf_size_total;
 
 	DPRINTF(1, "%s: %s: count=%d\n", DEVNAME(sc), __func__, rb->count);
 
@@ -4005,13 +4011,14 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* allocate the total mmap buffer */	
 	buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
-	buf_size_total = sc->sc_mmap_count * buf_size;
-	buf_size_total = round_page(buf_size_total); /* page align buffer */
-	if (buf_size_total > MALLOC_MAX) {
-		printf("%s: video frame size too large!\n", DEVNAME(sc));
+	if (buf_size == 0 ||
+	    buf_size > MALLOC_MAX / sc->sc_mmap_count) {
+		printf("%s: invalid video frame size!\n", DEVNAME(sc));
 		sc->sc_mmap_count = 0;
 		return (EINVAL);
 	}
+	buf_size_total = sc->sc_mmap_count * buf_size;
+	buf_size_total = round_page(buf_size_total); /* page align buffer */
 	sc->sc_mmap_buffer = malloc(buf_size_total, M_USBDEV, M_NOWAIT);
 	if (sc->sc_mmap_buffer == NULL) {
 		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));

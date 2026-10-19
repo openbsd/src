@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.63 2026/10/19 18:16:24 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.64 2026/10/19 18:33:50 kirill Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -394,6 +394,8 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		}
 		error = (sc->hw_if->dqbuf)(sc->hw_hdl,
 		    (struct v4l2_buffer *)data);
+		if (error)
+			break;
 		if (!atomic_load_int(&video_record_enable))
 			bzero(sc->sc_fbuffer_mmap + vb->m.offset, vb->length);
 		mtx_enter(&sc->sc_mtx);
@@ -463,8 +465,7 @@ videommap(dev_t dev, off_t off, int prot)
 	sc->sc_vidmode = VIDMODE_MMAP;
 
 	/* store frame buffer base address for later blanking */
-	if (off == 0)
-		sc->sc_fbuffer_mmap = p;
+	sc->sc_fbuffer_mmap = p - off;
 
 	device_unref(&sc->dev);
 	return (pa);
@@ -472,6 +473,23 @@ videommap(dev_t dev, off_t off, int prot)
 err:
 	device_unref(&sc->dev);
 	return (-1);
+}
+
+void
+video_mmap_revoke(caddr_t addr, size_t size)
+{
+	struct vm_page *pg;
+	paddr_t pa;
+	size_t off;
+
+	for (off = 0; off < size; off += PAGE_SIZE) {
+		if (!pmap_extract(pmap_kernel(), (vaddr_t)addr + off, &pa))
+			panic("video_mmap_revoke: invalid page");
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg == NULL)
+			panic("video_mmap_revoke: unmanaged page");
+		pmap_page_protect(pg, PROT_NONE);
+	}
 }
 
 void
