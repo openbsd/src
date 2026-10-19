@@ -1262,7 +1262,6 @@
 ./usr/include/scsi/cd.h
 ./usr/include/scsi/iscsi.h
 ./usr/include/scsi/mpathvar.h
-./usr/include/scsi/safte.h
 ./usr/include/scsi/scsi_all.h
 ./usr/include/scsi/scsi_changer.h
 ./usr/include/scsi/scsi_debug.h
