@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto.c,v 1.8 2021/10/24 10:26:22 patrick Exp $	*/
+/*	$OpenBSD: octcrypto.c,v 1.9 2026/10/19 01:03:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -685,7 +685,7 @@ octcrypto_authenc_gmac(struct cryptop *crp, struct cryptodesc *crde,
 	struct octcrypto_cpu *pcpu = &ses->ses_sc->sc_cpu[cpu_number()];
 	size_t aadlen;
 	size_t ivlen = 8;
-	size_t rlen;
+	size_t rlen, buflen;
 	int error = 0;
 	unsigned int iskip = 0;
 	unsigned int oskip = 0;
@@ -694,16 +694,20 @@ octcrypto_authenc_gmac(struct cryptop *crp, struct cryptodesc *crde,
 	KASSERT(crde != NULL);
 
 	rlen = roundup(crde->crd_len, AESCTR_BLOCKSIZE);
-	if (rlen > pcpu->pcpu_buflen) {
+	aadlen = crda->crd_len;
+	if (crda->crd_flags & CRD_F_ESN)
+		aadlen += 4;
+	buflen = roundup(MAX(crde->crd_len, aadlen), AESCTR_BLOCKSIZE);
+	if (buflen > pcpu->pcpu_buflen) {
 		if (pcpu->pcpu_buf != NULL) {
 			explicit_bzero(pcpu->pcpu_buf, pcpu->pcpu_buflen);
 			free(pcpu->pcpu_buf, M_DEVBUF, pcpu->pcpu_buflen);
 		}
 		pcpu->pcpu_buflen = 0;
-		pcpu->pcpu_buf = malloc(rlen, M_DEVBUF, M_NOWAIT | M_ZERO);
+		pcpu->pcpu_buf = malloc(buflen, M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (pcpu->pcpu_buf == NULL)
 			return ENOMEM;
-		pcpu->pcpu_buflen = rlen;
+		pcpu->pcpu_buflen = buflen;
 	}
 	buf = pcpu->pcpu_buf;
 
@@ -746,9 +750,7 @@ octcrypto_authenc_gmac(struct cryptop *crp, struct cryptodesc *crde,
 	((uint8_t *)icb)[AESCTR_BLOCKSIZE - 1] = 1;
 
 	/* Prepare the AAD. */
-	aadlen = crda->crd_len;
 	if (crda->crd_flags & CRD_F_ESN) {
-		aadlen += 4;
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copydata((struct mbuf *)crp->crp_buf,
 			    crda->crd_skip, 4, buf);
