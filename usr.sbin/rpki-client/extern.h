@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.312 2026/10/19 03:16:39 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.313 2026/10/19 03:28:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -308,7 +308,7 @@ struct roa_ip {
 	struct ip_addr	 addr; /* the address prefix itself */
 	unsigned char	 min[16]; /* full range minimum */
 	unsigned char	 max[16]; /* full range maximum */
-	unsigned char	 maxlength; /* max length or zero */
+	unsigned char	 maxlength; /* maxLength if present or prefix length */
 	unsigned char    superfluous; /* maxLength SHOULD NOT be encoded */
 };
 
