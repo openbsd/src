@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.22 2026/10/11 14:49:37 mglocker Exp $
+.\" $OpenBSD: video.4,v 1.23 2026/10/19 18:16:24 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2026 $
+.Dd $Mdocdate: October 19 2026 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -41,17 +41,17 @@ which are supported by the
 .Nm
 driver.
 .Pp
-For security reasons video recording is denied by default.
+For security reasons video recording is blanked by default.
 To achieve this, the
 .Nm
-driver returns EACCES (permission denied) on video device open.
+driver blanks image data received from the underlying video hardware driver.
 The superuser can change this behavior using the
 .Va kern.video.record
 .Xr sysctl 2
 variable:
 .Bd -literal -offset indent
-kern.video.record=0	# Recording is denied (default)
-kern.video.record=1	# Recording is allowed
+kern.video.record=0	# Recording is blanked (default)
+kern.video.record=1	# Recording is enabled
 .Ed
 .Sh IOCTLS
 The following
