@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.39 2026/10/16 06:54:01 kenjiro Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.40 2026/10/19 23:15:07 kenjiro Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -118,6 +119,24 @@ host_dns(const char *s, struct addr vec[MAX_SERVERS_DNS])
 
 	freeaddrinfo(res0);
 	return vecsz;
+}
+
+static int
+ocsp_url_chars_only(const char *url)
+{
+	size_t	i, len;
+
+	/* Reject control characters before using the URL in an HTTP request. */
+	len = strlen(url);
+	for (i = 0; i < len; i++) {
+		if (!isascii((unsigned char)url[i]))
+			return 0;
+		if (!isalnum((unsigned char)url[i]) &&
+		    !ispunct((unsigned char)url[i]))
+			return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -319,6 +338,7 @@ ocsp_request_new_from_cert(const char *cadir, char *file, int nonce)
 	ocsp_request *request = NULL;
 	const EVP_MD *cert_id_md = NULL;
 	const X509 *issuer;
+	const char *url;
 	STACK_OF(OPENSSL_STRING) *urls = NULL;
 
 	if ((request = calloc(1, sizeof(ocsp_request))) == NULL) {
@@ -357,7 +377,12 @@ ocsp_request_new_from_cert(const char *cadir, char *file, int nonce)
 		warnx("Certificate in %s contains no OCSP url", file);
 		goto err;
 	}
-	if ((request->url = strdup(sk_OPENSSL_STRING_value(urls, 0))) == NULL)
+	url = sk_OPENSSL_STRING_value(urls, 0);
+	if (!ocsp_url_chars_only(url)) {
+		warnx("Invalid OCSP url from %s", file);
+		goto err;
+	}
+	if ((request->url = strdup(url)) == NULL)
 		goto err;
 	X509_email_free(urls);
 	urls = NULL;
