@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.14 2026/06/09 15:18:26 kirill Exp $
+# $OpenBSD: RAMDISK,v 1.15 2026/10/19 04:40:41 gnezdo Exp $
 
 machine		powerpc64
 maxusers	4
@@ -56,7 +56,6 @@ sd*		at scsibus?
 st*		at scsibus?             # SCSI tape drives
 cd*		at scsibus?             # SCSI CD-ROM drives
 ch*		at scsibus?             # SCSI autochangers
-safte*		at scsibus?             # SCSI accessed fault-tolerant enclosures
 ses*		at scsibus?             # SCSI enclosure services
 uk*		at scsibus?             # unknown SCSI
 

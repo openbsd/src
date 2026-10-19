@@ -1,4 +1,4 @@
-# $OpenBSD: BOOT,v 1.10 2025/05/18 11:47:35 visa Exp $
+# $OpenBSD: BOOT,v 1.11 2026/10/19 04:40:41 gnezdo Exp $
 
 machine		powerpc64
 maxusers	4
@@ -46,7 +46,6 @@ sd*		at scsibus?
 st*		at scsibus?             # SCSI tape drives
 cd*		at scsibus?             # SCSI CD-ROM drives
 ch*		at scsibus?             # SCSI autochangers
-safte*		at scsibus?             # SCSI accessed fault-tolerant enclosures
 ses*		at scsibus?             # SCSI enclosure services
 uk*		at scsibus?             # unknown SCSI
 

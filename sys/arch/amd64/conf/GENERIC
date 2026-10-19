@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.543 2026/10/08 18:54:03 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.544 2026/10/19 04:40:41 gnezdo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -479,7 +479,6 @@ sd*	at scsibus?			# SCSI disk drives
 st*	at scsibus?			# SCSI tape drives
 cd*	at scsibus?			# SCSI CD-ROM drives
 ch*	at scsibus?			# SCSI autochangers
-safte*	at scsibus?			# SCSI accessed fault-tolerant encl
 ses*	at scsibus?			# SCSI enclosure services
 uk*	at scsibus?			# unknown SCSI
 

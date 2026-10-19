@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.277 2022/03/26 14:25:14 stsp Exp $g
+#	$OpenBSD: GENERIC,v 1.278 2026/10/19 04:40:41 gnezdo Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -389,7 +389,6 @@ sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
-safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
 
