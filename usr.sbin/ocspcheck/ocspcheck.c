@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.40 2026/10/19 23:15:07 kenjiro Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.41 2026/10/19 23:18:26 kenjiro Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -333,7 +333,7 @@ static ocsp_request *
 ocsp_request_new_from_cert(const char *cadir, char *file, int nonce)
 {
 	X509 *cert;
-	int count = 0;
+	int count = 0, i;
 	OCSP_CERTID *id = NULL;
 	ocsp_request *request = NULL;
 	const EVP_MD *cert_id_md = NULL;
@@ -377,11 +377,14 @@ ocsp_request_new_from_cert(const char *cadir, char *file, int nonce)
 		warnx("Certificate in %s contains no OCSP url", file);
 		goto err;
 	}
-	url = sk_OPENSSL_STRING_value(urls, 0);
-	if (!ocsp_url_chars_only(url)) {
-		warnx("Invalid OCSP url from %s", file);
-		goto err;
+	for (i = 0; i < sk_OPENSSL_STRING_num(urls); i++) {
+		url = sk_OPENSSL_STRING_value(urls, i);
+		if (!ocsp_url_chars_only(url)) {
+			warnx("Invalid OCSP url from %s", file);
+			goto err;
+		}
 	}
+	url = sk_OPENSSL_STRING_value(urls, 0);
 	if ((request->url = strdup(url)) == NULL)
 		goto err;
 	X509_email_free(urls);
