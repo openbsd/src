@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.35 2024/07/13 15:28:42 krw Exp $
+.\"	$OpenBSD: bio.4,v 1.36 2026/10/19 04:39:39 gnezdo Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" Copyright (c) 2006 Marco Peereboom
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2024 $
+.Dd $Mdocdate: October 19 2026 $
 .Dt BIO 4
 .Os
 .Sh NAME
@@ -92,9 +92,7 @@ The following device drivers register with
 .Nm
 to provide enclosure management:
 .Pp
-.Bl -tag -width safte($)XX -offset indent -compact
-.It Xr safte 4
-SCSI Accessed Fault-Tolerant Enclosure
+.Bl -tag -width ses(4)XX -offset indent -compact
 .It Xr ses 4
 SCSI Enclosure Services
 .El
@@ -112,7 +110,7 @@ Retrieve number of volumes and physical disks for a specific device.
 .It Dv BIOCDISK Fa "struct bioc_disk *"
 Retrieve detailed information for the specified physical disk.
 Information returned can include status, size, channel, target, lun,
-vendor name, serial number and processor device (ses or safte).
+vendor name, serial number and processor device (ses).
 .It Dv BIOCVOL Fa "struct bioc_vol *"
 Retrieve detailed information for the specified volume.
 Information returned can include status, size, RAID level, number of disks,
@@ -129,8 +127,6 @@ Supported blink states are: blink LED, unblink LED and blink alarm LED.
 .Pp
 Note:  This option is only supported if the disk is governed by
 .Xr ses 4
-or
-.Xr safte 4
 and the hardware supports hardware blinking.
 .It Dv BIOCSETSTATE Fa "struct bioc_setstate *"
 Alter the state of specified physical disk.

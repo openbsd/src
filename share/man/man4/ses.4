@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ses.4,v 1.20 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: ses.4,v 1.21 2026/10/19 04:39:39 gnezdo Exp $
 .\"
 .\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 19 2026 $
 .Dt SES 4
 .Os
 .Sh NAME
@@ -59,16 +59,8 @@ include the following types:
 .El
 .Pp
 Sensor data is updated every 10 seconds.
-.Pp
-An enclosure may provide environmental information using an alternative
-command set to the SCSI Enclosure Services used by this driver.
-Enclosures using the SCSI Accessed Fault-Tolerant Enclosure command set
-may be monitored by the
-.Xr safte 4
-driver.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr safte 4 ,
 .Xr scsibus 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
