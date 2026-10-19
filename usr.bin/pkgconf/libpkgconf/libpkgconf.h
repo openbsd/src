@@ -71,8 +71,8 @@ typedef struct pkgconf_license_ pkgconf_license_t;
 #define PKGCONF_FOREACH_LIST_ENTRY_REVERSE(tail, value) \
 	for ((value) = (tail); (value) != NULL; (value) = (value)->prev)
 
-#define LIBPKGCONF_VERSION	30009
-#define LIBPKGCONF_VERSION_STR	"3.0.9"
+#define LIBPKGCONF_VERSION	30010
+#define LIBPKGCONF_VERSION_STR	"3.0.10"
 
 struct pkgconf_queue_ {
 	pkgconf_node_t iter;
