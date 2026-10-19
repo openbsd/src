@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.94 2026/10/09 08:36:50 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.95 2026/10/19 03:16:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -78,7 +78,7 @@ roa_parse_econtent(const char *fn, void *obj, const unsigned char *d,
 	uint64_t			 maxlen;
 	struct ip_addr			 ipaddr;
 	struct roa_ip			*res;
-	int				 ipaddrblocksz;
+	int				 ipaddrblocksz, superfluous, warned = 0;
 	int				 i, j, rc = 0;
 
 	oder = d;
@@ -168,6 +168,7 @@ roa_parse_econtent(const char *fn, void *obj, const unsigned char *d,
 				goto out;
 			}
 			maxlen = ipaddr.prefixlen;
+			superfluous = 0;
 
 			if (addr->maxLength != NULL) {
 				if (!ASN1_INTEGER_get_uint64(&maxlen,
@@ -189,12 +190,21 @@ roa_parse_econtent(const char *fn, void *obj, const unsigned char *d,
 					    fn, (unsigned long long)maxlen);
 					goto out;
 				}
+				if (ipaddr.prefixlen == maxlen) {
+					superfluous = 1;
+					if (!warned && verbose > 1) {
+						warnx("%s: superfluous "
+						    "maxLength encoding", fn);
+						warned = 1;
+					}
+				}
 			}
 
 			res = &roa->ips[roa->num_ips++];
 			res->addr = ipaddr;
 			res->afi = afi;
 			res->maxlength = maxlen;
+			res->superfluous = superfluous;
 			ip_roa_compose_ranges(res);
 		}
 	}

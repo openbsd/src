@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.311 2026/10/16 19:39:31 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.312 2026/10/19 03:16:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -309,6 +309,7 @@ struct roa_ip {
 	unsigned char	 min[16]; /* full range minimum */
 	unsigned char	 max[16]; /* full range maximum */
 	unsigned char	 maxlength; /* max length or zero */
+	unsigned char    superfluous; /* maxLength SHOULD NOT be encoded */
 };
 
 /*
