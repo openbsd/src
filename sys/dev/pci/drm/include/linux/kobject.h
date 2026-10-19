@@ -27,6 +27,13 @@ kobject_init(struct kobject *obj, const struct kobj_type *type)
 }
 
 static inline int
+kobject_add(struct kobject *obj,
+    struct kobject *parent, const char *fmt, ...)
+{
+	return 0;
+}
+
+static inline int
 kobject_init_and_add(struct kobject *obj, const struct kobj_type *type,
     struct kobject *parent, const char *fmt, ...)
 {
