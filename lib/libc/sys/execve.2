@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.65 2026/10/11 23:33:36 jsg Exp $
+.\"	$OpenBSD: execve.2,v 1.66 2026/10/20 15:10:52 deraadt Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: October 11 2026 $
+.Dd $Mdocdate: October 20 2026 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -137,13 +137,17 @@ In
 .Em set-user-ID
 and
 .Em set-group-ID
-programs are required to statically initialize the global weak variable
+programs are required to statically initialize the visible
+global weak variable
 .Va mode_t _permit_setugid
 with the bits
 .Dv S_ISUID Pq 04000
 or
 .Dv S_ISGID Pq 02000
 to match their filesystem setuid or setgid mode.
+In programs compiled with reduced visibility, this variable may need
+visibility forced using
+.Va __attribute__((visibility("default"))) .
 The libc startup code imposes this additional requirement, and will
 log an error message and then
 .Xr abort 3
