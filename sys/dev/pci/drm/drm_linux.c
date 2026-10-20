@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.148 2026/09/15 01:24:06 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.149 2026/10/20 11:59:12 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3146,6 +3146,27 @@ void
 bitmap_free(void *p)
 {
 	kfree(p);
+}
+
+/* XXX assumes alignment mask is 0 */
+unsigned long
+bitmap_find_next_zero_area(unsigned long *p, unsigned long size,
+    unsigned long start, unsigned int n, unsigned long mask)
+{
+	unsigned long pos, end;
+
+	for (pos = start; pos < size ; pos = end) {
+		pos = find_next_zero_bit(p, size, pos);
+		if (pos == size)
+			return size;
+
+		end = find_next_bit(p, size, pos + 1);
+
+		if (end - pos >= n)
+			return pos;
+	}
+
+	return size;
 }
 
 int

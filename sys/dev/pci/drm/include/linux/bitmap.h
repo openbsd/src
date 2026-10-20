@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.11 2026/09/18 09:00:53 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.12 2026/10/20 11:59:12 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -215,7 +215,9 @@ bitmap_shift_right(void *dst, const void *src, unsigned int shift,
 	}
 }
 
-void *bitmap_zalloc(u_int, gfp_t);
-void bitmap_free(void *);
+void		*bitmap_zalloc(u_int, gfp_t);
+void		 bitmap_free(void *);
+unsigned long	 bitmap_find_next_zero_area(unsigned long *, unsigned long,
+		     unsigned long, unsigned int, unsigned long);
 
 #endif
