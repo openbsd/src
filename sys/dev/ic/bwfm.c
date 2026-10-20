@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.116 2026/10/20 11:44:17 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.117 2026/10/20 11:46:34 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2611,7 +2611,12 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct bwfm_event *e = mtod(m, void *);
-	size_t len = m->m_len;
+	size_t len = m->m_len, remain;
+
+	if (len < sizeof(*e)) {
+		m_freem(m);
+		return;
+	}
 
 	if (ntohl(e->msg.event_type) >= BWFM_E_LAST) {
 		m_freem(m);
@@ -2621,9 +2626,9 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 	switch (ntohl(e->msg.event_type)) {
 	case BWFM_E_ESCAN_RESULT: {
 		struct bwfm_escan_results *res;
-		struct bwfm_bss_info *bss;
+		struct bwfm_bss_info *bss, *this_bss;
 		size_t reslen;
-		int i;
+
 		/* Abort event triggered by SCAN -> INIT */
 		if (ic->ic_state == IEEE80211_S_INIT &&
 		    ntohl(e->msg.status) == BWFM_E_STATUS_ABORT)
@@ -2650,10 +2655,17 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 			return;
 		}
 		reslen = len;
-		res = malloc(len, M_TEMP, M_WAITOK);
-		memcpy(res, (void *)&e[1], len);
-		if (len < letoh32(res->buflen)) {
-			DPRINTF(("%s: results too small\n", DEVNAME(sc)));
+		res = malloc(reslen, M_TEMP, M_WAITOK);
+		memcpy(res, (void *)&e[1], reslen);
+		if (reslen < letoh32(res->buflen)) {
+			DPRINTF(("%s: bad scan results size\n", DEVNAME(sc)));
+			free(res, M_TEMP, reslen);
+			m_freem(m);
+			return;
+		}
+		if (letoh16(res->bss_count) * sizeof(struct bwfm_bss_info) <
+		    letoh16(res->bss_count)) {
+			DPRINTF(("%s: bad scan results count\n", DEVNAME(sc)));
 			free(res, M_TEMP, reslen);
 			m_freem(m);
 			return;
@@ -2666,16 +2678,35 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 			return;
 		}
 		bss = &res->bss_info[0];
-		for (i = 0; i < letoh16(res->bss_count); i++) {
-			bwfm_scan_node(sc, &res->bss_info[i], len);
-			len -= sizeof(*bss) + letoh32(bss->length);
-			bss = (void *)((char *)bss) + letoh32(bss->length);
-			if (len <= 0)
-				break;
+		remain = len;
+		this_bss = malloc(BWFM_BSS_INFO_LENGTH_MAX, M_TEMP, M_WAITOK);
+		while (remain >= sizeof(*bss)) {
+			size_t bss_maxlen;
+
+			bss_maxlen = remain < BWFM_BSS_INFO_LENGTH_MAX ?
+			    remain : BWFM_BSS_INFO_LENGTH_MAX;
+
+			/* Don't allow device to cause unaligned access. */
+			memcpy(this_bss, bss, bss_maxlen);
+
+			if (letoh32(this_bss->length) < sizeof(*bss) ||
+			    letoh32(this_bss->length) > remain) {
+				free(res, M_TEMP, reslen);
+				m_freem(m);
+				free(this_bss, M_TEMP,
+				    BWFM_BSS_INFO_LENGTH_MAX);
+				return;
+			}
+
+			bwfm_scan_node(sc, this_bss, letoh32(this_bss->length));
+
+			remain -= letoh32(this_bss->length);
+			bss = (void *)((char *)bss) + letoh32(this_bss->length);
 		}
 		free(res, M_TEMP, reslen);
+		free(this_bss, M_TEMP, BWFM_BSS_INFO_LENGTH_MAX);
 		break;
-		}
+	}
 	case BWFM_E_AUTH:
 		if (ntohl(e->msg.status) != BWFM_E_STATUS_SUCCESS &&
 		    ic->ic_state == IEEE80211_S_AUTH)
