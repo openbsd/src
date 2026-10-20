@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.113 2025/08/21 17:03:58 mbuhl Exp $ */
+/* $OpenBSD: bwfm.c,v 1.114 2026/10/20 11:41:45 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2416,6 +2416,8 @@ bwfm_rx_auth_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
 
 	/* Build a fake beacon frame to let net80211 do all the parsing. */
 	ieslen = betoh32(e->msg.datalen);
+	if (ieslen >= len - sizeof(*wh) - 6)
+		return;
 	pktlen = sizeof(*wh) + ieslen + 6;
 	if (pktlen > MCLBYTES)
 		return;
@@ -2455,6 +2457,8 @@ bwfm_rx_assoc_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 
 	/* Build a fake beacon frame to let net80211 do all the parsing. */
 	ieslen = betoh32(e->msg.datalen);
+	if (ieslen >= len - sizeof(*wh) - 4)
+		return;
 	pktlen = sizeof(*wh) + ieslen + 4;
 	if (reassoc)
 		pktlen += IEEE80211_ADDR_LEN;
