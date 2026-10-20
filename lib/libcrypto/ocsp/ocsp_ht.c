@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.29 2026/10/20 04:39:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -66,6 +66,7 @@
 #include <openssl/buffer.h>
 
 #include "err_local.h"
+#include "ocsp_local.h"
 
 /* Stateful OCSP request code, supporting non-blocking I/O */
 
@@ -158,6 +159,12 @@ OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req, int maxline)
 {
 	OCSP_REQ_CTX *rctx;
 
+	if (path == NULL)
+		path = "/";
+
+	if (!ocsp_uri_chars_only(path))
+		return NULL;
+
 	rctx = malloc(sizeof(OCSP_REQ_CTX));
 	if (rctx == NULL)
 		return NULL;
@@ -178,8 +185,6 @@ OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req, int maxline)
 		free(rctx);
 		return NULL;
 	}
-	if (!path)
-		path = "/";
 
 	if (BIO_printf(rctx->mem, "POST %s HTTP/1.0\r\n", path) <= 0) {
 		free(rctx->iobuf);

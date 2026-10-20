@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.30 2026/10/20 04:39:15 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -61,6 +61,7 @@
  *
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -184,6 +185,24 @@ OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 }
 LCRYPTO_ALIAS(OCSP_id_cmp);
 
+int
+ocsp_uri_chars_only(const char *str)
+{
+	size_t i, len;
+
+	len = strlen(str);
+
+	for (i = 0; i < len; i++) {
+		if (!isascii((unsigned char)str[i]))
+			return 0;
+		if (!isalnum((unsigned char)str[i]) &&
+		    !ispunct((unsigned char)str[i]))
+			return 0;
+	}
+
+	return 1;
+}
+
 /* Parse a URL and split it up into host, port and path components and whether
  * it is SSL.
  */
@@ -195,6 +214,11 @@ OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
 
 	*phost = *pport = *ppath = NULL;
 	*pssl = 0;
+
+	if (!ocsp_uri_chars_only(url)) {
+		OCSPerror(OCSP_R_ERROR_PARSING_URL);
+		return 0;
+	}
 
 	if (strncmp(url, "https://", 8) == 0) {
 		*pssl = 1;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_local.h,v 1.2 2022/01/14 08:32:26 tb Exp $ */
+/* $OpenBSD: ocsp_local.h,v 1.3 2026/10/20 04:39:15 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -285,6 +285,8 @@ struct ocsp_service_locator_st {
 #define OCSP_BASICRESP_verify(a,r,d) \
     ASN1_item_verify(&OCSP_RESPDATA_it, \
 	(a)->signatureAlgorithm, (a)->signature, (a)->tbsResponseData, (r))
+
+int ocsp_uri_chars_only(const char *str);
 
 __END_HIDDEN_DECLS
 
