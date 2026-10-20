@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.12 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.13 2026/10/20 01:50:43 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -110,7 +110,7 @@ int		mue_read_eeprom(struct mue_softc *, caddr_t, int, int);
 int		mue_dataport_wait(struct mue_softc *);
 void		mue_dataport_write(struct mue_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t *);
-void		mue_init_ltm(struct mue_softc *);
+int		mue_init_ltm(struct mue_softc *);
 int		mue_chip_init(struct mue_softc *);
 void		mue_set_macaddr(struct mue_softc *);
 
@@ -530,31 +530,37 @@ mue_dataport_write(struct mue_softc *sc, uint32_t sel, uint32_t addr,
 	}
 }
 
-void
+int
 mue_init_ltm(struct mue_softc *sc)
 {
-	uint8_t idx[6] = { 0 };
-	int i;
+	uint32_t idx[6] = { 0 };
+	int i, error = 0;
 
 	if (mue_csr_read(sc, MUE_USB_CFG1) & MUE_USB_CFG1_LTM_ENABLE) {
 		uint8_t temp[2];
 
-		if (mue_read_eeprom(sc, (caddr_t)&temp, MUE_EE_LTM_OFFSET, 2)) {
-			if (temp[0] != 24)
-				goto done;
-			mue_read_eeprom(sc, (caddr_t)&idx, temp[1] << 1, 24);
+		if (mue_read_eeprom(sc, (caddr_t)&temp, MUE_EE_LTM_OFFSET,
+		    2) == 0) {
+			if (temp[0] == 24) {
+				error = mue_read_eeprom(sc, (caddr_t)&idx,
+				    temp[1] << 1, 24);
+				if (error != 0)
+					return (error);
+			}
 		}
 	}
-done:
-	for (i = 0; i < sizeof(idx); i++)
-		mue_csr_write(sc, MUE_LTM_INDEX(i), idx[i]);
+
+	for (i = 0; i < nitems(idx); i++)
+		mue_csr_write(sc, MUE_LTM_INDEX(i), letoh32(idx[i]));
+
+	return (error);
 }
 
 int
 mue_chip_init(struct mue_softc *sc)
 {
 	uint32_t val;
-	int ntries;
+	int ntries, error = 0;
 
 	if (sc->mue_flags & LAN7500) {
 		for (ntries = 0; ntries < 100; ntries++) {
@@ -601,7 +607,9 @@ mue_chip_init(struct mue_softc *sc)
 		mue_csr_write(sc, MUE_FCT_TX_FIFO_END, 0x17);
 	} else {
 		/* Init LTM. */
-		mue_init_ltm(sc);
+		error = mue_init_ltm(sc);
+		if (error != 0)
+			return (error);
 
 		val = (sc->mue_udev->speed == USB_SPEED_SUPER) ?
 		    MUE_7800_BURST_MIN_BUFSZ : MUE_7800_BURST_MAX_BUFSZ;
@@ -661,7 +669,7 @@ mue_chip_init(struct mue_softc *sc)
 		    MUE_HW_CFG_LED0_EN | MUE_HW_CFG_LED1_EN);
 	}
 
-	return (0);
+	return (error);
 }
 
 void
