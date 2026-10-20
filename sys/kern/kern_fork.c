@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.280 2026/09/19 16:29:14 gnezdo Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.281 2026/10/20 00:40:58 mvs Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -475,6 +475,11 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	mtx_leave(&pr->ps_mtx);
 
 	/*
+	 * Child can exit1() just after start. Be sure it waits for us.
+	 */
+	refcnt_take(&pr->ps_refcnt);
+
+	/*
 	 * For new processes, set accounting bits and mark as complete.
 	 */
 	nanouptime(&pr->ps_start);
@@ -534,6 +539,9 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	 */
 	if (retval != NULL)
 		*retval = pr->ps_pid;
+
+	refcnt_rele_wake(&pr->ps_refcnt);
+
 	return (0);
 }
 
