@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.13 2026/10/20 01:50:43 kevlo Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.14 2026/10/20 01:52:07 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -578,9 +578,9 @@ mue_chip_init(struct mue_softc *sc)
 	MUE_SETBIT(sc, MUE_HW_CFG, MUE_HW_CFG_LRST);
 
 	for (ntries = 0; ntries < 1000; ntries++) {
+		DELAY(1000);
 		if (!(mue_csr_read(sc, MUE_HW_CFG) & MUE_HW_CFG_LRST))
 			break;
-		DELAY(5);
 	}
 	if (ntries == 1000) {
 		printf("%s: timeout on lite software reset\n",
