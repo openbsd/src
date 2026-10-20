@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.26 2022/03/04 22:34:41 kettenis Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.27 2026/10/20 11:39:26 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -770,7 +770,7 @@ struct bwfm_event_msg {
 	uint32_t auth_type;
 	uint32_t datalen;
 	struct ether_addr addr;
-	char ifname[IFNAMSIZ];
+	char ifname[16];
 	uint8_t ifidx;
 	uint8_t bsscfgidx;
 } __packed;
