@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.115 2026/10/20 11:42:55 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.116 2026/10/20 11:44:17 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2739,7 +2739,7 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 
 	iesoff = letoh16(bss->ie_offset);
 	ieslen = letoh32(bss->ie_length);
-	if (ieslen > len - iesoff)
+	if (iesoff > len || ieslen > len - iesoff)
 		return;
 
 	/* Build a fake beacon frame to let net80211 do all the parsing. */
