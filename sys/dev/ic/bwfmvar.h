@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.31 2022/03/06 18:52:47 kettenis Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.32 2026/10/20 11:59:15 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -111,13 +111,19 @@ struct bwfm_buscore_ops {
 	void (*bc_activate)(struct bwfm_softc *, uint32_t);
 };
 
+enum bwfm_rx_type {
+	BWFM_RX_ANY,
+	BWFM_RX_FRAME,
+	BWFM_RX_FW_EVENT
+};
+
 struct bwfm_proto_ops {
 	int (*proto_query_dcmd)(struct bwfm_softc *, int, int,
 	    char *, size_t *);
 	int (*proto_set_dcmd)(struct bwfm_softc *, int, int,
 	    char *, size_t);
 	void (*proto_rx)(struct bwfm_softc *, struct mbuf *,
-	    struct mbuf_list *);
+	    struct mbuf_list *, enum bwfm_rx_type);
 	void (*proto_rxctl)(struct bwfm_softc *, char *, size_t);
 };
 extern struct bwfm_proto_ops bwfm_proto_bcdc_ops;
@@ -213,7 +219,8 @@ void bwfm_chip_set_passive(struct bwfm_softc *);
 int bwfm_chip_sr_capable(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
-void bwfm_rx(struct bwfm_softc *, struct mbuf *, struct mbuf_list *);
+void bwfm_rx(struct bwfm_softc *, struct mbuf *, struct mbuf_list *,
+    enum bwfm_rx_type);
 void bwfm_do_async(struct bwfm_softc *, void (*)(struct bwfm_softc *, void *),
     void *, int);
 int bwfm_nvram_convert(int, u_char **, size_t *, size_t *);

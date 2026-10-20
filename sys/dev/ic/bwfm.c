@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.117 2026/10/20 11:46:34 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.118 2026/10/20 11:59:15 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -102,7 +102,7 @@ int	 bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *, int,
 int	 bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t);
 void	 bwfm_proto_bcdc_rx(struct bwfm_softc *, struct mbuf *,
-	     struct mbuf_list *);
+	     struct mbuf_list *, enum bwfm_rx_type);
 int	 bwfm_proto_bcdc_txctl(struct bwfm_softc *, int, char *, size_t *);
 void	 bwfm_proto_bcdc_rxctl(struct bwfm_softc *, char *, size_t);
 
@@ -1763,7 +1763,8 @@ bwfm_proto_bcdc_rxctl(struct bwfm_softc *sc, char *buf, size_t len)
 }
 
 void
-bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
+bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml,
+    enum bwfm_rx_type rx_type)
 {
 	struct bwfm_proto_bcdc_hdr *hdr;
 
@@ -1778,7 +1779,7 @@ bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 	}
 	m_adj(m, sizeof(*hdr) + (hdr->data_offset << 2));
 
-	bwfm_rx(sc, m, ml);
+	bwfm_rx(sc, m, ml, rx_type);
 }
 
 /* FW Variable code */
@@ -2343,13 +2344,14 @@ bwfm_newbuf(void)
 }
 
 void
-bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
+bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml,
+    enum bwfm_rx_type rx_type)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
-	struct bwfm_event *e;
 	uint32_t datalen;
+	struct bwfm_event *e;
 
 #ifdef __STRICT_ALIGNMENT
 	/* Remaining data is an ethernet packet, so align. */
@@ -2364,9 +2366,9 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 		m = m0;
 	}
 #endif
-
 	e = mtod(m, struct bwfm_event *);
-	if (m->m_len >= sizeof(*e) &&
+	if ((rx_type == BWFM_RX_ANY || rx_type == BWFM_RX_FW_EVENT) &&
+	    m->m_len >= sizeof(*e) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
 	    memcmp(BWFM_BRCM_OUI, e->hdr.oui, sizeof(e->hdr.oui)) == 0 &&
 	    ntohs(e->hdr.usr_subtype) == BWFM_BRCM_SUBTYPE_EVENT) {
@@ -2377,6 +2379,17 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 			return;
 		}
 		bwfm_rx_event(sc, m);
+		return;
+	}
+
+	/*
+	 * If possible, drop forged firmware event messages which
+	 * did in fact arrive on data frame Rx rings. PCI and SDIO
+	 * devices provide this information, but USB devices do not.
+	 */
+	if (rx_type != BWFM_RX_ANY && rx_type != BWFM_RX_FRAME) {
+		m_freem(m);
+		ifp->if_ierrors++;
 		return;
 	}
 

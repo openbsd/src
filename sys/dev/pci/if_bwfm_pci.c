@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.78 2025/08/21 17:03:58 mbuhl Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.79 2026/10/20 11:59:15 stsp Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1754,7 +1754,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 			break;
 		m_adj(m, sc->sc_rx_dataoffset);
 		m->m_len = m->m_pkthdr.len = letoh16(event->event_data_len);
-		bwfm_rx(&sc->sc_sc, m, ml);
+		bwfm_rx(&sc->sc_sc, m, ml, BWFM_RX_FW_EVENT);
 		if_rxr_put(&sc->sc_event_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
 		break;
@@ -1781,7 +1781,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 		else if (sc->sc_rx_dataoffset)
 			m_adj(m, sc->sc_rx_dataoffset);
 		m->m_len = m->m_pkthdr.len = letoh16(rx->data_len);
-		bwfm_rx(&sc->sc_sc, m, ml);
+		bwfm_rx(&sc->sc_sc, m, ml, BWFM_RX_FRAME);
 		if_rxr_put(&sc->sc_rxbuf_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
 		break;

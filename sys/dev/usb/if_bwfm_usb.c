@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.21 2024/05/23 03:21:08 jsg Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.22 2026/10/20 11:59:15 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -446,6 +446,12 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbd_status error;
 	struct mbuf *m;
 	uint32_t len;
+	/*
+	 * XXX USB devices don't provide out-of-band information to tell
+	 * us whether a packet contains a firmware event or a data frame.
+	 * Firmware events might be forged, but we cannot detect this.
+	 */
+	enum bwfm_rx_type rx_type = BWFM_RX_ANY;
 
 	DPRINTFN(2, ("%s: %s status %s\n", DEVNAME(sc), __func__,
 	    usbd_errstr(status)));
@@ -467,7 +473,8 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	memcpy(mtod(m, char *), data->buf, len);
 	m->m_len = m->m_pkthdr.len = len;
-	sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, &ml);
+
+	sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, &ml, rx_type);
 	if_input(ifp, &ml);
 
 resubmit:

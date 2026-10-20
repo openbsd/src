@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.44 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.45 2026/10/20 11:59:15 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1207,6 +1207,7 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 	char *data;
 	off_t off;
 	int nsub;
+	uint8_t chanflag;
 
 	hwhdr = (struct bwfm_sdio_hwhdr *)sc->sc_bounce_buf;
 	swhdr = (struct bwfm_sdio_swhdr *)&hwhdr[1];
@@ -1269,7 +1270,8 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 		if (off > flen)
 			break;
 
-		switch (swhdr->chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK) {
+		chanflag = (swhdr->chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK);
+		switch (chanflag) {
 		case BWFM_SDIO_SWHDR_CHANNEL_CONTROL:
 			sc->sc_sc.sc_proto_ops->proto_rxctl(&sc->sc_sc,
 			    data + off, flen - off);
@@ -1288,7 +1290,9 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			}
 			m->m_len = m->m_pkthdr.len = flen - off;
 			memcpy(mtod(m, char *), data + off, flen - off);
-			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, &ml);
+			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, &ml,
+			    chanflag == BWFM_SDIO_SWHDR_CHANNEL_DATA ?
+			    BWFM_RX_FRAME : BWFM_RX_FW_EVENT);
 			nextlen = swhdr->nextlen << 4;
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
@@ -1321,6 +1325,7 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 	size_t flen;
 	off_t off;
 	int i;
+	uint8_t chanflag;
 
 	ml_init(&glom);
 	ml_init(&drop);
@@ -1393,7 +1398,8 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 		if (off > flen)
 			goto drop;
 
-		switch (swhdr.chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK) {
+		chanflag =(swhdr.chanflag & BWFM_SDIO_SWHDR_CHANNEL_MASK);
+		switch (chanflag) {
 		case BWFM_SDIO_SWHDR_CHANNEL_CONTROL:
 			printf("%s: control channel not allowed in glom\n",
 			    DEVNAME(sc));
@@ -1401,7 +1407,9 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 		case BWFM_SDIO_SWHDR_CHANNEL_EVENT:
 		case BWFM_SDIO_SWHDR_CHANNEL_DATA:
 			m_adj(m, swhdr.dataoff);
-			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, ml);
+			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, ml,
+			    chanflag == BWFM_SDIO_SWHDR_CHANNEL_DATA ?
+			    BWFM_RX_FRAME : BWFM_RX_FW_EVENT);
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
 			printf("%s: glom not allowed in glom\n",
