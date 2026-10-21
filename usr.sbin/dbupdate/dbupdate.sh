@@ -60,7 +60,7 @@ if [ $FORCE = true -o X"$o" != X"$n" ]; then
 	if [ $DRY = true ]; then
 		echo dbupdate: would have installed new zoneinfo
 	else
-		tar xpf zoneinfo.tar
+		tar xpf zoneinfo.tar -C /
 		echo dbupdate: installed new zoneinfo
 	fi
 fi
