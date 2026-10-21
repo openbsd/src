@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.89 2026/06/24 19:57:11 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.90 2026/10/21 18:04:21 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -130,8 +130,6 @@ void	sys_tick_start(void);
 void	stick_start(void);
 
 int	tickintr(void *);
-int	sys_tickintr(void *);
-int	stickintr(void *);
 
 /* %TICK is at most a 63-bit counter. */
 #define TICK_COUNT_MASK 0x7fffffffffffffff
@@ -532,17 +530,14 @@ cpu_initclocks(void)
 		    sys_tick_rate * (1ULL << 32) / 1000000000;
 		sys_tick_nsec_max = UINT64_MAX / sys_tick_nsec_cycle_ratio;
 		if (impl == IMPL_HUMMINGBIRD) {
-			level10.ih_fun = stickintr;
 			cpu_start_clock = stick_start;
 		} else {
-			level10.ih_fun = sys_tickintr;
 			cpu_start_clock = sys_tick_start;
 		}
 	} else {
 		tick_nsec_cycle_ratio =
 		    cpu_clockrate * (1ULL << 32) / 1000000000;
 		tick_nsec_max = UINT64_MAX / tick_nsec_cycle_ratio;
-		level10.ih_fun = tickintr;
 		cpu_start_clock = tick_start;
 	}
 
@@ -571,22 +566,6 @@ setstatclockrate(int newhz)
  */
 int
 tickintr(void *cap)
-{
-	clockintr_dispatch(cap);
-	evcount_inc(&level10.ih_count);
-	return (1);
-}
-
-int
-sys_tickintr(void *cap)
-{
-	clockintr_dispatch(cap);
-	evcount_inc(&level10.ih_count);
-	return (1);
-}
-
-int
-stickintr(void *cap)
 {
 	clockintr_dispatch(cap);
 	evcount_inc(&level10.ih_count);
