@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.89 2026/10/15 10:59:00 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.90 2026/10/21 19:13:27 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -298,7 +298,8 @@ parent_configure(struct httpd *env)
 			continue;
 		/* start the rekey of the tls ticket keys */
 		if (srv->srv_conf.flags & SRVFLAG_TLS &&
-		    srv->srv_conf.tls_ticket_lifetime)
+		    srv->srv_conf.tls_ticket_lifetime &&
+		    server_match(srv, 0) == srv)
 			parent_tls_ticket_rekey_start(srv);
 		if (config_setserver(env, srv) == -1)
 			fatal("send server");
