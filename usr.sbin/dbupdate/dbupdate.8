@@ -1,0 +1,66 @@
+.\" $OpenBSD: dbupdate.8,v 1.1 2026/10/21 01:08:58 deraadt Exp $
+.\"
+.\" Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 21 2026 $
+.Dt DBUPDATE 8
+.Os
+.Sh NAME
+.Nm dbupdate
+.Nd updates system databases
+.Sh SYNOPSIS
+.Nm
+.Op Fl fn
+.Sh DESCRIPTION
+The
+.Nm
+utility updates various system databases which are changed by
+entities on the internet, validated through our source processes,
+but unsuitable for distribution via the
+.Xr syspatch 8 ,
+.Xr fw_update 8 ,
+or
+.Xr sysmerge 8
+mechanisms.
+.Pp
+This is a different distribution and polling mechanism which is
+kept simple as possible so that it can be run regularily as root
+in 
+.Xr cron 8 .
+.Pp
+The two databases currently updated are
+.Pa /etc/ssl/cert.pem
+and
+.Pa /usr/share/zoneinfo .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f
+.Nm
+normally only updates new files.
+This option forces download and installation.
+.It Fl n
+Dry run (prints out what it would have done).
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /var/run/dbupdate
+A cache of hashes and signs to optimize download.
+.El
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was designed by
+.An Theo de Raadt .
