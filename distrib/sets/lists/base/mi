@@ -480,6 +480,7 @@
 ./usr/bin/cut
 ./usr/bin/cvs
 ./usr/bin/cvsbug
+./usr/bin/dbupdate
 ./usr/bin/dc
 ./usr/bin/deroff
 ./usr/bin/diff
