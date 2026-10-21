@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.74 2026/10/21 18:06:40 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.75 2026/10/21 18:07:52 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -169,7 +169,7 @@ intr_establish(struct intrhand *ih)
 	/*
 	 * Store in fast lookup table
 	 */
-	if (ih->ih_number <= 0 || ih->ih_number >= MAXINTNUM)
+	if (ih->ih_number < 0 || ih->ih_number >= MAXINTNUM)
 		panic("intr_establish: bad intr number %x", ih->ih_number);
 
 	q = intrlev[ih->ih_number];

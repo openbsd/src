@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.94 2026/10/21 18:06:40 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.95 2026/10/21 18:07:52 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -168,7 +168,7 @@ const struct intrclock stick_intrclock = {
 
 static struct intrhand level10 = {
 	.ih_fun = tickintr,
-	.ih_number = 1,
+	.ih_number = 0,
 	.ih_pil = PIL_CLOCK,
 	.ih_name = "clock"
 };
@@ -515,9 +515,6 @@ cpu_initclocks(void)
 
 	/* 
 	 * Establish a level 10 interrupt handler 
-	 *
-	 * We will have a conflict with the softint handler,
-	 * so we set the ih_number to 1.
 	 */
 	intr_establish(&level10);
 	evcount_percpu(&level10.ih_count);
