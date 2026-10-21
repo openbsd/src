@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/ksh
 
 set -o errexit
 
@@ -7,7 +7,7 @@ usage() {
         exit 1
 }
 
-D=`mktemp -d /tmp/_updXXXXXXXXXX` || exit 1
+D=$(mktemp -d /tmp/_updXXXXXXXXXX) || exit 1
 trap "rm -rf $D" 0 1 2 3 13 15
 
 FORCE=false
@@ -74,7 +74,7 @@ if [ $FORCE = true -o X"$o" != X"$n" ]; then
 		echo dbupdate: would have installed new cert.pem
 	else
 		# prepend cert.local.pem
-		t=`mktemp /etc/ssl/cert.XXXXXXXX`
+		t=$(mktemp /etc/ssl/cert.XXXXXXXX)
 		[ -f /etc/ssl/cert.local.pem ] &&
 		    cat /etc/ssl/cert.local.pem > $t
 		cat ./etc/ssl/cert.pem >> $t
