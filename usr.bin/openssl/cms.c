@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.40 2025/12/20 07:02:37 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.41 2026/10/21 01:25:44 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1159,7 +1159,7 @@ cms_usage(void)
 int
 cms_main(int argc, char **argv)
 {
-	int ret = 0;
+	int ret = 1;
 	char **args;
 	int argsused = 0;
 	const char *inmode = "r", *outmode = "w";
@@ -1191,7 +1191,6 @@ cms_main(int argc, char **argv)
 		goto argerr;
 	}
 	args = argv + argsused;
-	ret = 1;
 
 	if (((cfg.rr_allorfirst != -1) || cfg.rr_from != NULL) &&
 	    cfg.rr_to == NULL) {

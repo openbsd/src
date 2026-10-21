@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.21 2025/06/07 08:28:49 tb Exp $ */
+/* $OpenBSD: smime.c,v 1.22 2026/10/21 01:25:44 kenjiro Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -708,7 +708,7 @@ smime_usage(void)
 int
 smime_main(int argc, char **argv)
 {
-	int ret = 0;
+	int ret = 1;
 	char **args;
 	int argsused = 0;
 	const char *inmode = "r", *outmode = "w";
@@ -735,7 +735,6 @@ smime_main(int argc, char **argv)
 		goto argerr;
 	}
 	args = argv + argsused;
-	ret = 1;
 
 	if (!(cfg.operation & SMIME_SIGNERS) &&
 	    (cfg.skkeys != NULL || cfg.sksigners != NULL)) {
