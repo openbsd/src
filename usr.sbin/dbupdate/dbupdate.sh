@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: dbupdate.sh,v 1.8 2026/10/21 18:23:34 deraadt Exp $
+# $OpenBSD: dbupdate.sh,v 1.9 2026/10/21 18:30:14 deraadt Exp $
 #
 # Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 #
@@ -43,7 +43,7 @@ CACHE=/var/dbupdate
 R=$(sysctl -n kern.osrelease | sed -e 's/\.//')
 PUBKEY=/etc/signify/openbsd-${R}-base.pub
 
-mkdir -p ${CACHE}	# XXX create this in mtree
+mkdir -p ${CACHE}	# XXX created by mtree, but help systems without..
 cd $D
 
 if ! ftp -o out-SHA256.sig \
