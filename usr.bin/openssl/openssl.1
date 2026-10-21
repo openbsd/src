@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.171 2026/08/25 00:08:28 jsg Exp $
+.\" $OpenBSD: openssl.1,v 1.172 2026/10/21 02:42:50 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: August 25 2026 $
+.Dd $Mdocdate: October 21 2026 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -146,6 +146,12 @@ program is a command line tool for using the various
 cryptography functions of
 .Nm openssl Ns 's
 crypto library from the shell.
+This is intended for debugging purposes.
+When run on untrusted data,
+output and return value are unreliable and can be misleading.
+.Pp
+Do not base security or trust decisions solely on running
+.Nm .
 .Pp
 The pseudo-commands
 .Cm list-standard-commands , list-message-digest-commands ,
