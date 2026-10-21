@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.198 2026/10/15 09:12:03 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.199 2026/10/21 09:36:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1031,7 +1031,7 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 				if (spl != NULL)
 					mtime = spl->signtime;
 			} else {
-				if (verbose > 0)
+				if (verbose)
 					warnx("%s: skipped", file);
 				spl = NULL;
 			}
