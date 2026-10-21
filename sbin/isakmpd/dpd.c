@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.20 2017/12/05 20:31:45 jca Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.21 2026/10/21 06:03:35 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -139,7 +139,9 @@ dpd_start(struct sa *isakmp_sa)
 }
 
 /*
- * All incoming DPD Notify messages enter here. Message has been validated.
+ * All incoming DPD Notify messages enter here.  The generic Notify
+ * payload has been validated; authentication and the DPD payload
+ * format are checked here.
  */
 void
 dpd_handle_notify(struct message *msg, struct payload *p)
@@ -147,6 +149,23 @@ dpd_handle_notify(struct message *msg, struct payload *p)
 	struct sa	*isakmp_sa = msg->isakmp_sa;
 	u_int16_t	 notify = GET_ISAKMP_NOTIFY_MSG_TYPE(p->p);
 	u_int32_t	 p_seq;
+
+	if (!isakmp_sa || (msg->flags & MSG_AUTHENTICATED) == 0) {
+		LOG_DBG((LOG_MESSAGE, 10,
+		    "dpd_handle_notify: got unauthenticated %s",
+		    constant_name(isakmp_notify_cst, notify)));
+		return;
+	}
+
+	if (GET_ISAKMP_NOTIFY_PROTO(p->p) != ISAKMP_PROTO_ISAKMP ||
+	    GET_ISAKMP_NOTIFY_SPI_SZ(p->p) != ISAKMP_HDR_COOKIES_LEN ||
+	    GET_ISAKMP_GEN_LENGTH(p->p) < ISAKMP_NOTIFY_SPI_OFF +
+	    ISAKMP_HDR_COOKIES_LEN + sizeof p_seq) {
+		LOG_DBG((LOG_MESSAGE, 10,
+		    "dpd_handle_notify: malformed %s payload",
+		    constant_name(isakmp_notify_cst, notify)));
+		return;
+	}
 
 	/* Extract the sequence number.  */
 	memcpy(&p_seq, p->p + ISAKMP_NOTIFY_SPI_OFF + ISAKMP_HDR_COOKIES_LEN,

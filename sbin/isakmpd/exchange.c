@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.146 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.147 2026/10/21 06:03:35 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1430,6 +1430,8 @@ exchange_finalize(struct message *msg)
 	/* If we have nothing to retransmit we can safely remove ourselves.  */
 	if (!exchange->last_sent)
 		exchange_free(exchange);
+	else
+		exchange->flags |= EXCHANGE_FLAG_FINALIZED;
 }
 
 /* Stash a nonce into the exchange data.  */

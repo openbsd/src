@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.137 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.138 2026/10/21 06:03:35 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -905,6 +905,15 @@ message_validate_notify(struct message *msg, struct payload *p)
 		return -1;
 	}
 
+	if (GET_ISAKMP_GEN_LENGTH(p->p) <
+	    ISAKMP_NOTIFY_SPI_OFF + GET_ISAKMP_NOTIFY_SPI_SZ(p->p)) {
+		LOG_DBG((LOG_MESSAGE, 50, "message_validate_notify: "
+		    "payload too short for SPI size %u",
+		    GET_ISAKMP_NOTIFY_SPI_SZ(p->p)));
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
+
 	/* Validate the SPI. XXX Just ISAKMP for now.  */
 	if (proto == ISAKMP_PROTO_ISAKMP &&
 	    GET_ISAKMP_NOTIFY_SPI_SZ(p->p) == ISAKMP_HDR_COOKIES_LEN &&
@@ -1409,6 +1418,17 @@ message_recv(struct message *msg)
 		ks = msg->isakmp_sa->doi->get_keystate(msg);
 		if (!ks) {
 			message_free(msg);
+			return -1;
+		}
+		/*
+		 * Encrypted data must be a non-zero multiple of the
+		 * block size.
+		 */
+		if (sz - ISAKMP_HDR_SZ == 0 ||
+		    (sz - ISAKMP_HDR_SZ) % ks->xf->blocksize != 0) {
+			log_print("message_recv: bad encrypted message length");
+			message_free(msg);
+			freezero(ks, sizeof(*ks));
 			return -1;
 		}
 		msg->orig = malloc(sz);
@@ -1993,6 +2013,17 @@ message_check_duplicate(struct message *msg)
 			message_free(msg);
 			return -1;
 		}
+	}
+	/*
+	 * A finalized exchange only answers retransmits of the peer's
+	 * last message.  Anything else is not ours.
+	 */
+	if (exchange->flags & EXCHANGE_FLAG_FINALIZED) {
+		LOG_DBG((LOG_MESSAGE, 80,
+		    "message_check_duplicate: ignoring message for finalized "
+		    "exchange %p", exchange));
+		message_free(msg);
+		return -1;
 	}
 	/*
 	 * As this new message is an indication that state is moving forward
