@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.290 2026/08/30 15:53:56 stu Exp $
+.\"	$OpenBSD: port-modules.5,v 1.291 2026/10/21 09:09:47 kirill Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 30 2026 $
+.Dd $Mdocdate: October 21 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -877,22 +877,22 @@ If
 is not gcc4 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
 and architecture is in
-.Ev MODGCC4_ARCHS ,
+.Ev MODGCC_ARCHS ,
 then the gcc4 compilers will be put at the front of the path.
 By default, only C language support is included by this module.
 If other languages are needed, they must be listed in
-.Ev MODGCC4_LANGS
+.Ev MODGCC_LANGS
 (e.g. c++, fortran).
 The
-.Ev MODGCC4_VERSION
+.Ev MODGCC_VERSION
 variable can be used to change the version of gcc.
 By default gcc 4.9 is used.
 If
-.Ev MODGCC4_LANGS
+.Ev MODGCC_LANGS
 contains c++, this module provides
-.Ev MODGCC4_CPPLIBDEP
+.Ev MODGCC_CPPLIBDEP
 and
-.Ev MODGCC4_CPPWANTLIB .
+.Ev MODGCC_CPPWANTLIB .
 .It Cm gnu
 This module is documented in the main
 .Xr bsd.port.mk 5
