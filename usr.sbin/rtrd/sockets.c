@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockets.c,v 1.8 2026/10/14 00:54:42 rcovelli Exp $ */
+/*	$OpenBSD: sockets.c,v 1.9 2026/10/21 02:11:43 rcovelli Exp $ */
 /*
  * Copyright (c) 2025-2026 Ralph Covelli <rcovelli@he.net>
  *
@@ -428,9 +428,9 @@ rtr_flush_write(struct rtr_socket *s)
 			SetSocketFlag(s, RTR_SOCKET_FLAG_CLOSED);
 			return -1;
 		}
-		ret = 0;
+		return 0;
 	}
-	if (!ret)
+	if (ret == 0)
 		return 0;
 
 	if (ret < s->write_length) {
@@ -502,7 +502,7 @@ rtr_sendq_add(struct rtr_socket *s, void *data, int length)
 		new_sendq_link = malloc(SENDQ_BLOCK);
 		if (new_sendq_link == NULL)
 			err(1, NULL);
-;
+
 		new_sendq_link->length = 0;
 		new_sendq_link->offset = 0;
 		new_sendq_link->next = NULL;
