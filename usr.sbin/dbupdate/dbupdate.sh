@@ -85,5 +85,7 @@ if [ $FORCE = true -o X"$o" != X"$n" ]; then
 fi
 
 # finish up
-cp SHA256 ${CACHE}/in-SHA256
-cp out-SHA256.sig ${CACHE}/out-SHA256.sig
+if [ $DRY = false ]; then
+	cp SHA256 ${CACHE}/in-SHA256
+	cp out-SHA256.sig ${CACHE}/out-SHA256.sig
+fi
