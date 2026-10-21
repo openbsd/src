@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.234 2026/10/21 18:06:08 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.235 2026/10/21 18:06:40 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6157,12 +6157,12 @@ ENTRY(cecc_catch)
 END(cecc_catch)
 
 /*
- * send_softint(intrhand)
+ * softintr_schedule(intrhand)
  *
  * Send a softint with an intrhand pointer so we can cause a vectored
  * interrupt.  This does pretty much the same as interrupt_vector.
  */
-ENTRY(send_softint)
+ENTRY(softintr_schedule)
 	rdpr	%pstate, %g1
 	andn	%g1, PSTATE_IE, %o3
 	wrpr	%o3, 0, %pstate
@@ -6188,7 +6188,7 @@ ENTRY(send_softint)
 1:
 	retl
 	 wrpr	%g1, 0, %pstate		! restore interrupts
-END(send_softint)
+END(softintr_schedule)
 
 /*
  * Flush user windows to memory.

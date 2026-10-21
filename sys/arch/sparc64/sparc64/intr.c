@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.73 2026/10/21 18:06:08 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.74 2026/10/21 18:06:40 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -309,14 +309,6 @@ softintr_disestablish(void *cookie)
 	struct intrhand *ih = cookie;
 
 	free(ih, M_DEVBUF, sizeof(*ih));
-}
-
-void
-softintr_schedule(void *cookie)
-{
-	struct intrhand *ih = cookie;
-
-	send_softint(ih);
 }
 
 #ifdef DIAGNOSTIC

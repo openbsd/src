@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.37 2026/10/21 18:06:08 miod Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.38 2026/10/21 18:06:40 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -760,7 +760,7 @@ vpci_msi_eq_intr(void *arg)
 		if (err != H_EOK)
 			printf("%s: pci_msi_setstate: %d\n", __func__, err);
 
-		send_softint(ih);
+		softintr_schedule(ih);
 
 		head += sizeof(struct vpci_msi_msg);
 		head &= eq->eq_mask;

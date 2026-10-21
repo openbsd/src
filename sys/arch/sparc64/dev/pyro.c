@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.40 2026/10/21 18:06:08 miod Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.41 2026/10/21 18:06:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -848,7 +848,7 @@ pyro_msi_eq_intr(void *arg)
 		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
 		    FIRE_MSI_CLEAR(msinum), FIRE_MSI_CLEAR_EQWR_N);
 
-		send_softint(ih);
+		softintr_schedule(ih);
 
 		head += 1;
 		head &= eq->eq_mask;
