@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.91 2026/10/21 18:04:50 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.92 2026/10/21 18:05:15 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -169,7 +169,7 @@ const struct intrclock stick_intrclock = {
 static struct intrhand level10 = {
 	.ih_fun = tickintr,
 	.ih_number = 1,
-	.ih_pil = 10,
+	.ih_pil = PIL_CLOCK,
 	.ih_name = "clock"
 };
 
@@ -554,9 +554,7 @@ setstatclockrate(int newhz)
 }
 
 /*
- * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
- * console input, we need to check for that here as well, and generate
- * a software interrupt to read it.
+ * Level 10 (clock) interrupts.
  *
  * %tick is really a level-14 interrupt.  We need to remap this in 
  * locore.s to a level 10.
