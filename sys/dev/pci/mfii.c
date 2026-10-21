@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.95 2026/09/18 22:01:01 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.96 2026/10/21 05:53:07 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -156,7 +156,7 @@ struct mfii_ld_map {
 	uint32_t		mlm_reserved1[5];
 	uint32_t		mlm_num_lds;
 	uint32_t		mlm_reserved2;
-	uint8_t			mlm_tgtid_to_ld[2 * MFII_MAX_LD];
+	uint8_t			mlm_tgtid_to_ld[2 * MFI_MAX_LD];
 	uint8_t			mlm_pd_timeout;
 	uint8_t			mlm_reserved3[7];
 	struct mfii_array_map	mlm_am[MFII_MAX_ARRAY];
