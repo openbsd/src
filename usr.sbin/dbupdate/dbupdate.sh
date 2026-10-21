@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: dbupdate.sh,v 1.9 2026/10/21 18:30:14 deraadt Exp $
+# $OpenBSD: dbupdate.sh,v 1.10 2026/10/21 18:30:33 deraadt Exp $
 #
 # Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 #
@@ -17,6 +17,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 set -o errexit
+umask 0022
 
 usage() {
         echo "usage: ${0##*/} [-fn]"
