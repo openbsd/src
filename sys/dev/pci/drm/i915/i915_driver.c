@@ -2582,8 +2582,13 @@ void
 inteldrm_native_backlight(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = &dev_priv->drm;
+	struct intel_display *display = dev_priv->display;
 	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *connector;
+
+	/* connector state not initialised with no crtc */
+	if (!intel_display_device_present(display))
+		return;
 
 	drm_connector_list_iter_begin(dev, &conn_iter);
 	drm_for_each_connector_iter(connector, &conn_iter) {
@@ -2628,10 +2633,15 @@ inteldrm_firmware_backlight(struct drm_i915_private *dev_priv,
     struct wsdisplay_param *dp)
 {
 	struct drm_device *dev = &dev_priv->drm;
+	struct intel_display *display = dev_priv->display;
 	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *connector;
 	struct backlight_properties props;
 	struct backlight_device *bd;
+
+	/* connector state not initialised with no crtc */
+	if (!intel_display_device_present(display))
+		return;
 
 	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_FIRMWARE;
