@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.90 2026/10/21 18:04:21 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.91 2026/10/21 18:04:50 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -130,6 +130,8 @@ void	sys_tick_start(void);
 void	stick_start(void);
 
 int	tickintr(void *);
+void	sparc64_raise_clockintr(void *);
+
 
 /* %TICK is at most a 63-bit counter. */
 #define TICK_COUNT_MASK 0x7fffffffffffffff
@@ -138,11 +140,10 @@ uint64_t tick_nsec_cycle_ratio;
 uint64_t tick_nsec_max;
 
 void tick_rearm(void *, uint64_t);
-void tick_trigger(void *);
 
 const struct intrclock tick_intrclock = {
 	.ic_rearm = tick_rearm,
-	.ic_trigger = tick_trigger
+	.ic_trigger = sparc64_raise_clockintr
 };
 
 /* %STICK is at most a 63-bit counter. */
@@ -152,22 +153,18 @@ uint64_t sys_tick_nsec_cycle_ratio;
 uint64_t sys_tick_nsec_max;
 
 void sys_tick_rearm(void *, uint64_t);
-void sys_tick_trigger(void *);
 
 const struct intrclock sys_tick_intrclock = {
 	.ic_rearm = sys_tick_rearm,
-	.ic_trigger = sys_tick_trigger
+	.ic_trigger = sparc64_raise_clockintr
 };
 
 void stick_rearm(void *, uint64_t);
-void stick_trigger(void *);
 
 const struct intrclock stick_intrclock = {
 	.ic_rearm = stick_rearm,
-	.ic_trigger = stick_trigger
+	.ic_trigger = sparc64_raise_clockintr
 };
-
-void sparc64_raise_clockintr(void);
 
 static struct intrhand level10 = {
 	.ih_fun = tickintr,
@@ -595,14 +592,8 @@ tick_rearm(void *unused, uint64_t nsecs)
 	t0 = tick();
 	tickcmpr_set((t0 + cycles) & TICK_COUNT_MASK);
 	if (cycles <= ((tick() - t0) & TICK_COUNT_MASK))
-		sparc64_raise_clockintr();
+		sparc64_raise_clockintr(NULL);
 	intr_restore(s);
-}
-
-void
-tick_trigger(void *unused)
-{
-	sparc64_raise_clockintr();
 }
 
 void
@@ -631,14 +622,8 @@ sys_tick_rearm(void *unused, uint64_t nsecs)
 	t0 = sys_tick();
 	sys_tickcmpr_set((t0 + cycles) & STICK_COUNT_MASK);
 	if (cycles <= ((sys_tick() - t0) & STICK_COUNT_MASK))
-		sparc64_raise_clockintr();
+		sparc64_raise_clockintr(NULL);
 	intr_restore(s);
-}
-
-void
-sys_tick_trigger(void *unused)
-{
-	sparc64_raise_clockintr();
 }
 
 void
@@ -664,14 +649,8 @@ stick_rearm(void *unused, uint64_t nsecs)
 	t0 = stick();
 	stickcmpr_set((t0 + cycles) & STICK_COUNT_MASK);
 	if (cycles <= ((stick() - t0) & STICK_COUNT_MASK))
-		sparc64_raise_clockintr();
+		sparc64_raise_clockintr(NULL);
 	intr_restore(s);
-}
-
-void
-stick_trigger(void *unused)
-{
-	sparc64_raise_clockintr();
 }
 
 u_int
@@ -695,7 +674,7 @@ sys_tick_get_timecount(struct timecounter *tc)
 }
 
 void
-sparc64_raise_clockintr(void)
+sparc64_raise_clockintr(void *unused)
 {
 	send_softint(PIL_CLOCK, &curcpu()->ci_tickintr);
 }
