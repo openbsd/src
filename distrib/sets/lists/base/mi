@@ -480,7 +480,6 @@
 ./usr/bin/cut
 ./usr/bin/cvs
 ./usr/bin/cvsbug
-./usr/bin/dbupdate
 ./usr/bin/dc
 ./usr/bin/deroff
 ./usr/bin/diff
@@ -2908,6 +2907,7 @@
 ./usr/sbin/crunchgen
 ./usr/sbin/cryptoadm
 ./usr/sbin/cryptoinit
+./usr/sbin/dbupdate
 ./usr/sbin/dev_mkdb
 ./usr/sbin/dhcp6leasectl
 ./usr/sbin/dhcpd
