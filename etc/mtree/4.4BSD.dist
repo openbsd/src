@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.327 2026/10/21 01:46:06 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.328 2026/10/21 01:46:53 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -542,7 +542,7 @@ var
     ..
     run				mode=755
     ..
-    dbupdates			mode=755
+    dbupdate			mode=755
     ..
     yp				mode=755
     ..
