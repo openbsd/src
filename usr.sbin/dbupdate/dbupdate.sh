@@ -21,7 +21,7 @@ while getopts "fn" name; do
 	esac
 done
 
-CACHE=/var/run/dbupdates
+CACHE=/var/dbupdate
 R=$(sysctl -n kern.osrelease | sed -e 's/\.//')
 PUBKEY=/etc/signify/openbsd-${R}-base.pub
 
