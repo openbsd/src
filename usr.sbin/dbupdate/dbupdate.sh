@@ -21,6 +21,8 @@ while getopts "fn" name; do
 	esac
 done
 
+[[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && exit 1
+
 CACHE=/var/dbupdate
 R=$(sysctl -n kern.osrelease | sed -e 's/\.//')
 PUBKEY=/etc/signify/openbsd-${R}-base.pub
