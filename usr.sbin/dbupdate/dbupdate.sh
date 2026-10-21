@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: dbupdate.sh,v 1.7 2026/10/21 17:56:48 deraadt Exp $
+# $OpenBSD: dbupdate.sh,v 1.8 2026/10/21 18:23:34 deraadt Exp $
 #
 # Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 #
@@ -46,12 +46,16 @@ PUBKEY=/etc/signify/openbsd-${R}-base.pub
 mkdir -p ${CACHE}	# XXX create this in mtree
 cd $D
 
-ftp -o out-SHA256.sig \
-    https://ftp.openbsd.org/pub/OpenBSD/dbupdates/$R/SHA256.sig > /dev/null
+if ! ftp -o out-SHA256.sig \
+    https://ftp.openbsd.org/pub/OpenBSD/dbupdates/$R/SHA256.sig \
+    > /dev/null 2>&1 ; then
+	echo dbupdates: no databases available.
+	exit 0
+fi
 
 if cmp -s ${CACHE}/out-SHA256.sig out-SHA256.sig ; then
 	if [ $FORCE != true ]; then
-		echo dbupdates has not changed.
+		echo dbupdates: databases have not changed.
 		exit 0
 	fi
 fi
