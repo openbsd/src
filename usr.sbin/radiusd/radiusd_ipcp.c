@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.27 2025/06/25 11:38:21 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.28 2026/10/22 04:39:59 bket Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -349,8 +349,7 @@ ipcp_stop(void *ctx)
 		if (evtimer_pending(&dae->ev_reqs, NULL))
 			event_del(&dae->ev_reqs);
 	}
-	if (evtimer_pending(&self->ev_timer, NULL))
-		evtimer_del(&self->ev_timer);
+	evtimer_del(&self->ev_timer);
 }
 
 void
@@ -379,8 +378,7 @@ ipcp_fini(struct module_ipcp *self)
 	}
 	TAILQ_FOREACH_SAFE(addr, &self->addrs, next, addrt)
 		free(addr);
-	if (evtimer_pending(&self->ev_timer, NULL))
-		evtimer_del(&self->ev_timer);
+	evtimer_del(&self->ev_timer);
 	module_destroy(self->base);
 }
 
@@ -1640,8 +1638,7 @@ ipcp_schedule_timer(struct module_ipcp *self)
 		    timespeccmp(&min_assign->timeout, &assign->timeout, >))
 			min_assign = assign;
 	}
-	if (evtimer_pending(&self->ev_timer, NULL))
-		evtimer_del(&self->ev_timer);
+	evtimer_del(&self->ev_timer);
 
 	if (min_assign != NULL) {
 		timespecsub(&min_assign->timeout, &self->uptime, &tsd);
@@ -1846,8 +1843,7 @@ ipcp_dae_reset_request(struct assigned_ipv4 *assign)
 	if (assign->dae_reqpkt != NULL)
 		radius_delete_packet(assign->dae_reqpkt);
 	assign->dae_reqpkt = NULL;
-	if (evtimer_pending(&assign->dae_evtimer, NULL))
-		evtimer_del(&assign->dae_evtimer);
+	evtimer_del(&assign->dae_evtimer);
 	TAILQ_FOREACH_SAFE(client, &assign->dae_clients, entry, clientt) {
 		TAILQ_REMOVE(&assign->dae_clients, client, entry);
 		free(client);

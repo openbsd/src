@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.34 2026/09/19 17:21:52 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.35 2026/10/22 04:39:59 bket Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -214,8 +214,7 @@ rtc_reschedule_per(void)
 	uint64_t us;
 	uint8_t period;
 
-	if (evtimer_pending(&rtc.per, NULL))
-		evtimer_del(&rtc.per);
+	evtimer_del(&rtc.per);
 
 	if (rtc.regs[MC_REGB] & MC_REGB_PIE) {
 		period = rtc.regs[MC_REGA] & MC_RATE_MASK;

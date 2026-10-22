@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.64 2026/08/04 13:24:44 claudio Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.65 2026/10/22 04:39:59 bket Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -323,14 +323,10 @@ radiusd_stop(struct radiusd *radiusd)
 		radiusd_module_stop(module);
 		radiusd_module_close(module);
 	}
-	if (signal_pending(&radiusd->ev_sigterm, NULL))
-		signal_del(&radiusd->ev_sigterm);
-	if (signal_pending(&radiusd->ev_sigint, NULL))
-		signal_del(&radiusd->ev_sigint);
-	if (signal_pending(&radiusd->ev_sighup, NULL))
-		signal_del(&radiusd->ev_sighup);
-	if (signal_pending(&radiusd->ev_sigchld, NULL))
-		signal_del(&radiusd->ev_sigchld);
+	signal_del(&radiusd->ev_sigterm);
+	signal_del(&radiusd->ev_sigint);
+	signal_del(&radiusd->ev_sighup);
+	signal_del(&radiusd->ev_sigchld);
 }
 
 static void

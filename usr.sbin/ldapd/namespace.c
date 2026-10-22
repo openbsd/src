@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.20 2020/03/05 07:39:25 martijn Exp $ */
+/*	$OpenBSD: namespace.c,v 1.21 2026/10/22 04:39:59 bket Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -238,8 +238,7 @@ namespace_close(struct namespace *ns)
 	free(ns->suffix);
 	btree_close(ns->data_db);
 	btree_close(ns->indx_db);
-	if (evtimer_pending(&ns->ev_queue, NULL))
-		evtimer_del(&ns->ev_queue);
+	evtimer_del(&ns->ev_queue);
 	free(ns->data_path);
 	free(ns->indx_path);
 	free(ns);
