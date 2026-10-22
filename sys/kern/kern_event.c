@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.206 2026/06/01 18:24:58 mvs Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.207 2026/10/22 11:52:14 mvs Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -362,7 +362,7 @@ int
 filt_procattach(struct knote *kn)
 {
 	struct process *pr;
-	int nolock;
+	int error = 0, nolock;
 
 	if ((curproc->p_p->ps_flags & PS_PLEDGE) &&
 	    (curproc->p_pledge & PLEDGE_PROC) == 0)
@@ -371,14 +371,22 @@ filt_procattach(struct knote *kn)
 	if (kn->kn_id > PID_MAX)
 		return ESRCH;
 
+	/* serialize with filt_procdetach() */
+	nolock = (rw_status(&kqueue_ps_list_lock) == RW_WRITE);
+	if (!nolock)
+		rw_enter_write(&kqueue_ps_list_lock);
 	KERNEL_LOCK();
 	pr = prfind(kn->kn_id);
-	if (pr == NULL)
+	if (pr == NULL) {
+		error = ESRCH;
 		goto fail;
+	}
 
 	/* exiting processes can't be specified */
-	if (pr->ps_flags & PS_EXITING)
+	if (pr->ps_flags & PS_EXITING) {
+		error = ESRCH;
 		goto fail;
+	}
 
 	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
@@ -393,23 +401,15 @@ filt_procattach(struct knote *kn)
 		rw_assert_wrlock(&kqueue_ps_list_lock);
 	}
 
-	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
-	nolock = (rw_status(&kqueue_ps_list_lock) == RW_WRITE);
-	if (!nolock)
-		rw_enter_write(&kqueue_ps_list_lock);
 	mtx_enter(&pr->ps_mtx);
 	klist_insert_locked(&pr->ps_klist, kn);
 	mtx_leave(&pr->ps_mtx);
+fail:
+	KERNEL_UNLOCK();
 	if (!nolock)
 		rw_exit_write(&kqueue_ps_list_lock);
 
-	KERNEL_UNLOCK();
-
-	return (0);
-
-fail:
-	KERNEL_UNLOCK();
-	return (ESRCH);
+	return (error);
 }
 
 /*
