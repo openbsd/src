@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.96 2026/10/15 09:09:22 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.97 2026/10/22 20:29:26 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1442,11 +1442,12 @@ repo_queued(struct repo *rp, struct entity *ent)
 }
 
 void
-repo_printinfo(size_t qlen)
+repo_printinfo(size_t qlen, size_t lpqlen)
 {
 	struct repo	*rp;
 
-	warnx("%zu outstanding entities", qlen);
+	warnx("Outstanding entities: %zu regular, %zu lower priority", qlen,
+	    lpqlen);
 
 	SLIST_FOREACH(rp, &repos, entry) {
 		if (TAILQ_EMPTY(&rp->queue))
@@ -1551,15 +1552,19 @@ repo_stat_count_ca(struct ca *ca)
 {
 	struct repo *rp;
 
-	if (!ca->nonfunc)
+	if (!ca->nonfunc && ca->confirmed)
 		return;
 
 	SLIST_FOREACH(rp, &repos, entry) {
 		if (rp->id == ca->repoid) {
-			rp->stats[ca->talid].certs_nonfunc++;
+			if (ca->nonfunc)
+				rp->stats[ca->talid].certs_nonfunc++;
 
-			if (ca->defer)
+			if (ca->nonfunc && ca->defer)
 				rp->stats[ca->talid].certs_nonfunc_deferred++;
+
+			if (!ca->confirmed)
+				rp->stats[ca->talid].certs_unconfirmed++;
 
 			break;
 		}
@@ -1883,9 +1888,12 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 	path = skip_dotslash(e->fts_path);
 	switch (e->fts_info) {
 	case FTS_NSOK:
-		if (e->fts_level == 1 && fts_state.type == BASE_DIR &&
-		    strcmp(e->fts_name, NCA_HISTORY) == 0)
-			break;
+		if (e->fts_level == 1 && fts_state.type == BASE_DIR) {
+			if (strcmp(e->fts_name, CA_STATE) == 0)
+				break;
+			if (strcmp(e->fts_name, NCA_HISTORY) == 0)
+				break;
+		}
 		if (filepath_exists(tree, path)) {
 			e->fts_parent->fts_number++;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.315 2026/10/22 13:37:53 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.316 2026/10/22 20:29:26 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -163,6 +163,7 @@ struct cert {
  */
 struct ca {
 	RB_ENTRY(ca)		 entry;
+	struct ca		*issuer;
 	char			*aki;
 	char			*ski;
 	char			*location;
@@ -181,10 +182,14 @@ struct ca {
 	time_t			 last_attempt;
 	unsigned int		 attempts;
 	int			 defer;
+
+	/* CA confirmation */
+	int			 confirmed;
+	time_t			 first_confirmed;
 };
 
 /*
- * Tree of nonfunc CAs, sorted by certid.
+ * Tree of CAs, sorted by certid.
  */
 RB_HEAD(ca_tree, ca);
 RB_PROTOTYPE(ca_tree, ca, entry, certidcmp);
@@ -660,6 +665,7 @@ struct repotalstats {
 	uint32_t	 certs_fail; /* invalid certificate */
 	uint32_t	 certs_nonfunc; /* non-functional CA certificates */
 	uint32_t	 certs_nonfunc_deferred;
+	uint32_t	 certs_unconfirmed;
 	uint32_t	 mfts; /* total number of manifests */
 	uint32_t	 mfts_gap; /* manifests with sequence gaps */
 	uint32_t	 mfts_fail; /* failing syntactic parse */
@@ -775,7 +781,12 @@ void		 nca_history_load(void);
 void		 nca_history_save(struct ca_tree *, time_t);
 int		 nca_skip_sync(struct ca *);
 void		 ca_clear_nonfunc(struct ca_tree *, int);
+
+void		 ca_state_load(void);
+void		 ca_state_save(struct ca_tree *, time_t);
 struct ca	*ca_tree_insert_cert(struct ca_tree *, const struct cert *);
+int		 ca_check_confirmed(struct ca_tree *, int);
+void		 ca_set_confirmed(struct ca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
@@ -932,7 +943,7 @@ struct repo	*ta_lookup(int, struct tal *);
 struct repo	*repo_lookup(int, const char *, const char *);
 struct repo	*repo_byid(unsigned int);
 int		 repo_queued(struct repo *, struct entity *);
-void		 repo_printinfo(size_t);
+void		 repo_printinfo(size_t, size_t);
 void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
 void		 repostats_new_files_inc(struct repo *, const char *);
@@ -1137,6 +1148,7 @@ int	mkpathat(int, const char *);
 #define RSYNC_PROTO		"rsync://"
 #define RSYNC_PROTO_LEN		(sizeof(RSYNC_PROTO) - 1)
 
+#define CA_STATE		".ca_state"
 #define NCA_HISTORY		".nca_history"
 
 /* Compat helpers for OpenSSL < 4 and LibreSSL. */

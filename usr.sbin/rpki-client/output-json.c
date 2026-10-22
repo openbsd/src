@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.65 2026/10/15 09:29:55 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.66 2026/10/22 20:29:26 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -65,6 +65,7 @@ outputheader_json(struct validation_data *vd, struct stats *st)
 	json_do_int("invalidcertificates", st->repo_tal_stats.certs_fail);
 	json_do_int("nonfunctionalcas", st->repo_tal_stats.certs_nonfunc);
 	json_do_int("deferredcas", st->repo_tal_stats.certs_nonfunc_deferred);
+	json_do_int("unconfirmedcas", st->repo_tal_stats.certs_unconfirmed);
 	json_do_int("taks", st->repo_tal_stats.taks);
 	json_do_int("tals", st->tals);
 	json_do_int("invalidtals", talsz - st->tals);
@@ -105,6 +106,7 @@ print_vap(struct vap *v)
 	json_do_object("aspa", 1);
 	json_do_uint("customer_asid", v->custasid);
 	json_do_int("expires", v->expires);
+	json_do_string("ta", taldescs[v->talid]);
 
 	json_do_array("providers");
 	for (i = 0; i < v->num_providers; i++)

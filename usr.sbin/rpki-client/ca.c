@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.6 2026/10/22 15:01:10 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.7 2026/10/22 20:29:26 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -35,6 +35,7 @@
 extern int rrdpon;
 
 static void ca_free(struct ca *);
+static time_t ca_state_get_first_confirmed(const struct cert *);
 
 static inline int
 certidcmp(const struct ca *a, const struct ca *b)
@@ -97,6 +98,18 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 	if (cert->purpose != CERT_PURPOSE_TA)
 		ca->nonfunc = 1;
 
+	if (cert->purpose == CERT_PURPOSE_TA) {
+		ca->confirmed = 1;
+		ca->first_confirmed = now;
+		ca->issuer = NULL;
+	} else {
+		ca->confirmed = 0;
+		ca->first_confirmed = ca_state_get_first_confirmed(cert);
+		ca->issuer = ca_lookup_by_certid(ca_tree, cert->issuerid);
+		if (ca->issuer == NULL)
+			errx(1, "ca tree corrupted");
+	}
+
 	if ((old_ca = RB_INSERT(ca_tree, ca_tree, ca)) != NULL) {
 		warnx("duplicate CA at %s", ca->location);
 		ca_free(ca);
@@ -120,6 +133,37 @@ ca_free(struct ca *ca)
 	free(ca->baseuri);
 	free(ca->notify);
 	free(ca);
+}
+
+void
+ca_set_confirmed(struct ca_tree *ca_tree, int certid)
+{
+	struct ca *ca;
+
+	if ((ca = ca_lookup_by_certid(ca_tree, certid)) == NULL)
+		errx(1, "ca_tree corrupted");
+
+	do {
+		if (ca->confirmed)
+			return;
+
+		ca->confirmed = 1;
+
+		if (ca->first_confirmed == 0)
+			ca->first_confirmed = get_current_time();
+
+	} while ((ca = ca->issuer) != NULL);
+}
+
+int
+ca_check_confirmed(struct ca_tree *ca_tree, int certid)
+{
+	struct ca *ca;
+
+	if ((ca = ca_lookup_by_certid(ca_tree, certid)) != NULL)
+		return ca->confirmed;
+
+	return 0;
 }
 
 void
@@ -161,6 +205,38 @@ ca_cmp(const struct ca *a, const struct ca *b)
 		return -1;
 
 	return 0;
+}
+
+static RB_HEAD(ca_state_tree, ca) ca_state_tree \
+    = RB_INITIALIZER(&ca_state_tree);
+
+RB_GENERATE_STATIC(ca_state_tree, ca, entry, ca_cmp);
+
+static time_t
+ca_state_get_first_confirmed(const struct cert *cert)
+{
+	struct ca *ca, needle;
+
+	needle.aki = cert->aki;
+	needle.ski = cert->ski;
+	needle.location = cert->path;
+	needle.mfturi = cert->mft;
+
+	if ((ca = RB_FIND(ca_state_tree, &ca_state_tree, &needle)) != NULL)
+		return ca->first_confirmed;
+
+	return 0;
+}
+
+static void
+ca_state_tree_free(void)
+{
+	struct ca *ca, *ca_tmp;
+
+	RB_FOREACH_SAFE(ca, ca_state_tree, &ca_state_tree, ca_tmp) {
+		RB_REMOVE(ca_state_tree, &ca_state_tree, ca);
+		ca_free(ca);
+	}
 }
 
 static RB_HEAD(nca_tree, ca) nca_tree = RB_INITIALIZER(&nca_tree);
@@ -546,4 +622,205 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 	unlink(temp);
 	free(ncas_sorted);
 	nca_tree_free();
+}
+
+void
+ca_state_load(void)
+{
+	FILE *f;
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
+	const char *errstr;
+	struct ca *ca = NULL;
+	time_t now;
+
+	now = get_current_time();
+
+	if ((f = fopen(CA_STATE, "r")) == NULL) {
+		if (errno == ENOENT)
+			return;
+		err(1, "failed to open %s", CA_STATE);
+	}
+
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
+		char *l, *aki, *ski, *loc, *mfturi, *since;
+		size_t loc_len, mfturi_len;
+
+		if (line[linelen - 1] == '\n')
+			line[linelen - 1] = '\0';
+
+		if ((ca = calloc(1, sizeof(*ca))) == NULL)
+			err(1, NULL);
+
+		l = line;
+
+		if ((aki = strsep(&l, " ")) == NULL)
+			goto err;
+		if ((ca->aki = strdup(aki)) == NULL)
+			err(1, NULL);
+
+		if ((ski = strsep(&l, " ")) == NULL)
+			goto err;
+		if ((ca->ski = strdup(ski)) == NULL)
+			err(1, NULL);
+
+		if ((since = strsep(&l, " ")) == NULL)
+			goto err;
+		ca->first_confirmed = strtonum(since, 1, LLONG_MAX, &errstr);
+		if (errstr != NULL)
+			goto err;
+		if (ca->first_confirmed > now)
+			goto err;
+
+		if ((loc = strsep(&l, " ")) == NULL)
+			goto err;
+
+		/* minimal example cert location: ab.cd/a/b.cer */
+		if ((loc_len = strlen(loc)) < 13)
+			goto err;
+		if (strcmp(loc + loc_len - 4, ".cer") != 0)
+			goto err;
+		if (!valid_uri(loc, strlen(loc), NULL))
+			goto err;
+		if ((ca->location = strdup(loc)) == NULL)
+			err(1, NULL);
+
+		mfturi = l;
+		if (mfturi == NULL)
+			goto err;
+
+		/* minimal example mft location: rsync://a.bc/d/e.mft */
+		if ((mfturi_len = strlen(mfturi)) < 20)
+			goto err;
+		if (strcmp(mfturi + mfturi_len - 4, ".mft") != 0)
+			goto err;
+		if (!valid_uri(mfturi, strlen(mfturi), RSYNC_PROTO))
+			goto err;
+		if (!rsync_base_uri(mfturi, NULL))
+			goto err;
+		if ((ca->mfturi = strdup(mfturi)) == NULL)
+			err(1, NULL);
+
+		if (RB_INSERT(ca_state_tree, &ca_state_tree, ca) != NULL) {
+			warnx("duplicate entry for ca state tree at %s",
+			    ca->location);
+			ca_free(ca);
+			ca = NULL;
+		}
+	}
+
+	if (ferror(f))
+		goto err;
+
+	fclose(f);
+	free(line);
+
+	return;
+
+ err:
+	warnx("error reading %s", CA_STATE);
+	fclose(f);
+	unlink(CA_STATE);
+
+	free(line);
+
+	ca_free(ca);
+
+	ca_state_tree_free();
+}
+
+static inline int
+cas_sorted_cmp(const void *ca_a, const void *ca_b)
+{
+	int cmp;
+	const struct ca *a = *(const struct ca **)ca_a;
+	const struct ca *b = *(const struct ca **)ca_b;
+
+	assert(a->purpose == CERT_PURPOSE_CA);
+	assert(b->purpose == CERT_PURPOSE_CA);
+
+	cmp = strcmp(a->location, b->location);
+	if (cmp > 0)
+		return 1;
+	if (cmp < 0)
+		return -1;
+
+	return 0;
+}
+
+void
+ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
+{
+	char temp[] = CA_STATE ".XXXXXXXX";
+	FILE *f = NULL;
+	int fd;
+	struct ca *ca, **cas_sorted = NULL;
+	size_t cas_num = 0, idx = 0;
+	struct timespec ts[2];
+
+	RB_FOREACH(ca, ca_tree, ca_tree) {
+		if (ca->confirmed && ca->purpose == CERT_PURPOSE_CA)
+			cas_num++;
+	}
+
+	if (cas_num == 0) {
+		unlink(CA_STATE);
+		return;
+	}
+
+	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
+		goto err;
+	(void)fchmod(fd, 0644);
+
+	if ((f = fdopen(fd, "w")) == NULL)
+		err(1, "fdopen");
+
+	if ((cas_sorted = calloc(cas_num, sizeof(cas_sorted[0]))) == NULL)
+		err(1, NULL);
+
+	RB_FOREACH(ca, ca_tree, ca_tree) {
+		if (ca->confirmed && ca->purpose == CERT_PURPOSE_CA)
+			cas_sorted[idx++] = ca;
+	}
+
+	qsort(cas_sorted, cas_num, sizeof(cas_sorted[0]), cas_sorted_cmp);
+
+	for (idx = 0; idx < cas_num; idx++) {
+		ca = cas_sorted[idx];
+
+		if (fprintf(f, "%s %s %lld %s %s\n", ca->aki, ca->ski,
+		    (long long)ca->first_confirmed, ca->location,
+		    ca->mfturi) < 0)
+			goto err;
+	}
+
+	if (fclose(f) != 0) {
+		f = NULL;
+		goto err;
+	}
+	f = NULL;
+
+	ts[0].tv_nsec = UTIME_OMIT;
+	ts[1].tv_sec = buildtime;
+	ts[1].tv_nsec = 0;
+
+	if (utimensat(AT_FDCWD, temp, ts, 0) == -1)
+		goto err;
+
+	if (rename(temp, CA_STATE) == -1)
+		goto err;
+
+	free(cas_sorted);
+	ca_state_tree_free();
+
+	return;
+
+ err:
+	warn("error saving CA state to %s", temp);
+	if (f != NULL)
+		fclose(f);
+	unlink(temp);
+	free(cas_sorted);
+	ca_state_tree_free();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.331 2026/10/16 19:39:31 job Exp $ */
+/*	$OpenBSD: main.c,v 1.332 2026/10/22 20:29:26 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -54,7 +54,7 @@ unsigned int	 talrepocnt[TALSZ_MAX];
 struct repotalstats talstats[TALSZ_MAX];
 int		 talsz;
 
-size_t	entity_queue;
+size_t	entity_queue, entity_lowprio_queue;
 int	timeout = 60*60;
 volatile sig_atomic_t killme;
 volatile sig_atomic_t printinfo;
@@ -63,6 +63,8 @@ void	sighandler(int sig);
 static struct filepath_tree	fpt = RB_INITIALIZER(&fpt);
 static struct msgbuf		*procq, *rsyncq, *httpq, *rrdpq;
 static int			cachefd, outdirfd;
+
+static struct entityq lowprio_queue = TAILQ_HEAD_INITIALIZER(lowprio_queue);
 
 int	verbose;
 int	noop;
@@ -312,6 +314,26 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
 		entity_write_req(ent);
 		entity_free(ent);
 	}
+}
+
+/*
+ * The lowprio queue delays processing of manifests from CAs which haven't
+ * (yet) been confirmed to be part of certification chains toward valid
+ * non-inheriting EE certs.
+ */
+static void
+entity_lowprioq_add(char *path, char *file, enum rtype type, enum location loc,
+    struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
+    char *mftaki)
+{
+	struct entity *ent;
+
+	ent = entity_new(path, file, type, loc, rp, data, datasz, talid, certid,
+	    mftaki);
+
+	entity_lowprio_queue++;
+
+	TAILQ_INSERT_TAIL(&lowprio_queue, ent, entries);
 }
 
 static void
@@ -606,8 +628,12 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 			err(1, NULL);
 	}
 
-	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
-	    cert->talid, cert->certid, NULL);
+	if (ca_check_confirmed(ca_tree, cert->certid))
+		entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo,
+		    NULL, 0, cert->talid, cert->certid, NULL);
+	else
+		entity_lowprioq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo,
+		    NULL, 0, cert->talid, cert->certid, NULL);
 }
 
 /*
@@ -686,6 +712,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			ccr_insert_mft_sub(&vd->ccr.mfts, cert);
 			break;
 		case CERT_PURPOSE_BGPSEC_ROUTER:
+			ca_set_confirmed(&vd->cas, cert->issuerid);
 			cert_insert_brks(&vd->brks, cert);
 			repo_stat_inc(rp, talid, type, STYPE_BGPSEC);
 			break;
@@ -719,6 +746,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		}
 		roa = roa_read(b);
 		if (roa->valid) {
+			ca_set_confirmed(&vd->cas, roa->issuerid);
 			roa_insert_vrps(&vd->vrps, roa, rp);
 			ccr_insert_roa(&vd->ccr.vrps, roa);
 		} else
@@ -732,9 +760,10 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			break;
 		}
 		aspa = aspa_read(b);
-		if (aspa->valid)
+		if (aspa->valid) {
+			ca_set_confirmed(&vd->cas, aspa->issuerid);
 			aspa_insert_vaps(file, &vd->vaps, aspa, rp);
-		else
+		} else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		aspa_free(aspa);
 		break;
@@ -746,9 +775,10 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			break;
 		}
 		spl = spl_read(b);
-		if (spl->valid)
+		if (spl->valid) {
+			ca_set_confirmed(&vd->cas, spl->issuerid);
 			spl_insert_vsps(&vd->vsps, spl, rp);
-		else
+		} else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		spl_free(spl);
 		break;
@@ -841,6 +871,7 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->certs_fail += in->certs_fail;
 	out->certs_nonfunc += in->certs_nonfunc;
 	out->certs_nonfunc_deferred += in->certs_nonfunc_deferred;
+	out->certs_unconfirmed += in->certs_unconfirmed;
 	out->roas += in->roas;
 	out->roas_fail += in->roas_fail;
 	out->roas_invalid += in->roas_invalid;
@@ -1386,15 +1417,38 @@ main(int argc, char *argv[])
 	if (filemode || noop)
 		close(cachefd);
 
-	if (!noop)
+	if (!noop) {
+		ca_state_load();
 		nca_history_load();
+	}
 
-	while (entity_queue > 0 && !killme) {
+	while ((entity_queue > 0 || entity_lowprio_queue > 0) && !killme) {
 		int polltim;
 
 		if (printinfo) {
 			printinfo = 0;
-			repo_printinfo(entity_queue);
+			repo_printinfo(entity_queue, entity_lowprio_queue);
+		}
+
+		/*
+		 * If there isn't much else to do, work the low priority queue.
+		 */
+		if (entity_queue == 0 && entity_lowprio_queue > 0) {
+			struct entity *ent, *ent_tmp;
+			struct repo *rp;
+
+			TAILQ_FOREACH_SAFE(ent, &lowprio_queue, entries,
+			    ent_tmp) {
+				TAILQ_REMOVE(&lowprio_queue, ent, entries);
+				entity_lowprio_queue--;
+
+				entity_queue++;
+				rp = repo_byid(ent->repoid);
+				if (!repo_queued(rp, ent)) {
+					entity_write_req(ent);
+					entity_free(ent);
+				}
+			}
 		}
 
 		polltim = repo_check_timeout(INFTIM);
@@ -1516,7 +1570,7 @@ main(int argc, char *argv[])
 
 	signal(SIGALRM, SIG_DFL);
 	if (killme) {
-		repo_printinfo(entity_queue);
+		repo_printinfo(entity_queue, entity_lowprio_queue);
 		syslog(LOG_CRIT|LOG_DAEMON,
 		    "excessive runtime (%d seconds), giving up", timeout);
 		errx(1, "excessive runtime (%d seconds), giving up", timeout);
@@ -1572,7 +1626,7 @@ main(int argc, char *argv[])
 
 	/* processing did not finish because of error */
 	if (entity_queue != 0) {
-		repo_printinfo(entity_queue);
+		repo_printinfo(entity_queue, entity_lowprio_queue);
 		errx(1, "not all files processed, giving up");
 	}
 
@@ -1607,8 +1661,10 @@ main(int argc, char *argv[])
 
 	vd.buildtime = get_current_time();
 
-	if (!noop && rc == 0)
+	if (!noop && rc == 0) {
+		ca_state_save(&vd.cas, vd.buildtime);
 		nca_history_save(&vd.cas, vd.buildtime);
+	}
 
 	/* change working directory to the output directory */
 	if (fchdir(outdirfd) == -1)
@@ -1651,10 +1707,11 @@ main(int argc, char *argv[])
 	}
 	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
 	printf("Certificates: %u (%u invalid, %u non-functional, %u sync "
-	    "deferred)\n", stats.repo_tal_stats.certs,
+	    "deferred, %u unconfirmed)\n", stats.repo_tal_stats.certs,
 	    stats.repo_tal_stats.certs_fail,
 	    stats.repo_tal_stats.certs_nonfunc,
-	    stats.repo_tal_stats.certs_nonfunc_deferred);
+	    stats.repo_tal_stats.certs_nonfunc_deferred,
+	    stats.repo_tal_stats.certs_unconfirmed);
 	printf("Trust Anchor Locators: %u (%u invalid)\n",
 	    stats.tals, talsz - stats.tals);
 	printf("Manifests: %u (%u failed parse, %u seqnum gaps)\n",
