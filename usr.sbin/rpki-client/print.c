@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.80 2026/10/19 03:16:39 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.81 2026/10/22 06:15:57 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -524,6 +524,7 @@ roa_print(const struct cert *c, const struct roa *p)
 		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
+		json_do_bool("noncanonical", p->noncanonical);
 		if (p->expires)
 			json_do_int("expires", p->expires);
 	} else {

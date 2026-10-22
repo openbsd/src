@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.313 2026/10/19 03:28:19 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.314 2026/10/22 06:15:57 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -323,6 +323,7 @@ struct roa {
 	int		 talid; /* ROAs are covered by which TAL */
 	int		 issuerid; /* certid of the issuer */
 	int		 valid; /* validated resources */
+	int		 noncanonical; /* ips not ordered per RFC 9582, 4.3.3 */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* when the signature path expires */
 };
