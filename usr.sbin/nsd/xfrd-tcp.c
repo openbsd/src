@@ -1421,7 +1421,7 @@ conn_read_ssl(struct xfrd_tcp* tcp, SSL* ssl)
 						sizeof(tcp->msglen) - tcp->total_bytes);
 		if (received <= 0) {
 			int err = SSL_get_error(ssl, received);
-			if(err == SSL_ERROR_WANT_READ && errno == EAGAIN) {
+			if(err == SSL_ERROR_WANT_READ) {
 				return 0;
 			}
 			if(err == SSL_ERROR_ZERO_RETURN) {
@@ -1476,6 +1476,9 @@ conn_read_ssl(struct xfrd_tcp* tcp, SSL* ssl)
 
 	if (received <= 0) {
 		int err = SSL_get_error(ssl, received);
+		if(err == SSL_ERROR_WANT_READ) {
+			return 0;
+		}
 		if(err == SSL_ERROR_ZERO_RETURN) {
 			/* EOF */
 			return -1;

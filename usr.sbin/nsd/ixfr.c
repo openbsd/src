@@ -1157,8 +1157,9 @@ void ixfr_store_finish(struct ixfr_store* ixfr_store, struct nsd* nsd,
 static int read_soa_rdata_fields(struct buffer* packet, uint8_t* primns,
 	int* primns_len, uint8_t* email, int* email_len,
 	uint32_t* serial, uint32_t* refresh, uint32_t* retry,
-	uint32_t* expire, uint32_t* minimum, size_t* sz)
+	uint32_t* expire, uint32_t* minimum, size_t* sz, size_t rrlen)
 {
+	size_t pos = buffer_position(packet), dname_pkt_len;
 	if(!(*primns_len = dname_make_wire_from_packet(primns, packet, 1))) {
 		log_msg(LOG_ERR, "ixfr_store: cannot parse soa nsname in packet");
 		return 0;
@@ -1169,6 +1170,11 @@ static int read_soa_rdata_fields(struct buffer* packet, uint8_t* primns,
 		return 0;
 	}
 	*sz += *email_len;
+	if(buffer_position(packet) < pos)
+		return 0; /* wrong position after dnames */
+	dname_pkt_len = buffer_position(packet) - pos;
+	if(dname_pkt_len + 20 > rrlen)
+		return 0; /* malformed SOA rdata */
 	*serial = buffer_read_u32(packet);
 	*sz += 4;
 	*refresh = buffer_read_u32(packet);
@@ -1244,7 +1250,7 @@ void ixfr_store_add_newsoa(struct ixfr_store* ixfr_store, uint32_t ttl,
 		return;
 	}
 	if(!read_soa_rdata_fields(packet, primns, &primns_len, email, &email_len,
-		&serial, &refresh, &retry, &expire, &minimum, &sz)) {
+		&serial, &refresh, &retry, &expire, &minimum, &sz, rrlen)) {
 		log_msg(LOG_ERR, "ixfr_store newsoa: cannot parse packet");
 		ixfr_store_cancel(ixfr_store);
 		buffer_set_position(packet, oldpos);
@@ -1304,7 +1310,7 @@ void ixfr_store_add_oldsoa(struct ixfr_store* ixfr_store, uint32_t ttl,
 		return;
 	}
 	if(!read_soa_rdata_fields(packet, primns, &primns_len, email, &email_len,
-		&serial, &refresh, &retry, &expire, &minimum, &sz)) {
+		&serial, &refresh, &retry, &expire, &minimum, &sz, rrlen)) {
 		log_msg(LOG_ERR, "ixfr_store oldsoa: cannot parse packet");
 		ixfr_store_cancel(ixfr_store);
 		buffer_set_position(packet, oldpos);

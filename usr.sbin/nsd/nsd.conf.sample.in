@@ -147,6 +147,10 @@ server:
 	# NSID identity (hex string, or "ascii_somestring"). default disabled.
 	# nsid: "aabbccdd"
 
+	# Add report channel option to EDNS section of responses.
+	# default disabled.
+	# report-channel: agent.example.com
+
 	# Maximum number of concurrent TCP connections per server.
 	# tcp-count: 100
 
@@ -586,6 +590,12 @@ remote-control:
 	# without a request-xfr option and with and catalog option set to
 	# producer.
 	# catalog-producer-member: "catalog1.invalid"
+
+	# Add report channel option to EDNS section of responses for zones with
+	# this pattern. Takes the value configured in the server section by
+	# default, which is disabled by default.
+	# report-channel: agent.example.com
+
 
 # Fixed zone entries.  Here you can config zones that cannot be deleted.
 # Zones that are dynamically added and deleted are put in the zonelist file.

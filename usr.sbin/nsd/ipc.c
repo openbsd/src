@@ -132,6 +132,8 @@ parent_handle_xfrd_command(netio_type *ATTR_UNUSED(netio),
 
 	switch (mode) {
 	case NSD_RELOAD:
+		if(data->nsd->file_rotation_ok)
+			log_reopen(data->nsd->log_filename, 1);
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "parent handle xfrd command RELOAD"));
 		data->nsd->signal_hint_reload = 1;
 		break;
@@ -510,6 +512,7 @@ xfrd_handle_ipc(int ATTR_UNUSED(fd), short event, void* arg)
 		} else if(xfrd->need_to_send_quit) {
 			xfrd_send_quit_req(xfrd);
 		} else if(xfrd->can_send_reload && xfrd->need_to_send_reload) {
+			xfrd_reopen_logfile();
 			xfrd_send_reload_req(xfrd);
 		} else if(xfrd->need_to_send_stats) {
 			xfrd_send_stats(xfrd);
@@ -570,7 +573,6 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		xfrd->can_send_reload = 1;
 		xfrd->ipc_send_blocked = 0;
 		ipc_xfrd_set_listening(xfrd, EV_PERSIST|EV_READ|EV_WRITE);
-		xfrd_reopen_logfile();
 		if(!xfrd->reload_failed) {
 			xfrd_check_failed_updates();
 			xfrd->reload_cmd_first_sent = 0;

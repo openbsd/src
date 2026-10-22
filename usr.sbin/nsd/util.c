@@ -1301,8 +1301,8 @@ generate_cookie_secrets:
 
 	for( j = 0; j < NSD_COOKIE_HISTORY_SIZE; j++) {
 #if defined(HAVE_SSL)
-		if (!RAND_status()
-		||  !RAND_bytes(nsd->cookie_secrets[j].cookie_secret, NSD_COOKIE_SECRET_SIZE))
+		if (RAND_status() == 0
+		||  RAND_bytes(nsd->cookie_secrets[j].cookie_secret, NSD_COOKIE_SECRET_SIZE) <= 0)
 #endif
 		for (i = 0; i < NSD_COOKIE_SECRET_SIZE; i++)
 			nsd->cookie_secrets[j].cookie_secret[i] = random_generate(256);

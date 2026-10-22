@@ -59,6 +59,27 @@ catalog_member_pattern(struct xfrd_catalog_consumer_zone* consumer_zone)
 		consumer_zone->options->pattern->catalog_member_pattern);
 }
 
+/* for using strcmp in bsearch */
+static int
+cmpstringp(const void *p1, const void *p2)
+{
+	return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
+
+/** return whether the group_value is allowed to be used for the member */
+static inline int
+allowed_catalog_group_value(struct xfrd_catalog_consumer_zone* cz,
+		const char* group_value)
+{
+	return !cz->options->pattern
+	    || !cz->options->pattern->catalog_group_pattern
+	    || (  cz->options->pattern->catalog_group_pattern->nmemb
+	       && bsearch( &group_value
+	                 , cz->options->pattern->catalog_group_pattern->groups
+	                 , cz->options->pattern->catalog_group_pattern->nmemb
+	                 , sizeof(char*), cmpstringp));
+}
+
 /** see if we have more zonestatistics entries and it has to be incremented */
 static inline void
 zonestat_inc_ifneeded()
@@ -580,7 +601,7 @@ retry_adding:
 		char member_domain_str[5 * MAXDOMAINLEN];
 		struct zone_options* zopt;
 		int valid_group_values;
-		struct pattern_options *pattern = NULL;
+		struct pattern_options *pattern = NULL, *pattern_found;
 		struct catalog_member_zone* to_add;
 		const dname_type* group_dname;
 
@@ -641,9 +662,19 @@ retry_adding:
 			group_value[
 			       rrset->rrs[i]->rdata[0]
 			] = 0;
-			if ((pattern = pattern_options_find(
-					xfrd->nsd->options, group_value)))
+			if (!allowed_catalog_group_value(
+					consumer_zone, group_value))
+				log_msg(LOG_WARNING, "member zone '%s': "
+					"group \"%s\" not listed in "
+					"catalog-group-pattern values.",
+					domain_to_string(member_id),
+					group_value);
+
+			else if ((pattern_found = pattern_options_find(
+					xfrd->nsd->options, group_value))) {
+				pattern = pattern_found;
 				valid_group_values += 1;
+			}
 		}
 		if (valid_group_values > 1) {
 	                log_msg(LOG_ERR, "member zone '%s': only a single "

@@ -86,7 +86,7 @@ escaped:
       mask = block.backslashes - 1;
       count = count_ones(mask);
       const uint32_t octet = unescape(text+count, wire+count);
-      if (!octet)
+      if (!octet || length < count + octet)
         return -1;
       text += count + octet;
       wire += count + 1;

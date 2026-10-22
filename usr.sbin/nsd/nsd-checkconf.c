@@ -43,6 +43,12 @@ int zonec_parse_string(region_type* ATTR_UNUSED(region),
 		return; 				\
 	}
 
+#define ZONE_GET_DNAME(NAME, VAR, PATTERN) 		\
+	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
+		quotedname(PATTERN->NAME); 		\
+		return; 			\
+	}
+
 #define ZONE_GET_STR(NAME, VAR, PATTERN) 		\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
 		quote(PATTERN->NAME); 		\
@@ -82,6 +88,12 @@ int zonec_parse_string(region_type* ATTR_UNUSED(region),
 #define SERV_GET_STR(NAME, VAR) 		\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
 		quote(opt->NAME); 		\
+		return; 			\
+	}
+
+#define SERV_GET_DNAME(NAME, VAR) 		\
+	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
+		quotedname(opt->NAME); 		\
 		return; 			\
 	}
 
@@ -176,12 +188,37 @@ print_string_var(const char* varname, const char* value)
 }
 
 static void
+print_dname_var(const char* varname, const struct dname* value)
+{
+	char buf[MAXDOMAINLEN * 5];
+
+	if (!value) {
+		printf("\t#%s\n", varname);
+	} else {
+		printf("\t%s %s\n", varname, dname_to_string_buf(value, NULL, buf));
+	}
+}
+
+
+
+static void
 quote(const char *v)
 {
 	if(v==NULL)
 		printf("\n");
 	else
 		printf("%s\n", v);
+}
+
+static void
+quotedname(const struct dname* v)
+{
+	char buf[MAXDOMAINLEN * 5];
+
+	if(v==NULL)
+		printf("\n");
+	else
+		printf("%s\n", dname_to_string_buf(v, NULL, buf));
 }
 
 static void
@@ -359,6 +396,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		ZONE_GET_INT(ixfr_size, o, zone->pattern);
 		ZONE_GET_INT(ixfr_number, o, zone->pattern);
 		ZONE_GET_BIN(create_ixfr, o, zone->pattern);
+		ZONE_GET_DNAME(report_channel, o, zone->pattern);
 		printf("Zone option not handled: %s %s\n", z, o);
 		exit(1);
 	} else if(pat) {
@@ -396,6 +434,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		ZONE_GET_INT(ixfr_size, o, p);
 		ZONE_GET_INT(ixfr_number, o, p);
 		ZONE_GET_BIN(create_ixfr, o, p);
+		ZONE_GET_DNAME(report_channel, o, p);
 		printf("Pattern option not handled: %s %s\n", pat, o);
 		exit(1);
 	} else {
@@ -523,6 +562,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 				printf("%d\n", p->port);
 			return;
 		}
+		SERV_GET_DNAME(report_channel, o);
 		printf("Server option not handled: %s\n", o);
 		exit(1);
 	}
@@ -614,6 +654,14 @@ static void print_zone_content_elems(pattern_options_type* pat)
 		print_string_var("catalog-member-pattern:", pat->catalog_member_pattern);
 	if(pat->catalog_producer_zone)
 		print_string_var("catalog-producer-zone:", pat->catalog_producer_zone);
+	if(pat->catalog_group_pattern) {
+		size_t i;
+
+		for(i = 0; i < pat->catalog_group_pattern->nmemb; i++) {
+			print_string_var("catalog-group-pattern:",
+				pat->catalog_group_pattern->groups[i]);
+		}
+	}
 }
 
 void
@@ -643,6 +691,7 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("identity:", opt->identity);
 	print_string_var("version:", opt->version);
 	print_string_var("nsid:", opt->nsid);
+	print_dname_var("report-channel:", opt->report_channel);
 	print_string_var("logfile:", opt->logfile);
 	printf("\tlog-only-syslog: %s\n", opt->log_only_syslog?"yes":"no");
 	printf("\tserver-count: %d\n", opt->server_count);

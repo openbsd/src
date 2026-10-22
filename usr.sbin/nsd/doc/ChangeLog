@@ -1,3 +1,66 @@
+12 October 2026: Willem
+	- Merge #527: Eliminate excess error message in XoT transfer
+	  Thanks Ferran Tufan
+	- Merge #515: The UNECE and ISO RR types
+
+12 October 2026: Wouter
+	- Fix #526 from jpmens: Fix typo in nsd.conf.5.in
+
+9 October 2026: Wouter
+	- Fix #523: systemd support is incomplete. Implements
+	  Type=notify-reload with systemctl reload nsd support.
+
+2 October 2026: Willem
+	- A catalog-group-pattern option to limit the patterns from which
+	  catalog consumer member zones may be configured by using the group
+	  property.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the suggestion.
+	- Fix to deny CAA RRs from primaries with an empty tag.
+	  Thanks Qifan Zhang, Palo Alto Networks, for the report.
+
+30 September 2026: Willem
+	- Fix to compare the dname variant of an AMTRELAY relay and IPSECKEY
+	  gateway RDATA field case insensitively when they are removed by way
+	  of IXFR.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+
+26 September 2026: Willem
+	- Fix to not crash when more than one group property is parsed from a
+	  consumer catalog member zone, with only one of them valid.
+	  Thanks to Yuxiao Wu, Yunyi Zhang, Baojun Liu, and Haixin Duan
+	  from Tsinghua University, for the report and suggested fix.
+	- Fix that when printing rdata, fixed sized writes will not overflow
+	  the buffer.
+	  Thanks to Yuxiao Wu, Yunyi Zhang, Baojun Liu, and Haixin Duan
+	  from Tsinghua University, for the report and suggested fix.
+
+22 September 2026: Willem
+	- Fix to not wrap the rdlength variable for SVCB RRs with an rdlength
+	  larger than 65528 (and a short TargetName rdata field, like .).
+	  Thanks to Zanya <tea915656@gmail.com> for the report.
+
+16 September 2026: Willem
+	- A report-channel config option to return a Report-Channel EDNS option
+	  in responses
+
+10 September 2026: Willem
+	- Merge #511: Fix to retry a catalog consumer zone over AXFR if IXFR
+	  failed to apply
+
+9 September 2026: Wouter
+	- Fix #510: Missing NSEC3 records for next-closer in case of
+	  ENT, NSEC3 and opt-out.
+
+3 September 2026: Willem
+	- Fix handling malformed SOA records with a short rdata content with
+	  incremental transfers. Thanks to Tristan Madani for the report.
+
+3 September 2026: Wouter
+	- Fix makedist.sh to omit .cirrus.yml ci integration.
+
+2 September 2026: Willem
+	- Continue with 4.15.3 for development
+
 28 August 2026: Willem
 	- Fix client certificate checking by linking the tls-auth-name
 	  requirement on an access control list item, to the other requirements

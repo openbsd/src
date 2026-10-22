@@ -521,4 +521,18 @@ buffer_read_u64(buffer_type *buffer)
 int buffer_printf(buffer_type *buffer, const char *format, ...)
 	ATTR_FORMAT(printf, 2, 3);
 
+static inline void
+buffer_print_char(buffer_type *buffer, char data)
+{
+	buffer_reserve(buffer, 1);
+	buffer_write_u8(buffer, (uint8_t)data);
+}
+
+static inline void
+buffer_print(buffer_type *buffer, const void *data, size_t count)
+{
+	buffer_reserve(buffer, count);
+	buffer_write(buffer, data, count);
+}
+
 #endif /* BUFFER_H */

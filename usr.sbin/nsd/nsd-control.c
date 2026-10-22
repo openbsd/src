@@ -235,7 +235,7 @@ checkconnecterr(int err, const char* svr, int port, int statuscmd)
 
 /** contact the server with TCP connect */
 static int
-contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
+contact_server(char* svr, struct nsd_options* cfg, int statuscmd)
 {
 #ifdef INET6
 	struct sockaddr_storage addr;

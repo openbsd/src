@@ -1826,6 +1826,7 @@ void
 query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 {
 	struct edns_data *edns = &nsd->edns_ipv4;
+	const dname_type* report_channel = NULL;
 #if defined(INET6)
 	if (q->client_addr.ss_family == AF_INET6) {
 		edns = &nsd->edns_ipv6;
@@ -1859,6 +1860,25 @@ query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 			                           +  sizeof(uint8_t)
 			                           +  sizeof(uint8_t)
 			                           +  sizeof(uint32_t);
+		if(q->zone
+		&& q->zone->opts
+		&& q->zone->opts->pattern
+		&& q->zone->opts->pattern->report_channel
+		&& q->zone->opts->pattern->report_channel->name_size)
+			report_channel = q->zone->opts->pattern->report_channel;
+
+		else if(nsd->options->report_channel
+		     && nsd->options->report_channel->name_size)
+			report_channel = nsd->options->report_channel;
+
+		if(report_channel && buffer_available(q->packet,
+				2 + q->edns.opt_reserved_space +
+				4 + report_channel->name_size)) {
+			q->edns.opt_reserved_space +=
+				4 + report_channel->name_size;
+		} else
+			report_channel = NULL;
+
 		if(q->edns.padding) {
 			size_t cur_sz = buffer_position(q->packet) + 2 + q->edns.opt_reserved_space;
 			size_t padded_sz = (((cur_sz - 1) / PADDING_BLOCK_SZ) + 1) * PADDING_BLOCK_SZ;
@@ -1928,6 +1948,12 @@ query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 					buffer_write(q->packet,
 							q->edns.ede_text,
 							q->edns.ede_text_len);
+			}
+			if(report_channel) {
+				buffer_write_u16(q->packet, REPORT_CHANNEL_CODE);
+				buffer_write_u16(q->packet, report_channel->name_size);
+				buffer_write(q->packet, dname_name(report_channel)
+				                      , report_channel->name_size);
 			}
 			if(q->edns.padding) {
 				assert(q->edns.padding >= 4);

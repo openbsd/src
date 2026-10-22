@@ -412,6 +412,20 @@ static const struct nsd_rdata_descriptor brid_rdata_fields[] = {
 	FIELD("cbor blob", RDATA_REMAINDER)
 };
 
+static const struct nsd_rdata_descriptor unece_rdata_fields[] = {
+	FIELD("recommendation", RDATA_STRING),
+	FIELD("value", RDATA_STRING),
+	FIELD("code", RDATA_STRING),
+	FIELD("descriptor", RDATA_REMAINDER)
+};
+
+static const struct nsd_rdata_descriptor iso_rdata_fields[] = {
+	FIELD("standard", RDATA_STRING),
+	FIELD("value", RDATA_STRING),
+	FIELD("code", RDATA_STRING),
+	FIELD("descriptor", RDATA_REMAINDER)
+};
+
 static const struct nsd_rdata_descriptor spf_rdata_fields[] = {
 	FIELD("text", RDATA_REMAINDER)
 };
@@ -797,8 +811,15 @@ const nsd_type_descriptor_type type_descriptors[] = {
 		read_brid_rdata, write_generic_rdata,
 		print_brid_rdata, brid_rdata_fields),
 
-	UNKNOWN_TYPE(69),
-	UNKNOWN_TYPE(70),
+	/* 69 */
+	TYPE("UNECE", TYPE_UNECE, TYPE_HAS_NO_REFS,
+		read_unece_iso_rdata, write_generic_rdata,
+		print_unece_iso_rdata, unece_rdata_fields),
+	/* 70 */
+	TYPE("ISO", TYPE_ISO, TYPE_HAS_NO_REFS,
+		read_unece_iso_rdata, write_generic_rdata,
+		print_unece_iso_rdata, iso_rdata_fields),
+
 	UNKNOWN_TYPE(71),
 	UNKNOWN_TYPE(72),
 	UNKNOWN_TYPE(73),

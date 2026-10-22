@@ -297,6 +297,27 @@ xfrd_sig_process(void)
 	} else if(xfrd->nsd->signal_hint_reload_hup) {
 		log_msg(LOG_WARNING, "SIGHUP received, reloading...");
 		xfrd->nsd->signal_hint_reload_hup = 0;
+#ifdef HAVE_SYSTEMD
+		if(1) {
+			/* Notify systemd that SIGHUP was received and the
+			 * reload has started. But a reload can take, for
+			 * large zone data, a long time, and systemd would
+			 * then kill a process on a timer. We notify that the
+			 * reload is ready straight away. */
+			char relmsg[256];
+			struct timespec tp;
+			uint64_t us;
+			memset(&tp, 0, sizeof(tp));
+			if(clock_gettime(CLOCK_MONOTONIC, &tp) < 0)
+				log_msg(LOG_ERR, "clock_gettime: %s", strerror(errno));
+			us = (uint64_t)tp.tv_sec*1000000ULL +
+				(uint64_t)tp.tv_nsec/1000ULL;
+			snprintf(relmsg, sizeof(relmsg),
+				"RELOADING=1\nMONOTONIC_USEC=%" PRIu64, us);
+			sd_notify(0, relmsg);
+			sd_notify(0, "READY=1");
+		}
+#endif
 		if(xfrd->nsd->options->reload_config) {
 			xfrd_reload_config(xfrd);
 		}
@@ -620,7 +641,8 @@ xfrd_init_zones()
 		(int)xfrd->catalog_consumer_zones->count));
 }
 
-static void
+/* returns 1 on failure, 0 on success */
+static int
 apply_xfrs_to_consumer_zone(struct xfrd_catalog_consumer_zone* consumer_zone,
 		zone_type* dbzone, xfrd_xfr_type* xfr)
 {
@@ -629,6 +651,7 @@ apply_xfrs_to_consumer_zone(struct xfrd_catalog_consumer_zone* consumer_zone,
 	if(xfr->msg_is_ixfr) {
 		uint32_t soa_serial=0, after_serial=0;
 		xfrd_xfr_type* prev;
+		int ret = 0;
 
 		if(dbzone->soa_rrset == NULL
 #ifndef PACKED_STRUCTS
@@ -642,7 +665,7 @@ apply_xfrs_to_consumer_zone(struct xfrd_catalog_consumer_zone* consumer_zone,
 			       "could not apply ixfr on catalog consumer zone "
 			       "\'%s\': invalid SOA resource record",
 			       consumer_zone->options->name);
-			return;
+			return 1;
 		}
 		if(soa_serial == xfr->msg_old_serial) 
 			goto apply_xfr;
@@ -651,19 +674,20 @@ apply_xfrs_to_consumer_zone(struct xfrd_catalog_consumer_zone* consumer_zone,
 				continue;
 			if(xfr->msg_old_serial != prev->msg_new_serial)
 				continue;
-			apply_xfrs_to_consumer_zone(consumer_zone, dbzone, prev);
+			ret |= apply_xfrs_to_consumer_zone(consumer_zone, dbzone, prev);
 			break;
 		}
 		if(!prev
-		|| !retrieve_soa_rdata_serial(dbzone->soa_rrset->rrs[0],
-			&after_serial)
-		|| xfr->msg_old_serial != after_serial) {
+		|| !retrieve_soa_rdata_serial( dbzone->soa_rrset->rrs[0]
+		                             , &after_serial)
+		|| xfr->msg_old_serial != after_serial
+		|| ret) {
 			make_catalog_consumer_invalid(consumer_zone,
 			       "could not find and/or apply xfrs for catalog "
 			       "consumer zone \'%s\': to update to serial %u",
 			       consumer_zone->options->name,
 			       xfr->msg_new_serial);
-			return;
+			return 1;
 		}
 	}
 apply_xfr:
@@ -675,13 +699,16 @@ apply_xfr:
 		make_catalog_consumer_invalid(consumer_zone,
 		       "could not open transfer file %lld: %s",
 		       (long long)xfr->xfrfilenumber, strerror(errno));
+		return 1;
 
 	} else if(0 >= apply_ixfr_for_zone(xfrd->nsd, dbzone, df,
 			xfrd->nsd->options, NULL, xfr->xfrfilenumber)) {
 		make_catalog_consumer_invalid(consumer_zone,
-			"error processing transfer file %lld",
-			(long long)xfr->xfrfilenumber);
+			"error applying %sXFR %u -> %u",
+			(xfr->msg_is_ixfr ? "I" : "A"),
+			xfr->msg_old_serial, xfr->msg_new_serial);
 		fclose(df);
+		return 1;
 	} else {
 		/* Make valid for reprocessing */
 		make_catalog_consumer_valid(consumer_zone);
@@ -690,6 +717,7 @@ apply_xfr:
 			"applied", (xfr->msg_is_ixfr ? "I" : "A"), xfr->msg_old_serial,
 			xfr->msg_new_serial, consumer_zone->options->name));
 	}
+	return 0;
 }
 
 static void
@@ -700,7 +728,8 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 	xfrd_zone_type* zone;
 	struct xfrd_catalog_producer_zone* producer_zone;
 	struct xfrd_catalog_consumer_zone* consumer_zone = NULL;
-	zone_type* dbzone = NULL;
+	zone_type* consumer_dbzone = NULL;
+	int retry_consumer = 0;
 	xfrd_xfr_type* xfr;
 	xfrd_xfr_type* prev_xfr;
 	int xfr_was_ixfr = 0;
@@ -823,8 +852,8 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 #endif
 	&& (consumer_zone = (struct xfrd_catalog_consumer_zone*)rbtree_search(
 			xfrd->catalog_consumer_zones, task->zname))) {
-		dbzone = namedb_find_or_create_zone( xfrd->nsd->db, task->zname
-		                                   , consumer_zone->options);
+		consumer_dbzone = namedb_find_or_create_zone(
+			xfrd->nsd->db, task->zname, consumer_zone->options);
 	}
 	if(zone->latest_xfr) {
 		xfr_was_ixfr = (zone->latest_xfr->query_type == TYPE_IXFR);
@@ -867,11 +896,12 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 					xfrd->nsd, xfr->xfrfilenumber);
 				return;
 			}
-			if(consumer_zone && dbzone &&
-				/* Call consumer apply for most recent update*/
-				(soa_ptr && soa_ptr->serial == htonl(xfr->msg_new_serial)))
-				apply_xfrs_to_consumer_zone(
-					consumer_zone, dbzone, xfr);
+			/* Call consumer apply for most recent update*/
+			if(consumer_dbzone && soa_ptr
+			&& soa_ptr->serial == htonl(xfr->msg_new_serial)) {
+				retry_consumer |= apply_xfrs_to_consumer_zone(
+					consumer_zone, consumer_dbzone, xfr);
+			}
 		}
 		DEBUG(DEBUG_IPC, 1,
 			(LOG_INFO, "xfrd: zone %s delete update to serial %u",
@@ -916,6 +946,13 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 	case soainfo_ok:
 		if(xfrd->reload_failed)
 			break;
+		if(retry_consumer && xfr_was_ixfr) {
+			/* A full transfer of the catalog zone might fix it */
+			zone->soa_disk_acquired = 0;
+			zone->soa_nsd_acquired = 0;
+			xfrd_handle_notify_and_start_xfr(zone, NULL);
+			break;
+		}
 		/* fall through */
 	case soainfo_gone:
 		if(hint == soainfo_gone) {

@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "sep  2, 2026" "NLnet Labs" "nsd 4.15.2"
+.TH "nsd.conf" "5" "okt 21, 2026" "NLnet Labs" "nsd 4.15.4"
 .\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -213,6 +213,9 @@ Add the specified nsid to the EDNS section of the answer when queried
 with an NSID EDNS enabled packet.  As a sequence of hex characters or
 with ascii_ prefix and then an ascii string.  Same as command-line option
 .BR \-I .
+.TP
+.B report\-channel:\fR <domain name>
+Adds an Report\-Channel option with this name to the EDNS section of responses.
 .TP
 .B logfile:\fR <filename>
 Log messages to the logfile. The default is to log to stderr and
@@ -903,8 +906,10 @@ The zone options such as
 .BR verifier\-feed\-zone ,
 .BR verifier\-timeout ,
 .BR catalog ,
+.BR catalog\-group\-pattern ,
+.BR catalog\-member\-pattern , 
 and
-.B catalog\-member\-pattern
+.B report\-channel
 can be given.  They are applied to the patterns and zones that include
 this pattern.
 .SS "Zone Options"
@@ -1174,11 +1179,26 @@ to not use a specific timeout. Default is verifier\-timeout from
 If set to \fIconsumer\fR, catalog zone processing is enabled for the zone.
 Only a single zone may be configured as a catalog consumer zone. When more than
 one catalog consumer zone is configured, none of them will be processed.
+.sp
+Note that administrative control over what zones are served shifts completely
+from the consumer to the producer of the catalog zone content. To prevent
+unintended provisioning of zones, a consumer SHOULD scope the set of admissible
+member zones by any means deemed suitable (see Section 7 of RFC 9432).
+Therefore, if the catalog consumer zone comes from a different party it is
+highly RECOMMENDED to verify the zone for errors and other impermissible
+configuration.  For example to prevent the zone to accidentally delete all the
+members, or for verifying that the provided member zones are legitimate. The
+\fBverifier\fR option may be useful to automate this.
+.sp
 Member zones of the catalog will use the pattern specified by the group
 property, or if a group property is missing or invalid, the pattern specified
 by the \fBcatalog\-member\-pattern\fR option is used. Group properties are valid
 if there is only a single value matching the name of a for member zones valid
-pattern.
+pattern. The patterns that are allowed for a catalog consumer may be restricted
+by providing one or more \fBcatalog\-group\-pattern\fR option. Only the patterns
+listed by a \fBcatalog\-group\-pattern\fR option are allowed. Without the any
+\fBcatalog\-group\-pattern\fR option, all patterns are allowed to be used with
+the group property.
 .sp
 A zone with the option set to \fIproducer\fR, can be used to produce a
 catalog zone.  Member zones for catalog producer zones can be added with
@@ -1209,6 +1229,12 @@ transfers over TLS to further protect the catalog against eavesdroppers.
 If this option is provided for a catalog consumer zone, members of that catalog
 that have a missing or an invalid group property will be added using pattern 
 <pattern\-name>.
+.TP
+.B catalog\-group\-pattern:\fR <pattern\-name>
+If one or more \fBcatalog\-group\-pattern\fR options are provided for a catalog
+consumer zone, only group properties with these values will be considered.
+The default behaviour, without the \fBcatalog\-group\-pattern\fR option is to
+accept all values for group properties for which a pattern exists.
 .TP
 .B catalog\-producer\-zone:\fR <zone\-name>
 This option can only be used in a pattern. Adding a zone using

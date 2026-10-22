@@ -249,20 +249,20 @@ print_string(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	n = rdata[*offset];
 	if(rdlength < *offset || (size_t)rdlength - *offset < 1 + n)
 		return 0;
-	buffer_printf(output, "\"");
+	buffer_print_char(output, '"');
 	for (size_t i = 1; i <= n; i++) {
 		char ch = (char) rdata[*offset+i];
 		if (isprint((unsigned char)ch)) {
 			if (ch == '"' || ch == '\\') {
-				buffer_printf(output, "\\");
+				buffer_print_char(output, '\\');
 			}
-			buffer_printf(output, "%c", ch);
+			buffer_print_char(output, ch);
 		} else {
 			buffer_printf(output, "\\%03u",
 				(unsigned) rdata[*offset+i]);
 		}
 	}
-	buffer_printf(output, "\"");
+	buffer_print_char(output, '"');
 	*offset += 1;
 	*offset += n;
 	return 1;
@@ -272,19 +272,19 @@ static int32_t
 print_text(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 	uint16_t *offset)
 {
-	buffer_printf(output, "\"");
+	buffer_print_char(output, '"');
 	for (size_t i = *offset; i < rdlength; ++i) {
 		char ch = (char) rdata[i];
 		if (isprint((unsigned char)ch)) {
 			if (ch == '"' || ch == '\\') {
-				buffer_printf(output, "\\");
+				buffer_print_char(output, '\\');
 			}
-			buffer_printf(output, "%c", ch);
+			buffer_print_char(output, ch);
 		} else {
 			buffer_printf(output, "\\%03u", (unsigned) rdata[i]);
 		}
 	}
-	buffer_printf(output, "\"");
+	buffer_print_char(output, '"');
 	*offset = rdlength;
 	return 1;
 }
@@ -307,9 +307,9 @@ print_unquoted(buffer_type *output, uint16_t rdlength,
 		if (isprint((unsigned char)ch)) {
 			if (ch == '"' || ch == '\\' || ch == '(' || ch == ')'
 			  || ch == '\'' || isspace((unsigned char)ch)) {
-				buffer_printf(output, "\\");
+				buffer_print_char(output, '\\');
 			}
-			buffer_printf(output, "%c", ch);
+			buffer_print_char(output, ch);
 		} else {
 			buffer_printf(output, "\\%03u",
 				(unsigned) rdata[*offset + i]);
@@ -328,7 +328,7 @@ print_unquoteds(buffer_type *output, uint16_t rdlength,
 		if(!print_unquoted(output, rdlength, rdata, offset))
 			return 0;
 		if(*offset < rdlength)
-			buffer_printf(output, " ");
+			buffer_print_char(output, ' ');
 	}
 	return 1;
 }
@@ -483,7 +483,7 @@ print_base32(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 		return 0;
 
 	if (size == 0) {
-		buffer_write(output, "-", 1);
+		buffer_print_char(output, '-');
 		*offset += 1;
 		return 1;
 	}
@@ -517,7 +517,7 @@ print_base64(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 		return 0;
 	if(size == 0) {
 		/* single zero represents empty buffer */
-		buffer_write(output, "0", 1);
+		buffer_print_char(output, '0');
 		return 1;
 	}
 	buffer_reserve(output, size * 2 + 1);
@@ -542,8 +542,8 @@ buffer_print_hex(buffer_type *output, const uint8_t *data, size_t size)
 	buffer_reserve(output, size * 2);
 	for (i = 0; i < size; ++i) {
 		uint8_t octet = *data++;
-		buffer_write_u8(output, hexdigits[octet >> 4]);
-		buffer_write_u8(output, hexdigits[octet & 0x0f]);
+		buffer_print_char(output, hexdigits[octet >> 4]);
+		buffer_print_char(output, hexdigits[octet & 0x0f]);
 	}
 }
 
@@ -565,7 +565,7 @@ print_base16(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 		return 0;
 	if(size == 0) {
 		/* single zero represents empty buffer, such as CDS deletes */
-		buffer_write(output, "0", 1);
+		buffer_print_char(output, '0');
 		return 1;
 	} else {
 		buffer_print_hex(output, rdata+*offset, size);
@@ -596,7 +596,7 @@ print_salt(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 		return 0;
 	if (!length)
 		/* NSEC3 salt hex can be empty */
-		buffer_printf(output, "-");
+		buffer_print_char(output, '-');
 	else
 		buffer_print_hex(output, rdata + *offset + 1, length);
 	*offset += 1 + (uint16_t)length;
@@ -781,12 +781,12 @@ print_svcparam_mandatory(struct buffer *output, uint16_t svcparamkey,
 	if (datalen % sizeof(uint16_t))
 		return 0; /* wireformat error, val_len must be multiple of shorts */
 	buffer_print_svcparamkey(output, svcparamkey);
-	buffer_write_u8(output, '=');
+	buffer_print_char(output, '=');
 	buffer_print_svcparamkey(output, read_uint16(data));
 	data += 2;
 
 	while ((datalen -= sizeof(uint16_t))) {
-		buffer_write_u8(output, ',');
+		buffer_print_char(output, ',');
 		buffer_print_svcparamkey(output, read_uint16(data));
 		data += 2;
 	}
@@ -803,8 +803,7 @@ print_svcparam_alpn(struct buffer *output, uint16_t svcparamkey,
 	assert(datalen > 0); /* Guaranteed by svcparam_print */
 
 	buffer_print_svcparamkey(output, svcparamkey);
-	buffer_write_u8(output, '=');
-	buffer_write_u8(output, '"');
+	buffer_print(output, "=\"", 2);
 	while (datalen) {
 		uint8_t i, str_len = *dp++;
 
@@ -822,13 +821,13 @@ print_svcparam_alpn(struct buffer *output, uint16_t svcparamkey,
 				buffer_printf(output, "\\%03u", (unsigned) dp[i]);
 
 			else
-				buffer_write_u8(output, dp[i]);
+				buffer_print_char(output, dp[i]);
 		}
 		dp += str_len;
 		if ((datalen -= str_len))
-			buffer_write_u8(output, ',');
+			buffer_print_char(output, ',');
 	}
-	buffer_write_u8(output, '"');
+	buffer_print_char(output, '"');
 	return 1;
 }
 
@@ -881,7 +880,7 @@ print_svcparam_ech(struct buffer *output, uint16_t svcparamkey,
 	buffer_print_svcparamkey(output, svcparamkey);
 	if(datalen == 0)
 		return 1;
-	buffer_write_u8(output, '=');
+	buffer_print_char(output, '=');
 
 	buffer_reserve(output, datalen * 2 + 1);
 	length = __b64_ntop(data, datalen, (char*)buffer_current(output),
@@ -930,7 +929,7 @@ print_svcparam_dohpath(struct buffer *output, uint16_t svcparamkey,
 	unsigned i;
 
 	buffer_print_svcparamkey(output, svcparamkey);
-	buffer_write(output, "=\"", 2);
+	buffer_print(output, "=\"", 2);
 	for (i = 0; i < datalen; i++) {
 		if (dp[i] == '"' || dp[i] == '\\')
 			buffer_printf(output, "\\%c", dp[i]);
@@ -939,9 +938,9 @@ print_svcparam_dohpath(struct buffer *output, uint16_t svcparamkey,
 			buffer_printf(output, "\\%03u", (unsigned) dp[i]);
 
 		else
-			buffer_write_u8(output, dp[i]);
+			buffer_print_char(output, dp[i]);
 	}
-	buffer_write_u8(output, '"');
+	buffer_print_char(output, '"');
 	return 1;
 }
 
@@ -981,7 +980,7 @@ print_svcparam_oots(struct buffer *output, uint16_t svcparamkey,
 	assert(datalen > 0); /* Guaranteed by svcparam_print */
 
 	buffer_print_svcparamkey(output, svcparamkey);
-	buffer_printf(output, "=\"");
+	buffer_print(output, "=\"", 2);
 	while(((size_t)(*data)) + 2 <= (size_t)datalen) {
 		size_t transport_len = *data;
 		uint8_t percentage = data[transport_len + 1];
@@ -996,17 +995,17 @@ print_svcparam_oots(struct buffer *output, uint16_t svcparamkey,
 			|| ch == '"' || ch == '\\' || ch == ',' || ch == ':')
 				return 0;
 
-			buffer_write_u8(output, ch);
+			buffer_print_char(output, ch);
 		}
 		buffer_printf(output, ":%d", percentage);
 		data += transport_len + 2;
 		datalen -= transport_len + 2;
 		if(datalen)
-			buffer_write_u8(output, ',');
+			buffer_print_char(output, ',');
 	}
 	if(datalen)
 		return 0;
-	buffer_printf(output, "\"");
+	buffer_print_char(output, '"');
 	return 1;
 }
 
@@ -1053,7 +1052,7 @@ print_svcparam(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 		return 1;
 	}
 
-	buffer_write(output, "=\"", 2);
+	buffer_print(output, "=\"", 2);
 	dp = rdata + *offset + 4;
 
 	for (i = 0; i < length; i++) {
@@ -1064,9 +1063,9 @@ print_svcparam(struct buffer *output, uint16_t rdlength, const uint8_t *rdata,
 			buffer_printf(output, "\\%03u", (unsigned) dp[i]);
 
 		else
-			buffer_write_u8(output, dp[i]);
+			buffer_print_char(output, dp[i]);
 	}
-	buffer_write_u8(output, '"');
+	buffer_print_char(output, '"');
 	*offset += length + 4;
 	return 1;
 }
@@ -1363,7 +1362,7 @@ int print_unknown_rdata_field(buffer_type *output,
 int print_unknown_rdata(buffer_type *output,
 	const nsd_type_descriptor_type *descriptor, const rr_type *rr)
 {
-	buffer_printf(output, "\t");
+	buffer_print_char(output, '\t');
 	return print_unknown_rdata_field(output, descriptor, rr);
 }
 
@@ -1537,7 +1536,7 @@ print_soa_rdata(struct buffer *output, const struct rr *rr)
 	assert(rr->rdlength == 2 * sizeof(void*) + 20);
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 
@@ -1562,7 +1561,7 @@ print_soa_rdata_twoline(struct buffer *output, const struct rr *rr)
 	assert(rr->rdlength == 2 * sizeof(void*) + 20);
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 
@@ -1617,12 +1616,12 @@ print_wks_rdata(struct buffer *output, const struct rr *rr)
 	if (!print_ip4(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	protocol = rr->rdata[4];
 	if(protocol == 6)
-		buffer_printf(output, "tcp");
+		buffer_print(output, "tcp", 3);
 	else if(protocol == 17)
-		buffer_printf(output, "udp");
+		buffer_print(output, "udp", 3);
 	else
 		buffer_printf(output, "%" PRIu8, protocol);
 
@@ -1658,7 +1657,7 @@ print_hinfo_rdata(struct buffer *output, const struct rr *rr)
 	uint16_t length = 0;
 	if (!print_string(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_string(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -1711,7 +1710,7 @@ print_minfo_rdata(struct buffer *output, const struct rr *rr)
 	assert(rr->rdlength == 2 * sizeof(void*));
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	assert(rr->rdlength == length);
@@ -1790,7 +1789,7 @@ print_txt_rdata(struct buffer *output, const struct rr *rr)
 		if (!print_string(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 		while (length < rr->rdlength) {
-			buffer_printf(output, " ");
+			buffer_print_char(output, ' ');
 			if (!print_string(output, rr->rdlength, rr->rdata,
 				&length))
 				return 0;
@@ -1847,7 +1846,7 @@ print_rp_rdata(struct buffer *output, const struct rr *rr)
 	uint16_t length = 0;
 	if(!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if(!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	assert(rr->rdlength == length);
@@ -1961,7 +1960,7 @@ print_isdn_rdata(struct buffer *output, const struct rr *rr)
 		return 0;
 	if(rr->rdlength > length) {
 		/* Optional subaddress field is present. */
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if (!print_string(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 	}
@@ -2015,7 +2014,7 @@ write_rt_rdata(struct query *query, const struct rr *rr)
 int
 print_nsap_rdata(struct buffer *output, const struct rr *rr)
 {
-	buffer_printf(output, "0x");
+	buffer_print(output, "0x", 2);
 	buffer_print_hex(output, rr->rdata, rr->rdlength);
 	return 1;
 }
@@ -2106,7 +2105,7 @@ print_px_rdata(struct buffer *output, const struct rr *rr)
 	buffer_printf(output, "%" PRIu16 " ", read_uint16(rr->rdata));
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	assert(rr->rdlength == length);
@@ -2119,10 +2118,10 @@ print_gpos_rdata(struct buffer *output, const struct rr *rr)
 	uint16_t length = 0;
 	if(!print_unquoted(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if(!print_unquoted(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if(!print_unquoted(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -2186,7 +2185,7 @@ loc_cm_print(struct buffer* output, uint8_t mantissa, uint8_t exponent)
 	/* always <digit><string of zeros> */
 	buffer_printf(output, "%d", (int)mantissa);
 	for(i=0; i<exponent-2; i++)
-		buffer_printf(output, "0");
+		buffer_print_char(output, '0');
 }
 
 int
@@ -2257,18 +2256,18 @@ print_loc_rdata(struct buffer *output, const struct rr *rr)
 		buffer_printf(output, "%.2f", s);
 	else
 		buffer_printf(output, "%.0f", s);
-	buffer_printf(output, "m ");
+	buffer_print(output, "m ", 2);
 
 	loc_cm_print(output, (size & 0xf0) >> 4, size & 0x0f);
-	buffer_printf(output, "m ");
+	buffer_print(output, "m ", 2);
 
 	loc_cm_print(output, (horizontal_precision & 0xf0) >> 4,
 		horizontal_precision & 0x0f);
-	buffer_printf(output, "m ");
+	buffer_print(output, "m ", 2);
 
 	loc_cm_print(output, (vertical_precision & 0xf0) >> 4,
 		vertical_precision & 0x0f);
-	buffer_printf(output, "m");
+	buffer_print_char(output, 'm');
 
 	return 1;
 }
@@ -2436,7 +2435,7 @@ print_atma_rdata(struct buffer *output, const struct rr *rr)
 	} else if(format == 1) {
 		/* E.164 format. */
 		/* '+' and then digits '0'-'9' from the rdata string. */
-		buffer_printf(output, "+");
+		buffer_print_char(output, '+');
 		for (size_t i = 1; i < rr->rdlength; i++) {
 			char ch = (char)rr->rdata[i];
 			if(!isdigit((unsigned char)ch))
@@ -2509,13 +2508,13 @@ print_naptr_rdata(struct buffer *output, const struct rr *rr)
 		read_uint16(rr->rdata), read_uint16(rr->rdata+2));
 	if (!print_string(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_string(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_string(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	assert(rr->rdlength == length);
@@ -2697,7 +2696,7 @@ print_apl_rdata(struct buffer *output, const struct rr *rr)
 
 	while (length < rr->rdlength) {
 		if(length != 0)
-			buffer_printf(output, " ");
+			buffer_print_char(output, ' ');
 		if (!print_apl(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 	}
@@ -2841,7 +2840,7 @@ print_ipseckey_rdata(struct buffer *output, const struct rr *rr)
 	gateway_type = rr->rdata[1];
 	switch (gateway_type) {
 	case IPSECKEY_NOGATEWAY:
-		buffer_printf(output, ".");
+		buffer_print_char(output, '.');
 		break;
 	case IPSECKEY_IP4:
 		if (!print_ip4(output, rr->rdlength, rr->rdata, &length))
@@ -2862,7 +2861,7 @@ print_ipseckey_rdata(struct buffer *output, const struct rr *rr)
 
 	if(rr->rdlength > length) {
 		/* Print key field in base64. */
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if (!print_base64(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 	}
@@ -2945,7 +2944,7 @@ print_rrsig_rdata(struct buffer *output, const struct rr *rr)
 		rr->rdata[3], read_uint32(rr->rdata+4));
 	if (!print_time(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_time(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 
@@ -2954,7 +2953,7 @@ print_rrsig_rdata(struct buffer *output, const struct rr *rr)
 
 	if (!print_name_literal(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_base64(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -3004,7 +3003,7 @@ print_nsec_rdata(struct buffer *output, const struct rr *rr)
 
 	if (!print_name_literal(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_nsec_bitmap(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -3093,10 +3092,10 @@ print_nsec3_rdata(struct buffer *output, const struct rr *rr)
 		rr->rdata[0], rr->rdata[1], read_uint16(rr->rdata + 2));
 	if (!print_salt(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_base32(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_nsec_bitmap(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -3198,11 +3197,11 @@ print_hip_rdata(struct buffer *output, const struct rr *rr)
 	buffer_printf(output, "%" PRIu8 " ", pk_algorithm);
 	if(!print_base16(output, length+hit_length, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if(!print_base64(output, length+pk_length, rr->rdata, &length))
 		return 0;
 	while(length < rr->rdlength) {
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if(!print_name_literal(output, rr->rdlength, rr->rdata,
 			&length))
 			return 0;
@@ -3273,7 +3272,7 @@ print_talink_rdata(struct buffer *output, const struct rr *rr)
 	uint16_t length = 0;
 	if(!print_name_literal(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if(!print_name_literal(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -3378,6 +3377,8 @@ read_svcb_rdata(struct domain_table *domains, uint16_t rdlength,
 	svcparams_length = rdlength - length;
 	buffer_skip(packet, svcparams_length);
 
+	if (2 + sizeof(void*) + svcparams_length > UINT16_MAX)
+		return MALFORMED;
 	size = sizeof(**rr) + 2 + sizeof(void*) + svcparams_length;
 	if (!(*rr = region_alloc(domains->region, size)))
 		return TRUNCATED;
@@ -3420,7 +3421,7 @@ print_svcb_rdata(struct buffer *output, const struct rr *rr)
 	if (!print_domain(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	while (length < rr->rdlength) {
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if (!print_svcparam(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 	}
@@ -3510,6 +3511,60 @@ print_brid_rdata(struct buffer *output, const struct rr *rr)
 	uint16_t length = 0;
 
 	if (!print_base64(output, rr->rdlength, rr->rdata, &length))
+		return 0;
+	if(rr->rdlength != length)
+		return 0;
+	return 1;
+}
+
+int32_t
+read_unece_iso_rdata(struct domain_table *domains, uint16_t rdlength,
+	struct buffer *packet, struct rr **rr)
+{
+	const size_t mark = buffer_position(packet);
+	uint16_t length = 0;
+
+	/* standard or recommendation (at least 2) plus value (at least 1)
+	 * plus code (at least 2) plus description (remainder)
+	 */
+	if (buffer_remaining(packet) < rdlength || rdlength < 2 + 1 + 2)
+		return MALFORMED;
+	if (skip_string(packet, rdlength, &length) < 0
+	||  skip_string(packet, rdlength, &length) < 0
+	||  skip_string(packet, rdlength, &length) < 0
+	||  rdlength < length)
+		return MALFORMED;
+	buffer_set_position(packet, mark);
+	return read_rdata(domains, rdlength, packet, rr);
+}
+
+int
+print_unece_iso_rdata(struct buffer *output, const struct rr *rr)
+{
+	uint16_t length = 0;
+	/* recommendation/standard MUST have at least 1 char */
+	if(rr->rdlength <= length || rr->rdata[length] == 0)
+		return 0;
+	if(!print_unquoted(output, rr->rdlength, rr->rdata, &length))
+		return 0;
+	buffer_printf(output, " ");
+	/* value may be empty (printed as -) */
+	if(rr->rdlength <= length)
+		return 0;
+	if(rr->rdata[length] == 0) {
+		buffer_printf(output, "-");
+		length += 1;
+	} else if(!print_unquoted(output, rr->rdlength, rr->rdata, &length))
+		return 0;
+	buffer_printf(output, " ");
+	/* recommendation/standard MUST have at least 1 char */
+	if(rr->rdlength <= length || rr->rdata[length] == 0)
+		return 0;
+	if(!print_unquoted(output, rr->rdlength, rr->rdata, &length))
+		return 0;
+	buffer_printf(output, " ");
+	/* description */
+	if(!print_text(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
 		return 0;
@@ -3729,9 +3784,12 @@ read_caa_rdata(struct domain_table *domains, uint16_t rdlength,
 	uint16_t length = 1;
 
 	/* byte + string + long string */
-	if (buffer_remaining(packet) < rdlength || rdlength < 2)
+	if (buffer_remaining(packet) < rdlength || rdlength < 3)
 		return MALFORMED;
 	buffer_skip(packet, 1);
+	/* RFC 8659 section 4.1.1: tag length MUST be at least 1 */
+	if (buffer_read_u8_at(packet, mark + 1) == 0)
+		return MALFORMED;
 	if (skip_string(packet, rdlength, &length) < 0 || rdlength < length)
 		return MALFORMED;
 	buffer_set_position(packet, mark);
@@ -3758,7 +3816,7 @@ print_caa_rdata(struct buffer *output, const struct rr *rr)
 		else	return 0;
 	}
 
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if (!print_text(output, rr->rdlength, rr->rdata, &length))
 		return 0;
 	if(rr->rdlength != length)
@@ -3777,10 +3835,10 @@ print_doa_rdata(struct buffer *output, const struct rr *rr)
 		rr->rdata[8]);
 	if(!print_string(output, rr->rdlength, rr->rdata, &length))
 		return 0;
-	buffer_printf(output, " ");
+	buffer_print_char(output, ' ');
 	if(rr->rdlength == length) {
 		/* The base64 string is empty, and DOA uses '-' for that. */
-		buffer_printf(output, "-");
+		buffer_print_char(output, '-');
 	} else {
 		if(!print_base64(output, rr->rdlength, rr->rdata, &length))
 			return 0;
@@ -3868,20 +3926,20 @@ print_amtrelay_rdata(struct buffer *output, const struct rr *rr)
 		relay_type);
 	switch(relay_type) {
 	case AMTRELAY_NOGATEWAY:
-		buffer_printf(output, " .");
+		buffer_print(output, " .", 2);
 		break;
 	case AMTRELAY_IP4:
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if(!print_ip4(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 		break;
 	case AMTRELAY_IP6:
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if(!print_ip6(output, rr->rdlength, rr->rdata, &length))
 			return 0;
 		break;
 	case AMTRELAY_DNAME:
-		buffer_printf(output, " ");
+		buffer_print_char(output, ' ');
 		if(!print_name_literal(output, rr->rdlength, rr->rdata,
 			&length))
 			return 0;
@@ -3972,7 +4030,7 @@ print_rdata(buffer_type *output, const nsd_type_descriptor_type *descriptor,
 	size_t saved_position = buffer_position(output);
 	/* If print_rdata is going to print "", omit the tab printout. */
 	if(!(rr->type == TYPE_APL && rr->rdlength == 0))
-		buffer_printf(output, "\t");
+		buffer_print_char(output, '\t');
 	if(!descriptor->print_rdata(output, rr)) {
 		buffer_set_position(output, saved_position);
 		return 0;

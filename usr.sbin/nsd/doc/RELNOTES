@@ -1,5 +1,54 @@
 NSD RELEASE NOTES
 
+4.15.4
+================
+FEATURES:
+	- A report-channel config option to return a Report-Channel EDNS option
+	  in responses
+	- A catalog-group-pattern option to limit the patterns from which
+	  catalog consumer member zones may be configured by using the group
+	  property.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the suggestion.
+	- Merge #515: The UNECE and ISO RR types
+
+BUG FIXES:
+	- Fix makedist.sh to omit .cirrus.yml ci integration.
+	- Fix handling malformed SOA records with a short rdata content with
+	  incremental transfers. Thanks to Tristan Madani for the report.
+	- Fix #510: Missing NSEC3 records for next-closer in case of
+	  ENT, NSEC3 and opt-out.
+	- Merge #511: Fix to retry a catalog consumer zone over AXFR if IXFR
+	  failed to apply
+	- Fix to not wrap the rdlength variable for SVCB RRs with an rdlength
+	  larger than 65528 (and a short TargetName rdata field, like .).
+	  Thanks to Zanya <tea915656@gmail.com> for the report.
+	- Fix to not crash when more than one group property is parsed from a
+	  consumer catalog member zone, with only one of them valid.
+	  Thanks to Yuxiao Wu, Yunyi Zhang, Baojun Liu, and Haixin Duan
+	  from Tsinghua University, for the report and suggested fix.
+	- Fix that when printing rdata, fixed sized writes will not overflow
+	  the buffer.
+	  Thanks to Yuxiao Wu, Yunyi Zhang, Baojun Liu, and Haixin Duan
+	  from Tsinghua University, for the report and suggested fix.
+	- Fix to compare the dname variant of an AMTRELAY relay and IPSECKEY
+	  gateway RDATA field case insensitively when they are removed by way
+	  of IXFR.
+	  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix to deny CAA RRs from primaries with an empty tag.
+	  Thanks Qifan Zhang, Palo Alto Networks, for the report.
+	- Fix #523: systemd support is incomplete. Implements
+	  Type=notify-reload with systemctl reload nsd support.
+	- Fix #526 from jpmens: Fix typo in nsd.conf.5.in
+	- Merge #527: Eliminate excess error message in XoT transfer
+	  Thanks Ferran Tufan
+
+4.15.3
+================
+FEATURES:
+BUG FIXES:
+	- Update to simdzone-0.2.7 with fixes for CVE-2026-101337,
+	  CVE-2026-101338, CVE-2026-101339 and CVE-2026-101341
+
 4.15.2
 ================
 FEATURES:

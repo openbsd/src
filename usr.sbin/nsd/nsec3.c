@@ -1272,8 +1272,12 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 			/* add optout range from parent zone */
 			/* note: no check of optout bit, resolver checks it */
 			if(domain->nsec3) {
-				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
-					domain->nsec3->nsec3_ds_parent_cover);
+				/* add from this side of a zone cut (if any) */
+				if(domain->nsec3->nsec3_ds_parent_cover)
+					nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+						domain->nsec3->nsec3_ds_parent_cover);
+				else nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+						domain->nsec3->nsec3_cover);
 			}
 		}
 	}

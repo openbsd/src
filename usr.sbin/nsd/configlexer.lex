@@ -204,6 +204,7 @@ database{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_DATABASE;}
 identity{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IDENTITY;}
 version{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERSION;}
 nsid{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NSID;}
+report-channel{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REPORT_CHANNEL;}
 logfile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_LOGFILE;}
 log-only-syslog{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_LOG_ONLY_SYSLOG;}
 server-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_SERVER_COUNT;}
@@ -331,6 +332,7 @@ verifier-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_COUNT; }
 verifier-feed-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_FEED_ZONE; }
 verifier-timeout{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_TIMEOUT; }
 catalog{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG; }
+catalog-group-pattern{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG_GROUP_PATTERN; }
 catalog-member-pattern{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG_MEMBER_PATTERN; }
 catalog-producer-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG_PRODUCER_ZONE; }
 xdp-interface{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_XDP_INTERFACE; }

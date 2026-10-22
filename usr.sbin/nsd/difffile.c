@@ -401,8 +401,9 @@ rdatas_equal(const rr_type *rr1, const rr_type *rr2, uint16_t type,
 			}
 			offset += field_len1;
 			continue;
-		} else if(descriptor->rdata.fields[i].length ==
-			RDATA_LITERAL_DNAME) {
+		} else if(descriptor->rdata.fields[i].length == RDATA_LITERAL_DNAME
+		       || descriptor->rdata.fields[i].length == RDATA_IPSECGATEWAY
+		       || descriptor->rdata.fields[i].length == RDATA_AMTRELAY_RELAY) {
 			uint8_t length1, length2;
 			const uint8_t *name1 = rr1->rdata + offset;
 			const uint8_t *name2 = rr2->rdata + offset;

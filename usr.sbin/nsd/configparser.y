@@ -43,6 +43,14 @@ struct component {
 	char *str;
 };
 
+
+/* for using strcmp in qsort */
+static int
+cmpstringp(const void *p1, const void *p2)
+{
+	return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
+
 %}
 
 %union {
@@ -100,6 +108,7 @@ struct component {
 %token VAR_VERSION
 %token VAR_IDENTITY
 %token VAR_NSID
+%token VAR_REPORT_CHANNEL
 %token VAR_TCP_COUNT
 %token VAR_TCP_REJECT_OVERFLOW
 %token VAR_TCP_QUERY_COUNT
@@ -218,6 +227,7 @@ struct component {
 %token VAR_IXFR_NUMBER
 %token VAR_CREATE_IXFR
 %token VAR_CATALOG
+%token VAR_CATALOG_GROUP_PATTERN
 %token VAR_CATALOG_MEMBER_PATTERN
 %token VAR_CATALOG_PRODUCER_ZONE
 %token VAR_XDP_INTERFACE
@@ -369,6 +379,12 @@ server_option:
         } else {
           yyerror("NSID too long");
         }
+      }
+    }
+  | VAR_REPORT_CHANNEL STRING
+    {
+      if (!(cfg_parser->opt->report_channel = (dname_type *)dname_parse(cfg_parser->opt->region, $2))) {
+        yyerror("bad report-channel name %s", $2);
       }
     }
   | VAR_LOGFILE STRING
@@ -1223,6 +1239,47 @@ pattern_or_zone_option:
     { 
       cfg_parser->pattern->catalog_member_pattern = region_strdup(cfg_parser->opt->region, $2); 
     }
+  | VAR_CATALOG_GROUP_PATTERN STRING
+    {
+      struct group_arr* new_arr;
+
+      if(!cfg_parser->pattern->catalog_group_pattern) {
+	new_arr = region_alloc( cfg_parser->opt->region
+	                      , sizeof(struct group_arr) + sizeof(char*));
+	if(!new_arr) {
+	  new_arr = GROUP_ARR_NULL;
+	} else {
+	  new_arr->nmemb = 1;
+	  new_arr->groups[0] = region_strdup(cfg_parser->opt->region, $2);
+	  if(!new_arr->groups[0])
+	    new_arr->nmemb = 0;
+	}
+        cfg_parser->pattern->catalog_group_pattern = new_arr;
+
+      } else if(cfg_parser->pattern->catalog_group_pattern->nmemb == 0) {
+	; /* Pass; something went wrong earlier */
+
+      } else {
+	new_arr = region_alloc( cfg_parser->opt->region
+	                      , sizeof(struct group_arr)
+	                      + sizeof(char*) * (cfg_parser->pattern->catalog_group_pattern->nmemb + 1));
+	if(!new_arr)
+	  cfg_parser->pattern->catalog_group_pattern->nmemb = 0;
+	else {
+	  memcpy(new_arr, cfg_parser->pattern->catalog_group_pattern,
+	      sizeof(struct group_arr)
+            + sizeof(char*) * cfg_parser->pattern->catalog_group_pattern->nmemb);
+	  new_arr->groups[new_arr->nmemb] = region_strdup(cfg_parser->opt->region, $2);
+	  if(!new_arr->groups[new_arr->nmemb])
+	    new_arr->nmemb = 0;
+	  else {
+	    new_arr->nmemb += 1;
+	    qsort(new_arr->groups, new_arr->nmemb, sizeof(char*), cmpstringp);
+	  }
+          cfg_parser->pattern->catalog_group_pattern = new_arr;
+	}
+      }
+    }
   | VAR_CATALOG_PRODUCER_ZONE STRING 
     {
       dname_type *dname;
@@ -1235,6 +1292,12 @@ pattern_or_zone_option:
       } else {
         region_recycle(cfg_parser->opt->region, dname, dname_total_size(dname));
         cfg_parser->pattern->catalog_producer_zone = region_strdup(cfg_parser->opt->region, $2); 
+      }
+    }
+  | VAR_REPORT_CHANNEL STRING
+    {
+      if (!(cfg_parser->pattern->report_channel = (dname_type *)dname_parse(cfg_parser->opt->region, $2))) {
+        yyerror("bad report-channel name %s", $2);
       }
     };
 
