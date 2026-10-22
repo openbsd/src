@@ -133,6 +133,10 @@ static const uint32_t cpuid_pclmulqdq_bit = 1 << 1;     ///< @private bit  1 of 
 static const uint32_t cpuid_have_xgetbv_bit = 1 << 27;  ///< @private bit 27 of ECX for EAX=0x1
 static const uint32_t cpuid_have_avx_bit = 1 << 28;     ///< @private bit 28 of ECX for EAX=0x1
 
+#ifndef __GNUC__
+#define __asm__ asm
+#endif
+
 static inline void cpuid(
   uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
 {
@@ -148,7 +152,7 @@ static inline void cpuid(
   __get_cpuid(level, eax, ebx, ecx, edx);
 #else
   uint32_t a = *eax, b, c = *ecx, d;
-  asm volatile("cpuid\n\t" : "+a"(a), "=b"(b), "+c"(c), "=d"(d));
+  __asm__ volatile("cpuid\n\t" : "+a"(a), "=b"(b), "+c"(c), "=d"(d));
   *eax = a;
   *ebx = b;
   *ecx = c;
@@ -162,7 +166,7 @@ static inline uint64_t xgetbv(uint32_t ecx)
   return _xgetbv(ecx);
 #else
   uint32_t a, c = ecx, d;
-  asm volatile("xgetbv\n\t" : "=d"(d), "=a"(a) : "c"(c));
+  __asm__ volatile("xgetbv\n\t" : "=d"(d), "=a"(a) : "c"(c));
   uint64_t xcr0 = ((uint64_t)d << 32) | (uint64_t)a;
   return xcr0;
 #endif

@@ -10,7 +10,7 @@
 # platform not supported by NSD here is undesirable. Builds for standalone use
 # or development/testing are required to use CMake.
 
-AC_INIT([simdzone],[0.2.5],[https://github.com/NLnetLabs/simdzone/issues])
+AC_INIT([simdzone],[0.2.8],[https://github.com/NLnetLabs/simdzone/issues])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
@@ -20,6 +20,8 @@ m4_include(m4/ax_check_compile_flag.m4)
 
 CFLAGS="$CFLAGS"
 m4_version_prereq([2.70], [AC_PROG_CC], [AC_PROG_CC_STDC])
+
+m4_ifdef([AC_PROG_AR], [AC_PROG_AR], [AC_SUBST([AR], [ar])])
 
 # allow user to override the -g -O2 flags.
 if test "x$CFLAGS" = "x" ; then
@@ -49,6 +51,12 @@ AC_ARG_ENABLE(haswell, AS_HELP_STRING([--disable-haswell],[Disable Haswell (AVX2
 case "$enable_haswell" in
   no)    enable_haswell=no ;;
   yes|*) enable_haswell=yes ;;
+esac
+
+AC_ARG_ENABLE(checking, AS_HELP_STRING([--enable-checking],[Enable internal runtime checks]))
+case "$enable_checking" in
+  yes)  ;;
+  no|*) AC_DEFINE([NDEBUG], [], [Undefine this to enable internal runtime checks.]) ;;
 esac
 
 # GCC and Clang

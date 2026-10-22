@@ -155,6 +155,26 @@ static really_inline int32_t check_string(
   return count;
 }
 
+/* The "Recommendation" and "Code" rdata fields from the UNECE and ISO RRs
+ * MUST be at least 1 byte. 0 bytes is a syntax error as the values are not
+ * represented within quotes. The value must be in US-ASCII and must not
+ * contain whitespaces, however a receiver MUST NOT treat the record as
+ * invalid so the character restrictions can be semantic errors.
+ */
+zone_nonnull((1,2,3,4))
+static really_inline int32_t check_ascii(
+  parser_t *parser,
+  const type_info_t *type,
+  const rdata_info_t *field,
+  const uint8_t *data,
+  const size_t length)
+{
+  int32_t count = check_string(parser, type, field, data, length);
+  if (count == 0)
+    SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
+  return count;
+}
+
 zone_nonnull((1,2,3,4))
 static really_inline int32_t check_nsec(
   parser_t *parser,
@@ -415,7 +435,7 @@ static int32_t parse_wks_rdata(
     take(parser, token);
   }
 
-  rdata->octets += (size_t)highest_port / 8 + 1;
+  rdata->octets += highest_port < 0 ? 0 : (size_t)highest_port / 8 + 1;
 
   if (have_delimiter(parser, type, token) < 0)
     return token->code;
@@ -2387,6 +2407,210 @@ static int32_t parse_brid_rdata(
   return check_brid_rr(parser, type, rdata);
 }
 
+nonnull_all
+static int32_t check_unece_iso_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  int32_t r;
+  size_t c = 0;
+  const size_t n = (uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets;
+  const uint8_t *o = parser->rdata->octets;
+  const rdata_info_t *f = type->rdata.fields;
+
+  if ((r = check(&c, check_ascii(parser, type, &f[0], o, n))) ||
+      (r = check(&c, check_string(parser, type, &f[1], o+c, n-c))) ||
+      (r = check(&c, check_ascii(parser, type, &f[2], o+c, n-c))))
+    return r;
+  return accept_rr(parser, type, rdata);
+}
+
+static const uint8_t not_printable_ascii[256] = {
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x00 - 0x07
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x08 - 0x0f
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x10 - 0x17
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x18 - 0x1f
+  0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, // 0x20 - 0x27
+  0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x28 - 0x2f
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x30 - 0x37
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x38 - 0x3f
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x40 - 0x47
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x48 - 0x4f
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x50 - 0x57
+  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 0x58 - 0x5f
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x60 - 0x67
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x68 - 0x6f
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x70 - 0x77
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // 0x78 - 0x7f
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x80 - 0x87
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x88 - 0x8f
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x90 - 0x97
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0x98 - 0x9f
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xa0 - 0xa7
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xa8 - 0xaf
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xb0 - 0xb7
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xb8 - 0xbf
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xc0 - 0xc7
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xc8 - 0xcf
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xd0 - 0xd7
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xd8 - 0xdf
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xe0 - 0xe7
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xe8 - 0xef
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xf0 - 0xf7
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, // 0xf8 - 0xff
+};
+
+nonnull_all
+static really_inline int32_t parse_ascii(
+  parser_t *parser,
+  const type_info_t *type,
+  const rdata_info_t *field,
+  rdata_t *rdata,
+  const token_t *token)
+{
+  if (token->length > 255)
+    SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
+  *rdata->octets++ = (uint8_t)token->length;
+
+  uint32_t bad_chars = 0;
+  for (size_t count=0; count < token->length; count++) {
+    const uint8_t octet = (uint8_t)token->data[count];
+    *rdata->octets++ = octet;
+    bad_chars |= not_printable_ascii[octet];
+  }
+  
+  if (bad_chars)
+    SEMANTIC_ERROR(parser, "Invalid %s in %s", NAME(field), NAME(type));
+
+  return 0;
+}
+
+nonnull_all
+static really_inline bool unece_iso_check_posnum(uint8_t **input, uint8_t *end)
+{
+  /* posnum    = nzint [ "." frac ] / "0" "." frac
+   * nzint     = %x31-39 *DIGIT
+   * frac      = *DIGIT %x31-39
+   */
+  if (*input >= end)
+    return false;
+  if (**input == '0') {
+    if (*input + 3 >= end || (*input)[1] != '.')
+      return false;
+    *input += 2;
+    goto unece_iso_check_frac;
+  }
+  if (*input >= end || **input < '1' || **input > '9')
+    return false;
+  while (*input < end && **input >= '0' && **input <= '9')
+    *input += 1;
+  if (*input + 2 >= end || **input != '.')
+    return true;
+  *input += 1;
+
+unece_iso_check_frac:
+  assert(*input < end);
+  if (**input < '0' || **input > '9')
+    return false;
+  while (*input < end && **input >= '0' && **input <= '9')
+    *input += 1;
+  return (*input)[-1] != '0';
+}
+
+nonnull_all
+static really_inline bool unece_iso_check_precision(uint8_t **input, uint8_t *end)
+{
+  assert(*input < end); /* guaranteed by check_unece_iso_value*/
+
+  /* precision = "+-" ( "0" / posnum / "?" )
+   */
+  if (**input != '+' || *input + 2 >= end || (*input)[1] != '-')
+    return false;
+  *input += 2;
+  if (**input == '?')
+    return *input + 1 == end;
+  if (**input == '0' && *input + 1 == end)
+      return true;
+  if (!unece_iso_check_posnum(input, end))
+    return false;
+  return *input == end;
+}
+
+nonnull_all
+static really_inline bool check_unece_iso_value(uint8_t **input, uint8_t *end)
+{
+  /* value     = unknown / quantity
+   * unknown   = "?"
+   * quantity  = ( "0" / ["-"] posnum ) [precision]
+   */
+  if (**input == '?')
+    return *input + 1 == end;
+  if (**input == '0') {
+    *input += 1;
+    /* optional precision */
+    return *input == end ? true : unece_iso_check_precision(input, end);
+  }
+  if (**input == '-')
+    *input += 1;
+  if (!unece_iso_check_posnum(input, end))
+    return false;
+  /* optional precision */
+  return *input == end ? true : unece_iso_check_precision(input, end);
+}
+
+nonnull_all
+static really_inline int32_t parse_unece_iso_value(
+  parser_t *parser,
+  const type_info_t *type,
+  const rdata_info_t *field,
+  rdata_t *rdata,
+  const token_t *token)
+{
+
+  if (token->length == 1 && token->data[0] == '-' && rdata->octets < rdata->limit) {
+    *rdata->octets++ = 0;
+    return 0;
+  }
+  uint8_t *o = rdata->octets;
+  int r = parse_string(parser, type, field, rdata, token);
+  if (r)
+    return r;
+  assert(rdata->octets == o + 1 + o[0]);
+  if (o[0] == 0) /* No value is allowed */
+    return 0;
+  o += 1;
+  if (!check_unece_iso_value(&o, o + o[-1]))
+    SEMANTIC_ERROR( parser, "Invalid %s in %s", NAME(field), NAME(type));
+  return 0;
+}
+
+
+nonnull_all
+static int32_t parse_unece_iso_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if ((code = parse_ascii(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[1], token)) < 0)
+    return code;
+  if ((code = parse_unece_iso_value(parser, type, &fields[1], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[2], token)) < 0)
+    return code;
+  if ((code = parse_ascii(parser, type, &fields[2], rdata, token)) < 0)
+    return code;
+  if ((code = take_quoted(parser, type, &fields[3], token)) < 0)
+    return code;
+  if ((code = parse_text(parser, type, &fields[3], rdata, token)) < 0)
+    return code;
+  if ((code = take_delimiter(parser, type, token)) < 0)
+    return code;
+  return accept_rr(parser, type, rdata);
+}
 
 nonnull_all
 static int32_t check_nid_rr(
@@ -2919,7 +3143,7 @@ static int32_t parse_generic_rdata(
     struct base16_state state = { .eof = 0, .bytes = 0, .carry = 0 };
 
     do {
-      size_t length = token->length + 1 / 2;
+      size_t length = (token->length + 1) / 2;
       if (length > (uintptr_t)rdata->limit - (uintptr_t)rdata->octets)
         SYNTAX_ERROR(parser, "Invalid RDATA in %s", NAME(type));
       if (!base16_stream_decode(&state, token->data, token->length, rdata->octets, &length))
@@ -3338,6 +3562,21 @@ static const rdata_info_t brid_rdata_fields[] = {
   FIELD("cbor blob"),
 };
 
+static const rdata_info_t unece_rdata_fields[] = {
+  FIELD("recommendation"),
+  FIELD("value"),
+  FIELD("code"),
+  FIELD("description"),
+};
+
+static const rdata_info_t iso_rdata_fields[] = {
+  FIELD("standard"),
+  FIELD("value"),
+  FIELD("code"),
+  FIELD("description"),
+};
+
+
 static const rdata_info_t spf_rdata_fields[] = {
   FIELD("text")
 };
@@ -3587,8 +3826,10 @@ static const type_info_t types[] = {
                 check_hhit_rr, parse_hhit_rdata),
   TYPE("BRID", ZONE_TYPE_BRID, ZONE_CLASS_ANY, FIELDS(brid_rdata_fields),
                 check_brid_rr, parse_brid_rdata),
-  UNKNOWN_TYPE(69),
-  UNKNOWN_TYPE(70),
+  TYPE("UNECE", ZONE_TYPE_UNECE, ZONE_CLASS_ANY, FIELDS(unece_rdata_fields),
+                check_unece_iso_rr, parse_unece_iso_rdata),
+  TYPE("ISO", ZONE_TYPE_ISO, ZONE_CLASS_ANY, FIELDS(iso_rdata_fields),
+                check_unece_iso_rr, parse_unece_iso_rdata),
   UNKNOWN_TYPE(71),
   UNKNOWN_TYPE(72),
   UNKNOWN_TYPE(73),

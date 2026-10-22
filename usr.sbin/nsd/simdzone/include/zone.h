@@ -191,6 +191,10 @@ extern "C" {
 #define ZONE_TYPE_HHIT (67u)
 /** UAS Broadcast Remote Identification @rfc{9886} */
 #define ZONE_TYPE_BRID (68u)
+/** Value coded per a UNECE Recommendation @draft{woodcock-faltstrom, external-registry-rrtypes} */
+#define ZONE_TYPE_UNECE (69u)
+/** Value coded per an ISO Recommendation @draft{woodcock-faltstrom, external-registry-rrtypes} */
+#define ZONE_TYPE_ISO (70u)
 /** Sender Policy Framework @rfc{7208} */
 #define ZONE_TYPE_SPF (99u)
 /** Node Identifier @rfc{6742} */

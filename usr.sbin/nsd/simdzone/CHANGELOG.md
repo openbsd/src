@@ -5,6 +5,47 @@ All notable changes to simdzone will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-10-21
+
+### Added
+- The UNECE and ISO RR types
+
+### Fixed
+
+- Fix the calculation of the rdata needed for rdata in RFC 3597 Unknown Type
+  format.
+  Thanks to Zanya <tea915656@gmail.com> for the report.
+- Fix preventing size\_t length to wrap below 0 when scanning an end-of-string
+  backslash character, resulting in out-of-bounds read.
+  Thanks to Zanya <tea915656@gmail.com> for the report.
+- Fix to determine the correct rdata length for WKS RRs without bitmap.
+  Thanks to Alwaleed Ashi (LXR) <waleed.9998@hotmail.com> for the report.
+- Fix to build simdzone also with NDEBUG by default, like NSD and only disable
+  it when `--enable-check ing` is given to configure.
+  Thanks to Alwaleed Ashi (LXR) <waleed.9998@hotmail.com> for the report.
+- Fix to let configure detect ar as it needs to match the --host arch
+  Thanks Haelwenn (lanodan) Monnier
+- Fix asm usage in strict ISO C builds
+  Thanks Jared Mauch
+
+## [0.2.7] - 2026-10-14
+
+### Fixed
+
+- Fix for CVE-2026-101337: Reserve correct number of bytes for base64 sequence
+  tokens, regardless of stream decoder phase.
+  Thanks to Qifan Zhang, Palo Alto Networks, and Gaurang Maheta for the report.
+- Fix for CVE-2026-101338: No SVCB and/or HTTPS parameters are parsed when the
+  RDATA is already filled to the brim.
+  Thanks to Qifan Zhang, Palo Alto Networks, for the report.
+- Fix CVE-2026-101339: Fix for dname possibility to overwrite the stack when
+  near the RDATA limit.
+  Thanks to Qifan Zhang, Palo Alto Networks, and Alwaleed Ashi (LXR)
+  <waleed.9998@hotmail.com> for the report.
+- Fix for CVE-2026-101341: Also check that RDATA stays within bounds while
+  parsing string tokens under 32 bytes.
+  Thanks to Alwaleed Ashi (LXR) <waleed.9998@hotmail.com> for the report
+
 ## [0.2.6] - 2026-09-02
 
 ### Added
@@ -31,8 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix to parse SVCB and HTTPS svcparam ech=0.
 
 ## [0.2.4] - 2025-12-04
-
-### Added
 
 ### Fixed
 
