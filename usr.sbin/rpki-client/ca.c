@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.3 2026/10/22 13:37:53 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.4 2026/10/22 14:18:55 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -451,25 +451,12 @@ ncas_sorted_cmp(const void *ca_a, const void *ca_b)
 	assert(a->purpose == CERT_PURPOSE_CA);
 	assert(b->purpose == CERT_PURPOSE_CA);
 
-	cmp = strcmp(a->aki, b->aki);
-	if (cmp > 0)
+	if (a->since > b->since)
 		return 1;
-	if (cmp < 0)
-		return -1;
-
-	cmp = strcmp(a->mfturi, b->mfturi);
-	if (cmp > 0)
-		return 1;
-	if (cmp < 0)
+	if (a->since < b->since)
 		return -1;
 
 	cmp = strcmp(a->location, b->location);
-	if (cmp > 0)
-		return 1;
-	if (cmp < 0)
-		return -1;
-
-	cmp = strcmp(a->ski, b->ski);
 	if (cmp > 0)
 		return 1;
 	if (cmp < 0)
