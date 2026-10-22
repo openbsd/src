@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.13 2016/09/13 10:49:52 mikeb Exp $	*/
+/*	$OpenBSD: timer.c,v 1.14 2026/10/22 04:31:42 bket Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -37,8 +37,7 @@ void
 timer_set(struct iked *env, struct iked_timer *tmr,
     void (*cb)(struct iked *, void *), void *arg)
 {
-	if (evtimer_initialized(&tmr->tmr_ev) &&
-	    evtimer_pending(&tmr->tmr_ev, NULL))
+	if (evtimer_initialized(&tmr->tmr_ev))
 		evtimer_del(&tmr->tmr_ev);
 
 	tmr->tmr_env = env;

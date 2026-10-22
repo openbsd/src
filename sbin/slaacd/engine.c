@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.105 2026/08/04 12:48:01 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.106 2026/10/22 04:31:42 bket Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1029,10 +1029,9 @@ iface_state_transition(struct slaacd_iface *iface, enum if_state new_state)
 		    if_state_name(new_state), iface->timo.tv_sec);
 	}
 
-	if (iface->timo.tv_sec == -1) {
-		if (evtimer_pending(&iface->timer, NULL))
-			evtimer_del(&iface->timer);
-	} else
+	if (iface->timo.tv_sec == -1)
+		evtimer_del(&iface->timer);
+	else
 		evtimer_add(&iface->timer, &iface->timo);
 }
 
@@ -1110,10 +1109,9 @@ void addr_proposal_state_transition(struct address_proposal *addr_proposal,
 		    proposal_state_name(new_state), addr_proposal->timo.tv_sec);
 	}
 
-	if (addr_proposal->timo.tv_sec == -1) {
-		if (evtimer_pending(&addr_proposal->timer, NULL))
-			evtimer_del(&addr_proposal->timer);
-	} else
+	if (addr_proposal->timo.tv_sec == -1)
+		evtimer_del(&addr_proposal->timer);
+	else
 		evtimer_add(&addr_proposal->timer, &addr_proposal->timo);
 }
 
@@ -1186,10 +1184,9 @@ void dfr_proposal_state_transition(struct dfr_proposal *dfr_proposal,
 		    proposal_state_name(new_state), dfr_proposal->timo.tv_sec);
 	}
 
-	if (dfr_proposal->timo.tv_sec == -1) {
-		if (evtimer_pending(&dfr_proposal->timer, NULL))
-			evtimer_del(&dfr_proposal->timer);
-	} else
+	if (dfr_proposal->timo.tv_sec == -1)
+		evtimer_del(&dfr_proposal->timer);
+	else
 		evtimer_add(&dfr_proposal->timer, &dfr_proposal->timo);
 
 }
@@ -1263,10 +1260,9 @@ void rdns_proposal_state_transition(struct rdns_proposal *rdns_proposal,
 		    proposal_state_name(new_state), rdns_proposal->timo.tv_sec);
 	}
 
-	if (rdns_proposal->timo.tv_sec == -1) {
-		if (evtimer_pending(&rdns_proposal->timer, NULL))
-			evtimer_del(&rdns_proposal->timer);
-	} else
+	if (rdns_proposal->timo.tv_sec == -1)
+		evtimer_del(&rdns_proposal->timer);
+	else
 		evtimer_add(&rdns_proposal->timer, &rdns_proposal->timo);
 }
 

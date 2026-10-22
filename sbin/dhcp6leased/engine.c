@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.42 2026/08/04 12:50:43 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.43 2026/10/22 04:31:42 bket Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1212,10 +1212,9 @@ state_transition(struct dhcp6leased_iface *iface, enum if_state new_state)
 	    "?" : if_name, if_state_name[old_state], if_state_name[new_state],
 	    iface->timo.tv_sec);
 
-	if (iface->timo.tv_sec == -1) {
-		if (evtimer_pending(&iface->timer, NULL))
-			evtimer_del(&iface->timer);
-	} else
+	if (iface->timo.tv_sec == -1)
+		evtimer_del(&iface->timer);
+	else
 		evtimer_add(&iface->timer, &iface->timo);
 }
 

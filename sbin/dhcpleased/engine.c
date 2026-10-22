@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.70 2026/08/26 17:25:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.71 2026/10/22 04:31:42 bket Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1544,10 +1544,9 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 	    if_state_name[old_state], if_state_name[new_state],
 	    iface->timo.tv_sec);
 
-	if (iface->timo.tv_sec == -1) {
-		if (evtimer_pending(&iface->timer, NULL))
-			evtimer_del(&iface->timer);
-	} else
+	if (iface->timo.tv_sec == -1)
+		evtimer_del(&iface->timer);
+	else
 		evtimer_add(&iface->timer, &iface->timo);
 }
 
