@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.4 2026/10/22 14:18:55 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.5 2026/10/22 14:59:51 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -490,7 +490,7 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 	(void)fchmod(fd, 0644);
 
 	if ((f = fdopen(fd, "w")) == NULL)
-		err(1, "fopen");
+		err(1, "fdopen");
 
 	if ((ncas_sorted = calloc(ncas_num, sizeof(ncas_sorted[0]))) == NULL)
 		err(1, NULL);
