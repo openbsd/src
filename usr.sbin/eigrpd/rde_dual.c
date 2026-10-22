@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.31 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.32 2026/10/22 04:38:15 bket Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -510,8 +510,7 @@ reply_active_start_timer(struct reply_node *reply)
 static void
 reply_active_stop_timer(struct reply_node *reply)
 {
-	if (evtimer_pending(&reply->ev_active_timeout, NULL) &&
-	    evtimer_del(&reply->ev_active_timeout) == -1)
+	if (evtimer_del(&reply->ev_active_timeout) == -1)
 		fatal("reply_active_stop_timer");
 }
 
@@ -575,8 +574,7 @@ reply_sia_start_timer(struct reply_node *reply)
 static void
 reply_sia_stop_timer(struct reply_node *reply)
 {
-	if (evtimer_pending(&reply->ev_sia_timeout, NULL) &&
-	    evtimer_del(&reply->ev_sia_timeout) == -1)
+	if (evtimer_del(&reply->ev_sia_timeout) == -1)
 		fatal("reply_sia_stop_timer");
 }
 

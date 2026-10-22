@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtp.c,v 1.8 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: rtp.c,v 1.9 2026/10/22 04:38:15 bket Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -280,8 +280,7 @@ rtp_retrans_start_timer(struct packet *pkt)
 static void
 rtp_retrans_stop_timer(struct packet *pkt)
 {
-	if (evtimer_pending(&pkt->ev_timeout, NULL) &&
-	    evtimer_del(&pkt->ev_timeout) == -1)
+	if (evtimer_del(&pkt->ev_timeout) == -1)
 		fatal("rtp_retrans_stop_timer");
 }
 
@@ -307,7 +306,6 @@ rtp_ack_start_timer(struct nbr *nbr)
 void
 rtp_ack_stop_timer(struct nbr *nbr)
 {
-	if (evtimer_pending(&nbr->ev_ack, NULL) &&
-	    evtimer_del(&nbr->ev_ack) == -1)
+	if (evtimer_del(&nbr->ev_ack) == -1)
 		fatal("rtp_ack_stop_timer");
 }

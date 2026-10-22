@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.71 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.72 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -925,7 +925,6 @@ lde_gc_start_timer(void)
 void
 lde_gc_stop_timer(void)
 {
-	if (evtimer_pending(&gc_timer, NULL) &&
-	    evtimer_del(&gc_timer) == -1)
+	if (evtimer_del(&gc_timer) == -1)
 		fatal(__func__);
 }

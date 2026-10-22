@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.28 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.29 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2013, 2015 Renato Westphal <renato@openbsd.org>
@@ -190,8 +190,7 @@ adj_start_itimer(struct adj *adj)
 void
 adj_stop_itimer(struct adj *adj)
 {
-	if (evtimer_pending(&adj->inactivity_timer, NULL) &&
-	    evtimer_del(&adj->inactivity_timer) == -1)
+	if (evtimer_del(&adj->inactivity_timer) == -1)
 		fatal(__func__);
 }
 
@@ -318,8 +317,7 @@ tnbr_start_hello_timer(struct tnbr *tnbr)
 static void
 tnbr_stop_hello_timer(struct tnbr *tnbr)
 {
-	if (evtimer_pending(&tnbr->hello_timer, NULL) &&
-	    evtimer_del(&tnbr->hello_timer) == -1)
+	if (evtimer_del(&tnbr->hello_timer) == -1)
 		fatal(__func__);
 }
 

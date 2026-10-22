@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.52 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: interface.c,v 1.53 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -397,8 +397,7 @@ if_start_hello_timer(struct iface_af *ia)
 static void
 if_stop_hello_timer(struct iface_af *ia)
 {
-	if (evtimer_pending(&ia->hello_timer, NULL) &&
-	    evtimer_del(&ia->hello_timer) == -1)
+	if (evtimer_del(&ia->hello_timer) == -1)
 		fatal(__func__);
 }
 

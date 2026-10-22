@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.12 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.13 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -311,9 +311,8 @@ nbr_failed_find(struct iface *iface, u_int32_t src_ip)
 void
 nbr_failed_delete(struct nbr_failed *nbr_failed)
 {
-	if (evtimer_pending(&nbr_failed->timeout_timer, NULL))
-		if (evtimer_del(&nbr_failed->timeout_timer) == -1)
-			fatal("nbr_failed_delete");
+	if (evtimer_del(&nbr_failed->timeout_timer) == -1)
+		fatal("nbr_failed_delete");
 
 	LIST_REMOVE(nbr_failed, entry);
 	free(nbr_failed);

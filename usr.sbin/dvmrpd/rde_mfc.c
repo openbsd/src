@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.12 2025/12/15 23:38:34 jsg Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.13 2026/10/22 04:38:15 bket Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -473,9 +473,8 @@ mfc_delete_prune(struct mfc_node *mn, struct prune_node *pn)
 {
 	unsigned int	ifindex = pn->ifindex;
 
-	if (evtimer_pending(&pn->lifetime_timer, NULL))
-		if (evtimer_del(&pn->lifetime_timer) == -1)
-			fatal("mfc_delete_prune");
+	if (evtimer_del(&pn->lifetime_timer) == -1)
+		fatal("mfc_delete_prune");
 
 	LIST_REMOVE(pn, entry);
 	free(pn);

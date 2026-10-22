@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.11 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.12 2026/10/22 04:38:15 bket Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -258,7 +258,6 @@ nbr_start_timeout(struct nbr *nbr)
 static void
 nbr_stop_timeout(struct nbr *nbr)
 {
-	if (evtimer_pending(&nbr->ev_hello_timeout, NULL) &&
-	    evtimer_del(&nbr->ev_hello_timeout) == -1)
+	if (evtimer_del(&nbr->ev_hello_timeout) == -1)
 		fatal("nbr_stop_timeout");
 }

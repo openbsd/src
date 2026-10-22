@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.26 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: interface.c,v 1.27 2026/10/22 04:38:15 bket Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -464,8 +464,7 @@ eigrp_if_start_hello_timer(struct eigrp_iface *ei)
 static void
 eigrp_if_stop_hello_timer(struct eigrp_iface *ei)
 {
-	if (evtimer_pending(&ei->hello_timer, NULL) &&
-	    evtimer_del(&ei->hello_timer) == -1)
+	if (evtimer_del(&ei->hello_timer) == -1)
 		fatal("eigrp_if_stop_hello_timer");
 }
 

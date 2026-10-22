@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.81 2019/06/28 13:32:48 deraadt Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.82 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -404,8 +404,7 @@ nbr_start_ktimer(struct nbr *nbr)
 void
 nbr_stop_ktimer(struct nbr *nbr)
 {
-	if (evtimer_pending(&nbr->keepalive_timer, NULL) &&
-	    evtimer_del(&nbr->keepalive_timer) == -1)
+	if (evtimer_del(&nbr->keepalive_timer) == -1)
 		fatal(__func__);
 }
 
@@ -436,8 +435,7 @@ nbr_start_ktimeout(struct nbr *nbr)
 void
 nbr_stop_ktimeout(struct nbr *nbr)
 {
-	if (evtimer_pending(&nbr->keepalive_timeout, NULL) &&
-	    evtimer_del(&nbr->keepalive_timeout) == -1)
+	if (evtimer_del(&nbr->keepalive_timeout) == -1)
 		fatal(__func__);
 }
 
@@ -467,8 +465,7 @@ nbr_start_itimeout(struct nbr *nbr)
 void
 nbr_stop_itimeout(struct nbr *nbr)
 {
-	if (evtimer_pending(&nbr->init_timeout, NULL) &&
-	    evtimer_del(&nbr->init_timeout) == -1)
+	if (evtimer_del(&nbr->init_timeout) == -1)
 		fatal(__func__);
 }
 
@@ -515,8 +512,7 @@ nbr_start_idtimer(struct nbr *nbr)
 void
 nbr_stop_idtimer(struct nbr *nbr)
 {
-	if (evtimer_pending(&nbr->initdelay_timer, NULL) &&
-	    evtimer_del(&nbr->initdelay_timer) == -1)
+	if (evtimer_del(&nbr->initdelay_timer) == -1)
 		fatal(__func__);
 }
 

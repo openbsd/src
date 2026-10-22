@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.19 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.20 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -335,16 +335,11 @@ nbr_del(struct nbr *nbr)
 {
 	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0, NULL, 0);
 
-	if (evtimer_pending(&nbr->inactivity_timer, NULL))
-		evtimer_del(&nbr->inactivity_timer);
-	if (evtimer_pending(&nbr->db_tx_timer, NULL))
-		evtimer_del(&nbr->db_tx_timer);
-	if (evtimer_pending(&nbr->lsreq_tx_timer, NULL))
-		evtimer_del(&nbr->lsreq_tx_timer);
-	if (evtimer_pending(&nbr->ls_retrans_timer, NULL))
-		evtimer_del(&nbr->ls_retrans_timer);
-	if (evtimer_pending(&nbr->adj_timer, NULL))
-		evtimer_del(&nbr->adj_timer);
+	evtimer_del(&nbr->inactivity_timer);
+	evtimer_del(&nbr->db_tx_timer);
+	evtimer_del(&nbr->lsreq_tx_timer);
+	evtimer_del(&nbr->ls_retrans_timer);
+	evtimer_del(&nbr->adj_timer);
 
 	/* clear lists */
 	ls_retrans_list_clr(nbr);

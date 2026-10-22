@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.31 2026/07/22 16:37:46 bket Exp $ */
+/*	$OpenBSD: interface.c,v 1.32 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -272,12 +272,9 @@ if_del(struct iface *iface)
 	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
 		nbr_del(nbr);
 
-	if (evtimer_pending(&iface->hello_timer, NULL))
-		evtimer_del(&iface->hello_timer);
-	if (evtimer_pending(&iface->wait_timer, NULL))
-		evtimer_del(&iface->wait_timer);
-	if (evtimer_pending(&iface->lsack_tx_timer, NULL))
-		evtimer_del(&iface->lsack_tx_timer);
+	evtimer_del(&iface->hello_timer);
+	evtimer_del(&iface->wait_timer);
+	evtimer_del(&iface->lsack_tx_timer);
 
 	ls_ack_list_clr(iface);
 	TAILQ_REMOVE(&iflist, iface, list);

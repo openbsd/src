@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.77 2024/11/21 13:29:28 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.78 2026/10/22 04:38:16 bket Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -747,8 +747,7 @@ pending_conn_new(int fd, int af, union ldpd_addr *addr)
 void
 pending_conn_del(struct pending_conn *pconn)
 {
-	if (evtimer_pending(&pconn->ev_timeout, NULL) &&
-	    evtimer_del(&pconn->ev_timeout) == -1)
+	if (evtimer_del(&pconn->ev_timeout) == -1)
 		fatal(__func__);
 
 	TAILQ_REMOVE(&global.pending_conns, pconn, entry);

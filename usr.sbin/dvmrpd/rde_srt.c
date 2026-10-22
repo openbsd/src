@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.27 2018/09/21 01:33:55 jsg Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.28 2026/10/22 04:38:15 bket Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -91,9 +91,8 @@ rt_start_expire_timer(struct rt_node *rn)
 
 	rn->old_cost = 0;
 
-	if (evtimer_pending(&rn->holddown_timer, NULL))
-		if (evtimer_del(&rn->holddown_timer) == -1)
-			fatal("rt_start_expire_timer");
+	if (evtimer_del(&rn->holddown_timer) == -1)
+		fatal("rt_start_expire_timer");
 
 	timerclear(&tv);
 	tv.tv_sec = ROUTE_EXPIRATION_TIME;
