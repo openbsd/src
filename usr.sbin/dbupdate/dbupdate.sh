@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: dbupdate.sh,v 1.10 2026/10/21 18:30:33 deraadt Exp $
+# $OpenBSD: dbupdate.sh,v 1.11 2026/10/22 02:52:49 dgl Exp $
 #
 # Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 #
@@ -19,8 +19,10 @@
 set -o errexit
 umask 0022
 
+PROG=${0##*/}
+
 usage() {
-        echo "usage: ${0##*/} [-fn]"
+        echo "usage: $PROG [-fn]"
         exit 1
 }
 
@@ -38,7 +40,7 @@ while getopts "fn" name; do
 	esac
 done
 
-[[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && exit 1
+[[ $(id -u) -ne 0 ]] && echo $PROG: need root privileges && exit 1
 
 CACHE=/var/dbupdate
 R=$(sysctl -n kern.osrelease | sed -e 's/\.//')
@@ -50,13 +52,13 @@ cd $D
 if ! ftp -o out-SHA256.sig \
     https://ftp.openbsd.org/pub/OpenBSD/dbupdates/$R/SHA256.sig \
     > /dev/null 2>&1 ; then
-	echo dbupdates: no databases available.
+	echo $PROG: no databases available.
 	exit 0
 fi
 
 if cmp -s ${CACHE}/out-SHA256.sig out-SHA256.sig ; then
 	if [ $FORCE != true ]; then
-		echo dbupdates: databases have not changed.
+		echo $PROG: databases have not changed.
 		exit 0
 	fi
 fi
@@ -71,7 +73,7 @@ tar xfz dbupdates.tgz
 # check if the contents are same as previously processed
 if cmp -s ${CACHE}/in-SHA256 SHA256 ; then
 	if [ $FORCE != true ]; then
-		echo same internals, nothing to do
+		echo $PROG: same internals, nothing to do
 		exit 0
 	fi
 fi
@@ -81,10 +83,10 @@ n=$(cat SHA256 | grep '^SHA256 (zoneinfo.tar) ')
 o=$(cat ${CACHE}/in-SHA256 | grep '^SHA256 (zoneinfo.tar) ' || true)
 if [ $FORCE = true -o X"$o" != X"$n" ]; then
 	if [ $DRY = true ]; then
-		echo dbupdate: would have installed new zoneinfo
+		echo $PROG: would have installed new zoneinfo
 	else
 		tar xpf zoneinfo.tar -C /
-		echo dbupdate: installed new zoneinfo
+		echo $PROG: installed new zoneinfo
 	fi
 fi
 
@@ -94,7 +96,7 @@ if [ $FORCE = true -o X"$o" != X"$n" ]; then
 	tar xpf cert.tar ./etc/ssl/cert.pem
 
 	if [ $DRY == true ]; then
-		echo dbupdate: would have installed new cert.pem
+		echo $PROG: would have installed new cert.pem
 	else
 		# prepend cert.local.pem
 		t=$(mktemp /etc/ssl/cert.XXXXXXXX)
@@ -103,7 +105,7 @@ if [ $FORCE = true -o X"$o" != X"$n" ]; then
 		cat ./etc/ssl/cert.pem >> $t
 		chmod a+r $t
 		mv $t /etc/ssl/cert.pem
-		echo dbupdate: installed new cert.pem
+		echo $PROG: installed new cert.pem
 	fi
 fi
 
