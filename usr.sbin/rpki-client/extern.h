@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.314 2026/10/22 06:15:57 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.315 2026/10/22 13:37:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -158,24 +158,8 @@ struct cert {
 	unsigned char	 mfthash[SHA256_DIGEST_LENGTH]; /* of the parent mft */
 };
 
-struct ca_state {
-	RB_ENTRY(ca_state)	 entry;
-	char			*aki;
-	char			*ski;
-	char			*location;
-	char			*mfturi;
-	char			*baseuri;
-	char			*notify;
-	time_t			 since;
-	time_t			 last_attempt;
-	unsigned int		 attempts;
-	int			 defer;
-};
-
 /*
- * Non-functional CA tree element.
- * Initially all CA and TA certs are added to this tree.
- * They are removed once they are the issuer of a valid mft.
+ * CA tree element.
  */
 struct ca {
 	RB_ENTRY(ca)		 entry;
@@ -184,6 +168,7 @@ struct ca {
 	char			*location;
 	char			*carepo;
 	char			*mfturi;
+	char			*baseuri;
 	char			*notify;
 	int			 certid;
 	unsigned int		 repoid;
