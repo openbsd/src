@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.5 2026/10/22 14:59:51 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.6 2026/10/22 15:01:10 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -163,8 +163,7 @@ ca_cmp(const struct ca *a, const struct ca *b)
 	return 0;
 }
 
-static RB_HEAD(nca_tree, ca) nca_tree = \
-    RB_INITIALIZER(&nca_tree);
+static RB_HEAD(nca_tree, ca) nca_tree = RB_INITIALIZER(&nca_tree);
 
 RB_GENERATE_STATIC(nca_tree, ca, entry, ca_cmp);
 
