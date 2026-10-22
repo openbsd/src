@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.57 2026/04/11 17:04:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.58 2026/10/22 02:13:40 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -246,7 +246,7 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 	root = p->p_fd->fd_rdir ? p->p_fd->fd_rdir : rootvnode;
 	vp = dp;
 
-	while (vp != root) {
+	while (vp != root && vp != rootvnode) {
 		struct componentname cn = {
 			.cn_nameiop = LOOKUP,
 			.cn_flags = ISLASTCN | ISDOTDOT | RDONLY,
