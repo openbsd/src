@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.79 2026/10/12 14:40:52 deraadt Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.80 2026/10/22 04:35:22 bket Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -266,7 +266,7 @@ set_slice_timer(int on)
 		tv.tv_usec = (ptb->rflag % 1000) * 1000;
 
 		evtimer_add(&mainstats.timer, &tv);
-	} else if (evtimer_pending(&mainstats.timer, NULL))
+	} else
 		evtimer_del(&mainstats.timer);
 }
 
