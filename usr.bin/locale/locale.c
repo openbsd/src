@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.13 2020/04/17 10:45:04 schwarze Exp $	*/
+/*	$OpenBSD: locale.c,v 1.14 2026/10/23 11:20:51 stsp Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -184,11 +184,6 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if (argc == 1) {
-		show_current_locale();
-		return 0;
-	}
-
 	while ((opt = getopt(argc, argv, "am")) != -1) {
 		switch (opt) {
 		case 'a':
@@ -210,7 +205,9 @@ main(int argc, char *argv[])
 		show_locales();
 	else if (mflag)
 		printf("UTF-8\n");
-	else if (strcmp(*argv, "charmap") == 0)
+	else if (argc == 0)
+		show_current_locale();
+	else if (argc == 1 && strcmp(argv[0], "charmap") == 0)
 		printf("%s\n", nl_langinfo(CODESET));
 	else
 		usage();
