@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.188 2026/10/15 10:59:00 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.189 2026/10/23 05:44:54 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -694,7 +694,8 @@ struct server		*server_byaddr(struct sockaddr *, in_port_t);
 struct server_config	*serverconfig_byid(uint32_t);
 int			 server_foreach(int (*)(struct server *,
 	struct server_config *, void *), void *);
-struct server		*server_match(struct server *, int);
+struct server		*server_byname(struct server *);
+struct server		*server_bysocket(struct server *);
 
 SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
 

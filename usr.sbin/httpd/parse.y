@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2026/10/02 04:47:07 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.140 2026/10/23 05:44:54 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -351,7 +351,7 @@ server		: SERVER optmatch STRING	{
 			srv_conf = &srv->srv_conf;
 
 			/* Check if the new server already exists. */
-			if (server_match(srv, 1) != NULL) {
+			if (server_byname(srv) != NULL) {
 				yyerror("server \"%s\" defined twice",
 				    srv->srv_conf.name);
 				serverconfig_free(srv_conf);
@@ -366,7 +366,7 @@ server		: SERVER optmatch STRING	{
 				YYERROR;
 			}
 
-			if ((s = server_match(srv, 0)) != NULL) {
+			if ((s = server_bysocket(srv)) != NULL) {
 				if ((s->srv_conf.flags & SRVFLAG_TLS) !=
 				    (srv->srv_conf.flags & SRVFLAG_TLS)) {
 					yyerror("server \"%s\": tls and "
@@ -2658,7 +2658,7 @@ server_inherit(struct server *src, struct server_config *alias,
 	}
 
 	/* Check if the new server already exists */
-	if (server_match(dst, 1) != NULL) {
+	if (server_byname(dst) != NULL) {
 		yyerror("server \"%s\" defined twice",
 		    dst->srv_conf.name);
 		serverconfig_free(&dst->srv_conf);

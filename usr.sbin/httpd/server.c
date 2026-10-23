@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.143 2026/10/15 10:59:00 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.144 2026/10/23 05:44:54 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -607,7 +607,7 @@ server_foreach(int (*srv_cb)(struct server *,
 	return (0);
 }
 
-struct server *
+static struct server *
 server_match(struct server *s2, int match_name)
 {
 	struct server	*s1;
@@ -632,6 +632,25 @@ server_match(struct server *s2, int match_name)
 	}
 
 	return (NULL);
+}
+
+/*
+ * Return the server with the same name, address and port.
+ */
+struct server *
+server_byname(struct server *s)
+{
+	return server_match(s, 1);
+}
+
+/*
+ * Return the first server with the same address and port.
+ * This is the server that owns the socket.
+ */
+struct server *
+server_bysocket(struct server *s)
+{
+	return server_match(s, 0);
 }
 
 int
