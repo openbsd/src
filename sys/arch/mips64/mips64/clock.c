@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.54 2023/10/24 13:20:10 claudio Exp $ */
+/*	$OpenBSD: clock.c,v 1.55 2026/10/23 19:38:17 kirill Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -158,7 +158,7 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 #ifdef MULTIPROCESSOR
 	setsr(sr);
 #endif
-	ci->ci_ipl = s;
+	splx(s);
 	return CR_INT_5;	/* Clock is always on 5 */
 }
 
