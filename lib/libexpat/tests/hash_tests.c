@@ -41,6 +41,7 @@ __  __            _
 #include <stdbool.h>
 #include <string.h> // for memcmp
 
+#if defined(XML_TESTING)
 START_TEST(test_hash_table) {
   // The test is not doing any parsing, so a single run
   // (with `g_chunkSize == 0`) is enough
@@ -148,10 +149,13 @@ START_TEST(test_hash_table) {
   XML_ParserFree(parser);
 }
 END_TEST
+#endif
 
 void
 make_hash_test_case(Suite *s) {
   TCase *const tc_hash = tcase_create("hash tests");
   suite_add_tcase(s, tc_hash);
+#if defined(XML_TESTING)
   tcase_add_test(tc_hash, test_hash_table);
+#endif
 }
