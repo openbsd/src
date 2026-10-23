@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.7 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.8 2026/10/23 11:39:02 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -560,13 +560,6 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 		return;
 	}
 
-	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
-		goto err;
-	(void)fchmod(fd, 0644);
-
-	if ((f = fdopen(fd, "w")) == NULL)
-		err(1, "fdopen");
-
 	if ((ncas_sorted = calloc(ncas_num, sizeof(ncas_sorted[0]))) == NULL)
 		err(1, NULL);
 
@@ -576,6 +569,13 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 	}
 
 	qsort(ncas_sorted, ncas_num, sizeof(ncas_sorted[0]), ncas_sorted_cmp);
+
+	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
+		goto err;
+	(void)fchmod(fd, 0644);
+
+	if ((f = fdopen(fd, "w")) == NULL)
+		err(1, "fdopen");
 
 	for (idx = 0; idx < ncas_num; idx++) {
 		ca = ncas_sorted[idx];
@@ -769,13 +769,6 @@ ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 		return;
 	}
 
-	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
-		goto err;
-	(void)fchmod(fd, 0644);
-
-	if ((f = fdopen(fd, "w")) == NULL)
-		err(1, "fdopen");
-
 	if ((cas_sorted = calloc(cas_num, sizeof(cas_sorted[0]))) == NULL)
 		err(1, NULL);
 
@@ -785,6 +778,13 @@ ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 	}
 
 	qsort(cas_sorted, cas_num, sizeof(cas_sorted[0]), cas_sorted_cmp);
+
+	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
+		goto err;
+	(void)fchmod(fd, 0644);
+
+	if ((f = fdopen(fd, "w")) == NULL)
+		err(1, "fdopen");
 
 	for (idx = 0; idx < cas_num; idx++) {
 		ca = cas_sorted[idx];
