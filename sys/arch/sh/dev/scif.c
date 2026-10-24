@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.24 2024/11/05 18:58:59 miod Exp $	*/
+/*	$OpenBSD: scif.c,v 1.25 2026/10/24 18:13:58 miod Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -121,7 +121,6 @@ void	scifstart(struct tty *);
 int	scifparam(struct tty *, struct termios *);
 
 cons_decl(scif);
-void scif_intr_init(void);
 int scifintr(void *);
 
 struct scif_softc {
@@ -245,7 +244,6 @@ void InitializeScif(unsigned int);
 
 void scif_putc(unsigned char);
 unsigned char scif_getc(void);
-int ScifErrCheck(void);
 
 
 /* XXX: uwe
@@ -344,18 +342,6 @@ scif_putc(unsigned char c)
 
 	/* clear ready flag */
 	scif_ssr_write(scif_ssr_read() & ~(SCSSR2_TDFE | SCSSR2_TEND));
-}
-
-/*
- * : ScifErrCheck
- *	0x80 = error
- *	0x08 = frame error
- *	0x04 = parity error
- */
-int
-ScifErrCheck(void)
-{
-	return (scif_ssr_read() & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER));
 }
 
 /*
@@ -911,12 +897,6 @@ scifstop(struct tty *tp, int flag)
 }
 
 void
-scif_intr_init(void)
-{
-	/* XXX */
-}
-
-void
 scifdiag(void *arg)
 {
 	struct scif_softc *sc = arg;
@@ -1032,11 +1012,11 @@ scif_txsoft(struct scif_softc *sc, struct tty *tp)
 	(*linesw[tp->t_line].l_start)(tp);
 }
 
+#if 0
+/* XXX (msaitoh) */
 void
 scif_stsoft(struct scif_softc *sc, struct tty *tp)
 {
-#if 0
-/* XXX (msaitoh) */
 	u_char msr, delta;
 	int s;
 
@@ -1067,8 +1047,8 @@ scif_stsoft(struct scif_softc *sc, struct tty *tp)
 	if (scif_debug)
 		scifstatus(sc, "scif_stsoft");
 #endif
-#endif
 }
+#endif
 
 void
 scifsoft(void *arg)
