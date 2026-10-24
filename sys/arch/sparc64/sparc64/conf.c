@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.90 2024/06/11 09:21:32 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.91 2026/10/24 20:04:43 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -115,6 +115,7 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
+#include "radio.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -294,6 +295,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fido_init(NFIDO,fido),	/* 137: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 138: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 139: USB joystick/gamecontroller */
+	cdev_radio_init(NRADIO,radio),	/* 140: generic radio I/O */
 };
 int	nchrdev = nitems(cdevsw);
 
