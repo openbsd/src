@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.155 2026/10/07 23:06:26 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.156 2026/10/24 08:09:15 jan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -99,6 +99,9 @@ static void virtio_pci_add_cap(uint8_t, uint8_t, uint8_t, uint32_t);
 static int virtio_pci_msix_io(struct virtio_dev *, int, uint16_t, uint32_t *,
     uint8_t);
 static void virtio_inject_irq(struct virtio_dev *, uint16_t);
+static int virtio_init_net(struct vmd_vm *, int *, uint8_t *, uint8_t);
+static int virtio_init_disk(struct vmd_vm *, int[][VM_MAX_BASE_PER_DISK],
+    uint8_t *, uint8_t);
 static void vmmci_pipe_dispatch(int, short, void *);
 
 static int virtio_io_dispatch(int, uint16_t, uint32_t *, uint8_t *, void *,
@@ -1196,6 +1199,135 @@ vmmci_pipe_dispatch(int fd, short event, void *arg)
 	}
 }
 
+static int
+virtio_init_net(struct vmd_vm *vm, int *child_taps, uint8_t *id, uint8_t i)
+{
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct virtio_dev *dev;
+	struct tun_capabilities tcap;
+	int bar_id;
+
+	dev = malloc(sizeof(struct virtio_dev));
+	if (dev == NULL) {
+		log_warn("%s: failure allocating vionet", __func__);
+		return (1);
+	}
+	if (pci_add_device(id, PCI_VENDOR_QUMRANET,
+	    PCI_PRODUCT_QUMRANET_VIO1_NET, PCI_CLASS_SYSTEM,
+	    PCI_SUBCLASS_SYSTEM_MISC, PCI_VENDOR_OPENBSD,
+	    PCI_PRODUCT_VIRTIO_NETWORK, 1, 1, NULL)) {
+		log_warnx("can't add PCI virtio net device");
+		free(dev);
+		return (1);
+	}
+	virtio_dev_init(vm, dev, *id, VIONET_QUEUE_SIZE_DEFAULT,
+	    VIRTIO_NET_QUEUES, VIRTIO_NET_F_CSUM | VIRTIO_NET_F_GUEST_CSUM |
+	    VIRTIO_NET_F_MAC | VIRTIO_F_VERSION_1);
+
+	bar_id = pci_add_bar(*id, PCI_MAPREG_TYPE_IO, virtio_pci_io, dev);
+	if (bar_id == -1 || bar_id > 0xff) {
+		log_warnx("can't add bar for virtio net device");
+		free(dev);
+		return (1);
+	}
+	virtio_pci_add_intr_caps(*id, dev->num_queues);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_COMMON_CFG, bar_id, 0);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_DEVICE_CFG, bar_id, 8);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_ISR_CFG, bar_id, 0);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_NOTIFY_CFG, bar_id, 0);
+
+	/* Device specific initialization. */
+	dev->dev_type = VMD_DEVTYPE_NET;
+	dev->vm_fd = vm->vm_fd;
+	dev->vionet.data_fd = child_taps[i];
+
+	/*
+	 * IFCAPs are tweaked after feature negotiation with
+	 * the guest later.
+	 */
+	memset(&tcap, 0, sizeof(tcap));
+	if (ioctl(dev->vionet.data_fd, TUNSCAP, &tcap) == -1)
+		fatal("tap(4) TUNSCAP");
+
+	/* MAC address has been assigned by the parent */
+	memcpy(&dev->vionet.mac, &vmc->vmc_macs[i], 6);
+	dev->vionet.lockedmac = vmc->vmc_ifflags[i] & VMIFF_LOCKED ? 1 : 0;
+	dev->vionet.local = vmc->vmc_ifflags[i] & VMIFF_LOCAL ? 1 : 0;
+	if (i == 0 && vmc->vmc_bootdevice & VMBOOTDEV_NET)
+		dev->vionet.pxeboot = 1;
+	memcpy(&dev->vionet.local_prefix, &env->vmd_cfg.cfg_localprefix,
+	    sizeof(dev->vionet.local_prefix));
+	log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s%s",
+	    __func__, vm->vm_params.vmc_name, i,
+	    ether_ntoa((void *)dev->vionet.mac),
+	    dev->vionet.lockedmac ? ", locked" : "",
+	    dev->vionet.local ? ", local" : "",
+	    dev->vionet.pxeboot ? ", pxeboot" : "");
+
+	/* Add the vionet to our device list. */
+	dev->vionet.idx = i;
+	SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
+
+	return (0);
+}
+
+static int
+virtio_init_disk(struct vmd_vm *vm, int child_disks[][VM_MAX_BASE_PER_DISK],
+    uint8_t *id, uint8_t i)
+{
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct virtio_dev *dev;
+	int bar_id;
+	uint8_t j;
+
+	dev = malloc(sizeof(struct virtio_dev));
+	if (dev == NULL) {
+		log_warn("%s: failure allocating vioblk", __func__);
+		return (1);
+	}
+	if (pci_add_device(id, PCI_VENDOR_QUMRANET,
+	    PCI_PRODUCT_QUMRANET_VIO1_BLOCK, PCI_CLASS_MASS_STORAGE,
+	    PCI_SUBCLASS_MASS_STORAGE_SCSI, PCI_VENDOR_OPENBSD,
+	    PCI_PRODUCT_VIRTIO_BLOCK, 1, 1, NULL)) {
+		log_warnx("can't add PCI virtio block device");
+		free(dev);
+		return (1);
+	}
+	virtio_dev_init(vm, dev, *id, VIOBLK_QUEUE_SIZE_DEFAULT,
+	    VIRTIO_BLK_QUEUES, VIRTIO_F_VERSION_1 | VIRTIO_BLK_F_SEG_MAX);
+
+	bar_id = pci_add_bar(*id, PCI_MAPREG_TYPE_IO, virtio_pci_io, dev);
+	if (bar_id == -1 || bar_id > 0xff) {
+		log_warnx("can't add bar for virtio block device");
+		free(dev);
+		return (1);
+	}
+	virtio_pci_add_intr_caps(*id, dev->num_queues);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_COMMON_CFG, bar_id, 0);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_DEVICE_CFG, bar_id, 24);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_ISR_CFG, bar_id, 0);
+	virtio_pci_add_cap(*id, VIRTIO_PCI_CAP_NOTIFY_CFG, bar_id, 0);
+
+	/* Device specific initialization. */
+	dev->dev_type = VMD_DEVTYPE_DISK;
+	dev->vm_fd = vm->vm_fd;
+	dev->vioblk.seg_max = VIOBLK_SEG_MAX_DEFAULT;
+
+	/*
+	 * Initialize disk fds to an invalid fd (-1), then
+	 * set any child disk fds.
+	 */
+	memset(&dev->vioblk.disk_fd, -1, sizeof(dev->vioblk.disk_fd));
+	dev->vioblk.ndisk_fd = vmc->vmc_diskbases[i];
+	for (j = 0; j < dev->vioblk.ndisk_fd; j++)
+		dev->vioblk.disk_fd[j] = child_disks[i][j];
+
+	dev->vioblk.idx = i;
+	SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
+
+	return (0);
+}
+
 /*
  * Initialize virtio devices, launching subprocesses if needed.
  *
@@ -1207,7 +1339,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct virtio_dev *dev;
-	uint8_t id, i, j;
+	uint8_t id, i;
 	int bar_id, ret = 0;
 
 	SLIST_INIT(&virtio_devs);
@@ -1245,142 +1377,15 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	virtio_pci_add_cap(id, VIRTIO_PCI_CAP_NOTIFY_CFG, bar_id, 0);
 
 	/* Virtio 1.x Network Devices */
-	if (vmc->vmc_nnics > 0) {
-		for (i = 0; i < vmc->vmc_nnics; i++) {
-			struct tun_capabilities tcap;
-
-			dev = malloc(sizeof(struct virtio_dev));
-			if (dev == NULL) {
-				log_warn("calloc failure allocating vionet");
-				return (1);
-			}
-			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-				PCI_PRODUCT_QUMRANET_VIO1_NET, PCI_CLASS_SYSTEM,
-				PCI_SUBCLASS_SYSTEM_MISC, PCI_VENDOR_OPENBSD,
-				PCI_PRODUCT_VIRTIO_NETWORK, 1, 1, NULL)) {
-				log_warnx("can't add PCI virtio net device");
-				free(dev);
-				return (1);
-			}
-			virtio_dev_init(vm, dev, id, VIONET_QUEUE_SIZE_DEFAULT,
-			    VIRTIO_NET_QUEUES,
-			    (VIRTIO_NET_F_CSUM | VIRTIO_NET_F_GUEST_CSUM |
-			     VIRTIO_NET_F_MAC | VIRTIO_F_VERSION_1));
-
-			bar_id = pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io,
-			    dev);
-			if (bar_id == -1 || bar_id > 0xff) {
-				log_warnx("can't add bar for virtio net "
-				    "device");
-				free(dev);
-				return (1);
-			}
-			virtio_pci_add_intr_caps(id, dev->num_queues);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG,
-			    bar_id, 0);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_DEVICE_CFG,
-			    bar_id, 8);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_ISR_CFG, bar_id,
-			    0);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_NOTIFY_CFG,
-			    bar_id, 0);
-
-			/* Device specific initialization. */
-			dev->dev_type = VMD_DEVTYPE_NET;
-			dev->vm_fd = vm->vm_fd;
-			dev->vionet.data_fd = child_taps[i];
-
-			/*
-			 * IFCAPs are tweaked after feature negotiation with
-			 * the guest later.
-			 */
-			memset(&tcap, 0, sizeof(tcap));
-			if (ioctl(dev->vionet.data_fd, TUNSCAP, &tcap) == -1)
-			    fatal("tap(4) TUNSCAP");
-
-			/* MAC address has been assigned by the parent */
-			memcpy(&dev->vionet.mac, &vmc->vmc_macs[i], 6);
-			dev->vionet.lockedmac =
-			    vmc->vmc_ifflags[i] & VMIFF_LOCKED ? 1 : 0;
-			dev->vionet.local =
-			    vmc->vmc_ifflags[i] & VMIFF_LOCAL ? 1 : 0;
-			if (i == 0 && vmc->vmc_bootdevice & VMBOOTDEV_NET)
-				dev->vionet.pxeboot = 1;
-			memcpy(&dev->vionet.local_prefix,
-			    &env->vmd_cfg.cfg_localprefix,
-			    sizeof(dev->vionet.local_prefix));
-			log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s%s",
-			    __func__, vm->vm_params.vmc_name, i,
-			    ether_ntoa((void *)dev->vionet.mac),
-			    dev->vionet.lockedmac ? ", locked" : "",
-			    dev->vionet.local ? ", local" : "",
-			    dev->vionet.pxeboot ? ", pxeboot" : "");
-
-			/* Add the vionet to our device list. */
-			dev->vionet.idx = i;
-			SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
-		}
+	for (i = 0; i < vmc->vmc_nnics; i++) {
+		if (virtio_init_net(vm, child_taps, &id, i) != 0)
+			return (1);
 	}
 
 	/* Virtio 1.x Block Devices */
-	if (vmc->vmc_ndisks > 0) {
-		for (i = 0; i < vmc->vmc_ndisks; i++) {
-			dev = malloc(sizeof(struct virtio_dev));
-			if (dev == NULL) {
-				log_warn("%s: failure allocating vioblk",
-				    __func__);
-				return (1);
-			}
-			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-			    PCI_PRODUCT_QUMRANET_VIO1_BLOCK,
-			    PCI_CLASS_MASS_STORAGE,
-			    PCI_SUBCLASS_MASS_STORAGE_SCSI, PCI_VENDOR_OPENBSD,
-			    PCI_PRODUCT_VIRTIO_BLOCK, 1, 1, NULL)) {
-				log_warnx("can't add PCI virtio block "
-				    "device");
-				free(dev);
-				return (1);
-			}
-			virtio_dev_init(vm, dev, id, VIOBLK_QUEUE_SIZE_DEFAULT,
-			    VIRTIO_BLK_QUEUES,
-			    (VIRTIO_F_VERSION_1 | VIRTIO_BLK_F_SEG_MAX));
-
-			bar_id = pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io,
-			    dev);
-			if (bar_id == -1 || bar_id > 0xff) {
-				log_warnx("can't add bar for virtio block "
-				    "device");
-				free(dev);
-				return (1);
-			}
-			virtio_pci_add_intr_caps(id, dev->num_queues);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG,
-			    bar_id, 0);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_DEVICE_CFG,
-			    bar_id, 24);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_ISR_CFG, bar_id,
-			    0);
-			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_NOTIFY_CFG,
-			    bar_id, 0);
-
-			/* Device specific initialization. */
-			dev->dev_type = VMD_DEVTYPE_DISK;
-			dev->vm_fd = vm->vm_fd;
-			dev->vioblk.seg_max = VIOBLK_SEG_MAX_DEFAULT;
-
-			/*
-			 * Initialize disk fds to an invalid fd (-1), then
-			 * set any child disk fds.
-			 */
-			memset(&dev->vioblk.disk_fd, -1,
-			    sizeof(dev->vioblk.disk_fd));
-			dev->vioblk.ndisk_fd = vmc->vmc_diskbases[i];
-			for (j = 0; j < dev->vioblk.ndisk_fd; j++)
-				dev->vioblk.disk_fd[j] = child_disks[i][j];
-
-			dev->vioblk.idx = i;
-			SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
-		}
+	for (i = 0; i < vmc->vmc_ndisks; i++) {
+		if (virtio_init_disk(vm, child_disks, &id, i) != 0)
+			return (1);
 	}
 
 	/* Virtio 1.x SCSI CD-ROM */
