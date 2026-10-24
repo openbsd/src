@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.127 2020/09/12 07:47:27 mglocker Exp $
+#	$OpenBSD: files.isa,v 1.128 2026/10/24 21:16:04 miod Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -185,7 +185,7 @@ file	dev/isa/if_sm_isa.c		sm_isa
 
 # MPU401 MIDI UART compatibles
 define	mpu
-file	dev/isa/mpu401.c		mpu | midi
+file	dev/isa/mpu401.c		mpu
 
 # MPU401 generic MIDI UART for dumb MPUs like Yamaha SW60XG
 device	mpu: midibus
