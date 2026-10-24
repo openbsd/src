@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.766 2026/09/20 20:50:29 gnezdo Exp $	*/
+/*	$OpenBSD: if.c,v 1.767 2026/10/24 15:47:07 miod Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -704,21 +704,6 @@ if_attach_common(struct ifnet *ifp)
 		ifp->if_bpf_mtap = bpf_mtap_ether;
 #endif
 	ifp->if_llprio = IFQ_DEFPRIO;
-}
-
-void
-if_attach_ifq(struct ifnet *ifp, const struct ifq_ops *newops, void *args)
-{
-	/*
-	 * only switch the ifq_ops on the first ifq on an interface.
-	 *
-	 * the only ifq_ops we provide priq and hfsc, and hfsc only
-	 * works on a single ifq. because the code uses the ifq_ops
-	 * on the first ifq (if_snd) to select a queue for an mbuf,
-	 * by switching only the first one we change both the algorithm
-	 * and force the routing of all new packets to it.
-	 */
-	ifq_attach(&ifp->if_snd, newops, args);
 }
 
 void
