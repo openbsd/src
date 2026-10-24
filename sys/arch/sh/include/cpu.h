@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.42 2024/11/06 18:59:09 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.43 2026/10/24 18:12:41 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -261,7 +261,6 @@ void need_resched(struct cpu_info *);
 #ifdef _KERNEL
 void sh_cpu_init(int, int);
 void sh_startup(void);
-__dead void cpu_reset(void);	/* soft reset */
 void _cpu_spin(uint32_t);	/* for delay loop. */
 void delay(int);
 struct pcb;

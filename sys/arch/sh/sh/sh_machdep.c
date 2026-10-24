@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.55 2022/10/30 17:43:40 guenther Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.56 2026/10/24 18:12:41 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -125,7 +125,6 @@ struct pcb *curpcb;
 struct md_upte *curupte;	/* SH3 wired u-area hack */
 
 #define	VBR	(u_int8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
-vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 /* exception handler holder (sh/sh/vectors.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
@@ -603,19 +602,4 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 		fpu_restore(&pcb->pcb_fp);
 	}
 #endif
-}
-
-/*
- * Jump to reset vector.
- */
-void
-cpu_reset(void)
-{
-	_cpu_exception_suspend();
-	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);
-
-#ifndef __lint__
-	goto *(void *)0xa0000000;
-#endif
-	/* NOTREACHED */
 }
