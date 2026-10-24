@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.24 2025/09/29 01:02:59 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.25 2026/10/24 20:06:35 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.octeon/MAKEDEV.md,v 1.23 2025/09/29 01:00:14 deraadt Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.122 2025/01/08 23:09:25 kirill Exp 
+.\"	OpenBSD: etc.octeon/MAKEDEV.md,v 1.24 2026/10/24 20:04:43 miod Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.124 2025/10/15 17:53:36 deraadt Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.10 2025/09/29 01:00:14 deraadt Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 29 2025 $
+.Dd $Mdocdate: October 24 2026 $
 .Dt MAKEDEV 8 octeon
 .Os
 .Sh NAME
@@ -235,6 +235,9 @@ Virtual SCSI controller, see
 .It Ar kstat
 Kernel Statistics, see
 .Xr kstat 4 .
+.It Ar radio*
+FM tuner devices, see
+.Xr radio 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

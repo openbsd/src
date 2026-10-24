@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.23 2025/09/29 01:00:14 deraadt Exp 
+#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.24 2026/10/24 20:04:43 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.124 2025/10/15 17:53:36 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.91 2025/11/19 17:49:42 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -80,6 +80,7 @@
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
 #	kstat	Kernel Statistics
+#	radio*	FM tuner devices
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 UNITMULT=64
 MAKEDEV_PARTITIONS=${MAKEDEV_PARTITIONS:-`sysctl -n kern.maxpartitions`}
@@ -236,6 +237,11 @@ std)
 	M ksyms		c 35 0 640 kmem
 	M klog		c 6 0 600
 	M openprom	c 20 0 600
+	;;
+
+radio*)
+	M radio$U	c 79 $U
+	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"
 	;;
 
 kstat)
@@ -468,9 +474,9 @@ all)
 	R sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3
 	R bio pty0 pty1 pty2 diskmap vscsi0 ch0 audio0 audio1 audio2
 	R audio3 kstat dt bpf fuse pppac pppx hotplug ptm local wscons
-	R pci0 pci1 pci2 pci3 uall video0 video1 video2 video3 uk0
-	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
-	R tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R pci0 pci1 pci2 pci3 uall radio0 video0 video1 video2 video3
+	R uk0 random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07
+	R tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 octcf*|wd*|sd*)
