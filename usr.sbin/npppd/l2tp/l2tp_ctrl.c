@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.27 2022/12/28 21:30:17 jmc Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.28 2026/10/24 06:46:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.27 2022/12/28 21:30:17 jmc Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.28 2026/10/24 06:46:39 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -205,6 +205,8 @@ l2tp_ctrl_init(l2tp_ctrl *_this, l2tpd *_l2tpd, struct sockaddr *peer,
 
 	/* register l2tp context */
 	l2tpd_add_ctrl(_l2tpd, _this);
+	_this->pending = 1;
+	_l2tpd->pending_ctrls++;
 	return 0;
 fail:
 	l2tp_ctrl_stop(_this, 0);
@@ -322,6 +324,11 @@ l2tp_ctrl_stop(l2tp_ctrl *_this, int result)
 		/* FALLTHROUGH */
 	case L2TP_CTRL_STATE_CLEANUP_WAIT:
 cleanup:
+		if (_this->pending) {
+			L2TP_CTRL_ASSERT(_this->l2tpd->pending_ctrls > 0);
+			_this->l2tpd->pending_ctrls--;
+			_this->pending = 0;
+		}
 		if (slist_length(&_this->call_list) != 0) {
 			if (l2tp_ctrl_disconnect_all_calls(_this, 1) > 0)
 				break;
@@ -734,6 +741,8 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 			    avp_mes_type_string(mestype));
 			goto bad_packet;
 		}
+		if (_this->pending_ctrls >= L2TPD_MAX_PENDING_CTRL)
+			return;
 
 		if ((ctrl = l2tp_ctrl_create()) == NULL) {
 			l2tp_ctrl_log(ctrl, LOG_ERR,
@@ -953,6 +962,10 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		case L2TP_AVP_MESSAGE_TYPE_SCCCN:
 			l2tp_ctrl_log(ctrl, LOG_INFO, "RecvSCCN");
 			if (l2tp_ctrl_send_ZLB(ctrl) == 0) {
+				L2TP_CTRL_ASSERT(ctrl->pending != 0);
+				L2TP_CTRL_ASSERT(_this->pending_ctrls > 0);
+				_this->pending_ctrls--;
+				ctrl->pending = 0;
 				ctrl->state = L2TP_CTRL_STATE_ESTABLISHED;
 			}
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.15 2024/02/26 08:29:37 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.16 2026/10/24 06:46:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.15 2024/02/26 08:29:37 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.16 2026/10/24 06:46:39 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -222,6 +222,7 @@
 #define	L2TPD_DIALIN_LAYER2_LABEL		"DialIn"
 #define	L2TPD_CONFIG_BUFSIZ			65535
 #define	L2TP_CTRL_WINDOW_SIZE			8
+#define	L2TPD_MAX_PENDING_CTRL			256
 #ifndef	L2TPD_VENDOR_NAME
 #define	L2TPD_VENDOR_NAME			""
 #endif
@@ -326,6 +327,8 @@ typedef struct _l2tpd {
 	int state;
 	/** mappings from tunnel ID to {@link ::_l2tp_ctrl L2TP control} */
 	hash_table *ctrl_map;
+	/** number of controls waiting for the initial handshake */
+	u_int pending_ctrls;
 	/** unique and free Session-ID list */
 	slist free_session_id_list;
 
@@ -408,7 +411,9 @@ typedef struct _l2tp_ctrl {
 	unsigned int /** use sequence number in L2TP Data Message? */
 	    data_use_seq:1,
 	    /** waiting to acknowledge HELLO? */
-	    hello_wait_ack:1;
+	    hello_wait_ack:1,
+	    /** waiting for the initial control handshake? */
+	    pending:1;
 
 } l2tp_ctrl;
 
