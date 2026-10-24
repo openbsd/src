@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.39 2026/10/07 23:06:26 mlarkin Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.40 2026/10/24 08:01:27 jan Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -723,9 +723,9 @@ vionet_tx(struct virtio_dev *dev)
 {
 	uint16_t idx, hdr_idx;
 	size_t chain_len, iov_cnt;
-	ssize_t dhcpsz = 0, sz;
+	ssize_t sz;
 	int notify = 0;
-	char *vr = NULL, *dhcppkt = NULL;
+	char *vr = NULL;
 	struct vionet_dev *vionet = &dev->vionet;
 	struct vring_desc *desc, *table;
 	struct vring_avail *avail;
@@ -757,6 +757,9 @@ vionet_tx(struct virtio_dev *dev)
 	used = vq_info->q_used_hva;
 
 	while (idx != avail->idx) {
+		char *dhcppkt = NULL;
+		ssize_t dhcpsz = 0;
+
 		hdr_idx = avail->ring[idx & vq_info->mask];
 		if (!virtio_desc_chain_valid(vq_info, table, hdr_idx)) {
 			log_warnx("%s: invalid descriptor chain", __func__);
