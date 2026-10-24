@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.15 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: mppe.c,v 1.16 2026/10/24 06:08:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.15 2019/02/27 04:52:19 denis Exp $ */
+/* $Id: mppe.c,v 1.16 2026/10/24 06:08:27 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -320,7 +320,10 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	encrypt = 0;
 	flushed = 0;
 
-	MPPE_ASSERT(len >= 4);
+	if (len < 3) {
+		mppe_log(_this, LOG_WARNING, "Received a short MPPE packet");
+		return;
+	}
 
 	pktp0 = pktp;
 	GETSHORT(coher_cnt, pktp);
@@ -436,8 +439,14 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 
 	if (pktp[0] & 1)
 		proto = pktp[0];
-	else
+	else {
+		if (len < 4) {
+			mppe_log(_this, LOG_WARNING,
+			    "Received a short MPPE protocol field");
+			return;
+		}
 		proto = pktp[0] << 8 | pktp[1];
+	}
 	/*
 	 * According to RFC3078 section 3,
 	 * MPPE only accept protocol number 0021-00FA.
