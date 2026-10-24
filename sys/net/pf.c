@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1244 2026/10/08 20:37:05 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1245 2026/10/24 21:53:16 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -8266,6 +8266,41 @@ pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
 }
 
 void
+pf_st_counters_inc(struct pf_pdesc *pd, struct pf_state *st, int dirndx)
+{
+	struct pf_rule_item	*ri;
+	struct pf_sn_item	*sni;
+
+	mtx_enter(&st->mtx);
+	if (st->timeout != PFTM_UNLINKED) {
+		SLIST_FOREACH(sni, &st->src_nodes, next) {
+			sni->sn->packets[dirndx]++;
+			sni->sn->bytes[dirndx] += pd->tot_len;
+		}
+		dirndx = (pd->dir == st->direction) ? 0 : 1;
+		st->packets[dirndx]++;
+		st->bytes[dirndx] += pd->tot_len;
+
+		SLIST_FOREACH(ri, &st->match_rules, entry) {
+			ri->r->packets[dirndx]++;
+			ri->r->bytes[dirndx] += pd->tot_len;
+
+			if (ri->r->src.addr.type == PF_ADDR_TABLE)
+				pfr_update_stats(ri->r->src.addr.p.tbl,
+				    &st->key[(st->direction == PF_IN)]->
+					addr[(st->direction == PF_OUT)],
+				    pd, ri->r->action, ri->r->src.neg);
+			if (ri->r->dst.addr.type == PF_ADDR_TABLE)
+				pfr_update_stats(ri->r->dst.addr.p.tbl,
+				    &st->key[(st->direction == PF_IN)]->
+					addr[(st->direction == PF_IN)],
+				    pd, ri->r->action, ri->r->dst.neg);
+		}
+	}
+	mtx_leave(&st->mtx);
+}
+
+void
 pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *st,
     struct pf_rule *r, struct pf_rule *a)
 {
@@ -8283,34 +8318,8 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *st,
 			a->packets[dirndx]++;
 			a->bytes[dirndx] += pd->tot_len;
 		}
-		if (st != NULL) {
-			struct pf_rule_item	*ri;
-			struct pf_sn_item	*sni;
-
-			SLIST_FOREACH(sni, &st->src_nodes, next) {
-				sni->sn->packets[dirndx]++;
-				sni->sn->bytes[dirndx] += pd->tot_len;
-			}
-			dirndx = (pd->dir == st->direction) ? 0 : 1;
-			st->packets[dirndx]++;
-			st->bytes[dirndx] += pd->tot_len;
-
-			SLIST_FOREACH(ri, &st->match_rules, entry) {
-				ri->r->packets[dirndx]++;
-				ri->r->bytes[dirndx] += pd->tot_len;
-
-				if (ri->r->src.addr.type == PF_ADDR_TABLE)
-					pfr_update_stats(ri->r->src.addr.p.tbl,
-					    &st->key[(st->direction == PF_IN)]->
-						addr[(st->direction == PF_OUT)],
-					    pd, ri->r->action, ri->r->src.neg);
-				if (ri->r->dst.addr.type == PF_ADDR_TABLE)
-					pfr_update_stats(ri->r->dst.addr.p.tbl,
-					    &st->key[(st->direction == PF_IN)]->
-						addr[(st->direction == PF_IN)],
-					    pd, ri->r->action, ri->r->dst.neg);
-			}
-		}
+		if (st != NULL)
+			pf_st_counters_inc(pd, st, dirndx);
 		if (r->src.addr.type == PF_ADDR_TABLE)
 			pfr_update_stats(r->src.addr.p.tbl,
 			    (st == NULL) ? pd->src :
