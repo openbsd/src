@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.14 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.15 2026/10/24 15:47:55 miod Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -277,7 +277,6 @@ struct ie_softc {
 /* Exported functions */
 int 	i82596_intr(void *);
 int 	i82596_probe(struct ie_softc *);
-int 	i82596_proberam(struct ie_softc *);
 void 	i82596_attach(struct ie_softc *, const char *, u_int8_t *, 
 	    uint64_t *, int, uint64_t);
 int 	i82596_start_cmd(struct ie_softc *, int, int, int, int);

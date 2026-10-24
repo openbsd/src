@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.58 2026/10/11 20:17:51 miod Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.59 2026/10/24 15:47:55 miod Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1273,43 +1273,6 @@ i82596_start(struct ifnet *ifp)
 		if (sc->xmit_busy++ == 0)
 			i82596_xmit(sc);
 	}
-}
-
-/*
- * Probe IE's ram setup   [ Move all this into MD front-end!? ]
- * Use only if SCP and ISCP represent offsets into shared ram space.
- */
-int
-i82596_proberam(struct ie_softc *sc)
-{
-	int result, off;
-
-	/* Put in 16-bit mode */
-	off = IE_SCP_BUS_USE(sc->scp);
-	(sc->ie_bus_write16)(sc, off, 0);
-	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_WRITE);
-
-	/* Set the ISCP `busy' bit */
-	off = IE_ISCP_BUSY(sc->iscp);
-	(sc->ie_bus_write16)(sc, off, 1);
-	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_WRITE);
-
-	if (sc->hwreset)
-		(sc->hwreset)(sc, IE_CHIP_PROBE);
-
-	(sc->chan_attn) (sc);
-
-	DELAY(100);		/* wait a while... */
-
-	/* Read back the ISCP `busy' bit; it should be clear by now */
-	off = IE_ISCP_BUSY(sc->iscp);
-	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_READ);
-	result = (sc->ie_bus_read16)(sc, off) == 0;
-
-	/* Acknowledge any interrupts we may have caused. */
-	ie_ack(sc, IE_ST_WHENCE);
-
-	return (result);
 }
 
 void
