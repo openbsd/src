@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.8 2026/10/23 11:39:02 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.9 2026/10/25 15:33:00 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -160,8 +160,10 @@ ca_check_confirmed(struct ca_tree *ca_tree, int certid)
 {
 	struct ca *ca;
 
-	if ((ca = ca_lookup_by_certid(ca_tree, certid)) != NULL)
-		return ca->confirmed;
+	if ((ca = ca_lookup_by_certid(ca_tree, certid)) != NULL) {
+		if (ca->confirmed || ca->first_confirmed > 0)
+			return 1;
+	}
 
 	return 0;
 }
