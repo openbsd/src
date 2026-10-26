@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwxreg.h,v 1.26 2026/10/08 14:32:35 claudio Exp $	*/
+/*	$OpenBSD: if_mwxreg.h,v 1.27 2026/10/26 12:51:13 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (C) 2021 MediaTek Inc.
@@ -900,6 +900,7 @@ struct mt76_txwi {
 				(((x) << 4) & MT7925_TXD2_FRAME_TYPE_MASK)
 #define	MT7925_TXD2_SUB_TYPE(x)		((x) & MT7925_TXD2_SUB_TYPE_MASK)
 
+#define	MT7925_TXD3_HW_AMSDU			(1U << 5)
 #define	MT7925_TXD3_BCM				(1U << 4)
 
 #define	MT7925_TXD6_TX_RATE_MASK		0x003f0000
@@ -1029,6 +1030,8 @@ struct mt76_txwi {
 #define	MT7925_RXD2_NORMAL_HDR_TRANS		(1U << 7)
 #define	MT7925_RXD2_NORMAL_HDR_OFFSET_MASK	0x0000e000
 #define	MT7925_RXD2_NORMAL_HDR_OFFSET_SHIFT	13
+#define	MT7925_RXD2_NORMAL_SEC_MODE_MASK	0x001f0000
+#define	MT7925_RXD2_NORMAL_SEC_MODE_SHIFT	16
 
 #define	MT7925_RXD3_NORMAL_CH_FREQ_MASK		0x0000ff00
 #define	MT7925_RXD3_NORMAL_CH_FREQ_SHIFT	8

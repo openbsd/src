@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.47 2026/10/17 16:12:45 deraadt Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.48 2026/10/26 12:51:13 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1374,8 +1374,6 @@ mwx_bgscan_done_task(void *arg)
 		ni->ni_flags &= ~IEEE80211_NODE_RXMGMTPROT;
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 	}
-
-printf("%s: %s: XXX %s refcnt %u\n", DEVNAME(sc), __func__, ether_sprintf(ni->ni_macaddr), ni->ni_refcnt);
 
         /*
 	 * Tx queues have been flushed and Tx agg has been stopped.
@@ -2993,8 +2991,8 @@ enqueue:
 
 if (cmd != MCU_CMD_FW_SCATTER) {
 printf("%s: %s: cmd %08x\n", DEVNAME(sc), __func__, cmd);
-if (cmd == MCU_UNI_CMD_SCAN_REQ || cmd == MCU_UNI_CMD_BSS_INFO_UPDATE || cmd == MCU_UNI_CMD_EDCA_UPDATE)
-	pkt_hex_dump(m);
+//if (cmd == MCU_UNI_CMD_BSS_INFO_UPDATE || cmd == MCU_UNI_CMD_EDCA_UPDATE)
+//	pkt_hex_dump(m);
 }
 
 	s = splnet();
@@ -3115,8 +3113,6 @@ mwx_mcu_rx_event(struct mwx_softc *sc, struct mbuf *m)
 	case 0x6:
 		printf("%s: MAGIC COMMAND\n", DEVNAME(sc));
 	default:
-printf("%s: mcu rx event, seq %x eid %x ext_eid %x opt %x len %u\n", DEVNAME(sc), rxd->seq, rxd->eid, rxd->ext_eid, rxd->option, le16toh(rxd->len));
-
 		if (rxd->option & MCU_UNI_CMD_UNSOLICITED_EVENT) {
 			mwx_mcu_rx_unsolicited_event(sc, rxd, m);
 			break;
@@ -6061,10 +6057,20 @@ mt7921_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 #endif
 	rxi->rxi_chan = chfnum;
 
+#ifdef NOTYET
+{
+struct ieee80211_frame *wh;
+wh = mtod(m, struct ieee80211_frame *);
+printf("%s: RX HWDEC %d FC1 PROTECT %d rxd1 %08x\n", DEVNAME(sc),
+    rxi->rxi_flags & IEEE80211_RXI_HWDEC ? 1 : 0,
+    wh->i_fc[1] & IEEE80211_FC1_PROTECTED ? 1 : 0, rxd1);
+}
+#endif
+
 	if (rxi->rxi_flags & IEEE80211_RXI_HWDEC) {
 		/*
 		 * XXX
-		 * MT7921 firmware decrypts and removes both CCMP IV (8B)
+		 * MediaTek firmware decrypts and removes both CCMP IV (8B)
 		 * and MIC (8B), leaving plaintext payload.
 		 * Clear Protected bit so ieee80211_input_hwdecrypt() won't
 		 * strip the IV.
@@ -6128,6 +6134,11 @@ mt7925_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 	idx = rxd1 & MT7925_RXD1_NORMAL_WLAN_IDX_MASK;
 	(void)idx;
 	(void)unicast;
+
+	if ((rxd2 & MT7925_RXD2_NORMAL_SEC_MODE_MASK) != 0 &&
+	    !(rxd1 & (MT_RXD1_NORMAL_CLM | MT_RXD1_NORMAL_CM))) {
+		rxi->rxi_flags |= IEEE80211_RXI_HWDEC;
+	}
 
 	remove_pad = (rxd2 & MT7925_RXD2_NORMAL_HDR_OFFSET_MASK) >>
 	    MT7925_RXD2_NORMAL_HDR_OFFSET_SHIFT;
@@ -6198,6 +6209,19 @@ mt7925_mac_fill_rx(struct mwx_softc *sc, struct mbuf *m,
 	m_adj(m, hdr_gap);
 	rxi->rxi_chan = chfreq;
 
+	if (rxi->rxi_flags & IEEE80211_RXI_HWDEC) {
+		/*
+		 * XXX
+		 * MediaTek firmware decrypts and removes both CCMP IV (8B)
+		 * and MIC (8B), leaving plaintext payload.
+		 * Clear Protected bit so ieee80211_input_hwdecrypt() won't
+		 * strip the IV.
+		 */
+		struct ieee80211_frame *wh;
+		wh = mtod(m, struct ieee80211_frame *);
+		wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
+	}
+
 	return 0;
 }
 
@@ -6227,6 +6251,25 @@ mt7921_mac_tx_rate_val(struct mwx_softc *sc)
 	rate &= 0xff;
 
 	return (rate & MT_TX_RATE_IDX_MASK) | (mode & MT_TX_RATE_MODE_MASK);
+}
+
+static inline int
+mwx_is_bip_frame(uint8_t type, uint8_t subtype, int is_protected)
+{
+	if (type == IEEE80211_FC0_TYPE_MGT &&
+	    subtype == IEEE80211_FC0_SUBTYPE_DISASSOC)
+		return 1;
+
+	if (type == IEEE80211_FC0_TYPE_MGT &&
+	    subtype == IEEE80211_FC0_SUBTYPE_DEAUTH)
+		return 1;
+
+	if (type == IEEE80211_FC0_TYPE_MGT &&
+	    subtype == IEEE80211_FC0_SUBTYPE_ACTION &&
+	    is_protected == 1)
+		return 1;
+
+	return 0;
 }
 
 void
@@ -6283,13 +6326,12 @@ mt7921_mac_write_txwi_80211(struct mwx_softc *sc, struct mbuf *m,
 	if (multicast)
 		val |= MT_TXD2_MULTICAST;
 
-#ifdef NOTYET
-	if (key && multicast && ieee80211_is_robust_mgmt_frame(skb) &&
-	    key->cipher == WLAN_CIPHER_SUITE_AES_CMAC) {
+	if (multicast && ni->ni_flags & IEEE80211_NODE_MFP &&
+	    mwx_is_bip_frame(type, subtype,
+	    wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
 		val |= MT_TXD2_BIP;
 		txp->txwi[3] &= ~htole32(MT_TXD3_PROTECT_FRAME);
 	}
-#endif
 
 	if (multicast || type != IEEE80211_FC0_TYPE_DATA) {
 		/* Fixed rata is available just for 802.11 txd */
@@ -6479,6 +6521,14 @@ mt7925_mac_write_txwi_80211(struct mwx_softc *sc, struct mbuf *m,
 	else
 		hdrlen = ieee80211_get_hdrlen(wh);
 
+#ifdef NOTYET
+	if (ieee80211_is_action(fc) &&
+	    skb->len >= IEEE80211_MIN_ACTION_SIZE(action_code) &&
+	    mgmt->u.action.category == WLAN_CATEGORY_BACK &&
+	    mgmt->u.action.action_code == WLAN_ACTION_ADDBA_REQ)
+		tid = MT_TX_ADDBA;
+	else
+#endif
 	if (ieee80211_has_qos(wh)) {
 		uint16_t qos = ieee80211_get_qos(wh);
 
@@ -6491,6 +6541,14 @@ mt7925_mac_write_txwi_80211(struct mwx_softc *sc, struct mbuf *m,
 	    MT7925_TXD1_TID(tid);
 	if (type != IEEE80211_FC0_TYPE_DATA || multicast)
 		val |= MT7925_TXD1_FIXED_RATE;
+
+	if (multicast && ni->ni_flags & IEEE80211_NODE_MFP &&
+	    mwx_is_bip_frame(type, subtype,
+	    wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
+		val |= MT7925_TXD1_BIP;
+		txp->txwi[3] &= ~htole32(MT_TXD3_PROTECT_FRAME);
+	}
+
 	txp->txwi[1] |= htole32(val);
 
 	if (multicast)
@@ -6501,16 +6559,10 @@ mt7925_mac_write_txwi_80211(struct mwx_softc *sc, struct mbuf *m,
 
 	if (multicast)
 		txp->txwi[3] |= htole32(MT7925_TXD3_BCM);
-
-	val = MT7925_TXD6_DAS | MT7925_TXD6_MSDU_CNT(1) |
-	    MT7925_TXD6_DIS_MAT;
-
-	if (letoh32(txp->txwi[1]) & MT7925_TXD1_FIXED_RATE) {
-		val |= MT7925_TXD6_TX_RATE(mt7925_mac_basic_rates_idx(ni));
-		txp->txwi[3] |= htole32(MT_TXD3_BA_DISABLE);
-	}
-	txp->txwi[6] = htole32(val);
-	txp->txwi[7] = 0;
+#ifdef NOTYET
+	if (ieee80211_is_beacon(fc))
+		txwi[3] |= htole32(MT_TXD3_REM_TX_COUNT);
+#endif
 
 #if NBPFILTER > 0
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
@@ -6558,6 +6610,7 @@ mt7925_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 	uint8_t p_fmt, q_idx, omac_idx, wmm_idx, band_idx;
 	uint32_t val;
 	uint8_t type;
+	int pid = MT_PACKET_ID_FIRST;
 
 	omac_idx = sc->sc_vif.omac_idx;
 	wmm_idx = sc->sc_vif.wmm_idx;
@@ -6583,17 +6636,47 @@ mt7925_mac_write_txwi(struct mwx_softc *sc, struct mbuf *m,
 	txp->txwi[2] = 0;
 
 	val = 15 << MT_TXD3_REM_TX_COUNT_SHIFT;
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED)
+		val |= MT_TXD3_PROTECT_FRAME;
+#ifdef NOTYET
+	if (info->flags & IEEE80211_TX_CTL_NO_ACK)
+		val |= MT_TXD3_NO_ACK;
+	if (wcid->amsdu)
+		val |= MT_TXD3_HW_AMSDU;
+#endif
 	txp->txwi[3] = htole32(val);
 	txp->txwi[4] = 0;
 
-	val = MT_PACKET_ID_FIRST & MT_TXD5_PID;
-	val |= MT_TXD5_TX_STATUS_HOST;
-	txp->txwi[3] |= htole32(MT_TXD3_BA_DISABLE);
+	val = pid & MT_TXD5_PID;
+	if (pid >= MT_PACKET_ID_FIRST) {
+		val |= MT_TXD5_TX_STATUS_HOST;
+		txp->txwi[3] |= htole32(MT_TXD3_BA_DISABLE);
+		txp->txwi[3] &= ~htole32(MT7925_TXD3_HW_AMSDU);
+	}
 	txp->txwi[5] = htole32(val);
-	txp->txwi[6] = 0;
+
+	val = MT7925_TXD6_DAS | MT7925_TXD6_MSDU_CNT(1);
+#ifdef NOTYET
+	if (vif && (!ieee80211_vif_is_mld(vif) ||
+	    (q_idx >= MT_LMAC_ALTX0 && q_idx <= MT_LMAC_BCN0)))
+#endif
+		val |= MT7925_TXD6_DIS_MAT;
+
+	txp->txwi[6] = htole32(val);
 	txp->txwi[7] = 0;
 
-	mt7925_mac_write_txwi_80211(sc, m, ni, txp);
+#ifdef NOTYET
+	if (is_8023)
+		mt7925_mac_write_txwi_8023(txp, m, wcid);
+	else
+#endif
+		mt7925_mac_write_txwi_80211(sc, m, ni, txp);
+
+	if (letoh32(txp->txwi[1]) & MT7925_TXD1_FIXED_RATE) {
+		txp->txwi[6] |= htole32(MT7925_TXD6_TX_RATE(
+		    mt7925_mac_basic_rates_idx(ni)));
+		txp->txwi[3] |= htole32(MT_TXD3_BA_DISABLE);
+	}
 }
 
 void
