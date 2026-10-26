@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.326 2026/10/14 16:37:35 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.327 2026/10/26 14:06:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1151,7 +1151,6 @@ void
 network_bulk(struct parse_result *res)
 {
 	struct network_config net;
-	struct filter_set *s = NULL;
 	struct bgpd_addr h;
 	char *line = NULL;
 	size_t linesize = 0;
@@ -1180,15 +1179,7 @@ network_bulk(struct parse_result *res)
 			if (res->action == NETWORK_BULK_ADD) {
 				imsg_compose(imsgbuf, IMSG_NETWORK_ADD,
 				    0, 0, -1, &net, sizeof(net));
-				/*
-				 * can't use send_filterset since that
-				 * would free the set.
-				 */
-				TAILQ_FOREACH(s, &res->set, entry) {
-					imsg_compose(imsgbuf,
-					    IMSG_FILTER_SET,
-					    0, 0, -1, s, sizeof(*s));
-				}
+				imsg_send_filterset(imsgbuf, &res->set);
 				imsg_compose(imsgbuf, IMSG_NETWORK_DONE,
 				    0, 0, -1, NULL, 0);
 			} else
@@ -1310,6 +1301,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 {
 	struct ctl_show_rib		 ctl;
 	struct network_config		 net;
+	struct filter_set_head		 set = TAILQ_HEAD_INITIALIZER(set);
 	struct ctl_show_rib_request	*req = arg;
 	struct mrt_rib_entry		*mre;
 	struct ibuf			*msg;
@@ -1369,6 +1361,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 
 		imsg_compose(imsgbuf, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &net, sizeof(net));
+		imsg_send_filterset(imsgbuf, &set);
 		if ((msg = imsg_create(imsgbuf, IMSG_NETWORK_ASPATH,
 		    0, 0, sizeof(ctl) + mre->aspath_len)) == NULL)
 			errx(1, "imsg_create failure");
