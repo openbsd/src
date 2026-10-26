@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.135 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.136 2026/10/26 06:34:50 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1014,12 +1014,6 @@ pppac_lookup(dev_t dev)
 	}
 
 	return (NULL);
-}
-
-void
-pppacattach(int n)
-{
-	pipex_init(); /* to be sure, to be sure */
 }
 
 int
