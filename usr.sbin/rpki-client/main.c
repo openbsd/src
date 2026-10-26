@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.332 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: main.c,v 1.333 2026/10/26 08:19:00 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -628,7 +628,7 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 			err(1, NULL);
 	}
 
-	if (ca_check_confirmed(ca_tree, cert->certid))
+	if (ca_confirmed_in_last_run(ca_tree, cert))
 		entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo,
 		    NULL, 0, cert->talid, cert->certid, NULL);
 	else

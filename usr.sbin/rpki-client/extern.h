@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.316 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.317 2026/10/26 08:19:00 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -185,7 +185,8 @@ struct ca {
 
 	/* CA confirmation */
 	int			 confirmed;
-	time_t			 first_confirmed;
+	int			 confirmed_in_last_run;
+	time_t			 confirmed_since;
 };
 
 /*
@@ -785,7 +786,7 @@ void		 ca_clear_nonfunc(struct ca_tree *, int);
 void		 ca_state_load(void);
 void		 ca_state_save(struct ca_tree *, time_t);
 struct ca	*ca_tree_insert_cert(struct ca_tree *, const struct cert *);
-int		 ca_check_confirmed(struct ca_tree *, int);
+int		 ca_confirmed_in_last_run(struct ca_tree *, const struct cert *);
 void		 ca_set_confirmed(struct ca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.9 2026/10/25 15:33:00 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.10 2026/10/26 08:19:00 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -35,7 +35,7 @@
 extern int rrdpon;
 
 static void ca_free(struct ca *);
-static time_t ca_state_get_first_confirmed(const struct cert *);
+static void ca_set_state_from_last_run(struct ca *, const struct cert *);
 
 static inline int
 certidcmp(const struct ca *a, const struct ca *b)
@@ -98,13 +98,13 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 	if (cert->purpose != CERT_PURPOSE_TA)
 		ca->nonfunc = 1;
 
+	ca->confirmed = 0;
+
 	if (cert->purpose == CERT_PURPOSE_TA) {
-		ca->confirmed = 1;
-		ca->first_confirmed = now;
+		ca->confirmed_in_last_run = 1;
 		ca->issuer = NULL;
 	} else {
-		ca->confirmed = 0;
-		ca->first_confirmed = ca_state_get_first_confirmed(cert);
+		ca_set_state_from_last_run(ca, cert);
 		ca->issuer = ca_lookup_by_certid(ca_tree, cert->issuerid);
 		if (ca->issuer == NULL)
 			errx(1, "ca tree corrupted");
@@ -149,21 +149,19 @@ ca_set_confirmed(struct ca_tree *ca_tree, int certid)
 
 		ca->confirmed = 1;
 
-		if (ca->first_confirmed == 0)
-			ca->first_confirmed = get_current_time();
+		if (!ca->confirmed_in_last_run)
+			ca->confirmed_since = get_current_time();
 
 	} while ((ca = ca->issuer) != NULL);
 }
 
 int
-ca_check_confirmed(struct ca_tree *ca_tree, int certid)
+ca_confirmed_in_last_run(struct ca_tree *ca_tree, const struct cert *cert)
 {
 	struct ca *ca;
 
-	if ((ca = ca_lookup_by_certid(ca_tree, certid)) != NULL) {
-		if (ca->confirmed || ca->first_confirmed > 0)
-			return 1;
-	}
+	if ((ca = ca_lookup_by_certid(ca_tree, cert->certid)) != NULL)
+		return ca->confirmed_in_last_run;
 
 	return 0;
 }
@@ -214,20 +212,18 @@ static RB_HEAD(ca_state_tree, ca) ca_state_tree \
 
 RB_GENERATE_STATIC(ca_state_tree, ca, entry, ca_cmp);
 
-static time_t
-ca_state_get_first_confirmed(const struct cert *cert)
+static void
+ca_set_state_from_last_run(struct ca *ca, const struct cert *cert)
 {
-	struct ca *ca, needle;
+	struct ca *found;
 
-	needle.aki = cert->aki;
-	needle.ski = cert->ski;
-	needle.location = cert->path;
-	needle.mfturi = cert->mft;
+	assert(ca->purpose == CERT_PURPOSE_CA);
 
-	if ((ca = RB_FIND(ca_state_tree, &ca_state_tree, &needle)) != NULL)
-		return ca->first_confirmed;
+	if ((found = RB_FIND(ca_state_tree, &ca_state_tree, ca)) == NULL)
+		return;
 
-	return 0;
+	ca->confirmed_since = found->confirmed_since;
+	ca->confirmed_in_last_run = found->confirmed_in_last_run;
 }
 
 static void
@@ -655,6 +651,8 @@ ca_state_load(void)
 		if ((ca = calloc(1, sizeof(*ca))) == NULL)
 			err(1, NULL);
 
+		ca->confirmed_in_last_run = 1;
+
 		l = line;
 
 		if ((aki = strsep(&l, " ")) == NULL)
@@ -669,10 +667,10 @@ ca_state_load(void)
 
 		if ((since = strsep(&l, " ")) == NULL)
 			goto err;
-		ca->first_confirmed = strtonum(since, 1, LLONG_MAX, &errstr);
+		ca->confirmed_since = strtonum(since, 1, LLONG_MAX, &errstr);
 		if (errstr != NULL)
 			goto err;
-		if (ca->first_confirmed > now)
+		if (ca->confirmed_since > now)
 			goto err;
 
 		if ((loc = strsep(&l, " ")) == NULL)
@@ -792,7 +790,7 @@ ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 		ca = cas_sorted[idx];
 
 		if (fprintf(f, "%s %s %lld %s %s\n", ca->aki, ca->ski,
-		    (long long)ca->first_confirmed, ca->location,
+		    (long long)ca->confirmed_since, ca->location,
 		    ca->mfturi) < 0)
 			goto err;
 	}
