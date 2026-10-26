@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.72 2026/10/14 06:52:16 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.73 2026/10/26 10:05:12 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -101,10 +101,7 @@ cbs_is_sha256_algorithmIdentifier_value(CBS *cbs)
 		return 0;
 
 	/* Long live Postel's Law - cf., e.g., RFC 5754, section 2. */
-	if (param_present)
-		return CBS_len(&param) == 0;
-
-	return 1;
+	return !param_present || CBS_len(&param) == 0;
 }
 
 static int
