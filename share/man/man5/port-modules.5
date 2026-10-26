@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.291 2026/10/21 09:09:47 kirill Exp $
+.\"	$OpenBSD: port-modules.5,v 1.292 2026/10/26 16:17:46 kirill Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 21 2026 $
+.Dd $Mdocdate: October 26 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -871,14 +871,14 @@ The current default and only supported value is
 .Cm gfortran .
 The dependencies are chosen according to
 .Ev MODFORTRAN_COMPILER .
-.It Cm gcc4
+.It Cm gcc
 If
 .Ev COMPILER_VERSION
 is not gcc4 (defined by
 .Pa /usr/share/mk/bsd.own.mk ) ,
 and architecture is in
 .Ev MODGCC_ARCHS ,
-then the gcc4 compilers will be put at the front of the path.
+then the gcc compilers will be put at the front of the path.
 By default, only C language support is included by this module.
 If other languages are needed, they must be listed in
 .Ev MODGCC_LANGS
@@ -938,7 +938,7 @@ target (if not already defined).
 It heeds
 .Ev NO_BUILD .
 .It Cm lang/clang
-Similar to gcc4 module.
+Similar to gcc module.
 If architecture is in MODCLANG_ARCHS, the Clang compilers will be
 put at the front of the path.
 By default, only C language support is included by this module.
