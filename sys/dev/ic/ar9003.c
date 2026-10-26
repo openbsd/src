@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.56 2022/12/27 20:13:03 patrick Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.57 2026/10/26 18:53:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -116,7 +116,6 @@ void	ar9003_next_calib(struct athn_softc *);
 void	ar9003_calib_iq(struct athn_softc *);
 int	ar9003_get_iq_corr(struct athn_softc *, int32_t *, int32_t *);
 int	ar9003_calib_tx_iq(struct athn_softc *);
-void	ar9003_paprd_calib(struct athn_softc *, struct ieee80211_channel *);
 int	ar9003_get_desired_txgain(struct athn_softc *, int, int);
 void	ar9003_force_txgain(struct athn_softc *, uint32_t);
 void	ar9003_set_training_gain(struct athn_softc *, int);
@@ -2406,135 +2405,6 @@ ar9003_calib_tx_iq(struct athn_softc *sc)
 	return (0);
 }
 #undef DELPT
-
-/*-
- * The power amplifier predistortion state machine works as follows:
- * 1) Disable digital predistorters for all Tx chains
- * 2) Repeat steps 3~7 for all Tx chains
- * 3)   Force Tx gain to that of training signal
- * 4)   Send training signal (asynchronous)
- * 5)   Wait for training signal to complete (asynchronous)
- * 6)   Read PA measurements (input power, output power, output phase)
- * 7)   Compute the predistortion function that linearizes PA output
- * 8) Write predistortion functions to hardware tables for all Tx chains
- * 9) Enable digital predistorters for all Tx chains
- */
-void
-ar9003_paprd_calib(struct athn_softc *sc, struct ieee80211_channel *c)
-{
-	static const int scaling[] = {
-		261376, 248079, 233759, 220464,
-		208194, 196949, 185706, 175487
-	};
-	struct athn_ops *ops = &sc->ops;
-	uint32_t reg, ht20mask, ht40mask;
-	int i;
-
-	/* Read PA predistortion masks from ROM. */
-	ops->get_paprd_masks(sc, c, &ht20mask, &ht40mask);
-
-	/* AM-to-AM: amplifier's amplitude characteristic. */
-	reg = AR_READ(sc, AR_PHY_PAPRD_AM2AM);
-	reg = RW(reg, AR_PHY_PAPRD_AM2AM_MASK, ht20mask);
-	AR_WRITE(sc, AR_PHY_PAPRD_AM2AM, reg);
-
-	/* AM-to-PM: amplifier's phase transfer characteristic. */
-	reg = AR_READ(sc, AR_PHY_PAPRD_AM2PM);
-	reg = RW(reg, AR_PHY_PAPRD_AM2PM_MASK, ht20mask);
-	AR_WRITE(sc, AR_PHY_PAPRD_AM2PM, reg);
-
-	reg = AR_READ(sc, AR_PHY_PAPRD_HT40);
-	reg = RW(reg, AR_PHY_PAPRD_HT40_MASK, ht40mask);
-	AR_WRITE(sc, AR_PHY_PAPRD_HT40, reg);
-
-	for (i = 0; i < AR9003_MAX_CHAINS; i++) {
-		AR_SETBITS(sc, AR_PHY_PAPRD_CTRL0_B(i),
-		    AR_PHY_PAPRD_CTRL0_USE_SINGLE_TABLE);
-
-		reg = AR_READ(sc, AR_PHY_PAPRD_CTRL1_B(i));
-		reg = RW(reg, AR_PHY_PAPRD_CTRL1_PA_GAIN_SCALE_FACT, 181);
-		reg = RW(reg, AR_PHY_PAPRD_CTRL1_MAG_SCALE_FACT, 361);
-		reg &= ~AR_PHY_PAPRD_CTRL1_ADAPTIVE_SCALING_ENA;
-		reg |= AR_PHY_PAPRD_CTRL1_ADAPTIVE_AM2AM_ENA;
-		reg |= AR_PHY_PAPRD_CTRL1_ADAPTIVE_AM2PM_ENA;
-		AR_WRITE(sc, AR_PHY_PAPRD_CTRL1_B(i), reg);
-
-		reg = AR_READ(sc, AR_PHY_PAPRD_CTRL0_B(i));
-		reg = RW(reg, AR_PHY_PAPRD_CTRL0_PAPRD_MAG_THRSH, 3);
-		AR_WRITE(sc, AR_PHY_PAPRD_CTRL0_B(i), reg);
-	}
-
-	/* Disable all digital predistorters during calibration. */
-	for (i = 0; i < AR9003_MAX_CHAINS; i++) {
-		AR_CLRBITS(sc, AR_PHY_PAPRD_CTRL0_B(i),
-		    AR_PHY_PAPRD_CTRL0_PAPRD_ENABLE);
-	}
-	AR_WRITE_BARRIER(sc);
-
-	/*
-	 * Configure training signal.
-	 */
-	reg = AR_READ(sc, AR_PHY_PAPRD_TRAINER_CNTL1);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL1_AGC2_SETTLING, 28);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL1_LB_SKIP, 0x30);
-	reg &= ~AR_PHY_PAPRD_TRAINER_CNTL1_RX_BB_GAIN_FORCE;
-	reg &= ~AR_PHY_PAPRD_TRAINER_CNTL1_IQCORR_ENABLE;
-	reg |= AR_PHY_PAPRD_TRAINER_CNTL1_LB_ENABLE;
-	reg |= AR_PHY_PAPRD_TRAINER_CNTL1_TX_GAIN_FORCE;
-	reg |= AR_PHY_PAPRD_TRAINER_CNTL1_TRAIN_ENABLE;
-	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL1, reg);
-
-	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL2, 147);
-
-	reg = AR_READ(sc, AR_PHY_PAPRD_TRAINER_CNTL3);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_FINE_CORR_LEN, 4);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_COARSE_CORR_LEN, 4);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_NUM_CORR_STAGES, 7);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_MIN_LOOPBACK_DEL, 1);
-	if (AR_SREV_9485(sc))
-		reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_QUICK_DROP, -3);
-	else
-		reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_QUICK_DROP, -6);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_ADC_DESIRED_SIZE, -15);
-	reg |= AR_PHY_PAPRD_TRAINER_CNTL3_BBTXMIX_DISABLE;
-	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL3, reg);
-
-	reg = AR_READ(sc, AR_PHY_PAPRD_TRAINER_CNTL4);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL4_SAFETY_DELTA, 0);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL4_MIN_CORR, 400);
-	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL4_NUM_TRAIN_SAMPLES, 100);
-	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL4, reg);
-
-	for (i = 0; i < nitems(scaling); i++) {
-		reg = AR_READ(sc, AR_PHY_PAPRD_PRE_POST_SCALE_B0(i));
-		reg = RW(reg, AR_PHY_PAPRD_PRE_POST_SCALING, scaling[i]);
-		AR_WRITE(sc, AR_PHY_PAPRD_PRE_POST_SCALE_B0(i), reg);
-	}
-
-	/* Save Tx gain table. */
-	for (i = 0; i < AR9003_TX_GAIN_TABLE_SIZE; i++)
-		sc->txgain[i] = AR_READ(sc, AR_PHY_TXGAIN_TABLE(i));
-
-	/* Set Tx power of training signal (use setting for MCS0). */
-	sc->trainpow = MS(AR_READ(sc, AR_PHY_PWRTX_RATE5),
-	    AR_PHY_PWRTX_RATE5_POWERTXHT20_0) - 4;
-
-	/*
-	 * Start PA predistortion calibration state machine.
-	 */
-	/* Find first available Tx chain. */
-	sc->paprd_curchain = 0;
-	while (!(sc->txchainmask & (1 << sc->paprd_curchain)))
-		sc->paprd_curchain++;
-
-	/* Make sure training done bit is clear. */
-	AR_CLRBITS(sc, AR_PHY_PAPRD_TRAINER_STAT1,
-	    AR_PHY_PAPRD_TRAINER_STAT1_TRAIN_DONE);
-	AR_WRITE_BARRIER(sc);
-
-	/* Transmit training signal. */
-	ar9003_paprd_tx_tone(sc);
-}
 
 int
 ar9003_get_desired_txgain(struct athn_softc *sc, int chain, int pow)
