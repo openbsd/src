@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.158 2026/02/11 22:34:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.159 2026/10/26 18:52:27 miod Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -101,7 +101,6 @@ struct kmemstats kmemstats[M_LAST];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 char buckstring[16 * sizeof("123456,")];	/* [I] */
-int buckstring_init = 0;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC)
 char *memname[] = INITKMEMNAMES;
 char *memall;					/* [I] */
