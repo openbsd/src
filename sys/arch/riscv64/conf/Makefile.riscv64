@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.24 2025/07/05 19:03:02 kn Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.25 2026/10/26 08:26:46 jca Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -31,7 +31,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	-march=rv64gc -mcmodel=medany -mno-relax \
+CMACHFLAGS=	-march=rv64gc -mcmodel=medany -mrelax \
 		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 SORTR=		sort -R
