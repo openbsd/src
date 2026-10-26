@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.10 2026/10/26 08:19:00 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.11 2026/10/26 08:23:16 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -538,6 +538,16 @@ ncas_sorted_cmp(const void *ca_a, const void *ca_b)
 	return 0;
 }
 
+static int
+ca_print_nonfunctional(FILE *f, const struct ca *ca)
+{
+	assert(ca->nonfunc);
+
+	return fprintf(f, "%s %s %lld %lld %d %s %s %s\n", ca->aki, ca->ski,
+	    (long long)ca->since, (long long)ca->last_attempt, ca->attempts,
+	    ca->location, ca->mfturi, ca->notify == NULL ? "-" : ca->notify);
+}
+
 void
 nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 {
@@ -576,20 +586,8 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 		err(1, "fdopen");
 
 	for (idx = 0; idx < ncas_num; idx++) {
-		ca = ncas_sorted[idx];
-
-		if (fprintf(f, "%s %s %lld %lld %d %s %s", ca->aki, ca->ski,
-		    (long long)ca->since, (long long)ca->last_attempt,
-		    ca->attempts, ca->location, ca->mfturi) < 0)
+		if (ca_print_nonfunctional(f, ncas_sorted[idx]) < 0)
 			goto err;
-
-		if (ca->notify == NULL) {
-			if (fprintf(f, " -\n") < 0)
-				goto err;
-		} else {
-			if (fprintf(f, " %s\n", ca->notify) < 0)
-				goto err;
-		}
 	}
 
 	if (fclose(f) != 0) {
@@ -749,6 +747,15 @@ cas_sorted_cmp(const void *ca_a, const void *ca_b)
 	return 0;
 }
 
+static int
+ca_print_confirmed(FILE *f, const struct ca *ca)
+{
+	assert(ca->confirmed);
+
+	return fprintf(f, "%s %s %lld %s %s\n", ca->aki, ca->ski,
+	    (long long)ca->confirmed_since, ca->location, ca->mfturi);
+}
+
 void
 ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 {
@@ -787,11 +794,7 @@ ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 		err(1, "fdopen");
 
 	for (idx = 0; idx < cas_num; idx++) {
-		ca = cas_sorted[idx];
-
-		if (fprintf(f, "%s %s %lld %s %s\n", ca->aki, ca->ski,
-		    (long long)ca->confirmed_since, ca->location,
-		    ca->mfturi) < 0)
+		if (ca_print_confirmed(f, cas_sorted[idx]) < 0)
 			goto err;
 	}
 
