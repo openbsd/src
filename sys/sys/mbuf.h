@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.271 2026/07/03 11:51:57 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.272 2026/10/26 06:33:46 miod Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -535,7 +535,6 @@ void			ml_init(struct mbuf_list *);
 void			ml_enqueue(struct mbuf_list *, struct mbuf *);
 struct mbuf *		ml_dequeue(struct mbuf_list *);
 void			ml_enlist(struct mbuf_list *, struct mbuf_list *);
-struct mbuf *		ml_dechain(struct mbuf_list *);
 unsigned int		ml_purge(struct mbuf_list *);
 unsigned int		ml_hdatalen(struct mbuf_list *);
 

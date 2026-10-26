@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.307 2026/07/03 11:51:57 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.308 2026/10/26 06:33:46 miod Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1729,18 +1729,6 @@ ml_dequeue(struct mbuf_list *ml)
 	}
 
 	return (m);
-}
-
-struct mbuf *
-ml_dechain(struct mbuf_list *ml)
-{
-	struct mbuf *m0;
-
-	m0 = ml->ml_head;
-
-	ml_init(ml);
-
-	return (m0);
 }
 
 unsigned int
