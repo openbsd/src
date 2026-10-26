@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.15 2020/01/23 07:12:42 jmc Exp $
+.\"     $OpenBSD: ml_init.9,v 1.16 2026/10/26 05:22:13 jsg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2020 $
+.Dd $Mdocdate: October 26 2026 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
@@ -22,7 +22,6 @@
 .Nm ml_enqueue ,
 .Nm ml_dequeue ,
 .Nm ml_enlist ,
-.Nm ml_dechain ,
 .Nm ml_len ,
 .Nm ml_empty ,
 .Nm ml_hdatalen ,
@@ -42,8 +41,6 @@
 .Fn ml_dequeue "struct mbuf_list *ml"
 .Ft void
 .Fn ml_enlist "struct mbuf_list *ml" "struct mbuf_list *src"
-.Ft struct mbuf *
-.Fn ml_dechain "struct mbuf_list *ml"
 .Ft unsigned int
 .Fn ml_len "struct mbuf_list *ml"
 .Ft int
@@ -94,10 +91,6 @@ Enqueue all the mbufs on the
 mbuf list on to the end of the
 .Fa ml
 mbuf list.
-.It Fn ml_dechain "struct mbuf_list *ml"
-Dequeues all mbufs from the
-.Fa ml
-mbuf list.
 .It Fn ml_len "struct mbuf_list *ml"
 Return the number of mbufs on the
 .Fa ml
@@ -135,7 +128,6 @@ Note that it is unsafe to modify the list while iterating over it.
 .Fn ml_enqueue ,
 .Fn ml_dequeue ,
 .Fn ml_enlist ,
-.Fn ml_dechain ,
 .Fn ml_len ,
 .Fn ml_empty ,
 .Fn ml_purge ,
@@ -148,13 +140,6 @@ can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn ml_dequeue
 returns the mbuf that was at the head of its list.
-If the list was empty,
-.Dv NULL
-is returned.
-.Pp
-.Fn ml_dechain
-returns all the mbufs that were on the list via
-a pointer to an mbuf with the chain accessible via m_nextpkt members.
 If the list was empty,
 .Dv NULL
 is returned.
