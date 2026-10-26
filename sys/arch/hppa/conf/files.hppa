@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.99 2024/11/04 22:08:03 jsg Exp $
+#	$OpenBSD: files.hppa,v 1.100 2026/10/26 18:13:00 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -320,23 +320,11 @@ file	arch/hppa/spmath/dfmpy.c	fpemul
 file	arch/hppa/spmath/dfrem.c	fpemul
 file	arch/hppa/spmath/dfsqrt.c	fpemul
 file	arch/hppa/spmath/dfsub.c	fpemul
-file	arch/hppa/spmath/divsfm.c	fpemul
-file	arch/hppa/spmath/divsfr.c	fpemul
-file	arch/hppa/spmath/divsim.c	fpemul
-file	arch/hppa/spmath/divsir.c	fpemul
-file	arch/hppa/spmath/divufr.c	fpemul
-file	arch/hppa/spmath/divuir.c	fpemul
 file	arch/hppa/spmath/fcnvff.c	fpemul
 file	arch/hppa/spmath/fcnvfx.c	fpemul
 file	arch/hppa/spmath/fcnvfxt.c	fpemul
 file	arch/hppa/spmath/fcnvxf.c	fpemul
 file	arch/hppa/spmath/frnd.c		fpemul
-file	arch/hppa/spmath/mpyaccs.c	fpemul
-file	arch/hppa/spmath/mpyaccu.c	fpemul
-file	arch/hppa/spmath/mpys.c		fpemul
-file	arch/hppa/spmath/mpyscv.c	fpemul
-file	arch/hppa/spmath/mpyu.c		fpemul
-file	arch/hppa/spmath/mpyucv.c	fpemul
 file	arch/hppa/spmath/sfadd.c	fpemul
 file	arch/hppa/spmath/sfcmp.c	fpemul
 file	arch/hppa/spmath/sfdiv.c	fpemul
@@ -344,6 +332,5 @@ file	arch/hppa/spmath/sfmpy.c	fpemul
 file	arch/hppa/spmath/sfrem.c	fpemul
 file	arch/hppa/spmath/sfsqrt.c	fpemul
 file	arch/hppa/spmath/sfsub.c	fpemul
-file	arch/hppa/spmath/divu.S		fpemul
 file	arch/hppa/spmath/impys.S	fpemul
 file	arch/hppa/spmath/impyu.S	fpemul
