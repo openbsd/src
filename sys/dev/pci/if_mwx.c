@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.48 2026/10/26 12:51:13 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.49 2026/10/27 14:59:27 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -2539,6 +2539,8 @@ mwx_dma_tx_enqueue(struct mwx_softc *sc, struct mwx_queue *q, struct mbuf *m)
 	struct mwx_desc *desc;
 	int i, nsegs, idx, rv;
 
+	splassert(IPL_NET);
+
 	idx = q->mq_prod;
 	md = &q->mq_data[idx];
 	desc = &q->mq_desc[idx];
@@ -2617,6 +2619,8 @@ mwx_dma_txwi_enqueue(struct mwx_softc *sc, struct mwx_queue *q,
 	uint32_t buf0, len0, ctrl;
 	int idx;
 
+	splassert(IPL_NET);
+
 	idx = q->mq_prod;
 	md = &q->mq_data[idx];
 	desc = &q->mq_desc[idx];
@@ -2654,6 +2658,8 @@ mwx_dma_tx_cleanup(struct mwx_softc *sc, struct mwx_queue *q)
 	struct mwx_queue_data *md;
 	struct mwx_desc *desc;
 	int idx, last;
+
+	splassert(IPL_NET);
 
 	idx = q->mq_cons;
 	last = mwx_read(sc, q->mq_regbase + MT_DMA_DMA_IDX);
@@ -2782,6 +2788,8 @@ mwx_dma_rx_dequeue(struct mwx_softc *sc, struct mwx_queue *q,
 	struct mwx_desc *desc;
 	struct mbuf *m, *m0, *mtail;
 	int idx, last;
+
+	splassert(IPL_NET);
 
 	idx = q->mq_cons;
 	last = mwx_read(sc, q->mq_regbase + MT_DMA_DMA_IDX);
@@ -3969,6 +3977,7 @@ mwx_mcu_send_firmware(struct mwx_softc *sc, int cmd, u_char *data,
 {
 	size_t cur_len;
 	int rv;
+	int s;
 
 	while (len > 0) {
 		cur_len = len;
@@ -3982,7 +3991,9 @@ mwx_mcu_send_firmware(struct mwx_softc *sc, int cmd, u_char *data,
 		data += cur_len;
 		len -= cur_len;
 
+		s = splnet();
 		mwx_dma_tx_cleanup(sc, &sc->sc_txfwdlq);
+		splx(s);
 	}
 
 	return 0;
