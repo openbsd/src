@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.14 2026/09/10 08:06:58 jsg Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.15 2026/10/27 12:58:26 tb Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2026 $
+.Dd $Mdocdate: October 27 2026 $
 .Dt IBUF_ADD 3
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@
 .Nm ibufq_pop ,
 .Nm ibufq_push ,
 .Nm ibufq_queuelen
-.Nd save buffer API for basic IO
+.Nd safe buffer API for basic IO
 .Sh SYNOPSIS
 .Lb libutil
 .In imsg.h
