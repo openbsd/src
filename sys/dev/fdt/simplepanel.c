@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplepanel.c,v 1.7 2026/10/14 15:28:10 kirill Exp $	*/
+/*	$OpenBSD: simplepanel.c,v 1.8 2026/10/27 21:31:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -82,8 +82,10 @@ simplepanel_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "simple-panel") ||
+	    OF_is_compatible(faa->fa_node, "edp-panel") ||
 	    OF_is_compatible(faa->fa_node, "boe,nv140fhmn49") ||
-	    OF_is_compatible(faa->fa_node, "edo,edo1455"));
+	    OF_is_compatible(faa->fa_node, "edo,edo1455") ||
+	    OF_is_compatible(faa->fa_node, "samsung,atna33xc20"));
 }
 
 void
@@ -113,7 +115,9 @@ simplepanel_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_mode = &boe_nv140fhmn49_mode;
 		connector_type = DRM_MODE_CONNECTOR_eDP;
 	}
-	if (OF_is_compatible(faa->fa_node, "edo,edo1455")) {
+	if (OF_is_compatible(faa->fa_node, "edp-panel") ||
+	    OF_is_compatible(faa->fa_node, "edo,edo1455") ||
+	    OF_is_compatible(faa->fa_node, "samsung,atna33xc20")) {
 		connector_type = DRM_MODE_CONNECTOR_eDP;
 		sc->sc_power_control = 1;
 	}
