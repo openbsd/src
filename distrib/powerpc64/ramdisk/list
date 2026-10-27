@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2021/08/29 09:05:21 deraadt Exp $
+#	$OpenBSD: list,v 1.6 2026/10/27 01:38:20 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -71,6 +71,15 @@ SPECIAL	rm bin/md5
 SPECIAL awk -f ${UTILS}/trimcerts.awk ${DESTDIR}/etc/ssl/cert.pem etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
 SPECIAL	rm usr/bin/ftp-ssl
+
+# firmware we might need
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125	etc/firmware/rge-rtl8125
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125b	etc/firmware/rge-rtl8125b
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125d-1	etc/firmware/rge-rtl8125d-1
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125d-2	etc/firmware/rge-rtl8125d-2
+COPY	${DESTDIR}/etc/firmware/rge-rtl8126-1	etc/firmware/rge-rtl8126-1
+COPY	${DESTDIR}/etc/firmware/rge-rtl8126-2	etc/firmware/rge-rtl8126-2
+COPY	${DESTDIR}/etc/firmware/rge-rtl8127	etc/firmware/rge-rtl8127
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

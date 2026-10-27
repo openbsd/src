@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.25 2025/09/03 01:39:28 jsg Exp $
+#	$OpenBSD: list,v 1.26 2026/10/27 01:38:20 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -101,6 +101,13 @@ COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188ftv etc/firmware/urtwn-rtl8188ftv
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cT	etc/firmware/urtwn-rtl8192cT
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cU	etc/firmware/urtwn-rtl8192cU
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125	etc/firmware/rge-rtl8125
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125b	etc/firmware/rge-rtl8125b
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125d-1	etc/firmware/rge-rtl8125d-1
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125d-2	etc/firmware/rge-rtl8125d-2
+COPY	${DESTDIR}/etc/firmware/rge-rtl8126-1	etc/firmware/rge-rtl8126-1
+COPY	${DESTDIR}/etc/firmware/rge-rtl8126-2	etc/firmware/rge-rtl8126-2
+COPY	${DESTDIR}/etc/firmware/rge-rtl8127	etc/firmware/rge-rtl8127
 
 MKDIR	usr/mdec/rpi
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-2-b.dtb usr/mdec/rpi/bcm2710-rpi-2-b.dtb

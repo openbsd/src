@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 2023/04/28 01:24:14 kevlo Exp $
+#	$OpenBSD: list,v 1.8 2026/10/27 01:38:20 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -72,6 +72,13 @@ LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
 SPECIAL	rm usr/bin/ftp-ssl
 
 # firmware we might need
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125	etc/firmware/rge-rtl8125
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125b	etc/firmware/rge-rtl8125b
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125d-1	etc/firmware/rge-rtl8125d-1
+COPY	${DESTDIR}/etc/firmware/rge-rtl8125d-2	etc/firmware/rge-rtl8125d-2
+COPY	${DESTDIR}/etc/firmware/rge-rtl8126-1	etc/firmware/rge-rtl8126-1
+COPY	${DESTDIR}/etc/firmware/rge-rtl8126-2	etc/firmware/rge-rtl8126-2
+COPY	${DESTDIR}/etc/firmware/rge-rtl8127	etc/firmware/rge-rtl8127
 COPY    ${DESTDIR}/etc/firmware/rsu-rtl8712	etc/firmware/rsu-rtl8712
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188eu	etc/firmware/urtwn-rtl8188eu
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188ftv	etc/firmware/urtwn-rtl8188ftv

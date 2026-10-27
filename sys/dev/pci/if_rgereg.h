@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.19 2026/10/13 01:35:47 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.20 2026/10/27 01:38:20 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2025, 2026
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifdef _KERNEL
 
 #define RGE_PCI_BAR0		PCI_MAPREG_START
 #define RGE_PCI_BAR1		(PCI_MAPREG_START + 4)
@@ -371,9 +373,14 @@ enum {
 	CMDSTS_SOF
 };
 
- /*
-  * Statistics counter structure
-  */
+struct rge_pair {
+	uint16_t	reg;
+	uint16_t	val;
+};
+
+/*
+ * Statistics counter structure
+ */
 struct rge_stats {
 	uint64_t		rge_tx_ok;
 	uint64_t		rge_rx_ok;
@@ -514,8 +521,10 @@ struct rge_softc {
 	bus_dma_tag_t		sc_dmat;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
+	struct pci_attach_args	sc_pa;
 	struct ifmedia		sc_media;	/* media info */
 	struct intrmap		*sc_intrmap;
+	const char		*sc_fwname;
 	enum rge_mac_type	rge_type;
 
 	uint16_t		rge_min_msix;
@@ -524,6 +533,11 @@ struct rge_softc {
 	int			sc_nqueues;
 	int			sc_ntxqs;
 	uint32_t		sc_linkvec;
+
+	const struct rge_pair	*rge_macp;
+	const struct rge_pair	*rge_phyp;
+	int			rge_nmac;
+	int			rge_nphy;
 
 	struct timeout		sc_timeout;	/* tick timeout */
 
@@ -590,3 +604,45 @@ struct rge_softc {
 
 #define RGE_MAC_CLRBIT(sc, reg, val)	\
 	rge_write_mac_ocp(sc, reg, rge_read_mac_ocp(sc, reg) & ~(val))
+
+static const struct {
+	uint16_t	reg;
+	uint16_t	val;
+} mac_r25_ephy[] = {
+	{ 0x0004, 0xd000 }, { 0x000a, 0x8653 }, { 0x0023, 0xab66 },
+	{ 0x0020, 0x9455 }, { 0x0021, 0x99ff }, { 0x0029, 0xfe04 },
+	{ 0x0044, 0xd000 }, { 0x004a, 0x8653 }, { 0x0063, 0xab66 },
+	{ 0x0060, 0x9455 }, { 0x0061, 0x99ff }, { 0x0069, 0xfe04 }
+}, mac_r25b_ephy[] = {
+	{ 0x000b, 0xa908 }, { 0x001e, 0x20eb }, { 0x0022, 0x0023 },
+	{ 0x0002, 0x60c2 }, { 0x0029, 0xff00 }, { 0x004b, 0xa908 },
+	{ 0x005e, 0x28eb }, { 0x0062, 0x0023 }, { 0x0042, 0x60c2 },
+	{ 0x0069, 0xff00 }
+}, mac_r27_ephy[] = {
+	{ 0x8088, 0x0064 }, { 0x8488, 0x0064 }, { 0x8888, 0x0064 },
+	{ 0x8c88, 0x0064 }, { 0x8188, 0x0064 }, { 0x8588, 0x0064 },
+	{ 0x8988, 0x0064 }, { 0x8d88, 0x0064 }, { 0x808c, 0x09b0 },
+	{ 0x848c, 0x09b0 }, { 0x888c, 0x0f90 }, { 0x8c8c, 0x0f90 },
+	{ 0x818c, 0x09b0 }, { 0x858c, 0x09b0 }, { 0x898c, 0x0f90 },
+	{ 0x8d8c, 0x0f90 }, { 0x808a, 0x09b8 }, { 0x848a, 0x09b8 },
+	{ 0x888a, 0x0f98 }, { 0x8c8a, 0x0f98 }, { 0x818a, 0x09b8 },
+	{ 0x858a, 0x09b8 }, { 0x898a, 0x0f98 }, { 0x8d8a, 0x0f98 },
+	{ 0x9020, 0x0080 }, { 0x9420, 0x0080 }, { 0x9820, 0x0080 },
+	{ 0x9c20, 0x0080 }, { 0x901e, 0x0190 }, { 0x941e, 0x0190 },
+	{ 0x981e, 0x0140 }, { 0x9c1e, 0x0140 }, { 0x901c, 0x0190 },
+	{ 0x941c, 0x0190 }, { 0x981c, 0x0140 }, { 0x9c1c, 0x0140 }
+};
+#endif /* _KERNEL */
+
+#define RGE_RTL8125_FW		"rge-rtl8125"
+#define RGE_RTL8125B_FW		"rge-rtl8125b"
+#define RGE_RTL8125D_1_FW	"rge-rtl8125d-1"
+#define RGE_RTL8125D_2_FW	"rge-rtl8125d-2"
+#define RGE_RTL8126_1_FW	"rge-rtl8126-1"
+#define RGE_RTL8126_2_FW	"rge-rtl8126-2"
+#define RGE_RTL8127_FW		"rge-rtl8127"
+
+struct rge_fw_hdr {
+	uint32_t	rge_maclen;
+	uint32_t	rge_phylen;
+} __packed;

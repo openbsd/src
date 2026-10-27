@@ -1,0 +1,12 @@
+Copyright (c) 2011-2013, Realtek Semiconductor Corporation
+
+Permission is hereby granted for the distribution of this firmware
+data in hexadecimal or equivalent format, provided this copyright
+notice is accompanying it.
+
+The following files are under this license:
+
+rge-rtl8125 rge-rtl8125b rge-rtl8125d-1 rge-rtl8125d-2 rge-rtl8126-1
+rge-rtl8126-2 rge-rtl8127
+
+These files are needed by various models of rge(4) devices.
