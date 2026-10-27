@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.28 2023/03/01 08:15:58 claudio Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.29 2026/10/27 03:43:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -301,12 +301,39 @@ struct tok ns_type2str[] = {
 	{ T_RRSIG, 	"RRSIG" },		/* RFC 4034 */
 	{ T_NSEC,	"NSEC" },		/* RFC 4034 */
 	{ T_DNSKEY,	"DNSKEY" },		/* RFC 4034 */
+	{ T_DHCID,	"DHCID" },		/* RFC 4701 */
+	{ T_NSEC3,	"NSEC3" },		/* RFC 5155, RFC 9077 */
+	{ T_NSEC3PARAM,	"NSEC3PARAM" },	/* RFC 5155 */
+	{ T_TLSA,	"TLSA" },		/* RFC 6698 */
+	{ T_SMIMEA,	"SMIMEA" },		/* RFC 8162 */
+	{ T_HIP,	"HIP" },		/* RFC 8005 */
+	{ T_NINFO,	"NINFO" },
+	{ T_RKEY,	"RKEY" },
+	{ T_TALINK,	"TALINK" },
+	{ T_CDS,	"CDS" },		/* RFC 7344 */
+	{ T_CDNSKEY,	"CDNSKEY" },	/* RFC 7344 */
+	{ T_OPENPGPKEY,	"OPENPGPKEY" },	/* RFC 7929 */
+	{ T_CSYNC,	"CSYNC" },		/* RFC 7477 */
+	{ T_ZONEMD,	"ZONEMD" },		/* RFC 8976 */
+	{ T_SVCB,	"SVCB" },		/* RFC 9460 */
+	{ T_HTTPS,	"HTTPS" },		/* RFC 9460 */
+	{ T_DSYNC,	"DSYNC" },		/* RFC 9859 */
+	{ T_HHIT,	"HHIT" },		/* RFC 9886 */
+	{ T_BRID,	"BRID" },		/* RFC 9886 */
+	{ T_UNECE,	"UNECE" },
+	{ T_ISO,	"ISO" },
 	{ T_SPF,	"SPF" },		/* RFC-schlitt-spf-classic-02.txt */
 	{ T_UINFO,	"UINFO" },
 	{ T_UID,	"UID" },
 	{ T_GID,	"GID" },
 	{ T_UNSPEC,	"UNSPEC" },
-	{ T_UNSPECA,	"UNSPECA" },
+	{ T_NID,	"NID" },		/* RFC 6742 */
+	{ T_L32,	"L32" },		/* RFC 6742 */
+	{ T_L64,	"L64" },		/* RFC 6742 */
+	{ T_LP,		"LP" },			/* RFC 6742 */
+	{ T_EUI48,	"EUI48" },		/* RFC 7043 */
+	{ T_EUI64,	"EUI64" },		/* RFC 7043 */
+	{ T_NXNAME,	"NXNAME" },		/* RFC 9824 */
 	{ T_TKEY,	"TKEY" },		/* RFC 2930 */
 	{ T_TSIG,	"TSIG" },		/* RFC 2845 */
 	{ T_IXFR,	"IXFR" },		/* RFC 1995 */
@@ -314,6 +341,17 @@ struct tok ns_type2str[] = {
 	{ T_MAILB,	"MAILB" },		/* RFC 1035 */
 	{ T_MAILA,	"MAILA" },		/* RFC 1035 */
 	{ T_ANY,	"ANY" },
+	{ T_URI,	"URI" },		/* RFC 7553 */
+	{ T_CAA,	"CAA" },		/* RFC 8659 */
+	{ T_AVC,	"AVC" },
+	{ T_DOA,	"DOA" },
+	{ T_AMTRELAY,	"AMTRELAY" },	/* RFC 8777 */
+	{ T_RESINFO,	"RESINFO" },	/* RFC 9606 */
+	{ T_WALLET,	"WALLET" },
+	{ T_CLA,	"CLA" },
+	{ T_IPN,	"IPN" },
+	{ T_TA,		"TA" },
+	{ T_DLV,	"DLV" },		/* RFC 8749, RFC 4431 */
 	{ 0,		NULL }
 };
 
@@ -525,13 +563,6 @@ ns_rprint(const u_char *cp, const u_char *bp, int is_mdns)
 		printf(" UDPsize=%u", class);
 		if (opt_flags & 0x8000)
 			printf(" DO");
-		break;
-
-	case T_UNSPECA:		/* One long string */
-		if (!TTEST2(*cp, len))
-			return(NULL);
-		if (fn_printn(cp, len, snapend))
-			return(NULL);
 		break;
 
 	case T_TSIG:

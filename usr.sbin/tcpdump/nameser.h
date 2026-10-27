@@ -1,4 +1,4 @@
-/* @(#) $Id: nameser.h,v 1.8 2015/11/15 20:35:36 mmcc Exp $ (LBL) */
+/* @(#) $Id: nameser.h,v 1.9 2026/10/27 03:43:20 dlg Exp $ (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -157,13 +157,40 @@
 #define T_RRSIG		46		/* RRSIG */
 #define T_NSEC		47		/* NSEC */
 #define T_DNSKEY	48		/* DNSKEY */
+#define T_DHCID		49		/* DHCID, RFC 4701 */
+#define T_NSEC3		50		/* NSEC3, RFC 5155 and RFC 9077 */
+#define T_NSEC3PARAM	51	/* NSEC3PARAM, RFC 5155 */
+#define T_TLSA		52		/* TLSA, RFC 6698 */
+#define T_SMIMEA	53		/* S/MIME cert association, RFC 8162 */
+#define T_HIP		55		/* Host Identity Protocol, RFC 8005 */
+#define T_NINFO		56		/* NINFO */
+#define T_RKEY		57		/* RKEY */
+#define T_TALINK	58		/* Trust Anchor LINK */
+#define T_CDS		59		/* Child DS, RFC 7344 */
+#define T_CDNSKEY	60		/* DNSKEY(s) the Child wants reflected in DS, RFC 7344 */
+#define T_OPENPGPKEY	61	/* OpenPGP Key, RFC 7929 */
+#define T_CSYNC		62		/* Child-To-Parent Synchronization, RFC 7477 */
+#define T_ZONEMD	63		/* Message Digest Over Zone Data, RFC 8976 */
+#define T_SVCB		64		/* General-purpose service binding, RFC 9460 */
+#define T_HTTPS		65		/* SVCB-compatible type for use with HTTP, RFC 9460 */
+#define T_DSYNC		66		/* Endpoint discovery for delegation synchronization, RFC 9859 */
+#define T_HHIT		67		/* Hierarchical Host Identity Tag, RFC 9886 */
+#define T_BRID		68		/* UAS Broadcast Remote Identification, RFC 9886 */
+#define T_UNECE		69		/* Value coded per a UNECE Recommendation */
+#define T_ISO		70		/* Value coded per an ISO standard */
 	/* non standard */
 #define T_SPF		99		/* sender policy framework */
 #define T_UINFO		100		/* user (finger) information */
 #define T_UID		101		/* user ID */
 #define T_GID		102		/* group ID */
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
-#define T_UNSPECA	104		/* "unspecified ascii". Ugly MIT hack */
+#define T_NID		104		/* RFC 6742 */
+#define T_L32		105		/* RFC 6742 */
+#define T_L64		106		/* RFC 6742 */
+#define T_LP		107		/* RFC 6742 */
+#define T_EUI48		108		/* an EUI-48 address, RFC 7043 */
+#define T_EUI64		109		/* an EUI-64 address, RFC 7043 */
+#define T_NXNAME	128		/* NXDOMAIN indicator for Compact Denial of Existence, RFC 9824 */
 	/* Query type values which do not appear in resource records */
 #define T_TKEY		249		/* Transaction Key [RFC2930] */
 #define T_TSIG		250		/* Transaction Signature [RFC2845] */
@@ -172,6 +199,17 @@
 #define T_MAILB		253		/* transfer mailbox records */
 #define T_MAILA		254		/* transfer mail agent records */
 #define T_ANY		255		/* wildcard match */
+#define T_URI		256		/* URI, RFC 7553 */
+#define T_CAA		257		/* Certification Authority Restriction, RFC 8659 */
+#define T_AVC		258		/* Application Visibility and Control */
+#define T_DOA		259		/* Digital Object Architecture */
+#define T_AMTRELAY	260		/* Automatic Multicast Tunneling Relay, RFC 8777 */
+#define T_RESINFO	261		/* Resolver Information as Key/Value Pairs, RFC 9606 */
+#define T_WALLET	262		/* Public wallet address */
+#define T_CLA		263		/* BP Convergence Layer Adapter */
+#define T_IPN		264		/* BP Node Number */
+#define T_TA		32768	/* DNSSEC Trust Authorities */
+#define T_DLV		32769	/* DNSSEC Lookaside Validation (OBSOLETE), RFC 8749 and RFC 4431 */
 
 /*
  * Values for class field
