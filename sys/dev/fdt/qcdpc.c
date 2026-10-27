@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcdpc.c,v 1.3 2026/10/14 15:27:35 kirill Exp $	*/
+/*	$OpenBSD: qcdpc.c,v 1.4 2026/10/27 21:25:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -124,7 +124,6 @@ struct cfdriver qcdpc_cd = {
 };
 
 int	qcdpc_print(void *, const char *);
-int	qcdpc_map_link(struct qcdpc_softc *, struct fdt_attach_args *);
 void	qcdpc_attach_backlight(struct qcdpc_softc *);
 void	qcdpc_read_link_config(struct qcdpc_softc *);
 void	qcdpc_configure_sink(struct qcdpc_softc *);
@@ -190,6 +189,16 @@ qcdpc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[2].addr,
+	    faa->fa_reg[2].size, 0, &sc->sc_link_ioh)) {
+		printf(": can't map LINK registers\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ahb_ioh,
+		    faa->fa_reg[0].size);
+		bus_space_unmap(sc->sc_iot, sc->sc_aux_ioh,
+		    faa->fa_reg[1].size);
+		return;
+	}
+
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO, qcdpc_intr,
 	    sc, sc->sc_sbus.sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
@@ -198,6 +207,8 @@ qcdpc_attach(struct device *parent, struct device *self, void *aux)
 		    faa->fa_reg[0].size);
 		bus_space_unmap(sc->sc_iot, sc->sc_aux_ioh,
 		    faa->fa_reg[1].size);
+		bus_space_unmap(sc->sc_iot, sc->sc_link_ioh,
+		    faa->fa_reg[2].size);
 		return;
 	}
 
@@ -209,10 +220,7 @@ qcdpc_attach(struct device *parent, struct device *self, void *aux)
 
 	node = OF_getnodebyname(node, "panel");
 	if (node) {
-		if (qcdpc_map_link(sc, faa) == 0) {
-			if (OF_is_compatible(node, "edo,edo1455"))
-				sc->sc_panel_reinit = 1;
-		}
+		sc->sc_panel_reinit = 1;
 
 		/* We have a panel.  Try to enable its backlight control. */
 		qcdpc_attach_backlight(sc);
@@ -222,26 +230,6 @@ qcdpc_attach(struct device *parent, struct device *self, void *aux)
 		fa.fa_node = node;
 		config_found(self, &fa, qcdpc_print);
 	}
-}
-
-int
-qcdpc_map_link(struct qcdpc_softc *sc, struct fdt_attach_args *faa)
-{
-	int error;
-
-	if (faa->fa_nreg < 3 ||
-	    faa->fa_reg[0].size < DP_INTR_STATUS2 + 4 ||
-	    faa->fa_reg[2].size < DP_MAINLINK_READY + 4) {
-		printf("%s: no LINK registers\n", sc->sc_sbus.sc_dev.dv_xname);
-		return ENXIO;
-	}
-
-	error = bus_space_map(sc->sc_iot, faa->fa_reg[2].addr,
-	    faa->fa_reg[2].size, 0, &sc->sc_link_ioh);
-	if (error)
-		printf("%s: can't map LINK registers\n",
-		    sc->sc_sbus.sc_dev.dv_xname);
-	return error;
 }
 
 int
