@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.11 2026/10/26 08:23:16 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.12 2026/10/27 06:15:48 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -515,6 +515,58 @@ nca_skip_sync(struct ca *ca)
 }
 
 static int
+ca_state_write(const char *fn, time_t buildtime, struct ca **cas,
+    size_t num_cas, int (*ca_print)(FILE *, const struct ca *))
+{
+	char *temp = NULL;
+	FILE *f = NULL;
+	size_t idx;
+	int fd, ret = 0;
+	struct timespec ts[2];
+
+	if (asprintf(&temp, "%s.XXXXXXXX", fn) == -1)
+		err(1, NULL);
+
+	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
+		goto err;
+	(void)fchmod(fd, 0644);
+
+	if ((f = fdopen(fd, "w")) == NULL)
+		err(1, "fdopen");
+
+	for (idx = 0; idx < num_cas; idx++) {
+		if (ca_print(f, cas[idx]) < 0)
+			goto err;
+	}
+
+	if (fclose(f) != 0) {
+		f = NULL;
+		goto err;
+	}
+	f = NULL;
+
+	ts[0].tv_nsec = UTIME_OMIT;
+	ts[1].tv_sec = buildtime;
+	ts[1].tv_nsec = 0;
+
+	if (utimensat(AT_FDCWD, temp, ts, 0) == -1)
+		goto err;
+
+	if (rename(temp, fn) == -1)
+		goto err;
+
+	ret = 1;
+
+ err:
+	free(temp);
+	if (f != NULL)
+		fclose(f);
+	unlink(temp);
+
+	return ret;
+}
+
+static int
 ncas_sorted_cmp(const void *ca_a, const void *ca_b)
 {
 	int cmp;
@@ -551,12 +603,8 @@ ca_print_nonfunctional(FILE *f, const struct ca *ca)
 void
 nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 {
-	char temp[] = NCA_HISTORY ".XXXXXXXX";
-	FILE *f = NULL;
-	int fd;
 	struct ca *ca, **ncas_sorted = NULL;
 	size_t ncas_num = 0, idx = 0;
-	struct timespec ts[2];
 
 	RB_FOREACH(ca, ca_tree, ca_tree) {
 		if (ca->nonfunc && ca->purpose == CERT_PURPOSE_CA)
@@ -578,46 +626,15 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 
 	qsort(ncas_sorted, ncas_num, sizeof(ncas_sorted[0]), ncas_sorted_cmp);
 
-	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
-		goto err;
-	(void)fchmod(fd, 0644);
-
-	if ((f = fdopen(fd, "w")) == NULL)
-		err(1, "fdopen");
-
-	for (idx = 0; idx < ncas_num; idx++) {
-		if (ca_print_nonfunctional(f, ncas_sorted[idx]) < 0)
-			goto err;
-	}
-
-	if (fclose(f) != 0) {
-		f = NULL;
-		goto err;
-	}
-	f = NULL;
-
-	ts[0].tv_nsec = UTIME_OMIT;
-	ts[1].tv_sec = buildtime;
-	ts[1].tv_nsec = 0;
-
-	if (utimensat(AT_FDCWD, temp, ts, 0) == -1)
-		goto err;
-
-	if (rename(temp, NCA_HISTORY) == -1)
-		goto err;
+	if (!ca_state_write(NCA_HISTORY, buildtime, ncas_sorted, ncas_num,
+	    ca_print_nonfunctional))
+		warn("error saving non-functional CA history to %s",
+		    NCA_HISTORY);
 
 	free(ncas_sorted);
 	nca_tree_free();
 
 	return;
-
- err:
-	warn("error saving non-functional CA history to %s", temp);
-	if (f != NULL)
-		fclose(f);
-	unlink(temp);
-	free(ncas_sorted);
-	nca_tree_free();
 }
 
 void
@@ -759,12 +776,8 @@ ca_print_confirmed(FILE *f, const struct ca *ca)
 void
 ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 {
-	char temp[] = CA_STATE ".XXXXXXXX";
-	FILE *f = NULL;
-	int fd;
 	struct ca *ca, **cas_sorted = NULL;
 	size_t cas_num = 0, idx = 0;
-	struct timespec ts[2];
 
 	RB_FOREACH(ca, ca_tree, ca_tree) {
 		if (ca->confirmed && ca->purpose == CERT_PURPOSE_CA)
@@ -786,44 +799,12 @@ ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 
 	qsort(cas_sorted, cas_num, sizeof(cas_sorted[0]), cas_sorted_cmp);
 
-	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
-		goto err;
-	(void)fchmod(fd, 0644);
-
-	if ((f = fdopen(fd, "w")) == NULL)
-		err(1, "fdopen");
-
-	for (idx = 0; idx < cas_num; idx++) {
-		if (ca_print_confirmed(f, cas_sorted[idx]) < 0)
-			goto err;
-	}
-
-	if (fclose(f) != 0) {
-		f = NULL;
-		goto err;
-	}
-	f = NULL;
-
-	ts[0].tv_nsec = UTIME_OMIT;
-	ts[1].tv_sec = buildtime;
-	ts[1].tv_nsec = 0;
-
-	if (utimensat(AT_FDCWD, temp, ts, 0) == -1)
-		goto err;
-
-	if (rename(temp, CA_STATE) == -1)
-		goto err;
+	if (!ca_state_write(CA_STATE, buildtime, cas_sorted, cas_num,
+	    ca_print_confirmed))
+		warn("error saving CA state to %s", CA_STATE);
 
 	free(cas_sorted);
 	ca_state_tree_free();
 
 	return;
-
- err:
-	warn("error saving CA state to %s", temp);
-	if (f != NULL)
-		fclose(f);
-	unlink(temp);
-	free(cas_sorted);
-	ca_state_tree_free();
 }
