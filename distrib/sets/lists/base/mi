@@ -136,6 +136,14 @@
 ./etc/firmware/ral-rt2661
 ./etc/firmware/ral-rt2860
 ./etc/firmware/ral-rt3290
+./etc/firmware/rge-license
+./etc/firmware/rge-rtl8125
+./etc/firmware/rge-rtl8125b
+./etc/firmware/rge-rtl8125d-1
+./etc/firmware/rge-rtl8125d-2
+./etc/firmware/rge-rtl8126-1
+./etc/firmware/rge-rtl8126-2
+./etc/firmware/rge-rtl8127
 ./etc/firmware/rsu-license
 ./etc/firmware/rsu-rtl8712
 ./etc/firmware/rtwn-license
