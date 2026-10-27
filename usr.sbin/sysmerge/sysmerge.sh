@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.236 2025/07/13 08:15:46 bentley Exp $
+# $OpenBSD: sysmerge.sh,v 1.237 2026/10/27 11:19:48 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -243,6 +243,7 @@ sm_run() {
 		      /etc/passwd
 		      /etc/pwd.db
 		      /etc/spwd.db
+		      /etc/ssl/cert.pem
 		      /var/db/locate.database
 		      /var/mail/root"
 	# in case X(7) is not installed, xetcsum is not removed by the loop above
