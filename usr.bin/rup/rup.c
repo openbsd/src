@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.32 2026/10/15 04:29:50 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.33 2026/10/28 03:11:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -243,8 +243,10 @@ onehost(char *host)
 	extern char *__progname;
 
 	rstat_clnt = clnt_create(host, RSTATPROG, RSTATVERS_TIME, "udp");
-	if (rstat_clnt == NULL)
+	if (rstat_clnt == NULL) {
 		warnx("%s", clnt_spcreateerror(host));
+		return;
+	}
 
 	bzero((char *)&host_stat, sizeof(host_stat));
 	if (clnt_call(rstat_clnt, RSTATPROC_STATS, xdr_void, NULL,
