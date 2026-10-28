@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.12 2026/10/27 06:15:48 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.13 2026/10/28 12:14:47 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
 
