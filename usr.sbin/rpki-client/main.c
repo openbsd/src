@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.333 2026/10/26 08:19:00 job Exp $ */
+/*	$OpenBSD: main.c,v 1.334 2026/10/28 13:37:29 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -266,9 +266,9 @@ entityq_flush(struct entityq *q, struct repo *rp)
 }
 
 static struct entity *
-entity_new(char *path, char *file, enum rtype type, enum location loc,
-    struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
-    char *mftaki)
+entity_new(const char *path, const char *file, enum rtype type,
+    enum location loc, struct repo *rp, unsigned char *data, size_t datasz,
+    int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
 
@@ -279,11 +279,18 @@ entity_new(char *path, char *file, enum rtype type, enum location loc,
 	ent->location = loc;
 	ent->talid = talid;
 	ent->certid = certid;
-	ent->mftaki = mftaki;
-	ent->path = path;
+	if (mftaki != NULL) {
+		if ((ent->mftaki = strdup(mftaki)) == NULL)
+			err(1, NULL);
+	}
+	if (path != NULL) {
+		if ((ent->path = strdup(path)) == NULL)
+			err(1, NULL);
+	}
 	if (rp != NULL)
 		ent->repoid = repo_id(rp);
-	ent->file = file;
+	if ((ent->file = strdup(file)) == NULL)
+		err(1, NULL);
 	ent->data = data;
 	ent->datasz = (data != NULL) ? datasz : 0;
 
@@ -294,9 +301,9 @@ entity_new(char *path, char *file, enum rtype type, enum location loc,
  * Add the heap-allocated file to the queue for processing.
  */
 static void
-entityq_add(char *path, char *file, enum rtype type, enum location loc,
-    struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
-    char *mftaki)
+entityq_add(const char *path, const char *file, enum rtype type,
+    enum location loc, struct repo *rp, unsigned char *data, size_t datasz,
+    int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
 
@@ -322,9 +329,9 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
  * non-inheriting EE certs.
  */
 static void
-entity_lowprioq_add(char *path, char *file, enum rtype type, enum location loc,
-    struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
-    char *mftaki)
+entity_lowprioq_add(const char *path, const char *file, enum rtype type,
+    enum location loc, struct repo *rp, unsigned char *data, size_t datasz,
+    int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
 
@@ -477,7 +484,6 @@ queue_add_from_mft(const struct mft *mft)
 	size_t			 i;
 	struct repo		*rp;
 	const struct mftfile	*f;
-	char			*mftaki, *nfile, *npath = NULL;
 
 	rp = repo_byid(mft->repoid);
 	for (i = 0; i < mft->filesz; i++) {
@@ -496,16 +502,8 @@ queue_add_from_mft(const struct mft *mft)
 			datasz = sizeof(mft->mfthash);
 		}
 
-		if (mft->path != NULL)
-			if ((npath = strdup(mft->path)) == NULL)
-				err(1, NULL);
-		if ((nfile = strdup(f->file)) == NULL)
-			err(1, NULL);
-		if ((mftaki = strdup(mft->aki)) == NULL)
-			err(1, NULL);
-
-		entityq_add(npath, nfile, f->type, f->location, rp,
-		    data, datasz, mft->talid, mft->issuerid, mftaki);
+		entityq_add(mft->path, f->file, f->type, f->location, rp,
+		    data, datasz, mft->talid, mft->issuerid, mft->aki);
 	}
 }
 
@@ -516,7 +514,6 @@ static void
 queue_add_file(const char *file, enum rtype type, int talid)
 {
 	unsigned char	*buf = NULL;
-	char		*nfile;
 	size_t		 len = 0;
 
 	if (!filemode || strncmp(file, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
@@ -525,10 +522,8 @@ queue_add_file(const char *file, enum rtype type, int talid)
 			err(1, "%s", file);
 	}
 
-	if ((nfile = strdup(file)) == NULL)
-		err(1, NULL);
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(NULL, nfile, type, DIR_UNKNOWN, NULL, buf, len, talid, 0,
+	entityq_add(NULL, file, type, DIR_UNKNOWN, NULL, buf, len, talid, 0,
 	    NULL);
 }
 
@@ -550,15 +545,12 @@ queue_add_from_tal(struct tal *tal)
 	/* figure out the TA filename, must be done before repo lookup */
 	nfile = strrchr(tal->uri[0], '/');
 	assert(nfile != NULL);
-	if ((nfile = strdup(nfile + 1)) == NULL)
-		err(1, NULL);
+	nfile += 1; /* skip '/' */
 
 	/* Look up the repository. */
 	repo = ta_lookup(tal->id, tal);
-	if (repo == NULL) {
-		free(nfile);
+	if (repo == NULL)
 		return;
-	}
 
 	/* steal the spki from the tal structure */
 	data = tal->spki;
@@ -575,7 +567,7 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 {
 	struct ca		*ca;
 	struct repo		*repo;
-	char			*nfile, *npath, *host;
+	char			*npath, *host;
 	const char		*uri, *repouri, *file;
 	size_t			 hostsz, repourisz;
 
@@ -619,21 +611,20 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 	file = strrchr(uri, '/');
 	if (file == NULL) {
 		npath = NULL;
-		if ((nfile = strdup(uri)) == NULL)
-			err(1, NULL);
+		file = uri;
 	} else {
 		if ((npath = strndup(uri, file - uri)) == NULL)
 			err(1, NULL);
-		if ((nfile = strdup(file + 1)) == NULL)
-			err(1, NULL);
+		file += 1; /* skip '/' */
 	}
 
 	if (ca_confirmed_in_last_run(ca_tree, cert))
-		entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo,
+		entityq_add(npath, file, RTYPE_MFT, DIR_UNKNOWN, repo,
 		    NULL, 0, cert->talid, cert->certid, NULL);
 	else
-		entity_lowprioq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo,
+		entity_lowprioq_add(npath, file, RTYPE_MFT, DIR_UNKNOWN, repo,
 		    NULL, 0, cert->talid, cert->certid, NULL);
+	free(npath);
 }
 
 /*
