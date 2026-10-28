@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.239 2026/08/11 14:28:59 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.240 2026/10/28 12:08:29 jan Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -951,6 +951,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 	u_int16_t		 hdrlen, extoff, maxlen;
 	u_int8_t		 proto;
 	int			 error;
+	int			 flags = 0;
 
 	hdrlen = ftag->ft_hdrlen;
 	extoff = ftag->ft_extoff;
@@ -995,22 +996,24 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 		return (PF_DROP);
 	}
 
+	if (ifp == NULL) {
+		switch (atomic_load_int(&ip6_forwarding)) {
+		case 2:
+			SET(flags, IPV6_FORWARDING_IPSEC);
+			/* FALLTHROUGH */
+		case 1:
+			SET(flags, IPV6_FORWARDING);
+			break;
+		default:
+			ip6stat_inc(ip6s_cantforward);
+			ml_purge(&ml);
+			return (PF_DROP);
+		}
+	}
+
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		m->m_pkthdr.pf.flags |= PF_TAG_REFRAGMENTED;
 		if (ifp == NULL) {
-			int flags = 0;
-
-			switch (atomic_load_int(&ip6_forwarding)) {
-			case 2:
-				SET(flags, IPV6_FORWARDING_IPSEC);
-				/* FALLTHROUGH */
-			case 1:
-				SET(flags, IPV6_FORWARDING);
-				break;
-			default:
-				ip6stat_inc(ip6s_cantforward);
-				return (PF_DROP);
-			}
 			ip6_forward(m, NULL, flags);
 		} else if ((u_long)m->m_pkthdr.len <= ifp->if_mtu) {
 			ifp->if_output(ifp, m, sin6tosa(dst), rt);
