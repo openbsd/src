@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.21 2026/10/16 06:42:46 kenjiro Exp $ */
+/*	$Id: http.c,v 1.22 2026/10/28 20:39:38 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,8 +34,7 @@
 
 #include "http.h"
 
-#define HTTP_MAXHEADERLENGTH	(64 * 1024)
-
+#define HTTP_MAX_HEADER_SIZE	(64 * 1024)
 #define HTTP_MAX_BODY_SIZE	(20 * 1024)
 
 /*
@@ -620,7 +619,7 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 			return NULL;
 		else if (ssz == 0)
 			break;
-		if ((size_t)ssz > HTTP_MAXHEADERLENGTH - trans->hbufsz) {
+		if ((size_t)ssz > HTTP_MAX_HEADER_SIZE - trans->hbufsz) {
 			warnx("%s: header too large", http->src.ip);
 			return NULL;
 		}
