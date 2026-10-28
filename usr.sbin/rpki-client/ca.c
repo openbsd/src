@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.13 2026/10/28 12:14:47 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.14 2026/10/28 15:07:27 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -559,10 +559,10 @@ ca_state_write(const char *fn, time_t buildtime, struct ca **cas,
 	ret = 1;
 
  err:
-	free(temp);
 	if (f != NULL)
 		fclose(f);
 	unlink(temp);
+	free(temp);
 
 	return ret;
 }
