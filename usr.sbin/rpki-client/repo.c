@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.97 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.98 2026/10/28 13:33:40 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -351,7 +351,6 @@ repo_done(const void *vp, int ok)
 
 /*
  * Build TA file name based on the repo info.
- * If temp is set add Xs for mkostemp.
  */
 static char *
 ta_filename(const struct tarepo *tr)
