@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2025/04/30 12:30:54 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2026/10/29 16:53:30 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -79,8 +79,6 @@ extern struct intc_intrhand __intc_intrhand[];
 void intc_init(void);
 void *intc_intr_establish(int, int, int, int (*)(void *), void *, const char *);
 void intc_intr_disestablish(void *);
-void intc_intr_enable(int);
-void intc_intr_disable(int);
 void intc_intr(int, int, int);
 
 void intpri_intr_priority(int evtcode, int level);

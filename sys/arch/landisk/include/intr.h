@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2018/08/20 15:02:07 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.15 2026/10/29 16:53:30 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -88,8 +88,5 @@ do {									\
 void intr_init(void);
 void *extintr_establish(int, int, int (*)(void *), void *, const char *);
 void extintr_disestablish(void *ih);
-void extintr_enable(void *ih);
-void extintr_disable(void *ih);
-void extintr_disable_by_num(int irq);
 
 #endif /* !_MACHINE_INTR_H_ */

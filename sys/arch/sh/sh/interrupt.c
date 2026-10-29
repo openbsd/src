@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.21 2025/04/30 12:30:54 visa Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.22 2026/10/29 16:53:30 miod Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -47,11 +47,6 @@ void intc_intr_priority(int, int);
 struct intc_intrhand *intc_alloc_ih(void);
 void intc_free_ih(struct intc_intrhand *);
 int intc_unknown_intr(void *);
-
-#ifdef SH4
-void intpri_intr_enable(int);
-void intpri_intr_disable(int);
-#endif
 
 void tmu1_oneshot(void);
 int tmu1_intr(void *);
@@ -158,66 +153,6 @@ intc_intr_disestablish(void *arg)
 		evcount_detach(&ih->ih_count);
 	intc_free_ih(ih);
 }
-
-void
-intc_intr_disable(int evtcode)
-{
-	int s;
-
-	s = _cpu_intr_suspend();
-	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	switch (evtcode) {
-	default:
-		intc_intr_priority(evtcode, 0);
-		break;
-
-#ifdef SH4
-	case SH4_INTEVT_PCISERR:
-	case SH4_INTEVT_PCIDMA3:
-	case SH4_INTEVT_PCIDMA2:
-	case SH4_INTEVT_PCIDMA1:
-	case SH4_INTEVT_PCIDMA0:
-	case SH4_INTEVT_PCIPWON:
-	case SH4_INTEVT_PCIPWDWN:
-	case SH4_INTEVT_PCIERR:
-		intpri_intr_disable(evtcode);
-		break;
-#endif
-	}
-	_cpu_intr_resume(s);
-}
-
-void
-intc_intr_enable(int evtcode)
-{
-	struct intc_intrhand *ih;
-	int s;
-
-	s = _cpu_intr_suspend();
-	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	switch (evtcode) {
-	default:
-		ih = EVTCODE_IH(evtcode);
-		/* ih_level is in the SR.IMASK format */
-		intc_intr_priority(evtcode, (ih->ih_level >> 4));
-		break;
-
-#ifdef SH4
-	case SH4_INTEVT_PCISERR:
-	case SH4_INTEVT_PCIDMA3:
-	case SH4_INTEVT_PCIDMA2:
-	case SH4_INTEVT_PCIDMA1:
-	case SH4_INTEVT_PCIDMA0:
-	case SH4_INTEVT_PCIPWON:
-	case SH4_INTEVT_PCIPWDWN:
-	case SH4_INTEVT_PCIERR:
-		intpri_intr_enable(evtcode);
-		break;
-#endif
-	}
-	_cpu_intr_resume(s);
-}
-
 
 /*
  * int intc_intr_priority(int evtcode, int level)
@@ -467,103 +402,6 @@ intpri_intr_priority(int evtcode, int level)
 	_reg_write_4(iprreg, r);
 }
 
-void
-intpri_intr_enable(int evtcode)
-{
-	volatile uint32_t *iprreg;
-	uint32_t bit;
-
-	if (!CPU_IS_SH4)
-		return;
-
-	switch (cpu_product) {
-	default:
-		return;
-
-	case CPU_PRODUCT_7751:
-	case CPU_PRODUCT_7751R:
-		break;
-	}
-
-	iprreg = (volatile uint32_t *)SH4_INTMSKCLR00;
-	bit = 0;
-
-	switch (evtcode) {
-	case SH4_INTEVT_PCISERR:
-	case SH4_INTEVT_PCIDMA3:
-	case SH4_INTEVT_PCIDMA2:
-	case SH4_INTEVT_PCIDMA1:
-	case SH4_INTEVT_PCIDMA0:
-	case SH4_INTEVT_PCIPWON:
-	case SH4_INTEVT_PCIPWDWN:
-	case SH4_INTEVT_PCIERR:
-		bit = (1 << ((evtcode - SH4_INTEVT_PCISERR) >> 5));
-		break;
-
-	case SH4_INTEVT_TMU3:
-		bit = INTREQ00_TUNI3;
-		break;
-
-	case SH4_INTEVT_TMU4:
-		bit = INTREQ00_TUNI4;
-		break;
-	}
-
-	if ((bit == 0) || (iprreg == NULL)) {
-		return;
-	}
-
-	_reg_write_4(iprreg, bit);
-}
-
-void
-intpri_intr_disable(int evtcode)
-{
-	volatile uint32_t *iprreg;
-	uint32_t bit;
-
-	if (!CPU_IS_SH4)
-		return;
-
-	switch (cpu_product) {
-	default:
-		return;
-
-	case CPU_PRODUCT_7751:
-	case CPU_PRODUCT_7751R:
-		break;
-	}
-
-	iprreg = (volatile uint32_t *)SH4_INTMSK00;
-	bit = 0;
-
-	switch (evtcode) {
-	case SH4_INTEVT_PCISERR:
-	case SH4_INTEVT_PCIDMA3:
-	case SH4_INTEVT_PCIDMA2:
-	case SH4_INTEVT_PCIDMA1:
-	case SH4_INTEVT_PCIDMA0:
-	case SH4_INTEVT_PCIPWON:
-	case SH4_INTEVT_PCIPWDWN:
-	case SH4_INTEVT_PCIERR:
-		bit = (1 << ((evtcode - SH4_INTEVT_PCISERR) >> 5));
-		break;
-
-	case SH4_INTEVT_TMU3:
-		bit = INTREQ00_TUNI3;
-		break;
-
-	case SH4_INTEVT_TMU4:
-		bit = INTREQ00_TUNI4;
-		break;
-	}
-
-	if ((bit == 0) || (iprreg == NULL)) {
-		return;
-	}
-
-	_reg_write_4(iprreg, bit);
-}
 #endif /* SH4 */
 
 void

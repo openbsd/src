@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.13 2024/11/06 18:59:09 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.14 2026/10/29 16:53:30 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -249,98 +249,6 @@ extintr_disestablish(void *aux)
 		_reg_bclr_1(LANDISK_INTEN, (1 << irq));
 	}
 
-	_cpu_intr_resume(s);
-}
-
-void
-extintr_enable(void *aux)
-{
-	struct intrhand *ih = aux;
-	struct intrhand *p, *q;
-	struct extintr_handler *eih;
-	int irq;
-	int cnt;
-	int s;
-
-	KDASSERT(ih != NULL);
-
-	s = _cpu_intr_suspend();
-
-	irq = ih->ih_irq - 5;
-	KDASSERT(irq >= 0 && irq < 8);
-	eih = &extintr_handler[irq];
-	for (cnt = 0, p = eih->eih_ih, q = NULL; p != NULL; p = p->ih_next) {
-		if (p->ih_enable) {
-			cnt++;
-		}
-		if (p == ih) {
-			q = p;
-			p->ih_enable = 1;
-		}
-	}
-	KDASSERT(q != NULL);
-
-	if (cnt == 0) {
-		/* Unmask interrupt */
-		_reg_bset_1(LANDISK_INTEN, (1 << irq));
-	}
-
-	_cpu_intr_resume(s);
-}
-
-void
-extintr_disable(void *aux)
-{
-	struct intrhand *ih = aux;
-	struct intrhand *p, *q;
-	struct extintr_handler *eih;
-	int irq;
-	int cnt;
-	int s;
-
-	KDASSERT(ih != NULL);
-
-	s = _cpu_intr_suspend();
-
-	irq = ih->ih_irq - 5;
-	KDASSERT(irq >= 0 && irq < 8);
-	eih = &extintr_handler[irq];
-	for (cnt = 0, p = eih->eih_ih, q = NULL; p != NULL; p = p->ih_next) {
-		if (p == ih) {
-			q = p;
-			p->ih_enable = 0;
-		}
-		if (!ih->ih_enable) {
-			cnt++;
-		}
-	}
-	KDASSERT(q != NULL);
-
-	if (cnt == 0) {
-		/* Mask interrupt */
-		_reg_bclr_1(LANDISK_INTEN, (1 << irq));
-	}
-
-	_cpu_intr_resume(s);
-}
-
-void
-extintr_disable_by_num(int irq)
-{
-	struct extintr_handler *eih;
-	struct intrhand *ih;
-	int s;
-
-	irq -= 5;
-	KDASSERT(irq >= 0 && irq < 8);
-
-	s = _cpu_intr_suspend();
-	eih = &extintr_handler[irq];
-	for (ih = eih->eih_ih; ih != NULL; ih = ih->ih_next) {
-		ih->ih_enable = 0;
-	}
-	/* Mask interrupt */
-	_reg_bclr_1(LANDISK_INTEN, (1 << irq));
 	_cpu_intr_resume(s);
 }
 
