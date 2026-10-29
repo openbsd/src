@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uncm.c,v 1.5 2026/10/16 09:39:35 stsp Exp $ */
+/*	$OpenBSD: if_uncm.c,v 1.6 2026/10/29 14:56:18 stsp Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -70,6 +70,8 @@ struct uncm_softc {
 	struct usbd_device	*sc_udev;
 
 	uint32_t		 sc_maxpktlen;
+	uint32_t		 sc_rx_maxdgram;
+	uint8_t			 sc_ncm_caps;
 	unsigned int		 sc_ncm_supported_formats;
 	int			 sc_ncm_format;
 
@@ -86,10 +88,12 @@ struct uncm_softc {
 	struct usbd_interface	*sc_data_iface;
 
 	int			 sc_data_ifaceidx;
+	int			 sc_data_altidx;
 
 	int			 sc_rx_ep;
 	struct usbd_xfer	*sc_rx_xfer;
 	void			*sc_rx_buf;
+	uint32_t		 sc_rx_ntbmax;
 	int			 sc_rx_bufsz;
 	struct usbd_pipe	*sc_rx_pipe;
 	unsigned int		 sc_rx_nerr;
@@ -108,6 +112,9 @@ struct uncm_softc {
 };
 
 #define UNCM_RX_NTB_MAX		16384
+#define UNCM_RX_NTB_HARDMAX	UINT16_MAX
+
+#define UNCM_RX_DGRAM_MAX	9018
 
 #define UNCM_NTB16_MINSZ	(sizeof(struct ncm_header16) +	\
 				 sizeof(struct ncm_pointer16) +	\
@@ -121,7 +128,8 @@ void		 uncm_attach(struct device *, struct device *, void *);
 int		 uncm_detach(struct device *, int);
 void		 uncm_ntb_setup(struct uncm_softc *);
 void		 uncm_ntb_setup_format(struct uncm_softc *);
-void		 uncm_ntb_setup_input_size(struct uncm_softc *);
+int		 uncm_ntb_setup_input_size(struct uncm_softc *);
+void		 uncm_ntb_setup_dgram_size(struct uncm_softc *);
 void		 uncm_get_eaddr(struct uncm_softc *, int);
 int		 uncm_alloc_xfers(struct uncm_softc *);
 void		 uncm_free_xfers(struct uncm_softc *);
@@ -177,7 +185,6 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uncm_softc *sc = (struct uncm_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_status status;
 	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	struct usb_cdc_union_descriptor *ud;
@@ -188,7 +195,7 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_assoc_descriptor_t *ad;
 	struct ifnet *ifp;
-	int	current_ifaceno = -1;
+	int	current_ifaceno = -1, current_alt = -1;
 	int	data_ifaceno = -1;
 	int	mac_idx = -1;
 	int	ctrl_ep, ctrl_maxpkt = 0;
@@ -199,6 +206,7 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctrl_iface = uaa->iface;
 	sc->sc_ctrl_ifaceno = uaa->ifaceno;
 	sc->sc_maxpktlen = ETHER_MAX_LEN - ETHER_CRC_LEN;
+	sc->sc_rx_maxdgram = sc->sc_maxpktlen;
 	sc->sc_link = LINK_STATE_UNKNOWN;
 
 	ml_init(&sc->sc_tx_ml);
@@ -222,8 +230,11 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (current_ifaceno != uaa->ifaceno)
 			continue;
-		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
-			continue;
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
+			if (desc->bDescriptorType != UDESC_CS_CONFIG ||
+			    desc->bDescriptorSubtype != UDESCSUB_CDC_NCM)
+				continue;
+		}
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_CDC_UNION:
 			if (desc->bLength < sizeof(*ud))
@@ -237,14 +248,17 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 			ed_eth = (struct usb_cdc_ethernet_descriptor *)desc;
 			mac_idx = ed_eth->iMacAddress;
 			maxpktlen = UGETW(ed_eth->wMaxSegmentSize);
-			if (maxpktlen >= ETHER_MIN_LEN &&
-			    maxpktlen <= ETHER_MAX_LEN - ETHER_CRC_LEN)
-				sc->sc_maxpktlen = maxpktlen;
+			if (maxpktlen < ETHER_MIN_LEN)
+				break;
+			sc->sc_maxpktlen = MIN(maxpktlen,
+			    ETHER_MAX_LEN - ETHER_CRC_LEN);
+			sc->sc_rx_maxdgram = MIN(maxpktlen, UNCM_RX_DGRAM_MAX);
 			break;
 		case UDESCSUB_CDC_NCM:
 			if (desc->bLength < sizeof(*nd))
 				break;
 			nd = (struct usb_cdc_ncm_descriptor *)desc;
+			sc->sc_ncm_caps = nd->bmNetworkCapabilities;
 			DPRINTFN(2, "%s: NCM version %x.%x, caps 0x%02x\n",
 			    DEVNAM(sc), UGETW(nd->bcdNcmVersion) >> 8,
 			    UGETW(nd->bcdNcmVersion) & 0xff,
@@ -309,20 +323,26 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAM(sc), data_ifaceno);
 		goto fail;
 	}
-	status = usbd_set_interface(sc->sc_data_iface, i);
-	if (status) {
-		printf("%s: select alt setting %d for interface #%d "
-		    "failed: %s\n", DEVNAM(sc), i, data_ifaceno,
-		    usbd_errstr(status));
-		goto fail;
-	}
+	sc->sc_data_altidx = i;
 
-	id = usbd_get_interface_descriptor(sc->sc_data_iface);
 	sc->sc_rx_ep = sc->sc_tx_ep = -1;
-	for (i = 0; i < id->bNumEndpoints; i++) {
-		if ((ed = usbd_interface2endpoint_descriptor(sc->sc_data_iface,
-		    i)) == NULL)
-			break;
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	while ((desc = usbd_desc_iter_next(&iter))) {
+		if (desc->bDescriptorType == UDESC_INTERFACE) {
+			if (desc->bLength < sizeof(*id))
+				continue;
+			id = (usb_interface_descriptor_t *)desc;
+			current_ifaceno = id->bInterfaceNumber;
+			current_alt = id->bAlternateSetting;
+			continue;
+		}
+		if (current_ifaceno != data_ifaceno ||
+		    current_alt != sc->sc_data_altidx)
+			continue;
+		if (desc->bDescriptorType != UDESC_ENDPOINT ||
+		    desc->bLength < sizeof(*ed))
+			continue;
+		ed = (usb_endpoint_descriptor_t *)desc;
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
 		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
 			sc->sc_rx_ep = ed->bEndpointAddress;
@@ -363,7 +383,8 @@ uncm_attach(struct device *parent, struct device *self, void *aux)
 	uncm_ntb_setup_format(sc);
 	if (sc->sc_ncm_supported_formats == 0)
 		goto fail;
-	uncm_ntb_setup_input_size(sc);
+	if (uncm_ntb_setup_input_size(sc))
+		goto fail;
 	DPRINTFN(2, "%s: rx/tx size %d/%d\n", DEVNAM(sc),
 	    sc->sc_rx_bufsz, sc->sc_tx_bufsz);
 
@@ -475,7 +496,8 @@ uncm_ntb_setup(struct uncm_softc *sc)
 
 	if (usbd_do_request(sc->sc_udev, &req, &np) == USBD_NORMAL_COMPLETION &&
 	    UGETW(np.wLength) == sizeof(np)) {
-		sc->sc_rx_bufsz = MIN(UGETDW(np.dwNtbInMaxSize), UINT16_MAX);
+		sc->sc_rx_ntbmax = UGETDW(np.dwNtbInMaxSize);
+		sc->sc_rx_bufsz = MIN(sc->sc_rx_ntbmax, UNCM_RX_NTB_HARDMAX);
 		sc->sc_tx_bufsz = MIN(UGETDW(np.dwNtbOutMaxSize), UINT16_MAX);
 		sc->sc_maxdgram = UGETW(np.wNtbOutMaxDatagrams);
 		sc->sc_align = UGETW(np.wNdpOutAlignment);
@@ -490,13 +512,19 @@ uncm_ntb_setup(struct uncm_softc *sc)
 			sc->sc_ndp_div = sizeof(uint32_t);
 		if (sc->sc_ndp_remainder >= sc->sc_ndp_div)
 			sc->sc_ndp_remainder = 0;
+		sc->sc_ndp_remainder = (sc->sc_ndp_remainder - ETHER_HDR_LEN) &
+		    (sc->sc_ndp_div - 1);
 		DPRINTF("%s: NCM align=%d div=%d rem=%d in=%u out=%u "
 		    "maxdgram=%d\n", DEVNAM(sc), sc->sc_align, sc->sc_ndp_div,
 		    sc->sc_ndp_remainder, UGETDW(np.dwNtbInMaxSize),
 		    UGETDW(np.dwNtbOutMaxSize), sc->sc_maxdgram);
-		sc->sc_ncm_supported_formats = UGETW(np.bmNtbFormatsSupported);
+		sc->sc_ncm_supported_formats =
+		    UGETW(np.bmNtbFormatsSupported) &
+		    (NCM_FORMAT_NTB16_MASK | NCM_FORMAT_NTB32_MASK);
 	} else {
-		sc->sc_rx_bufsz = sc->sc_tx_bufsz = 8 * 1024;
+		sc->sc_rx_ntbmax = 8 * 1024;
+		sc->sc_rx_bufsz = 8 * 1024;
+		sc->sc_tx_bufsz = 8 * 1024;
 		sc->sc_maxdgram = 0;
 		sc->sc_align = sc->sc_ndp_div = sizeof(uint32_t);
 		sc->sc_ndp_remainder = 0;
@@ -561,14 +589,20 @@ fail:
 	sc->sc_ncm_supported_formats = 0;
 }
 
-void
+int
 uncm_ntb_setup_input_size(struct uncm_softc *sc)
 {
 	usb_device_request_t req;
 	uDWord dwSize;
+	uint32_t devmax = sc->sc_rx_ntbmax;
 
-	if (sc->sc_rx_bufsz <= UNCM_RX_NTB_MAX)
-		return;
+	if (sc->sc_ncm_format == NCM_FORMAT_NTB16)
+		devmax = MIN(devmax, UINT16_MAX);
+
+	if (devmax <= UNCM_RX_NTB_MAX) {
+		sc->sc_rx_bufsz = devmax;
+		return 0;
+	}
 
 	USETDW(dwSize, UNCM_RX_NTB_MAX);
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
@@ -578,11 +612,61 @@ uncm_ntb_setup_input_size(struct uncm_softc *sc)
 	USETW(req.wLength, sizeof(dwSize));
 
 	if (usbd_do_request(sc->sc_udev, &req, dwSize) ==
-	    USBD_NORMAL_COMPLETION)
+	    USBD_NORMAL_COMPLETION) {
 		sc->sc_rx_bufsz = UNCM_RX_NTB_MAX;
-	else
-		DPRINTF("%s: SET_NTB_INPUT_SIZE refused, keeping %d\n",
-		    DEVNAM(sc), sc->sc_rx_bufsz);
+		return 0;
+	}
+
+	if (devmax > UNCM_RX_NTB_HARDMAX) {
+		printf("%s: SET_NTB_INPUT_SIZE refused and IN NTB size %u "
+		    "too large\n", DEVNAM(sc), devmax);
+		return 1;
+	}
+
+	DPRINTF("%s: SET_NTB_INPUT_SIZE refused, using %u\n",
+	    DEVNAM(sc), devmax);
+	sc->sc_rx_bufsz = devmax;
+	return 0;
+}
+
+void
+uncm_ntb_setup_dgram_size(struct uncm_softc *sc)
+{
+	usb_device_request_t req;
+	uWord wSize;
+	uint32_t size;
+
+	if ((sc->sc_ncm_caps & UCDC_NCM_NCAP_MAX_DATAGRAM) == 0)
+		return;
+
+	USETW(wSize, sc->sc_maxpktlen);
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = NCM_SET_MAX_DATAGRAM_SIZE;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_ctrl_ifaceno);
+	USETW(req.wLength, sizeof(wSize));
+	if (usbd_do_request(sc->sc_udev, &req, wSize) ==
+	    USBD_NORMAL_COMPLETION) {
+		sc->sc_rx_maxdgram = sc->sc_maxpktlen;
+		return;
+	}
+
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = NCM_GET_MAX_DATAGRAM_SIZE;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_ctrl_ifaceno);
+	USETW(req.wLength, sizeof(wSize));
+	if (usbd_do_request(sc->sc_udev, &req, wSize) !=
+	    USBD_NORMAL_COMPLETION) {
+		DPRINTF("%s: cannot set or get max datagram size\n",
+		    DEVNAM(sc));
+		return;
+	}
+	size = UGETW(wSize);
+	if (size >= ETHER_MIN_LEN)
+		sc->sc_rx_maxdgram = MIN(size, UNCM_RX_DGRAM_MAX);
+	DPRINTF("%s: max datagram size %u, accepting up to %u\n",
+	    DEVNAM(sc), size, sc->sc_rx_maxdgram);
 }
 
 int
@@ -625,6 +709,7 @@ void
 uncm_init(struct uncm_softc *sc)
 {
 	struct ifnet *ifp = GET_IFP(sc);
+	usbd_status status;
 
 	splassert(IPL_NET);
 
@@ -632,10 +717,28 @@ uncm_init(struct uncm_softc *sc)
 		return;
 
 	sc->sc_tx_seq = 0;
+
+	uncm_ntb_setup_format(sc);
+	if (sc->sc_ncm_supported_formats == 0) {
+		printf("%s: cannot set up NCM format\n", DEVNAM(sc));
+		return;
+	}
+
+	if (uncm_ntb_setup_input_size(sc))
+		return;
+	uncm_ntb_setup_dgram_size(sc);
+
+	status = usbd_set_interface(sc->sc_data_iface, sc->sc_data_altidx);
+	if (status) {
+		printf("%s: select alt setting %d failed: %s\n", DEVNAM(sc),
+		    sc->sc_data_altidx, usbd_errstr(status));
+		return;
+	}
+
 	if (!uncm_alloc_xfers(sc)) {
 		printf("%s: allocation of xfers failed\n", DEVNAM(sc));
 		uncm_free_xfers(sc);
-		return;
+		goto fail;
 	}
 	if (usbd_open_pipe(sc->sc_data_iface, sc->sc_rx_ep,
 	    USBD_EXCLUSIVE_USE, &sc->sc_rx_pipe)) {
@@ -676,6 +779,9 @@ uncm_stop(struct uncm_softc *sc)
 		sc->sc_tx_pipe = NULL;
 	}
 	uncm_free_xfers(sc);
+
+	if (!usbd_is_dying(sc->sc_udev))
+		usbd_set_interface(sc->sc_data_iface, 0);
 }
 
 int
@@ -1150,7 +1256,7 @@ uncm_decap(struct uncm_softc *sc, struct usbd_xfer *xfer)
 			ifp->if_ierrors++;
 			continue;
 		}
-		if (dlen < ETHER_HDR_LEN || dlen > sc->sc_maxpktlen) {
+		if (dlen < ETHER_HDR_LEN || dlen > sc->sc_rx_maxdgram) {
 			ifp->if_ierrors++;
 			continue;
 		}
@@ -1179,9 +1285,9 @@ uncm_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct uncm_softc *sc = priv;
 	struct ifnet *ifp = GET_IFP(sc);
 	struct usb_cdc_notification *msg;
-	uint32_t up, down;
+	uint32_t up, down, total_len;
 	uint8_t *buf;
-	int	total_len, off, dlen;
+	int	off, dlen;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
@@ -1199,12 +1305,12 @@ uncm_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	if (total_len < UCDC_NOTIFICATION_LENGTH) {
-		DPRINTF("%s: short notification (%d<%d)\n", DEVNAM(sc),
+		DPRINTF("%s: short notification (%u<%d)\n", DEVNAM(sc),
 		    total_len, UCDC_NOTIFICATION_LENGTH);
 		return;
 	}
 
-	DPRINTFN(4, "%s: recv %d bytes of notifications\n", DEVNAM(sc),
+	DPRINTFN(4, "%s: recv %u bytes of notifications\n", DEVNAM(sc),
 	    total_len);
 
 	/*
