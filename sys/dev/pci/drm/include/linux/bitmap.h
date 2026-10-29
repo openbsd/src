@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.12 2026/10/20 11:59:12 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.13 2026/10/29 11:30:38 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -40,6 +40,26 @@ bitmap_clear(void *p, int b, u_int n)
 
 	for (; b < end; b++)
 		__clear_bit(b, p);
+}
+
+static inline void
+bitmap_write(void *p, u_int v, int b, u_int n)
+{
+	int end = b + n;
+
+	for (; b < end; b++) {
+		if (v & 1)
+			__set_bit(b, p);
+		else
+			__clear_bit(b, p);
+		v >>= 1;
+	}
+}
+
+static inline void
+bitmap_set_value8(void *p, u_int v, int b)
+{
+	bitmap_write(p, v, b, 8);
 }
 
 static inline void
