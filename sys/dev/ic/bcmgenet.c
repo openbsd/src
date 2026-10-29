@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.13 2026/10/16 22:17:00 mvs Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.14 2026/10/29 09:56:22 kettenis Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -204,8 +204,8 @@ genet_setup_txdesc(struct genet_softc *sc, int index, int flags,
 int
 genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 {
-	bus_dma_segment_t *segs;
-	int error, nsegs, cur, i;
+	bus_dmamap_t map;
+	int error, cur, i;
 	uint32_t flags;
 
 	/*
@@ -230,20 +230,24 @@ genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 	if (error != 0)
 		return 0;
 
-	segs = sc->sc_tx.buf_map[index].map->dm_segs;
-	nsegs = sc->sc_tx.buf_map[index].map->dm_nsegs;
-
+	map = sc->sc_tx.buf_map[index].map;
 	flags = GENET_TX_DESC_STATUS_SOP |
 		GENET_TX_DESC_STATUS_CRC |
 		GENET_TX_DESC_STATUS_QTAG;
 
-	for (cur = index, i = 0; i < nsegs; i++) {
-		sc->sc_tx.buf_map[cur].mbuf = (i == 0 ? m : NULL);
-		if (i == nsegs - 1)
-			flags |= GENET_TX_DESC_STATUS_EOP;
+	for (cur = index, i = 0; i < map->dm_nsegs; i++) {
+		KASSERT(sc->sc_tx.buf_map[cur].mbuf == NULL);
 
-		genet_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
-		    segs[i].ds_len);
+		if (i == map->dm_nsegs - 1) {
+			sc->sc_tx.buf_map[index].map =
+				sc->sc_tx.buf_map[cur].map;
+			sc->sc_tx.buf_map[cur].map = map;
+			sc->sc_tx.buf_map[cur].mbuf = m;
+			flags |= GENET_TX_DESC_STATUS_EOP;
+		}
+
+		genet_setup_txdesc(sc, cur, flags, map->dm_segs[i].ds_addr,
+		    map->dm_segs[i].ds_len);
 
 		if (i == 0) {
 			flags &= ~GENET_TX_DESC_STATUS_SOP;
@@ -252,10 +256,10 @@ genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 		cur = TX_NEXT(cur);
 	}
 
-	bus_dmamap_sync(sc->sc_tx.buf_tag, sc->sc_tx.buf_map[index].map,
-	    0, sc->sc_tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_tx.buf_tag, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
-	return nsegs;
+	return map->dm_nsegs;
 }
 
 void
