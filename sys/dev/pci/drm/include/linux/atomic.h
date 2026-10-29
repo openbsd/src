@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.34 2026/08/19 01:34:10 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.35 2026/10/29 10:48:53 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -391,6 +391,20 @@ find_next_bit(const volatile void *p, int max, int b)
 	return max;
 }
 
+static inline int
+find_next_or_bit(const volatile void *p1, const volatile void *p2,
+    int max, int b)
+{
+	int b1, b2;
+
+	b1 = find_next_bit(p1, max, b);
+	b2 = find_next_bit(p2, max, b);
+
+	if (b1 < b2)
+		return b1;
+	return b2;
+}
+
 #define for_each_set_bit(b, p, max) \
 	for ((b) = find_first_bit((p), (max));			\
 	     (b) < (max);					\
@@ -400,6 +414,11 @@ find_next_bit(const volatile void *p, int max, int b)
 	for ((b) = find_first_zero_bit((p), (max));		\
 	     (b) < (max);					\
 	     (b) = find_next_zero_bit((p), (max), (b) + 1))
+
+#define for_each_or_bit(b, p1, p2, max) \
+	for ((b) = find_next_or_bit((p1), (p2), (max), 0);	\
+	     (b) < (max);					\
+	     (b) = find_next_or_bit((p1), (p2), (max), (b) + 1))
 
 #if defined(__i386__)
 #define rmb()	__asm volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
