@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.111 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.112 2026/10/29 17:26:59 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -149,12 +149,14 @@ int		athn_ioctl(struct ifnet *, u_long, caddr_t);
 int		athn_init(struct ifnet *);
 void		athn_stop(struct ifnet *, int);
 void		athn_init_tx_queues(struct athn_softc *);
+#ifdef notyet
 int32_t		athn_ani_get_rssi(struct athn_softc *);
 void		athn_ani_ofdm_err_trigger(struct athn_softc *);
 void		athn_ani_cck_err_trigger(struct athn_softc *);
 void		athn_ani_lower_immunity(struct athn_softc *);
 void		athn_ani_restart(struct athn_softc *);
 void		athn_ani_monitor(struct athn_softc *);
+#endif
 
 /* Extern functions. */
 int		ar5416_attach(struct athn_softc *);
@@ -1455,6 +1457,7 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 	return (0);
 }
 
+#ifdef notyet
 /*
  * Adaptive noise immunity.
  */
@@ -1730,6 +1733,7 @@ athn_ani_monitor(struct athn_softc *sc)
 		}
 	}
 }
+#endif
 
 uint8_t
 athn_chan2fbin(struct ieee80211_channel *c)
