@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.239 2026/09/20 17:47:16 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.240 2026/10/29 21:00:16 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -832,7 +832,7 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 struct tls *
 tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 {
-	struct tls *tls_cctx;
+	struct tls *tls_cctx = NULL;
 	const char *errstr;
 
 	if (tls_accept_socket(tls_ctx, &tls_cctx, connfd) == -1) {
@@ -860,6 +860,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 			return tls_cctx;
 		}
 	}
+	tls_free(tls_cctx);
 	return NULL;
 }
 
