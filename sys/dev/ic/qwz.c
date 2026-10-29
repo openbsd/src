@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.92 2026/10/17 08:01:29 stsp Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.93 2026/10/29 13:09:45 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6292,38 +6292,45 @@ qwz_qmi_mem_seg_send(struct qwz_softc *sc)
 		printf("%s: firmware has requested no memory\n",
 		    sc->sc_dev.dv_xname);
 		mem_seg_len = 0;
-	} else if (sc->fwmem == NULL || QWZ_DMA_LEN(sc->fwmem) < total_size) {
-		if (sc->fwmem != NULL)
-			qwz_dmamem_free(sc->sc_dmat, sc->fwmem);
-		sc->fwmem = qwz_dmamem_alloc(sc->sc_dmat, total_size, 65536);
-		if (sc->fwmem == NULL) {
-			printf("%s: failed to allocate %zu bytes of DMA "
-			    "memory for firmware\n", sc->sc_dev.dv_xname,
-			    total_size);
-			/* Send back an empty allocation. */
-			mem_seg_len = 0;
-		} else
-			DPRINTF("%s: allocated %zu bytes of DMA memory for "
-			    "firmware\n", sc->sc_dev.dv_xname, total_size);
 	}
 
-	/* Chunk DMA memory block into segments as requested by firmware. */
-	req->mem_seg_len = htole32(mem_seg_len);
-	if (sc->fwmem) {
-		uint64_t paddr = QWZ_DMA_DVA(sc->fwmem);
+	/*
+	 * Allocate each segment separately and align it to the next power
+	 * of two of its size, as Linux does.  Firmware crashes otherwise.
+	 */
+	for (i = 0; i < mem_seg_len; i++) {
+		bus_size_t size = le32toh(ind->mem_seg[i].size);
+		bus_size_t align = PAGE_SIZE;
 
-		for (i = 0; i < mem_seg_len; i++) {
-			DPRINTF("%s: mem seg[%d] addr=%llx size=%u type=%u\n",
-			    __func__, i, paddr, le32toh(ind->mem_seg[i].size),
-			    le32toh(ind->mem_seg[i].type));
-			req->mem_seg[i].addr = htole64(paddr);
-			paddr += le32toh(ind->mem_seg[i].size);
-
-			/* Values in 'ind' are in little-endian format. */
-			req->mem_seg[i].size = ind->mem_seg[i].size;
-			req->mem_seg[i].type = ind->mem_seg[i].type;
+		if (sc->fwmem[i] != NULL && QWZ_DMA_LEN(sc->fwmem[i]) != size) {
+			qwz_dmamem_free(sc->sc_dmat, sc->fwmem[i]);
+			sc->fwmem[i] = NULL;
 		}
+		if (sc->fwmem[i] == NULL) {
+			while (align < size)
+				align <<= 1;
+			sc->fwmem[i] = qwz_dmamem_alloc(sc->sc_dmat, size,
+			    align);
+			if (sc->fwmem[i] == NULL) {
+				printf("%s: failed to allocate %lu bytes of "
+				    "DMA memory for firmware\n",
+				    sc->sc_dev.dv_xname, (unsigned long)size);
+				/* Send back an empty allocation. */
+				mem_seg_len = 0;
+				break;
+			}
+		}
+
+		DPRINTF("%s: mem seg[%d] addr=%llx size=%u type=%u\n",
+		    __func__, i, (unsigned long long)QWZ_DMA_DVA(sc->fwmem[i]),
+		    le32toh(ind->mem_seg[i].size),
+		    le32toh(ind->mem_seg[i].type));
+		req->mem_seg[i].addr = htole64(QWZ_DMA_DVA(sc->fwmem[i]));
+		/* Values in 'ind' are in little-endian format. */
+		req->mem_seg[i].size = ind->mem_seg[i].size;
+		req->mem_seg[i].type = ind->mem_seg[i].type;
 	}
+	req->mem_seg_len = htole32(mem_seg_len);
 
 	free(ind, M_DEVBUF, sizeof(*ind));
 	sc->sc_req_mem_ind = NULL;
@@ -25093,11 +25100,15 @@ qwz_attach(struct qwz_softc *sc)
 void
 qwz_detach(struct qwz_softc *sc)
 {
+	int i;
+
 	qwz_vif_purge(sc);
 
-	if (sc->fwmem) {
-		qwz_dmamem_free(sc->sc_dmat, sc->fwmem);
-		sc->fwmem = NULL;
+	for (i = 0; i < nitems(sc->fwmem); i++) {
+		if (sc->fwmem[i]) {
+			qwz_dmamem_free(sc->sc_dmat, sc->fwmem[i]);
+			sc->fwmem[i] = NULL;
+		}
 	}
 
 	if (sc->m3_mem) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.30 2026/10/17 08:01:29 stsp Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.31 2026/10/29 13:09:45 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -2115,7 +2115,7 @@ struct qwz_softc {
 
 	struct qmi_response_type_v01	qmi_resp;
 
-	struct qwz_dmamem		*fwmem;
+	struct qwz_dmamem		*fwmem[ATH12K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
 	int				 expect_fwmem_req;
 	int				 fwmem_ready;
 	int				 fw_ready;
