@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1246 2026/10/28 08:38:01 jan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1247 2026/10/29 16:50:23 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -8732,10 +8732,14 @@ done:
 		if (pd.pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
 			pflog_packet(&pd, reason, r, a, ruleset, NULL);
 		if (st) {
-			SLIST_FOREACH(ri, &st->match_rules, entry)
-				if (ri->r->log & PF_LOG_ALL)
-					pflog_packet(&pd, reason, ri->r, a,
-					    ruleset, NULL);
+			mtx_enter(&st->mtx);
+			if (st->timeout != PFTM_UNLINKED) {
+				SLIST_FOREACH(ri, &st->match_rules, entry)
+					if (ri->r->log & PF_LOG_ALL)
+						pflog_packet(&pd, reason,
+						    ri->r, a, ruleset, NULL);
+			}
+			mtx_leave(&st->mtx);
 		}
 	}
 #endif	/* NPFLOG > 0 */
