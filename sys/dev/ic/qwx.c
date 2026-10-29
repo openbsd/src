@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.148 2026/10/29 14:15:02 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.149 2026/10/29 14:51:58 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23191,8 +23191,6 @@ qwx_ce_rx_post_pipe(struct qwx_ce_pipe *pipe)
 
 		ret = qwx_ce_rx_buf_enqueue_pipe(pipe, rx_data->map);
 		if (ret) {
-			printf("%s: failed to enqueue rx buf: %d\n",
-			    sc->sc_dev.dv_xname, ret);
 			bus_dmamap_unload(sc->sc_dmat, rx_data->map);
 			m_freem(m);
 			break;
