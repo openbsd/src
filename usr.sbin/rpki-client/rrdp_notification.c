@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.26 2026/10/29 08:11:32 tb Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.27 2026/10/29 08:20:11 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -122,6 +122,8 @@ check_delta(struct notification_xml *nxml)
 			return 0;
 		serial = d->serial;
 	}
+	if (serial != 0 && serial != nxml->serial)
+		return 0;
 	return 1;
 }
 
