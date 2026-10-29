@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.59 2026/09/16 00:25:02 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.60 2026/10/29 07:27:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -228,7 +228,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	EC_KEY			*ecdsa;
 	u_char			*to = NULL;
 	struct iovec		 iov[2];
-	int			 ret = 0, c = 0;
+	int			 c = 0;
 	unsigned int		 len;
 
 	switch (imsg_get_type(imsg)) {
@@ -342,13 +342,12 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((to = calloc(1, len)) == NULL)
 			fatalx("%s: calloc", __func__);
 
-		ret = ECDSA_sign(0, ibuf_data(&ibuf), ibuf_size(&ibuf), to,
-		    &len, ecdsa);
-
-		cko.cko_tlen = (ret > 0) ? len : -1;
+		cko.cko_tlen = -1;
 		iov[c].iov_base = &cko;
 		iov[c++].iov_len = sizeof(cko);
-		if (ret > 0) {
+		if (ECDSA_sign(0, ibuf_data(&ibuf), ibuf_size(&ibuf), to,
+		    &len, ecdsa) > 0) {
+			cko.cko_tlen = len;
 			iov[c].iov_base = to;
 			iov[c++].iov_len = len;
 		}
