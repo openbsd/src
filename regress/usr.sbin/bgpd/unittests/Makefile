@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2025/12/17 14:27:47 claudio Exp $
+# $OpenBSD: Makefile,v 1.17 2026/10/29 20:04:28 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/bgpd
 
@@ -22,7 +22,7 @@ DPADD+= ${LIBUTIL}
 
 SRCS_rde_aspa_test=	rde_aspa_test.c monotime.c
 
-SRCS_rde_sets_test=	rde_sets_test.c rde_sets.c timer.c log.c monotime.c
+SRCS_rde_sets_test=	rde_sets_test.c rde_sets.c timer.c log.c monotime.c util.c
 
 SRCS_rde_trie_test=	rde_trie_test.c rde_trie.c util.c rde_sets.c timer.c log.c monotime.c
 run-regress-rde_trie_test:
