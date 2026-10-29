@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.170 2026/09/21 23:37:20 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.171 2026/10/29 06:12:19 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -33,7 +33,8 @@
 #include "ssl_tlsext.h"
 
 #define TLSEXT_TYPE_alpn TLSEXT_TYPE_application_layer_protocol_negotiation
-#define TLSEXT_MAX_SUPPORTED_GROUPS 64
+#define TLSEXT_MAX_SUPPORTED_GROUPS	64
+#define TLSEXT_MAX_SIGALGS		256
 
 /*
  * Supported Application-Layer Protocol Negotiation - RFC 7301
@@ -610,13 +611,23 @@ tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 }
 
 static int
+tlsext_sigalgs_check_length(CBS *cbs)
+{
+	if (CBS_len(cbs) % 2 != 0)
+		return 0;
+	if (CBS_len(cbs) / 2 > TLSEXT_MAX_SIGALGS)
+		return 0;
+	return 1;
+}
+
+static int
 tlsext_sigalgs_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	CBS sigalgs;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
 		return 0;
-	if (CBS_len(&sigalgs) % 2 != 0 || CBS_len(&sigalgs) > 64)
+	if (!tlsext_sigalgs_check_length(&sigalgs))
 		return 0;
 	if (!CBS_stow(&sigalgs, &s->s3->hs.sigalgs, &s->s3->hs.sigalgs_len))
 		return 0;
@@ -656,7 +667,7 @@ tlsext_sigalgs_client_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
 		return 0;
-	if (CBS_len(&sigalgs) % 2 != 0 || CBS_len(&sigalgs) > 64)
+	if (!tlsext_sigalgs_check_length(&sigalgs))
 		return 0;
 	if (!CBS_stow(&sigalgs, &s->s3->hs.sigalgs, &s->s3->hs.sigalgs_len))
 		return 0;
