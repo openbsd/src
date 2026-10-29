@@ -1,4 +1,4 @@
-# $OpenBSD: bgpd.conf.14.in,v 1.2 2023/01/20 15:43:25 claudio Exp $
+# $OpenBSD: bgpd.conf.14.in,v 1.3 2026/10/29 20:03:18 claudio Exp $
 # test roa-set blocks
 
 AS 1
@@ -27,7 +27,7 @@ aspa-set {
 aspa-set {
 	customer-as 3 provider-as { 5 }
 	customer-as 2 expires 1668181648 provider-as { 3 4 }
-	customer-as 5 provider-as { 1, 2 inet, 7 inet6 }
+	customer-as 5 provider-as { 1, 2, 7 }
 }
 
 
