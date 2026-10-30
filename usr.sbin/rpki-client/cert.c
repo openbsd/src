@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.248 2026/10/14 06:41:29 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.249 2026/10/30 09:08:46 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -587,7 +587,7 @@ cert_aki(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 static int
 cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 {
-	CRL_DIST_POINTS	*crldp = NULL;
+	CRL_DIST_POINTS	*dps = NULL;
 	DIST_POINT	*dp;
 	GENERAL_NAMES	*names;
 	GENERAL_NAME	*name;
@@ -608,19 +608,19 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 	}
 
 	/* XXX - cast away const for OpenSSL 3 and LibreSSL */
-	if ((crldp = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
+	if ((dps = X509V3_EXT_d2i((X509_EXTENSION *)ext)) == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point: "
 		    "failed extension parse", fn);
 		goto out;
 	}
 
-	if (sk_DIST_POINT_num(crldp) != 1) {
+	if (sk_DIST_POINT_num(dps) != 1) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point: "
-		    "want 1 element, have %d", fn, sk_DIST_POINT_num(crldp));
+		    "want 1 element, have %d", fn, sk_DIST_POINT_num(dps));
 		goto out;
 	}
 
-	dp = sk_DIST_POINT_value(crldp, 0);
+	dp = sk_DIST_POINT_value(dps, 0);
 	if (dp->CRLissuer != NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL CRLIssuer field"
 		    " disallowed", fn);
@@ -677,7 +677,7 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 
 	rc = 1;
  out:
-	CRL_DIST_POINTS_free(crldp);
+	CRL_DIST_POINTS_free(dps);
 	return rc;
 }
 
