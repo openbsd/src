@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.56 2026/08/12 18:38:17 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.57 2026/10/30 08:31:46 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,9 @@
 
 #include "relayd.h"
 #include "log.h"
+
+static struct relay_cert *config_getcert(struct relayd *,
+    struct ctl_relayfd *);
 
 int
 config_init(struct relayd *env)
@@ -1178,55 +1181,71 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 	return (-1);
 }
 
+static struct relay_cert *
+config_getcert(struct relayd *env, struct ctl_relayfd *crfd)
+{
+	struct relay_cert	*cert;
+
+	if ((cert = cert_find(env, crfd->id)) == NULL) {
+		if ((cert = cert_add(env, crfd->id)) == NULL)
+			return (NULL);
+		cert->cert_relayid = crfd->relayid;
+	}
+	return (cert);
+}
+
 int
 config_getrelayfd(struct relayd *env, struct imsg *imsg)
 {
 	struct ctl_relayfd	 crfd;
-	struct relay		*rlay = NULL;
+	struct relay		*rlay;
 	struct relay_cert	*cert;
+	int			 fd;
 
 	if (imsg_get_data(imsg, &crfd, sizeof(crfd)) == -1) {
 		log_warn("%s: imsg_get_data", __func__);
 		return (-1);
 	}
 
-	switch (crfd.type) {
-	case RELAY_FD_CERT:
-	case RELAY_FD_KEY:
-	case RELAY_FD_OCSP:
-		if ((cert = cert_find(env, crfd.id)) == NULL) {
-			if ((cert = cert_add(env, crfd.id)) == NULL)
-				return (-1);
-			cert->cert_relayid = crfd.relayid;
-		}
-		/* FALLTHROUGH */
-	default:
-		if ((rlay = relay_find(env, crfd.relayid)) == NULL) {
-			log_debug("%s: unknown relay", __func__);
-			return (-1);
-		}
-		break;
+	if ((rlay = relay_find(env, crfd.relayid)) == NULL) {
+		log_debug("%s: unknown relay", __func__);
+		return (-1);
+	}
+
+	if ((fd = imsg_get_fd(imsg)) == -1) {
+		log_warnx("%s: no fd for type %d", __func__, crfd.type);
+		return (-1);
 	}
 
 	switch (crfd.type) {
 	case RELAY_FD_CERT:
-		cert->cert_fd = imsg_get_fd(imsg);
+		if ((cert = config_getcert(env, &crfd)) == NULL)
+			goto fail;
+		cert->cert_fd = fd;
 		break;
 	case RELAY_FD_KEY:
-		cert->cert_key_fd = imsg_get_fd(imsg);
+		if ((cert = config_getcert(env, &crfd)) == NULL)
+			goto fail;
+		cert->cert_key_fd = fd;
 		break;
 	case RELAY_FD_OCSP:
-		cert->cert_ocsp_fd = imsg_get_fd(imsg);
+		if ((cert = config_getcert(env, &crfd)) == NULL)
+			goto fail;
+		cert->cert_ocsp_fd = fd;
 		break;
 	case RELAY_FD_CACERT:
-		rlay->rl_tls_ca_fd = imsg_get_fd(imsg);
+		rlay->rl_tls_ca_fd = fd;
 		break;
 	case RELAY_FD_CAFILE:
-		rlay->rl_tls_cacert_fd = imsg_get_fd(imsg);
+		rlay->rl_tls_cacert_fd = fd;
 		break;
 	case RELAY_FD_CLIENTCACERT:
-		rlay->rl_tls_client_ca_fd = imsg_get_fd(imsg);
+		rlay->rl_tls_client_ca_fd = fd;
 		break;
+	default:
+		log_warnx("%s: unexpected relay fd type %d", __func__,
+		    crfd.type);
+		goto fail;
 	}
 
 	log_debug("%s: %s %d received relay type %d for relay %s", __func__,
@@ -1234,4 +1253,8 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 	    crfd.type, rlay->rl_conf.name);
 
 	return (0);
+
+ fail:
+	close(fd);
+	return (-1);
 }
