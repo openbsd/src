@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.58 2026/09/26 15:04:51 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.59 2026/10/30 21:19:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -281,6 +281,7 @@ static int
 pw_equal(const struct passwd *pw1, const struct passwd *pw2)
 {
 	return (strcmp(pw1->pw_name, pw2->pw_name) == 0 &&
+	    strcmp(pw1->pw_passwd, pw2->pw_passwd) == 0 &&
 	    pw1->pw_uid == pw2->pw_uid &&
 	    pw1->pw_gid == pw2->pw_gid &&
 	    strcmp(pw1->pw_class, pw2->pw_class) == 0 &&
