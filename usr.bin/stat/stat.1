@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.25 2026/01/18 14:18:22 schwarze Exp $
+.\"	$OpenBSD: stat.1,v 1.26 2026/10/30 21:00:17 naddy Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 18 2026 $
+.Dd $Mdocdate: October 30 2026 $
 .Dt STAT 1
 .Os
 .Sh NAME
@@ -81,10 +81,21 @@ The options are as follows:
 .It Fl F
 As in
 .Xr ls 1 ,
-display a slash (/) immediately after each pathname that is a directory, an
-asterisk (*) after each that is executable, an at sign (@) after each symbolic
-link, an equal sign (=) after each socket, and a vertical bar (|) after each
-that is a FIFO.
+display a slash
+.Pq Ql /
+immediately after each pathname that is a directory,
+an asterisk
+.Pq Ql *
+after each that is executable,
+an at sign
+.Pq Ql @
+after each symbolic link,
+an equal sign
+.Pq Ql =
+after each socket,
+and a vertical bar
+.Pq Ql |
+after each that is a FIFO.
 The use of
 .Fl F
 implies
@@ -120,7 +131,9 @@ or
 fail.
 .It Fl r
 Display raw information.
-That is, for all the fields in the stat-structure,
+That is, for all the fields in the
+.Vt stat
+structure,
 display the raw, numerical value (for example, times in seconds since the
 Epoch, etc.).
 .It Fl s
@@ -133,14 +146,15 @@ passed directly to
 .It Fl x
 Display information in a more verbose way.
 .El
-.Ss FORMATS
+.Ss Formats
 Format strings are similar to
 .Xr printf 3
 formats in that they start with
 .Cm % ,
 are then followed by a sequence of formatting characters, and end in
-a character that selects the field of the struct stat which is to be
-formatted.
+a character that selects the field of the
+.Vt struct stat
+which is to be formatted.
 If the
 .Cm %
 is immediately followed by one of
@@ -159,7 +173,7 @@ Any of the following optional flags:
 Selects an alternate output form for octal and hexadecimal output.
 Non-zero octal output will have a leading zero, and non-zero
 hexadecimal output will have
-.Sq 0x
+.Ql 0x
 prepended to it.
 .It Cm +
 Asserts that a sign indicating whether a number is positive or negative
@@ -169,8 +183,9 @@ with a sign.
 .It Cm -
 Aligns string output to the left of the field, instead of to the right.
 .It Cm 0
-Sets the fill character for left padding to the 0 character, instead of
-a space.
+Sets the fill character for left padding to the
+.Ql 0
+character, instead of a space.
 .It space
 Reserves a space at the front of non-negative signed output fields.
 A
@@ -180,15 +195,15 @@ overrides a space if both are used.
 .Pp
 Then the following fields:
 .Bl -tag -width Ds
-.It Cm size
+.It Ar size
 An optional decimal digit string specifying the minimum field width.
-.It Cm prec
+.It Ar prec
 An optional precision composed of a decimal point
 .Sq Cm \&.
 and a decimal digit string that indicates the maximum string length,
 the number of digits to appear after the decimal point in floating point
 output, or the minimum number of digits to appear in numeric output.
-.It Cm fmt
+.It Ar fmt
 An optional output format specifier which is one of
 .Cm D ,
 .Cm O ,
@@ -201,7 +216,9 @@ These represent signed decimal output, octal output, unsigned decimal
 output, hexadecimal output, floating point output, and string output,
 respectively.
 Some output formats do not apply to all fields.
-Floating point output only applies to timespec fields (the
+Floating point output only applies to
+.Vt timespec
+fields (the
 .Cm a ,
 .Cm m ,
 and
@@ -243,7 +260,7 @@ for
 is a string, but if specified explicitly, these four characters are
 prepended.
 .El
-.It Cm sub
+.It Ar sub
 An optional sub field specifier (high, middle, low).
 Only applies to
 the
@@ -290,7 +307,7 @@ or the
 suid, sgid, and sticky bits for the numeric forms of
 .Cm p .
 .El
-.It Cm datum
+.It Ar datum
 A required field specifier, being one of the following:
 .Bl -tag -width Ds
 .It Cm d
@@ -346,14 +363,18 @@ Inode generation number
 .El
 .Pp
 The following four field specifiers are not drawn directly from the
-data in struct stat, but are:
+data in
+.Vt struct stat ,
+but are:
 .Bl -tag -width Ds
 .It Cm N
 The name of the file.
 .It Cm T
 The file type, either as in
 .Ic ls -F
-or in a more descriptive form if the sub field specifier
+or in a more descriptive form if the
+.Ar sub
+field specifier
 .Cm H
 is given.
 .It Cm Y
@@ -361,7 +382,9 @@ The target of a symbolic link.
 .It Cm Z
 Expands to
 .Ar major , Ns Ar minor
-from the rdev field for character or block
+from the
+.Va rdev
+field for character or block
 special devices and gives size output for all others.
 .El
 .El
@@ -373,12 +396,12 @@ Most field specifiers default to
 .Cm U
 as an output form, with the
 exception of
-.Cm p
+.Cm p ,
 which defaults to
 .Cm O ;
 .Cm a , m ,
 and
-.Cm c
+.Cm c ,
 which default to
 .Cm D ;
 and
@@ -407,7 +430,7 @@ lrwxrwxrwx 1 jschauma cs 1 Apr 24 16:37:28 2002 /tmp/foo@ -\*(Gt /
 drwxr-xr-x 16 root wheel 512 Apr 19 10:57:54 2002 /tmp/foo/
 .Ed
 .Pp
-To initialize some shell-variables, you could use the
+To initialize some shell variables, you could use the
 .Fl s
 flag as follows:
 .Bd -literal -offset indent
