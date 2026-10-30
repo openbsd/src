@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.90 2026/09/24 14:44:03 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.91 2026/10/30 10:21:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -460,7 +460,7 @@ valid_cert(char *file, X509_STORE_CTX *store_ctx, struct cert *cert,
 	}
 
 	if (cert->purpose != CERT_PURPOSE_TA) {
-		if (strcmp(cert->crl, crl->mftcrldp) != 0) {
+		if (strcmp(cert->crldp, crl->mftcrldp) != 0) {
 			*errstr = "invalid CRLDP pointer";
 			goto out;
 		}

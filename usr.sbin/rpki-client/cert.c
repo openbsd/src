@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.249 2026/10/30 09:08:46 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.250 2026/10/30 10:21:19 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -593,7 +593,7 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 	GENERAL_NAME	*name;
 	int		 i, rc = 0;
 
-	assert(cert->crl == NULL);
+	assert(cert->crldp == NULL);
 
 	if (cert->purpose == CERT_PURPOSE_TA) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point "
@@ -658,9 +658,9 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 		if (!x509_location(fn, "CRL distribution point", name, &crl))
 			goto out;
 
-		if (cert->crl == NULL && strncasecmp(crl, RSYNC_PROTO,
+		if (cert->crldp == NULL && strncasecmp(crl, RSYNC_PROTO,
 		    RSYNC_PROTO_LEN) == 0) {
-			cert->crl = crl;
+			cert->crldp = crl;
 			continue;
 		}
 		if (verbose)
@@ -669,7 +669,7 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 		free(crl);
 	}
 
-	if (cert->crl == NULL) {
+	if (cert->crldp == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: no rsync URI in "
 		    "CRL distribution point", fn);
 		goto out;
@@ -1801,7 +1801,7 @@ cert_free(struct cert *cert)
 	if (cert == NULL)
 		return;
 
-	free(cert->crl);
+	free(cert->crldp);
 	free(cert->repo);
 	free(cert->path);
 	free(cert->mft);
@@ -1850,14 +1850,14 @@ cert_buffer(struct ibuf *b, const struct cert *cert)
 		io_str_buffer(b, cert->mft);
 		io_opt_str_buffer(b, cert->notify);
 		io_str_buffer(b, cert->repo);
-		io_str_buffer(b, cert->crl);
+		io_str_buffer(b, cert->crldp);
 		io_str_buffer(b, cert->aia);
 		io_str_buffer(b, cert->aki);
 		io_str_buffer(b, cert->ski);
 		io_simple_buffer(b, &cert->mfthash, sizeof(cert->mfthash));
 	} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		/* No SIA, so no mft, notify, repo. */
-		io_str_buffer(b, cert->crl);
+		io_str_buffer(b, cert->crldp);
 		io_str_buffer(b, cert->aia);
 		io_str_buffer(b, cert->aki);
 		io_str_buffer(b, cert->ski);
@@ -1920,14 +1920,14 @@ cert_read(struct ibuf *b)
 		io_read_str(b, &cert->mft);
 		io_read_opt_str(b, &cert->notify);
 		io_read_str(b, &cert->repo);
-		io_read_str(b, &cert->crl);
+		io_read_str(b, &cert->crldp);
 		io_read_str(b, &cert->aia);
 		io_read_str(b, &cert->aki);
 		io_read_str(b, &cert->ski);
 		io_read_buf(b, &cert->mfthash, sizeof(cert->mfthash));
 	} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		/* No SIA, so no mft, notify, repo. */
-		io_read_str(b, &cert->crl);
+		io_read_str(b, &cert->crldp);
 		io_read_str(b, &cert->aia);
 		io_read_str(b, &cert->aki);
 		io_read_str(b, &cert->ski);

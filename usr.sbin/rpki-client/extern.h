@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.317 2026/10/26 08:19:00 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.318 2026/10/30 10:21:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -144,7 +144,7 @@ struct cert {
 	char		*repo; /* CA repository (rsync:// uri) */
 	char		*mft; /* manifest (rsync:// uri) */
 	char		*notify; /* RRDP notify (https:// uri) */
-	char		*crl; /* CRL location (rsync:// or NULL) */
+	char		*crldp; /* CRL distribution point (rsync:// or NULL) */
 	char		*signedobj; /* rsync access location for EE certs. */
 	char		*aia; /* AIA (or NULL, for trust anchor) */
 	char		*aki; /* AKI (or NULL, for trust anchor) */

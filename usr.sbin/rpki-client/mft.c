@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.147 2026/10/09 10:05:12 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.148 2026/10/30 10:21:19 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -390,10 +390,10 @@ mft_cert_info(const char *fn, void *obj, const struct cert *cert)
 		err(1, NULL);
 	if ((mft->sia = strdup(cert->signedobj)) == NULL)
 		err(1, NULL);
-	if ((mft->crldp = strdup(cert->crl)) == NULL)
+	if ((mft->crldp = strdup(cert->crldp)) == NULL)
 		err(1, NULL);
 
-	crlfile = strrchr(cert->crl, '/');
+	crlfile = strrchr(cert->crldp, '/');
 	if (crlfile == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: "
 		    "invalid CRL distribution point", fn);
