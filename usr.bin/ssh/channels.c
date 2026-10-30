@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.476 2026/10/30 05:16:48 djm Exp $ */
+/* $OpenBSD: channels.c,v 1.477 2026/10/30 07:25:33 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -76,6 +76,7 @@
 #include "canohost.h"
 #include "pathnames.h"
 #include "match.h"
+#include "utf8.h"
 
 /* XXX remove once we're satisfied there's no lurking bugs */
 /* #define DEBUG_CHANNEL_POLL 1 */
@@ -1143,8 +1144,8 @@ channel_open_message(struct ssh *ssh)
 	struct sshbuf *buf;
 	Channel *c;
 	u_int i;
-	int r;
-	char *cp, *ret;
+	int r, w;
+	char *cp, *name, *ret;
 
 	if ((buf = sshbuf_new()) == NULL)
 		fatal_f("sshbuf_new");
@@ -1177,12 +1178,23 @@ channel_open_message(struct ssh *ssh)
 		case SSH_CHANNEL_X11_OPEN:
 		case SSH_CHANNEL_MUX_PROXY:
 		case SSH_CHANNEL_MUX_CLIENT:
+			/*
+			 * The remote name may have been supplied by the
+			 * peer; don't let embedded newlines or control
+			 * characters mess up the display.
+			 */
+			w = INT_MAX;
+			asmprintf(&name, INT_MAX, &w, "%s", c->remote_name);
+			if (name == NULL)
+				fatal_f("asmprintf failed");
 			cp = channel_format_status(c);
 			if ((r = sshbuf_putf(buf, "  #%d %.300s (%s)\r\n",
-			    c->self, c->remote_name, cp)) != 0) {
+			    c->self, name, cp)) != 0) {
+				free(name);
 				free(cp);
 				fatal_fr(r, "sshbuf_putf");
 			}
+			free(name);
 			free(cp);
 			continue;
 		default:

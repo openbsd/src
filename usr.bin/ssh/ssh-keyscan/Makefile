@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.18 2025/07/24 05:44:55 djm Exp $
+#	$OpenBSD: Makefile,v 1.19 2026/10/30 07:25:33 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh-keyscan.c
-SRCS+=	atomicio.c cleanup.c compat.c hostfile.c ssh_api.c dns.c fatal.c
+SRCS+=	atomicio.c cleanup.c compat.c hostfile.c ssh_api.c dns.c fatal.c utf8.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXC} ${SRCS_KEXS} ${SRCS_KEY} \
 	${SRCS_PKT} ${SRCS_UTL} ${SRCS_SK_CLIENT} ${SRCS_PKCS11_CLIENT}
 PROG=	ssh-keyscan
