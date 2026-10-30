@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.81 2026/10/22 06:15:57 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.82 2026/10/30 14:18:22 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -293,6 +293,8 @@ cert_print(const struct cert *p)
 		x509_print(p->x509);
 		if (p->aia != NULL)
 			json_do_string("aia", p->aia);
+		if (p->crldp != NULL)
+			json_do_string("crldp", p->crldp);
 		if (p->mft != NULL)
 			json_do_string("manifest", p->mft);
 		if (p->repo != NULL)
@@ -314,6 +316,8 @@ cert_print(const struct cert *p)
 		x509_print(p->x509);
 		if (p->aia != NULL)
 			printf("Authority info access:    %s\n", p->aia);
+		if (p->crldp != NULL)
+			printf("CRL Distribution Point:   %s\n", p->crldp);
 		if (p->mft != NULL)
 			printf("Manifest:                 %s\n", p->mft);
 		if (p->repo != NULL)
