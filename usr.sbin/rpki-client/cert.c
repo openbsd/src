@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.250 2026/10/30 10:21:19 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.251 2026/10/30 10:43:28 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -651,22 +651,22 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 
 	names = dp->distpoint->name.fullname;
 	for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
-		char	*crl = NULL;
+		char *crldp = NULL;
 
 		name = sk_GENERAL_NAME_value(names, i);
 
-		if (!x509_location(fn, "CRL distribution point", name, &crl))
+		if (!x509_location(fn, "CRL distribution point", name, &crldp))
 			goto out;
 
-		if (cert->crldp == NULL && strncasecmp(crl, RSYNC_PROTO,
+		if (cert->crldp == NULL && strncasecmp(crldp, RSYNC_PROTO,
 		    RSYNC_PROTO_LEN) == 0) {
-			cert->crldp = crl;
+			cert->crldp = crldp;
 			continue;
 		}
 		if (verbose)
 			warnx("%s: ignoring CRL distribution point %s",
-			    fn, crl);
-		free(crl);
+			    fn, crldp);
+		free(crldp);
 	}
 
 	if (cert->crldp == NULL) {
