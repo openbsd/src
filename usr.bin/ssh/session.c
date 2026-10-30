@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.353 2026/10/30 02:11:00 djm Exp $ */
+/* $OpenBSD: session.c,v 1.354 2026/10/30 02:31:36 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -2292,13 +2292,21 @@ do_cleanup(struct ssh *ssh, Authctxt *authctxt)
 		return;
 	called = 1;
 
-	if (authctxt == NULL || !authctxt->authenticated)
+	if (authctxt == NULL)
 		return;
 #ifdef KRB5
-	if (options.kerberos_ticket_cleanup &&
-	    authctxt->krb5_ctx)
+	/*
+	 * Remove the ticket cache written by Kerberos password
+	 * authentication; if the login never completed there is no
+	 * session that could use it, regardless of KerberosTicketCleanup.
+	 */
+	if (authctxt->krb5_ctx && (options.kerberos_ticket_cleanup ||
+	    !authctxt->authenticated))
 		krb5_cleanup_proc(authctxt);
 #endif
+
+	if (!authctxt->authenticated)
+		return;
 
 #ifdef GSSAPI
 	if (options.gss_cleanup_creds)
