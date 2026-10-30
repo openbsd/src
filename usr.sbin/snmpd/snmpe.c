@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.97 2026/06/18 10:45:33 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.98 2026/10/30 16:40:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -44,7 +44,9 @@
 #include "mib.h"
 
 void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
+void	 snmpe_run(void);
 int	 snmpe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
+int	 snmpe_dispatch_storage(int, struct privsep_proc *, struct imsg *);
 int	 snmpe_parse(struct snmp_message *);
 void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
@@ -62,8 +64,14 @@ static const struct timeval	snmpe_tcp_timeout = { 10, 0 }; /* 10s */
 struct snmp_messages snmp_messages = RB_INITIALIZER(&snmp_messages);
 
 static struct privsep_proc procs[] = {
-	{ "parent",	PROC_PARENT, snmpe_dispatch_parent }
+	{ "parent",	PROC_PARENT, snmpe_dispatch_parent },
+	{ "storage",	PROC_STORAGE, snmpe_dispatch_storage }
 };
+
+static int ready = 0;
+#define SNMPE_READY_AGENTXFD	(1 << 0)
+#define SNMPE_READY_STORAGE	(1 << 1)
+#define SNMPE_READY_ALL		(SNMPE_READY_AGENTXFD | SNMPE_READY_STORAGE)
 
 void
 snmpe(struct privsep *ps, struct privsep_proc *p)
@@ -87,14 +95,30 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 void
 snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
-	struct snmpd		*env = ps->ps_env;
-	struct address		*h;
-
 	usm_generate_keys();
 	appl_init();
 
-	/* listen for incoming SNMP UDP/TCP messages */
-	TAILQ_FOREACH(h, &env->sc_addresses, entry) {
+	/* no filesystem visibility */
+	if (unveil("/", "") == -1)
+		fatal("unveil /");
+	if (pledge("stdio recvfd inet unix", NULL) == -1)
+		fatal("pledge");
+}
+
+void
+snmpe_run(void)
+{
+	struct address		*h;
+
+	if (ready != SNMPE_READY_ALL)
+		return;
+	/*
+	 * listen for incoming SNMP UDP/TCP messages
+	 *
+	 * This is delayed to ensure that the engine information is properly
+	 * loaded
+	 */
+	TAILQ_FOREACH(h, &snmpd_env->sc_addresses, entry) {
 		if (h->type == SOCK_STREAM) {
 			if (listen(h->fd, 5) < 0)
 				fatalx("snmpe: failed to listen on socket");
@@ -107,14 +131,16 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 		event_add(&h->ev, NULL);
 	}
 
-	/* no filesystem visibility */
-	if (unveil("/", "") == -1)
-		fatal("unveil /");
-	if (pledge("stdio recvfd inet unix", NULL) == -1)
-		fatal("pledge");
-
-	log_info("snmpe %s: ready",
-	    tohexstr(env->sc_engineid.value, env->sc_engineid.length));
+	snmpd_env->sc_engine.boots++;
+	snmpd_env->sc_engine.time = 0;
+	snmpd_env->sc_engine.msg_max_size = READ_BUF_SIZE;
+	clock_gettime(CLOCK_MONOTONIC, &snmpd_env->sc_engine.measure);
+	if (proc_compose(&snmpd_env->sc_ps, PROC_STORAGE, IMSG_STORAGE_ENGINE,
+	    &snmpd_env->sc_engine, sizeof(snmpd_env->sc_engine)) == -1)
+		fatal("proc_compose");
+	
+	log_info("snmpe %s, boots %d: ready", tohexstr(snmpd_env->sc_engine.id.value,
+	    snmpd_env->sc_engine.id.length), snmpd_env->sc_engine.boots);
 	trap_init();
 }
 
@@ -142,6 +168,32 @@ snmpe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_SENDFD_DONE:
 		if (pledge("stdio inet unix", NULL) == -1)
 			fatal("pledge");
+		ready |= SNMPE_READY_AGENTXFD;
+		snmpe_run();
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+int
+snmpe_dispatch_storage(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct engine engine;
+
+	switch (imsg_get_type(imsg)) {
+	case IMSG_STORAGE_ENGINE:
+		if (imsg_get_data(imsg, &engine, sizeof(engine)) == -1)
+			fatal("imsg_get_data");
+
+		/* Ignore other engines for now */
+		if (engineid_cmp(&engine.id, &snmpd_env->sc_engine.id) == 0)
+			snmpd_env->sc_engine = engine;
+
+		return 0;
+	case IMSG_STORAGE_DONE:
+		ready |= SNMPE_READY_STORAGE;
+		snmpe_run();
 		return 0;
 	default:
 		return -1;
@@ -855,7 +907,8 @@ snmpe_encode(struct snmp_message *msg)
 	pdu = epdu = ober_add_sequence(NULL);
 	if (msg->sm_version == SNMP_V3) {
 		if ((epdu = ober_printf_elements(epdu, "xs{",
-		    snmpd_env->sc_engineid.value, snmpd_env->sc_engineid.length,
+		    snmpd_env->sc_engine.id.value,
+		    snmpd_env->sc_engine.id.length,
 		    msg->sm_ctxname)) == NULL) {
 			ober_free_elements(pdu);
 			return -1;

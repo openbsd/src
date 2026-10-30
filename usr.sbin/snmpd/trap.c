@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2025/12/24 13:36:38 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2026/10/30 16:40:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -107,9 +107,9 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 			msg->sm_flags = tr->ta_seclevel != -1 ?
 			    tr->ta_seclevel : snmpd_env->sc_min_seclevel;
 			msg->sm_secmodel = SNMP_SEC_USM;
-			msg->sm_engine_time = snmpd_engine_time();
-			msg->sm_engine_boots = snmpd_env->sc_engine_boots;
-			msg->sm_ctxengineid = snmpd_env->sc_engineid;
+			msg->sm_engine_time = engine_time(&snmpd_env->sc_engine);
+			msg->sm_engine_boots = engine_boots(&snmpd_env->sc_engine);
+			msg->sm_ctxengineid = snmpd_env->sc_engine.id;
 			(void)strlcpy(msg->sm_username, tr->ta_usmusername,
 			    sizeof(msg->sm_username));
 			msg->sm_user = tr->ta_usmuser;

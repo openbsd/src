@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.94 2026/10/12 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.95 2026/10/30 16:40:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -308,11 +308,11 @@ main		: LISTEN ON listen_udptcp
 			    axm_entry);
 		}
 		| engineid_local {
-			if (conf->sc_engineid.length != 0) {
+			if (conf->sc_engine.id.length != 0) {
 				yyerror("Redefinition of engineid");
 				YYERROR;
 			}
-			conf->sc_engineid = $1;
+			conf->sc_engine.id = $1;
 		}
 		| READONLY COMMUNITY STRING	{
 			if (strlcpy(conf->sc_rdcommunity, $3,
@@ -1874,18 +1874,19 @@ parse_config(const char *filename, u_int flags)
 
 
 	/* Must be identical to enginefmt_local:HOSTHASH */
-	if (conf->sc_engineid.length == 0) {
+	if (conf->sc_engine.id.length == 0) {
 		if (gethostname(hostname, sizeof(hostname)) == -1)
 			fatal("gethostname");
-		memcpy(conf->sc_engineid.value, &npen, sizeof(npen));
-		conf->sc_engineid.length += sizeof(npen);
-		conf->sc_engineid.value[conf->sc_engineid.length++] =
+		memcpy(conf->sc_engine.id.value, &npen, sizeof(npen));
+		conf->sc_engine.id.length += sizeof(npen);
+		conf->sc_engine.id.value[conf->sc_engine.id.length++] =
 		    SNMP_ENGINEID_FMT_HH;
-		memcpy(conf->sc_engineid.value + conf->sc_engineid.length,
+		memcpy(conf->sc_engine.id.value + conf->sc_engine.id.length,
 		    SHA256(hostname, strlen(hostname), sha256),
-		    sizeof(conf->sc_engineid.value) - conf->sc_engineid.length);
-		conf->sc_engineid.length = sizeof(conf->sc_engineid.value);
-		conf->sc_engineid.value[0] |= SNMP_ENGINEID_NEW;
+		    sizeof(conf->sc_engine.id.value) -
+		    conf->sc_engine.id.length);
+		conf->sc_engine.id.length = sizeof(conf->sc_engine.id.value);
+		conf->sc_engine.id.value[0] |= SNMP_ENGINEID_NEW;
 	}
 
 	/* Setup default listen addresses */

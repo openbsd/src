@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.56 2026/10/12 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.57 2026/10/30 16:40:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,7 @@ struct snmpd	*snmpd_env;
 
 static struct privsep_proc procs[] = {
 	{ "snmpe", PROC_SNMPE, snmpd_dispatch_snmpe, snmpe, snmpe_shutdown },
+	{ "storage", PROC_STORAGE, NULL, storage, storage_shutdown, SNMPD_STORAGE },
 };
 
 void
@@ -128,6 +129,7 @@ int
 main(int argc, char *argv[])
 {
 	int		 c;
+	size_t		 i;
 	struct snmpd	*env;
 	int		 debug = 0, verbose = 0;
 	u_int		 flags = 0;
@@ -138,13 +140,14 @@ main(int argc, char *argv[])
 	int		 argc0 = argc;
 	char		**argv0 = argv, execpath[PATH_MAX];
 	const char	*errp, *title = NULL;
+	const char	*storagepath = SNMPD_STORAGE;
 
 	smi_init();
 
 	/* log to stderr until daemonized */
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "dD:nNf:I:P:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nNf:I:P:S:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -176,6 +179,16 @@ main(int argc, char *argv[])
 			if (proc_id == PROC_MAX)
 				fatalx("invalid process name");
 			break;
+		case 'S':
+			if (optarg[0] != '/')
+				fatalx("%s: must be absolute path", optarg);
+			for (i = 0; i < nitems(procs); i++) {
+				if (procs[i].p_id == PROC_STORAGE) {
+					procs[i].p_chroot = optarg;
+					storagepath = optarg;
+					break;
+				}
+			}
 		case 'v':
 			verbose++;
 			flags |= SNMPD_F_VERBOSE;
@@ -201,6 +214,7 @@ main(int argc, char *argv[])
 	ps = &env->sc_ps;
 	ps->ps_env = env;
 	snmpd_env = env;
+	env->sc_storagepath = storagepath;
 	ps->ps_instance = proc_instance;
 	if (title)
 		ps->ps_title[proc_id] = title;
@@ -218,8 +232,6 @@ main(int argc, char *argv[])
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
-
-	env->sc_engine_boots = 0;
 
 	proc_init(ps, procs, nitems(procs), debug, execpath, argc0, argv0, proc_id);
 
@@ -318,24 +330,6 @@ snmpd_socket_af(struct sockaddr_storage *ss, int type)
 		return -1;
 	}
 	return fd;
-}
-
-u_long
-snmpd_engine_time(void)
-{
-	struct timeval	 now;
-
-	/*
-	 * snmpEngineBoots should be stored in a non-volatile storage.
-	 * snmpEngineTime is the number of seconds since snmpEngineBoots
-	 * was last incremented. We don't rely on non-volatile storage.
-	 * snmpEngineBoots is set to zero and snmpEngineTime to the system
-	 * clock. Hence, the tuple (snmpEngineBoots, snmpEngineTime) is
-	 * still unique and protects us against replay attacks. It only
-	 * 'expires' a little bit sooner than the RFC3414 method.
-	 */
-	gettimeofday(&now, NULL);
-	return now.tv_sec;
 }
 
 void

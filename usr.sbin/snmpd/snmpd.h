@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.126 2026/10/12 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.127 2026/10/30 16:40:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@
 
 #define CONF_FILE		"/etc/snmpd.conf"
 #define SNMPD_BACKEND		"/usr/libexec/snmpd"
+#define SNMPD_STORAGE		"/var/db/snmpd"
 #define SNMPD_USER		"_snmpd"
 #define SNMP_PORT		"161"
 #define SNMPTRAP_PORT		"162"
@@ -92,7 +93,9 @@ enum imsg_type {
 	IMSG_CTL_PROCREADY,
 	IMSG_TRAP_EXEC,
 	IMSG_AX_FD,
-	IMSG_SENDFD_DONE
+	IMSG_SENDFD_DONE,
+	IMSG_STORAGE_ENGINE,
+	IMSG_STORAGE_DONE
 };
 
 struct imsgev {
@@ -114,6 +117,7 @@ struct imsgev {
 enum privsep_procid {
 	PROC_PARENT,	/* Parent process and application interface */
 	PROC_SNMPE,	/* SNMP engine */
+	PROC_STORAGE,
 	PROC_MAX
 };
 
@@ -190,6 +194,14 @@ struct privsep_fd {
 struct engineid {
 	uint8_t			 value[SNMPD_MAXENGINEIDLEN];
 	size_t			 length;
+};
+
+struct engine {
+	struct engineid		 id;
+	int32_t			 boots;
+	int32_t			 time;
+	struct timespec		 measure;
+	int			 msg_max_size;
 };
 
 #define MSG_HAS_AUTH(m)		(((m)->sm_flags & SNMP_MSGFLAG_AUTH) != 0)
@@ -411,15 +423,15 @@ struct snmpd {
 	enum mib_oidfmt		 sc_oidfmt;
 
 	const char		*sc_confpath;
+	const char		*sc_storagepath;
 	struct addresslist	 sc_addresses;
 	struct axmasterlist	 sc_agentx_masters;
-	u_int32_t		 sc_engine_boots;
 
 	char			 sc_rdcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_rwcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_trcommunity[SNMPD_MAXCOMMUNITYLEN];
 
-	struct engineid		 sc_engineid;
+	struct engine		 sc_engine;
 
 	struct snmp_stats	 sc_stats;
 	struct snmp_system	 sc_system;
@@ -456,6 +468,10 @@ struct snmpd	*parse_config(const char *, u_int);
 int		 cmdline_symset(char *);
 
 /* engine.c */
+int		 engine_islocal(struct engine *);
+int		 engine_in_timewindow(struct engine *, int32_t, int32_t);
+int32_t		 engine_boots(struct engine *);
+int32_t		 engine_time(struct engine *);
 int		 engineid_cmp(struct engineid *, struct engineid *);
 
 /* snmpe.c */
@@ -479,7 +495,10 @@ void		 smi_debug_elements(struct ber_element *);
 
 /* snmpd.c */
 int		 snmpd_socket_af(struct sockaddr_storage *, int);
-u_long		 snmpd_engine_time(void);
+
+/* storage.c */
+void		 storage(struct privsep *, struct privsep_proc *);
+void		 storage_shutdown(void);
 
 /* usm.c */
 void		 usm_generate_keys(void);

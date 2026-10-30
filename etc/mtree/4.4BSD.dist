@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.328 2026/10/21 01:46:53 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.329 2026/10/30 16:40:40 martijn Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -576,6 +576,8 @@ var
         rpki-client		uname=_rpki-client mode=0755
         ..
         pkg
+        ..
+        snmpd			uname=_snmpd gname=_snmpd mode=0700
         ..
         yubikey			uname=root gname=auth mode=0770
         ..

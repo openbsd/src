@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.8,v 1.24 2023/03/02 17:09:54 jmc Exp $
+.\" $OpenBSD: snmpd.8,v 1.25 2026/10/30 16:40:40 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: October 30 2026 $
 .Dt SNMPD 8
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Op Fl dNnv
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
+.Op Fl S Ar path
 .Sh DESCRIPTION
 .Nm
 is a daemon which implements the SNMP protocol.
@@ -53,6 +54,12 @@ Show numeric OID values instead of their symbolic names.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl S Ar path
+Use
+.Ar path
+as the location for storing dynamic information,
+instead of the default
+.Pa /var/db/snmpd .
 .It Fl v
 Produce more verbose output.
 .El
