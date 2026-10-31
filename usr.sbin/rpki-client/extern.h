@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.318 2026/10/30 10:21:19 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.319 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -175,6 +175,7 @@ struct ca {
 	unsigned int		 repoid;
 	int			 talid;
 	enum cert_purpose	 purpose;
+	int			 bad;
 
 	/* non-functional CA handling */
 	int			 nonfunc;
@@ -667,6 +668,7 @@ struct repotalstats {
 	uint32_t	 certs_nonfunc; /* non-functional CA certificates */
 	uint32_t	 certs_nonfunc_deferred;
 	uint32_t	 certs_unconfirmed;
+	uint32_t	 certs_bad;
 	uint32_t	 mfts; /* total number of manifests */
 	uint32_t	 mfts_gap; /* manifests with sequence gaps */
 	uint32_t	 mfts_fail; /* failing syntactic parse */
@@ -788,6 +790,8 @@ void		 ca_state_save(struct ca_tree *, time_t);
 struct ca	*ca_tree_insert_cert(struct ca_tree *, const struct cert *);
 int		 ca_confirmed_in_last_run(struct ca_tree *, const struct cert *);
 void		 ca_set_confirmed(struct ca_tree *, int);
+int		 ca_is_bad(struct ca_tree *, int);
+void		 carepo_tree_free(void);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
@@ -1141,6 +1145,8 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of delegated hosting locations (repositories) for each TAL. */
 #define MAX_REPO_PER_TAL	1000
+
+#define MAX_CA_PER_CAREPO	20
 
 #define HTTP_PROTO		"http://"
 #define HTTP_PROTO_LEN		(sizeof(HTTP_PROTO) - 1)

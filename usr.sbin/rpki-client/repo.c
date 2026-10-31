@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.98 2026/10/28 13:33:40 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.99 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1564,6 +1564,9 @@ repo_stat_count_ca(struct ca *ca)
 
 			if (!ca->confirmed)
 				rp->stats[ca->talid].certs_unconfirmed++;
+
+			if (ca->bad)
+				rp->stats[ca->talid].certs_bad++;
 
 			break;
 		}

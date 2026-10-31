@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.66 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.67 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -66,6 +66,7 @@ outputheader_json(struct validation_data *vd, struct stats *st)
 	json_do_int("nonfunctionalcas", st->repo_tal_stats.certs_nonfunc);
 	json_do_int("deferredcas", st->repo_tal_stats.certs_nonfunc_deferred);
 	json_do_int("unconfirmedcas", st->repo_tal_stats.certs_unconfirmed);
+	json_do_int("badcas", st->repo_tal_stats.certs_bad);
 	json_do_int("taks", st->repo_tal_stats.taks);
 	json_do_int("tals", st->tals);
 	json_do_int("invalidtals", talsz - st->tals);

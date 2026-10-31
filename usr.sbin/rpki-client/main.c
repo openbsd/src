@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.334 2026/10/28 13:37:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.335 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -588,6 +588,10 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 	}
 
 	ca = ca_tree_insert_cert(ca_tree, cert);
+
+	if (cert->purpose == CERT_PURPOSE_CA && ca->bad)
+		return;
+
 	if (nca_skip_sync(ca))
 		return;
 
@@ -863,6 +867,7 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->certs_nonfunc += in->certs_nonfunc;
 	out->certs_nonfunc_deferred += in->certs_nonfunc_deferred;
 	out->certs_unconfirmed += in->certs_unconfirmed;
+	out->certs_bad += in->certs_bad;
 	out->roas += in->roas;
 	out->roas_fail += in->roas_fail;
 	out->roas_invalid += in->roas_invalid;
@@ -1433,6 +1438,11 @@ main(int argc, char *argv[])
 				TAILQ_REMOVE(&lowprio_queue, ent, entries);
 				entity_lowprio_queue--;
 
+				if (ca_is_bad(&vd.cas, ent->certid)) {
+					entity_free(ent);
+					continue;
+				}
+
 				entity_queue++;
 				rp = repo_byid(ent->repoid);
 				if (!repo_queued(rp, ent)) {
@@ -1698,11 +1708,13 @@ main(int argc, char *argv[])
 	}
 	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
 	printf("Certificates: %u (%u invalid, %u non-functional, %u sync "
-	    "deferred, %u unconfirmed)\n", stats.repo_tal_stats.certs,
+	    "deferred, %u unconfirmed, %u bad)\n",
+	    stats.repo_tal_stats.certs,
 	    stats.repo_tal_stats.certs_fail,
 	    stats.repo_tal_stats.certs_nonfunc,
 	    stats.repo_tal_stats.certs_nonfunc_deferred,
-	    stats.repo_tal_stats.certs_unconfirmed);
+	    stats.repo_tal_stats.certs_unconfirmed,
+	    stats.repo_tal_stats.certs_bad);
 	printf("Trust Anchor Locators: %u (%u invalid)\n",
 	    stats.tals, talsz - stats.tals);
 	printf("Manifests: %u (%u failed parse, %u seqnum gaps)\n",
@@ -1727,6 +1739,7 @@ main(int argc, char *argv[])
 
 	/* Memory cleanup. */
 	repo_free();
+	carepo_tree_free();
 
 	return rc;
 

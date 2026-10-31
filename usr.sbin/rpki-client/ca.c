@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.14 2026/10/28 15:07:27 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.15 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -37,6 +37,77 @@ extern int rrdpon;
 
 static void ca_free(struct ca *);
 static void ca_set_state_from_last_run(struct ca *, const struct cert *);
+
+struct carepo {
+	RB_ENTRY(carepo) entry;
+	char *carepo;
+	int talid;
+	unsigned int counter;
+};
+
+static inline int
+carepocmp(const struct carepo *a, const struct carepo *b)
+{
+	int cmp;
+
+	if (a->talid < b->talid)
+		return -1;
+	if (a->talid > b->talid)
+		return 1;
+
+	cmp = strcmp(a->carepo, b->carepo);
+	if (cmp > 0)
+		return 1;
+	if (cmp < 0)
+		return -1;
+	return 0;
+}
+
+static RB_HEAD(carepo_tree, carepo) carepos = RB_INITIALIZER(&carepos);
+
+RB_GENERATE_STATIC(carepo_tree, carepo, entry, carepocmp);
+
+static void
+carepo_free(struct carepo *carepo)
+{
+	free(carepo->carepo);
+	free(carepo);
+}
+
+void
+carepo_tree_free(void)
+{
+	struct carepo *carepo, *carepo_tmp;
+
+	RB_FOREACH_SAFE(carepo, carepo_tree, &carepos, carepo_tmp) {
+		RB_REMOVE(carepo_tree, &carepos, carepo);
+		carepo_free(carepo);
+	}
+}
+
+/*
+ * Increment and return per TAL per carepo counter.
+ */
+static unsigned int
+carepo_increment(const struct ca *ca)
+{
+	struct carepo *carepo, needle;
+
+	needle.talid = ca->talid;
+	needle.carepo = ca->carepo;
+	if ((carepo = RB_FIND(carepo_tree, &carepos, &needle)) == NULL) {
+		if ((carepo = calloc(1, sizeof(*carepo))) == NULL)
+			err(1, NULL);
+		carepo->talid = ca->talid;
+		if ((carepo->carepo = strdup(ca->carepo)) == NULL)
+			err(1, NULL);
+		carepo->counter = 0;
+		if (RB_INSERT(carepo_tree, &carepos, carepo) != NULL)
+			err(1, "carepos tree corrupted");
+	}
+
+	return ++carepo->counter;
+}
 
 static inline int
 certidcmp(const struct ca *a, const struct ca *b)
@@ -109,10 +180,18 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 		ca->issuer = ca_lookup_by_certid(ca_tree, cert->issuerid);
 		if (ca->issuer == NULL)
 			errx(1, "ca tree corrupted");
+		ca->bad = ca->issuer->bad;
+		if (carepo_increment(ca) > MAX_CA_PER_CAREPO) {
+			warnx("%s: ca repository overflowed %s", ca->location,
+			    ca->carepo);
+			ca->bad = 1;
+		}
 	}
 
 	if ((old_ca = RB_INSERT(ca_tree, ca_tree, ca)) != NULL) {
 		warnx("duplicate CA at %s", ca->location);
+		if (ca->bad)
+			old_ca->bad = 1;
 		ca_free(ca);
 		return old_ca;
 	}
@@ -236,6 +315,20 @@ ca_state_tree_free(void)
 		RB_REMOVE(ca_state_tree, &ca_state_tree, ca);
 		ca_free(ca);
 	}
+}
+
+int
+ca_is_bad(struct ca_tree *ca_tree, int certid)
+{
+	struct ca *ca;
+
+	if ((ca = ca_lookup_by_certid(ca_tree, certid)) == NULL)
+		return 1;
+
+	if (ca->purpose != CERT_PURPOSE_CA)
+		return 1;
+
+	return ca->bad || ca->issuer->bad;
 }
 
 static RB_HEAD(nca_tree, ca) nca_tree = RB_INITIALIZER(&nca_tree);

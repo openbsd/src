@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.18 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.19 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -48,6 +48,8 @@ set_common_stats(const struct repotalstats *in, struct ometric *metric,
 	    OKV("type", "state"), OKV("cert", "sync-deferred"), ol);
 	ometric_set_int_with_labels(metric, in->certs_unconfirmed,
 	    OKV("type", "state"), OKV("cert", "unconfirmed"), ol);
+	ometric_set_int_with_labels(metric, in->certs_bad,
+	    OKV("type", "state"), OKV("cert", "bad"), ol);
 
 	ometric_set_int_with_labels(metric, in->mfts,
 	    OKV("type", "state"), OKV("manifest", "valid"), ol);

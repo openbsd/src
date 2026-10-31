@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.49 2026/10/22 20:29:26 job Exp $ */
+/*	$OpenBSD: output.c,v 1.50 2026/10/31 16:21:26 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -285,7 +285,7 @@ outputheader(FILE *out, struct validation_data *vd, struct stats *st)
 	    "# Route Origin Authorizations: %u (%u failed parse, %u invalid)\n"
 	    "# BGPsec Router Certificates: %u\n"
 	    "# Certificates: %u (%u invalid, %u non-functional, %u sync "
-	    "deferred, %u unconfirmed)\n", hn, tbuf,
+	    "deferred, %u unconfirmed, %u bad)\n", hn, tbuf,
 	    (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    vd->ccr.mfts_hash, vd->ccr.vrps_hash, vd->ccr.vaps_hash,
@@ -294,7 +294,8 @@ outputheader(FILE *out, struct validation_data *vd, struct stats *st)
 	    st->repo_tal_stats.certs, st->repo_tal_stats.certs_fail,
 	    st->repo_tal_stats.certs_nonfunc,
 	    st->repo_tal_stats.certs_nonfunc_deferred,
-	    st->repo_tal_stats.certs_unconfirmed) < 0)
+	    st->repo_tal_stats.certs_unconfirmed,
+	    st->repo_tal_stats.certs_bad) < 0)
 		return -1;
 
 	if (fprintf(out,
