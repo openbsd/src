@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.23 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.24 2026/10/31 09:15:11 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -83,7 +83,6 @@ int utwitch_detach(struct device *, int);
 
 void utwitch_set_mode(struct utwitch_softc *, uint8_t);
 void utwitch_read_value_request(struct utwitch_softc *);
-void utwitch_write_value_request(struct utwitch_softc *, uint32_t);
 
 void utwitch_intr(struct uhidev *, void *, u_int);
 void utwitch_refresh(void *);
@@ -296,29 +295,4 @@ utwitch_read_value_request(struct utwitch_softc *sc)
 
 	/* wait till sensor data are updated, 500ms will be enough */
 	tsleep_nsec(&sc->sc_sensortask, 0, "utwitch", MSEC_TO_NSEC(500));
-}
-
-void
-utwitch_write_value_request(struct utwitch_softc *sc, uint32_t val)
-{
-	uint32_t v;
-	uint8_t req[8];
-	int olen;
-
-	olen = MIN(sc->sc_olen, sizeof(req));
-	req[0] = CMD_WRITE;
-	req[1] = 0;
-	req[6] = CMD_EOF;
-	req[7] = CMD_PADDING;
-	v = htobe32(val);
-	memcpy(req + 2, &v, sizeof(uint32_t));
-
-	sc->issueing_cmd = CMD_WRITE;
-	sc->accepted_cmd = CMD_NONE;
-	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_OUTPUT_REPORT,
-	    sc->sc_hdev.sc_report_id, req, olen) != olen)
-		return;
-
-	/* wait till sensor data are updated, 250ms will be enough */
-	tsleep_nsec(&sc->sc_sensortask, 0, "utwitch", MSEC_TO_NSEC(250));
 }
