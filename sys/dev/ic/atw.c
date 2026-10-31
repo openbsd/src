@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.102 2024/10/06 01:12:15 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.103 2026/10/31 15:23:08 miod Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3025,7 +3025,7 @@ void
 atw_rxintr(struct atw_softc *sc)
 {
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	static int rate_tbl[] = {2, 4, 11, 22, 44};
+	static const int rate_tbl[] = {2, 4, 11, 22, 44};
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
