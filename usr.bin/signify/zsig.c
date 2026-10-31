@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.20 2025/05/20 01:03:56 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.21 2026/10/31 08:22:57 tb Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <sha2.h>
 #include <string.h>
@@ -131,7 +132,7 @@ readgz_header(struct gzheader *h, int fd)
 
 static void
 copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
-    size_t bufsize, uint8_t *bufend)
+    size_t bufsize, uint8_t *bufend, bool checklast, size_t lastblocksize)
 {
 	uint8_t *buffer;
 	uint8_t *residual;
@@ -159,6 +160,14 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 			n += more;
 			if (more == 0)
 				break;
+		}
+		if (n != bufsize) {
+			if (endsha - sha > SHA512_256_DIGEST_STRING_LENGTH)
+				errx(1, "block has the wrong length "
+				    "(%zu vs %zu)", n, bufsize);
+			else if (checklast && n != lastblocksize)
+				errx(1, "block has the wrong length "
+				    "(%zu vs %zu)", n, lastblocksize);
 		}
 		if (n == 0)
 			break;
@@ -188,6 +197,8 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	char *p;
 	uint8_t *bufend;
 	int fdin, fdout;
+	bool checklast;
+	size_t lastblocksize;
 
 	/* by default, verification will love pipes */
 	if (!sigfile)
@@ -207,6 +218,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	    pubkeyfile, keytype);
 
 	bufsize = MYBUFSIZE;
+	checklast = false;
 
 #define BEGINS_WITH(x, y) memcmp((x), (y), sizeof(y)-1) == 0
 
@@ -216,6 +228,11 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	    sscanf(p, "blocksize=%zu\n", &bufsize) > 0) {
 		while (*(p++) != '\n')
 			continue;
+		if (sscanf(p, "lastblocksize=%zu\n", &lastblocksize) > 0) {
+			checklast = true;
+			while (*(p++) != '\n')
+				continue;
+		}
 	}
 
 	if (*p != '\n')
@@ -225,7 +242,8 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	writeall(fdout, fake, sizeof fake, msgfile);
 	writeall(fdout, h.comment, len+1, msgfile);
 	*(p++) = 0;
-	copy_blocks(fdout, fdin, p, h.endcomment, bufsize, bufend);
+	copy_blocks(fdout, fdin, p, h.endcomment, bufsize, bufend, checklast,
+	    lastblocksize);
 	free(h.buffer);
 	close(fdout);
 	close(fdin);
