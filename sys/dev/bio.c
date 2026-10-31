@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.20 2026/08/11 16:25:29 deraadt Exp $	*/
+/*	$OpenBSD: bio.c,v 1.21 2026/10/31 09:37:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -183,36 +183,6 @@ int
 bio_delegate_ioctl(struct bio_mapping *bm, u_long cmd, caddr_t addr)
 {
 	return (bm->bm_ioctl(bm->bm_dev, cmd, addr));
-}
-
-void
-bio_info(struct bio_status *bs, int print, const char *fmt, ...)
-{
-	va_list	ap;
-
-	va_start(ap, fmt);
-	bio_status(bs, print, BIO_MSG_INFO, fmt, &ap);
-	va_end(ap);
-}
-
-void
-bio_warn(struct bio_status *bs, int print, const char *fmt, ...)
-{
-	va_list	ap;
-
-	va_start(ap, fmt);
-	bio_status(bs, print, BIO_MSG_WARN, fmt, &ap);
-	va_end(ap);
-}
-
-void
-bio_error(struct bio_status *bs, int print, const char *fmt, ...)
-{
-	va_list	ap;
-
-	va_start(ap, fmt);
-	bio_status(bs, print, BIO_MSG_ERROR, fmt, &ap);
-	va_end(ap);
 }
 
 void

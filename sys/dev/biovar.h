@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.46 2020/06/07 16:51:43 kn Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.47 2026/10/31 09:37:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -303,10 +303,6 @@ void	bio_unregister(struct device *);
 
 void	bio_status_init(struct bio_status *, struct device *);
 void	bio_status(struct bio_status *, int, int, const char *, va_list *);
-
-void	bio_info(struct bio_status *, int, const char *, ...);
-void	bio_warn(struct bio_status *, int, const char *, ...);
-void	bio_error(struct bio_status *, int, const char *, ...);
 #endif
 
 #endif /* _SYS_DEV_BIOVAR_H_ */
