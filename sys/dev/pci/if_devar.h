@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.42 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.43 2026/10/31 09:23:12 miod Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -425,7 +425,6 @@ typedef struct {
 struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* interrupt vectoring */
-    void *tulip_ats;			/* shutdown hook */
 
     bus_space_tag_t tulip_bustag;	/* tag of CSR region being used */
     bus_space_handle_t tulip_bushandle;	/* handle for CSR region being used */
