@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.36 2023/06/16 08:42:08 sf Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.37 2026/10/31 21:05:26 miod Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@
 #include <msdosfs/denode.h>
 #include <msdosfs/fat.h>
 
+#ifndef SMALL_KERNEL
 /*
  * Fat cache stats.
  */
@@ -82,6 +83,7 @@ int fc_bmapcalls;		/* # of times pcbmap was called		 */
 int fc_lmdistance[LMMAX];	/* counters for how far off the last
 				 * cluster mapped entry was. */
 int fc_largedistance;		/* off by more than LMMAX		 */
+#endif
 
 static void fatblock(struct msdosfsmount *, uint32_t, uint32_t *, uint32_t *,
 			  uint32_t *);
@@ -147,7 +149,9 @@ pcbmap(struct denode *dep, uint32_t findcn, daddr_t *bnp, uint32_t *cnp,
 	struct msdosfsmount *pmp = dep->de_pmp;
 	uint32_t bsize;
 
+#ifndef SMALL_KERNEL
 	fc_bmapcalls++;
+#endif
 
 	/*
 	 * If they don't give us someplace to return a value then don't
@@ -198,10 +202,13 @@ pcbmap(struct denode *dep, uint32_t findcn, daddr_t *bnp, uint32_t *cnp,
 	 */
 	i = 0;
 	fc_lookup(dep, findcn, &i, &cn);
-	if ((bn = findcn - i) >= LMMAX)
+	bn = findcn - i;
+#ifndef SMALL_KERNEL
+	if (bn >= LMMAX)
 		fc_largedistance++;
 	else
 		fc_lmdistance[bn]++;
+#endif
 
 	/*
 	 * Handle all other files or directories the normal way.
@@ -956,10 +963,14 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 	 * If the "file's last cluster" cache entry is empty, and the file
 	 * is not empty, then fill the cache entry by calling pcbmap().
 	 */
+#ifndef SMALL_KERNEL
 	fc_fileextends++;
+#endif
 	if (dep->de_fc[FC_LASTFC].fc_frcn == FCE_EMPTY &&
 	    dep->de_StartCluster != 0) {
+#ifndef SMALL_KERNEL
 		fc_lfcempty++;
+#endif
 		error = pcbmap(dep, CLUST_END, 0, &cn, 0);
 		/* we expect it to return E2BIG */
 		if (error != E2BIG)
