@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.697 2026/09/11 14:43:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.698 2026/10/31 10:46:05 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1488,7 +1488,7 @@ void m_get_data(struct msg *, const void **, size_t *);
 void m_get_evpid(struct msg *, uint64_t *);
 void m_get_msgid(struct msg *, uint32_t *);
 void m_get_id(struct msg *, uint64_t *);
-void m_get_sockaddr(struct msg *, struct sockaddr *);
+void m_get_sockaddr(struct msg *, struct sockaddr_storage *);
 void m_get_mailaddr(struct msg *, struct mailaddr *);
 void m_get_envelope(struct msg *, struct envelope *);
 void m_get_params(struct msg *, struct dict *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.252 2026/05/26 22:49:18 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.253 2026/10/31 10:46:05 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -131,7 +131,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &tablename);
-		m_get_sockaddr(&m, (struct sockaddr *)&ss);
+		m_get_sockaddr(&m, &ss);
 		m_end(&m);
 
 		ret = lka_addrname(tablename, (struct sockaddr*)&ss,
@@ -238,7 +238,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &tablename);
-		m_get_sockaddr(&m, (struct sockaddr *)&ss);
+		m_get_sockaddr(&m, &ss);
 		m_end(&m);
 
 		ret = lka_addrname(tablename, (struct sockaddr*)&ss,
@@ -376,8 +376,8 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &rdns);
 		m_get_int(&m, &fcrdns);
-		m_get_sockaddr(&m, (struct sockaddr *)&ss_src);
-		m_get_sockaddr(&m, (struct sockaddr *)&ss_dest);
+		m_get_sockaddr(&m, &ss_src);
+		m_get_sockaddr(&m, &ss_dest);
 		m_end(&m);
 
 		lka_report_smtp_link_connect(direction, &tv, reqid, rdns, fcrdns, &ss_src, &ss_dest);

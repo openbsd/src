@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.7 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.8 2026/10/31 10:46:05 op Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
@@ -198,13 +198,13 @@ resolver_dispatch_request(struct mproc *proc, struct imsg *imsg)
 		break;
 
 	case IMSG_GETNAMEINFO:
-		sa = (struct sockaddr*)&ss;
-		m_get_sockaddr(&m, sa);
+		m_get_sockaddr(&m, &ss);
 		m_get_int(&m, &flags);
 		m_end(&m);
 
 		s = NULL;
 		q = NULL;
+		sa = (struct sockaddr*)&ss;
 		if ((s = calloc(1, sizeof(*s))) &&
 		    (s->host = malloc(NI_MAXHOST)) &&
 		    (s->serv = malloc(NI_MAXSERV)) &&
@@ -323,7 +323,7 @@ resolver_dispatch_result(struct mproc *proc, struct imsg *imsg)
 		m_get_int(&m, &tai.ai_family);
 		m_get_int(&m, &tai.ai_socktype);
 		m_get_int(&m, &tai.ai_protocol);
-		m_get_sockaddr(&m, (struct sockaddr *)&ss);
+		m_get_sockaddr(&m, &ss);
 		m_get_string(&m, &cname);
 		m_end(&m);
 

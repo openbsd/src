@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.249 2026/07/12 23:19:39 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.250 2026/10/31 10:46:05 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -220,7 +220,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_id(&m, &reqid);
 		m_get_int(&m, &status);
 		if (status == LKA_OK)
-			m_get_sockaddr(&m, (struct sockaddr*)&ss);
+			m_get_sockaddr(&m, &ss);
 		m_end(&m);
 
 		relay = tree_xpop(&wait_source, reqid);
@@ -249,7 +249,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &hostname);
-		m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_get_sockaddr(&m, &ss);
 		m_get_int(&m, &preference);
 		m_end(&m);
 		domain = tree_xget(&wait_mx, reqid);
@@ -405,7 +405,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_CTL_MTA_BLOCK:
 		m_msg(&m, imsg);
-		m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_get_sockaddr(&m, &ss);
 		m_get_string(&m, &dom);
 		m_end(&m);
 		source = mta_source((struct sockaddr*)&ss);
@@ -422,7 +422,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_CTL_MTA_UNBLOCK:
 		m_msg(&m, imsg);
-		m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_get_sockaddr(&m, &ss);
 		m_get_string(&m, &dom);
 		m_end(&m);
 		source = mta_source((struct sockaddr*)&ss);
