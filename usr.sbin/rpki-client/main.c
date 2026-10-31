@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.335 2026/10/31 16:21:26 job Exp $ */
+/*	$OpenBSD: main.c,v 1.336 2026/10/31 17:55:10 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -143,7 +143,7 @@ getmonotime(void)
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
 		err(1, "clock_gettime");
-	return (ts.tv_sec);
+	return ts.tv_sec;
 }
 
 /*
