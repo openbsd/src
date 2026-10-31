@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.103 2024/11/09 08:26:29 miod Exp $ */
+/*	$OpenBSD: udl.c,v 1.104 2026/10/31 09:15:58 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -120,7 +120,6 @@ void		udl_cmd_free_xfer(struct udl_softc *);
 int		udl_cmd_alloc_buf(struct udl_softc *);
 void		udl_cmd_free_buf(struct udl_softc *);
 void		udl_cmd_insert_int_1(struct udl_softc *, uint8_t);
-void		udl_cmd_insert_int_2(struct udl_softc *, uint16_t);
 void		udl_cmd_insert_int_3(struct udl_softc *, uint32_t);
 void		udl_cmd_insert_int_4(struct udl_softc *, uint32_t);
 void		udl_cmd_insert_buf(struct udl_softc *, uint8_t *, uint32_t);
@@ -1552,18 +1551,6 @@ udl_cmd_insert_int_1(struct udl_softc *sc, uint8_t value)
 	cb->buf[cb->off] = value;
 
 	cb->off += 1;
-}
-
-void
-udl_cmd_insert_int_2(struct udl_softc *sc, uint16_t value)
-{
-	uint16_t lvalue;
-	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
-
-	lvalue = htobe16(value);
-	bcopy(&lvalue, cb->buf + cb->off, 2);
-
-	cb->off += 2;
 }
 
 void
