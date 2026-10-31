@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2014/12/01 01:16:46 deraadt Exp $
+# $OpenBSD: Makefile,v 1.7 2026/10/31 11:50:31 kirill Exp $
 
 .include <bsd.own.mk>
 
@@ -24,20 +24,20 @@ test: lib1.so lib2.so lib3.so dlopen dlopen1 dlopen2 dlopen3
 lib1.so: ${LIB_DEPENDS}
 	cc -o lib1.so ${EMPTYFILE} -fPIC -shared -Wl,-znodlopen
 
-lib2.so: ${LIB_DEPENDS}
+lib2.so: ${LIB_DEPENDS} lib1.so
 	cc -o lib2.so ${EMPTYFILE} -fPIC -shared -L. -l1
 
-lib3.so: ${LIB_DEPENDS}
+lib3.so: ${LIB_DEPENDS} lib2.so
 	cc -o lib3.so ${EMPTYFILE} -fPIC -shared -L. -l2
 
 dlopen: dlopen.c
 	cc -o dlopen ${.CURDIR}/dlopen.c
 
-dlopen1: dlopen.c
+dlopen1: dlopen.c lib1.so
 	cc -o dlopen1 ${.CURDIR}/dlopen.c -L. -l1
 
-dlopen2: dlopen.c
+dlopen2: dlopen.c lib2.so
 	cc -o dlopen2 ${.CURDIR}/dlopen.c -L. -l2
 
-dlopen3: dlopen.c
+dlopen3: dlopen.c lib3.so
 	cc -o dlopen3 ${.CURDIR}/dlopen.c -L. -l3
