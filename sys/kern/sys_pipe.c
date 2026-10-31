@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.149 2025/08/04 04:59:31 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.150 2026/10/31 21:41:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -119,7 +119,6 @@ const struct filterops pipe_efiltops = {
  */
 #define LIMITBIGPIPES	32
 unsigned int nbigpipe;
-static unsigned int amountpipekva;
 
 struct pool pipe_pair_pool;
 
@@ -265,8 +264,6 @@ pipe_buffer_realloc(struct pipe *cpipe, u_int size)
 	cpipe->pipe_buffer.size = size;
 	cpipe->pipe_buffer.in = 0;
 	cpipe->pipe_buffer.out = 0;
-
-	atomic_add_int(&amountpipekva, cpipe->pipe_buffer.size);
 
 	return (0);
 }
@@ -767,7 +764,6 @@ pipe_buffer_free(struct pipe *cpipe)
 
 	cpipe->pipe_buffer.buffer = NULL;
 
-	atomic_sub_int(&amountpipekva, size);
 	if (size > PIPE_SIZE)
 		atomic_dec_int(&nbigpipe);
 }
