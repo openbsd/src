@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.15 2026/10/31 16:21:26 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.16 2026/10/31 16:24:28 job Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -727,8 +727,6 @@ nca_history_save(struct ca_tree *ca_tree, time_t buildtime)
 
 	free(ncas_sorted);
 	nca_tree_free();
-
-	return;
 }
 
 void
@@ -899,6 +897,4 @@ ca_state_save(struct ca_tree *ca_tree, time_t buildtime)
 
 	free(cas_sorted);
 	ca_state_tree_free();
-
-	return;
 }
