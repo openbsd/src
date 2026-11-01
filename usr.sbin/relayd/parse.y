@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.272 2026/09/16 15:00:13 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.273 2026/11/01 07:28:43 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -125,7 +125,6 @@ static enum key_type	 keytype = KEY_TYPE_NONE;
 static enum direction	 dir = RELAY_DIR_ANY;
 static char		*rulefile = NULL;
 static union hashkey	*hashkey = NULL;
-static int		 value_pattern = 0;
 
 struct address	*host_ip(const char *);
 int		 host_dns(const char *, struct addresslist *,
@@ -144,6 +143,15 @@ struct relay	*relay_inherit(struct relay *, struct relay *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
 static struct keyname *proto_keyname(char *);
+static int	 rule_kv_uniq_check(struct relay_rule *, enum key_type,
+		    const char *);
+static int	 rule_kv_sanity_check(enum key_type, enum key_option,
+		    u_int16_t, u_int16_t);
+static void 	 rule_kv_setvalue(struct kv *, enum key_type, const char *,
+		    u_int16_t);
+static u_int16_t rule_kv_key_flag(enum key_type, const char *, u_int16_t);
+static u_int16_t rule_kv_val_flag(enum key_type, u_int16_t);
+static int	 rule_kv_keyword_check(struct relay_rule *);
 
 typedef struct {
 	union {
@@ -167,6 +175,10 @@ typedef struct {
 			enum digest_type type;
 			char		*digest;
 		}			 digest;
+		struct {
+			char		*string;
+			u_int16_t	 matching;
+		}			 matchval;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -175,13 +187,14 @@ typedef struct {
 
 %token	AGENTX APPEND
 %token	BACKLOG BINARY BLOCK BUFFER BRIEF
-%token	CA CACHE CERTIFICATE CHANGES CHECK CHECKS CIPHERS CLIENT CODE CONNECTION
-%token	CONNECTIONS CONTEXT COOKIE
+%token	CA CACHE CERTIFICATE CHANGES CHECK CHECKS CIPHERS CLIENT CODE
+%token	CONNECTION CONNECTIONS CONTEXT COOKIE
 %token	DEMOTE DESTINATION DIGEST DISABLE
 %token	ECDHE EDH ERROR ERRORS EXPECT EXTERNAL
 %token	FILENAME FORWARD FROM
+%token	GLOB
 %token	HASH HEADER HEADERLEN HOST HTTP
-%token	ICMP INCLUDE INET INET6 INTERFACE INTERVAL IP
+%token	ICMP IGNORECASE INCLUDE INET INET6 INTERFACE INTERVAL IP
 %token	KEY KEYPAIR
 %token	LABEL LEASTSTATES LISTEN LOADBALANCE LOG LOOKUP
 %token	MATCH METHOD MODE NAT NO NODELAY NOTHING
@@ -199,7 +212,7 @@ typedef struct {
 %token	WEBSOCKETS WITH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	context hostname interface table value path
+%type	<v.string>	context hostname interface table path
 %type	<v.number>	http_type loglevel quick
 %type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	opttls opttlsclient optproxyproto
@@ -213,6 +226,7 @@ typedef struct {
 %type	<v.table>	tablespec
 %type	<v.dir>		dir
 %type	<v.key>		hashkey
+%type	<v.matchval>	value
 
 %%
 
@@ -1517,7 +1531,16 @@ filterrule	: action dir quick ruleaf rulesrc ruledst {
 			}
 
 			rulefile = NULL;
+			keytype = KEY_TYPE_NONE;
 		} ruleopts_l {
+			/* keys from a file are set later in rule_add() */
+			if (rulefile == NULL &&
+			    rule_kv_keyword_check(rule) == -1) {
+				rule_free(rule);
+				free(rule);
+				rule = NULL;
+				YYERROR;
+			}
 			if (rule_add(proto, rule, rulefile) == -1) {
 				if (rulefile == NULL) {
 					yyerror("failed to load rule");
@@ -1600,84 +1623,127 @@ ruleopts	: METHOD STRING					{
 			free($2);
 		}
 		| COOKIE key_option optpattern STRING value	{
+			if (rule_kv_sanity_check(KEY_TYPE_COOKIE, $2, $3,
+			    $5.matching) == -1 ||
+			    (rule_kv_uniq_check(rule, KEY_TYPE_COOKIE,
+			    "cookie") != 0)) {
+				free($4);
+				free($5.string);
+				YYERROR;
+			}
 			keytype = KEY_TYPE_COOKIE;
 			rule->rule_kv[keytype].kv_key = strdup($4);
 			rule->rule_kv[keytype].kv_option = $2;
-			if ($3)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_KEY_PATTERN;
-			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
-			    strdup($5) : strdup("*"));
-			if (value_pattern)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_VAL_PATTERN;
+
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, $4, $3);
+
+			rule_kv_setvalue(&rule->rule_kv[keytype], keytype,
+			    $5.string, $5.matching);
+
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
 			free($4);
-			if ($5)
-				free($5);
+			if ($5.string)
+				free($5.string);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| COOKIE key_option				{
+		| COOKIE key_option optpattern			{
+			if (rule_kv_sanity_check(KEY_TYPE_COOKIE, $2, $3,
+			    0) == -1 ||
+			    rule_kv_uniq_check(rule, KEY_TYPE_COOKIE,
+			    "cookie") != 0)
+				YYERROR;
 			keytype = KEY_TYPE_COOKIE;
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, NULL, $3);
 		}
 		| HEADER key_option optpattern STRING value		{
+			if (rule_kv_sanity_check(KEY_TYPE_HEADER, $2, $3,
+			    $5.matching) == -1 ||
+			    (rule_kv_uniq_check(rule, KEY_TYPE_HEADER,
+			    "header") != 0)) {
+				free($4);
+				free($5.string);
+				YYERROR;
+			}
 			keytype = KEY_TYPE_HEADER;
-			memset(&rule->rule_kv[keytype], 0,
-			    sizeof(rule->rule_kv[keytype]));
 			rule->rule_kv[keytype].kv_option = $2;
-			if ($3)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_KEY_PATTERN;
 			rule->rule_kv[keytype].kv_key = strdup($4);
-			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
-			    strdup($5) : strdup("*"));
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, $4, $3);
+
+			rule_kv_setvalue(&rule->rule_kv[keytype], keytype,
+			    $5.string, $5.matching);
+
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
-			if (value_pattern)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_VAL_PATTERN;
+
 			free($4);
-			if ($5)
-				free($5);
+			if ($5.string)
+				free($5.string);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| HEADER key_option				{
+		| HEADER key_option optpattern			{
+			if (rule_kv_sanity_check(KEY_TYPE_HEADER, $2, $3,
+			    0) == -1 ||
+			    rule_kv_uniq_check(rule, KEY_TYPE_HEADER,
+			    "header") != 0)
+				YYERROR;
 			keytype = KEY_TYPE_HEADER;
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, NULL, $3);
 		}
 		| PATH key_option optpattern STRING value	{
+			if (rule_kv_sanity_check(KEY_TYPE_PATH, $2, $3,
+			    $5.matching) == -1 ||
+			    (rule_kv_uniq_check(rule, KEY_TYPE_PATH,
+			    "path") != 0)) {
+				free($4);
+				free($5.string);
+				YYERROR;
+			}
 			keytype = KEY_TYPE_PATH;
 			rule->rule_kv[keytype].kv_option = $2;
-			if ($3)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, $4, $3);
 			rule->rule_kv[keytype].kv_key = strdup($4);
-			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
-			    strdup($5) : strdup("*"));
-			if (value_pattern)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_VAL_PATTERN;
+
+			rule_kv_setvalue(&rule->rule_kv[keytype], keytype,
+			    $5.string, $5.matching);
+
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
 			free($4);
-			if ($5)
-				free($5);
+			if ($5.string)
+				free($5.string);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| PATH key_option				{
+		| PATH key_option optpattern			{
+			if (rule_kv_sanity_check(KEY_TYPE_PATH, $2, $3,
+			    0) == -1 ||
+			    rule_kv_uniq_check(rule, KEY_TYPE_PATH,
+			    "path") != 0)
+				YYERROR;
 			keytype = KEY_TYPE_PATH;
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, NULL, $3);
 		}
 		| PATH STRIP NUMBER				{
 			char	*strip = NULL;
+
+			if (rule_kv_uniq_check(rule, KEY_TYPE_PATH,
+			    "path") != 0)
+				YYERROR;
 
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("invalid strip number");
@@ -1691,6 +1757,14 @@ ruleopts	: METHOD STRING					{
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
 		| QUERYSTR key_option optpattern STRING value	{
+			if (rule_kv_sanity_check(KEY_TYPE_QUERY, $2, $3,
+			    $5.matching) == -1 ||
+			    (rule_kv_uniq_check(rule, KEY_TYPE_QUERY,
+			    "query") != 0)) {
+				free($4);
+				free($5.string);
+				YYERROR;
+			}
 			switch ($2) {
 			case KEY_OPTION_APPEND:
 			case KEY_OPTION_SET:
@@ -1698,31 +1772,34 @@ ruleopts	: METHOD STRING					{
 				yyerror("combining query type and the given "
 				    "option is not supported");
 				free($4);
-				if ($5)
-					free($5);
+				if ($5.string)
+					free($5.string);
 				YYERROR;
 				break;
 			}
 			keytype = KEY_TYPE_QUERY;
 			rule->rule_kv[keytype].kv_option = $2;
-			if ($3)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, $4, $3);
 			rule->rule_kv[keytype].kv_key = strdup($4);
-			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
-			    strdup($5) : strdup("*"));
-			if (value_pattern)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_VAL_PATTERN;
+
+			rule_kv_setvalue(&rule->rule_kv[keytype], keytype,
+			    $5.string, $5.matching);
+
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
 			free($4);
-			if ($5)
-				free($5);
+			if ($5.string)
+				free($5.string);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| QUERYSTR key_option				{
+		| QUERYSTR key_option optpattern		{
+			if (rule_kv_sanity_check(KEY_TYPE_QUERY, $2, $3,
+			    0) == -1 ||
+			    rule_kv_uniq_check(rule, KEY_TYPE_QUERY,
+			    "query") != 0)
+				YYERROR;
 			switch ($2) {
 			case KEY_OPTION_APPEND:
 			case KEY_OPTION_SET:
@@ -1735,8 +1812,18 @@ ruleopts	: METHOD STRING					{
 			keytype = KEY_TYPE_QUERY;
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, NULL, $3);
 		}
 		| URL key_option optpattern optdigest value	{
+			if (rule_kv_sanity_check(KEY_TYPE_URL, $2, $3,
+			    $5.matching) == -1 ||
+			    (rule_kv_uniq_check(rule, KEY_TYPE_URL,
+			    "url") != 0)) {
+				free($4.digest);
+				free($5.string);
+				YYERROR;
+			}
 			switch ($2) {
 			case KEY_OPTION_APPEND:
 			case KEY_OPTION_SET:
@@ -1744,31 +1831,33 @@ ruleopts	: METHOD STRING					{
 				yyerror("combining url type and the given "
 				"option is not supported");
 				free($4.digest);
-				free($5);
+				free($5.string);
 				YYERROR;
 				break;
 			}
 			keytype = KEY_TYPE_URL;
 			rule->rule_kv[keytype].kv_option = $2;
-			if ($3)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_KEY_PATTERN;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, $4.digest, $3);
 			rule->rule_kv[keytype].kv_key = strdup($4.digest);
 			rule->rule_kv[keytype].kv_digest = $4.type;
-			rule->rule_kv[keytype].kv_value = (($5 != NULL) ?
-			    strdup($5) : strdup("*"));
-			if (value_pattern)
-				rule->rule_kv[keytype].kv_flags |=
-				    KV_FLAG_VAL_PATTERN;
+
+			rule_kv_setvalue(&rule->rule_kv[keytype], keytype,
+			    $5.string, $5.matching);
+
 			if (rule->rule_kv[keytype].kv_key == NULL ||
 			    rule->rule_kv[keytype].kv_value == NULL)
 				fatal("out of memory");
 			free($4.digest);
-			if ($5)
-				free($5);
+			if ($5.string)
+				free($5.string);
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
-		| URL key_option					{
+		| URL key_option optpattern			{
+			if (rule_kv_sanity_check(KEY_TYPE_URL, $2, $3,
+			    0) == -1 ||
+			    rule_kv_uniq_check(rule, KEY_TYPE_URL, "url") != 0)
+				YYERROR;
 			switch ($2) {
 			case KEY_OPTION_APPEND:
 			case KEY_OPTION_SET:
@@ -1781,6 +1870,8 @@ ruleopts	: METHOD STRING					{
 			keytype = KEY_TYPE_URL;
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
+			rule->rule_kv[keytype].kv_flags |=
+			    rule_kv_key_flag(keytype, NULL, $3);
 		}
 		| FORWARD TO table				{
 			if (table_findbyname(conf, $3) == NULL) {
@@ -1903,35 +1994,76 @@ ruleopts	: METHOD STRING					{
 			if (rulefile != NULL) {
 				yyerror("only one file per rule supported");
 				free($2);
-				free($3);
+				free($3.string);
 				rule_free(rule);
 				free(rule);
 				YYERROR;
 			}
-			if ($3) {
+			if (keytype == KEY_TYPE_NONE) {
+				yyerror("file needs a preceding cookie, "
+				    "header, path, query or url");
+				free($2);
+				free($3.string);
+				rule_free(rule);
+				free(rule);
+				YYERROR;
+			}
+			if ($3.string) {
+				if (rule_kv_sanity_check(keytype,
+				    rule->rule_kv[keytype].kv_option, 0,
+				    $3.matching) == -1) {
+					free($2);
+					free($3.string);
+					rule_free(rule);
+					free(rule);
+					YYERROR;
+				}
 				if ((rule->rule_kv[keytype].kv_value =
-				    strdup($3)) == NULL)
+				    strdup($3.string)) == NULL)
 					fatal("out of memory");
-				free($3);
+				rule->rule_kv[keytype].kv_flags |=
+				    rule_kv_val_flag(keytype, $3.matching);
+				free($3.string);
 			} else
 				rule->rule_kv[keytype].kv_value = NULL;
 			rulefile = $2;
 		}
 		;
 
-optpattern	: /* empty */		{ $$ = 0; }
-		| PATTERN		{ $$ = 1; }
+optpattern	: /* empty */		{
+					  $$ = 0;
+					}
+		| PATTERN		{
+					  $$ = KV_FLAG_KEY_PATTERN;
+					}
+		| GLOB			{
+					  $$ = KV_FLAG_KEY_GLOBBING;
+					}
+		| GLOB IGNORECASE	{
+					  $$ = KV_FLAG_KEY_GLOBBING_ICASE;
+					}
 		;
 
-value		: /* empty */		{ $$ = NULL;
-					  value_pattern = 0;
-					}
-		| VALUE STRING		{ $$ = $2;
-					  value_pattern = 0;
-					}
-		| VALUE PATTERN STRING	{ $$ = $3;
-					  value_pattern = 1;
-					}
+value		: /* empty */			{
+			$$.string = NULL;
+			$$.matching = 0;
+		}
+		| VALUE STRING			{
+			$$.string = $2;
+			$$.matching = 0;
+		}
+		| VALUE PATTERN STRING		{
+			$$.string = $3;
+			$$.matching = KV_FLAG_VAL_PATTERN;
+		}
+		| VALUE GLOB STRING		{
+			$$.string = $3;
+			$$.matching = KV_FLAG_VAL_GLOBBING;
+		}
+		| VALUE GLOB IGNORECASE STRING	{
+			$$.string = $4;
+			$$.matching = KV_FLAG_VAL_GLOBBING_ICASE;
+		}
 		;
 
 key_option	: /* empty */		{ $$ = KEY_OPTION_NONE; }
@@ -2607,12 +2739,14 @@ lookup(char *s)
 		{ "file",		FILENAME },
 		{ "forward",		FORWARD },
 		{ "from",		FROM },
+		{ "glob",		GLOB },
 		{ "hash",		HASH },
 		{ "header",		HEADER },
 		{ "headerlen",		HEADERLEN },
 		{ "host",		HOST },
 		{ "http",		HTTP },
 		{ "icmp",		ICMP },
+		{ "ignorecase",		IGNORECASE },
 		{ "include",		INCLUDE },
 		{ "inet",		INET },
 		{ "inet6",		INET6 },
@@ -3797,4 +3931,143 @@ proto_keyname(char *name)
 	}
 	TAILQ_INSERT_TAIL(&proto->tlscerts, kname, entry);
 	return kname;
+}
+
+static int
+rule_kv_sanity_check(enum key_type type, enum key_option opt,
+    u_int16_t kflag, u_int16_t vflag)
+{
+	/* Only the glob keywords are restricted, "pattern" is allowed. */
+	kflag &= ~KV_FLAG_KEY_PATTERN;
+	vflag &= ~KV_FLAG_VAL_PATTERN;
+
+	/* url lookups never match the value. */
+	if (type == KEY_TYPE_URL && vflag != 0) {
+		yyerror("glob not allowed on a url value, "
+		    "it is never matched");
+		return (-1);
+	}
+
+	if (opt != KEY_OPTION_SET && opt != KEY_OPTION_APPEND)
+		return (0);
+
+	/* path set and append match the key against the request path. */
+	if (type == KEY_TYPE_PATH)
+		kflag = 0;
+
+	if (kflag != 0 || vflag != 0) {
+		yyerror("glob not allowed with %s",
+		    opt == KEY_OPTION_SET ? "set" : "append");
+		return (-1);
+	}
+	return (0);
+}
+
+static int
+rule_kv_uniq_check(struct relay_rule *r, enum key_type type, const char *name)
+{
+	if (r == NULL)
+		return (0);
+	if (r->rule_kv[type].kv_type == KEY_TYPE_NONE)
+		return (0);
+	yyerror("duplicate %s type in rule, "
+	    "use tag and tagged to combine conditions", name);
+	return (-1);
+}
+
+/*
+ * Set the value of a rule kv. An omitted value matches anything,
+ * otherwise use the matching keyword or the per-type default.
+ */
+static void
+rule_kv_setvalue(struct kv *kv, enum key_type type, const char *val,
+    u_int16_t vflag)
+{
+	kv->kv_value = strdup(val != NULL ? val : "*");
+	if (kv->kv_value == NULL)
+		fatal("out of memory");
+	kv->kv_flags |= rule_kv_val_flag(type, vflag);
+}
+
+/*
+ * Value flag from the matching keyword, or the per-type default.
+ */
+static u_int16_t
+rule_kv_val_flag(enum key_type type, u_int16_t vflag)
+{
+	if (vflag != 0)
+		return (vflag);
+	switch (type) {
+	case KEY_TYPE_HEADER:
+	case KEY_TYPE_QUERY:
+		/* default: case-sensitive glob(7) */
+		return (KV_FLAG_VAL_GLOBBING);
+	default:
+		/* default: case-insensitive glob(7) */
+		return (KV_FLAG_VAL_GLOBBING_ICASE);
+	}
+}
+
+/*
+ * Key flag from the matching keyword.
+ * The key is NULL for keys read from a file.
+ */
+static u_int16_t
+rule_kv_key_flag(enum key_type type, const char *key, u_int16_t kflag)
+{
+	switch (type) {
+	case KEY_TYPE_HEADER:
+		if (kflag == KV_FLAG_KEY_GLOBBING) {
+			log_warnx("header %s: names are "
+			    "case-insensitive (RFC 9110), using glob "
+			    "ignorecase", key != NULL ? key : "file");
+			return (KV_FLAG_KEY_GLOBBING_ICASE);
+		}
+		/*
+		 * No keyword: leave the key flag unset, rule_add()
+		 * makes keys containing "*?[" glob ignorecase.
+		 * Header keys from a file are literal.
+		 */
+		return (kflag);
+	case KEY_TYPE_PATH:
+	case KEY_TYPE_QUERY:
+		/* rule_add() handles path and query default. */
+		/* FALLTHROUGH */
+	default:
+		/* default: literal, case-insensitive */
+		return (kflag);
+	}
+}
+
+/*
+ * A matching keyword for the key needs a key or log, which matches "*".
+ * "*" is not a patterns(7) wildcard, so log without a key only takes glob.
+ */
+static int
+rule_kv_keyword_check(struct relay_rule *r)
+{
+	struct kv	*kv;
+	u_int16_t	 kflag;
+	u_int		 i;
+
+	for (i = 0; i < KEY_TYPE_MAX; i++) {
+		kv = &r->rule_kv[i];
+		if (kv->kv_type != i || kv->kv_key != NULL)
+			continue;
+		kflag = kv->kv_flags & (KV_FLAG_KEY_PATTERN |
+		    KV_FLAG_KEY_GLOBBING | KV_FLAG_KEY_GLOBBING_ICASE);
+		if (kv->kv_option == KEY_OPTION_LOG) {
+			if (kflag & KV_FLAG_KEY_PATTERN) {
+				yyerror("log without a key matches \"*\", "
+				    "use glob instead of pattern");
+				return (-1);
+			}
+			continue;
+		}
+		if (kflag != 0) {
+			yyerror("matching keyword needs a key or a file");
+			return (-1);
+		}
+	}
+	return (0);
 }

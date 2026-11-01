@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.211 2026/09/17 23:15:32 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.212 2026/11/01 07:28:43 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -850,35 +850,63 @@ kv_log(struct rsession *con, struct kv *kv, u_int16_t labelid,
  * Returns 1 on match, 0 on no match or error.
  */
 static int
-_kv_match(const char *pattern, const char *str, int is_pattern, int fnflags)
+_kv_match(const char *pattern, const char *str, u_int16_t matching)
 {
 	struct str_find	 sm;
 	const char	*errstr = NULL;
 
 	if (pattern == NULL || str == NULL)
 		return (0);
-	if (!is_pattern)
-		return (fnmatch(pattern, str, fnflags) != FNM_NOMATCH);
 
-	if (str_find(str, pattern, &sm, 1, &errstr) > 0 && errstr == NULL)
-		return (1);
-	if (errstr != NULL)
-		log_warnx("%s: pattern \"%s\": %s", __func__, pattern, errstr);
-	return (0);
+	if (matching & (KV_FLAG_VAL_PATTERN | KV_FLAG_KEY_PATTERN)) {
+		if (str_find(str, pattern, &sm, 1, &errstr) > 0 &&
+		    errstr == NULL)
+			return (1);
+		if (errstr != NULL)
+			log_warnx("%s: pattern \"%s\": %s", __func__, pattern,
+			    errstr);
+		return (0);
+	}
+	if (matching &
+	    (KV_FLAG_VAL_GLOBBING_ICASE | KV_FLAG_KEY_GLOBBING_ICASE))
+		return (fnmatch(pattern, str, FNM_CASEFOLD) != FNM_NOMATCH);
+
+	if (matching &
+	    (KV_FLAG_VAL_GLOBBING | KV_FLAG_KEY_GLOBBING))
+		return (fnmatch(pattern, str, 0) != FNM_NOMATCH);
+
+	/* no matching keyword: literal, case-insensitive */
+	return (strcasecmp(pattern, str) == 0);
 }
 
 int
-kv_match_key(const struct kv *kv, const char *str, int fnflags)
+kv_match_key(const struct kv *kv, const char *str)
 {
-	return (_kv_match(kv->kv_key, str, kv->kv_flags & KV_FLAG_KEY_PATTERN,
-	    fnflags));
+	u_int16_t	matching = kv->kv_flags & (KV_FLAG_KEY_PATTERN |
+	    KV_FLAG_KEY_GLOBBING | KV_FLAG_KEY_GLOBBING_ICASE);
+
+	return (_kv_match(kv->kv_key, str, matching));
 }
 
 int
-kv_match_val(const struct kv *kv, const char *str, int fnflags)
+kv_match_val(const struct kv *kv, const char *str)
 {
-	return (_kv_match(kv->kv_value, str, kv->kv_flags & KV_FLAG_VAL_PATTERN,
-	    fnflags));
+	u_int16_t	matching = kv->kv_flags & (KV_FLAG_VAL_PATTERN |
+	    KV_FLAG_VAL_GLOBBING | KV_FLAG_VAL_GLOBBING_ICASE);
+
+	return (_kv_match(kv->kv_value, str, matching));
+}
+
+const char *
+kv_key_flag_str(u_int16_t flags)
+{
+	if (flags & KV_FLAG_KEY_PATTERN)
+		return ("pattern");
+	if (flags & KV_FLAG_KEY_GLOBBING_ICASE)
+		return ("glob ignorecase");
+	if (flags & KV_FLAG_KEY_GLOBBING)
+		return ("glob");
+	return ("literal");
 }
 
 /*
@@ -894,13 +922,14 @@ kv_find(struct kvtree *keys, struct kv *kv)
 	  * If the key uses glob(7) or a patterns(7) expression, fall back
 	  * to a linear scan and match each entry.
 	  */
-	if (kv->kv_flags & (KV_FLAG_GLOBBING | KV_FLAG_KEY_PATTERN)) {
+	if (kv->kv_flags &
+	    (KV_FLAG_KEY_GLOBBING | KV_FLAG_KEY_GLOBBING_ICASE |
+	     KV_FLAG_KEY_PATTERN)) {
 		RB_FOREACH(match, kvtree, keys) {
-			if (kv_match_key(kv, match->kv_key, FNM_CASEFOLD)) {
+			if (kv_match_key(kv, match->kv_key)) {
 				log_debug("%s: %s \"%s\" matched key \"%s\"",
 				    __func__,
-				    (kv->kv_flags & KV_FLAG_KEY_PATTERN) ?
-				    "pattern" : "glob",
+				    kv_key_flag_str(kv->kv_flags),
 				    kv->kv_key, match->kv_key);
 				break;
 			}
@@ -1003,10 +1032,34 @@ rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
 		    !(kv->kv_flags & KV_FLAG_VAL_PATTERN) &&
 		    strchr(kv->kv_value, '$') != NULL)
 			kv->kv_flags |= KV_FLAG_MACRO;
+		/*
+		 * Without a matching keyword, path and query keys are
+		 * case-sensitive glob(7), cookie and url keys literal
+		 * and case-insensitive.
+		 */
+		if ((kv->kv_type == KEY_TYPE_PATH ||
+		    kv->kv_type == KEY_TYPE_QUERY) &&
+		    (kv->kv_flags & (KV_FLAG_KEY_PATTERN |
+		     KV_FLAG_KEY_GLOBBING | KV_FLAG_KEY_GLOBBING_ICASE)) == 0)
+			kv->kv_flags |= KV_FLAG_KEY_GLOBBING;
+		/*
+		 * glob ignorecase without metacharacters is a literal
+		 * compare, which allows the tree lookup.
+		 */
 		if (kv->kv_key != NULL &&
-		    !(kv->kv_flags & KV_FLAG_KEY_PATTERN) &&
+		    (kv->kv_flags & KV_FLAG_KEY_GLOBBING_ICASE) &&
+		    strpbrk(kv->kv_key, "*?[\\") == NULL)
+			kv->kv_flags &= ~KV_FLAG_KEY_GLOBBING_ICASE;
+		/*
+		 * Header keys without a matching keyword that contain "*?[",
+		 * including the "*" set above for "header log" without a key,
+		 * are glob ignorecase.
+		 */
+		if (kv->kv_type == KEY_TYPE_HEADER && kv->kv_key != NULL &&
+		    (kv->kv_flags & (KV_FLAG_KEY_PATTERN |
+		     KV_FLAG_KEY_GLOBBING | KV_FLAG_KEY_GLOBBING_ICASE)) == 0 &&
 		    strpbrk(kv->kv_key, "*?[") != NULL)
-			kv->kv_flags |= KV_FLAG_GLOBBING;
+			kv->kv_flags |= KV_FLAG_KEY_GLOBBING_ICASE;
 	}
 
 	if (rulefile == NULL) {

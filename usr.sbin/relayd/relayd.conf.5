@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.225 2026/09/18 11:44:56 jsg Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.226 2026/11/01 07:28:43 rsadowski Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2026 $
+.Dd $Mdocdate: November 1 2026 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1218,8 +1218,9 @@ Add a "sticky" tag to connections matching this filter rule.
 Tags can be used to filter the connection by further rules using the
 .Ic tagged
 option.
-Only one tag is assigned per connection;
-the tag will be replaced if the connection is already tagged.
+Only one tag is assigned per connection.
+The tag will be replaced if the connection is already tagged.
+It is kept for later requests on a persistent connection.
 .It Ic tagged Ar string
 Match the connection if it is already tagged with a given tag by a
 previous rule.
@@ -1270,9 +1271,9 @@ or
 .Ic VERSION-CONTROL .
 .It Xo
 .Ar type option
-.Oo Oo Ic digest Oc
+.Oo Oo Ar matching Oc Oo Ic digest Oc
 .Pq Ar key Ns | Ns Ic file Ar path
-.Oo Ic value Ar value Oc Oc
+.Oo Ic value Oo Ar matching Oc Ar value Oc Oc
 .Xc
 Match a specified HTTP header entity and an optional
 .Ic key
@@ -1302,6 +1303,14 @@ Lines will be stripped at the first whitespace or newline character
 and any empty lines or lines beginning with a hash mark
 .Pq Ql #
 will be ignored.
+A
+.Ar matching
+keyword before
+.Ic file
+applies to every key read from it, for example:
+.Bd -literal -offset indent
+block request header glob ignorecase file "/etc/relayd.badheaders"
+.Ed
 .Pp
 If the
 .Ic digest
@@ -1323,8 +1332,8 @@ $ echo -n "example.com/path/?args" | sha1
 may be one of:
 .Bl -tag -width Ds
 .It Xo Ic cookie Ar option
-.Oo Oo Ic pattern Oc Ar key
-.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Oo Oo Ar matching Oc Ar key
+.Oo Ic value Oo Ar matching Oc Ar value Oc Oc
 .Xc
 Look up the entity as a value in the Cookie header.
 This type is only available with the direction
@@ -1338,8 +1347,8 @@ block request quick cookie "session" value pattern "^admin_"
 pass  request cookie "lang" value pattern "^%a%a$"
 .Ed
 .It Xo Ic header Ar option
-.Oo Oo Ic pattern Oc Ar key
-.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Oo Oo Ar matching Oc Ar key
+.Oo Ic value Oo Ar matching Oc Ar value Oc Oc
 .Xc
 Look up the entity in the application protocol headers, like HTTP
 headers in
@@ -1354,14 +1363,21 @@ block request quick header "User-Agent" \e
 
 # Require JSON requests on the API
 pass  request header "Content-Type" \e
-    value pattern "^application/json"
+    value glob ignorecase "application/json*"
 
-# Strip any custom debug header (matches key by pattern)
-pass request header remove pattern "^X%-Debug%-"
+# Strip any custom debug header
+pass request header remove glob ignorecase "X-Debug-*"
 .Ed
+.Pp
+.Ic glob
+on a header name is treated as
+.Ic glob ignorecase ,
+as header names are case-insensitive (RFC 9110).
+.Ic pattern
+stays case-sensitive.
 .It Xo Ic path Ar option
-.Oo Oo Ic pattern Oc Ar key
-.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Oo Oo Ar matching Oc Ar key
+.Oo Ic value Oo Ar matching Oc Ar value Oc Oc
 .Xc
 Look up the entity as a value in the URL path when using the
 .Ic http
@@ -1378,8 +1394,8 @@ block path "/index.html"
 block path pattern "^/index%.html$"
 block path "/cgi-bin/t.cgi" value "foo=bar*"
 
-# Block direct access to the admin tree
-block request quick path pattern "^/admin/"
+# Block direct access to the admin tree, in any case
+block request quick path glob ignorecase "/admin/*"
 
 # Only versioned API paths (v1, v2, ...)
 pass request path pattern "^/api/v%d+/"
@@ -1397,8 +1413,8 @@ protocol.
 This type is only available with the direction
 .Ic request .
 .It Xo Ic query Ar option
-.Oo Oo Ic pattern Oc Ar key
-.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Oo Oo Ar matching Oc Ar key
+.Oo Ic value Oo Ar matching Oc Ar value Oc Oc
 .Xc
 Look up the entity as a query variable in the URL when using the
 .Ic http
@@ -1414,11 +1430,11 @@ pass request query "foo" value "bar"
 pass request query "id" value pattern "^%d+$"
 
 # Reject requests that carry a debug flag on any query key
-block request quick query pattern "^debug" value "*"
+block request quick query glob ignorecase "debug*"
 .Ed
 .It Xo Ic url Ar option
-.Oo Oo Ic pattern Oc Oo Ic digest Oc Ar key
-.Oo Ic value Oo Ic pattern Oc Ar value Oc Oc
+.Oo Oo Ar matching Oc Oo Ic digest Oc Ar key
+.Oo Ic value Oo Ar matching Oc Ar value Oc Oc
 .Xc
 Look up the entity as a URL suffix/prefix expression consisting of a
 canonicalized hostname without port or suffix and a path name or
@@ -1435,6 +1451,16 @@ block url pattern "^example%.com/index%.html$"
 # Any subdomain of example.com, path under /api/
 pass request url pattern "^[%w%-]+%.example%.com/api/"
 .Ed
+.Pp
+The
+.Ar value
+is not used for
+.Ic url
+lookups, so
+.Ic glob
+and
+.Ic glob ignorecase
+may not be given on it.
 .Pp
 .Xr relayd 8
 will match the full URL and different possible suffix/prefix
@@ -1459,17 +1485,17 @@ example.com/1/2/3/
 .Ed
 .El
 .Pp
-The optional
-.Ic pattern
-keyword makes the following string a
-.Xr patterns 7
-expression instead of the default
-.Xr glob 7
-pattern.
-It can appear before any matchable string, for example:
+An optional
+.Ar matching
+keyword, see
+.Sx Matching options ,
+can appear before any matchable string, for example:
 .Bd -literal -offset indent
 pass request path pattern "^/api/v%d+/" \e
     value pattern "^id=%d+$"
+
+pass request header "User-Agent" \e
+    value glob ignorecase "*mozilla*"
 .Ed
 .Pp
 Note that macro expansion is disabled on a
@@ -1485,25 +1511,6 @@ Use a plain
 .Ar value
 if macro expansion is required.
 .Pp
-Matching with
-.Ic pattern
-is always case-sensitive.
-The default
-.Xr glob 7
-matching is case-insensitive for the
-.Ic url
-lookup, for
-.Ic cookie
-names and values, and for
-.Ic header
-names.
-It is case-sensitive for
-.Ic header
-values, for the
-.Ic path
-name, and for
-.Ic query
-names and values, matching how the client sent them on the wire.
 When porting existing rules to
 .Ic pattern ,
 add character classes such as
@@ -1518,33 +1525,55 @@ is omitted, it defaults to
 .Sq *
 and matches any value using
 .Xr glob 7
-rules regardless of whether the key uses
-.Ic pattern .
+rules regardless of which
+.Ar matching
+keyword the key uses.
 .Pp
 For
 .Ic url ,
-.Ic pattern
-on the
+a
+.Ar matching
+keyword on the
 .Ar key
-is tested against every candidate form listed above; anchor patterns
-carefully.
+is tested against every candidate form listed above.
+Anchor
+.Xr patterns 7
+expressions carefully.
 When combined with
 .Ic digest ,
-the pattern applies to the digest string, not to the URL.
+the match applies to the digest string, not to the URL.
 .Pp
-.Ic pattern
-on the
+A
+.Ar matching
+keyword on the
 .Ar key
 is most useful with the
 .Ic remove
 and
 .Ic log
 options.
-It has no effect for
-.Ic append
+.Pp
+A single rule may contain at most one clause of each lookup type.
+A second
+.Ic cookie ,
+.Ic header ,
+.Ic path ,
+.Ic query ,
 or
-.Ic set ,
-which create a new entity from a literal name.
+.Ic url
+clause in the same rule is rejected.
+Use
+.Ic tag
+and
+.Ic tagged
+on separate rules to combine such conditions, for example:
+.Bd -literal -offset indent
+match request header glob ignorecase "X-*" tag "XHDR"
+block request quick tagged "XHDR" header "Host"
+.Ed
+.Pp
+Note that a tag stays on the connection, see
+.Ic tag .
 .Pp
 .Bq Ar option
 may be one of:
@@ -1556,6 +1585,18 @@ to a protocol entity with the selected
 .Ar key
 name.
 If it does not exist, it will be created with the new value.
+.Pp
+The
+.Ar key
+and
+.Ar value
+are written rather than matched, so
+.Ic glob
+and
+.Ic glob ignorecase
+may not be given, except on a
+.Ic path
+.Ar key .
 .Pp
 The value string may contain predefined macros that will be expanded
 at runtime:
@@ -1593,6 +1634,20 @@ Log the
 name and the
 .Ar value
 of the entity.
+Without a
+.Ar key
+or
+.Ic file ,
+the
+.Ar key
+is
+.Sq * ,
+so
+.Ic pattern
+may not be given; for
+.Ic cookie
+it only matches with
+.Ic glob .
 .It Ic remove
 Remove the entity with the selected
 .Ar key
@@ -1613,7 +1668,80 @@ may contain predefined macros that will be expanded at runtime,
 as detailed for the
 .Ic append
 directive above.
+.Pp
+As with
+.Ic append ,
+no
+.Ic glob
+keyword may be given, except on a
+.Ic path
+.Ar key .
 .El
+.Ss Matching options
+An optional
+.Ar matching
+keyword before a
+.Ar key
+or
+.Ar value
+string selects how the following string is interpreted.
+It may be one of:
+.Bl -tag -width Ds
+.It Ic pattern
+Treat the following string as a
+.Xr patterns 7
+expression.
+Matching is always case-sensitive.
+.It Ic glob
+Treat the following string as a case-sensitive
+.Xr glob 7
+pattern,
+except for
+.Ic header
+names, see
+.Ic header
+above.
+.It Ic glob Ic ignorecase
+Like
+.Ic glob ,
+but match case-insensitively.
+.El
+.Pp
+Without a keyword, the defaults are:
+.Bl -column "header" "literal, case-insensitive" "value" -offset indent
+.It Em type Ta Em key Ta Em value
+.It Ic cookie Ta literal, case-insensitive Ta Ic glob ignorecase
+.It Ic header Ta literal, case-insensitive Ta Ic glob
+.It Ic path Ta Ic glob Ta Ic glob ignorecase
+.It Ic query Ta Ic glob Ta Ic glob
+.It Ic url Ta literal, case-insensitive Ta not used
+.El
+.Pp
+A
+.Ic header
+key containing
+.Ql * ,
+.Ql \&?
+or
+.Ql \&[
+is matched as
+.Ic glob ignorecase ,
+except when read from a
+.Ic file .
+With the
+.Ic log
+option,
+.Ic url
+keys default to
+.Ic glob ignorecase .
+A
+.Ar matching
+keyword without a
+.Ar key
+is only allowed with
+.Ic file
+or
+.Ic log .
 .Ss Routers
 Routers represent routing table entries in the kernel forwarding
 database, see
