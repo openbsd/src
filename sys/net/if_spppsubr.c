@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.202 2026/06/14 05:39:23 mvs Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.203 2026/11/01 09:03:01 yasuoka Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -3388,6 +3388,9 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	h = mtod (m, struct lcp_header*);
 	if (len > ntohs (h->len))
 		len = ntohs (h->len);
+	if ((h->type == CHAP_RESPONSE && sp->hisauth.proto != PPP_CHAP) ||
+	    (h->type != CHAP_RESPONSE && sp->myauth.proto != PPP_CHAP))
+		return;
 
 	switch (h->type) {
 	/* challenge, failure and success are his authproto */
@@ -3781,6 +3784,9 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	h = mtod (m, struct lcp_header*);
 	if (len > ntohs (h->len))
 		len = ntohs (h->len);
+	if ((h->type == PAP_REQ && sp->hisauth.proto != PPP_PAP) ||
+	    (h->type != PAP_REQ && sp->myauth.proto != PPP_PAP))
+		return;
 	switch (h->type) {
 	/* PAP request is my authproto */
 	case PAP_REQ:
