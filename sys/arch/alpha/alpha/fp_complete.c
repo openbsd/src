@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.14 2025/06/29 15:55:21 miod Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.15 2026/11/01 08:56:03 miod Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ struct alpha_shadow {
 	u_int32_t nilswfunc;	/* unexpected function codes */
 	u_int32_t nilanyop;	/* this "cannot happen" */
 	u_int32_t vax;		/* sigs from vax fp opcodes */
-} alpha_shadow, alpha_shadow_zero;
+} alpha_shadow;
 
 static float64 float64_unk(float64, float64);
 static float64 compare_un(float64, float64);
