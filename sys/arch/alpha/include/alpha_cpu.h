@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.15 2025/06/29 15:55:21 miod Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.16 2026/11/01 08:55:45 miod Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -348,11 +348,9 @@ alpha_rpcc(void)
  */
 #include <machine/pal.h>
 
-void		alpha_pal_cflush(unsigned long);
 void		alpha_pal_halt(void) __attribute__((__noreturn__));
 unsigned long	_alpha_pal_swpipl(unsigned long);	/* for profiling */
 void		alpha_pal_wrent(void *, unsigned long);
-void		alpha_pal_wrvptptr(unsigned long);
 
 #define	alpha_pal_draina() __asm volatile("call_pal %0 # PAL_draina"	\
 				: : "i" (PAL_draina) : "memory")

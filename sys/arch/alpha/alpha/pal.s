@@ -1,4 +1,4 @@
-/* $OpenBSD: pal.s,v 1.7 2008/01/13 20:59:52 kettenis Exp $ */
+/* $OpenBSD: pal.s,v 1.8 2026/11/01 08:55:45 miod Exp $ */
 /* $NetBSD: pal.s,v 1.14 1999/12/02 22:08:04 thorpej Exp $ */
 
 /*
@@ -75,21 +75,6 @@ LEAF(alpha_implver,0)
 	END(alpha_implver)
 
 /*
- * alpha_pal_cflush: Cache flush [PRIVILEGED]
- *
- * Flush the entire physical page specified by the PFN specified in
- * a0 from any data caches associated with the current processor.
- *
- * Arguments:
- *	a0	page frame number of page to flush
- */
-	.text
-LEAF(alpha_pal_cflush,1)
-	call_pal PAL_cflush
-	RET
-	END(alpha_pal_cflush)
-
-/*
  * alpha_pal_halt: Halt the processor. [PRIVILEGED]
  */
 	.text
@@ -144,15 +129,3 @@ LEAF(alpha_pal_wrent,2)
 	call_pal PAL_OSF1_wrent
 	RET
 	END(alpha_pal_wrent)
-
-/*
- * alpha_pal_wrvptptr: Write virtual page table pointer. [PRIVILEGED]
- *
- * Arguments:
- *	a0	new virtual page table pointer
- */
-	.text
-LEAF(alpha_pal_wrvptptr,1)
-	call_pal PAL_OSF1_wrvptptr
-	RET
-	END(alpha_pal_wrvptptr)
