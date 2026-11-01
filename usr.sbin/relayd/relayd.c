@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.212 2026/11/01 07:28:43 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.213 2026/11/01 07:41:35 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1028,7 +1028,9 @@ rule_add(struct protocol *proto, struct relay_rule *rule, const char *rulefile)
 		}
 
 		/* Only auto-detect on the side that is not a pattern. */
-		if (kv->kv_value != NULL &&
+		if ((kv->kv_option == KEY_OPTION_APPEND ||
+		    kv->kv_option == KEY_OPTION_SET) &&
+		    kv->kv_value != NULL &&
 		    !(kv->kv_flags & KV_FLAG_VAL_PATTERN) &&
 		    strchr(kv->kv_value, '$') != NULL)
 			kv->kv_flags |= KV_FLAG_MACRO;
