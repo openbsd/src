@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.14 2025/06/28 13:24:21 miod Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.15 2026/11/01 09:13:01 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -103,7 +103,7 @@ lpt_gsc_probe(struct device *parent, void *match, void *aux)
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
-	int i, rv;
+	int i;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    ga->ga_type.iodc_sv_model != HPPA_FIO_CENT)
@@ -129,7 +129,6 @@ lpt_gsc_probe(struct device *parent, void *match, void *aux)
 		return 0;
 	}
 
-	rv = 0;
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
