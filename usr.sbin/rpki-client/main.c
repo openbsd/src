@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.337 2026/11/02 13:55:19 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.338 2026/11/02 15:31:27 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -267,7 +267,7 @@ entityq_flush(struct entityq *q, struct repo *rp)
 
 static struct entity *
 entity_new(const char *path, const char *file, enum rtype type,
-    enum location loc, struct repo *rp, unsigned char *data, size_t datasz,
+    enum location loc, unsigned int repoid, unsigned char *data, size_t datasz,
     int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
@@ -279,6 +279,7 @@ entity_new(const char *path, const char *file, enum rtype type,
 	ent->location = loc;
 	ent->talid = talid;
 	ent->certid = certid;
+	ent->repoid = repoid;
 	if (mftaki != NULL) {
 		if ((ent->mftaki = strdup(mftaki)) == NULL)
 			err(1, NULL);
@@ -287,8 +288,6 @@ entity_new(const char *path, const char *file, enum rtype type,
 		if ((ent->path = strdup(path)) == NULL)
 			err(1, NULL);
 	}
-	if (rp != NULL)
-		ent->repoid = repo_id(rp);
 	if ((ent->file = strdup(file)) == NULL)
 		err(1, NULL);
 	ent->data = data;
@@ -307,8 +306,8 @@ entityq_add(const char *path, const char *file, enum rtype type,
 {
 	struct entity *ent;
 
-	ent = entity_new(path, file, type, loc, rp, data, datasz, talid, certid,
-	    mftaki);
+	ent = entity_new(path, file, type, loc, repo_id(rp), data, datasz,
+	    talid, certid, mftaki);
 
 	entity_queue++;
 
@@ -335,8 +334,8 @@ entity_lowprioq_add(const char *path, const char *file, enum rtype type,
 {
 	struct entity *ent;
 
-	ent = entity_new(path, file, type, loc, rp, data, datasz, talid, certid,
-	    mftaki);
+	ent = entity_new(path, file, type, loc, repo_id(rp), data, datasz,
+	    talid, certid, mftaki);
 
 	entity_lowprio_queue++;
 
