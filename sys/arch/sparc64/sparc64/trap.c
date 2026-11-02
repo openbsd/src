@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.131 2026/04/25 12:14:38 claudio Exp $	*/
+/*	$OpenBSD: trap.c,v 1.132 2026/11/02 20:49:38 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -352,46 +352,6 @@ trap(struct trapframe *tf, unsigned type, vaddr_t pc, long tstate)
 			}
 		}
 #endif
-		/*
-		 * The kernel needs to use FPU registers for block
-		 * load/store.  If we trap in privileged code, save
-		 * the FPU state if there is any and enable the FPU.
-		 *
-		 * We rely on the kernel code properly enabling the FPU
-		 * in %fprs, otherwise we'll hang here trying to enable
-		 * the FPU.
-		 */
-		if (type == T_FPDISABLED) {
-			struct proc *newfpproc;
-
-			if (CLKF_INTR((struct clockframe *)tf) || !curproc)
-				newfpproc = &proc0;
-			else {
-				newfpproc = curproc;
-				/* force other cpus to give up this fpstate */
-				if (newfpproc->p_md.md_fpstate)
-					fpusave_proc(newfpproc, 1);
-			}
-			if (fpproc != newfpproc) {
-				s = intr_disable();
-				if (fpproc != NULL) {
-					/* someone else had it, maybe? */
-					savefpstate(fpproc->p_md.md_fpstate);
-					fpproc = NULL;
-				}
-				intr_restore(s);
-
-				/* If we have an allocated fpstate, load it */
-				if (newfpproc->p_md.md_fpstate != 0) {
-					fpproc = newfpproc;
-					loadfpstate(fpproc->p_md.md_fpstate);
-				} else
-					fpproc = NULL;
-			}
-			/* Enable the FPU */
-			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
-			return;
-		}
 		if (type != T_SPILL_N_NORM && type != T_FILL_N_NORM)
 			goto dopanic;
 	}
