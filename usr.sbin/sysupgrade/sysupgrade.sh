@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.63 2026/09/20 02:23:36 dgl Exp $
+# $OpenBSD: sysupgrade.sh,v 1.64 2026/11/02 15:31:39 phessler Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -35,7 +35,7 @@ err()
 
 usage()
 {
-	echo "usage: ${0##*/} [-fkns] [-b base-directory] [-R version] [installurl | path]" 1>&2
+	echo "usage: ${0##*/} [-46fkns] [-b base-directory] [-R version] [installurl | path]" 1>&2
 	return 1
 }
 
@@ -72,6 +72,7 @@ rmel() {
 	echo -n "$_c"
 }
 
+AF=''
 SNAP=false
 FILE=false
 FORCE=false
@@ -83,8 +84,10 @@ WHAT='release'
 VERSION=$(uname -r)
 NEXT_VERSION=$(echo ${VERSION} + 0.1 | bc)
 
-while getopts b:fknrR:s arg; do
+while getopts 46b:fknrR:s arg; do
 	case ${arg} in
+	4)	AF='-4';;
+	6)	AF='-6';;
 	b)	SETSDIR=${OPTARG}/_sysupgrade;;
 	f)	FORCE=true;;
 	k)	KEEP=true;;
@@ -143,10 +146,10 @@ install -d -o 0 -g 0 -m 0755 ${SETSDIR}
 cd ${SETSDIR}
 
 echo "Fetching from ${URL}"
-if ! unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig; then
+if ! unpriv -f SHA256.sig ftp ${AF} -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig; then
 	if [[ -n ${ALT_URL} ]]; then
 		echo "Fetching from ${ALT_URL}"
-		unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${ALT_URL}SHA256.sig
+		unpriv -f SHA256.sig ftp ${AF} -N sysupgrade -Vmo SHA256.sig ${ALT_URL}SHA256.sig
 		URL=${ALT_URL}
 		NEXT_VERSION=${VERSION}
 	else
@@ -169,7 +172,7 @@ if ! [[ -r /etc/signify/$KEY ]]; then
 	BUNDLE=sigbundle-${HAVEKEY}.tgz
 	FWKEY=$(echo $KEY | sed -e 's/base/fw/')
 	echo "Adding missing keys from bundle $BUNDLE"
-	unpriv -f ${BUNDLE} ftp -N sysupgrade -Vmo $BUNDLE https://ftp.openbsd.org/pub/OpenBSD/signify/$BUNDLE
+	unpriv -f ${BUNDLE} ftp ${AF} -N sysupgrade -Vmo $BUNDLE https://ftp.openbsd.org/pub/OpenBSD/signify/$BUNDLE
 	signify -Vzq -m - -x $BUNDLE | (cd /etc/signify && tar xfz - $KEY $FWKEY)
 	rm $BUNDLE
 fi
@@ -182,7 +185,7 @@ if cmp -s /var/db/installed.SHA256 SHA256 && ! $FORCE; then
 	exit 0
 fi
 
-unpriv -f BUILDINFO ftp -N sysupgrade -Vmo BUILDINFO ${URL}BUILDINFO
+unpriv -f BUILDINFO ftp ${AF} -N sysupgrade -Vmo BUILDINFO ${URL}BUILDINFO
 unpriv cksum -qC SHA256 BUILDINFO
 
 if [[ -e /var/db/installed.BUILDINFO ]]; then
@@ -212,7 +215,7 @@ done
 
 [[ -n ${OLD_FILES} ]] && rm ${OLD_FILES}
 for f in ${DL}; do
-	unpriv -f $f ftp -N sysupgrade -Vmo ${f} ${URL}${f}
+	unpriv -f $f ftp ${AF} -N sysupgrade -Vmo ${f} ${URL}${f}
 done
 
 if [[ -n ${DL} ]]; then
@@ -242,7 +245,7 @@ if [[ ${_NEXTKERNV[1]} == '-current' ]]; then
 else
 	FW_URL=http://firmware.openbsd.org/firmware/${_NEXTKERNV[0]}/
 fi
-VNAME="${_NEXTKERNV[0]}" fw_update -p ${FW_URL} || true
+VNAME="${_NEXTKERNV[0]}" fw_update ${AF} -p ${FW_URL} || true
 
 install -F -m 700 bsd.rd /bsd.upgrade
 logger -t sysupgrade -p kern.info "installed new /bsd.upgrade. Old kernel version: $(sysctl -n kern.version)"

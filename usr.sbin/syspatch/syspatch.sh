@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.173 2026/09/20 02:23:36 dgl Exp $
+# $OpenBSD: syspatch.sh,v 1.174 2026/11/02 15:31:39 phessler Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -28,7 +28,7 @@ err()
 
 usage()
 {
-	echo "usage: ${0##*/} [-c | -l | -R | -r]" 1>&2
+	echo "usage: ${0##*/} [-46] [-c | -l | -R | -r]" 1>&2
 	return 1
 }
 
@@ -139,7 +139,7 @@ fetch_and_verify()
 	[[ -n ${_tgz} ]]
 
 	[[ -t 0 ]] || echo "${_title} ${_tgz}"
-	unpriv -f "${_TMP}/${_tgz}" ftp -N syspatch -VD "${_title}" -o \
+	unpriv -f "${_TMP}/${_tgz}" ftp ${AF} -N syspatch -VD "${_title}" -o \
 		"${_TMP}/${_tgz}" "${_MIRROR}/${_tgz}"
 
 	(cd ${_TMP} && sha256 -qC ${_TMP}/SHA256 ${_tgz})
@@ -173,7 +173,7 @@ ls_missing()
 	local _c _f _l="$(ls_installed)" _p _sha=${_TMP}/SHA256
 
 	# don't output anything on stdout to prevent corrupting the patch list
-	unpriv -f "${_sha}.sig" ftp -N syspatch -MVo "${_sha}.sig" \
+	unpriv -f "${_sha}.sig" ftp ${AF} -N syspatch -MVo "${_sha}.sig" \
 		"${_MIRROR}/SHA256.sig" >/dev/null
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
@@ -305,11 +305,15 @@ _KARL=false
 
 readonly _KERNV _MIRROR _OSrev _PDIR _TMP
 
+AF=''
+
 trap 'trap_handler' EXIT
 trap exit HUP INT TERM
 
-while getopts clRr arg; do
+while getopts 46clRr arg; do
 	case ${arg} in
+		4) AF='-4' ;;
+		6) AF='-6' ;;
 		c) ls_missing ;;
 		l) ls_installed ;;
 		R) while [[ -n $(ls_installed) ]]; do rollback_patch; done ;;

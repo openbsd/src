@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.74 2026/09/20 03:12:23 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.75 2026/11/02 15:31:39 phessler Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -139,13 +139,13 @@ fetch() {
 	esac
 
 	if ! "$DROP_PRIVS"; then
-		/usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
+		/usr/bin/ftp ${AF} -N error -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
 	elif [ -x /usr/bin/su ]; then
 		exec /usr/bin/su -s /bin/ksh "$_user" -c \
-		    "/usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- '$_src'" > "$_dst"
+		    "/usr/bin/ftp ${AF} -N error -D 'Get/Verify' $_flags -o- '$_src'" > "$_dst"
 	else
 		exec /usr/bin/doas -u "$_user" \
-		    /usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
+		    /usr/bin/ftp ${AF} -N error -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
 	fi
 	) & FTPPID=$!
 	set +o monitor
@@ -557,16 +557,19 @@ set_fw_paths() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-adFlnv] [-D path] [-p path] [driver | file ...]"
+	echo "usage: ${0##*/} [-46adFlnv] [-D path] [-p path] [driver | file ...]"
 	exit 1
 }
 
 ALL=false
 LIST=false
+AF=''
 
-while getopts :adD:Flnp:v name
+while getopts :46adD:Flnp:v name
 do
 	case "$name" in
+	4) AF='-4';;
+	6) AF='-6';;
 	a) ALL=true ;;
 	d) DELETE=true ;;
 	D) DMESG="$OPTARG" ;;

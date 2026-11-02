@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.23 2025/11/11 15:18:30 deraadt Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.24 2026/11/02 15:31:39 phessler Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2025 $
+.Dd $Mdocdate: November 2 2026 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd upgrade system to the next release or a new snapshot
 .Sh SYNOPSIS
 .Nm
-.Op Fl fkns
+.Op Fl 46fkns
 .Op Fl b Ar base-directory
 .Op Fl R Ar version
 .Op Ar installurl | path
@@ -49,6 +49,10 @@ triggering a one-shot upgrade using the files in
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 4
+Use IPv4 for the file transfer.
+.It Fl 6
+Use IPv6 for the file transfer.
 .It Fl b Ar base-directory
 Download files to
 .Ar base-directory Ns / Ns Pa _sysupgrade

@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: dbupdate.sh,v 1.11 2026/10/22 02:52:49 dgl Exp $
+# $OpenBSD: dbupdate.sh,v 1.12 2026/11/02 15:31:39 phessler Exp $
 #
 # Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 #
@@ -22,7 +22,7 @@ umask 0022
 PROG=${0##*/}
 
 usage() {
-        echo "usage: $PROG [-fn]"
+        echo "usage: $PROG [-46fn]"
         exit 1
 }
 
@@ -31,9 +31,12 @@ trap "rm -rf $D" 0 1 2 3 13 15
 
 FORCE=false
 DRY=false
+AF=''
 
-while getopts "fn" name; do
+while getopts "46fn" name; do
 	case "$name" in
+	4) AF='-4' ;;
+	6) AF='-6' ;;
 	f) FORCE=true ;;
 	n) DRY=true ;;
 	?) usage ;;
@@ -49,7 +52,7 @@ PUBKEY=/etc/signify/openbsd-${R}-base.pub
 mkdir -p ${CACHE}	# XXX created by mtree, but help systems without..
 cd $D
 
-if ! ftp -o out-SHA256.sig \
+if ! ftp ${AF} -o out-SHA256.sig \
     https://ftp.openbsd.org/pub/OpenBSD/dbupdates/$R/SHA256.sig \
     > /dev/null 2>&1 ; then
 	echo $PROG: no databases available.
@@ -64,7 +67,7 @@ if cmp -s ${CACHE}/out-SHA256.sig out-SHA256.sig ; then
 fi
 
 # Get the new file & verify the signing
-ftp https://ftp.openbsd.org/pub/OpenBSD/dbupdates/dbupdates.tgz > /dev/null
+ftp ${AF} https://ftp.openbsd.org/pub/OpenBSD/dbupdates/dbupdates.tgz > /dev/null
 signify -C -q -p "${PUBKEY}" -x out-SHA256.sig
 
 # extract

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.22 2020/12/07 21:19:28 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.23 2026/11/02 15:31:39 phessler Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2020 $
+.Dd $Mdocdate: November 2 2026 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd manage base system binary patches
 .Sh SYNOPSIS
 .Nm syspatch
+.Op Fl 46
 .Op Fl c | l | R | r
 .Sh DESCRIPTION
 .Nm
@@ -42,6 +43,10 @@ of them.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 4
+Use IPv4 for the file transfer.
+.It Fl 6
+Use IPv6 for the file transfer.
 .It Fl c
 List available patches; suitable for
 .Xr cron 8 .
