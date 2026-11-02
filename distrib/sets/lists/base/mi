@@ -6876,6 +6876,7 @@
 ./var/db/ns
 ./var/db/pkg
 ./var/db/rpki-client
+./var/db/snmpd
 ./var/db/yubikey
 ./var/dbupdate
 ./var/empty
