@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.114 2026/10/17 17:57:25 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.115 2026/11/02 18:15:52 thfr Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -245,11 +245,14 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: no memory\n", DEVNAME(sc));
 		return;
 	}
+	sc->sc_irepsizes = mallocarray(nrepid, sizeof(*sc->sc_irepsizes),
+	    M_USBDEV, M_WAITOK);
 	sc->sc_nrepid = nrepid;
 	sc->sc_isize = 0;
 
 	for (repid = 0; repid < nrepid; repid++) {
 		repsz = hid_report_size(desc, size, hid_input, repid);
+		sc->sc_irepsizes[repid] = repsz;
 		DPRINTF(("uhidev_match: repid=%d, repsz=%d\n", repid, repsz));
 		if (repsz > sc->sc_isize)
 			sc->sc_isize = repsz;
@@ -486,6 +489,8 @@ uhidev_detach(struct device *self, int flags)
 		sc->sc_subdevs[i] = NULL;
 	}
 	free(sc->sc_subdevs, M_USBDEV, sc->sc_nrepid * sizeof(struct uhidev *));
+	free(sc->sc_irepsizes, M_USBDEV,
+	    sc->sc_nrepid * sizeof(*sc->sc_irepsizes));
 
 	return (rv);
 }
@@ -537,6 +542,8 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		printf("uhidev_intr: bad repid %d\n", rep);
 		return;
 	}
+	if (cc > sc->sc_irepsizes[rep])
+		return;
 	scd = sc->sc_subdevs[rep];
 	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=0x%x\n",
 		    rep, scd, scd ? scd->sc_state : 0));

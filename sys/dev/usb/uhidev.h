@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.41 2022/03/21 12:18:52 thfr Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.42 2026/11/02 18:15:52 thfr Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ struct uhidev_softc {
 
 	u_int sc_nrepid;
 	struct uhidev **sc_subdevs;
+	u_int *sc_irepsizes;
 
 	int sc_refcnt;
 
