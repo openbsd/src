@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.336 2026/10/31 17:55:10 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.337 2026/11/02 13:55:19 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -835,9 +835,6 @@ rrdp_process(struct ibuf *b)
 			io_read_buf(b, &hash, sizeof(hash));
 		io_read_str(b, &uri);
 		io_read_buf_alloc(b, (void **)&data, &dsz);
-
-		if (uri == NULL || (pt != PUB_DEL && dsz == 0))
-			errx(1, "bad rrdp file request");
 
 		ok = rrdp_handle_file(id, pt, uri, hash, sizeof(hash),
 		    data, dsz);

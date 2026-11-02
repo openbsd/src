@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.99 2026/10/31 16:21:26 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.100 2026/11/02 13:55:19 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1006,6 +1006,12 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 	if (pt == PUB_DEL) {
 		filepath_add(&rr->deleted, uri, 0, 0, 1);
 	} else {
+		if (dlen < MIN_FILE_SIZE) {
+			warnx("%s: too small publish element: %s",
+			    rr->notifyuri, uri);
+			return 0;
+		}
+
 		fp = filepath_find(&rr->deleted, uri);
 		if (fp != NULL) {
 			filepath_put(&rr->deleted, fp);
