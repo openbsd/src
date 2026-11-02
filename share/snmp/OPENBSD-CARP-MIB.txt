@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-CARP-MIB.txt,v 1.4 2018/05/30 18:17:20 sthen Exp $
+-- $OpenBSD: OPENBSD-CARP-MIB.txt,v 1.5 2026/11/02 12:15:28 martijn Exp $
 --
 -- Copyright (c) 2006-2011 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -32,7 +32,7 @@ IMPORTS
 		FROM SNMPv2-CONF;
 
 carpMIBObjects MODULE-IDENTITY
-    LAST-UPDATED "201805140000Z"
+    LAST-UPDATED "202611020000Z"
     ORGANIZATION "OpenBSD"
     CONTACT-INFO "
                   Author:     Joel Knight
@@ -41,6 +41,8 @@ carpMIBObjects MODULE-IDENTITY
                  "
     DESCRIPTION  "The MIB module for gathering information about
 		 Common Address Redundancy Protocol (CARP) interfaces."
+    REVISION     "202611020000Z"
+    DESCRIPTION  "carpGroupDemote must be in range 0..255"
     REVISION     "201805140000Z"
     DESCRIPTION  "Add the carpGroupTable to OPENBSD-CARP-MIB."
     REVISION     "201201310000Z"
@@ -222,7 +224,7 @@ carpGroupName OBJECT-TYPE
 	::= { carpGroupEntry 2 }
 
 carpGroupDemote OBJECT-TYPE
-	SYNTAX		Integer32 (1..2147483647)
+	SYNTAX		Integer32 (0..255)
 	MAX-ACCESS	read-only
 	STATUS		current
 	DESCRIPTION
