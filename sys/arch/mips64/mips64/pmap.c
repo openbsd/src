@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.126 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.127 2026/11/02 17:08:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1422,7 +1422,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	if (dstpg->pg_flags & PGF_UNCACHED)
 		df = 1;
 	else if (dstpg->pg_flags & PGF_CACHED) {
-		df = ((pv->pv_va ^ s) & cache_valias_mask) != 0;
+		df = ((pv->pv_va ^ d) & cache_valias_mask) != 0;
 		if (df)
 			Mips_SyncDCachePage(ci, pv->pv_va, dst);
 	}
