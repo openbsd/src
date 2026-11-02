@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_util.c,v 1.2 2023/11/24 14:05:47 job Exp $ */
+/*	$OpenBSD: rrdp_util.c,v 1.3 2026/11/02 13:52:25 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -106,27 +106,30 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 {
 	unsigned char *data = NULL;
 	size_t datasz = 0;
+	int rc = -1;
 
 	switch (pxml->type) {
 	case PUB_ADD:
 	case PUB_UPD:
 		if (base64_decode_len(pxml->data_length, &datasz) == -1)
-			return -1;
-		if (datasz < MIN_FILE_SIZE)
-			return -1;
+			goto done;
 		if ((base64_decode(pxml->data, pxml->data_length,
 		    &data, &datasz)) == -1)
-			return -1;
+			goto done;
+		if (datasz < MIN_FILE_SIZE)
+			goto done;
 		break;
 	case PUB_DEL:
 		if (pxml->data_length != 0)
-			return -1;
+			goto done;
 		break;
 	}
 
 	rrdp_publish_file(s, pxml, data, datasz);
+	rc = 0;
 
+ done:
 	free(data);
 	free_publish_xml(pxml);
-	return 0;
+	return rc;
 }
