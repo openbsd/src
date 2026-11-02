@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_point2oct.3,v 1.6 2025/06/13 18:34:00 schwarze Exp $
+.\" $OpenBSD: EC_POINT_point2oct.3,v 1.7 2026/11/02 08:27:17 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: November 2 2026 $
 .Dt EC_POINT_POINT2OCT 3
 .Os
 .Sh NAME
@@ -103,9 +103,11 @@ in the prime field of size p.
 Thus, y is a square root of x^3 + ax + b.
 Since p > 3 is odd, p - y is another square root
 with different parity, unless y is zero.
-Point compression uses that x and the parity of y are enough
-to compute y using
-.Xr BN_mod_sqrt 3 .
+Point compression saves nearly half of the bits needed to encode a point
+because x and the parity of y are enough to compute y.
+This comes at the cost of using the complicated
+.Xr BN_mod_sqrt 3 ,
+which requires a probabilistic algorithm for p = 1 (mod 8).
 .Pp
 Field elements are represented as non-negative integers < p
 in big-endian 2-complement form, zero-padded on the left to the byte
