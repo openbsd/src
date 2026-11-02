@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.91 2026/10/30 10:21:19 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.92 2026/11/02 14:01:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -273,7 +273,8 @@ valid_filename(const char *fn, size_t len)
 int
 valid_uri(const char *uri, size_t usz, const char *proto)
 {
-	size_t s;
+	const char *p;
+	size_t len, s;
 
 	if (usz > MAX_URI_LENGTH)
 		return 0;
@@ -291,8 +292,21 @@ valid_uri(const char *uri, size_t usz, const char *proto)
 			return 0;
 	}
 
+	/* skip over the proto, if any */
+	if ((p = memmem(uri, usz, "://", strlen("://"))) != NULL) {
+		p += strlen("://");
+		len = usz - (p - uri);
+	} else {
+		p = uri;
+		len = usz;
+	}
+
+	/* do not allow "//" */
+	if (memmem(p, len, "//", strlen("//")) != NULL)
+		return 0;
+
 	/* do not allow files or directories to start with a '.' */
-	if (memmem(uri, usz, "/.", strlen("/.")) != NULL)
+	if (memmem(p, len, "/.", strlen("/.")) != NULL)
 		return 0;
 
 	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
