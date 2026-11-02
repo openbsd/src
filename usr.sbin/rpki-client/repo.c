@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.100 2026/11/02 13:55:19 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.101 2026/11/02 15:26:33 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1370,6 +1370,8 @@ repo_basedir(const struct repo *rp, int wantvalid)
 unsigned int
 repo_id(const struct repo *rp)
 {
+	if (rp == NULL)
+		return 0;
 	return rp->id;
 }
 
