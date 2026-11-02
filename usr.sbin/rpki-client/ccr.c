@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.46 2026/09/30 15:54:48 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.47 2026/11/02 15:23:17 claudio Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -719,7 +719,7 @@ ccr_insert_mft_sub(struct ccr_mft_tree *tree, const struct cert *cert)
 	memcpy(needle.hash, cert->mfthash, sizeof(cert->mfthash));
 
 	if ((m = RB_FIND(ccr_mft_tree, tree, &needle)) == NULL)
-		errx(1, "RB_FIND ccr_mft_tree");
+		errx(1, "Can't find mfthash in ccr_mft_tree");
 
 	if ((sub = calloc(1, sizeof(*sub))) == NULL)
 		err(1, NULL);
