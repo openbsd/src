@@ -129,19 +129,11 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   RESERVE_REG(x31)
 #undef RESERVE_REG
 
-#ifdef __OpenBSD__
-  // -mno-relax is default, unless -mrelax is specified.
-  if (Args.hasFlag(options::OPT_mrelax, options::OPT_mno_relax, false))
-    Features.push_back("+relax");
-  else
-    Features.push_back("-relax");
-#else
   // -mrelax is default, unless -mno-relax is specified.
   if (Args.hasFlag(options::OPT_mrelax, options::OPT_mno_relax, true))
     Features.push_back("+relax");
   else
     Features.push_back("-relax");
-#endif
 
   // If -mstrict-align, -mno-strict-align, -mscalar-strict-align, or
   // -mno-scalar-strict-align is passed, use it. Otherwise, the
