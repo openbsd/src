@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid_rdesc.h,v 1.2 2022/03/21 12:18:52 thfr Exp $ */
+/*	$OpenBSD: uhid_rdesc.h,v 1.3 2026/11/02 18:20:35 thfr Exp $ */
 /*	$NetBSD: ugraphire_rdesc.h,v 1.1 2000/12/29 01:47:49 augustss Exp $	*/
 /*	$FreeBSD: uxb360gp_rdesc.h,v 1.3 2008/05/24 18:35:55 ed Exp $ */
 /*
@@ -249,7 +249,7 @@ static const uByte uhid_xb360gp_report_descr[] = {
     0x26, 0xff, 0x00,	/*  LOGICAL MAXIMUM (255)		*/
     0x35, 0x00,		/*  PHYSICAL MINIMUM (0)		*/
     0x46, 0xff, 0x00,	/*  PHYSICAL MAXIMUM (255)		*/
-    0x95, 0x02,		/*  REPORT SIZE (2)			*/
+    0x95, 0x02,		/*  REPORT COUNT (2)			*/
     0x05, 0x01,		/*  USAGE PAGE (Generic Desktop)	*/
     0x09, 0x32,		/*  USAGE (Z)				*/
     0x09, 0x35,		/*  USAGE (Rz)				*/
