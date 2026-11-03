@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.164 2026/07/17 18:51:29 bluhm Exp $ */
+/*	$OpenBSD: pipex.c,v 1.165 2026/11/03 16:55:23 miod Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1707,21 +1707,6 @@ pipex_pptp_userland_lookup_session_ipv4(struct mbuf *m0, struct in_addr dst)
 
 	return pipex_pptp_userland_lookup_session(m0, sintosa(&sin));
 }
-
-#ifdef INET6
-struct pipex_session *
-pipex_pptp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
-{
-	struct sockaddr_in6 sin6;
-
-	memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_family = AF_INET6;
-	in6_recoverscope(&sin6, &dst);
-
-	return pipex_pptp_userland_lookup_session(m0, sin6tosa(&sin6));
-}
-#endif
 
 struct pipex_session *
 pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
