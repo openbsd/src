@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.251 2026/10/30 10:43:28 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.252 2026/11/03 11:07:45 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -658,7 +658,7 @@ cert_crldp(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 		if (!x509_location(fn, "CRL distribution point", name, &crldp))
 			goto out;
 
-		if (cert->crldp == NULL && strncasecmp(crldp, RSYNC_PROTO,
+		if (cert->crldp == NULL && strncmp(crldp, RSYNC_PROTO,
 		    RSYNC_PROTO_LEN) == 0) {
 			cert->crldp = crldp;
 			continue;
@@ -725,7 +725,7 @@ cert_aia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 			if (!x509_location(fn, "AIA: caIssuers", ad->location,
 			    &caissuers))
 				goto out;
-			if (cert->aia == NULL && strncasecmp(caissuers,
+			if (cert->aia == NULL && strncmp(caissuers,
 			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
 				cert->aia = caissuers;
 				caissuers = NULL;
@@ -801,7 +801,7 @@ cert_ca_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 			if (!x509_location(fn, "SIA: caRepository",
 			    ad->location, &carepo))
 				goto out;
-			if (cert->repo == NULL && strncasecmp(carepo,
+			if (cert->repo == NULL && strncmp(carepo,
 			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
 				if (carepo[strlen(carepo) - 1] != '/') {
 					char *carepo_tmp;
@@ -826,7 +826,7 @@ cert_ca_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 			if (!x509_location(fn, "SIA: rpkiManifest",
 			    ad->location, &rpkimft))
 				goto out;
-			if (cert->mft == NULL && strncasecmp(rpkimft,
+			if (cert->mft == NULL && strncmp(rpkimft,
 			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
 				cert->mft = rpkimft;
 				rpkimft = NULL;
@@ -841,7 +841,7 @@ cert_ca_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 			if (!x509_location(fn, "SIA: rpkiNotify",
 			    ad->location, &notify))
 				goto out;
-			if (strncasecmp(notify, HTTPS_PROTO,
+			if (strncmp(notify, HTTPS_PROTO,
 			    HTTPS_PROTO_LEN) != 0) {
 				warnx("%s: non-https uri in rpkiNotify: %s",
 				    fn, notify);
@@ -950,7 +950,7 @@ cert_ee_sia(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 			if (!x509_location(fn, "SIA: signedObject",
 			    ad->location, &signedobj))
 				goto out;
-			if (cert->signedobj == NULL && strncasecmp(signedobj,
+			if (cert->signedobj == NULL && strncmp(signedobj,
 			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
 				cert->signedobj = signedobj;
 				signedobj = NULL;
