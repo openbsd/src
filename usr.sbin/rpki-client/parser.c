@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.200 2026/11/03 14:29:03 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.201 2026/11/03 18:25:42 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -514,8 +514,9 @@ proc_parser_mft_pre(struct entity *ent, char *file, struct crl **crl,
 	if (seqnum_cmp > 0) {
 		if (mft_seqnum_gap_present(mft, cached_mft, bn_ctx)) {
 			mft->seqnum_gap = 1;
-			warnx("%s: seqnum gap detected #%s -> #%s", file,
-			    cached_mft->seqnum, mft->seqnum);
+			if (verbose)
+				warnx("%s: seqnum gap detected #%s -> #%s",
+				    file, cached_mft->seqnum, mft->seqnum);
 		}
 	}
 
