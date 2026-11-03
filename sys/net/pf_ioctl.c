@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.434 2026/09/10 12:28:04 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.435 2026/11/03 16:54:42 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -109,8 +109,6 @@ int			 pf_validate_range(u_int8_t, u_int16_t[2], int);
 int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *);
 int			 pf_rule_checkaf(struct pf_rule *);
 u_int16_t		 pf_qname2qid(char *, int);
-void			 pf_qid2qname(u_int16_t, char *);
-void			 pf_qid_unref(u_int16_t);
 int			 pf_states_clr(struct pfioc_state_kill *);
 int			 pf_states_get(struct pfioc_states *);
 
@@ -550,18 +548,6 @@ u_int16_t
 pf_qname2qid(char *qname, int create)
 {
 	return (tagname2tag(&pf_qids, qname, create));
-}
-
-void
-pf_qid2qname(u_int16_t qid, char *p)
-{
-	tag2tagname(&pf_qids, qid, p);
-}
-
-void
-pf_qid_unref(u_int16_t qid)
-{
-	tag_unref(&pf_qids, (u_int16_t)qid);
 }
 
 int
