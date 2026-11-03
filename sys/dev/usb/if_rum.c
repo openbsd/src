@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.129 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.130 2026/11/03 01:43:59 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -756,7 +756,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
-	int s, len;
+	int s, len, framelen;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -777,6 +777,13 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	desc = (const struct rum_rx_desc *)data->buf;
+	framelen = (letoh32(desc->flags) >> 16) & 0xfff;
+	if (framelen > len - RT2573_RX_DESC_SIZE) {
+		DPRINTF(("%s: xfer too short %d, frame length %d\n",
+		    sc->sc_dev.dv_xname, len, framelen));
+		ifp->if_ierrors++;
+		goto skip;
+	}
 
 	if (letoh32(desc->flags) & RT2573_RX_CRC_ERROR) {
 		/*
@@ -809,7 +816,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	/* finalize mbuf */
 	m->m_data = (caddr_t)(desc + 1);
-	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
+	m->m_pkthdr.len = m->m_len = framelen;
 
 	s = splnet();
 
