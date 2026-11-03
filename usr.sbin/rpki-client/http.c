@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.110 2026/10/31 17:55:10 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.111 2026/11/03 08:34:28 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -912,10 +912,22 @@ http_free(struct http_connection *conn)
 static enum res
 http_done(struct http_connection *conn, enum http_result res)
 {
-	assert(conn->bufpos == 0);
-	assert(conn->iosz == 0);
-	assert(conn->chunked == 0);
-	assert(conn->redir_uri == NULL);
+	if (conn->bufpos != 0) {
+		warnx("%s: unexpected trailing data", conn_info(conn));
+		return http_failed(conn);
+	}
+	if (conn->iosz != 0) {
+		warnx("%s: missing data at end of transfer", conn_info(conn));
+		return http_failed(conn);
+	}
+	if (conn->chunked != 0) {
+		warnx("%s: unfinished chunked transfer", conn_info(conn));
+		return http_failed(conn);
+	}
+	if (conn->redir_uri != NULL) {
+		warnx("%s: unfinished redirect", conn_info(conn));
+		return http_failed(conn);
+	}
 
 	if (conn->gzipped) {
 		conn->gzipped = 0;
@@ -1711,7 +1723,10 @@ again:
 		conn->state = STATE_WRITE_DATA;
 		return WANT_POLLOUT;
 	case STATE_RESPONSE_CHUNKED_HEADER:
-		assert(conn->iosz == 0);
+		if (conn->iosz != 0) {
+			warnx("%s: bad chunk encoding", conn_info(conn));
+			return http_failed(conn);
+		}
 
 		buf = http_get_line(conn);
 		if (buf == NULL)
@@ -1873,7 +1888,10 @@ proxy_write(struct http_connection *conn)
 
 	assert(conn->state == STATE_PROXY_REQUEST);
 
-	assert(conn->bufpos < conn->bufsz);
+	if (conn->bufpos >= conn->bufsz) {
+		warnx("%s: proxy write underflow", conn_info(conn));
+		return http_failed(conn);
+	}
 	s = write(conn->fd, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
