@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_blist.c,v 1.4 2023/05/30 08:30:01 jsg Exp $ */
+/* $OpenBSD: subr_blist.c,v 1.5 2026/11/03 16:52:32 miod Exp $ */
 /* DragonFlyBSD:7b80531f545c7d3c51c1660130c71d01f6bccbe0:/sys/kern/subr_blist.c */
 /*
  * BLIST.C -	Bitmap allocator/deallocator, using a radix tree with hinting
@@ -144,16 +144,22 @@ static void blst_leaf_free(blmeta_t *scan, swblk_t relblk, swblk_t count);
 static void blst_meta_free(blmeta_t *scan, swblk_t freeBlk, swblk_t count, 
 					swblk_t radix, swblk_t skip,
 					swblk_t blk);
+#if (!defined(_KERNEL) && defined(BLIST_DEBUG)) || defined(HIBERNATE)
 static swblk_t blst_leaf_fill(blmeta_t *scan, swblk_t blk, swblk_t count);
 static swblk_t blst_meta_fill(blmeta_t *scan, swblk_t fillBlk, swblk_t count,
 					swblk_t radix, swblk_t skip,
 					swblk_t blk);
+#endif
+#if !defined(_KERNEL) && defined(BLIST_DEBUG)
 static void blst_copy(blmeta_t *scan, swblk_t blk, swblk_t radix,
 				swblk_t skip, blist_t dest, swblk_t count);
+#endif
 static swblk_t	blst_radix_init(blmeta_t *scan, swblk_t radix,
 						swblk_t skip, swblk_t count);
+#if (!defined(_KERNEL) && defined(BLIST_DEBUG)) || defined(HIBERNATE)
 static int blst_radix_gapfind(blmeta_t *scan, swblk_t blk, swblk_t radix, swblk_t skip,
     int state, swblk_t *maxbp, swblk_t *maxep, swblk_t *bp, swblk_t *ep);
+#endif
 
 #if defined(BLIST_DEBUG) || defined(DDB)
 static void	blst_radix_print(blmeta_t *scan, swblk_t blk,
@@ -259,6 +265,7 @@ blist_alloc(blist_t bl, swblk_t count)
 	return(blk);
 }
 
+#if !defined(_KERNEL) && defined(BLIST_DEBUG)
 swblk_t
 blist_allocat(blist_t bl, swblk_t count, swblk_t blkat)
 {
@@ -282,6 +289,7 @@ blist_allocat(blist_t bl, swblk_t count, swblk_t blkat)
 	}
 	return(blk);
 }
+#endif	/* !_KERNEL && BLIST_DEBUG */
 
 /*
  * blist_free() -	free up space in the block bitmap.  Return the base
@@ -306,6 +314,7 @@ blist_free(blist_t bl, swblk_t blkno, swblk_t count)
 	}
 }
 
+#if (!defined(_KERNEL) && defined(BLIST_DEBUG)) || defined(HIBERNATE)
 /*
  * blist_fill() -	mark a region in the block bitmap as off-limits
  *			to the allocator (i.e. allocate it), ignoring any
@@ -335,7 +344,9 @@ blist_fill(blist_t bl, swblk_t blkno, swblk_t count)
 		return 0;
 	}
 }
+#endif	/* (!_KERNEL && BLIST_DEBUG) || HIBERNATE */
 
+#if !defined(_KERNEL) && defined(BLIST_DEBUG)
 /*
  * blist_resize() -	resize an existing radix tree to handle the
  *			specified number of blocks.  This will reallocate
@@ -363,6 +374,9 @@ blist_resize(blist_t *pbl, swblk_t count, int freenew)
     }
     blist_destroy(save);
 }
+#endif	/* !_KERNEL && BLIST_DEBUG */
+
+#if (!defined(_KERNEL) && defined(BLIST_DEBUG)) || defined(HIBERNATE)
 
 #define	GAPFIND_FIRSTFREE 0
 #define	GAPFIND_FIRSTUSED 1
@@ -491,6 +505,7 @@ blst_radix_gapfind(blmeta_t *scan, swblk_t blk, swblk_t radix, swblk_t skip,
 
 	return state;
 }
+#endif	/* (!_KERNEL && BLIST_DEBUG) || HIBERNATE */
 
 #if defined(BLIST_DEBUG) || defined(DDB)
 
@@ -846,6 +861,7 @@ blst_meta_free(blmeta_t *scan, swblk_t freeBlk, swblk_t count,
 	}
 }
 
+#if (!defined(_KERNEL) && defined(BLIST_DEBUG)) || defined(HIBERNATE)
 /*
  * BLST_LEAF_FILL() -	allocate specific blocks in leaf bitmap
  *
@@ -950,7 +966,9 @@ blst_meta_fill(blmeta_t *scan, swblk_t fillBlk, swblk_t count,
 	scan->u.bmu_avail -= nblks;
 	return (nblks);
 }
+#endif	/* (!_KERNEL && BLIST_DEBUG) || HIBERNATE */
 
+#if !defined(_KERNEL) && defined(BLIST_DEBUG)
 /*
  * BLIST_RADIX_COPY() - copy one radix tree to another
  *
@@ -1038,6 +1056,7 @@ blst_copy(blmeta_t *scan, swblk_t blk, swblk_t radix,
 		blk += (swblk_t)radix;
 	}
 }
+#endif	/* !_KERNEL && BLIST_DEBUG */
 
 /*
  * BLST_RADIX_INIT() - initialize radix tree
