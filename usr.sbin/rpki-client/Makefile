@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2026/10/16 16:17:27 job Exp $
+#	$OpenBSD: Makefile,v 1.45 2026/11/03 14:33:14 tb Exp $
 
 PROG=	rpki-client
 
@@ -36,6 +36,7 @@ SRCS+=	print.c
 SRCS+=	repo.c
 SRCS+=	rfc3779.c
 SRCS+=	roa.c
+SRCS+=	rpki-der.c
 SRCS+=	rrdp.c
 SRCS+=	rrdp_delta.c
 SRCS+=	rrdp_notification.c
