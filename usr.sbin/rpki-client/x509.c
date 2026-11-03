@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.137 2026/11/03 11:01:01 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.138 2026/11/03 11:05:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -359,7 +359,7 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
 	if ((size_t)length <= RSYNC_PROTO_LEN ||
 	    (size_t)length <= HTTPS_PROTO_LEN) {
 		warnx("%s: RFC 6487 section 4.8: %s short location", fn, descr);
-		/* XXX - almost certainly a bad URI. return 0? */
+		return 0;
 	} else if (strncasecmp(data, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
 		proto = RSYNC_PROTO;
 		data += RSYNC_PROTO_LEN;
