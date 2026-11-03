@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-seqnum.c,v 1.4 2025/09/10 06:28:20 tb Exp $ */
+/*	$OpenBSD: test-seqnum.c,v 1.5 2026/11/03 14:59:42 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -32,6 +32,7 @@ static const struct seqnum {
 	const unsigned char der[MAX_DER];
 	int der_len;
 	int valid;
+	int invalid_serial;
 } seqnum_tests[] = {
 	{
 		.descr = "0 - smallest acceptable value:",
@@ -40,6 +41,7 @@ static const struct seqnum {
 		},
 		.der_len = 3,
 		.valid = 1,
+		.invalid_serial = 1,
 	},
 	{
 		.descr = "1 - acceptable:",
@@ -48,6 +50,7 @@ static const struct seqnum {
 		},
 		.der_len = 3,
 		.valid = 1,
+		.invalid_serial = 0,
 	},
 	{
 		.descr = "-1 - invalid:",
@@ -56,6 +59,7 @@ static const struct seqnum {
 		},
 		.der_len = 3,
 		.valid = 0,
+		.invalid_serial = 1,
 	},
 	{
 		.descr = "2^159 - 1 - largest acceptable value:",
@@ -67,6 +71,7 @@ static const struct seqnum {
 		},
 		.der_len = 22,
 		.valid = 1,
+		.invalid_serial = 0,
 	},
 	{
 		.descr = "-2^159 - invalid, but fits in 20 octets:",
@@ -78,6 +83,7 @@ static const struct seqnum {
 		},
 		.der_len = 22,
 		.valid = 0,
+		.invalid_serial = 1,
 	},
 	{
 		.descr = "2^159 - smallest inacceptable positive value:",
@@ -89,6 +95,7 @@ static const struct seqnum {
 		},
 		.der_len = 23,
 		.valid = 0,
+		.invalid_serial = 1,
 	},
 	{
 		.descr = "2^160 - 1 - largest unsigned 20-bit number:",
@@ -100,6 +107,7 @@ static const struct seqnum {
 		},
 		.der_len = 23,
 		.valid = 0,
+		.invalid_serial = 1,
 	},
 	{
 		.descr = "2^160: too large:",
@@ -111,6 +119,7 @@ static const struct seqnum {
 		},
 		.der_len = 23,
 		.valid = 0,
+		.invalid_serial = 1,
 	},
 };
 
@@ -122,6 +131,7 @@ seqnum_testcase(const struct seqnum *test)
 	ASN1_INTEGER *aint = NULL;
 	const unsigned char *p;
 	char *s = NULL;
+	int valid_serial;
 	int failed = 1;
 
 	p = test->der;
@@ -140,6 +150,18 @@ seqnum_testcase(const struct seqnum *test)
 	if (s != NULL && !test->valid) {
 		fprintf(stderr, "FAIL: %s invalid seqnum succeeded\n",
 		    test->descr);
+		goto err;
+	}
+
+	if (!test->valid && !test->invalid_serial) {
+		fprintf(stderr, "FAIL: %s invalid test case", test->descr);
+		goto err;
+	}
+
+	valid_serial = x509_valid_serial(__func__, test->descr, aint);
+	if (valid_serial != !test->invalid_serial) {
+		fprintf(stderr, "FAIL: %s serial number: got %d, want %d\n",
+		    test->descr, !test->invalid_serial, valid_serial);
 		goto err;
 	}
 
