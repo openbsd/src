@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.252 2026/11/03 11:07:45 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.253 2026/11/03 14:58:42 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1504,7 +1504,7 @@ cert_parse_internal(const char *fn, X509 *x)
 		warnx("%s: RFC 6487 4.2: missing serialNumber", fn);
 		goto out;
 	}
-	if (!x509_valid_seqnum(fn, "RFC 6487 4.2: serialNumber", serial))
+	if (!x509_valid_serial(fn, "RFC 6487 4.2: serialNumber", serial))
 		goto out;
 
 	if (!cert_check_sigalg(fn, cert))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.138 2026/11/03 11:05:20 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.139 2026/11/03 14:58:42 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -504,11 +504,12 @@ x509_valid_issuer_name(const char *fn, const X509_NAME *xn)
 }
 
 /*
- * Check ASN1_INTEGER is non-negative and fits in 20 octets.
+ * Check ASN1_INTEGER is non-negative (or positive) and fits in 20 octets.
  * Returns allocated BIGNUM if true, NULL otherwise.
  */
 static BIGNUM *
-x509_seqnum_to_bn(const char *fn, const char *descr, const ASN1_INTEGER *i)
+x509_seqnum_to_bn(const char *fn, const char *descr, const ASN1_INTEGER *i,
+    int exclude_zero)
 {
 	BIGNUM *bn = NULL;
 
@@ -517,8 +518,9 @@ x509_seqnum_to_bn(const char *fn, const char *descr, const ASN1_INTEGER *i)
 		goto out;
 	}
 
-	if (BN_is_negative(bn)) {
-		warnx("%s: %s should be non-negative", fn, descr);
+	if (BN_is_negative(bn) || (exclude_zero && BN_is_zero(bn))) {
+		warnx("%s: %s should be %s", fn, descr,
+		    exclude_zero ? "positive" : "non-negative");
 		goto out;
 	}
 
@@ -549,7 +551,7 @@ x509_convert_seqnum(const char *fn, const char *descr, const ASN1_INTEGER *i)
 	if (i == NULL)
 		goto out;
 
-	if ((bn = x509_seqnum_to_bn(fn, descr, i)) == NULL)
+	if ((bn = x509_seqnum_to_bn(fn, descr, i, 0)) == NULL)
 		goto out;
 
 	if ((s = BN_bn2hex(bn)) == NULL)
@@ -560,12 +562,32 @@ x509_convert_seqnum(const char *fn, const char *descr, const ASN1_INTEGER *i)
 	return s;
 }
 
+/*
+ * Check seqnum is non-negative and fits into 20 octets:
+ *   RFC 5280: CRLNumber ::= INTEGER (0..MAX)
+ *   RFC 9286: manifestNumber  INTEGER (0..MAX)
+ */
 int
 x509_valid_seqnum(const char *fn, const char *descr, const ASN1_INTEGER *i)
 {
 	BIGNUM *bn;
 
-	if ((bn = x509_seqnum_to_bn(fn, descr, i)) == NULL)
+	if ((bn = x509_seqnum_to_bn(fn, descr, i, 0)) == NULL)
+		return 0;
+
+	BN_free(bn);
+	return 1;
+}
+
+/*
+ * RFC 5280, 4.1.2.2, RFC 6487, serialNumber is positive (also eid3200).
+ */
+int
+x509_valid_serial(const char *fn, const char *descr, const ASN1_INTEGER *i)
+{
+	BIGNUM *bn;
+
+	if ((bn = x509_seqnum_to_bn(fn, descr, i, 1)) == NULL)
 		return 0;
 
 	BN_free(bn);
