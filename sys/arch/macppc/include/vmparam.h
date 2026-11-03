@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.33 2024/01/30 16:43:22 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.34 2026/11/03 01:10:43 kirill Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(2UL*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(3UL*1024*1024*1024)	/* max data size */
 #endif
 
 #ifndef BRKSIZ
