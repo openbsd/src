@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.136 2026/10/09 08:34:39 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.137 2026/11/03 11:01:01 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -328,6 +328,7 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
     char **out)
 {
 	const unsigned char *data;
+	const char *proto;
 	int length;
 
 	assert(*out == NULL);
@@ -345,7 +346,31 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
 		return 0;
 	}
 
-	if ((*out = strndup(data, length)) == NULL)
+	/*
+	 * Accept unknown protocols without normalizing for simplicity.
+	 * The specification of all accessLocation entries in extensions
+	 * requires the presence of one particular scheme in CA preference
+	 * order, which callers honor by remembering the first match. The
+	 * schemes always are rsync:// or https:// but that might change.
+	 */
+	proto = "";
+
+	/* data may not be NUL terminated, so be careful not to overread. */
+	if ((size_t)length <= RSYNC_PROTO_LEN ||
+	    (size_t)length <= HTTPS_PROTO_LEN) {
+		warnx("%s: RFC 6487 section 4.8: %s short location", fn, descr);
+		/* XXX - almost certainly a bad URI. return 0? */
+	} else if (strncasecmp(data, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+		proto = RSYNC_PROTO;
+		data += RSYNC_PROTO_LEN;
+		length -= RSYNC_PROTO_LEN;
+	} else if (strncasecmp(data, HTTPS_PROTO, HTTPS_PROTO_LEN) == 0) {
+		proto = HTTPS_PROTO;
+		data += HTTPS_PROTO_LEN;
+		length -= HTTPS_PROTO_LEN;
+	}
+
+	if (asprintf(out, "%s%.*s", proto, length, data) == -1)
 		err(1, NULL);
 
 	return 1;
