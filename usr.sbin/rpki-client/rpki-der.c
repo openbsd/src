@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpki-der.c,v 1.1 2026/11/03 14:33:14 tb Exp $ */
+/*	$OpenBSD: rpki-der.c,v 1.2 2026/11/03 15:04:31 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -74,7 +74,8 @@ cbs_is_sha256_algorithmIdentifier_value(CBS *cbs)
 	return !param_present || CBS_len(&param) == 0;
 }
 
-int cbs_is_rfc7935_signatureAlgorithm_value(CBS *cbs)
+int
+cbs_is_rfc7935_signatureAlgorithm_value(CBS *cbs)
 {
 	CBS alg, oid, param;
 	int param_present;
