@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.285 2026/04/22 12:28:08 claudio Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.286 2026/11/03 16:56:06 miod Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -350,31 +350,6 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 
 	/* lets get some io up in the air */
 	scsi_iopool_run(iopl);
-
-	return rv;
-}
-
-int
-scsi_ioh_del(struct scsi_iohandler *ioh)
-{
-	struct scsi_iopool	*iopl = ioh->pool;
-	int			 rv = 0;
-
-	mtx_enter(&iopl->mtx);
-	switch (ioh->q_state) {
-	case RUNQ_POOLQ:
-		TAILQ_REMOVE(&iopl->queue, ioh, q_entry);
-		ioh->q_state = RUNQ_IDLE;
-		rv = 1;
-		break;
-#ifdef DIAGNOSTIC
-	case RUNQ_IDLE:
-		break;
-	default:
-		panic("scsi_ioh_del: unexpected state %u", ioh->q_state);
-#endif /* DIAGNOSTIC */
-	}
-	mtx_leave(&iopl->mtx);
 
 	return rv;
 }

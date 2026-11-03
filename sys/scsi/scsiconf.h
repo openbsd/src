@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.202 2023/05/10 15:28:26 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.203 2026/11/03 16:56:06 miod Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -557,7 +557,6 @@ void	scsi_default_put(void *, void *);
 void	scsi_ioh_set(struct scsi_iohandler *, struct scsi_iopool *,
 	    void (*)(void *, void *), void *);
 int	scsi_ioh_add(struct scsi_iohandler *);
-int	scsi_ioh_del(struct scsi_iohandler *);
 
 void	scsi_xsh_set(struct scsi_xshandler *, struct scsi_link *,
 	    void (*)(struct scsi_xfer *));
