@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.374 2026/11/02 08:39:37 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.375 2026/11/03 13:59:58 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -840,7 +840,7 @@ attach	bwfm at pci with bwfm_pci: firmload
 file	dev/pci/if_bwfm_pci.c		bwfm_pci
 
 # AMD Cryptographic Co-processor
-attach	ccp at pci with ccp_pci
+attach	ccp at pci with ccp_pci: firmload
 file	dev/pci/ccp_pci.c		ccp_pci
 file	dev/pci/psp_pci.c		psp
 
