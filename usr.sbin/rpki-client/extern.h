@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.319 2026/10/31 16:21:26 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.320 2026/11/03 14:29:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -284,6 +284,7 @@ struct mft {
 	time_t		 nextupdate; /* from the eContent */
 	time_t		 expires; /* when the signature path expires */
 	size_t		 filesz; /* number of filenames */
+	size_t		 work_items; /* number of files to validate */
 	unsigned int	 repoid;
 	int		 talid;
 	int		 issuerid; /* certid of the issuer */
@@ -909,6 +910,9 @@ void		 constraints_parse(void);
 int		 constraints_validate(const char *, const struct cert *);
 
 /* Parser-specific */
+struct entity	*entity_new(const char *, const char *, enum rtype,
+		    enum location, unsigned int, unsigned char *, size_t,
+		    int, int, const char *);
 void		 entity_free(struct entity *);
 void		 entity_read_req(struct ibuf *, struct entity *);
 void		 entityq_flush(struct entityq *, struct repo *);

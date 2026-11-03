@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.148 2026/10/30 10:21:19 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.149 2026/11/03 14:29:03 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -501,8 +501,6 @@ mft_free(struct mft *mft)
 void
 mft_buffer(struct ibuf *b, const struct mft *mft)
 {
-	size_t		 i;
-
 	io_simple_buffer(b, &mft->repoid, sizeof(mft->repoid));
 	io_simple_buffer(b, &mft->talid, sizeof(mft->talid));
 	io_simple_buffer(b, &mft->issuerid, sizeof(mft->issuerid));
@@ -516,15 +514,7 @@ mft_buffer(struct ibuf *b, const struct mft *mft)
 	io_simple_buffer(b, mft->mfthash, sizeof(mft->mfthash));
 	io_simple_buffer(b, &mft->mftsize, sizeof(mft->mftsize));
 
-	io_simple_buffer(b, &mft->filesz, sizeof(size_t));
-	for (i = 0; i < mft->filesz; i++) {
-		io_str_buffer(b, mft->files[i].file);
-		io_simple_buffer(b, &mft->files[i].type,
-		    sizeof(mft->files[i].type));
-		io_simple_buffer(b, &mft->files[i].location,
-		    sizeof(mft->files[i].location));
-		io_simple_buffer(b, mft->files[i].hash, SHA256_DIGEST_LENGTH);
-	}
+	io_simple_buffer(b, &mft->work_items, sizeof(mft->work_items));
 }
 
 /*
@@ -535,7 +525,6 @@ struct mft *
 mft_read(struct ibuf *b)
 {
 	struct mft	*mft = NULL;
-	size_t		 i;
 
 	if ((mft = calloc(1, sizeof(struct mft))) == NULL)
 		err(1, NULL);
@@ -553,19 +542,7 @@ mft_read(struct ibuf *b)
 	io_read_buf(b, &mft->mfthash, sizeof(mft->mfthash));
 	io_read_buf(b, &mft->mftsize, sizeof(mft->mftsize));
 
-	io_read_buf(b, &mft->filesz, sizeof(size_t));
-	if (mft->filesz == 0)
-		err(1, "mft_read: bad message");
-	if ((mft->files = calloc(mft->filesz, sizeof(struct mftfile))) == NULL)
-		err(1, NULL);
-
-	for (i = 0; i < mft->filesz; i++) {
-		io_read_str(b, &mft->files[i].file);
-		io_read_buf(b, &mft->files[i].type, sizeof(mft->files[i].type));
-		io_read_buf(b, &mft->files[i].location,
-		    sizeof(mft->files[i].location));
-		io_read_buf(b, mft->files[i].hash, SHA256_DIGEST_LENGTH);
-	}
+	io_read_buf(b, &mft->work_items, sizeof(mft->work_items));
 
 	return mft;
 }

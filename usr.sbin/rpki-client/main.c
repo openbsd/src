@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.338 2026/11/02 15:31:27 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.339 2026/11/03 14:29:03 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -265,7 +265,7 @@ entityq_flush(struct entityq *q, struct repo *rp)
 	}
 }
 
-static struct entity *
+struct entity *
 entity_new(const char *path, const char *file, enum rtype type,
     enum location loc, unsigned int repoid, unsigned char *data, size_t datasz,
     int talid, int certid, const char *mftaki)
@@ -471,39 +471,6 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
 	io_simple_buffer(b, &res, sizeof(res));
 	io_opt_str_buffer(b, last_mod);
 	io_close_buffer(rrdpq, b);
-}
-
-/*
- * Add a file (CER, ROA, CRL, ...) from a manifest fileList, RFC 9286.
- * These are always relative to the directory in which "mft" sits.
- */
-static void
-queue_add_from_mft(const struct mft *mft)
-{
-	size_t			 i;
-	struct repo		*rp;
-	const struct mftfile	*f;
-
-	rp = repo_byid(mft->repoid);
-	for (i = 0; i < mft->filesz; i++) {
-		unsigned char *data = NULL;
-		size_t datasz = 0;
-
-		f = &mft->files[i];
-
-		if (f->type == RTYPE_INVALID || f->type == RTYPE_CRL)
-			continue;
-
-		if (f->type == RTYPE_CER) {
-			if ((data = calloc(1, sizeof(mft->mfthash))) == NULL)
-				err(1, NULL);
-			memcpy(data, mft->mfthash, sizeof(mft->mfthash));
-			datasz = sizeof(mft->mfthash);
-		}
-
-		entityq_add(mft->path, f->file, f->type, f->location, rp,
-		    data, datasz, mft->talid, mft->issuerid, mft->aki);
-	}
 }
 
 /*
@@ -723,9 +690,9 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			break;
 		}
 		mft = mft_read(b);
+		entity_queue += mft->work_items;
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
-		queue_add_from_mft(mft);
 		ca_clear_nonfunc(&vd->cas, mft->issuerid);
 		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
@@ -790,9 +757,6 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 
 done:
 	free(file);
-	/* CRLs are sent together with the MFT and not accounted for */
-	if (type == RTYPE_CRL)
-		return;
 	entity_queue--;
 }
 

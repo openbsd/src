@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.199 2026/10/21 09:36:15 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.200 2026/11/03 14:29:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -291,7 +291,7 @@ static int
 proc_parser_mft_check(const char *fn, struct mft *mft)
 {
 	const enum location loc[2] = { DIR_TEMP, DIR_VALID };
-	size_t	 i;
+	size_t	 i, items = 0;
 	int	 rc = 1;
 	char	*path;
 
@@ -329,7 +329,13 @@ proc_parser_mft_check(const char *fn, struct mft *mft)
 			rc = 0;
 			continue;
 		}
+
+		if (m->type != RTYPE_INVALID)
+			items++;
 	}
+
+	if (rc == 1)
+		mft->work_items = items;
 
 	return rc;
 }
@@ -598,6 +604,43 @@ proc_parser_mft(struct entity *ent, struct mft **mp, char **crlfile,
 	crl_free(crl);
 
 	return file;
+}
+
+static void
+proc_enqueue_mft(struct entityq *mftq, const struct mft *mft, const char *file)
+{
+	const struct mftfile *f;
+	struct entity *new;
+	size_t i, inserted = 0;
+
+	for (i = 0; i < mft->filesz; i++) {
+		unsigned char *mfthash = NULL;
+		size_t mfthashsz = 0;
+
+		f = &mft->files[i];
+
+		if (f->type == RTYPE_INVALID || f->type == RTYPE_CRL)
+			continue;
+
+		if (f->type == RTYPE_CER) {
+			if ((mfthash = malloc(sizeof(mft->mfthash))) == NULL)
+				err(1, NULL);
+			memcpy(mfthash, mft->mfthash, sizeof(mft->mfthash));
+			mfthashsz = sizeof(mft->mfthash);
+		}
+
+		new = entity_new(mft->path, f->file, f->type, f->location,
+		    mft->repoid, mfthash, mfthashsz, mft->talid,
+		    mft->issuerid, mft->aki);
+
+		TAILQ_INSERT_TAIL(mftq, new, entries);
+		inserted++;
+	}
+
+	/* account for the one skipped RTYPE_CRL in the check below */
+	if (inserted + 1 != mft->work_items)
+		errx(1, "%s#%s: bad count of workitems, %zu vs %zu",
+		    file, mft->seqnum, inserted + 1, mft->work_items);
 }
 
 /*
@@ -881,8 +924,8 @@ parse_load_file(struct entity *ent, unsigned char **f, size_t *flen)
  * Process an entity and respond to parent process.
  */
 static void
-parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
-    BN_CTX *bn_ctx)
+parse_entity(struct entityq *q, struct ibufqueue *msgq, struct entityq *mftq,
+    X509_STORE_CTX *ctx, BN_CTX *bn_ctx)
 {
 	struct entity	*ent;
 	struct tal	*tal;
@@ -964,8 +1007,10 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			io_simple_buffer(b, &mtime, sizeof(mtime));
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
-			if (mft != NULL)
+			if (mft != NULL) {
+				proc_enqueue_mft(mftq, mft, file);
 				mft_buffer(b, mft);
+			}
 
 			/* Push valid CRL together with the MFT. */
 			if (crlfile != NULL) {
@@ -1064,6 +1109,7 @@ static void *
 parse_worker(void *arg)
 {
 	struct entityq q = TAILQ_HEAD_INITIALIZER(q);
+	struct entityq mftq = TAILQ_HEAD_INITIALIZER(mftq);
 	struct entity *ent;
 	struct ibufqueue *myq;
 	X509_STORE_CTX *ctx;
@@ -1108,7 +1154,7 @@ parse_worker(void *arg)
 			errx(1, "pthread_mutex_unlock: %s",
 			    strerror(error));
 
-		parse_entity(&q, myq, ctx, bn_ctx);
+		parse_entity(&q, myq, &mftq, ctx, bn_ctx);
 
 		if (ibufq_queuelen(myq) > 0) {
 			if ((error = pthread_mutex_lock(&globalmsgq_mtx)) != 0)
@@ -1120,6 +1166,22 @@ parse_worker(void *arg)
 				errx(1, "pthread_cond_signal: %s",
 				    strerror(error));
 			error = pthread_mutex_unlock(&globalmsgq_mtx);
+			if (error != 0)
+				errx(1, "pthread_mutex_unlock: %s",
+				    strerror(error));
+		}
+
+		if (!TAILQ_EMPTY(&mftq)) {
+			error = pthread_mutex_lock(&globalq_mtx);
+			if (error != 0)
+				errx(1, "pthread_mutex_lock: %s",
+				    strerror(error));
+			TAILQ_CONCAT(&globalq, &mftq, entries);
+			error = pthread_cond_signal(&globalq_cond);
+			if (error != 0)
+				errx(1, "pthread_cond_signal: %s",
+				    strerror(error));
+			error = pthread_mutex_unlock(&globalq_mtx);
 			if (error != 0)
 				errx(1, "pthread_mutex_unlock: %s",
 				    strerror(error));
