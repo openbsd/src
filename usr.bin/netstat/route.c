@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.113 2025/09/19 11:27:51 jsg Exp $	*/
+/*	$OpenBSD: route.c,v 1.114 2026/11/04 08:59:48 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -79,62 +79,52 @@ static void p_krtentry(struct rtentry *);
 
 /*
  * Print routing tables.
+ *
+ * One struct rtable per table, reached through the rtables map, with
+ * a struct rtidx per address family inside it at af2idx[af] - 1.
  */
 void
-routepr(u_long afmap, u_long af2idx, u_long af2idx_max, u_int tableid)
+routepr(u_long rtables, u_long af2idx, u_int tableid)
 {
-	struct rtable tbl;
+	struct rtable_map map, *mapp;
+	struct rtable *rtp;
+	struct rtidx idx;
 	struct art art;
 	struct art_node *node;
-	struct srp *afm_head, *afm;
-	struct {
-		unsigned int	limit;
-		struct rtable **tbl;
-	} map;
-	struct rtable **tblmap;
-	int i;
 	uint8_t af2i[AF_MAX+1];
-	uint8_t af2i_max;
+	int i;
 
 	printf("Routing tables\n");
 
-	if (afmap == 0 || af2idx == 0 || af2idx_max == 0) {
+	if (rtables == 0 || af2idx == 0) {
 		printf("symbol not in namelist\n");
 		return;
 	}
 
-	kread(afmap, &afm_head, sizeof(afm_head));
+	kread(rtables, &mapp, sizeof(mapp));
+	if (mapp == NULL)
+		return;
+	kread((u_long)mapp, &map, sizeof(map));
+	if (tableid >= map.m_limit)
+		return;
+
+	kread((u_long)&mapp->m_tbl[tableid], &rtp, sizeof(rtp));
+	if (rtp == NULL)
+		return;
+
 	kread(af2idx, af2i, sizeof(af2i));
-	kread(af2idx_max, &af2i_max, sizeof(af2i_max));
-
-	if ((afm = calloc(af2i_max + 1, sizeof(*afm))) == NULL)
-		err(1, NULL);
-
-	kread((u_long)afm_head, afm, (af2i_max + 1) * sizeof(*afm));
 
 	for (i = 1; i <= AF_MAX; i++) {
 		if (af != AF_UNSPEC && af != i)
 			continue;
-		if (af2i[i] == 0 || afm[af2i[i]].ref == NULL)
+		if (af2i[i] == 0)
 			continue;
 
-		kread((u_long)afm[af2i[i]].ref, &map, sizeof(map));
-		if (tableid >= map.limit)
+		kread((u_long)&rtp->rt_idx[af2i[i] - 1], &idx, sizeof(idx));
+		if (idx.r_art == NULL)
 			continue;
 
-		if ((tblmap = calloc(map.limit, sizeof(*tblmap))) == NULL)
-			err(1, NULL);
-
-		kread((u_long)map.tbl, tblmap, map.limit * sizeof(*tblmap));
-		if (tblmap[tableid] == NULL)
-			continue;
-
-		kread((u_long)tblmap[tableid], &tbl, sizeof(tbl));
-
-		free(tblmap);
-
-		kread((u_long)tbl.r_art, &art, sizeof(art));
-
+		kread((u_long)idx.r_art, &art, sizeof(art));
 		if (art.art_root == NULL)
 			continue;
 
@@ -147,8 +137,6 @@ routepr(u_long afmap, u_long af2idx, u_long af2idx_max, u_int tableid)
 
 		p_table(art.art_root);
 	}
-
-	free(afm);
 }
 
 static struct sockaddr *

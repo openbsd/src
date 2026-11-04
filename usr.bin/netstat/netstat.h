@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.79 2025/06/21 22:08:44 bluhm Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.80 2026/11/04 08:59:48 claudio Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ char	*routename4(in_addr_t);
 char	*netname(struct sockaddr *, struct sockaddr *);
 char	*netname4(in_addr_t, in_addr_t);
 char	*mpls_op(u_int32_t);
-void	routepr(u_long, u_long, u_long, u_int);
+void	routepr(u_long, u_long, u_int);
 
 #define	IF_SHOW_FAIL	0
 #define	IF_SHOW_ERRS	1
