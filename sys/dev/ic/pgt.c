@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.104 2023/11/10 15:51:20 bluhm Exp $  */
+/*	$OpenBSD: pgt.c,v 1.105 2026/11/04 07:19:07 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -483,6 +483,9 @@ trying_again:
 
 	/* reboot card */
 	pgt_reboot(sc);
+
+	if (flag & SC_DYING)
+		return;
 
 	do {
 		wokeup = 0;
@@ -3254,10 +3257,8 @@ pgt_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
-		if (ifp->if_flags & IFF_RUNNING) {
-			pgt_stop(sc, SC_NEEDS_RESET);
-			pgt_update_hw_from_sw(sc, 0);
-		}
+		if (ifp->if_flags & IFF_RUNNING)
+			pgt_stop(sc, SC_DYING);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, act);
 		break;
