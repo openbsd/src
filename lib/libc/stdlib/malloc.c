@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.301 2026/09/30 05:44:16 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.302 2026/11/04 12:37:25 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -569,6 +569,7 @@ omalloc_init(void)
 		do {
 			mopts.chunk_canaries = arc4random();
 		} while ((u_char)mopts.chunk_canaries == 0 ||
+		    (u_char)mopts.chunk_canaries == SOME_JUNK ||
 		    (u_char)mopts.chunk_canaries == SOME_FREEJUNK);
 }
 
@@ -1235,7 +1236,7 @@ validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
 	q = p + check_sz;
 
 	while (p < q) {
-		if (*p != (u_char)mopts.chunk_canaries && *p != SOME_JUNK) {
+		if (*p != (u_char)mopts.chunk_canaries) {
 			wrterror(d, "canary corrupted %p[%tu]@%zu/%zu%s",
 			    ptr, p - ptr, sz, allocated,
 			    *p == SOME_FREEJUNK ? " (double free?)" : "");
@@ -1363,7 +1364,8 @@ omalloc(struct dir_info *pool, size_t sz, int zero_fill)
 				else
 					memset(p, SOME_JUNK,
 					    psz - mopts.malloc_guard);
-			} else if (mopts.chunk_canaries)
+			}
+			if (mopts.chunk_canaries)
 				fill_canary(p, sz - mopts.malloc_guard,
 				    psz - mopts.malloc_guard);
 		}
@@ -2276,7 +2278,8 @@ omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill)
 			    SOME_JUNK, psz - sz);
 		else
 			memset(p, SOME_JUNK, psz - mopts.malloc_guard);
-	} else if (mopts.chunk_canaries)
+	}
+	if (mopts.chunk_canaries)
 		fill_canary(p, sz - mopts.malloc_guard,
 		    psz - mopts.malloc_guard);
 
