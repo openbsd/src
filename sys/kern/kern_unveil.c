@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.58 2026/10/22 02:13:40 dgl Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.59 2026/11/04 08:00:52 dgl Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -647,6 +647,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 	struct process *pr = p->p_p;
 	struct unveil *uv = NULL, *nuv;
 	struct unvname *tname = NULL;
+	size_t nvisited = 0;
 
 	if (ni->ni_pledge == PLEDGE_UNVEIL || pr->ps_uvpaths == NULL)
 		return (0);
@@ -754,6 +755,8 @@ done:
 	 * access is allowed or not.
 	 */
 	for (uv = ni->ni_unveil_match; uv != NULL; uv = nuv) {
+		if (nvisited++ >= pr->ps_uvvcount)
+			break;
 		if (unveil_flagmatch(ni, uv->uv_flags)) {
 			DPRINTF("unveil: %s(%d): matched \"%s\" underneath/at "
 			    "vnode %p\n", pr->ps_comm, pr->ps_pid,
