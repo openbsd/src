@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1248 2026/11/04 11:26:05 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1249 2026/11/04 15:55:04 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1710,6 +1710,10 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 		    ntohl(sp->creatorid));
 		return (EINVAL);
 	}
+
+	if ((ntohs(sp->state_flags) & PFSTATE_SETPRIO) &&
+	    (sp->set_prio[0] > IFQ_MAXPRIO || sp->set_prio[1] > IFQ_MAXPRIO))
+		return (EINVAL);
 
 	if ((kif = pfi_kif_get(sp->ifname, NULL)) == NULL) {
 		DPFPRINTF(LOG_NOTICE, "%s: unknown interface: %s", __func__,
