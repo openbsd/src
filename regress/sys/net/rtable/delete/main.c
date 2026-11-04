@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2025/07/10 05:28:13 dlg Exp $ */
+/*	$OpenBSD: main.c,v 1.10 2026/11/04 09:00:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -33,7 +33,7 @@
 
 #include "util.h"
 
-extern struct rtable *rtable_get(unsigned int, sa_family_t);
+extern struct rtidx *rtable_get(unsigned int, sa_family_t);
 
 __dead void
 usage(void)
@@ -61,11 +61,11 @@ main(int argc, char *argv[])
 
 	rtable_walk(0, AF_INET6, NULL, rtentry_dump, NULL);
 
-	struct rtable *tbl;
-	tbl = rtable_get(0, AF_INET6);
-	assert(tbl != NULL);
+	struct rtidx *ri;
+	ri = rtable_get(0, AF_INET6);
+	assert(ri != NULL);
 	struct art *art;
-	art = tbl->r_art;
+	art = ri->r_art;
 	assert(art != NULL);
 	assert(art->art_root == NULL);
 
