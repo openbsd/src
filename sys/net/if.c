@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.767 2026/10/24 15:47:07 miod Exp $	*/
+/*	$OpenBSD: if.c,v 1.768 2026/11/04 08:51:51 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -128,8 +128,8 @@
 void	if_attachsetup(struct ifnet *);
 void	if_attach_common(struct ifnet *);
 void	if_remove(struct ifnet *);
-int	if_createrdomain(int, struct ifnet *);
-int	if_setrdomain(struct ifnet *, int);
+int	if_createrdomain(struct ifnet *, unsigned int);
+int	if_setrdomain(struct ifnet *, unsigned int);
 void	if_slowtimo(void *);
 
 void	if_detached_qstart(struct ifqueue *);
@@ -1390,7 +1390,7 @@ if_isconnected(const struct ifnet *ifp0, unsigned int ifidx)
  * Create a clone network interface.
  */
 int
-if_clone_create(const char *name, int rdomain)
+if_clone_create(const char *name, unsigned int rdomain)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
@@ -2021,7 +2021,7 @@ if_setlladdr(struct ifnet *ifp, const uint8_t *lladdr)
 }
 
 int
-if_createrdomain(int rdomain, struct ifnet *ifp)
+if_createrdomain(struct ifnet *ifp, unsigned int rdomain)
 {
 	int error;
 	struct ifnet *loifp;
@@ -2043,29 +2043,26 @@ if_createrdomain(int rdomain, struct ifnet *ifp)
 		return (error);
 	}
 
-	rtable_l2set(rdomain, rdomain, loifp->if_index);
 	loifp->if_rdomain = rdomain;
+	rtable_l2set(rdomain, rdomain, loifp->if_index);
 	if_put(loifp);
 
 	return (0);
 }
 
 int
-if_setrdomain(struct ifnet *ifp, int rdomain)
+if_setrdomain(struct ifnet *ifp, unsigned int rdomain)
 {
 	struct ifreq ifr;
 	int error, up = 0, s;
 
-	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
-		return (EINVAL);
+	if (!rtable_exists(rdomain))
+		return (ESRCH);
 
 	if (rdomain != ifp->if_rdomain &&
 	    (ifp->if_flags & IFF_LOOPBACK) &&
 	    (ifp->if_index == rtable_loindex(ifp->if_rdomain)))
 		return (EPERM);
-
-	if (!rtable_exists(rdomain))
-		return (ESRCH);
 
 	/* make sure that the routing table is a real rdomain */
 	if (rdomain != rtable_l2(rdomain))
@@ -2377,7 +2374,11 @@ forceup:
 	case SIOCSIFRDOMAIN:
 		if ((error = suser(p)) != 0)
 			break;
-		error = if_createrdomain(ifr->ifr_rdomainid, ifp);
+		if (ifr->ifr_rdomainid < 0) {
+			error = EINVAL;
+			break;
+		}
+		error = if_createrdomain(ifp, ifr->ifr_rdomainid);
 		if (!error || error == EEXIST) {
 			NET_LOCK();
 			error = if_setrdomain(ifp, ifr->ifr_rdomainid);

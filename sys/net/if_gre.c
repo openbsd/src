@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.192 2025/11/21 04:44:26 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.193 2026/11/04 08:51:51 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2159,7 +2159,6 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
 			break;
@@ -2713,7 +2712,6 @@ nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
 			break;
@@ -2909,7 +2907,6 @@ eoip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
 			break;
@@ -4724,7 +4721,6 @@ erspan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
 			break;

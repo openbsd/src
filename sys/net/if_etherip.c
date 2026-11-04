@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.59 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.60 2026/11/04 08:51:51 claudio Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -289,7 +289,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
 			break;

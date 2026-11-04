@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.21 2025/11/27 03:06:59 dlg Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.22 2026/11/04 08:51:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -402,7 +402,6 @@ mpip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid) ||
 		    ifr->ifr_rdomainid != rtable_l2(ifr->ifr_rdomainid)) {
 			error = EINVAL;

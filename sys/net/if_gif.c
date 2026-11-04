@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.141 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.142 2026/11/04 08:51:51 claudio Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -509,7 +509,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.451 2026/04/22 15:17:43 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.452 2026/11/04 08:51:52 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -147,8 +147,6 @@
 
 /* Give some jitter to hash, to avoid synchronization between routers. */
 static uint32_t		rt_hashjitter;
-
-extern unsigned int	rtmap_limit;
 
 struct cpumem	*rtcounters;
 int		 rttrash;	/* [a] routes not in table but not freed */
@@ -1464,9 +1462,10 @@ rt_ifa_purge(struct ifaddr *ifa)
 
 	KASSERT(ifp != NULL);
 
-	for (rtableid = 0; rtableid < rtmap_limit; rtableid++) {
+	for (rtableid = 0; rtableid <= rt_tableid_max; rtableid++) {
 		/* skip rtables that are not in the rdomain of the ifp */
-		if (rtable_l2(rtableid) != ifp->if_rdomain)
+		if (!rtable_exists(rtableid) ||
+		    rtable_l2(rtableid) != ifp->if_rdomain)
 			continue;
 
 		do {
@@ -1886,9 +1885,10 @@ rt_if_track(struct ifnet *ifp)
 	struct rtentry *rt = NULL;
 	int i, error = 0;
 
-	for (rtableid = 0; rtableid < rtmap_limit; rtableid++) {
+	for (rtableid = 0; rtableid <= rt_tableid_max; rtableid++) {
 		/* skip rtables that are not in the rdomain of the ifp */
-		if (rtable_l2(rtableid) != ifp->if_rdomain)
+		if (!rtable_exists(rtableid) ||
+		    rtable_l2(rtableid) != ifp->if_rdomain)
 			continue;
 		for (i = 1; i <= AF_MAX; i++) {
 			if (!rtable_mpath_capable(rtableid, i))

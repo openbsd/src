@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.79 2022/08/29 07:51:45 bluhm Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.80 2026/11/04 08:51:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -33,6 +33,7 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+#include <net/rtable.h>
 
 struct ifnet			**enc_ifps;	/* rdomain-mapped enc ifs */
 u_int				  enc_max_rdomain;
@@ -216,8 +217,6 @@ enc_getif(u_int rdomain, u_int unit)
 	/* Otherwise return the default enc interface for this rdomain */
 	if (enc_ifps == NULL)
 		return (NULL);
-	else if (rdomain > RT_TABLEID_MAX)
-		return (NULL);
 	else if (rdomain > enc_max_rdomain)
 		return (NULL);
 	return (enc_ifps[rdomain]);
@@ -255,7 +254,7 @@ enc_setif(struct ifnet *ifp, u_int rdomain)
 	if (enc_getif(rdomain, 0) != NULL)
 		return (0);
 
-	if (rdomain > RT_TABLEID_MAX)
+	if (!rtable_exists(rdomain))
 		return (EINVAL);
 
 	if (enc_ifps == NULL || rdomain > enc_max_rdomain) {

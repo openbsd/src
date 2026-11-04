@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.36 2026/04/23 01:28:03 jsg Exp $ */
+/*	$OpenBSD: art.c,v 1.37 2026/11/04 08:51:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -195,6 +195,12 @@ art_alloc(unsigned int alen)
 	art_init(art, alen);
 
 	return (art);
+}
+
+void
+art_free(struct art *art)
+{
+	free(art, M_RTABLE, sizeof(*art));
 }
 
 /*

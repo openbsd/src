@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.109 2025/11/29 10:29:48 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.110 2026/11/04 08:51:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -391,7 +391,6 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid) ||
 		    ifr->ifr_rdomainid != rtable_l2(ifr->ifr_rdomainid)) {
 			error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.435 2026/11/03 16:54:42 miod Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.436 2026/11/04 08:51:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2983,8 +2983,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    PF_AZERO(&pnl->daddr, pnl->af) ||
 		    ((pnl->proto == IPPROTO_TCP ||
 		    pnl->proto == IPPROTO_UDP) &&
-		    (!pnl->dport || !pnl->sport)) ||
-		    pnl->rdomain > RT_TABLEID_MAX)
+		    (!pnl->dport || !pnl->sport)))
 			error = EINVAL;
 		else {
 			key.af = pnl->af;
@@ -4140,8 +4139,7 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 	if (to->rtableid >= 0 && !rtable_exists(to->rtableid))
 		return (EBUSY);
 	to->onrdomain = from->onrdomain;
-	if (to->onrdomain != -1 && (to->onrdomain < 0 ||
-	    to->onrdomain > RT_TABLEID_MAX))
+	if (to->onrdomain != -1 && to->onrdomain < 0)
 		return (EINVAL);
 
 	for (i = 0; i < PFTM_MAX; i++)

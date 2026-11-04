@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.29 2026/04/23 01:28:03 jsg Exp $ */
+/* $OpenBSD: art.h,v 1.30 2026/11/04 08:51:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -133,6 +133,7 @@ art_heap_to_heap_entry(art_heap_entry *heap)
 #ifdef _KERNEL
 void		 art_boot(void);
 struct art	*art_alloc(unsigned int);
+void		 art_free(struct art *);
 void		 art_init(struct art *, unsigned int);
 struct art_node *art_insert(struct art *, struct art_node *);
 struct art_node *art_delete(struct art *, const void *, unsigned int);
