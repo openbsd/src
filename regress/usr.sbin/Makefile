@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2022/09/17 09:30:18 kn Exp $
+#	$OpenBSD: Makefile,v 1.34 2026/11/04 15:43:31 op Exp $
 
 SUBDIR += acme-client
 SUBDIR += arp
@@ -14,6 +14,7 @@ SUBDIR += ospfd
 SUBDIR += ospf6d
 SUBDIR += relayd
 SUBDIR += rpki-client
+SUBDIR += smtpd
 SUBDIR += snmpd
 SUBDIR += syslogd
 
