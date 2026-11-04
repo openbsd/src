@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1247 2026/10/29 16:50:23 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1248 2026/11/04 11:26:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2271,7 +2271,6 @@ pf_free_state(struct pf_state *st)
 			pf_rm_rule(NULL, ri->r);
 		pool_put(&pf_rule_item_pl, ri);
 	}
-	pf_normalize_tcp_cleanup(st);
 	pfi_kif_unref(st->kif, PFI_KIF_REF_STATE);
 	pf_state_list_remove(&pf_state_list, st);
 	if (st->tag)
@@ -9142,6 +9141,7 @@ pf_state_unref(struct pf_state *st)
 		KASSERT((TAILQ_NEXT(st, entry_list) == NULL) ||
 		    (TAILQ_NEXT(st, entry_list) == _Q_INVALID));
 
+		pf_normalize_tcp_cleanup(st);
 		pf_state_key_unref(st->key[PF_SK_WIRE]);
 		pf_state_key_unref(st->key[PF_SK_STACK]);
 
