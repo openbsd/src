@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.51 2026/07/12 22:06:01 kirill Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.52 2026/11/05 18:21:48 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -166,7 +166,19 @@ sys_msgctl(struct proc *p, void *v, register_t *retval)
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_R)))
 			goto out;
-		error = copyout(&que->msqid_ds, umsq, sizeof(struct msqid_ds));
+
+		memset(&tmp, 0, sizeof(tmp));
+		tmp.msg_perm = que->msqid_ds.msg_perm;
+		tmp.msg_cbytes = que->msqid_ds.msg_cbytes;
+		tmp.msg_qnum = que->msqid_ds.msg_qnum;
+		tmp.msg_qbytes = que->msqid_ds.msg_qbytes;
+		tmp.msg_lspid = que->msqid_ds.msg_lspid;
+		tmp.msg_lrpid = que->msqid_ds.msg_lrpid;
+		tmp.msg_stime = que->msqid_ds.msg_stime;
+		tmp.msg_rtime = que->msqid_ds.msg_rtime;
+		tmp.msg_ctime = que->msqid_ds.msg_ctime;
+
+		error = copyout(&tmp, umsq, sizeof(*umsq));
 		break;
 
 	default:
@@ -732,9 +744,19 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 		 * exported the array indices and userland has come to rely
 		 * upon these indices, so keep behavior consistent.
 		 */
-		TAILQ_FOREACH(que, &msg_queues, que_next)
-			memcpy(&info->msgids[que->que_ix], &que->msqid_ds,
-			    sizeof(struct msqid_ds));
+		TAILQ_FOREACH(que, &msg_queues, que_next) {
+			struct msqid_ds *tmp = &info->msgids[que->que_ix];
+
+			tmp->msg_perm = que->msqid_ds.msg_perm;
+			tmp->msg_cbytes = que->msqid_ds.msg_cbytes;
+			tmp->msg_qnum = que->msqid_ds.msg_qnum;
+			tmp->msg_qbytes = que->msqid_ds.msg_qbytes;
+			tmp->msg_lspid = que->msqid_ds.msg_lspid;
+			tmp->msg_lrpid = que->msqid_ds.msg_lrpid;
+			tmp->msg_stime = que->msqid_ds.msg_stime;
+			tmp->msg_rtime = que->msqid_ds.msg_rtime;
+			tmp->msg_ctime = que->msqid_ds.msg_ctime;
+		}
 		KERNEL_UNLOCK();
 
 		error = copyout(info, where, infolen);
