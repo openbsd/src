@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.81 2026/06/23 14:40:40 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.82 2026/11/05 15:47:44 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1104,7 +1104,11 @@ vio_stop(struct ifnet *ifp, int disable)
 		mtx_leave(&sc->sc_q[i].viq_rxmtx);
 	}
 
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
+	/*
+	 * We cannot use virtio_has_feature() between virtio_reset and
+	 * virtio_reinit_start()
+	 */
+	if (sc->sc_ctl_vq != NULL)
 		vio_ctrl_wakeup(sc, RESET);
 	vio_tx_drain(sc);
 	if (disable)
@@ -1118,10 +1122,10 @@ vio_stop(struct ifnet *ifp, int disable)
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		virtio_start_vq_intr(vsc, sc->sc_ctl_vq);
 	virtio_reinit_end(vsc);
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ))
-		vio_ctrl_mq(sc);
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		vio_ctrl_wakeup(sc, FREE);
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ))
+		vio_ctrl_mq(sc);
 }
 
 static inline uint16_t
