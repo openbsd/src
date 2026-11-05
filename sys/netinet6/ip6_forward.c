@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.130 2026/06/23 15:45:00 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.131 2026/11/05 19:07:35 claudio Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -319,6 +319,7 @@ reroute:
 	    ISSET(flags, IPV6_FORWARDING_IPSEC) &&
 	    !ISSET(m->m_pkthdr.ph_tagsset, PACKET_TAG_IPSEC_IN_DONE)) {
 		error = EHOSTUNREACH;
+		m_freem(m);
 		goto senderr;
 	}
 #endif
