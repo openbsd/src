@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.168 2026/07/16 12:21:40 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.169 2026/11/05 13:22:47 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			return (EMSGSIZE);
 		}
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-		if (!m)
+		if (m == NULL)
 			return (ENOBUFS);
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = inp->inp_ip.ip_tos;
@@ -310,8 +310,10 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 
 	if (ip->ip_src.s_addr == INADDR_ANY) {
 		error = in_pcbselsrc(&ip->ip_src, dst, inp);
-		if (error != 0)
+		if (error != 0) {
+			m_freem(m);
 			return (error);
+		}
 	}
 
 #ifdef INET6
