@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.67 2026/05/08 06:35:47 renaud Exp $	*/
+/*	$OpenBSD: pch.c,v 1.68 2026/11/05 11:17:38 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -622,82 +622,81 @@ another_hunk(void)
 				p_max = hunkmax;
 				break;
 			case '-':
-				if (buf[1] == '-') {
-					if (repl_beginning ||
-					    (p_end != p_ptrn_lines + 1 +
-					    (p_char[p_end - 1] == '\n'))) {
-						if (p_end == 1) {
-							/*
-							 * `old' lines were omitted;
-							 * set up to fill them in
-							 * from 'new' context lines.
-							 */
-							p_end = p_ptrn_lines + 1;
-							fillsrc = p_end + 1;
-							filldst = 1;
-							fillcnt = p_ptrn_lines;
-						} else {
-							if (repl_beginning) {
-								if (repl_could_be_missing) {
-									repl_missing = true;
-									goto hunk_done;
-								}
-								fatal("duplicate \"---\" at line %ld--check line numbers at line %ld\n",
-								    p_input_line, p_hunk_beg + repl_beginning);
-							} else {
-								fatal("%s \"---\" at line %ld--check line numbers at line %ld\n",
-								    (p_end <= p_ptrn_lines
-								    ? "Premature"
-								    : "Overdue"),
-								    p_input_line, p_hunk_beg);
+				if (buf[1] != '-')
+					goto change_line;
+				if (repl_beginning ||
+				    (p_end != p_ptrn_lines + 1 +
+					(p_char[p_end - 1] == '\n'))) {
+					if (p_end == 1) {
+						/*
+						 * `old' lines were omitted;
+						 * set up to fill them in
+						 * from 'new' context lines.
+						 */
+						p_end = p_ptrn_lines + 1;
+						fillsrc = p_end + 1;
+						filldst = 1;
+						fillcnt = p_ptrn_lines;
+					} else {
+						if (repl_beginning) {
+							if (repl_could_be_missing) {
+								repl_missing = true;
+								goto hunk_done;
 							}
+							fatal("duplicate \"---\" at line %ld--check line numbers at line %ld\n",
+							    p_input_line, p_hunk_beg + repl_beginning);
+						} else {
+							fatal("%s \"---\" at line %ld--check line numbers at line %ld\n",
+							    (p_end <= p_ptrn_lines
+								? "Premature"
+								: "Overdue"),
+							    p_input_line, p_hunk_beg);
 						}
 					}
-					repl_beginning = p_end;
-					repl_backtrack_position = ftello(pfp);
-					repl_patch_line = p_input_line;
-					p_line[p_end] = savestr(buf);
-					if (out_of_mem) {
-						p_end--;
-						return false;
-					}
-					p_char[p_end] = '=';
-					for (s = buf;
-					    *s && !isdigit((unsigned char)*s); s++)
+				}
+				repl_beginning = p_end;
+				repl_backtrack_position = ftello(pfp);
+				repl_patch_line = p_input_line;
+				p_line[p_end] = savestr(buf);
+				if (out_of_mem) {
+					p_end--;
+					return false;
+				}
+				p_char[p_end] = '=';
+				for (s = buf;
+				     *s && !isdigit((unsigned char)*s); s++)
+					;
+				if (!*s)
+					malformed();
+				p_newfirst = strtolinenum(s, &s);
+				if (*s == ',') {
+					for (; *s && !isdigit((unsigned char)*s); s++)
 						;
 					if (!*s)
 						malformed();
-					p_newfirst = strtolinenum(s, &s);
-					if (*s == ',') {
-						for (; *s && !isdigit((unsigned char)*s); s++)
-							;
-						if (!*s)
-							malformed();
-						p_repl_lines = strtolinenum(s, &s) -
-						    p_newfirst + 1;
-						if (p_repl_lines < 0)
-							malformed();
-					} else if (p_newfirst)
-						p_repl_lines = 1;
-					else {
-						p_repl_lines = 0;
-						p_newfirst = 1;
-					}
-					if (p_newfirst >= LINENUM_MAX - p_repl_lines ||
-					    p_repl_lines >= LINENUM_MAX - p_end)
+					p_repl_lines = strtolinenum(s, &s) -
+						p_newfirst + 1;
+					if (p_repl_lines < 0)
 						malformed();
-					p_max = p_repl_lines + p_end;
-					if (p_max > MAXHUNKSIZE)
-						fatal("hunk too large (%ld lines) at line %ld: %s",
-						    p_max, p_input_line, buf);
-					while (p_max >= hunkmax)
-						grow_hunkmax();
-					if (p_repl_lines != ptrn_copiable &&
-					    (p_context != 0 || p_repl_lines != 1))
-						repl_could_be_missing = false;
-					break;
+				} else if (p_newfirst)
+					p_repl_lines = 1;
+				else {
+					p_repl_lines = 0;
+					p_newfirst = 1;
 				}
-				goto change_line;
+				if (p_newfirst >= LINENUM_MAX - p_repl_lines ||
+				    p_repl_lines >= LINENUM_MAX - p_end)
+					malformed();
+				p_max = p_repl_lines + p_end;
+				if (p_max > MAXHUNKSIZE)
+					fatal("hunk too large (%ld lines) at line %ld: %s",
+					    p_max, p_input_line, buf);
+				while (p_max >= hunkmax)
+					grow_hunkmax();
+				if (p_repl_lines != ptrn_copiable &&
+				    (p_context != 0 || p_repl_lines != 1))
+					repl_could_be_missing = false;
+				break;
 			case '+':
 			case '!':
 				repl_could_be_missing = false;
