@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.68 2026/05/25 01:56:50 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.69 2026/11/05 17:12:38 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -300,9 +300,6 @@ void	savectx		(struct pcb *pcb);
 
 /* machdep.h */
 void bootsync		(int);
-
-/* fault.c */
-int badaddr_read	(void *, size_t, void *);
 
 /* syscall.c */
 void swi_handler	(trapframe_t *);

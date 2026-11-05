@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.11 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.12 2026/11/05 17:12:38 miod Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -684,79 +684,4 @@ ENTRY(kcopy)
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
-	mov	pc, lr
-
-/*
- * int badaddr_read_1(const uint8_t *src, uint8_t *dest)
- *
- * Copies a single 8-bit value from src to dest, returning 0 on success,
- * else EFAULT if a page fault occurred.
- */
-ENTRY(badaddr_read_1)
-	/* Get curcpu from TPIDRPRW. */
-	mrc	CP15_TPIDRPRW(r2)
-	ldr	r2, [r2, #CI_CURPCB]
-	ldr	ip, [r2, #PCB_ONFAULT]
-	adr	r3, 1f
-	str	r3, [r2, #PCB_ONFAULT]
-	nop
-	nop
-	nop
-	ldrb	r3, [r0]
-	nop
-	nop
-	nop
-	strb	r3, [r1]
-	mov	r0, #0		/* No fault */
-1:	str	ip, [r2, #PCB_ONFAULT]
-	mov	pc, lr
-
-/*
- * int badaddr_read_2(const uint16_t *src, uint16_t *dest)
- *
- * Copies a single 16-bit value from src to dest, returning 0 on success,
- * else EFAULT if a page fault occurred.
- */
-ENTRY(badaddr_read_2)
-	/* Get curcpu from TPIDRPRW. */
-	mrc	CP15_TPIDRPRW(r2)
-	ldr	r2, [r2, #CI_CURPCB]
-	ldr	ip, [r2, #PCB_ONFAULT]
-	adr	r3, 1f
-	str	r3, [r2, #PCB_ONFAULT]
-	nop
-	nop
-	nop
-	ldrh	r3, [r0]
-	nop
-	nop
-	nop
-	strh	r3, [r1]
-	mov	r0, #0		/* No fault */
-1:	str	ip, [r2, #PCB_ONFAULT]
-	mov	pc, lr
-
-/*
- * int badaddr_read_4(const uint32_t *src, uint32_t *dest)
- *
- * Copies a single 32-bit value from src to dest, returning 0 on success,
- * else EFAULT if a page fault occurred.
- */
-ENTRY(badaddr_read_4)
-	/* Get curcpu from TPIDRPRW. */
-	mrc	CP15_TPIDRPRW(r2)
-	ldr	r2, [r2, #CI_CURPCB]
-	ldr	ip, [r2, #PCB_ONFAULT]
-	adr	r3, 1f
-	str	r3, [r2, #PCB_ONFAULT]
-	nop
-	nop
-	nop
-	ldr	r3, [r0]
-	nop
-	nop
-	nop
-	str	r3, [r1]
-	mov	r0, #0		/* No fault */
-1:	str	ip, [r2, #PCB_ONFAULT]
 	mov	pc, lr

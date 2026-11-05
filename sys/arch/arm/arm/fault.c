@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.49 2026/03/08 17:07:31 deraadt Exp $	*/
+/*	$OpenBSD: fault.c,v 1.50 2026/11/05 17:12:38 miod Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -594,52 +594,4 @@ prefetch_abort_handler(trapframe_t *tf)
 
 out:
 	userret(p);
-}
-
-/*
- * Tentatively read an 8, 16, or 32-bit value from 'addr'.
- * If the read succeeds, the value is written to 'rptr' and zero is returned.
- * Else, return EFAULT.
- */
-int
-badaddr_read(void *addr, size_t size, void *rptr)
-{
-	extern int badaddr_read_1(const uint8_t *, uint8_t *);
-	extern int badaddr_read_2(const uint16_t *, uint16_t *);
-	extern int badaddr_read_4(const uint32_t *, uint32_t *);
-	union {
-		uint8_t v1;
-		uint16_t v2;
-		uint32_t v4;
-	} u;
-	int rv;
-
-	cpu_drain_writebuf();
-
-	/* Read from the test address. */
-	switch (size) {
-	case sizeof(uint8_t):
-		rv = badaddr_read_1(addr, &u.v1);
-		if (rv == 0 && rptr)
-			*(uint8_t *) rptr = u.v1;
-		break;
-
-	case sizeof(uint16_t):
-		rv = badaddr_read_2(addr, &u.v2);
-		if (rv == 0 && rptr)
-			*(uint16_t *) rptr = u.v2;
-		break;
-
-	case sizeof(uint32_t):
-		rv = badaddr_read_4(addr, &u.v4);
-		if (rv == 0 && rptr)
-			*(uint32_t *) rptr = u.v4;
-		break;
-
-	default:
-		panic("badaddr: invalid size (%lu)", (u_long) size);
-	}
-
-	/* Return EFAULT if the address was invalid, else zero */
-	return (rv);
 }
