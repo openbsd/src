@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.20 2026/10/27 01:38:20 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.21 2026/11/05 07:54:52 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2025, 2026
@@ -502,6 +502,8 @@ enum rge_mac_type {
 #define RGE_JUMBO_MTU							\
 	(RGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN - 		\
 	ETHER_VLAN_ENCAP_LEN)
+#define RGE_MIN_FRAMELEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
+#define RGE_MIN_PATCHLEN	47	/* Vendor magic */
 
 #define RGE_TXCFG_CONFIG	0x03000700
 #define RGE_RXCFG_CONFIG	0x41000700

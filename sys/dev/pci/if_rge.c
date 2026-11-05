@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.48 2026/10/27 01:38:20 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.49 2026/11/05 07:54:52 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2026
@@ -35,10 +35,16 @@
 #include <net/toeplitz.h>
 
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/udp.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -95,7 +101,8 @@ void		rge_free_rx_ring(struct rge_softc *, struct rge_queues *);
 void		rge_free_tx_ring(struct rge_softc *, struct rge_queues *);
 void		rge_rxcsum(struct rge_softc *, uint32_t, uint32_t,
 		    struct mbuf *);
-void		rge_tx_offload(struct mbuf *, uint32_t *, uint32_t *);
+int		rge_tx_offload(struct rge_softc *, struct mbuf *, uint32_t *,
+		    uint32_t *);
 int		rge_rxeof(struct rge_queues *);
 int		rge_txeof(struct rge_queues *);
 int		rge_reset(struct rge_softc *);
@@ -162,6 +169,11 @@ void		rge_wol_power(struct rge_softc *);
 
 #if NKSTAT > 0
 void		rge_kstat_attach(struct rge_softc *);
+#endif
+
+void		in_delayed_cksum(struct mbuf *);
+#ifdef INET6
+void		in6_delayed_cksum(struct mbuf *, uint8_t);
 #endif
 
 const struct cfattach rge_ca = {
@@ -683,6 +695,9 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 	caddr_t if_bpf;
 #endif
 
+	if (rge_tx_offload(sc, m, &cflags, &tflags))
+		return (0);
+
 	txq = &q->q_tx.rge_txq[idx];
 	txmap = txq->txq_dmamap;
 
@@ -709,8 +724,6 @@ rge_encap(struct ifnet *ifp, struct rge_queues *q, struct mbuf *m, int idx)
 
 	bus_dmamap_sync(sc->sc_dmat, txmap, 0, txmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
-
-	rge_tx_offload(m, &cflags, &tflags);
 
 	cur = idx;
 	for (i = 1; i < txmap->dm_nsegs; i++) {
@@ -1794,11 +1807,15 @@ rge_rxcsum(struct rge_softc *sc, uint32_t cmdsts, uint32_t extsts,
 	}
 }
 
-void
-rge_tx_offload(struct mbuf *m, uint32_t *cflags, uint32_t *tflags)
+int
+rge_tx_offload(struct rge_softc *sc, struct mbuf *m, uint32_t *cflags,
+    uint32_t *tflags)
 {
 	struct ether_extracted ext;
 	uint32_t hdrlen;
+	uint16_t port;
+	uint8_t proto = 0;
+	int udplen, totlen, padlen = 0;
 
 	/* Set up hardware VLAN tagging. */
 #if NVLAN > 0
@@ -1808,6 +1825,94 @@ rge_tx_offload(struct mbuf *m, uint32_t *cflags, uint32_t *tflags)
 
 	ether_extract_headers(m, &ext);
 	hdrlen = sizeof(*ext.eh) + ext.iphlen;
+	totlen = m->m_pkthdr.len;
+
+	/*
+	 * Workaround for a bug in RTL8125/RTL8125B.
+	 * The chip hangs when a short UDP frame reads port 319 or 320
+	 * with fewer than 47 bytes of data.
+	 */
+	if ((sc->rge_type == MAC_R25 || sc->rge_type == MAC_R25B) &&
+	    totlen < 128 + RGE_MIN_PATCHLEN) {
+		if (ext.ip4)
+			proto = ext.ip4->ip_p;
+#ifdef INET6
+		else if (ext.ip6)
+			proto = ext.ip6->ip6_nxt;
+#endif
+		if (proto == IPPROTO_UDP) {
+			udplen = totlen - hdrlen;
+			if (udplen > 3 && udplen < RGE_MIN_PATCHLEN) {
+				m_copydata(m,
+				    hdrlen + offsetof(struct udphdr, uh_dport),
+				    sizeof(port), &port);
+				port = ntohs(port);
+				if (port == 319 || port == 320)
+					padlen = RGE_MIN_PATCHLEN - udplen;
+			}
+			if (udplen < sizeof(struct udphdr))
+				padlen = MAX(padlen,
+				    sizeof(struct udphdr) - udplen);
+		}
+	}
+
+	/*
+	 * MAC does not checksum transmit packets that are fewer than
+	 * 60 bytes correctly.
+	 */
+	if (totlen + padlen < RGE_MIN_FRAMELEN)
+		padlen = RGE_MIN_FRAMELEN - totlen;
+
+	if (padlen > 0) {
+		struct mbuf *n;
+
+		if (m->m_pkthdr.csum_flags &
+		    (M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) {
+			struct mbuf mh, *mp;
+			int off;
+
+			mp = m_getptr(m, sizeof(*ext.eh), &off);
+			if (mp == NULL)
+				return (EINVAL);
+
+			mh.m_flags = 0;
+			mh.m_data = mtod(mp, caddr_t) + off;
+			mh.m_next = mp->m_next;
+			mh.m_pkthdr.len = totlen - sizeof(*ext.eh);
+			mh.m_len = mp->m_len - off;
+
+			if (ext.ip4) {
+				if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+					ext.ip4->ip_sum = in_cksum(&mh,
+					    ext.iphlen);
+				if (m->m_pkthdr.csum_flags &
+				    (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+					in_delayed_cksum(&mh);
+			}
+#ifdef INET6
+			else if (ext.ip6) {
+				if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+					in6_delayed_cksum(&mh, IPPROTO_TCP);
+				else if (m->m_pkthdr.csum_flags &
+				    M_UDP_CSUM_OUT)
+					in6_delayed_cksum(&mh, IPPROTO_UDP);
+			}
+#endif
+
+			m->m_pkthdr.csum_flags &=
+			    ~(M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT |
+			    M_UDP_CSUM_OUT);
+		}
+
+		MGET(n, M_DONTWAIT, MT_DATA);
+		if (n == NULL)
+			return (ENOBUFS);
+
+		memset(mtod(n, caddr_t), 0, padlen);
+		n->m_len = padlen;
+		m_cat(m, n);
+		m->m_pkthdr.len += padlen;
+	}
 
 	if (m->m_pkthdr.csum_flags & M_TCP_TSO) {
 		uint32_t outlen;
@@ -1839,6 +1944,8 @@ rge_tx_offload(struct mbuf *m, uint32_t *cflags, uint32_t *tflags)
 		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 			*cflags |= RGE_TDEXTSTS_UDPCSUM;
 	}
+
+	return (0);
 }
 
 int
