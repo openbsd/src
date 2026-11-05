@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.82 2026/11/05 06:02:11 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.83 2026/11/05 06:04:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -320,7 +320,7 @@ config_settls(struct httpd *env, struct server *srv, enum tls_config_type type,
 	struct server_config	*srv_conf = &srv->srv_conf;
 	struct tls_config	 tls;
 	struct iovec		 iov[2];
-	size_t			 c;
+	size_t			 c, maxchunk;
 
 	if (data == NULL || len == 0)
 		return (0);
@@ -335,10 +335,13 @@ config_settls(struct httpd *env, struct server *srv, enum tls_config_type type,
 	tls.tls_len = len;
 	tls.tls_chunk_offset = 0;
 
+	/* largest chunk that fits next to the header into one imsg */
+	maxchunk = MAX_IMSGSIZE - IMSG_HEADER_SIZE - sizeof(tls);
+
 	while (len > 0) {
 		tls.tls_chunk_len = len;
-		if (tls.tls_chunk_len > (MAX_IMSG_DATA_SIZE - sizeof(tls)))
-			tls.tls_chunk_len = MAX_IMSG_DATA_SIZE - sizeof(tls);
+		if (tls.tls_chunk_len > maxchunk)
+			tls.tls_chunk_len = maxchunk;
 
 		c = 0;
 		iov[c].iov_base = &tls;

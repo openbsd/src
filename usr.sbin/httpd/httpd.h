@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.190 2026/11/05 06:02:11 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.191 2026/11/05 06:04:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -165,7 +165,6 @@ struct imsgev {
 };
 
 #define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
-#define MAX_IMSG_DATA_SIZE	(MAX_IMSGSIZE - IMSG_HEADER_SIZE)
 
 enum imsg_type {
 	IMSG_NONE,
