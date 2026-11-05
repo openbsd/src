@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.46 2021/10/24 21:24:17 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.47 2026/11/05 11:27:33 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -356,6 +356,8 @@ fetchname(const char *at, bool *exists, int strip_leading)
 	if (strnEQ(at, _PATH_DEVNULL, sizeof(_PATH_DEVNULL) - 1))
 		return NULL;
 	name = fullname = t = savestr(at);
+	if (out_of_mem)
+		return NULL;
 
 	tab = strchr(t, '\t') != NULL;
 	/* Strip off up to `strip_leading' path components and NUL terminate. */
@@ -381,6 +383,8 @@ fetchname(const char *at, bool *exists, int strip_leading)
 	}
 	name = savestr(name);
 	free(fullname);
+	if (out_of_mem)
+		return NULL;
 
 	*exists = stat(name, &filestat) == 0;
 	return name;
