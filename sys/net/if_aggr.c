@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.53 2025/12/02 03:50:56 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.54 2026/11/05 05:49:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -679,7 +679,7 @@ aggr_transmit(struct aggr_softc *sc, const struct aggr_map *map, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
-	uint16_t flow = 0;
+	uint16_t flow;
 
 #if NBPFILTER > 0
 	{
@@ -689,8 +689,11 @@ aggr_transmit(struct aggr_softc *sc, const struct aggr_map *map, struct mbuf *m)
 	}
 #endif
 
-	if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
-		flow = m->m_pkthdr.ph_flowid >> AGGR_FLOWID_SHIFT;
+	if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID)) {
+		flow = (sc->sc_mix ^ m->m_pkthdr.ph_flowid) >>
+		    AGGR_FLOWID_SHIFT;
+	} else
+		flow = m->m_pkthdr.ph_ifidx;
 
 	ifp0 = map->m_ifp0s[flow % AGGR_MAX_PORTS];
 
@@ -884,8 +887,11 @@ aggr_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *port,
 	if (__predict_false(!p->p_collecting))
 		goto drop;
 
-	if (!ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
-		m->m_pkthdr.ph_flowid = ifp0->if_index ^ sc->sc_mix;
+	if (!ISSET(m->m_pkthdr.csum_flags, M_FLOWID)) {
+		m->m_pkthdr.ph_flowid =
+		    (ifp0->if_index << AGGR_FLOWID_SHIFT) ^ sc->sc_mix;
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+	}
 
 	if_vinput(ifp, m, ns);
 
