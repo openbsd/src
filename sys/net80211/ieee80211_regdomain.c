@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.c,v 1.10 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.c,v 1.11 2026/11/05 17:15:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -61,8 +61,9 @@ bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
     int (*compar)(const void *, const void *))
 {
 	const char *base = base0;
-	int lim, cmp;
 	const void *p;
+	size_t lim;
+	int cmp;
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
 		p = base + (lim >> 1) * size;
