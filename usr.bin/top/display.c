@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.67 2022/09/10 16:58:51 cheloha Exp $	 */
+/* $OpenBSD: display.c,v 1.68 2026/11/05 17:54:16 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -813,6 +813,7 @@ show_help(void)
 	    "               (o -field sorts in reverse)\n"
 	    "P pid        - highlight process `pid' (P+ switches highlighting off)\n"
 	    "p pid        - display process by `pid' (p+ selects all processes)\n"
+	    "Q            - toggle the display of pledge promises and related state\n"
 	    "q            - quit\n"
 	    "r count pid  - renice process `pid' to nice value `count'\n"
 	    "S            - toggle the display of system processes\n"

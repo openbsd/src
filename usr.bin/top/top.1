@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.83 2025/05/21 02:41:52 schwarze Exp $
+.\"	$OpenBSD: top.1,v 1.84 2026/11/05 17:54:16 kn Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 21 2025 $
+.Dd $Mdocdate: November 5 2026 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm top
 .Bk -words
-.Op Fl 1bCHIinqStu
+.Op Fl 1bCHIinQqStu
 .Op Fl d Ar count
 .Op Fl g Ar string
 .Op Fl o Oo - Oc Ns Ar field
@@ -163,6 +163,17 @@ and
 .It Fl p Ar pid
 Show only the process
 .Ar pid .
+.It Fl Q
+Show
+.Xr pledge 2
+promises and
+.Xr ps 1
+.Cm state
+letters pertaining to use of
+.Xr chroot 2 ,
+.Xr pledge 2
+and
+.Xr unveil 2 .
 .It Fl q
 Renice
 .Nm
@@ -285,6 +296,10 @@ Display a summary of the commands (help screen).
 Redraw the screen.
 .It <space>
 Update the screen.
+.It Q
+Toggle the display of
+.Xr pledge 2
+promises and related state.
 .It q
 Quit
 .Nm .
@@ -480,13 +495,31 @@ if
 is specified.
 .It Li TIME
 The number of system and user CPU seconds that the process has used.
+.It Li PRIV
+.Xr ps 1
+.Cm state
+letters pertaining to use of
+.Xr chroot 2 ,
+.Xr pledge 2
+and
+.Xr unveil 2 ,
+used instead of
+.Li TIME
+if
+.Fl Q
+is specified.
 .It Li CPU
 The raw percentage of CPU usage and the default field on which the
 display is sorted.
 .It Li COMMAND
 The name (and arguments if
 .Fl C
-is specified) of the command that the process is currently running.
+is specified) of the command that the process is currently running
+(and
+.Xr pledge 2
+promises if
+.Fl Q
+is specified).
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width Ev

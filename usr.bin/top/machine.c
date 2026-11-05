@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.113 2023/01/07 05:24:59 guenther Exp $	 */
+/* $OpenBSD: machine.c,v 1.114 2026/11/05 17:54:16 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -34,6 +34,8 @@
  */
 
 #include <sys/param.h>	/* DEV_BSIZE PZERO */
+#define PLEDGENAMES
+#include <sys/pledge.h>
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
@@ -78,6 +80,7 @@ static char header[] =
 /* offsets in the header line to start alternative columns */
 #define UNAME_START 6
 #define RTABLE_START 46
+#define PRIV_START 54
 
 #define Proc_format \
 	"%5d %-8.8s %3d %4d %5s %5s %-9s %-7.7s %6s %5.2f%% %s"
@@ -227,9 +230,10 @@ machine_init(struct statics *statics)
 }
 
 char *
-format_header(char *second_field, char *eighth_field)
+format_header(char *second_field, char *eighth_field, char *nineth_field)
 {
 	char *second_fieldp = second_field, *eighth_fieldp = eighth_field, *ptr;
+	char *nineth_fieldp = nineth_field;
 
 	ptr = header + UNAME_START;
 	while (*second_fieldp != '\0')
@@ -237,6 +241,9 @@ format_header(char *second_field, char *eighth_field)
 	ptr = header + RTABLE_START;
 	while (*eighth_fieldp != '\0')
 		*ptr++ = *eighth_fieldp++;
+	ptr = header + PRIV_START;
+	while (*nineth_fieldp != '\0')
+		*ptr++ = *nineth_fieldp++;
 	return (header);
 }
 
@@ -519,24 +526,40 @@ format_comm(struct kinfo_proc *kp)
 {
 	static char	buf[MAX_COLS];
 	char		**p, **s;
-	extern int	show_args;
+	extern int	show_args, show_pledge;
+
+	buf[0] = '\0';
 
 	if (show_args && (s = get_proc_args(kp)) != NULL) {
-		buf[0] = '\0';
 		for (p = s; *p != NULL; p++) {
 			if (p != s)
 				strlcat(buf, " ", sizeof(buf));
 			strlcat(buf, *p, sizeof(buf));
 		}
-		if (buf[0] != '\0')
-			return buf;
-	}
-	if (kp->p_name[0] != '\0') {
+	} else if (kp->p_name[0] != '\0')
 		snprintf(buf, sizeof buf, "%s/%s", kp->p_comm,
 		    kp->p_name);
+	else
+		strlcat(buf, kp->p_comm, sizeof(buf));
+
+	if (show_pledge && kp->p_psflags & PS_PLEDGE) {
+		int n = 0;
+
+		strlcat(buf, " (", sizeof(buf));
+
+		for (int i = 0; pledgenames[i].bits != 0; i++) {
+			if (pledgenames[i].bits & kp->p_pledge) {
+				if (n++)
+					strlcat(buf, ",", sizeof(buf));
+				strlcat(buf, pledgenames[i].name, sizeof(buf));
+			}
+		}
+
+		strlcat(buf, ")", sizeof(buf));
 		return buf;
 	}
-	return kp->p_comm;
+
+	return buf;
 }
 
 void
@@ -552,7 +575,8 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 	struct kinfo_proc *pp;
 	int cputime;
 	double pct;
-	char second_buf[16], eighth_buf[8];
+	char second_buf[16], eighth_buf[8], nineth_buf[7];
+	extern int show_pledge;
 
 	/* find and remember the next proc structure */
 	pp = *(hndl->next_proc++);
@@ -574,6 +598,27 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 		strlcpy(eighth_buf, pp->p_wmesg[0] ? pp->p_wmesg : "-",
 		    sizeof(eighth_buf));
 
+	if (show_pledge) {
+		char *p = nineth_buf;
+
+		if (pp->p_psflags & PS_PLEDGE)
+			*p++ = 'p';
+		if (pp->p_eflag & EPROC_UNVEIL) {
+			if (pp->p_eflag & EPROC_LKUNVEIL)
+				*p++ = 'U';
+			else
+				*p++ = 'u';
+		}
+		if (pp->p_psflags & PS_CHROOT)
+			*p++ = 'c';
+
+		if (p == nineth_buf)
+			*p++ = '-';
+		*p = '\0';
+	} else
+		snprintf(nineth_buf, sizeof(nineth_buf), "%6s",
+	    format_time(cputime));
+
 	/* format this entry */
 	snprintf(fmt, sizeof(fmt), Proc_format, pp->p_pid, second_buf,
 	    pp->p_priority - PZERO, pp->p_nice - NZERO,
@@ -581,7 +626,7 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 	    format_k(pagetok(pp->p_vm_rssize)),
 	    (pp->p_stat == SSLEEP && pp->p_slptime > maxslp) ?
 	    "idle" : state_abbr(pp),
-	    eighth_buf, format_time(cputime), 100.0 * pct,
+	    eighth_buf, nineth_buf, 100.0 * pct,
 	    printable(format_comm(pp)));
 
 	*pid = pp->p_pid;

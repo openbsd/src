@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.32 2022/09/10 16:58:51 cheloha Exp $	 */
+/* $OpenBSD: machine.h,v 1.33 2026/11/05 17:54:16 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -87,7 +87,7 @@ extern int      display_init(struct statics *);
 
 /* machine.c */
 extern int      machine_init(struct statics *);
-extern char    *format_header(char *, char *);
+extern char    *format_header(char *, char *, char *);
 extern void     get_system_info(struct system_info *);
 extern struct handle
 *get_process_info(struct system_info *, struct process_select *,

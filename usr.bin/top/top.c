@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.110 2026/09/26 15:00:42 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.111 2026/11/05 17:54:16 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -89,6 +89,7 @@ int no_command = true;
 int old_system = false;
 int old_threads = false;
 int show_args = false;
+int show_pledge = false;
 pid_t hlpid = (pid_t)-1;
 int combine_cpus = 0;
 
@@ -135,6 +136,7 @@ struct statics  statics;
 #define CMD_grep2	28
 #define CMD_rtableid	29
 #define CMD_rtable	30
+#define CMD_pledge	31
 
 static void
 usage(void)
@@ -142,7 +144,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-1bCHIinqStu] [-d count] [-g string] [-o [-]field] "
+	    "usage: %s [-1bCHIinQqStu] [-d count] [-g string] [-o [-]field] "
 	    "[-p pid] [-s time]\n\t[-T [-]rtable] [-U [-]user] [number]\n",
 	    __progname);
 }
@@ -242,13 +244,16 @@ parseargs(int ac, char **av)
 	char *endp;
 	int i;
 
-	while ((i = getopt(ac, av, "1SHICbinqus:d:p:U:o:g:T:t")) != -1) {
+	while ((i = getopt(ac, av, "1SHICQbinqus:d:p:U:o:g:T:t")) != -1) {
 		switch (i) {
 		case '1':
 			combine_cpus = 1;
 			break;
 		case 'C':
 			show_args = true;
+			break;
+		case 'Q':
+			show_pledge = true;
 			break;
 		case 'u':	/* toggle uid/username display */
 			do_unames = !do_unames;
@@ -378,6 +383,7 @@ main(int argc, char *argv[])
 	char *header_text, *env_top;
 	char *uname_field = "USERNAME", *thread_field = "     TID";
 	char *wait_field = "WAIT   ", *rtable_field = " RTABLE";
+	char *time_field = "  TIME", *flags_field = "  PRIV";
 	const char *(*get_userid)(uid_t, int) = user_from_uid;
 	char **preset_argv = NULL, **av = argv;
 	int preset_argc = 0, ac = argc, active_procs, i, ncpuonline_now;
@@ -583,7 +589,8 @@ restart:
 		/* get the string to use for the process area header */
 		header_text = format_header(
 		    ps.threads ? thread_field : uname_field,
-		    ps.rtable ? rtable_field : wait_field);
+		    ps.rtable ? rtable_field : wait_field,
+		    show_pledge ? flags_field : time_field);
 
 		/* update the header area */
 		i_header(header_text);
@@ -679,7 +686,7 @@ rundisplay(void)
 	char ch, *iptr;
 	int change, i;
 	struct pollfd pfd[1];
-	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(/Tt";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(/TtQ";
 
 	/*
 	 * assume valid command unless told
@@ -974,6 +981,10 @@ rundisplay(void)
 
 		case CMD_command:
 			show_args = !show_args;
+			break;
+
+		case CMD_pledge:
+			show_pledge = !show_pledge;
 			break;
 
 		case CMD_threads:
