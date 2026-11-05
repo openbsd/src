@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.497 2026/09/19 17:29:23 dgl Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.498 2026/11/05 18:20:53 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -692,6 +692,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	case KERN_TIMEOUT_STATS:
 		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
+#if NPF > 0
+	case KERN_PFSTATUS:
+		return (pf_sysctl(oldp, oldlenp, newp, newlen));
+#endif
 	case KERN_MAXPROC:
 	case KERN_MAXFILES:
 	case KERN_NFILES:
@@ -803,10 +807,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return(0);
 	}
 #endif /* SMALL_KERNEL */
-#if NPF > 0
-	case KERN_PFSTATUS:
-		return (pf_sysctl(oldp, oldlenp, newp, newlen));
-#endif
 	case KERN_CONSDEV:
 		if (cn_tab != NULL)
 			dev = cn_tab->cn_dev;
