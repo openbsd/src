@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.99 2026/11/06 10:22:36 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.100 2026/11/06 10:30:07 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -60,8 +60,6 @@ int	 snmpe_encode(struct snmp_message *);
 
 struct imsgev	*iev_parent;
 static const struct timeval	snmpe_tcp_timeout = { 10, 0 }; /* 10s */
-
-struct snmp_messages snmp_messages = RB_INITIALIZER(&snmp_messages);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT, snmpe_dispatch_parent },
@@ -304,11 +302,6 @@ snmpe_parse(struct snmp_message *msg)
 	struct ber_element	*root = msg->sm_req;
 
 	msg->sm_errstr = "invalid message";
-
-	do {
-		msg->sm_transactionid = arc4random();
-	} while (msg->sm_transactionid == 0 ||
-	    RB_INSERT(snmp_messages, &snmp_messages, msg) != NULL);
 
 	if (ober_scanf_elements(root, "{ie", &ver, &a) != 0)
 		goto parsefail;
@@ -872,8 +865,6 @@ snmpe_response(struct snmp_message *msg)
 void
 snmp_msgfree(struct snmp_message *msg)
 {
-	if (msg->sm_transactionid != 0)
-		RB_REMOVE(snmp_messages, &snmp_messages, msg);
 	event_del(&msg->sm_sockev);
 	ober_free(&msg->sm_ber);
 	if (msg->sm_req != NULL)
@@ -937,12 +928,3 @@ snmpe_encode(struct snmp_message *msg)
 #endif
 	return 0;
 }
-
-int
-snmp_messagecmp(struct snmp_message *m1, struct snmp_message *m2)
-{
-	return (m1->sm_transactionid < m2->sm_transactionid ? -1 :
-	    m1->sm_transactionid > m2->sm_transactionid);
-}
-
-RB_GENERATE(snmp_messages, snmp_message, sm_entry, snmp_messagecmp)
