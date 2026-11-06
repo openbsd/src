@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.253 2026/10/31 10:46:05 op Exp $	*/
+/*	$OpenBSD: lka.c,v 1.254 2026/11/06 12:09:26 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -36,7 +36,7 @@ static void lka_sig_handler(int, short, void *);
 static int lka_authenticate(const char *, const char *, const char *);
 static int lka_credentials(const char *, const char *, char *, size_t);
 static int lka_userinfo(const char *, const char *, struct userinfo *);
-static int lka_addrname(const char *, const struct sockaddr *,
+static int lka_addrname(const char *, const struct sockaddr_storage *,
     struct addrname *);
 static int lka_mailaddrmap(const char *, const char *, const struct mailaddr *);
 
@@ -134,8 +134,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_sockaddr(&m, &ss);
 		m_end(&m);
 
-		ret = lka_addrname(tablename, (struct sockaddr*)&ss,
-		    &addrname);
+		ret = lka_addrname(tablename, &ss, &addrname);
 
 		m_create(p, IMSG_SMTP_LOOKUP_HELO, 0, 0, -1);
 		m_add_id(p, reqid);
@@ -241,8 +240,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_sockaddr(&m, &ss);
 		m_end(&m);
 
-		ret = lka_addrname(tablename, (struct sockaddr*)&ss,
-		    &addrname);
+		ret = lka_addrname(tablename, &ss, &addrname);
 
 		m_create(p, IMSG_MTA_LOOKUP_HELO, 0, 0, -1);
 		m_add_id(p, reqid);
@@ -841,14 +839,14 @@ lka_userinfo(const char *tablename, const char *username, struct userinfo *res)
 }
 
 static int
-lka_addrname(const char *tablename, const struct sockaddr *sa,
+lka_addrname(const char *tablename, const struct sockaddr_storage *ss,
     struct addrname *res)
 {
 	struct table	*table;
 	union lookup	 lk;
 	const char	*source;
 
-	source = sa_to_text(sa);
+	source = ss_to_text(ss);
 
 	log_debug("debug: lka: helo %s:%s", tablename, source);
 	table = table_find(env, tablename);
