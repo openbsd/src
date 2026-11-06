@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.15 2026/06/08 11:52:43 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.16 2026/11/06 12:59:42 beck Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -261,45 +261,6 @@ ssl_kex_derive_dhe(DH *dh, DH *dh_peer,
 
  err:
 	freezero(key, key_len);
-
-	return ret;
-}
-
-int
-ssl_kex_dummy_ecdhe_x25519(EVP_PKEY *pkey)
-{
-	EC_GROUP *group = NULL;
-	EC_POINT *point = NULL;
-	EC_KEY *ec_key = NULL;
-	BIGNUM *order = NULL;
-	int ret = 0;
-
-	/* Fudge up an EC_KEY that looks like X25519... */
-	if ((group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1)) == NULL)
-		goto err;
-	if ((point = EC_POINT_new(group)) == NULL)
-		goto err;
-	if ((order = BN_new()) == NULL)
-		goto err;
-	if (!BN_set_bit(order, 252))
-		goto err;
-	if (!EC_GROUP_set_generator(group, point, order, NULL))
-		goto err;
-	EC_GROUP_set_curve_name(group, NID_X25519);
-	if ((ec_key = EC_KEY_new()) == NULL)
-		goto err;
-	if (!EC_KEY_set_group(ec_key, group))
-		goto err;
-	if (!EVP_PKEY_set1_EC_KEY(pkey, ec_key))
-		goto err;
-
-	ret = 1;
-
- err:
-	EC_GROUP_free(group);
-	EC_POINT_free(point);
-	EC_KEY_free(ec_key);
-	BN_free(order);
 
 	return ret;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.12 2026/06/08 11:38:04 tb Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.13 2026/11/06 12:59:42 beck Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -153,19 +153,34 @@ tls_key_share_set_dh_params(struct tls_key_share *ks, DH *dh_params)
 	return 1;
 }
 
-int
-tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey)
+EVP_PKEY *
+tls_key_share_peer_pkey(struct tls_key_share *ks)
 {
-	if (ks->nid == NID_dhKeyAgreement && ks->dhe_peer != NULL)
-		return EVP_PKEY_set1_DH(pkey, ks->dhe_peer);
+	EVP_PKEY *pkey = NULL;
 
 	if (ks->nid == NID_X25519 && ks->x25519_peer_public != NULL)
-		return ssl_kex_dummy_ecdhe_x25519(pkey);
+		return EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL,
+		    ks->x25519_peer_public, X25519_KEY_LENGTH);
 
-	if (ks->ecdhe_peer != NULL)
-		return EVP_PKEY_set1_EC_KEY(pkey, ks->ecdhe_peer);
+	if ((pkey = EVP_PKEY_new()) == NULL)
+		goto err;
 
-	return 0;
+	if (ks->nid == NID_dhKeyAgreement && ks->dhe_peer != NULL) {
+		if (!EVP_PKEY_set1_DH(pkey, ks->dhe_peer))
+			goto err;
+	}
+
+	if (ks->ecdhe_peer != NULL) {
+		if (!EVP_PKEY_set1_EC_KEY(pkey, ks->ecdhe_peer))
+			goto err;
+	}
+
+	return pkey;
+
+ err:
+	EVP_PKEY_free(pkey);
+
+	return NULL;
 }
 
 static int

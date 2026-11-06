@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.266 2026/09/22 03:45:18 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.267 2026/11/06 12:59:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1429,9 +1429,7 @@ _SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 	if (s->s3->hs.key_share == NULL)
 		goto err;
 
-	if ((pkey = EVP_PKEY_new()) == NULL)
-		goto err;
-	if (!tls_key_share_peer_pkey(s->s3->hs.key_share, pkey))
+	if ((pkey = tls_key_share_peer_pkey(s->s3->hs.key_share)) == NULL)
 		goto err;
 
 	*key = pkey;
