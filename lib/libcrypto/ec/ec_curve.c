@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.60 2025/12/15 12:09:46 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.61 2026/11/06 13:09:18 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2010 The OpenSSL Project.  All rights reserved.
  *
@@ -77,6 +77,7 @@
 #include <openssl/ec.h>
 #include <openssl/objects.h>
 
+#include "ec_curve_tables.h"
 #include "ec_local.h"
 #include "err_local.h"
 
@@ -943,11 +944,13 @@ static const struct ec_curve {
 	const uint8_t *x;
 	const uint8_t *y;
 	const uint8_t *order;
+	const EC_GROUP *group;
 } ec_curve_list[] = {
 	/* secg curves */
 	{
 		.comment = "SECG curve secp224k1",
 		.nid = NID_secp224k1,
+		.group = &secp224k1_group,
 		.param_len = sizeof(_EC_SECG_PRIME_224K1.p),
 		.p = _EC_SECG_PRIME_224K1.p,
 		.a = _EC_SECG_PRIME_224K1.a,
@@ -960,6 +963,7 @@ static const struct ec_curve {
 	{
 		.comment = "NIST/SECG curve secp224r1",
 		.nid = NID_secp224r1,
+		.group = &secp224r1_group,
 		.seed_len = sizeof(_EC_NIST_PRIME_224.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_224.p),
 		.seed = _EC_NIST_PRIME_224.seed,
@@ -974,6 +978,7 @@ static const struct ec_curve {
 	{
 		.comment = "SECG curve secp256k1",
 		.nid = NID_secp256k1,
+		.group = &secp256k1_group,
 		.param_len = sizeof(_EC_SECG_PRIME_256K1.p),
 		.p = _EC_SECG_PRIME_256K1.p,
 		.a = _EC_SECG_PRIME_256K1.a,
@@ -987,6 +992,7 @@ static const struct ec_curve {
 		/* Everyone except OpenSSL calls this secp256r1 or P-256. */
 		.comment = "X9.62/SECG curve prime256v1",
 		.nid = NID_X9_62_prime256v1,
+		.group = &prime256v1_group,
 		.seed_len = sizeof(_EC_NIST_PRIME_256.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_256.p),
 		.seed = _EC_NIST_PRIME_256.seed,
@@ -1001,6 +1007,7 @@ static const struct ec_curve {
 	{
 		.comment = "NIST/SECG curve secp384r1",
 		.nid = NID_secp384r1,
+		.group = &secp384r1_group,
 		.seed_len = sizeof(_EC_NIST_PRIME_384.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_384.p),
 		.seed = _EC_NIST_PRIME_384.seed,
@@ -1015,6 +1022,7 @@ static const struct ec_curve {
 	{
 		.comment = "NIST/SECG curve secp521r1",
 		.nid = NID_secp521r1,
+		.group = &secp521r1_group,
 		.seed_len = sizeof(_EC_NIST_PRIME_521.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_521.p),
 		.seed = _EC_NIST_PRIME_521.seed,
@@ -1030,6 +1038,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP224r1",
 		.nid = NID_brainpoolP224r1,
+		.group = &brainpoolp224r1_group,
 		.param_len = sizeof(_EC_brainpoolP224r1.p),
 		.p = _EC_brainpoolP224r1.p,
 		.a = _EC_brainpoolP224r1.a,
@@ -1042,6 +1051,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP224t1",
 		.nid = NID_brainpoolP224t1,
+		.group = &brainpoolp224t1_group,
 		.param_len = sizeof(_EC_brainpoolP224t1.p),
 		.p = _EC_brainpoolP224t1.p,
 		.a = _EC_brainpoolP224t1.a,
@@ -1054,6 +1064,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP256r1",
 		.nid = NID_brainpoolP256r1,
+		.group = &brainpoolp256r1_group,
 		.param_len = sizeof(_EC_brainpoolP256r1.p),
 		.p = _EC_brainpoolP256r1.p,
 		.a = _EC_brainpoolP256r1.a,
@@ -1066,6 +1077,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP256t1",
 		.nid = NID_brainpoolP256t1,
+		.group = &brainpoolp256t1_group,
 		.param_len = sizeof(_EC_brainpoolP256t1.p),
 		.p = _EC_brainpoolP256t1.p,
 		.a = _EC_brainpoolP256t1.a,
@@ -1078,6 +1090,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP320r1",
 		.nid = NID_brainpoolP320r1,
+		.group = &brainpoolp320r1_group,
 		.param_len = sizeof(_EC_brainpoolP320r1.p),
 		.p = _EC_brainpoolP320r1.p,
 		.a = _EC_brainpoolP320r1.a,
@@ -1090,6 +1103,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP320t1",
 		.nid = NID_brainpoolP320t1,
+		.group = &brainpoolp320t1_group,
 		.param_len = sizeof(_EC_brainpoolP320t1.p),
 		.p = _EC_brainpoolP320t1.p,
 		.a = _EC_brainpoolP320t1.a,
@@ -1102,6 +1116,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP384r1",
 		.nid = NID_brainpoolP384r1,
+		.group = &brainpoolp384r1_group,
 		.param_len = sizeof(_EC_brainpoolP384r1.p),
 		.p = _EC_brainpoolP384r1.p,
 		.a = _EC_brainpoolP384r1.a,
@@ -1114,6 +1129,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP384t1",
 		.nid = NID_brainpoolP384t1,
+		.group = &brainpoolp384t1_group,
 		.param_len = sizeof(_EC_brainpoolP384t1.p),
 		.p = _EC_brainpoolP384t1.p,
 		.a = _EC_brainpoolP384t1.a,
@@ -1126,6 +1142,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP512r1",
 		.nid = NID_brainpoolP512r1,
+		.group = &brainpoolp512r1_group,
 		.param_len = sizeof(_EC_brainpoolP512r1.p),
 		.p = _EC_brainpoolP512r1.p,
 		.a = _EC_brainpoolP512r1.a,
@@ -1138,6 +1155,7 @@ static const struct ec_curve {
 	{
 		.comment = "RFC 5639 curve brainpoolP512t1",
 		.nid = NID_brainpoolP512t1,
+		.group = &brainpoolp512t1_group,
 		.param_len = sizeof(_EC_brainpoolP512t1.p),
 		.p = _EC_brainpoolP512t1.p,
 		.a = _EC_brainpoolP512t1.a,
@@ -1151,6 +1169,7 @@ static const struct ec_curve {
 	{
 		.comment = "ANSSI curve FRP256v1",
 		.nid = NID_FRP256v1,
+		.group = &frp256v1_group,
 		.param_len = sizeof(_EC_FRP256v1.p),
 		.p = _EC_FRP256v1.p,
 		.a = _EC_FRP256v1.a,
@@ -1164,115 +1183,6 @@ static const struct ec_curve {
 
 #define EC_CURVE_LIST_LENGTH (sizeof(ec_curve_list) / sizeof(ec_curve_list[0]))
 
-static EC_GROUP *
-ec_group_new_from_data(const struct ec_curve *curve)
-{
-	EC_GROUP *group = NULL, *ret = NULL;
-	EC_POINT *generator = NULL;
-	BN_CTX *ctx = NULL;
-	BIGNUM *p, *a, *b, *x, *y, *order, *cofactor;
-
-	if ((ctx = BN_CTX_new()) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	BN_CTX_start(ctx);
-
-	if ((p = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((a = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((b = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((x = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((y = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((order = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((cofactor = BN_CTX_get(ctx)) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-
-	if (BN_bin2bn(curve->p, curve->param_len, p) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (BN_bin2bn(curve->a, curve->param_len, a) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (BN_bin2bn(curve->b, curve->param_len, b) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if ((group = EC_GROUP_new_curve_GFp(p, a, b, ctx)) == NULL) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-	EC_GROUP_set_curve_name(group, curve->nid);
-
-	if ((generator = EC_POINT_new(group)) == NULL) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-	if (BN_bin2bn(curve->x, curve->param_len, x) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (BN_bin2bn(curve->y, curve->param_len, y) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (!EC_POINT_set_affine_coordinates(group, generator, x, y, ctx)) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-	if (BN_bin2bn(curve->order, curve->param_len, order) == NULL) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-	if (!BN_set_word(cofactor, curve->cofactor)) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (!EC_GROUP_set_generator(group, generator, order, cofactor)) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-
-	if (curve->seed != NULL) {
-		if (!EC_GROUP_set_seed(group, curve->seed, curve->seed_len)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-	}
-
-	ret = group;
-	group = NULL;
-
- err:
-	EC_GROUP_free(group);
-	EC_POINT_free(generator);
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
-
-	return ret;
-}
-
 EC_GROUP *
 EC_GROUP_new_by_curve_name(int nid)
 {
@@ -1283,7 +1193,7 @@ EC_GROUP_new_by_curve_name(int nid)
 
 	for (i = 0; i < EC_CURVE_LIST_LENGTH; i++) {
 		if (ec_curve_list[i].nid == nid)
-			return ec_group_new_from_data(&ec_curve_list[i]);
+			return EC_GROUP_dup(ec_curve_list[i].group);
 	}
 
 	ECerror(EC_R_UNKNOWN_GROUP);

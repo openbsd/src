@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.132 2026/06/09 05:23:30 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.133 2026/11/06 13:09:18 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -124,17 +124,20 @@ EC_GROUP_free(EC_GROUP *group)
 	if (group == NULL)
 		return;
 
-	BN_free(group->p);
-	BN_free(group->a);
-	BN_free(group->b);
+	if (!group->static_params) {
+		BN_free(group->p);
+		BN_free(group->a);
+		BN_free(group->b);
 
-	BN_MONT_CTX_free(group->mont_ctx);
+		BN_MONT_CTX_free(group->mont_ctx);
 
-	EC_POINT_free(group->generator);
-	BN_free(group->order);
-	BN_free(group->cofactor);
+		EC_POINT_free(group->generator);
+		BN_free(group->order);
+		BN_free(group->cofactor);
+	}
 
-	freezero(group->seed, group->seed_len);
+	if (!group->static_seed)
+		freezero(group->seed, group->seed_len);
 	freezero(group, sizeof *group);
 }
 LCRYPTO_ALIAS(EC_GROUP_free);
@@ -209,6 +212,22 @@ EC_GROUP_dup(const EC_GROUP *in_group)
 
 	if (in_group == NULL)
 		goto err;
+
+	if (in_group->static_params) {
+		if ((group = calloc(1, sizeof(*group))) == NULL) {
+			ECerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		*group = *in_group;
+		if (!group->static_seed) {
+			group->seed = NULL;
+			group->seed_len = 0;
+			if (!EC_GROUP_set_seed(group, in_group->seed,
+			    in_group->seed_len))
+				goto err;
+		}
+		return group;
+	}
 
 	if ((group = EC_GROUP_new(in_group->meth)) == NULL)
 		goto err;
@@ -320,6 +339,11 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 {
 	if (generator == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
+
+	if (group->static_params) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 
@@ -449,7 +473,9 @@ LCRYPTO_ALIAS(EC_GROUP_get_point_conversion_form);
 size_t
 EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *seed, size_t len)
 {
-	free(group->seed);
+	if (!group->static_seed)
+		free(group->seed);
+	group->static_seed = 0;
 	group->seed = NULL;
 	group->seed_len = 0;
 
@@ -491,7 +517,8 @@ EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->group_set_curve == NULL) {
+	if (group->static_params ||
+	    group->meth->group_set_curve == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		goto err;
 	}

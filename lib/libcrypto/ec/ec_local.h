@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.74 2026/03/18 08:02:40 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.75 2026/11/06 13:09:18 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -149,6 +149,8 @@ struct ec_group_st {
 	/* Optional seed for parameters (appears in ASN.1). */
 	unsigned char *seed;
 	size_t seed_len;
+	/* Set if seed points to static data. */
+	int static_seed;
 
 	/*
 	 * Coefficients of the Weierstrass equation y^2 = x^3 + a*x + b (mod p).
@@ -166,6 +168,12 @@ struct ec_group_st {
 	EC_FIELD_MODULUS fm;
 	EC_FIELD_ELEMENT fe_a;
 	EC_FIELD_ELEMENT fe_b;
+
+	/*
+	 * Set if generator, order, cofactor, p, a, b and mont_ctx point to
+	 * static data, which is shared and never modified.
+	 */
+	int static_params;
 } /* EC_GROUP */;
 
 struct ec_point_st {
@@ -185,6 +193,8 @@ struct ec_point_st {
 	EC_FIELD_ELEMENT fe_y;
 	EC_FIELD_ELEMENT fe_z;
 } /* EC_POINT */;
+
+extern const EC_METHOD ec_GFp_mont_method;
 
 const EC_METHOD *EC_GFp_simple_method(void);
 const EC_METHOD *EC_GFp_mont_method(void);

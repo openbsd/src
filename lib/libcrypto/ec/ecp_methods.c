@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.49 2026/02/08 12:34:05 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.50 2026/11/06 13:09:18 beck Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1357,7 +1357,7 @@ EC_GFp_simple_method(void)
 	return &ec_GFp_simple_method;
 }
 
-static const EC_METHOD ec_GFp_mont_method = {
+const EC_METHOD ec_GFp_mont_method = {
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
 	.point_set_to_infinity = ec_point_set_to_infinity,
