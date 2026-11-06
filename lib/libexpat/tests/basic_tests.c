@@ -27,6 +27,7 @@
    Copyright (c) 2026      Afonso Januário <afonso-januario@hotmail.com>
    Copyright (c) 2026      Braian Plaku <braianplaku@gmail.com>
    Copyright (c) 2026      Filippo Tedeschi <filippotedeschi98@gmail.com>
+   Copyright (c) 2026      Alexander Bluhm <alexander.bluhm@gmx.net>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -208,8 +209,8 @@ START_TEST(test_hash_collision) {
    * tests invoked from qa.sh usually provide a hash collision, but
    * not always.  This is an attempt to provide insurance.
    */
-  const uint8_t entropy[16] = { 0, 0, 0, 0, 0, 0, 0, 0,
-      0x90, 0xfc, 0x99, 0xff, 0xff, 0xff, 0xff, 0xff };
+  const uint8_t entropy[16] = {0,    0,    0,    0,    0,    0,    0,    0,
+                               0x90, 0xfc, 0x99, 0xff, 0xff, 0xff, 0xff, 0xff};
   const char *text
       = "<doc>\n"
         "<a1/><a2/><a3/><a4/><a5/><a6/><a7/><a8/>\n"
@@ -250,6 +251,31 @@ START_TEST(test_hash_salt_setter) {
   XML_ParserFree(parser);
 }
 END_TEST
+
+#if defined(XML_TESTING)
+START_TEST(test_hash_salt_ulong) {
+  const unsigned long salt = 0x12345678;
+  XML_Parser parser = XML_ParserCreate(NULL);
+
+  // NULL parser should be rejected
+  assert_true(xmlSetHashSalt(NULL, salt) == 0);
+
+  // salt 0 is ignored, but accepted
+  assert_true(xmlSetHashSalt(parser, 0) == 1);
+
+  // Setting should be allowed more than once
+  assert_true(xmlSetHashSalt(parser, salt) == 1);
+  assert_true(xmlSetHashSalt(parser, salt) == 1);
+
+  // But not after parsing has started
+  assert_true(XML_Parse(parser, "", 0, XML_FALSE /* isFinal */)
+              == XML_STATUS_OK);
+  assert_true(xmlSetHashSalt(parser, salt) == 0);
+
+  XML_ParserFree(parser);
+}
+END_TEST
+#endif
 
 /* Regression test for SF bug #491986. */
 START_TEST(test_danish_latin1) {
@@ -2743,7 +2769,7 @@ END_TEST
 
 /* Test foreign DTD handling */
 START_TEST(test_set_foreign_dtd) {
-  const uint8_t entropy[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+  const uint8_t entropy[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8};
   const char *text1 = "<?xml version='1.0' encoding='us-ascii'?>\n";
   const char *text2 = "<doc>&entity;</doc>";
   ExtTest test_data = {"<!ELEMENT doc (#PCDATA)*>", NULL, NULL};
@@ -2813,7 +2839,7 @@ END_TEST
 
 /* Test foreign DTD use with a doctype */
 START_TEST(test_foreign_dtd_with_doctype) {
-  const uint8_t entropy[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+  const uint8_t entropy[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8};
   const char *text1 = "<?xml version='1.0' encoding='us-ascii'?>\n"
                       "<!DOCTYPE doc [<!ENTITY entity 'hello world'>]>\n";
   const char *text2 = "<doc>&entity;</doc>";
@@ -4404,17 +4430,23 @@ START_TEST(test_attribute_enum_value) {
 }
 END_TEST
 
-/* Slightly bizarrely, the library seems to silently ignore entity
- * definitions for predefined entities, even when they are wrong.  The
- * language of the XML 1.0 spec is somewhat unhelpful as to what ought
- * to happen, so this is currently treated as acceptable.
- */
 START_TEST(test_predefined_entity_redefinition) {
+  // NOTE: This violates XML 1.0 fourth edition section
+  //       "4.6 Predefined Entities" (that demands rejection of bad
+  //       redefinitions) only for backwards-compatibility reasons.
   const char *text = "<!DOCTYPE doc [\n"
-                     "<!ENTITY apos 'foo'>\n"
+                     "  <!ENTITY amp 'bad'>\n"
+                     "  <!ENTITY apos 'bad'>\n"
+                     "  <!ENTITY gt 'bad'>\n"
+                     "  <!ENTITY lt 'bad'>\n"
+                     "  <!ENTITY quot 'bad'>\n"
                      "]>\n"
-                     "<doc>&apos;</doc>";
-  run_character_check(text, XCS("'"));
+                     "<doc>&amp;&apos;&gt;&lt;&quot;</doc>";
+  run_character_check(text, XCS("&"
+                                "'"
+                                ">"
+                                "<"
+                                "\""));
 }
 END_TEST
 
@@ -7160,6 +7192,9 @@ make_basic_test_case(Suite *s) {
   tcase_add_test(tc_basic, test_nobom_utf16_le);
   tcase_add_test(tc_basic, test_hash_collision);
   tcase_add_test(tc_basic, test_hash_salt_setter);
+#if defined(XML_TESTING)
+  tcase_add_test(tc_basic, test_hash_salt_ulong);
+#endif
   tcase_add_test(tc_basic, test_illegal_utf8);
   tcase_add_test(tc_basic, test_utf8_auto_align);
   tcase_add_test(tc_basic, test_utf16);
