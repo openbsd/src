@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.15 2026/11/06 11:52:17 op Exp $
+# $OpenBSD: Makefile,v 1.16 2026/11/06 13:11:20 op Exp $
 
 PATCH?=		patch
 PATCHFLAGS=	-sN
 CLEANFILES=	*.copy *.orig *.rej t5 d19/* fetchname util.c
 
 REGRESS_TARGETS= t0  t1  t2  t3  t4  t5  t6  t7  t8  t9 \
-		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
+		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
+		t20
 
 CPPFLAGS +=	-I${.OBJDIR}
 fetchname: ${.CURDIR}/fetchname.c
