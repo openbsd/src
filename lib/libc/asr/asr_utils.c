@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.23 2026/06/25 19:27:51 florian Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.24 2026/11/06 16:09:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -247,7 +247,7 @@ unpack_dname(struct asr_unpack *p, char *dst, size_t max)
 		p->err = EINVAL;
 		return (-1);
 	}
-	if (e < 0 || e > MAXDNAME) {
+	if (e < 0 || e > MAXCDNAME) {
 		p->err = ERANGE;
 		return (-1);
 	}
