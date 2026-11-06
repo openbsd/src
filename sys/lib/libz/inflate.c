@@ -545,9 +545,7 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
             }
             DROPBITS(4);
             len = BITS(4) + 8;
-            if (state->wbits == 0)
-                state->wbits = len;
-            if (len > 15 || len > state->wbits) {
+            if (len > 15 || (state->wbits != 0 && len > state->wbits)) {
 #ifdef SMALL
                 strm->msg = (z_const char *)"error";
 #else
@@ -556,6 +554,8 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 state->mode = BAD;
                 break;
             }
+            if (state->wbits == 0)
+                state->wbits = len;
             state->dmax = 1U << len;
             state->flags = 0;               /* indicate zlib header */
             Tracev((stderr, "inflate:   zlib header ok\n"));
@@ -973,7 +973,7 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 /* fallthrough */
         case LEN:
 #ifndef SLOW
-            if (have >= 6 && left >= 258) {
+            if (have >= 6 && left >= 258 && bits < 8) {
                 RESTORE();
                 inflate_fast(strm, out);
                 LOAD();
@@ -1391,6 +1391,14 @@ int ZEXPORT inflateSync(z_streamp strm) {
     inflateReset(strm);
     strm->total_in = in;  strm->total_out = out;
     state->flags = flags;
+    if (state->wbits == 0) {
+        /* we never got to see a header for the window size -- set to max */
+        if (state->window != Z_NULL) {
+            ZFREE(strm, state->window, 1U << state->wbits);
+            state->window = Z_NULL;
+        }
+        state->wbits = 15;
+    }
     state->mode = TYPE;
     return Z_OK;
 }
