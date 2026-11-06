@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.39 2024/08/29 21:04:16 op Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.40 2026/11/06 21:27:09 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <err.h>
 
 /*
  *  VACATION -- return a message to the sender when on vacation.
@@ -87,14 +88,13 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, iflag, flags;
+	int ch, iflag = 0, flags;
 	struct passwd *pw;
-	time_t interval;
+	time_t interval = -1;
 	struct stat sb;
 	ALIAS *cur;
 
-	opterr = iflag = 0;
-	interval = -1;
+	opterr = 0;
 	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch ((char)ch) {
 		case 'a':			/* alias */
@@ -122,6 +122,14 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (iflag) {
+		if (pledge("stdio rpath wpath cpath getpw", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio rpath wpath getpw proc exec unveil", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	if (argc != 1) {
 		if (!iflag)
 			usage();
@@ -140,6 +148,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (unveil(VDB, "rw") == -1)
+		err(1, "unveil");
+	if (unveil(VMSG, "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	/*
 	 * dbopen(3) can not deal with a zero-length file w/o O_TRUNC.
 	 */
@@ -154,13 +169,16 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (interval != -1)
-		setinterval(interval);
-
 	if (iflag) {
 		(void)(db->close)(db);
 		exit(0);
 	}
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
+	if (interval != -1)
+		setinterval(interval);
 
 	if (!(cur = malloc(sizeof(ALIAS))))
 		exit(1);
