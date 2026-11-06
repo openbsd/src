@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.155 2026/09/17 15:56:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.156 2026/11/06 19:37:32 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -79,8 +79,8 @@
 /*
  * Locks used to protect data:
  *	I	immutable after creation
- *	N	net lock
  *	R	multicast router lock
+ *	S	socket lock
  */
 
 /* #define MCAST_DEBUG */
@@ -111,7 +111,7 @@ static const u_int32_t mrt_api_support =
 struct rttimer_queue mrt_timer;
 struct socket	*mrt_mrouter[RT_TABLEID_MAX + 1];	/* [R] */
 uint32_t	 mrt_api_config[RT_TABLEID_MAX + 1];	/* [R] */
-uint64_t	 mrt_count[RT_TABLEID_MAX + 1];		/* [N] */
+int		 mrt_api_locked[RT_TABLEID_MAX + 1];	/* [S] */
 int		 ip_mrtproto = IGMP_DVMRP;	/* [I] for netstat only */
 
 struct cpumem *mrtcounters;
@@ -671,12 +671,6 @@ ip_mrouter_done(struct socket *so)
 		rtfree(rt);
 	} while (error == EAGAIN);
 
-	/*
-	 * XXX Should be KASSERT, but there is a leak.  If an interface
-	 * is destroyed, the route is deleted, but mrt_mcast_del() not run.
-	 */
-	mrt_count[rtableid] = 0;
-
 	/* Unregister all interfaces in the domain. */
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
@@ -687,6 +681,7 @@ ip_mrouter_done(struct socket *so)
 
 	mrt_mrouter[rtableid] = NULL;
 	mrt_api_config[rtableid] = 0;
+	mrt_api_locked[rtableid] = 0;
 	sorele(so);
 
 	rw_exit_write(&mrt_routerlock);
@@ -712,7 +707,6 @@ int
 set_api_config(struct socket *so, struct mbuf *m)
 {
 	struct inpcb *inp = sotoinpcb(so);
-	struct ifnet *ifp;
 	uint32_t *apival;
 	unsigned int rtableid = inp->inp_rtableid;
 
@@ -732,21 +726,9 @@ set_api_config(struct socket *so, struct mbuf *m)
 
 	/*
 	 * We can set the API capabilities only if it is the first operation
-	 * after MRT_INIT. I.e.:
-	 *  - there are no vifs installed
-	 *  - the MFC table is empty
+	 * after MRT_INIT.
 	 */
-	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
-		if (ifp->if_rdomain != rtableid)
-			continue;
-		if (ifp->if_mcast == NULL)
-			continue;
-
-		rw_exit_write(&mrt_routerlock);
-		*apival = 0;
-		return (EPERM);
-	}
-	if (mrt_count[rtableid] > 0) {
+	if (mrt_api_locked[rtableid]) {
 		rw_exit_write(&mrt_routerlock);
 		*apival = 0;
 		return (EPERM);
@@ -754,6 +736,7 @@ set_api_config(struct socket *so, struct mbuf *m)
 
 	*apival &= mrt_api_support;
 	mrt_api_config[rtableid] = *apival;
+	mrt_api_locked[rtableid] = 1;
 
 	rw_exit_write(&mrt_routerlock);
 
@@ -872,6 +855,8 @@ add_vif(struct socket *so, struct mbuf *m)
 	vifp->v_threshold = vifcp->vifc_threshold;
 	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
 	vifp->v_rmt_addr = vifcp->vifc_rmt_addr;
+
+	mrt_api_locked[rtableid] = 1;
 
 	return (0);
 }
@@ -1161,6 +1146,7 @@ add_mfc(struct socket *so, struct mbuf *m)
 		    sizeof(mfcctl2) - sizeof(struct mfcctl));
 	}
 
+	mrt_api_locked[rtableid] = 1;
 	return (mfc_add(&mfcctl2, &mfcctl2.mfcc_origin, &mfcctl2.mfcc_mcastgrp,
 	    mfcctl2.mfcc_parent, rtableid, M_WAITOK));
 }
@@ -1505,8 +1491,6 @@ rt_mcast_add(struct ifnet *ifp, struct sockaddr *origin, struct sockaddr *group)
 		return (NULL);
 	}
 
-	mrt_count[rtableid]++;
-
 	return (mfc_find(ifp, &satosin(group)->sin_addr, rtableid));
 }
 
@@ -1521,8 +1505,6 @@ mrt_mcast_del(struct rtentry *rt, unsigned int rtableid)
 
 	free(rt->rt_llinfo, M_MRTABLE, sizeof(struct mfc));
 	rt->rt_llinfo = NULL;
-
-	mrt_count[rtableid]--;
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
