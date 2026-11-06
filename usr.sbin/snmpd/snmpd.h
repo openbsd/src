@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.129 2026/11/06 10:30:07 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.130 2026/11/06 10:32:04 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -438,7 +438,6 @@ struct snmpd {
 	int			 sc_rtfilter;
 
 	int			 sc_min_seclevel;
-	int			 sc_traphandler;
 
 	struct privsep		 sc_ps;
 };
