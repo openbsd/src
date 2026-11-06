@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.39 2025/07/23 01:14:54 jsg Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.40 2026/11/06 07:42:56 miod Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -230,31 +230,6 @@ isa_dmamap_create(struct device *isadev, int chan, bus_size_t size, int flags)
 
  lose:
 	panic("isa_dmamap_create");
-}
-
-void
-isa_dmamap_destroy(struct device *isadev, int chan)
-{
-	struct isa_softc *sc = (struct isa_softc *)isadev;
-
-	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		goto lose;
-	}
-
-	if (ISA_DRQ_ISFREE(sc, chan)) {
-		printf("%s: drq %d is already free\n",
-		    sc->sc_dev.dv_xname, chan);
-		goto lose;
-	}
-
-	ISA_DRQ_FREE(sc, chan);
-
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamaps[chan]);
-	return;
-
- lose:
-	panic("isa_dmamap_destroy");
 }
 
 /*
