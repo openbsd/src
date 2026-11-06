@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.45 2026/07/16 11:21:37 tb Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.46 2026/11/06 11:51:40 kirill Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -153,7 +153,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	/* tight loop for leading relative relocs */
 	for (i = 0; i < num_relative; i++, rela++) {
-		Elf_Addr *where = (Elf_Addr *)(rela->r_offset + loff);
+		Elf_Addr *where;
+
+		if (ELF_R_TYPE(rela->r_info) == RELOC_NONE)
+			continue;
+		where = (Elf_Addr *)(rela->r_offset + loff);
 		*where = rela->r_addend + loff;
 	}
 	for (; i < numrela; i++, rela++) {
