@@ -1,16 +1,23 @@
-# $OpenBSD: Makefile,v 1.14 2022/08/03 07:35:04 op Exp $
+# $OpenBSD: Makefile,v 1.15 2026/11/06 11:52:17 op Exp $
 
 PATCH?=		patch
 PATCHFLAGS=	-sN
-CLEANFILES=	*.copy *.orig *.rej t5 d19/*
+CLEANFILES=	*.copy *.orig *.rej t5 d19/* fetchname util.c
 
-REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
+REGRESS_TARGETS= t0  t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
+
+CPPFLAGS +=	-I${.OBJDIR}
+fetchname: ${.CURDIR}/fetchname.c
+	${CC} ${CCFLAGS} ${CPPFLAGS} -o fetchname $<
+
+fetchname.c: util.c
 
 # .in: input file
 # .diff: patch
 # .out: desired result after patching
 
+# t0: fetchname() tests
 # t1: diff contains invalid line number 0.
 # t2: diff contains invalid line numbers beyond end of input file.
 # t3: a case where patch should detect a previously applied patch.
@@ -38,6 +45,10 @@ REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 	@${PATCH} ${PATCHFLAGS} ${*}.copy ${.CURDIR}/${*}.diff
 	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
 		(echo "XXX ${*} failed" && false)
+
+t0: fetchname
+	@echo ${*}
+	@./fetchname
 
 t3:
 	@echo ${*}
@@ -83,3 +94,6 @@ t20:
 .PHONY: t5
 
 .include <bsd.regress.mk>
+
+util.c: ${BSDSRCDIR}/usr.bin/patch/util.c
+	(echo 'char *' ; sed -n '/^fetchname/,/^}/p' $?) > util.c
