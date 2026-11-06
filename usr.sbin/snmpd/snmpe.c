@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.98 2026/10/30 16:40:40 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.99 2026/11/06 10:22:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -348,6 +348,10 @@ snmpe_parse(struct snmp_message *msg)
 			goto parsefail;
 
 		msg->sm_flags = *flagstr;
+
+		if (MSG_HAS_PRIV(msg) && !MSG_HAS_AUTH(msg))
+			goto parsefail;
+
 		if ((a = usm_decode(msg, a, &msg->sm_errstr)) == NULL)
 			goto parsefail;
 
