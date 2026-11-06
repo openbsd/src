@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.159 2026/09/17 15:56:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.160 2026/11/06 06:12:15 claudio Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -133,7 +133,6 @@ struct rwlock mrt6_routerlock = RWLOCK_INITIALIZER("mrouter6");
 
 struct rttimer_queue mrt6_timer;
 struct socket	*mrt6_mrouter[RT_TABLEID_MAX + 1];	/* [R] */
-int		 mrt6_mrouter_ver[RT_TABLEID_MAX + 1];	/* [R] */
 int		 ip6_mrtproto;    		/* [I] for netstat only */
 
 struct cpumem *mrt6counters;
@@ -571,7 +570,6 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 		return (EADDRINUSE);
 	}
 	mrt6_mrouter[rtableid] = soref(so);
-	mrt6_mrouter_ver[rtableid] = cmd;
 
 	rw_exit_write(&mrt6_routerlock);
 
@@ -631,7 +629,6 @@ ip6_mrouter_done(struct socket *so)
 	}
 
 	mrt6_mrouter[rtableid] = NULL;
-	mrt6_mrouter_ver[rtableid] = 0;
 	sorele(so);
 
 	rw_exit_write(&mrt6_routerlock);
@@ -1072,18 +1069,10 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 
 			rw_enter_read(&mrt6_routerlock);
 
-			switch (mrt6_mrouter_ver[rtableid]) {
-			case MRT6_INIT:
-				im = mtod(mm, struct mrt6msg *);
-				im->im6_msgtype = MRT6MSG_NOCACHE;
-				im->im6_mbz = 0;
-				im->im6_mif = mifp->m6_mifi;
-				break;
-			default:
-				rw_exit_read(&mrt6_routerlock);
-				m_freem(mm);
-				return (EINVAL);
-			}
+			im = mtod(mm, struct mrt6msg *);
+			im->im6_msgtype = MRT6MSG_NOCACHE;
+			im->im6_mbz = 0;
+			im->im6_mif = mifp->m6_mifi;
 
 			sin6.sin6_addr = ip6->ip6_src;
 			if (socket6_send(mrt6_mrouter[rtableid], mm,
