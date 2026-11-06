@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.38 2026/10/07 09:36:53 kirill Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.39 2026/11/06 09:12:07 kirill Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -34,7 +34,9 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
 
@@ -132,6 +134,25 @@ const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_XIAOMI, USB_PRODUCT_XIAOMI_RTL8152B },
 };
 
+#define URE_8157_FW		"rge-rtl8126-2"
+#define URE_8159_FW		"rge-rtl8127"
+
+struct ure_fw_hdr {
+	uint32_t		maclen;
+	uint32_t		phylen;
+} __packed;
+
+struct ure_fw_pair {
+	uint16_t		reg;
+	uint16_t		val;
+};
+
+struct ure_fw {
+	uint8_t			buf[URE_FW_BUFSZ];
+	int			len;
+	uint16_t		page;
+};
+
 int	ure_match(struct device *, void *, void *);
 void	ure_attach(struct device *, struct device *, void *);
 int	ure_detach(struct device *, int);
@@ -205,6 +226,15 @@ void		ure_rtl8152_init(struct ure_softc *);
 int		ure_rtl8153_init(struct ure_softc *);
 int		ure_rtl8153b_init(struct ure_softc *);
 int		ure_rtl8157_init(struct ure_softc *);
+int		ure_rtl8157_phy_config(struct ure_softc *);
+int		ure_rtl8159_phy_config(struct ure_softc *);
+int		ure_loadfirmware(struct ure_softc *, int);
+int		ure_fw_write(struct ure_softc *, struct ure_fw *, uint16_t,
+		    uint16_t);
+int		ure_fw_chunk(struct ure_softc *, struct ure_fw *);
+int		ure_phy_patch_request(struct ure_softc *, int, int);
+void		ure_aldps_en(struct ure_softc *, int);
+void		ure_rtl8157_eee_en(struct ure_softc *, int);
 int		ure_rtl8152_nic_reset(struct ure_softc *);
 int		ure_rtl8153_nic_reset(struct ure_softc *);
 uint16_t	ure_rtl8153_phy_status(struct ure_softc *, int);
@@ -382,6 +412,49 @@ static inline void
 ure_phy_write(struct ure_softc *sc, uint16_t addr, uint16_t data)
 {
 	return sc->ure_phy_write(sc, addr, data);
+}
+
+void
+ure_aldps_en(struct ure_softc *sc, int enable)
+{
+	uint16_t reg;
+	int i;
+
+	if (enable) {
+		reg = ure_phy_read(sc, URE_OCP_POWER_CFG);
+		ure_phy_write(sc, URE_OCP_POWER_CFG, reg | URE_EN_ALDPS);
+		return;
+	}
+
+	reg = ure_phy_read(sc, URE_OCP_POWER_CFG) & ~URE_EN_ALDPS;
+	ure_phy_write(sc, URE_OCP_POWER_CFG, reg);
+	for (i = 0; i < 20; i++) {
+		usbd_delay_ms(sc->ure_udev, 1);
+		if (ure_read_2(sc, 0xe000, URE_MCU_TYPE_PLA) & 0x0100)
+			break;
+	}
+}
+
+void
+ure_rtl8157_eee_en(struct ure_softc *sc, int enable)
+{
+	uint16_t adv;
+
+	if (enable) {
+		URE_SETBIT_2(sc, URE_PLA_EEE_CR, URE_MCU_TYPE_PLA,
+		    URE_EEE_RX_EN | URE_EEE_TX_EN);
+		adv = URE_EEE_100TX | URE_EEE_1000T;
+		if (sc->ure_flags & URE_FLAG_8159)
+			adv |= URE_EEE_10GT;
+		ure_phy_write(sc, URE_OCP_EEE_ADV, adv);
+		ure_phy_write(sc, URE_OCP_EEE_ADV2,
+		    URE_EEE_2500T | URE_EEE_5000T);
+	} else {
+		URE_CLRBIT_2(sc, URE_PLA_EEE_CR, URE_MCU_TYPE_PLA,
+		    URE_EEE_RX_EN | URE_EEE_TX_EN);
+		ure_phy_write(sc, URE_OCP_EEE_ADV, 0);
+		ure_phy_write(sc, URE_OCP_EEE_ADV2, 0);
+	}
 }
 
 uint16_t
@@ -689,7 +762,7 @@ ure_ifmedia_upd(struct ifnet *ifp)
 	struct ure_softc	*sc = ifp->if_softc;
 	struct mii_data		*mii = &sc->ure_mii;
 	struct ifmedia		*ifm = &sc->ure_ifmedia;
-	int			anar, gig, err, reg;
+	int			anar, gig, err, reg, i;
 
 	if (sc->ure_flags & (URE_FLAG_8156 | URE_FLAG_8156B | URE_FLAG_8157 |
 	    URE_FLAG_8159)) {
@@ -756,8 +829,22 @@ ure_ifmedia_upd(struct ifnet *ifp)
 		ure_phy_write(sc, URE_OCP_BASE_MII + MII_100T2CR * 2, gig);
 		if (!(sc->ure_chip & URE_CHIP_VER_7420))
 			ure_phy_write(sc, URE_OCP_10GBT_CTRL, reg);
-		ure_phy_write(sc, URE_OCP_BASE_MII + MII_BMCR,
-		    BMCR_AUTOEN | BMCR_STARTNEG);
+		reg = BMCR_AUTOEN | BMCR_STARTNEG;
+		if (sc->ure_flags & URE_FLAG_PHY_RESET)
+			reg |= BMCR_RESET;
+		ure_phy_write(sc, URE_OCP_BASE_MII + MII_BMCR, reg);
+		if (sc->ure_flags & URE_FLAG_PHY_RESET) {
+			sc->ure_flags &= ~URE_FLAG_PHY_RESET;
+			for (i = 0; i < URE_PHY_TIMEOUT; i++) {
+				usbd_delay_ms(sc->ure_udev, 1);
+				if (!(ure_phy_read(sc,
+				    URE_OCP_BASE_MII + MII_BMCR) & BMCR_RESET))
+					break;
+			}
+			if (i == URE_PHY_TIMEOUT)
+				printf("%s: PHY reset timed out\n",
+				    sc->ure_dev.dv_xname);
+		}
 
 		return (0);
 	}
@@ -781,6 +868,12 @@ ure_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct ure_softc	*sc = ifp->if_softc;
 	struct mii_data		*mii = &sc->ure_mii;
 	uint16_t		status = 0;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
 
 	if (sc->ure_flags & (URE_FLAG_8156 | URE_FLAG_8156B | URE_FLAG_8157 |
 	    URE_FLAG_8159)) {
@@ -1038,6 +1131,19 @@ ure_init(void *xsc)
 	/* Cancel pending I/O. */
 	ure_stop(sc);
 
+	if (sc->ure_flags & URE_FLAG_8157)
+		error = ure_rtl8157_phy_config(sc);
+	else if (sc->ure_flags & URE_FLAG_8159)
+		error = ure_rtl8159_phy_config(sc);
+	else
+		error = 0;
+	if (error != 0) {
+		splx(s);
+		return;
+	}
+	if (sc->ure_flags & (URE_FLAG_8157 | URE_FLAG_8159))
+		ure_ifmedia_upd(ifp);
+
 	if (sc->ure_flags & URE_FLAG_8152)
 		error = ure_rtl8152_nic_reset(sc);
 	else
@@ -1103,7 +1209,8 @@ ure_init(void *xsc)
 		usbd_transfer(c->uc_xfer);
 	}
 
-	ure_ifmedia_upd(ifp);
+	if (!(sc->ure_flags & (URE_FLAG_8157 | URE_FLAG_8159)))
+		ure_ifmedia_upd(ifp);
 
 	/* Indicate we are up and running. */
 	sc->ure_flags &= ~URE_FLAG_LINK;
@@ -1706,6 +1813,938 @@ ure_rtl8157_init(struct ure_softc *sc)
 	URE_SETBIT_2(sc, URE_PLA_RSTTALLY, URE_MCU_TYPE_PLA, URE_TALLY_RESET);
 
 	return (0);
+}
+
+int
+ure_rtl8157_phy_config(struct ure_softc *sc)
+{
+	uint16_t reg;
+	int error;
+
+	if ((error = ure_wait_for_flash(sc)) != 0)
+		return (error);
+
+	URE_CLRBIT_2(sc, URE_USB_MISC_0, URE_MCU_TYPE_USB, URE_PCUT_STATUS);
+
+	reg = ure_rtl8153_phy_status(sc, 0);
+	switch (reg) {
+	case URE_PHY_STAT_EXT_INIT:
+		if ((error = ure_loadfirmware(sc, 0)) != 0)
+			return (error);
+		reg = ure_phy_read(sc, 0xa466) & ~0x0001;
+		ure_phy_write(sc, 0xa466, reg);
+		reg = ure_phy_read(sc, 0xa468) & ~0x000a;
+		ure_phy_write(sc, 0xa468, reg);
+		break;
+	case URE_PHY_STAT_LAN_ON:
+	case URE_PHY_STAT_PWRDN:
+	default:
+		if ((error = ure_loadfirmware(sc, 1)) != 0)
+			return (error);
+		break;
+	}
+
+	reg = ure_phy_read(sc, URE_OCP_BASE_MII + MII_BMCR * 2);
+	if (reg & BMCR_PDOWN)
+		ure_phy_write(sc, URE_OCP_BASE_MII + MII_BMCR * 2,
+		    reg & ~BMCR_PDOWN);
+
+	/* disable ALDPS before updating the PHY parameters */
+	ure_aldps_en(sc, 0);
+
+	/* disable EEE before updating the PHY parameters */
+	ure_rtl8157_eee_en(sc, 0);
+
+	if (ure_rtl8153_phy_status(sc, URE_PHY_STAT_LAN_ON) !=
+	    URE_PHY_STAT_LAN_ON)
+		return (ETIMEDOUT);
+
+	/* PFM mode */
+	URE_CLRBIT_2(sc, URE_PLA_PHY_PWR, URE_MCU_TYPE_PLA,
+	    URE_PFM_PWM_SWITCH);
+
+	/* advanced Power Saving paramater */
+	reg = ure_phy_read(sc, URE_OCP_POWER_CFG);
+	ure_phy_write(sc, URE_OCP_POWER_CFG, reg | 0x0003);
+
+	/* aldpsce force mode */
+	reg = ure_phy_read(sc, 0xa44a) & ~0x0004;
+	ure_phy_write(sc, 0xa44a, reg);
+
+	/* XG_INRX parameter */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8183);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x5900);
+
+	reg = ure_phy_read(sc, 0xa654);
+	ure_phy_write(sc, 0xa654, reg | 0x0800);
+	reg = ure_phy_read(sc, 0xb648);
+	ure_phy_write(sc, 0xb648, reg | 0x4000);
+	reg = ure_phy_read(sc, 0xad2c) & ~0x8000;
+	ure_phy_write(sc, 0xad2c, reg);
+	reg = ure_phy_read(sc, 0xad94);
+	ure_phy_write(sc, 0xad94, reg | 0x0020);
+	reg = ure_phy_read(sc, 0xada0);
+	ure_phy_write(sc, 0xada0, reg | 0x0002);
+	reg = ure_phy_read(sc, 0xae06) & ~0xfc00;
+	ure_phy_write(sc, 0xae06, reg | 0x7c00);
+
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8647);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0xe600);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8036);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x3000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8078);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x3000);
+
+	/* green mode */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x89e9);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ffd);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ffe);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0200);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8fff);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0400);
+
+	/* recognize AQC/Bcom function */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8018);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x7700);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8f9c);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0005);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00ed);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0502);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0b00);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0xd401);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8fa8);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x2900);
+
+	/* RFI_corr_thd 5g */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x814b);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x1100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x814d);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x1100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x814f);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0b00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8142);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8144);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8150);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+	/* RFI_corr_thd 2p5g */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8118);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0700);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x811a);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0700);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x811c);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0500);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x810f);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8111);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x811d);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0100);
+
+	/* RFI parameter */
+	reg = ure_phy_read(sc, 0xad1c) & ~0x0100;
+	ure_phy_write(sc, 0xad1c, reg);
+	reg = ure_phy_read(sc, 0xade8) & ~0xffc0;
+	ure_phy_write(sc, 0xade8, reg | 0x1400);
+
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x864b);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x9d00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x862c);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x1200);
+
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8566);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x003f);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x3f02);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x023c);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x3b0a);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x1c00);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0000);
+
+	/* RFI-color noise gen parameter 5g */
+	reg = ure_phy_read(sc, 0xad9c);
+	ure_phy_write(sc, 0xad9c, reg | 0x0020);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8122);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0c00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82c8);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03ed);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03ff);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0009);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03fe);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x000b);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0021);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03f7);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03b8);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03e0);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0049);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0049);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03e0);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03b8);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03f7);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0021);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x000b);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03fe);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0009);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03ff);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03ed);
+	/* RFI-color noise gen parameter 2p5g */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x80ef);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0c00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82a0);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x000e);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03fe);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03ed);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0006);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x001a);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03f1);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03d8);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0023);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0054);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0322);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x00dd);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03ab);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03dc);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0027);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x000e);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03e5);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03f9);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0012);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0001);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x03f1);
+
+	/* modify thermal speed down threshold */
+	reg = ure_phy_read(sc, 0xb54c) & ~0xffc0;
+	ure_phy_write(sc, 0xb54c, reg | 0x3700);
+
+	/* XG compatibility modification */
+	reg = ure_phy_read(sc, 0xb648);
+	ure_phy_write(sc, 0xb648, reg | 0x0040);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8082);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5d00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x807c);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x809d);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5000);
+
+	if ((error = ure_phy_patch_request(sc, 1, 1)) != 0) {
+		ure_phy_patch_request(sc, 0, 1);
+		return (error);
+	}
+
+	URE_SETBIT_2(sc, URE_PLA_MAC_PWR_CTRL4, URE_MCU_TYPE_PLA,
+	    URE_EEE_SPDWN_EN);
+	reg = ure_phy_read(sc, URE_OCP_DOWN_SPEED) &
+	    ~(URE_EN_EEE_100 | URE_EN_EEE_1000);
+	ure_phy_write(sc, URE_OCP_DOWN_SPEED, reg | URE_EN_10M_CLKDIV);
+	reg = ure_phy_read(sc, URE_OCP_POWER_CFG);
+	ure_phy_write(sc, URE_OCP_POWER_CFG, reg | URE_EEE_CLKDIV_EN);
+
+	if ((error = ure_phy_patch_request(sc, 0, 1)) != 0)
+		return (error);
+
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, URE_SRAM_GREEN_CFG);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | URE_GREEN_ETH_EN);
+
+	reg = ure_phy_read(sc, 0xa428) & ~0x0200;
+	ure_phy_write(sc, 0xa428, reg);
+	reg = ure_phy_read(sc, 0xa5ea) & ~0x0003;
+	ure_phy_write(sc, 0xa5ea, reg);
+
+	ure_rtl8157_eee_en(sc, 1);
+
+	ure_aldps_en(sc, 1);
+	reg = ure_phy_read(sc, URE_OCP_BASE_MII + MII_ANAR * 2);
+	ure_phy_write(sc, URE_OCP_BASE_MII + MII_ANAR * 2,
+	    reg | (ANAR_FC | ANAR_PAUSE_ASYM));
+
+	sc->ure_flags |= URE_FLAG_PHY_RESET;
+	return (0);
+}
+
+int
+ure_rtl8159_phy_config(struct ure_softc *sc)
+{
+	uint16_t reg;
+	int error;
+
+	if ((error = ure_wait_for_flash(sc)) != 0)
+		return (error);
+
+	URE_CLRBIT_2(sc, URE_USB_MISC_0, URE_MCU_TYPE_USB, URE_PCUT_STATUS);
+
+	reg = ure_rtl8153_phy_status(sc, 0);
+	switch (reg) {
+	case URE_PHY_STAT_EXT_INIT:
+		if ((error = ure_loadfirmware(sc, 0)) != 0)
+			return (error);
+		reg = ure_phy_read(sc, 0xa466) & ~0x0001;
+		ure_phy_write(sc, 0xa466, reg);
+		reg = ure_phy_read(sc, 0xa468) & ~0x000a;
+		ure_phy_write(sc, 0xa468, reg);
+		break;
+	case URE_PHY_STAT_LAN_ON:
+	case URE_PHY_STAT_PWRDN:
+	default:
+		if ((error = ure_loadfirmware(sc, 1)) != 0)
+			return (error);
+		break;
+	}
+
+	reg = ure_phy_read(sc, URE_OCP_BASE_MII + MII_BMCR * 2);
+	if (reg & BMCR_PDOWN)
+		ure_phy_write(sc, URE_OCP_BASE_MII + MII_BMCR * 2,
+		    reg & ~BMCR_PDOWN);
+
+	/* disable ALDPS before updating the PHY parameters */
+	ure_aldps_en(sc, 0);
+
+	if (ure_rtl8153_phy_status(sc, URE_PHY_STAT_LAN_ON) !=
+	    URE_PHY_STAT_LAN_ON)
+		return (ETIMEDOUT);
+
+	/* PFM mode */
+	URE_CLRBIT_2(sc, URE_PLA_PHY_PWR, URE_MCU_TYPE_PLA,
+	    URE_PFM_PWM_SWITCH);
+
+	/* advanced Power Saving paramater */
+	reg = ure_phy_read(sc, URE_OCP_POWER_CFG);
+	ure_phy_write(sc, URE_OCP_POWER_CFG, reg | 0x0003);
+
+	/* Disable ALDPS force mode */
+	reg = ure_phy_read(sc, 0xa44a) & ~0x0004;
+	ure_phy_write(sc, 0xa44a, reg);
+
+	/* Disable bypass_turn_off_clk_in_aldps */
+	URE_CLRBIT_1(sc, 0xd3c8, URE_MCU_TYPE_PLA, 0x01);
+
+	/* power level tune */
+	/* test mode power level */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8415);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x9300);
+	/* normal link power level 10G, 5G, 2.5G */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81a3);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x0f00);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81ae);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x0f00);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81b9);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0xb900);
+	/* nomal link TX filter */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83b0);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0x0e00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83c5);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0x0e00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83da);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0x0e00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83ef);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0x0e00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+
+	/* AFE power saving for 2.5G & 5G */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8173);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x8620);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8175);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x8671);
+
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x817c);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x2000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8187);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x2000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8192);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x2000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x819d);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x2000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81a8);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x2000;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81b3);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x2000;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81be);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x2000);
+
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x817d);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0xa600);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8188);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0xa600);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8193);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0xa600);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x819e);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0xa600);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81a9);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1400);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81b4);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1400);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81bf);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0xa600);
+
+	/* RFI parameter */
+	/* disable preset FBE */
+	reg = ure_phy_read(sc, 0xaeaa) & ~0x0028;
+	ure_phy_write(sc, 0xaeaa, reg);
+	/* modify PGA for 5G&10G */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84f0);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x201c);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84f2);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x3117);
+	/* RFI parameter */
+	ure_phy_write(sc, 0xaec6, 0x0000);
+	ure_phy_write(sc, 0xae20, 0xffff);
+	ure_phy_write(sc, 0xaece, 0xffff);
+	ure_phy_write(sc, 0xaed2, 0xffff);
+	ure_phy_write(sc, 0xaec8, 0x0000);
+	reg = ure_phy_read(sc, 0xaed0) & ~0x0001;
+	ure_phy_write(sc, 0xaed0, reg);
+	ure_phy_write(sc, 0xadb8, 0x0150);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8197);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8231);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82cb);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82cd);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5700);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8233);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5700);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8199);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x5700);
+
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x815a);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0150);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x81f4);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0150);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x828e);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0150);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x81b1);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x824b);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82e5);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0000);
+
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84f7);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x2800);
+	reg = ure_phy_read(sc, 0xaec2);
+	ure_phy_write(sc, 0xaec2, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x81b3);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0xad00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x824d);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0xad00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82e7);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0xad00);
+	reg = ure_phy_read(sc, 0xae4e) & ~0x000f;
+	ure_phy_write(sc, 0xae4e, reg | 0x0001);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x82ce);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xf000;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x4000);
+
+	/* % 5G shift sel, default = '04' */
+	/* 10G shift sel, default = '03' */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83a5);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0400);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83a6);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0400);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83a7);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0400);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x83a8);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0400);
+
+	/* XG INRX parameter */
+	/* RC coefficients */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84ac);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84ae);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84b0);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xf818);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x84b2);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x6000);
+	/* Training AAGC PAR (with uc2 patch) */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ffc);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x6008);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ffe);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xf450);
+	/* DAC BGK */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8015);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0200);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8016);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0800);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8fe6);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0800);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8fe4);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x2114);
+	/* 10G PBO table */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8647);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xa7b1);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8649);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xbbca);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x864b);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0xdc00);
+	/* 2.5G ado power window size */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8154);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xc000;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x4000);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8158);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xc000;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+	/* 10G lock far */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x826c);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xffff);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x826e);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xffff);
+	/* XG INRX parameter */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8872);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0e00);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8012);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x0800);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8012);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x4000);
+	reg = ure_phy_read(sc, 0xb576);
+	ure_phy_write(sc, 0xb576, reg | 0x0001);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x834a);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x0700);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8217);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0x3f00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x2a00);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81b1);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x0b00);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8fed);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x4e00);
+	/* Slave about EC mu of datamode AAGC  and DAC BG */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x88ac);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x2300);
+	/* improve UBE */
+	reg = ure_phy_read(sc, 0xbf0c);
+	ure_phy_write(sc, 0xbf0c, reg | 0x3800);
+	/* close Sparse NEC, improve connect 5EUU calble performace */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x88de);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg);
+	/* 5G slave compatibility issue (will include in v10) */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x80b4);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x5195);
+
+	/* XG Test Mode */
+	/* xgtstm_map_tbl for mdi_cap_sel */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8370);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x8671);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8372);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x86c8);
+	/* xgtstm_amp_map_tbl for  REG_IBX_UP_SHIFT_L */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8401);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x86c8);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8403);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x86da);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8406);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8408);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x840a);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x840c);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x840e);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8410);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8412);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8414);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x8416);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA) & ~0x1800;
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | 0x1000);
+
+	/* Cable Test Pacth */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x82bd);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x1f40);
+
+	/* thermal sensor parameter */
+	reg = ure_phy_read(sc, 0xbfb4) & ~0x07ff;
+	ure_phy_write(sc, 0xbfb4, reg | 0x0328);
+	ure_phy_write(sc, 0xbfb6, 0x3e14);
+
+	/* spdchg_gtx_shape_100M */
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, 0x81c4);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x003b);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0086);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00b7);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00db);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00fe);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00fe);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00fe);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00fe);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x00c3);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0078);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0047);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, 0x0023);
+
+	/* lsbmsk_parameter */
+	/* RL6961_lsbmsk_parameter_250207 */
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x88d7);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x01a0);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x88d9);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x01a0);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ffa);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x002a);
+
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8fee);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xffdf);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ff0);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xffff);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ff2);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0a4a);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ff4);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xaa5a);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ff6);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0x0a4a);
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x8ff8);
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, 0xaa5a);
+
+	ure_phy_write(sc, URE_OCP_SRAM2_ADDR, 0x88d5);
+	reg = ure_phy_read(sc, URE_OCP_SRAM2_DATA) & ~0xff00;
+	ure_phy_write(sc, URE_OCP_SRAM2_DATA, reg | 0x0200);
+
+	if ((error = ure_phy_patch_request(sc, 1, 1)) != 0) {
+		ure_phy_patch_request(sc, 0, 1);
+		return (error);
+	}
+
+	URE_SETBIT_2(sc, URE_PLA_MAC_PWR_CTRL4, URE_MCU_TYPE_PLA,
+	    URE_EEE_SPDWN_EN);
+	reg = ure_phy_read(sc, URE_OCP_DOWN_SPEED) &
+	    ~(URE_EN_EEE_100 | URE_EN_EEE_1000);
+	ure_phy_write(sc, URE_OCP_DOWN_SPEED, reg | URE_EN_10M_CLKDIV);
+	reg = ure_phy_read(sc, URE_OCP_POWER_CFG);
+	ure_phy_write(sc, URE_OCP_POWER_CFG, reg | URE_EEE_CLKDIV_EN);
+
+	if ((error = ure_phy_patch_request(sc, 0, 1)) != 0)
+		return (error);
+
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, URE_SRAM_GREEN_CFG);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	ure_phy_write(sc, URE_OCP_SRAM_DATA, reg | URE_GREEN_ETH_EN);
+
+	reg = ure_phy_read(sc, 0xa428) & ~0x0200;
+	ure_phy_write(sc, 0xa428, reg);
+	reg = ure_phy_read(sc, 0xa5ea) & ~0x0003;
+	ure_phy_write(sc, 0xa5ea, reg);
+
+	ure_rtl8157_eee_en(sc, 1);
+
+	ure_aldps_en(sc, 1);
+	reg = ure_phy_read(sc, URE_OCP_BASE_MII + MII_ANAR * 2);
+	ure_phy_write(sc, URE_OCP_BASE_MII + MII_ANAR * 2,
+	    reg | (ANAR_FC | ANAR_PAUSE_ASYM));
+
+	sc->ure_flags |= URE_FLAG_PHY_RESET;
+	return (0);
+}
+
+int
+ure_loadfirmware(struct ure_softc *sc, int wait)
+{
+	struct ure_fw_hdr *hdr;
+	struct ure_fw_pair *phy;
+	struct ure_fw *ucode = NULL;
+	const char *fwname;
+	u_char *fw;
+	size_t fwlen, i, nphy, patchidx;
+	uint32_t maclen, phylen;
+	uint16_t reg, val, version;
+	int error, release_error;
+
+	if (sc->ure_flags & URE_FLAG_8159) {
+		fwname = URE_8159_FW;
+		version = URE_8159_FW_VER;
+	} else {
+		fwname = URE_8157_FW;
+		version = URE_8157_FW_VER;
+	}
+
+	if ((error = loadfirmware(fwname, &fw, &fwlen)) != 0) {
+		printf("%s: could not load firmware %s (%d)\n",
+		    sc->ure_dev.dv_xname, fwname, error);
+		return (error);
+	}
+
+	error = EINVAL;
+	if (fwlen < sizeof(*hdr))
+		goto out;
+	hdr = (struct ure_fw_hdr *)fw;
+	maclen = letoh32(hdr->maclen);
+	phylen = letoh32(hdr->phylen);
+	if (maclen > fwlen - sizeof(*hdr) ||
+	    phylen != fwlen - sizeof(*hdr) - maclen ||
+	    maclen % sizeof(*phy) != 0 || phylen % sizeof(*phy) != 0 ||
+	    phylen == 0)
+		goto out;
+
+	phy = (struct ure_fw_pair *)(fw + sizeof(*hdr) + maclen);
+	nphy = phylen / sizeof(*phy);
+	for (patchidx = 0; patchidx < nphy; patchidx++) {
+		if (letoh16(phy[patchidx].reg) == URE_OCP_PHY_PATCH_CMD &&
+		    letoh16(phy[patchidx].val) == 0)
+			break;
+	}
+	if (patchidx == nphy)
+		goto out;
+
+	ure_phy_write(sc, URE_OCP_SRAM_ADDR, URE_SRAM_GPHY_FW_VER);
+	reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+	if (reg == 0xffff) {
+		error = EIO;
+		goto out;
+	}
+	if (reg >= version) {
+		error = 0;
+		goto out;
+	}
+
+	ucode = malloc(sizeof(*ucode), M_DEVBUF, M_WAITOK | M_ZERO);
+	ucode->page = 0xffff;
+
+	if ((ure_read_2(sc, URE_PLA_GPHY_CTRL, URE_MCU_TYPE_PLA) &
+	    URE_GPHY_FLASH) &&
+	    !(ure_read_2(sc, URE_USB_GPHY_CTRL, URE_MCU_TYPE_USB) &
+	    URE_BYPASS_FLASH)) {
+		if (URE_SETBIT_2(sc, URE_USB_GPHY_CTRL, URE_MCU_TYPE_USB,
+		    URE_BYPASS_FLASH) != 0) {
+			error = EIO;
+			goto out;
+		}
+	}
+
+	error = ure_phy_patch_request(sc, 1, wait);
+	if (error != 0)
+		goto release;
+
+	for (i = 0; i < nphy; i++) {
+		reg = letoh16(phy[i].reg);
+		val = letoh16(phy[i].val);
+		if (i == patchidx) {
+			error = ure_fw_write(sc, ucode, URE_OCP_SRAM_ADDR,
+			    URE_SRAM_GPHY_FW_VER);
+			if (error != 0)
+				goto release;
+			error = ure_fw_write(sc, ucode, URE_OCP_SRAM_DATA,
+			    version);
+			if (error != 0)
+				goto release;
+			if (sc->ure_flags & URE_FLAG_8159)
+				continue;
+		}
+		error = ure_fw_write(sc, ucode, reg, val);
+		if (error != 0)
+			goto release;
+	}
+	if (ucode->len != 0)
+		error = ure_fw_chunk(sc, ucode);
+
+release:
+	release_error = ure_phy_patch_request(sc, 0, wait);
+	if (error == 0)
+		error = release_error;
+	if (error == 0) {
+		ure_phy_write(sc, URE_OCP_SRAM_ADDR, URE_SRAM_GPHY_FW_VER);
+		reg = ure_phy_read(sc, URE_OCP_SRAM_DATA);
+		if (reg == 0xffff || reg < version)
+			error = EIO;
+	}
+out:
+	if (error != 0)
+		printf("%s: loading firmware %s failed (%d)\n",
+		    sc->ure_dev.dv_xname, fwname, error);
+	if (ucode != NULL)
+		free(ucode, M_DEVBUF, sizeof(*ucode));
+	free(fw, M_DEVBUF, fwlen);
+	return (error);
+}
+
+int
+ure_fw_write(struct ure_softc *sc, struct ure_fw *ucode, uint16_t reg,
+    uint16_t val)
+{
+	uint16_t page = reg & 0xf000;
+	int error, page_select, len;
+
+	page_select = reg == URE_OCP_SRAM_ADDR &&
+	    (val == 0xa016 || val == 0xb87c);
+	len = sizeof(struct ure_fw_pair);
+	if (page_select || ucode->page != page)
+		len += sizeof(struct ure_fw_pair);
+	if (ucode->len + len + sizeof(struct ure_fw_pair) > sizeof(ucode->buf)) {
+		error = ure_fw_chunk(sc, ucode);
+		if (error != 0)
+			return (error);
+	}
+
+	if (page_select || ucode->page != page) {
+		USETW(ucode->buf + ucode->len, URE_PLA_OCP_GPHY_BASE);
+		USETW(ucode->buf + ucode->len + 2, page);
+		ucode->len += sizeof(struct ure_fw_pair);
+		ucode->page = page;
+	}
+	USETW(ucode->buf + ucode->len, 0xb000 | (reg & 0x0fff));
+	USETW(ucode->buf + ucode->len + 2, val);
+	ucode->len += sizeof(struct ure_fw_pair);
+	return (0);
+}
+
+int
+ure_fw_chunk(struct ure_softc *sc, struct ure_fw *ucode)
+{
+	uint16_t reg;
+	int i;
+
+	if (usbd_is_dying(sc->ure_udev))
+		return (ENXIO);
+
+	memset(ucode->buf + ucode->len, 0xff, sizeof(struct ure_fw_pair));
+	ucode->len += sizeof(struct ure_fw_pair);
+	if (URE_SETBIT_2(sc, URE_USB_GPHY_CTRL, URE_MCU_TYPE_USB,
+	    URE_GPHY_PATCH_DONE | URE_BACKUP_RESTORE) != 0 ||
+	    ure_write_mem(sc, URE_FW_ADDR,
+	    URE_MCU_TYPE_USB | URE_BYTE_EN_DWORD, ucode->buf, ucode->len) != 0 ||
+	    URE_SETBIT_2(sc, URE_PLA_POL_GPIO_CTRL, URE_MCU_TYPE_PLA,
+	    URE_POL_GPHY_PATCH) != 0)
+		return (EIO);
+
+	for (i = 0; i < URE_TIMEOUT; i++) {
+		if (usbd_is_dying(sc->ure_udev))
+			return (ENXIO);
+		reg = ure_read_2(sc, URE_PLA_POL_GPIO_CTRL, URE_MCU_TYPE_PLA);
+		if (reg == 0xffff)
+			return (EIO);
+		if (!(reg & URE_POL_GPHY_PATCH))
+			break;
+	}
+	if (i == URE_TIMEOUT)
+		return (ETIMEDOUT);
+
+	ucode->len = 0;
+	ucode->page = 0xffff;
+	return (0);
+}
+
+int
+ure_phy_patch_request(struct ure_softc *sc, int request, int wait)
+{
+	uint16_t reg;
+	int i;
+
+	if (usbd_is_dying(sc->ure_udev))
+		return (ENXIO);
+	reg = ure_phy_read(sc, URE_OCP_PHY_PATCH_CMD);
+	if (reg == 0xffff)
+		return (EIO);
+	if (request)
+		reg |= URE_PATCH_REQUEST;
+	else
+		reg &= ~URE_PATCH_REQUEST;
+	ure_phy_write(sc, URE_OCP_PHY_PATCH_CMD, reg);
+	if (!wait)
+		return (0);
+
+	for (i = 0; i < URE_PHY_PATCH_TIMEOUT; i++) {
+		usbd_delay_ms(sc->ure_udev, 1);
+		if (usbd_is_dying(sc->ure_udev))
+			return (ENXIO);
+		reg = ure_phy_read(sc, URE_OCP_PHY_PATCH_STAT);
+		if (reg == 0xffff)
+			return (EIO);
+		if (((reg & URE_PATCH_READY) != 0) == request)
+			return (0);
+	}
+	return (ETIMEDOUT);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.15 2026/10/07 09:36:53 kirill Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.16 2026/11/06 09:12:07 kirill Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #define	URE_CTL_WRITE		0x02
 
 #define	URE_TIMEOUT		1000
+#define	URE_PHY_PATCH_TIMEOUT	5000
 #define	URE_PHY_TIMEOUT		2000
 
 #define	URE_BYTE_EN_DWORD	0xff
@@ -175,11 +176,18 @@
 #define	URE_OCP_EEE_ADV		0xa5d0
 #define	URE_OCP_EEE_LPABLE	0xa5d2
 #define	URE_OCP_10GBT_CTRL	0xa5d4
+#define	URE_OCP_EEE_ADV2	0xa6d4
 #define	URE_OCP_PHY_STATE	0xa708
+#define	URE_OCP_PHY_PATCH_STAT	0xb800
+#define	URE_OCP_PHY_PATCH_CMD	0xb820
+#define	URE_OCP_SRAM2_ADDR	0xb87c
+#define	URE_OCP_SRAM2_DATA	0xb87e
 #define	URE_OCP_ADC_CFG		0xbc06
 
 /* SRAM Register. */
+#define	URE_SRAM_GREEN_CFG	0x8011
 #define	URE_SRAM_LPF_CFG	0x8012
+#define	URE_SRAM_GPHY_FW_VER	0x801e
 #define	URE_SRAM_10M_AMP1	0x8080
 #define	URE_SRAM_10M_AMP2	0x8082
 #define	URE_SRAM_IMPEDANCE	0x8084
@@ -361,6 +369,7 @@
 #define	URE_GPHY_FLASH		0x0002
 
 /* URE_PLA_POL_GPIO_CTRL */
+#define	URE_POL_GPHY_PATCH	0x0010
 #define	URE_DACK_DET_EN		0x8000
 
 /* URE_PLA_PHYSTATUS */
@@ -411,6 +420,7 @@
 /* URE_USB_GPHY_CTRL */
 #define	URE_GPHY_PATCH_DONE	0x0004
 #define	URE_BYPASS_FLASH	0x0020
+#define	URE_BACKUP_RESTORE	0x0040
 
 /* URE_USB_SPEED_OPTION */
 #define	URE_RG_PWRDN_EN		0x0100
@@ -541,8 +551,29 @@
 #define	URE_CTAP_SHORT_EN	0x0040
 #define	URE_EEE10_EN		0x0010
 
+/* URE_OCP_EEE_ADV */
+#define	URE_EEE_100TX		0x0002
+#define	URE_EEE_1000T		0x0004
+#define	URE_EEE_10GT		0x0008
+
+/* URE_OCP_EEE_ADV2 */
+#define	URE_EEE_2500T		0x0001
+#define	URE_EEE_5000T		0x0002
+
+/* URE_SRAM_GREEN_CFG */
+#define	URE_GREEN_ETH_EN	0x8000
+
 /* URE_OCP_DOWN_SPEED */
 #define	URE_EN_10M_BGOFF	0x0080
+#define	URE_EN_10M_CLKDIV	0x0800
+#define	URE_EN_EEE_100		0x1000
+#define	URE_EN_EEE_1000		0x2000
+
+/* URE_OCP_PHY_PATCH_STAT */
+#define	URE_PATCH_READY		0x0040
+
+/* URE_OCP_PHY_PATCH_CMD */
+#define	URE_PATCH_REQUEST	0x0010
 
 /* URE_OCP_PHY_STATE */
 #define	URE_TXDIS_STATE		0x01
@@ -644,6 +675,11 @@ struct ure_txpkt_v2 {
 #define	URE_8152_RX_BUFSZ	16384
 #define	URE_8153_RX_BUFSZ	32768
 
+#define	URE_FW_BUFSZ		2048
+#define	URE_FW_ADDR		0x9a00
+#define	URE_8157_FW_VER		0x0014
+#define	URE_8159_FW_VER		0x0020
+
 #define URE_CMD_TYPE_BMU	0
 #define URE_CMD_TYPE_IP		1
 
@@ -696,6 +732,7 @@ struct ure_softc {
 
 	u_int			ure_flags;
 #define	URE_FLAG_LINK		0x0001
+#define	URE_FLAG_PHY_RESET	0x0002
 #define	URE_FLAG_8152		0x0010	/* RTL8152 */
 #define	URE_FLAG_8153B		0x0020	/* RTL8153B */
 #define	URE_FLAG_8156		0x0040	/* RTL8156 */

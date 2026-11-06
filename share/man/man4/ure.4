@@ -1,4 +1,4 @@
-.\" $OpenBSD: ure.4,v 1.12 2026/10/07 09:39:37 kirill Exp $
+.\" $OpenBSD: ure.4,v 1.13 2026/11/06 09:12:07 kirill Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd $Mdocdate: October 7 2026 $
+.Dd $Mdocdate: November 6 2026 $
 .Dt URE 4
 .Os
 .Sh NAME
@@ -57,6 +57,15 @@ Ethernet MAC.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh FILES
+RTL8157 and RTL8159 adapters require the following firmware files, which
+are loaded when the interface is brought up:
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/rge-rtl8126-2
+RTL8157 firmware.
+.It Pa /etc/firmware/rge-rtl8127
+RTL8159 firmware.
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -78,8 +87,3 @@ The
 .Nm
 driver was written by
 .An Kevin Lo Aq Mt kevlo@FreeBSD.org .
-.Sh CAVEATS
-RTL8159 adapters require firmware for 10Gb operation.
-The
-.Nm
-driver does not support loading this firmware.
