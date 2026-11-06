@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.356 2026/06/25 08:27:34 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.357 2026/11/06 01:46:28 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3503,8 +3503,10 @@ uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
 	if (UVM_ET_ISOBJ(new_entry) &&
 	    new_entry->object.uvm_obj->pgops->pgo_reference) {
 		new_entry->offset += off;
+		KERNEL_LOCK();
 		new_entry->object.uvm_obj->pgops->pgo_reference
 		    (new_entry->object.uvm_obj);
+		KERNEL_UNLOCK();
 	}
 
 	return new_entry;
