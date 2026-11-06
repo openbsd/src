@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.43 2026/11/06 01:39:54 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.44 2026/11/06 03:16:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1186,7 +1186,8 @@ OF_getnextcells(int handle, const char *prop, const char *ncellsprop,
 int
 OF_getindex(int handle, const char *entry, const char *prop)
 {
-	char names[1024];
+	void *node = (char *)tree.header + handle;
+	char *data;
 	char *name;
 	char *end;
 	int idx = 0;
@@ -1195,16 +1196,12 @@ OF_getindex(int handle, const char *entry, const char *prop)
 	if (entry == NULL)
 		return 0;
 
-	len = OF_getproplen(handle, (char *)prop);
+	len = fdt_node_property(node, (char *)prop, &data);
 	if (len <= 0)
 		return -1;
 
-	KASSERT(len <= sizeof(names));
-	if (len > sizeof(names))
-		return -1;
-	OF_getprop(handle, (char *)prop, names, sizeof(names));
-	end = names + len;
-	name = names;
+	end = data + len;
+	name = data;
 	while (name < end) {
 		if (strcmp(name, entry) == 0)
 			return idx;
