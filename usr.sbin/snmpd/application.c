@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.46 2026/10/12 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: application.c,v 1.47 2026/11/06 10:25:12 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -914,6 +914,9 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 
 	if ((ureq = malloc(sizeof(*ureq))) == NULL)
 		fatal("malloc");
+
+	if (maxrepetitions > SNMPD_MAXREPETITIONS)
+		maxrepetitions = SNMPD_MAXREPETITIONS;
 
 	ureq->aru_ctx = ctx;
 	ureq->aru_statereference = statereference;
