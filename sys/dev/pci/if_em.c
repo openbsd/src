@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.384 2026/08/14 06:40:24 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.385 2026/11/06 21:44:04 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -277,8 +277,8 @@ int  em_setup_receive_structures(struct em_softc *);
 void em_initialize_receive_unit(struct em_softc *);
 void em_enable_intr(struct em_softc *);
 void em_disable_intr(struct em_softc *);
-void em_free_transmit_structures(struct em_softc *);
-void em_free_receive_structures(struct em_softc *);
+void em_free_transmit_structures(struct em_softc *, int);
+void em_free_receive_structures(struct em_softc *, int);
 void em_disable_aspm(struct em_softc *);
 void em_txeof(struct em_queue *);
 int  em_allocate_receive_structures(struct em_softc *);
@@ -1607,8 +1607,8 @@ em_update_link_status(struct em_softc *sc)
 /*********************************************************************
  *
  *  This routine disables all traffic on the adapter by issuing a
- *  global reset on the MAC and deallocates TX/RX buffers. 
- *
+ *  global reset on the MAC.
+ *  If softonly is set for device detach, it deallocates TX/RX buffers
  **********************************************************************/
 
 void
@@ -1642,8 +1642,8 @@ em_stop(void *arg, int softonly)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
-	em_free_transmit_structures(sc);
-	em_free_receive_structures(sc);
+	em_free_transmit_structures(sc, softonly);
+	em_free_receive_structures(sc, softonly);
 }
 
 /*********************************************************************
@@ -2228,8 +2228,10 @@ em_allocate_transmit_structures(struct em_softc *sc)
 		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		que->tx.sc_tx_pkts_ring = mallocarray(sc->sc_tx_slots,
-		    sizeof(*que->tx.sc_tx_pkts_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (que->tx.sc_tx_pkts_ring == NULL)
+			que->tx.sc_tx_pkts_ring = mallocarray(sc->sc_tx_slots,
+			    sizeof(*que->tx.sc_tx_pkts_ring), M_DEVBUF,
+			    M_NOWAIT | M_ZERO);
 		if (que->tx.sc_tx_pkts_ring == NULL) {
 			printf("%s: Unable to allocate tx_buffer memory\n", 
 			    DEVNAME(sc));
@@ -2283,7 +2285,7 @@ em_setup_transmit_structures(struct em_softc *sc)
 	return (0);
 
 fail:
-	em_free_transmit_structures(sc);
+	em_free_transmit_structures(sc, 0);
 	return (error);
 }
 
@@ -2395,7 +2397,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
  *
  **********************************************************************/
 void
-em_free_transmit_structures(struct em_softc *sc)
+em_free_transmit_structures(struct em_softc *sc, int softonly)
 {
 	struct em_queue *que;
 	struct em_packet *pkt;
@@ -2426,9 +2428,12 @@ em_free_transmit_structures(struct em_softc *sc)
 				}
 			}
 
-			free(que->tx.sc_tx_pkts_ring, M_DEVBUF,
-			    sc->sc_tx_slots * sizeof(*que->tx.sc_tx_pkts_ring));
-			que->tx.sc_tx_pkts_ring = NULL;
+			if (softonly) {
+				free(que->tx.sc_tx_pkts_ring, M_DEVBUF,
+				    sc->sc_tx_slots *
+				    sizeof(*que->tx.sc_tx_pkts_ring));
+				que->tx.sc_tx_pkts_ring = NULL;
+			}
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
@@ -2770,9 +2775,10 @@ em_allocate_receive_structures(struct em_softc *sc)
 	int error;
 
 	FOREACH_QUEUE(sc, que) {
-		que->rx.sc_rx_pkts_ring = mallocarray(sc->sc_rx_slots,
-		    sizeof(*que->rx.sc_rx_pkts_ring),
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (que->rx.sc_rx_pkts_ring == NULL)
+			que->rx.sc_rx_pkts_ring = mallocarray(sc->sc_rx_slots,
+			    sizeof(*que->rx.sc_rx_pkts_ring),
+			    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (que->rx.sc_rx_pkts_ring == NULL) {
 			printf("%s: Unable to allocate rx_buffer memory\n",
 			    DEVNAME(sc));
@@ -2802,7 +2808,7 @@ em_allocate_receive_structures(struct em_softc *sc)
         return (0);
 
 fail:
-	em_free_receive_structures(sc);
+	em_free_receive_structures(sc, 0);
 	return (error);
 }
 
@@ -2968,7 +2974,7 @@ em_initialize_receive_unit(struct em_softc *sc)
  *
  **********************************************************************/
 void
-em_free_receive_structures(struct em_softc *sc)
+em_free_receive_structures(struct em_softc *sc, int softonly)
 {
 	struct em_queue *que;
 	struct em_packet *pkt;
@@ -2994,14 +3000,20 @@ em_free_receive_structures(struct em_softc *sc)
 					bus_dmamap_unload(sc->sc_dmat,
 					    pkt->pkt_map);
 					m_freem(pkt->pkt_m);
+				}
+				if (pkt->pkt_m != NULL) {
+					bus_dmamap_destroy(sc->sc_dmat,
+					    pkt->pkt_map);
 					pkt->pkt_m = NULL;
 				}
-				bus_dmamap_destroy(sc->sc_dmat, pkt->pkt_map);
 			}
 
-			free(que->rx.sc_rx_pkts_ring, M_DEVBUF,
-			    sc->sc_rx_slots * sizeof(*que->rx.sc_rx_pkts_ring));
-			que->rx.sc_rx_pkts_ring = NULL;
+			if (softonly) {
+				free(que->rx.sc_rx_pkts_ring, M_DEVBUF,
+				    sc->sc_rx_slots *
+				    sizeof(*que->rx.sc_rx_pkts_ring));
+				que->rx.sc_rx_pkts_ring = NULL;
+			}
 		}
 
 		if (que->rx.fmp != NULL) {
