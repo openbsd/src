@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.314 2026/09/28 14:14:03 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.315 2026/11/06 05:25:03 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -149,6 +149,10 @@ extern int db_console;
 #if NPCKBC > 0 && NUKBD > 0
 #include <dev/ic/pckbcvar.h>
 #endif
+
+#define RST_CNT	0xcf9		/* Reset Control Register */
+#define RST_CNT_SYS_RST	0x02	/* System Reset */
+#define RST_CNT_RST_CPU	0x04	/* Reset CPU */
 
 /* #define MACHDEP_DEBUG */
 
@@ -1916,6 +1920,18 @@ cpu_reset(void)
 	delay(100000);
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
+
+	/*
+	 * Try to force a reset via the Reset Control register.
+	 * Reset is triggered by the 0->1 transition of the RST_CPU bit,
+	 * and a hard reset will be done when the SYS_RST bit is set at
+	 * the moment of the transition.
+	 * First write selects the hard reset and clears RST_CPU, second
+	 * write forces the 0->1 transition on RST_CPU.
+	 */
+	outb(RST_CNT, RST_CNT_SYS_RST);
+	outb(RST_CNT, RST_CNT_SYS_RST | RST_CNT_RST_CPU);
+	delay(500000);
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by making the IDT
