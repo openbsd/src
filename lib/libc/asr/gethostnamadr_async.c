@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.55 2026/07/21 09:50:31 florian Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.56 2026/11/06 12:00:15 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -672,7 +672,7 @@ hostent_add_addr(struct hostent_ext *h, const void *addr, size_t size)
 static void
 netent_from_hostent(struct asr_result *ar)
 {
-	struct in_addr		 *addr;
+	struct in_addr		 addr;
 	struct netent_ext	 *n;
 	struct hostent_ext	 *h;
 	char			**na, **ha;
@@ -691,8 +691,8 @@ netent_from_hostent(struct asr_result *ar)
 
 	/* Copy the fixed-size data. */
 	h = (struct hostent_ext *)ar->ar_hostent;
-	addr = (struct in_addr *)h->h.h_addr;
-	n->n.n_net = ntohl(addr->s_addr);
+	memcpy(&addr, h->h.h_addr, sizeof addr);
+	n->n.n_net = ntohl(addr.s_addr);
 	n->n.n_addrtype = h->h.h_addrtype;
 
 	/* Copy the network name. */
