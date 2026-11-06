@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_power.c,v 1.2 2021/11/26 11:44:01 kettenis Exp $	*/
+/*	$OpenBSD: ofw_power.c,v 1.3 2026/11/06 01:39:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -52,45 +52,23 @@ power_domain_enable_cells(uint32_t *cells, int on)
 		pd->pd_enable(pd->pd_cookie, &cells[1], on);
 }
 
-uint32_t *
-power_domain_next_domain(uint32_t *cells)
-{
-	uint32_t phandle = cells[0];
-	int node, ncells;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return NULL;
-
-	ncells = OF_getpropint(node, "#power-domain-cells", 0);
-	return cells + ncells + 1;
-}
-
 void
 power_domain_do_enable_idx(int node, int idx, int on)
 {
-	uint32_t *domains;
-	uint32_t *domain;
-	int len;
+	uint32_t domain[MAX_POWER_DOMAIN_CELLS];
+	int offset = 0;
 
-	len = OF_getproplen(node, "power-domains");
-	if (len <= 0)
-		return;
-
-	domains = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "power-domains", domains, len);
-
-	domain = domains;
-	while (domain && domain < domains + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, "power-domains",
+		    "#power-domain-cells", offset, domain, sizeof(domain));
+		if (offset < 0)
+			break;
 		if (idx <= 0)
 			power_domain_enable_cells(domain, on);
 		if (idx == 0)
 			break;
-		domain = power_domain_next_domain(domain);
 		idx--;
 	}
-
-	free(domains, M_TEMP, len);
 }
 
 void

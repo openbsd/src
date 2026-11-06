@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_power.h,v 1.2 2021/11/26 11:44:01 kettenis Exp $	*/
+/*	$OpenBSD: ofw_power.h,v 1.3 2026/11/06 01:39:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -18,6 +18,8 @@
 
 #ifndef _DEV_OFW_POWER_H_
 #define _DEV_OFW_POWER_H_
+
+#define MAX_POWER_DOMAIN_CELLS	3
 
 struct power_domain_device {
 	int	pd_node;

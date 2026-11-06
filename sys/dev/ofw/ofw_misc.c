@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.45 2026/09/05 20:36:56 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.46 2026/11/06 01:39:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -235,46 +235,25 @@ phy_enable_cells(uint32_t *cells)
 	return ENXIO;
 }
 
-uint32_t *
-phy_next_phy(uint32_t *cells)
-{
-	uint32_t phandle = cells[0];
-	int node, ncells;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return NULL;
-
-	ncells = OF_getpropint(node, "#phy-cells", 0);
-	return cells + ncells + 1;
-}
-
 int
 phy_enable_prop_idx(int node, char *prop, int idx)
 {
-	uint32_t *phys;
-	uint32_t *phy;
+	uint32_t phy[MAX_PHY_CELLS];
+	int offset = 0;
 	int rv = -1;
-	int len;
 
-	len = OF_getproplen(node, prop);
-	if (len <= 0)
-		return -1;
-
-	phys = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, prop, phys, len);
-
-	phy = phys;
-	while (phy && phy < phys + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, prop,
+		    "#phy-cells", offset, phy, sizeof(phy));
+		if (offset < 0)
+			break;
 		if (idx <= 0)
 			rv = phy_enable_cells(phy);
 		if (idx == 0)
 			break;
-		phy = phy_next_phy(phy);
 		idx--;
 	}
 
-	free(phys, M_TEMP, len);
 	return rv;
 }
 
@@ -1296,46 +1275,25 @@ mbox_channel_cells(uint32_t *cells, struct mbox_client *client)
 	return NULL;
 }
 
-uint32_t *
-mbox_next_mbox(uint32_t *cells)
-{
-	uint32_t phandle = cells[0];
-	int node, ncells;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return NULL;
-
-	ncells = OF_getpropint(node, "#mbox-cells", 0);
-	return cells + ncells + 1;
-}
-
 struct mbox_channel *
 mbox_channel_idx(int node, int idx, struct mbox_client *client)
 {
 	struct mbox_channel *mc = NULL;
-	uint32_t *mboxes;
-	uint32_t *mbox;
-	int len;
+	uint32_t mbox[MAX_MBOX_CELLS];
+	int offset = 0;
 
-	len = OF_getproplen(node, "mboxes");
-	if (len <= 0)
-		return NULL;
-
-	mboxes = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "mboxes", mboxes, len);
-
-	mbox = mboxes;
-	while (mbox && mbox < mboxes + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, "mboxes",
+		    "#mbox-cells", offset, mbox, sizeof(mbox));
+		if (offset < 0)
+			break;
 		if (idx == 0) {
 			mc = mbox_channel_cells(mbox, client);
 			break;
 		}
-		mbox = mbox_next_mbox(mbox);
 		idx--;
 	}
 
-	free(mboxes, M_TEMP, len);
 	return mc;
 }
 
@@ -1406,46 +1364,25 @@ hwlock_lock_cells(uint32_t *cells, int lock)
 	return ENXIO;
 }
 
-uint32_t *
-hwlock_next_hwlock(uint32_t *cells)
-{
-	uint32_t phandle = cells[0];
-	int node, ncells;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return NULL;
-
-	ncells = OF_getpropint(node, "#hwlock-cells", 0);
-	return cells + ncells + 1;
-}
-
 int
 hwlock_do_lock_idx(int node, int idx, int lock)
 {
-	uint32_t *hwlocks;
-	uint32_t *hwlock;
+	uint32_t hwlock[MAX_HWLOCK_CELLS];
+	int offset = 0;
 	int rv = -1;
-	int len;
 
-	len = OF_getproplen(node, "hwlocks");
-	if (len <= 0)
-		return -1;
-
-	hwlocks = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "hwlocks", hwlocks, len);
-
-	hwlock = hwlocks;
-	while (hwlock && hwlock < hwlocks + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, "hwlocks",
+		    "#hwlock-cells", offset, hwlock, sizeof(hwlock));
+		if (offset < 0)
+			break;
 		if (idx <= 0)
 			rv = hwlock_lock_cells(hwlock, lock);
 		if (idx == 0)
 			break;
-		hwlock = hwlock_next_hwlock(hwlock);
 		idx--;
 	}
 
-	free(hwlocks, M_TEMP, len);
 	return rv;
 }
 

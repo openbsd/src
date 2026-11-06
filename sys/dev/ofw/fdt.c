@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.42 2026/10/15 00:17:34 kirill Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.43 2026/11/06 01:39:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1145,6 +1145,42 @@ OF_is_enabled(int handle)
 	}
 
 	return 1;
+}
+
+int
+OF_getnextcells(int handle, const char *prop, const char *ncellsprop,
+    int offset, uint32_t *buf, int buflen)
+{
+	void *node = (char *)tree.header + handle;
+	uint32_t ncells, phandle;
+	char *data;
+	int i, len;
+
+	len = fdt_node_property(node, (char *)prop, &data);
+	if (len < 0 || offset + sizeof(uint32_t) > len)
+		return -1;
+	data += offset;
+	len -= offset;
+
+	phandle = bemtoh32(data);
+	handle = OF_getnodebyphandle(phandle);
+	if (handle == 0)
+		return -1;
+
+	ncells = OF_getpropint(handle, (char *)ncellsprop, 0) + 1;
+	if (ncells > buflen / sizeof(uint32_t)) {
+		panic("%s: %s is too large (%d)",
+		    __func__, ncellsprop, ncells);
+	}
+	if (ncells > len / sizeof(uint32_t))
+		return -1;
+	for (i = 0; i < ncells; i++) {
+		buf[i] = bemtoh32(data);
+		data += sizeof(uint32_t);
+		offset += sizeof(uint32_t);
+	}
+
+	return offset;
 }
 
 int

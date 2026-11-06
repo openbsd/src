@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.32 2026/09/05 20:36:56 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.33 2026/11/06 01:39:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -48,6 +48,8 @@ struct ifnet *if_bynode(int);
 struct ifnet *if_byphandle(uint32_t);
 
 /* PHY support */
+
+#define MAX_PHY_CELLS	6
 
 #define PHY_NONE	0
 #define PHY_TYPE_SATA	1
@@ -288,6 +290,8 @@ void	iommu_reserve_region_pci(int, uint32_t, bus_addr_t, bus_size_t);
 
 /* Mailbox support */
 
+#define MAX_MBOX_CELLS	4
+
 struct mbox_client {
 	void	(*mc_rx_callback)(void *);
 	void	*mc_rx_arg;
@@ -318,6 +322,8 @@ int	mbox_send(struct mbox_channel *, const void *, size_t);
 int	mbox_recv(struct mbox_channel *, void *, size_t);
 
 /* hwlock support */
+
+#define MAX_HWLOCK_CELLS	2
 
 struct hwlock_device {
 	int	hd_node;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.h,v 1.7 2022/02/04 22:24:09 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.h,v 1.8 2026/11/06 01:39:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -17,6 +17,8 @@
 
 #ifndef _DEV_OFW_CLOCK_H_
 #define _DEV_OFW_CLOCK_H_
+
+#define MAX_CLOCK_CELLS		4
 
 struct clock_device {
 	int	cd_node;

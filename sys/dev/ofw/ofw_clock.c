@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.11 2018/08/05 21:05:17 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.12 2026/11/06 01:39:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -140,29 +140,22 @@ clock_next_clock(uint32_t *cells)
 uint32_t
 clock_get_frequency_idx(int node, int idx)
 {
-	uint32_t *clocks;
-	uint32_t *clock;
+	uint32_t clock[MAX_CLOCK_CELLS];
 	uint32_t freq = 0;
-	int len;
+	int offset = 0;
 
-	len = OF_getproplen(node, "clocks");
-	if (len <= 0)
-		return 0;
-
-	clocks = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "clocks", clocks, len);
-
-	clock = clocks;
-	while (clock && clock < clocks + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, "clocks",
+		    "#clock-cells", offset, clock, sizeof(clock));
+		if (offset < 0)
+			break;
 		if (idx == 0) {
 			freq = clock_get_frequency_cells(clock);
 			break;
 		}
-		clock = clock_next_clock(clock);
 		idx--;
 	}
 
-	free(clocks, M_TEMP, len);
 	return freq;
 }
 
@@ -181,29 +174,22 @@ clock_get_frequency(int node, const char *name)
 int
 clock_set_frequency_idx(int node, int idx, uint32_t freq)
 {
-	uint32_t *clocks;
-	uint32_t *clock;
+	uint32_t clock[MAX_CLOCK_CELLS];
+	int offset = 0;
 	int rv = -1;
-	int len;
 
-	len = OF_getproplen(node, "clocks");
-	if (len <= 0)
-		return -1;
-
-	clocks = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "clocks", clocks, len);
-
-	clock = clocks;
-	while (clock && clock < clocks + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, "clocks",
+		    "#clock-cells", offset, clock, sizeof(clock));
+		if (offset < 0)
+			break;
 		if (idx == 0) {
 			rv = clock_set_frequency_cells(clock, freq);
 			break;
 		}
-		clock = clock_next_clock(clock);
 		idx--;
 	}
 
-	free(clocks, M_TEMP, len);
 	return rv;
 }
 
@@ -222,28 +208,20 @@ clock_set_frequency(int node, const char *name, uint32_t freq)
 void
 clock_do_enable_idx(int node, int idx, int on)
 {
-	uint32_t *clocks;
-	uint32_t *clock;
-	int len;
+	uint32_t clock[MAX_CLOCK_CELLS];
+	int offset = 0;
 
-	len = OF_getproplen(node, "clocks");
-	if (len <= 0)
-		return;
-
-	clocks = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "clocks", clocks, len);
-
-	clock = clocks;
-	while (clock && clock < clocks + (len / sizeof(uint32_t))) {
+	for (;;) {
+		offset = OF_getnextcells(node, "clocks",
+		    "#clock-cells", offset, clock, sizeof(clock));
+		if (offset < 0)
+			break;
 		if (idx <= 0)
 			clock_enable_cells(clock, on);
 		if (idx == 0)
 			break;
-		clock = clock_next_clock(clock);
 		idx--;
 	}
-
-	free(clocks, M_TEMP, len);
 }
 
 void

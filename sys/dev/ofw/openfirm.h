@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.23 2026/06/22 21:12:12 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.24 2026/11/06 01:39:54 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ uint32_t OF_getpropint(int handle, char *, uint32_t);
 int OF_getpropintarray(int, char *, uint32_t *, int);
 uint64_t OF_getpropint64(int handle, char *, uint64_t);
 int OF_getpropint64array(int, char *, uint64_t *, int);
+int OF_getnextcells(int, const char *, const char *, int, uint32_t *, int);
 int OF_setprop(int, char *, const void *, int);
 int OF_nextprop(int, char *, void *);
 int OF_finddevice(char *name);
