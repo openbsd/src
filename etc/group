@@ -87,5 +87,6 @@ _shutdown:*:118:
 _lldpd:*:119:
 _rtrd:*:121:
 _ypbind:*:122:
+wscons:*:32765:
 nogroup:*:32766:
 nobody:*:32767:
