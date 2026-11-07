@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.48 2026/11/07 08:51:12 beck Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.49 2026/11/07 08:55:48 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -390,7 +390,7 @@ x509v3_cache_extensions_internal(X509 *x)
 		x->ex_flags |= EXFLAG_INVALID;
 
 	version = X509_get_version(x);
-	if (version < 0 || version > 2)
+	if (version != 2)
 		x->ex_flags |= EXFLAG_INVALID;
 	if (version == 0) {
 		x->ex_flags |= EXFLAG_V1;
