@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.26 2026/10/09 16:36:24 miod Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.27 2026/11/07 12:28:26 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -113,9 +113,11 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		sc->sc_brttimeout = bparam->ifbrp_ctime;
-		if (bparam->ifbrp_ctime != 0)
-			timeout_add_sec(&sc->sc_brtimeout, sc->sc_brttimeout);
-		else
+		if (bparam->ifbrp_ctime != 0) {
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				timeout_add_sec(&sc->sc_brtimeout,
+				    sc->sc_brttimeout);
+		} else
 			timeout_del(&sc->sc_brtimeout);
 		break;
 	case SIOCBRDGGTO:
