@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.70 2025/07/14 23:49:08 jsg Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.71 2026/11/07 08:28:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -5975,7 +5975,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		next_scb->flags = SCB_FLAG_NONE;
 
 		error = bus_dmamap_create(ahd->parent_dmat,
-		    AHD_MAXTRANSFER_SIZE, AHD_NSEG, MAXBSIZE, 0,
+		    MAXPHYS, AHD_NSEG, MAXBSIZE, 0,
 		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &next_scb->dmamap);
 
 		if (error != 0) {
