@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.47 2026/09/29 14:03:40 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.48 2026/11/07 08:51:12 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -283,7 +283,6 @@ X509_supported_extension(X509_EXTENSION *ext)
 	case NID_inhibit_any_policy:
 	case NID_key_usage:
 	case NID_name_constraints:
-	case NID_netscape_cert_type:
 	case NID_policy_constraints:
 	case NID_policy_mappings:
 #ifndef OPENSSL_NO_RFC3779
@@ -372,7 +371,6 @@ x509v3_cache_extensions_internal(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;
 	ASN1_BIT_STRING *usage;
-	ASN1_BIT_STRING *ns;
 	EXTENDED_KEY_USAGE *extusage;
 	X509_EXTENSION *ex;
 	long version;
@@ -481,17 +479,6 @@ x509v3_cache_extensions_internal(X509 *x)
 			}
 		}
 		sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
-	} else if (i != -1) {
-		x->ex_flags |= EXFLAG_INVALID;
-	}
-
-	if ((ns = X509_get_ext_d2i(x, NID_netscape_cert_type, &i, NULL))) {
-		if (ns->length > 0)
-			x->ex_nscert = ns->data[0];
-		else
-			x->ex_nscert = 0;
-		x->ex_flags |= EXFLAG_NSCERT;
-		ASN1_BIT_STRING_free(ns);
 	} else if (i != -1) {
 		x->ex_flags |= EXFLAG_INVALID;
 	}
