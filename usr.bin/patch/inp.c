@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.49 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: inp.c,v 1.50 2026/11/07 09:41:19 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -57,7 +57,7 @@ static size_t	lines_per_buf;	/* how many lines per buffer */
 static size_t	tibuflen;	/* plan b buffer length */
 static size_t	tireclen;	/* length of records in tmp file */
 
-static bool	rev_in_string(const char *);
+static bool	rev_in_string(const char *, size_t);
 static bool	reallocate_lines(size_t *);
 
 /* returns false if insufficient memory */
@@ -247,7 +247,7 @@ plan_a(const char *filename)
 	/* now check for revision, if any */
 
 	if (revision != NULL) {
-		if (i_womp == NULL || !rev_in_string(i_womp)) {
+		if (i_womp == NULL || !rev_in_string(i_womp, i_size)) {
 			if (force) {
 				if (verbose)
 					say("Warning: this file doesn't appear "
@@ -301,7 +301,8 @@ plan_b(const char *filename)
 			last_line_missing_eol = true;
 			len++;
 		}
-		if (revision != NULL && !found_revision && rev_in_string(p))
+		if (revision != NULL && !found_revision &&
+		    rev_in_string(p, len - 1))
 			found_revision = true;
 		if (len > maxlen)
 			maxlen = len;	/* find longest line */
@@ -409,18 +410,24 @@ ifetch(LINENUM line, int whichbuf)
  * True if the string argument contains the revision number we want.
  */
 static bool
-rev_in_string(const char *string)
+rev_in_string(const char *string, size_t len)
 {
 	const char	*s;
-	size_t		patlen;
+	size_t		patlen, i;
 
 	if (revision == NULL)
 		return true;
 	patlen = strlen(revision);
+	if (patlen >= len)
+		return false;
 	if (strnEQ(string, revision, patlen) &&
 	    isspace((unsigned char)string[patlen]))
 		return true;
-	for (s = string; *s; s++) {
+	if (len < patlen + 2)
+		return false;
+	for (i = 0; i < len - patlen - 2; i++) {
+		s = &string[i];
+		/* ' ' + revision/patlen + ' ' */
 		if (isspace((unsigned char)*s) && strnEQ(s + 1, revision, patlen) &&
 		    isspace((unsigned char)s[patlen + 1])) {
 			return true;
