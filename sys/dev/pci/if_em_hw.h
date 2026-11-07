@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.103 2026/08/14 07:21:33 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.104 2026/11/07 06:00:20 jan Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2245,6 +2245,7 @@ struct e1000_adv_tx_context_desc {
 #define E1000_MANC_SMB_DATA_IN   0x08000000 /* SMBus Data In */
 #define E1000_MANC_SMB_DATA_OUT  0x10000000 /* SMBus Data Out */
 #define E1000_MANC_SMB_CLK_OUT   0x20000000 /* SMBus Clock Out */
+#define E1000_MANC_EN_BMC2NET    0x20000000 /* MC <-> network traffic */
 
 #define E1000_MANC_SMB_DATA_OUT_SHIFT  28 /* SMBus Data Out Shift */
 #define E1000_MANC_SMB_CLK_OUT_SHIFT   29 /* SMBus Clock Out Shift */

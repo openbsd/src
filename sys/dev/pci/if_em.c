@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.385 2026/11/06 21:44:04 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.386 2026/11/07 06:00:20 jan Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -618,6 +618,16 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_check_phy_reset_block(&sc->hw))
 		printf("%s: PHY reset is blocked due to SOL/IDER session.\n",
 		    DEVNAME(sc));
+
+	/* Indicate whether the BMC is reachable via this port */
+	if (sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
+		uint32_t manc = E1000_READ_REG(&sc->hw, MANC);
+
+		if (ISSET(manc, E1000_MANC_RCV_TCO_EN) &&
+		    ISSET(manc, E1000_MANC_EN_BMC2NET))
+			printf("%s: warning - BMC is enabled on this interface\n",
+			    DEVNAME(sc));
+	}
 
 	/* Identify 82544 on PCI-X */
 	if (sc->hw.bus_type == em_bus_type_pcix &&

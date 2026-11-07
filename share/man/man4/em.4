@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.55 2021/09/08 20:29:21 jmc Exp $
+.\" $OpenBSD: em.4,v 1.56 2026/11/07 06:00:20 jan Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -28,7 +28,7 @@
 .\" * Other names and brands may be claimed as the property of others.
 .\"
 .\" $FreeBSD: em.4,v 1.18 2005/01/30 12:29:06 yar Exp $
-.Dd $Mdocdate: September 8 2021 $
+.Dd $Mdocdate: November 7 2026 $
 .Dt EM 4
 .Os
 .Sh NAME
@@ -193,6 +193,23 @@ Only full-duplex mode is supported at this speed.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+.Bl -tag -width Ds
+.It "warning - BMC is enabled on this interface"
+.Pp
+A baseboard management controller (BMC) shares this interface with the host
+and is directly reachable from the connected network.
+BMC firmware is often buggy and has a history of security vulnerabilities,
+so exposing it to an untrusted network is a risk.
+The controller diverts certain categories of received packets to the BMC,
+for example ARP, RMCP, or traffic addressed to the BMC.
+These packets are consumed by the BMC and are not visible to the operating
+system.
+The BMC may also use its own MAC address,
+so the port can appear on the network with two MAC addresses.
+Depending on the system, the BMC's network access may be disabled in the BIOS
+or BMC configuration.
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr gcu 4 ,
