@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.149 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.150 2026/11/07 20:57:39 jan Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -783,6 +783,7 @@ int	   in_cksum(struct mbuf *, int);
 int	   in4_cksum(struct mbuf *, u_int8_t, int, int);
 void	   in_hdr_cksum_out(struct mbuf *, struct ifnet *);
 void	   in_proto_cksum_out(struct mbuf *, struct ifnet *);
+uint16_t   in_cksum_phdr(uint32_t, uint32_t, uint32_t);
 int	   in_ifcap_cksum(struct mbuf *, struct ifnet *, int);
 void	   in_ifdetach(struct ifnet *);
 int	   in_mask2len(struct in_addr *);

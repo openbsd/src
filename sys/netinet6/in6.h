@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.126 2026/10/10 19:05:46 miod Exp $	*/
+/*	$OpenBSD: in6.h,v 1.127 2026/11/07 20:57:39 jan Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -408,6 +408,8 @@ struct mbuf *
 
 int	in6_cksum(struct mbuf *, uint8_t, uint32_t, uint32_t);
 void	in6_proto_cksum_out(struct mbuf *, struct ifnet *);
+uint16_t in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
+	    uint32_t, uint32_t);
 int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, const struct in6_addr *,
 	    u_int, struct rtentry *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.420 2026/08/05 09:43:19 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.421 2026/11/07 20:57:39 jan Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ int ip_pcbopts(struct mbuf **, struct mbuf *);
 int ip_multicast_if(struct ip_mreqn *, u_int, unsigned int *);
 int ip_setmoptions(int, struct ip_moptions **, struct mbuf *, u_int);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
-static u_int16_t in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
 int ip_output_ipsec_lookup(struct mbuf *m, int hlen,
@@ -1784,8 +1783,8 @@ in_hdr_cksum_out(struct mbuf *m, struct ifnet *ifp)
  *	Compute significant parts of the IPv4 checksum pseudo-header
  *	for use in a delayed TCP/UDP checksum calculation.
  */
-static u_int16_t
-in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
+uint16_t
+in_cksum_phdr(uint32_t src, uint32_t dst, uint32_t lenproto)
 {
 	u_int32_t sum;
 

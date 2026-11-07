@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.309 2026/09/17 15:56:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.310 2026/11/07 20:57:39 jan Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -133,9 +133,6 @@ int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *);
 int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *);
-static __inline u_int16_t __attribute__((__unused__))
-    in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
-    u_int32_t, u_int32_t);
 void in6_delayed_cksum(struct mbuf *, u_int8_t);
 
 int ip6_output_ipsec_pmtu_update(struct tdb *, struct route *,
@@ -2515,9 +2512,9 @@ ip6_randomid_init(void)
  *	Compute significant parts of the IPv6 checksum pseudo-header
  *	for use in a delayed TCP/UDP checksum calculation.
  */
-static __inline u_int16_t __attribute__((__unused__))
+uint16_t
 in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
-    u_int32_t len, u_int32_t nxt)
+    uint32_t len, uint32_t nxt)
 {
 	u_int32_t sum = 0;
 	const u_int16_t *w;
