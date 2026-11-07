@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.131 2026/06/26 15:26:52 bket Exp $
+#	$OpenBSD: special,v 1.132 2026/11/07 08:59:53 robert Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -25,7 +25,6 @@ daily.local	type=file mode=0644 uname=root gname=wheel optional
 dhcpd.conf	type=file mode=0644 uname=root gname=wheel optional
 dvmrpd.conf	type=file mode=0600 uname=root gname=wheel optional
 exports		type=file mode=0644 uname=root gname=wheel optional
-fbtab		type=file mode=0644 uname=root gname=wheel
 fstab		type=file mode=0644 uname=root gname=wheel
 ftpchroot	type=file mode=0644 uname=root gname=wheel optional
 ftpusers	type=file mode=0644 uname=root gname=wheel

@@ -2,7 +2,6 @@
 ./.profile
 ./etc/changelist
 ./etc/dumpdates
-./etc/fbtab
 ./etc/ftpusers
 ./etc/gettytab
 ./etc/group

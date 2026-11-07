@@ -253,7 +253,7 @@ ramdisk)
 	;;
 
 std)
-	M console	c 0 0 600
+	M console	c 0 0 660 wscons root
 	M tty		c 1 0
 	M mem		c 2 0 640 kmem
 	M kmem		c 2 1 640 kmem
@@ -293,7 +293,7 @@ vmm)
 	;;
 
 video*)
-	M video$U  c 44 $U 600
+	M video$U  c 44 $U 660 wscons root
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
@@ -392,9 +392,9 @@ dri)
 	n=0
 	while [ $n -lt 4 ]
 	do
-		M dri/card$n c 87 $n 600
+		M dri/card$n c 87 $n 660 wscons root
 		r=$(($n+128))
-		M dri/renderD$r c 87 $r 600
+		M dri/renderD$r c 87 $r 660 wscons root
 		n=$(($n+1))
 	done
 	MKlist[${#MKlist[*]}]=";chmod 555 dri"
@@ -487,16 +487,16 @@ lpt*|lpa*)
 	;;
 
 wsmouse[0-9]*)
-	M wsmouse$U c 68 $U 600
+	M wsmouse$U c 68 $U 660 wscons root
 	;;
 
 wsmux|wsmouse|wskbd)
-	M wsmouse c 69 0 600
-	M wskbd c 69 1 600
+	M wsmouse c 69 0 660 wscons root
+	M wskbd c 69 1 660 wscons root
 	;;
 
 wskbd[0-9]*)
-	M wskbd$U c 67 $U 600
+	M wskbd$U c 67 $U 660 wscons root
 	;;
 
 wscons)
@@ -520,8 +520,8 @@ tty[C-J]*)
 	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c 12 $((16#$U+$m)) 600;;
-	cfg) M tty${n}cfg c 12 $((255+$m)) 600;;
+	[0-9a-f]) M tty$n$U c 12 $((16#$U+$m)) 660 wscons root;;
+	cfg) M tty${n}cfg c 12 $((255+$m)) 660 wscons root;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
 	;;

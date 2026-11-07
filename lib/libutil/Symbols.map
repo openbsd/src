@@ -109,8 +109,8 @@
 		isduid;
 		login;
 		login_check_expire;
-		login_fbtab;
 		login_tty;
+		login_wscons;
 		logout;
 		logwtmp;
 		msgbuf_clear;

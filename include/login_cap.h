@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.21 2025/11/24 12:37:15 jca Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.22 2026/11/07 08:59:53 robert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -58,6 +58,7 @@
 #define	LOGIN_SETALL 		0x01ff	/* Set all. */
 /* The LOGIN defines below are not part of LOGIN_SETALL */
 #define	LOGIN_SETXDGENV		0x0200	/* Set XDG environment variables */
+#define	LOGIN_SETWSCONSGROUP	0x0400	/* Set wscons group */
 
 #define	BI_AUTH		"authorize"		/* Accepted authentication */
 #define	BI_REJECT	"reject"		/* Rejected authentication */

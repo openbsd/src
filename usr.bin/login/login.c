@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.75 2025/11/27 17:27:22 jca Exp $	*/
+/*	$OpenBSD: login.c,v 1.76 2026/11/07 08:59:53 robert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 	char localhost[HOST_NAME_MAX+1], *copyright;
 	char mail[sizeof(_PATH_MAILDIR) + 1 + NAME_MAX];
 	int ask, ch, cnt, fflag, pflag, quietlog, rootlogin, lastchance;
-	int error, homeless, needto, authok, tries, backoff;
+	int error, homeless, needto, authok, tries, backoff, wscons = 0;
 	struct addrinfo *ai, hints;
 	struct rlimit cds, scds;
 	quad_t expire, warning;
@@ -667,10 +667,12 @@ failed:
 		(void)check_failedlogin(pwd->pw_uid);
 	dolastlog(quietlog);
 
-	login_fbtab(tty, pwd->pw_uid, pwd->pw_gid);
+	wscons = login_wscons(tty);
 
-	(void)chown(ttyn, pwd->pw_uid,
-	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+	if (!wscons) {
+		(void)chown(ttyn, pwd->pw_uid,
+		    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+	}
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0) {
@@ -711,7 +713,8 @@ failed:
 		    "  You must change your password, now!\n");
 
 	if (setusercontext(lc, pwd, rootlogin ? 0 : pwd->pw_uid,
-	    (LOGIN_SETALL & ~LOGIN_SETPATH) | LOGIN_SETXDGENV) < 0) {
+	    (LOGIN_SETALL & ~LOGIN_SETPATH) | LOGIN_SETXDGENV |
+	    (wscons ? LOGIN_SETWSCONSGROUP : 0)) < 0) {
 		warn("unable to set user context");
 		quickexit(1);
 	}

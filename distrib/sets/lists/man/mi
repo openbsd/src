@@ -2424,7 +2424,6 @@
 ./usr/share/man/man5/elf.5
 ./usr/share/man/man5/ethers.5
 ./usr/share/man/man5/exports.5
-./usr/share/man/man5/fbtab.5
 ./usr/share/man/man5/files.conf.5
 ./usr/share/man/man5/forward.5
 ./usr/share/man/man5/fs.5

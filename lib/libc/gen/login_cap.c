@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.51 2026/07/29 11:01:02 claudio Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.52 2026/11/07 08:59:53 robert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -67,6 +67,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
+/* 32765:wscons */
+#define WSCONS_GID 32765
 
 static	char *_authtypes[] = { LOGIN_DEFSTYLE, 0 };
 static	char *expandstr(const char *, const struct passwd *, int);
@@ -643,6 +645,8 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 {
 	login_cap_t *flc;
 	quad_t p, rtable;
+	gid_t groups[NGROUPS_MAX];
+	int ngroups = NGROUPS_MAX;
 	int i;
 
 	flc = NULL;
@@ -708,8 +712,23 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 			return (-1);
 		}
 
-		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
-			syslog(LOG_ERR, "initgroups(%s,%u): %m",
+		if (getgrouplist(pwd->pw_name, pwd->pw_gid, groups, &ngroups) == -1) {
+			/* Silently truncate group list */
+			ngroups = NGROUPS_MAX;
+		}
+
+		if (flags & LOGIN_SETWSCONSGROUP) {
+			if (ngroups == NGROUPS_MAX) {
+				syslog(LOG_ERR, "unable to append wscons group for %s",
+				    pwd->pw_name);
+			} else {
+				groups[ngroups] = WSCONS_GID;
+				ngroups++;
+			}
+		}
+
+		if (setgroups(ngroups, groups) == 1) {
+			syslog(LOG_ERR, "setgroups(%s,%u): %m",
 			    pwd->pw_name, pwd->pw_gid);
 			login_close(flc);
 			return (-1);

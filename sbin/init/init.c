@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.73 2026/08/20 21:35:32 daniel Exp $	*/
+/*	$OpenBSD: init.c,v 1.74 2026/11/07 08:59:53 robert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -1019,7 +1019,6 @@ collect_child(pid_t pid)
 		return;
 
 	clear_session_logs(sp);
-	login_fbtab(sp->se_device + sizeof(_PATH_DEV) - 1, 0, 0);
 	del_session(sp);
 	sp->se_process = 0;
 

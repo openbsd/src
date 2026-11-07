@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.495 2026/09/21 16:31:30 job Exp $
+#	$OpenBSD: Makefile,v 1.496 2026/11/07 08:59:52 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -96,9 +96,6 @@ distribution-etc-root-var: distrib-dirs
 	    ${DESTDIR}/etc/examples/sysctl.conf && \
 	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/examples/sysctl.conf && \
 	    chmod 644 ${DESTDIR}/etc/examples/sysctl.conf
-	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
-	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/fbtab && \
-	    chmod 644 ${DESTDIR}/etc/fbtab
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 motd ${DESTDIR}/etc
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc

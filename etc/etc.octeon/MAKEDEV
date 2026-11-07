@@ -226,7 +226,7 @@ boot)
 	M octboot	c 21 0 600
 	;;
 std)
-	M console	c 0 0 600
+	M console	c 0 0 660 wscons root
 	M tty		c 2 0
 	M mem		c 3 0 640 kmem
 	M kmem		c 3 1 640 kmem
@@ -258,7 +258,7 @@ vscsi*)
 	;;
 
 video*)
-	M video$U  c 45 $U 600
+	M video$U  c 45 $U 660 wscons root
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
 	;;
 
@@ -368,16 +368,16 @@ ttyU[0-9a-zA-Z])
 	;;
 
 wsmouse[0-9]*)
-	M wsmouse$U c 27 $U 600
+	M wsmouse$U c 27 $U 660 wscons root
 	;;
 
 wsmux|wsmouse|wskbd)
-	M wsmouse c 28 0 600
-	M wskbd c 28 1 600
+	M wsmouse c 28 0 660 wscons root
+	M wskbd c 28 1 660 wscons root
 	;;
 
 wskbd[0-9]*)
-	M wskbd$U c 26 $U 600
+	M wskbd$U c 26 $U 660 wscons root
 	;;
 
 wscons)
@@ -401,8 +401,8 @@ tty[C-J]*)
 	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c 25 $((16#$U+$m)) 600;;
-	cfg) M tty${n}cfg c 25 $((255+$m)) 600;;
+	[0-9a-f]) M tty$n$U c 25 $((16#$U+$m)) 660 wscons root;;
+	cfg) M tty${n}cfg c 25 $((255+$m)) 660 wscons root;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
 	;;

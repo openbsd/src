@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.38 2022/05/11 17:23:56 millert Exp $	*/
+/*	$OpenBSD: util.h,v 1.39 2026/11/07 08:59:53 robert Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -109,8 +109,8 @@ pid_t	fdforkpty(int, int *, char *, const struct termios *,
 	    const struct winsize *);
 int	getmaxpartitions(void);
 int	getrawpartition(void);
-void	login_fbtab(const char *, uid_t, gid_t);
 int	login_check_expire(struct __sFILE *, struct passwd *, char *, int);
+int	login_wscons(const char *);
 char   *readlabelfs(char *, int);
 const char *uu_lockerr(int);
 int     uu_lock(const char *);

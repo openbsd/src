@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.144 2026/06/26 15:26:52 bket Exp $
+#	$OpenBSD: changelist,v 1.145 2026/11/07 08:59:52 robert Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -41,7 +41,6 @@
 /etc/eigrpd.conf
 /etc/ethers
 /etc/exports
-/etc/fbtab
 /etc/fstab
 /etc/ftpchroot
 /etc/ftpusers

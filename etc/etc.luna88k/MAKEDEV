@@ -213,7 +213,7 @@ U=`unt $i`
 
 case $i in
 std)
-	M console	c 0 0 600
+	M console	c 0 0 660 wscons root
 	M tty		c 1 0
 	M mem		c 2 0 640 kmem
 	M kmem		c 2 1 640 kmem
@@ -311,16 +311,16 @@ audio*)
 	;;
 
 wsmouse[0-9]*)
-	M wsmouse$U c 15 $U 600
+	M wsmouse$U c 15 $U 660 wscons root
 	;;
 
 wsmux|wsmouse|wskbd)
-	M wsmouse c 16 0 600
-	M wskbd c 16 1 600
+	M wsmouse c 16 0 660 wscons root
+	M wskbd c 16 1 660 wscons root
 	;;
 
 wskbd[0-9]*)
-	M wskbd$U c 14 $U 600
+	M wskbd$U c 14 $U 660 wscons root
 	;;
 
 wscons)
@@ -344,8 +344,8 @@ tty[C-J]*)
 	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c 13 $((16#$U+$m)) 600;;
-	cfg) M tty${n}cfg c 13 $((255+$m)) 600;;
+	[0-9a-f]) M tty$n$U c 13 $((16#$U+$m)) 660 wscons root;;
+	cfg) M tty${n}cfg c 13 $((255+$m)) 660 wscons root;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
 	;;
