@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.67 2026/11/07 10:56:23 beck Exp $ */
+/* $OpenBSD: ca.c,v 1.68 2026/11/07 16:46:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2634,7 +2634,6 @@ make_revocation_str(int rev_type, char *rev_arg)
 int
 make_revoked(X509_REVOKED *rev, const char *str)
 {
-	char *tmp = NULL;
 	int reason_code = -1;
 	int i, ret = 0;
 	ASN1_OBJECT *hold = NULL;
@@ -2674,8 +2673,6 @@ make_revoked(X509_REVOKED *rev, const char *str)
 		ret = 1;
 
  err:
-	free(tmp);
-
 	ASN1_OBJECT_free(hold);
 	ASN1_GENERALIZEDTIME_free(comp_time);
 	ASN1_ENUMERATED_free(rtmp);
