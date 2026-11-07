@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.26 2026/07/08 19:39:33 mvs Exp $	*/
+/*	$OpenBSD: msg.h,v 1.27 2026/11/07 15:32:57 mvs Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -56,6 +56,20 @@ struct msqid_ds {
 #ifdef _KERNEL
 #include <sys/queue.h>
 
+struct msqid_ds_kern {
+	struct ipc_perm	msg_perm;	/* msg queue permission bits */
+	struct msg	*msg_first;	/* first message in the queue */
+	struct msg	*msg_last;	/* last message in the queue */
+	msglen_t	msg_cbytes;	/* number of bytes in use on the queue */
+	msgqnum_t	msg_qnum;	/* number of msgs in the queue */
+	msglen_t	msg_qbytes;	/* max # of bytes on the queue */
+	pid_t		msg_lspid;	/* pid of last msgsnd() */
+	pid_t		msg_lrpid;	/* pid of last msgrcv() */
+	time_t		msg_stime;	/* time of last msgsnd() */
+	time_t		msg_rtime;	/* time of last msgrcv() */
+	time_t		msg_ctime;	/* time of last msgctl() */
+};
+
 struct msg {
 	long		 msg_type;
 	size_t		 msg_len;
@@ -65,13 +79,13 @@ struct msg {
 };
 
 struct que {
-	struct msqid_ds	msqid_ds;
-	int		que_ix;		/* pseudo-index */
-	int		que_flags;
-	int		que_references;
+	struct msqid_ds_kern	msqid_ds;
+	int			que_ix;		/* pseudo-index */
+	int			que_flags;
+	int			que_references;
 
 	TAILQ_ENTRY(que)	que_next;
-	TAILQ_HEAD(, msg) que_msgs;
+	TAILQ_HEAD(, msg)	que_msgs;
 };
 
 /* for que_flags */
