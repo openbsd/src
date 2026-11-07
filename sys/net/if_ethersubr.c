@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.308 2025/12/19 02:04:13 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.309 2026/11/07 10:00:05 jan Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1146,6 +1146,11 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 		ext->ip4 = (struct ip *)(mtod(m, caddr_t) + hoff);
 
 		memcpy(&hdrcpy.hc_data, ext->ip4, 1);
+		if (hdrcpy.hc_ip.v != IPVERSION) {
+			DPRINTF("ip4version %u", hdrcpy.hc_ip.v);
+			ext->ip4 = NULL;
+			return;
+		}
 		hlen = hdrcpy.hc_ip.hl << 2;
 		if (m->m_len - hoff < hlen) {
 			DPRINTF("m_len %d, hoff %d, iphl %zu",
@@ -1187,6 +1192,11 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 		}
 		ext->ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
 
+		if ((ext->ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+			DPRINTF("ip6version %u", ext->ip6->ip6_vfc >> 4);
+			ext->ip6 = NULL;
+			return;
+		}
 		hlen = sizeof(*ext->ip6);
 		if (ext->paylen < hlen) {
 			DPRINTF("paylen %u, ip6hlen %zu", ext->paylen, hlen);
@@ -1538,7 +1548,7 @@ ether_frm_detach(struct socket *so)
 			sa = &ifr.ifr_addr;
 			sa->sa_family = AF_UNSPEC;
 			memcpy(sa->sa_data, &epg->epg_addr, ETHER_ADDR_LEN);
-		
+
 			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 		}
 		if_put(ifp);
