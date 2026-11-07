@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2026/07/16 11:21:37 tb Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.9 2026/11/07 09:08:53 kirill Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -77,6 +77,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	for (i = 0; i < relrel; i++, relas++) {
 		Elf_Addr *r_addr;
 
+		if (ELF_R_TYPE(relas->r_info) == R_PPC64_NONE)
+			continue;
 		r_addr = (Elf_Addr *)(relas->r_offset + loff);
 		*r_addr = loff + relas->r_addend;
 	}
