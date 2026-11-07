@@ -94,8 +94,9 @@ main(void)
 			passed = actual != NULL &&
 			    strcmp(actual, example->expected) == 0;
 		if (!passed) {
-			printf("%zu, '%s' => wanted='%s' got='%s'\n", i,
-			    example->input, example->expected, actual);
+			printf("%zu, strip=%d '%s' => wanted='%s' got='%s'\n",
+			    i, example->strip, example->input,
+			    example->expected, actual);
 			failures++;
 		}
 
