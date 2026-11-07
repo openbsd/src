@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.13 2026/05/09 06:36:06 jsg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.14 2026/11/07 12:50:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -356,7 +356,7 @@ rport_set_parent(struct rport_softc *sc, const struct if_parent *p)
 
 	if (ifp0 == ifp) {
 		error = EINVAL;
-		goto leave;
+		goto put;
 	}
 
 	if (ifp0->if_enqueue != rport_enqueue) {
