@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.30 2026/10/10 14:33:52 deraadt Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.31 2026/11/07 21:36:39 bluhm Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -651,7 +651,7 @@ ipcs_kvm(void)
 {
 	struct msginfo msginfo;
 	struct que msgque;
-	struct msqid_ds *msqids;
+	struct msqid_ds_kern *msqids;
 	struct seminfo seminfo;
 	struct semid_ds sem, **sema;
 	struct shminfo shminfo;
@@ -716,8 +716,7 @@ ipcs_kvm(void)
 				    symbols[X_MSG_QUEUES].n_name,
 				    kvm_geterr(kd));
 
-			msqids = calloc(sizeof(struct msqid_ds),
-			    msginfo.msgmni);
+			msqids = calloc(sizeof(*msqids), msginfo.msgmni);
 			if (msqids == NULL)
 				err(1, "calloc");
 
@@ -733,7 +732,7 @@ ipcs_kvm(void)
 
 			show_msginfo_hdr();
 			for (i = 0; i < msginfo.msgmni; i++) {
-				struct msqid_ds *msqptr = &msqids[i];
+				struct msqid_ds_kern *msqptr = &msqids[i];
 				if (msqptr->msg_qbytes != 0)
 					show_msginfo(msqptr->msg_stime,
 					    msqptr->msg_rtime,
