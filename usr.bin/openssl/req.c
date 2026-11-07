@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.29 2024/04/17 01:24:43 tb Exp $ */
+/* $OpenBSD: req.c,v 1.30 2026/11/07 08:46:56 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -882,9 +882,7 @@ req_main(int argc, char **argv)
 			if ((x509ss = X509_new()) == NULL)
 				goto end;
 
-			/* Set version to V3 */
-			if ((cfg.extensions != NULL || addext_conf != NULL) &&
-			    !X509_set_version(x509ss, 2))
+			if (!X509_set_version(x509ss, 2))
 				goto end;
 			if (cfg.serial) {
 				if (!X509_set_serialNumber(x509ss, cfg.serial))

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.44 2026/02/08 22:33:14 kenjiro Exp $ */
+/* $OpenBSD: x509.c,v 1.45 2026/11/07 08:46:56 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1441,10 +1441,10 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 				goto end;
 		}
 	}
+	if (!X509_set_version(x, 2))
+		goto end;
 	if (conf != NULL) {
 		X509V3_CTX ctx2;
-		if (!X509_set_version(x, 2))	/* version 3 certificate */
-			goto end;
 		X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
 		X509V3_set_nconf(&ctx2, conf);
 		if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
@@ -1645,11 +1645,11 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 				goto err;
 		}
 	}
+	if (!X509_set_version(x, 2))
+		goto err;
 	if (conf != NULL) {
 		X509V3_CTX ctx;
 
-		if (!X509_set_version(x, 2))	/* version 3 certificate */
-			goto err;
 		X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
 		X509V3_set_nconf(&ctx, conf);
 		if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))
