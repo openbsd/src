@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.66 2026/11/07 08:46:56 beck Exp $ */
+/* $OpenBSD: ca.c,v 1.67 2026/11/07 10:56:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1308,7 +1308,6 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	if (cfg.gencrl) {
-		int crl_v2 = 0;
 		if (cfg.crl_ext == NULL) {
 			cfg.crl_ext = NCONF_get_string(conf,
 			    cfg.section, ENV_CRLEXT);
@@ -1383,8 +1382,6 @@ ca_main(int argc, char **argv)
 				j = make_revoked(r, pp[DB_rev_date]);
 				if (!j)
 					goto err;
-				if (j == 2)
-					crl_v2 = 1;
 				if (!BN_hex2bn(&serial, pp[DB_serial]))
 					goto err;
 				tmpserial = BN_to_ASN1_INTEGER(serial, NULL);
@@ -1433,15 +1430,12 @@ ca_main(int argc, char **argv)
 					goto err;
 				}
 				ASN1_INTEGER_free(tmpserial);
-				crl_v2 = 1;
 				if (!BN_add_word(crlnumber, 1))
 					goto err;
 			}
 		}
-		if (cfg.crl_ext != NULL || crl_v2) {
-			if (!X509_CRL_set_version(crl, 1))
-				goto err;	/* version 2 CRL */
-		}
+		if (!X509_CRL_set_version(crl, 1))
+			goto err;
 		if (crlnumberfile != NULL)	/* we have a CRL number that
 						 * need updating */
 			if (!save_serial(crlnumberfile, "new", crlnumber, NULL))
