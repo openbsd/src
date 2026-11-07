@@ -16,4 +16,5 @@ _file:*:104:
 _sndiop:*:110:
 _slaacd:*:115:
 dialer:*:117:
+wscons:*:32765:
 nobody:*:32767:
