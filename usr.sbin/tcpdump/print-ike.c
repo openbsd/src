@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.41 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.42 2026/11/07 10:34:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -843,7 +843,8 @@ ike_pl_print (u_int8_t type, u_int8_t *buf, u_int8_t doi)
 	next_type = buf[0];
 	this_len = buf[2]<<8 | buf[3];
 
-	if (type < PAYLOAD_PRIVATE_MIN && type >= PAYLOAD_IKEV2_SA)
+	if (type >= PAYLOAD_IKEV2_SA && type - PAYLOAD_IKEV2_SA <
+	    sizeof(plv2types) / sizeof(plv2types[0]))
 		printf("\n\t%spayload: %s len: %hu", ike_tab_offset(),
 		    plv2types[type - PAYLOAD_IKEV2_SA], this_len);
 	else if (type < PAYLOAD_PRIVATE_MIN || type >= PAYLOAD_PRIVATE_MAX)
