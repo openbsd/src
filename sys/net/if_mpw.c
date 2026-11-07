@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.72 2026/11/04 08:51:51 claudio Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.73 2026/11/07 12:18:09 mvs Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -97,9 +97,6 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_txhprio = 0;
 	sc->sc_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_rdomain = 0;
-	refcnt_init_trace(&sc->sc_ifa.ifa_refcnt, DT_REFCNT_IDX_IFADDR);
-	sc->sc_ifa.ifa_ifp = ifp;
-	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
 	sc->sc_smpls.smpls_family = AF_MPLS;
 
@@ -117,6 +114,11 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 
 	ether_ifattach(ifp);
 	ifp->if_input = mpw_input;
+
+	/* ether_ifattach did if_sadl allocation */
+	refcnt_init_trace(&sc->sc_ifa.ifa_refcnt, DT_REFCNT_IDX_IFADDR);
+	sc->sc_ifa.ifa_ifp = ifp;
+	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp); /* undo bpfattach in ether_ifattach */
