@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.8 2024/03/29 06:42:42 tb Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.9 2026/11/07 08:48:34 beck Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -31,40 +31,42 @@ static const char cms_msg[] = "Hello CMS!\r\n";
 
 static const char cms_ca_1[] =
     "-----BEGIN CERTIFICATE-----\n"
-    "MIICqDCCAZACCQD8ebR8e4kdvjANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtU\n"
-    "ZXN0IENNUyBDQTAeFw0xOTA1MTExNTUzNTNaFw0yOTA1MDgxNTUzNTNaMBYxFDAS\n"
-    "BgNVBAMMC1Rlc3QgQ01TIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\n"
-    "AQEAoIiW3POGYfhY0BEgG8mIwouOI917M72jsuUE57ccjEXLWseItLb7r9vkiwW/\n"
-    "FYbz0UYkJW1JgpZmWaTGOgZGxj+WTzxh1aq7OHyJb6Pxwp9wGrGJu+BEqOZN/bi/\n"
-    "aQ1l8x7DxVJkFeI1+4QKDfmGYfWoVzQLgamO3u0vxz3Vi/XzX01ZomcZUYYx0lIq\n"
-    "hxAO665HoPUmecqYdLPquJNxdfiy37ieLJOmIsKZJtMcCZAxqhcCwE7I0196Ng3P\n"
-    "fK9Sl7BCyTBszb2YC2qOleuI2Wjg/7o1+hugopUkjxz0RGFu5s3K9PhCLwpqylXg\n"
-    "IXe9Vwi38gKawD3yjtDBRDNmIwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAvsvtc\n"
-    "cO0Eo0F6MvB0bjBIMHBkKyWcmD2c5gVFhbHyRD+XBVXNdn5CcBba2amm0VgShBpM\n"
-    "4e1rOtIH/Hf6nB3c/EjZvd16ryoTCTvzayac7sD2Y8IxF1JIAKvjFbu+LmzM/F5f\n"
-    "x3/WdY1qs5W7lO46i8xmSUAP88gohWP4cyVUAITNrh/RSOFaWUd5i1/vZ+iEexLI\n"
-    "rQWsweJleOxvA8SrXm2gAkqRWEncsxOrsX/MsPl7iJoebLhWbS3cOHhutWrfhdlC\n"
-    "2uT6K7SA9rn6qqmvI6mLkHJQpqq++Py2UTDo1u8VKa3ieYNUN070kgxpYiVBGs3L\n"
-    "aaACIcEs48gnTRWc\n"
+    "MIIC1DCCAbygAwIBAgIJANoYzgNsY23UMA0GCSqGSIb3DQEBCwUAMBYxFDASBgNV\n"
+    "BAMMC1Rlc3QgQ01TIENBMCAXDTI2MTEwNjE2NTQxNloYDzIwNzYxMDI0MTY1NDE2\n"
+    "WjAWMRQwEgYDVQQDDAtUZXN0IENNUyBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEP\n"
+    "ADCCAQoCggEBAML3fO4NJzEemR9u4SzVDBf546XhkG9TrXzeM4BBpFcahsuymiVF\n"
+    "qzM1F7AaeOYccKBNNq+VxfUVelttLV+ckl4FiBoctwkZX1MGiTqTei/hDBHRkhYD\n"
+    "Rt0K+hu7kVtkTQ6tpgWwBat91waWc0UWuR5CnvUC/jwcGbk7njCNab1nycTZyWG5\n"
+    "DcpLyeaBwSV5+V0NTeDfkuB60q2WtDiLH7RhF9iKNLnPfXOzaleiSOiuzo0XrS4X\n"
+    "Cc6cerL5ELjoPgg/5KHOkiGCx4/JNcg1C+xRYIfjyBTwJd7CcmNFfasW4t1ZcFXu\n"
+    "5HY/wNdRSno5wyPMjKBJRNaZLh8gEgRPHa8CAwEAAaMjMCEwDwYDVR0TAQH/BAUw\n"
+    "AwEB/zAOBgNVHQ8BAf8EBAMCAQYwDQYJKoZIhvcNAQELBQADggEBAHOnFS6z3lJQ\n"
+    "cnuAQKvkIRoQTv0GFlbD0m8NqTvvY2QakohOwTqmb8Fe7AG7JOcrdJOUz7YN+ymd\n"
+    "rUhvzsC6HaB83o4VaXCOW0+KHzOALsQIUAjryiHqeoE03SRVZza+qJeY3UJ/l9vN\n"
+    "CLnLevTm1eqfo6fuPrFUMRlu5MKYWwS/3kKLOHUrw/uHJ0tzkJ+9tqWDj+fnhZvl\n"
+    "Gg8410g3ufe93zXtd1+Od2PITdzupLGsdu9frQS+kN/IbsdbmyTg8uC4oYu6/hpb\n"
+    "IVn4gH5DpTo6nQb8YRPmi09Fi3STGeiVOi1cJcr/2rcZzoOJ6LRJc50sH9WEyYMo\n"
+    "VgtR0Ab7yTQ=\n"
     "-----END CERTIFICATE-----\n";
 
 static const char cms_cert_1[] =
     "-----BEGIN CERTIFICATE-----\n"
-    "MIICpDCCAYwCAQMwDQYJKoZIhvcNAQEFBQAwFjEUMBIGA1UEAwwLVGVzdCBDTVMg\n"
-    "Q0EwHhcNMTkwNTExMTU1MzU0WhcNMjkwNTA4MTU1MzU0WjAaMRgwFgYDVQQDDA9U\n"
-    "ZXN0IENNUyBDZXJ0IDEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDD\n"
-    "MLSuy+tc0AwfrlszgHJ3z7UEpJSn5mcKxquFnEC5DtchgQJ+cj5VFvB9A9G98ykQ\n"
-    "0IrHXNUTbS2yvf8ac1PlocuA8ggeDK4gPHCe097j0nUphhT0VzhwwFfP6Uo6VaR8\n"
-    "B7Qb3zFTz64bN66V89etZ5NQJKMdrh4oOh5nfxLKvCcTK+9U4ZrgeGVdVXmL6HJp\n"
-    "3m9CPobCBsC8DgI+zF/tg4GjDoVCJd6Tv5MRAmKiBrzTGglVeknkgiyIZ9C7gXU/\n"
-    "7NMUihmLlt+80zr+nL0P+MA924WV4fZJi1wtf6Eioalq6n/9i93nBRCeu8bEOBrT\n"
-    "pAre2oBEoULIJu7Ubx79AgMBAAEwDQYJKoZIhvcNAQEFBQADggEBADnLc6ZzApHq\n"
-    "Z8l4zrFKAG/O/oULPMRTA8/zXNQ60BMV10hVtTCxVNq59d48wEljuUOGLfM91rhj\n"
-    "gId8AOlsQbfRZE94DxlcaaAXaEjbkVSke56yfdLd4NqkIWrXGrFlbepj4b4ORAHh\n"
-    "85kPwDEDnpMgQ63LqNX3gru3xf2AGIa1Fck2ISkVafqW5TH0Y6dCeGGFTtnH/QUT\n"
-    "ofTm8uQ2vG9ERn+C1ooqJ2dyAckXFdmCcpor26vO/ZssMEKSee38ZNWR/01LEkOG\n"
-    "G0+AL7E1mJdlVOtp3DDFN0hoNY7PbVuuzT+mrAwGLhCp2jnf68iNdrIuDdIE6yvi\n"
-    "6WWvmmz+rC0=\n"
+    "MIICzTCCAbWgAwIBAgIBAzANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtUZXN0\n"
+    "IENNUyBDQTAgFw0yNjExMDYxNjU0MTZaGA8yMDc2MTAyNDE2NTQxNlowGjEYMBYG\n"
+    "A1UEAwwPVGVzdCBDTVMgQ2VydCAxMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\n"
+    "CgKCAQEAwzC0rsvrXNAMH65bM4Byd8+1BKSUp+ZnCsarhZxAuQ7XIYECfnI+VRbw\n"
+    "fQPRvfMpENCKx1zVE20tsr3/GnNT5aHLgPIIHgyuIDxwntPe49J1KYYU9Fc4cMBX\n"
+    "z+lKOlWkfAe0G98xU8+uGzeulfPXrWeTUCSjHa4eKDoeZ38SyrwnEyvvVOGa4Hhl\n"
+    "XVV5i+hyad5vQj6GwgbAvA4CPsxf7YOBow6FQiXek7+TEQJioga80xoJVXpJ5IIs\n"
+    "iGfQu4F1P+zTFIoZi5bfvNM6/py9D/jAPduFleH2SYtcLX+hIqGpaup//Yvd5wUQ\n"
+    "nrvGxDga06QK3tqARKFCyCbu1G8e/QIDAQABoyAwHjAMBgNVHRMBAf8EAjAAMA4G\n"
+    "A1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAQEAXHP2XqkIx9+G2LALqb73\n"
+    "5+y2SyyFGUrLIYi/Pu9nMcYJZD3e7g/6OVPENgFk7dtt9sgN1b/6BJhIBwWCNkC5\n"
+    "CYOHMFijKphP7S8t0Q3ZHDQmVhf+P+yy2uVNicXAVN/bq74xsUUeQaLSdvNw2v+Z\n"
+    "5MQyXr6sySjzmiOq8AGX0Iq9WDoVTS5hbILkznkm1CB8ZslqVqoAQLq7AmBTbAAY\n"
+    "aBz0dB/vwqLs/yPIzY0McyCvMGbY4upFfPoJo04xToCSnb2J/whOPu8rVwbADrXX\n"
+    "r5sQUBQOqrxI7OOzFE0HDGtgr5JiHVMUXoT0Fx/cpojCeWZlpnQ5weJm53lrOcXH\n"
+    "Jw==\n"
     "-----END CERTIFICATE-----\n";
 
 static const char cms_key_1[] =
