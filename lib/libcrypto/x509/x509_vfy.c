@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.154 2026/09/16 23:40:48 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.155 2026/11/07 10:57:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1229,6 +1229,8 @@ get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer, unsigned int *preasons,
 
 	/* First see if we can reject CRL straight away */
 
+	if (X509_CRL_get_version(crl) != 1)
+		return 0;
 	/* Invalid IDP cannot be processed */
 	if (crl->idp_flags & IDP_INVALID)
 		return 0;
