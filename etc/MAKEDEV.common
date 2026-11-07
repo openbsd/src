@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.124 2025/10/15 17:53:36 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.125 2026/11/07 13:01:09 miod Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -290,23 +290,23 @@ _mkdev({-wsdisp-}, tty[C-J]*, {-U=${i##tty[C-J]}
 	ttyJ*) n=J m=expr(7*256);;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c major_wsdisp_c Add(16#$U, $m) 600;;
-	cfg) M tty${n}cfg c major_wsdisp_c Add(255,$m) 600;;
+	[0-9a-f]) M tty$n$U c major_wsdisp_c Add(16#$U, $m) 660 wscons root;;
+	cfg) M tty${n}cfg c major_wsdisp_c Add(255,$m) 660 wscons root;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac-})dnl
 __devitem(wskbd, wskbd*, wscons keyboards)dnl
 dnl XXX wskbd[0-9]* instead of wskbd* in case this appears before
 dnl XXX ``wsmux|wsmouse|wskbd'' in the final MAKEDEV.
-_mkdev(wskbd, wskbd[0-9]*, {-M wskbd$U c major_wskbd_c $U 600-})dnl
+_mkdev(wskbd, wskbd[0-9]*, {-M wskbd$U c major_wskbd_c $U 660 wscons root-})dnl
 __devitem(wsmux, wsmux, wscons keyboard/mouse mux devices)dnl
-_mkdev(wsmux, wsmux|wsmouse|wskbd, {-M wsmouse c major_wsmux_c 0 600
-	M wskbd c major_wsmux_c 1 600-})dnl
+_mkdev(wsmux, wsmux|wsmouse|wskbd, {-M wsmouse c major_wsmux_c 0 660 wscons root
+	M wskbd c major_wsmux_c 1 660 wscons root-})dnl
 __devitem(pcons, console, PROM console)dnl
 __devtitle(point, Pointing devices)dnl
 __devitem(wsmouse, wsmouse*, wscons mice)dnl
 dnl XXX wsmouse[0-9]* instead of wsmouse* in case this appears before
 dnl XXX ``wsmux|wsmouse|wskbd'' in the final MAKEDEV.
-_mkdev(wsmouse, wsmouse[0-9]*, {-M wsmouse$U c major_wsmouse_c $U 600-})dnl
+_mkdev(wsmouse, wsmouse[0-9]*, {-M wsmouse$U c major_wsmouse_c $U 660 wscons root-})dnl
 __devtitle(pty, Pseudo terminals)dnl
 __devitem(ptm, ptm, pty master device)dnl
 _mkdev(ptm, ptm, {-M ptm c major_ptm_c 0 666-})dnl
@@ -337,9 +337,9 @@ _mkdev(dri, dri, {-RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
 	n=0
 	while [ $n -lt 4 ]
 	do
-		M dri/card$n c major_dri_c $n 600
+		M dri/card$n c major_dri_c $n 660 wscons root
 		r=Add($n, 128)
-		M dri/renderD$r c major_dri_c $r 600
+		M dri/renderD$r c major_dri_c $r 660 wscons root
 		n=Add($n, 1)
 	done
 	MKlist[${#MKlist[*]}]=";chmod 555 dri"-})dnl
@@ -429,7 +429,7 @@ __devitem(au, audio*, Audio devices,audio)dnl
 _mkdev(au, audio*, {-M audio$U	c major_au_c $U 660 _sndiop
 	M audioctl$U	c major_au_c Add($U, 192) 660 _sndiop-})dnl
 __devitem(vi, video*, Video V4L2 devices,video)dnl
-_mkdev(vi, video*, {-M video$U  c major_vi_c $U 600
+_mkdev(vi, video*, {-M video$U  c major_vi_c $U 660 wscons root
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"-})dnl
 __devitem(asc, asc*, ASC Audio device)dnl
 _mkdev(asc, asc*, {-M asc$U major_asc_c 0-})dnl

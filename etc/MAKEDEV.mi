@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.91 2025/11/19 17:49:42 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.92 2026/11/07 13:01:09 miod Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -38,7 +38,7 @@ dnl $4: klog
 dnl
 define({-_std-},{-dnl
 std)
-	M console	c 0 0 600
+	M console	c 0 0 660 wscons root
 	M tty		c $1 0
 	M mem		c $2 0 640 kmem
 	M kmem		c $2 1 640 kmem
