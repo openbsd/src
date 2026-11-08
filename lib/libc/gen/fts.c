@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.61 2021/11/29 03:20:37 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.62 2026/11/08 19:59:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -360,6 +360,7 @@ next:	tmp = p;
 		if (p->fts_level == FTS_ROOTLEVEL) {
 			if (FCHDIR(sp, sp->fts_rfd)) {
 				SET(FTS_STOP);
+				sp->fts_cur = p;
 				return (NULL);
 			}
 			fts_load(sp, p);
