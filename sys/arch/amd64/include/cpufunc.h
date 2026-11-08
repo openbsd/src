@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.48 2026/07/28 15:08:06 hshoexer Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.49 2026/11/08 17:48:20 hshoexer Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -436,7 +436,7 @@ static __inline void
 vmgexit(void)
 {
 	/* rep; vmmcall encodes the vmgexit instruction */
-	__asm volatile("rep; vmmcall");
+	__asm volatile("rep; vmmcall" : : : "memory");
 }
 
 void amd64_errata(struct cpu_info *);
