@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.119 2024/04/03 18:32:47 gkoehler Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.120 2026/11/08 17:53:22 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -37,6 +37,7 @@
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/task.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/smbiosvar.h>
@@ -2013,6 +2014,9 @@ ipmi_probe(void *aux)
 	struct ipmi_attach_args *ia = aux;
 	struct dmd_ipmi *pipmi;
 	struct smbtable tbl;
+
+	if (ISSET(boothowto, RB_COCOVM))
+		return (0);
 
 	tbl.cookie = 0;
 	if (smbios_find_table(SMBIOS_TYPE_IPMIDEV, &tbl))
