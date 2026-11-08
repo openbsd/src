@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.64 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.65 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -117,7 +117,8 @@ struct pciintr_link_map *pciintr_link_lookup(int);
 struct pcibios_intr_routing *pciintr_pir_lookup(int, int);
 int	pciintr_bitmap_count_irq(int, int *);
 
-SIMPLEQ_HEAD(, pciintr_link_map) pciintr_link_map_list;
+SIMPLEQ_HEAD(, pciintr_link_map) pciintr_link_map_list =
+    SIMPLEQ_HEAD_INITIALIZER(pciintr_link_map_list);
 
 const struct pciintr_icu_table {
 	pci_vendor_id_t	piit_vendor;
@@ -375,8 +376,6 @@ pciintr_link_init(pci_chipset_tag_t pc)
 		printf("pciintr_link_init: no PIR table\n");
 		return (1);
 	}
-
-	SIMPLEQ_INIT(&pciintr_link_map_list);
 
 	for (entry = 0; entry < pcibios_pir_table_nentries; entry++) {
 		pir = &pcibios_pir_table[entry];

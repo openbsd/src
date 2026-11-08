@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.98 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.99 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -88,13 +88,16 @@ struct deferred_config {
 	void (*dc_func)(struct device *);
 };
 
-TAILQ_HEAD(, deferred_config) deferred_config_queue;
-TAILQ_HEAD(, deferred_config) mountroot_config_queue;
+TAILQ_HEAD(, deferred_config) deferred_config_queue =
+    TAILQ_HEAD_INITIALIZER(deferred_config_queue);
+TAILQ_HEAD(, deferred_config) mountroot_config_queue =
+    TAILQ_HEAD_INITIALIZER(mountroot_config_queue);
 
 void *config_rootsearch(cfmatch_t, char *, void *);
 void config_process_deferred_children(struct device *);
 
-struct devicelist alldevs;		/* list of all devices */
+struct devicelist alldevs =		/* list of all devices */
+    TAILQ_HEAD_INITIALIZER(alldevs);
 
 volatile int config_pending;		/* semaphore for mountroot */
 
@@ -110,19 +113,6 @@ int	autoconf_attdet;
  * Versioned state of the devices tree so that changes can be detected.
  */
 unsigned int autoconf_serial = 0;
-
-/*
- * Initialize autoconfiguration data structures.  This occurs before console
- * initialization as that might require use of this subsystem.  Furthermore
- * this means that malloc et al. isn't yet available.
- */
-void
-config_init(void)
-{
-	TAILQ_INIT(&deferred_config_queue);
-	TAILQ_INIT(&mountroot_config_queue);
-	TAILQ_INIT(&alldevs);
-}
 
 /*
  * Apply the matching function and choose the best.  This is used

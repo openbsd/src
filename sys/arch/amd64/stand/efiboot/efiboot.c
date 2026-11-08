@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.44 2025/09/16 05:07:33 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.45 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -172,7 +172,7 @@ efi_cleanup(void)
 /***********************************************************************
  * Disk
  ***********************************************************************/
-struct disklist_lh efi_disklist;
+struct disklist_lh efi_disklist = TAILQ_HEAD_INITIALIZER(efi_disklist);
 
 void
 efi_diskprobe(void)
@@ -185,8 +185,6 @@ efi_diskprobe(void)
 	EFI_BLOCK_IO_MEDIA	*media;
 	struct diskinfo		*di;
 	EFI_DEVICE_PATH		*dp;
-
-	TAILQ_INIT(&efi_disklist);
 
 	sz = 0;
 	status = BS->LocateHandle(ByProtocol, &blkio_guid, 0, &sz, 0);

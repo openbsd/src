@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.46 2026/08/06 20:38:02 claudio Exp $	*/
+/*	$OpenBSD: tty.h,v 1.47 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -295,7 +295,6 @@ int	 ttywait(struct tty *tp);
 int	 ttywflush(struct tty *tp);
 void	 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd);
 
-void	tty_init(void);
 struct tty *ttymalloc(int);
 void	 ttyfree(struct tty *);
 

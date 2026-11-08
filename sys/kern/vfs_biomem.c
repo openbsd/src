@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.55 2026/06/10 00:04:38 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.56 2026/11/08 08:42:55 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -29,7 +29,7 @@
 
 vaddr_t buf_kva_start, buf_kva_end;
 int buf_needva;
-TAILQ_HEAD(,buf) buf_valist;
+TAILQ_HEAD(,buf) buf_valist = TAILQ_HEAD_INITIALIZER(buf_valist);
 
 extern struct bcachestats bcstats;
 
@@ -38,8 +38,6 @@ vaddr_t buf_unmap(struct buf *);
 void
 buf_mem_init(vsize_t size)
 {
-	TAILQ_INIT(&buf_valist);
-
 	buf_kva_start = vm_map_min(kernel_map);
 	if (uvm_map(kernel_map, &buf_kva_start, size, NULL,
 	    UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(PROT_NONE,

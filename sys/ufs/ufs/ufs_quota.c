@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.48 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.49 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -810,7 +810,7 @@ u_long dqhash;
  * Dquot free list.
  */
 #define	DQUOTINC	5	/* minimum free dquots desired */
-TAILQ_HEAD(dqfreelist, dquot) dqfreelist;
+TAILQ_HEAD(dqfreelist, dquot) dqfreelist = TAILQ_HEAD_INITIALIZER(dqfreelist);
 long numdquot, desireddquot = DQUOTINC;
 
 /*
@@ -821,7 +821,6 @@ ufs_quota_init(void)
 {
 	dqhashtbl = hashinit(initialvnodes, M_DQUOT, M_WAITOK, &dqhash);
 	arc4random_buf(&dqhashkey, sizeof(dqhashkey));
-	TAILQ_INIT(&dqfreelist);
 }
 
 /*

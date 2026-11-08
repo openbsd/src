@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.70 2026/09/24 17:57:24 kirill Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.71 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ pd_entry_t l1_c_pxn;
 /*
  * A list of all L1 tables
  */
-TAILQ_HEAD(, l1_ttable) l1_list;
+TAILQ_HEAD(, l1_ttable) l1_list = TAILQ_HEAD_INITIALIZER(l1_list);
 
 /*
  * The l2_dtable tracks L2_BUCKET_SIZE worth of L1 slots.
@@ -2371,7 +2371,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * We can now initialise the first L1's metadata.
 	 */
-	TAILQ_INIT(&l1_list);
 	pmap_init_l1(l1, kernel_l1pt);
 
 	/*

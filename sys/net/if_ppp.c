@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.124 2026/09/10 18:31:39 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.125 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ struct compressor *ppp_compressors[] = {
 };
 #endif /* PPP_COMPRESS */
 
-LIST_HEAD(, ppp_softc) ppp_softc_list;
+LIST_HEAD(, ppp_softc) ppp_softc_list = LIST_HEAD_INITIALIZER(ppp_softc_list);
 struct if_clone ppp_cloner =
     IF_CLONE_INITIALIZER("ppp", ppp_clone_create, ppp_clone_destroy);
 
@@ -194,7 +194,6 @@ struct if_clone ppp_cloner =
 void
 pppattach(int count)
 {
-	LIST_INIT(&ppp_softc_list);
 	if_clone_attach(&ppp_cloner);
 }
 

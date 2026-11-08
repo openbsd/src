@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.73 2026/10/14 23:51:44 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.74 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ extern struct devicelist alldevs;	/* list of all devices */
 extern int autoconf_verbose;
 extern volatile int config_pending;	/* semaphore for mountroot */
 
-void config_init(void);
 void *config_search(cfmatch_t, struct device *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t,
     cfmatch_t);

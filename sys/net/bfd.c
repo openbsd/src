@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.81 2025/07/24 00:49:22 jsg Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.82 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -169,7 +169,8 @@ void	 bfd_set_uptime(struct bfd_config *);
 
 void	 bfd_debug(struct bfd_config *);
 
-TAILQ_HEAD(bfd_queue, bfd_config)  bfd_queue;
+TAILQ_HEAD(bfd_queue, bfd_config)  bfd_queue =
+    TAILQ_HEAD_INITIALIZER(bfd_queue);
 
 /*
  * allocate a new bfd session
@@ -285,8 +286,6 @@ bfdinit(void)
 	bfdtq = taskq_create("bfd", 1, IPL_SOFTNET, 0);
 	if (bfdtq == NULL)
 		panic("unable to create BFD taskq");
-
-	TAILQ_INIT(&bfd_queue);
 }
 
 /*

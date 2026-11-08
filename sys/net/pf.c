@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1249 2026/11/04 15:55:04 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1250 2026/11/08 08:42:55 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -579,7 +579,7 @@ pf_source_find(struct pf_sourcelim *srlim, const struct pf_source *key)
 	return (RBT_FIND(pf_source_tree, &srlim->pfsrlim_sources, key));
 }
 
-struct pf_src_tree tree_src_tracking;
+struct pf_src_tree tree_src_tracking = RB_INITIALIZER(tree_src_tracking);
 
 struct pf_state_tree_id tree_id;
 struct pf_state_list pf_state_list = PF_STATE_LIST_INITIALIZER(pf_state_list);

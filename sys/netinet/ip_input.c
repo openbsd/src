@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.433 2026/08/11 14:28:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.434 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -105,7 +105,8 @@ int	ip_directedbcast = 0;			/* [a] */
 struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 /* IP reassembly queue */
-LIST_HEAD(, ipq) ipq;				/* [Q] */
+LIST_HEAD(, ipq) ipq =				/* [Q] */
+    LIST_HEAD_INITIALIZER(ipq);
 
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;			/* [a] */
@@ -212,7 +213,6 @@ ip_init(void)
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW &&
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
-	LIST_INIT(&ipq);
 
 	/* Fill in list of ports not to allocate dynamically. */
 	memset(&baddynamicports, 0, sizeof(baddynamicports));

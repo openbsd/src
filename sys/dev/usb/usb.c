@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.134 2024/12/22 22:36:23 kirill Exp $	*/
+/*	$OpenBSD: usb.c,v 1.135 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -95,9 +95,12 @@ struct usb_softc {
 
 struct rwlock usbpalock;
 
-TAILQ_HEAD(, usb_task) usb_abort_tasks;
-TAILQ_HEAD(, usb_task) usb_explore_tasks;
-TAILQ_HEAD(, usb_task) usb_generic_tasks;
+TAILQ_HEAD(, usb_task) usb_abort_tasks =
+    TAILQ_HEAD_INITIALIZER(usb_abort_tasks);
+TAILQ_HEAD(, usb_task) usb_explore_tasks =
+    TAILQ_HEAD_INITIALIZER(usb_explore_tasks);
+TAILQ_HEAD(, usb_task) usb_generic_tasks =
+    TAILQ_HEAD_INITIALIZER(usb_generic_tasks);
 
 static int usb_nbuses = 0;
 static int usb_run_tasks, usb_run_abort_tasks;
@@ -145,9 +148,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 
 	if (usb_nbuses == 0) {
 		rw_init(&usbpalock, "usbpalock");
-		TAILQ_INIT(&usb_abort_tasks);
-		TAILQ_INIT(&usb_explore_tasks);
-		TAILQ_INIT(&usb_generic_tasks);
 		usb_run_tasks = usb_run_abort_tasks = 1;
 		kthread_create_deferred(usb_create_task_threads, NULL);
 	}

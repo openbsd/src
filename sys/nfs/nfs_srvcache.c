@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.32 2024/09/18 05:21:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.33 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -65,7 +65,8 @@ void			 nfsrv_cleanentry(struct nfsrvcache *);
 
 LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
 SIPHASH_KEY nfsrvhashkey;
-TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
+TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead =
+    TAILQ_HEAD_INITIALIZER(nfsrvlruhead);
 u_long nfsrvhash;
 #define	NFSRCHASH(xid) \
     (&nfsrvhashtbl[SipHash24(&nfsrvhashkey, &(xid), sizeof(xid)) & nfsrvhash])
@@ -106,7 +107,6 @@ nfsrv_initcache(void)
 
 	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, M_WAITOK, &nfsrvhash);
 	arc4random_buf(&nfsrvhashkey, sizeof(nfsrvhashkey));
-	TAILQ_INIT(&nfsrvlruhead);
 }
 
 /*

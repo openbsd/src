@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.437 2026/11/06 10:51:28 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.438 2026/11/08 08:42:55 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -245,8 +245,6 @@ pfattach(int num)
 		pf_pool_limits[PF_LIMIT_TABLE_ENTRIES].limit =
 		    PFR_KENTRY_HIWAT_SMALL;
 
-	RB_INIT(&tree_src_tracking);
-	RB_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
 	TAILQ_INIT(&pf_queues[0]);
 	TAILQ_INIT(&pf_queues[1]);

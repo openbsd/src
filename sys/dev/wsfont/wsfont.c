@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.65 2023/10/24 13:52:49 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.66 2026/11/08 08:42:55 miod Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ struct font {
 	u_short	cookie;
 	u_short	flg;
 };
-TAILQ_HEAD(, font) fontlist;
+TAILQ_HEAD(, font) fontlist = TAILQ_HEAD_INITIALIZER(fontlist);
 
 /* Our list of built-in fonts */
 static struct font builtin_fonts[] = {
@@ -425,8 +425,6 @@ wsfont_init(void)
 	if (again != 0)
 		return;
 	again = 1;
-
-	TAILQ_INIT(&fontlist);
 
 	for (i = 0; i < nitems(builtin_fonts); i++) {
 		TAILQ_INSERT_TAIL(&fontlist, &builtin_fonts[i], chain);

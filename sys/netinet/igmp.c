@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.100 2026/07/30 14:57:46 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.101 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -114,7 +114,8 @@ struct router_info {
 
 int	igmp_timers_are_running;	/* [a] shortcut for fast timer */
 struct mutex igmp_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
-static LIST_HEAD(, router_info) rti_head;	/* [G] */
+static LIST_HEAD(, router_info) rti_head =	/* [G] */
+    LIST_HEAD_INITIALIZER(rti_head);
 static struct mbuf *router_alert;
 struct cpumem *igmpcounters;
 
@@ -132,7 +133,6 @@ igmp_init(void)
 	struct ipoption *ra;
 
 	igmp_timers_are_running = 0;
-	LIST_INIT(&rti_head);
 
 	igmpcounters = counters_alloc(igps_ncounters);
 	router_alert = m_get(M_WAIT, MT_DATA);

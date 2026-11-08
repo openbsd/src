@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.287 2026/08/09 19:22:49 gnezdo Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.288 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -76,9 +76,9 @@
  * A global list of all disks attached to the system.  May grow or
  * shrink over time.
  */
-struct	disklist_head disklist;	/* TAILQ_HEAD */
-int	disk_count;		/* number of drives in global disklist */
-int	disk_change;		/* set if a disk has been attached/detached
+struct	disklist_head disklist = TAILQ_HEAD_INITIALIZER(disklist);
+int	disk_count = 0;		/* number of drives in global disklist */
+int	disk_change = 0;	/* set if a disk has been attached/detached
 				 * since last we looked at this variable. This
 				 * is reset by hw_sysctl()
 				 */
@@ -1031,17 +1031,6 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 		    (long long)(sn / DL_SECTOBLK(lp, lp->d_nsectors)),
 		    (long long)(sn % DL_SECTOBLK(lp, lp->d_nsectors)));
 	}
-}
-
-/*
- * Initialize the disklist.  Called by main() before autoconfiguration.
- */
-void
-disk_init(void)
-{
-
-	TAILQ_INIT(&disklist);
-	disk_count = disk_change = 0;
 }
 
 int

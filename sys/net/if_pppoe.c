@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.92 2026/10/16 05:35:11 renaud Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.93 2026/11/08 08:42:55 miod Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -176,8 +176,10 @@ static struct pppoe_softc *pppoe_find_softc_by_session(u_int, u_int);
 static struct pppoe_softc *pppoe_find_softc_by_hunique(u_int8_t *, size_t, u_int);
 static struct mbuf	  *pppoe_get_mbuf(size_t len);
 
-LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
-SMR_LIST_HEAD(pppoe_softc_sessions, pppoe_softc) pppoe_sessions; /* [K] */
+LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list =
+    LIST_HEAD_INITIALIZER(pppoe_softc_list);
+SMR_LIST_HEAD(pppoe_softc_sessions, pppoe_softc) pppoe_sessions = /* [K] */
+    SMR_LIST_HEAD_INITIALIZER(pppoe_sessions);
 
 /* interface cloning */
 int pppoe_clone_create(struct if_clone *, int);
@@ -211,8 +213,6 @@ pppoeintr(void)
 void
 pppoeattach(int count)
 {
-	LIST_INIT(&pppoe_softc_list);
-	SMR_LIST_INIT(&pppoe_sessions);
 	if_clone_attach(&pppoe_cloner);
 }
 

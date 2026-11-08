@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.7 2024/04/25 18:31:49 kn Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.8 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -36,10 +36,10 @@
 #define SR_CRYPTO_KEYBLOCK_BYTES SR_CRYPTO_MAXKEYS * SR_CRYPTO_KEYBYTES
 
 /* List of softraid volumes. */
-struct sr_boot_volume_head sr_volumes;
+struct sr_boot_volume_head sr_volumes = SLIST_HEAD_INITIALIZER(sr_volumes);
 
 /* List of softraid keydisks. */
-struct sr_boot_keydisk_head sr_keydisks;
+struct sr_boot_keydisk_head sr_keydisks = SLIST_HEAD_INITIALIZER(sr_keydisks);
 
 #ifdef DEBUG
 void

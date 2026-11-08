@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.22 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.23 2026/11/08 08:42:55 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -74,7 +74,7 @@ struct pool	pf_anchor_pl;
 #endif /* _KERNEL */
 
 
-struct pf_anchor_global	 pf_anchors;
+struct pf_anchor_global	 pf_anchors = RB_INITIALIZER(pf_anchors);
 struct pf_anchor	 pf_main_anchor;
 
 static __inline int pf_anchor_compare(struct pf_anchor *, struct pf_anchor *);

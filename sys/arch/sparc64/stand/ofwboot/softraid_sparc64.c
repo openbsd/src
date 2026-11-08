@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_sparc64.c,v 1.9 2025/10/17 16:54:04 deraadt Exp $	*/
+/*	$OpenBSD: softraid_sparc64.c,v 1.10 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -135,9 +135,6 @@ srprobe(void)
 	dev_t bsd_dev;
 
 	/* Probe for softraid volumes. */
-	SLIST_INIT(&sr_volumes);
-	SLIST_INIT(&sr_keydisks);
-
 	md = alloc(SR_META_SIZE * DEV_BSIZE);
 	diskno = 0;
 	ihandle = -1;

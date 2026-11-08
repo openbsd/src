@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.220 2026/10/09 16:35:28 miod Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.221 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct proc *cleanerproc;
 int bd_req;			/* Sleep point for cleaner daemon. */
 
 struct bufcache cleancache;
-struct bufqueue dirtyqueue;
+struct bufqueue dirtyqueue = TAILQ_HEAD_INITIALIZER(dirtyqueue);
 
 void
 buf_put(struct buf *bp)
@@ -1288,7 +1288,6 @@ bufcache_init(void)
 	TAILQ_INIT(&cleancache.hotqueue);
 	TAILQ_INIT(&cleancache.coldqueue);
 	TAILQ_INIT(&cleancache.warmqueue);
-	TAILQ_INIT(&dirtyqueue);
 }
 
 /*

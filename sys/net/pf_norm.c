@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.240 2026/10/28 12:08:29 jan Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.241 2026/11/08 08:42:55 miod Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -105,7 +105,8 @@ struct pf_fragment_tag {
 	u_int16_t	 ft_maxlen;	/* maximum fragment payload length */
 };
 
-TAILQ_HEAD(pf_fragqueue, pf_fragment)	pf_fragqueue;
+TAILQ_HEAD(pf_fragqueue, pf_fragment)	pf_fragqueue =
+    TAILQ_HEAD_INITIALIZER(pf_fragqueue);
 
 static __inline int	 pf_frnode_compare(struct pf_frnode *,
 			    struct pf_frnode *);
@@ -163,8 +164,6 @@ pf_normalize_init(void)
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT);
-
-	TAILQ_INIT(&pf_fragqueue);
 
 	PF_FRAG_LOCK_INIT();
 }

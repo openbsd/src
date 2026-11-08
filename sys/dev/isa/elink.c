@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink.c,v 1.7 2007/06/29 15:17:02 jasper Exp $	*/
+/*	$OpenBSD: elink.c,v 1.8 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: elink.c,v 1.9 1996/05/03 19:06:27 christos Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ struct elink_done_reset {
 	LIST_ENTRY(elink_done_reset)	er_link;
 	int				er_bus;
 };
-static LIST_HEAD(, elink_done_reset) elink_all_resets;
-static int elink_all_resets_initialized;
+static LIST_HEAD(, elink_done_reset) elink_all_resets =
+    LIST_HEAD_INITIALIZER(elink_all_resets);
 
 /*
  * Issue a `global reset' to all cards, and reset the ID state machines.  We
@@ -68,11 +68,6 @@ void
 elink_reset(bus_space_tag_t iot, bus_space_handle_t ioh, int bus)
 {
 	struct elink_done_reset *er;
-
-	if (elink_all_resets_initialized == 0) {
-		LIST_INIT(&elink_all_resets);
-		elink_all_resets_initialized = 1;
-	}
 
 	/*
 	 * Reset these cards if we haven't done so already.

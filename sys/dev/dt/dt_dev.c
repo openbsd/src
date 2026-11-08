@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.49 2026/05/16 12:59:37 daniel Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.50 2026/11/08 08:42:55 miod Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -138,14 +138,16 @@ struct dt_softc {
 	unsigned int		 ds_lastcpu;	/* [r] last CPU ring read(2). */
 };
 
-SLIST_HEAD(, dt_softc) dtdev_list;	/* [K] list of open /dev/dt nodes */
+SLIST_HEAD(, dt_softc) dtdev_list =	/* [K] list of open /dev/dt nodes */
+    SLIST_HEAD_INITIALIZER(dtdev_list);
 
 /*
  * Probes are created during dt_attach() and never modified/freed during
  * the lifetime of the system.  That's why we consider them as [I]mmutable.
  */
 unsigned int			dt_nprobes;	/* [I] # of probes available */
-SIMPLEQ_HEAD(, dt_probe)	dt_probe_list;	/* [I] list of probes */
+SIMPLEQ_HEAD(, dt_probe)	dt_probe_list =	/* [I] list of probes */
+    SIMPLEQ_HEAD_INITIALIZER(dt_probe_list);
 
 struct rwlock			dt_lock = RWLOCK_INITIALIZER("dtlk");
 volatile uint32_t		dt_tracing = 0;	/* [D] # of processes tracing */
@@ -179,9 +181,6 @@ void	dt_deferred_wakeup(void *);
 void
 dtattach(int count)
 {
-	SLIST_INIT(&dtdev_list);
-	SIMPLEQ_INIT(&dt_probe_list);
-
 	/* Init providers */
 	dt_nprobes += dt_prov_profile_init();
 	dt_nprobes += dt_prov_syscall_init();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.331 2026/01/01 07:00:57 jsg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.332 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -164,7 +164,6 @@ main(void *framep)
 	struct process *pr;
 	struct pdevinit *pdev;
 	extern struct pdevinit pdevinit[];
-	extern void disk_init(void);
 
 	/*
 	 * Initialize the current process pointer (curproc) before
@@ -182,7 +181,6 @@ main(void *framep)
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
 	 */
-	config_init();		/* init autoconfiguration data structures */
 	consinit();
 
 	printf("%s\n", copyright);
@@ -199,8 +197,6 @@ main(void *framep)
 
 	rw_obj_init();
 	uvm_init();
-	disk_init();		/* must come before autoconfiguration */
-	tty_init();		/* initialise tty's */
 	cpu_startup();
 
 	random_start(boothowto & RB_GOODRANDOM);	/* Start the flow */

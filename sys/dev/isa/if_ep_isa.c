@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.33 2023/09/11 08:41:26 mvs Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.34 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -93,8 +93,8 @@ struct ep_isa_done_probe {
 	LIST_ENTRY(ep_isa_done_probe)	er_link;
 	int				er_bus;
 };
-static LIST_HEAD(, ep_isa_done_probe) ep_isa_all_probes;
-static int ep_isa_probes_initialized;
+static LIST_HEAD(, ep_isa_done_probe) ep_isa_all_probes =
+    LIST_HEAD_INITIALIZER(ep_isa_probes);
 
 #define MAXEPCARDS	20	/* if you have more than 20, you lose */
 
@@ -137,11 +137,6 @@ ep_isa_probe(struct device *parent, void *match, void *aux)
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
 	int bus = parent->dv_unit;
-
-	if (ep_isa_probes_initialized == 0) {
-		LIST_INIT(&ep_isa_all_probes);
-		ep_isa_probes_initialized = 1;
-	}
 
 	/*
 	 * Probe this bus if we haven't done so already.

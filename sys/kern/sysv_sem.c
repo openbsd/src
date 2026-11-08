@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.72 2026/09/21 04:26:47 gnezdo Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.73 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -52,7 +52,8 @@ struct	rwlock sysvsem_lock = RWLOCK_INITIALIZER("semlk");
 int	semtot = 0;
 int	semutot = 0;
 struct	semid_ds_kern **sema;	/* semaphore id list */
-SLIST_HEAD(, sem_undo) semu_list; /* list of undo structures */
+SLIST_HEAD(, sem_undo) semu_list = /* list of undo structures */
+    SLIST_HEAD_INITIALIZER(semu_list);
 struct	pool sema_pool;		/* pool for struct semid_ds_kern */
 struct	pool semu_pool;		/* pool for struct sem_undo (SEMUSZ) */
 unsigned short *semseqs;	/* array of sem sequence numbers */
@@ -73,7 +74,6 @@ seminit(void)
 	    M_SEM, M_WAITOK|M_ZERO);
 	semseqs = mallocarray(seminfo.semmni, sizeof(unsigned short),
 	    M_SEM, M_WAITOK|M_ZERO);
-	SLIST_INIT(&semu_list);
 }
 
 static inline void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.153 2026/11/06 11:37:36 deraadt Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.154 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -70,7 +70,8 @@
  * we keep a simpleq of vnodes that are currently being sync'd.
  */
 struct pool			uvm_vnode_pool;
-LIST_HEAD(, uvm_vnode)		uvn_wlist;	/* [K] writeable uvns */
+LIST_HEAD(, uvm_vnode)		uvn_wlist =	/* [K] writeable uvns */
+    LIST_HEAD_INITIALIZER(uvn_wlist);
 SIMPLEQ_HEAD(, uvm_vnode)	uvn_sync_q;	/* [S] sync'ing uvns */
 struct rwlock uvn_sync_lock;			/* locks sync operation */
 
@@ -117,7 +118,6 @@ uvn_init(void)
 {
 	pool_init(&uvm_vnode_pool, sizeof(struct uvm_vnode), 0, IPL_NONE,
 	    PR_WAITOK, "uvmvnodes", NULL);
-	LIST_INIT(&uvn_wlist);
 	/* note: uvn_sync_q init'd in uvm_vnp_sync() */
 	rw_init_flags(&uvn_sync_lock, "uvnsync", RWL_IS_VNODE);
 }

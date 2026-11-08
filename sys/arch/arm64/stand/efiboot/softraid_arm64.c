@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_arm64.c,v 1.7 2025/11/18 15:24:09 krw Exp $	*/
+/*	$OpenBSD: softraid_arm64.c,v 1.8 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -138,9 +138,6 @@ srprobe(void)
 	daddr_t off;
 
 	/* Probe for softraid volumes. */
-	SLIST_INIT(&sr_volumes);
-	SLIST_INIT(&sr_keydisks);
-
 	md = alloc(SR_META_SIZE * DEV_BSIZE);
 
 	TAILQ_FOREACH(dip, &disklist, list) {

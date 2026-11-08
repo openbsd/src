@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.161 2026/06/27 06:29:15 jan Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.162 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -48,7 +48,8 @@
 #include <net/bpf.h>
 #endif
 
-SLIST_HEAD(__trhead, trunk_softc) trunk_list;	/* list of trunks */
+SLIST_HEAD(__trhead, trunk_softc) trunk_list =	/* list of trunks */
+    SLIST_HEAD_INITIALIZER(trunk_list);
 
 void	 trunkattach(int);
 int	 trunk_clone_create(struct if_clone *, int);
@@ -139,7 +140,6 @@ static const struct {
 void
 trunkattach(int count)
 {
-	SLIST_INIT(&trunk_list);
 	if_clone_attach(&trunk_cloner);
 }
 

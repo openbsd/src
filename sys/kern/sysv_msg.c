@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.52 2026/11/05 18:21:48 mvs Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.53 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -70,7 +70,7 @@ const struct msginfo msginfo = {
 	.msgseg = MSGSEG,
 };
 
-TAILQ_HEAD(, que) msg_queues;
+TAILQ_HEAD(, que) msg_queues = TAILQ_HEAD_INITIALIZER(msg_queues);
 
 int num_ques;
 int num_msgs;
@@ -82,8 +82,6 @@ msginit(void)
 {
 	pool_init(&sysvmsgpl, sizeof(struct msg), 0, IPL_NONE, PR_WAITOK,
 	    "sysvmsgpl", NULL);
-
-	TAILQ_INIT(&msg_queues);
 
 	num_ques = 0;
 	num_msgs = 0;

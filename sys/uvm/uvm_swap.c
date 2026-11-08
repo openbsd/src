@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.184 2026/10/04 21:12:18 krw Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.185 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -211,8 +211,8 @@ struct pool vndbuf_pool;
 struct extent *swapmap;		/* controls the mapping of /dev/drum */
 
 /* list of all active swap devices [by priority] */
-LIST_HEAD(swap_priority, swappri);
-struct swap_priority swap_priority;	/* [S] */
+LIST_HEAD(swap_priority, swappri) swap_priority =	/* [S] */
+    LIST_HEAD_INITIALIZER(swappri);
 
 /* locks */
 struct mutex uvm_swap_data_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
@@ -262,7 +262,6 @@ uvm_swap_init(void)
 	 * then get a handle on the vnode for /dev/drum by using
 	 * the its dev_t number ("swapdev", from MD conf.c).
 	 */
-	LIST_INIT(&swap_priority);
 	atomic_store_int(&uvmexp.nswapdev, 0);
 
 	if (!swapdev_vp && bdevvp(swapdev, &swapdev_vp))

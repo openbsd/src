@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.43 2024/01/09 03:15:59 guenther Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.44 2026/11/08 08:42:55 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -80,7 +80,7 @@ struct pool		ufsdirhash_pool;
 #define DIRHASH_ASSERT(e, m)	KASSERT((e))
 
 /* Dirhash list; recently-used entries are near the tail. */
-TAILQ_HEAD(, dirhash) ufsdirhash_list;
+TAILQ_HEAD(, dirhash) ufsdirhash_list = TAILQ_HEAD_INITIALIZER(ufsdirhash_list);
 
 /* Protects: ufsdirhash_list, `dh_list' field, ufs_dirhashmem. */
 struct rwlock		ufsdirhash_mtx;
@@ -1051,7 +1051,6 @@ ufsdirhash_init(void)
 	    PR_WAITOK, "dirhash", NULL);
 	rw_init(&ufsdirhash_mtx, "dirhash_list");
 	arc4random_buf(&ufsdirhash_key, sizeof(ufsdirhash_key));
-	TAILQ_INIT(&ufsdirhash_list);
 	ufs_dirhashmaxmem = 5 * 1024 * 1024;
 	ufs_mindirhashsize = 5 * DIRBLKSIZ;
 }

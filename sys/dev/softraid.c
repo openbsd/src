@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.440 2026/09/29 22:49:58 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.441 2026/11/08 08:42:55 miod Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -172,7 +172,8 @@ struct sr_hotplug_list {
 };
 SLIST_HEAD(sr_hotplug_list_head, sr_hotplug_list);
 
-struct			sr_hotplug_list_head	sr_hotplug_callbacks;
+struct			sr_hotplug_list_head	sr_hotplug_callbacks =
+    SLIST_HEAD_INITIALIZER(sr_hotplug_callbacks);
 extern void		(*softraid_disk_attach)(struct disk *, int);
 
 /* scsi glue */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.112 2025/11/13 17:12:30 chris Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.113 2026/11/08 08:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -56,7 +56,8 @@
 #define DPRINTF(x)
 #endif
 
-SMR_SLIST_HEAD(, pflow_softc) pflowif_list;
+SMR_SLIST_HEAD(, pflow_softc) pflowif_list =
+    SMR_SLIST_HEAD_INITIALIZER(pflowif_list);
 
 enum pflowstat_counters {
 	pflow_flows,
@@ -127,7 +128,6 @@ struct if_clone	pflow_cloner =
 void
 pflowattach(int npflow)
 {
-	SMR_SLIST_INIT(&pflowif_list);
 	pflow_counters = counters_alloc(pflow_ncounters);
 	if_clone_attach(&pflow_cloner);
 }

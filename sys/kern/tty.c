@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.186 2026/08/19 22:56:24 daniel Exp $	*/
+/*	$OpenBSD: tty.c,v 1.187 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -166,8 +166,8 @@ u_char const char_type[] = {
 #define	tolower(c)	((c) - 'A' + 'a')
 #define	toupper(c)	((c) - 'a' + 'A')
 
-struct ttylist_head ttylist;	/* TAILQ_HEAD */
-int tty_count;
+struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
+int tty_count = 0;
 struct rwlock ttylist_lock = RWLOCK_INITIALIZER("ttylist");
 
 int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
@@ -2327,17 +2327,6 @@ ttysleep_nsec(struct tty *tp, void *chan, int pri, char *wmesg, uint64_t nsecs)
 	if ((error = tsleep_nsec(chan, pri, wmesg, nsecs)) != 0)
 		return (error);
 	return (tp->t_gen == gen ? 0 : ERESTART);
-}
-
-/*
- * Initialise the global tty list.
- */
-void
-tty_init(void)
-{
-
-	TAILQ_INIT(&ttylist);
-	tty_count = 0;
 }
 
 /*

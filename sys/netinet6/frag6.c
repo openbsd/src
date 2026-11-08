@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.97 2026/08/11 14:28:59 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.98 2026/11/08 08:42:55 miod Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -56,7 +56,8 @@ struct mutex frag6_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 u_int frag6_nfragpackets;			/* [Q] */
 u_int frag6_nfrags;				/* [Q] */
-TAILQ_HEAD(ip6q_head, ip6q) frag6_queue;	/* [Q] ip6 reassemble queue */
+TAILQ_HEAD(ip6q_head, ip6q) frag6_queue =	/* [Q] ip6 reassemble queue */
+    TAILQ_HEAD_INITIALIZER(frag6_queue);
 
 void frag6_freef(struct ip6q *);
 void frag6_unlink(struct ip6q *, struct ip6q_head *);
@@ -74,8 +75,6 @@ frag6_init(void)
 	    0, IPL_SOFTNET, 0, "ip6af", NULL);
 	pool_init(&ip6q_pool, sizeof(struct ip6q),
 	    0, IPL_SOFTNET, 0, "ip6q", NULL);
-
-	TAILQ_INIT(&frag6_queue);
 }
 
 /*

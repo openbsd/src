@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.87 2024/09/18 05:21:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.88 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 extern int nfs_numasync;
 extern struct nfsstats nfsstats;
-struct nfs_bufqhead nfs_bufq;
+struct nfs_bufqhead nfs_bufq = TAILQ_HEAD_INITIALIZER(nfs_bufq);
 uint32_t nfs_bufqmax, nfs_bufqlen;
 
 struct buf *nfs_getcacheblk(struct vnode *, daddr_t, int, struct proc *);

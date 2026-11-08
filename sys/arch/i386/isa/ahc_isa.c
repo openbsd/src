@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.21 2022/02/21 12:53:39 jsg Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.22 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -138,8 +138,8 @@ struct ahc_isa_slot {
 	int				bus;
 	int				slot;
 };
-static LIST_HEAD(, ahc_isa_slot) ahc_isa_all_slots;
-static int ahc_isa_slot_initialized;
+static LIST_HEAD(, ahc_isa_slot) ahc_isa_all_slots =
+    LIST_HEAD_INITIALIZER(ahc_isa_all_slots);
 
 /*
  * Return irq setting of the board, otherwise -1.
@@ -287,11 +287,6 @@ ahc_isa_probe(struct device *parent, void *match, void *aux)
 {       
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;
-
-	if (ahc_isa_slot_initialized == 0) {
-		LIST_INIT(&ahc_isa_all_slots);
-		ahc_isa_slot_initialized = 1;
-	}
 
 	if (ia->ia_iobase != IOBASEUNK)
 		return (ahc_isa_match(ia, ia->ia_iobase));

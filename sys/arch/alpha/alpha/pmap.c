@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.97 2026/03/08 23:00:43 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.98 2026/11/08 08:42:54 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -239,7 +239,7 @@ int		pmap_pv_lowat = PMAP_PV_LOWAT;
  * page tables are allocated.  This list is kept LRU-ordered by
  * pmap_activate().
  */
-TAILQ_HEAD(, pmap) pmap_all_pmaps;
+TAILQ_HEAD(, pmap) pmap_all_pmaps = TAILQ_HEAD_INITIALIZER(pmap_all_pmaps);
 
 /*
  * The pools from which pmap structures and sub-structures are allocated.
@@ -819,8 +819,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	    "l1ptpl", &pmap_l1pt_allocator);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
 	    "pvpl", &pmap_pv_page_allocator);
-
-	TAILQ_INIT(&pmap_all_pmaps);
 
 	/*
 	 * Initialize the ASN logic.

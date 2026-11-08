@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.153 2026/09/01 02:33:27 jsg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.154 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -906,8 +906,6 @@ int
 nfs_vfs_init(struct vfsconf *vfsp)
 {
 	extern struct pool nfs_node_pool;
-
-	TAILQ_INIT(&nfs_bufq);
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, IPL_NONE,
 		  PR_WAITOK, "nfsnodepl", NULL);

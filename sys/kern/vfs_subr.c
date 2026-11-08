@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.336 2026/11/07 17:01:08 kirill Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.337 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -100,10 +100,13 @@ int prtactive = 0;	/* 1 => print out reclaim of active vnodes */
 }
 
 TAILQ_HEAD(freelst, vnode);
-struct freelst vnode_hold_list;	/* list of vnodes referencing buffers */
-struct freelst vnode_free_list;	/* vnode free list */
+struct freelst vnode_hold_list =	/* list of vnodes referencing buffers */
+    TAILQ_HEAD_INITIALIZER(vnode_hold_list);
+struct freelst vnode_free_list =	/* vnode free list */
+    TAILQ_HEAD_INITIALIZER(vnode_free_list);
 
-struct mntlist mountlist;	/* mounted filesystem list */
+struct mntlist mountlist =		/* mounted filesystem list */
+    TAILQ_HEAD_INITIALIZER(mountlist);
 
 void	vclean(struct vnode *, int, struct proc *);
 
@@ -152,9 +155,6 @@ vntblinit(void)
 	maxvnodes = 2 * initialvnodes;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, IPL_NONE,
 	    PR_WAITOK, "vnodes", NULL);
-	TAILQ_INIT(&vnode_hold_list);
-	TAILQ_INIT(&vnode_free_list);
-	TAILQ_INIT(&mountlist);
 	/*
 	 * Initialize the filesystem syncer.
 	 */

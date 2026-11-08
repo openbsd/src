@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.51 2026/06/20 13:45:13 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.52 2026/11/08 08:42:55 miod Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -57,7 +57,7 @@ int stat_fbufs_in = 0;
 int stat_fbufs_wait = 0;
 int stat_opened_fusedev = 0;
 
-LIST_HEAD(, fuse_d) fuse_d_list;
+LIST_HEAD(, fuse_d) fuse_d_list = LIST_HEAD_INITIALIZER(fuse_d_list);
 struct fuse_d *fuse_lookup(int);
 
 void	fuseattach(int);
@@ -191,7 +191,6 @@ fuse_device_set_fmp(struct fusefs_mnt *fmp, int set)
 void
 fuseattach(int num)
 {
-	LIST_INIT(&fuse_d_list);
 }
 
 int

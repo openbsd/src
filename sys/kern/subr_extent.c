@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.65 2024/01/19 22:12:24 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.66 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -100,7 +100,8 @@ extent_align(u_long start, u_long align, u_long skew)
  * Register the extent on a doubly linked list.
  * Should work, no?
  */
-static LIST_HEAD(listhead, extent) ext_list;
+static LIST_HEAD(listhead, extent) ext_list =
+    LIST_HEAD_INITIALIZER(ext_list);
 static	void extent_register(struct extent *);
 
 static void
@@ -108,15 +109,7 @@ extent_register(struct extent *ex)
 {
 #ifdef DIAGNOSTIC
 	struct extent *ep;
-#endif
-	static int initialized;
 
-	if (!initialized){
-		LIST_INIT(&ext_list);
-		initialized = 1;
-	}
-
-#ifdef DIAGNOSTIC
 	LIST_FOREACH(ep, &ext_list, ex_link) {
 		if (ep == ex)
 			panic("%s: already registered", __func__);

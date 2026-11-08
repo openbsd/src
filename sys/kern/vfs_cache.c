@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.58 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.59 2026/11/08 08:42:55 miod Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -60,8 +60,10 @@
 long	numcache;	/* total number of cache entries allocated */
 long	numneg;		/* number of negative cache entries */
 
-TAILQ_HEAD(, namecache) nclruhead;	/* Regular Entry LRU chain */
-TAILQ_HEAD(, namecache) nclruneghead;	/* Negative Entry LRU chain */
+TAILQ_HEAD(, namecache) nclruhead =	/* Regular Entry LRU chain */
+    TAILQ_HEAD_INITIALIZER(nclruhead);
+TAILQ_HEAD(, namecache) nclruneghead =	/* Negative Entry LRU chain */
+    TAILQ_HEAD_INITIALIZER(nclruneghead);
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
 int doingcache = 1;			/* 1 => enable the cache */
@@ -417,8 +419,6 @@ done:
 void
 nchinit(void)
 {
-	TAILQ_INIT(&nclruhead);
-	TAILQ_INIT(&nclruneghead);
 	pool_init(&nch_pool, sizeof(struct namecache), 0, IPL_NONE, PR_WAITOK,
 	    "nchpl", NULL);
 }
