@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.227 2026/10/17 21:57:32 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.228 2026/11/08 06:57:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -76,9 +76,6 @@ int _dl_argc __relro = 0;
 const char *_dl_libcname;
 
 char *_dl_preload __boot_data = NULL;
-char *_dl_tracefmt1 __boot_data = NULL;
-char *_dl_tracefmt2 __boot_data = NULL;
-char *_dl_traceprog __boot_data = NULL;
 void *_dl_exec_hint __boot_data = NULL;
 
 char **environ = NULL;
@@ -289,7 +286,9 @@ _dl_setup_env(const char *argv0, char **envp)
 		/*
 		 * Get paths to various things we are going to use.
 		 */
+#ifdef DL_DEBUG
 		_dl_debug = _dl_getenv("LD_DEBUG", envp) != NULL;
+#endif
 		_dl_libpath = _dl_split_path(_dl_getenv("LD_LIBRARY_PATH",
 		    envp));
 		_dl_preload = _dl_getenv("LD_PRELOAD", envp);
@@ -300,12 +299,8 @@ _dl_setup_env(const char *argv0, char **envp)
 	 * these are usable even in setugid processes, however if the
 	 * binary is unreadable, we want to avoid address information leaks.
 	 */
-	if (_dl_unreadable == 0) {
+	if (_dl_unreadable == 0)
 		_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp) != NULL;
-		_dl_tracefmt1 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT1", envp);
-		_dl_tracefmt2 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT2", envp);
-		_dl_traceprog = _dl_getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", envp);
-	}
 
 	environ = envp;
 

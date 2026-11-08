@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.27 2026/10/10 22:29:53 deraadt Exp $
+.\"	$OpenBSD: ld.so.1,v 1.28 2026/11/08 06:57:50 deraadt Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 10 2026 $
+.Dd $Mdocdate: November 8 2026 $
 .Dt LD.SO 1
 .Os
 .Sh NAME
@@ -130,62 +130,6 @@ When set, causes
 .Nm
 to exit after loading the shared objects and printing a summary which includes
 the absolute pathnames of all objects, to standard output.
-.Pp
-.It Ev LD_TRACE_LOADED_OBJECTS_FMT1
-.It Ev LD_TRACE_LOADED_OBJECTS_FMT2
-When set, these variables are interpreted as format strings a la
-.Xr printf 3
-to customize the trace output and are used by
-.Xr ldd 1 Ns 's
-.Fl f
-option and allows
-.Xr ldd 1
-to be operated as a filter more conveniently.
-.Ev LD_TRACE_LOADED_OBJECTS_FMT1
-is used for tracing shared libraries;
-.Ev LD_TRACE_LOADED_OBJECTS_FMT2
-for dynamically loaded objects, the dynamic linker,
-and the main executable.
-The following conversions can be used:
-.Bl -tag -width "xxxx"
-.It %a
-The main program's name
-.Pq also known as Dq __progname .
-.It \&%A
-The value of the environment variable
-.Ev LD_TRACE_LOADED_OBJECTS_PROGNAME .
-.It %e
-The end address of the object.
-.It %g
-The object's group reference count.
-.It %m
-The object's major version number.
-.It %n
-The object's minor version number.
-.It \&%O
-The object's open count.
-.It %o
-The object name.
-.It %p
-The full pathname as determined by
-.Nm ld.so Ns 's
-library search rules.
-.It %r
-The object's reference count.
-.It %x
-The object's load address.
-.El
-.Pp
-Additionally,
-.Sy \en
-and
-.Sy \et
-are recognised and have their usual meaning.
-.Pp
-.It Ev LD_DEBUG
-When set, be verbose about what
-.Nm
-does.
 .El
 .Pp
 Many of these environment variables are ignored for executables

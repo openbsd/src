@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.118 2026/10/17 22:00:16 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.119 2026/11/08 06:57:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -404,13 +404,9 @@ dlerror(void)
 }
 
 static void
-_dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
-    const char *objtypename)
+_dl_tracefmt(int fd, elf_object_t *object, const char *fmt, const char *objtypename)
 {
-	const char *fmt;
 	int i;
-
-	fmt = object->sod.sod_library ? fmt1 : fmt2;
 
 	for (i = 0; fmt[i]; i++) {
 		if (fmt[i] != '%' && fmt[i] != '\\') {
@@ -425,13 +421,6 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 			case '%':
 				_dl_dprintf(fd, "%c", '%');
 				break;
-			case 'A':
-				_dl_dprintf(fd, "%s", _dl_traceprog ?
-				    _dl_traceprog : "");
-				break;
-			case 'a':
-				_dl_dprintf(fd, "%s", __progname);
-				break;
 			case 'e':
 				_dl_dprintf(fd, "%lX",
 				    (void *)(object->load_base +
@@ -440,17 +429,8 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 			case 'g':
 				_dl_dprintf(fd, "%d", object->grprefcount);
 				break;
-			case 'm':
-				_dl_dprintf(fd, "%d", object->sod.sod_major);
-				break;
-			case 'n':
-				_dl_dprintf(fd, "%d", object->sod.sod_minor);
-				break;
 			case 'O':
 				_dl_dprintf(fd, "%d", object->opencount);
-				break;
-			case 'o':
-				_dl_dprintf(fd, "%s", object->sod.sod_name);
 				break;
 			case 'p':
 				_dl_dprintf(fd, "%s", object->load_name);
@@ -495,7 +475,6 @@ _dl_show_objects(elf_object_t *trace)
 	char *objtypename;
 	int outputfd;
 	char *pad;
-	const char *fmt1, *fmt2;
 
 	object = _dl_objects;
 	if (_dl_traceld)
@@ -508,15 +487,9 @@ _dl_show_objects(elf_object_t *trace)
 	else
 		pad = "";
 
-	fmt1 = _dl_tracefmt1 ? _dl_tracefmt1 :
-	    "\t%x %e %t %O    %r   %g      %p\n";
-	fmt2 = _dl_tracefmt2 ? _dl_tracefmt2 :
-	    "\t%x %e %t %O    %r   %g      %p\n";
-
-	if (_dl_tracefmt1 == NULL && _dl_tracefmt2 == NULL)
-		_dl_dprintf(outputfd, "%s:\n"
-		    "\tStart   %s End     %s Type  Open Ref GrpRef Name\n",
-		    _dl_execpath, pad, pad);
+	_dl_dprintf(outputfd, "%s:\n"
+	    "\tStart   %s End     %s Type  Open Ref GrpRef Name\n",
+	    _dl_execpath, pad, pad);
 
 	if (trace != NULL) {
 		for (; object != NULL; object = object->next) {
@@ -547,7 +520,9 @@ _dl_show_objects(elf_object_t *trace)
 			objtypename = "?????";
 			break;
 		}
-		_dl_tracefmt(outputfd, object, fmt1, fmt2, objtypename);
+		_dl_tracefmt(outputfd, object,
+		    "\t%x %e %t %O    %r   %g      %p\n",
+		    objtypename);
 	}
 }
 

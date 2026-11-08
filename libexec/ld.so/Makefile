@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 2026/06/30 19:18:53 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.91 2026/11/08 06:57:50 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -37,6 +37,8 @@ syscall=close exit fstat getdents getentropy getthrid issetugid kbind \
 syscall+=sendsyslog
 CFLAGS+=-DSTACK_PROTECTOR
 .endif
+
+#CFLAGS+=-DDL_DEBUG	# to enable unsfe LD_DEBUG environment variable
 
 .if (${MACHINE_ARCH} == "i386")
 syscall+=mquery

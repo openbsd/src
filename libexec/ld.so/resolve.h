@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.109 2026/09/13 19:30:29 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.110 2026/11/08 06:57:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -377,9 +377,6 @@ extern int _dl_traceld;
 extern int _dl_debug;
 
 extern char *_dl_preload;
-extern char *_dl_tracefmt1;
-extern char *_dl_tracefmt2;
-extern char *_dl_traceprog;
 
 extern void *_dl_exec_hint;
 
