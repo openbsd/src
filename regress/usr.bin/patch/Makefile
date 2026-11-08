@@ -1,13 +1,13 @@
-# $OpenBSD: Makefile,v 1.18 2026/11/07 09:43:01 op Exp $
+# $OpenBSD: Makefile,v 1.19 2026/11/08 16:18:53 op Exp $
 
 PATCH?=		patch
 PATCHFLAGS=	-sN
 CLEANFILES=	*.copy *.orig *.rej t5 d19/* fetchname util.c \
-		t21* t22*
+		t21* t22* t23
 
 REGRESS_TARGETS= t0  t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
-		t20 t21 t22
+		t20 t21 t22 t23
 
 CPPFLAGS +=	-I${.OBJDIR}
 fetchname: ${.CURDIR}/fetchname.c
@@ -117,7 +117,12 @@ t22:
 	@set +e ; ${PATCH} -t ${PATCHFLAGS} < ${*}.diff ; \
 		[ $$? -lt 128 ] || (echo "XXX ${*} failed" && false)
 
-.PHONY: t5 t21 t22
+t23:
+	@echo ${*}
+	@printf 'x REV ' > ${*}
+	@${PATCH} ${PATCHFLAGS} -t < ${.CURDIR}/${*}.diff
+
+.PHONY: t5 t21 t22 t23
 
 .include <bsd.regress.mk>
 
