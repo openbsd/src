@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.61 2025/08/20 14:24:05 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.62 2026/11/08 08:47:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -410,19 +410,31 @@ rtwn_fw_cmd(struct rtwn_softc *sc, uint8_t id, const void *buf, int len)
 	}
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.id = id;
-	if (len > 3)
-		cmd.id |= R92C_CMD_FLAG_EXT;
 	KASSERT(len <= sizeof(cmd.msg));
-	memcpy(cmd.msg, buf, len);
+	if (len > 3 &&
+	    !(sc->chip & (RTWN_CHIP_88E | RTWN_CHIP_88F | RTWN_CHIP_92E))) {
+		/*
+		 * R92C firmware expects extended commands as
+		 * [id : byte2 : byte3 : byte4] [byte0 : byte1],
+		 * i.e. the first two payload bytes go into HMEBOX_EXT.
+		 */
+		cmd.id |= R92C_CMD_FLAG_EXT;
+		memcpy(cmd.msg, (const uint8_t *)buf + 2, len - 2);
+		memcpy(cmd.msg + 3, buf, 2);
+	} else {
+		if (len > 3)
+			cmd.id |= R92C_CMD_FLAG_EXT;
+		memcpy(cmd.msg, buf, len);
+	}
 
 	/* Write the first word last since that will trigger the FW. */
 	if (sc->chip & RTWN_CHIP_92E)
 		rtwn_write_2(sc, R88E_HMEBOX_EXT(sc->fwcur),
-		    *((uint8_t *)&cmd + 4));
+		    LE_READ_2((uint8_t *)&cmd + 4));
 	else
 		rtwn_write_2(sc, R92C_HMEBOX_EXT(sc->fwcur),
-		    *((uint8_t *)&cmd + 4));
-	rtwn_write_4(sc, R92C_HMEBOX(sc->fwcur), *((uint8_t *)&cmd + 0));
+		    LE_READ_2((uint8_t *)&cmd + 4));
+	rtwn_write_4(sc, R92C_HMEBOX(sc->fwcur), LE_READ_4((uint8_t *)&cmd));
 
 	sc->fwcur = (sc->fwcur + 1) % R92C_H2C_NBOX;
 
