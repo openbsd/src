@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.52 2025/04/15 05:51:51 jsg Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.53 2026/11/08 15:35:01 kirill Exp $  */
 
 /*
  * Portions of this code are:
@@ -54,6 +54,7 @@ vop_generic_revoke(void *v)
 	struct vop_revoke_args *ap = v;
 	struct vnode *vp, *vq;
 	struct proc *p = curproc;
+	int referenced = 0;
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
@@ -61,7 +62,21 @@ vop_generic_revoke(void *v)
 #endif
 
 	vp = ap->a_vp;
- 
+
+	/* Use mounted alias instead supplied by vdevgone() */
+	if (vp->v_type == VBLK && vp->v_specinfo != NULL) {
+		SLIST_FOREACH(vq, vp->v_hashchain, v_specnext) {
+			if (vq->v_rdev != vp->v_rdev ||
+			    vq->v_type != VBLK ||
+			    vq->v_specmountpoint == NULL)
+				continue;
+			vp = vq;
+			vref(vp);
+			referenced = 1;
+			break;
+		}
+	}
+
 	while (vp->v_type == VBLK && vp->v_specinfo != NULL &&
 	    vp->v_specmountpoint != NULL) {
 		struct mount *mp = vp->v_specmountpoint;
@@ -88,7 +103,7 @@ vop_generic_revoke(void *v)
 			msleep_nsec(vp, &vnode_mtx, PINOD,
 			    "vop_generic_revokeall", INFSLP);
 			mtx_leave(&vnode_mtx);
-			return(0);
+			goto out;
 		}
 
 		/*
@@ -120,6 +135,9 @@ vop_generic_revoke(void *v)
 
 	vgonel(vp, p);
 
+out:
+	if (referenced)
+		vrele(vp);
 	return (0);
 }
 

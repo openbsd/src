@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.179 2025/09/25 09:05:47 mpi Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.180 2026/11/08 15:35:01 kirill Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ struct vnode;
 /* vfs_subr */
 int	bdevvp(dev_t, struct vnode **);
 int	cdevvp(dev_t, struct vnode **);
-struct vnode *checkalias(struct vnode *, dev_t, struct mount *);
+void checkalias(struct vnode *, dev_t);
 int	getnewvnode(enum vtagtype, struct mount *, const struct vops *,
 	    struct vnode **);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
