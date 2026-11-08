@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.165 2025/09/16 09:52:49 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.166 2026/11/08 16:41:35 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1010,7 +1010,7 @@ nd6_dad_reaper(void *arg)
 void
 nd6_dad_starttimer(struct dadq *dp)
 {
-	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
+	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_timer, dp);
 	timeout_add_msec(&dp->dad_timer_ch, RETRANS_TIMER);
 }
 
@@ -1099,23 +1099,22 @@ nd6_dad_stop(struct ifaddr *ifa)
 void
 nd6_dad_timer(void *arg)
 {
-	struct ifaddr *ifa = arg;
+	struct dadq *dp = arg;
+	struct ifaddr *ifa;
 	struct in6_ifaddr *ia6;
 	struct in6_addr daddr6, taddr6;
 	struct ifnet *ifp;
-	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
 	NET_LOCK();
 
+	ifa = dp->dad_ifa;
+	if (nd6_dad_find(ifa) != dp)
+		goto done;
+
 	ia6 = ifatoia6(ifa);
 	taddr6 = ia6->ia_addr.sin6_addr;
 	ifp = ifa->ifa_ifp;
-	dp = nd6_dad_find(ifa);
-	if (dp == NULL) {
-		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
-		goto done;
-	}
 	if (ia6->ia6_flags & IN6_IFF_DUPLICATED) {
 		log(LOG_ERR, "%s: called with duplicated address %s(%s)\n",
 		    __func__, inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
