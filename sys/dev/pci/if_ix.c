@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.228 2026/06/23 18:13:32 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.229 2026/11/08 15:02:12 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -121,7 +121,7 @@ int	ixgbe_rxrinfo(struct ix_softc *, struct if_rxrinfo *);
 int	ixgbe_get_sffpage(struct ix_softc *, struct if_sffpage *);
 void	ixgbe_watchdog(struct ifnet *);
 void	ixgbe_init(void *);
-void	ixgbe_stop(void *);
+void	ixgbe_stop(void *, int);
 void	ixgbe_media_status(struct ifnet *, struct ifmediareq *);
 int	ixgbe_media_change(struct ifnet *);
 void	ixgbe_identify_hardware(struct ix_softc *);
@@ -142,15 +142,15 @@ int	ixgbe_allocate_transmit_buffers(struct ix_txring *);
 int	ixgbe_setup_transmit_structures(struct ix_softc *);
 int	ixgbe_setup_transmit_ring(struct ix_txring *);
 void	ixgbe_initialize_transmit_units(struct ix_softc *);
-void	ixgbe_free_transmit_structures(struct ix_softc *);
-void	ixgbe_free_transmit_buffers(struct ix_txring *);
+void	ixgbe_free_transmit_structures(struct ix_softc *, int);
+void	ixgbe_free_transmit_buffers(struct ix_txring *, int);
 
 int	ixgbe_allocate_receive_buffers(struct ix_rxring *);
 int	ixgbe_setup_receive_structures(struct ix_softc *);
 int	ixgbe_setup_receive_ring(struct ix_rxring *);
 void	ixgbe_initialize_receive_units(struct ix_softc *);
-void	ixgbe_free_receive_structures(struct ix_softc *);
-void	ixgbe_free_receive_buffers(struct ix_rxring *);
+void	ixgbe_free_receive_structures(struct ix_softc *, int);
+void	ixgbe_free_receive_buffers(struct ix_rxring *, int);
 void	ixgbe_initialize_rss_mapping(struct ix_softc *);
 int	ixgbe_rxfill(struct ix_rxring *);
 void	ixgbe_rxrefill(void *);
@@ -365,8 +365,8 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 err_late:
-	ixgbe_free_transmit_structures(sc);
-	ixgbe_free_receive_structures(sc);
+	ixgbe_free_transmit_structures(sc, 0);
+	ixgbe_free_receive_structures(sc, 0);
 err_out:
 	ixgbe_free_pci_resources(sc);
 	free(sc->mta, M_DEVBUF, IXGBE_ETH_LENGTH_OF_ADDRESS *
@@ -377,8 +377,7 @@ err_out:
  *  Device removal routine
  *
  *  The detach entry point is called when the driver is being removed.
- *  This routine stops the adapter and deallocates all the resources
- *  that were allocated for driver operation.
+ *  This routine stops the adapter.
  *
  *  return 0 on success, positive on failure
  *********************************************************************/
@@ -392,7 +391,7 @@ ixgbe_detach(struct device *self, int flags)
 
 	INIT_DEBUGOUT("ixgbe_detach: begin");
 
-	ixgbe_stop(sc);
+	ixgbe_stop(sc, 1);
 
 	/* let hardware know driver is unloading */
 	ctrl_ext = IXGBE_READ_REG(&sc->hw, IXGBE_CTRL_EXT);
@@ -409,8 +408,8 @@ ixgbe_detach(struct device *self, int flags)
 
 	ixgbe_free_pci_resources(sc);
 
-	ixgbe_free_transmit_structures(sc);
-	ixgbe_free_receive_structures(sc);
+	ixgbe_free_transmit_structures(sc, 0);
+	ixgbe_free_receive_structures(sc, 0);
 	free(sc->mta, M_DEVBUF, IXGBE_ETH_LENGTH_OF_ADDRESS *
 	    MAX_NUM_MULTICAST_ADDRESSES);
 
@@ -430,7 +429,7 @@ ixgbe_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_QUIESCE:
 		if (ifp->if_flags & IFF_RUNNING)
-			ixgbe_stop(sc);
+			ixgbe_stop(sc, 0);
 		break;
 	case DVACT_RESUME:
 		ixgbe_init_hw(hw);
@@ -571,7 +570,7 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 				ixgbe_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				ixgbe_stop(sc);
+				ixgbe_stop(sc, 0);
 		}
 		break;
 
@@ -795,7 +794,7 @@ ixgbe_init(void *arg)
 
 	s = splnet();
 
-	ixgbe_stop(sc);
+	ixgbe_stop(sc, 0);
 
 	/* reprogram the RAR[0] in case user changed it. */
 	ixgbe_set_rar(&sc->hw, 0, sc->hw.mac.addr, 0, IXGBE_RAH_AV);
@@ -810,7 +809,7 @@ ixgbe_init(void *arg)
 	if (ixgbe_setup_transmit_structures(sc)) {
 		printf("%s: Could not setup transmit structures\n",
 		    ifp->if_xname);
-		ixgbe_stop(sc);
+		ixgbe_stop(sc, 0);
 		splx(s);
 		return;
 	}
@@ -832,7 +831,7 @@ ixgbe_init(void *arg)
 	if (ixgbe_setup_receive_structures(sc)) {
 		printf("%s: Could not setup receive structures\n",
 		    ifp->if_xname);
-		ixgbe_stop(sc);
+		ixgbe_stop(sc, 0);
 		splx(s);
 		return;
 	}
@@ -1726,7 +1725,7 @@ ixgbe_handle_fw_event(struct ix_softc *sc)
 
 		case ixgbe_aci_opc_temp_tca_event:
 			if (sc->hw.adapter_stopped == FALSE) {
-				ixgbe_stop(sc);
+				ixgbe_stop(sc, 0);
 				printf("%s: CRITICAL: OVER TEMP! "
 				    "PHY IS SHUT DOWN!!\n", ifp->if_xname);
 			}
@@ -1750,7 +1749,7 @@ ixgbe_handle_fw_event(struct ix_softc *sc)
  **********************************************************************/
 
 void
-ixgbe_stop(void *arg)
+ixgbe_stop(void *arg, int detaching)
 {
 	struct ix_softc *sc = arg;
 	struct ifnet   *ifp = &sc->arpcom.ac_if;
@@ -1793,8 +1792,8 @@ ixgbe_stop(void *arg)
 	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
 	/* Should we really clear all structures on stop? */
-	ixgbe_free_transmit_structures(sc);
-	ixgbe_free_receive_structures(sc);
+	ixgbe_free_transmit_structures(sc, detaching);
+	ixgbe_free_receive_structures(sc, detaching);
 
 	ixgbe_update_link_status(sc);
 }
@@ -2404,8 +2403,10 @@ ixgbe_allocate_transmit_buffers(struct ix_txring *txr)
 	struct ixgbe_tx_buf	*txbuf;
 	int			 error, i;
 
-	if (!(txr->tx_buffers = mallocarray(sc->num_tx_desc,
-	    sizeof(struct ixgbe_tx_buf), M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (txr->tx_buffers == NULL)
+		txr->tx_buffers = mallocarray(sc->num_tx_desc,
+		    sizeof(struct ixgbe_tx_buf), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (txr->tx_buffers == NULL) {
 		printf("%s: Unable to allocate tx_buffer memory\n",
 		    ifp->if_xname);
 		error = ENOMEM;
@@ -2480,7 +2481,7 @@ ixgbe_setup_transmit_structures(struct ix_softc *sc)
 
 	return (0);
 fail:
-	ixgbe_free_transmit_structures(sc);
+	ixgbe_free_transmit_structures(sc, 0);
 	return (error);
 }
 
@@ -2576,13 +2577,13 @@ ixgbe_initialize_transmit_units(struct ix_softc *sc)
  *
  **********************************************************************/
 void
-ixgbe_free_transmit_structures(struct ix_softc *sc)
+ixgbe_free_transmit_structures(struct ix_softc *sc, int detaching)
 {
 	struct ix_txring *txr = sc->tx_rings;
 	int		i;
 
 	for (i = 0; i < sc->num_queues; i++, txr++)
-		ixgbe_free_transmit_buffers(txr);
+		ixgbe_free_transmit_buffers(txr, detaching);
 }
 
 /*********************************************************************
@@ -2591,7 +2592,7 @@ ixgbe_free_transmit_structures(struct ix_softc *sc)
  *
  **********************************************************************/
 void
-ixgbe_free_transmit_buffers(struct ix_txring *txr)
+ixgbe_free_transmit_buffers(struct ix_txring *txr, int detaching)
 {
 	struct ix_softc *sc = txr->sc;
 	struct ixgbe_tx_buf *tx_buffer;
@@ -2622,10 +2623,11 @@ ixgbe_free_transmit_buffers(struct ix_txring *txr)
 		}
 	}
 
-	if (txr->tx_buffers != NULL)
+	if (detaching && txr->tx_buffers != NULL) {
 		free(txr->tx_buffers, M_DEVBUF,
 		    sc->num_tx_desc * sizeof(struct ixgbe_tx_buf));
-	txr->tx_buffers = NULL;
+		txr->tx_buffers = NULL;
+	}
 	txr->txtag = NULL;
 }
 
@@ -2888,8 +2890,10 @@ ixgbe_allocate_receive_buffers(struct ix_rxring *rxr)
 	struct ixgbe_rx_buf 	*rxbuf;
 	int			i, error;
 
-	if (!(rxr->rx_buffers = mallocarray(sc->num_rx_desc,
-	    sizeof(struct ixgbe_rx_buf), M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (rxr->rx_buffers == NULL)
+		rxr->rx_buffers = mallocarray(sc->num_rx_desc,
+		    sizeof(struct ixgbe_rx_buf), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (rxr->rx_buffers == NULL) {
 		printf("%s: Unable to allocate rx_buffer memory\n",
 		    ifp->if_xname);
 		error = ENOMEM;
@@ -3018,7 +3022,7 @@ ixgbe_setup_receive_structures(struct ix_softc *sc)
 
 	return (0);
 fail:
-	ixgbe_free_receive_structures(sc);
+	ixgbe_free_receive_structures(sc, 0);
 	return (ENOBUFS);
 }
 
@@ -3215,7 +3219,7 @@ ixgbe_initialize_rss_mapping(struct ix_softc *sc)
  *
  **********************************************************************/
 void
-ixgbe_free_receive_structures(struct ix_softc *sc)
+ixgbe_free_receive_structures(struct ix_softc *sc, int detaching)
 {
 	struct ix_rxring *rxr;
 	int		i;
@@ -3224,7 +3228,7 @@ ixgbe_free_receive_structures(struct ix_softc *sc)
 		if_rxr_init(&rxr->rx_ring, 0, 0);
 
 	for (i = 0, rxr = sc->rx_rings; i < sc->num_queues; i++, rxr++)
-		ixgbe_free_receive_buffers(rxr);
+		ixgbe_free_receive_buffers(rxr, detaching);
 }
 
 /*********************************************************************
@@ -3233,7 +3237,7 @@ ixgbe_free_receive_structures(struct ix_softc *sc)
  *
  **********************************************************************/
 void
-ixgbe_free_receive_buffers(struct ix_rxring *rxr)
+ixgbe_free_receive_buffers(struct ix_rxring *rxr, int detaching)
 {
 	struct ix_softc		*sc;
 	struct ixgbe_rx_buf	*rxbuf;
@@ -3249,8 +3253,13 @@ ixgbe_free_receive_buffers(struct ix_rxring *rxr)
 				    BUS_DMASYNC_POSTREAD);
 				bus_dmamap_unload(rxr->rxdma.dma_tag,
 				    rxbuf->map);
-				m_freem(rxbuf->buf);
+				if (rxbuf->fmp == NULL)
+					m_freem(rxbuf->buf);
 				rxbuf->buf = NULL;
+			}
+			if (rxbuf->fmp != NULL) {
+				m_freem(rxbuf->fmp);
+				rxbuf->fmp = NULL;
 			}
 			if (rxbuf->map != NULL) {
 				bus_dmamap_destroy(rxr->rxdma.dma_tag,
@@ -3258,9 +3267,11 @@ ixgbe_free_receive_buffers(struct ix_rxring *rxr)
 				rxbuf->map = NULL;
 			}
 		}
-		free(rxr->rx_buffers, M_DEVBUF,
-		    sc->num_rx_desc * sizeof(struct ixgbe_rx_buf));
-		rxr->rx_buffers = NULL;
+		if (detaching) {
+			free(rxr->rx_buffers, M_DEVBUF,
+			    sc->num_rx_desc * sizeof(struct ixgbe_rx_buf));
+			rxr->rx_buffers = NULL;
+		}
 	}
 }
 
