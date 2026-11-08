@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.228 2026/11/08 06:57:50 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.229 2026/11/08 21:49:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -761,6 +761,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	if (!_dl_traceld)
 		failed = _dl_rtld(_dl_objects);
 
+	if (_dl_traceld)
+		_dl_pledge("stdio", NULL);
 	if (_dl_debug || _dl_traceld)
 		_dl_show_objects(NULL);
 

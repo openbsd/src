@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.119 2026/11/08 06:57:50 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.120 2026/11/08 21:49:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -109,8 +109,8 @@ dlopen(const char *libname, int flags)
 		if (object->grpsym_vec.len == 0)
 			_dl_cache_grpsym_list_setup(object);
 		if (_dl_traceld) {
+			_dl_pledge("stdio", NULL);
 			_dl_show_objects(object);
-			_dl_unload_shlib(object);
 			_dl_exit(0);
 		}
 		goto loaded;
@@ -129,8 +129,8 @@ dlopen(const char *libname, int flags)
 		int err;
 		DL_DEB(("tail %s\n", object->load_name));
 		if (_dl_traceld) {
+			_dl_pledge("stdio", NULL);
 			_dl_show_objects(object);
-			_dl_unload_shlib(object);
 			_dl_exit(0);
 		}
 		err = _dl_rtld(object);
