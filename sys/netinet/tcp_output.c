@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.158 2026/01/01 05:28:23 jsg Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.159 2026/11/08 11:14:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -306,9 +306,8 @@ again:
 		}
 	}
 
-	if (!sack_rxmit) {
+	if (!sack_rxmit)
 		len = ulmin(so->so_snd.sb_cc, win) - off;
-	}
 
 	if (len < 0) {
 		/*
@@ -347,7 +346,7 @@ again:
 		    ((tp->t_flags & TF_SIGNATURE) == 0) &&
 #endif
 		    len >= 2 * tp->t_maxseg &&
-		    tp->rcv_numsacks == 0 && sack_rxmit == 0 &&
+		    tp->rcv_numsacks == 0 && !sack_rxmit &&
 		    !(flags & (TH_SYN|TH_RST|TH_FIN))) {
 			tso = 1;
 			/* avoid small chopped packets */
@@ -931,11 +930,8 @@ send:
 				tp->t_flags |= TF_SENTFIN;
 			}
 		}
-		if (tp->sack_enable) {
-			if (sack_rxmit && (p->rxmit != tp->snd_nxt)) {
-				goto timer;
-			}
-		}
+		if (sack_rxmit)
+			goto timer;
 		tp->snd_nxt += len;
 		if (SEQ_GT(tp->snd_nxt, tp->snd_max)) {
 			tp->snd_max = tp->snd_nxt;
@@ -959,7 +955,7 @@ send:
 		 * of retransmit time.
 		 */
  timer:
-		if (tp->sack_enable && sack_rxmit &&
+		if (sack_rxmit &&
 		    TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_max) {
 			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
