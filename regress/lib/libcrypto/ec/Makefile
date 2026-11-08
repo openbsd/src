@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2026/11/06 13:09:18 beck Exp $
+#	$OpenBSD: Makefile,v 1.15 2026/11/08 08:53:13 tb Exp $
 
 .ifdef EOPENSSL35
 LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl35 -L/usr/local/lib/eopenssl35
@@ -15,18 +15,18 @@ PROGS +=	ec_builtin_test
 LDADD_ec_asn1_test += ${CRYPTO_INT}
 LDADD_ec_builtin_test += ${CRYPTO_INT}
 
-SRCS_ec_builtin_test = ec_builtin_test.c test.c test_util.c
+LDADD =		-lcrypto
+DPADD =		${LIBCRYPTO}
 
+WARNINGS =	Yes
+CFLAGS += -DLIBRESSL_CRYPTO_INTERNAL -DLIBRESSL_INTERNAL
+CFLAGS += -Wall -Wundef -Werror
 CFLAGS += -I${.CURDIR}/../../../../lib/libcrypto/bn
 CFLAGS += -I${.CURDIR}/../../../../lib/libcrypto/ec
 CFLAGS += -I${.CURDIR}/../test
 
-.PATH: ${.CURDIR}/../test
+SRCS_ec_builtin_test = ec_builtin_test.c test.c test_util.c
 
-LDADD =		-lcrypto
-DPADD =		${LIBCRYPTO}
-WARNINGS =	Yes
-CFLAGS +=	-DLIBRESSL_CRYPTO_INTERNAL -DLIBRESSL_INTERNAL
-CFLAGS +=	-Wall -Wundef -Werror
+.PATH: ${.CURDIR}/../test
 
 .include <bsd.regress.mk>
