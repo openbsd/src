@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.386 2026/11/07 06:00:20 jan Exp $ */
+/* $OpenBSD: if_em.c,v 1.387 2026/11/08 14:05:21 jan Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2421,8 +2421,9 @@ em_free_transmit_structures(struct em_softc *sc, int softonly)
 				pkt = &que->tx.sc_tx_pkts_ring[i];
 
 				if (pkt->pkt_m != NULL) {
-					bus_dmamap_sync(sc->sc_dmat, pkt->pkt_map,
-					    0, pkt->pkt_map->dm_mapsize,
+					bus_dmamap_sync(sc->sc_dmat,
+					    pkt->pkt_map, 0,
+					    pkt->pkt_map->dm_mapsize,
 					    BUS_DMASYNC_POSTWRITE);
 					bus_dmamap_unload(sc->sc_dmat,
 					    pkt->pkt_map);
@@ -3002,19 +3003,23 @@ em_free_receive_structures(struct em_softc *sc, int softonly)
 		if (que->rx.sc_rx_pkts_ring != NULL) {
 			for (i = 0; i < sc->sc_rx_slots; i++) {
 				pkt = &que->rx.sc_rx_pkts_ring[i];
+
 				if (pkt->pkt_m != NULL) {
 					bus_dmamap_sync(sc->sc_dmat,
-					    pkt->pkt_map,
-					    0, pkt->pkt_map->dm_mapsize,
+					    pkt->pkt_map, 0,
+					    pkt->pkt_map->dm_mapsize,
 					    BUS_DMASYNC_POSTREAD);
 					bus_dmamap_unload(sc->sc_dmat,
 					    pkt->pkt_map);
+
 					m_freem(pkt->pkt_m);
+					pkt->pkt_m = NULL;
 				}
-				if (pkt->pkt_m != NULL) {
+
+				if (pkt->pkt_map != NULL) {
 					bus_dmamap_destroy(sc->sc_dmat,
 					    pkt->pkt_map);
-					pkt->pkt_m = NULL;
+					pkt->pkt_map = NULL;
 				}
 			}
 
