@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.387 2026/11/08 14:05:21 jan Exp $ */
+/* $OpenBSD: if_em.c,v 1.388 2026/11/08 14:24:42 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1618,11 +1618,10 @@ em_update_link_status(struct em_softc *sc)
  *
  *  This routine disables all traffic on the adapter by issuing a
  *  global reset on the MAC.
- *  If softonly is set for device detach, it deallocates TX/RX buffers
  **********************************************************************/
 
 void
-em_stop(void *arg, int softonly)
+em_stop(void *arg, int detaching)
 {
 	struct em_softc *sc = arg;
 	struct em_queue *que = sc->queues; /* Use only first queue. */
@@ -1637,11 +1636,11 @@ em_stop(void *arg, int softonly)
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
 
-	if (!softonly)
+	if (!detaching)
 		em_disable_intr(sc);
 	if (sc->hw.mac_type >= em_pch_spt)
 		em_flush_desc_rings(sc);
-	if (!softonly)
+	if (!detaching)
 		em_reset_hw(&sc->hw);
 
 	intr_barrier(sc->sc_intrhand);
@@ -1652,8 +1651,8 @@ em_stop(void *arg, int softonly)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
-	em_free_transmit_structures(sc, softonly);
-	em_free_receive_structures(sc, softonly);
+	em_free_transmit_structures(sc, detaching);
+	em_free_receive_structures(sc, detaching);
 }
 
 /*********************************************************************
@@ -2407,7 +2406,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
  *
  **********************************************************************/
 void
-em_free_transmit_structures(struct em_softc *sc, int softonly)
+em_free_transmit_structures(struct em_softc *sc, int detaching)
 {
 	struct em_queue *que;
 	struct em_packet *pkt;
@@ -2439,7 +2438,7 @@ em_free_transmit_structures(struct em_softc *sc, int softonly)
 				}
 			}
 
-			if (softonly) {
+			if (detaching) {
 				free(que->tx.sc_tx_pkts_ring, M_DEVBUF,
 				    sc->sc_tx_slots *
 				    sizeof(*que->tx.sc_tx_pkts_ring));
@@ -2985,7 +2984,7 @@ em_initialize_receive_unit(struct em_softc *sc)
  *
  **********************************************************************/
 void
-em_free_receive_structures(struct em_softc *sc, int softonly)
+em_free_receive_structures(struct em_softc *sc, int detaching)
 {
 	struct em_queue *que;
 	struct em_packet *pkt;
@@ -3023,7 +3022,7 @@ em_free_receive_structures(struct em_softc *sc, int softonly)
 				}
 			}
 
-			if (softonly) {
+			if (detaching) {
 				free(que->rx.sc_rx_pkts_ring, M_DEVBUF,
 				    sc->sc_rx_slots *
 				    sizeof(*que->rx.sc_rx_pkts_ring));
