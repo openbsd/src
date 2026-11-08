@@ -1,4 +1,4 @@
-/*	$OpenBSD: mldsa_internal.c,v 1.2 2026/11/08 16:58:49 beck Exp $ */
+/*	$OpenBSD: mldsa_internal.c,v 1.3 2026/11/08 17:04:30 beck Exp $ */
 /* Copyright 2014 The BoringSSL Authors
  * Copyright (c) 2026 Bob Beck <beck@obtuse.com>
  *
@@ -36,9 +36,6 @@
  */
 
 #define DEGREE 256
-
-#define MLDSA65_RANK 6
-#define MLDSA87_RANK 8
 
 #define kRhoBytes 32
 #define kSigmaBytes 64
