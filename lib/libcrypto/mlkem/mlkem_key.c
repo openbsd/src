@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_key.c,v 1.5 2026/01/01 12:47:52 tb Exp $ */
+/* $OpenBSD: mlkem_key.c,v 1.6 2026/11/08 18:08:08 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -79,8 +79,6 @@ MLKEM_private_key_encoded_length(const MLKEM_private_key *key)
 		return MLKEM768_PRIVATE_KEY_BYTES;
 	case MLKEM1024_RANK:
 		return MLKEM1024_PRIVATE_KEY_BYTES;
-	default:
-		return 0;
 	}
 	return 0;
 }
@@ -97,8 +95,6 @@ MLKEM_private_key_ciphertext_length(const MLKEM_private_key *key)
 		return MLKEM768_CIPHERTEXT_BYTES;
 	case MLKEM1024_RANK:
 		return MLKEM1024_CIPHERTEXT_BYTES;
-	default:
-		return 0;
 	}
 	return 0;
 }
@@ -162,8 +158,6 @@ MLKEM_public_key_encoded_length(const MLKEM_public_key *key)
 		return MLKEM768_PUBLIC_KEY_BYTES;
 	case MLKEM1024_RANK:
 		return MLKEM1024_PUBLIC_KEY_BYTES;
-	default:
-		return 0;
 	}
 	return 0;
 }
@@ -180,8 +174,6 @@ MLKEM_public_key_ciphertext_length(const MLKEM_public_key *key)
 		return MLKEM768_CIPHERTEXT_BYTES;
 	case MLKEM1024_RANK:
 		return MLKEM1024_CIPHERTEXT_BYTES;
-	default:
-		return 0;
 	}
 	return 0;
 }
