@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.698 2026/10/31 10:46:05 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.699 2026/11/08 14:04:49 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -125,7 +125,7 @@ struct netaddr {
 struct relayhost {
 	uint16_t flags;
 	int tls;
-	char hostname[HOST_NAME_MAX+1];
+	char hostname[_POSIX_HOST_NAME_MAX+1];
 	uint16_t port;
 	char authlabel[PATH_MAX];
 };
@@ -136,7 +136,7 @@ struct credentials {
 };
 
 struct destination {
-	char	name[HOST_NAME_MAX+1];
+	char	name[_POSIX_HOST_NAME_MAX+1];
 };
 
 struct source {
@@ -145,7 +145,7 @@ struct source {
 
 struct addrname {
 	struct sockaddr_storage	addr;
-	char			name[HOST_NAME_MAX+1];
+	char			name[_POSIX_HOST_NAME_MAX+1];
 };
 
 union lookup {
@@ -479,7 +479,7 @@ struct maddrmap {
 struct envelope {
 	TAILQ_ENTRY(envelope)		entry;
 
-	char				dispatcher[HOST_NAME_MAX+1];
+	char				dispatcher[_POSIX_HOST_NAME_MAX+1];
 
 	char				tag[SMTPD_TAG_SIZE];
 
@@ -487,9 +487,9 @@ struct envelope {
 	uint64_t			id;
 	enum envelope_flags		flags;
 
-	char				smtpname[HOST_NAME_MAX+1];
-	char				helo[HOST_NAME_MAX+1];
-	char				hostname[HOST_NAME_MAX+1];
+	char				smtpname[_POSIX_HOST_NAME_MAX+1];
+	char				helo[_POSIX_HOST_NAME_MAX+1];
+	char				hostname[_POSIX_HOST_NAME_MAX+1];
 	char				username[SMTPD_MAXMAILADDRSIZE];
 	char				errorline[LINE_MAX];
 	struct sockaddr_storage		ss;
@@ -535,7 +535,7 @@ struct listener {
 	char			 ca_name[PATH_MAX];
 	char			 tag[SMTPD_TAG_SIZE];
 	char			 authtable[LINE_MAX];
-	char			 hostname[HOST_NAME_MAX+1];
+	char			 hostname[_POSIX_HOST_NAME_MAX+1];
 	char			 hostnametable[PATH_MAX];
 	char			 sendertable[PATH_MAX];
 
@@ -597,7 +597,7 @@ struct smtpd {
 	int				sc_ttl;
 #define MAX_BOUNCE_WARN			4
 	time_t				sc_bounce_warn[MAX_BOUNCE_WARN];
-	char				sc_hostname[HOST_NAME_MAX+1];
+	char				sc_hostname[_POSIX_HOST_NAME_MAX+1];
 	struct stat_backend	       *sc_stat;
 	struct compress_backend	       *sc_comp;
 

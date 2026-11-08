@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.250 2026/10/31 10:46:05 op Exp $	*/
+/*	$OpenBSD: mta.c,v 1.251 2026/11/08 14:04:49 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -156,7 +156,7 @@ static time_t	max_seen_discdelay_route;
 
 #define	HOSTSTAT_EXPIRE_DELAY	(4 * 3600)
 struct hoststat {
-	char			 name[HOST_NAME_MAX+1];
+	char			 name[_POSIX_HOST_NAME_MAX+1];
 	time_t			 tm;
 	char			 error[LINE_MAX];
 	struct tree		 deferred;
@@ -2628,7 +2628,7 @@ void
 mta_hoststat_update(const char *host, const char *error)
 {
 	struct hoststat	*hs = NULL;
-	char		 buf[HOST_NAME_MAX+1];
+	char		 buf[_POSIX_HOST_NAME_MAX+1];
 
 	if (!lowercase(buf, host, sizeof buf))
 		return;
@@ -2653,7 +2653,7 @@ void
 mta_hoststat_cache(const char *host, uint64_t evpid)
 {
 	struct hoststat	*hs = NULL;
-	char buf[HOST_NAME_MAX+1];
+	char buf[_POSIX_HOST_NAME_MAX+1];
 
 	if (!lowercase(buf, host, sizeof buf))
 		return;
@@ -2672,7 +2672,7 @@ void
 mta_hoststat_uncache(const char *host, uint64_t evpid)
 {
 	struct hoststat	*hs = NULL;
-	char buf[HOST_NAME_MAX+1];
+	char buf[_POSIX_HOST_NAME_MAX+1];
 
 	if (!lowercase(buf, host, sizeof buf))
 		return;
@@ -2688,7 +2688,7 @@ void
 mta_hoststat_reschedule(const char *host)
 {
 	struct hoststat	*hs = NULL;
-	char		 buf[HOST_NAME_MAX+1];
+	char		 buf[_POSIX_HOST_NAME_MAX+1];
 	uint64_t	 evpid;
 
 	if (!lowercase(buf, host, sizeof buf))

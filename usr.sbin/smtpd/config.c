@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.58 2024/01/04 09:30:09 op Exp $	*/
+/*	$OpenBSD: config.c,v 1.59 2026/11/08 14:04:49 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,7 +35,7 @@ config_default(void)
 	struct smtpd	       *conf = NULL;
 	struct mta_limits      *limits = NULL;
 	struct table	       *t = NULL;
-	char			hostname[HOST_NAME_MAX+1];
+	char			hostname[_POSIX_HOST_NAME_MAX+1];
 
 	if (getmailname(hostname, sizeof hostname) == -1)
 		return NULL;

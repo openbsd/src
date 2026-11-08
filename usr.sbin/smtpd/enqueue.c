@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.128 2026/08/03 06:58:55 claudio Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.129 2026/11/08 14:04:49 op Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -89,7 +89,7 @@ struct {
 #define WSP(c)			(c == ' ' || c == '\t')
 
 int		 verbose = 0;
-static char	 host[HOST_NAME_MAX+1];
+static char	 host[_POSIX_HOST_NAME_MAX+1];
 char		*user = NULL;
 time_t		 timestamp;
 

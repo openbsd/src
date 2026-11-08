@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.451 2026/09/13 19:14:41 op Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.452 2026/11/08 14:04:49 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -122,8 +122,8 @@ struct smtp_session {
 	struct listener		*listener;
 	void			*ssl_ctx;
 	struct sockaddr_storage	 ss;
-	char			 rdns[HOST_NAME_MAX+1];
-	char			 smtpname[HOST_NAME_MAX+1];
+	char			 rdns[_POSIX_HOST_NAME_MAX+1];
+	char			 smtpname[_POSIX_HOST_NAME_MAX+1];
 	int			 fcrdns;
 
 	int			 flags;

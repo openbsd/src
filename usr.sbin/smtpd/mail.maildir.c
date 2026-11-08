@@ -116,7 +116,7 @@ maildir_engine(const char *dirname, int junk)
 	char	extpath[PATH_MAX];
 	char	subdir[PATH_MAX];
 	char	filename[PATH_MAX];
-	char	hostname[HOST_NAME_MAX+1];
+	char	hostname[_POSIX_HOST_NAME_MAX+1];
 
 	char	tmp[PATH_MAX];
 	char	new[PATH_MAX];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.93 2026/07/12 23:00:50 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.94 2026/11/08 14:04:49 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -40,7 +40,7 @@ struct dns_session {
 	struct mproc		*p;
 	uint64_t		 reqid;
 	int			 type;
-	char			 name[HOST_NAME_MAX+1];
+	char			 name[_POSIX_HOST_NAME_MAX+1];
 	size_t			 mxfound;
 	int			 error;
 	int			 refcount;
@@ -344,7 +344,7 @@ dns_lookup_host(struct dns_session *s, const char *host, int preference)
 {
 	struct dns_lookup	*lookup;
 	struct addrinfo		 hints;
-	char			 hostcopy[HOST_NAME_MAX+1];
+	char			 hostcopy[_POSIX_HOST_NAME_MAX+1];
 	char			*p;
 	void			*as;
 

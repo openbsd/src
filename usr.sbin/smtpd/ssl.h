@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.27 2023/06/25 08:08:03 op Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.28 2026/11/08 14:04:49 op Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -16,7 +16,7 @@
  */
 
 struct pki {
-	char			 pki_name[HOST_NAME_MAX+1];
+	char			 pki_name[_POSIX_HOST_NAME_MAX+1];
 
 	char			*pki_cert_file;
 	char			*pki_cert;
@@ -30,7 +30,7 @@ struct pki {
 };
 
 struct ca {
-	char			 ca_name[HOST_NAME_MAX+1];
+	char			 ca_name[_POSIX_HOST_NAME_MAX+1];
 
 	char			*ca_cert_file;
 	char			*ca_cert;
