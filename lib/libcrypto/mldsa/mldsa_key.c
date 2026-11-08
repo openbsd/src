@@ -1,4 +1,4 @@
-/* $OpenBSD: mldsa_key.c,v 1.1 2026/11/08 16:36:04 beck Exp $ */
+/* $OpenBSD: mldsa_key.c,v 1.2 2026/11/08 17:52:06 beck Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -27,6 +27,7 @@ MLDSA_private_key_new(int rank)
 {
 	struct MLDSA87_private_key *key_87 = NULL;
 	struct MLDSA65_private_key *key_65 = NULL;
+	struct MLDSA44_private_key *key_44 = NULL;
 	MLDSA_private_key *key = NULL;
 	MLDSA_private_key *ret = NULL;
 
@@ -34,6 +35,11 @@ MLDSA_private_key_new(int rank)
 		goto err;
 
 	switch (rank) {
+	case MLDSA44_RANK:
+		if ((key_44 = calloc(1, sizeof(*key_44))) == NULL)
+			goto err;
+		key->key_44 = key_44;
+		break;
 	case MLDSA65_RANK:
 		if ((key_65 = calloc(1, sizeof(*key_65))) == NULL)
 			goto err;
@@ -66,6 +72,7 @@ MLDSA_private_key_free(MLDSA_private_key *key)
 	if (key == NULL)
 		return;
 
+	freezero(key->key_44, sizeof(*key->key_44));
 	freezero(key->key_65, sizeof(*key->key_65));
 	freezero(key->key_87, sizeof(*key->key_87));
 	freezero(key, sizeof(*key));
@@ -77,6 +84,7 @@ MLDSA_public_key_new(int rank)
 {
 	struct MLDSA87_public_key *key_87 = NULL;
 	struct MLDSA65_public_key *key_65 = NULL;
+	struct MLDSA44_public_key *key_44 = NULL;
 	MLDSA_public_key *key = NULL;
 	MLDSA_public_key *ret = NULL;
 
@@ -84,6 +92,11 @@ MLDSA_public_key_new(int rank)
 		goto err;
 
 	switch (rank) {
+	case MLDSA44_RANK:
+		if ((key_44 = calloc(1, sizeof(*key_44))) == NULL)
+			goto err;
+		key->key_44 = key_44;
+		break;
 	case MLDSA65_RANK:
 		if ((key_65 = calloc(1, sizeof(*key_65))) == NULL)
 			goto err;
@@ -117,6 +130,7 @@ MLDSA_public_key_free(MLDSA_public_key *key)
 	if (key == NULL)
 		return;
 
+	freezero(key->key_44, sizeof(*key->key_44));
 	freezero(key->key_65, sizeof(*key->key_65));
 	freezero(key->key_87, sizeof(*key->key_87));
 	freezero(key, sizeof(*key));

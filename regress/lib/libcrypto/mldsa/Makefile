@@ -1,10 +1,12 @@
-#	$OpenBSD: Makefile,v 1.2 2026/11/08 17:48:00 beck Exp $
+#	$OpenBSD: Makefile,v 1.3 2026/11/08 17:52:06 beck Exp $
 
 PROGS +=	mldsa_tests
 PROGS +=	mldsa_unittest
 
+FILE_TEST +=	mldsa44_nist_keygen_tests
 FILE_TEST +=	mldsa65_nist_keygen_tests
 FILE_TEST +=	mldsa87_nist_keygen_tests
+FILE_TEST +=	mldsa44_nist_siggen_tests
 FILE_TEST +=	mldsa65_nist_siggen_tests
 FILE_TEST +=	mldsa87_nist_siggen_tests
 

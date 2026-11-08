@@ -1,4 +1,4 @@
-/*	$OpenBSD: mldsa_unittest.c,v 1.1 2026/11/08 17:48:00 beck Exp $ */
+/*	$OpenBSD: mldsa_unittest.c,v 1.2 2026/11/08 17:52:06 beck Exp $ */
 /*
  * Copyright (c) 2026 Bob Beck <beck@obtuse.com>
  *
@@ -265,6 +265,7 @@ main(void)
 {
 	int failed = 0;
 
+	failed |= MldsaUnitTest(MLDSA44_RANK);
 	failed |= MldsaUnitTest(MLDSA65_RANK);
 	failed |= MldsaUnitTest(MLDSA87_RANK);
 

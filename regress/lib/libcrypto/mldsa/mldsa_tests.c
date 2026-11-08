@@ -1,4 +1,4 @@
-/*	$OpenBSD: mldsa_tests.c,v 1.1 2026/11/08 17:39:42 beck Exp $ */
+/*	$OpenBSD: mldsa_tests.c,v 1.2 2026/11/08 17:52:06 beck Exp $ */
 /*
  * Copyright (c) 2026 Bob Beck <beck@obtuse.com>
  *
@@ -305,11 +305,15 @@ mldsa_siggen_tests(const char *fn, int rank)
 static int
 run_mldsa_test(const char *test, const char *fn)
 {
+	if (strcmp(test, "mldsa44_nist_keygen_tests") == 0)
+		return mldsa_keygen_tests(fn, MLDSA44_RANK);
 	if (strcmp(test, "mldsa65_nist_keygen_tests") == 0)
 		return mldsa_keygen_tests(fn, MLDSA65_RANK);
 	if (strcmp(test, "mldsa87_nist_keygen_tests") == 0)
 		return mldsa_keygen_tests(fn, MLDSA87_RANK);
 
+	if (strcmp(test, "mldsa44_nist_siggen_tests") == 0)
+		return mldsa_siggen_tests(fn, MLDSA44_RANK);
 	if (strcmp(test, "mldsa65_nist_siggen_tests") == 0)
 		return mldsa_siggen_tests(fn, MLDSA65_RANK);
 	if (strcmp(test, "mldsa87_nist_siggen_tests") == 0)
