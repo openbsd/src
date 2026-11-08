@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.116 2026/04/09 01:30:02 jsg Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.117 2026/11/08 09:47:07 miod Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -47,12 +47,17 @@ struct cpuset sched_all_cpus;
 /*
  * Some general scheduler counters.
  */
+#ifndef SMALL_KERNEL
+#define	SCHED_COUNTERS
+#endif
+#ifdef SCHED_COUNTERS
 uint64_t sched_nmigrations;	/* Cpu migration counter */
 uint64_t sched_nomigrations;	/* Cpu no migration counter */
 uint64_t sched_noidle;		/* Times we didn't pick the idle task */
 uint64_t sched_stolen;		/* Times we stole proc from other cpus */
 uint64_t sched_choose;		/* Times we chose a cpu */
 uint64_t sched_wasidle;		/* Times we came out of idle */
+#endif
 
 #ifdef __HAVE_CPU_TOPOLOGY
 int sched_blockcpu;		/* Types of cpu to not schedule on */
@@ -356,7 +361,9 @@ again:
 		queue = ffs(spc->spc_whichqs) - 1;
 		p = TAILQ_FIRST(&spc->spc_qs[queue]);
 		remrunqueue(p);
+#ifdef SCHED_COUNTERS
 		sched_noidle++;
+#endif
 		if (p->p_stat != SRUN)
 			panic("thread %d not in SRUN: %d", p->p_tid, p->p_stat);
 	} else if ((p = sched_steal_proc(curcpu())) == NULL) {
@@ -439,7 +446,9 @@ sched_choosecpu(struct proc *p)
 	if (p->p_flag & P_CPUPEG)
 		return (p->p_cpu);
 
+#ifdef SCHED_COUNTERS
 	sched_choose++;
+#endif
 
 	/*
 	 * Look at all cpus that are currently idle and have nothing queued.
@@ -460,7 +469,9 @@ sched_choosecpu(struct proc *p)
 	    (p->p_cpu == curcpu() && p->p_cpu->ci_schedstate.spc_nrun == 0 &&
 	    (p->p_cpu->ci_schedstate.spc_schedflags & SPCF_SHOULDHALT) == 0 &&
 	    curproc == p)) {
+#ifdef SCHED_COUNTERS
 		sched_wasidle++;
+#endif
 		return (p->p_cpu);
 	}
 
@@ -477,10 +488,12 @@ sched_choosecpu(struct proc *p)
 		cpuset_del(&set, ci);
 	}
 
+#ifdef SCHED_COUNTERS
 	if (p->p_cpu != choice)
 		sched_nmigrations++;
 	else
 		sched_nomigrations++;
+#endif
 
 	if (choice != NULL)
 		return (choice);
@@ -540,7 +553,9 @@ sched_steal_proc(struct cpu_info *self)
 	remrunqueue(best);
 	best->p_cpu = self;
 
+#ifdef SCHED_COUNTERS
 	sched_stolen++;
+#endif
 #endif
 	return (best);
 }
