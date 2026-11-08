@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.49 2026/08/30 06:44:10 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.50 2026/11/08 15:15:06 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -218,7 +218,9 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 
 	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
 #ifdef HAVE_DOUBLE_WIDTH_HEIGHT
-	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT | M_ZERO);
+	/* at least two columns needed to enable double-width characters... */
+	if (edp->ncols >= 2)
+		edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT | M_ZERO);
 	edp->dw = 0;
 #endif
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
@@ -266,8 +268,8 @@ wsemul_vt100_resetop(void *cookie, enum wsemul_resetops op)
 		vt100_initchartables(edp);
 		break;
 	case WSEMUL_CLEARSCREEN:
-		(void)wsemul_vt100_ed(edp, 2);
 		edp->ccol = edp->crow = 0;
+		(void)wsemul_vt100_ed(edp, 2);	/* erase complete display */
 		(*edp->emulops->cursor)(edp->emulcookie,
 		    edp->flags & VTFL_CURSORON, 0, 0);
 		break;
@@ -537,6 +539,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp,
 			break;
 		edp->crow = edp->savedcursor_row;
 		edp->ccol = edp->savedcursor_col;
+		CHECK_DW;
 		edp->curattr = edp->savedattr;
 		edp->bkgdattr = edp->savedbkgdattr;
 		edp->attrflags = edp->savedattrflags;
@@ -609,10 +612,10 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp,
 		break;
 	case 'c': /* RIS */
 		wsemul_vt100_reset(edp);
-		rc = wsemul_vt100_ed(edp, 2);
+		edp->ccol = edp->crow = 0;
+		rc = wsemul_vt100_ed(edp, 2);	/* erase complete display */
 		if (rc != 0)
 			break;
-		edp->ccol = edp->crow = 0;
 		break;
 	case '(': case ')': case '*': case '+': /* SCS */
 		edp->designating = instate->inchar - '(';
@@ -1027,6 +1030,7 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp,
 					return rc;
 			}
 			edp->dblwid[edp->crow] = 1;
+			/* inline CHECK_DW */
 			edp->dw = 1;
 			if (edp->ccol > (edp->ncols >> 1) - 1)
 				edp->ccol = (edp->ncols >> 1) - 1;
@@ -1045,6 +1049,7 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp,
 		}
 		edp->ccol = 0;
 		edp->crow = 0;
+		CHECK_DW;
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
@@ -1213,6 +1218,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 			}
 			wsemul_reset_abortstate(&edp->abortstate);
 			edp->crow -= lines;
+			CHECK_DW;
 		}
 #endif
 

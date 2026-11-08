@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.32 2024/11/05 15:54:12 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.33 2026/11/08 15:15:06 miod Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -74,8 +74,8 @@ wsemul_vt100_scrollup(struct wsemul_vt100_emuldata *edp, int n)
 			memmove(&edp->dblwid[edp->scrreg_startrow],
 			    &edp->dblwid[edp->scrreg_startrow + n], help);
 		memset(&edp->dblwid[edp->scrreg_startrow + help], 0, n);
+		CHECK_DW;
 	}
-	CHECK_DW;
 #endif
 
 	return 0;
@@ -111,8 +111,8 @@ wsemul_vt100_scrolldown(struct wsemul_vt100_emuldata *edp, int n)
 			memmove(&edp->dblwid[edp->scrreg_startrow + n],
 			    &edp->dblwid[edp->scrreg_startrow], help);
 		memset(&edp->dblwid[edp->scrreg_startrow], 0, n);
+		CHECK_DW;
 	}
-	CHECK_DW;
 #endif
 
 	return 0;
@@ -477,7 +477,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		break;
 	case 'G': /* CHA */
 	case '`': /* HPA */
-		edp->ccol = min(DEF1_ARG(0), edp->ncols) - 1;
+		edp->ccol = min(DEF1_ARG(0), NCOLS) - 1;
 		break;
 	case 'H': /* CUP */
 	case 'f': /* HVP */
@@ -565,6 +565,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		break;
 	case 'd': /* VPA */
 		edp->crow = min(DEF1_ARG(0), edp->nrows) - 1;
+		CHECK_DW;
 		break;
 	case 'g': /* TBC */
 		if (edp->tabs != NULL)
@@ -738,6 +739,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		edp->crow = ((edp->flags & VTFL_DECOM) ?
 			     edp->scrreg_startrow : 0);
 		edp->ccol = 0;
+		CHECK_DW;
 		break;
 	case 's':
 		edp->flags |= VTFL_SAVEDCURS;
@@ -748,6 +750,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		if (edp->flags & VTFL_SAVEDCURS) {
 			edp->crow = edp->savedcursor_row;
 			edp->ccol = edp->savedcursor_col;
+			CHECK_DW;
 		}
 		break;
 	case 'y':
