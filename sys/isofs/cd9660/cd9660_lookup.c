@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.30 2022/01/11 03:13:58 jsg Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.31 2026/11/08 09:46:18 miod Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -53,7 +53,9 @@
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 
+#ifndef SMALL_KERNEL
 struct	nchstats iso_nchstats;
+#endif
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -187,7 +189,9 @@ cd9660_lookup(void *v)
 			&bp)))
 				return (error);
 		numdirpasses = 2;
+#ifndef SMALL_KERNEL
 		iso_nchstats.ncs_2passes++;
+#endif
 	}
 	endsearch = dp->i_size;
 	
@@ -337,8 +341,10 @@ notfound:
 	return (ENOENT);
 	
 found:
+#ifndef SMALL_KERNEL
 	if (numdirpasses == 2)
 		iso_nchstats.ncs_pass2++;
+#endif
 	
 	/*
 	 * Found component in pathname.
