@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2026/11/08 17:39:42 beck Exp $
+#	$OpenBSD: Makefile,v 1.2 2026/11/08 17:48:00 beck Exp $
 
 PROGS +=	mldsa_tests
+PROGS +=	mldsa_unittest
 
 FILE_TEST +=	mldsa65_nist_keygen_tests
 FILE_TEST +=	mldsa87_nist_keygen_tests
@@ -15,6 +16,7 @@ run-regress-mldsa_tests: mldsa_tests
 .PATH:		${.CURDIR}/../mlkem
 
 SRCS_mldsa_tests =	mldsa_tests.c parse_test_file.c
+SRCS_mldsa_unittest =	mldsa_unittest.c mlkem_tests_util.c
 
 LDADD =		${CRYPTO_INT}
 DPADD =		${LIBCRYPTO}
