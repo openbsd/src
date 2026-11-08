@@ -1,4 +1,4 @@
-/*	$OpenBSD: mldsa.h,v 1.3 2026/11/08 16:36:04 beck Exp $ */
+/*	$OpenBSD: mldsa.h,v 1.4 2026/11/08 17:06:23 beck Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 /*
  * ML-DSA constants
  */
@@ -186,6 +187,8 @@ int MLDSA_parse_public_key(MLDSA_public_key *public_key, const uint8_t *in,
  */
 int MLDSA_parse_private_key(MLDSA_private_key *private_key, const uint8_t *in,
     size_t in_len);
+
+#endif /* defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API) */
 
 #if defined(__cplusplus)
 }
