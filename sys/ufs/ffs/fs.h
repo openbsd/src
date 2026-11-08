@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.45 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: fs.h,v 1.46 2026/11/08 09:46:45 krw Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
 
 /*
  * Addresses stored in inodes are capable of addressing fragments
- * of `blocks'. File system blocks of at most size MAXBSIZE can 
+ * of `blocks'. File system blocks of at most size MAXBSIZE can
  * be optionally broken into 2, 4, or 8 pieces, each of which is
  * addressable; these pieces may be DEV_BSIZE, or some multiple of
  * a DEV_BSIZE unit.
@@ -286,7 +286,7 @@ struct fs {
 	int32_t	 fs_sparecon[26];	/* reserved for future constants */
 	u_int32_t fs_flags;		/* see FS_ flags below */
 	int32_t	 fs_fscktime;		/* last time fsck(8)ed */
-	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
+	int32_t	 fs_contigsumsize;	/* size of cluster summary array */
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */
 	u_int64_t fs_maxfilesize;	/* maximum representable file size */
@@ -324,7 +324,7 @@ struct fs {
 #define FS_OPTTIME	0	/* minimize allocation time */
 #define FS_OPTSPACE	1	/* minimize disk fragmentation */
 
-/* 
+/*
  * Filesystem flags.
  */
 #define FS_UNCLEAN	0x01	/* filesystem not clean at mount */
