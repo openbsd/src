@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.469 2026/09/18 22:14:46 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.470 2026/11/08 13:45:51 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3369,6 +3369,11 @@ syn_cache_timer(void *arg)
 	uint64_t now;
 	int lastref, do_ecn = 0;
 
+	/*
+	 * Routes in rt_timer are only protected by exclusive netlock.  Grab
+	 * shared netlock here to avoid that syn_cache_put() frees a route.
+	 */
+	NET_LOCK_SHARED();
 	mtx_enter(&syn_cache_mtx);
 	inp = in_pcbref(sc->sc_inplisten);
 	if (inp == NULL)
@@ -3397,7 +3402,6 @@ syn_cache_timer(void *arg)
 		refcnt_take(&sc->sc_refcnt);
 	mtx_leave(&syn_cache_mtx);
 
-	NET_LOCK_SHARED();
 	so = in_pcbsolock(inp);
 	if (so != NULL) {
 		now = tcp_now();
@@ -3408,10 +3412,10 @@ syn_cache_timer(void *arg)
 		tcpstat_inc(tcps_sc_retransmitted);
 	}
 	in_pcbsounlock(inp, so);
-	NET_UNLOCK_SHARED();
 
 	in_pcbunref(inp);
 	syn_cache_put(sc);
+	NET_UNLOCK_SHARED();
 	return;
 
  dropit:
@@ -3425,6 +3429,7 @@ syn_cache_timer(void *arg)
  freeit:
 	mtx_leave(&syn_cache_mtx);
 	syn_cache_put(sc);
+	NET_UNLOCK_SHARED();
 }
 
 /*
