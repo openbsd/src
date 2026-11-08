@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.50 2026/11/07 09:41:19 op Exp $	*/
+/*	$OpenBSD: inp.c,v 1.51 2026/11/08 16:13:26 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -425,7 +425,7 @@ rev_in_string(const char *string, size_t len)
 		return true;
 	if (len < patlen + 2)
 		return false;
-	for (i = 0; i < len - patlen - 2; i++) {
+	for (i = 0; i < len - patlen - 1; i++) {
 		s = &string[i];
 		/* ' ' + revision/patlen + ' ' */
 		if (isspace((unsigned char)*s) && strnEQ(s + 1, revision, patlen) &&
