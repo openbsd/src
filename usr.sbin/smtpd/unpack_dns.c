@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpack_dns.c,v 1.5 2026/04/04 11:01:41 op Exp $	*/
+/*	$OpenBSD: unpack_dns.c,v 1.6 2026/11/08 14:06:18 op Exp $	*/
 
 /*
  * Copyright (c) 2011-2014 Eric Faurot <eric@faurot.net>
@@ -287,7 +287,7 @@ unpack_dname(struct unpack *p, char *dst, size_t max)
 		p->err = "bad domain name";
 		return (-1);
 	}
-	if (e < 0 || e > MAXDNAME) {
+	if (e < 0 || e > MAXCDNAME) {
 		p->err = "domain name too long";
 		return (-1);
 	}
