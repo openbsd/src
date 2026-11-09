@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.14 2025/06/29 15:55:21 miod Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.15 2026/11/09 20:36:29 miod Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -68,7 +68,6 @@
 static int comcnrate = CONSPEED;
 
 #ifdef DEBUG
-int bootdev_debug;
 #define	DPRINTF(x)	if (bootdev_debug) printf x
 #else
 #define DPRINTF(x)
