@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tc.c,v 1.15 2025/06/29 15:55:22 miod Exp $ */
+/* $OpenBSD: asc_tc.c,v 1.16 2026/11/09 20:41:35 miod Exp $ */
 /* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -69,7 +69,6 @@ int	asc_tc_setup(struct ncr53c9x_softc *, caddr_t *,
 void	asc_tc_go(struct ncr53c9x_softc *);
 void	asc_tc_stop(struct ncr53c9x_softc *);
 int	asc_dma_isactive(struct ncr53c9x_softc *);
-void	asc_clear_latched_intr(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue asc_tc_glue = {
 	asc_read_reg,
@@ -81,7 +80,7 @@ struct ncr53c9x_glue asc_tc_glue = {
 	asc_tc_go,
 	asc_tc_stop,
 	asc_dma_isactive,
-	asc_clear_latched_intr,
+	NULL, /* gl_clear_latched_intr */
 };
 
 /*
@@ -298,9 +297,4 @@ asc_dma_isactive(struct ncr53c9x_softc *sc)
 	struct asc_tc_softc *asc = (struct asc_tc_softc *)sc;
 
 	return !!(asc->asc.sc_flags & ASC_DMAACTIVE);
-}
-
-void
-asc_clear_latched_intr(struct ncr53c9x_softc *sc)
-{
 }
