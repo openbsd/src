@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1251 2026/11/09 10:33:54 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1252 2026/11/09 10:54:23 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -8283,7 +8283,15 @@ pf_st_counters_inc(struct pf_pdesc *pd, struct pf_state *st, int dirndx)
 			sni->sn->packets[dirndx]++;
 			sni->sn->bytes[dirndx] += pd->tot_len;
 		}
-		dirndx = (pd->dir == st->direction) ? 0 : 1;
+		/*
+		 * af-to states only see inbound packets; the reply
+		 * is told apart by its address family.
+		 */
+		if (pd->af != st->key[PF_SK_WIRE]->af)
+			dirndx = 1;
+		else
+			dirndx = (pd->dir == st->direction) ? 0 : 1;
+
 		st->packets[dirndx]++;
 		st->bytes[dirndx] += pd->tot_len;
 
