@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasic_subr.c,v 1.3 2025/06/29 15:55:22 miod Exp $	*/
+/*	$OpenBSD: ioasic_subr.c,v 1.4 2026/11/09 20:40:58 miod Exp $	*/
 /*	$NetBSD: ioasic_subr.c,v 1.3 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -45,15 +45,6 @@ ioasicprint(void *aux, const char *pnp)
 		printf("%s at %s", d->iada_modname, pnp);
 	printf(" offset 0x%lx", (long)d->iada_offset);
 	return (UNCONF);
-}
-
-int
-ioasic_submatch(void *vcf, struct ioasicdev_attach_args *d)
-{
-	struct cfdata *match = vcf;
-
-	return ((match->ioasiccf_offset == d->iada_offset) ||
-		(match->ioasiccf_offset == IOASIC_OFFSET_UNKNOWN));
 }
 
 void
