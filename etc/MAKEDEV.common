@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.125 2026/11/07 13:01:09 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.126 2026/11/09 02:32:54 thfr Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -364,7 +364,7 @@ _mkdev(fido, fido, {-RMlist[${#RMlist[*]}]=";mkdir -p fido;rm -f" n=0
 	MKlist[${#MKlist[*]}]=";chmod 555 fido"-})dnl
 __devitem(ujoy, ujoy, ujoy/* nodes, ujoy)dnl
 _mkdev(ujoy, ujoy, {-RMlist[${#RMlist[*]}]=";mkdir -p ujoy;rm -f" n=0
-	while [ $n -lt 4 ];do M ujoy/$n c major_ujoy_c $n 444;n=Add($n, 1);done
+	while [ $n -lt 4 ];do M ujoy/$n c major_ujoy_c $n 440 wscons root;n=Add($n, 1);done
 	MKlist[${#MKlist[*]}]=";chmod 555 ujoy"-})dnl
 __devitem(ulpt, ulpt*, Printer devices)dnl
 _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 600)dnl
