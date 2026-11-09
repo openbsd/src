@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.94 2025/11/13 20:59:14 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.95 2026/11/09 15:31:13 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -337,6 +337,7 @@ static char *fstypesnames[] = {
  * flags shared by various drives:
  */
 #define		D_VENDOR	0x08		/* vendor disklabel */
+#define		D_EXTRACT	0x01		/* extracted from larger label */
 
 #ifndef _LOCORE
 /*
@@ -472,6 +473,9 @@ int	 readdisksector(struct buf *, void (*)(struct buf *),
 	    struct disklabel *, u_int64_t);
 int	 readdoslabel(struct buf *, void (*)(struct buf *),
 	    struct disklabel *, daddr_t *, int);
+void	 extractbootlabel(const struct disklabel *, struct disklabel *);
+int	 readfulllabel(dev_t, void (*)(struct buf *), struct disklabel *);
+int	 writefulllabel(dev_t, void (*)(struct buf *), const struct disklabel *);
 #ifdef CD9660
 int iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	struct disklabel *lp);

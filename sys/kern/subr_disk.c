@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.288 2026/11/08 08:42:55 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.289 2026/11/09 15:31:13 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <sys/vnode.h>
 #include <sys/task.h>
 #include <sys/stdint.h>
+#include <ufs/ffs/fs.h>
 
 #include <sys/socket.h>
 
@@ -117,6 +118,13 @@ int gpt_get_fstype(const struct uuid *);
 int mbr_get_fstype(const uint8_t);
 
 int duid_equal(u_char *, u_char *);
+
+int checklabel(dev_t, void *, struct disklabel *, u_int64_t, u_int64_t, int);
+daddr_t fulllabeldaddr(dev_t, void (*)(struct buf *), const struct disklabel *);
+daddr_t bbfulllabel(dev_t, void (*)(struct buf *), const struct disklabel *);
+daddr_t swapfulllabel(dev_t, void (*)(struct buf *), const struct disklabel *);
+daddr_t sbfulllabel(dev_t, void (*)(struct buf *), const struct disklabel *);
+int getfulllabel(dev_t, void (*)(struct buf *), struct disklabel *, daddr_t);
 
 /*
  * Compute checksum for disk label.
@@ -405,6 +413,431 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	    "%lld %s\n", devname, error, partoff, error ? "failed" : "ok");
 
 	return error;
+}
+
+/*
+ * Check incoming blocks to make sure they are a disklabel with a maximum of
+ * maxparts partitions.
+ */
+int
+checklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
+    u_int64_t boundend, int maxparts)
+{
+	struct disklabel *dlp = rlp;
+	struct partition *pp;
+	u_int64_t disksize;
+	int error = 0;
+	int i;
+
+	/* These fields may not be 0, no point trying a byteswap */
+	if (dlp->d_secpercyl == 0 || dlp->d_nsectors == 0 ||
+	    dlp->d_version == 0)
+		return EINVAL;	/* invalid label */
+	else if (dlp->d_secsize == 0)
+		return ENOSPC; /* disk too small */
+
+	if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
+		error = ENOENT;	/* no disk label */
+	else if (dlp->d_npartitions > maxparts)
+		error = E2BIG;	/* too many partitions */
+	else if (dkcksum(dlp) != 0)
+		error = EINVAL;	/* incorrect checksum */
+
+	if (error) {
+		u_int16_t *start, *end, sum = 0;
+
+		/* If it is byte-swapped, attempt to convert it */
+		if (swap32(dlp->d_magic) != DISKMAGIC ||
+		    swap32(dlp->d_magic2) != DISKMAGIC ||
+		    swap16(dlp->d_npartitions) > maxparts)
+			return (error);
+
+		/*
+		 * Need a byte-swap aware dkcksum variant
+		 * inlined, because dkcksum uses a sub-field
+		 */
+		start = (u_int16_t *)dlp;
+		end = (u_int16_t *)&dlp->d_partitions[
+		    swap16(dlp->d_npartitions)];
+		while (start < end)
+			sum ^= *start++;
+		if (sum != 0)
+			return (error);
+
+		dlp->d_magic = swap32(dlp->d_magic);
+		dlp->d_type = swap16(dlp->d_type);
+
+		/* d_typename and d_packname are strings */
+
+		dlp->d_secsize = swap32(dlp->d_secsize);
+		dlp->d_nsectors = swap32(dlp->d_nsectors);
+		dlp->d_ntracks = swap32(dlp->d_ntracks);
+		dlp->d_ncylinders = swap32(dlp->d_ncylinders);
+		dlp->d_secpercyl = swap32(dlp->d_secpercyl);
+		dlp->d_secperunit = swap32(dlp->d_secperunit);
+
+		/* d_uid is a string */
+
+		dlp->d_acylinders = swap32(dlp->d_acylinders);
+
+		dlp->d_flags = swap32(dlp->d_flags);
+
+		dlp->d_secperunith = swap16(dlp->d_secperunith);
+		dlp->d_version = swap16(dlp->d_version);
+
+		for (i = 0; i < NSPARE; i++)
+			dlp->d_spare[i] = swap32(dlp->d_spare[i]);
+
+		dlp->d_magic2 = swap32(dlp->d_magic2);
+
+		dlp->d_npartitions = swap16(dlp->d_npartitions);
+
+		for (i = 0; i < maxparts; i++) {
+			pp = &dlp->d_partitions[i];
+			pp->p_size = swap32(pp->p_size);
+			pp->p_offset = swap32(pp->p_offset);
+			pp->p_offseth = swap16(pp->p_offseth);
+			pp->p_sizeh = swap16(pp->p_sizeh);
+			pp->p_cpg = swap16(pp->p_cpg);
+		}
+
+		dlp->d_checksum = 0;
+		dlp->d_checksum = dkcksum(dlp);
+		error = 0;
+	}
+
+	/* XXX should verify lots of other fields and whine a lot */
+
+	/* Initial passed in lp contains the real disk size. */
+	disksize = DL_GETDSIZE(lp);
+
+	if (lp != dlp) {
+		memset(lp, 0, sizeof(*lp));
+		memcpy(lp, dlp, offsetof(struct disklabel,
+		    d_partitions[MAXPARTITIONS]));
+	}
+
+#ifdef DEBUG
+	if (DL_GETDSIZE(lp) != disksize)
+		printf("on-disk disklabel has incorrect disksize (%llu)\n",
+		    DL_GETDSIZE(lp));
+	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) != disksize)
+		printf("on-disk disklabel RAW_PART has incorrect size (%llu)\n",
+		    DL_GETPSIZE(&lp->d_partitions[RAW_PART]));
+	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0)
+		printf("on-disk disklabel RAW_PART offset != 0 (%llu)\n",
+		    DL_GETPOFFSET(&lp->d_partitions[RAW_PART]));
+#endif
+	DL_SETDSIZE(lp, disksize);
+	DL_SETPSIZE(&lp->d_partitions[RAW_PART], disksize);
+	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	DL_SETBSTART(lp, boundstart);
+	DL_SETBEND(lp, boundend < DL_GETDSIZE(lp) ? boundend : DL_GETDSIZE(lp));
+
+	lp->d_checksum = 0;
+	lp->d_checksum = dkcksum(lp);
+	return (0);
+}
+
+/*
+ * Extract a DEV_BSIZE disklabel that boot code and fulllabeldaddr() can use.
+ *
+ * Set D_EXTRACT if it lacks some partition info from the full disklabel.
+ *
+ * This is invoked in MD writelabel() after writefulllabel().
+ *
+ * N.B.: NOT used in sparc64 or luna88k as they do not currently save d_flags
+ *       in their MD boot labels. XXX
+ */
+void
+extractbootlabel(const struct disklabel *lp, struct disklabel *dlp)
+{
+	unsigned int i;
+
+	memcpy(dlp, lp, offsetof(struct disklabel,
+	    d_partitions[MAXPARTITIONS16]));
+
+	for (i = MAXPARTITIONS16; i < MAXPARTITIONS; i++) {
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED) {
+			SET(dlp->d_flags, D_EXTRACT);
+			break;
+		}
+	}
+
+	dlp->d_npartitions = MAXPARTITIONS16;
+	dlp->d_checksum = 0;
+	dlp->d_checksum = dkcksum(dlp);
+}
+
+/*
+ * Return daddr of full disklabel in root partition's boot block.
+ *
+ * Succeeds if root partition is present, is FFS and doesn't start @ daddr 0.
+ */
+daddr_t
+bbfulllabel(dev_t dev, void (*strat)(struct buf *), const struct disklabel *lp)
+{
+	const struct partition *pp = &lp->d_partitions[0];
+
+	if (pp->p_fstype != FS_BSDFFS || DL_GETPOFFSET(pp) == 0)
+		return -1;
+
+	return DL_SECTOBLK(lp, DL_GETPOFFSET(pp)) + DOS_LABELSECTOR + 1;
+}
+
+/*
+ * Return daddr_t of full disklabel contained in the swap partition.
+ *
+ * Succeeds if a swap partition is found in the first MAXPARTITION16.
+ */
+
+daddr_t
+swapfulllabel(dev_t dev, void (*strat)(struct buf *), const struct disklabel *lp)
+{
+	const struct partition *pp;
+	unsigned int i;
+
+	for (i = 0; i < MAXPARTITIONS16; i++) {
+		pp = &lp->d_partitions[i];
+		if (pp->p_fstype == FS_SWAP) {
+			return DL_SECTOBLK(lp, DL_GETPOFFSET(pp)) + 16; /* 8K */
+		}
+	}
+
+	return -1;
+}
+
+/*
+ * Return daddr_t of full disklabel in root partiton's superblock.
+ *
+ * Succeeds if:
+ * a) 'a' is FFS/FFS2.
+ * AND
+ * b) superblock is found in one of the usual spots.
+ *
+ */
+daddr_t
+sbfulllabel(dev_t dev, void (*strat)(struct buf *), const struct disklabel *lp)
+{
+	const struct partition *pp = &lp->d_partitions[0];
+	const off_t sblock_try[] = SBLOCKSEARCH;
+	struct fs *fs;
+	struct buf *bp = NULL;
+	uint64_t poffset, sector;
+	daddr_t fsblk;
+	size_t sz;
+	unsigned int i, is_ufs2, offset;
+	int error;
+
+	if (pp->p_fstype != FS_BSDFFS)
+		return -1;
+
+	poffset = DL_SECTOBLK(lp, DL_GETPOFFSET(pp));
+	for (i = 0; sblock_try[i] != -1; i++) {
+		if (bp != NULL ) {
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+			bp = NULL;
+		}
+
+		fsblk = poffset + sblock_try[i] / DEV_BSIZE;
+		sector = DL_BLKTOSEC(lp, fsblk);
+		offset = DL_BLKOFFSET(lp, fsblk);
+		sz = roundup(sizeof(*fs) + offset, lp->d_secsize);
+
+		bp = geteblk(sz);
+		bp->b_dev = dev;
+		bp->b_blkno = DL_SECTOBLK(lp, sector);
+		bp->b_bcount = sz;
+		bp->b_error = 0;
+		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
+		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+		(*strat)(bp);
+		error = biowait(bp);
+		if (error)
+			continue;
+
+		fs = (struct fs *)(bp->b_data + offset);
+		switch(fs->fs_magic) {
+		case FS_UFS2_MAGIC:
+			is_ufs2 = 1;
+			break;
+		case FS_UFS1_MAGIC:
+			break;
+		default:
+			continue;
+		}
+		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
+			continue;
+		if (is_ufs2 && fs->fs_sblockloc != sblock_try[i])
+			continue;
+
+		break;
+	}
+
+	if (bp != NULL ) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
+
+	if (sblock_try[i] == -1)
+		return -1; /* Superblock not found. */
+
+	/* Return 1st daddr after struct fs in superblock. */
+	return fsblk + roundup(sizeof(*fs), DEV_BSIZE) / DEV_BSIZE;
+}
+
+/*
+ * Read full disklabel from one of {BootBlock, Swap, Superblock}
+ *
+ * N.B.: Only the first DEV_BSIZE bytes of *lp have been initialized.
+ *
+ * This is invoked from MD readlabel() functions if !spoofonly and a valid
+ * DEV_BSIZE boot label was obtained.
+ */
+int
+readfulllabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
+{
+	daddr_t blk;
+
+	blk = bbfulllabel(dev, strat, lp);
+	if (blk != -1 && getfulllabel(dev, strat, lp, blk) == 0)
+		return 0;
+
+	blk = swapfulllabel(dev, strat, lp);
+	if (blk != -1 && getfulllabel(dev, strat, lp, blk) == 0)
+		return 0;
+
+	blk = sbfulllabel(dev, strat, lp);
+	if (blk != -1 && getfulllabel(dev, strat, lp, blk) == 0)
+		return 0;
+
+	if (!ISSET(lp->d_flags, D_EXTRACT))
+	    return 0;	/* OK if full label wasn't found. */
+
+	return EIO;
+}
+
+int
+getfulllabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    daddr_t blk)
+{
+	struct buf *bp = NULL;
+	struct disklabel *rlp;
+	size_t sz;
+	uint64_t sector;
+	int offset;
+	int error = EIO;
+
+	sector = DL_BLKTOSEC(lp, blk);
+	offset = DL_BLKOFFSET(lp, blk);
+	sz = roundup(sizeof(*lp) + offset, lp->d_secsize);
+
+	/* Read full disklabel from struct fs. */
+	bp = geteblk(sz);
+	bp->b_dev = dev;
+	bp->b_blkno = DL_SECTOBLK(lp, sector);
+	bp->b_bcount = sz;
+	bp->b_error = 0;
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
+	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	(*strat)(bp);
+	error = biowait(bp);
+	if (error)
+		goto done;
+
+	rlp = (struct disklabel *)(bp->b_data + offset);
+	error = checklabel(bp->b_dev, rlp, rlp, DL_GETBSTART(rlp),
+	    DL_GETBEND(rlp), MAXPARTITIONS);
+	if (!error)
+		memcpy(lp, rlp, sizeof(*lp))
+
+	DPRINTF("readfulllabel return: %d, checkdisklabel() of daddr_t "
+	    "%lld %s\n", error, blk, error ? "failed" : "ok");
+
+ done:
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
+	disk_change = 1;
+
+	return error;
+}
+
+/*
+ * Update full disklabel.
+ *
+ * This is invoked from MD writelabel() functions before writing the
+ * MAXPARTITIONS16 disklabel to the normal spot.
+ *
+ * Succeeds if fulllabeldaddr() returns daddr != -1 AND
+ *
+ * a) The full disklabel is written to disk.
+ * OR
+ * b) All partition info fits in MAXPARTITIONS16.
+ *
+ */
+int
+writefulllabel(dev_t dev, void (*strat)(struct buf *),
+    const struct disklabel *lp)
+{
+	struct buf *bp = NULL;
+	struct disklabel *dlp;
+	uint64_t sector;
+	size_t sz;
+	daddr_t blk = -1;
+	int i, offset;
+	int error = EIO;
+
+	blk = bbfulllabel(dev, strat, lp);
+	if (blk == -1)
+		blk = swapfulllabel(dev, strat, lp);
+	if (blk == -1)
+		blk = sbfulllabel(dev, strat, lp);
+	if (blk != -1)
+		goto done;
+
+	sector = DL_BLKTOSEC(lp, blk);
+	offset = DL_BLKOFFSET(lp, blk);
+	sz = roundup(sizeof(*lp) + offset, lp->d_secsize);
+
+	bp = geteblk(sz);
+	bp->b_dev = dev;
+
+	/* Read, update, write full disklabel. */
+	bp->b_blkno = DL_SECTOBLK(lp, sector);
+	bp->b_bcount = sz;
+	bp->b_error = 0;
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
+	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	(*strat)(bp);
+	error = biowait(bp);
+	if (error)
+		goto done;
+
+	dlp = (struct disklabel *)(bp->b_data + offset);
+	memcpy(dlp, lp, sizeof(*dlp));
+
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	SET(bp->b_flags, B_BUSY | B_WRITE | B_RAW);
+
+	(*strat)(bp);
+	error = biowait(bp);
+
+ done:
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
+	disk_change = 1;
+
+	/* Ignore error if full label not required. */
+	for (i = MAXPARTITIONS16; i < MAXPARTITIONS; i++) {
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED)
+		    break;
+	}
+	return (i == MAXPARTITIONS) ? 0 : error;
 }
 
 /*
