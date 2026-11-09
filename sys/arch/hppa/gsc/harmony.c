@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.42 2025/06/28 13:24:21 miod Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.43 2026/11/09 22:03:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -677,7 +677,7 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 		err = 0;
 		break;
 	}
-	return (0);
+	return err;
 }
 
 int
