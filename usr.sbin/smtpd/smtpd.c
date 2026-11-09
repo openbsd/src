@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.366 2026/10/15 14:15:08 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.367 2026/11/09 10:18:20 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1915,8 +1915,9 @@ parent_auth_user(const char *username, const char *password)
 	char	pass[LINE_MAX];
 	int	ret;
 
-	(void)strlcpy(user, username, sizeof(user));
-	(void)strlcpy(pass, password, sizeof(pass));
+	if (strlcpy(user, username, sizeof(user)) >= sizeof(user) ||
+	    strlcpy(pass, password, sizeof(pass)) >= sizeof(pass))
+		return LKA_PERMFAIL;
 
 	ret = auth_userokay(user, NULL, "auth-smtp", pass);
 	if (ret)
