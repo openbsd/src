@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1250 2026/11/08 08:42:55 miod Exp $ */
+/*	$OpenBSD: pf.c,v 1.1251 2026/11/09 10:33:54 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -797,13 +797,12 @@ pf_src_connlimit(struct pf_state **stp)
 		if (pf_status.debug >= LOG_NOTICE) {
 			log(LOG_NOTICE,
 			    "pf: pf_src_connlimit: blocking address ");
-			pf_print_host(&sn->addr, 0,
-			    (*stp)->key[PF_SK_WIRE]->af);
+			pf_print_host(&sn->addr, 0, sn->af);
 		}
 
 		memset(&p, 0, sizeof(p));
-		p.pfra_af = (*stp)->key[PF_SK_WIRE]->af;
-		switch ((*stp)->key[PF_SK_WIRE]->af) {
+		p.pfra_af = sn->af;
+		switch (sn->af) {
 		case AF_INET:
 			p.pfra_net = 32;
 			p.pfra_ip4addr = sn->addr.v4;
@@ -823,22 +822,25 @@ pf_src_connlimit(struct pf_state **stp)
 		if ((*stp)->rule.ptr->flush) {
 			struct pf_state_key *sk;
 			struct pf_state *st;
+			int sidx;
 
 			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
 			PF_STATE_ENTER_READ();
 			RBT_FOREACH(st, pf_state_tree_id, &tree_id) {
-				sk = st->key[PF_SK_WIRE];
+				if (st->direction == PF_IN) {
+					sk = st->key[PF_SK_WIRE];
+					sidx = 0;
+				} else {
+					sk = st->key[PF_SK_STACK];
+					sidx = 1;
+				}
 				/*
 				 * Kill states from this source.  (Only those
 				 * from the same rule if PF_FLUSH_GLOBAL is not
 				 * set)
 				 */
-				if (sk->af ==
-				    (*stp)->key[PF_SK_WIRE]->af &&
-				    (((*stp)->direction == PF_OUT &&
-				    PF_AEQ(&sn->addr, &sk->addr[1], sk->af)) ||
-				    ((*stp)->direction == PF_IN &&
-				    PF_AEQ(&sn->addr, &sk->addr[0], sk->af))) &&
+				if (sk->af == sn->af &&
+				    PF_AEQ(&sn->addr, &sk->addr[sidx], sk->af) &&
 				    ((*stp)->rule.ptr->flush &
 				    PF_FLUSH_GLOBAL ||
 				    (*stp)->rule.ptr == st->rule.ptr)) {
