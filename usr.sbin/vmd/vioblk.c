@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.38 2026/11/09 19:23:55 hshoexer Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.39 2026/11/09 19:34:04 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -699,14 +699,10 @@ vioblk_io(struct vioblk_dev *dev, struct virtio_vq_info *vq_info, int is_write,
 	}
 	offset = sector * VIRTIO_BLK_SECTOR_SIZE;
 
-	/*
-	 * Validate the requested block io operation alignment and size.
-	 * Checking offset is just an extra caution as it is derived from
-	 * a disk sector and is done for completeness in bounds checking.
-	 */
-	if (offset % VIRTIO_BLK_SECTOR_SIZE != 0 &&
-	    xfer_sz % VIRTIO_BLK_SECTOR_SIZE != 0) {
-		log_warnx("%s: unaligned read", __func__);
+	/* Validate the requested block io operation alignment and size. */
+	if (xfer_sz % VIRTIO_BLK_SECTOR_SIZE != 0) {
+		log_warnx("%s: unaligned %s", __func__,
+		    is_write ? "write" : "read");
 		return (-1);
 	}
 	if (xfer_sz > SSIZE_MAX) {	/* iovec_copyin limit */
