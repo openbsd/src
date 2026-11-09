@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.30 2025/01/18 10:52:09 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.31 2026/11/09 06:51:46 tb Exp $ */
 /*
  * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -400,38 +400,6 @@ ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
 	if (!ssl_security_cert_sig(ctx, ssl, x509, SSL_SECOP_CA_MD)) {
 		*out_error = SSL_R_CA_MD_TOO_WEAK;
 		return 0;
-	}
-
-	return 1;
-}
-
-/*
- * Check security of a chain. If |sk| includes the end entity certificate
- * then |x509| must be NULL.
- */
-int
-ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk, X509 *x509,
-    int *out_error)
-{
-	int start_idx = 0;
-	int is_ee;
-	int i;
-
-	if (x509 == NULL) {
-		x509 = sk_X509_value(sk, 0);
-		start_idx = 1;
-	}
-
-	is_ee = 1;
-	if (!ssl_security_cert(NULL, ssl, x509, is_ee, out_error))
-		return 0;
-
-	is_ee = 0;
-	for (i = start_idx; i < sk_X509_num(sk); i++) {
-		x509 = sk_X509_value(sk, i);
-
-		if (!ssl_security_cert(NULL, ssl, x509, is_ee, out_error))
-			return 0;
 	}
 
 	return 1;
