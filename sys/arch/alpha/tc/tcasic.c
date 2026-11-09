@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.21 2025/06/29 15:55:22 miod Exp $ */
+/* $OpenBSD: tcasic.c,v 1.22 2026/11/09 20:39:06 miod Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -107,7 +107,6 @@ tcasicattach(struct device *parent, struct device *self, void *aux)
 			tba.tba_builtins = tc_3000_500_nographics_builtins;
 		}
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
-		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_500;
 
 		/* Do 3000/500-specific DMA setup now. */
@@ -127,7 +126,6 @@ tcasicattach(struct device *parent, struct device *self, void *aux)
 		tba.tba_nbuiltins = tc_3000_300_nbuiltins;
 		tba.tba_builtins = tc_3000_300_builtins;
 		tba.tba_intr_establish = tc_3000_300_intr_establish;
-		tba.tba_intr_disestablish = tc_3000_300_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_300;
 		break;
 #endif /* DEC_3000_300 */

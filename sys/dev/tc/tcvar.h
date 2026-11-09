@@ -1,4 +1,4 @@
-/* $OpenBSD: tcvar.h,v 1.16 2010/11/11 17:54:54 miod Exp $ */
+/* $OpenBSD: tcvar.h,v 1.17 2026/11/09 20:39:06 miod Exp $ */
 /* $NetBSD: tcvar.h,v 1.17 2000/06/04 19:15:15 cgd Exp $ */
 
 /*
@@ -52,7 +52,6 @@ struct tc_softc {
 
 	void	(*sc_intr_establish)(struct device *, void *,
 			int, int (*)(void *), void *, const char *);
-	void	(*sc_intr_disestablish)(struct device *, void *, const char *);
 	bus_dma_tag_t (*sc_get_dma_tag)(int);
 };
 
@@ -74,7 +73,6 @@ struct tcbus_attach_args {
 	/* TC bus resource management; XXX will move elsewhere eventually. */
 	void	(*tba_intr_establish)(struct device *, void *,
 			int, int (*)(void *), void *, const char *);
-	void	(*tba_intr_disestablish)(struct device *, void *, const char *);
 	bus_dma_tag_t (*tba_get_dma_tag)(int);
 };
 
@@ -122,7 +120,6 @@ void	tc_devinfo(const char *, char *, size_t);
 void	tcattach(struct device *, struct device *, void *);
 void	tc_intr_establish(struct device *, void *, int, int (*)(void *),
 	    void *, const char *);
-void	tc_intr_disestablish(struct device *, void *, const char *);
 
 /*
  * Easy to remember names for TURBOchannel device locators.

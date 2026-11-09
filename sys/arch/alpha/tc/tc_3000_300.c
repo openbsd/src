@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_300.c,v 1.21 2025/06/29 15:55:22 miod Exp $ */
+/* $OpenBSD: tc_3000_300.c,v 1.22 2026/11/09 20:39:06 miod Exp $ */
 /* $NetBSD: tc_3000_300.c,v 1.26 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -137,41 +137,6 @@ tc_3000_300_intr_establish(struct device *tcadev, void *cookie, int level,
 		/* interrupts for builtins always enabled */
 		break;
 	}
-}
-
-void
-tc_3000_300_intr_disestablish(struct device *tcadev, void *cookie,
-    const char *name)
-{
-	volatile u_int32_t *imskp;
-	u_long dev = (u_long)cookie;
-
-#ifdef DIAGNOSTIC
-	/* XXX bounds-check cookie. */
-#endif
-
-	if (tc_3000_300_intr[dev].tci_func == tc_3000_300_intrnull)
-		panic("tc_3000_300_intr_disestablish: cookie %lu bad intr",
-		    dev);
-
-	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
-	switch (dev) {
-	case TC_3000_300_DEV_OPT0:
-		*imskp &= ~IOASIC_INTR_300_OPT0;
-		break;
-	case TC_3000_300_DEV_OPT1:
-		*imskp &= ~IOASIC_INTR_300_OPT1;
-		break;
-	default:
-		/* interrupts for builtins always enabled */
-		break;
-	}
-
-	tc_3000_300_intr[dev].tci_func = tc_3000_300_intrnull;
-	tc_3000_300_intr[dev].tci_arg = (void *)dev;
-	tc_3000_300_intr[dev].tci_level = IPL_HIGH;
-	if (name != NULL)
-		evcount_detach(&tc_3000_300_intr[dev].tci_count);
 }
 
 int

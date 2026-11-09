@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.21 2025/06/29 15:55:22 miod Exp $ */
+/* $OpenBSD: ioasic.c,v 1.22 2026/11/09 20:39:06 miod Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -237,36 +237,6 @@ ioasic_intr_establish(struct device *ioa, void *cookie, int level,
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	imsk |= ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-}
-
-void
-ioasic_intr_disestablish(struct device *ioa, void *cookie)
-{
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_long dev, i, imsk;
-
-	dev = (u_long)cookie;
-#ifdef DIAGNOSTIC
-	/* XXX check cookie. */
-#endif
-
-	if (ioasicintrs[dev].iai_func == ioasic_intrnull)
-		panic("ioasic_intr_disestablish: cookie %lu missing intr", dev);
-
-	/* Enable interrupts for the device. */
-	for (i = 0; i < ioasic_ndevs; i++)
-		if (ioasic_devs[i].iad_cookie == cookie)
-			break;
-	if (i == ioasic_ndevs)
-		panic("ioasic_intr_disestablish: invalid cookie.");
-
-	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
-	imsk &= ~ioasic_devs[i].iad_intrbits;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-
-	ioasicintrs[dev].iai_func = ioasic_intrnull;
-	ioasicintrs[dev].iai_arg = (void *)dev;
-	evcount_detach(&ioasicintrs[dev].iai_count);
 }
 
 int

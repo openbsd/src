@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.22 2025/06/28 16:04:10 miod Exp $	*/
+/*	$OpenBSD: tc.c,v 1.23 2026/11/09 20:39:06 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -88,7 +88,6 @@ tcattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nslots = tba->tba_nslots;
 	sc->sc_slots = tba->tba_slots;
 	sc->sc_intr_establish = tba->tba_intr_establish;
-	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
 	sc->sc_get_dma_tag = tba->tba_get_dma_tag;
 
 	/*
@@ -257,14 +256,6 @@ tc_intr_establish(struct device *dev, void *cookie, int level,
 	struct tc_softc *sc = tc_cd.cd_devs[0];
 
 	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg, name);
-}
-
-void
-tc_intr_disestablish(struct device *dev, void *cookie, const char *name)
-{
-	struct tc_softc *sc = tc_cd.cd_devs[0];
-
-	(*sc->sc_intr_disestablish)(dev, cookie, name);
 }
 
 #ifdef TCVERBOSE

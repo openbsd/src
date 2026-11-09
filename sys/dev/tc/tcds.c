@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.12 2025/06/29 15:55:22 miod Exp $ */
+/* $OpenBSD: tcds.c,v 1.13 2026/11/09 20:39:06 miod Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -110,7 +110,7 @@ struct cfdriver tcds_cd = {
 /*static*/ int	tcds_intr(void *);
 /*static*/ int	tcds_intrnull(void *);
 
-struct tcds_device {
+const struct tcds_device {
 	const char *td_name;
 	int td_flags;
 } tcds_devices[] = {
@@ -123,13 +123,13 @@ struct tcds_device {
 	{ NULL,		0 },
 };
 
-struct tcds_device *tcds_lookup(const char *);
+const struct tcds_device *tcds_lookup(const char *);
 void	tcds_params(struct tcds_softc *, int, int *, int *);
 
-struct tcds_device *
+const struct tcds_device *
 tcds_lookup(const char *modname)
 {
-	struct tcds_device *td;
+	const struct tcds_device *td;
 
 	for (td = tcds_devices; td->td_name != NULL; td++)
 		if (strncmp(td->td_name, modname, TC_ROM_LLEN) == 0)
@@ -153,7 +153,7 @@ tcdsattach(struct device *parent, struct device *self, void *aux)
 	struct tc_attach_args *ta = aux;
 	struct tcdsdev_attach_args tcdsdev;
 	struct tcds_slotconfig *slotc;
-	struct tcds_device *td;
+	const struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
 	int i, gpi2;
 
@@ -338,23 +338,6 @@ tcds_intr_establish(struct device *tcds, int slot, int (*func)(void *),
 	evcount_attach(&sc->sc_slots[slot].sc_count, name, NULL);
 
 	tcds_scsi_reset(&sc->sc_slots[slot]);
-}
-
-void
-tcds_intr_disestablish(struct device *tcds, int slot)
-{
-	struct tcds_softc *sc = (struct tcds_softc *)tcds;
-
-	if (sc->sc_slots[slot].sc_intrhand == tcds_intrnull)
-		panic("tcds_intr_disestablish: chip %d missing intr",
-		    slot);
-
-	sc->sc_slots[slot].sc_intrhand = tcds_intrnull;
-	sc->sc_slots[slot].sc_intrarg = (void *)(u_long)slot;
-	evcount_detach(&sc->sc_slots[slot].sc_count);
-
-	tcds_dma_enable(&sc->sc_slots[slot], 0);
-	tcds_scsi_enable(&sc->sc_slots[slot], 0);
 }
 
 int
