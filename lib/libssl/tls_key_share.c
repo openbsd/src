@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.13 2026/11/06 12:59:42 beck Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.14 2026/11/09 10:39:45 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -162,15 +162,16 @@ tls_key_share_peer_pkey(struct tls_key_share *ks)
 		return EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL,
 		    ks->x25519_peer_public, X25519_KEY_LENGTH);
 
-	if ((pkey = EVP_PKEY_new()) == NULL)
-		goto err;
-
 	if (ks->nid == NID_dhKeyAgreement && ks->dhe_peer != NULL) {
+		if ((pkey = EVP_PKEY_new()) == NULL)
+			goto err;
 		if (!EVP_PKEY_set1_DH(pkey, ks->dhe_peer))
 			goto err;
 	}
 
 	if (ks->ecdhe_peer != NULL) {
+		if ((pkey = EVP_PKEY_new()) == NULL)
+			goto err;
 		if (!EVP_PKEY_set1_EC_KEY(pkey, ks->ecdhe_peer))
 			goto err;
 	}
