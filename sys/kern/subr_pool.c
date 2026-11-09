@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.243 2026/01/29 01:04:35 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.244 2026/11/09 11:09:36 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -51,12 +51,12 @@
  *
  * Memory is allocated in pages which are split into pieces according to
  * the pool item size. Each page is kept on one of three lists in the
- * pool structure: `pr_emptypages', `pr_fullpages' and `pr_partpages',
- * for empty, full and partially-full pages respectively. The individual
- * pool items are on a linked list headed by `ph_items' in each page
- * header. The memory for building the page list is either taken from
- * the allocated pages themselves (for small pool items) or taken from
- * an internal pool of page headers (`phpool').
+ * pool structure: `pr_idlepages', `pr_partpages' and `pr_usedpages',
+ * for completely idle, partially used, and fully allocated pages
+ * respectively. The individual pool items are on a linked list headed
+ * by `ph_items' in each page header. The memory for building the page
+ * list is either taken from the allocated pages themselves (for small
+ * pool items) or taken from an internal pool of page headers (`phpool').
  */
 
 /* List of all pools */
@@ -410,9 +410,9 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 		pp->pr_lock_ops = &pool_lock_ops_rw;
 	} else
 		pp->pr_lock_ops = &pool_lock_ops_mtx;
-	TAILQ_INIT(&pp->pr_emptypages);
-	TAILQ_INIT(&pp->pr_fullpages);
+	TAILQ_INIT(&pp->pr_usedpages);
 	TAILQ_INIT(&pp->pr_partpages);
+	TAILQ_INIT(&pp->pr_idlepages);
 	pp->pr_curpage = NULL;
 	pp->pr_npages = 0;
 	pp->pr_minitems = 0;
@@ -524,13 +524,13 @@ pool_destroy(struct pool *pp)
 #endif
 
 	/* Remove all pages */
-	while ((ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL) {
+	while ((ph = TAILQ_FIRST(&pp->pr_idlepages)) != NULL) {
 		pl_enter(pp, &pp->pr_lock);
 		pool_p_remove(pp, ph);
 		pl_leave(pp, &pp->pr_lock);
 		pool_p_free(pp, ph);
 	}
-	KASSERT(TAILQ_EMPTY(&pp->pr_fullpages));
+	KASSERT(TAILQ_EMPTY(&pp->pr_usedpages));
 	KASSERT(TAILQ_EMPTY(&pp->pr_partpages));
 }
 
@@ -752,10 +752,10 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 
 	if (ph->ph_nmissing++ == 0) {
 		/*
-		 * This page was previously empty.  Move it to the list of
+		 * This page was previously idle.  Move it to the list of
 		 * partially-full pages.  This page is already curpage.
 		 */
-		TAILQ_REMOVE(&pp->pr_emptypages, ph, ph_entry);
+		TAILQ_REMOVE(&pp->pr_idlepages, ph, ph_entry);
 		TAILQ_INSERT_TAIL(&pp->pr_partpages, ph, ph_entry);
 
 		pp->pr_nidle--;
@@ -763,11 +763,11 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 
 	if (ph->ph_nmissing == pp->pr_itemsperpage) {
 		/*
-		 * This page is now full.  Move it to the full list
+		 * This page is now fully used.  Move it to the used list
 		 * and select a new current page.
 		 */
 		TAILQ_REMOVE(&pp->pr_partpages, ph, ph_entry);
-		TAILQ_INSERT_TAIL(&pp->pr_fullpages, ph, ph_entry);
+		TAILQ_INSERT_TAIL(&pp->pr_usedpages, ph, ph_entry);
 		pool_update_curpage(pp);
 	}
 
@@ -807,7 +807,7 @@ pool_put(struct pool *pp, void *v)
 
 	/* is it time to free a page? */
 	if (pp->pr_nidle > pp->pr_maxpages &&
-	    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
+	    (ph = TAILQ_FIRST(&pp->pr_idlepages)) != NULL &&
 	    getnsecuptime() - ph->ph_timestamp > POOL_WAIT_FREE) {
 		freeph = ph;
 		pool_p_remove(pp, freeph);
@@ -862,22 +862,22 @@ pool_do_put(struct pool *pp, void *v)
 
 	if (ph->ph_nmissing-- == pp->pr_itemsperpage) {
 		/*
-		 * The page was previously completely full, move it to the
-		 * partially-full list.
+		 * The page was previously completely used, move it to the
+		 * partially used list.
 		 */
-		TAILQ_REMOVE(&pp->pr_fullpages, ph, ph_entry);
+		TAILQ_REMOVE(&pp->pr_usedpages, ph, ph_entry);
 		TAILQ_INSERT_TAIL(&pp->pr_partpages, ph, ph_entry);
 	}
 
 	if (ph->ph_nmissing == 0) {
 		/*
-		 * The page is now empty, so move it to the empty page list.
+		 * The page is now idle, so move it to the idle page list.
 		 */
 		pp->pr_nidle++;
 
 		ph->ph_timestamp = getnsecuptime();
 		TAILQ_REMOVE(&pp->pr_partpages, ph, ph_entry);
-		TAILQ_INSERT_TAIL(&pp->pr_emptypages, ph, ph_entry);
+		TAILQ_INSERT_TAIL(&pp->pr_idlepages, ph, ph_entry);
 		pool_update_curpage(pp);
 	}
 }
@@ -1028,7 +1028,7 @@ pool_p_insert(struct pool *pp, struct pool_page_header *ph)
 	if (pp->pr_curpage == NULL)
 		pp->pr_curpage = ph;
 
-	TAILQ_INSERT_TAIL(&pp->pr_emptypages, ph, ph_entry);
+	TAILQ_INSERT_TAIL(&pp->pr_idlepages, ph, ph_entry);
 	if (!POOL_INPGHDR(pp))
 		RBT_INSERT(phtree, &pp->pr_phtree, ph);
 
@@ -1052,7 +1052,7 @@ pool_p_remove(struct pool *pp, struct pool_page_header *ph)
 
 	if (!POOL_INPGHDR(pp))
 		RBT_REMOVE(phtree, &pp->pr_phtree, ph);
-	TAILQ_REMOVE(&pp->pr_emptypages, ph, ph_entry);
+	TAILQ_REMOVE(&pp->pr_idlepages, ph, ph_entry);
 
 	pool_update_curpage(pp);
 }
@@ -1062,7 +1062,7 @@ pool_update_curpage(struct pool *pp)
 {
 	pp->pr_curpage = TAILQ_LAST(&pp->pr_partpages, pool_pagelist);
 	if (pp->pr_curpage == NULL) {
-		pp->pr_curpage = TAILQ_LAST(&pp->pr_emptypages, pool_pagelist);
+		pp->pr_curpage = TAILQ_LAST(&pp->pr_idlepages, pool_pagelist);
 	}
 }
 
@@ -1130,7 +1130,7 @@ pool_reclaim(struct pool *pp)
 	struct pool_pagelist pl = TAILQ_HEAD_INITIALIZER(pl);
 
 	pl_enter(pp, &pp->pr_lock);
-	for (ph = TAILQ_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
+	for (ph = TAILQ_FIRST(&pp->pr_idlepages); ph != NULL; ph = phnext) {
 		phnext = TAILQ_NEXT(ph, ph_entry);
 
 		/* Check our minimum page claim */
@@ -1239,15 +1239,15 @@ pool_print1(struct pool *pp, const char *modif,
 	if (print_pagelist == 0)
 		return;
 
-	if ((ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL)
-		(*pr)("\n\tempty page list:\n");
-	pool_print_pagelist(&pp->pr_emptypages, pr);
-	if ((ph = TAILQ_FIRST(&pp->pr_fullpages)) != NULL)
-		(*pr)("\n\tfull page list:\n");
-	pool_print_pagelist(&pp->pr_fullpages, pr);
+	if ((ph = TAILQ_FIRST(&pp->pr_usedpages)) != NULL)
+		(*pr)("\n\tused page list:\n");
+	pool_print_pagelist(&pp->pr_usedpages, pr);
 	if ((ph = TAILQ_FIRST(&pp->pr_partpages)) != NULL)
 		(*pr)("\n\tpartial-page list:\n");
 	pool_print_pagelist(&pp->pr_partpages, pr);
+	if ((ph = TAILQ_FIRST(&pp->pr_idlepages)) != NULL)
+		(*pr)("\n\tidle page list:\n");
+	pool_print_pagelist(&pp->pr_idlepages, pr);
 
 	if (pp->pr_curpage == NULL)
 		(*pr)("\tno current page\n");
@@ -1408,9 +1408,9 @@ pool_chk(struct pool *pp)
 	struct pool_page_header *ph;
 	int r = 0;
 
-	TAILQ_FOREACH(ph, &pp->pr_emptypages, ph_entry)
+	TAILQ_FOREACH(ph, &pp->pr_idlepages, ph_entry)
 		r += pool_chk_page(pp, ph, pp->pr_itemsperpage);
-	TAILQ_FOREACH(ph, &pp->pr_fullpages, ph_entry)
+	TAILQ_FOREACH(ph, &pp->pr_usedpages, ph_entry)
 		r += pool_chk_page(pp, ph, 0);
 	TAILQ_FOREACH(ph, &pp->pr_partpages, ph_entry)
 		r += pool_chk_page(pp, ph, -1);
@@ -1431,7 +1431,7 @@ pool_walk(struct pool *pp, int full,
 	caddr_t cp;
 	int n;
 
-	TAILQ_FOREACH(ph, &pp->pr_fullpages, ph_entry) {
+	TAILQ_FOREACH(ph, &pp->pr_usedpages, ph_entry) {
 		cp = ph->ph_colored;
 		n = ph->ph_nmissing;
 
@@ -1578,7 +1578,7 @@ pool_gc_pages(void *null)
 
 		/* is it time to free a page? */
 		if (pp->pr_nidle > pp->pr_minpages &&
-		    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
+		    (ph = TAILQ_FIRST(&pp->pr_idlepages)) != NULL &&
 		    getnsecuptime() - ph->ph_timestamp > POOL_WAIT_GC) {
 			freeph = ph;
 			pool_p_remove(pp, freeph);

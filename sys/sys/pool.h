@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.81 2025/05/21 09:33:49 mvs Exp $	*/
+/*	$OpenBSD: pool.h,v 1.82 2026/11/09 11:09:36 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -156,11 +156,11 @@ struct pool {
 	SIMPLEQ_ENTRY(pool)
 			pr_poollist;
 	struct pool_pagelist
-			pr_emptypages;	/* Empty pages */
+			pr_usedpages;	/* Fully allocated pages */
 	struct pool_pagelist
-			pr_fullpages;	/* Full pages */
+			pr_partpages;	/* Partially allocated pages */
 	struct pool_pagelist
-			pr_partpages;	/* Partially-allocated pages */
+			pr_idlepages;	/* Idle pages, ie, no items out */
 	struct pool_page_header	*
 			pr_curpage;
 	unsigned int	pr_size;	/* Size of item */
