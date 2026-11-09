@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.290 2026/11/09 16:43:26 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.291 2026/11/09 20:17:02 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ checklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
 	if (lp != dlp) {
 		memset(lp, 0, sizeof(*lp));
 		memcpy(lp, dlp, offsetof(struct disklabel,
-		    d_partitions[MAXPARTITIONS]));
+		    d_partitions[maxparts]));
 	}
 
 #ifdef DEBUG
