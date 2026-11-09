@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.338 2026/11/08 15:35:01 kirill Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.339 2026/11/09 09:50:29 kirill Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1180,7 +1180,7 @@ vgonel(struct vnode *vp, struct proc *p)
 {
 	struct vnode *vq;
 	struct vnode *vx;
-	int s, flags = DOCLOSE;
+	int s;
 
 	KASSERT(vp->v_uvcount == 0);
 
@@ -1200,9 +1200,7 @@ vgonel(struct vnode *vp, struct proc *p)
 	/*
 	 * Clean out the filesystem specific data.
 	 */
-	if (vp->v_op == &spec_vops && vp->v_specinfo == NULL)
-		flags = 0;
-	vclean(vp, flags, p);
+	vclean(vp, DOCLOSE, p);
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
