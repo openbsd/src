@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.78 2026/05/12 09:34:00 henning Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.79 2026/11/09 09:56:59 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -80,6 +80,8 @@ int			 pf_map_addr_sticky(sa_family_t, struct pf_rule *,
 int			 pf_pool_states_decrease_addr(struct pf_pool *, int,
 			    struct pf_addr *);
 
+#define PF_NAT_PORT_SEARCH_MAX	128
+
 u_int64_t
 pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
     struct pf_poolhashkey *key, sa_family_t af)
@@ -127,6 +129,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 	struct pf_state_key_cmp	key;
 	struct pf_addr		init_addr;
 	u_int16_t		cut;
+	u_int			attempts = 0;
 	int			dir = (pd->dir == PF_IN) ? PF_OUT : PF_IN;
 	int			sidx = pd->sidx;
 	int			didx = pd->didx;
@@ -153,6 +156,10 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 	}
 #endif /* INET6 */
 
+	/*
+	 * Rule matching holds PF_LOCK.  An exhausted translation pool must
+	 * not force a complete state-table search for every packet.
+	 */
 	do {
 		key.af = pd->naf;
 		key.proto = pd->proto;
@@ -169,6 +176,8 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 		    pd->proto == IPPROTO_ICMP || pd->proto == IPPROTO_ICMPV6)) {
 			/* XXX bug: icmp states dont use the id on both
 			 * XXX sides (traceroute -I through nat) */
+			if (attempts++ >= PF_NAT_PORT_SEARCH_MAX)
+				return (1);
 			key.port[sidx] = pd->nsport;
 			key.hash = pf_pkt_hash(key.af, key.proto, &key.addr[0],
 			    &key.addr[1], key.port[0], key.port[1]);
@@ -177,6 +186,8 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 				return (0);
 			}
 		} else if (low == 0 && high == 0) {
+			if (attempts++ >= PF_NAT_PORT_SEARCH_MAX)
+				return (1);
 			key.port[sidx] = pd->nsport;
 			key.hash = pf_pkt_hash(key.af, key.proto, &key.addr[0],
 			    &key.addr[1], key.port[0], key.port[1]);
@@ -185,6 +196,8 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 				return (0);
 			}
 		} else if (low == high) {
+			if (attempts++ >= PF_NAT_PORT_SEARCH_MAX)
+				return (1);
 			key.port[sidx] = htons(low);
 			key.hash = pf_pkt_hash(key.af, key.proto, &key.addr[0],
 			    &key.addr[1], key.port[0], key.port[1]);
@@ -204,6 +217,8 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 			cut = arc4random_uniform(1 + high - low) + low;
 			/* low <= cut <= high */
 			for (tmp = cut; tmp <= high && tmp <= 0xffff; ++tmp) {
+				if (attempts++ >= PF_NAT_PORT_SEARCH_MAX)
+					return (1);
 				key.port[sidx] = htons(tmp);
 				key.hash = pf_pkt_hash(key.af, key.proto,
 				    &key.addr[0], &key.addr[1], key.port[0],
@@ -216,6 +231,8 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 			}
 			tmp = cut;
 			for (tmp -= 1; tmp >= low && tmp <= 0xffff; --tmp) {
+				if (attempts++ >= PF_NAT_PORT_SEARCH_MAX)
+					return (1);
 				key.port[sidx] = htons(tmp);
 				key.hash = pf_pkt_hash(key.af, key.proto,
 				    &key.addr[0], &key.addr[1], key.port[0],
