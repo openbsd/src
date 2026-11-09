@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2024/03/12 21:31:29 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.31 2026/11/09 09:47:42 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -68,7 +68,7 @@ addr.py: Makefile
 .if ${.CURDIR} == ${.OBJDIR}
 PYTHON =	python3 -u ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
+PYTHON =	env PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
 stamp-stack:

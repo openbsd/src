@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2023/05/24 20:31:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2026/11/09 09:47:42 bluhm Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -121,7 +121,7 @@ TARGETS =
 PYTHON =	python3 -u
 SCAPYPATH =
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u
+PYTHON =	env PYTHONPATH=${.OBJDIR} python3 -u
 SCAPYPATH =	${.CURDIR}/
 .endif
 

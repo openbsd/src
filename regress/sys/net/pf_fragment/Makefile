@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2021/02/01 12:52:07 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.31 2026/11/09 09:47:42 bluhm Exp $
 
 # Copyright (c) 2011-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -125,7 +125,7 @@ stamp-pfctl: addr.py pf.conf
 .if ${.CURDIR} == ${.OBJDIR}
 PYTHON =	python3 -u ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
+PYTHON =	env PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
 # Ping all addresses.  This ensures that the IP addresses are configured
