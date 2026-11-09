@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.108 2024/02/03 15:58:33 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.109 2026/11/09 06:59:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -309,23 +309,12 @@ ssl_cert_set0_chain(SSL_CTX *ctx, SSL *ssl, STACK_OF(X509) *chain)
 {
 	SSL_CERT *ssl_cert;
 	SSL_CERT_PKEY *cpk;
-	X509 *x509;
-	int ssl_err;
-	int i;
 
 	if ((ssl_cert = ssl_get0_cert(ctx, ssl)) == NULL)
 		return 0;
 
 	if ((cpk = ssl_cert->key) == NULL)
 		return 0;
-
-	for (i = 0; i < sk_X509_num(chain); i++) {
-		x509 = sk_X509_value(chain, i);
-		if (!ssl_security_cert(ctx, ssl, x509, 0, &ssl_err)) {
-			SSLerrorx(ssl_err);
-			return 0;
-		}
-	}
 
 	sk_X509_pop_free(cpk->chain, X509_free);
 	cpk->chain = chain;
@@ -355,18 +344,12 @@ ssl_cert_add0_chain_cert(SSL_CTX *ctx, SSL *ssl, X509 *cert)
 {
 	SSL_CERT *ssl_cert;
 	SSL_CERT_PKEY *cpk;
-	int ssl_err;
 
 	if ((ssl_cert = ssl_get0_cert(ctx, ssl)) == NULL)
 		return 0;
 
 	if ((cpk = ssl_cert->key) == NULL)
 		return 0;
-
-	if (!ssl_security_cert(ctx, ssl, cert, 0, &ssl_err)) {
-		SSLerrorx(ssl_err);
-		return 0;
-	}
 
 	if (cpk->chain == NULL) {
 		if ((cpk->chain = sk_X509_new_null()) == NULL)
