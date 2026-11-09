@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgidexec.c,v 1.3 2021/12/15 18:42:38 anton Exp $	*/
+/*	$OpenBSD: sgidexec.c,v 1.4 2026/11/09 14:48:51 bluhm Exp $	*/
 /*
  *	Written by Bret Stephen Lambert <blambert@openbsd.org> 2014
  *	Public Domain.
@@ -18,6 +18,8 @@
 #include <unistd.h>
 
 #include "setuid_regress.h"
+
+int _permit_setugid = 02000;
 
 int
 main(int argc, char *argv[])
