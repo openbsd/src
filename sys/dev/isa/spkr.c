@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.27 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.28 2026/11/09 20:34:25 miod Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -63,29 +63,41 @@ cdev_decl(spkr);
 int spkrprobe(struct device *, void *, void *);
 void spkrattach(struct device *, struct device *, void *);
 
+struct spkr_softc {
+	struct device	 sc_dev;
+	pcppi_tag_t	 sc_ppicookie;
+	int		 sc_open;	/* exclusion flag */
+	char		*sc_inbuf;
+
+	int octave;	/* currently selected octave */
+	int whole;	/* whole-note time at current tempo, in milliseconds */
+	int value;	/* whole divisor for note time, quarter note = 1 */
+	int fill;	/* controls spacing of notes */
+	int octtrack;	/* octave-tracking on? */
+	int octprefix;	/* override current octave-tracking state? */
+};
+
 const struct cfattach spkr_ca = {
-	sizeof(struct device), spkrprobe, spkrattach
+	sizeof(struct spkr_softc), spkrprobe, spkrattach
 };
 
 struct cfdriver spkr_cd = {
 	NULL, "spkr", DV_DULL
 };
 
-static pcppi_tag_t ppicookie;
-
 #define SPKRPRI (PZERO - 1)
 
-static void tone(u_int, u_int);
+static void tone(struct spkr_softc*, u_int, u_int);
 static void rest(int);
-static void playinit(void);
-static void playtone(int, int, int);
-static void playstring(char *, size_t);
+static void playinit(struct spkr_softc *);
+static void playtone(struct spkr_softc *, int, int, int);
+static void playstring(struct spkr_softc *, char *, size_t);
 
 /* emit tone of frequency freq for given number of milliseconds */
 static void
-tone(u_int freq, u_int ms)
+tone(struct spkr_softc* sc, u_int freq, u_int ms)
 {
-	pcppi_bell(ppicookie, freq, ms, PCPPI_BELL_SLEEP);
+	pcppi_bell(sc->sc_ppicookie, freq, ms, PCPPI_BELL_SLEEP);
 }
 
 /* rest for given number of milliseconds */
@@ -114,14 +126,6 @@ rest(int ms)
 
 #define toupper(c)	((c) - ' ' * (((c) >= 'a') && ((c) <= 'z')))
 #define isdigit(c)	(((c) >= '0') && ((c) <= '9'))
-#define dtoi(c)		((c) - '0')
-
-static int octave;	/* currently selected octave */
-static int whole;	/* whole-note time at current tempo, in milliseconds */
-static int value;	/* whole divisor for note time, quarter note = 1 */
-static int fill;	/* controls spacing of notes */
-static int octtrack;	/* octave-tracking on? */
-static int octprefix;	/* override current octave-tracking state? */
 
 /*
  * Magic number avoidance...
@@ -142,7 +146,7 @@ static int octprefix;	/* override current octave-tracking state? */
 #define DENOM_MULT	2	/* denominator of dot multiplier */
 
 /* letter to half-tone:  A   B  C  D  E  F  G */
-static int notetab[8] = { 9, 11, 0, 2, 4, 5, 7 };
+static const int notetab[8] = { 9, 11, 0, 2, 4, 5, 7 };
 
 /*
  * This is the American Standard A440 Equal-Tempered scale with frequencies
@@ -150,7 +154,7 @@ static int notetab[8] = { 9, 11, 0, 2, 4, 5, 7 };
  * our octave 0 is standard octave 2.
  */
 #define OCTAVE_NOTES	12	/* semitones per octave */
-static int pitchtab[] =
+static const int pitchtab[] =
 {
 /*        C     C#    D     D#    E     F     F#    G     G#    A     A#    B*/
 /* 0 */   65,   69,   73,   78,   82,   87,   93,   98,  103,  110,  117,  123,
@@ -164,19 +168,19 @@ static int pitchtab[] =
 #define NOCTAVES (sizeof(pitchtab) / sizeof(pitchtab[0]) / OCTAVE_NOTES)
 
 static void
-playinit(void)
+playinit(struct spkr_softc *sc)
 {
-	octave = DFLT_OCTAVE;
-	whole = (1000 * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
-	fill = NORMAL;
-	value = DFLT_VALUE;
-	octtrack = 0;
-	octprefix = 1;	/* act as though there was an initial O(n) */
+	sc->octave = DFLT_OCTAVE;
+	sc->whole = (1000 * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
+	sc->fill = NORMAL;
+	sc->value = DFLT_VALUE;
+	sc->octtrack = 0;
+	sc->octprefix = 1;	/* act as though there was an initial O(n) */
 }
 
 /* play tone of proper duration for current rhythm signature */
 static void
-playtone(int pitch, int value, int sustain)
+playtone(struct spkr_softc *sc, int pitch, int value, int sustain)
 {
 	int sound, silence, snum = 1, sdenom = 1;
 
@@ -187,12 +191,12 @@ playtone(int pitch, int value, int sustain)
 	}
 
 	if (pitch == -1)
-		rest(whole * snum / (value * sdenom));
+		rest(sc->whole * snum / (value * sdenom));
 	else if (pitch >= 0 &&
 	    pitch < (sizeof(pitchtab) / sizeof(pitchtab[0]))) {
-		sound = (whole * snum) / (value * sdenom) -
-		    (whole * (FILLTIME - fill)) / (value * FILLTIME);
-		silence = whole * (FILLTIME-fill) * snum /
+		sound = (sc->whole * snum) / (value * sdenom) -
+		    (sc->whole * (FILLTIME - sc->fill)) / (value * FILLTIME);
+		silence = sc->whole * (FILLTIME-sc->fill) * snum /
 		    (FILLTIME * value * sdenom);
 
 #ifdef SPKRDEBUG
@@ -200,15 +204,15 @@ playtone(int pitch, int value, int sustain)
 		    pitch, sound, silence);
 #endif /* SPKRDEBUG */
 
-		tone(pitchtab[pitch], sound);
-		if (fill != LEGATO)
+		tone(sc, pitchtab[pitch], sound);
+		if (sc->fill != LEGATO)
 			rest(silence);
 	}
 }
 
 /* interpret and play an item from a notation string */
 static void
-playstring(char *cp, size_t slen)
+playstring(struct spkr_softc *sc, char *cp, size_t slen)
 {
 	int pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
@@ -237,7 +241,7 @@ do { \
 		case 'F':
 		case 'G':
 			/* compute pitch */
-			pitch = notetab[c - 'A'] + octave * OCTAVE_NOTES;
+			pitch = notetab[c - 'A'] + sc->octave * OCTAVE_NOTES;
 
 			/* this may be followed by an accidental sign */
 			if (slen > 0 && (cp[1] == '#' || cp[1] == '+')) {
@@ -256,20 +260,20 @@ do { \
 			 * current letter note closest to the last regardless
 			 * of octave.
 			 */
-			if (octtrack && !octprefix) {
+			if (sc->octtrack != 0 && sc->octprefix == 0) {
 				if (abs(pitch - lastpitch) >
 				    abs(pitch + OCTAVE_NOTES - lastpitch)) {
-					++octave;
+					++(sc->octave);
 					pitch += OCTAVE_NOTES;
 				}
 
 				if (abs(pitch - lastpitch) >
 				    abs(pitch - OCTAVE_NOTES - lastpitch)) {
-					--octave;
+					--(sc->octave);
 					pitch -= OCTAVE_NOTES;
 				}
 			}
-			octprefix = 0;
+			sc->octprefix = 0;
 			lastpitch = pitch;
 
 			/*
@@ -278,7 +282,7 @@ do { \
 			 */
 			GETNUM(cp, timeval);
 			if (timeval <= 0 || timeval > MIN_VALUE)
-				timeval = value;
+				timeval = sc->value;
 
 			/* ...and/or sustain dots */
 			for (sustain = 0; slen > 0 && cp[1] == '.'; cp++) {
@@ -287,36 +291,36 @@ do { \
 			}
 
 			/* time to emit the actual tone */
-			playtone(pitch, timeval, sustain);
+			playtone(sc, pitch, timeval, sustain);
 			break;
 
 		case 'O':
 			if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n')) {
-				octprefix = octtrack = 0;
+				sc->octprefix = sc->octtrack = 0;
 				++cp;
 				slen--;
 			} else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l')) {
-				octtrack = 1;
+				sc->octtrack = 1;
 				++cp;
 				slen--;
 			} else {
-				GETNUM(cp, octave);
-				if (octave >= NOCTAVES)
-					octave = DFLT_OCTAVE;
-				octprefix = 1;
+				GETNUM(cp, sc->octave);
+				if (sc->octave >= NOCTAVES)
+					sc->octave = DFLT_OCTAVE;
+				sc->octprefix = 1;
 			}
 			break;
 
 		case '>':
-			if (octave < NOCTAVES - 1)
-				octave++;
-			octprefix = 1;
+			if (sc->octave < NOCTAVES - 1)
+				sc->octave++;
+			sc->octprefix = 1;
 			break;
 
 		case '<':
-			if (octave > 0)
-				octave--;
-			octprefix = 1;
+			if (sc->octave > 0)
+				sc->octave--;
+			sc->octprefix = 1;
 			break;
 
 		case 'N':
@@ -325,13 +329,13 @@ do { \
 				slen--;
 				sustain++;
 			}
-			playtone(pitch - 1, value, sustain);
+			playtone(sc, pitch - 1, sc->value, sustain);
 			break;
 
 		case 'L':
-			GETNUM(cp, value);
-			if (value <= 0 || value > MIN_VALUE)
-				value = DFLT_VALUE;
+			GETNUM(cp, sc->value);
+			if (sc->value <= 0 || sc->value > MIN_VALUE)
+				sc->value = DFLT_VALUE;
 			break;
 
 		case 'P':
@@ -339,32 +343,32 @@ do { \
 			/* this may be followed by an override time value */
 			GETNUM(cp, timeval);
 			if (timeval <= 0 || timeval > MIN_VALUE)
-				timeval = value;
+				timeval = sc->value;
 			for (sustain = 0; slen > 0 && cp[1] == '.'; cp++) {
 				slen--;
 				sustain++;
 			}
-			playtone(-1, timeval, sustain);
+			playtone(sc, -1, timeval, sustain);
 			break;
 
 		case 'T':
 			GETNUM(cp, tempo);
 			if (tempo < MIN_TEMPO || tempo > MAX_TEMPO)
 				tempo = DFLT_TEMPO;
-			whole = (1000 * SECS_PER_MIN * WHOLE_NOTE) / tempo;
+			sc->whole = (1000 * SECS_PER_MIN * WHOLE_NOTE) / tempo;
 			break;
 
 		case 'M':
 			if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n')) {
-				fill = NORMAL;
+				sc->fill = NORMAL;
 				++cp;
 				slen--;
 			} else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l')) {
-				fill = LEGATO;
+				sc->fill = LEGATO;
 				++cp;
 				slen--;
 			} else if (slen > 0 && (cp[1] == 'S' || cp[1] == 's')) {
-				fill = STACCATO;
+				sc->fill = STACCATO;
 				++cp;
 				slen--;
 			}
@@ -379,9 +383,6 @@ do { \
  * endtone(), and rest() functions defined above.
  */
 
-static int spkr_active;	/* exclusion flag */
-static void *spkr_inbuf;
-
 static int spkr_attached = 0;
 
 int
@@ -393,26 +394,36 @@ spkrprobe(struct device *parent, void *match, void *aux)
 void
 spkrattach(struct device *parent, struct device *self, void *aux)
 {
+	struct spkr_softc *sc = (struct spkr_softc *)self;
+	struct pcppi_attach_args *paa = (struct pcppi_attach_args *)aux;
+
 	printf("\n");
-	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
+	sc->sc_ppicookie = paa->pa_cookie;
 	spkr_attached = 1;
 }
 
 int
 spkropen(dev_t dev, int flags, int mode, struct proc *p)
 {
+	struct spkr_softc *sc;
+	int unit = minor(dev);
+
+	if (unit >= spkr_cd.cd_ndevs)
+		return (ENXIO);
+	sc = (struct spkr_softc *)spkr_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
+
 #ifdef SPKRDEBUG
 	printf("spkropen: entering with dev = %x\n", dev);
 #endif /* SPKRDEBUG */
 
-	if (minor(dev) != 0 || !spkr_attached)
-		return (ENXIO);
-	else if (spkr_active)
+	if (sc->sc_open != 0)
 		return (EBUSY);
 	else {
-		playinit();
-		spkr_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
-		spkr_active = 1;
+		playinit(sc);
+		sc->sc_inbuf = (char *)malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+		sc->sc_open = 1;
 	}
 	return (0);
 }
@@ -420,44 +431,43 @@ spkropen(dev_t dev, int flags, int mode, struct proc *p)
 int
 spkrwrite(dev_t dev, struct uio *uio, int flags)
 {
+	struct spkr_softc *sc;
 	size_t n;
 	int error;
+
 #ifdef SPKRDEBUG
 	printf("spkrwrite: entering with dev = %x, count = %zu\n",
 	    dev, uio->uio_resid);
 #endif /* SPKRDEBUG */
 
-	if (minor(dev) != 0)
-		return (ENXIO);
-	else {
-		n = ulmin(DEV_BSIZE, uio->uio_resid);
-		error = uiomove(spkr_inbuf, n, uio);
-		if (!error)
-			playstring((char *)spkr_inbuf, n);
-		return (error);
-	}
+	sc = (struct spkr_softc *)spkr_cd.cd_devs[minor(dev)];
+	n = ulmin(DEV_BSIZE, uio->uio_resid);
+	error = uiomove(sc->sc_inbuf, n, uio);
+	if (!error)
+		playstring(sc, sc->sc_inbuf, n);
+	return (error);
 }
 
 int
 spkrclose(dev_t dev, int flags, int mode, struct proc *p)
 {
+	struct spkr_softc *sc;
+
 #ifdef SPKRDEBUG
 	printf("spkrclose: entering with dev = %x\n", dev);
 #endif /* SPKRDEBUG */
 
-	if (minor(dev) != 0)
-		return (ENXIO);
-	else {
-		tone(0, 0);
-		free(spkr_inbuf, M_DEVBUF, DEV_BSIZE);
-		spkr_active = 0;
-	}
+	sc = (struct spkr_softc *)spkr_cd.cd_devs[minor(dev)];
+	tone(sc, 0, 0);
+	free(sc->sc_inbuf, M_DEVBUF, DEV_BSIZE);
+	sc->sc_open = 0;
 	return (0);
 }
 
 int
 spkrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	struct spkr_softc *sc;
 	tone_t *tp, ttp;
 	int error;
 
@@ -465,8 +475,7 @@ spkrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
 #endif /* SPKRDEBUG */
 
-	if (minor(dev) != 0)
-		return (ENXIO);
+	sc = (struct spkr_softc *)spkr_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
 	case SPKRTONE:
@@ -486,7 +495,7 @@ spkrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (tp->frequency == 0)
 			rest(tp->duration);
 		else
-			tone(tp->frequency, tp->duration);
+			tone(sc, tp->frequency, tp->duration);
 		break;
 	case SPKRTUNE:
 		tp = (tone_t *)(*(caddr_t *)data);
@@ -502,7 +511,7 @@ spkrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if (ttp.frequency == 0)
 				rest(ttp.duration);
 			else
-				tone(ttp.frequency, ttp.duration);
+				tone(sc, ttp.frequency, ttp.duration);
 		}
 		break;
 	default:
