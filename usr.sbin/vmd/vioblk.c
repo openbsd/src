@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.37 2026/10/07 23:06:26 mlarkin Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.38 2026/11/09 19:23:55 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -43,7 +43,7 @@ static uint32_t vioblk_dev_read(struct virtio_dev *, struct viodev_msg *);
 
 static int vioblk_notifyq(struct virtio_dev *, uint16_t);
 static ssize_t vioblk_io(struct vioblk_dev *, struct virtio_vq_info *, int,
-    off_t, struct vring_desc *, struct vring_desc **);
+    uint64_t, struct vring_desc *, struct vring_desc **);
 
 static void dev_dispatch_vm(int, short, void *);
 static void handle_sync_io(int, short, void *);
@@ -254,7 +254,6 @@ vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 	uint32_t cmd_len;
 	uint16_t idx, cmd_desc_idx;
 	uint8_t ds;
-	off_t offset;
 	ssize_t sz;
 	int is_write, notify = 0;
 	char *vr;
@@ -324,9 +323,8 @@ vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 		case VIRTIO_BLK_T_OUT:
 			/* Read (IN) & Write (OUT) */
 			is_write = (cmd->type == VIRTIO_BLK_T_OUT) ? 1 : 0;
-			offset = cmd->sector * VIRTIO_BLK_SECTOR_SIZE;
-			sz = vioblk_io(vioblk, vq_info, is_write, offset, table,
-			    &desc);
+			sz = vioblk_io(vioblk, vq_info, is_write,
+			    cmd->sector, table, &desc);
 			if (sz == -1)
 				ds = VIRTIO_BLK_S_IOERR;
 			else
@@ -652,9 +650,10 @@ vioblk_dev_read(struct virtio_dev *dev, struct viodev_msg *msg)
  */
 static ssize_t
 vioblk_io(struct vioblk_dev *dev, struct virtio_vq_info *vq_info, int is_write,
-    off_t offset, struct vring_desc *desc_tbl, struct vring_desc **desc)
+    uint64_t sector, struct vring_desc *desc_tbl, struct vring_desc **desc)
 {
 	struct iovec *iov = NULL;
+	off_t offset;
 	ssize_t sz = 0;
 	size_t io_idx = 0;		/* Index into iovec workqueue. */
 	size_t xfer_sz = 0;		/* Total accumulated io bytes. */
@@ -692,6 +691,13 @@ vioblk_io(struct vioblk_dev *dev, struct virtio_vq_info *vq_info, int is_write,
 		/* Advance to the next descriptor. */
 		*desc = &desc_tbl[(*desc)->next & vq_info->mask];
 	} while ((*desc)->flags & VRING_DESC_F_NEXT);
+
+	if (sector > dev->capacity ||
+	    xfer_sz > (dev->capacity - sector) * VIRTIO_BLK_SECTOR_SIZE) {
+		log_warnx("%s: request exceeds disk capacity", __func__);
+		return (-1);
+	}
+	offset = sector * VIRTIO_BLK_SECTOR_SIZE;
 
 	/*
 	 * Validate the requested block io operation alignment and size.
