@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.498 2026/11/05 18:20:53 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.499 2026/11/09 10:23:34 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -127,6 +127,8 @@
 /*
  * Locks used to protect data:
  *	a	atomic
+ *	H	hostname_mtx
+ *	K	kernel lock
  */
 
 extern struct forkstat forkstat;
@@ -318,13 +320,15 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+struct mutex hostname_mtx = MUTEX_INITIALIZER(IPL_MPFLOOR);
+
 /*
  * Attributes stored in the kernel.
  */
-char hostname[MAXHOSTNAMELEN];
-int hostnamelen;
-char domainname[MAXHOSTNAMELEN];
-int domainnamelen;
+char hostname[MAXHOSTNAMELEN];		/* [H,K] */
+int hostnamelen;			/* [H,K] */
+char domainname[MAXHOSTNAMELEN];	/* [H,K] */
+int domainnamelen;			/* [H,K] */
 int hostid;
 char *disknames = NULL;
 size_t disknameslen;
@@ -538,6 +542,59 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, osversion));
 	case KERN_VERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
+	case KERN_HOSTNAME: {
+		char buf[MAXHOSTNAMELEN];
+
+		mtx_enter(&hostname_mtx);
+		strlcpy(buf, hostname, sizeof(buf));
+		mtx_leave(&hostname_mtx);
+
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+		    buf, sizeof(buf));
+
+		if (newp && !error) {
+			KERNEL_LOCK();
+			mtx_enter(&hostname_mtx);
+			strlcpy(hostname, buf, sizeof(hostname));
+			hostnamelen = newlen;
+			mtx_leave(&hostname_mtx);
+			KERNEL_UNLOCK();
+		}
+
+		return (error);
+	}
+	case KERN_DOMAINNAME: {
+		char buf[MAXHOSTNAMELEN];
+
+		mtx_enter(&hostname_mtx);
+		strlcpy(buf, domainname, sizeof(buf));
+		mtx_leave(&hostname_mtx);
+
+		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+		    buf, sizeof(buf));
+
+		if (newp && !error) {
+			int securelevel_local = atomic_load_int(&securelevel);
+
+			/* try to avoid locking */
+			if (securelevel_local >= 1 &&
+			    atomic_load_int(&domainnamelen))
+				return (EPERM);
+
+			KERNEL_LOCK();
+			mtx_enter(&hostname_mtx);
+			if (securelevel_local >= 1 && domainnamelen)
+				error = EPERM;
+			else {
+				strlcpy(domainname, buf, sizeof(domainname));
+				atomic_store_int(&domainnamelen, newlen);
+			}
+			mtx_leave(&hostname_mtx);
+			KERNEL_UNLOCK();
+		}
+
+		return (error);
+	}
 	case KERN_CONSBUF:
 		if ((error = suser(p)))
 			return (error);
@@ -749,21 +806,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	switch (name[0]) {
 	case KERN_SECURELVL:
 		return (sysctl_securelevel(oldp, oldlenp, newp, newlen, p));
-	case KERN_HOSTNAME:
-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
-		    hostname, sizeof(hostname));
-		if (newp && !error)
-			hostnamelen = newlen;
-		return (error);
-	case KERN_DOMAINNAME:
-		if (securelevel >= 1 && domainnamelen && newp)
-			error = EPERM;
-		else
-			error = sysctl_tstring(oldp, oldlenp, newp, newlen,
-			    domainname, sizeof(domainname));
-		if (newp && !error)
-			domainnamelen = newlen;
-		return (error);
 #ifndef SMALL_KERNEL
 	case KERN_NCHSTATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &nchstats,
