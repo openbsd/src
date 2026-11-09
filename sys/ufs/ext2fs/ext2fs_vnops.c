@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.95 2025/06/01 00:32:54 rsadowski Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.96 2026/11/09 08:34:28 kirill Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -115,9 +115,10 @@ ext2fs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	vput(*vpp);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
+	vrele(*vpp);
 	*vpp = NULL;
 	return (0);
 }

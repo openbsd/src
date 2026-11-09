@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.79 2026/07/10 14:43:48 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.80 2026/11/09 08:34:28 kirill Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -1214,9 +1214,10 @@ fusefs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	vput(*vpp);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
+	vrele(*vpp);
 	*vpp = NULL;
 out:
 	fb_delete(fbuf);

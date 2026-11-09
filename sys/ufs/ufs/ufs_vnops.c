@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.165 2026/05/26 15:01:16 kirill Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.166 2026/11/09 08:34:28 kirill Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -182,9 +182,10 @@ ufs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	vput(*vpp);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
+	vrele(*vpp);
 	*vpp = NULL;
 	return (0);
 }
