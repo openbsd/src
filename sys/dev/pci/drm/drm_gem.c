@@ -331,7 +331,7 @@ int drm_gem_object_init(struct drm_device *dev,
 {
 	drm_gem_private_object_init(dev, obj, size);
 
-	if (size > (512 * 1024 * 1024)) {
+	if (size > (1536 * 1024 * 1024)) {
 		printf("%s size too big %lu\n", __func__, size);
 		return -ENOMEM;
 	}
