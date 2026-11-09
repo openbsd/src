@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.499 2026/11/09 10:23:34 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.500 2026/11/09 13:21:11 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -800,7 +800,6 @@ int
 kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
-	int error;
 	dev_t dev;
 
 	switch (name[0]) {
@@ -814,7 +813,7 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &forkstat,
 		    sizeof(struct forkstat)));
 	case KERN_STACKGAPRANDOM: {
-		int stackgap = stackgap_random;
+		int error, stackgap = stackgap_random;
 
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &stackgap);
 		if (error)
@@ -830,7 +829,7 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	    }
 	case KERN_CACHEPCT: {
 		u_int64_t pages;
-		int opct, pgs;
+		int error, opct, pgs;
 		opct = bufcachepercent;
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &bufcachepercent);
