@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.9 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: ui.h,v 1.10 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: ui.h,v 1.5 1998/12/01 10:20:12 niklas Exp $	 */
 
 /*
@@ -38,6 +38,7 @@ extern char    *ui_fifo;
 extern int      ui_socket;
 extern int	ui_daemon_passive;
 
+extern void     ui_handle_command(char *);
 extern void     ui_handler(void);
 extern void     ui_init(void);
 

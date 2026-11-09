@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.44 2021/10/13 16:56:30 tb Exp $	 */
+/* $OpenBSD: init.c,v 1.45 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -41,6 +41,7 @@
 #include "connection.h"
 #include "doi.h"
 #include "exchange.h"
+#include "ikedmode.h"
 #include "init.h"
 #include "ipsec.h"
 #include "isakmp_doi.h"
@@ -62,10 +63,17 @@
 #include "nat_traversal.h"
 #include "udp_encap.h"
 
+/*
+ * In iked mode (see ikedmode.c) there is no monitor to open files and
+ * sockets for us: the PF_KEY socket, the configuration and the IKE
+ * datagrams come from iked over imsg, policies, certificates and the UDP
+ * transports not at all.  The subsystems that need them are skipped.
+ */
 void
 init(void)
 {
-	app_init();
+	if (!iked_mode)
+		app_init();
 	doi_init();
 	exchange_init();
 	group_init();
@@ -81,19 +89,25 @@ init(void)
 	/* This depends on conf_init, thus check as soon as possible. */
 	log_reinit();
 
-	/* policy_init depends on conf_init having run.  */
-	policy_init();
+	if (!iked_mode) {
+		/* policy_init depends on conf_init having run.  */
+		policy_init();
 
-	/* Depends on conf_init and policy_init having run */
-	cert_init();
-	crl_init();
+		/* Depends on conf_init and policy_init having run */
+		cert_init();
+		crl_init();
+	}
 
 	sa_init();
 	transport_init();
-	virtual_init();
-	udp_init();
-	nat_t_init();
-	udp_encap_init();
+	if (iked_mode)
+		transport_imsg_init();
+	else {
+		virtual_init();
+		udp_init();
+		nat_t_init();
+		udp_encap_init();
+	}
 	vendor_init();
 }
 

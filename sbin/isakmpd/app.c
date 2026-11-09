@@ -1,4 +1,4 @@
-/* $OpenBSD: app.c,v 1.14 2017/02/03 08:23:46 guenther Exp $	 */
+/* $OpenBSD: app.c,v 1.15 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	 */
 
 /*
@@ -56,6 +56,15 @@ app_init(void)
 	app_socket = monitor_pf_key_v2_open();
 	if (app_socket == -1)
 		log_fatal("app_init: cannot open connection to application");
+}
+
+/* Use FD, a PF_KEY socket opened by iked(8), as our application socket.  */
+void
+app_setsocket(int fd)
+{
+	app_socket = pf_key_v2_register(fd);
+	if (app_socket == -1)
+		log_fatal("app_setsocket: cannot use PF_KEY socket %d", fd);
 }
 
 void

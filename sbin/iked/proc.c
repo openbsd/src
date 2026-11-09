@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.57 2026/09/10 15:06:22 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.58 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -72,39 +72,49 @@ void
 proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
     char *execpath, int argc, char **argv)
 {
-	unsigned int		  proc, nargc, i, proc_i;
-	char			**nargv;
+	unsigned int		  proc, nargc, i;
+	char			**nargv, *path;
 	struct privsep_proc	 *p;
 	char			  num[32];
 	int			  fd;
 
 	/* Prepare the new process argv. */
-	nargv = calloc(argc + 5, sizeof(char *));
+	nargv = calloc(argc + 6, sizeof(char *));
 	if (nargv == NULL)
 		fatal("%s: calloc", __func__);
-
-	/* Copy call argument first. */
-	nargc = 0;
-	nargv[nargc++] = execpath;
-
-	/* Set process name argument and save the position. */
-	nargv[nargc++] = "-P";
-	proc_i = nargc;
-	nargc++;
-
-	/* Point process instance arg to stack and copy the original args. */
-	nargv[nargc++] = "-I";
-	nargv[nargc++] = num;
-	for (i = 1; i < (unsigned int)argc; i++)
-		nargv[nargc++] = argv[i];
-
-	nargv[nargc] = NULL;
 
 	for (proc = 0; proc < nproc; proc++) {
 		p = &procs[proc];
 
-		/* Update args with process title. */
-		nargv[proc_i] = (char *)(uintptr_t)p->p_title;
+		/*
+		 * A process can be a foreign executable.  It is told that
+		 * it runs as an iked process and then gets the same
+		 * arguments as our own children.
+		 */
+		nargc = 0;
+		if (p->p_exec != NULL) {
+			path = (char *)(uintptr_t)p->p_exec;
+			nargv[nargc++] = path;
+			nargv[nargc++] = "--iked-mode";
+		} else {
+			path = execpath;
+			nargv[nargc++] = path;
+		}
+
+		/* Set process name argument. */
+		nargv[nargc++] = "-P";
+		nargv[nargc++] = (char *)(uintptr_t)p->p_title;
+
+		/*
+		 * Point process instance arg to stack and copy the
+		 * original args.
+		 */
+		nargv[nargc++] = "-I";
+		nargv[nargc++] = num;
+		for (i = 1; i < (unsigned int)argc; i++)
+			nargv[nargc++] = argv[i];
+
+		nargv[nargc] = NULL;
 
 		/* Fire children processes. */
 		for (i = 0; i < ps->ps_instances[p->p_id]; i++) {
@@ -127,7 +137,7 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 				} else if (fcntl(fd, F_SETFD, 0) == -1)
 					fatal("fcntl");
 
-				execv(execpath, nargv);
+				execv(path, nargv);
 				fatal("%s: execv", __func__);
 				break;
 			default:

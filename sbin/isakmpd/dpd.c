@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.21 2026/10/21 06:03:35 hshoexer Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.22 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -244,6 +244,16 @@ dpd_timer_reset(struct sa *sa, u_int32_t time_passed, enum dpd_tstate mode)
 	switch (mode) {
 	case DPD_TIMER_NORMAL:
 		sa->dpd_failcount = 0;
+		if (dpd_timer_interval(0) == 0) {
+			/*
+			 * DPD has been disabled by a configuration reload.
+			 * Stop probing instead of re-arming with a zero
+			 * interval, which would probe on every reply.
+			 */
+			sa->flags &= ~SA_FLAG_DPD;
+			sa->dpd_event = 0;
+			return;
+		}
 		ts.tv_sec += dpd_timer_interval(time_passed);
 		sa->dpd_event = timer_add_event("dpd_event", dpd_event, sa,
 		    &ts);

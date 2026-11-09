@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 2021/10/13 16:56:30 tb Exp $
+#	$OpenBSD: Makefile,v 1.91 2026/11/09 12:31:36 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -35,11 +35,13 @@
 PROG=		isakmpd
 SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		cookie.c crypto.c dh.c doi.c exchange.c exchange_num.c \
-		field.c hash.c if.c ike_auth.c ike_main_mode.c \
+		field.c hash.c if.c ike_auth.c ikedmode.c ikedmode_show.c \
+		ike_main_mode.c \
 		ike_phase_1.c ike_quick_mode.c init.c ipsec.c ipsec_fld.c \
 		ipsec_num.c isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c \
 		key.c log.c message.c \
-		prf.c sa.c sysdep.c timer.c transport.c virtual.c udp.c \
+		prf.c sa.c sysdep.c timer.c transport.c transport_imsg.c \
+		virtual.c udp.c \
 		ui.c util.c x509.c \
 		pf_key_v2.c policy.c ike_aggressive.c isakmp_cfg.c \
 		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c \
@@ -53,6 +55,8 @@ CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wmissing-declarations -I${.CURDIR} -I.
+# iked/types.h for the imsg protocol of iked(8), see ikedmode.c
+CFLAGS+=	-I${.CURDIR}/..
 
 # Include symbolic debugging info
 #DEBUG=		-g
@@ -63,8 +67,9 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 #LWRESLIB=      /usr/local/lib/liblwres.a
 #DNSSEC_CFLAGS= -I/usr/local/include -DLWRES
 
-LDADD+=		${LWRESLIB} -lkeynote -lcrypto -lm
-DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBM}
+LDADD+=		${LWRESLIB} -lkeynote -lcrypto -lm -levent -lutil
+DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBM} ${LIBEVENT} \
+		${LIBUTIL}
 
 exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num

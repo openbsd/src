@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.109 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.110 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -47,6 +47,7 @@
 
 #include "app.h"
 #include "conf.h"
+#include "ikedmode.h"
 #include "log.h"
 #include "monitor.h"
 #include "util.h"
@@ -613,7 +614,12 @@ conf_reinit(void)
 	size_t	 sz;
 	char	*new_conf_addr = 0;
 
-	fd = monitor_open(conf_path, O_RDONLY);
+	if (iked_mode) {
+		/* No configuration file, iked feeds us over imsg.  */
+		fd = -1;
+		errno = ENOENT;
+	} else
+		fd = monitor_open(conf_path, O_RDONLY);
 	if (fd == -1 || check_file_secrecy_fd(fd, conf_path, &sz) == -1) {
 		if (fd == -1 && errno != ENOENT)
 			log_error("conf_reinit: open(\"%s\", O_RDONLY) "
@@ -646,8 +652,11 @@ conf_reinit(void)
 	/* Load default configuration values.  */
 	conf_load_defaults(trans);
 
-	/* Free potential existing configuration.  */
-	if (conf_addr) {
+	/*
+	 * Free potential existing configuration.  In iked mode there is no
+	 * file, but the bindings set over imsg have to go as well.
+	 */
+	if (conf_addr || iked_mode) {
 		for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0];
 		    i++)
 			for (cb = LIST_FIRST(&conf_bindings[i]); cb;

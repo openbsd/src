@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.237 2026/09/21 20:54:38 hshoexer Exp $	*/
+/*	$OpenBSD: iked.h,v 1.238 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -261,6 +261,7 @@ struct iked_policy {
 #define IKED_POLICY_TRANSPORT		 0x040
 #define IKED_POLICY_ROUTING		 0x080
 #define IKED_POLICY_NATT_FORCE		 0x100
+#define IKED_POLICY_IKEV1		 0x200
 
 	int				 pol_refcnt;
 
@@ -831,14 +832,9 @@ struct privsep_proc {
 	struct passwd		*p_pw;
 	struct privsep		*p_ps;
 	void			(*p_shutdown)(void);
+	const char		*p_exec;	/* foreign executable */
 };
 
-struct privsep_fd {
-	enum privsep_procid		 pf_procid;
-	unsigned int			 pf_instance;
-};
-
-#define PROC_PARENT_SOCK_FILENO 3
 #define PROC_MAX_INSTANCES      32
 
 #if DEBUG
@@ -1019,6 +1015,8 @@ int	 config_getreset(struct iked *, struct imsg *);
 int	 config_doreset(struct iked *, unsigned int);
 int	 config_setpolicy(struct iked *, struct iked_policy *,
 	    enum privsep_procid);
+int	 config_setikev1policy(struct iked *, struct iked_policy *);
+int	 config_setikev1general(struct iked *);
 int	 config_getpolicy(struct iked *, struct imsg *);
 int	 config_setflow(struct iked *, struct iked_policy *,
 	    enum privsep_procid);
@@ -1229,6 +1227,7 @@ int	 ikev2_msg_authverify(struct iked *, struct iked_sa *,
 int	 ikev2_msg_valid_ike_sa(struct iked *, struct ike_header *,
 	    struct iked_message *);
 int	 ikev2_msg_send(struct iked *, struct iked_message *);
+int	 ikev1_send(struct iked *, struct imsg *);
 int	 ikev2_msg_send_encrypt(struct iked *, struct iked_sa *,
 	    struct ibuf **, uint8_t, uint8_t, int);
 struct ibuf

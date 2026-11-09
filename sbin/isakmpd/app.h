@@ -1,4 +1,4 @@
-/* $OpenBSD: app.h,v 1.8 2024/05/21 05:00:47 jsg Exp $	 */
+/* $OpenBSD: app.h,v 1.9 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: app.h,v 1.4 1999/04/02 00:58:16 niklas Exp $	 */
 
 /*
@@ -37,5 +37,6 @@ extern int      app_none;
 
 extern void     app_handler(void);
 extern void     app_init(void);
+extern void     app_setsocket(int);
 
 #endif				/* _APP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.74 2026/09/10 15:06:22 deraadt Exp $	*/
+/*	$OpenBSD: iked.c,v 1.75 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -44,6 +44,7 @@ void	 parent_shutdown(struct iked *);
 void	 parent_sig_handler(int, short, void *);
 int	 parent_dispatch_ca(int, struct privsep_proc *, struct imsg *);
 int	 parent_dispatch_control(int, struct privsep_proc *, struct imsg *);
+int	 parent_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
 int	 parent_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 void	 parent_connected(struct privsep *);
 int	 parent_configure(struct iked *);
@@ -53,6 +54,8 @@ struct iked	*iked_env;
 static struct privsep_proc procs[] = {
 	{ "ca",		PROC_CERT,	parent_dispatch_ca, caproc, IKED_CA },
 	{ "control",	PROC_CONTROL,	parent_dispatch_control, control },
+	{ "ikev1",	PROC_IKEV1,	parent_dispatch_ikev1,
+	    .p_exec = ISAKMPD_PATH },
 	{ "ikev2",	PROC_IKEV2,	parent_dispatch_ikev2, ikev2 }
 };
 
@@ -272,6 +275,8 @@ parent_configure(struct iked *env)
 
 	/* Now compile the policies and calculate skip steps */
 	config_setcompile(env, PROC_IKEV2);
+	config_setikev1general(env);
+	config_setcompile(env, PROC_IKEV1);
 
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET;
@@ -331,6 +336,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 
 	if (reset == RESET_RELOAD) {
 		config_setreset(env, RESET_POLICY, PROC_IKEV2);
+		config_setreset(env, RESET_POLICY, PROC_IKEV1);
 		config_setreset(env, RESET_RADIUS, PROC_IKEV2);
 		if (config_setkeys(env) == -1)
 			fatalx("%s: failed to send keys", __func__);
@@ -343,6 +349,8 @@ parent_reload(struct iked *env, int reset, const char *filename)
 
 		/* Re-compile policies and skip steps */
 		config_setcompile(env, PROC_IKEV2);
+		config_setikev1general(env);
+	config_setcompile(env, PROC_IKEV1);
 
 		config_setstatic(env);
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
@@ -351,6 +359,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		config_setmode(env, env->sc_passive ? 1 : 0);
 	} else {
 		config_setreset(env, reset, PROC_IKEV2);
+		config_setreset(env, reset, PROC_IKEV1);
 		config_setreset(env, reset, PROC_CERT);
 	}
 }
@@ -464,10 +473,12 @@ parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&v, imsg->data, sizeof(v));
 		parent_reload(env, v, NULL);
 		break;
-	case IMSG_CTL_COUPLE:
-	case IMSG_CTL_DECOUPLE:
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
+		proc_compose(&env->sc_ps, PROC_IKEV1, type, NULL, 0);
+		/* FALLTHROUGH */
+	case IMSG_CTL_COUPLE:
+	case IMSG_CTL_DECOUPLE:
 		proc_compose(&env->sc_ps, PROC_IKEV2, type, NULL, 0);
 		break;
 	case IMSG_CTL_RELOAD:
@@ -478,10 +489,22 @@ parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CTL_VERBOSE:
 		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2);
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV1);
 		proc_forward_imsg(&env->sc_ps, imsg, PROC_CERT);
 
 		/* return 1 to let proc.c handle it locally */
 		return (1);
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+parent_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	switch (imsg->hdr.type) {
 	default:
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.59 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.60 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -422,7 +422,7 @@ ui_setmode(char *cmd)
  * Call the relevant command handler based on the first character of the
  * line (the command).
  */
-static void
+void
 ui_handle_command(char *line)
 {
 	/* Find out what one-letter command was sent.  */

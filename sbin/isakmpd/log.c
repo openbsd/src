@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.66 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: log.c,v 1.67 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -51,6 +51,7 @@
 #include <unistd.h>
 
 #include "conf.h"
+#include "ikedmode.h"
 #include "isakmp_num.h"
 #include "log.h"
 #include "monitor.h"
@@ -112,7 +113,8 @@ log_to(FILE *f)
 		closelog();
 	log_output = f;
 	if (!f)
-		openlog("isakmpd", LOG_PID | LOG_CONS, LOG_DAEMON);
+		openlog(iked_mode ? "iked" : "isakmpd", LOG_PID | LOG_CONS,
+		    LOG_DAEMON);
 }
 
 FILE *

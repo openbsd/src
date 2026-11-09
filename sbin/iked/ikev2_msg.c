@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.105 2026/06/22 14:01:13 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.106 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -107,10 +107,13 @@ ikev2_msg_cb(int fd, short event, void *arg)
 	ikev2_msg_cleanup(env, &msg);
 }
 
+/* Forward an IKEv1 datagram to the ikev1 process.  */
 void
 ikev1_recv(struct iked *env, struct iked_message *msg)
 {
 	struct ike_header	*hdr;
+	struct ikev1_datagram	 dg;
+	struct iovec		 iov[2];
 
 	if (ibuf_size(msg->msg_data) <= sizeof(*hdr)) {
 		log_debug("%s: short message", __func__);
@@ -121,7 +124,7 @@ ikev1_recv(struct iked *env, struct iked_message *msg)
 
 	log_debug("%s: header ispi %s rspi %s"
 	    " nextpayload %u version 0x%02x exchange %u flags 0x%02x"
-	    " msgid %u length %u", __func__,
+	    " msgid %u length %u, peer %s local %s%s", __func__,
 	    print_spi(betoh64(hdr->ike_ispi), 8),
 	    print_spi(betoh64(hdr->ike_rspi), 8),
 	    hdr->ike_nextpayload,
@@ -129,9 +132,107 @@ ikev1_recv(struct iked *env, struct iked_message *msg)
 	    hdr->ike_exchange,
 	    hdr->ike_flags,
 	    betoh32(hdr->ike_msgid),
-	    betoh32(hdr->ike_length));
+	    betoh32(hdr->ike_length),
+	    print_addr(&msg->msg_peer), print_addr(&msg->msg_local),
+	    msg->msg_natt ? ", NAT-T" : "");
 
-	log_debug("%s: IKEv1 not supported", __func__);
+	bzero(&dg, sizeof(dg));
+	memcpy(&dg.dg_peer, &msg->msg_peer, sizeof(dg.dg_peer));
+	dg.dg_peerlen = msg->msg_peerlen;
+	memcpy(&dg.dg_local, &msg->msg_local, sizeof(dg.dg_local));
+	dg.dg_locallen = msg->msg_locallen;
+	dg.dg_natt = msg->msg_natt;
+
+	iov[0].iov_base = &dg;
+	iov[0].iov_len = sizeof(dg);
+	iov[1].iov_base = ibuf_data(msg->msg_data);
+	iov[1].iov_len = ibuf_size(msg->msg_data);
+
+	if (proc_composev(&env->sc_ps, PROC_IKEV1, IMSG_IKE_MESSAGE,
+	    iov, 2) == -1)
+		log_warn("%s: failed to forward message to ikev1", __func__);
+}
+
+/* Send an IKEv1 datagram on behalf of the ikev1 process.  */
+int
+ikev1_send(struct iked *env, struct imsg *imsg)
+{
+	struct ikev1_datagram	 dg;
+	struct iked_socket	*sock = NULL, **socks;
+	struct ibuf		*buf = NULL;
+	uint8_t			*ptr;
+	size_t			 len;
+	uint32_t		 natt = 0x00000000;
+	unsigned int		 i;
+
+	len = IMSG_DATA_SIZE(imsg);
+	if (len <= sizeof(dg)) {
+		log_debug("%s: short message", __func__);
+		return (0);
+	}
+	memcpy(&dg, imsg->data, sizeof(dg));
+	ptr = (uint8_t *)imsg->data + sizeof(dg);
+	len -= sizeof(dg);
+
+	if (dg.dg_peerlen > sizeof(dg.dg_peer) ||
+	    dg.dg_locallen > sizeof(dg.dg_local) ||
+	    dg.dg_peer.ss_family != dg.dg_local.ss_family) {
+		log_debug("%s: invalid addresses", __func__);
+		return (0);
+	}
+
+	/* Pick the socket the message came in on: same family and port. */
+	switch (dg.dg_local.ss_family) {
+	case AF_INET:
+		socks = env->sc_sock4;
+		break;
+	case AF_INET6:
+		socks = env->sc_sock6;
+		break;
+	default:
+		log_debug("%s: invalid address family %u", __func__,
+		    dg.dg_local.ss_family);
+		return (0);
+	}
+	for (i = 0; i < 2; i++) {
+		if (socks[i] != NULL &&
+		    socket_getport((struct sockaddr *)&socks[i]->sock_addr) ==
+		    socket_getport((struct sockaddr *)&dg.dg_local)) {
+			sock = socks[i];
+			break;
+		}
+	}
+	if (sock == NULL) {
+		log_debug("%s: no socket for local address %s", __func__,
+		    print_addr(&dg.dg_local));
+		return (0);
+	}
+
+	if (dg.dg_natt) {
+		if ((buf = ibuf_new(&natt, sizeof(natt))) == NULL ||
+		    ibuf_add(buf, ptr, len) == -1) {
+			log_debug("%s: failed to set NAT-T", __func__);
+			ibuf_free(buf);
+			return (0);
+		}
+		ptr = ibuf_data(buf);
+		len = ibuf_size(buf);
+	}
+
+	log_debug("%s: send %zu bytes peer %s local %s%s", __func__, len,
+	    print_addr(&dg.dg_peer), print_addr(&dg.dg_local),
+	    dg.dg_natt ? ", NAT-T" : "");
+
+	if (sendtofrom(sock->sock_fd, ptr, len, 0,
+	    (struct sockaddr *)&dg.dg_peer, dg.dg_peerlen,
+	    (struct sockaddr *)&dg.dg_local, dg.dg_locallen) == -1) {
+		log_warn("%s: sendtofrom", __func__);
+		ikestat_inc(env, ikes_msg_send_failures);
+	} else
+		ikestat_inc(env, ikes_msg_sent);
+
+	ibuf_free(buf);
+	return (0);
 }
 
 struct ibuf *

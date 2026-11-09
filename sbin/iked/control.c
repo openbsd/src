@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.47 2026/07/27 13:47:34 tb Exp $	*/
+/*	$OpenBSD: control.c,v 1.48 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -47,11 +47,13 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 void	 control_imsg_forward_peerid(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);
+int	 control_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
 int	 control_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 int	 control_dispatch_ca(int, struct privsep_proc *, struct imsg *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT, NULL },
+	{ "ikev1",	PROC_IKEV1, control_dispatch_ikev1 },
 	{ "ikev2",	PROC_IKEV2, control_dispatch_ikev2 },
 	{ "ca",		PROC_CERT, control_dispatch_ca },
 };
@@ -363,6 +365,20 @@ control_imsg_forward_peerid(struct imsg *imsg)
 			imsg_compose_event(&c->iev, imsg->hdr.type,
 			    0, imsg->hdr.pid, -1, imsg->data,
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
+}
+
+int
+control_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_SA:
+		control_imsg_forward_peerid(imsg);
+		return (0);
+	default:
+		break;
+	}
+
+	return (-1);
 }
 
 int

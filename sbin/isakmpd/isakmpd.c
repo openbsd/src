@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.110 2026/10/03 01:31:30 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.111 2026/11/09 12:31:36 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -47,6 +47,7 @@
 #include "app.h"
 #include "conf.h"
 #include "connection.h"
+#include "ikedmode.h"
 #include "init.h"
 #include "libcrypto.h"
 #include "log.h"
@@ -295,6 +296,10 @@ main(int argc, char *argv[])
 	int             n, m;
 	size_t          mask_size;
 	struct timespec ts, *timeout;
+
+	/* Started by iked(8) as its ikev1 process?  */
+	if (argc > 1 && strcmp(argv[1], "--iked-mode") == 0)
+		return ikedmode_main(argc, argv);
 
 	/* Log cmd line parsing and initialization errors to stderr.  */
 	log_to(stderr);

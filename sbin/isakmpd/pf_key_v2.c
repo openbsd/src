@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.208 2026/10/03 01:31:30 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.209 2026/11/09 12:31:36 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -424,9 +424,7 @@ pf_key_v2_find_ext(struct pf_key_v2_msg *msg, u_int16_t type)
 int
 pf_key_v2_open(void)
 {
-	int		fd = -1, err;
-	struct sadb_msg msg;
-	struct pf_key_v2_msg *regmsg = 0, *ret = 0;
+	int		fd;
 
 	/* Open the socket we use to speak to IPsec. */
 	pf_key_v2_socket = -1;
@@ -434,11 +432,24 @@ pf_key_v2_open(void)
 	if (fd == -1) {
 		log_error("pf_key_v2_open: "
 		    "socket (PF_KEY, SOCK_RAW, PF_KEY_V2) failed");
-		goto cleanup;
+		return -1;
 	}
+	return pf_key_v2_register(fd);
+}
+
+/*
+ * Use the PF_KEY socket FD, opened by the monitor or handed to us by
+ * iked(8), and register it to get ESP and AH acquires from the kernel.
+ */
+int
+pf_key_v2_register(int fd)
+{
+	int		err;
+	struct sadb_msg msg;
+	struct pf_key_v2_msg *regmsg = 0, *ret = 0;
+
 	pf_key_v2_socket = fd;
 
-	/* Register it to get ESP and AH acquires from the kernel.  */
 	msg.sadb_msg_seq = 0;
 	msg.sadb_msg_type = SADB_REGISTER;
 	msg.sadb_msg_satype = SADB_SATYPE_ESP;
@@ -451,7 +462,7 @@ pf_key_v2_open(void)
 		goto cleanup;
 	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
-		log_print("pf_key_v2_open: REGISTER: %s", strerror(err));
+		log_print("pf_key_v2_register: REGISTER: %s", strerror(err));
 		goto cleanup;
 	}
 	/* XXX Register the accepted transforms.  */
@@ -471,7 +482,7 @@ pf_key_v2_open(void)
 		goto cleanup;
 	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
-		log_print("pf_key_v2_open: REGISTER: %s", strerror(err));
+		log_print("pf_key_v2_register: REGISTER: %s", strerror(err));
 		goto cleanup;
 	}
 	/* XXX Register the accepted transforms.  */
@@ -491,7 +502,7 @@ pf_key_v2_open(void)
 		goto cleanup;
 	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
-		log_print("pf_key_v2_open: REGISTER: %s", strerror(err));
+		log_print("pf_key_v2_register: REGISTER: %s", strerror(err));
 		goto cleanup;
 	}
 	/* XXX Register the accepted transforms.  */
@@ -501,10 +512,8 @@ pf_key_v2_open(void)
 	return fd;
 
 cleanup:
-	if (pf_key_v2_socket != -1) {
-		close(pf_key_v2_socket);
-		pf_key_v2_socket = -1;
-	}
+	close(pf_key_v2_socket);
+	pf_key_v2_socket = -1;
 	if (ret)
 		pf_key_v2_msg_free(ret);
 	return -1;

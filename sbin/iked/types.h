@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.55 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: types.h,v 1.56 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -19,6 +19,9 @@
 
 #ifndef IKED_TYPES_H
 #define IKED_TYPES_H
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #ifndef IKED_USER
 #define IKED_USER		"_iked"
@@ -45,6 +48,10 @@
 #define IKED_NAS_ID		"OpenIKED"
 
 #define IKED_OCSP_RESPCERT	"ocsp/responder.crt"
+
+#ifndef ISAKMPD_PATH
+#define ISAKMPD_PATH		"/sbin/isakmpd"
+#endif
 
 #define IKED_OPT_VERBOSE	0x00000001
 #define IKED_OPT_NOACTION	0x00000002
@@ -140,6 +147,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_STATS,
 	IMSG_CTL_PROCFD,
 	IMSG_CTL_PROCREADY,
+	IMSG_IKEV1_COMMAND,
 };
 
 enum privsep_procid {
@@ -147,7 +155,28 @@ enum privsep_procid {
 	PROC_CONTROL,
 	PROC_CERT,
 	PROC_IKEV2,
+	PROC_IKEV1,
 	PROC_MAX
+};
+
+struct privsep_fd {
+	enum privsep_procid		 pf_procid;
+	unsigned int			 pf_instance;
+};
+
+#define PROC_PARENT_SOCK_FILENO 3
+
+/*
+ * An IKEv1 datagram forwarded between the ikev2 process, which owns the
+ * UDP sockets, and the ikev1 process (IMSG_IKE_MESSAGE).  The raw IKE
+ * message follows; the NAT-T marker is stripped.
+ */
+struct ikev1_datagram {
+	struct sockaddr_storage	 dg_peer;
+	socklen_t		 dg_peerlen;
+	struct sockaddr_storage	 dg_local;
+	socklen_t		 dg_locallen;
+	int			 dg_natt;
 };
 
 enum flushmode {

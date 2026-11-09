@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.99 2024/09/15 11:08:50 yasuoka Exp $	*/
+/*	$OpenBSD: config.c,v 1.100 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <netdb.h>
 #include <errno.h>
 #include <err.h>
 #include <event.h>
@@ -522,6 +524,7 @@ config_setmode(struct iked *env, unsigned int passive)
 	 */
 	type = passive ? IMSG_CTL_PASSIVE : IMSG_CTL_ACTIVE;
 	proc_compose(&env->sc_ps, PROC_CERT, type, NULL, 0);
+	proc_compose(&env->sc_ps, PROC_IKEV1, type, NULL, 0);
 
 	return (0);
 }
@@ -727,6 +730,12 @@ config_setpfkey(struct iked *env)
 		return (-1);
 	proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1,
 	    IMSG_PFKEY_SOCKET, -1, s, NULL, 0);
+
+	/* The ikev1 process installs its own SAs and flows. */
+	if ((s = pfkey_socket(env)) == -1)
+		return (-1);
+	proc_compose_imsg(&env->sc_ps, PROC_IKEV1, -1,
+	    IMSG_PFKEY_SOCKET, -1, s, NULL, 0);
 	return (0);
 }
 
@@ -816,6 +825,364 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
 	}
 
 	return (0);
+}
+
+/*
+ * Send one command line to the ikev1 process (isakmpd).  The format is
+ * the one ipsecctl(8) writes to the isakmpd FIFO, see sbin/ipsecctl/ike.c
+ * and isakmpd(8).  Lines with the pre-shared key are not logged.
+ */
+static int
+config_ikev1cmd(struct iked *env, const char *fmt, ...)
+{
+	char	*cmd;
+	va_list	 ap;
+	int	 ret = -1;
+
+	va_start(ap, fmt);
+	if (vasprintf(&cmd, fmt, ap) == -1)
+		cmd = NULL;
+	va_end(ap);
+	if (cmd == NULL) {
+		log_warn("%s: vasprintf", __func__);
+		return (-1);
+	}
+
+	if (strstr(cmd, ":Authentication=") == NULL)
+		log_debug("%s: %s", __func__, cmd);
+
+	if (env->sc_opts & IKED_OPT_NOACTION) {
+		ret = 0;
+		goto done;
+	}
+
+	if (proc_compose(&env->sc_ps, PROC_IKEV1, IMSG_IKEV1_COMMAND,
+	    cmd, strlen(cmd) + 1) == -1) {
+		log_debug("%s: proc_compose failed", __func__);
+		goto done;
+	}
+	ret = 0;
+ done:
+	freezero(cmd, strlen(cmd));
+	return (ret);
+}
+
+/*
+ * Global isakmpd settings that belong to no policy.  Sent after every
+ * RESET_POLICY, which makes isakmpd drop them, and before IMSG_COMPILE.
+ * DPD-check-interval is iked's dpd_check_interval: isakmpd only probes
+ * peers that advertised the DPD vendor ID, and 0 disables probing.
+ */
+int
+config_setikev1general(struct iked *env)
+{
+	return (config_ikev1cmd(env,
+	    "C set [General]:DPD-check-interval=%llu force",
+	    (unsigned long long)env->sc_alive_timeout));
+}
+
+/* Print the netmask of a prefix length as isakmpd wants it. */
+static const char *
+config_ikev1netmask(int af, uint8_t prefixlen)
+{
+	static char		 buf[INET6_ADDRSTRLEN];
+	struct in_addr		 in4;
+	struct in6_addr		 in6;
+	unsigned int		 i;
+
+	switch (af) {
+	case AF_INET:
+		if (prefixlen > 32)
+			return (NULL);
+		in4.s_addr = prefixlen == 0 ? 0 :
+		    htonl(0xffffffffU << (32 - prefixlen));
+		return (inet_ntop(af, &in4, buf, sizeof(buf)));
+	case AF_INET6:
+		if (prefixlen > 128)
+			return (NULL);
+		bzero(&in6, sizeof(in6));
+		for (i = 0; i < prefixlen / 8; i++)
+			in6.s6_addr[i] = 0xff;
+		if (prefixlen % 8)
+			in6.s6_addr[i] = 0xff << (8 - prefixlen % 8);
+		return (inet_ntop(af, &in6, buf, sizeof(buf)));
+	default:
+		return (NULL);
+	}
+}
+
+/* The [id-...] section for a static ID of an ikev1 policy. */
+static int
+config_ikev1id(struct iked *env, struct iked_static_id *id,
+    const char *section, const char *tag)
+{
+	const char	*type, *attr;
+
+	switch (id->id_type) {
+	case IKEV2_ID_IPV4:
+		type = "IPV4_ADDR";
+		attr = "Address";
+		break;
+	case IKEV2_ID_IPV6:
+		type = "IPV6_ADDR";
+		attr = "Address";
+		break;
+	case IKEV2_ID_FQDN:
+		type = "FQDN";
+		attr = "Name";
+		break;
+	case IKEV2_ID_UFQDN:
+		type = "USER_FQDN";
+		attr = "Name";
+		break;
+	default:
+		log_warnx("%s: unsupported ID type %u", __func__,
+		    id->id_type);
+		return (-1);
+	}
+
+	if (config_ikev1cmd(env, "C set [%s]:%s=id-%s force", section, tag,
+	    id->id_data) == -1 ||
+	    config_ikev1cmd(env, "C set [id-%s]:ID-type=%s force",
+	    id->id_data, type) == -1 ||
+	    config_ikev1cmd(env, "C set [id-%s]:%s=%s force", id->id_data,
+	    attr, id->id_data) == -1)
+		return (-1);
+	return (0);
+}
+
+/* The [from-...] or [to-...] section of a flow endpoint. */
+static int
+config_ikev1flowid(struct iked *env, struct iked_addr *addr,
+    uint8_t ipproto, const char *section)
+{
+	const char	*mask;
+	int		 v = addr->addr_af == AF_INET ? 4 : 6;
+
+	if (addr->addr_net) {
+		if ((mask = config_ikev1netmask(addr->addr_af,
+		    addr->addr_mask)) == NULL)
+			return (-1);
+		if (config_ikev1cmd(env, "C set [%s]:ID-type=IPV%d_ADDR_SUBNET"
+		    " force", section, v) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:Network=%s force",
+		    section, print_addr(&addr->addr)) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:Netmask=%s force",
+		    section, mask) == -1)
+			return (-1);
+	} else {
+		if (config_ikev1cmd(env, "C set [%s]:ID-type=IPV%d_ADDR force",
+		    section, v) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:Address=%s force",
+		    section, print_addr(&addr->addr)) == -1)
+			return (-1);
+	}
+	if (ipproto &&
+	    config_ikev1cmd(env, "C set [%s]:Protocol=%u force", section,
+	    ipproto) == -1)
+		return (-1);
+	if (addr->addr_port &&
+	    config_ikev1cmd(env, "C set [%s]:Port=%u force", section,
+	    ntohs(addr->addr_port)) == -1)
+		return (-1);
+	return (0);
+}
+
+/*
+ * Configure an ikev1 policy in the ikev1 process (isakmpd).  This is
+ * what ipsecctl(8) does for an "ike" rule in ipsec.conf, with a fixed
+ * cipher suite: Main Mode AES-128-CBC, HMAC-SHA2-256, modp3072 and Quick
+ * Mode ESP AES-128-CBC, HMAC-SHA2-256 with PFS modp3072.  Only pre-shared
+ * keys are supported, see create_ike().  The peer section selects the
+ * imsg transport; for the active role isakmpd creates it from the
+ * section's Address and Local-address.
+ */
+int
+config_setikev1policy(struct iked *env, struct iked_policy *pol)
+{
+	struct iked_flow	*flow;
+	char			 p1name[IKED_ID_SIZE], psk[IKED_PSK_SIZE * 2 + 3];
+	char			 p2name[IKED_ID_SIZE], lid[IKED_ID_SIZE];
+	char			 rid[IKED_ID_SIZE], proto[16], port[16];
+	char			 peer[NI_MAXHOST], local[NI_MAXHOST];
+	const char		*xf1, *xf2, *satype, *xfid, *encap;
+	unsigned int		 i;
+	int			 ret;
+
+	/* print_addr() cycles through a few buffers, keep copies. */
+	strlcpy(peer, print_addr(&pol->pol_peer.addr), sizeof(peer));
+	local[0] = '\0';
+	if (pol->pol_local.addr_af != AF_UNSPEC)
+		strlcpy(local, print_addr(&pol->pol_local.addr),
+		    sizeof(local));
+
+	/* Phase 1: the peer. */
+	if (local[0] != '\0')
+		ret = snprintf(p1name, sizeof(p1name), "peer-%s-local-%s",
+		    peer, local);
+	else
+		ret = snprintf(p1name, sizeof(p1name), "peer-%s", peer);
+	if (ret < 0 || (size_t)ret >= sizeof(p1name))
+		return (-1);
+
+	/* isakmpd takes the pre-shared key in hex, limited by its parser. */
+	if (pol->pol_auth.auth_length * 2 + 3 > 200)
+		return (-1);
+	strlcpy(psk, "0x", sizeof(psk));
+	for (i = 0; i < pol->pol_auth.auth_length; i++)
+		snprintf(psk + 2 + i * 2, sizeof(psk) - 2 - i * 2, "%02x",
+		    pol->pol_auth.auth_data[i]);
+
+	if (config_ikev1cmd(env, "C set [Phase 1]:%s=%s force", peer,
+	    p1name) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:Phase=1 force", p1name) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:Transport=imsg force",
+	    p1name) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:Address=%s force", p1name,
+	    peer) == -1)
+		goto fail;
+	if (local[0] != '\0' &&
+	    config_ikev1cmd(env, "C set [%s]:Local-address=%s force",
+	    p1name, local) == -1)
+		goto fail;
+	if (config_ikev1cmd(env, "C set [%s]:Authentication=%s force",
+	    p1name, psk) == -1)
+		goto fail;
+
+	xf1 = "phase1-transform-PRE_SHARED-SHA2_256-AES128-MODP_3072";
+	if (config_ikev1cmd(env, "C set [%s]:Configuration=phase1-%s force",
+	    p1name, p1name) == -1 ||
+	    config_ikev1cmd(env, "C set [phase1-%s]:EXCHANGE_TYPE=ID_PROT "
+	    "force", p1name) == -1 ||
+	    config_ikev1cmd(env, "C add [phase1-%s]:Transforms=%s force",
+	    p1name, xf1) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:AUTHENTICATION_METHOD=PRE_SHARED"
+	    " force", xf1) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:HASH_ALGORITHM=SHA2_256 force",
+	    xf1) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:ENCRYPTION_ALGORITHM=AES_CBC "
+	    "force", xf1) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:KEY_LENGTH=128,128:128 force",
+	    xf1) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:GROUP_DESCRIPTION=MODP_3072 "
+	    "force", xf1) == -1 ||
+	    config_ikev1cmd(env, "C set [%s]:Life=LIFE_MAIN_MODE force",
+	    xf1) == -1)
+		goto fail;
+
+	if (pol->pol_localid.id_type != IKEV2_ID_NONE &&
+	    config_ikev1id(env, &pol->pol_localid, p1name, "ID") == -1)
+		goto fail;
+	if (pol->pol_peerid.id_type != IKEV2_ID_NONE &&
+	    config_ikev1id(env, &pol->pol_peerid, p1name, "Remote-ID") == -1)
+		goto fail;
+
+	/* Phase 2: one passive connection per flow. */
+	switch (pol->pol_saproto) {
+	case IKEV2_SAPROTO_ESP:
+		satype = "IPSEC_ESP";
+		xfid = "AES";
+		break;
+	case IKEV2_SAPROTO_AH:
+		satype = "IPSEC_AH";
+		xfid = "SHA2_256";
+		break;
+	default:
+		log_warnx("%s: unsupported SA type %u", __func__,
+		    pol->pol_saproto);
+		return (-1);
+	}
+	encap = pol->pol_flags & IKED_POLICY_TRANSPORT ? "TRANSPORT" :
+	    "TUNNEL";
+
+	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
+		proto[0] = port[0] = '\0';
+		if (flow->flow_ipproto)
+			snprintf(proto, sizeof(proto), "=%u",
+			    flow->flow_ipproto);
+		if (flow->flow_src.addr_port)
+			snprintf(port, sizeof(port), ":%u",
+			    ntohs(flow->flow_src.addr_port));
+		ret = snprintf(lid, sizeof(lid), "from-%s/%u%s%s",
+		    print_addr(&flow->flow_src.addr), flow->flow_src.addr_mask,
+		    proto, port);
+		if (ret < 0 || (size_t)ret >= sizeof(lid))
+			return (-1);
+		if (flow->flow_dst.addr_port)
+			snprintf(port, sizeof(port), ":%u",
+			    ntohs(flow->flow_dst.addr_port));
+		ret = snprintf(rid, sizeof(rid), "to-%s/%u%s%s",
+		    print_addr(&flow->flow_dst.addr), flow->flow_dst.addr_mask,
+		    proto, port);
+		if (ret < 0 || (size_t)ret >= sizeof(rid))
+			return (-1);
+		ret = snprintf(p2name, sizeof(p2name), "%s-%s", lid, rid);
+		if (ret < 0 || (size_t)ret >= sizeof(p2name))
+			return (-1);
+
+		if (config_ikev1cmd(env, "C set [%s]:Phase=2 force",
+		    p2name) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:ISAKMP-peer=%s force",
+		    p2name, p1name) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:Configuration=phase2-%s "
+		    "force", p2name, p2name) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:Local-ID=%s force",
+		    p2name, lid) == -1 ||
+		    config_ikev1cmd(env, "C set [%s]:Remote-ID=%s force",
+		    p2name, rid) == -1)
+			goto fail;
+		if (pol->pol_tag[0] != '\0' &&
+		    config_ikev1cmd(env, "C set [%s]:PF-Tag=%s force",
+		    p2name, pol->pol_tag) == -1)
+			goto fail;
+
+		xf2 = "phase2-transform-AES128-SHA2_256-MODP_3072";
+		if (config_ikev1cmd(env, "C set [phase2-%s]:EXCHANGE_TYPE="
+		    "QUICK_MODE force", p2name) == -1 ||
+		    config_ikev1cmd(env, "C set [phase2-%s]:Suites=phase2-"
+		    "suite-%s force", p2name, p2name) == -1 ||
+		    config_ikev1cmd(env, "C set [phase2-suite-%s]:Protocols="
+		    "phase2-protocol-%s force", p2name, p2name) == -1 ||
+		    config_ikev1cmd(env, "C set [phase2-protocol-%s]:"
+		    "PROTOCOL_ID=%s force", p2name, satype) == -1 ||
+		    config_ikev1cmd(env, "C set [phase2-protocol-%s]:"
+		    "Transforms=%s-%s force", p2name, xf2, encap) == -1 ||
+		    config_ikev1cmd(env, "C set [%s-%s]:TRANSFORM_ID=%s force",
+		    xf2, encap, xfid) == -1)
+			goto fail;
+		if (pol->pol_saproto == IKEV2_SAPROTO_ESP &&
+		    config_ikev1cmd(env, "C set [%s-%s]:KEY_LENGTH=128,128:128"
+		    " force", xf2, encap) == -1)
+			goto fail;
+		if (config_ikev1cmd(env, "C set [%s-%s]:ENCAPSULATION_MODE=%s"
+		    " force", xf2, encap, encap) == -1 ||
+		    config_ikev1cmd(env, "C set [%s-%s]:AUTHENTICATION_"
+		    "ALGORITHM=HMAC_SHA2_256 force", xf2, encap) == -1 ||
+		    config_ikev1cmd(env, "C set [%s-%s]:GROUP_DESCRIPTION="
+		    "MODP_3072 force", xf2, encap) == -1 ||
+		    config_ikev1cmd(env, "C set [%s-%s]:Life=LIFE_QUICK_MODE "
+		    "force", xf2, encap) == -1)
+			goto fail;
+
+		if (config_ikev1flowid(env, &flow->flow_src,
+		    flow->flow_ipproto, lid) == -1 ||
+		    config_ikev1flowid(env, &flow->flow_dst,
+		    flow->flow_ipproto, rid) == -1)
+			goto fail;
+
+		/* Active connections are recorded as passive ones too. */
+		if (config_ikev1cmd(env, "C add [Phase 2]:%s=%s",
+		    pol->pol_flags & IKED_POLICY_ACTIVE ? "Connections" :
+		    "Passive-Connections", p2name) == -1)
+			goto fail;
+	}
+
+	explicit_bzero(psk, sizeof(psk));
+	return (0);
+
+ fail:
+	explicit_bzero(psk, sizeof(psk));
+	return (-1);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.149 2025/04/30 03:51:42 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.150 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -446,7 +446,7 @@ typedef struct {
 %token	FROM ESP AH IN PEER ON OUT TO SRCID DSTID PSK PORT
 %token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA ESN NOESN
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
-%token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
+%token	IKE IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE RDOMAIN
 %token	FRAGMENTATION NOFRAGMENTATION DPD_CHECK_INTERVAL
@@ -493,6 +493,7 @@ grammar		: /* empty */
 		| grammar set '\n'
 		| grammar user '\n'
 		| grammar ikev2rule '\n'
+		| grammar ikev1rule '\n'
 		| grammar radius '\n'
 		| grammar varset '\n'
 		| grammar otherrule skipline '\n'
@@ -570,6 +571,22 @@ ikev2rule	: IKEV2 name ikeflags satype af proto rdomain hosts_list peers
 			if (create_ike($2, $5, $6, $7, $8, &$9, $10, $11, $4,
 			    $3, $12.srcid, $12.dstid, $13, &$14, &$15,
 			    $18, $16, $17) == -1) {
+				yyerror("create_ike failed");
+				YYERROR;
+			}
+		}
+		;
+
+/*
+ * Same syntax as ikev2, handled by the ikev1 process (isakmpd).
+ * create_ike() rejects what the IKEv1 responder does not support yet.
+ */
+ikev1rule	: IKEV1 name ikeflags satype af proto rdomain hosts_list peers
+		    ike_sas child_sas ids ikelifetime lifetime ikeauth ikecfg
+		    iface filters {
+			if (create_ike($2, $5, $6, $7, $8, &$9, $10, $11, $4,
+			    $3 | IKED_POLICY_IKEV1, $12.srcid, $12.dstid, $13,
+			    &$14, &$15, $18, $16, $17) == -1) {
 				yyerror("create_ike failed");
 				YYERROR;
 			}
@@ -1494,7 +1511,7 @@ varset		: STRING '=' string
 /*
  * ignore IKEv1/manual keying rules in ipsec.conf
  */
-otherrule	: IKEV1
+otherrule	: IKE
 		| sarule
 		| FLOW
 		| TCPMD5
@@ -1590,9 +1607,10 @@ lookup(char *s)
 		{ "from",		FROM },
 		{ "group",		GROUP },
 		{ "iface",		IFACE },
-		{ "ike",		IKEV1 },
+		{ "ike",		IKE },
 		{ "ikelifetime",	IKELIFETIME },
 		{ "ikesa",		IKESA },
+		{ "ikev1",		IKEV1 },
 		{ "ikev2",		IKEV2 },
 		{ "include",		INCLUDE },
 		{ "inet",		INET },
@@ -2874,6 +2892,57 @@ create_ike(char *name, int af, struct ipsec_addr_wrap *ipproto,
 	TAILQ_INIT(&pol.pol_proposals);
 	RB_INIT(&pol.pol_flows);
 
+	if (pol.pol_flags & IKED_POLICY_IKEV1) {
+		/*
+		 * The IKEv1 responder speaks Main Mode with a fixed cipher
+		 * suite and pre-shared keys, see config_setikev1policy().
+		 */
+		if ((pol.pol_flags & IKED_POLICY_ACTIVE) &&
+		    pol.pol_local.addr_af == AF_UNSPEC) {
+			yyerror("ikev1: active mode requires a local address");
+			goto done;
+		}
+		if (pol.pol_flags & (IKED_POLICY_IPCOMP|
+		    IKED_POLICY_NATT_FORCE)) {
+			yyerror("ikev1: ipcomp and natt not supported");
+			goto done;
+		}
+		if (pol.pol_auth.auth_method != IKEV2_AUTH_SHARED_KEY_MIC) {
+			yyerror("ikev1: psk authentication required");
+			goto done;
+		}
+		if (pol.pol_peer.addr_af == AF_UNSPEC ||
+		    pol.pol_peer.addr_net) {
+			yyerror("ikev1: peer must be a single address");
+			goto done;
+		}
+		if (pol.pol_local.addr_net) {
+			yyerror("ikev1: local must be a single address");
+			goto done;
+		}
+		if ((ike_sa != NULL && ike_sa->nxfs) ||
+		    (ipsec_sa != NULL && ipsec_sa->nxfs)) {
+			yyerror("ikev1: ikesa and childsa transforms not "
+			    "supported yet");
+			goto done;
+		}
+		if (ikelifetime || (lt != NULL &&
+		    memcmp(lt, &deflifetime, sizeof(*lt)) != 0)) {
+			yyerror("ikev1: lifetimes not supported yet");
+			goto done;
+		}
+		if (ikecfg != NULL || iface != NULL ||
+		    (filter != NULL && filter->tap)) {
+			yyerror("ikev1: config, iface and tap not supported");
+			goto done;
+		}
+		if (pol.pol_localid.id_type == IKEV2_ID_ASN1_DN ||
+		    pol.pol_peerid.id_type == IKEV2_ID_ASN1_DN) {
+			yyerror("ikev1: distinguished names not supported");
+			goto done;
+		}
+	}
+
 	if (ike_sa == NULL || ike_sa->nxfs == 0) {
 		/* AES-GCM proposal */
 		if ((p = calloc(1, sizeof(*p))) == NULL)
@@ -3149,8 +3218,15 @@ create_ike(char *name, int af, struct ipsec_addr_wrap *ipproto,
 	log_debug("%s: using %s for peer %s", __func__,
 	    print_xf(ikeauth->auth_method, 0, methodxfs), idstr);
 
-	config_setpolicy(env, &pol, PROC_IKEV2);
-	config_setflow(env, &pol, PROC_IKEV2);
+	if (pol.pol_flags & IKED_POLICY_IKEV1) {
+		if (config_setikev1policy(env, &pol) == -1) {
+			yyerror("ikev1: could not configure policy");
+			goto done;
+		}
+	} else {
+		config_setpolicy(env, &pol, PROC_IKEV2);
+		config_setflow(env, &pol, PROC_IKEV2);
+	}
 
 	rules++;
 	ret = 0;

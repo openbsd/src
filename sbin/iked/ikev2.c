@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.404 2026/09/24 15:52:05 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.405 2026/11/09 12:31:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -26,6 +26,7 @@
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 
+#include <poll.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <syslog.h>
@@ -50,6 +51,7 @@
 #include "version.h"
 
 void	 ikev2_info(struct iked *, struct imsg *, int);
+void	 ikev2_shutdown_ikev1(struct iked *);
 void	 ikev2_info_sa(struct iked *, struct imsg *, int, const char *,
 	    struct iked_sa *);
 void	 ikev2_info_csa(struct iked *, struct imsg *, int, const char *,
@@ -64,6 +66,7 @@ void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 void	 ikev2_shutdown(void);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ikev2_dispatch_cert(int, struct privsep_proc *, struct imsg *);
+int	 ikev2_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
 int	 ikev2_dispatch_control(int, struct privsep_proc *, struct imsg *);
 
 struct iked_sa *
@@ -197,7 +200,8 @@ void	ikev2_ctl_show_stats(struct iked *, struct imsg *);
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
 	{ "certstore",	PROC_CERT,	ikev2_dispatch_cert },
-	{ "control",	PROC_CONTROL,	ikev2_dispatch_control }
+	{ "control",	PROC_CONTROL,	ikev2_dispatch_control },
+	{ "ikev1",	PROC_IKEV1,	ikev2_dispatch_ikev1 }
 };
 
 void
@@ -221,11 +225,52 @@ ikev2_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 		fatal("pledge");
 }
 
+/*
+ * On shutdown the ikev1 process deletes its SAs and sends DELETE
+ * notifications through us.  The parent closes all pipes at once, so we
+ * would normally be gone before they arrive: keep reading the ikev1 pipe
+ * until ikev1 closes it, bounded in case ikev1 hangs.
+ */
+void
+ikev2_shutdown_ikev1(struct iked *env)
+{
+	struct imsgev	*iev;
+	struct imsgbuf	*ibuf;
+	struct imsg	 imsg;
+	struct pollfd	 pfd;
+	ssize_t		 n;
+
+	if ((iev = proc_iev(&env->sc_ps, PROC_IKEV1, 0)) == NULL ||
+	    (ibuf = &iev->ibuf)->fd == -1)
+		return;
+
+	pfd.fd = ibuf->fd;
+	pfd.events = POLLIN;
+	for (;;) {
+		for (;;) {
+			if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
+				return;
+			if (n == 0)
+				break;
+			if (imsg_get_type(&imsg) == IMSG_IKE_MESSAGE)
+				ikev1_send(env, &imsg);
+			imsg_free(&imsg);
+		}
+		if (poll(&pfd, 1, 1000) <= 0) {
+			log_debug("%s: giving up waiting for ikev1", __func__);
+			return;
+		}
+		if (imsgbuf_read(ibuf) != 1)	/* EOF or error */
+			return;
+	}
+}
+
 void
 ikev2_shutdown(void)
 {
 	struct iked		*env = iked_env;
 
+	ikev2_shutdown_ikev1(env);
 	ibuf_free(env->sc_certreq);
 	env->sc_certreq = NULL;
 	config_doreset(env, RESET_ALL);
@@ -546,6 +591,21 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+int
+ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct iked		*env = iked_env;
+
+	switch (imsg->hdr.type) {
+	case IMSG_IKE_MESSAGE:
+		return (ikev1_send(env, imsg));
+	default:
+		break;
+	}
+
+	return (-1);
 }
 
 int
@@ -7759,9 +7819,11 @@ ikev2_info(struct iked *env, struct imsg *imsg, int dolog)
 	}
 	if (dolog)
 		return;
-	/* Send empty reply to indicate end of information. */
-	proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1, IMSG_CTL_SHOW_SA,
-	    imsg->hdr.peerid, -1, NULL, 0);
+	/*
+	 * The ikev1 process appends its SAs and sends the empty reply
+	 * that ends the listing.
+	 */
+	proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV1);
 }
 
 const char *
