@@ -3,6 +3,7 @@
 # and check retransmit of FIN
 
 import os
+import subprocess
 import threading
 from addr import *
 from scapy.all import *
@@ -38,8 +39,9 @@ sniffer.start()
 time.sleep(1)
 
 print("Connect from remote client.")
-client=os.popen("ssh %s perl %s/client.pl %s %s %u shutdown" % \
-    (REMOTE_SSH, CURDIR, ip.dst, ip.src, tport), mode='w')
+client=subprocess.Popen("ssh %s perl %s/client.pl %s %s %u shutdown" % \
+    (REMOTE_SSH, CURDIR, ip.dst, ip.src, tport), shell=True,
+    stdin=subprocess.PIPE)
 
 print("Wait for SYN.")
 sniffer.join(timeout=10)
@@ -79,7 +81,7 @@ sniffer.start()
 time.sleep(1)
 
 print("Close remote client to trigger shutdown.")
-os.close(client.fileno())
+client.stdin.close()
 
 print("Wait for FIN and its retransmit.")
 sniffer.join(timeout=10)
