@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.144 2024/11/20 02:26:53 dlg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.145 2026/11/09 20:40:34 miod Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -1817,8 +1817,9 @@ tulip_mii_writebits(tulip_softc_t * const sc, unsigned data, unsigned bits)
 
     for (; bits > 0; bits--, data <<= 1) {
 	const unsigned thisbit = data & msb;
-	if (thisbit != lastbit)
+	if (thisbit != lastbit) {
 	    csr ^= MII_DOUT; MII_EMIT;  /* clock low; invert data */
+	}
 	csr ^= MII_CLKON; MII_EMIT;     /* clock high; data valid */
 	lastbit = thisbit;
 	csr ^= MII_CLKOFF; MII_EMIT;    /* clock low; data not valid */
@@ -1835,8 +1836,9 @@ tulip_mii_turnaround(tulip_softc_t * const sc, unsigned cmd)
 	csr ^= MII_CLKON; MII_EMIT;	/* clock high; data valid */
 	csr ^= MII_CLKOFF; MII_EMIT;	/* clock low; data not valid */
 	csr ^= MII_DOUT; MII_EMIT;	/* clock low; change data */
-    } else
+    } else {
 	csr |= MII_RD; MII_EMIT;	/* clock low; switch to read */
+    }
     csr ^= MII_CLKON; MII_EMIT;		/* clock high; data valid */
     csr ^= MII_CLKOFF; MII_EMIT;	/* clock low; data not valid */
 }
