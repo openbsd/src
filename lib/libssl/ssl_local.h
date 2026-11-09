@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.51 2026/11/09 06:51:46 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.52 2026/11/09 07:03:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1187,7 +1187,7 @@ int ssl_security_sigalg_check(const SSL *ssl, const EVP_PKEY *pkey);
 int ssl_security_tickets(const SSL *ssl);
 int ssl_security_version(const SSL *ssl, int version);
 int ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
-    int is_peer, int *out_error);
+    int *out_error);
 int ssl_security_shared_group(const SSL *ssl, uint16_t group_id);
 int ssl_security_supported_group(const SSL *ssl, uint16_t group_id);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.31 2026/11/09 06:51:46 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.32 2026/11/09 07:03:00 tb Exp $ */
 /*
  * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -325,80 +325,14 @@ ssl_security_cert_key(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int secop)
 	return ssl_ctx_security(ctx, secop, security_bits, 0, x509);
 }
 
-static int
-ssl_security_cert_sig_security_bits(X509 *x509, int *out_md_nid)
-{
-	int pkey_nid, security_bits;
-	uint32_t flags;
-
-	*out_md_nid = NID_undef;
-
-	/*
-	 * Returning -1 security bits makes the default security callback fail
-	 * to match bonkers behavior in OpenSSL. This in turn lets a security
-	 * callback override such failures.
-	 */
-	if (!X509_get_signature_info(x509, out_md_nid, &pkey_nid, &security_bits,
-	    &flags))
-		return -1;
-	/*
-	 * OpenSSL doesn't check flags. Test RSA-PSS certs we were provided have
-	 * a salt length distinct from hash length and thus fail this check.
-	 */
-	if ((flags & X509_SIG_INFO_TLS) == 0)
-		return -1;
-
-	/* Weird OpenSSL behavior only relevant for EdDSA certs in LibreSSL. */
-	if (*out_md_nid == NID_undef)
-		*out_md_nid = pkey_nid;
-
-	return security_bits;
-}
-
-static int
-ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int secop)
-{
-	int md_nid = NID_undef, security_bits = -1;
-
-	/* Don't check signature if self signed. */
-	if ((X509_get_extension_flags(x509) & EXFLAG_SS) != 0)
-		return 1;
-
-	/*
-	 * The default security callback fails on -1 security bits. It ignores
-	 * the md_nid (aka version) argument we pass from here.
-	 */
-	security_bits = ssl_security_cert_sig_security_bits(x509, &md_nid);
-
-	if (ssl != NULL)
-		return ssl_security(ssl, secop, security_bits, md_nid, x509);
-
-	return ssl_ctx_security(ctx, secop, security_bits, md_nid, x509);
-}
-
 int
 ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
-    int is_ee, int *out_error)
+    int *out_error)
 {
-	int key_error, operation;
-
 	*out_error = 0;
 
-	if (is_ee) {
-		operation = SSL_SECOP_EE_KEY;
-		key_error = SSL_R_EE_KEY_TOO_SMALL;
-	} else {
-		operation = SSL_SECOP_CA_KEY;
-		key_error = SSL_R_CA_KEY_TOO_SMALL;
-	}
-
-	if (!ssl_security_cert_key(ctx, ssl, x509, operation)) {
-		*out_error = key_error;
-		return 0;
-	}
-
-	if (!ssl_security_cert_sig(ctx, ssl, x509, SSL_SECOP_CA_MD)) {
-		*out_error = SSL_R_CA_MD_TOO_WEAK;
+	if (!ssl_security_cert_key(ctx, ssl, x509, SSL_SECOP_EE_KEY)) {
+		*out_error = SSL_R_EE_KEY_TOO_SMALL;
 		return 0;
 	}
 
