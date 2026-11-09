@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.206 2025/06/29 15:55:21 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.207 2026/11/09 20:37:09 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -126,7 +126,6 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
 void	identifycpu(void);
-void	regdump(struct trapframe *framep);
 void	printregs(struct reg *);
 
 struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
@@ -157,7 +156,9 @@ int	unknownmem;		/* amount of memory with an unknown use */
 
 int	cputype;		/* system type, from the RPB */
 
+#ifdef DEBUG
 int	bootdev_debug = 0;	/* patchable, or from DDB */
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -1327,18 +1328,6 @@ printregs(struct reg *regp)
 	for (i = 0; i < 32; i++)
 		printf("R%d:\t0x%016lx%s", i, regp->r_regs[i],
 		   i & 1 ? "\n" : "\t");
-}
-
-void
-regdump(struct trapframe *framep)
-{
-	struct reg reg;
-
-	frametoreg(framep, &reg);
-	reg.r_regs[R_SP] = alpha_pal_rdusp();
-
-	printf("REGISTERS:\n");
-	printregs(&reg);
 }
 
 /*

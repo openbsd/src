@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.80 2025/12/04 22:21:22 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.81 2026/11/09 20:37:09 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -143,7 +143,6 @@ void	machine_check(unsigned long, struct trapframe *, unsigned long,
 u_int64_t hwrpb_checksum(void);
 void	hwrpb_restart_setup(void);
 void	proc_trampoline(void);					/* MAGIC */
-void	regdump(struct trapframe *);
 void	regtoframe(struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
 void	syscall(u_int64_t, struct trapframe *);
