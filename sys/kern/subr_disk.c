@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.289 2026/11/09 15:31:13 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.290 2026/11/09 16:43:26 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -171,124 +171,14 @@ initdisklabel(struct disklabel *lp)
 }
 
 /*
- * Check an incoming block to make sure it is a disklabel, convert it to
- * a newer version if needed, etc etc.
+ * Check an incoming block to make sure it is a disklabel with a maximum of
+ * MAXPARTITIONS16 partitions.
  */
 int
 checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
     u_int64_t boundend)
 {
-	struct disklabel *dlp = rlp;
-	struct partition *pp;
-	u_int64_t disksize;
-	int error = 0;
-	int i;
-
-	/* These fields may not be 0, no point trying a byteswap */
-	if (dlp->d_secpercyl == 0 || dlp->d_nsectors == 0 ||
-	    dlp->d_version == 0)
-		return EINVAL;	/* invalid label */
-	else if (dlp->d_secsize == 0)
-		return ENOSPC; /* disk too small */
-
-	if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
-		error = ENOENT;	/* no disk label */
-	else if (dlp->d_npartitions > MAXPARTITIONS)
-		error = E2BIG;	/* too many partitions */
-	else if (dkcksum(dlp) != 0)
-		error = EINVAL;	/* incorrect checksum */
-
-	if (error) {
-		u_int16_t *start, *end, sum = 0;
-
-		/* If it is byte-swapped, attempt to convert it */
-		if (swap32(dlp->d_magic) != DISKMAGIC ||
-		    swap32(dlp->d_magic2) != DISKMAGIC ||
-		    swap16(dlp->d_npartitions) > MAXPARTITIONS)
-			return (error);
-
-		/*
-		 * Need a byte-swap aware dkcksum variant
-		 * inlined, because dkcksum uses a sub-field
-		 */
-		start = (u_int16_t *)dlp;
-		end = (u_int16_t *)&dlp->d_partitions[
-		    swap16(dlp->d_npartitions)];
-		while (start < end)
-			sum ^= *start++;
-		if (sum != 0)
-			return (error);
-
-		dlp->d_magic = swap32(dlp->d_magic);
-		dlp->d_type = swap16(dlp->d_type);
-
-		/* d_typename and d_packname are strings */
-
-		dlp->d_secsize = swap32(dlp->d_secsize);
-		dlp->d_nsectors = swap32(dlp->d_nsectors);
-		dlp->d_ntracks = swap32(dlp->d_ntracks);
-		dlp->d_ncylinders = swap32(dlp->d_ncylinders);
-		dlp->d_secpercyl = swap32(dlp->d_secpercyl);
-		dlp->d_secperunit = swap32(dlp->d_secperunit);
-
-		/* d_uid is a string */
-
-		dlp->d_acylinders = swap32(dlp->d_acylinders);
-
-		dlp->d_flags = swap32(dlp->d_flags);
-
-		dlp->d_secperunith = swap16(dlp->d_secperunith);
-		dlp->d_version = swap16(dlp->d_version);
-
-		for (i = 0; i < NSPARE; i++)
-			dlp->d_spare[i] = swap32(dlp->d_spare[i]);
-
-		dlp->d_magic2 = swap32(dlp->d_magic2);
-
-		dlp->d_npartitions = swap16(dlp->d_npartitions);
-
-		for (i = 0; i < MAXPARTITIONS; i++) {
-			pp = &dlp->d_partitions[i];
-			pp->p_size = swap32(pp->p_size);
-			pp->p_offset = swap32(pp->p_offset);
-			pp->p_offseth = swap16(pp->p_offseth);
-			pp->p_sizeh = swap16(pp->p_sizeh);
-			pp->p_cpg = swap16(pp->p_cpg);
-		}
-
-		dlp->d_checksum = 0;
-		dlp->d_checksum = dkcksum(dlp);
-		error = 0;
-	}
-
-	/* XXX should verify lots of other fields and whine a lot */
-
-	/* Initial passed in lp contains the real disk size. */
-	disksize = DL_GETDSIZE(lp);
-
-	if (lp != dlp)
-		*lp = *dlp;
-
-#ifdef DEBUG
-	if (DL_GETDSIZE(lp) != disksize)
-		printf("on-disk disklabel has incorrect disksize (%llu)\n",
-		    DL_GETDSIZE(lp));
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) != disksize)
-		printf("on-disk disklabel RAW_PART has incorrect size (%llu)\n",
-		    DL_GETPSIZE(&lp->d_partitions[RAW_PART]));
-	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0)
-		printf("on-disk disklabel RAW_PART offset != 0 (%llu)\n",
-		    DL_GETPOFFSET(&lp->d_partitions[RAW_PART]));
-#endif
-	DL_SETDSIZE(lp, disksize);
-	DL_SETPSIZE(&lp->d_partitions[RAW_PART], disksize);
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	DL_SETBSTART(lp, boundstart);
-	DL_SETBEND(lp, boundend < DL_GETDSIZE(lp) ? boundend : DL_GETDSIZE(lp));
-
-	lp->d_checksum = 0;
-	lp->d_checksum = dkcksum(lp);
-	return (0);
+	return checklabel(dev, rlp, lp, boundstart, boundend, MAXPARTITIONS16);
 }
 
 /*
