@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.315 2026/11/06 05:25:03 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.316 2026/11/09 10:02:38 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1351,6 +1351,7 @@ void
 cpu_init_early_vctrap(paddr_t addr)
 {
 	struct region_descriptor region;
+	uint64_t request, resp;
 
 	extern void Xvctrap_early(void);
 
@@ -1370,8 +1371,19 @@ cpu_init_early_vctrap(paddr_t addr)
 	    GSEL(GCODE_SEL, SEL_KPL));
 	cpu_init_idt();
 
-	/* Tell the hypervisor about our GHCB. */
-	ghcb_paddr = addr;
+	/* For SEV-SNP we have to register GHCB. */
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_SNP_ACTIVE)) {
+		request = (addr & PG_FRAME) | MSR_PROTO_REGISTER_GHCB_PA_REQ;
+		wrmsr(MSR_SEV_GHCB, request);
+		vmgexit();
+		resp = rdmsr(MSR_SEV_GHCB);
+		if (((resp & ~PG_FRAME) != MSR_PROTO_REGISTER_GHCB_PA_RESP) ||
+		    ((resp & PG_FRAME) != (addr & PG_FRAME)))
+			panic("failed to register GHCB");
+	}
+
+	/* Tell vmm(4) about our GHCB. */
+	ghcb_paddr = addr & PG_FRAME;
 	ghcb_vaddr = addr + KERNBASE;
 	memset((void *)ghcb_vaddr, 0, 2 * PAGE_SIZE);
 	wrmsr(MSR_SEV_GHCB, ghcb_paddr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.123 2026/09/22 08:21:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.124 2026/11/09 10:02:38 hshoexer Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -268,6 +268,7 @@ struct vm;
 #define SVM_AVIC_INCOMPLETE_IPI			0x401
 #define SVM_AVIC_NOACCEL			0x402
 #define SVM_VMEXIT_VMGEXIT			0x403
+#define SVM_VMEXIT_PAGE_NOT_VALIDATED		0x404
 #define SVM_VMEXIT_INVALID			-1
 
 /*

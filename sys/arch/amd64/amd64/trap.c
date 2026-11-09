@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.119 2026/08/19 08:56:28 hshoexer Exp $	*/
+/*	$OpenBSD: trap.c,v 1.120 2026/11/09 10:02:38 hshoexer Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 int	upageflttrap(struct trapframe *, uint64_t);
 int	kpageflttrap(struct trapframe *, uint64_t);
 #ifdef AMDSEV
-int	vctrap(struct trapframe *, int, int *, int *);
+int	vctrap(struct trapframe *, int, int *, int *, uint64_t);
 #endif
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
@@ -305,7 +305,7 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 
 #ifdef AMDSEV
 int
-vctrap(struct trapframe *frame, int user, int *sig, int *code)
+vctrap(struct trapframe *frame, int user, int *sig, int *code, uint64_t cr2)
 {
 	uint8_t		*rip = (uint8_t *)(frame->tf_rip);
 	uint64_t	 port;
@@ -466,6 +466,19 @@ vctrap(struct trapframe *frame, int user, int *sig, int *code)
 		else
 			frame->tf_rip += 2;
 		break;
+	case SVM_VMEXIT_PAGE_NOT_VALIDATED: {
+		struct pmap	*pm;
+		paddr_t		 pa;
+		vaddr_t		 va = (vaddr_t)cr2;
+
+		pm = user ? curproc->p_vmspace->vm_map.pmap : pmap_kernel();
+		if (!pmap_extract(pm, va, &pa))
+			panic("page not validated: rip 0x%llx va 0x%lx "
+			    "(unmapped)", frame->tf_rip, va);
+		panic("page not validated: rip 0x%llx va 0x%lx pa 0x%lx",
+		    frame->tf_rip, va, pa);
+		/* NOTREACHED */
+	    }
 	default:
 		panic("invalid exit code 0x%llx", ghcb_regs.exitcode);
 	}
@@ -551,7 +564,7 @@ kerntrap(struct trapframe *frame)
 
 #ifdef AMDSEV
 	case T_VC:
-		if (vctrap(frame, 0, NULL, NULL))
+		if (vctrap(frame, 0, NULL, NULL, cr2))
 			return;
 		goto we_re_toast;
 #endif
@@ -636,7 +649,7 @@ usertrap(struct trapframe *frame)
 		break;
 #ifdef AMDSEV
 	case T_VC:
-		if (vctrap(frame, 1, &sig, &code))
+		if (vctrap(frame, 1, &sig, &code, cr2))
 			goto out;
 		break;
 #endif

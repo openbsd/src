@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.108 2026/08/19 08:56:28 hshoexer Exp $	*/
+/*	$OpenBSD: vector.S,v 1.109 2026/11/09 10:02:38 hshoexer Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -560,6 +560,9 @@ IDTVEC(vctrap_early)
 	cld
 	movq	%rsp, %rdi
 	movq	$0x0, %rsi
+	movq	$0x0, %rdx
+	movq	$0x0, %rcx
+	movq	%cr2, %r8
 	call	vctrap
 	movq	$0,-8(%rsp)
 	INTRFASTEXIT
