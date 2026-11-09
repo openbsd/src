@@ -1149,6 +1149,7 @@
 ./usr/include/openssl/lhash.h
 ./usr/include/openssl/md4.h
 ./usr/include/openssl/md5.h
+./usr/include/openssl/mldsa.h
 ./usr/include/openssl/mlkem.h
 ./usr/include/openssl/modes.h
 ./usr/include/openssl/obj_mac.h
@@ -1645,7 +1646,6 @@
 ./usr/share/man/man2/fcntl.2
 ./usr/share/man/man2/fhopen.2
 ./usr/share/man/man2/flock.2
-./usr/share/man/man3/execvp.3
 ./usr/share/man/man2/fork.2
 ./usr/share/man/man2/fsync.2
 ./usr/share/man/man2/futex.2
@@ -2501,6 +2501,7 @@
 ./usr/share/man/man3/event.3
 ./usr/share/man/man3/evp.3
 ./usr/share/man/man3/execv.3
+./usr/share/man/man3/execvp.3
 ./usr/share/man/man3/exit.3
 ./usr/share/man/man3/exp.3
 ./usr/share/man/man3/fabs.3
