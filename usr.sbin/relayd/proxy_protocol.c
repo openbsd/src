@@ -55,6 +55,8 @@ proxy_protocol_v1(struct rsession *con, struct evbuffer *dstout)
 {
 	char ibuf[128], obuf[128];
 	const char *proxyproto;
+	const struct sockaddr_storage *dstss = &con->se_sockname;
+	in_port_t dstport = 0;
 	int ret;
 
 	bzero(&ibuf, sizeof(ibuf));
@@ -70,9 +72,11 @@ proxy_protocol_v1(struct rsession *con, struct evbuffer *dstout)
 		switch (con->se_in.ss.ss_family) {
 		case AF_INET:
 			proxyproto = "TCP4";
+			dstport = ((const struct sockaddr_in *)dstss)->sin_port;
 			break;
 		case AF_INET6:
 			proxyproto = "TCP6";
+			dstport = ((const struct sockaddr_in6 *)dstss)->sin6_port;
 			break;
 		default:
 			proxyproto = "UNKNOWN";
@@ -82,7 +86,7 @@ proxy_protocol_v1(struct rsession *con, struct evbuffer *dstout)
 
 	ret = evbuffer_add_printf(dstout,
 	    "PROXY %s %s %s %d %d\r\n", proxyproto, ibuf, obuf,
-	    ntohs(con->se_in.port), ntohs(con->se_relay->rl_conf.port));
+	    ntohs(con->se_in.port), ntohs(dstport));
 
 	return ret == -1 ? -1 : 0;
 }
@@ -97,7 +101,6 @@ proxy_protocol_v2(struct rsession *con, struct evbuffer *dstout)
 	const struct sockaddr_storage	*dstss = &con->se_sockname;
 	int				 error;
 	in_port_t			 srcport = con->se_in.port;
-	in_port_t			 dstport = conf->port;
 	u_int16_t			 len;
 
 	bcopy(PROXY_V2_SIG, hdr.sig, sizeof(hdr.sig));
@@ -113,7 +116,8 @@ proxy_protocol_v2(struct rsession *con, struct evbuffer *dstout)
 		addr.ipv4_addr.dst_addr =
 		    ((const struct sockaddr_in *)dstss)->sin_addr.s_addr;
 		addr.ipv4_addr.src_port = srcport;
-		addr.ipv4_addr.dst_port = dstport;
+		addr.ipv4_addr.dst_port =
+		    ((const struct sockaddr_in *)dstss)->sin_port;
 		break;
 	case AF_INET6:
 		hdr.fam = (conf->flags & F_UDP) ?
@@ -124,7 +128,8 @@ proxy_protocol_v2(struct rsession *con, struct evbuffer *dstout)
 		bcopy(&((const struct sockaddr_in6 *)dstss)->sin6_addr,
 		    addr.ipv6_addr.dst_addr, sizeof(addr.ipv6_addr.dst_addr));
 		addr.ipv6_addr.src_port = srcport;
-		addr.ipv6_addr.dst_port = dstport;
+		addr.ipv6_addr.dst_port =
+		    ((const struct sockaddr_in6 *)dstss)->sin6_port;
 		break;
 	default:
 		hdr.fam = 0x00;
