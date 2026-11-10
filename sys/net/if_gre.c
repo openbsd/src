@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.193 2026/11/04 08:51:51 claudio Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.194 2026/11/10 05:26:02 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -3512,12 +3512,16 @@ nvgre_up(struct nvgre_softc *sc)
 		goto remove_mcast;
 	}
 
+	error = etherbridge_up(&sc->sc_eb);
+	if (error != 0)
+		goto remove_ucast;
+
 	switch (tunnel->t_af) {
 	case AF_INET:
 		inm = in_addmulti(&tunnel->t_dst4, ifp0);
 		if (inm == NULL) {
 			error = ECONNABORTED;
-			goto remove_ucast;
+			goto etherbridge_down;
 		}
 		break;
 #ifdef INET6
@@ -3525,7 +3529,7 @@ nvgre_up(struct nvgre_softc *sc)
 		inm = in6_addmulti(&tunnel->t_dst6, ifp0, &error);
 		if (inm == NULL) {
 			/* error is already set */
-			goto remove_ucast;
+			goto etherbridge_down;
 		}
 		break;
 #endif /* INET6 */
@@ -3543,6 +3547,8 @@ nvgre_up(struct nvgre_softc *sc)
 
 	return (0);
 
+etherbridge_down:
+	etherbridge_down(&sc->sc_eb);
 remove_ucast:
 	RBT_REMOVE(nvgre_ucast_tree, &nvgre_ucast_tree, sc);
 remove_mcast:
@@ -3591,6 +3597,8 @@ nvgre_down(struct nvgre_softc *sc)
 	default:
 		unhandled_af(tunnel->t_af);
 	}
+
+	etherbridge_down(&sc->sc_eb);
 
 	RBT_REMOVE(nvgre_ucast_tree, &nvgre_ucast_tree, sc);
 	RBT_REMOVE(nvgre_mcast_tree, &nvgre_mcast_tree, sc);
