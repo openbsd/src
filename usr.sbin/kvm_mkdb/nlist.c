@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.53 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.54 2026/11/10 06:25:51 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -214,8 +214,7 @@ __elf_knlist(int fd, DB *db, int ksyms)
 		if (ELF_ST_BIND(sbuf.st_info) == STB_LOCAL)
 			nbuf.n_type = N_EXT;
 
-		*buf = '_';
-		strlcpy(buf + 1, strtab + sbuf.st_name, sizeof buf - 1);
+		strlcpy(buf, strtab + sbuf.st_name, sizeof buf);
 		key.data = (u_char *)buf;
 		key.size = strlen((char *)key.data);
 		if (db->put(db, &key, &data, 0))

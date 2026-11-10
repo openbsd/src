@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.18 2013/10/22 16:40:25 guenther Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.19 2026/11/10 06:25:51 miod Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 #define	_KVM_H_
 
 /* Default version symbol. */
-#define	VRS_SYM		"_version"
+#define	VRS_SYM		"version"
 #define	VRS_KEY		"VERSION"
 
 /*
