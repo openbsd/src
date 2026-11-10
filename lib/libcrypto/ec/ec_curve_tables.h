@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_curve_tables.h,v 1.1 2026/11/06 13:09:18 beck Exp $ */
+/*	$OpenBSD: ec_curve_tables.h,v 1.2 2026/11/10 18:00:27 tb Exp $ */
 /*
  * Copyright (c) 2026 Bob Beck <beck@openbsd.org>
  *
@@ -664,7 +664,7 @@ static const BN_ULONG frp256v1_rr[] = {
 
 #else
 
-#define EC_CURVE_N0(n0) { (BN_ULONG)(n0), (BN_ULONG)((n0) >> 32) }
+#define EC_CURVE_N0(n0) { (BN_ULONG)(n0 & 0xffffffff), (BN_ULONG)((n0) >> 32) }
 
 static const BN_ULONG secp224k1_p[] = {
 	0xffffe56d, 0xfffffffe, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
