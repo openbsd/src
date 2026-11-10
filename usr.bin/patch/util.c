@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2026/11/05 11:27:33 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.48 2026/11/10 16:28:48 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -341,7 +341,7 @@ char *
 fetchname(const char *at, bool *exists, int strip_leading)
 {
 	char		*fullname, *name, *t;
-	int		sleading, tab;
+	int		sleading;
 	struct stat	filestat;
 
 	if (at == NULL || *at == '\0')
@@ -355,19 +355,21 @@ fetchname(const char *at, bool *exists, int strip_leading)
 	/* So files can be created by diffing against /dev/null.  */
 	if (strnEQ(at, _PATH_DEVNULL, sizeof(_PATH_DEVNULL) - 1))
 		return NULL;
-	name = fullname = t = savestr(at);
+	name = fullname = savestr(at);
 	if (out_of_mem)
 		return NULL;
 
-	tab = strchr(t, '\t') != NULL;
-	/* Strip off up to `strip_leading' path components and NUL terminate. */
-	for (sleading = strip_leading; *t != '\0' && ((tab && *t != '\t') ||
-	    !isspace((unsigned char)*t)); t++) {
+	if ((t = strchr(fullname, '\t')) != NULL)
+		*t = '\0';
+	else
+		fullname[strcspn(fullname, " \f\v\r\n")] = '\0';
+
+	/* Strip off up to `strip_leading' path components. */
+	for (sleading = strip_leading, t = fullname; *t != '\0'; t++) {
 		if (t[0] == '/' && t[1] != '/' && t[1] != '\0')
 			if (--sleading >= 0)
 				name = t + 1;
 	}
-	*t = '\0';
 
 	/*
 	 * If no -p option was given (957 is the default value!), we were
