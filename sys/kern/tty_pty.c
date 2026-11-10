@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.116 2025/09/25 08:46:50 mvs Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.117 2026/11/10 06:23:26 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -818,6 +818,11 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return(0);
 	} else if (cdevsw[major(dev)].d_open == ptcopen)
 		switch (cmd) {
+
+		case TIOCSCTTY:
+		case TIOCNOTTY:
+		case TIOCSPGRP:
+			return (ENOTTY);
 
 		case TIOCGPGRP:
 			/*
