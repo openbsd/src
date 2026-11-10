@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.253 2026/11/03 14:58:42 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.254 2026/11/10 06:53:27 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1135,7 +1135,7 @@ cert_as_inherit(const struct cert *cert)
 	return cert->ases[0].type == CERT_AS_INHERIT;
 }
 
-static int
+int
 cert_has_one_as(const struct cert *cert)
 {
 	if (cert->num_ases != 1)

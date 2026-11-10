@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.48 2026/10/09 08:36:50 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.49 2026/11/10 06:53:27 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -158,6 +158,11 @@ aspa_cert_info(const char *fn, void *obj, const struct cert *cert)
 {
 	if (cert->num_ips > 0) {
 		warnx("%s: superfluous IP Resources extension present", fn);
+		return 0;
+	}
+
+	if (!cert_has_one_as(cert)) {
+		warnx("%s: expected one AS id element in EE cert", fn);
 		return 0;
 	}
 
