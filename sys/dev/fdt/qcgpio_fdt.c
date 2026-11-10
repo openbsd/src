@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.10 2026/10/05 20:27:37 kirill Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.11 2026/11/10 17:43:46 phessler Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -110,7 +110,9 @@ qcgpio_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "qcom,sc7280-pinctrl") ||
+	return (OF_is_compatible(faa->fa_node, "qcom,glymur-tlmm") ||
+	    OF_is_compatible(faa->fa_node, "qcom,mahua-tlmm") ||
+	    OF_is_compatible(faa->fa_node, "qcom,sc7280-pinctrl") ||
 	    OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm") ||
 	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-tlmm"));
 }
