@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.245 2026/11/08 17:04:30 beck Exp $
+# $OpenBSD: Makefile,v 1.246 2026/11/10 12:06:22 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -47,6 +47,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/lhash
 CFLAGS+= -I${LCRYPTO_SRC}/mldsa
 CFLAGS+= -I${LCRYPTO_SRC}/mlkem
 CFLAGS+= -I${LCRYPTO_SRC}/modes
+CFLAGS+= -I${LCRYPTO_SRC}/mtc
 CFLAGS+= -I${LCRYPTO_SRC}/ocsp
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs12
 CFLAGS+= -I${LCRYPTO_SRC}/rsa
@@ -393,6 +394,9 @@ SRCS+= gcm128.c
 SRCS+= ofb128.c
 SRCS+= xts128.c
 
+# mtc/
+SRCS+= mtc_tree.c
+
 # objects/
 SRCS+= obj_dat.c
 SRCS+= obj_err.c
@@ -619,6 +623,7 @@ SRCS+= x_all.c
 	${LCRYPTO_SRC}/mldsa \
 	${LCRYPTO_SRC}/mlkem \
 	${LCRYPTO_SRC}/modes \
+	${LCRYPTO_SRC}/mtc \
 	${LCRYPTO_SRC}/objects \
 	${LCRYPTO_SRC}/ocsp \
 	${LCRYPTO_SRC}/pem \
