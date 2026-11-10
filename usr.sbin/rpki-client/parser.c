@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.201 2026/11/03 18:25:42 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.202 2026/11/10 11:04:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,6 +38,7 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+#include "thread.h"
 
 extern int certid;
 
@@ -75,13 +76,10 @@ static struct parse_repo *
 repo_get(unsigned int id)
 {
 	struct parse_repo needle = { .id = id }, *r;
-	int error;
 
-	if ((error = pthread_rwlock_rdlock(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_rdlock: %s", strerror(error));
+	rw_enter_read(&repos_lk);
 	r = RB_FIND(repo_tree, &repos, &needle);
-	if ((error = pthread_rwlock_unlock(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&repos_lk);
 	return r;
 }
 
@@ -89,7 +87,6 @@ static void
 repo_add(unsigned int id, char *path, char *validpath)
 {
 	struct parse_repo *rp;
-	int error;
 
 	if ((rp = calloc(1, sizeof(*rp))) == NULL)
 		err(1, NULL);
@@ -100,32 +97,26 @@ repo_add(unsigned int id, char *path, char *validpath)
 	if ((rp->validpath = strdup(validpath)) == NULL)
 		err(1, NULL);
 
-	if ((error = pthread_rwlock_wrlock(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	rw_enter_write(&repos_lk);
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
-	if ((error = pthread_rwlock_unlock(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&repos_lk);
 }
 
 static void
 repo_tree_free(struct repo_tree *tree)
 {
 	struct parse_repo *repo, *trepo;
-	int error;
 
-	if ((error = pthread_rwlock_wrlock(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	rw_enter_write(&repos_lk);
 	RB_FOREACH_SAFE(repo, repo_tree, tree, trepo) {
 		RB_REMOVE(repo_tree, tree, repo);
 		free(repo->path);
 		free(repo->validpath);
 		free(repo);
 	}
-	if ((error = pthread_rwlock_unlock(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
-	if ((error = pthread_rwlock_destroy(&repos_lk)) != 0)
-		errx(1, "pthread_rwlock_destroy: %s", strerror(error));
+	rw_leave(&repos_lk);
+	rw_destroy(&repos_lk);
 }
 
 /*
@@ -1115,7 +1106,7 @@ parse_worker(void *arg)
 	struct ibufqueue *myq;
 	X509_STORE_CTX *ctx;
 	BN_CTX *bn_ctx;
-	int error, n;
+	int n;
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");
@@ -1125,18 +1116,12 @@ parse_worker(void *arg)
 		err(1, "ibufqueue_new");
 
 	while (!quit) {
-		if ((error = pthread_mutex_lock(&globalq_mtx)) != 0)
-			errx(1, "pthread_mutex_lock: %s", strerror(error));
-		while (TAILQ_EMPTY(&globalq) && !quit) {
-			error = pthread_cond_wait(&globalq_cond, &globalq_mtx);
-			if (error != 0)
-				errx(1, "pthread_cond_wait: %s",
-				    strerror(error));
-		}
+		mtx_enter(&globalq_mtx);
+		while (TAILQ_EMPTY(&globalq) && !quit)
+			cond_wait(&globalq_cond, &globalq_mtx);
+
 		if (quit) {
-			if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
-				errx(1, "pthread_mutex_unlock: %s",
-				    strerror(error));
+			mtx_leave(&globalq_mtx);
 			break;
 		}
 		n = 0;
@@ -1146,46 +1131,24 @@ parse_worker(void *arg)
 			if (++n > 16)
 				break;
 		}
-		if (n > 16) {
-			if ((error = pthread_cond_signal(&globalq_cond)) != 0)
-				errx(1, "pthread_cond_signal: %s",
-				    strerror(error));
-		}
-		if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
-			errx(1, "pthread_mutex_unlock: %s",
-			    strerror(error));
+		if (n > 16)
+			cond_signal(&globalq_cond);
+		mtx_leave(&globalq_mtx);
 
 		parse_entity(&q, myq, &mftq, ctx, bn_ctx);
 
 		if (ibufq_queuelen(myq) > 0) {
-			if ((error = pthread_mutex_lock(&globalmsgq_mtx)) != 0)
-				errx(1, "pthread_mutex_lock: %s",
-				    strerror(error));
+			mtx_enter(&globalmsgq_mtx);
 			ibufq_concat(globalmsgq, myq);
-			error = pthread_cond_signal(&globalmsgq_cond);
-			if (error != 0)
-				errx(1, "pthread_cond_signal: %s",
-				    strerror(error));
-			error = pthread_mutex_unlock(&globalmsgq_mtx);
-			if (error != 0)
-				errx(1, "pthread_mutex_unlock: %s",
-				    strerror(error));
+			cond_signal(&globalmsgq_cond);
+			mtx_leave(&globalmsgq_mtx);
 		}
 
 		if (!TAILQ_EMPTY(&mftq)) {
-			error = pthread_mutex_lock(&globalq_mtx);
-			if (error != 0)
-				errx(1, "pthread_mutex_lock: %s",
-				    strerror(error));
+			mtx_enter(&globalq_mtx);
 			TAILQ_CONCAT(&globalq, &mftq, entries);
-			error = pthread_cond_signal(&globalq_cond);
-			if (error != 0)
-				errx(1, "pthread_cond_signal: %s",
-				    strerror(error));
-			error = pthread_mutex_unlock(&globalq_mtx);
-			if (error != 0)
-				errx(1, "pthread_mutex_unlock: %s",
-				    strerror(error));
+			cond_signal(&globalq_cond);
+			mtx_leave(&globalq_mtx);
 		}
 	}
 
@@ -1200,30 +1163,20 @@ parse_writer(void *arg)
 {
 	struct msgbuf *myq;
 	struct pollfd pfd;
-	int error;
 
 	if ((myq = msgbuf_new()) == NULL)
 		err(1, NULL);
 	pfd.fd = *(int *)arg;
 	while (!quit) {
 		if (msgbuf_queuelen(myq) == 0) {
-			error = pthread_mutex_lock(&globalmsgq_mtx);
-			if (error != 0)
-				errx(1, "pthread_mutex_lock: %s",
-				    strerror(error));
-			while (ibufq_queuelen(globalmsgq) == 0 && !quit) {
-				error = pthread_cond_wait(&globalmsgq_cond,
+			mtx_enter(&globalmsgq_mtx);
+			while (ibufq_queuelen(globalmsgq) == 0 && !quit)
+				cond_wait(&globalmsgq_cond,
 				    &globalmsgq_mtx);
-				if (error != 0)
-					errx(1, "pthread_cond_wait: %s",
-					    strerror(error));
-			}
+
 			/* enqueue messages to local msgbuf */
 			msgbuf_concat(myq, globalmsgq);
-			error = pthread_mutex_unlock(&globalmsgq_mtx);
-			if (error != 0)
-				errx(1, "pthread_mutex_lock: %s",
-				    strerror(error));
+			mtx_leave(&globalmsgq_mtx);
 			if (quit)
 				break;
 		}
@@ -1346,43 +1299,28 @@ proc_parser(int fd, int nthreads)
 				TAILQ_INSERT_TAIL(&myq, ent, entries);
 			}
 			if (!TAILQ_EMPTY(&myq)) {
-				error = pthread_mutex_lock(&globalq_mtx);
-				if (error != 0)
-					errx(1, "pthread_mutex_lock: %s",
-					    strerror(error));
+				mtx_enter(&globalq_mtx);
 				TAILQ_CONCAT(&globalq, &myq, entries);
-				error = pthread_cond_signal(&globalq_cond);
-				if (error != 0)
-					errx(1, "pthread_cond_signal: %s",
-					    strerror(error));
-				error = pthread_mutex_unlock(&globalq_mtx);
-				if (error != 0)
-					errx(1, "pthread_mutex_unlock: %s",
-					    strerror(error));
+				cond_signal(&globalq_cond);
+				mtx_leave(&globalq_mtx);
 			}
 		}
 	}
 
 	/* signal all threads */
-	if ((error = pthread_mutex_lock(&globalq_mtx)) != 0)
-		errx(1, "pthread_mutex_lock: %s", strerror(error));
-	if ((error = pthread_mutex_lock(&globalmsgq_mtx)) != 0)
-		errx(1, "pthread_mutex_lock: %s", strerror(error));
+	mtx_enter(&globalq_mtx);
+	mtx_enter(&globalmsgq_mtx);
 
-	if ((error = pthread_cond_broadcast(&globalq_cond)) != 0)
-		errx(1, "pthread_cond_broadcast: %s", strerror(error));
-	if ((error = pthread_cond_broadcast(&globalmsgq_cond)) != 0)
-		errx(1, "pthread_cond_broadcast: %s", strerror(error));
+	cond_signal_all(&globalq_cond);
+	cond_signal_all(&globalmsgq_cond);
 
-	if ((error = pthread_mutex_unlock(&globalmsgq_mtx)) != 0)
-		errx(1, "pthread_mutex_unlock: %s", strerror(error));
+	mtx_leave(&globalmsgq_mtx);
 
 	while ((ent = TAILQ_FIRST(&globalq)) != NULL) {
 		TAILQ_REMOVE(&globalq, ent, entries);
 		entity_free(ent);
 	}
-	if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
-		errx(1, "pthread_mutex_unlock: %s", strerror(error));
+	mtx_leave(&globalq_mtx);
 
 	if ((error = pthread_join(writer, NULL)) != 0)
 		errx(1, "pthread_join writer: %s", strerror(error));
@@ -1393,14 +1331,10 @@ proc_parser(int fd, int nthreads)
 	}
 	free(workers);	/* karl marx */
 
-	if ((error = pthread_cond_destroy(&globalq_cond)) != 0)
-		errx(1, "pthread_cond_destroy: %s", strerror(error));
-	if ((error = pthread_mutex_destroy(&globalq_mtx)) != 0)
-		errx(1, "pthread_mutex_destroy: %s", strerror(error));
-	if ((error = pthread_cond_destroy(&globalmsgq_cond)) != 0)
-		errx(1, "pthread_cond_destroy: %s", strerror(error));
-	if ((error = pthread_mutex_destroy(&globalmsgq_mtx)) != 0)
-		errx(1, "pthread_mutex_destroy: %s", strerror(error));
+	cond_destroy(&globalq_cond);
+	mtx_destroy(&globalq_mtx);
+	cond_destroy(&globalmsgq_cond);
+	mtx_destroy(&globalmsgq_mtx);
 
 	auth_tree_free(&auths);
 	crl_tree_free(&crls);

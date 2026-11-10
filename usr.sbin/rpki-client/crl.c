@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.54 2026/10/09 14:15:30 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.55 2026/11/10 11:04:01 claudio Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -25,6 +25,7 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
+#include "thread.h"
 
 static pthread_rwlock_t	 crl_lk = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -321,7 +322,6 @@ struct crl *
 crl_get(struct crl_tree *crls, const struct auth *a)
 {
 	struct crl	find, *crl;
-	int		error;
 
 	/* XXX - this should be removed, but filemode relies on it. */
 	if (a == NULL)
@@ -330,24 +330,20 @@ crl_get(struct crl_tree *crls, const struct auth *a)
 	find.aki = a->cert->ski;
 	find.mftpath = a->cert->mft;
 
-	if ((error = pthread_rwlock_rdlock(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_rdlock: %s", strerror(error));
+	rw_enter_read(&crl_lk);
 	crl = RB_FIND(crl_tree, crls, &find);
-	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&crl_lk);
 	return crl;
 }
 
 int
 crl_insert(struct crl_tree *crls, struct crl *crl)
 {
-	int error, rv;
+	int rv;
 
-	if ((error = pthread_rwlock_wrlock(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	rw_enter_write(&crl_lk);
 	rv = RB_INSERT(crl_tree, crls, crl) == NULL;
-	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&crl_lk);
 
 	return rv;
 }
@@ -368,16 +364,12 @@ void
 crl_tree_free(struct crl_tree *crls)
 {
 	struct crl	*crl, *tcrl;
-	int error;
 
-	if ((error = pthread_rwlock_wrlock(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	rw_enter_write(&crl_lk);
 	RB_FOREACH_SAFE(crl, crl_tree, crls, tcrl) {
 		RB_REMOVE(crl_tree, crls, crl);
 		crl_free(crl);
 	}
-	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
-	if ((error = pthread_rwlock_destroy(&crl_lk)) != 0)
-		errx(1, "pthread_rwlock_destroy: %s", strerror(error));
+	rw_leave(&crl_lk);
+	rw_destroy(&crl_lk);
 }

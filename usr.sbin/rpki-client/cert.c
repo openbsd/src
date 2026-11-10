@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.254 2026/11/10 06:53:27 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.255 2026/11/10 11:04:01 claudio Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -30,6 +30,7 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+#include "thread.h"
 
 int certid = TALSZ_MAX;
 
@@ -1956,19 +1957,15 @@ void
 auth_tree_free(struct auth_tree *auths)
 {
 	struct auth	*auth, *tauth;
-	int error;
 
-	if ((error = pthread_rwlock_wrlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	rw_enter_write(&cert_lk);
 	RB_FOREACH_SAFE(auth, auth_tree, auths, tauth) {
 		RB_REMOVE(auth_tree, auths, auth);
 		cert_free(auth->cert);
 		free(auth);
 	}
-	if ((error = pthread_rwlock_unlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
-	if ((error = pthread_rwlock_destroy(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_destroy: %s", strerror(error));
+	rw_leave(&cert_lk);
+	rw_destroy(&cert_lk);
 }
 
 struct auth *
@@ -1976,16 +1973,13 @@ auth_find(struct auth_tree *auths, int id)
 {
 	struct auth a, *f;
 	struct cert c;
-	int error;
 
 	c.certid = id;
 	a.cert = &c;
 
-	if ((error = pthread_rwlock_rdlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_rdlock: %s", strerror(error));
+	rw_enter_read(&cert_lk);
 	f = RB_FIND(auth_tree, auths, &a);
-	if ((error = pthread_rwlock_unlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&cert_lk);
 	return f;
 }
 
@@ -1994,7 +1988,6 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
     struct auth *issuer, struct crl *crl)
 {
 	struct auth *na;
-	int error;
 
 	cert->expires = x509_find_expires(cert->notafter, issuer, crl);
 
@@ -2002,8 +1995,7 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 	if (na == NULL)
 		err(1, NULL);
 
-	if ((error = pthread_rwlock_wrlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	rw_enter_write(&cert_lk);
 	if (issuer == NULL) {
 		cert->certid = cert->talid;
 	} else {
@@ -2028,14 +2020,12 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		errx(1, "auth tree corrupted");
 
-	if ((error = pthread_rwlock_unlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&cert_lk);
 
 	return na;
 
  fail:
-	if ((error = pthread_rwlock_unlock(&cert_lk)) != 0)
-		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	rw_leave(&cert_lk);
 	free(na);
 	return NULL;
 }
