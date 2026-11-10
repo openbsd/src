@@ -1,4 +1,4 @@
-/*	$OpenBSD: qccpucp.c,v 1.1 2024/11/16 21:17:54 tobhe Exp $	*/
+/*	$OpenBSD: qccpucp.c,v 1.2 2026/11/10 17:41:16 phessler Exp $	*/
 /*
  * Copyright (c) 2024 Tobias Heider <tobhe@openbsd.org>
  *
@@ -83,7 +83,8 @@ qccpucp_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "qcom,x1e80100-cpucp-mbox");
+	return (OF_is_compatible(faa->fa_node, "qcom,glymur-cpucp-mbox") ||
+	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-cpucp-mbox"));
 }
 
 void
