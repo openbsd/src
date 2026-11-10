@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-chall.c,v 1.61 2026/07/06 07:44:48 djm Exp $ */
+/* $OpenBSD: auth2-chall.c,v 1.62 2026/11/10 23:19:56 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -43,6 +43,9 @@
 #include "log.h"
 #include "misc.h"
 
+#define SSH_CHALLENGE_MAX_RESPONSES	100
+#define SSH_CHALLENGE_MAX_DEVICES	100
+
 static int auth2_challenge_start(struct ssh *);
 static int send_userauth_info_request(struct ssh *);
 static int input_userauth_info_response(int, uint32_t, struct ssh *);
@@ -62,6 +65,7 @@ struct KbdintAuthctxt
 	KbdintDevice *device;
 	u_int nreq;
 	u_int devices_done;
+	u_int devices_tried;
 };
 
 static KbdintAuthctxt *
@@ -121,6 +125,11 @@ kbdint_next_device(Authctxt *authctxt, KbdintAuthctxt *kbdintctxt)
 	if (kbdintctxt->device)
 		kbdint_reset_device(kbdintctxt);
 	do {
+		if (++kbdintctxt->devices_tried > SSH_CHALLENGE_MAX_DEVICES) {
+			error_f("too many devices attempted");
+			return 0;
+		}
+
 		len = kbdintctxt->devices ?
 		    strcspn(kbdintctxt->devices, ",") : 0;
 
@@ -144,7 +153,7 @@ kbdint_next_device(Authctxt *authctxt, KbdintAuthctxt *kbdintctxt)
 		t = kbdintctxt->devices;
 		kbdintctxt->devices = t[len] ? xstrdup(t+len+1) : NULL;
 		free(t);
-		debug2("kbdint_next_device: devices %s", kbdintctxt->devices ?
+		debug2_f("devices %s", kbdintctxt->devices ?
 		    kbdintctxt->devices : "<empty>");
 	} while (kbdintctxt->devices && !kbdintctxt->device);
 
@@ -277,7 +286,7 @@ input_userauth_info_response(int type, uint32_t seq, struct ssh *ssh)
 		fatal_fr(r, "parse packet");
 	if (nresp != kbdintctxt->nreq)
 		fatal_f("wrong number of replies");
-	if (nresp > 100)
+	if (nresp > SSH_CHALLENGE_MAX_RESPONSES)
 		fatal_f("too many replies");
 	if (nresp > 0) {
 		response = xcalloc(nresp, sizeof(char *));
