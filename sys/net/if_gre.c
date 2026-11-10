@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.195 2026/11/10 05:31:44 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.196 2026/11/10 05:51:16 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2671,13 +2671,13 @@ nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSVNETID:
-		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-			error = EBUSY;
-			break;
-		}
 		if (ifr->ifr_vnetid < GRE_KEY_ENTROPY_MIN ||
 		    ifr->ifr_vnetid > GRE_KEY_ENTROPY_MAX) {
 			error = EINVAL;
+			break;
+		}
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
 			break;
 		}
 
@@ -2690,6 +2690,11 @@ nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYRTABLE:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+
 		if (ifr->ifr_rdomainid < 0 ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
 			error = EINVAL;
