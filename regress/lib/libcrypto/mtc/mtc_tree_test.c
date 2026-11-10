@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtc_tree_test.c,v 1.1 2026/11/10 12:06:22 beck Exp $ */
+/*	$OpenBSD: mtc_tree_test.c,v 1.2 2026/11/10 15:29:14 tb Exp $ */
 /*
  * Copyright (c) 2025, Google Inc.
  * Copyright (c) 2026, Bob Beck <beck@obtuse.com>
@@ -71,7 +71,7 @@ build_tree(uint64_t n)
 	for (i = 0; i < n; i++) {
 		make_entry(i, entry);
 		if (!mtc_tree_append(tree, entry, sizeof(entry)))
-			errx(1, "mtc_tree_append %llu", i);
+			errx(1, "mtc_tree_append %llu", (unsigned long long)i);
 	}
 
 	return tree;
@@ -90,8 +90,9 @@ check_valid(uint64_t start, uint64_t end, int want)
 	int got;
 
 	if ((got = mtc_subtree_is_valid(subtree(start, end))) != want) {
-		warnx("is_valid([%llu, %llu)) = %d, want %d", start, end, got,
-		    want);
+		warnx("is_valid([%llu, %llu)) = %d, want %d",
+		    (unsigned long long)start, (unsigned long long)end,
+		    got, want);
 		return 1;
 	}
 
@@ -121,8 +122,9 @@ check_split(uint64_t start, uint64_t end, uint64_t want)
 	uint64_t got;
 
 	if ((got = mtc_subtree_split(subtree(start, end))) != want) {
-		warnx("split([%llu, %llu)) = %llu, want %llu", start, end, got,
-		    want);
+		warnx("split([%llu, %llu)) = %llu, want %llu",
+		    (unsigned long long)start, (unsigned long long)end,
+		    (unsigned long long)got, (unsigned long long)want);
 		return 1;
 	}
 
@@ -221,7 +223,8 @@ check_consistency(const struct mtc_tree *tree, struct mtc_subtree s,
 	if (!mtc_verify_subtree_consistency_proof(md, n, s, proof, proof_len,
 	    node_hash, want)) {
 		warnx("%s: [%llu, %llu) in %llu: verify_consistency_proof",
-		    name, s.start, s.end, n);
+		    name,
+		    (unsigned long long)s.start, (unsigned long long)s.end, n);
 		goto err;
 	}
 
@@ -321,7 +324,8 @@ test_one_leaf(void)
 	full = subtree(0, 1);
 
 	if (mtc_tree_leaf_count(tree) != 1) {
-		warnx("leaf count %llu, want 1", mtc_tree_leaf_count(tree));
+		warnx("leaf count %llu, want 1",
+		    (unsigned long long)mtc_tree_leaf_count(tree));
 		failed = 1;
 	}
 
@@ -655,8 +659,13 @@ check_find_subtrees(uint64_t start, uint64_t end,
 		if (out[i].start != want[i].start ||
 		    out[i].end != want[i].end) {
 			warnx("find_subtrees([%llu, %llu))[%zu] = [%llu, %llu),"
-			    " want [%llu, %llu)", start, end, i, out[i].start,
-			    out[i].end, want[i].start, want[i].end);
+			    " want [%llu, %llu)",
+			    (unsigned long long)start, (unsigned long long)end,
+			    i,
+			    (unsigned long long)out[i].start,
+			    (unsigned long long)out[i].end,
+			    (unsigned long long)want[i].start,
+			    (unsigned long long)want[i].end);
 			return 1;
 		}
 	}
@@ -695,7 +704,8 @@ test_find_subtrees(void)
 				    out[1].start != end ||
 				    out[1].end != end) {
 					warnx("[%llu, %llu): bad short cover",
-					    start, end);
+					    (unsigned long long)start,
+					    (unsigned long long)end);
 					failed = 1;
 				}
 				continue;
@@ -710,7 +720,8 @@ test_find_subtrees(void)
 			    mtc_subtree_leaf_count(out[0]) >= 2 * len ||
 			    mtc_subtree_leaf_count(out[1]) > len) {
 				warnx("[%llu, %llu): bad two-subtree cover",
-				    start, end);
+				    (unsigned long long)start,
+				    (unsigned long long)end);
 				failed = 1;
 			}
 		}
@@ -873,7 +884,8 @@ test_vectors(void)
 				continue;
 			if (!mtc_tree_subtree_hash(tree, s, hash))
 				errx(1, "subtree_hash");
-			accumulate(acc, "[%llu, %llu)", start, end);
+			accumulate(acc, "[%llu, %llu)",
+			    (unsigned long long)start, (unsigned long long)end);
 			accumulate_hashes(acc, hash, hash_len);
 			accumulate(acc, "\n");
 		}
@@ -892,8 +904,10 @@ test_vectors(void)
 				if (!mtc_tree_inclusion_proof(tree, index, s,
 				    &proof, &proof_len))
 					errx(1, "inclusion_proof");
-				accumulate(acc, "%llu [%llu, %llu)", index,
-				    start, end);
+				accumulate(acc, "%llu [%llu, %llu)",
+				    (unsigned long long)index,
+				    (unsigned long long)start,
+				    (unsigned long long)end);
 				accumulate_hashes(acc, proof, proof_len);
 				accumulate(acc, "\n");
 				free(proof);
@@ -915,8 +929,10 @@ test_vectors(void)
 				if (!mtc_tree_consistency_proof(tree, s,
 				    subtree(0, n), &proof, &proof_len))
 					errx(1, "consistency_proof");
-				accumulate(acc, "[%llu, %llu) %llu", start, end,
-				    n);
+				accumulate(acc, "[%llu, %llu) %llu",
+				    (unsigned long long)start,
+				    (unsigned long long)end,
+				    (unsigned long long)n);
 				accumulate_hashes(acc, proof, proof_len);
 				accumulate(acc, "\n");
 				free(proof);
@@ -933,8 +949,10 @@ test_vectors(void)
 		for (start = 0; start <= end; start++) {
 			mtc_find_subtrees(subtree(start, end), out);
 			for (j = 0; j < 2; j++)
-				accumulate(acc, "[%llu, %llu)%s", out[j].start,
-				    out[j].end, j == 0 ? " " : "\n");
+				accumulate(acc, "[%llu, %llu)%s",
+				    (unsigned long long)out[j].start,
+				    (unsigned long long)out[j].end,
+				    j == 0 ? " " : "\n");
 		}
 	}
 	failed |= check_vector(acc, vector_covering_subtrees, "C.1.4");
