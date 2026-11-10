@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.64 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.65 2026/11/10 07:53:01 miod Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.64 2024/05/24 06:02:53 jsg Exp $
+ * $Id: ahc_pci.c,v 1.65 2026/11/10 07:53:01 miod Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -1049,6 +1049,11 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Core initialization */
 	if (ahc_init(ahc))
 		goto error_out;
+
+	/*
+	 * Link this softc in with all other ahc instances.
+	 */
+	ahc_softc_insert(ahc);
 
 	ahc_attach(ahc);
 
