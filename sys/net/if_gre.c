@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.194 2026/11/10 05:26:02 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.195 2026/11/10 05:31:44 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -58,7 +58,6 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
-#include <net/if_media.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -368,7 +367,6 @@ struct egre_softc {
 	RBT_ENTRY(egre_softc)	sc_entry;
 
 	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
 };
 
 RBT_HEAD(egre_tree, egre_softc);
@@ -383,8 +381,6 @@ static int	egre_clone_destroy(struct ifnet *);
 
 static void	egre_start(struct ifnet *);
 static int	egre_ioctl(struct ifnet *, u_long, caddr_t);
-static int	egre_media_change(struct ifnet *);
-static void	egre_media_status(struct ifnet *, struct ifmediareq *);
 
 static int	egre_up(struct egre_softc *);
 static int	egre_down(struct egre_softc *);
@@ -408,7 +404,6 @@ struct nvgre_softc {
 	RBT_ENTRY(nvgre_softc)	 sc_mentry;
 
 	struct arpcom		 sc_ac;
-	struct ifmedia		 sc_media;
 
 	struct mbuf_queue	 sc_send_list;
 	struct task		 sc_send_task;
@@ -490,7 +485,6 @@ struct eoip_softc {
 	RBT_ENTRY(eoip_softc)	sc_entry;
 
 	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
 
 	struct timeout		sc_ka_send;
 	struct timeout		sc_ka_hold;
@@ -788,10 +782,6 @@ egre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
 
-	ifmedia_init(&sc->sc_media, 0, egre_media_change, egre_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
-
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -809,7 +799,6 @@ egre_clone_destroy(struct ifnet *ifp)
 		egre_down(sc);
 	NET_UNLOCK();
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -866,10 +855,6 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 	task_set(&sc->sc_ltask, nvgre_link_change, sc);
 	task_set(&sc->sc_dtask, nvgre_detach, sc);
 
-	ifmedia_init(&sc->sc_media, 0, egre_media_change, egre_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
-
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -889,7 +874,6 @@ nvgre_clone_destroy(struct ifnet *ifp)
 
 	etherbridge_destroy(&sc->sc_eb);
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -930,10 +914,6 @@ eoip_clone_create(struct if_clone *ifc, int unit)
 	timeout_set_proc(&sc->sc_ka_hold, eoip_keepalive_hold, sc);
 	sc->sc_ka_state = GRE_KA_DOWN;
 
-	ifmedia_init(&sc->sc_media, 0, egre_media_change, egre_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
-
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -951,7 +931,6 @@ eoip_clone_destroy(struct ifnet *ifp)
 		eoip_down(sc);
 	NET_UNLOCK();
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -3467,19 +3446,6 @@ egre_down(struct egre_softc *sc)
 	/* barrier? */
 
 	return (0);
-}
-
-static int
-egre_media_change(struct ifnet *ifp)
-{
-	return (ENOTTY);
-}
-
-static void
-egre_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	imr->ifm_active = IFM_ETHER | IFM_AUTO;
-	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
 static int
