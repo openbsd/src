@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.26 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.27 2026/11/10 06:28:27 miod Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -48,9 +48,9 @@
 
 struct nlist nl[] = {
 #define	N_GMONPARAM	0
-	{ "__gmonparam" },
+	{ "_gmonparam" },
 #define	N_PROFHZ	1
-	{ "_profhz" },
+	{ "profhz" },
 	{ NULL }
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.23 2025/09/17 16:12:10 deraadt Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.24 2026/11/10 06:28:27 miod Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -78,7 +78,7 @@ sr_install_bootblk(int devfd, int vol, int disk)
 		errx(1, "partition offset too high");
 	poffset = pp->p_offset;			/* Offset of RAID partition. */
 	poffset += SR_BOOT_LOADER_OFFSET;	/* SR boot loader area. */
-	sym_set_value(pbr_symbols, "_p_offset", poffset);
+	sym_set_value(pbr_symbols, "p_offset", poffset);
 
 	if (verbose)
 		fprintf(stderr, "%s%c: %s boot blocks on %s, part offset %u\n",
@@ -165,13 +165,13 @@ sr_install_bootldr(int devfd, char *dev)
 	 * Set the values that will need to go into biosboot
 	 * (the partition boot record, a.k.a. the PBR).
 	 */
-	sym_set_value(pbr_symbols, "_fs_bsize_p", (bsize / 16));
-	sym_set_value(pbr_symbols, "_fs_bsize_s", (bsize / 512));
-	sym_set_value(pbr_symbols, "_fsbtodb", bshift);
-	sym_set_value(pbr_symbols, "_inodeblk", inodeblk);
-	sym_set_value(pbr_symbols, "_inodedbl", inodedbl);
-	sym_set_value(pbr_symbols, "_nblocks", nblocks);
-	sym_set_value(pbr_symbols, "_blkincr", 0);
+	sym_set_value(pbr_symbols, "fs_bsize_p", (bsize / 16));
+	sym_set_value(pbr_symbols, "fs_bsize_s", (bsize / 512));
+	sym_set_value(pbr_symbols, "fsbtodb", bshift);
+	sym_set_value(pbr_symbols, "inodeblk", inodeblk);
+	sym_set_value(pbr_symbols, "inodedbl", inodedbl);
+	sym_set_value(pbr_symbols, "nblocks", nblocks);
+	sym_set_value(pbr_symbols, "blkincr", 0);
 
 	if (verbose)
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",

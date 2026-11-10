@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.160 2025/05/21 03:04:14 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.161 2026/11/10 06:28:27 miod Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -61,21 +61,21 @@
 
 struct nlist namelist[] = {
 #define X_UVMEXP	0		/* sysctl */
-	{ "_uvmexp" },
+	{ "uvmexp" },
 #define	X_TIME_UPTIME	1
-	{ "_time_uptime" },
+	{ "time_uptime" },
 #define X_NCHSTATS	2		/* sysctl */
-	{ "_nchstats" },
+	{ "nchstats" },
 #define	X_KMEMSTAT	3		/* sysctl */
-	{ "_kmemstats" },
+	{ "kmemstats" },
 #define	X_KMEMBUCKETS	4		/* sysctl */
-	{ "_bucket" },
+	{ "bucket" },
 #define	X_FORKSTAT	5		/* sysctl */
-	{ "_forkstat" },
+	{ "forkstat" },
 #define X_POOLHEAD	6		/* sysctl */
-	{ "_pool_head" },
+	{ "pool_head" },
 #define	X_NAPTIME	7
-	{ "_naptime" },
+	{ "naptime" },
 	{ NULL },
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.9 2026/06/07 14:22:07 deraadt Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.10 2026/11/10 06:28:27 miod Exp $	*/
 /*
  * Copyright (c) 2019,2023 Philip Guenther <guenther@openbsd.org>
  *
@@ -79,8 +79,8 @@ int meltdown, hide_direct, hide_pte, reproducible, show[5], show_leaves;
 int user_proc;
 
 struct nlist nl[] = {
-	{ "_proc0paddr" },
-	{ "_pmap_direct_base" },
+	{ "proc0paddr" },
+	{ "pmap_direct_base" },
 	{ NULL }
 };
 

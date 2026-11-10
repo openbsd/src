@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.67 2025/05/31 20:25:33 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.68 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -59,32 +59,32 @@ extern FILE *zopen(const char *fname, const char *mode, int bits);
 
 struct nlist current_nl[] = {	/* Namelist for currently running system. */
 #define X_DUMPDEV	0
-	{ "_dumpdev" },
+	{ "dumpdev" },
 #define X_DUMPLO	1
-	{ "_dumplo" },
+	{ "dumplo" },
 #define X_TIME		2
-	{ "_time_second" },
+	{ "time_second" },
 #define	X_DUMPSIZE	3
-	{ "_dumpsize" },
+	{ "dumpsize" },
 #define X_VERSION	4
-	{ "_version" },
+	{ "version" },
 #define X_PANICSTR	5
-	{ "_panicstr" },
+	{ "panicstr" },
 #define	X_DUMPMAG	6
-	{ "_dumpmag" },
+	{ "dumpmag" },
 	{ NULL },
 };
 int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, -1 };
 int dumpsyms[] = { X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG, -1 };
 
 struct nlist dump_nl[] = {	/* Name list for dumped system. */
-	{ "_dumpdev" },		/* Entries MUST be the same as */
-	{ "_dumplo" },		/*	those in current_nl[].  */
-	{ "_time_second" },
-	{ "_dumpsize" },
-	{ "_version" },
-	{ "_panicstr" },
-	{ "_dumpmag" },
+	{ "dumpdev" },		/* Entries MUST be the same as */
+	{ "dumplo" },		/*	those in current_nl[].  */
+	{ "time_second" },
+	{ "dumpsize" },
+	{ "version" },
+	{ "panicstr" },
+	{ "dumpmag" },
 	{ NULL },
 };
 

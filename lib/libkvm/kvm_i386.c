@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.28 2021/12/01 16:53:28 deraadt Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.29 2026/11/10 06:28:27 miod Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -124,9 +124,9 @@ _kvm_initvtop(kvm_t *kd)
 
 	vm->PTD = NULL;
 
-	nl[0].n_name = "_PTDpaddr";
-	nl[1].n_name = "_PTDsize";
-	nl[2].n_name = "_cpu_pae";
+	nl[0].n_name = "PTDpaddr";
+	nl[1].n_name = "PTDsize";
+	nl[2].n_name = "cpu_pae";
 	nl[3].n_name = NULL;
 
 	if (kvm_nlist(kd, nl) != 0) {

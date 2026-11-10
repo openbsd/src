@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.25 2022/09/11 10:40:35 kettenis Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.26 2026/11/10 06:28:27 miod Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -714,7 +714,7 @@ efi_acpi_addr(void)
 	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
 	if (kd == NULL)
 		goto on_error;
-	nl[0].n_name = "_efi_acpi_table";
+	nl[0].n_name = "efi_acpi_table";
 	if (kvm_nlist(kd, nl) != 0)
 		goto on_error;
 	if (kvm_read(kd, nl[0].n_value, &table, sizeof(table)) == -1)
@@ -745,7 +745,7 @@ efi_acpi_addr(void)
 	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
 	if (kd == NULL)
 		goto on_error;
-	nl[0].n_name = "_bios_efiinfo";
+	nl[0].n_name = "bios_efiinfo";
 	if (kvm_nlist(kd, nl) != 0)
 		goto on_error;
 	if (kvm_read(kd, nl[0].n_value, &ptr, sizeof(ptr)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.39 2024/07/08 13:18:26 claudio Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.40 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,8 +134,8 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 	op &= ~KERN_PROC_SHOW_THREADS;
 
 	/* Anchor a time to compare process starting times from. */
-	nl[0].n_name = "_time_second";
-	nl[1].n_name = "_time_uptime";
+	nl[0].n_name = "time_second";
+	nl[1].n_name = "time_uptime";
 	nl[2].n_name = NULL;
 	if (kvm_nlist(kd, nl) != 0) {
 		for (i = 0; nl[i].n_type != 0; ++i)
@@ -476,10 +476,10 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 
 		memset(nl, 0, sizeof(nl));
-		nl[0].n_name = "_nthreads";
-		nl[1].n_name = "_nprocesses";
-		nl[2].n_name = "_allprocess";
-		nl[3].n_name = "_zombprocess";
+		nl[0].n_name = "nthreads";
+		nl[1].n_name = "nprocesses";
+		nl[2].n_name = "allprocess";
+		nl[3].n_name = "zombprocess";
 		nl[4].n_name = NULL;
 
 		if (kvm_nlist(kd, nl) != 0) {

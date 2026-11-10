@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.127 2026/11/04 08:59:48 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.128 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -55,9 +55,9 @@
 
 struct nlist nl[] = {
 #define N_RTABLES	0
-	{ "_rtables" },
+	{ "rtables" },
 #define N_AF2IDX	1
-	{ "_af2idx" },
+	{ "af2idx" },
 
 	{ "" }
 };

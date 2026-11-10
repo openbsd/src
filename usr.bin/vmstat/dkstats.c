@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.42 2024/05/06 16:54:22 cheloha Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.43 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -53,19 +53,19 @@
 #if !defined(NOKVM)
 static struct nlist namelist[] = {
 #define	X_TK_NIN	0		/* sysctl */
-	{ "_tk_nin" },
+	{ "tk_nin" },
 #define	X_TK_NOUT	1		/* sysctl */
-	{ "_tk_nout" },
+	{ "tk_nout" },
 #define	X_CP_TIME	2		/* sysctl */
-	{ "_cp_time" },
+	{ "cp_time" },
 #define	X_HZ		3		/* sysctl */
-	{ "_hz" },
+	{ "hz" },
 #define	X_STATHZ	4		/* sysctl */
-	{ "_stathz" },
+	{ "stathz" },
 #define X_DISK_COUNT	5		/* sysctl */
-	{ "_disk_count" },
+	{ "disk_count" },
 #define X_DISKLIST	6		/* sysctl */
-	{ "_disklist" },
+	{ "disklist" },
 	{ NULL },
 };
 #define	KVM_ERROR(_string) {						\

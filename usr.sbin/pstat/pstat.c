@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.132 2026/08/06 20:41:11 claudio Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.133 2026/11/10 06:28:28 miod Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -71,17 +71,17 @@
 
 struct nlist vnodenl[] = {
 #define	FNL_NFILE	0		/* sysctl */
-	{"_numfiles"},
+	{"numfiles"},
 #define FNL_MAXFILE	1		/* sysctl */
-	{"_maxfiles"},
+	{"maxfiles"},
 #define TTY_NTTY	2		/* sysctl */
-	{"_tty_count"},
+	{"tty_count"},
 #define V_NUMV		3		/* sysctl */
-	{ "_numvnodes" },
+	{"numvnodes"},
 #define TTY_TTYLIST	4		/* sysctl */
-	{"_ttylist"},
+	{"ttylist"},
 #define	V_MOUNTLIST	5		/* no sysctl */
-	{ "_mountlist" },
+	{"mountlist"},
 	{ NULL }
 };
 

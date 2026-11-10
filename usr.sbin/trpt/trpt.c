@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.40 2023/03/08 04:43:15 guenther Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.41 2026/11/10 06:28:28 miod Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,9 +100,9 @@
 
 struct nlist nl[] = {
 #define	N_TCP_DEBUG	0		/* no sysctl */
-	{ "_tcp_debug" },
+	{ "tcp_debug" },
 #define	N_TCP_DEBX	1		/* no sysctl */
-	{ "_tcp_debx" },
+	{ "tcp_debx" },
 	{ NULL },
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.74 2024/10/20 11:21:24 claudio Exp $ */
+/*	$OpenBSD: procmap.c,v 1.75 2026/11/10 06:28:28 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -163,17 +163,17 @@ struct kbit {
 #define KDEREF(kd, item) _KDEREF((kd), A(item), D(item, data), S(item))
 
 struct nlist nl[] = {
-	{ "_maxsmap" },
+	{ "maxsmap" },
 #define NL_MAXSSIZ		0
-	{ "_uvm_vnodeops" },
+	{ "uvm_vnodeops" },
 #define NL_UVM_VNODEOPS		1
-	{ "_uvm_deviceops" },
+	{ "uvm_deviceops" },
 #define NL_UVM_DEVICEOPS	2
-	{ "_aobj_pager" },
+	{ "aobj_pager" },
 #define NL_AOBJ_PAGER		3
-	{ "_kernel_map" },
+	{ "kernel_map" },
 #define NL_KERNEL_MAP		4
-	{ "_nclruhead" },
+	{ "nclruhead" },
 #define NL_NCLRUHEAD		5
 	{ NULL }
 };

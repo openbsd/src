@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.38 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.39 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 
 struct nlist nl[] = {
 #define	N_NFSSTAT	0
-	{ "_nfsstats" },
+	{ "nfsstats" },
 	{ "" },
 };
 kvm_t *kd;

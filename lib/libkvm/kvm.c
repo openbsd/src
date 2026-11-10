@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.72 2022/02/22 17:35:01 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.73 2026/11/10 06:28:27 miod Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -819,7 +819,7 @@ kvm_dump_inval(kvm_t *kd)
 		_kvm_err(kd, kd->program, "clearing dump on live kernel");
 		return (-1);
 	}
-	nl[0].n_name = "_dumpmag";
+	nl[0].n_name = "dumpmag";
 	nl[1].n_name = NULL;
 
 	if (kvm_nlist(kd, nl) == -1) {

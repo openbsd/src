@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.17 2019/09/06 21:30:31 cheloha Exp $ */
+/*	$OpenBSD: ukc.h,v 1.18 2026/11/10 06:28:27 miod Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -49,24 +49,24 @@
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
-	{ "_locnames" },
-	{ "_locnamp" },
-	{ "_cfroots" },
-	{ "_cfroots_size" },
-	{ "_pv_size" },
-	{ "_pv" },
-	{ "_cfdata" },
-	{ "_kernel_text" },
-	{ "_version" },
-	{ "_extraloc" },
-	{ "_rextraloc" },
-	{ "_textraloc" },
-	{ "_userconf_histlen" },
-	{ "_userconf_history" },
-	{ "_pdevnames" },
-	{ "_pdevnames_size" },
-	{ "_pdevinit" },
-	{ "_nkmempages" },
+	{ "locnames" },
+	{ "locnamp" },
+	{ "cfroots" },
+	{ "cfroots_size" },
+	{ "pv_size" },
+	{ "pv" },
+	{ "cfdata" },
+	{ "kernel_text" },
+	{ "version" },
+	{ "extraloc" },
+	{ "rextraloc" },
+	{ "textraloc" },
+	{ "userconf_histlen" },
+	{ "userconf_history" },
+	{ "pdevnames" },
+	{ "pdevnames_size" },
+	{ "pdevinit" },
+	{ "nkmempages" },
 	{ NULL },
 };
 int	maxdev = 0;

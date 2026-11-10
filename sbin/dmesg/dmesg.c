@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.33 2022/12/04 23:50:46 cheloha Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.34 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 #ifndef NOKVM
 struct nlist nl[] = {
 #define	X_MSGBUF	0
-	{ "_msgbufp" },
+	{ "msgbufp" },
 	{ NULL },
 };
 #endif

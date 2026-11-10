@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.24 2025/07/02 13:24:48 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.25 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -46,20 +46,20 @@
 #include "ps.h"
 
 struct	nlist psnl[] = {
-	{"_fscale"},
+	{"fscale"},
 #define	X_FSCALE	0
-	{"_ccpu"},
+	{"ccpu"},
 #define	X_CCPU		1
-	{"_physmem"},
+	{"physmem"},
 #define	X_PHYSMEM	2
-	{"_maxslp"},
+	{"maxslp"},
 #define X_MAXSLP	3
 	{NULL}
 };
 
-fixpt_t	ccpu;				/* kernel _ccpu variable */
+fixpt_t	ccpu;				/* kernel ccpu variable */
 u_int	mempages;			/* number of pages of phys. memory */
-int	fscale;				/* kernel _fscale variable */
+int	fscale;				/* kernel fscale variable */
 int	maxslp;
 
 extern kvm_t *kd;

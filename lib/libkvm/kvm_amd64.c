@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.17 2026/06/04 05:25:04 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.18 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -76,8 +76,8 @@ _kvm_initvtop(kvm_t *kd)
 {
 	struct nlist nl[3];
 
-	nl[0].n_name = "_pmap_direct_base";
-	nl[1].n_name = "_pmap_direct_end";
+	nl[0].n_name = "pmap_direct_base";
+	nl[1].n_name = "pmap_direct_end";
 	nl[2].n_name = NULL;
 
 	if (kvm_nlist(kd, nl) != 0) {

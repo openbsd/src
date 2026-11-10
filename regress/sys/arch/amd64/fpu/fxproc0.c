@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxproc0.c,v 1.2 2021/12/13 16:56:49 deraadt Exp $	*/
+/*	$OpenBSD: fxproc0.c,v 1.3 2026/11/10 06:28:27 miod Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 	char *memf, *nlistf;
 	kvm_t *kd;
 	int ch;
-	struct nlist nl[] = { { .n_name = "_proc0" }, { .n_name = NULL } };
+	struct nlist nl[] = { { .n_name = "proc0" }, { .n_name = NULL } };
 
 	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, "M:N:")) != -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.51 2025/09/17 16:12:10 deraadt Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.52 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -76,14 +76,14 @@ char	*blkstore;
 size_t	blksize;
 
 struct sym_data pbr_symbols[] = {
-	{"_fs_bsize_p",	2},
-	{"_fs_bsize_s",	2},
-	{"_fsbtodb",	1},
-	{"_p_offset",	4},
-	{"_inodeblk",	4},
-	{"_inodedbl",	4},
-	{"_nblocks",	2},
-	{"_blkincr",	1},
+	{"fs_bsize_p",	2},
+	{"fs_bsize_s",	2},
+	{"fsbtodb",	1},
+	{"p_offset",	4},
+	{"inodeblk",	4},
+	{"inodedbl",	4},
+	{"nblocks",	2},
+	{"blkincr",	1},
 	{NULL}
 };
 
@@ -891,8 +891,8 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	 * Now set the values that will need to go into biosboot
 	 * (the partition boot record, a.k.a. the PBR).
 	 */
-	sym_set_value(pbr_symbols, "_fs_bsize_p", (fs->fs_bsize / 16));
-	sym_set_value(pbr_symbols, "_fs_bsize_s", (fs->fs_bsize /
+	sym_set_value(pbr_symbols, "fs_bsize_p", (fs->fs_bsize / 16));
+	sym_set_value(pbr_symbols, "fs_bsize_s", (fs->fs_bsize /
 	    dl->d_secsize));
 
 	/*
@@ -904,16 +904,16 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	 *
 	 * N.B.: ASSUMES fs_fsize is a power of 2 of d_secsize.
 	 */
-	sym_set_value(pbr_symbols, "_fsbtodb",
+	sym_set_value(pbr_symbols, "fsbtodb",
 	    ffs(fs->fs_fsize / dl->d_secsize) - 1);
 
-	sym_set_value(pbr_symbols, "_p_offset", pp->p_offset);
-	sym_set_value(pbr_symbols, "_inodeblk",
+	sym_set_value(pbr_symbols, "p_offset", pp->p_offset);
+	sym_set_value(pbr_symbols, "inodeblk",
 	    ino_to_fsba(fs, fsb.st_ino));
-	sym_set_value(pbr_symbols, "_inodedbl",
+	sym_set_value(pbr_symbols, "inodedbl",
 	    ((((char *)ap) - buf) + INODEOFF));
-	sym_set_value(pbr_symbols, "_nblocks", ndb);
-	sym_set_value(pbr_symbols, "_blkincr", incr);
+	sym_set_value(pbr_symbols, "nblocks", ndb);
+	sym_set_value(pbr_symbols, "blkincr", incr);
 
 	if (verbose) {
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",

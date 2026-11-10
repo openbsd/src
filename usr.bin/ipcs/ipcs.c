@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.31 2026/11/07 21:36:39 bluhm Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.32 2026/11/10 06:28:27 miod Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -661,19 +661,19 @@ ipcs_kvm(void)
 	kvm_t *kd;
 	int i;
 	struct nlist symbols[] = {
-		{"_sema"},
+		{"sema"},
 	#define X_SEMA		0
-		{"_seminfo"},
+		{"seminfo"},
 	#define X_SEMINFO	1
-		{"_semu"},
+		{"semu"},
 	#define X_SEMU		2
-		{"_msginfo"},
+		{"msginfo"},
 	#define X_MSGINFO	3
-		{"_msg_queues"},
+		{"msg_queues"},
 	#define X_MSG_QUEUES	4
-		{"_shminfo"},
+		{"shminfo"},
 	#define X_SHMINFO	5
-		{"_shmsegs"},
+		{"shmsegs"},
 	#define X_SHMSEGS	6
 		{NULL}
 	};

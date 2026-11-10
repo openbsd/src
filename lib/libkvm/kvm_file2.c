@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.58 2024/02/11 21:29:12 bluhm Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.59 2026/11/10 06:28:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -208,8 +208,8 @@ kvm_deadfile_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct filelist filehead;
 	int nfiles;
 
-	nl[0].n_name = "_filehead";
-	nl[1].n_name = "_numfiles";
+	nl[0].n_name = "filehead";
+	nl[1].n_name = "numfiles";
 	nl[2].n_name = 0;
 
 	if (kvm_nlist(kd, nl) != 0) {
@@ -279,9 +279,9 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	char *filebuf = NULL;
 	int i, nfiles;
 
-	nl[0].n_name = "_filehead";
-	nl[1].n_name = "_numfiles";
-	nl[2].n_name = "_allprocess";
+	nl[0].n_name = "filehead";
+	nl[1].n_name = "numfiles";
+	nl[2].n_name = "allprocess";
 	nl[3].n_name = 0;
 
 	if (kvm_nlist(kd, nl) != 0) {

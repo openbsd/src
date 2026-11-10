@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_getloadavg.c,v 1.10 2021/09/10 00:02:43 deraadt Exp $ */
+/*	$OpenBSD: kvm_getloadavg.c,v 1.11 2026/11/10 06:28:27 miod Exp $ */
 /*	$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpej Exp $	*/
 
 /*-
@@ -46,9 +46,9 @@
 #include "kvm_private.h"
 
 static struct nlist nl[] = {
-	{ "_averunnable" },
+	{ "averunnable" },
 #define	X_AVERUNNABLE	0
-	{ "_fscale" },
+	{ "fscale" },
 #define	X_FSCALE	1
 	{ "" },
 };
