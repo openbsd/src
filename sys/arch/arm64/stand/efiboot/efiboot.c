@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.72 2026/09/04 17:48:11 mglocker Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.73 2026/11/10 17:38:52 phessler Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -610,7 +610,9 @@ efi_dma_constraint(void)
 	    fdt_node_is_compatible(node, "rockchip,rk3588") ||
 	    fdt_node_is_compatible(node, "rockchip,rk3588s"))
 		dma_constraint[1] = htobe64(0xffffffff);
-	if (fdt_node_is_compatible(node, "qcom,sc8280xp") ||
+	if (fdt_node_is_compatible(node, "qcom,glymur") ||
+	    fdt_node_is_compatible(node, "qcom,mahua") ||
+	    fdt_node_is_compatible(node, "qcom,sc8280xp") ||
 	    fdt_node_is_compatible(node, "qcom,x1e80100"))
 		dma_constraint[1] = htobe64(0xffffffff);
 
@@ -1168,8 +1170,14 @@ struct smbios_dtb {
 	  "qcom/x1e78100-lenovo-thinkpad-t14s.dtb" },
 	{ "LENOVO", "21NH",
 	  "qcom/x1p42100-lenovo-thinkbook-16.dtb" },
+	{ "LENOVO", "22A7",
+	  "qcom/mahua-lenovo-thinkpad-t14s-gen7-lcd.dtb" },
+	{ "LENOVO", "22A8",
+	  "qcom/mahua-lenovo-thinkpad-t14s-gen7-lcd.dtb" },
 	{ "LENOVO", "83ED",
 	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
+	{ "LENOVO", "83QR",
+	  "qcom/glymur-lenovo-yoga-slim7x.dts" },
 	{ "Microsoft Corporation", "Windows Dev Kit 2023",
 	  "qcom/sc8280xp-microsoft-blackrock.dtb" },
 	{ "Qualcomm", "CRD",
