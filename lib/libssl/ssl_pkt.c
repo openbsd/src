@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.80 2026/09/22 03:45:18 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.81 2026/11/10 12:03:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -486,8 +486,20 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	/* Send any existing record content. */
+	/*
+	 * Send any existing record content. This must be a retry of the
+	 * write that produced the pending record, otherwise we would report
+	 * the length of the pending record as having been written from the
+	 * caller's buffer.
+	 */
 	if (s->s3->tls_wrec != NULL) {
+		if (s->s3->wpend_tot > (int)len ||
+		    (s->s3->wpend_buf != buf &&
+		    !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)) ||
+		    s->s3->wpend_type != type) {
+			SSLerror(s, SSL_R_BAD_WRITE_RETRY);
+			return -1;
+		}
 		if ((ret = tls12_record_send(s->s3->tls_wrec,
 		    tls12_legacy_wire_write_cb, s)) <= 0)
 			return -1;
@@ -528,10 +540,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	s->s3->tls_wrec = wrec;
 	wrec = NULL;
 
-	/*
-	 * Memorize arguments so that ssl3_write_pending can detect
-	 * bad write retries later.
-	 */
+	/* Memorize arguments so that bad write retries can be detected. */
 	s->s3->wpend_tot = len;
 	s->s3->wpend_buf = buf;
 	s->s3->wpend_type = type;
@@ -1205,7 +1214,7 @@ ssl3_send_alert(SSL *s, int level, int desc)
 	 * If data is still being written out, the alert will be dispatched at
 	 * some point in the future.
 	 */
-	if (s->s3->wbuf.left != 0)
+	if (s->s3->wbuf.left != 0 || s->s3->tls_wrec != NULL)
 		return -1;
 
 	return ssl3_dispatch_alert(s);
