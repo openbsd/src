@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.10 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.11 2026/11/10 13:46:17 henning Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -159,7 +159,7 @@ pf_synflood_check(struct pf_pdesc *pd)
 {
 	KASSERT (pd->proto == IPPROTO_TCP);
 
-	if (pd->m && (pd->m->m_pkthdr.pf.tag & PF_TAG_SYNCOOKIE_RECREATED))
+	if (pd->m && (pd->m->m_pkthdr.pf.flags & PF_TAG_SYNCOOKIE_RECREATED))
 		return (0);
 
 	if (pf_status.syncookies_mode != PF_SYNCOOKIES_ADAPTIVE)
@@ -355,6 +355,7 @@ pf_syncookie_recreate_syn(struct pf_pdesc *pd, u_short *reason)
 	uint16_t		 mss;
 	uint32_t		 ack, seq;
 	union pf_syncookie	 cookie;
+	struct mbuf		*m;
 
 	seq = ntohl(pd->hdr.tcp.th_seq) - 1;
 	ack = ntohl(pd->hdr.tcp.th_ack) - 1;
@@ -367,8 +368,11 @@ pf_syncookie_recreate_syn(struct pf_pdesc *pd, u_short *reason)
 	mss = pf_syncookie_msstab[cookie.flags.mss_idx];
 	wscale = pf_syncookie_wstab[cookie.flags.wscale_idx];
 
-	return (pf_build_tcp(NULL, pd->af, pd->src, pd->dst, *pd->sport,
+	m = pf_build_tcp(NULL, pd->af, pd->src, pd->dst, *pd->sport,
 	    *pd->dport, seq, 0, TH_SYN, wscale, mss, pd->ttl, 0,
-	    PF_TAG_SYNCOOKIE_RECREATED, cookie.flags.sack_ok, pd->rdomain,
-	    reason));
+	    0, cookie.flags.sack_ok, pd->rdomain, reason);
+	if (m != NULL)
+		m->m_pkthdr.pf.flags |= PF_TAG_SYNCOOKIE_RECREATED;
+
+	return (m);
 }
