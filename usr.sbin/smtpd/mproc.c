@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.53 2026/10/31 10:46:05 op Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.54 2026/11/10 18:50:21 op Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -343,13 +343,8 @@ static struct imsg * current;
 static void
 m_error(const char *error)
 {
-	char	buf[512];
-
-	(void)snprintf(buf, sizeof buf, "%s: %s: %s",
-	    proc_name(smtpd_process),
-	    imsg_to_str(current->hdr.type),
-	    error);
-	fatalx("%s", buf);
+	fatalx("%s: %s: %s", proc_name(smtpd_process),
+	    imsg_to_str(current->hdr.type), error);
 }
 
 void
