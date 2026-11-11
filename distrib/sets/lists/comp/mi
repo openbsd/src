@@ -980,7 +980,6 @@
 ./usr/include/net/art.h
 ./usr/include/net/bfd.h
 ./usr/include/net/bpf.h
-./usr/include/net/bpfdesc.h
 ./usr/include/net/ethertypes.h
 ./usr/include/net/fq_codel.h
 ./usr/include/net/frame.h
