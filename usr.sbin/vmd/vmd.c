@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.186 2026/10/05 23:07:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.187 2026/11/11 18:29:25 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1077,8 +1077,7 @@ vm_remove(struct vmd_vm *vm, const char *caller)
 	TAILQ_REMOVE(env->vmd_vms, vm, vm_entry);
 
 	vm_stop(vm, 0, caller);
-	if (vm->vm_kernel_path != NULL && !vm->vm_from_config)
-		free(vm->vm_kernel_path);
+	free(vm->vm_kernel_path);
 	free(vm);
 }
 

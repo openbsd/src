@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2026/10/05 23:07:37 mlarkin Exp $	*/
+/*	$OpenBSD: parse.y,v 1.77 2026/11/11 18:29:25 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -396,6 +396,8 @@ vm		: VM string vm_instance		{
 				} else if (ret == -1) {
 					yyerror("vm \"%s\" failed: %s",
 					    vmc.vmc_name, strerror(errno));
+					free(kernel);
+					kernel = NULL;
 					YYERROR;
 				} else {
 					if (vmc_disable)
@@ -409,10 +411,13 @@ vm		: VM string vm_instance		{
 					    vmc_disable ?
 					    "disabled" : "enabled");
 				}
+				free(vm->vm_kernel_path);
 				vm->vm_kernel_path = kernel;
+				kernel = NULL;
 				vm->vm_kernel = -1;
 				vm->vm_from_config = 1;
 			}
+			free(kernel);
 			kernel = NULL;
 		}
 		;
