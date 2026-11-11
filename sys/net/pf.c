@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1252 2026/11/09 10:54:23 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1253 2026/11/11 23:34:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1340,11 +1340,14 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
 			sks = pf_state_key_ref(skw);
 		}
 		st->key[PF_SK_STACK] = sks;
-	} else if (pf_state_key_attach(sks, st, PF_SK_STACK) == NULL) {
-		pf_state_key_detach(st, PF_SK_WIRE);
-		pf_state_key_unref(skw);
-		PF_STATE_EXIT_WRITE();
-		return (-1);
+	} else {
+		sks = pf_state_key_attach(sks, st, PF_SK_STACK);
+		if (sks == NULL) {
+			pf_state_key_detach(st, PF_SK_WIRE);
+			pf_state_key_unref(skw);
+			PF_STATE_EXIT_WRITE();
+			return (-1);
+		}
 	}
 
 	if (st->id == 0 && st->creatorid == 0) {
