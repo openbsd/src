@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.33 2026/11/11 06:03:10 jmatthew Exp $ */
+/*	$OpenBSD: vmt.c,v 1.34 2026/11/11 07:42:54 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -656,9 +656,9 @@ vmt_update_guest_info(struct vmt_softc *sc)
 
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d "
 #ifdef __LP64__
-		    "other-64"
+		    "other-64",
 #else
-		    "other"
+		    "other",
 #endif
 		    VM_GUEST_INFO_OS_NAME) != 0) {
 			DPRINTF("%s: unable to set guest OS", DEVNAME(sc));
