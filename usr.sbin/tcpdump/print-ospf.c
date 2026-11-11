@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.23 2024/04/23 13:34:51 jsg Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.24 2026/11/11 18:40:59 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -197,6 +197,8 @@ ospf_print_lsa(const struct lsa *lsap)
 	if (ospf_print_lshdr(&lsap->ls_hdr))
 		return (1);
 	TCHECK(lsap->ls_hdr.ls_length);
+	if (ntohs(lsap->ls_hdr.ls_length) < sizeof(lsap->ls_hdr))
+		goto trunc;
 	ls_end = (u_char *)lsap + ntohs(lsap->ls_hdr.ls_length);
 	switch (lsap->ls_hdr.ls_type) {
 

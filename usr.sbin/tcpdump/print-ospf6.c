@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf6.c,v 1.11 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-ospf6.c,v 1.12 2026/11/11 18:40:59 hshoexer Exp $	*/
 
 
 /*
@@ -265,6 +265,8 @@ ospf6_print_lsa(const struct lsa *lsap)
 	if (ospf6_print_lshdr(&lsap->ls_hdr))
 		return (1);
 	TCHECK(lsap->ls_hdr.ls_length);
+	if (ntohs(lsap->ls_hdr.ls_length) < sizeof(lsap->ls_hdr))
+		goto trunc;
 	ls_end = (u_char *)lsap + ntohs(lsap->ls_hdr.ls_length);
 	switch (ntohs(lsap->ls_hdr.ls_type)) {
 	case LS_TYPE_ROUTER | LS_SCOPE_AREA:
