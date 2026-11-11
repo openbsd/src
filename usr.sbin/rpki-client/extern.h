@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.322 2026/11/10 06:53:27 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.323 2026/11/11 12:27:56 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -802,8 +802,7 @@ const struct signed_obj *mft_obj(void);
 struct mft	*mft_read(struct ibuf *);
 int		 mft_compare_issued(const struct mft *, const struct mft *);
 int		 mft_compare_seqnum(const struct mft *, const struct mft *);
-int		 mft_seqnum_gap_present(const struct mft *, const struct mft *,
-		    BN_CTX *);
+int		 mft_seqnum_gap_present(const struct mft *, const struct mft *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);

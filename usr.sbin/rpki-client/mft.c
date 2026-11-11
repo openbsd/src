@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.149 2026/11/03 14:29:03 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.150 2026/11/11 12:27:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -588,16 +588,10 @@ mft_compare_seqnum(const struct mft *a, const struct mft *b)
  * Return 1 if a gap is detected.
  */
 int
-mft_seqnum_gap_present(const struct mft *a, const struct mft *b, BN_CTX *bn_ctx)
+mft_seqnum_gap_present(const struct mft *a, const struct mft *b)
 {
-	BIGNUM *diff, *seqnum_a, *seqnum_b;
+	BIGNUM *seqnum_a = NULL, *seqnum_b = NULL;
 	int ret = 0;
-
-	BN_CTX_start(bn_ctx);
-	if ((diff = BN_CTX_get(bn_ctx)) == NULL ||
-	    (seqnum_a = BN_CTX_get(bn_ctx)) == NULL ||
-	    (seqnum_b = BN_CTX_get(bn_ctx)) == NULL)
-		errx(1, "BN_CTX_get");
 
 	if (!BN_hex2bn(&seqnum_a, a->seqnum))
 		errx(1, "BN_hex2bn");
@@ -605,12 +599,14 @@ mft_seqnum_gap_present(const struct mft *a, const struct mft *b, BN_CTX *bn_ctx)
 	if (!BN_hex2bn(&seqnum_b, b->seqnum))
 		errx(1, "BN_hex2bn");
 
-	if (!BN_sub(diff, seqnum_a, seqnum_b))
-		errx(1, "BN_sub");
+	if (!BN_add_word(seqnum_b, 1))
+		errx(1, "BN_add_word");
 
-	ret = !BN_is_one(diff);
+	if (BN_cmp(seqnum_a, seqnum_b) != 0)
+		ret = 1;
 
-	BN_CTX_end(bn_ctx);
+	BN_free(seqnum_a);
+	BN_free(seqnum_b);
 
 	return ret;
 }
