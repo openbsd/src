@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.291 2026/11/09 20:17:02 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.292 2026/11/11 14:54:35 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -685,7 +685,7 @@ writefulllabel(dev_t dev, void (*strat)(struct buf *),
 		blk = swapfulllabel(dev, strat, lp);
 	if (blk == -1)
 		blk = sbfulllabel(dev, strat, lp);
-	if (blk != -1)
+	if (blk == -1)
 		goto done;
 
 	sector = DL_BLKTOSEC(lp, blk);
