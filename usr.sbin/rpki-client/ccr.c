@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.47 2026/11/02 15:23:17 claudio Exp $ */
+/*	$OpenBSD: ccr.c,v 1.48 2026/11/11 14:30:07 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1020,7 +1020,7 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 			    fn, i);
 			goto out;
 		}
-		if (size < 1000 || size > MAX_FILE_SIZE) {
+		if (size > MAX_FILE_SIZE) {
 			warnx("%s: manifest instance #%d corrupted: size",
 			    fn, i);
 			goto out;
