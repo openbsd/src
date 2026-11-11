@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.125 2026/10/05 02:35:19 jsg Exp $
+.\" $OpenBSD: isakmpd.8,v 1.126 2026/11/11 18:45:03 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: October 5 2026 $
+.Dd $Mdocdate: November 11 2026 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -38,11 +38,10 @@
 .Nd ISAKMP/Oakley a.k.a. IKEv1 key management daemon
 .Sh SYNOPSIS
 .Nm isakmpd
-.Op Fl 46adKLnSTv
+.Op Fl 46adKnSTv
 .Op Fl c Ar config-file
 .Op Fl D Ar class Ns = Ns Ar level
 .Op Fl f Ar fifo
-.Op Fl l Ar packetlog-file
 .Op Fl N Ar udpencap-port
 .Op Fl p Ar listen-port
 .Sh DESCRIPTION
