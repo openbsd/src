@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.106 2026/11/09 12:31:36 hshoexer Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.107 2026/11/11 18:57:53 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -135,6 +135,11 @@ ikev1_recv(struct iked *env, struct iked_message *msg)
 	    betoh32(hdr->ike_length),
 	    print_addr(&msg->msg_peer), print_addr(&msg->msg_local),
 	    msg->msg_natt ? ", NAT-T" : "");
+
+	if (!env->sc_ikev1inuse) {
+		log_debug("%s: IKEv1 not configured", __func__);
+		return;
+	}
 
 	bzero(&dg, sizeof(dg));
 	memcpy(&dg.dg_peer, &msg->msg_peer, sizeof(dg.dg_peer));

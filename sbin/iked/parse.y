@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.150 2026/11/09 12:31:36 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.151 2026/11/11 18:57:53 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -112,6 +112,7 @@ static long		 ocsp_maxage = -1;
 static int		 cert_partial_chain = 0;
 static struct iked_radopts
 			 radauth, radacct;
+static int		 ikev1inuse = 0;
 
 struct iked_transform ikev2_default_ike_transforms[] = {
 	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },
@@ -590,6 +591,7 @@ ikev1rule	: IKEV1 name ikeflags satype af proto rdomain hosts_list peers
 				yyerror("create_ike failed");
 				YYERROR;
 			}
+			ikev1inuse = 1;
 		}
 		;
 
@@ -2051,6 +2053,7 @@ parse_config(const char *filename, struct iked *x_env)
 	radauth.max_failovers = 0;
 	radacct.max_tries = 3;
 	radacct.max_failovers = 0;
+	ikev1inuse = 0;
 
 	if (env->sc_opts & IKED_OPT_PASSIVE)
 		passive = 1;
@@ -2073,6 +2076,7 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_vendorid = vendorid;
 	env->sc_radauth = radauth;
 	env->sc_radacct = radacct;
+	env->sc_ikev1inuse = ikev1inuse;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",
