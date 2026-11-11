@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.49 2026/11/10 06:53:27 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.50 2026/11/11 20:08:27 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -141,6 +141,10 @@ aspa_parse_econtent(const char *fn, void *obj, const unsigned char *d,
 
 	if (!as_id_parse(aspa_asn1->customerASID, &aspa->custasid)) {
 		warnx("%s: malformed CustomerASID", fn);
+		goto out;
+	}
+	if (aspa->custasid == 0) {
+		warnx("%s: CustomerASID 0 not allowed", fn);
 		goto out;
 	}
 
