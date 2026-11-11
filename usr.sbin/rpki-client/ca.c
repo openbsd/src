@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.16 2026/10/31 16:24:28 job Exp $ */
+/*	$OpenBSD: ca.c,v 1.17 2026/11/11 19:43:11 claudio Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -32,8 +33,11 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "thread.h"
 
 extern int rrdpon;
+
+static pthread_rwlock_t carepo_lk = PTHREAD_RWLOCK_INITIALIZER;
 
 static void ca_free(struct ca *);
 static void ca_set_state_from_last_run(struct ca *, const struct cert *);
@@ -41,26 +45,13 @@ static void ca_set_state_from_last_run(struct ca *, const struct cert *);
 struct carepo {
 	RB_ENTRY(carepo) entry;
 	char *carepo;
-	int talid;
-	unsigned int counter;
+	unsigned int counter[TALSZ_MAX];
 };
 
 static inline int
 carepocmp(const struct carepo *a, const struct carepo *b)
 {
-	int cmp;
-
-	if (a->talid < b->talid)
-		return -1;
-	if (a->talid > b->talid)
-		return 1;
-
-	cmp = strcmp(a->carepo, b->carepo);
-	if (cmp > 0)
-		return 1;
-	if (cmp < 0)
-		return -1;
-	return 0;
+	return strcmp(a->carepo, b->carepo);
 }
 
 static RB_HEAD(carepo_tree, carepo) carepos = RB_INITIALIZER(&carepos);
@@ -79,34 +70,59 @@ carepo_tree_free(void)
 {
 	struct carepo *carepo, *carepo_tmp;
 
+	rw_enter_write(&carepo_lk);
 	RB_FOREACH_SAFE(carepo, carepo_tree, &carepos, carepo_tmp) {
 		RB_REMOVE(carepo_tree, &carepos, carepo);
 		carepo_free(carepo);
 	}
+	rw_leave(&carepo_lk);
+	rw_destroy(&carepo_lk);
+}
+
+static inline struct carepo *
+carepo_lookup_locked(const struct cert *cert)
+{
+	struct carepo needle;
+
+	needle.carepo = cert->repo;
+	return RB_FIND(carepo_tree, &carepos, &needle);
 }
 
 /*
  * Increment and return per TAL per carepo counter.
  */
-static unsigned int
-carepo_increment(const struct ca *ca)
+void
+carepo_increment(const struct cert *cert)
 {
-	struct carepo *carepo, needle;
+	struct carepo *carepo;
 
-	needle.talid = ca->talid;
-	needle.carepo = ca->carepo;
-	if ((carepo = RB_FIND(carepo_tree, &carepos, &needle)) == NULL) {
+	rw_enter_write(&carepo_lk);
+	if ((carepo = carepo_lookup_locked(cert)) == NULL) {
 		if ((carepo = calloc(1, sizeof(*carepo))) == NULL)
 			err(1, NULL);
-		carepo->talid = ca->talid;
-		if ((carepo->carepo = strdup(ca->carepo)) == NULL)
+		if ((carepo->carepo = strdup(cert->repo)) == NULL)
 			err(1, NULL);
-		carepo->counter = 0;
 		if (RB_INSERT(carepo_tree, &carepos, carepo) != NULL)
 			err(1, "carepos tree corrupted");
 	}
 
-	return ++carepo->counter;
+	++carepo->counter[cert->talid];
+	rw_leave(&carepo_lk);
+}
+
+unsigned int
+carepo_get_count(const struct cert *cert)
+{
+	struct carepo *carepo;
+	unsigned int count = 0;
+
+	rw_enter_read(&carepo_lk);
+	if ((carepo = carepo_lookup_locked(cert)) != NULL)
+		count = carepo->counter[cert->talid];
+	rw_leave(&carepo_lk);
+
+	return count;
+
 }
 
 static inline int
@@ -180,12 +196,6 @@ ca_tree_insert_cert(struct ca_tree *ca_tree, const struct cert *cert)
 		ca->issuer = ca_lookup_by_certid(ca_tree, cert->issuerid);
 		if (ca->issuer == NULL)
 			errx(1, "ca tree corrupted");
-		ca->bad = ca->issuer->bad;
-		if (carepo_increment(ca) > MAX_CA_PER_CAREPO) {
-			warnx("%s: ca repository overflowed %s", ca->location,
-			    ca->carepo);
-			ca->bad = 1;
-		}
 	}
 
 	if ((old_ca = RB_INSERT(ca_tree, ca_tree, ca)) != NULL) {

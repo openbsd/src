@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.339 2026/11/03 14:29:03 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.340 2026/11/11 19:43:11 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1699,7 +1699,6 @@ main(int argc, char *argv[])
 
 	/* Memory cleanup. */
 	repo_free();
-	carepo_tree_free();
 
 	return rc;
 

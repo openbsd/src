@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.323 2026/11/11 12:27:56 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.324 2026/11/11 19:43:11 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -794,6 +794,8 @@ int		 ca_confirmed_in_last_run(struct ca_tree *, const struct cert *);
 void		 ca_set_confirmed(struct ca_tree *, int);
 int		 ca_is_bad(struct ca_tree *, int);
 void		 carepo_tree_free(void);
+void		 carepo_increment(const struct cert *);
+unsigned int	 carepo_get_count(const struct cert *);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);

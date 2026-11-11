@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.203 2026/11/11 12:27:56 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.204 2026/11/11 19:43:11 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -589,9 +589,15 @@ proc_parser_mft(struct entity *ent, struct mft **mp, char **crlfile,
 	}
 
 	if (*mp != NULL) {
+		struct auth *a;
+
 		*crlmtime = crl->thisupdate;
 		if (crl_insert(&crls, crl))
 			crl = NULL;
+
+		a = auth_find(&auths, (*mp)->issuerid);
+		if (a != NULL)
+			carepo_increment(a->cert);
 	}
 	crl_free(crl);
 
@@ -690,6 +696,12 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (cert->purpose == CERT_PURPOSE_CA) {
 		if (sizeof(cert->mfthash) != ent->datasz)
 			errx(1, "%s: corrupted entity", file);
+
+		if (carepo_get_count(cert) >= MAX_CA_PER_CAREPO) {
+			warnx("%s: ca repository overflowed %s", file,
+			    cert->repo);
+			goto out;
+		}
 
 		memcpy(cert->mfthash, ent->data, ent->datasz);
 		auth_insert(file, &auths, cert, a, crl);
@@ -1335,6 +1347,7 @@ proc_parser(int fd, int nthreads)
 	auth_tree_free(&auths);
 	crl_tree_free(&crls);
 	repo_tree_free(&repos);
+	carepo_tree_free();
 
 	msgbuf_free(inbufq);
 	ibufq_free(globalmsgq);
