@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.29 2026/10/09 15:42:51 mlarkin Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.30 2026/11/11 17:32:23 hshoexer Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1039,7 +1039,7 @@ hvaddr_mem(paddr_t gpa, size_t len)
 
 	vmr = find_gpa_range(&current_vm->vm_params, gpa, len);
 	if (vmr == NULL) {
-		log_warnx("%s: failed - invalid gpa: 0x%lx\n", __func__, gpa);
+		log_warnx("%s: failed - invalid gpa: 0x%lx", __func__, gpa);
 		errno = EFAULT;
 		return (NULL);
 	}

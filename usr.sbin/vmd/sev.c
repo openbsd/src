@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.10 2026/09/19 17:21:52 dv Exp $	*/
+/*	$OpenBSD: sev.c,v 1.11 2026/11/11 17:32:23 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -22,6 +22,7 @@
 #include <crypto/xform.h>
 #include <dev/ic/pspvar.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "vmd.h"
@@ -79,11 +80,10 @@ sev_init(struct vmd_vm *vm)
  * Record memory segments to be encrypted for SEV.
  */
 int
-sev_register_encryption(vaddr_t addr, size_t size)
+sev_register_encryption(paddr_t gpa, size_t size)
 {
 	struct vmop_create_params *vmc;
-	struct vm_mem_range	*vmr;
-	size_t			 off;
+	void			*hva;
 	int			 i;
 
 	vmc = &current_vm->vm_params;
@@ -94,18 +94,22 @@ sev_register_encryption(vaddr_t addr, size_t size)
 	if (size == 0)
 		return (0);
 
-	/* Adjust address and size to be aligned to AES_XTS_BLOCKSIZE. */
-	if (addr & (AES_XTS_BLOCKSIZE - 1)) {
-		size += (addr & (AES_XTS_BLOCKSIZE - 1));
-		addr &= ~(AES_XTS_BLOCKSIZE - 1);
-	}
-
-	vmr = find_gpa_range(&current_vm->vm_params, addr, size);
-	if (vmr == NULL) {
-		log_warnx("%s: failed - invalid memory range addr = 0x%lx, "
-		    "len = 0x%zx", __func__, addr, size);
+	if (size > SSIZE_MAX) {
+		log_warnx("%s: invalid segment gpa 0x%lx size 0x%zx", __func__,
+		    gpa, size);
 		return (-1);
 	}
+
+	/* Adjust address and size to be aligned to AES_XTS_BLOCKSIZE. */
+	size += (gpa & (AES_XTS_BLOCKSIZE - 1));
+	gpa &= ~(AES_XTS_BLOCKSIZE - 1);
+	size = roundup(size, AES_XTS_BLOCKSIZE);
+
+	/* The PSP takes one host VA range, so stay within one memrange. */
+	hva = hvaddr_mem(gpa, size);
+	if (hva == NULL)
+		return (-1);
+
 	if (current_vm->vm_sev_nmemsegments ==
 	    nitems(current_vm->vm_sev_memsegments)) {
 		log_warnx("%s: failed - out of SEV memory segments", __func__);
@@ -113,19 +117,27 @@ sev_register_encryption(vaddr_t addr, size_t size)
 	}
 	i = current_vm->vm_sev_nmemsegments++;
 
-	off = addr - vmr->vmr_gpa;
-
-	current_vm->vm_sev_memsegments[i].vmr_va = vmr->vmr_va + off;
+	current_vm->vm_sev_memsegments[i].vmr_va = (vaddr_t)hva;
 	current_vm->vm_sev_memsegments[i].vmr_size = size;
-	current_vm->vm_sev_memsegments[i].vmr_gpa = vmr->vmr_gpa + off;
+	current_vm->vm_sev_memsegments[i].vmr_gpa = gpa;
 
-	log_debug("%s: i %d addr 0x%lx size 0x%lx vmr_va 0x%lx vmr_gpa 0x%lx "
-	    "vmr_size 0x%lx", __func__, i, addr, size,
+	log_debug("%s: i %d gpa 0x%lx size 0x%lx vmr_va 0x%lx vmr_gpa 0x%lx "
+	    "vmr_size 0x%lx", __func__, i, gpa, size,
 	    current_vm->vm_sev_memsegments[i].vmr_va,
 	    current_vm->vm_sev_memsegments[i].vmr_gpa,
 	    current_vm->vm_sev_memsegments[i].vmr_size);
 
 	return (0);
+}
+
+static int
+memseg_cmp(const void *a, const void *b)
+{
+	const struct vm_mem_range	*vmra = a;
+	const struct vm_mem_range	*vmrb = b;
+
+	return vmra->vmr_gpa < vmrb->vmr_gpa ? -1 :
+	    vmra->vmr_gpa > vmrb->vmr_gpa;
 }
 
 /*
@@ -142,18 +154,48 @@ int
 sev_encrypt_memory(struct vmd_vm *vm)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_mem_range	*vmr;
+	struct vm_mem_range	*vmr, *nvmr;
+	paddr_t			 end;
 	size_t			 i;
 
 	if (!vmc->vmc_sev)
 		return (0);
+
+	/* Sort segments low to high. */
+	qsort(vm->vm_sev_memsegments, vm->vm_sev_nmemsegments,
+	    sizeof(vm->vm_sev_memsegments[0]), memseg_cmp);
+
+	/* Merge overlapping segments; these always share one memrange. */
+	i = 0;
+	while (i + 1 < vm->vm_sev_nmemsegments) {
+		vmr = &vm->vm_sev_memsegments[i];
+		nvmr = vmr + 1;
+
+		log_debug("%s: %zu gpa [0x%lx 0x%lx] ngpa [0x%lx 0x%lx]",
+		    __func__, i,
+		    vmr->vmr_gpa, vmr->vmr_gpa + vmr->vmr_size,
+		    nvmr->vmr_gpa, nvmr->vmr_gpa + nvmr->vmr_size);
+
+		if (vmr->vmr_gpa + vmr->vmr_size <= nvmr->vmr_gpa) {
+			i++;
+			continue;
+		}
+
+		end = MAX(vmr->vmr_gpa + vmr->vmr_size,
+		    nvmr->vmr_gpa + nvmr->vmr_size);
+		vmr->vmr_size = end - vmr->vmr_gpa;
+
+		memmove(nvmr, nvmr + 1,
+		    (vm->vm_sev_nmemsegments - i - 2) * sizeof(*nvmr));
+		vm->vm_sev_nmemsegments--;
+	}
 
 	for (i = 0; i < vm->vm_sev_nmemsegments; i++) {
 		vmr = &vm->vm_sev_memsegments[i];
 
 		/* tell PSP to encrypt this range */
 		if (psp_launch_update(vm->vm_sev_handle, vmr->vmr_va,
-		    roundup(vmr->vmr_size, AES_XTS_BLOCKSIZE))) {
+		    vmr->vmr_size)) {
 			log_warnx("%s: failed to launch update page "
 			    "%zu:0x%lx", __func__, i, vmr->vmr_va);
 			return (-1);

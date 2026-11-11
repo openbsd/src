@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.154 2026/10/05 23:07:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.155 2026/11/11 17:32:23 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -619,7 +619,7 @@ void	 psp_setup(void);
 
 /* sev.c */
 int	sev_init(struct vmd_vm *);
-int	sev_register_encryption(vaddr_t, size_t);
+int	sev_register_encryption(paddr_t, size_t);
 int	sev_encrypt_memory(struct vmd_vm *);
 int	sev_activate(struct vmd_vm *, int);
 int	sev_encrypt_state(struct vmd_vm *, int);
