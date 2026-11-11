@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.103 2026/01/18 16:38:01 schwarze Exp $
+.\" $OpenBSD: iked.conf.5,v 1.104 2026/11/11 19:16:46 hshoexer Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2026 $
+.Dd $Mdocdate: November 11 2026 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -292,6 +292,36 @@ The name should only occur once in
 or any included files.
 If omitted,
 a name will be generated automatically for the policy.
+.Pp
+.It Xo
+.Ic ikev1
+.Op Ar name
+.Xc
+The
+.Ic ikev1
+keyword identifies an IKEv1 automatic keying policy, handled by the
+IKEv1 process of
+.Xr iked 8 .
+It takes the same options as
+.Ic ikev2 ,
+with restrictions:
+only
+.Ic psk
+authentication is supported,
+.Ar peer
+must be a single address,
+.Ic active
+mode also needs a single
+.Ar local
+address,
+and cipher suites, lifetimes, configuration payloads,
+.Ic iface
+and
+.Ic tap
+cannot be given.
+The IKEv1 process negotiates Main Mode with AES-128, HMAC-SHA2-256 and
+Diffie-Hellman group modp3072, and Quick Mode with AES-128, HMAC-SHA2-256
+and perfect forward secrecy using modp3072.
 .Pp
 .It Op Ar eval
 The
