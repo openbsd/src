@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.74 2026/11/08 15:35:01 kirill Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.75 2026/11/11 11:11:01 kirill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -547,7 +547,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *devvp;
 	struct umount *ump;
 	struct proc *p;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct unode *up;
 	struct extfile_entry *xfe;
 	struct file_entry *fe;
@@ -674,7 +674,23 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	/* check if this is a vnode alias */
-	checkalias(vp, up->u_dev);
+	if ((nvp = checkalias(vp, up->u_dev, ump->um_mountp)) != NULL) {
+		printf("found a vnode alias\n");
+		/*
+		 * Discard unneeded vnode, but save its udf_node.
+		 * Note that the lock is carried over in the udf_node
+		 */
+		nvp->v_data = vp->v_data;
+		vp->v_data = NULL;
+		vp->v_op = &spec_vops;
+		vrele(vp);
+		vgone(vp);
+		/*
+		 * Reinitialize aliased inode.
+		 */
+		vp = nvp;
+		ump->um_devvp = vp;
+	}
 
 	*vpp = vp;
 
