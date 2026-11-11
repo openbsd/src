@@ -1,3 +1,4 @@
+/*	$OpenBSD: proxy.c,v 1.5 2026/11/11 18:58:05 bluhm Exp $	*/
 /*
  * Copyright (c) 2017 Antoine Kaufmann <toni@famkaufmann.info>
  *

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mail.lmtp.c,v 1.18 2026/11/11 18:58:05 bluhm Exp $	*/
 /*
  * Copyright (c) 2017 Gilles Chehade <gilles@poolp.org>
  *

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mail.maildir.c,v 1.19 2026/11/11 18:58:05 bluhm Exp $	*/
 /*
  * Copyright (c) 2017 Gilles Chehade <gilles@poolp.org>
  *

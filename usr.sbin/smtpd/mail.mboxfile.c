@@ -1,3 +1,4 @@
+/*	$OpenBSD: mail.mboxfile.c,v 1.7 2026/11/11 18:58:05 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
  *

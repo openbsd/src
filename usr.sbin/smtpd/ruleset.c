@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.49 2026/09/13 19:14:41 op Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.50 2026/11/11 18:58:05 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
