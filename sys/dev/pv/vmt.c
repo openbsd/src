@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.32 2024/05/24 10:05:55 jsg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.33 2026/11/11 06:03:10 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -654,14 +654,13 @@ vmt_update_guest_info(struct vmt_softc *sc)
 			sc->sc_rpc_error = 1;
 		}
 
-		/*
-		 * Host doesn't like it if we send an OS name it doesn't
-		 * recognise, so use the closest match, which happens
-		 * to be FreeBSD.
-		 */
-
-		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s",
-		    VM_GUEST_INFO_OS_NAME, "FreeBSD") != 0) {
+		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d "
+#ifdef __LP64__
+		    "other-64"
+#else
+		    "other"
+#endif
+		    VM_GUEST_INFO_OS_NAME) != 0) {
 			DPRINTF("%s: unable to set guest OS", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
