@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.62 2026/11/08 08:47:07 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.63 2026/11/11 01:10:44 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -421,11 +421,8 @@ rtwn_fw_cmd(struct rtwn_softc *sc, uint8_t id, const void *buf, int len)
 		cmd.id |= R92C_CMD_FLAG_EXT;
 		memcpy(cmd.msg, (const uint8_t *)buf + 2, len - 2);
 		memcpy(cmd.msg + 3, buf, 2);
-	} else {
-		if (len > 3)
-			cmd.id |= R92C_CMD_FLAG_EXT;
+	} else
 		memcpy(cmd.msg, buf, len);
-	}
 
 	/* Write the first word last since that will trigger the FW. */
 	if (sc->chip & RTWN_CHIP_92E)
