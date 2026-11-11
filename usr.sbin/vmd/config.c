@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.84 2026/08/30 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: config.c,v 1.85 2026/11/11 14:32:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -481,13 +481,10 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Send VM information */
-	if ((kernfd = dup(vm->vm_kernel)) == -1) {
-		ret = errno;
-		goto fail;
-	}
 	/* XXX check proc_compose_imsg return values */
 	proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_REQUEST,
-	    vm->vm_vmid, kernfd, vmc, sizeof(*vmc));
+	    vm->vm_vmid, vm->vm_kernel, vmc, sizeof(*vmc));
+	vm->vm_kernel = -1;
 
 	if (strlen(vmc->vmc_cdrom))
 		proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_CDROM,
@@ -532,6 +529,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
  fail:
 	log_warnx("failed to start vm %s", vmc->vmc_name);
 
+	if (fd != -1)
+		close(fd);
 	if (kernfd != -1)
 		close(kernfd);
 	if (cdromfd != -1)
