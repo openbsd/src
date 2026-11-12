@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.340 2026/11/11 19:43:11 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.341 2026/11/12 19:34:54 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -164,10 +164,14 @@ entity_free(struct entity *ent)
 	if (ent == NULL)
 		return;
 
-	free(ent->path);
-	free(ent->file);
-	free(ent->mftaki);
-	free(ent->data);
+	if (ent->type == RTYPE_REPO) {
+		free(ent->validpath);
+		free(ent->tmppath);
+	} else {
+		free(ent->file);
+		free(ent->mftaki);
+		free(ent->data);
+	}
 	free(ent);
 }
 
@@ -185,12 +189,11 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 	io_read_buf(b, &ent->repoid, sizeof(ent->repoid));
 
 	if (ent->type == RTYPE_REPO) {
-		io_read_opt_str(b, &ent->path);
-		io_read_str(b, &ent->file);
+		io_read_str(b, &ent->validpath);
+		io_read_opt_str(b, &ent->tmppath);
 	} else {
 		io_read_buf(b, &ent->talid, sizeof(ent->talid));
 		io_read_buf(b, &ent->certid, sizeof(ent->certid));
-		io_read_opt_str(b, &ent->path);
 		io_read_str(b, &ent->file);
 		io_read_opt_str(b, &ent->mftaki);
 		io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
@@ -210,12 +213,13 @@ entity_write_req(const struct entity *ent)
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
 	io_simple_buffer(b, &ent->location, sizeof(ent->location));
 	io_simple_buffer(b, &ent->repoid, sizeof(ent->repoid));
+
 	io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
 	io_simple_buffer(b, &ent->certid, sizeof(ent->certid));
-	io_opt_str_buffer(b, ent->path);
 	io_str_buffer(b, ent->file);
 	io_opt_str_buffer(b, ent->mftaki);
 	io_buf_buffer(b, ent->data, ent->datasz);
+
 	io_close_buffer(procq, b);
 }
 
@@ -230,21 +234,23 @@ entity_write_repo(const struct repo *rp)
 	enum rtype type = RTYPE_REPO;
 	enum location loc = DIR_UNKNOWN;
 	unsigned int repoid;
-	char *path, *altpath;
+	char *validpath, *tmppath;
 
 	repoid = repo_id(rp);
-	path = repo_basedir(rp, 0);
-	altpath = repo_basedir(rp, 1);
+	validpath = repo_basedir(rp, 1);
+	tmppath = repo_basedir(rp, 0);
 
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &loc, sizeof(loc));
 	io_simple_buffer(b, &repoid, sizeof(repoid));
-	io_opt_str_buffer(b, path);
-	io_str_buffer(b, altpath);
+
+	io_str_buffer(b, validpath);
+	io_opt_str_buffer(b, tmppath);
+
 	io_close_buffer(procq, b);
-	free(path);
-	free(altpath);
+	free(validpath);
+	free(tmppath);
 }
 
 /*
@@ -266,8 +272,8 @@ entityq_flush(struct entityq *q, struct repo *rp)
 }
 
 struct entity *
-entity_new(const char *path, const char *file, enum rtype type,
-    enum location loc, unsigned int repoid, unsigned char *data, size_t datasz,
+entity_new(const char *file, enum rtype type, enum location loc,
+    unsigned int repoid, unsigned char *data, size_t datasz,
     int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
@@ -284,10 +290,6 @@ entity_new(const char *path, const char *file, enum rtype type,
 		if ((ent->mftaki = strdup(mftaki)) == NULL)
 			err(1, NULL);
 	}
-	if (path != NULL) {
-		if ((ent->path = strdup(path)) == NULL)
-			err(1, NULL);
-	}
 	if ((ent->file = strdup(file)) == NULL)
 		err(1, NULL);
 	ent->data = data;
@@ -300,13 +302,13 @@ entity_new(const char *path, const char *file, enum rtype type,
  * Add the heap-allocated file to the queue for processing.
  */
 static void
-entityq_add(const char *path, const char *file, enum rtype type,
-    enum location loc, struct repo *rp, unsigned char *data, size_t datasz,
+entityq_add(const char *file, enum rtype type, enum location loc,
+    struct repo *rp, unsigned char *data, size_t datasz,
     int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
 
-	ent = entity_new(path, file, type, loc, repo_id(rp), data, datasz,
+	ent = entity_new(file, type, loc, repo_id(rp), data, datasz,
 	    talid, certid, mftaki);
 
 	entity_queue++;
@@ -328,13 +330,13 @@ entityq_add(const char *path, const char *file, enum rtype type,
  * non-inheriting EE certs.
  */
 static void
-entity_lowprioq_add(const char *path, const char *file, enum rtype type,
-    enum location loc, struct repo *rp, unsigned char *data, size_t datasz,
+entity_lowprioq_add(const char *file, enum rtype type, enum location loc,
+    struct repo *rp, unsigned char *data, size_t datasz,
     int talid, int certid, const char *mftaki)
 {
 	struct entity *ent;
 
-	ent = entity_new(path, file, type, loc, repo_id(rp), data, datasz,
+	ent = entity_new(file, type, loc, repo_id(rp), data, datasz,
 	    talid, certid, mftaki);
 
 	entity_lowprio_queue++;
@@ -489,8 +491,7 @@ queue_add_file(const char *file, enum rtype type, int talid)
 	}
 
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(NULL, file, type, DIR_UNKNOWN, NULL, buf, len, talid, 0,
-	    NULL);
+	entityq_add(file, type, DIR_UNKNOWN, NULL, buf, len, talid, 0, NULL);
 }
 
 /*
@@ -521,7 +522,7 @@ queue_add_from_tal(struct tal *tal)
 	/* steal the spki from the tal structure */
 	data = tal->spki;
 	tal->spki = NULL;
-	entityq_add(NULL, nfile, RTYPE_CER, DIR_UNKNOWN, repo, data,
+	entityq_add(nfile, RTYPE_CER, DIR_UNKNOWN, repo, data,
 	    tal->spkisz, tal->id, tal->id, NULL);
 }
 
@@ -533,8 +534,8 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 {
 	struct ca		*ca;
 	struct repo		*repo;
-	char			*npath, *host;
-	const char		*uri, *repouri, *file;
+	char			*host;
+	const char		*repouri, *file;
 	size_t			 hostsz, repourisz;
 
 	if (strncmp(cert->repo, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
@@ -570,31 +571,21 @@ queue_add_from_cert(const struct cert *cert, struct ca_tree *ca_tree)
 	 * Figure out the cert filename and path by chopping up the
 	 * MFT URI in the cert based on the repo base URI.
 	 */
-	uri = cert->mft;
+	file = cert->mft;
 	repouri = repo_uri(repo);
 	repourisz = strlen(repouri);
 	if (strncmp(repouri, cert->mft, repourisz) != 0) {
-		warnx("%s: URI %s outside of repository", repouri, uri);
+		warnx("%s: URI %s outside of repository", repouri, file);
 		return;
 	}
-	uri += repourisz + 1;	/* skip base and '/' */
-	file = strrchr(uri, '/');
-	if (file == NULL) {
-		npath = NULL;
-		file = uri;
-	} else {
-		if ((npath = strndup(uri, file - uri)) == NULL)
-			err(1, NULL);
-		file += 1; /* skip '/' */
-	}
+	file += repourisz + 1;	/* skip base and '/' */
 
 	if (ca_confirmed_in_last_run(ca_tree, cert))
-		entityq_add(npath, file, RTYPE_MFT, DIR_UNKNOWN, repo,
+		entityq_add(file, RTYPE_MFT, DIR_UNKNOWN, repo,
 		    NULL, 0, cert->talid, cert->certid, NULL);
 	else
-		entity_lowprioq_add(npath, file, RTYPE_MFT, DIR_UNKNOWN, repo,
+		entity_lowprioq_add(file, RTYPE_MFT, DIR_UNKNOWN, repo,
 		    NULL, 0, cert->talid, cert->certid, NULL);
-	free(npath);
 }
 
 /*

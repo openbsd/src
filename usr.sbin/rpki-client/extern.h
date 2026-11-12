@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.326 2026/11/12 19:07:05 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.327 2026/11/12 19:34:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -629,14 +629,21 @@ enum publish_type {
  */
 struct entity {
 	TAILQ_ENTRY(entity) entries;
-	char		*path;		/* path relative to repository */
-	char		*file;		/* filename or valid repo path */
-	char		*mftaki;	/* expected AKI (taken from Manifest) */
-	unsigned char	*data;		/* optional data blob */
-	size_t		 datasz;	/* length of optional data blob */
+	union {
+		struct {
+			char		*file;		/* filename */
+			char		*mftaki;	/* expected AKI */
+			unsigned char	*data;		/* optional data blob */
+			size_t		 datasz;	/* data blob length */
+			int		 talid;		/* tal identifier */
+			int		 certid;
+		};
+		struct {
+			char		*validpath;
+			char		*tmppath;
+		};
+	};
 	unsigned int	 repoid;	/* repository identifier */
-	int		 talid;		/* tal identifier */
-	int		 certid;
 	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
 	enum location	 location;	/* which directory the file lives in */
 };
@@ -911,9 +918,9 @@ void		 constraints_parse(void);
 int		 constraints_validate(const char *, const struct cert *);
 
 /* Parser-specific */
-struct entity	*entity_new(const char *, const char *, enum rtype,
-		    enum location, unsigned int, unsigned char *, size_t,
-		    int, int, const char *);
+struct entity	*entity_new(const char *, enum rtype, enum location,
+		    unsigned int, unsigned char *, size_t, int, int,
+		    const char *);
 void		 entity_free(struct entity *);
 void		 entity_read_req(struct ibuf *, struct entity *);
 void		 entityq_flush(struct entityq *, struct repo *);
