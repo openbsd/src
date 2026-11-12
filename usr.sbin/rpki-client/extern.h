@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.325 2026/11/12 16:15:29 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.326 2026/11/12 19:07:05 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,8 +61,8 @@ struct cert_as_range {
 struct cert_as {
 	enum cert_as_type type; /* type of AS specification */
 	union {
-		uint32_t id; /* singular identifier */
 		struct cert_as_range range; /* range */
+		uint32_t id; /* singular identifier */
 	};
 };
 
@@ -112,8 +112,8 @@ struct cert_ip {
 	unsigned char		min[16]; /* full range minimum */
 	unsigned char		max[16]; /* full range maximum */
 	union {
-		struct ip_addr ip; /* singular address */
 		struct ip_addr_range range; /* range */
+		struct ip_addr ip; /* singular address */
 	};
 };
 
