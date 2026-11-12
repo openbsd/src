@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpki-der.h,v 1.2 2026/11/12 13:30:50 tb Exp $ */
+/*	$OpenBSD: rpki-der.h,v 1.3 2026/11/12 13:34:44 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -33,5 +33,6 @@ int cbs_is_sha256_algorithmIdentifier_value(CBS *);
 int cbs_is_rfc7935_signatureAlgorithm_value(CBS *);
 
 int cbs_get_econtent_version(CBS *, uint64_t *);
+int cbs_get_asid(CBS *, uint32_t *);
 
 #endif /* RPKI_DER_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpki-der.c,v 1.3 2026/11/12 13:30:50 tb Exp $ */
+/*	$OpenBSD: rpki-der.c,v 1.4 2026/11/12 13:34:44 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -139,5 +139,19 @@ cbs_get_econtent_version(CBS *cbs, uint64_t *out_version)
 
 	*out_version = u64;
 
+	return 1;
+}
+
+int
+cbs_get_asid(CBS *cbs, uint32_t *out)
+{
+	uint64_t asid;
+
+	if (!CBS_get_asn1_uint64(cbs, &asid))
+		return 0;
+	if (asid > UINT32_MAX)
+		return 0;
+
+	*out = asid;
 	return 1;
 }
