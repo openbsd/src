@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.53 2026/11/12 16:14:32 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.54 2026/11/12 16:15:29 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -210,7 +210,14 @@ aspa_validate(const char *fn, void *obj, struct cert *cert)
 {
 	struct aspa *aspa = obj;
 
-	aspa->valid = valid_aspa(fn, cert, aspa);
+	if (as_check_covered(aspa->custasid, aspa->custasid,
+	    cert->ases, cert->num_ases) > 0) {
+		aspa->valid = 1;
+	} else {
+		warnx("%s: ASPA: uncovered Customer ASID: %u",
+		    fn, aspa->custasid);
+		aspa->valid = 0;
+	}
 
 	/* return success for filemode and accounting in the main process */
 	return 1;
