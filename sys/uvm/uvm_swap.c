@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.185 2026/11/08 08:42:55 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.186 2026/11/12 21:58:37 kirill Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfsdiskless.h>
 #endif
+#include <sys/lock.h>
 
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT
@@ -471,7 +472,8 @@ swaplist_find(struct vnode *vp, boolean_t remove)
 	 */
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
-			if (sdp->swd_vp != vp)
+			if (sdp->swd_vp != vp &&
+			    (vp->v_type != VBLK || sdp->swd_dev != vp->v_rdev))
 				continue;
 			if (remove) {
 				TAILQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
@@ -775,8 +777,10 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 		/*
 		 * do the real work.
 		 */
+		mtx_leave(&uvm_swap_data_lock);
+		vput(vp);
 		error = swap_off(p, sdp);
-		break;
+		goto out;
 	default:
 		error = EINVAL;
 	}
@@ -965,7 +969,8 @@ bad:
 /*
  * swap_off: stop swapping on swapdev
  *
- * => swap data should be locked, we will unlock.
+ * => caller holds swap_syscall_lock, but not uvm_swap_data_lock.
+ * => on success, close the vnode and release the swap reference.
  */
 int
 swap_off(struct proc *p, struct swapdev *sdp)
@@ -974,7 +979,10 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	int error = 0;
 
 	KASSERT(rw_write_held(&swap_syscall_lock));
-	MUTEX_ASSERT_LOCKED(&uvm_swap_data_lock);
+	MUTEX_ASSERT_UNLOCKED(&uvm_swap_data_lock);
+
+	vn_lock(sdp->swd_vp, LK_EXCLUSIVE | LK_RETRY);
+	mtx_enter(&uvm_swap_data_lock);
 
 	/* disable the swap area being removed */
 	sdp->swd_flags &= ~SWF_ENABLE;
@@ -1000,19 +1008,14 @@ swap_off(struct proc *p, struct swapdev *sdp)
 		mtx_enter(&uvm_swap_data_lock);
 		sdp->swd_flags |= SWF_ENABLE;
 		mtx_leave(&uvm_swap_data_lock);
+		VOP_UNLOCK(sdp->swd_vp);
 		return error;
 	}
 
-	/*
-	 * done with the vnode and saved creds.
-	 * drop our ref on the vnode before calling VOP_CLOSE()
-	 * so that spec_close() can tell if this is the last close.
-	 */
 	if (sdp->swd_vp->v_type == VREG) {
 		crfree(sdp->swd_cred);
 		bufq_destroy(&sdp->swd_bufq);
 	}
-	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
 	}
@@ -1032,6 +1035,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 		    EX_WAITOK);
 	blist_destroy(sdp->swd_blist);
 	/* free sdp->swd_path ? */
+	vput(sdp->swd_vp);
 	free(sdp, M_VMSWAP, sizeof(*sdp));
 	return (0);
 }
