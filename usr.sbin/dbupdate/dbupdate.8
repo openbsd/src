@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbupdate.8,v 1.4 2026/11/02 15:31:39 phessler Exp $
+.\" $OpenBSD: dbupdate.8,v 1.5 2026/11/12 15:26:23 sthen Exp $
 .\"
 .\" Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2026 $
+.Dd $Mdocdate: November 12 2026 $
 .Dt DBUPDATE 8
 .Os
 .Sh NAME
@@ -44,6 +44,10 @@ The two databases currently updated are
 .Pa /etc/ssl/cert.pem
 and
 .Pa /usr/share/zoneinfo .
+.Pp
+To handle local additions, if
+.Pa /etc/ssl/cert.local.pem
+exists, the contents are prepended to the installed certificate database.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
