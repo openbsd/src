@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.92 2026/11/02 14:01:08 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.93 2026/11/12 13:23:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -538,7 +538,8 @@ valid_econtent_version(const char *fn, const ASN1_INTEGER *aint,
 	if (aint == NULL) {
 		if (expected == 0)
 			return 1;
-		warnx("%s: unexpected version 0", fn);
+		warnx("%s: unexpected version (expected %llu, got 0)",
+		    fn, (unsigned long long)expected);
 		return 0;
 	}
 
