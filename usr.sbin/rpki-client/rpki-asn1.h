@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.14 2026/04/07 11:52:21 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.15 2026/11/12 13:41:40 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -24,22 +24,6 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-
-/*
- * Autonomous System Provider Authorization (ASPA)
- * reference: draft-ietf-sidrops-aspa-profile
- */
-
-extern ASN1_ITEM_EXP ASProviderAttestation_it;
-
-typedef struct {
-	ASN1_INTEGER *version;
-	ASN1_INTEGER *customerASID;
-	STACK_OF(ASN1_INTEGER) *providers;
-} ASProviderAttestation;
-
-DECLARE_ASN1_FUNCTIONS(ASProviderAttestation);
-
 
 /*
  * Canonical Cache Representation (CCR)
