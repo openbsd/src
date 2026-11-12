@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.17 2026/06/21 14:10:10 bluhm Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.18 2026/11/12 16:07:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -508,7 +508,7 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags |= IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = cad_ioctl;
 	ifp->if_qstart = cad_start;
 	ifp->if_watchdog = cad_watchdog;
