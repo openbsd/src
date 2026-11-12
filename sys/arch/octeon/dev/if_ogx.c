@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.12 2026/11/12 16:27:19 visa Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.13 2026/11/12 16:34:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -479,7 +479,7 @@ ogx_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 	ifp->if_ioctl = ogx_ioctl;
 	ifp->if_qstart = ogx_start;
 	ifp->if_hardmtu = OGX_MAX_MTU;

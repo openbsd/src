@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.93 2026/10/23 19:36:20 kirill Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.94 2026/11/12 16:34:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -372,7 +372,7 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	strncpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_xflags = IFXF_MPSAFE | IFXF_MBUF_64BIT;
 #ifndef SMALL_KERNEL
 	ifp->if_xflags |= IFXF_LRO;
 #endif
