@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.34 2026/07/31 03:59:50 kenjiro Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.35 2026/11/12 14:41:41 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -448,7 +448,7 @@ process_certificate_policies(const X509 *x509, X509_POLICY_LEVEL *level,
 
 	ret = 1;
 
-err:
+ err:
 	sk_X509_POLICY_NODE_pop_free(new_nodes, x509_policy_node_free);
 	CERTIFICATEPOLICIES_free(policies);
 	return ret;
@@ -671,7 +671,7 @@ process_policy_mappings(const X509 *cert,
 	sk_X509_POLICY_NODE_sort(next->nodes);
 	ok = 1;
 
-err:
+ err:
 	if (!ok) {
 		x509_policy_level_free(next);
 		next = NULL;
@@ -1003,7 +1003,7 @@ X509_policy_check(const STACK_OF(X509) *certs,
 
 	ret = X509_V_OK;
 
-err:
+ err:
 	x509_policy_level_free(level);
 	/*
 	 * |user_policies_sorted|'s contents are owned by |user_policies|, so
