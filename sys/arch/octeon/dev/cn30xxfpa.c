@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.11 2024/05/20 23:13:33 jsg Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.12 2026/11/12 16:27:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -134,12 +134,12 @@ cn30xxfpa_buf_dma_alloc(struct cn30xxfpa_buf *fb)
 	    fb->fb_len / PAGE_SIZE,	/* # of segments */
 	    fb->fb_len,			/* we don't use s/g for FPA buf */
 	    PAGE_SIZE,			/* OCTEON hates >PAGE_SIZE boundary */
-	    0, &fb->fb_dmah);
+	    BUS_DMA_64BIT, &fb->fb_dmah);
 	if (status != 0)
 		panic("%s failed", "bus_dmamap_create");
 
 	status = bus_dmamem_alloc(fb->fb_dmat, fb->fb_len, CACHELINESIZE, 0,
-	    fb->fb_dma_segs, fb->fb_dma_nsegs, &nsegs, 0);
+	    fb->fb_dma_segs, fb->fb_dma_nsegs, &nsegs, BUS_DMA_64BIT);
 	if (status != 0 || fb->fb_dma_nsegs != nsegs)
 		panic("%s failed", "bus_dmamem_alloc");
 

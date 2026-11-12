@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.15 2023/04/12 02:20:07 jsg Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.16 2026/11/12 16:27:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -217,7 +217,7 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		goto error;
 	}
 	if (bus_dmamem_alloc(sc->sc_dmat, OCTMMC_MAX_DMASEG, 0, 0,
-	    &sc->sc_bounce_seg, 1, &rsegs, BUS_DMA_NOWAIT)) {
+	    &sc->sc_bounce_seg, 1, &rsegs, BUS_DMA_NOWAIT | BUS_DMA_64BIT)) {
 		printf(": could not allocate bounce buffer\n");
 		goto error;
 	}
@@ -228,7 +228,8 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		goto error_free;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, OCTMMC_MAX_DMASEG, maxsegs,
-	    OCTMMC_MAX_DMASEG, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+	    OCTMMC_MAX_DMASEG, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 	    &sc->sc_dma_data)) {
 		printf(": could not create data dmamap\n");
 		goto error_unmap;
