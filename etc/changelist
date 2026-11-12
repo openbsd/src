@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.145 2026/11/07 08:59:52 robert Exp $
+#	$OpenBSD: changelist,v 1.146 2026/11/12 14:54:54 sthen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -149,6 +149,7 @@
 +/etc/ssh/ssh_host_rsa_key
 /etc/ssh/ssh_host_rsa_key.pub
 /etc/ssh/sshd_config
+/etc/ssl/cert.local.pem
 /etc/ssl/cert.pem
 /etc/suid_profile
 /etc/sysctl.conf
