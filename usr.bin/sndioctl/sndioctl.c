@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.26 2026/08/30 14:56:39 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.27 2026/11/12 05:16:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -696,7 +696,8 @@ cmd(char *line)
 	char astr[SIOCTL_NAMEMAX], vstr[SIOCTL_NAMEMAX];
 	int aunit, vunit;
 	unsigned npar = 0, nent = 0;
-	int comma, mode;
+	unsigned int mode;
+	int comma;
 	float val;
 
 	pos = strrchr(line, '/');
