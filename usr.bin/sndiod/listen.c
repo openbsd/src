@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.18 2026/10/09 14:51:36 deraadt Exp $	*/
+/*	$OpenBSD: listen.c,v 1.19 2026/11/12 05:18:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,7 +75,7 @@ listen_close(struct listen *f)
 int
 listen_new_un(unsigned int unit)
 {
-	int len, sock, oldumask;
+	int len, sock;
 	struct sockaddr_un sockname;
 	struct listen *f;
 	struct stat sb;
@@ -134,7 +134,7 @@ listen_new_un(unsigned int unit)
 		goto bad_close;
 	}
 	sockname.sun_family = AF_UNIX;
-	oldumask = umask(0111);
+	omask = umask(0111);
 	if (bind(sock, (struct sockaddr *)&sockname,
 		sizeof(struct sockaddr_un)) == -1) {
 		logx(0, "%s: failed to bind socket", sockname.sun_path);
@@ -144,7 +144,7 @@ listen_new_un(unsigned int unit)
 		logx(0, "%s: failed to listen", sockname.sun_path);
 		goto bad_close;
 	}
-	umask(oldumask);
+	umask(omask);
 	f = xmalloc(sizeof(struct listen));
 	f->file = file_new(&listen_fileops, f, "unix", 1);
 	if (f->file == NULL)
