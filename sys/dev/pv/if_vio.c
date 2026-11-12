@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.82 2026/11/05 15:47:44 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.83 2026/11/12 19:00:01 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1449,7 +1449,7 @@ vio_add_rx_mbuf(struct vio_softc *sc, struct vio_queue *vioq, int i)
 	if (m == NULL)
 		return ENOBUFS;
 	vioq->viq_rxmbufs[i] = m;
-	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
+	m->m_len = m->m_pkthdr.len = sc->sc_rx_mbuf_size;
 	m_adj(m, sc->sc_rx_mbuf_offset);
 	r = bus_dmamap_load_mbuf(sc->sc_virtio->sc_dmat,
 	    vioq->viq_rxdmamaps[i], m, BUS_DMA_READ|BUS_DMA_NOWAIT);
