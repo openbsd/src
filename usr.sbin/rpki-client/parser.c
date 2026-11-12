@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.204 2026/11/11 19:43:11 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.205 2026/11/12 15:49:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -449,13 +449,11 @@ proc_parser_mft_pre(struct entity *ent, char *file, struct crl **crl,
 	mft->issuerid = ent->certid;
 
 	now = get_current_time();
-	/* check that now is not before from */
 	if (now < mft->thisupdate) {
 		warnx("%s: manifest not yet valid %s", file,
 		    time2str(mft->thisupdate));
 		goto err;
 	}
-	/* check that now is not after until */
 	if (now > mft->nextupdate) {
 		warnx("%s: manifest expired on %s", file,
 		    time2str(mft->nextupdate));
