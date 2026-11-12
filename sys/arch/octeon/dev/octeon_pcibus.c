@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.23 2021/03/04 16:44:07 visa Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.24 2026/11/12 16:19:01 visa Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -120,6 +120,7 @@ struct extent *octeon_pcibus_get_resource_extent(pci_chipset_tag_t, int);
 
 struct machine_bus_dma_tag octeon_pcibus_bus_dma_tag = {
 	._cookie = NULL,
+	._flags =		BUS_DMA_COHERENT,
 	._dmamap_create =	_dmamap_create,
 	._dmamap_destroy =	_dmamap_destroy,
 	._dmamap_load =		_dmamap_load,

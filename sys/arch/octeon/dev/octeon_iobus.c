@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.29 2026/04/27 16:39:50 kirill Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.30 2026/11/12 16:19:01 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -95,6 +95,7 @@ bus_space_t iobus_tag = {
 
 struct machine_bus_dma_tag iobus_bus_dma_tag = {
 	NULL,			/* _cookie */
+	BUS_DMA_COHERENT,
 	_dmamap_create,
 	_dmamap_destroy,
 	_dmamap_load,
