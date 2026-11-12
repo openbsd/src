@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.114 2026/11/12 14:57:02 op Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.115 2026/11/12 15:03:58 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -108,13 +108,13 @@ ffwopen(FILE ** ffp, const char *fn, struct buffer *bp)
 	if (fd == -1) {
 		ffp = NULL;
 		dobeep();
-		ewprintf("Cannot open file for writing : %s", strerror(errno));
+		ewprintf("Cannot open file for writing: %s", strerror(errno));
 		return (FIOERR);
 	}
 
 	if ((*ffp = fdopen(fd, "w")) == NULL) {
 		dobeep();
-		ewprintf("Cannot open file for writing : %s", strerror(errno));
+		ewprintf("Cannot open file for writing: %s", strerror(errno));
 		close(fd);
 		return (FIOERR);
 	}
@@ -218,7 +218,7 @@ fbackupfile(const char *fn)
 
 	if (stat(fn, &sb) == -1) {
 		dobeep();
-		ewprintf("Can't stat %s : %s", fn, strerror(errno));
+		ewprintf("Can't stat %s: %s", fn, strerror(errno));
 		return (FALSE);
 	}
 
@@ -227,13 +227,13 @@ fbackupfile(const char *fn)
 
 	if (asprintf(&nname, "%s~", bkpth) == -1) {
 		dobeep();
-		ewprintf("Can't allocate backup file name : %s", strerror(errno));
+		ewprintf("Can't allocate backup file name: %s", strerror(errno));
 		free(bkpth);
 		return (ABORT);
 	}
 	if (asprintf(&tname, "%s.XXXXXXXXXX", bkpth) == -1) {
 		dobeep();
-		ewprintf("Can't allocate temp file name : %s", strerror(errno));
+		ewprintf("Can't allocate temp file name: %s", strerror(errno));
 		free(bkpth);
 		free(nname);
 		return (ABORT);
@@ -272,10 +272,10 @@ fbackupfile(const char *fn)
 	close(to);
 	if (nread == -1) {
 		if (unlink(tname) == -1)
-			ewprintf("Can't unlink temp : %s", strerror(errno));
+			ewprintf("Can't unlink temp: %s", strerror(errno));
 	} else {
 		if (rename(tname, nname) == -1) {
-			ewprintf("Can't rename temp : %s", strerror(errno));
+			ewprintf("Can't rename temp: %s", strerror(errno));
 			(void) unlink(tname);
 			nread = -1;
 		}
@@ -388,7 +388,7 @@ copy(char *frname, char *toname)
 
 	if ((ifd = open(frname, O_RDONLY)) == -1) {
 		dobeep();
-		ewprintf("Cannot open file for reading : %s", strerror(errno));
+		ewprintf("Cannot open file for reading: %s", strerror(errno));
 		return (FALSE);
 	}
 	if (fstat(ifd, &orig) == -1) {
@@ -400,21 +400,21 @@ copy(char *frname, char *toname)
 
 	if ((ofd = open(toname, O_WRONLY|O_CREAT|O_TRUNC, fmode)) == -1) {
 		dobeep();
-		ewprintf("Cannot open file for writing : %s", strerror(errno));
+		ewprintf("Cannot open file for writing: %s", strerror(errno));
 		close(ifd);
 		return (FALSE);
 	}
 	while ((sr = read(ifd, buf, sizeof(buf))) > 0) {
 		if (write(ofd, buf, (size_t)sr) != sr) {
-			ewprintf("write error : %s", strerror(errno));
+			ewprintf("write error: %s", strerror(errno));
 			break;
 		}
 	}
 	if (fchmod(ofd, orig.st_mode) == -1)
-		ewprintf("Cannot set original mode : %s", strerror(errno));
+		ewprintf("Cannot set original mode: %s", strerror(errno));
 
 	if (sr == -1) {
-		ewprintf("Read error : %s", strerror(errno));
+		ewprintf("Read error: %s", strerror(errno));
 		close(ifd);
 		close(ofd);
 		return (FALSE);
@@ -424,7 +424,7 @@ copy(char *frname, char *toname)
 	 * we will be running as root.
 	 */
 	if (fchown(ofd, orig.st_uid, orig.st_gid) && errno != EPERM)
-		ewprintf("Cannot set owner : %s", strerror(errno));
+		ewprintf("Cannot set owner: %s", strerror(errno));
 
 	(void) close(ifd);
 	(void) close(ofd);
