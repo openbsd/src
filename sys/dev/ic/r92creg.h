@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.31 2024/09/01 03:14:48 jsg Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.32 2026/11/12 00:46:16 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -346,6 +346,12 @@
 #define R92C_RF_CTRL_EN		0x01
 #define R92C_RF_CTRL_RSTB	0x02
 #define R92C_RF_CTRL_SDMRSTB	0x04
+
+/* Bits for R92C_LDOA15_CTRL. */
+#define R92C_LDOA15_CTRL_EN		0x01
+#define R92C_LDOA15_CTRL_STBY		0x02
+#define R92C_LDOA15_CTRL_OBUF		0x04
+#define R92C_LDOA15_CTRL_REG_VOS	0x08
 
 /* Bits for R92C_LDOV12D_CTRL. */
 #define R92C_LDOV12D_CTRL_LDV12_EN	0x01

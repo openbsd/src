@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.16 2023/04/28 01:24:14 kevlo Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.17 2026/11/12 00:46:16 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -135,3 +135,4 @@ void		rtwn_delete_key(struct ieee80211com *,
 int		rtwn_ioctl(struct ifnet *, u_long, caddr_t);
 void		rtwn_start(struct ifnet *);
 void		rtwn_fw_reset(struct rtwn_softc *);
+void		rtwn_rf_write(struct rtwn_softc *, int, uint16_t, uint32_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.114 2025/06/18 13:48:23 jcs Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.115 2026/11/12 00:46:16 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -399,6 +399,7 @@ int		urtwn_ioctl(struct ifnet *, u_long, caddr_t);
 int		urtwn_power_on(void *);
 int		urtwn_alloc_buffers(void *);
 int		urtwn_r92c_power_on(struct urtwn_softc *);
+void		urtwn_r92c_power_off(struct urtwn_softc *);
 int		urtwn_r92e_power_on(struct urtwn_softc *);
 int		urtwn_r88e_power_on(struct urtwn_softc *);
 int		urtwn_r88f_power_on(struct urtwn_softc *);
@@ -1822,6 +1823,21 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 	urtwn_write_2(sc, R92C_SYS_ISO_CTRL,
 	    urtwn_read_2(sc, R92C_SYS_ISO_CTRL) & ~R92C_SYS_ISO_CTRL_DIOR);
 
+	/* Initialize MAC. */
+	urtwn_write_1(sc, R92C_APSD_CTRL,
+	    urtwn_read_1(sc, R92C_APSD_CTRL) & ~R92C_APSD_CTRL_OFF);
+	for (ntries = 0; ntries < 1000; ntries++) {
+		if (!(urtwn_read_1(sc, R92C_APSD_CTRL) &
+		    R92C_APSD_CTRL_OFF_STATUS))
+			break;
+		DELAY(50);
+	}
+	if (ntries == 1000) {
+		printf("%s: timeout waiting for MAC initialization\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
 	/* Enable MAC DMA/WMAC/SCHEDULE/SEC blocks. */
 	reg = urtwn_read_2(sc, R92C_CR);
 	reg |= R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
@@ -2592,6 +2608,123 @@ urtwn_stop(void *cookie)
 	/* Free Tx/Rx buffers. */
 	urtwn_free_tx_list(sc);
 	urtwn_free_rx_list(sc);
+
+	/*
+	 * Power the chip off, so that the next init starts from the same
+	 * state as after a replug.  A warm init does not reset the BB, RF,
+	 * MAC Tx queues or 8051.
+	 */
+	if (!usbd_is_dying(sc->sc_udev) &&
+	    !(sc->sc_sc.chip & (RTWN_CHIP_88E | RTWN_CHIP_88F | RTWN_CHIP_92E)))
+		urtwn_r92c_power_off(sc);
+}
+
+void
+urtwn_r92c_power_off(struct urtwn_softc *sc)
+{
+	uint32_t reg;
+
+	/* Block all Tx queues. */
+	urtwn_write_1(sc, R92C_TXPAUSE, R92C_TXPAUSE_ALL);
+
+	/* Disable RF. */
+	rtwn_rf_write(&sc->sc_sc, 0, 0, 0);
+
+	urtwn_write_1(sc, R92C_APSD_CTRL, R92C_APSD_CTRL_OFF);
+
+	/* Reset BB state machine. */
+	urtwn_write_1(sc, R92C_SYS_FUNC_EN,
+	    R92C_SYS_FUNC_EN_USBD | R92C_SYS_FUNC_EN_USBA |
+	    R92C_SYS_FUNC_EN_BB_GLB_RST);
+	urtwn_write_1(sc, R92C_SYS_FUNC_EN,
+	    R92C_SYS_FUNC_EN_USBD | R92C_SYS_FUNC_EN_USBA);
+
+	/* Reset digital sequence. */
+	if (urtwn_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RDY) {
+		/* Reset MCU ready status. */
+		urtwn_write_1(sc, R92C_MCUFWDL, 0);
+		/* If firmware in ram code, do reset. */
+		rtwn_fw_reset(&sc->sc_sc);
+	}
+
+	/* Reset MAC and enable 8051. */
+	urtwn_write_1(sc, R92C_SYS_FUNC_EN + 1,
+	    (R92C_SYS_FUNC_EN_CPUEN | R92C_SYS_FUNC_EN_ELDR |
+	    R92C_SYS_FUNC_EN_HWPDN) >> 8);
+
+	/* Reset MCU ready status. */
+	urtwn_write_1(sc, R92C_MCUFWDL, 0);
+
+	/* Disable MAC clock. */
+	urtwn_write_2(sc, R92C_SYS_CLKR,
+	    R92C_SYS_CLKR_ANAD16V_EN | R92C_SYS_CLKR_ANA8M |
+	    R92C_SYS_CLKR_LOADER_EN | R92C_SYS_CLKR_80M_SSC_DIS |
+	    R92C_SYS_CLKR_SYS_EN | R92C_SYS_CLKR_RING_EN | 0x4000);
+
+	/* Disable AFE PLL. */
+	urtwn_write_1(sc, R92C_AFE_PLL_CTRL, 0x80);
+
+	/* Gated AFE DIG_CLOCK. */
+	urtwn_write_2(sc, R92C_AFE_XTAL_CTRL, 0x880f);
+
+	/* Isolated digital to PON. */
+	urtwn_write_1(sc, R92C_SYS_ISO_CTRL,
+	    R92C_SYS_ISO_CTRL_MD2PP | R92C_SYS_ISO_CTRL_PA2PCIE |
+	    R92C_SYS_ISO_CTRL_PD2CORE | R92C_SYS_ISO_CTRL_IP2MAC |
+	    R92C_SYS_ISO_CTRL_DIOP | R92C_SYS_ISO_CTRL_DIOE);
+
+	/*
+	 * Pull GPIO PIN to balance level and LED control.
+	 */
+	/* Disable GPIO[7:0] */
+	urtwn_write_2(sc, R92C_GPIO_PIN_CTRL + 2, 0x0000);
+
+	reg = urtwn_read_4(sc, R92C_GPIO_PIN_CTRL) & ~0x0000ff00;
+	reg |= ((reg << 8) & 0x0000ff00) | 0x00ff0000;
+	urtwn_write_4(sc, R92C_GPIO_PIN_CTRL, reg);
+
+	/* Disable GPIO[10:8] */
+	urtwn_write_1(sc, R92C_MAC_PINMUX_CFG, 0x00);
+	reg = urtwn_read_2(sc, R92C_GPIO_IO_SEL) & ~0x00f0;
+	reg |= (((reg & 0x000f) << 4) | 0x0780);
+	urtwn_write_2(sc, R92C_GPIO_IO_SEL, reg);
+
+	/* Disable LED0 & 1 */
+	urtwn_write_2(sc, R92C_LEDCFG0, 0x8080);
+
+	/*
+	 * Reset digital sequence.
+	 */
+	/* Disable ELDR clock. */
+	urtwn_write_2(sc, R92C_SYS_CLKR,
+	    R92C_SYS_CLKR_ANAD16V_EN | R92C_SYS_CLKR_ANA8M |
+	    R92C_SYS_CLKR_LOADER_EN | R92C_SYS_CLKR_80M_SSC_DIS |
+	    R92C_SYS_CLKR_SYS_EN | R92C_SYS_CLKR_RING_EN | 0x4000);
+
+	/* Isolated ELDR to PON. */
+	urtwn_write_1(sc, R92C_SYS_ISO_CTRL + 1,
+	    (R92C_SYS_ISO_CTRL_DIOR | R92C_SYS_ISO_CTRL_PWC_EV12V) >> 8);
+
+	/*
+	 * Disable analog sequence.
+	 */
+	/* Disable A15 power. */
+	urtwn_write_1(sc, R92C_LDOA15_CTRL, R92C_LDOA15_CTRL_OBUF);
+	/* Disable digital core power. */
+	urtwn_write_1(sc, R92C_LDOV12D_CTRL,
+	    urtwn_read_1(sc, R92C_LDOV12D_CTRL) &
+	    ~R92C_LDOV12D_CTRL_LDV12_EN);
+
+	/* Enter PFM mode. */
+	urtwn_write_1(sc, R92C_SPS0_CTRL, 0x23);
+
+	/* Set USB suspend. */
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    R92C_APS_FSMCO_APDM_HOST | R92C_APS_FSMCO_AFSM_HSUS |
+	    R92C_APS_FSMCO_PFM_ALDN);
+
+	/* Lock ISO/CLK/Power control register. */
+	urtwn_write_1(sc, R92C_RSV_CTRL, 0x0e);
 }
 
 int
