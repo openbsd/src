@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.113 2026/03/02 19:38:17 op Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.114 2026/11/12 14:57:02 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -386,8 +386,11 @@ copy(char *frname, char *toname)
 	struct	stat orig;
 	ssize_t	sr;
 
-	if ((ifd = open(frname, O_RDONLY)) == -1)
+	if ((ifd = open(frname, O_RDONLY)) == -1) {
+		dobeep();
+		ewprintf("Cannot open file for reading : %s", strerror(errno));
 		return (FALSE);
+	}
 	if (fstat(ifd, &orig) == -1) {
 		dobeep();
 		ewprintf("fstat: %s", strerror(errno));
@@ -396,6 +399,8 @@ copy(char *frname, char *toname)
 	}
 
 	if ((ofd = open(toname, O_WRONLY|O_CREAT|O_TRUNC, fmode)) == -1) {
+		dobeep();
+		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		close(ifd);
 		return (FALSE);
 	}
