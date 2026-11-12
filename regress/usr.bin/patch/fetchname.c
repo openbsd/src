@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetchname.c,v 1.4 2026/11/07 10:16:00 op Exp $	*/
+/*	$OpenBSD: fetchname.c,v 1.5 2026/11/12 14:39:28 op Exp $	*/
 
 /*
  * Copyright (c) 2026 Kirill A. Korinsky <kirill@korins.ky>
@@ -86,8 +86,8 @@ static const struct example examples[] = {
 	{ "../a/b", 0, "../a/b" },
 	{ "../a/b", 1, "a/b" },
 	{ "a/", 1, "a/" },
-	{ "a/\tDATE", 1, "" },
-	{ "a/ DATE", 1, "" },
+	{ "a/\tDATE", 1, "a/" },
+	{ "a/ DATE", 1, "a/" },
 	{ "x/dev/null", 1, "dev/null" },
 	{ ".", 0, "." },
 	{ "./test.c", 123, "test.c" },
