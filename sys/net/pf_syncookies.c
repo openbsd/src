@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.11 2026/11/10 13:46:17 henning Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.12 2026/11/12 13:59:44 henning Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -159,7 +159,7 @@ pf_synflood_check(struct pf_pdesc *pd)
 {
 	KASSERT (pd->proto == IPPROTO_TCP);
 
-	if (pd->m && (pd->m->m_pkthdr.pf.flags & PF_TAG_SYNCOOKIE_RECREATED))
+	if (pd->m && (pd->m->m_pkthdr.pf.flags & PF_FLAG_SYNCOOKIE_RECREATED))
 		return (0);
 
 	if (pf_status.syncookies_mode != PF_SYNCOOKIES_ADAPTIVE)
@@ -372,7 +372,7 @@ pf_syncookie_recreate_syn(struct pf_pdesc *pd, u_short *reason)
 	    *pd->dport, seq, 0, TH_SYN, wscale, mss, pd->ttl, 0,
 	    0, cookie.flags.sack_ok, pd->rdomain, reason);
 	if (m != NULL)
-		m->m_pkthdr.pf.flags |= PF_TAG_SYNCOOKIE_RECREATED;
+		m->m_pkthdr.pf.flags |= PF_FLAG_SYNCOOKIE_RECREATED;
 
 	return (m);
 }

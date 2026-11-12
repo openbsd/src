@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.470 2026/11/08 13:45:51 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.471 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3604,7 +3604,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	/* inherit rtable from listening socket */
 	rtableid = sc->sc_rtableid;
 #if NPF > 0
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);

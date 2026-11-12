@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.351 2026/07/17 18:51:29 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.352 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 	if (atomic_load_int(&udpencap_enable) && udpencap_port_local &&
 	    atomic_load_int(&esp_enable) &&
 #if NPF > 0
-	    !(m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) &&
+	    !(m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) &&
 #endif
 	    uh->uh_dport == htons(udpencap_port_local)) {
 		u_int32_t spi;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.335 2026/08/12 18:23:14 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.336 2026/11/12 13:59:44 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1947,7 +1947,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	pd->pd_m = m;
 	pd->pd_deadline = getnsecuptime() + PFSYNC_DEFER_NSEC;
 
-	m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+	m->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 	st->sync_defer = pd;
 
 	sched = s->s_deferred++;

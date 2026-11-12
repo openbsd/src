@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.203 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.204 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -231,8 +231,8 @@ icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 	m->m_pkthdr.ph_rtableid = n->m_pkthdr.ph_rtableid;
 	m->m_pkthdr.ph_ifidx = n->m_pkthdr.ph_ifidx;
 	/* move PF_GENERATED to new packet, if existent XXX preserve more? */
-	if (n->m_pkthdr.pf.flags & PF_TAG_GENERATED)
-		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+	if (n->m_pkthdr.pf.flags & PF_FLAG_GENERATED)
+		m->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 	m->m_pkthdr.len = m->m_len = icmplen + ICMP_MINLEN;
 	m_align(m, m->m_len);
 	icp = mtod(m, struct icmp *);
@@ -378,7 +378,7 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;
 #if NPF > 0
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		switch (icp->icmp_type) {
 		 /*
 		  * As pf_icmp_mapping() considers redirects belonging to a
@@ -398,7 +398,7 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 			 * Do not use the divert-to property of the TCP or UDP
 			 * rule when doing the PCB lookup for the raw socket.
 			 */
-			m->m_pkthdr.pf.flags &=~ PF_TAG_DIVERTED;
+			m->m_pkthdr.pf.flags &=~ PF_FLAG_DIVERTED;
 			break;
 		default:
 			goto raw;
@@ -771,7 +771,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 
 	m_resethdr(m);
 	m->m_pkthdr.ph_rtableid = rtableid;
-	m->m_pkthdr.pf.flags = pfflags & PF_TAG_GENERATED;
+	m->m_pkthdr.pf.flags = pfflags & PF_FLAG_GENERATED;
 	ip->ip_dst = ip->ip_src;
 	ip->ip_src = ip_src;
 	ip->ip_ttl = MAXTTL;

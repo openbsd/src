@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.421 2026/11/07 20:57:39 jan Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.422 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -406,13 +406,13 @@ reroute:
 		goto done;
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
-	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
-	    (PF_TAG_REROUTE | PF_TAG_GENERATED))
+	if ((m->m_pkthdr.pf.flags & (PF_FLAG_REROUTE | PF_FLAG_GENERATED)) ==
+	    (PF_FLAG_REROUTE | PF_FLAG_GENERATED))
 		/* already rerun the route lookup, go on */
-		m->m_pkthdr.pf.flags &= ~(PF_TAG_GENERATED | PF_TAG_REROUTE);
-	else if (m->m_pkthdr.pf.flags & PF_TAG_REROUTE) {
+		m->m_pkthdr.pf.flags &= ~(PF_FLAG_GENERATED | PF_FLAG_REROUTE);
+	else if (m->m_pkthdr.pf.flags & PF_FLAG_REROUTE) {
 		/* tag as generated to skip over pf_test on rerun */
-		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+		m->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 		if (ro == &iproute)
 			rtfree(ro->ro_rt);
 		ro = NULL;
@@ -596,7 +596,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	if (m == NULL)
 		return 0;
 	/*
-	 * PF_TAG_REROUTE handling or not...
+	 * PF_FLAG_REROUTE handling or not...
 	 * Packet is entering IPsec so the routing is
 	 * already overruled by the IPsec policy.
 	 * Until now the change was not reconsidered.

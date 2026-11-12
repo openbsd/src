@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.241 2026/11/08 08:42:55 miod Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.242 2026/11/12 13:59:44 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1011,7 +1011,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 	}
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		m->m_pkthdr.pf.flags |= PF_TAG_REFRAGMENTED;
+		m->m_pkthdr.pf.flags |= PF_FLAG_REFRAGMENTED;
 		if (ifp == NULL) {
 			ip6_forward(m, NULL, flags);
 		} else if ((u_long)m->m_pkthdr.len <= ifp->if_mtu) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.45 2026/02/05 03:26:00 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.46 2026/11/12 13:59:44 henning Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -313,7 +313,7 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 	if (m == NULL)
 		return (NULL);
 
-	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
+	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_FLAG_DIVERTED)) {
 		pf_mbuf_unlink_state_key(m);
 		pf_mbuf_unlink_inpcb(m);
 		if_input_proto(ifp0, m, fam->ip_input, ns);

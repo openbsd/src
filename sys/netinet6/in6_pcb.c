@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.152 2025/09/16 09:19:16 florian Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.153 2026/11/12 13:59:44 henning Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -650,7 +650,7 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	key1 = laddr;
 	key2 = &zeroin6_addr;
 #if NPF > 0
-	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m && m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);
@@ -666,7 +666,7 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 			panic("%s: unknown divert type %d, mbuf %p, divert %p",
 			    __func__, divert->type, m, divert);
 		}
-	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
+	} else if (m && m->m_pkthdr.pf.flags & PF_FLAG_TRANSLATE_LOCALHOST) {
 		/*
 		 * Redirected connections should not be treated the same
 		 * as connections directed to ::1 since localhost

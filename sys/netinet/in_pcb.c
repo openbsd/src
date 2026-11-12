@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.322 2025/12/02 15:52:04 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.323 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1259,7 +1259,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	key1 = &laddr;
 	key2 = &zeroin_addr;
 #if NPF > 0
-	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m && m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);
@@ -1275,7 +1275,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 			panic("%s: unknown divert type %d, mbuf %p, divert %p",
 			    __func__, divert->type, m, divert);
 		}
-	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
+	} else if (m && m->m_pkthdr.pf.flags & PF_FLAG_TRANSLATE_LOCALHOST) {
 		/*
 		 * Redirected connections should not be treated the same
 		 * as connections directed to 127.0.0.0/8 since localhost

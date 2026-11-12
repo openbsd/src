@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.281 2025/11/12 19:11:10 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.282 2026/11/12 13:59:44 henning Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 	}
 
 #if NPF > 0
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		switch (icmp6->icmp6_type) {
 		/*
 		 * These ICMP6 types map to other connections.  They must be
@@ -434,7 +434,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 			 * Do not use the divert-to property of the TCP or UDP
 			 * rule when doing the PCB lookup for the raw socket.
 			 */
-			m->m_pkthdr.pf.flags &=~ PF_TAG_DIVERTED;
+			m->m_pkthdr.pf.flags &=~ PF_FLAG_DIVERTED;
 			break;
 		default:
 			goto raw;
@@ -1048,7 +1048,7 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 	pfflags = m->m_pkthdr.pf.flags;
 	m_resethdr(m);
 	m->m_pkthdr.ph_rtableid = rtableid;
-	m->m_pkthdr.pf.flags = pfflags & PF_TAG_GENERATED;
+	m->m_pkthdr.pf.flags = pfflags & PF_FLAG_GENERATED;
 
 	/*
 	 * If there are extra headers between IPv6 and ICMPv6, strip

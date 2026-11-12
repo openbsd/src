@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.74 2026/10/17 16:12:45 deraadt Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.75 2026/11/12 13:59:44 henning Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -840,7 +840,7 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 	if (m == NULL)
 		return (NULL);
 
-	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
+	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_FLAG_DIVERTED)) {
 		pf_mbuf_unlink_state_key(m);
 		pf_mbuf_unlink_inpcb(m);
 		if_input_proto(ifp0, m, fam->ip_input, ns);

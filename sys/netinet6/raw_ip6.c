@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.195 2026/09/17 15:56:59 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.196 2026/11/12 13:59:44 henning Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 
 	key = &ip6->ip6_dst;
 #if NPF > 0
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);

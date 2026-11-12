@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.131 2026/11/05 19:07:35 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.132 2026/11/12 13:59:44 henning Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -297,13 +297,13 @@ reroute:
 	if (m == NULL)
 		goto senderr;
 	ip6 = mtod(m, struct ip6_hdr *);
-	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
-	    (PF_TAG_REROUTE | PF_TAG_GENERATED)) {
+	if ((m->m_pkthdr.pf.flags & (PF_FLAG_REROUTE | PF_FLAG_GENERATED)) ==
+	    (PF_FLAG_REROUTE | PF_FLAG_GENERATED)) {
 		/* already rerun the route lookup, go on */
-		m->m_pkthdr.pf.flags &= ~(PF_TAG_GENERATED | PF_TAG_REROUTE);
-	} else if (m->m_pkthdr.pf.flags & PF_TAG_REROUTE) {
+		m->m_pkthdr.pf.flags &= ~(PF_FLAG_GENERATED | PF_FLAG_REROUTE);
+	} else if (m->m_pkthdr.pf.flags & PF_FLAG_REROUTE) {
 		/* tag as generated to skip over pf_test on rerun */
-		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+		m->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 		SET(flags, IPV6_REDIRECT);
 		if (ro == &iproute)
 			rtfree(ro->ro_rt);
@@ -354,7 +354,7 @@ senderr:
 				mcopy->m_pkthdr.ph_ifidx = ifidx;
 				mcopy->m_pkthdr.ph_loopcnt = loopcnt;
 				mcopy->m_pkthdr.pf.flags |=
-				    (pfflags & PF_TAG_GENERATED);
+				    (pfflags & PF_FLAG_GENERATED);
 				memcpy(mcopy->m_data, icmp_buf, icmp_len);
 			}
 			if (mcopy != NULL) {
@@ -417,7 +417,7 @@ senderr:
 		mcopy->m_pkthdr.ph_rtableid = rtableid;
 		mcopy->m_pkthdr.ph_ifidx = ifidx;
 		mcopy->m_pkthdr.ph_loopcnt = loopcnt;
-		mcopy->m_pkthdr.pf.flags |= (pfflags & PF_TAG_GENERATED);
+		mcopy->m_pkthdr.pf.flags |= (pfflags & PF_FLAG_GENERATED);
 		memcpy(mcopy->m_data, icmp_buf, icmp_len);
 	}
 	if (mcopy != NULL)

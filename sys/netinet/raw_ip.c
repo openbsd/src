@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.169 2026/11/05 13:22:47 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.170 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 
 	key = &ip->ip_dst;
 #if NPF > 0
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);

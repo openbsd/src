@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.223 2026/05/07 14:58:03 claudio Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.224 2026/11/12 13:59:44 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -837,7 +837,7 @@ ah46_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 
 	if (
 #if NPF > 0
-	    ((*mp)->m_pkthdr.pf.flags & PF_TAG_DIVERTED) ||
+	    ((*mp)->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) ||
 #endif
 	    !atomic_load_int(&ah_enable))
 		return ipsec_input_disabled(mp, offp, proto, af, ns);
@@ -871,7 +871,7 @@ esp46_input(struct mbuf **mp, int *offp, int proto, int af,
 
 	if (
 #if NPF > 0
-	    ((*mp)->m_pkthdr.pf.flags & PF_TAG_DIVERTED) ||
+	    ((*mp)->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) ||
 #endif
 	    !atomic_load_int(&esp_enable))
 		return ipsec_input_disabled(mp, offp, proto, af, ns);
@@ -896,7 +896,7 @@ ipcomp46_input(struct mbuf **mp, int *offp, int proto, int af,
 
 	if (
 #if NPF > 0
-	    ((*mp)->m_pkthdr.pf.flags & PF_TAG_DIVERTED) ||
+	    ((*mp)->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) ||
 #endif
 	    !atomic_load_int(&ipcomp_enable))
 		return ipsec_input_disabled(mp, offp, proto, af, ns);

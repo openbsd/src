@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.301 2026/09/17 15:56:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.302 2026/11/12 13:59:44 henning Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 	 * Be more secure than RFC5095 and scan for type 0 routing headers.
 	 * If pf has already scanned the header chain, do not do it twice.
 	 */
-	if (!(m->m_pkthdr.pf.flags & PF_TAG_PROCESSED) &&
+	if (!(m->m_pkthdr.pf.flags & PF_FLAG_PROCESSED) &&
 	    ip6_check_rh0hdr(m, offp)) {
 		ip6stat_inc(ip6s_badoptions);
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, *offp);
@@ -543,7 +543,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 		    rt->rt_ifidx != ifp->if_index &&
 		    !((ifp->if_flags & IFF_LOOPBACK) ||
 		    (ifp->if_type == IFT_ENC) ||
-		    (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST))) {
+		    (m->m_pkthdr.pf.flags & PF_FLAG_TRANSLATE_LOCALHOST))) {
 			/* received on wrong interface */
 #if NCARP > 0
 			struct ifnet *out_if;

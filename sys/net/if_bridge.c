@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.382 2025/12/02 03:24:19 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.383 2026/11/12 13:59:44 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1729,7 +1729,7 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 
 #if NPF > 0
 		if (dir == BRIDGE_IN &&
-		    m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		    m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 			m_resethdr(m);
 			m->m_pkthdr.ph_ifidx = ifp->if_index;
 			m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
@@ -1765,7 +1765,7 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 
 #if NPF > 0
 		if (dir == BRIDGE_IN &&
-		    m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		    m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED) {
 			m_resethdr(m);
 			m->m_pkthdr.ph_ifidx = ifp->if_index;
 			m->m_pkthdr.ph_rtableid = ifp->if_rdomain;

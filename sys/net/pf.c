@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1253 2026/11/11 23:34:38 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1254 2026/11/12 13:59:44 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3697,7 +3697,7 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
 		return (NULL);
 	}
 	if (tag)
-		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+		m->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 	m->m_pkthdr.pf.tag = rtag;
 	m->m_pkthdr.ph_rtableid = rdom;
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
@@ -3822,7 +3822,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, int param,
 	if ((m0 = m_copym(m, 0, M_COPYALL, M_NOWAIT)) == NULL)
 		return;
 
-	m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+	m0->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 	m0->m_pkthdr.ph_rtableid = rdomain;
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m0->m_pkthdr.pf.prio = r->set_prio[0];
@@ -8395,16 +8395,16 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif /* DIAGNOSTIC */
 
-	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_GENERATED)
+	if ((*m0)->m_pkthdr.pf.flags & PF_FLAG_GENERATED)
 		return (PF_PASS);
 
-	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_DIVERTED_PACKET) {
-		(*m0)->m_pkthdr.pf.flags &= ~PF_TAG_DIVERTED_PACKET;
+	if ((*m0)->m_pkthdr.pf.flags & PF_FLAG_DIVERTED_PACKET) {
+		(*m0)->m_pkthdr.pf.flags &= ~PF_FLAG_DIVERTED_PACKET;
 		return (PF_PASS);
 	}
 
-	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_REFRAGMENTED) {
-		(*m0)->m_pkthdr.pf.flags &= ~PF_TAG_REFRAGMENTED;
+	if ((*m0)->m_pkthdr.pf.flags & PF_FLAG_REFRAGMENTED) {
+		(*m0)->m_pkthdr.pf.flags &= ~PF_FLAG_REFRAGMENTED;
 		return (PF_PASS);
 	}
 
@@ -8449,7 +8449,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			goto done;
 		}
 	}
-	pd.m->m_pkthdr.pf.flags |= PF_TAG_PROCESSED;
+	pd.m->m_pkthdr.pf.flags |= PF_FLAG_PROCESSED;
 
 	/*
 	 * Avoid pcb-lookups from the forwarding path.  They should never
@@ -8719,10 +8719,10 @@ done:
 		if ((pd.af == AF_INET && (ntohl(pd.dst->v4.s_addr) >>
 		    IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) ||
 		    (pd.af == AF_INET6 && IN6_IS_ADDR_LOOPBACK(&pd.dst->v6)))
-			pd.m->m_pkthdr.pf.flags |= PF_TAG_TRANSLATE_LOCALHOST;
+			pd.m->m_pkthdr.pf.flags |= PF_FLAG_TRANSLATE_LOCALHOST;
 	/* We need to redo the route lookup on outgoing routes. */
 	if (pd.destchg && pd.dir == PF_OUT)
-		pd.m->m_pkthdr.pf.flags |= PF_TAG_REROUTE;
+		pd.m->m_pkthdr.pf.flags |= PF_FLAG_REROUTE;
 
 	if (pd.dir == PF_IN && action == PF_PASS &&
 	    (r->divert.type == PF_DIVERT_TO ||
@@ -8730,7 +8730,7 @@ done:
 		struct pf_divert *divert;
 
 		if ((divert = pf_get_divert(pd.m))) {
-			pd.m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED;
+			pd.m->m_pkthdr.pf.flags |= PF_FLAG_DIVERTED;
 			divert->addr = r->divert.addr;
 			divert->port = r->divert.port;
 			divert->rdomain = pd.rdomain;
@@ -8791,7 +8791,7 @@ done:
 			action = PF_DROP;
 			goto out;
 		}
-		pd.m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+		pd.m->m_pkthdr.pf.flags |= PF_FLAG_GENERATED;
 		switch (pd.naf) {
 		case AF_INET:
 			if (pd.dir == PF_IN) {
@@ -8892,7 +8892,7 @@ pf_ouraddr(struct mbuf *m)
 {
 	struct pf_state_key	*sk;
 
-	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED)
+	if (m->m_pkthdr.pf.flags & PF_FLAG_DIVERTED)
 		return (1);
 
 	sk = m->m_pkthdr.pf.statekey;

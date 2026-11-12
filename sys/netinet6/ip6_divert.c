@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.109 2026/06/24 15:56:17 claudio Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.110 2026/11/12 13:59:44 henning Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -126,7 +126,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	if (min_hdrlen && m->m_pkthdr.len < off + min_hdrlen)
 		goto fail;
 
-	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
+	m->m_pkthdr.pf.flags |= PF_FLAG_DIVERTED_PACKET;
 
 	if (dir == PF_IN) {
 		struct rtentry *rt;

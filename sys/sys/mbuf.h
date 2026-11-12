@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.272 2026/10/26 06:33:46 miod Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.273 2026/11/12 13:59:44 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -106,14 +106,14 @@ struct pkthdr_pf {
 };
 
 /* pkthdr_pf.flags */
-#define	PF_TAG_GENERATED		0x01
-#define	PF_TAG_SYNCOOKIE_RECREATED	0x02
-#define	PF_TAG_TRANSLATE_LOCALHOST	0x04
-#define	PF_TAG_DIVERTED			0x08
-#define	PF_TAG_DIVERTED_PACKET		0x10
-#define	PF_TAG_REROUTE			0x20
-#define	PF_TAG_REFRAGMENTED		0x40	/* refragmented ipv6 packet */
-#define	PF_TAG_PROCESSED		0x80	/* packet was checked by pf */
+#define	PF_FLAG_GENERATED		0x01
+#define	PF_FLAG_SYNCOOKIE_RECREATED	0x02
+#define	PF_FLAG_TRANSLATE_LOCALHOST	0x04
+#define	PF_FLAG_DIVERTED		0x08
+#define	PF_FLAG_DIVERTED_PACKET		0x10
+#define	PF_FLAG_REROUTE			0x20
+#define	PF_FLAG_REFRAGMENTED		0x40	/* refragmented ipv6 packet */
+#define	PF_FLAG_PROCESSED		0x80	/* packet was checked by pf */
 
 #ifdef _KERNEL
 #define MPF_BITS \
