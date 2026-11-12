@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.28 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.29 2026/11/12 05:14:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -259,7 +259,7 @@ file_process(struct file *f, struct pollfd *pfd)
 	rc = 0;
 	revents = (f->state != FILE_ZOMB) ?
 	    f->ops->revents(f->arg, pfd) : 0;
-	if ((revents & POLLHUP) && (f->state != FILE_ZOMB)) {
+	if ((revents & (POLLHUP | POLLERR)) && (f->state != FILE_ZOMB)) {
 		f->ops->hup(f->arg);
 		rc = 1;
 	}
