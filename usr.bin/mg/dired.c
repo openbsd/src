@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.106 2026/10/16 04:05:51 jsg Exp $	*/
+/*	$OpenBSD: dired.c,v 1.107 2026/11/12 14:56:12 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -521,9 +521,8 @@ d_copy(int f, int n)
 		ewprintf("Cannot copy to same file: %s", frname);
 		return (TRUE);
 	}
-	ret = (copy(frname, topath) >= 0) ? TRUE : FALSE;
-	if (ret != TRUE)
-		return (ret);
+	if (copy(frname, topath) == FALSE)
+		return (FALSE);
 	if ((bp = refreshbuffer(curbp)) == NULL)
 		return (FALSE);
 
