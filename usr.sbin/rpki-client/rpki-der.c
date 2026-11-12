@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpki-der.c,v 1.2 2026/11/03 15:04:31 tb Exp $ */
+/*	$OpenBSD: rpki-der.c,v 1.3 2026/11/12 13:30:50 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -110,4 +110,34 @@ cbs_is_rfc7935_signatureAlgorithm_value(CBS *cbs)
 		return !param_present;
 
 	return 0;
+}
+
+/*
+ * Assuming the version is explicitly tagged with default 0, as in
+ *   version [0] INTEGER DEFAULT 0,
+ * check whether the version is correctly encoded and return its value.
+ */
+int
+cbs_get_econtent_version(CBS *cbs, uint64_t *out_version)
+{
+	CBS version;
+	uint64_t u64;
+	int present;
+
+	if (!CBS_get_optional_asn1(cbs, &version, &present,
+	    CBS_ASN1_CONTEXT_SPECIFIC | CBS_ASN1_CONSTRUCTED | 0x00))
+		return 0;
+	if (!present) {
+		*out_version = 0;
+		return 1;
+	}
+
+	if (!CBS_get_asn1_uint64(&version, &u64))
+		return 0;
+	if (u64 == 0)
+		return 0;
+
+	*out_version = u64;
+
+	return 1;
 }
