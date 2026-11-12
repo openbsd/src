@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.12 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.13 2026/11/12 05:11:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -178,5 +178,5 @@ mio_aucat_revents(struct mio_hdl *sh, struct pollfd *pfd)
 	}
 	if (hdl->mio.eof)
 		return POLLHUP;
-	return revents & (hdl->events | POLLHUP);
+	return revents & (hdl->events | (POLLHUP | POLLERR));
 }

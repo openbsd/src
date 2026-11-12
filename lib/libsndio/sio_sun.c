@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.36 2026/03/10 06:47:41 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.37 2026/11/12 05:11:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -548,7 +548,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	int revents = pfd->revents;
 	int delta;
 
-	if ((pfd->revents & POLLHUP) ||
+	if ((pfd->revents & (POLLHUP | POLLERR)) ||
 	    (pfd->revents & (POLLIN | POLLOUT)) == 0)
 		return pfd->revents;
 	if (ioctl(hdl->fd, AUDIO_GETPOS, &ap) == -1) {

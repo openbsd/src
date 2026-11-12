@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.23 2026/03/10 06:23:44 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.24 2026/11/12 05:11:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -484,7 +484,7 @@ sio_aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	if (hdl->sio.eof)
 		return POLLHUP;
 	DPRINTFN(3, "sio_aucat_revents: %x\n", revents & hdl->events);
-	return revents & (hdl->events | POLLHUP);
+	return revents & (hdl->events | (POLLHUP | POLLERR));
 }
 
 static int
