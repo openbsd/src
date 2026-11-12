@@ -1,4 +1,4 @@
-/*      $OpenBSD: ufshci_fdt.c,v 1.2 2024/10/08 00:46:29 jsg Exp $ */
+/*      $OpenBSD: ufshci_fdt.c,v 1.3 2026/11/12 21:30:35 kirill Exp $ */
 /*
  * Copyright (c) 2024 Marcus Glocker <mglocker@openbsd.org>
  *
@@ -46,7 +46,8 @@ ufshci_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "jedec,ufs-2.0");
+	return OF_is_compatible(faa->fa_node, "jedec,ufs-2.0") ||
+	    OF_is_compatible(faa->fa_node, "qcom,ufshc");
 }
 
 void
