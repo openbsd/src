@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.22 2026/10/15 20:43:32 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.23 2026/11/12 16:14:32 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -238,7 +238,8 @@ spl_validate(const char *fn, void *obj, struct cert *cert)
 
 	spl->valid = valid_spl(fn, cert, spl);
 
-	return 1; /* XXX */
+	/* return success for filemode and accounting in the main process */
+	return 1;
 }
 
 static const ASN1_OBJECT *

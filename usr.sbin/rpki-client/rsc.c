@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.50 2026/09/14 09:21:41 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.51 2026/11/12 16:14:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -363,7 +363,8 @@ rsc_validate(const char *fn, void *obj, struct cert *cert)
 
 	rsc->valid = valid_rsc(fn, cert, rsc);
 
-	return 1; /* XXX */
+	/* return success for more useful filemode */
+	return 1;
 }
 
 static const ASN1_OBJECT *

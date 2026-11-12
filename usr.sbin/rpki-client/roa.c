@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.96 2026/10/22 06:15:57 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.97 2026/11/12 16:14:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -294,7 +294,8 @@ roa_validate(const char *fn, void *obj, struct cert *cert)
 
 	roa->valid = valid_roa(fn, cert, roa);
 
-	return 1; /* XXX */
+	/* return success for filemode and accounting in the main process */
+	return 1;
 }
 
 static const ASN1_OBJECT *

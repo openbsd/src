@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.52 2026/11/12 16:10:04 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.53 2026/11/12 16:14:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -212,7 +212,8 @@ aspa_validate(const char *fn, void *obj, struct cert *cert)
 
 	aspa->valid = valid_aspa(fn, cert, aspa);
 
-	return 1; /* XXX */
+	/* return success for filemode and accounting in the main process */
+	return 1;
 }
 
 static const ASN1_OBJECT *
