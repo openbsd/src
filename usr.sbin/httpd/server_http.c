@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.173 2026/10/18 23:20:15 dgl Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.174 2026/11/12 10:40:11 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -63,6 +63,8 @@ ssize_t		 server_create_builtin(struct server_config *, char **,
 char		*server_create_errdoc(struct server_config *, unsigned int,
     const char *);
 static char	*get_custom_headers(struct kvtree *);
+static struct server_config	*server_by_host_header(struct client *,
+    char *);
 
 static struct http_method	 http_methods[] = HTTP_METHODS;
 static struct http_error	 http_errors[] = HTTP_ERRORS;
@@ -1373,6 +1375,51 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 	return (buf);
 }
 
+/*
+ * Find the virtual host on the listener that matches the Host header
+ * Returns the default server if none matches, NULL on an invalid header.
+ */
+static struct server_config *
+server_by_host_header(struct client *clt, char *hostval)
+{
+	char			 hostname[HOST_NAME_MAX + 1];
+	struct server		*srv = clt->clt_srv;
+	struct server_config	*srv_conf;
+	struct str_find		 sm;
+	const char		*errstr = NULL;
+	int			 portval = -1, ret;
+
+	if (server_http_parsehost(hostval, hostname,
+	    sizeof(hostname), &portval) == NULL)
+		return (NULL);
+
+	TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+#ifdef DEBUG
+		if ((srv_conf->flags & SRVFLAG_LOCATION) == 0) {
+			DPRINTF("%s: virtual host \"%s:%u\""
+			    " host \"%s\" (\"%s\")",
+			    __func__, srv_conf->name,
+			    ntohs(srv_conf->port), hostval, hostname);
+		}
+#endif
+		if (srv_conf->flags & SRVFLAG_LOCATION)
+			continue;
+		else if (srv_conf->flags & SRVFLAG_SERVER_MATCH) {
+			ret = str_find(hostname, srv_conf->name, &sm, 1,
+			    &errstr) > 0 ? 0 : -1;
+		} else {
+			ret = fnmatch(srv_conf->name, hostname, FNM_CASEFOLD);
+		}
+		if (ret == 0 && errstr == NULL &&
+		    (portval == -1 || portval == srv_conf->port)) {
+			/* Found */
+			return srv_conf;
+		}
+	}
+	/* No match, keep the default server */
+	return (clt->clt_srv_conf);
+}
+
 int
 server_response(struct httpd *httpd, struct client *clt)
 {
@@ -1383,10 +1430,7 @@ server_response(struct httpd *httpd, struct client *clt)
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = &srv->srv_conf;
 	struct kv		*kv, key, *host;
-	struct str_find		 sm;
-	int			 portval = -1, ret;
-	char			*hostval, *query;
-	const char		*errstr = NULL;
+	char			*query;
 	struct header_rule	*mrule = NULL;
 
 	/* Preserve original path */
@@ -1407,8 +1451,18 @@ server_response(struct httpd *httpd, struct client *clt)
 
 	key.kv_key = "Host";
 	if ((host = kv_find(&desc->http_headers, &key)) != NULL &&
-	    host->kv_value == NULL)
+	    host->kv_value != NULL) {
+		if (strlcpy(hostname, host->kv_value, sizeof(hostname)) >=
+		    sizeof(hostname))
+			goto fail;
+	}
+	else {
+		/* Fallback: use the actual server IP address */
 		host = NULL;
+		if (server_http_host(&clt->clt_srv_ss, hostname,
+		    sizeof(hostname)) == NULL)
+			goto fail;
+	}
 
 	if (strcmp(desc->http_version, "HTTP/1.1") == 0) {
 		/* Host header is mandatory */
@@ -1437,49 +1491,10 @@ server_response(struct httpd *httpd, struct client *clt)
 	 * XXX the Host can also appear in the URL path.
 	 */
 	if (host != NULL) {
-		if ((hostval = server_http_parsehost(host->kv_value,
-		    hostname, sizeof(hostname), &portval)) == NULL)
+		if ((srv_conf = server_by_host_header(clt, hostname)) == NULL)
 			goto fail;
-
-		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
-#ifdef DEBUG
-			if ((srv_conf->flags & SRVFLAG_LOCATION) == 0) {
-				DPRINTF("%s: virtual host \"%s:%u\""
-				    " host \"%s\" (\"%s\")",
-				    __func__, srv_conf->name,
-				    ntohs(srv_conf->port), host->kv_value,
-				    hostname);
-			}
-#endif
-			if (srv_conf->flags & SRVFLAG_LOCATION)
-				continue;
-			else if (srv_conf->flags & SRVFLAG_SERVER_MATCH)
-				ret = str_find(hostname, srv_conf->name,
-				    &sm, 1, &errstr) > 0 ? 0 : -1;
-			else
-				ret = fnmatch(srv_conf->name,
-				    hostname, FNM_CASEFOLD);
-			if (ret == 0 && errstr == NULL &&
-			    (portval == -1 || portval == srv_conf->port)) {
-				/* Replace host configuration */
-				clt->clt_srv_conf = srv_conf;
-				srv_conf = NULL;
-				break;
-			}
-		}
-	}
-
-	if (srv_conf != NULL) {
-		/* Use the actual server IP address */
-		if (server_http_host(&clt->clt_srv_ss, hostname,
-		    sizeof(hostname)) == NULL)
-			goto fail;
-	} else {
-		/* Host header was valid and found */
-		if (strlcpy(hostname, host->kv_value, sizeof(hostname)) >=
-		    sizeof(hostname))
-			goto fail;
-		srv_conf = clt->clt_srv_conf;
+		/* Replace host configuration */
+		clt->clt_srv_conf = srv_conf;
 	}
 
 	/* Set request timeout from matching host configuration. */
