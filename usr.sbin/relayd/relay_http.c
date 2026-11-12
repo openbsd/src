@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.108 2026/11/01 07:28:43 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.109 2026/11/12 12:16:05 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -198,7 +198,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct kv		*connection_close = NULL;
 	int			 ws_response = 0;
 	int			 headers_only = 0;
-	enum httpmethod		 request_method = HTTP_METHOD_NONE;
 
 	getmonotime(&con->se_tv_last);
 	cre->timedout = 0;
@@ -264,7 +263,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		/* Process the HTTP start-line (request or response status) */
 		if (++cre->line == 1) {
 			if (relay_http_parse_startline(cre, line,
-			    &request_method) == -1) {
+			    &desc->http_request_method) == -1) {
 				free(line);
 				return;
 			}
@@ -319,7 +318,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 					    desc->http_lastheader);
 					break;
 				case HTTP_METHOD_RESPONSE:
-					if (request_method == HTTP_METHOD_HEAD)
+					if (desc->http_request_method ==
+					    HTTP_METHOD_HEAD)
 						break;
 					/* FALLTHROUGH */
 				default:
@@ -508,7 +508,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		 * line after the header section. 101 upgrades become streams.
 		 */
 		headers_only = cre->dir == RELAY_DIR_RESPONSE && !ws_response &&
-		    (request_method == HTTP_METHOD_HEAD ||
+		    (desc->http_request_method == HTTP_METHOD_HEAD ||
 		     (desc->http_status >= 100 && desc->http_status < 200) ||
 		     desc->http_status == 204 || desc->http_status == 304);
 		if (headers_only)
@@ -862,6 +862,7 @@ relay_reset_http(struct ctl_relay_event *cre)
 
 	relay_httpdesc_free(desc);
 	desc->http_method = 0;
+	desc->http_request_method = 0;
 	desc->http_chunked = 0;
 	desc->http_cl = NULL;
 	cre->headerlen = 0;
@@ -2154,12 +2155,7 @@ relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
 			log_debug("%s: session %d unbalanced response",
 			    __func__, con->se_id);
 		} else {
-			SIMPLEQ_REMOVE_HEAD(&hs->hs_methods, hmn_entry);
 			*request_method = hmn->hmn_method;
-			log_debug("%s: session %d dequeuing %s",
-			    __func__, con->se_id,
-			    relay_httpmethod_byid(*request_method));
-			free(hmn);
 		}
 
 		/*
@@ -2194,6 +2190,14 @@ relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
 		log_debug("http_version %s http_rescode %s http_resmesg %s",
 		    desc->http_version, desc->http_rescode,
 		    desc->http_resmesg);
+		if (hmn != NULL &&
+		    (desc->http_status == 101 || desc->http_status >= 200)) {
+			SIMPLEQ_REMOVE_HEAD(&hs->hs_methods, hmn_entry);
+			log_debug("%s: session %d dequeuing %s",
+			    __func__, con->se_id,
+			    relay_httpmethod_byid(*request_method));
+			free(hmn);
+		}
 	} else if (cre->dir == RELAY_DIR_REQUEST) {
 		desc->http_method = relay_httpmethod_byname(key);
 
