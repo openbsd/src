@@ -1,4 +1,4 @@
-/*	$OpenBSD: thread.h,v 1.1 2026/11/10 11:04:01 claudio Exp $ */
+/*	$OpenBSD: thread.h,v 1.2 2026/11/13 00:28:16 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
@@ -81,14 +81,14 @@ mtx_destroy(pthread_mutex_t *mutex)
 
 	if ((error = pthread_mutex_destroy(mutex)) != 0)
 		errx(1, "pthread_mutex_destroy: %s", strerror(error));
-}	
+}
 
 static inline void
 cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
 	int error;
 
- 	if ((error = pthread_cond_wait(cond, mutex)) != 0)
+	if ((error = pthread_cond_wait(cond, mutex)) != 0)
 		errx(1, "pthread_cond_wait: %s", strerror(error));
 }
 
