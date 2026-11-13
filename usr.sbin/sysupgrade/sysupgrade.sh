@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.64 2026/11/02 15:31:39 phessler Exp $
+# $OpenBSD: sysupgrade.sh,v 1.65 2026/11/13 23:57:38 afresh1 Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -120,8 +120,6 @@ esac
 	FILE=true
 $FORCE_VERSION && $SNAP &&
 	err "incompatible options: -s -R $NEXT_VERSION"
-$FORCE && ! $SNAP &&
-	err "incompatible options: -f without -s"
 
 USED_USR=$(df -P /usr | awk 'NR==2 {print substr($5, 1, length($5)-1)}')
 if (( ${USED_USR} >= 90 )) && ! $FORCE; then

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.24 2026/11/02 15:31:39 phessler Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.25 2026/11/13 23:57:38 afresh1 Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2026 $
+.Dd $Mdocdate: November 13 2026 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -59,8 +59,7 @@ Download files to
 instead of
 .Pa /home/_sysupgrade .
 .It Fl f
-For snapshots, force an already applied upgrade.
-This option has no effect on releases.
+Force an already applied upgrade.
 .It Fl k
 Keep the files in
 .Pa /home/_sysupgrade .
