@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.327 2026/11/12 19:34:54 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.328 2026/11/13 06:35:47 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -786,6 +786,8 @@ struct cert	*cert_parse_filemode(const char *, const unsigned char *,
 struct cert	*ta_validate(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
+int		 cert_any_inherits(const struct cert *);
+int		 cert_inherits(const struct cert *);
 int		 cert_has_one_as(const struct cert *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
@@ -1032,8 +1034,6 @@ int		 x509_valid_serial(const char *, const char *,
 int		 x509_check_tbs_sigalg(const char *, const X509_ALGOR *);
 int		 x509_location(const char *, const char *, GENERAL_NAME *,
 		    char **);
-int		 x509_inherits(X509 *);
-int		 x509_any_inherits(X509 *);
 int		 x509_valid_subject_name(const char *, const X509_NAME *);
 int		 x509_valid_issuer_name(const char *, const X509_NAME *);
 time_t		 x509_find_expires(time_t, struct auth *, struct crl *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.255 2026/11/10 11:04:01 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.256 2026/11/13 06:35:47 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1090,6 +1090,38 @@ cert_policies(const char *fn, struct cert *cert, const X509_EXTENSION *ext)
 }
 
 /*
+ * The inherit element applies to an entire AF. We have IPv4 and/or IPv6,
+ * so inherit elements are at the start of cert->ips[] and/or at the end.
+ */
+
+static int
+cert_all_ips_inherit(const struct cert *cert)
+{
+	if (cert->num_ips == 1)
+		return cert->ips[0].type == CERT_IP_INHERIT;
+
+	if (cert->num_ips == 2)
+		return cert->ips[0].type == CERT_IP_INHERIT &&
+		    cert->ips[1].type == CERT_IP_INHERIT;
+
+	return 0;
+}
+
+static int
+cert_any_ip_inherits(const struct cert *cert)
+{
+	if (cert->num_ips == 0)
+		return 0;
+
+	if (cert->ips[0].type == CERT_IP_INHERIT)
+		return 1;
+	if (cert->ips[cert->num_ips - 1].type == CERT_IP_INHERIT)
+		return 1;
+
+	return 0;
+}
+
+/*
  * Parse an IP Resources X.509v3 extension, RFC 6487 4.8.10, with
  * syntax documented in RFC 3779 starting in section 2.2.
  * Returns zero on failure, non-zero on success.
@@ -1143,6 +1175,25 @@ cert_has_one_as(const struct cert *cert)
 		return 0;
 
 	return cert->ases[0].type == CERT_AS_ID;
+}
+
+int
+cert_inherits(const struct cert *cert)
+{
+	/* Need one type of resources */
+	if (cert->num_ips == 0 && cert->num_ases == 0)
+		return 0;
+	if (cert->num_ips > 0 && !cert_all_ips_inherit(cert))
+		return 0;
+	if (cert->num_ases > 0 && !cert_as_inherit(cert))
+		return 0;
+	return 1;
+}
+
+int
+cert_any_inherits(const struct cert *cert)
+{
+	return cert_any_ip_inherits(cert) || cert_as_inherit(cert);
 }
 
 /*
@@ -1433,7 +1484,7 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 	}
 
 	if (cert->purpose == CERT_PURPOSE_TA) {
-		if (x509_any_inherits(cert->x509)) {
+		if (cert_any_inherits(cert)) {
 			warnx("%s: RFC 8630, 2.3: Trust Anchor INRs "
 			    "must not inherit", fn);
 			goto out;
@@ -2015,7 +2066,7 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 
 	na->issuer = issuer;
 	na->cert = cert;
-	na->any_inherits = x509_any_inherits(cert->x509);
+	na->any_inherits = cert_any_inherits(cert);
 
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		errx(1, "auth tree corrupted");

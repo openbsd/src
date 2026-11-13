@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.51 2026/11/12 16:14:32 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.52 2026/11/13 06:35:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -343,7 +343,7 @@ rsc_parse_econtent(const char *fn, void *obj, const unsigned char *d,
 static int
 rsc_cert_info(const char *fn, void *obj, const struct cert *cert)
 {
-	if (x509_any_inherits(cert->x509)) {
+	if (cert_any_inherits(cert)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		return 0;
 	}

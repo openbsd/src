@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.150 2026/11/11 12:27:56 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.151 2026/11/13 06:35:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -381,7 +381,7 @@ mft_cert_info(const char *fn, void *obj, const struct cert *cert)
 	struct mft *mft = obj;
 	char *crlfile;
 
-	if (!x509_inherits(cert->x509)) {
+	if (!cert_inherits(cert)) {
 		warnx("%s: RFC 3779 extensions not set to inherit", fn);
 		return 0;
 	}

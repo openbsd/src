@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.35 2026/10/15 20:54:00 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.36 2026/11/13 06:35:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -187,7 +187,7 @@ tak_parse_econtent(const char *fn, void *obj, const unsigned char *d,
 static int
 tak_cert_info(const char *fn, void *obj, const struct cert *cert)
 {
-	if (!x509_inherits(cert->x509)) {
+	if (!cert_inherits(cert)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);
 		return 0;
 	}
