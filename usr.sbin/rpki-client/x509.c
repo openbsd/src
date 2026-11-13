@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.139 2026/11/03 14:58:42 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.140 2026/11/13 00:16:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -456,12 +456,6 @@ x509_valid_name_internal(const char *fn, const char *descr, const X509_NAME *xn)
 				    fn);
 				return 0;
 			}
-			/*
-			 * XXX - For some reason RFC 8209, section 3.1.1 decided
-			 * to allow UTF8String for the subject of BGPsec Router
-			 * Certificates, although RECOMMENDED contents fit in
-			 * a PrintableString.
-			 */
 			if (!valid_printable_string(fn, descr, as))
 				return 0;
 			break;
