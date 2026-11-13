@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.27 2019/01/15 09:24:59 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.28 2026/11/13 16:19:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1129,8 +1129,14 @@ magic_test_type_search(struct magic_line *ml, struct magic_state *ms)
 	result = (found != NULL);
 
 	if (result == !ml->test_not) {
-		if (ml->result != NULL)
-			magic_add_string(ms, ml, found, ms->size - ms->offset);
+		if (ml->result != NULL) {
+			if (found == NULL)
+				magic_add_result(ms, ml, "%s", "");
+			else {
+				magic_add_string(ms, ml, found,
+				    ms->size - (found - ms->base));
+			}
+		}
 		if (result && found != NULL && ml->test_operator == '=')
 			ms->offset = (found + size) - ms->base;
 	}
