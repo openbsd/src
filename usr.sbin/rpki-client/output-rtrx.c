@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-rtrx.c,v 1.11 2026/10/15 11:26:57 claudio Exp $	*/
+/*	$OpenBSD: output-rtrx.c,v 1.12 2026/11/13 00:19:44 tb Exp $ */
 /*
  * Copyright (c) 2026 Ralph Covelli <rcovelli@he.net>
  *
