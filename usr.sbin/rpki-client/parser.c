@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.206 2026/11/12 19:34:54 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.207 2026/11/13 00:18:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -156,7 +156,7 @@ find_issuer(const char *fn, int id, const char *aki, const char *mftaki)
 
 /*
  * Build access path to file based on repoid and file.
- * Can return NULL when loc is set to DIR_TEMP. 
+ * Can return NULL when loc is set to DIR_TEMP.
  */
 static char *
 parse_filepath(unsigned int repoid, const char *file, enum location loc)
@@ -183,7 +183,7 @@ parse_filepath(unsigned int repoid, const char *file, enum location loc)
 
 /*
  * Build access path based on mft and file value.
- * Can return NULL when loc is set to DIR_TEMP. 
+ * Can return NULL when loc is set to DIR_TEMP.
  */
 static char *
 mft_filepath(const struct mft *mft, const char *file, enum location loc)
