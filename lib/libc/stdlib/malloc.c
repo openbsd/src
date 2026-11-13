@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.302 2026/11/04 12:37:25 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.303 2026/11/13 07:13:50 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1248,15 +1248,18 @@ validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
 static inline uint32_t
 find_chunknum(struct dir_info *d, struct chunk_info *info, void *ptr, int check)
 {
+	uintptr_t offset;
 	uint32_t chunknum;
 
 	if (info->canary != (u_short)d->canary1)
 		wrterror(d, "chunk info corrupted");
 
 	/* Find the chunk number on the page */
-	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) / B2ALLOC(info->bucket);
+	offset = (uintptr_t)ptr & MALLOC_PAGEMASK;
+	chunknum = offset / B2ALLOC(info->bucket);
 
-	if ((uintptr_t)ptr & (MALLOC_MINSIZE - 1))
+	if (chunknum >= info->total ||
+	    offset != chunknum * B2ALLOC(info->bucket))
 		wrterror(d, "modified chunk-pointer %p", ptr);
 	if (CHUNK_FREE(info, chunknum))
 		wrterror(d, "double free %p", ptr);
