@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.500 2026/11/09 13:21:11 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.501 2026/11/13 00:32:04 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2540,35 +2540,6 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 	}
 
-	pid = name[0];
-	if (pid == cp->p_p->ps_pid) {
-		/* Self process mapping. */
-		findpr = cp->p_p;
-	} else if (pid > 0) {
-		if ((findpr = prfind(pid)) == NULL)
-			return (ESRCH);
-
-		/* Either system process or exiting/zombie */
-		if (findpr->ps_flags & (PS_SYSTEM | PS_EXITING))
-			return (EINVAL);
-
-#if 1
-		/* XXX Allow only root for now */
-		if ((error = suser(cp)) != 0)
-			return (error);
-#else
-		/* Only owner or root can get vmmap */
-		if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
-		    (error = suser(cp)) != 0)
-			return (error);
-#endif
-	} else {
-		/* Only root can get kernel_map */
-		if ((error = suser(cp)) != 0)
-			return (error);
-		findpr = NULL;
-	}
-
 	/* Check the given size. */
 	oldlen = *oldlenp;
 	if (oldlen == 0 || oldlen % sizeof(*kve) != 0)
@@ -2590,11 +2561,49 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	/* Allocate wired memory to not block. */
 	kve = malloc(oldlen, M_TEMP, M_WAITOK | M_ZERO);
-
-	/* Set the base address and read entries. */
+	/* Set the base address. */
 	kve[0].kve_start = start;
+
+	pid = name[0];
+	if (pid == cp->p_p->ps_pid) {
+		/* Self process mapping. */
+		findpr = cp->p_p;
+	} else if (pid > 0) {
+		if ((findpr = prfind(pid)) == NULL) {
+			error = ESRCH;
+			goto free;
+		}
+
+		/* Either system process or exiting/zombie */
+		if (findpr->ps_flags & (PS_SYSTEM | PS_EXITING)) {
+			error = EINVAL;
+			goto free;
+		}
+
+#if 1
+		/* XXX Allow only root for now */
+		if ((error = suser(cp)) != 0)
+			goto free;
+#else
+		/* Only owner or root can get vmmap */
+		if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
+		    (error = suser(cp)) != 0)
+			goto free;
+#endif
+	} else {
+		/* Only root can get kernel_map */
+		if ((error = suser(cp)) != 0)
+			goto free;
+		findpr = NULL;
+	}
+
+	/* Read entries. */
 	len = oldlen;
+	if (findpr)
+		refcnt_take(&findpr->ps_refcnt);
 	error = fill_vmmap(findpr, kve, &len);
+	if (findpr)
+		refcnt_rele_wake(&findpr->ps_refcnt);
 	if (error != 0 && error != ENOMEM)
 		goto done;
 	if (len == 0)
@@ -2607,7 +2616,7 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 done:
 	*oldlenp = len;
-
+free:
 	free(kve, M_TEMP, oldlen);
 
 	return (error);
