@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.114 2025/03/27 23:30:54 tedu Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.115 2026/11/13 15:23:27 kirill Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -662,8 +662,8 @@ spec_advlock(void *v)
 	struct vop_advlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id,
-		ap->a_op, ap->a_fl, ap->a_flags));
+	return (lf_specadvlock(&vp->v_specinfo, ap->a_id, ap->a_op,
+	    ap->a_fl, ap->a_flags));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.50 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.51 2026/11/13 15:23:27 kirill Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/lockf.h>
 #include <sys/rwlock.h>
 #include <sys/unistd.h>
+#include <sys/specdev.h>
 
 /*
  * The lockf structure is a kernel structure which contains the information
@@ -102,6 +103,8 @@ void	lf_printlist(const char *, struct lockf *);
 #define	LFPRINT(args, level)
 #endif
 
+static int lf_doadvlock(struct lockf_state **, off_t, caddr_t, int,
+    struct flock *, int);
 struct lockf *lf_alloc(uid_t, int);
 void lf_free(struct lockf *);
 int lf_clearlock(struct lockf *);
@@ -215,6 +218,36 @@ int
 lf_advlock(struct lockf_state **state, off_t size, caddr_t id, int op,
     struct flock *fl, int flags)
 {
+	int error;
+
+	rw_enter_write(&lockf_lock);
+	error = lf_doadvlock(state, size, id, op, fl, flags);
+	rw_exit_write(&lockf_lock);
+	return (error);
+}
+
+/*
+ * Resolve the lock-state slot while the device is still attached.
+ */
+int
+lf_specadvlock(struct specinfo **sip, caddr_t id, int op, struct flock *fl,
+    int flags)
+{
+	int error;
+
+	rw_enter_write(&lockf_lock);
+	if (*sip == NULL)
+		error = EBADF;
+	else
+		error = lf_doadvlock(&(*sip)->si_lockf, 0, id, op, fl, flags);
+	rw_exit_write(&lockf_lock);
+	return (error);
+}
+
+static int
+lf_doadvlock(struct lockf_state **state, off_t size, caddr_t id, int op,
+    struct flock *fl, int flags)
+{
 	struct proc *p = curproc;
 	struct lockf_state *ls;
 	struct lockf *lock;
@@ -257,7 +290,7 @@ lf_advlock(struct lockf_state **state, off_t size, caddr_t id, int op,
 		end = -1;
 	}
 
-	rw_enter_write(&lockf_lock);
+	rw_assert_wrlock(&lockf_lock);
 	ls = *state;
 
 	/*
@@ -312,7 +345,6 @@ lf_advlock(struct lockf_state **state, off_t size, caddr_t id, int op,
 	}
 
 out:
-	rw_exit_write(&lockf_lock);
 	return (error);
 }
 
@@ -718,25 +750,32 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 }
 
 /*
- * Purge all locks associated with the given lock state.
+ * Detach the device before sleeping, so no new request can join the drain.
+ * Return its storage only after the last lock-state reference is gone.
  */
-void
-lf_purgelocks(struct lockf_state **state)
+struct specinfo *
+lf_purgespec(struct specinfo **sip)
 {
+	struct specinfo *si;
 	struct lockf_state *ls;
 	struct lockf *lock;
 
 	rw_enter_write(&lockf_lock);
 
-	ls = *state;
+	si = *sip;
+	*sip = NULL;
+	ls = si->si_lockf;
 	if (ls == NULL)
 		goto out;
 
 	ls_ref(ls);
 
+	/* Include waiters already woken by a concurrent unlock. */
+	TAILQ_FOREACH(lock, &ls->ls_pending, lf_entry)
+		lock->lf_flags |= F_INTR;
 	/* Interrupt blocked locks and wait for all of them to finish. */
 	TAILQ_FOREACH(lock, &ls->ls_locks, lf_entry) {
-		LFPRINT(("lf_purgelocks: wakeup", lock), DEBUG_SETLOCK);
+		LFPRINT(("lf_purgespec: wakeup", lock), DEBUG_SETLOCK);
 		lf_wakelock(lock, F_INTR);
 	}
 	while (!TAILQ_EMPTY(&ls->ls_pending))
@@ -757,6 +796,7 @@ lf_purgelocks(struct lockf_state **state)
 
 out:
 	rw_exit_write(&lockf_lock);
+	return (si);
 }
 
 /*

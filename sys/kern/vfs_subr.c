@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.340 2026/11/11 11:11:01 kirill Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.341 2026/11/13 15:23:27 kirill Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ struct mntlist mountlist =		/* mounted filesystem list */
     TAILQ_HEAD_INITIALIZER(mountlist);
 
 void	vclean(struct vnode *, int, struct proc *);
+static int vclean_start(struct vnode *, int, struct proc *);
+static void vclean_finish(struct vnode *, int);
 
 void insmntque(struct vnode *, struct mount *);
 int getdevvp(dev_t, struct vnode **, enum vtype);
@@ -426,6 +428,12 @@ getnewvnode(enum vtagtype tag, struct mount *mp, const struct vops *vops,
 		numvnodes++;
 	} else {
 		TAILQ_FOREACH(vp, listhd, v_freelist) {
+			mtx_enter(&vnode_mtx);
+			if (vp->v_lflag & VXLOCK) {
+				mtx_leave(&vnode_mtx);
+				continue;
+			}
+			mtx_leave(&vnode_mtx);
 			if (VOP_ISLOCKED(vp) == 0)
 				break;
 		}
@@ -1027,8 +1035,19 @@ vflush(struct mount *mp, struct vnode *skipvp, int flags)
 void
 vclean(struct vnode *vp, int flags, struct proc *p)
 {
-	int active, do_wakeup = 0, error;
-	int s;
+	int active;
+
+	active = vclean_start(vp, flags, p);
+	vclean_finish(vp, active);
+}
+
+/*
+ * Keep VXLOCK and any temporary reference until vclean_finish().
+ */
+static int
+vclean_start(struct vnode *vp, int flags, struct proc *p)
+{
+	int active, error;
 
 	/*
 	 * Check to see if the vnode is in use.
@@ -1110,16 +1129,6 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 */
 	if (VOP_RECLAIM(vp, p))
 		panic("vclean: cannot reclaim");
-	if (active) {
-		vp->v_usecount--;
-		if (vp->v_usecount == 0) {
-			s = splbio();
-			if (vp->v_holdcnt > 0)
-				panic("vclean: not clean");
-			vputonfreelist(vp);
-			splx(s);
-		}
-	}
 	cache_purge(vp);
 
 	/*
@@ -1131,7 +1140,28 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 #ifdef VFSLCKDEBUG
 	vp->v_flag &= ~VLOCKSWORK;
 #endif
+	return (active);
+}
+
+static void
+vclean_finish(struct vnode *vp, int active)
+{
+	int do_wakeup = 0;
+	int s;
+
+	if (active) {
+		vp->v_usecount--;
+		if (vp->v_usecount == 0) {
+			s = splbio();
+			if (vp->v_holdcnt > 0)
+				panic("vclean: not clean");
+			vputonfreelist(vp);
+			splx(s);
+		}
+	}
+
 	mtx_enter(&vnode_mtx);
+	KASSERT(vp->v_lflag & VXLOCK);
 	vp->v_lflag &= ~VXLOCK;
 	if (vp->v_lflag & VXWANT) {
 		vp->v_lflag &= ~VXWANT;
@@ -1172,9 +1202,10 @@ vgone(struct vnode *vp)
 void
 vgonel(struct vnode *vp, struct proc *p)
 {
+	struct specinfo *si;
 	struct vnode *vq;
 	struct vnode *vx;
-	int s;
+	int active, s, purgespec = 0;
 
 	KASSERT(vp->v_uvcount == 0);
 
@@ -1194,7 +1225,7 @@ vgonel(struct vnode *vp, struct proc *p)
 	/*
 	 * Clean out the filesystem specific data.
 	 */
-	vclean(vp, DOCLOSE, p);
+	active = vclean_start(vp, DOCLOSE, p);
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
@@ -1228,15 +1259,19 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-		lf_purgelocks(&vp->v_speclockf);
-		free(vp->v_specinfo, M_VNODE, sizeof(struct specinfo));
-		vp->v_specinfo = NULL;
+		purgespec = 1;
 	}
+
 	/*
 	 * If it is on the freelist and not already at the head,
 	 * move it to the head of the list.
 	 */
 	vp->v_type = VBAD;
+
+	if (purgespec) {
+		si = lf_purgespec(&vp->v_specinfo);
+		free(si, M_VNODE, sizeof(*si));
+	}
 
 	/*
 	 * Move onto the free list, unless we were called from
@@ -1254,6 +1289,8 @@ vgonel(struct vnode *vp, struct proc *p)
 		}
 	}
 	splx(s);
+
+	vclean_finish(vp, active);
 }
 
 /*

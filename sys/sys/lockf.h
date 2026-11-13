@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.17 2019/04/20 08:28:59 anton Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.18 2026/11/13 15:23:27 kirill Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -37,9 +37,11 @@
 
 #ifdef _KERNEL
 struct lockf_state;
+struct specinfo;
 
 void	 lf_init(void);
 int	 lf_advlock(struct lockf_state **,
 	    off_t, caddr_t, int, struct flock *, int);
-void	 lf_purgelocks(struct lockf_state **);
+int	 lf_specadvlock(struct specinfo **, caddr_t, int, struct flock *, int);
+struct specinfo *lf_purgespec(struct specinfo **);
 #endif /* _KERNEL */
