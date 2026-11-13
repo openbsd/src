@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.75 2026/08/04 13:15:36 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.76 2026/11/13 16:20:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -127,6 +127,7 @@ main(int argc, char **argv)
 	struct input_msg	 msg;
 	struct input_ack	 ack;
 	pid_t			 pid, parent;
+	int			 status;
 
 	tzset();
 
@@ -234,10 +235,12 @@ main(int argc, char **argv)
 
 wait_for_child:
 	close(pair[0]);
-	while (wait(NULL) == -1 && errno != ECHILD) {
+	while (wait(&status) == -1 && errno != ECHILD) {
 		if (errno != EINTR)
 			err(1, "wait");
 	}
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		errx(1, "child exited unexpectedly");
 	_exit(0); /* let the child flush */
 }
 
