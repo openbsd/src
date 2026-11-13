@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.40 2026/05/09 01:42:30 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.41 2026/11/13 06:25:30 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -521,6 +521,11 @@ sbgp_parse_ipaddrblocks(const char *fn, const IPAddrBlocks *addrs,
 
 		switch (afi) {
 		case AFI_IPV4:
+			if (ipv6_seen) {
+				warnx("%s: RFC 3779 section 2.2.3.3: "
+				    "IPv6 must not precede IPv4", fn);
+				goto out;
+			}
 			if (ipv4_seen++ > 0) {
 				warnx("%s: RFC 6487 section 4.8.10: "
 				    "IPv4 appears twice", fn);
