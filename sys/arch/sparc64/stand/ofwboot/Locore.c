@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.19 2025/11/14 19:17:13 miod Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.20 2026/11/13 19:34:30 miod Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -420,11 +420,12 @@ OF_free_virt(vaddr_t vaddr, int len)
 		cell_t ihandle;
 		cell_t len;
 		cell_t vaddr;
+		cell_t status;
 	} args;
 
 	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
@@ -452,11 +453,12 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 		cell_t vaddr;
 		cell_t paddr_hi;
 		cell_t paddr_lo;
+		cell_t status;
 	} args;
 
 	args.name = ADR2CELL("call-method");
 	args.nargs = 7;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("map");
 	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
@@ -519,11 +521,12 @@ OF_free_phys(paddr_t phys, int len)
 		cell_t len;
 		cell_t phys_hi;
 		cell_t phys_lo;
+		cell_t status;
 	} args;
 
 	args.name = ADR2CELL("call-method");
 	args.nargs = 5;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(memh);
 	args.len = len;

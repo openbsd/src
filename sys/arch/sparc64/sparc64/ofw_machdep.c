@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.38 2024/03/29 21:09:49 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.39 2026/11/13 19:34:30 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -260,6 +260,7 @@ prom_free_virt(vaddr_t vaddr, int len)
 		cell_t ihandle;
 		cell_t len;
 		cell_t vaddr;
+		cell_t status;
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -268,7 +269,7 @@ prom_free_virt(vaddr_t vaddr, int len)
 	}
 	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
@@ -293,6 +294,7 @@ prom_unmap_virt(vaddr_t vaddr, int len)
 		cell_t ihandle;
 		cell_t len;
 		cell_t vaddr;
+		cell_t status;
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -301,7 +303,7 @@ prom_unmap_virt(vaddr_t vaddr, int len)
 	}
 	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("unmap");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
@@ -328,6 +330,7 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 		cell_t vaddr;
 		cell_t phys_hi;
 		cell_t phys_lo;
+		cell_t status;
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -336,7 +339,7 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 	}
 	args.name = ADR2CELL("call-method");
 	args.nargs = 7;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("map");
 	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
@@ -443,6 +446,7 @@ prom_free_phys(paddr_t phys, int len)
 		cell_t len;
 		cell_t phys_hi;
 		cell_t phys_lo;
+		cell_t status;
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
@@ -451,7 +455,7 @@ prom_free_phys(paddr_t phys, int len)
 	}
 	args.name = ADR2CELL("call-method");
 	args.nargs = 5;
-	args.nreturns = 0;
+	args.nreturns = 1;
 	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(memh);
 	args.len = len;
