@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.213 2025/11/18 09:30:27 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.214 2026/11/13 06:08:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1822,6 +1822,9 @@ audio_event(struct audio_softc *sc, int addr)
 int
 audio_mixer_devinfo(struct audio_softc *sc, struct mixer_devinfo *devinfo)
 {
+	if (devinfo->index < 0)
+		return EINVAL;
+
 	if (devinfo->index < sc->mix_nent)
 		return sc->ops->query_devinfo(sc->arg, devinfo);	
 
@@ -1858,6 +1861,9 @@ audio_mixer_devinfo(struct audio_softc *sc, struct mixer_devinfo *devinfo)
 int
 audio_mixer_get(struct audio_softc *sc, struct mixer_ctrl *c)
 {
+	if (c->dev < 0)
+		return EINVAL;
+
 	if (c->dev < sc->mix_nent)
 		return sc->ops->get_port(sc->arg, c);
 
@@ -1878,6 +1884,9 @@ int
 audio_mixer_set(struct audio_softc *sc, struct mixer_ctrl *c, struct proc *p)
 {
 	int error;
+
+	if (c->dev < 0)
+		return EINVAL;
 
 	if (c->dev < sc->mix_nent) {
 		error = sc->ops->set_port(sc->arg, c);
