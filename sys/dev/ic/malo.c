@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.125 2023/11/10 15:51:20 bluhm Exp $ */
+/*	$OpenBSD: malo.c,v 1.126 2026/11/14 21:07:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -102,6 +102,7 @@ struct malo_tx_desc {
 } __packed;
 
 #define MALO_RX_RING_COUNT	256
+#define MALO_RX_BUFSZ		4096
 #define MALO_TX_RING_COUNT	256
 #define MALO_MAX_SCATTER	8	/* XXX unknown, wild guess */
 #define MALO_CMD_TIMEOUT	50	/* MALO_CMD_TIMEOUT * 100us */
@@ -588,8 +589,8 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 		desc = &ring->desc[i];
 		data = &ring->data[i];
 
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &data->map);
+		error = bus_dmamap_create(sc->sc_dmat, MALO_RX_BUFSZ, 1,
+		    MALO_RX_BUFSZ, 0, BUS_DMA_NOWAIT, &data->map);
 		if (error != 0) {
 			printf("%s: could not create DMA map\n",
 			    sc->sc_dev.dv_xname);
@@ -604,7 +605,7 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 			goto fail;
 		}
 
-		MCLGET(data->m, M_DONTWAIT);
+		MCLGETL(data->m, M_DONTWAIT, MALO_RX_BUFSZ);
 		if (!(data->m->m_flags & M_EXT)) {
 			printf("%s: could not allocate rx mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
@@ -613,7 +614,8 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 		}
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    mtod(data->m, void *), MALO_RX_BUFSZ, NULL,
+		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not load rx buf DMA map",
 			    sc->sc_dev.dv_xname);
@@ -1634,7 +1636,7 @@ malo_rx_intr(struct malo_softc *sc)
 			goto skip;
 		}
 
-		MCLGET(mnew, M_DONTWAIT);
+		MCLGETL(mnew, M_DONTWAIT, MALO_RX_BUFSZ);
 		if (!(mnew->m_flags & M_EXT)) {
 			m_freem(mnew);
 			ifp->if_ierrors++;
@@ -1646,12 +1648,13 @@ malo_rx_intr(struct malo_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    mtod(mnew, void *), MALO_RX_BUFSZ, NULL,
+		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			m_freem(mnew);
 
 			error = bus_dmamap_load(sc->sc_dmat, data->map,
-			    mtod(data->m, void *), MCLBYTES, NULL,
+			    mtod(data->m, void *), MALO_RX_BUFSZ, NULL,
 			    BUS_DMA_NOWAIT);
 			if (error != 0) {
 				panic("%s: could not load old rx mbuf",
