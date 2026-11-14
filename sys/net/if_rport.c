@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.14 2026/11/07 12:50:08 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.15 2026/11/14 23:55:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -82,6 +82,12 @@ rportattach(int count)
 	if_clone_attach(&rport_cloner);
 }
 
+static inline int
+if_is_rport(struct ifnet *ifp)
+{
+	return (ifp->if_drvid == &rport_cloner);
+}
+
 static int
 rport_clone_create(struct if_clone *ifc, int unit)
 {
@@ -94,6 +100,8 @@ rport_clone_create(struct if_clone *ifc, int unit)
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
 	    "%s%d", ifc->ifc_name, unit);
 
+	ifp->if_softc = sc;
+	ifp->if_drvid = &rport_cloner;
 	ifp->if_mtu = RPORT_MTU_DEFAULT;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
@@ -105,7 +113,6 @@ rport_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_input = p2p_input;
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type = IFT_TUNNEL;
-	ifp->if_softc = sc;
 
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
@@ -359,7 +366,7 @@ rport_set_parent(struct rport_softc *sc, const struct if_parent *p)
 		goto put;
 	}
 
-	if (ifp0->if_enqueue != rport_enqueue) {
+	if (!if_is_rport(ifp0)) {
 		error = EPROTONOSUPPORT;
 		goto put;
 	}
