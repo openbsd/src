@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.162 2026/11/08 08:42:55 miod Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.163 2026/11/14 23:41:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -30,7 +30,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -81,8 +80,6 @@ struct mbuf *
 void	 trunk_start(struct ifnet *);
 void	 trunk_init(struct ifnet *);
 void	 trunk_stop(struct ifnet *);
-int	 trunk_media_change(struct ifnet *);
-void	 trunk_media_status(struct ifnet *, struct ifmediareq *);
 struct trunk_port *trunk_link_active(struct trunk_softc *,
 	    struct trunk_port *);
 const void *trunk_gethdr(struct mbuf *, u_int, u_int, void *);
@@ -164,12 +161,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	}
 	SLIST_INIT(&tr->tr_ports);
 
-	/* Initialise pseudo media types */
-	ifmedia_init(&tr->tr_media, 0, trunk_media_change,
-	    trunk_media_status);
-	ifmedia_add(&tr->tr_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&tr->tr_media, IFM_ETHER | IFM_AUTO);
-
 	ifp = &tr->tr_ac.ac_if;
 	ifp->if_softc = tr;
 	ifp->if_start = trunk_start;
@@ -215,7 +206,6 @@ trunk_clone_destroy(struct ifnet *ifp)
 	}
 	NET_UNLOCK();
 
-	ifmedia_delete_instance(&tr->tr_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -780,10 +770,6 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		error = trunk_ether_delmulti(tr, ifr);
 		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &tr->tr_media, cmd);
-		break;
 	case SIOCSIFLLADDR:
 		/* Update the port lladdrs as well */
 		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
@@ -1143,33 +1129,6 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, uint64_t dst, void *port,
 drop:
 	m_freem(m);
 	return (NULL);
-}
-
-int
-trunk_media_change(struct ifnet *ifp)
-{
-	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
-
-	if (tr->tr_ifflags & IFF_DEBUG)
-		printf("%s\n", __func__);
-
-	/* Ignore */
-	return (0);
-}
-
-void
-trunk_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
-	struct trunk_port *tp;
-
-	imr->ifm_status = IFM_AVALID;
-	imr->ifm_active = IFM_ETHER | IFM_AUTO;
-
-	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
-		if (TRUNK_PORTACTIVE(tp))
-			imr->ifm_status |= IFM_ACTIVE;
-	}
 }
 
 void

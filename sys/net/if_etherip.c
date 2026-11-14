@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.60 2026/11/04 08:51:51 claudio Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.61 2026/11/14 23:41:31 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -27,7 +27,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_media.h>
 #include <net/rtable.h>
 
 #include <netinet/in.h>
@@ -87,7 +86,6 @@ static inline int etherip_cmp(const struct etherip_tunnel *,
 struct etherip_softc {
 	struct etherip_tunnel	sc_tunnel; /* must be first */
 	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
 	int			sc_txhprio;
 	int			sc_rxhprio;
 	uint16_t		sc_df;
@@ -109,8 +107,6 @@ int etherip_ioctl(struct ifnet *, u_long, caddr_t);
 int etherip_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 void etherip_start(struct ifnet *);
-int etherip_media_change(struct ifnet *);
-void etherip_media_status(struct ifnet *, struct ifmediareq *);
 int etherip_set_tunnel(struct etherip_softc *, struct if_laddrreq *);
 int etherip_get_tunnel(struct etherip_softc *, struct if_laddrreq *);
 int etherip_del_tunnel(struct etherip_softc *);
@@ -159,11 +155,6 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	ether_fakeaddr(ifp);
 
-	ifmedia_init(&sc->sc_media, 0, etherip_media_change,
-	    etherip_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
-
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -187,26 +178,12 @@ etherip_clone_destroy(struct ifnet *ifp)
 	TAILQ_REMOVE(&etherip_list, &sc->sc_tunnel, t_entry);
 	NET_UNLOCK();
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
-}
-
-int
-etherip_media_change(struct ifnet *ifp)
-{
-	return 0;
-}
-
-void
-etherip_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	imr->ifm_active = IFM_ETHER | IFM_AUTO;
-	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
 int
@@ -351,11 +328,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGLIFPHYDF:
 		ifr->ifr_df = sc->sc_df ? 1 : 0;
-		break;
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	case SIOCADDMULTI:

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.39 2025/09/16 23:11:39 jan Exp $ */
+/* $OpenBSD: if_vether.c,v 1.40 2026/11/14 23:41:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -22,7 +22,6 @@
 #include <sys/sockio.h>
 
 #include <net/if.h>
-#include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -38,29 +37,13 @@ int	vetherioctl(struct ifnet *, u_long, caddr_t);
 void	vetherqstart(struct ifqueue *);
 int	vether_clone_create(struct if_clone *, int);
 int	vether_clone_destroy(struct ifnet *);
-int	vether_media_change(struct ifnet *);
-void	vether_media_status(struct ifnet *, struct ifmediareq *);
 
 struct vether_softc {
 	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
 };
 
 struct if_clone	vether_cloner =
     IF_CLONE_INITIALIZER("vether", vether_clone_create, vether_clone_destroy);
-
-int
-vether_media_change(struct ifnet *ifp)
-{
-	return (0);
-}
-
-void
-vether_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	imr->ifm_active = IFM_ETHER | IFM_AUTO;
-	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
-}
 
 void
 vetherattach(int nvether)
@@ -94,11 +77,6 @@ vether_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 
-	ifmedia_init(&sc->sc_media, 0, vether_media_change,
-	    vether_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
-
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	return (0);
@@ -109,7 +87,6 @@ vether_clone_destroy(struct ifnet *ifp)
 {
 	struct vether_softc	*sc = ifp->if_softc;
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -141,7 +118,6 @@ int
 vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vether_softc	*sc = (struct vether_softc *)ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	int			 error = 0, link_state;
 
 	switch (cmd) {
@@ -165,11 +141,6 @@ vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

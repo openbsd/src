@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.18 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.19 2026/11/14 23:41:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/sockio.h>
 
 #include <net/if.h>
-#include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -38,41 +37,15 @@ int	pairioctl(struct ifnet *, u_long, caddr_t);
 void	pairstart(struct ifqueue *);
 int	pair_clone_create(struct if_clone *, int);
 int	pair_clone_destroy(struct ifnet *);
-int	pair_media_change(struct ifnet *);
-void	pair_media_status(struct ifnet *, struct ifmediareq *);
 void	pair_link_state(struct ifnet *);
 
 struct pair_softc {
 	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
 	unsigned int		sc_pairedif;
 };
 
 struct if_clone	pair_cloner =
     IF_CLONE_INITIALIZER("pair", pair_clone_create, pair_clone_destroy);
-
-int
-pair_media_change(struct ifnet *ifp)
-{
-	return (0);
-}
-
-void
-pair_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	struct pair_softc	*sc = ifp->if_softc;
-	struct ifnet		*pairedifp;
-
-	imr->ifm_active = IFM_ETHER | IFM_AUTO;
-
-	if ((pairedifp = if_get(sc->sc_pairedif)) == NULL) {
-		imr->ifm_status = 0;
-		return;
-	}
-	if_put(pairedifp);
-
-	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
-}
 
 void
 pair_link_state(struct ifnet *ifp)
@@ -120,11 +93,6 @@ pair_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-	ifmedia_init(&sc->sc_media, 0, pair_media_change,
-	    pair_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
-
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -147,7 +115,6 @@ pair_clone_destroy(struct ifnet *ifp)
 		if_put(pairedifp);
 	}
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -210,11 +177,6 @@ pairioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	case SIOCSIFPAIR:
