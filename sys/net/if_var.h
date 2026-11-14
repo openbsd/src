@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.150 2026/11/04 08:51:51 claudio Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.151 2026/11/14 23:50:47 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ SMR_LIST_HEAD(carp_iflist, carp_softc);
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* [I] lower-level data for this if */
+	void	*if_drvid;		/* [I] opaque driver identifier */
 	struct	refcnt if_refcnt;
 	TAILQ_ENTRY(ifnet) if_list;	/* [NK] all struct ifnets are chained */
 	TAILQ_ENTRY(ifnet) if_tmplist;	/* [T] temporary list */
