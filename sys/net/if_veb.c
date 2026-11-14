@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.75 2026/11/12 13:59:44 henning Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.76 2026/11/14 23:57:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -413,6 +413,12 @@ static int	vport_iff(struct vport_softc *);
 static struct if_clone vport_cloner =
     IF_CLONE_INITIALIZER("vport", vport_clone_create, vport_clone_destroy);
 
+static inline int
+if_is_vport(struct ifnet *ifp)
+{
+	return (ifp->if_drvid == &vport_cloner);
+}
+
 void
 vebattach(int count)
 {
@@ -809,7 +815,7 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 	 * pf direction on vport interfaces is reversed compared to
 	 * other veb ports.
 	 */
-	if (ifp0->if_enqueue == vport_enqueue)
+	if (if_is_vport(ifp0))
 		return (m);
 
 	eh = mtod(m, struct ether_header *);
@@ -1759,7 +1765,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 		goto put;
 	}
 
-	isvport = (ifp0->if_enqueue == vport_enqueue);
+	isvport = if_is_vport(ifp0);
 
 	error = ether_brport_isset(ifp0);
 	if (error != 0)
@@ -1986,7 +1992,7 @@ veb_port_set_pvid(struct veb_softc *sc, const struct ifbreq *ifbr)
 		return (ESRCH);
 
 	if ((pvid < EVL_VLID_MIN || pvid > EVL_VLID_MAX) &&
-	    p->p_ifp0->if_enqueue == vport_enqueue) {
+	    if_is_vport(p->p_ifp0)) {
 		error = EOPNOTSUPP;
 		goto put;
 	}
@@ -2030,7 +2036,7 @@ veb_get_vid_map(struct veb_softc *sc, struct ifbrvidmap *ifbrvm)
 	}
 	smr_read_leave();
 
-	if (p->p_ifp0->if_enqueue == vport_enqueue && !anybits)
+	if (if_is_vport(p->p_ifp0) && !anybits)
 		error = ENOENT;
 
 	veb_port_put(sc, p);
@@ -3522,6 +3528,7 @@ vport_clone_create(struct if_clone *ifc, int unit)
 	snprintf(ifp->if_xname, IFNAMSIZ, "%s%d", ifc->ifc_name, unit);
 
 	ifp->if_softc = sc;
+	ifp->if_drvid = &vport_cloner;
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_ioctl = vport_ioctl;
