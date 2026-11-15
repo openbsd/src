@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.108 2026/11/04 08:51:51 claudio Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.109 2026/11/15 04:03:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1580,6 +1580,11 @@ vxlan_set_parent(struct vxlan_softc *sc, const struct if_parent *p)
 	ifp0 = if_unit(p->ifp_parent);
 	if (ifp0 == NULL)
 		return (ENXIO);
+
+	if (ifp0 == ifp) {
+		error = EINVAL;
+		goto put;
+	}
 
 	if (!ISSET(ifp0->if_flags, IFF_MULTICAST)) {
 		error = ENXIO;
