@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.20 2026/11/15 00:01:22 dlg Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.21 2026/11/15 00:03:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -199,16 +199,15 @@ pairioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		newifp = if_get(ifr->ifr_index);
 
 		if (newifp != NULL) {
-			pairedsc = newifp->if_softc;
-
-			if (pairedsc->sc_pairedif != 0) {
-				error = EBUSY;
-				break;
-			}
-
 			/* Only allow pair(4) interfaces for the pair */
 			if (!if_is_pair(newifp)) {
 				error = ENODEV;
+				break;
+			}
+
+			pairedsc = newifp->if_softc;
+			if (pairedsc->sc_pairedif != 0) {
+				error = EBUSY;
 				break;
 			}
 
