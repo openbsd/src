@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.164 2026/11/15 05:00:26 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.165 2026/11/15 05:18:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -276,6 +276,9 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	/* Check if port has already been associated to a trunk */
 	if (trunk_port_get(NULL, ifp) != NULL)
 		return (EBUSY);
+
+	if (ifp == &tr->tr_ac.ac_if)
+		return (EINVAL);
 
 	/* XXX Disallow non-ethernet interfaces (this should be any of 802) */
 	if (ifp->if_type != IFT_ETHER)
