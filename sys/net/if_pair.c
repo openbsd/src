@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.19 2026/11/14 23:41:31 dlg Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.20 2026/11/15 00:01:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,12 @@ pairattach(int npair)
 	if_clone_attach(&pair_cloner);
 }
 
+static inline int
+if_is_pair(struct ifnet *ifp)
+{
+	return (ifp->if_drvid == &pair_cloner);
+}
+
 int
 pair_clone_create(struct if_clone *ifc, int unit)
 {
@@ -86,6 +92,7 @@ pair_clone_create(struct if_clone *ifc, int unit)
 	ether_fakeaddr(ifp);
 
 	ifp->if_softc = sc;
+	ifp->if_drvid = &pair_cloner;
 	ifp->if_ioctl = pairioctl;
 	ifp->if_qstart = pairstart;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
@@ -158,10 +165,9 @@ pairioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct pair_softc	*sc = (struct pair_softc *)ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct if_clone		*ifc;
 	struct pair_softc	*pairedsc = ifp->if_softc;
 	struct ifnet		*oldifp = NULL, *newifp = NULL;
-	int			 error = 0, unit;
+	int			 error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -201,9 +207,7 @@ pairioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 
 			/* Only allow pair(4) interfaces for the pair */
-			if ((ifc = if_clone_lookup(newifp->if_xname,
-			    &unit)) == NULL || strcmp("pair",
-			    ifc->ifc_name) != 0) {
+			if (!if_is_pair(newifp)) {
 				error = ENODEV;
 				break;
 			}
