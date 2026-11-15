@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.165 2026/11/15 05:18:43 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.166 2026/11/15 05:49:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -172,10 +172,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
 
-	/*
-	 * Attach as an ordinary ethernet device, children will be attached
-	 * as special device IFT_IEEE8023ADLAG.
-	 */
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -325,12 +321,6 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 		}
 	}
 
-	tp->tp_ioctl = ifp->if_ioctl;
-	ifp->if_ioctl = trunk_port_ioctl;
-
-	tp->tp_output = ifp->if_output;
-	ifp->if_output = trunk_port_output;
-
 	tp->tp_if = ifp;
 	tp->tp_trunk = tr;
 
@@ -371,6 +361,12 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	/* Assign input handler of the physical interface. */
 	NET_ASSERT_LOCKED();
 	SMR_PTR_SET_LOCKED(&ac0->ac_trport, &tp->tp_ether_port);
+
+	tp->tp_ioctl = ifp->if_ioctl;
+	ifp->if_ioctl = trunk_port_ioctl;
+
+	tp->tp_output = ifp->if_output;
+	ifp->if_output = trunk_port_output;
 
 	/* update linkstate */
 	trunk_link_active(tr, tp);
@@ -462,19 +458,23 @@ trunk_port_destroy(struct trunk_port *tp)
 int
 trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
+	struct arpcom *ac0 = (struct arpcom *)ifp;
+	const struct ether_port *ep = SMR_PTR_GET_LOCKED(&ac0->ac_trport);
 	struct trunk_reqport *rp = (struct trunk_reqport *)data;
 	struct trunk_softc *tr;
 	struct trunk_port *tp = NULL;
 	struct ifnet *ifp0 = NULL;
 	int error = 0;
 
-	/* Should be checked by the caller */
-	if (ifp->if_type != IFT_IEEE8023ADLAG ||
-	    (tp = trunk_port_get(NULL, ifp)) == NULL ||
-	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL) {
-		error = EINVAL;
-		goto fallback;
-	}
+	KASSERTMSG(ep != NULL,
+	    "%s: %s called without an ether_port set",
+	    ifp->if_xname, __func__);
+	KASSERTMSG(ep->ep_input == trunk_input,
+	    "%s called %s, but ep_input (%p) seems wrong",
+	    ifp->if_xname, __func__, ep->ep_input);
+
+	tp = ep->ep_port;
+	tr = tp->tp_trunk;
 
 	switch (cmd) {
 	case SIOCGTRUNKPORT:
