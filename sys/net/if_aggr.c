@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.55 2026/11/14 23:41:31 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.56 2026/11/15 03:47:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -533,6 +533,12 @@ static void	aggr_port_kstat_detach(struct aggr_port *);
 static struct if_clone aggr_cloner =
     IF_CLONE_INITIALIZER("aggr", aggr_clone_create, aggr_clone_destroy);
 
+static inline int
+if_is_aggr(struct ifnet *ifp)
+{
+	return (ifp->if_drvid == &aggr_cloner);
+}
+
 void
 aggrattach(int count)
 {
@@ -552,6 +558,7 @@ aggr_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_mix = arc4random();
 
 	ifp = &sc->sc_if;
+	ifp->if_drvid = &aggr_cloner;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
@@ -1186,6 +1193,11 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 		return (EINVAL);
 
 	if (ifp0->if_index == ifp->if_index) {
+		error = EINVAL;
+		goto put;
+	}
+
+	if (if_is_aggr(ifp0)) { /* it doesnt make sense to stack aggr */
 		error = EINVAL;
 		goto put;
 	}
