@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.239 2026/11/11 05:08:05 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.240 2026/11/15 11:39:40 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -198,7 +198,9 @@ struct bpf_d *bpfilter_lookup(int);
  * Called holding ``bd_mtx''.
  */
 void	bpf_attachd(struct bpf_d *, struct bpf_if *);
-void	bpf_detachd(struct bpf_d *);
+struct ifnet * __warn_unused_result
+	bpf_detachd(struct bpf_d *);
+void	bpf_unpromisc(struct ifnet *);
 void	bpf_resetd(struct bpf_d *);
 
 void	bpf_prog_smr(void *);
@@ -381,7 +383,7 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 /*
  * Detach a file from its interface.
  */
-void
+struct ifnet *
 bpf_detachd(struct bpf_d *d)
 {
 	struct bpf_if *bp;
@@ -391,7 +393,7 @@ bpf_detachd(struct bpf_d *d)
 	bp = d->bd_bif;
 	/* Not attached. */
 	if (bp == NULL)
-		return;
+		return (NULL);
 
 	/* Remove ``d'' from the interface's descriptor list. */
 	KERNEL_ASSERT_LOCKED();
@@ -408,32 +410,47 @@ bpf_detachd(struct bpf_d *d)
 
 	/*
 	 * Check if this descriptor had requested promiscuous mode.
-	 * If so, turn it off.
+	 * If so, get the caller to turn it off.
 	 */
 	if (d->bd_promisc) {
-		int error;
-
-		KASSERT(bp->bif_ifp != NULL);
-
+		struct ifnet *ifp = bp->bif_ifp;
+		KASSERT(ifp != NULL);
+ 
 		d->bd_promisc = 0;
-
-		bpf_get(d);
-		mtx_leave(&d->bd_mtx);
-		NET_LOCK();
-		error = ifpromisc(bp->bif_ifp, 0);
-		NET_UNLOCK();
-		mtx_enter(&d->bd_mtx);
-		bpf_put(d);
-
-		if (error && !(error == EINVAL || error == ENODEV ||
-		    error == ENXIO))
-			/*
-			 * Something is really wrong if we were able to put
-			 * the driver into promiscuous mode, but can't
-			 * take it out.
-			 */
-			panic("bpf: ifpromisc failed");
+		return (if_ref(ifp)); /* caller must bpf_unpromisc() this */
 	}
+
+	return (NULL);
+}
+
+void
+bpf_unpromisc(struct ifnet *ifp)
+{
+	int error;
+
+	if (ifp == NULL)
+		return;
+
+	NET_LOCK();
+	error = ifpromisc(ifp, 0);
+	NET_UNLOCK();
+
+	switch (error) {
+	case 0:
+	case EINVAL:
+	case ENODEV:
+	case ENXIO:
+		break;
+	default:
+		/*
+		 * Something is really wrong if we were able to put
+		 * the driver into promiscuous mode, but can't
+		 * take it out.
+		 */
+		panic("bpf: ifpromisc(%p(%s), 0) failed", ifp, ifp->if_xname);
+	}
+
+	if_put(ifp);
 }
 
 void
@@ -488,15 +505,16 @@ int
 bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct bpf_d *d;
+	struct ifnet *ifp;
 
 	d = bpfilter_lookup(minor(dev));
 	mtx_enter(&d->bd_mtx);
-	bpf_detachd(d);
+	ifp = bpf_detachd(d);
 	bpf_wakeup(d);
 	LIST_REMOVE(d, bd_list);
 	mtx_leave(&d->bd_mtx);
 	bpf_put(d);
-
+	bpf_unpromisc(ifp);
 	return (0);
 }
 
@@ -1001,11 +1019,8 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case BIOCSDLT:
 		if (d->bd_bif == NULL)
 			error = EINVAL;
-		else {
-			mtx_enter(&d->bd_mtx);
+		else
 			error = bpf_setdlt(d, *(u_int *)addr);
-			mtx_leave(&d->bd_mtx);
-		}
 		break;
 
 	/*
@@ -1247,6 +1262,7 @@ int
 bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 {
 	struct bpf_if *bp;
+	struct ifnet *ifp = NULL;
 	int error = 0;
 
 	/*
@@ -1275,12 +1291,13 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		/*
 		 * Detach if attached to something else.
 		 */
-		bpf_detachd(d);
+		ifp = bpf_detachd(d);
 		bpf_attachd(d, bp);
 	}
 	bpf_resetd(d);
 out:
 	mtx_leave(&d->bd_mtx);
+	bpf_unpromisc(ifp);
 	return (error);
 }
 
@@ -1954,10 +1971,16 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 {
 	const char *name;
 	struct bpf_if *bp;
+	struct ifnet *ifp = NULL;
+	int error = 0;
 
-	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
+	mtx_enter(&d->bd_mtx);
+	if (d->bd_bif == NULL) {
+		error = EINVAL;
+		goto leave;
+	}
 	if (d->bd_bif->bif_dlt == dlt)
-		return (0);
+		goto leave;
 	name = d->bd_bif->bif_name;
 	TAILQ_FOREACH(bp, &bpf_iflist, bif_next) {
 		if (strcmp(name, bp->bif_name) != 0)
@@ -1965,12 +1988,17 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 		if (bp->bif_dlt == dlt)
 			break;
 	}
-	if (bp == NULL)
-		return (EINVAL);
-	bpf_detachd(d);
+	if (bp == NULL) {
+		error = EINVAL;
+		goto leave;
+	}
+	ifp = bpf_detachd(d);
 	bpf_attachd(d, bp);
 	bpf_resetd(d);
-	return (0);
+leave:
+	mtx_leave(&d->bd_mtx);
+	bpf_unpromisc(ifp);
+	return (error);
 }
 
 u_int32_t	bpf_mbuf_ldw(const void *, u_int32_t, int *);
