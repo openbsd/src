@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.35 2026/11/14 23:41:31 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.36 2026/11/15 05:00:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -175,7 +175,6 @@ struct trunk_port {
 	u_int8_t			tp_lladdr[ETHER_ADDR_LEN];
 	caddr_t				tp_psc;		/* protocol data */
 
-	u_char				tp_iftype;	/* interface type */
 	u_int32_t			tp_prio;	/* port priority */
 	u_int32_t			tp_flags;	/* port flags */
 	struct task			tp_ltask;	/* if state hook */
