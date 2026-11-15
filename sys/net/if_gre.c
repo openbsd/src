@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.197 2026/11/13 02:07:13 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.198 2026/11/15 03:59:08 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -3588,23 +3588,30 @@ static int
 nvgre_set_parent(struct nvgre_softc *sc, const char *parent)
 {
 	struct ifnet *ifp0;
+	int error = 0;
 
 	ifp0 = if_unit(parent);
 	if (ifp0 == NULL)
 		return (EINVAL);
 
+	if (ifp0 == &sc->sc_ac.ac_if) {
+		error = EINVAL;
+		goto error;
+	}
+
 	if (!ISSET(ifp0->if_flags, IFF_MULTICAST)) {
-		if_put(ifp0);
-		return (EPROTONOSUPPORT);
+		error = EPROTONOSUPPORT;
+		goto error;
 	}
 
 	ifsetlro(ifp0, 0);
 
 	/* commit */
 	sc->sc_ifp0 = ifp0->if_index;
+error:
 	if_put(ifp0);
 
-	return (0);
+	return (error);
 }
 
 static int
