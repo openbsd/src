@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.77 2026/11/15 06:40:06 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.78 2026/11/15 09:18:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1659,10 +1659,7 @@ veb_ports_insert(struct veb_ports *om, struct veb_port *p)
 	unsigned int ncount = ocount + 1;
 	unsigned int i;
 
-	nm = malloc(veb_ports_size(ncount), M_DEVBUF,
-	    M_WAITOK|M_CANFAIL|M_ZERO);
-	if (nm == NULL)
-		return (NULL);
+	nm = malloc(veb_ports_size(ncount), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	refcnt_init(&nm->m_refs);
 	nm->m_count = ncount;
@@ -1834,15 +1831,11 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 
 	om = SMR_PTR_GET_LOCKED(ports_ptr);
 	nm = veb_ports_insert(om, p);
-	if (nm == NULL) {
-		error = ENOMEM;
-		goto unpromisc;
-	}
 
 	/* this might have changed if we slept for malloc or ifpromisc */
 	error = ether_brport_isset(ifp0);
 	if (error != 0)
-		goto free_ports;
+		goto unpromisc;
 
 	task_set(&p->p_ltask, veb_p_linkch, p);
 	if_linkstatehook_add(ifp0, &p->p_ltask);
@@ -1874,8 +1867,6 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 
 	return (0);
 
-free_ports:
-	veb_ports_destroy(nm);
 unpromisc:
 	if (!span)
 		ifpromisc(ifp0, 0);
