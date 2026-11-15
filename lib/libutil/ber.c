@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.26 2023/11/10 12:12:02 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.27 2026/11/15 14:15:33 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,7 @@
 #define BER_TAG_MORE		0x80	/* more subsequent octets */
 #define BER_TAG_TYPE_MASK	0x7f
 #define BER_CLASS_SHIFT		6
+#define BER_MAX_DEPTH		128
 
 static int	ober_dump_element(struct ber *ber, struct ber_element *root);
 static void	ober_dump_header(struct ber *ber, struct ber_element *root);
@@ -45,7 +46,8 @@ static void	ober_write(struct ber *ber, void *buf, size_t len);
 static ssize_t	get_id(struct ber *b, unsigned int *tag, int *class,
     int *cstruct);
 static ssize_t	get_len(struct ber *b, ssize_t *len);
-static ssize_t	ober_read_element(struct ber *ber, struct ber_element *elm);
+static ssize_t	ober_read_element(struct ber *ber, struct ber_element *elm,
+    int depth);
 static ssize_t	ober_getc(struct ber *b, u_char *c);
 static ssize_t	ober_read(struct ber *ber, void *buf, size_t len);
 
@@ -921,7 +923,7 @@ ober_read_elements(struct ber *ber, struct ber_element *elm)
 
 	DPRINTF("read ber elements, root %p\n", root);
 
-	if (ober_read_element(ber, root) == -1) {
+	if (ober_read_element(ber, root, 1) == -1) {
 		/* Cleanup if root was allocated by us */
 		if (elm == NULL)
 			ober_free_elements(root);
@@ -1264,7 +1266,7 @@ get_len(struct ber *b, ssize_t *len)
 }
 
 static ssize_t
-ober_read_element(struct ber *ber, struct ber_element *elm)
+ober_read_element(struct ber *ber, struct ber_element *elm, int depth)
 {
 	long long val = 0;
 	struct ber_element *next;
@@ -1273,6 +1275,10 @@ ober_read_element(struct ber *ber, struct ber_element *elm)
 	ssize_t len, r, totlen = 0;
 	u_char c, last = 0;
 
+	if (depth > BER_MAX_DEPTH) {
+		errno = ERANGE;
+		return -1;
+	}
 	if ((r = get_id(ber, &type, &class, &cstruct)) == -1)
 		return -1;
 	DPRINTF("ber read got class %d type %u, %s\n",
@@ -1405,7 +1411,7 @@ ober_read_element(struct ber *ber, struct ber_element *elm)
 				errno = ERANGE;
 				return -1;
 			}
-			r = ober_read_element(ber, next);
+			r = ober_read_element(ber, next, depth + 1);
 			if (r == -1) {
 				/* sub-element overflows sequence/set */
 				if (errno == ECANCELED)
