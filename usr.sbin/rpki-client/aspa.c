@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.55 2026/11/16 12:23:59 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.56 2026/11/16 15:42:29 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -330,21 +330,6 @@ aspa_read(struct ibuf *b)
 }
 
 /*
- * Insert a new uint32_t at index idx in the struct vap v.
- * All elements in the provider array from idx are moved up by one
- * to make space for the new element.
- */
-static void
-insert_vap(struct vap *v, uint32_t idx, uint32_t *p)
-{
-	if (idx < v->num_providers)
-		memmove(v->providers + idx + 1, v->providers + idx,
-		    (v->num_providers - idx) * sizeof(v->providers[0]));
-	v->providers[idx] = *p;
-	v->num_providers++;
-}
-
-/*
  * Add each ProviderAS entry into the Validated ASPA Providers (VAP) tree.
  * Duplicated entries are merged.
  */
@@ -352,8 +337,9 @@ void
 aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
     struct repo *rp)
 {
-	struct vap	*v, *found;
-	size_t		 i, j;
+	struct vap *v, *found;
+	uint32_t *providers;
+	size_t i, j, max, num;
 
 	if ((v = calloc(1, sizeof(*v))) == NULL)
 		err(1, NULL);
@@ -383,30 +369,58 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 
 	repo_stat_inc(rp, aspa->talid, RTYPE_ASPA, STYPE_TOTAL);
 
-	v->providers = reallocarray(v->providers,
-	    v->num_providers + aspa->num_providers, sizeof(v->providers[0]));
-	if (v->providers == NULL)
+	max = aspa->num_providers + v->num_providers;
+	providers = calloc(max, sizeof(providers[0]));
+	if (providers == NULL)
 		err(1, NULL);
 
 	/*
 	 * Merge all data from aspa into v: loop over all aspa providers,
 	 * insert them in the right place in v->providers while keeping the
-	 * order of the providers array.
+	 * order of the providers array and eliminating duplicates.
 	 */
-	for (i = 0, j = 0; i < aspa->num_providers; ) {
-		if (j == v->num_providers ||
-		    aspa->providers[i] < v->providers[j]) {
-			/* merge provider from aspa into v */
+
+	num = 0;
+	for (i = 0, j = 0; i < aspa->num_providers && j < v->num_providers;) {
+		uint32_t add, new, old;
+
+		new = aspa->providers[i];
+		old = v->providers[j];
+
+		/* Advance the array with the smaller provider, or both. */
+		if (new <= old) {
+			i++;
+			add = new;
+		}
+		if (new >= old) {
+			j++;
+			add = old;
+		}
+
+		assert(num < max);
+		providers[num++] = add;
+
+		if (new < old) {
+			/* A new provider was added */
 			repo_stat_inc(rp, v->talid, RTYPE_ASPA,
 			    STYPE_PROVIDERS);
-			insert_vap(v, j, &aspa->providers[i]);
-			i++;
-		} else if (aspa->providers[i] == v->providers[j])
-			i++;
-
-		if (j < v->num_providers)
-			j++;
+		}
 	}
+
+	/* Add the remainder of providers from either aspa or v, if any. */
+	for (; i < aspa->num_providers; i++) {
+		assert(num < max);
+		providers[num++] = aspa->providers[i];
+		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_PROVIDERS);
+	}
+	for (; j < v->num_providers; j++) {
+		assert(num < max);
+		providers[num++] = v->providers[j];
+	}
+
+	free(v->providers);
+	v->providers = providers;
+	v->num_providers = num;
 
 	if (v->num_providers > 1 && v->providers[0] == 0) {
 		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_DEC_PROVIDERS);
