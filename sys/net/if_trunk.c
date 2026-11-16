@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.166 2026/11/15 05:49:52 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.167 2026/11/16 11:19:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -399,8 +399,15 @@ trunk_port_destroy(struct trunk_port *tp)
 	struct ifnet *ifp = tp->tp_if;
 	struct arpcom *ac0 = (struct arpcom *)ifp;
 
+	if_detachhook_del(ifp, &tp->tp_dtask);
+	if_linkstatehook_del(ifp, &tp->tp_ltask);
+
 	/* Restore previous input handler. */
 	NET_ASSERT_LOCKED();
+
+	ifp->if_ioctl = tp->tp_ioctl;
+	ifp->if_output = tp->tp_output;
+
 	KASSERT(SMR_PTR_GET_LOCKED(&ac0->ac_trport) == &tp->tp_ether_port);
 	SMR_PTR_SET_LOCKED(&ac0->ac_trport, NULL);
 	smr_barrier();
@@ -413,12 +420,6 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	if (tr->tr_port_destroy != NULL)
 		(*tr->tr_port_destroy)(tp);
-
-	ifp->if_ioctl = tp->tp_ioctl;
-	ifp->if_output = tp->tp_output;
-
-	if_detachhook_del(ifp, &tp->tp_dtask);
-	if_linkstatehook_del(ifp, &tp->tp_ltask);
 
 	/* Finally, remove the port from the trunk */
 	SLIST_REMOVE(&tr->tr_ports, tp, trunk_port, tp_entries);
