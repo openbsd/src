@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.131 2024/05/24 06:02:57 jsg Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.132 2026/11/16 19:42:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -106,7 +106,9 @@ void txp_capabilities(struct txp_softc *);
 
 void txp_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int txp_ifmedia_upd(struct ifnet *);
+#ifdef DDB
 void txp_show_descriptor(void *);
+#endif
 void txp_tx_reclaim(struct txp_softc *, struct txp_tx_ring *,
     struct txp_dma_alloc *);
 void txp_rxbuf_reclaim(struct txp_softc *);
@@ -1725,6 +1727,7 @@ bail:
 	ifmr->ifm_status &= ~IFM_AVALID;
 }
 
+#ifdef DDB
 void
 txp_show_descriptor(void *d)
 {
@@ -1769,6 +1772,7 @@ txp_show_descriptor(void *d)
 		break;
 	}
 }
+#endif
 
 void
 txp_set_filter(struct txp_softc *sc)
