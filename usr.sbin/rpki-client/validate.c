@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.94 2026/11/12 16:15:29 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.95 2026/11/16 20:13:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,6 +98,7 @@ valid_resources(const char *fn, struct auth *a, const struct cert *cert)
 			 * Many MFTs are issued by a CA without AS resources.
 			 * Accept this non-compliance with RFC 3779, 3.3.
 			 * Apart from MFTs, this affects only TAKs and GBRs.
+			 * https://errata.rfc-editor.org/eid9314/
 			 */
 			if (cert->purpose == CERT_PURPOSE_EE)
 				continue;
@@ -130,6 +131,7 @@ valid_resources(const char *fn, struct auth *a, const struct cert *cert)
 			 * Many MFT are issued by a CA without IP resources.
 			 * Accept this non-compliance with RFC 3779, 2.3.
 			 * Apart from MFTs, this affects only TAKs and GBRs.
+			 * https://errata.rfc-editor.org/eid9314/
 			 */
 			if (cert->purpose == CERT_PURPOSE_EE)
 				continue;
