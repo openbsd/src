@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.158 2026/06/09 03:20:01 jsg Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.159 2026/11/16 19:39:52 miod Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -136,9 +136,6 @@ void nfs_msg(struct nfsreq *, char *);
 void nfs_rcvunlock(int *);
 
 int nfsrv_getstream(struct nfssvc_sock *, int);
-
-unsigned int nfs_realign_test = 0;
-unsigned int nfs_realign_count = 0;
 
 /* Initialize the RTT estimator state for a new mount point. */
 void
@@ -1399,7 +1396,6 @@ nfs_realign(struct mbuf **pm, int hsiz)
 	struct mbuf *n = NULL;
 	unsigned int off = 0;
 
-	++nfs_realign_test;
 	while ((m = *pm) != NULL) {
 		if (!ALIGNED_POINTER(m->m_data, void *) ||
 		    !ALIGNED_POINTER(m->m_len,  void *)) {
@@ -1418,7 +1414,6 @@ nfs_realign(struct mbuf **pm, int hsiz)
 	 * portion of the chain that had to be realigned.
 	 */
 	if (n != NULL) {
-		++nfs_realign_count;
 		while (m) {
 			m_copyback(n, off, m->m_len, mtod(m, caddr_t), M_WAIT);
 
