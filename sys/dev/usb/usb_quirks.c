@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.81 2025/03/27 14:12:38 sthen Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.82 2026/11/16 19:41:28 miod Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -182,6 +182,7 @@ const struct usbd_quirk_entry {
  { 0, 0, 0, { 0 } }
 };
 
+#if 0 /* no need to keep this as long as it is empty */
 #define bANY 0xff
 const struct usbd_dev_quirk_entry {
 	u_int8_t bDeviceClass;
@@ -191,6 +192,7 @@ const struct usbd_dev_quirk_entry {
 } usb_dev_quirks[] = {
  { 0, 0, 0, { 0 } }
 };
+#endif
 
 const struct usbd_quirks usbd_no_quirk = { 0 };
 
@@ -198,7 +200,9 @@ const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	const struct usbd_quirk_entry *t;
+#if 0
 	const struct usbd_dev_quirk_entry *td;
+#endif
 	u_int16_t vendor = UGETW(d->idVendor);
 	u_int16_t product = UGETW(d->idProduct);
 	u_int16_t revision = UGETW(d->bcdDevice);
@@ -218,6 +222,7 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 			return (&t->quirks);
 		}
 	}
+#if 0 /* no need to keep this as long as usb_dev_quirks[] is empty */
 	/* no device specific quirks found, search class specific entry */
 	for (td = usb_dev_quirks; td->bDeviceClass != 0; td++) {
 		if (td->bDeviceClass == d->bDeviceClass &&
@@ -235,6 +240,7 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 			return (&td->quirks);
 		}
 	}
+#endif
 
 	return (&usbd_no_quirk);
 }
