@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.57 2026/11/16 17:03:21 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.58 2026/11/16 20:07:46 tb Exp $ */
 /*
  * Copyright (c) 2022,2026 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -23,7 +23,6 @@
 #include <err.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #include "bytestring.h"
@@ -369,6 +368,20 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 
 	repo_stat_inc(rp, aspa->talid, RTYPE_ASPA, STYPE_TOTAL);
 
+	/*
+	 * The ->providers[] array is either {0}, or {non-zero providers}.
+	 */
+
+	/* If v isn't new, merging {0} from aspa changes nothing. */
+	if (v->num_providers > 0 && aspa->providers[0] == 0)
+		return;
+
+	/* If v->providers[] is {0}, drop the 0, then copy aspa->providers[]. */
+	if (v->num_providers == 1 && v->providers[0] == 0) {
+		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_DEC_PROVIDERS);
+		v->num_providers = 0;
+	}
+
 	max = aspa->num_providers + v->num_providers;
 	providers = calloc(max, sizeof(providers[0]));
 	if (providers == NULL)
@@ -421,13 +434,6 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 	free(v->providers);
 	v->providers = providers;
 	v->num_providers = num;
-
-	if (v->num_providers > 1 && v->providers[0] == 0) {
-		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_DEC_PROVIDERS);
-		v->num_providers--;
-		memmove(v->providers, v->providers + 1,
-		    v->num_providers * sizeof(v->providers[0]));
-	}
 
 	if (v->num_providers >= MAX_ASPA_PROVIDERS) {
 		v->overflowed = 1;
