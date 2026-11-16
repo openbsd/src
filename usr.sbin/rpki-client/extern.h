@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.328 2026/11/13 06:35:47 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.329 2026/11/16 12:23:59 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -658,6 +658,7 @@ enum stype {
 	STYPE_UNIQUE,
 	STYPE_DEC_UNIQUE,
 	STYPE_PROVIDERS,
+	STYPE_DEC_PROVIDERS,
 	STYPE_OVERFLOW,
 	STYPE_SEQNUM_GAP,
 };
