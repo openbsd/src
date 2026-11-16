@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.12 2026/07/09 09:29:02 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.13 2026/11/16 10:40:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -50,9 +50,9 @@ struct ovalue {
 	STAILQ_ENTRY(ovalue)	 entry;
 	struct olabels		*labels;
 	union {
+		struct timespec		ts;
 		unsigned long long	i;
 		double			f;
-		struct timespec		ts;
 	}			 value;
 	enum ovalue_type	 valtype;
 };
