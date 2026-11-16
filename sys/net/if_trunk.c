@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.167 2026/11/16 11:19:10 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.168 2026/11/16 11:20:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -519,8 +519,7 @@ trunk_port_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	/* restrict transmission on trunk members to bpf only */
-	if (ifp->if_type == IFT_IEEE8023ADLAG &&
-	    (m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL)) {
+	if (m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL) {
 		m_freem(m);
 		return (EBUSY);
 	}
@@ -1082,10 +1081,6 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, uint64_t dst, void *port,
 	eh = mtod(m, struct ether_header *);
 	if (ETHER_IS_MULTICAST(eh->ether_dhost))
 		ifp->if_imcasts++;
-
-	/* Should be checked by the caller */
-	if (ifp->if_type != IFT_IEEE8023ADLAG)
-		goto bad;
 
 	if ((tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
 		goto bad;
