@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.46 2025/06/28 16:04:10 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.47 2026/11/16 19:43:13 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -1545,12 +1545,12 @@ void tga2_ics9110_wr(
 	int dotclock
 );
 
-struct monitor *tga_getmonitor(struct tga_devconfig *dc);
+const struct monitor *tga_getmonitor(struct tga_devconfig *dc);
 
 void
 tga2_init(struct tga_devconfig *dc)
 {
-	struct	monitor *m = tga_getmonitor(dc);
+	const struct monitor *m = tga_getmonitor(dc);
 
 
 	/* Deal with the dot clocks.
@@ -1665,7 +1665,7 @@ tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock)
 	bus_space_barrier(dc->dc_memt, clock, 0, 0, BUS_SPACE_BARRIER_WRITE);
 }
 
-struct monitor *
+const struct monitor *
 tga_getmonitor(struct tga_devconfig *dc)
 {
        return &decmonitors[(~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f];

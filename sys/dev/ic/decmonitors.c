@@ -1,4 +1,4 @@
-/* $OpenBSD: decmonitors.c,v 1.3 2008/06/26 05:42:15 ray Exp $ */
+/* $OpenBSD: decmonitors.c,v 1.4 2026/11/16 19:43:13 miod Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define MHz	* 1000000
 #define KHz	* 1000
 
-struct monitor decmonitors[] = {
+const struct monitor decmonitors[] = {
 	/* 0x0: 1280 x 1024 @ 72Hz */
 	{ 1280,	32,	160,	232,
 	  1024,	3,	3,	33,
