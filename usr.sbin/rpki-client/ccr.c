@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.48 2026/11/11 14:30:07 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.49 2026/11/16 17:02:04 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1322,6 +1322,11 @@ parse_aspa_providers(const char *fn, struct ccr *ccr, uint32_t asid,
 
 		vap->providers[i] = provider;
 		prev = provider;
+	}
+	if (p_num > 1 && vap->providers[0] == 0) {
+		warnx("%s: AS %u malformed ASPA payload: AS 0 alongside others",
+		    fn, asid);
+		goto out;
 	}
 
 	if ((RB_INSERT(vap_tree, &ccr->vaps, vap)) != NULL) {
