@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.47 2026/09/15 23:51:49 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.48 2026/11/16 20:15:29 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1127,6 +1127,7 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		 * >10% of validated ROA payloads disappear (as of 09/2026).
 		 * The only other RPKI EE certs that may inherit are in TAKs
 		 * and GBRs, which are essentially unused.
+		 * https://errata.rfc-editor.org/eid9314/
 		 */
 		if (X509_check_ca(x) == 0)
 			strict_inherit = 0;
