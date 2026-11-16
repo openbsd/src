@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.70 2026/05/05 11:42:56 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.71 2026/11/16 15:23:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -693,7 +693,12 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *msg, char *buf,
     uint16_t len, struct map *map)
 {
 	uint16_t	off = 0;
-	uint8_t		pw_len, twcard_len;
+	uint8_t		pw_len, twcard_len, prefixlen_max;
+
+	if (len < 1) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, msg->id, msg->type);
+		return (-1);
+	}
 
 	map->type = *buf;
 	off += sizeof(uint8_t);
@@ -723,9 +728,11 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *msg, char *buf,
 		switch (map->fec.prefix.af) {
 		case AF_IPV4:
 			map->fec.prefix.af = AF_INET;
+			prefixlen_max = 32;
 			break;
 		case AF_IPV6:
 			map->fec.prefix.af = AF_INET6;
+			prefixlen_max = 128;
 			break;
 		default:
 			send_notification(nbr->tcp, S_UNSUP_ADDR, msg->id,
@@ -736,6 +743,11 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *msg, char *buf,
 		/* Prefix Length */
 		map->fec.prefix.prefixlen = buf[off];
 		off += sizeof(uint8_t);
+		if (map->fec.prefix.prefixlen > prefixlen_max) {
+			session_shutdown(nbr, S_BAD_TLV_VAL, msg->id,
+			    msg->type);
+			return (-1);
+		}
 		if (len < off + PREFIX_SIZE(map->fec.prefix.prefixlen)) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, msg->id,
 			    msg->type);
