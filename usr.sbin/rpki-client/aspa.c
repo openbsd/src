@@ -1,7 +1,7 @@
-/*	$OpenBSD: aspa.c,v 1.56 2026/11/16 15:42:29 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.57 2026/11/16 17:03:21 tb Exp $ */
 /*
+ * Copyright (c) 2022,2026 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
- * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
