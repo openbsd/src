@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.83 2025/07/22 09:31:09 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.84 2026/11/17 04:07:36 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -970,7 +970,7 @@ static const EVP_CIPHER aes_128_gcm = {
 	.block_size = 1,
 	.key_len = 16,
 	.iv_len = 12,
-	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
+	.flags = EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aes_gcm_init_key,
 	.do_cipher = aes_gcm_cipher,
 	.cleanup = aes_gcm_cleanup,
@@ -990,7 +990,7 @@ static const EVP_CIPHER aes_192_gcm = {
 	.block_size = 1,
 	.key_len = 24,
 	.iv_len = 12,
-	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
+	.flags = EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aes_gcm_init_key,
 	.do_cipher = aes_gcm_cipher,
 	.cleanup = aes_gcm_cleanup,
@@ -1010,7 +1010,7 @@ static const EVP_CIPHER aes_256_gcm = {
 	.block_size = 1,
 	.key_len = 32,
 	.iv_len = 12,
-	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
+	.flags = EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aes_gcm_init_key,
 	.do_cipher = aes_gcm_cipher,
 	.cleanup = aes_gcm_cleanup,
