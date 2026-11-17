@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.75 2026/11/09 12:31:36 hshoexer Exp $	*/
+/*	$OpenBSD: iked.c,v 1.76 2026/11/17 04:59:16 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -350,7 +350,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		/* Re-compile policies and skip steps */
 		config_setcompile(env, PROC_IKEV2);
 		config_setikev1general(env);
-	config_setcompile(env, PROC_IKEV1);
+		config_setcompile(env, PROC_IKEV1);
 
 		config_setstatic(env);
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
