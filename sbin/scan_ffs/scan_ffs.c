@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.24 2024/05/09 08:35:40 florian Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.25 2026/11/17 08:59:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -73,7 +73,7 @@ static int
 ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 {
 	static char lastmount[MAXMNTLEN];
-	static u_int8_t buf[SBSIZE * SBCOUNT];
+	static u_int8_t buf[SBSIZE * SBCOUNT] __aligned(8);
 	struct fs *sb;
 	daddr_t blk, lastblk;
 	int n;
