@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.207 2026/11/13 00:18:08 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.208 2026/11/17 15:23:08 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -364,8 +364,6 @@ parse_load_crl_from_mft(struct mft *mft, enum location loc, char **crlfile)
 	char		*fn = NULL;
 	size_t		 flen;
 
-	*crlfile = NULL;
-
 	fn = mft_filepath(mft, mft->crl, loc);
 	if (fn == NULL)
 		goto out;
@@ -426,10 +424,6 @@ proc_parser_mft_pre(struct entity *ent, char *file, struct crl **crl,
 	size_t		 len;
 	time_t		 now;
 	int		 issued_cmp, seqnum_cmp;
-
-	*crl = NULL;
-	*crlfile = NULL;
-	*errstr = NULL;
 
 	if (file == NULL)
 		return NULL;
@@ -560,6 +554,7 @@ proc_parser_mft(struct entity *ent, struct mft **mp, char **crlfile,
 	const char	*err1 = NULL, *err2 = NULL;
 
 	*mp = NULL;
+	*crlfile = NULL;
 	*crlmtime = 0;
 
 	file2 = parse_filepath(ent->repoid, ent->file, DIR_VALID);
