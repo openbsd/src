@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.52 2025/12/18 03:16:10 jsg Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.53 2026/11/17 22:20:07 yasuoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -307,7 +307,7 @@ dispatch(void)
 	static struct pollfd *fds;
 	static int nfds_max;
 	time_t howlong;
-	int nifaces;
+	int npolls;
 
 	for (nfds = 0, l = protocols; l; l = l->next)
 		nfds++;
@@ -349,23 +349,20 @@ another:
 			to_msec = -1;
 
 		/* Set up the descriptors to be polled. */
-		nifaces = 0;
-		for (i = 0, l = protocols; l; l = l->next) {
+		for (npolls = 0, l = protocols; l; l = l->next) {
 			if (l->handler == got_one) {
 				struct interface_info *ip = l->local;
 				if (ip->dead) {
 					l->pfd = -1;
 					continue;
-				} else
-					nifaces++;
+				}
 			}
-
-			fds[i].fd = l->fd;
-			fds[i].events = POLLIN;
-			l->pfd = i++;
+			fds[npolls].fd = l->fd;
+			fds[npolls].events = POLLIN;
+			l->pfd = npolls++;
 		}
 
-		if (nifaces == 0)
+		if (npolls == 0)
 			fatalx("No live interfaces to poll on - exiting.");
 
 		/* Wait for a packet or a timeout... */
