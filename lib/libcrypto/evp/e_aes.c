@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.85 2026/11/17 04:14:36 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.86 2026/11/17 04:27:20 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1181,7 +1181,7 @@ aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_CCM_SET_TAG:
 		if ((arg & 1) || arg < 4 || arg > 16)
 			return 0;
-		if ((c->encrypt && ptr) || (!c->encrypt && !ptr))
+		if (c->encrypt && ptr)
 			return 0;
 		if (ptr) {
 			cctx->tag_set = 1;
@@ -1256,8 +1256,6 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	if (!cctx->iv_set)
 		return -1;
-	if (!ctx->encrypt && !cctx->tag_set)
-		return -1;
 
 	if (!out) {
 		if (!in) {
@@ -1273,6 +1271,10 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		CRYPTO_ccm128_aad(ccm, in, len);
 		return len;
 	}
+
+	/* Can't decrypt data without a tag being set */
+	if (!ctx->encrypt && !cctx->tag_set)
+		return -1;
 
 	/* If not set length yet do it */
 	if (!cctx->len_set) {
