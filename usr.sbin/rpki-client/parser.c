@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.209 2026/11/18 08:28:10 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.210 2026/11/18 23:23:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -746,12 +746,11 @@ proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 		return 1;
 
 	/*
-	 * The standards don't specify tiebreakers. While RFC 6487 and other
-	 * sources advise against backdating, it's explicitly allowed and some
-	 * TAs do. Some TAs have also re-issued with new dates and old
-	 * serialNumber.
-	 * Our tiebreaker logic: a more recent notBefore is taken to mean a
-	 * more recent issuance, and thus preferable. Given equal notBefore
+	 * While RFC 6487 and other sources advise against backdating, it's
+	 * explicitly allowed and some TAs do. Some TAs have also re-issued
+	 * with new dates and old serialNumber.
+	 * RFC 10097 tiebreaker logic: a more recent notBefore is taken to mean
+	 * a more recent issuance, and thus preferable. Given equal notBefore
 	 * values, prefer the TA cert with the narrower validity window. This
 	 * hopefully encourages TA operators to reduce egregiously long TA
 	 * validity periods.
