@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.49 2026/11/16 17:02:04 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.50 2026/11/18 21:18:40 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1358,6 +1358,10 @@ parse_aspa_payloads(const char *fn, struct ccr *ccr,
 
 		if (!as_id_parse(a->asID, &asid)) {
 			warnx("%s: malformed asID in ASPAPayloadSet", fn);
+			goto out;
+		}
+		if (asid == 0) {
+			warnx("%s: CustomerASID 0 not allowed", fn);
 			goto out;
 		}
 
