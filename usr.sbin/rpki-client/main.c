@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.341 2026/11/12 19:34:54 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.342 2026/11/18 08:28:10 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -748,6 +748,12 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 
 done:
 	free(file);
+	/*
+	 * CRLs are sent together with the MFT and not accounted for
+	 * since in case of a bad MFT a CRL may or may not be sent along.
+	 */
+	if (type == RTYPE_CRL)
+		return;
 	entity_queue--;
 }
 

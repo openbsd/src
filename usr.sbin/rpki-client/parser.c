@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.208 2026/11/17 15:23:08 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.209 2026/11/18 08:28:10 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -343,7 +343,8 @@ proc_parser_mft_check(const char *fn, struct mft *mft)
 			continue;
 		}
 
-		if (m->type != RTYPE_INVALID)
+		/* invalid and CRL files do not add more work */
+		if (m->type != RTYPE_INVALID && m->type != RTYPE_CRL)
 			items++;
 	}
 
@@ -658,10 +659,9 @@ proc_enqueue_mft(struct entityq *mftq, const struct mft *mft, const char *file)
 		inserted++;
 	}
 
-	/* account for the one skipped RTYPE_CRL in the check below */
-	if (inserted + 1 != mft->work_items)
+	if (inserted != mft->work_items)
 		errx(1, "%s#%s: bad count of workitems, %zu vs %zu",
-		    file, mft->seqnum, inserted + 1, mft->work_items);
+		    file, mft->seqnum, inserted, mft->work_items);
 }
 
 /*
