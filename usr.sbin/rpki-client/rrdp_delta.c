@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.17 2026/08/04 18:46:18 tb Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.18 2026/11/18 12:46:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -163,9 +163,8 @@ end_publish_withdraw_elem(struct delta_xml *dxml, int withdraw)
 		PARSE_FAIL(p, "parse failed - exited publish/withdraw "
 		    "elem unexpectedly");
 
-	if (publish_done(dxml->rrdp, dxml->pxml) != 0)
+	if (publish_done(dxml->rrdp, &dxml->pxml) != 0)
 		PARSE_FAIL(p, "parse failed - bad publish/withdraw elem");
-	dxml->pxml = NULL;
 
 	dxml->scope = DELTA_SCOPE_DELTA;
 }

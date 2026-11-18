@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_util.c,v 1.3 2026/11/02 13:52:25 claudio Exp $ */
+/*	$OpenBSD: rrdp_util.c,v 1.4 2026/11/18 12:46:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -99,14 +99,19 @@ publish_add_content(struct publish_xml *pxml, const char *buf, int length)
  * where the hash is validated and the file stored in the repository.
  * Increase the file_pending counter to ensure the RRDP process waits
  * until all files have been processed before moving to the next stage.
- * Returns 0 on success or -1 on errors (base64 decode failed).
+ * Returns 0 on success or -1 on errors (base64 decode failed) and
+ * alwyas takes ownership of *in_pxml.
  */
 int
-publish_done(struct rrdp *s, struct publish_xml *pxml)
+publish_done(struct rrdp *s, struct publish_xml **in_pxml)
 {
+	struct publish_xml *pxml;
 	unsigned char *data = NULL;
 	size_t datasz = 0;
 	int rc = -1;
+
+	pxml = *in_pxml;
+	*in_pxml = NULL;
 
 	switch (pxml->type) {
 	case PUB_ADD:

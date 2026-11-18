@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.13 2026/08/04 18:46:18 tb Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.14 2026/11/18 12:46:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -149,9 +149,8 @@ end_publish_elem(struct snapshot_xml *sxml)
 		PARSE_FAIL(p, "parse failed - exited publish "
 		    "elem unexpectedly");
 
-	if (publish_done(sxml->rrdp, sxml->pxml) != 0)
+	if (publish_done(sxml->rrdp, &sxml->pxml) != 0)
 		PARSE_FAIL(p, "parse failed - bad publish elem");
-	sxml->pxml = NULL;
 
 	sxml->scope = SNAPSHOT_SCOPE_SNAPSHOT;
 }
