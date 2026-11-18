@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.50 2026/11/18 21:18:40 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.51 2026/11/18 21:22:38 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -1309,6 +1309,12 @@ parse_aspa_providers(const char *fn, struct ccr *ccr, uint32_t asid,
 
 		if (!as_id_parse(aint, &provider)) {
 			warnx("%s: AS %u malformed ASPA provider", fn, asid);
+			goto out;
+		}
+
+		if (asid == provider) {
+			warnx("%s: CustomerASID %u MUST NOT be provider",
+			    fn, asid);
 			goto out;
 		}
 
