@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.17 2021/07/22 16:40:19 tb Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.18 2026/11/18 23:19:06 yasuoka Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ z_decompress(void *arg, struct mbuf *mi, struct mbuf **mop)
     state->strm.next_out = wptr + 3;
     state->strm.avail_out = 1;
     decode_proto = 1;
-    olen = PPP_HDRLEN;
+    olen = 0;
 
     /*
      * Call inflate, supplying more input or output as needed.
@@ -538,6 +538,17 @@ z_decompress(void *arg, struct mbuf *mi, struct mbuf **mop)
 #endif
 		printf("z_decompress%d: inflate returned %d (%s)\n",
 		       state->unit, r, (state->strm.msg? state->strm.msg: ""));
+	    m_freem(mo_head);
+	    return DECOMP_FATALERROR;
+	}
+	if (!decode_proto && olen + ospace - state->strm.avail_out >
+	    state->mru + PPP_HDRLEN) {
+#ifndef DEFLATE_DEBUG
+	    if (state->debug)
+#endif
+		printf("ppp_deflate%d: exceeded mru (%d > %d)\n",
+			state->unit, olen + ospace - state->strm.avail_out,
+			state->mru + PPP_HDRLEN);
 	    m_freem(mo_head);
 	    return DECOMP_FATALERROR;
 	}
@@ -559,7 +570,6 @@ z_decompress(void *arg, struct mbuf *mi, struct mbuf **mop)
 		    wptr[2] = wptr[3];
 		    --state->strm.next_out;
 		    ++state->strm.avail_out;
-		    --olen;
 		}
 		decode_proto = 0;
 	    } else {
@@ -571,6 +581,7 @@ z_decompress(void *arg, struct mbuf *mi, struct mbuf **mop)
 		    m_freem(mo_head);
 		    return DECOMP_ERROR;
 		}
+		mo->m_len = 0;
 		MCLGET(mo, M_DONTWAIT);
 		state->strm.next_out = mtod(mo, u_char *);
 		state->strm.avail_out = ospace = m_trailingspace(mo);
@@ -582,12 +593,6 @@ z_decompress(void *arg, struct mbuf *mi, struct mbuf **mop)
 	return DECOMP_ERROR;
     }
     olen += (mo->m_len = ospace - state->strm.avail_out);
-#ifdef DEFLATE_DEBUG
-    if (olen > state->mru + PPP_HDRLEN)
-	printf("ppp_deflate%d: exceeded mru (%d > %d)\n",
-	       state->unit, olen, state->mru + PPP_HDRLEN);
-#endif
-
     state->stats.unc_bytes += olen;
     state->stats.unc_packets++;
     state->stats.comp_bytes += rlen;
