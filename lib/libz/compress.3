@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.37 2026/09/10 01:28:12 jsg Exp $
+.\"	$OpenBSD: compress.3,v 1.38 2026/11/18 14:28:26 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: September 10 2026 $
+.Dd $Mdocdate: November 18 2026 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -1345,6 +1345,18 @@ if the source stream state was inconsistent
 being NULL).
 .Fa msg
 is left unchanged in both source and destination.
+If
+.Fn deflateCopy
+fails and
+.Fa dest
+is not
+.Dv Z_NULL ,
+then dest->state is set to
+.Dv Z_NULL
+with
+.Fa dest
+otherwise unchanged, so that deflateEnd(dest) can be called safely,
+though dest is not a usable stream.
 .It Xo
 .Fa int
 .Fn deflateReset "z_streamp strm" ;
@@ -1485,7 +1497,9 @@ It must be called after
 or
 .Fn deflateInit2 .
 and after
-.Fn deflateSetHeader ,
+.Fn deflateSetHeader
+or
+.Fn deflateSetDictionary ,
 if used.
 This would be used to allocate an output buffer for deflation in a single pass,
 and so would be called before
@@ -1690,9 +1704,8 @@ while compressing, or it must be equal to 15 if
 was not used.
 If a compressed stream with a larger window size is given as input,
 .Fn inflate
-will return with the error code
-.Dv Z_DATA_ERROR
-instead of trying to allocate a larger window.
+will return with a
+.Dv Z_DATA_ERROR .
 .Pp
 .Fa windowBits
 can also be zero to request that inflate use the window size in the zlib header
@@ -1898,6 +1911,20 @@ is left unchanged in both
 .Fa source
 and
 .Fa dest .
+If
+.Fn inflateCopy
+fails and
+.Fa dest
+is not
+.Dv Z_NULL ,
+then dest->state is set to
+.Dv Z_NULL ,
+with
+.Fa dest
+otherwise unchanged, so that inflateEnd(dest) can be called safely,
+though
+.Fa dest
+is not a usable stream.
 .It Xo
 .Fa int
 .Fn inflateReset "z_streamp strm" ;
@@ -2154,6 +2181,8 @@ to signal its absence.
 This allows the use of
 .Fn deflateSetHeader
 with the returned structure to duplicate the header.
+Though take care that none of the fields were truncated before using it,
+lest havoc ensue.
 However if those fields are set to allocated memory,
 then the application will need to save those pointers
 elsewhere so that they can be eventually freed.
@@ -3089,6 +3118,11 @@ or if there was an error.
 .Fn gzerror
 must be consulted if zero is returned in order to determine
 if there was an error.
+If some data was read before an error,
+then that data is returned until exhausted,
+after which the next call will return zero and
+.Fn gzerror
+will report an error.
 If the multiplication of
 .Fa size
 and
@@ -3398,7 +3432,11 @@ the next read or write operation, or close operation when writing.
 returns the resulting offset location as measured in bytes from
 the beginning of the uncompressed stream, or -1 in case of error,
 in particular if the file is opened for writing and the new starting position
-would be before the current position.
+would be before the current position,
+or if the resulting position would not be representable in the offset type.
+If
+.Fn gzseek
+returns \-1, the stream position is unchanged.
 .It Xo
 .Fa int
 .Fn gzrewind "gzFile file" ;
@@ -3601,6 +3639,10 @@ is set to
 and the application may consult
 .Va errno
 to get the exact error code.
+The error is reported by
+.Fn gzerror
+as soon as it is detected, which may be
+before all of the data read prior to the error has been returned.
 .Pp
 The application must not modify the returned string.
 Future calls to this function may invalidate the previously returned string.
