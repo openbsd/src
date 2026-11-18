@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.204 2026/11/04 08:51:51 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.205 2026/11/18 04:10:11 gnezdo Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -1827,7 +1827,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				addlog("[invalid] ");
 			break;
 		case LCP_OPT_AUTH_PROTO:
-			if (len < 4) {
+			if (len < 4 || p[1] < 4) {
 				if (debug)
 					addlog("[invalid] ");
 				break;
