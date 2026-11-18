@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.145 2026/10/15 08:33:45 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.146 2026/11/18 22:56:13 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2026 $
+.Dd $Mdocdate: November 18 2026 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -457,6 +457,11 @@ This facility is experimental and is still subject to change.
 .Re
 .Pp
 .Rs
+.%T Tiebreaking RPKI Trust Anchors
+.%U RFC 10097
+.Re
+.Pp
+.Rs
 .%T A Profile for Autonomous System Provider Authorization (ASPA)
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-aspa-profile
 .%D February, 2026
@@ -472,12 +477,6 @@ This facility is experimental and is still subject to change.
 .%T A profile for Signed Prefix Lists for Use in the RPKI
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rpki-prefixlist
 .%D March, 2025
-.Re
-.Pp
-.Rs
-.%T Tiebreaking RPKI Trust Anchors
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rpki-ta-tiebreaker
-.%D February, 2025
 .Re
 .Pp
 .Rs
