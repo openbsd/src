@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.210 2026/11/18 23:23:12 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.211 2026/11/19 13:14:04 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1014,12 +1014,14 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, struct entityq *mftq,
 			if (cert != NULL) {
 				cert->repoid = ent->repoid;
 				cert_buffer(b, cert);
+
+				/*
+				 * The auth_tree owns TA and CA certs.
+				 * BGPsec certs need to be freed.
+				 */
+				if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER)
+					cert_free(cert);
 			}
-			/*
-			 * The parsed certificate data "cert" is now
-			 * managed in the "auths" table, so don't free
-			 * it here.
-			 */
 			break;
 		case RTYPE_MFT:
 			file = proc_parser_mft(ent, &mft, &crlfile, &crlmtime,
