@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.263 2026/05/28 10:50:47 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.264 2026/11/19 22:44:25 stsp Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -165,8 +165,10 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	int hdrlen;
 
 	k = ieee80211_get_rxkey(ic, m, ni);
-	if (k == NULL)
+	if (k == NULL) {
+		m_freem(m);
 		return NULL;
+	}
 	
 	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
@@ -192,15 +194,18 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 		if (ieee80211_ccmp_get_pn(&pn, &prsc, m, k) != 0) {
 			ic->ic_stats.is_ccmp_dec_errs++;
+			m_freem(m);
 			return NULL;
 		}
 		if (rxi->rxi_flags & IEEE80211_RXI_HWDEC_SAME_PN) {
 			if (pn < *prsc) {
 				ic->ic_stats.is_ccmp_replays++;
+				m_freem(m);
 				return NULL;
 			}
 		} else if (pn <= *prsc) {
 			ic->ic_stats.is_ccmp_replays++;
+			m_freem(m);
 			return NULL;
 		}
 
@@ -222,15 +227,19 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			 */
 			break;
 		}
-		if (ieee80211_tkip_get_tsc(&pn, &prsc, m, k) != 0)
+		if (ieee80211_tkip_get_tsc(&pn, &prsc, m, k) != 0) {
+			m_freem(m);
 			return NULL;
+		}
 		if (rxi->rxi_flags & IEEE80211_RXI_HWDEC_SAME_PN) {
 			if (pn < *prsc) {
 				ic->ic_stats.is_tkip_replays++;
+				m_freem(m);
 				return NULL;
 			}
 		} else if (pn <= *prsc) {
 			ic->ic_stats.is_tkip_replays++;
+			m_freem(m);
 			return NULL;
 		}
 
