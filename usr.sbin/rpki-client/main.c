@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.343 2026/11/19 05:16:22 job Exp $ */
+/*	$OpenBSD: main.c,v 1.344 2026/11/19 06:26:15 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1496,7 +1496,6 @@ main(int argc, char *argv[])
 		if ((pfd[3].revents & POLLIN)) {
 			switch (ibuf_read(pfd[3].fd, queues[3])) {
 			case -1:
-				abort();
 				err(1, "ibuf_read");
 			case 0:
 				errx(1, "ibuf_read: connection closed");
