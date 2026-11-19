@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.14 2026/09/08 13:56:53 kettenis Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.15 2026/11/19 18:58:45 mglocker Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -1300,8 +1300,6 @@ struct pmic_glink_hdr {
 #define BATTMGR_NOTIF_BAT_STATUS		0x80
 #define BATTMGR_NOTIF_BAT_INFO			0x81
 #define BATTMGR_NOTIF_CHG_CTRL			0x83
-#define BATTMGR_NOTIF_CHG_CTRL_STOP		0x183
-#define BATTMGR_NOTIF_CHG_CTRL_START		0x583
 
 #define BATTMGR_CHEMISTRY_LEN			4
 #define BATTMGR_STRING_LEN			128
@@ -1477,6 +1475,7 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			}
 			memcpy(&notification, buf + sizeof(hdr),
 			    sizeof(uint32_t));
+			notification &= 0xff;
 			switch (notification) {
 			case BATTMGR_NOTIF_BAT_INFO:
 				qcpas_pmic_rtr_battmgr_req_info(cookie);
@@ -1486,8 +1485,6 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 				qcpas_pmic_rtr_battmgr_req_status(cookie);
 				break;
 			case BATTMGR_NOTIF_CHG_CTRL:
-			case BATTMGR_NOTIF_CHG_CTRL_STOP:
-			case BATTMGR_NOTIF_CHG_CTRL_START:
 				break;
 			default:
 				printf("%s: unknown battmgr notification"
