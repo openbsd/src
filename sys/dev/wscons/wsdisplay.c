@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.158 2026/10/08 18:19:31 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.159 2026/11/19 16:55:38 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -94,6 +94,7 @@ struct wsscreen {
 #define SCR_WAITACTIVE 2	/* someone waiting on activation */
 #define SCR_GRAPHICS 4		/* graphics mode, no text (emulation) output */
 #define	SCR_DUMBFB 8		/* in use as dumb fb (iff SCR_GRAPHICS) */
+#define SCR_DELETING 16		/* reserved by wsdisplay_delscreen */
 
 #ifdef WSDISPLAY_COMPAT_USL
 	const struct wscons_syncops *scr_syncops;
@@ -485,13 +486,15 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 
 	if (ISSET(sc->sc_flags, SC_SWITCHPENDING))
 		return (EBUSY);
-	if (scr->scr_dconf == &wsdisplay_console_conf ||
+	if (ISSET(scr->scr_flags, SCR_DELETING) ||
+	    scr->scr_dconf == &wsdisplay_console_conf ||
 #ifdef WSDISPLAY_COMPAT_USL
 	    scr->scr_syncops ||
 #endif
 	    ((scr->scr_flags & SCR_OPEN) && !(flags & WSDISPLAY_DELSCR_FORCE)))
 		return (EBUSY);
 
+	SET(scr->scr_flags, SCR_DELETING);
 	wsdisplay_closescreen(sc, scr);
 
 	/*
@@ -862,6 +865,9 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (WSDISPLAYSCREEN(dev) >= WSDISPLAY_MAXSCREEN)
 		return (ENXIO);
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (ENXIO);
+
+	if (ISSET(scr->scr_flags, SCR_DELETING))
 		return (ENXIO);
 
 	if (WSSCREEN_HAS_TTY(scr)) {
@@ -1877,6 +1883,15 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 		return (res);
 	}
 
+	/* A resume wait above may have changed either screen. */
+	if ((no != WSDISPLAY_NULLSCREEN &&
+	    (sc->sc_scr[no] == NULL ||
+	    ISSET(sc->sc_scr[no]->scr_flags, SCR_DELETING))) ||
+	    (sc->sc_focus && ISSET(sc->sc_focus->scr_flags, SCR_DELETING))) {
+		splx(s);
+		return (EBUSY);
+	}
+
 	if ((sc->sc_focus && no == sc->sc_focusidx) ||
 	    (sc->sc_focus == NULL && no == WSDISPLAY_NULLSCREEN)) {
 		splx(s);
@@ -1953,6 +1968,8 @@ int
 wsscreen_attach_sync(struct wsscreen *scr, const struct wscons_syncops *ops,
     void *cookie)
 {
+	if (ISSET(scr->scr_flags, SCR_DELETING))
+		return (EBUSY);
 	if (scr->scr_syncops) {
 		/*
 		 * The screen is already claimed.
