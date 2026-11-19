@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.58 2026/11/16 20:07:46 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.59 2026/11/19 09:31:50 tb Exp $ */
 /*
  * Copyright (c) 2022,2026 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -169,7 +169,7 @@ aspa_parse_econtent(const char *fn, void *obj, const uint8_t *d, size_t dsz)
 	}
 	if (CBS_len(&econtent) > 0) {
 		warnx("%s: %zu bytes trailing garbage in eContent",
-		    fn, CBS_len(&cbs));
+		    fn, CBS_len(&econtent));
 		return 0;
 	}
 
