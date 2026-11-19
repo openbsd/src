@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.145 2026/11/05 06:02:11 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.146 2026/11/19 05:44:03 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1208,7 +1208,7 @@ void
 server_tls_handshake(int fd, short event, void *arg)
 {
 	struct client *clt = (struct client *)arg;
-	struct server *srv = (struct server *)clt->clt_srv;
+	struct server *srv = clt->clt_srv;
 	int ret;
 
 	if (event == EV_TIMEOUT) {

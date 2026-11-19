@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.191 2026/11/05 06:04:16 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.192 2026/11/19 05:44:03 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -284,8 +284,8 @@ struct range_data {
 struct client {
 	uint32_t		 clt_id;
 	pid_t			 clt_pid;
-	void			*clt_srv;
-	void			*clt_srv_conf;
+	struct server		*clt_srv;
+	struct server_config	*clt_srv_conf;
 	uint32_t		 clt_srv_id;
 	struct sockaddr_storage	 clt_srv_ss;
 	struct str_match	 clt_srv_match;
