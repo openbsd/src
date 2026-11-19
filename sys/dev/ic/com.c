@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.184 2026/08/31 15:40:34 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.185 2026/11/19 16:58:09 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -185,7 +185,8 @@ com_detach(struct device *self, int flags)
 
 	/* Detach and free the tty. */
 	if (sc->sc_tty) {
-		ttyfree(sc->sc_tty);
+		ttydetach(sc->sc_tty);
+		sc->sc_tty = NULL;
 	}
 
 	return (0);

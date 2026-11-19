@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.159 2026/11/19 16:55:38 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.160 2026/11/19 16:58:09 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -326,8 +326,8 @@ wsscreen_detach(struct wsscreen *scr)
 	int ccol, crow; /* XXX */
 
 	if (WSSCREEN_HAS_TTY(scr)) {
-		timeout_del(&scr->scr_tty->t_rstrt_to);
-		ttyfree(scr->scr_tty);
+		ttydetach(scr->scr_tty);
+		scr->scr_tty = NULL;
 	}
 	(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
 	    &ccol, &crow);

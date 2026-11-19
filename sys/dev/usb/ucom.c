@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.80 2026/06/26 10:32:32 gnezdo Exp $ */
+/*	$OpenBSD: ucom.c,v 1.81 2026/11/19 16:58:09 miod Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -281,12 +281,7 @@ ucom_detach(struct device *self, int flags)
 
 	/* Detach and free the tty. */
 	if (tp != NULL) {
-		(*LINESW(tp, l_close))(tp, FNONBLOCK, curproc);
-		s = spltty();
-		CLR(tp->t_state, TS_BUSY | TS_FLUSH);
-		ttyclose(tp);
-		splx(s);
-		ttyfree(tp);
+		ttydetach(tp);
 		sc->sc_tty = NULL;
 	}
 

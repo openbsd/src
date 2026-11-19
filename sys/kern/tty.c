@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.187 2026/11/08 08:42:55 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.188 2026/11/19 16:58:09 miod Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2391,6 +2391,20 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
 	free(tp, M_TTYS, sizeof(*tp));
+}
+
+void
+ttydetach(struct tty *tp)
+{
+	int s;
+
+	(*linesw[tp->t_line].l_close)(tp, FNONBLOCK, curproc);
+	s = spltty();
+	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+	ttyclose(tp);
+	splx(s);
+	timeout_del(&tp->t_rstrt_to);
+	ttyfree(tp);
 }
 
 void
