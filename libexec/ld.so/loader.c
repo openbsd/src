@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.229 2026/11/08 21:49:41 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.230 2026/11/19 17:09:48 brynet Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -1131,7 +1131,12 @@ _dl_apply_immutable(elf_object_t *object)
 	struct addr_range *m, *im;
 	int i, j, imut, in, out;
 
-	if (object->obj_type != OBJTYPE_LIB)
+	/* kernel and ld.so bootstrap handle these objects */
+	if (object->obj_type == OBJTYPE_LDR || object->obj_type == OBJTYPE_EXE)
+		return;
+
+	/* dlopen() without RTLD_NODELETE cannot be locked */
+	if (object->obj_type == OBJTYPE_DLO && object->nodelete == 0)
 		return;
 
 	for (imut = 0; imut < object->imut.count; imut++) {
