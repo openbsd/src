@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.16 2026/05/10 15:57:38 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.17 2026/11/19 19:23:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -62,15 +62,15 @@ const struct pci_matchid sti_pci_devices[] = {
 	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FX4 },
 	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FX6 },
 	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FXE },
-#ifdef notyet
 	{ PCI_VENDOR_IBM, PCI_PRODUCT_IBM_FIREGL2 }
-#endif
 };
 
 int	sti_readbar(struct sti_softc *, struct pci_attach_args *, u_int, int);
 int	sti_check_rom(struct sti_pci_softc *, struct pci_attach_args *);
 void	sti_pci_enable_rom(struct sti_softc *);
 void	sti_pci_disable_rom(struct sti_softc *);
+uint32_t sti_pci_conf_read(struct sti_softc *, uint32_t);
+void	sti_pci_conf_write(struct sti_softc *, uint32_t, uint32_t);
 
 int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
 
@@ -93,6 +93,8 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 	spc->sc_tag = paa->pa_tag;
 	spc->sc_base.sc_enable_rom = sti_pci_enable_rom;
 	spc->sc_base.sc_disable_rom = sti_pci_disable_rom;
+	spc->sc_base.sc_conf_read = sti_pci_conf_read;
+	spc->sc_base.sc_conf_write = sti_pci_conf_write;
 
 	printf("\n");
 
@@ -100,6 +102,7 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	printf("%s", self->dv_xname);
+
 	if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
 		spc->sc_base.sc_flags |= STI_CONSOLE;
 	if (sti_attach_common(&spc->sc_base, paa->pa_iot, paa->pa_memt,
@@ -145,6 +148,22 @@ sti_pci_disable_rom(struct sti_softc *sc)
 		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
 		spc->sc_rom_enabled = 0;
 	}
+}
+
+uint32_t
+sti_pci_conf_read(struct sti_softc *sc, uint32_t reg)
+{
+	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
+
+	return pci_conf_read(spc->sc_pc, spc->sc_tag, reg & ~3);
+}
+
+void
+sti_pci_conf_write(struct sti_softc *sc, uint32_t reg, uint32_t val)
+{
+	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
+
+	pci_conf_write(spc->sc_pc, spc->sc_tag, reg & ~3, val);
 }
 
 /*

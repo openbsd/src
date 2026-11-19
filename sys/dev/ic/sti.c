@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.87 2026/11/19 19:01:03 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.88 2026/11/19 19:23:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -408,6 +408,9 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 		rom->scment = NULL;
 	}
 
+	if (dd->dd_grid[0] == STI_DD_FIREGL)
+		rom->init_flags = STI_INITF_RESET;
+
 	return (0);
 }
 
@@ -567,6 +570,7 @@ sti_gvid(void *v, uint32_t cmd, uint32_t *params)
 {
 	struct sti_screen *scr = v;
 	struct sti_rom *rom = scr->scr_rom;
+	struct sti_softc *sc = rom->rom_softc;
 
 	/* paranoia */
 	if (cmd != 0x000c0003)
@@ -574,14 +578,38 @@ sti_gvid(void *v, uint32_t cmd, uint32_t *params)
 
 	switch (params[0]) {
 	case 4:
-		/* register read */
-		params[2] =
-		    bus_space_read_4(rom->memt, rom->regh[2], params[1]);
+		/* PCI configuration space read */
+		if ((params[1] & 0x03) != 0)
+			return -1;
+		if (sc != NULL && sc->sc_conf_read != NULL) {
+			if (params[1] >= 0x100)
+				return -1;
+			params[2] = (*sc->sc_conf_read)(sc, params[1]);
+		} else {
+			/*
+			 * Legacy devices are expected to have the equivalent
+			 * of the PCI configuration space in region #2.
+			 */
+			params[2] = bus_space_read_4(rom->memt, rom->regh[2],
+			    params[1]);
+		}
 		return 0;
 	case 5:
-		/* register write */
-		bus_space_write_4(rom->memt, rom->regh[2], params[1],
-		    params[2]);
+		/* PCI configuration space write */
+		if ((params[1] & 0x03) != 0)
+			return -1;
+		if (sc != NULL && sc->sc_conf_write != NULL) {
+			if (params[1] >= 0x100)
+				return -1;
+			(*sc->sc_conf_write)(sc, params[1], params[2]);
+		} else {
+			/*
+			 * Legacy devices are expected to have the equivalent
+			 * of the PCI configuration space in region #2.
+			 */
+			bus_space_write_4(rom->memt, rom->regh[2], params[1],
+			    params[2]);
+		}
 		return 0;
 	default:
 		return -1;
@@ -1081,6 +1109,8 @@ sti_init(struct sti_screen *scr, int mode)
 			a.flags.flags |= STI_INITF_CLEAR;
 	} else if (mode & STI_FBMODE) {
 		a.flags.flags |= STI_INITF_NTEXT /* | STI_INITF_PTS */;
+	} else {
+		a.flags.flags |= rom->init_flags;
 	}
 
 	a.in.text_planes = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.30 2026/05/01 20:03:58 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.31 2026/11/19 19:23:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -56,6 +56,8 @@ struct sti_rom {
 	sti_blkmv_t		 blkmv;
 	sti_inqconf_t		 inqconf;
 	sti_scment_t		 scment;
+
+	u_int			 init_flags;
 };
 
 /*
@@ -126,6 +128,9 @@ struct sti_softc {
 	/* optional, required for PCI */
 	void			(*sc_enable_rom)(struct sti_softc *);
 	void			(*sc_disable_rom)(struct sti_softc *);
+	uint32_t		(*sc_conf_read)(struct sti_softc *, uint32_t);
+	void			(*sc_conf_write)(struct sti_softc *,
+				    uint32_t, uint32_t);
 };
 
 int	sti_attach_common(struct sti_softc *, bus_space_tag_t, bus_space_tag_t,
