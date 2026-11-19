@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.86 2026/05/12 14:49:35 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.87 2026/11/19 19:01:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -425,6 +425,7 @@ sti_region_setup(struct sti_screen *scr, bus_space_handle_t romh)
 	struct sti_region regions[STI_REGION_MAX], *r;
 	u_int regno, regcnt;
 	bus_addr_t addr;
+	bus_size_t size;
 
 #ifdef STIDEBUG
 	printf("%s: regions @%p:\n",
@@ -467,11 +468,12 @@ sti_region_setup(struct sti_screen *scr, bus_space_handle_t romh)
 		if (r->length == 0)
 			continue;
 
-		addr = bases[regno] + (r->offset << PGSHIFT);
+		addr = bases[regno] + (r->offset << STI_PGSHIFT);
+		size = r->length << STI_PGSHIFT;
 
 #ifdef STIDEBUG
-		printf("%08x @ 0x%08lx%s%s%s%s",
-		    r->length << PGSHIFT, addr, r->sys_only ? " sys" : "",
+		printf("%08lx @ 0x%08lx%s%s%s%s",
+		    size, addr, r->sys_only ? " sys" : "",
 		    r->cache ? " cache" : "", r->btlb ? " btlb" : "",
 		    r->last ? " last" : "");
 #endif
@@ -508,9 +510,9 @@ sti_region_setup(struct sti_screen *scr, bus_space_handle_t romh)
 			}
 		}
 
-		if (bus_space_map(memt, addr, r->length << PGSHIFT,
-		    BUS_SPACE_MAP_LINEAR | (r->cache ?
-		    BUS_SPACE_MAP_CACHEABLE : 0), &rom->regh[regno]) != 0) {
+		if (bus_space_map(memt, addr, size, BUS_SPACE_MAP_LINEAR |
+		    (r->cache ?  BUS_SPACE_MAP_CACHEABLE : 0),
+		    &rom->regh[regno]) != 0) {
 			/*
 			 * If bus_space_map() fails, we are probably
 			 * overlapping the existing ROM mapping, so use it
@@ -533,11 +535,11 @@ sti_region_setup(struct sti_screen *scr, bus_space_handle_t romh)
 #endif
 		}
 
-		cc->regions[regno] = addr;
 		if (regno == 1) {
 			scr->fbaddr = addr;
-			scr->fblen = r->length << PGSHIFT;
+			scr->fblen = size;
 		}
+		cc->regions[regno] = addr;
 	}
 
 #ifdef STIDEBUG

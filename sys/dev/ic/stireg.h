@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.17 2026/05/10 15:57:38 miod Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.18 2026/11/19 19:01:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -179,6 +179,8 @@ struct sti_region {
 	u_int	last    : 1;	/* last region in the list */
 	u_int	length  :14;	/* size in pages */
 }  __packed;
+
+#define	STI_PGSHIFT	12	/* sti(4) assumes 4KB/page for offset/length */
 
 struct sti_font {
 	u_int16_t	first;
