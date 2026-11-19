@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.149 2026/10/20 11:59:12 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.150 2026/11/19 04:03:26 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3354,7 +3354,8 @@ get_unused_fd_flags(unsigned int flags)
 	struct filedesc *fdp = p->p_fd;
 	int error, fd;
 
-	KASSERT((flags & O_CLOEXEC) != 0);
+	if ((flags & O_CLOEXEC) != O_CLOEXEC)
+		return -1;
 
 	fdplock(fdp);
 retryalloc:
