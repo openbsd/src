@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.71 2026/10/22 04:31:42 bket Exp $	*/
+/*	$OpenBSD: engine.c,v 1.72 2026/11/19 08:45:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -38,6 +38,7 @@
 #include <event.h>
 #include <imsg.h>
 #include <pwd.h>
+#include <resolv.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -1071,6 +1072,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			strvisx(hostname, p, slen, VIS_SAFE | VIS_NL);
 			if (log_getverbose() > 1)
 				log_debug("DHO_HOST_NAME: %s", hostname);
+			if (!res_hnok(hostname))
+				*hostname = '\0';
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -1090,6 +1093,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			strvisx(domainname, p, slen, VIS_SAFE | VIS_NL);
 			if (log_getverbose() > 1)
 				log_debug("DHO_DOMAIN_NAME: %s", domainname);
+			if (!res_hnok(domainname))
+				*domainname = '\0';
 			p += dho_len;
 			rem -= dho_len;
 			break;
