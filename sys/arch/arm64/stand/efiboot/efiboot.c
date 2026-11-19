@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.73 2026/11/10 17:38:52 phessler Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.74 2026/11/19 20:24:47 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -837,7 +837,19 @@ efi_timer_cleanup(void)
 time_t
 getsecs(void)
 {
-	return ticks;
+	uint64_t freq, val0, val1, cnt;
+
+	__asm volatile("mrs %x0, CNTFRQ_EL0" : "=r" (freq));
+	if (freq == 0)
+		return ticks;
+
+	/* Work around Cortex-A73 errata 858921; see agtimer.c */
+	__asm volatile("isb" ::: "memory");
+	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val0));
+	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val1));
+	cnt = ((val0 ^ val1) & 0x100000000ULL) ? val0 : val1;
+
+	return cnt / freq;
 }
 
 /*
