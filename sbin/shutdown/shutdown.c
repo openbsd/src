@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.56 2024/04/28 16:43:42 florian Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.57 2026/11/19 18:48:11 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -478,7 +478,8 @@ die_you_gravy_sucking_pig_dog(void)
 			t.c_oflag |= (ONLCR | OPOST);
 			tcsetattr(0, TCSANOW, &t);
 
-			execl(_PATH_BSHELL, "sh", _PATH_RC, "shutdown", (char *)NULL);
+			execle(_PATH_BSHELL, "sh", _PATH_RC, "shutdown",
+			    (char *)NULL, restricted_environ);
 			_exit(1);
 		default:
 			waitpid(pid, NULL, 0);
