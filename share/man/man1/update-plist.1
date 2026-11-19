@@ -1,4 +1,4 @@
-.\"	$OpenBSD: update-plist.1,v 1.10 2024/04/14 17:24:15 phessler Exp $
+.\"	$OpenBSD: update-plist.1,v 1.11 2026/11/19 18:48:43 edd Exp $
 .\"
 .\" Copyright (c) 2018 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 14 2024 $
+.Dd $Mdocdate: November 19 2026 $
 .Dt UPDATE-PLIST 1
 .Os
 .Sh NAME
@@ -29,11 +29,13 @@
 .Op Fl c Ar var
 .Op Fl E Ar ext
 .Op Fl e Ar ext
+.Op Fl H Ar hints
 .Op Fl I Ar var
 .Op Fl i Ar var
 .Op Fl j Ar jobs
 .Op Fl S Ar var
 .Op Fl s Ar var
+.Op Fl t Ar pkgpath
 .Op Fl X Ar path
 .Op Fl w Ar suffix
 .Fl -
@@ -114,6 +116,19 @@ Variable
 may expand to nothing, in which case the variable from
 .Fl c Ar var
 can be used to prevent duplicate entries.
+.It Fl H Ar hints
+Add an
+.Ar hints
+file, that contains locations of files in the format
+.Dl path subpackage
+as used for the texlive packages.
+Those hints are absolute and will preempt already existing entries.
+.Pp
+Note that a commented out entry in the format
+.Dl # path
+will ignore
+.Ar path
+for packing-list generation.
 .It Fl i Ar var
 Ignore variable
 .Ar var
@@ -152,6 +167,9 @@ e.g., for directories like
 .Pa /etc/rc.d
 or
 .Pa /usr/local .
+.It Fl t Ar pkgpath
+Trim files corresponding to another package in the ports tree,
+by ignoring entries in the corresponding packing-list.
 .It Fl v
 Verbose mode.
 Explain about directories stripped from dependencies.
@@ -164,6 +182,11 @@ that (usually) should not end into packing-lists.
 Exclude file at absolute
 .Ar path
 from the information recorded in the packing-list.
+The
+.Ar path
+goes through glob,
+as documented in
+.Xr perlfunc 1 .
 .El
 .Pp
 .Nm
