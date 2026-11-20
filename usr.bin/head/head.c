@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.24 2022/02/07 17:19:57 cheloha Exp $	*/
+/*	$OpenBSD: head.c,v 1.25 2026/11/20 21:46:07 jca Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-int head_file(const char *, long, int);
+int head_file(const char *, int, long long, int);
 static void usage(void);
 
 /*
@@ -46,12 +46,16 @@ static void usage(void);
  * Bill Joy UCB August 24, 1977
  */
 
+#define	LINES 1
+#define	BYTES 2
+
 int
 main(int argc, char *argv[])
 {
 	const char *errstr;
 	int	ch;
-	long	linecnt = 10;
+	long long count = 10;
+	int	mode = LINES;
 	int	status = 0;
 
 	if (pledge("stdio rpath", NULL) == -1)
@@ -60,17 +64,23 @@ main(int argc, char *argv[])
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' &&
 	    isdigit((unsigned char)argv[1][1])) {
-		linecnt = strtonum(argv[1] + 1, 1, LONG_MAX, &errstr);
+		mode = LINES;
+		count = strtonum(argv[1] + 1, 1, LLONG_MAX, &errstr);
 		if (errstr != NULL)
 			errx(1, "count is %s: %s", errstr, argv[1] + 1);
 		argc--;
 		argv++;
 	}
 
-	while ((ch = getopt(argc, argv, "n:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:n:")) != -1) {
 		switch (ch) {
+		case 'c':
 		case 'n':
-			linecnt = strtonum(optarg, 1, LONG_MAX, &errstr);
+			if (ch == 'c')
+				mode = BYTES;
+			else
+				mode = LINES;
+			count = strtonum(optarg, 1, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "count is %s: %s", errstr, optarg);
 			break;
@@ -84,17 +94,17 @@ main(int argc, char *argv[])
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 
-		status = head_file(NULL, linecnt, 0);
+		status = head_file(NULL, mode, count, 0);
 	} else {
 		for (; *argv != NULL; argv++)
-			status |= head_file(*argv, linecnt, argc > 1);
+			status |= head_file(*argv, mode, count, argc > 1);
 	}
 
 	return status;
 }
 
 int
-head_file(const char *path, long count, int need_header)
+head_file(const char *path, int mode, long long count, int need_header)
 {
 	const char *name;
 	FILE *fp;
@@ -122,8 +132,13 @@ head_file(const char *path, long count, int need_header)
 	while ((ch = getc(fp)) != EOF) {
 		if (putchar(ch) == EOF)
 			err(1, "stdout");
-		if (ch == '\n' && --count == 0)
-			break;
+		if (mode == LINES) {
+			if (ch == '\n' && --count == 0)
+				break;
+		} else {
+			if (--count == 0)
+				break;
+		}
 	}
 	if (ferror(fp)) {
 		warn("%s", name);
@@ -139,6 +154,7 @@ head_file(const char *path, long count, int need_header)
 static void
 usage(void)
 {
-	fputs("usage: head [-count | -n count] [file ...]\n", stderr);
+	fputs("usage: head [-c count | -n count | -count] [file ...]\n",
+	    stderr);
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: head.1,v 1.23 2015/10/25 21:50:32 zhuk Exp $
+.\"	$OpenBSD: head.1,v 1.24 2026/11/20 21:46:07 jca Exp $
 .\"
 .\" Copyright (c) 1980, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,34 +29,40 @@
 .\"
 .\"	from: @(#)head.1	6.6 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: October 25 2015 $
+.Dd $Mdocdate: November 20 2026 $
 .Dt HEAD 1
 .Os
 .Sh NAME
 .Nm head
-.Nd display first few lines of files
+.Nd display the first few lines or bytes of files
 .Sh SYNOPSIS
 .Nm head
-.Op Fl Ar count | Fl n Ar count
+.Op Fl c Ar count | Fl n Ar count | Fl Ar count
 .Op Ar
 .Sh DESCRIPTION
 The
 .Nm
 utility copies the first
 .Ar count
-lines of each specified
+lines or bytes of each specified
 .Ar file
 to the standard output.
 If no files are named,
 .Nm
-copies lines from the standard input.
-If
-.Ar count
-is omitted, it defaults to 10.
+copies from the standard input.
+If options are omitted,
+.Nm
+defaults to 10 lines.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl Ar count | Fl n Ar count
+.It Fl c Ar count
+Copy the first
+.Ar count
+bytes of each input file to the standard output.
+.Ar count
+must be a positive decimal integer.
+.It Fl n Ar count | Fl Ar count
 Copy the first
 .Ar count
 lines of each input file to the standard output.
@@ -95,7 +101,7 @@ in the following way to, for example, display only line 500 from the file
 The
 .Nm
 utility is compliant with the
-.St -p1003.1-2008
+.St -p1003.1-2024
 specification.
 .Pp
 The historic syntax
