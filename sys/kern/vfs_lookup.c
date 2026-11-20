@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.95 2026/09/17 18:51:39 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.96 2026/11/20 01:15:47 kirill Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+static int vfs_lookup_internal(struct nameidata *, int);
 
 int
 component_push(struct componentname *cnp, char *component, size_t len)
@@ -247,7 +249,7 @@ namei(struct nameidata *ndp)
 
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
-		if ((error = vfs_lookup(ndp)) != 0)
+		if ((error = vfs_lookup_internal(ndp, 1)) != 0)
 			goto fail;
 
 		/*
@@ -255,17 +257,30 @@ namei(struct nameidata *ndp)
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
 			if ((error = unveil_check_final(p, ndp))) {
-				if ((cnp->cn_flags & LOCKPARENT) &&
-				    (cnp->cn_flags & ISLASTCN) &&
-				    (ndp->ni_vp != ndp->ni_dvp))
-					vput(ndp->ni_dvp);
+				if (ndp->ni_dvp != NULL) {
+					if ((cnp->cn_flags & LOCKPARENT) &&
+					    (cnp->cn_flags & ISLASTCN) &&
+					    (ndp->ni_vp != ndp->ni_dvp))
+						vput(ndp->ni_dvp);
+					else
+						vrele(ndp->ni_dvp);
+				}
 				if (ndp->ni_vp) {
 					if ((cnp->cn_flags & LOCKLEAF))
 						vput(ndp->ni_vp);
 					else
 						vrele(ndp->ni_vp);
 				}
+				if (ndp->ni_startdir != NULL) {
+					vrele(ndp->ni_startdir);
+					ndp->ni_startdir = NULL;
+				}
 				goto fail;
+			}
+			if ((cnp->cn_flags & (LOCKPARENT | WANTPARENT)) == 0 &&
+			    ndp->ni_vp != NULL && ndp->ni_dvp != NULL) {
+				vrele(ndp->ni_dvp);
+				ndp->ni_dvp = NULL;
 			}
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
 				pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -397,6 +412,12 @@ fail:
  */
 int
 vfs_lookup(struct nameidata *ndp)
+{
+	return (vfs_lookup_internal(ndp, 0));
+}
+
+static int
+vfs_lookup_internal(struct nameidata *ndp, int keep_parent)
 {
 	char *cp;			/* pointer into pathname argument */
 	struct vnode *dp = NULL;	/* the directory we are searching */
@@ -732,7 +753,7 @@ terminal:
 			ndp->ni_startdir = ndp->ni_dvp;
 			vref(ndp->ni_startdir);
 		}
-		if (!wantparent)
+		if (!wantparent && !keep_parent)
 			vrele(ndp->ni_dvp);
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0)

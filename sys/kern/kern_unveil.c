@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.59 2026/11/04 08:00:52 dgl Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.60 2026/11/20 01:15:47 kirill Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -245,6 +245,7 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 	/* use the correct root to stop at, chrooted or not.. */
 	root = p->p_fd->fd_rdir ? p->p_fd->fd_rdir : rootvnode;
 	vp = dp;
+	vref(vp);
 
 	while (vp != root && vp != rootvnode) {
 		struct componentname cn = {
@@ -265,13 +266,19 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 		 */
 		while (vp != root && (vp->v_flag & VROOT)) {
 			if (vp->v_mount == NULL)
-				return -1;
-			vp = vp->v_mount->mnt_vnodecovered ?
-			    vp->v_mount->mnt_vnodecovered : vp;
+				goto done;
+			parent = vp->v_mount->mnt_vnodecovered;
+			if (parent == NULL)
+				goto done;
+			vref(parent);
+			vrele(vp);
+			vp = parent;
+			parent = NULL;
 		}
 
 		if (vget(vp, LK_EXCLUSIVE|LK_RETRY) != 0)
-			return -1;
+			goto done;
+		vrele(vp);
 		/* Get parent vnode of vp using lookup of '..' */
 		/* This returns with vp unlocked but ref'ed*/
 		error = VOP_LOOKUP(vp, &parent, &cn);
@@ -286,23 +293,24 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 				DPRINTF("vnode %p PDIRUNLOCK on error\n", vp);
 				vrele(vp);
 			}
-			break;
+			return ret;
 		}
 
-		vrele(vp);
 		(void) unveil_lookup(parent, p->p_p, &ret);
-		vput(parent);
-
-		if (ret >= 0)
-			break;
-
-		if (vp == parent) {
-			ret = -1;
-			break;
+		if (ret >= 0 || vp == parent) {
+			if (vp == parent)
+				ret = -1;
+			vrele(vp);
+			vput(parent);
+			return ret;
 		}
+		vrele(vp);
+		VOP_UNLOCK(parent);
 		vp = parent;
 		parent = NULL;
 	}
+ done:
+	vrele(vp);
 	return ret;
 }
 
