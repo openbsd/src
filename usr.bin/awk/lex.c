@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.35 2025/02/05 20:32:56 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.36 2026/11/20 02:58:49 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -384,7 +384,8 @@ int string(void)
 	if (buf == NULL && (buf = (char *) malloc(bufsz)) == NULL)
 		FATAL("out of space for strings");
 	for (bp = buf; (c = input()) != '"'; ) {
-		if (!adjbuf(&buf, &bufsz, bp-buf+2, 500, &bp, "string"))
+		/* A Unicode escape can append four bytes (plus a NUL). */
+		if (!adjbuf(&buf, &bufsz, bp-buf+5, 500, &bp, "string"))
 			FATAL("out of space for string %.10s...", buf);
 		switch (c) {
 		case '\n':
