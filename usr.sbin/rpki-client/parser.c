@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.211 2026/11/19 13:14:04 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.212 2026/11/20 19:37:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -726,7 +726,8 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 		}
 
 		memcpy(cert->mfthash, ent->data, ent->datasz);
-		auth_insert(file, &auths, cert, a, crl);
+		if (auth_insert(file, &auths, cert, a, crl) == NULL)
+			goto out;
 	}
 
 	return cert;
