@@ -30,6 +30,7 @@
 
 #define PKGCONF_EVAL_MAX_OUTPUT (PKGCONF_BUFSIZE - 1)
 #define PKGCONF_EVAL_MAX_ITERATIONS (512)
+#define PKGCONF_BYTECODE_MAX_SPLICED_SIZE (PKGCONF_BUFSIZE)
 
 static bool
 pkgconf_bytecode_eval_append_slice(pkgconf_bytecode_eval_ctx_t *ctx, pkgconf_buffer_t *out, const char *p, size_t n)
@@ -517,10 +518,55 @@ pkgconf_bytecode_append_stream(pkgconf_buffer_t *dst, const pkgconf_buffer_t *bc
 	return pkgconf_buffer_append_slice(dst, pkgconf_buffer_str(bcbuf), pkgconf_buffer_len(bcbuf));
 }
 
+/*
+ * Size of what pkgconf_bytecode_rewrite_selfrefs() would write, or false if
+ * `rhs` is malformed or the size passes PKGCONF_BYTECODE_MAX_SPLICED_SIZE.
+ *
+ * A self-reference is replaced by the whole of the previous definition, so a
+ * definition which names itself several times multiplies its own size, and a
+ * few such lines in a row would multiply it without limit.  Evaluation stops at
+ * PKGCONF_EVAL_MAX_OUTPUT whatever the bytecode says, so nothing useful lies
+ * past the limit, and this is checked before anything is allocated.
+ */
+static bool
+pkgconf_bytecode_spliced_size(const pkgconf_buffer_t *rhs, const char *key, const pkgconf_buffer_t *prev, size_t *size)
+{
+	const uint8_t *p = (const uint8_t *) rhs->base;
+	size_t remaining = pkgconf_buffer_len(rhs);
+	size_t prev_size = pkgconf_buffer_len(prev);
+	size_t total = *size;
+
+	while (remaining != 0)
+	{
+		const pkgconf_bytecode_op_t *op;
+		size_t op_size;
+
+		if (!pkgconf_bytecode_read_op(p, remaining, &op, &op_size))
+			return false;
+
+		size_t grow = pkgconf_bytecode_op_is_selfref(op, key) ? prev_size : op_size;
+
+		if (total > PKGCONF_BYTECODE_MAX_SPLICED_SIZE ||
+			grow > PKGCONF_BYTECODE_MAX_SPLICED_SIZE - total)
+			return false;
+
+		total += grow;
+		p += op_size;
+		remaining -= op_size;
+	}
+
+	*size = total;
+	return true;
+}
+
 bool
 pkgconf_bytecode_rewrite_selfrefs(pkgconf_buffer_t *out, const pkgconf_buffer_t *rhs, const char *key, const pkgconf_buffer_t *prev)
 {
 	if (out == NULL || rhs == NULL || key == NULL || prev == NULL)
+		return false;
+
+	size_t spliced_size = pkgconf_buffer_len(out);
+	if (!pkgconf_bytecode_spliced_size(rhs, key, prev, &spliced_size))
 		return false;
 
 	const uint8_t *p = (const uint8_t *) rhs->base;

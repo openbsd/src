@@ -1135,28 +1135,38 @@ search_preload_list(pkgconf_client_t *client, const char *name)
 	return NULL;
 }
 
+static inline bool
+name_has_path_separator(const char *name)
+{
+	for (; *name != '\0'; name++)
+		if (is_path_separator(*name))
+			return true;
+
+	return false;
+}
+
 /*
- * !doc
- *
- * .. c:function:: pkgconf_pkg_t *pkgconf_pkg_find(pkgconf_client_t *client, const char *name)
- *
- *    Search for a package.
- *
- *    :param pkgconf_client_t* client: The pkgconf client object to use for dependency resolution.
- *    :param char* name: The name of the package `atom` to use for searching.
- *    :return: A package object reference if the package was found, else ``NULL``.
- *    :rtype: pkgconf_pkg_t *
+ * Only a name the user asked for may be a path.  A name which a .pc file
+ * supplies is a module name: letting it be a path would let the file reach
+ * outside the search path, and would let it spell one module several ways,
+ * each of which loads as a package the cache has never seen.
  */
-pkgconf_pkg_t *
-pkgconf_pkg_find(pkgconf_client_t *client, const char *name)
+static pkgconf_pkg_t *
+pkg_find(pkgconf_client_t *client, const char *name, bool allow_path)
 {
 	pkgconf_pkg_t *pkg = NULL;
 	pkgconf_node_t *n;
 
 	PKGCONF_TRACE(client, "looking for: %s", name);
 
+	if (!allow_path && name_has_path_separator(name))
+	{
+		PKGCONF_TRACE(client, "%s is a path, which only a query may use", name);
+		return NULL;
+	}
+
 	/* name might actually be a filename. */
-	if (str_has_suffix(name, PKG_CONFIG_EXT))
+	if (allow_path && str_has_suffix(name, PKG_CONFIG_EXT))
 	{
 		pkg = pkgconf_pkg_new_from_path(client, name, 0);
 		if (pkg != NULL)
@@ -1198,6 +1208,24 @@ out:
 	pkgconf_cache_add(client, pkg);
 
 	return pkg;
+}
+
+/*
+ * !doc
+ *
+ * .. c:function:: pkgconf_pkg_t *pkgconf_pkg_find(pkgconf_client_t *client, const char *name)
+ *
+ *    Search for a package.
+ *
+ *    :param pkgconf_client_t* client: The pkgconf client object to use for dependency resolution.
+ *    :param char* name: The name of the package `atom` to use for searching.
+ *    :return: A package object reference if the package was found, else ``NULL``.
+ *    :rtype: pkgconf_pkg_t *
+ */
+pkgconf_pkg_t *
+pkgconf_pkg_find(pkgconf_client_t *client, const char *name)
+{
+	return pkg_find(client, name, true);
 }
 
 typedef bool (*pkgconf_vercmp_res_func_t)(const char *a, const char *b);
@@ -1533,7 +1561,7 @@ pkgconf_pkg_verify_dependency(pkgconf_client_t *client, pkgconf_dependency_t *pk
 		return pkgconf_pkg_ref(client, pkgdep->match);
 	}
 
-	pkg = pkgconf_pkg_find(client, pkgdep->package);
+	pkg = pkg_find(client, pkgdep->package, (pkgdep->flags & PKGCONF_PKG_DEPF_QUERY) != 0);
 	if (pkg == NULL)
 	{
 		if (client->flags & PKGCONF_PKG_PKGF_SKIP_PROVIDES)

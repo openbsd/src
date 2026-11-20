@@ -179,8 +179,6 @@ pkgconf_tuple_add(const pkgconf_client_t *client, pkgconf_list_t *list, const ch
 	char *dequote_value;
 	pkgconf_buffer_t rhs_bcbuf = PKGCONF_BUFFER_INITIALIZER;
 
-	(void) client;
-
 	if (list == NULL || key == NULL || value == NULL)
 		return NULL;
 
@@ -235,6 +233,9 @@ pkgconf_tuple_add(const pkgconf_client_t *client, pkgconf_list_t *list, const ch
 		/* splice the selfrefs, using the old bytecode instead of ${var} */
 		if (!pkgconf_bytecode_rewrite_selfrefs(&new_bcbuf, &rhs_bcbuf, key, &old_bcbuf))
 		{
+			if (client != NULL)
+				pkgconf_warn(client, "warning: variable '%s' could not be redefined in terms of itself (the limit is 64KB), keeping its previous definition\n", key);
+
 			pkgconf_buffer_finalize(&old_bcbuf);
 			pkgconf_buffer_finalize(&new_bcbuf);
 			pkgconf_buffer_finalize(&rhs_bcbuf);

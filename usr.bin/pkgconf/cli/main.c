@@ -151,6 +151,7 @@ usage(void)
 	printf("  --print-errors                    ensure all errors are printed\n");
 	printf("  --short-errors                    be less verbose about some errors\n");
 	printf("  --silence-errors                  explicitly be silent about errors\n");
+	printf("  --debug                           print non-fatal warnings and debugging messages\n");
 	printf("  --list-all                        list all known packages\n");
 	printf("  --list-package-names              list all known package names\n");
 #ifndef PKGCONF_LITE
@@ -219,6 +220,7 @@ usage(void)
 	printf("  --modversion                      print the specified module's version to stdout\n");
 	printf("  --internal-cflags                 do not filter 'internal' cflags from output\n");
 	printf("  --license                         print the specified module's license to stdout if known\n");
+	printf("  --license-file                    print the specified module's license file location to stdout if known\n");
 	printf("  --link-abi                        print the link ABIs (e.g. c, c++) the module must be linked against\n");
 	printf("  --source                          print the specified module's source code location to stdout if known\n");
 	printf("  --exists-cflags                   add -DHAVE_FOO fragments to cflags for each found module\n");
