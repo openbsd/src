@@ -433,6 +433,36 @@ test_rewrite_selfrefs(void)
 }
 
 static void
+test_rewrite_selfrefs_too_large(void)
+{
+	pkgconf_buffer_t prev = PKGCONF_BUFFER_INITIALIZER;
+	pkgconf_buffer_t rhs = PKGCONF_BUFFER_INITIALIZER;
+	pkgconf_buffer_t rewritten = PKGCONF_BUFFER_INITIALIZER;
+	char text[1025];
+
+	memset(text, 'a', sizeof text - 1);
+	text[sizeof text - 1] = '\0';
+	pkgconf_bytecode_compile(&prev, text);
+
+	// 63 copies of the previous definition fit under PKGCONF_BUFSIZE, 64 do not
+	for (int i = 0; i < 63; i++)
+		pkgconf_bytecode_emit_var(&rhs, "foo", 3);
+
+	TEST_ASSERT_TRUE(pkgconf_bytecode_rewrite_selfrefs(&rewritten, &rhs, "foo", &prev));
+	TEST_ASSERT_TRUE(pkgconf_buffer_len(&rewritten) == 63 * pkgconf_buffer_len(&prev));
+	pkgconf_buffer_finalize(&rewritten);
+
+	pkgconf_bytecode_emit_var(&rhs, "foo", 3);
+
+	TEST_ASSERT_FALSE(pkgconf_bytecode_rewrite_selfrefs(&rewritten, &rhs, "foo", &prev));
+	TEST_ASSERT_TRUE(pkgconf_buffer_len(&rewritten) == 0);
+
+	pkgconf_buffer_finalize(&rewritten);
+	pkgconf_buffer_finalize(&rhs);
+	pkgconf_buffer_finalize(&prev);
+}
+
+static void
 test_rewrite_selfrefs_no_match(void)
 {
 	pkgconf_client_t *client = test_client_new();
@@ -686,6 +716,7 @@ main(int argc, char *argv[])
 	TEST_RUN(basename, test_sysroot_normalizes_to_root_disables);
 
 	TEST_RUN(basename, test_rewrite_selfrefs);
+	TEST_RUN(basename, test_rewrite_selfrefs_too_large);
 	TEST_RUN(basename, test_rewrite_selfrefs_no_match);
 
 	TEST_RUN(basename, test_compile_eval_roundtrip);

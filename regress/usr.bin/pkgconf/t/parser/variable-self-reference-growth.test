@@ -1,0 +1,5 @@
+PackageSearchPath: lib1
+Query: variable-self-reference-growth
+WantedFlags: validate
+ExpectedStderr: warning: variable 'x' could not be redefined in terms of itself
+MatchStderr: partial

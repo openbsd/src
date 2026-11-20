@@ -1,0 +1,4 @@
+Name: traversal
+Description: requires a module by relative path
+Version: 1
+Requires: ../outside/hidden

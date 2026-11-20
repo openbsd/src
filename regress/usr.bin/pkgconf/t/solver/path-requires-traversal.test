@@ -1,0 +1,6 @@
+PackageSearchPath: lib-path-requires/inside
+Query: traversal
+WantedFlags: cflags print-errors
+ExpectedExitCode: 1
+ExpectedStderr: Package '../outside/hidden', required by 'traversal', not found
+MatchStderr: partial

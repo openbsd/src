@@ -1,0 +1,3 @@
+Query: %TEST_FIXTURES_DIR%/lib-path-requires/outside/hidden.pc hidden-sibling
+WantedFlags: cflags
+ExpectedStdout: -DHIDDEN -DHIDDEN_SIBLING

@@ -1,0 +1,6 @@
+PackageSearchPath: lib-path-requires/inside
+Query: file
+WantedFlags: cflags print-errors
+ExpectedExitCode: 1
+ExpectedStderr: Package 'hidden-sibling', required by 'file', not found
+MatchStderr: partial

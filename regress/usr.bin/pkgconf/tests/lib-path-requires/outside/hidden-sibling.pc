@@ -1,0 +1,4 @@
+Name: hidden-sibling
+Description: only reachable if the search path grows
+Version: 1
+Cflags: -DHIDDEN_SIBLING

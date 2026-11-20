@@ -1,0 +1,6 @@
+PackageSearchPath: lib-path-requires/inside
+Query: alias
+WantedFlags: cflags print-errors
+ExpectedExitCode: 1
+ExpectedStderr: Package '/alias', required by 'alias', not found
+MatchStderr: partial

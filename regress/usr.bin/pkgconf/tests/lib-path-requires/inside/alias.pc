@@ -1,0 +1,4 @@
+Name: alias
+Description: requires itself under two path spellings
+Version: 1
+Requires: /alias ./alias

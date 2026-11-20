@@ -1,0 +1,3 @@
+Query: %TEST_FIXTURES_DIR%/lib1/foo.pc
+WantVariable: pcfiledir
+ExpectedStdout: %TEST_FIXTURES_DIR%/lib1

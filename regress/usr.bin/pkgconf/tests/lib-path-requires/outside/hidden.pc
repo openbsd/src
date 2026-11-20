@@ -1,0 +1,4 @@
+Name: hidden
+Description: lives outside the search path
+Version: 1
+Cflags: -DHIDDEN

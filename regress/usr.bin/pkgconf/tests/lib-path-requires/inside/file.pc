@@ -1,0 +1,4 @@
+Name: file
+Description: requires a module by filename
+Version: 1
+Requires: ${pcfiledir}/../outside/hidden.pc hidden-sibling
