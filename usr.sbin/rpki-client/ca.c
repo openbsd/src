@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.17 2026/11/11 19:43:11 claudio Exp $ */
+/*	$OpenBSD: ca.c,v 1.18 2026/11/20 09:21:45 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -89,7 +89,7 @@ carepo_lookup_locked(const struct cert *cert)
 }
 
 /*
- * Increment and return per TAL per carepo counter.
+ * Increment per TAL per carepo counter.
  */
 void
 carepo_increment(const struct cert *cert)
