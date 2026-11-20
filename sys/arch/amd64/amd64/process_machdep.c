@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.18 2024/11/27 05:25:56 anton Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.19 2026/11/20 18:05:04 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -265,6 +265,7 @@ process_write_xstate(struct proc *p, void *addr)
 	    (xsave_mask & XSTATE_COMPONENT_SSE)) {
 		memcpy(area->legacy_region, new_area->legacy_region,
 		    sizeof(area->legacy_region));
+		((struct fxsave64 *)area)->fx_mxcsr &= fpu_mxcsr_mask;
 		area->xsave_header.xstate_bv |= xsave_mask &
 		    (XSTATE_COMPONENT_X87 | XSTATE_COMPONENT_SSE);
 	}
