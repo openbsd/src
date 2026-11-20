@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.25 2026/11/17 08:59:43 miod Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.26 2026/11/20 16:21:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -73,7 +73,7 @@ static int
 ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 {
 	static char lastmount[MAXMNTLEN];
-	static u_int8_t buf[SBSIZE * SBCOUNT] __aligned(8);
+	static uint64_t buf[(SBSIZE * SBCOUNT) / sizeof(uint64_t)];
 	struct fs *sb;
 	daddr_t blk, lastblk;
 	int n;
@@ -89,7 +89,7 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 			err(1, "read");
 
 		for (n = 0; n < (SBSIZE * SBCOUNT); n += 512){
-			sb = (struct fs*)(&buf[n]);
+			sb = (struct fs*)(&buf[n / sizeof(uint64_t)]);
 			if (sb->fs_magic == FS_MAGIC) {
 				if (flags & FLAG_VERBOSE)
 					printf("block %lld id %x,%x size %d\n",
