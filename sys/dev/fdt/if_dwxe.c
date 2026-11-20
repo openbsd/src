@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.24 2024/02/27 10:47:20 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.25 2026/11/20 16:02:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1037,22 +1037,24 @@ dwxe_up(struct dwxe_softc *sc)
 	struct dwxe_buf *txb, *rxb;
 	int i;
 
-	/* Allocate Tx descriptor ring. */
-	sc->sc_txring = dwxe_dmamem_alloc(sc,
-	    DWXE_NTXDESC * sizeof(struct dwxe_desc), 8);
-	sc->sc_txdesc = DWXE_DMA_KVA(sc->sc_txring);
+	if (sc->sc_txring == NULL) {
+		/* Allocate Tx descriptor ring. */
+		sc->sc_txring = dwxe_dmamem_alloc(sc,
+		    DWXE_NTXDESC * sizeof(struct dwxe_desc), 8);
+		sc->sc_txdesc = DWXE_DMA_KVA(sc->sc_txring);
 
-	sc->sc_txbuf = malloc(sizeof(struct dwxe_buf) * DWXE_NTXDESC,
-	    M_DEVBUF, M_WAITOK);
-	for (i = 0; i < DWXE_NTXDESC; i++) {
-		txb = &sc->sc_txbuf[i];
-		bus_dmamap_create(sc->sc_dmat, MCLBYTES, DWXE_NTXSEGS,
-		    MCLBYTES, 0, BUS_DMA_WAITOK, &txb->tb_map);
-		txb->tb_m = NULL;
+		sc->sc_txbuf = malloc(sizeof(struct dwxe_buf) * DWXE_NTXDESC,
+		    M_DEVBUF, M_WAITOK);
+		for (i = 0; i < DWXE_NTXDESC; i++) {
+			txb = &sc->sc_txbuf[i];
+			bus_dmamap_create(sc->sc_dmat, MCLBYTES, DWXE_NTXSEGS,
+			    MCLBYTES, 0, BUS_DMA_WAITOK, &txb->tb_map);
+			txb->tb_m = NULL;
 
-		sc->sc_txdesc[i].sd_next =
-		    DWXE_DMA_DVA(sc->sc_txring) +
-		    ((i+1) % DWXE_NTXDESC) * sizeof(struct dwxe_desc);
+			sc->sc_txdesc[i].sd_next =
+			    DWXE_DMA_DVA(sc->sc_txring) +
+			    ((i+1) % DWXE_NTXDESC) * sizeof(struct dwxe_desc);
+		}
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, DWXE_DMA_MAP(sc->sc_txring),
@@ -1062,23 +1064,25 @@ dwxe_up(struct dwxe_softc *sc)
 
 	dwxe_write(sc, DWXE_TX_DESC_LIST, DWXE_DMA_DVA(sc->sc_txring));
 
-	/* Allocate  descriptor ring. */
-	sc->sc_rxring = dwxe_dmamem_alloc(sc,
-	    DWXE_NRXDESC * sizeof(struct dwxe_desc), 8);
-	sc->sc_rxdesc = DWXE_DMA_KVA(sc->sc_rxring);
+	if (sc->sc_rxring == NULL) {
+		/* Allocate Rx descriptor ring. */
+		sc->sc_rxring = dwxe_dmamem_alloc(sc,
+		    DWXE_NRXDESC * sizeof(struct dwxe_desc), 8);
+		sc->sc_rxdesc = DWXE_DMA_KVA(sc->sc_rxring);
 
-	sc->sc_rxbuf = malloc(sizeof(struct dwxe_buf) * DWXE_NRXDESC,
-	    M_DEVBUF, M_WAITOK);
+		sc->sc_rxbuf = malloc(sizeof(struct dwxe_buf) * DWXE_NRXDESC,
+		    M_DEVBUF, M_WAITOK);
 
-	for (i = 0; i < DWXE_NRXDESC; i++) {
-		rxb = &sc->sc_rxbuf[i];
-		bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_WAITOK, &rxb->tb_map);
-		rxb->tb_m = NULL;
+		for (i = 0; i < DWXE_NRXDESC; i++) {
+			rxb = &sc->sc_rxbuf[i];
+			bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+			    MCLBYTES, 0, BUS_DMA_WAITOK, &rxb->tb_map);
+			rxb->tb_m = NULL;
 
-		sc->sc_rxdesc[i].sd_next =
-		    DWXE_DMA_DVA(sc->sc_rxring) +
-		    ((i+1) % DWXE_NRXDESC) * sizeof(struct dwxe_desc);
+			sc->sc_rxdesc[i].sd_next =
+			    DWXE_DMA_DVA(sc->sc_rxring) +
+			    ((i+1) % DWXE_NRXDESC) * sizeof(struct dwxe_desc);
+		}
 	}
 
 	if_rxr_init(&sc->sc_rx_ring, 2, DWXE_NRXDESC);
@@ -1167,11 +1171,7 @@ dwxe_down(struct dwxe_softc *sc)
 			bus_dmamap_unload(sc->sc_dmat, txb->tb_map);
 			m_freem(txb->tb_m);
 		}
-		bus_dmamap_destroy(sc->sc_dmat, txb->tb_map);
 	}
-
-	dwxe_dmamem_free(sc, sc->sc_txring);
-	free(sc->sc_txbuf, M_DEVBUF, 0);
 
 	for (i = 0; i < DWXE_NRXDESC; i++) {
 		rxb = &sc->sc_rxbuf[i];
@@ -1181,11 +1181,7 @@ dwxe_down(struct dwxe_softc *sc)
 			bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
 			m_freem(rxb->tb_m);
 		}
-		bus_dmamap_destroy(sc->sc_dmat, rxb->tb_map);
 	}
-
-	dwxe_dmamem_free(sc, sc->sc_rxring);
-	free(sc->sc_rxbuf, M_DEVBUF, 0);
 }
 
 /* Bit Reversal - http://aggregate.org/MAGIC/#Bit%20Reversal */
