@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.21 2026/11/05 07:54:52 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.22 2026/11/20 02:46:15 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2025, 2026
@@ -88,6 +88,20 @@
 #define RGE_RSS_INDTBL(i)		(0x4700 + (i) * 4)
 #define RGE_RXQUEUE_CTRL		0x4800
 #define RGE_EEE_TXIDLE_TIMER		0x6048
+#define RGE_INT_HW_ID			0xd006
+
+#define RGE_SDS_CMD			0x2348
+#define RGE_SDS_ADDR			0x234a
+#define RGE_SDS_DATA_IN			0x234c
+#define RGE_SDS_DATA_OUT		0x234e
+#define RGE_SDS_MOD_ABS			0x2400
+#define RGE_SDS_I2C_CON			0xe200
+#define RGE_SDS_I2C_TAR			0xe204
+#define RGE_SDS_I2C_CMD			0xe210
+#define RGE_SDS_I2C_FS_SCL_HCNT		0xe21c
+#define RGE_SDS_I2C_FS_SCL_LCNT		0xe220
+#define RGE_SDS_I2C_EN			0xe26c
+#define RGE_SDS_I2C_STS			0xe270
 
 /* Flags for register RGE_INT_CFG0 */
 #define RGE_INT_CFG0_EN			0x01
@@ -221,6 +235,26 @@
 #define RGE_RSS_CTRL_IPV6_EXT		0x00000010
 #define RGE_RSS_CTRL_TCP_IPV6_EXT	0x00000020
 
+/* Flags for register RGE_INT_HW_ID */
+#define RGE_INT_HW_ID_MASK	0x00ff
+
+/* Flags for register RGE_SDS_CMD */
+#define RGE_SDS_CMD_EXEC	0x0001
+#define RGE_SDS_CMD_WE		0x0002
+
+/* Flags for register RGE_SDS_MOD_ABS */
+#define RGE_SDS_MOD_ABS_ABSENT	0x1000
+#define RGE_SDS_MOD_ABS_ENABLE	0x2000
+
+/* Flags for register RGE_SDS_I2C_CMD */
+#define RGE_SDS_I2C_CMD_READ	0x0100
+#define RGE_SDS_I2C_CMD_STOP	0x0200
+#define RGE_SDS_I2C_CMD_RESTART	0x0400
+
+/* Flags for register RGE_SDS_I2C_STS */
+#define RGE_SDS_I2C_STS_TXFIFO_NOT_FULL		0x0002
+#define RGE_SDS_I2C_STS_RXFIFO_NOT_EMPTY	0x0008
+
 #define RGE_TX_NSEGS		32
 #define RGE_TX_LIST_CNT		1024
 #define RGE_RX_LIST_CNT		1024
@@ -233,6 +267,28 @@
 #define RGE_ADV_2500TFDX	0x0080
 #define RGE_ADV_5000TFDX	0x0100
 #define RGE_ADV_10000TFDX	0x1000
+
+/* EEPROM byte offsets */
+#define RGE_SFF_10GBE_COMP	0x03
+#define RGE_SFF_1GBE_COMP	0x06
+#define RGE_SFF_CABLE		0x08
+#define RGE_SFF_NOMINAL		0x0c
+
+/* RGE_SFF_10GBE_COMP bitmasks */
+#define RGE_SFF_10GBASESR_CAPABLE	0x10
+#define RGE_SFF_10GBASELR_CAPABLE	0x20
+#define RGE_SFF_10GBASELRM_CAPABLE	0x40
+#define RGE_SFF_10GBASEER_CAPABLE	0x80
+
+/* RGE_SFF_1GBE_COMP bitmasks */
+#define RGE_SFF_1GBASESX_CAPABLE	0x01
+#define RGE_SFF_1GBASELX_CAPABLE	0x02
+#define RGE_SFF_1GBASECX_CAPABLE	0x04
+#define RGE_SFF_1GBASET_CAPABLE		0x08
+
+/* RGE_SFF_CABLE bitmasks */
+#define RGE_SFF_DA_PASSIVE_CABLE	0x04
+#define RGE_SFF_DA_ACTIVE_CABLE		0x08
 
 /* Tx descriptor */
 struct rge_tx_desc {
@@ -459,9 +515,6 @@ struct rge_queues {
 #define RGE_LINK_VECTOR_8127		29
 #define RGE_MIN_MSIX_VECTORS_8127	30
 
-#define RGE_RSS_KEY_SIZE		40
-#define RGE_RSS_MAX_INDTBL_SIZE		128
-
 /* Ram version */
 #define RGE_MAC_R25D_1_RCODE_VER	0x0027
 #define RGE_MAC_R25D_2_RCODE_VER	0x0031
@@ -542,6 +595,13 @@ struct rge_softc {
 	int			rge_nphy;
 
 	struct timeout		sc_timeout;	/* tick timeout */
+
+	uint8_t			rge_sfp_cable;
+	uint8_t			rge_sfp_comp10g;
+	uint8_t			rge_sfp_comp1g;
+	uint8_t			rge_sfp_nominal;
+	uint32_t		rge_sfp_speed;
+	int			rge_sfp_present;
 
 	uint64_t		rge_mcodever;
 	uint16_t		rge_rcodever;

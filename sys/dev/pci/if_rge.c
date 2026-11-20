@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.49 2026/11/05 07:54:52 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.50 2026/11/20 02:46:15 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2026
@@ -109,6 +109,19 @@ int		rge_reset(struct rge_softc *);
 void		rge_iff(struct rge_softc *);
 void		rge_init_rss(struct rge_softc *);
 int		rge_chipinit(struct rge_softc *);
+void		rge_sds_disable_i2c(struct rge_softc *);
+void		rge_sds_init_i2c(struct rge_softc *, uint16_t);
+int		rge_sds_read_i2c_byte(struct rge_softc *, uint8_t, uint8_t *);
+uint16_t	rge_sds_read_phy(struct rge_softc *, uint16_t, uint16_t,
+		    uint16_t);
+void		rge_sds_write_phy(struct rge_softc *, uint16_t, uint16_t,
+		    uint16_t, uint16_t);
+int		rge_sds_send_i2c_cmd(struct rge_softc *, uint16_t);
+void		rge_sds_set_phy_speed(struct rge_softc *, uint32_t);
+void		rge_sds_set_phy_speed_10g(struct rge_softc *);
+void		rge_sds_set_phy_speed_1g(struct rge_softc *);
+int		rge_sds_wait_i2c_cmd(struct rge_softc *);
+int		rge_sds_wait_phy_cmd(struct rge_softc *);
 void		rge_set_phy_power(struct rge_softc *, int);
 void		rge_ephy_config(struct rge_softc *);
 void		rge_ephy_config_mac_r25(struct rge_softc *);
@@ -134,6 +147,7 @@ void		rge_hw_reset(struct rge_softc *);
 void		rge_disable_phy_ocp_pwrsave(struct rge_softc *);
 void		rge_patch_phy_mcu(struct rge_softc *, int);
 void		rge_add_media_types(struct rge_softc *);
+void		rge_add_media_types_fiber(struct rge_softc *);
 void		rge_config_imtype(struct rge_softc *, int);
 void		rge_disable_aspm_clkreq(struct rge_softc *);
 void		rge_disable_hw_im(struct rge_softc *);
@@ -159,6 +173,11 @@ void		rge_write_phy_ocp(struct rge_softc *, uint16_t, uint16_t);
 uint16_t	rge_read_phy_ocp(struct rge_softc *, uint16_t);
 uint32_t	rge_rxstatus_mask(struct rge_softc *, int);
 int		rge_get_link_status(struct rge_softc *);
+int		rge_get_sffpage(struct rge_softc *, struct if_sffpage *);
+int		rge_identify_sfp(struct rge_softc *);
+int		rge_is_sfp_10g(struct rge_softc *);
+int		rge_is_sfp_connected(struct rge_softc *);
+void		rge_setup_sfp(struct rge_softc *);
 void		rge_txstart(void *);
 void		rge_tick(void *);
 void		rge_link_state(struct rge_softc *);
@@ -269,7 +288,8 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 		printf(": RTL8125D");
 		break;
 	case 0x6c900000:
-		if (rge_read_mac_ocp(sc, 0xd006) == 0x0007) {
+		if ((rge_read_mac_ocp(sc, RGE_INT_HW_ID) &
+		    RGE_INT_HW_ID_MASK) == 0x07) {
 			sc->rge_type = MAC_R27ATF;
 			printf(": RTL8127ATF");
 		} else
@@ -829,6 +849,12 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFRXR:
 		error = rge_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
+	case SIOCGIFSFFPAGE:
+		if (sc->rge_type == MAC_R27ATF)
+			error = rge_get_sffpage(sc, (struct if_sffpage *)data);
+		else
+			error = ENXIO;
+		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
@@ -1213,6 +1239,7 @@ rge_ifmedia_upd(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_media;
+	uint32_t speed = 0;
 	int anar, gig, val;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
@@ -1224,6 +1251,40 @@ rge_ifmedia_upd(struct ifnet *ifp)
 		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0007);
 	else
 		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0001);
+
+	if (sc->rge_type == MAC_R27ATF) {
+		switch (IFM_SUBTYPE(ifm->ifm_media)) {
+		case IFM_AUTO:
+			if (!rge_identify_sfp(sc))
+				speed = rge_is_sfp_10g(sc) ? 10000 : 1000;
+			break;
+		case IFM_10G_AOC:
+		case IFM_10G_ER:
+		case IFM_10G_LR:
+		case IFM_10G_LRM:
+		case IFM_10G_SFP_CU:
+		case IFM_10G_SR:
+			speed = 10000;
+			ifp->if_baudrate = IF_Gbps(10);
+			break;
+		case IFM_1000_CX:
+		case IFM_1000_LX:
+		case IFM_1000_SX:
+		case IFM_1000_T:
+			speed = 1000;
+			ifp->if_baudrate = IF_Gbps(1);
+			break;
+		default:
+			printf("%s: unsupported media type\n",
+			    sc->sc_dev.dv_xname);
+			return (EINVAL);
+		}
+
+		RGE_SETBIT_2(sc, RGE_SDS_MOD_ABS, RGE_SDS_MOD_ABS_ENABLE);
+		rge_sds_set_phy_speed(sc, speed);
+
+		return (0);
+	}
 
 	val = rge_read_phy_ocp(sc, 0xa5d4);
 	switch (sc->rge_type) {
@@ -1301,15 +1362,50 @@ void
 rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct rge_softc *sc = ifp->if_softc;
-	uint16_t status = 0;
+	uint16_t status;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (rge_get_link_status(sc)) {
-		ifmr->ifm_status |= IFM_ACTIVE;
+	if (!rge_get_link_status(sc))
+		return;
 
-		status = RGE_READ_2(sc, RGE_PHYSTAT);
+	ifmr->ifm_status |= IFM_ACTIVE;
+	status = RGE_READ_2(sc, RGE_PHYSTAT);
+
+	if (sc->rge_type == MAC_R27ATF) {
+		ifmr->ifm_active |= IFM_FDX;
+
+		if (status & RGE_PHYSTAT_1000MBPS) {
+			if (sc->rge_sfp_comp1g & RGE_SFF_1GBASECX_CAPABLE)
+				ifmr->ifm_active |= IFM_1000_CX;
+			else if (sc->rge_sfp_cable & RGE_SFF_DA_PASSIVE_CABLE)
+				ifmr->ifm_active |= IFM_1000_CX;
+			else if (sc->rge_sfp_comp1g & RGE_SFF_1GBASELX_CAPABLE)
+				ifmr->ifm_active |= IFM_1000_LX;
+			else if (sc->rge_sfp_comp1g & RGE_SFF_1GBASESX_CAPABLE)
+				ifmr->ifm_active |= IFM_1000_SX;
+			else if (sc->rge_sfp_comp1g & RGE_SFF_1GBASET_CAPABLE)
+				ifmr->ifm_active |= IFM_1000_T;
+		} else if (status & RGE_PHYSTAT_10000MBPS) {
+			if (sc->rge_sfp_cable & RGE_SFF_DA_ACTIVE_CABLE)
+				ifmr->ifm_active |= IFM_10G_AOC;
+			else if (sc->rge_sfp_comp10g &
+			    RGE_SFF_10GBASEER_CAPABLE)
+				ifmr->ifm_active |= IFM_10G_ER;
+			else if (sc->rge_sfp_comp10g &
+			    RGE_SFF_10GBASELR_CAPABLE)
+				ifmr->ifm_active |= IFM_10G_LR;
+			else if (sc->rge_sfp_comp10g &
+			    RGE_SFF_10GBASELRM_CAPABLE)
+				ifmr->ifm_active |= IFM_10G_LRM;
+			else if (sc->rge_sfp_cable & RGE_SFF_DA_PASSIVE_CABLE)
+				ifmr->ifm_active |= IFM_10G_SFP_CU;
+			else if (sc->rge_sfp_comp10g &
+			    RGE_SFF_10GBASESR_CAPABLE)
+				ifmr->ifm_active |= IFM_10G_SR;
+		}
+	} else {
 		if ((status & RGE_PHYSTAT_FDX) ||
 		    (status & (RGE_PHYSTAT_1000MBPS | RGE_PHYSTAT_2500MBPS |
 		    RGE_PHYSTAT_5000MBPS | RGE_PHYSTAT_10000MBPS)))
@@ -2200,10 +2296,10 @@ rge_reset(struct rge_softc *sc)
 	}
 	if (i == RGE_TIMEOUT) {
 		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
-		return ETIMEDOUT;
+		return (ETIMEDOUT);
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -2300,12 +2396,199 @@ rge_chipinit(struct rge_softc *sc)
 	int error;
 
 	if ((error = rge_exit_oob(sc)) != 0)
-		return error;
+		return (error);
 	rge_set_phy_power(sc, 1);
 	rge_hw_init(sc);
 	rge_hw_reset(sc);
 
-	return 0;
+	return (0);
+}
+
+void
+rge_sds_disable_i2c(struct rge_softc *sc)
+{
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_EN, 0);
+}
+
+void
+rge_sds_init_i2c(struct rge_softc *sc, uint16_t addr)
+{
+	rge_sds_disable_i2c(sc);
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_CON, 0x65);
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_TAR, addr / 2);
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_FS_SCL_HCNT, 0x7a30);
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_FS_SCL_LCNT, 0x7a30);
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_EN, 1);
+}
+
+int
+rge_sds_read_i2c_byte(struct rge_softc *sc, uint8_t off, uint8_t *data)
+{
+	int error, ntries;
+
+	if ((error = rge_sds_send_i2c_cmd(sc, off)) != 0)
+		return (error);
+	error = rge_sds_send_i2c_cmd(sc,
+	    RGE_SDS_I2C_CMD_READ | RGE_SDS_I2C_CMD_STOP |
+	    RGE_SDS_I2C_CMD_RESTART);
+	if (error)
+		return (error);
+
+	for (ntries = 0; ntries < 10000; ntries++) {
+		if (rge_read_mac_ocp(sc, RGE_SDS_I2C_STS) &
+		    RGE_SDS_I2C_STS_RXFIFO_NOT_EMPTY) {
+			*data = rge_read_mac_ocp(sc, RGE_SDS_I2C_CMD) & 0x00ff;
+			return (0);
+		}
+		DELAY(1);
+	}
+
+	return (EIO);
+}
+
+uint16_t
+rge_sds_read_phy(struct rge_softc *sc, uint16_t index, uint16_t page,
+    uint16_t reg)
+{
+	RGE_WRITE_2(sc, RGE_SDS_ADDR, index << 11 | page << 5 | reg);
+	RGE_WRITE_2(sc, RGE_SDS_CMD, RGE_SDS_CMD_EXEC);
+
+	if (rge_sds_wait_phy_cmd(sc))
+		return (0xffff);
+
+	return (RGE_READ_2(sc, RGE_SDS_DATA_OUT));
+}
+
+void
+rge_sds_write_phy(struct rge_softc *sc, uint16_t index, uint16_t page,
+    uint16_t reg, uint16_t val)
+{
+	RGE_WRITE_2(sc, RGE_SDS_DATA_IN, val);
+	RGE_WRITE_2(sc, RGE_SDS_ADDR, index << 11 | page << 5 | reg);
+	RGE_WRITE_2(sc, RGE_SDS_CMD, RGE_SDS_CMD_EXEC | RGE_SDS_CMD_WE);
+
+	rge_sds_wait_phy_cmd(sc);
+}
+
+int
+rge_sds_send_i2c_cmd(struct rge_softc *sc, uint16_t cmd)
+{
+	int error;
+
+	if ((error = rge_sds_wait_i2c_cmd(sc)) != 0)
+		return (error);
+	rge_write_mac_ocp(sc, RGE_SDS_I2C_CMD, cmd);
+
+	return (0);
+}
+
+void
+rge_sds_set_phy_speed(struct rge_softc *sc, uint32_t speed)
+{
+	uint16_t val;
+
+	val = rge_sds_read_phy(sc, 0, 1, 31) & ~0x0008;
+	rge_sds_write_phy(sc, 0, 1, 31, val);
+	val = rge_sds_read_phy(sc, 0, 2, 0) & ~0x3040;
+	rge_sds_write_phy(sc, 0, 2, 0, val | 0x0040);
+
+	/* Reset SerDes PHY. */
+	RGE_CLRBIT_1(sc, 0x2350, 0x01);
+	DELAY(1);
+	RGE_WRITE_2(sc, 0x233a, 0x801f);
+	RGE_SETBIT_1(sc, 0x2350, 0x01);
+	DELAY(10);
+
+	if (speed == 10000)
+		rge_sds_set_phy_speed_10g(sc);
+	else
+		rge_sds_set_phy_speed_1g(sc);
+}
+
+void
+rge_sds_set_phy_speed_10g(struct rge_softc *sc)
+{
+	uint16_t val;
+
+	rge_sds_write_phy(sc, 0, 31, 11,
+	    rge_sds_read_phy(sc, 0, 31, 11) | 0x000c);
+
+	RGE_WRITE_2(sc, 0x233a, 0x801a);
+
+	val = RGE_READ_2(sc, 0x233e) & ~0x3003;
+	RGE_WRITE_2(sc, 0x233e, val | 0x1000);
+
+	rge_write_phy_ocp(sc, 0xc40a, 0x0);
+	rge_write_phy_ocp(sc, 0xc466, 0x3);
+	rge_write_phy_ocp(sc, 0xc808, 0x0);
+	rge_write_phy_ocp(sc, 0xc80a, 0x0);
+	val = rge_read_phy_ocp(sc, 0xc804) & ~0x000f;
+	rge_write_phy_ocp(sc, 0xc804, val | 0x000c);
+
+	sc->rge_sfp_speed = 10000;
+}
+
+void
+rge_sds_set_phy_speed_1g(struct rge_softc *sc)
+{
+	uint16_t val;
+
+	rge_sds_write_phy(sc, 0, 2, 4,
+	    rge_sds_read_phy(sc, 0, 2, 4) | 0x0180);
+
+	rge_sds_write_phy(sc, 0, 1, 31,
+	    rge_sds_read_phy(sc, 0, 1, 31) | 0x0008);
+	val = rge_sds_read_phy(sc, 0, 2, 0) & ~0x3040;
+	rge_sds_write_phy(sc, 0, 2, 0, val | 0x1040);
+	rge_sds_write_phy(sc, 0, 0, 4,
+	    rge_sds_read_phy(sc, 0, 0, 4) | 0x0004);
+	RGE_WRITE_2(sc, 0x233a, 0x8004);
+
+	val = RGE_READ_2(sc, 0x233e) & ~0x3003;
+	RGE_WRITE_2(sc, 0x233e, val | 0x0002);
+
+	rge_write_phy_ocp(sc, 0xc40a, 0x0);
+	rge_write_phy_ocp(sc, 0xc466, 0x0);
+	rge_write_phy_ocp(sc, 0xc808, 0x0);
+	rge_write_phy_ocp(sc, 0xc80a, 0x0);
+	val = rge_read_phy_ocp(sc, 0xc804) & ~0x000f;
+	rge_write_phy_ocp(sc, 0xc804, val | 0x000c);
+
+	sc->rge_sfp_speed = 1000;
+}
+
+int
+rge_sds_wait_i2c_cmd(struct rge_softc *sc)
+{
+	int ntries;
+
+	for (ntries = 0; ntries < 1000; ntries++) {
+		if (rge_read_mac_ocp(sc, RGE_SDS_I2C_STS) &
+		    RGE_SDS_I2C_STS_TXFIFO_NOT_FULL)
+			return (0);
+		DELAY(1);
+	}
+
+	return (EIO);
+}
+
+int
+rge_sds_wait_phy_cmd(struct rge_softc *sc)
+{
+	int ntries;
+
+	for (ntries = 0; ntries < 100; ntries++) {
+		if (!(RGE_READ_2(sc, RGE_SDS_CMD) & RGE_SDS_CMD_EXEC))
+			break;
+		DELAY(1);
+	}
+	if (ntries == 100) {
+		printf("%s: timeout waiting for SerDes PHY\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
+	return (0);
 }
 
 void
@@ -2534,7 +2817,7 @@ rge_mcu_get_bin_version(const struct rge_pair *macp, uint16_t entries)
 		binver |= macp[entries - 4 + i].val;
 	}
 
-	return binver;
+	return (binver);
 }
 
 void
@@ -3999,6 +4282,11 @@ rge_patch_phy_mcu(struct rge_softc *sc, int set)
 void
 rge_add_media_types(struct rge_softc *sc)
 {
+	if (sc->rge_type == MAC_R27ATF) {
+		rge_add_media_types_fiber(sc);
+		return;
+	}
+
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX, 0, NULL);
@@ -4017,6 +4305,33 @@ rge_add_media_types(struct rge_softc *sc)
 		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_T | IFM_FDX,
 		    0, NULL);
 	}
+}
+
+void
+rge_add_media_types_fiber(struct rge_softc *sc)
+{
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_CX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_CX | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_LX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_LX | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_SX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_SX | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_T, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
+
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_AOC, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_AOC | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_ER, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_ER | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_LR, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_LR | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_LRM, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_LRM | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_SFP_CU, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_SFP_CU | IFM_FDX, 0,
+	    NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_SR, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_SR | IFM_FDX, 0, NULL);
 }
 
 void
@@ -4149,7 +4464,7 @@ rge_exit_oob(struct rge_softc *sc)
 	rge_write_mac_ocp(sc, 0xc0bc, 0x00ff);
 
 	if ((error = rge_reset(sc)) != 0)
-		return error;
+		return (error);
 
 	/* Disable OOB. */
 	RGE_CLRBIT_1(sc, RGE_MCUCMD, RGE_MCUCMD_IS_OOB);
@@ -4184,7 +4499,7 @@ rge_exit_oob(struct rge_softc *sc)
 		RGE_PHY_CLRBIT(sc, 0xa468, 0x000a);
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -4391,6 +4706,86 @@ rge_get_link_status(struct rge_softc *sc)
 	return ((RGE_READ_2(sc, RGE_PHYSTAT) & RGE_PHYSTAT_LINK) ? 1 : 0);
 }
 
+int
+rge_get_sffpage(struct rge_softc *sc, struct if_sffpage *sff)
+{
+	size_t i;
+	int error;
+
+	rge_sds_init_i2c(sc, sff->sff_addr);
+
+	for (i = 0; i < sizeof(sff->sff_data); i++) {
+		error = rge_sds_read_i2c_byte(sc, i, &sff->sff_data[i]);
+		if (error)
+			break;
+	}
+
+	rge_sds_disable_i2c(sc);
+
+	return (error);
+}
+
+int
+rge_identify_sfp(struct rge_softc *sc)
+{
+	int error;
+
+	rge_sds_init_i2c(sc, IFSFF_ADDR_EEPROM);
+	error = rge_sds_read_i2c_byte(sc, RGE_SFF_1GBE_COMP,
+	    &sc->rge_sfp_comp1g);
+	if (error)
+		goto out;
+	error = rge_sds_read_i2c_byte(sc, RGE_SFF_10GBE_COMP,
+	    &sc->rge_sfp_comp10g);
+	if (error)
+		goto out;
+	error = rge_sds_read_i2c_byte(sc, RGE_SFF_CABLE, &sc->rge_sfp_cable);
+	if (error)
+		goto out;
+	error = rge_sds_read_i2c_byte(sc, RGE_SFF_NOMINAL,
+	    &sc->rge_sfp_nominal);
+out:
+	rge_sds_disable_i2c(sc);
+	return (error);
+}
+
+int
+rge_is_sfp_10g(struct rge_softc *sc)
+{
+	return ((sc->rge_sfp_nominal > 0x63 && sc->rge_sfp_nominal < 0x70) ?
+	    1 : 0);
+}
+
+int
+rge_is_sfp_connected(struct rge_softc *sc)
+{
+	return (!(RGE_READ_2(sc, RGE_SDS_MOD_ABS) & RGE_SDS_MOD_ABS_ABSENT));
+}
+
+void
+rge_setup_sfp(struct rge_softc *sc)
+{
+	uint32_t speed;
+
+	/* Check if SFP module is connected. */
+	if (!rge_is_sfp_connected(sc)) {
+		sc->rge_sfp_present = 0;
+		return;
+	}
+
+	if (sc->rge_sfp_present || rge_identify_sfp(sc))
+		return;
+
+	sc->rge_sfp_present = 1;
+
+	if (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media) != IFM_AUTO)
+		return;
+
+	speed = rge_is_sfp_10g(sc) ? 10000 : 1000;
+	if (sc->rge_sfp_speed != speed)
+		rge_sds_set_phy_speed(sc, speed);
+}
+
 void
 rge_txstart(void *arg)
 {
@@ -4408,6 +4803,8 @@ rge_tick(void *arg)
 
 	s = splnet();
 	rge_link_state(sc);
+	if (sc->rge_type == MAC_R27ATF)
+		rge_setup_sfp(sc);
 	splx(s);
 
 	timeout_add_sec(&sc->sc_timeout, 1);
