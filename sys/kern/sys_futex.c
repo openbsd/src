@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.26 2025/08/18 03:51:45 dlg Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.27 2026/11/20 10:40:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -177,16 +177,13 @@ futex_addrs(struct proc *p, struct futex *f, uint32_t *uaddr, int flags)
 	struct uvm_object *obj = NULL;
 	struct vm_amap *amap = NULL;
 	voff_t off = (vaddr_t)uaddr;
-	struct process *ps;
+	struct process *ps = p->p_p;
 
-	if (ISSET(flags, FT_PRIVATE))
-		ps = p->p_p;
-	else {
-		ps = NULL;
-
+	if (!ISSET(flags, FT_PRIVATE)) {
 		vm_map_lock_read(map);
 		if (uvm_map_lookup_entry(map, (vaddr_t)uaddr, &entry) &&
 		    entry->inheritance == MAP_INHERIT_SHARE) {
+			ps = NULL;
 			if (UVM_ET_ISOBJ(entry)) {
 				obj = entry->object.uvm_obj;
 				off = entry->offset +
