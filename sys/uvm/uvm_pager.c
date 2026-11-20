@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.101 2026/11/19 18:08:06 renaud Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.102 2026/11/20 16:48:12 renaud Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -778,5 +778,7 @@ uvm_aio_aiodone(struct buf *bp)
 		/* XXX daddr_t -> int */
 		uvm_swap_markbad(slot, npages);
 	}
+	if (bp->b_vp)
+		brelvp(bp);
 	pool_put(&bufpool, bp);
 }
