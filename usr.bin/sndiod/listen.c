@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.20 2026/11/20 09:18:15 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.21 2026/11/20 09:18:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,7 +75,8 @@ listen_close(struct listen *f)
 int
 listen_new_un(unsigned int unit)
 {
-	int len, sock;
+	size_t len;
+	int sock;
 	struct sockaddr_un sockname;
 	struct listen *f;
 	struct stat sb;
