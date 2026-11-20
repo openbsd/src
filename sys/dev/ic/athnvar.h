@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.42 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.43 2026/11/20 18:10:12 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -513,7 +513,6 @@ struct athn_softc {
 	int				kc_entries;
 
 	void				*eep;
-	const void			*eep_def;
 	uint32_t			eep_base;
 	uint32_t			eep_size;
 
