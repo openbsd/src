@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.112 2026/10/29 17:26:59 miod Exp $	*/
+/*	$OpenBSD: athn.c,v 1.113 2026/11/20 18:10:33 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -110,7 +110,6 @@ void		athn_init_dma(struct athn_softc *);
 void		athn_rx_start(struct athn_softc *);
 void		athn_inc_tx_trigger_level(struct athn_softc *);
 int		athn_stop_rx_dma(struct athn_softc *);
-int		athn_rx_abort(struct athn_softc *);
 void		athn_tx_reclaim(struct athn_softc *, int);
 int		athn_tx_pending(struct athn_softc *, int);
 void		athn_stop_tx_dma(struct athn_softc *, int);
@@ -1845,23 +1844,6 @@ athn_stop_rx_dma(struct athn_softc *sc)
 		DELAY(100);
 	}
 	DPRINTF(("Rx DMA failed to stop\n"));
-	return (ETIMEDOUT);
-}
-
-int
-athn_rx_abort(struct athn_softc *sc)
-{
-	int ntries;
-
-	AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
-	for (ntries = 0; ntries < 1000; ntries++) {
-		if (MS(AR_READ(sc, AR_OBS_BUS_1), AR_OBS_BUS_1_RX_STATE) == 0)
-			return (0);
-		DELAY(10);
-	}
-	DPRINTF(("Rx failed to go idle in 10ms\n"));
-	AR_CLRBITS(sc, AR_DIAG_SW, AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT);
-	AR_WRITE_BARRIER(sc);
 	return (ETIMEDOUT);
 }
 
