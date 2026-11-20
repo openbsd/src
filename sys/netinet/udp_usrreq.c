@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.352 2026/11/12 13:59:44 henning Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.353 2026/11/20 21:23:53 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -987,7 +987,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 				goto release;
 			}
 			cm = (struct cmsghdr *)cmsgs;
-			if (cm->cmsg_len < CMSG_LEN(0) ||
+			if (cm->cmsg_len < CMSG_LEN(0) || cm->cmsg_len > clen ||
 			    CMSG_ALIGN(cm->cmsg_len) > clen) {
 				error = EINVAL;
 				goto release;
