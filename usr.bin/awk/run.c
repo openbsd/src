@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.90 2026/05/09 02:13:21 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.91 2026/11/20 02:59:12 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1245,8 +1245,13 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			pad = wid>prec ? wid - prec : 0;  // has to be >= 0
 			int i, precb;
 			
+			precb = u8_char2byte(t, prec);
+			if (pad > INT_MAX - (p - buf) - precb - 1)
+				FATAL("formatted string too long");
+			adjbuf(&buf, &bufsize, (p - buf) + pad + precb + 1,
+			    0, &p, "format utf8 string");
+
 			if (ljust) { // print prec chars from t, then pad blanks
-				precb = u8_char2byte(t, prec);
 				for (i = 0; i < precb; i++) {
 					//putchar(t[i]);
 					*p++ = t[i];
@@ -1260,7 +1265,6 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 					//printf(" ");
 					*p++ = ' ';
 				}
-				precb = u8_char2byte(t, prec);
 				for (i = 0; i < precb; i++) {
 					//putchar(t[i]);
 					*p++ = t[i];
@@ -1346,6 +1350,11 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				prec = 1;
 			pad = wid>prec ? wid - prec : 0;  // has to be >= 0
 			int i;
+
+			if (pad > INT_MAX - (p - buf) - n - 1)
+				FATAL("formatted string too long");
+			adjbuf(&buf, &bufsize, (p - buf) + pad + n + 1,
+			    0, &p, "format utf8 string");
 
 			if (ljust) { // print one char from t, then pad blanks
 				for (i = 0; i < n; i++)
