@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.149 2026/10/29 14:51:58 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.150 2026/11/20 10:36:23 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -19270,8 +19270,8 @@ qwx_wmi_send_init_country_cmd(struct qwx_softc *sc, int pdev_id,
 		cmd->cc_info.regdom_id = init_cc_params->cc_info.regdom_id;
 		break;
 	default:
-		DPRINTF("%s: unknown cc params flags: 0x%x",
-		    init_cc_params->flags);
+		DPRINTF("%s: unknown cc params flags: %u",
+		    sc->sc_dev.dv_xname, init_cc_params->flags);
 		ret = EINVAL;
 		goto err;
 	}
