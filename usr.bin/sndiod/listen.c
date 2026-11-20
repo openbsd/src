@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.19 2026/11/12 05:18:04 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.20 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -86,11 +86,11 @@ listen_new_un(unsigned int unit)
 	uid = geteuid();
 	if (uid == 0) {
 		mask = 022;
-		len = snprintf(sockname.sun_path, sizeof(sockname.sun_path),
+		len = xsnprintf(sockname.sun_path, sizeof(sockname.sun_path),
 		    SOCKPATH_DIR "/" SOCKPATH_FILE "%u", unit);
 	} else {
 		mask = 077;
-		len = snprintf(sockname.sun_path, sizeof(sockname.sun_path),
+		len = xsnprintf(sockname.sun_path, sizeof(sockname.sun_path),
 		    SOCKPATH_DIR "-%u/" SOCKPATH_FILE "%u", uid, unit);
 	}
 	if (len >= sizeof(sockname.sun_path)) {
@@ -170,7 +170,7 @@ listen_new_tcp(char *addr, unsigned int port)
 	 * obtain a list of possible addresses for the host/port
 	 */
 	memset(&aihints, 0, sizeof(struct addrinfo));
-	snprintf(serv, sizeof(serv), "%u", port);
+	xsnprintf(serv, sizeof(serv), "%u", port);
 	host = strcmp(addr, "-") == 0 ? NULL : addr;
 	aihints.ai_flags |= AI_PASSIVE;
 	aihints.ai_socktype = SOCK_STREAM;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.62 2026/08/30 06:21:05 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.63 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -647,7 +647,7 @@ main(int argc, char **argv)
 	for (i = 0; i < MIDITHRU_NMAX; i++) {
 		char name[CTL_NAMEMAX];
 
-		snprintf(name, sizeof(name), "default-%d", i);
+		xsnprintf(name, sizeof(name), "default-%d", i);
 		midithru_new(name);
 	}
 

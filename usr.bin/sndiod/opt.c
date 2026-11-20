@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.27 2026/08/12 11:03:19 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.28 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -402,7 +402,7 @@ opt_setalt(struct opt *o, struct dev *d)
 	char buf[128];
 
 	for (a = o->alt_list; a != NULL; a = a->next) {
-		n += snprintf(buf + n, n >= sizeof(buf) ? 0 : sizeof(buf) - n,
+		n += xsnprintf(buf + n, n >= sizeof(buf) ? 0 : sizeof(buf) - n,
 		    "%s%s", a->dev->path, (a->next != NULL) ? ", " : "");
 	}
 	logx(2, "%s: alt -> %s", o->name, buf);

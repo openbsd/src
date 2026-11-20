@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.12 2026/07/09 09:27:39 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.13 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -63,7 +63,7 @@ dev_sioctl_ondesc(void *arg, struct sioctl_desc *desc, int val)
 	if (desc->group[0] == 0)
 		group = d->name;
 	else {
-		if (snprintf(group_buf, CTL_NAMEMAX, "%s/%s",
+		if (xsnprintf(group_buf, CTL_NAMEMAX, "%s/%s",
 			d->name, desc->group) >= CTL_NAMEMAX)
 			return;
 		group = group_buf;

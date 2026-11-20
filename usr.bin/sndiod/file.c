@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.29 2026/11/12 05:14:53 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.30 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -288,20 +288,20 @@ size_t
 filelist_fmt(char *buf, size_t size, struct pollfd *pfd, int ret)
 {
 	struct file *f;
-	char *p = buf, *end = buf + size;
 	const char *sep = "";
+	size_t n = 0;
 	int i;
 
 	for (f = file_list; f != NULL; f = f->next) {
-		p += snprintf(p, p < end ? end - p : 0, "%s%s:", sep, f->name);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "%s%s:", sep, f->name);
 		for (i = 0; i < f->nfds; i++) {
-			p += snprintf(p, p < end ? end - p : 0, " 0x%x",
+			n += xsnprintf(buf + n, n < size ? size - n : 0, " 0x%x",
 			    ret ? pfd->revents : pfd->events);
 			pfd++;
 		}
 		sep = ", ";
 	}
-	return p - buf;
+	return n;
 }
 #endif
 

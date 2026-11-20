@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.71 2026/08/30 13:49:19 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.72 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -742,12 +742,12 @@ sock_hello(struct sock *f)
 	 */
 	if (type & AMSG_TYPE_MAGIC) {
 		type = type & ~AMSG_TYPE_MAGIC;
-		snprintf(name, sizeof(name), "%s%s",
+		xsnprintf(name, sizeof(name), "%s%s",
 		    type == AMSG_TYPE_MIDITHRU ? "default-" : "",
 		    p->opt);
 	} else {
 		type = type >> 4;
-		snprintf(name, sizeof(name), "%s%d",
+		xsnprintf(name, sizeof(name), "%s%d",
 		    type == AMSG_TYPE_MIDITHRU ? "default-" : "",
 		    type & 0xf);
 	}

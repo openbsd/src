@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.147 2026/11/12 05:19:05 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.148 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -138,22 +138,21 @@ size_t
 chans_fmt(char *buf, size_t size, int mode, int pmin, int pmax, int rmin, int rmax)
 {
 	const char *sep = "";
-	char *end = buf + size;
-	char *p = buf;
+	size_t n = 0;
 
 	if (mode & MODE_PLAY) {
-		p += snprintf(p, p < end ? end - p : 0, "play %d:%d", pmin, pmax);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "play %d:%d", pmin, pmax);
 		sep = ", ";
 	}
 	if (mode & MODE_REC) {
-		p += snprintf(p, p < end ? end - p : 0, "%srec %d:%d", sep, rmin, rmax);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "%srec %d:%d", sep, rmin, rmax);
 		sep = ", ";
 	}
 	if (mode & MODE_MON) {
-		p += snprintf(p, p < end ? end - p : 0, "%smon", sep);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "%smon", sep);
 	}
 
-	return p - buf;
+	return n;
 }
 
 /*
@@ -765,7 +764,7 @@ dev_new(char *path, struct aparams *par, unsigned int hold, unsigned int autovol
 	d->slot_list = NULL;
 	d->master = MIDI_MAXCTL;
 	d->master_enabled = 0;
-	snprintf(d->name, CTL_NAMEMAX, "%u", d->num);
+	xsnprintf(d->name, CTL_NAMEMAX, "%u", d->num);
 	for (pd = &dev_list; *pd != NULL; pd = &(*pd)->next)
 		;
 	d->next = *pd;
@@ -1850,15 +1849,14 @@ ctlslot_update(struct ctlslot *s)
 size_t
 ctl_node_fmt(char *buf, size_t size, struct ctl_node *c)
 {
-	char *end = buf + size;
-	char *p = buf;
+	size_t n;
 
-	p += snprintf(buf, size, "%s", c->name);
+	n = xsnprintf(buf, size, "%s", c->name);
 
 	if (c->unit >= 0)
-		p += snprintf(p, p < end ? end - p : 0, "%d", c->unit);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "%d", c->unit);
 
-	return p - buf;
+	return n;
 }
 
 size_t
@@ -1866,54 +1864,53 @@ ctl_scope_fmt(char *buf, size_t size, struct ctl *c)
 {
 	switch (c->scope) {
 	case CTL_HW:
-		return snprintf(buf, size, "hw:%s/%u",
+		return xsnprintf(buf, size, "hw:%s/%u",
 		    c->u.hw.dev->name, c->u.hw.addr);
 	case CTL_DEV_MASTER:
-		return snprintf(buf, size, "dev_master:%s",
+		return xsnprintf(buf, size, "dev_master:%s",
 		    c->u.dev_master.dev->name);
 	case CTL_APP_LEVEL:
-		return snprintf(buf, size, "app_level:%s/%s",
+		return xsnprintf(buf, size, "app_level:%s/%s",
 		    c->u.app_level.opt->name, c->u.app_level.app->name);
 	case CTL_OPT_DEV:
-		return snprintf(buf, size, "opt_dev:%s/%s",
+		return xsnprintf(buf, size, "opt_dev:%s/%s",
 		    c->u.opt_dev.opt->name, c->u.opt_dev.dev->name);
 	case CTL_OPT_MODE:
-		return snprintf(buf, size, "opt_mode:%s/%s",
+		return xsnprintf(buf, size, "opt_mode:%s/%s",
 		    c->u.opt_mode.opt->name, opt_modes[c->u.opt_mode.idx].name);
 	case CTL_MIDI_PORT:
-		return snprintf(buf, size, "midi_port:%s/%u",
+		return xsnprintf(buf, size, "midi_port:%s/%u",
 		    c->u.midi.midithru->name, c->u.midi.port->num);
 	case CTL_MIDI_THRU:
-		return snprintf(buf, size, "midi_thru:%s",
+		return xsnprintf(buf, size, "midi_thru:%s",
 		    c->u.midi.midithru->name);
 	default:
-		return snprintf(buf, size, "unknown");
+		return xsnprintf(buf, size, "unknown");
 	}
 }
 
 size_t
 ctl_fmt(char *buf, size_t size, struct ctl *c)
 {
-	char *end = buf + size;
-	char *p = buf;
+	size_t n;
 
-	p += snprintf(p, size, "%s/", c->group);
-	p += ctl_node_fmt(p, p < end ? end - p : 0, &c->node0);
-	p += snprintf(p, p < end ? end - p : 0, ".%s", c->func);
+	n = xsnprintf(buf, size, "%s/", c->group);
+	n += ctl_node_fmt(buf + n, n < size ? size - n : 0, &c->node0);
+	n += xsnprintf(buf + n, n < size ? size - n : 0, ".%s", c->func);
 
 	switch (c->type) {
 	case CTL_VEC:
 	case CTL_LIST:
 	case CTL_SEL:
-		p += snprintf(p, p < end ? end - p : 0, "[");
-		p += ctl_node_fmt(p, p < end ? end - p : 0, &c->node1);
-		p += snprintf(p, p < end ? end - p : 0, "]");
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "[");
+		n += ctl_node_fmt(buf + n, n < size ? size - n : 0, &c->node1);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "]");
 	}
 
 	if (c->display[0] != 0)
-		p += snprintf(p, size, " (%s)", c->display);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, " (%s)", c->display);
 
-	return p - buf;
+	return n;
 }
 
 int

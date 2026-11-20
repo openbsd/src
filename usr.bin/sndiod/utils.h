@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.8 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: utils.h,v 1.9 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,6 +18,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdarg.h>
 #include <stddef.h>
 
 #define logx(n, ...)						\
@@ -29,7 +30,14 @@
 void panic(void);
 void log_flush(void);
 void log_do(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
-
+size_t xvsnprintf(char *, size_t, const char *, va_list)
+	__attribute__((__format__ (printf, 3, 0)))
+	__attribute__((__nonnull__ (3)))
+	__attribute__((__bounded__(__string__, 1, 2)));
+size_t xsnprintf(char *, size_t, const char *, ...)
+	__attribute__((__format__ (printf, 3, 4)))
+	__attribute__((__nonnull__ (3)))
+	__attribute__((__bounded__ (__string__, 1, 2)));
 void *xmalloc(size_t);
 char *xstrdup(char *);
 void xfree(void *);

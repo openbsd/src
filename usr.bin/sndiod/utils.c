@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.9 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: utils.c,v 1.10 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -21,6 +21,7 @@
  * slow syscalls are no longer disruptive, e.g. at the end of the poll() loop.
  */
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -135,4 +136,33 @@ xstrdup(char *s)
 	p = xmalloc(size);
 	memcpy(p, s, size);
 	return p;
+}
+
+size_t
+xvsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
+{
+	int n;
+
+	if (size > INT_MAX) {
+		logx(1, "%s: overflow", __func__);
+		panic();
+	}
+	n = vsnprintf(buf, size, fmt, ap);
+	if (n == -1) {
+		logx(1, "%s: conversion failed", __func__);
+		panic();
+	}
+	return (size_t)n;
+}
+
+size_t
+xsnprintf(char *buf, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	size_t n;
+
+	va_start(ap, fmt);
+	n = xvsnprintf(buf, size, fmt, ap);
+	va_end(ap);
+	return n;
 }

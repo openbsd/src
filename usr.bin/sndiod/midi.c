@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.47 2026/09/24 08:41:41 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.48 2026/11/20 09:18:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,17 +56,16 @@ size_t
 midiev_fmt(char *buf, size_t size, unsigned char *ev, size_t len)
 {
 	const char *sep = "";
-	char *end = buf + size;
-	char *p = buf;
+	size_t n = 0;
 	int i;
 
 	for (i = 0; i < len; i++) {
 		if (i == 1)
 			sep = " ";
-		p += snprintf(p, p < end ? end - p : 0, "%s%02x", sep, ev[i]);
+		n += xsnprintf(buf + n, n < size ? size - n : 0, "%s%02x", sep, ev[i]);
 	}
 
-	return p - buf;
+	return n;
 }
 
 void
@@ -425,7 +424,7 @@ port_new(char *path, unsigned int mode, int hold)
 	c->refcnt = 0;
 	c->midi = midi_new(&port_midiops, c, mode);
 	c->num = midi_portnum++;
-	snprintf(name, sizeof(name), "%d", c->num);
+	xsnprintf(name, sizeof(name), "%d", c->num);
 	c->midithru = midithru_new(name);
 	c->midithru->prefportmask |= c->midi->self;
 	c->midithru->fixed = 1;
@@ -658,7 +657,7 @@ midithru_ref(struct midithru *t)
 			}
 			c->refcnt++;
 		}
-		snprintf(name, sizeof(name), "%u", c->num);
+		xsnprintf(name, sizeof(name), "%u", c->num);
 		ctl_new(CTL_MIDI_PORT, t, c,
 		    CTL_LIST, "", "", "server", -1, "port",
 		    name, -1, 1, !!(t->portmask & c->midi->self));
