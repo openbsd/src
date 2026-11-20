@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.24 2025/10/21 05:18:47 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.25 2026/11/20 13:12:18 kevlo Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -236,7 +236,7 @@ static const struct sff_media_map sff8472_media_map = {
 	.dist_om2		= SFF8472_DIST_OM2,
 	.scale_om2		= 10,
 	.dist_om3		= SFF8472_DIST_OM3,
-	.scale_om3		= 20,
+	.scale_om3		= 10,
 	.dist_cu		= SFF8472_DIST_CU,
 };
 
