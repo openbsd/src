@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic_fdt.c,v 1.5 2026/05/28 19:03:44 mglocker Exp $	*/
+/*	$OpenBSD: qciic_fdt.c,v 1.6 2026/11/21 20:09:38 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,6 +43,12 @@
 #define GENI_M_IRQ_STATUS		0x610
 #define GENI_M_IRQ_CLEAR		0x618
 #define  GENI_M_IRQ_CMD_DONE		(1 << 0)
+#define  GENI_M_IRQ_NACK		(1 << 10)
+#define  GENI_M_IRQ_BUS_PROTO		(1 << 12)
+#define  GENI_M_IRQ_ARB_LOST		(1 << 13)
+#define  GENI_M_IRQ_ERROR		(GENI_M_IRQ_NACK | \
+					 GENI_M_IRQ_BUS_PROTO | \
+					 GENI_M_IRQ_ARB_LOST)
 #define GENI_TX_FIFO			0x700
 #define GENI_RX_FIFO			0x780
 #define GENI_TX_FIFO_STATUS		0x800
@@ -140,20 +146,53 @@ qciic_fdt_release_bus(void *cookie, int flags)
 {
 }
 
+void
+qciic_fdt_rx_fifo_drain(struct qciic_fdt_softc *sc)
+{
+	uint32_t stat;
+	int n;
+
+	for (n = 0; n < 64; n++) {
+		stat = HREAD4(sc, GENI_RX_FIFO_STATUS);
+		if (GENI_RX_FIFO_STATUS_WC(stat) == 0)
+			break;
+		(void)HREAD4(sc, GENI_RX_FIFO);
+	}
+}
+
 int
 qciic_fdt_wait(struct qciic_fdt_softc *sc, uint32_t bits)
 {
-	uint32_t stat;
+	uint32_t stat, err = 0;
 	int timo;
 
 	for (timo = 50000; timo > 0; timo--) {
 		stat = HREAD4(sc, GENI_M_IRQ_STATUS);
-		if (stat & bits)
+		err = stat & GENI_M_IRQ_ERROR;
+		if (err || (stat & bits))
 			break;
 		delay(10);
 	}
 	if (timo == 0)
 		return ETIMEDOUT;
+
+	/*
+	 * An error can arrive before the command finishes.  Give it a
+	 * moment to settle rather than leaving the serial engine busy.
+	 */
+	if (err) {
+		for (timo = 1000; timo > 0; timo--) {
+			stat = HREAD4(sc, GENI_M_IRQ_STATUS);
+			if (stat & bits)
+				break;
+			delay(10);
+		}
+
+		if (err & GENI_M_IRQ_NACK)
+			return ENXIO;
+
+		return EIO;
+	}
 
 	return 0;
 }
@@ -216,6 +255,9 @@ qciic_fdt_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 	struct qciic_fdt_softc *sc = cookie;
 	uint32_t m_cmd, m_param, stat;
 	int error;
+
+	/* A previous failed transfer can leave data in the FIFO. */
+	qciic_fdt_rx_fifo_drain(sc);
 
 	m_param = addr << GENI_M_CMD0_SLV_ADDR_SHIFT;
 	m_param |= GENI_M_CMD0_STOP_STRETCH;
