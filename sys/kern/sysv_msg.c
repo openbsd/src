@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.53 2026/11/08 08:42:55 miod Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.54 2026/11/21 20:07:32 mvs Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -635,9 +635,9 @@ msg_copyin(struct msg *msg, const char *ubuf, size_t len)
 		m = m_get(M_WAIT, MT_DATA);
 		if ((xfer = len - msg->msg_len) >= MINCLSIZE) {
 			MCLGET(m, M_WAIT);
-			xfer = min(xfer, MCLBYTES);
+			xfer = ulmin(xfer, MCLBYTES);
 		} else {
-			xfer = min(xfer, MLEN);
+			xfer = ulmin(xfer, MLEN);
 		}
 		m->m_len = xfer;
 		msg->msg_len += xfer;
@@ -668,7 +668,7 @@ msg_copyout(struct msg *msg, char *ubuf, size_t *len, int msgflg)
 		panic("SysV message longer than MSGMAX");
 #endif
 
-	if ((total = min(*len, msg->msg_len)) < msg->msg_len) {
+	if ((total = ulmin(*len, msg->msg_len)) < msg->msg_len) {
 		if ((msgflg & MSG_NOERROR) == 0)
 			return (E2BIG);
 	}
@@ -680,7 +680,7 @@ msg_copyout(struct msg *msg, char *ubuf, size_t *len, int msgflg)
 	*len = total;
 
 	for (done = 0, m = msg->msg_data; m; m = m->m_next) {
-		if ((xfer = min(m->m_len, total - done)) == 0)
+		if ((xfer = ulmin(m->m_len, total - done)) == 0)
 			break;
 		if ((error = copyout(mtod(m, void *), ubuf, xfer)))
 			return (error);
