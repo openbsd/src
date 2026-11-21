@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.501 2026/11/13 00:32:04 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.502 2026/11/21 20:06:50 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2289,6 +2289,11 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	 */
 	if (cnt > ARG_MAX) {
 		/* Hard cap, so don't return ENOMEM, caller can't retry */
+		error = EINVAL;
+		goto out;
+	}
+
+	if (*oldlenp == 0) {
 		error = EINVAL;
 		goto out;
 	}
