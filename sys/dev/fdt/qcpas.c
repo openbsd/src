@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.15 2026/11/19 18:58:45 mglocker Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.16 2026/11/21 17:04:23 mglocker Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -943,6 +943,13 @@ qcpas_glink_send(void *cookie, void *buf, int len)
 	struct qcpas_glink_intent *it;
 	struct glink_msg msg;
 	uint32_t chunk_size, left_size;
+
+	/*
+	 * If the remote side hasn't advertised any intents yet, then the
+	 * channel isn't ready for sending.
+	 */ 
+	if (TAILQ_EMPTY(&ch->ch_r_intents))
+		return;
 
 	TAILQ_FOREACH(it, &ch->ch_r_intents, it_q) {
 		if (!it->it_inuse)
