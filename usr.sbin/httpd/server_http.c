@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.175 2026/11/21 06:50:14 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.176 2026/11/21 07:45:22 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1438,16 +1438,64 @@ server_response(struct httpd *httpd, struct client *clt)
 {
 	char			 path[PATH_MAX];
 	char			 hostname[HOST_NAME_MAX + 1];
+	char			*urlproto = NULL, *urlhost = NULL;
+	char			*urlpath = NULL;
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct http_descriptor	*resp = clt->clt_descresp;
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = &srv->srv_conf;
 	struct kv		*kv, key, *host;
 	char			*query;
+	int			 http11;
+
+	if (desc->http_path == NULL)
+		goto fail;
+
+	/* Multiple Host headers are not allowed (RFC 9112 3.2) */
+	key.kv_key = "Host";
+	if ((host = kv_find(&desc->http_headers, &key)) != NULL &&
+	    !TAILQ_EMPTY(&host->kv_children))
+		goto fail;
+
+	http11 = (strcmp(desc->http_version, "HTTP/1.1") == 0);
+
+	/* A client MUST send a Host header field in all HTTP/1.1 */
+	if (host == NULL && http11)
+		goto fail;
+
+	/*
+	 * Clients may send the full URL (GET http://host/path),
+	 * Use the path as request path. The host from the URL wins
+	 * over the Host header, which origin servers must ignore in
+	 * this case (RFC 9112 3.2.2).
+	 */
+	if (*desc->http_path != '/') {
+		if (parse_url(desc->http_path, &urlproto, &urlhost,
+		    &urlpath) == -1)
+			goto fail;
+		if ((strcasecmp(urlproto, "http://") != 0 &&
+		    strcasecmp(urlproto, "https://") != 0) ||
+		    strchr(urlhost, '@') != NULL)
+			goto fail;
+
+		free(desc->http_path);
+		desc->http_path = urlpath;
+		urlpath = NULL;
+
+		if (host != NULL) {
+			if (kv_set(host, "%s", urlhost) == -1)
+				goto fail;
+		} else if ((host = kv_add(&desc->http_headers, "Host",
+		    urlhost)) == NULL)
+			goto fail;
+
+		free(urlproto);
+		free(urlhost);
+		urlproto = urlhost = NULL;
+	}
 
 	/* Preserve original path */
-	if (desc->http_path == NULL ||
-	    (desc->http_path_orig = strdup(desc->http_path)) == NULL)
+	if ((desc->http_path_orig = strdup(desc->http_path)) == NULL)
 		goto fail;
 
 	/* Decode the URL */
@@ -1461,9 +1509,7 @@ server_response(struct httpd *httpd, struct client *clt)
 	if ((desc->http_path = strdup(path)) == NULL)
 		goto fail;
 
-	key.kv_key = "Host";
-	if ((host = kv_find(&desc->http_headers, &key)) != NULL &&
-	    host->kv_value != NULL) {
+	if (host != NULL && host->kv_value != NULL) {
 		if (strlcpy(hostname, host->kv_value, sizeof(hostname)) >=
 		    sizeof(hostname))
 			goto fail;
@@ -1476,11 +1522,7 @@ server_response(struct httpd *httpd, struct client *clt)
 			goto fail;
 	}
 
-	if (strcmp(desc->http_version, "HTTP/1.1") == 0) {
-		/* Host header is mandatory */
-		if (host == NULL)
-			goto fail;
-
+	if (http11) {
 		/* Is the connection persistent? */
 		key.kv_key = "Connection";
 		if ((kv = kv_find(&desc->http_headers, &key)) != NULL &&
@@ -1498,10 +1540,7 @@ server_response(struct httpd *httpd, struct client *clt)
 			clt->clt_persist = 0;
 	}
 
-	/*
-	 * Do we have a Host header and matching configuration?
-	 * XXX the Host can also appear in the URL path.
-	 */
+	/* Do we have a Host header and matching configuration? */
 	if (host != NULL) {
 		if ((srv_conf = server_by_host_header(clt, hostname)) == NULL)
 			goto fail;
@@ -1581,6 +1620,9 @@ server_response(struct httpd *httpd, struct client *clt)
 
 	return (server_file(httpd, clt));
  fail:
+	free(urlproto);
+	free(urlhost);
+	free(urlpath);
 	server_abort_http(clt, 400, "bad request");
 	return (-1);
 }

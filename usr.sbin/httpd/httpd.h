@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.193 2026/11/21 06:50:14 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.194 2026/11/21 07:45:22 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -792,6 +792,7 @@ void			 print_custom_header(const char *,
 int			 header_exists(struct server_config *, const char *);
 struct custom_header	*header_dup(const struct custom_header *);
 struct header_rule	*header_rule_dup(const struct header_rule *);
+int			 parse_url(const char *, char **, char **, char **);
 
 extern struct httpd *httpd_env;
 

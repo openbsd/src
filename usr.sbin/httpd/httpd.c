@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.92 2026/11/05 06:02:11 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.93 2026/11/21 07:45:22 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1296,4 +1296,50 @@ header_rule_dup(const struct header_rule *src)
 		fatal("out of memory");
 
 	return (r);
+}
+
+int
+parse_url(const char *url, char **protoptr, char **hostptr, char **pathptr)
+{
+	char	*p, *proto = NULL, *host = NULL, *path = NULL;
+
+	/* return error if it is not a URL */
+	if ((p = strstr(url, ":/")) == NULL ||
+	    (strcspn(url, ":/") != (size_t)(p - url)))
+		return (-1);
+
+	/* get protocol */
+	if ((proto = strdup(url)) == NULL)
+		goto fail;
+	p = proto + (p - url);
+
+	/* get host */
+	p += strspn(p, ":/");
+	if (*p == '\0' || (host = strdup(p)) == NULL)
+		goto fail;
+	*p = '\0';
+
+	/* find and copy path or default to "/" */
+	if ((p = strchr(host, '/')) == NULL)
+		p = "/";
+	if ((path = strdup(p)) == NULL)
+		goto fail;
+
+	/* strip path after host */
+	host[strcspn(host, "/")] = '\0';
+
+	log_debug("%s: %s proto %s, host %s, path %s", __func__,
+	    url, proto, host, path);
+
+	*protoptr = proto;
+	*hostptr = host;
+	*pathptr = path;
+
+	return (0);
+
+ fail:
+	free(proto);
+	free(host);
+	free(path);
+	return (-1);
 }
