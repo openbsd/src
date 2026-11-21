@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.18 2026/11/20 09:21:45 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.19 2026/11/21 12:01:07 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -549,8 +549,8 @@ nca_history_load(void)
 		if (RB_INSERT(nca_tree, &nca_tree, nca) != NULL) {
 			warnx("duplicate nca_tree entry for %s", nca->location);
 			ca_free(nca);
-			nca = NULL;
 		}
+		nca = NULL;
 	}
 
 	if (ferror(f))
@@ -823,8 +823,8 @@ ca_state_load(void)
 			warnx("duplicate entry for ca state tree at %s",
 			    ca->location);
 			ca_free(ca);
-			ca = NULL;
 		}
+		ca = NULL;
 	}
 
 	if (ferror(f))
