@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.103 2026/07/26 14:46:32 rsadowski Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.104 2026/11/21 06:50:14 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -248,12 +248,20 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 
 	if (srv_conf->flags & SRVFLAG_AUTH) {
+		if (clt->clt_remote_user == NULL) {
+			errstr = "location not authenticated";
+			goto fail;
+		}
 		if (fcgi_add_param(&param, "REMOTE_USER",
 		    clt->clt_remote_user, clt) == -1) {
 			errstr = "failed to encode param";
 			goto fail;
 		}
 	}
+
+	/* Do not pass the credentials of an authenticated request */
+	if (clt->clt_remote_user != NULL)
+		server_http_wipe_auth(desc);
 
 	/* Add HTTP_* headers */
 	if (server_headers(clt, desc, server_fcgi_writeheader, &param) == -1) {

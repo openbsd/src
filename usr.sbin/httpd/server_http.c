@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.174 2026/11/12 10:40:11 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.175 2026/11/21 06:50:14 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -65,6 +65,8 @@ char		*server_create_errdoc(struct server_config *, unsigned int,
 static char	*get_custom_headers(struct kvtree *);
 static struct server_config	*server_by_host_header(struct client *,
     char *);
+static int	 server_http_header_rules(struct client *,
+    struct server_config *);
 
 static struct http_method	 http_methods[] = HTTP_METHODS;
 static struct http_error	 http_errors[] = HTTP_ERRORS;
@@ -123,6 +125,7 @@ server_httpdesc_free(struct http_descriptor *desc)
 	desc->http_version = NULL;
 	free(desc->http_host);
 	desc->http_host = NULL;
+	server_http_wipe_auth(desc);
 
 	kv_purge(&desc->http_headers);
 	desc->http_lastheader = NULL;
@@ -165,6 +168,8 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 
 	clt_user = decoded;
 	*clt_pass++ = '\0';
+	/* May be called more than once per request */
+	free(clt->clt_remote_user);
 	if ((clt->clt_remote_user = strdup(clt_user)) == NULL)
 		goto done;
 
@@ -200,12 +205,20 @@ done:
 	if (fp != NULL)
 		fclose(fp);
 
-	if (ba != NULL && ba->kv_value != NULL) {
-		explicit_bzero(ba->kv_value, strlen(ba->kv_value));
-		explicit_bzero(decoded, sizeof(decoded));
-	}
-
+	explicit_bzero(decoded, sizeof(decoded));
 	return (ret);
+}
+
+/* Wipe the credentials of a request */
+void
+server_http_wipe_auth(struct http_descriptor *desc)
+{
+	struct kv	*ba, key;
+
+	key.kv_key = "Authorization";
+	if ((ba = kv_find(&desc->http_headers, &key)) != NULL &&
+	    ba->kv_value != NULL)
+		explicit_bzero(ba->kv_value, strlen(ba->kv_value));
 }
 
 static int
@@ -1431,7 +1444,6 @@ server_response(struct httpd *httpd, struct client *clt)
 	struct server_config	*srv_conf = &srv->srv_conf;
 	struct kv		*kv, key, *host;
 	char			*query;
-	struct header_rule	*mrule = NULL;
 
 	/* Preserve original path */
 	if (desc->http_path == NULL ||
@@ -1521,24 +1533,13 @@ server_response(struct httpd *httpd, struct client *clt)
 		server_abort_http(clt, 500, desc->http_path);
 		return (-1);
 	}
-	if ((mrule = server_match_header_rule(srv_conf, desc)) != NULL) {
-		switch (mrule->action) {
-		case HEADER_ACTION_DROP:
-			(void)server_log_http(clt, 0, 0);
-			server_close(clt, mrule->return_uri);
-			return (-1);
-		case HEADER_ACTION_RDR:
-		case HEADER_ACTION_RETURN:
-			server_abort_http(clt, mrule->return_code,
-			    mrule->return_uri);
-			return (-1);
-		default:
-			break;
-		}
-	}
 
 	/* Optional rewrite */
 	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
+		/* Header rules of the rewriting location apply as well */
+		if (server_http_header_rules(clt, srv_conf) == -1)
+			return (-1);
+
 		/* Expand macros */
 		if (server_expand_http(clt, srv_conf->path,
 		    path, sizeof(path)) == NULL)
@@ -1578,6 +1579,49 @@ server_response(struct httpd *httpd, struct client *clt)
 		}
 	}
 
+	return (server_file(httpd, clt));
+ fail:
+	server_abort_http(clt, 400, "bad request");
+	return (-1);
+}
+
+static int
+server_http_header_rules(struct client *clt, struct server_config *srv_conf)
+{
+	struct header_rule	*mrule;
+
+	if ((mrule = server_match_header_rule(srv_conf,
+	    clt->clt_descreq)) == NULL)
+		return (0);
+
+	switch (mrule->action) {
+	case HEADER_ACTION_DROP:
+		(void)server_log_http(clt, 0, 0);
+		server_close(clt, mrule->return_uri);
+		return (-1);
+	case HEADER_ACTION_RDR:
+	case HEADER_ACTION_RETURN:
+		server_abort_http(clt, mrule->return_code,
+		    mrule->return_uri);
+		return (-1);
+	default:
+		break;
+	}
+	return (0);
+}
+
+/*
+ * Enforce the access settings of the location that is about to
+ * serve the request.
+ */
+int
+server_http_access(struct client *clt, struct server_config *srv_conf)
+{
+	struct http_descriptor	*desc = clt->clt_descreq;
+
+	if (server_http_header_rules(clt, srv_conf) == -1)
+		return (-1);
+
 	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
 	    srv_conf->maxrequestbody) {
 		server_abort_http(clt, 413, "request body too large");
@@ -1589,19 +1633,21 @@ server_response(struct httpd *httpd, struct client *clt)
 		return (-1);
 	}
 
+	/* Location is blocked */
 	if (srv_conf->flags & SRVFLAG_BLOCK) {
 		server_abort_http(clt, srv_conf->return_code,
 		    srv_conf->return_uri);
 		return (-1);
-	} else if (srv_conf->flags & SRVFLAG_AUTH &&
+	}
+
+	/* Location requires authentication */
+	if (srv_conf->flags & SRVFLAG_AUTH &&
 	    server_http_authenticate(srv_conf, clt) == -1) {
 		server_abort_http(clt, 401, srv_conf->auth_realm);
 		return (-1);
-	} else
-		return (server_file(httpd, clt));
- fail:
-	server_abort_http(clt, 400, "bad request");
-	return (-1);
+	}
+
+	return (0);
 }
 
 const char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.84 2026/07/26 14:46:32 rsadowski Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.85 2026/11/21 06:50:14 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -219,6 +219,13 @@ server_file(struct httpd *env, struct client *clt)
 	char			 path[PATH_MAX];
 	const char		*stripped, *errstr = NULL;
 	int			 ret = 500;
+
+	/*
+	 * Check the location that serves the request as a directory
+	 * index may have changed it since last server_response
+	 */
+	if (server_http_access(clt, srv_conf) == -1)
+		return (-1);
 
 	if (srv_conf->flags & SRVFLAG_FCGI)
 		return (server_fcgi(env, clt));

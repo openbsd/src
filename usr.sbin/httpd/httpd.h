@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.192 2026/11/19 05:44:03 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.193 2026/11/21 06:50:14 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -700,6 +700,9 @@ int			 server_httpdesc_init(struct client *);
 void			 server_read_http(struct bufferevent *, void *);
 void			 server_abort_http(struct client *, unsigned int,
     const char *);
+int			 server_http_access(struct client *,
+    struct server_config *);
+void			 server_http_wipe_auth(struct http_descriptor *);
 int			 server_custom_headers(struct server_config *,
     struct kvtree *, unsigned int);
 struct header_rule	*server_match_header_rule(struct server_config *,
