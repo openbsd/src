@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.151 2026/10/02 09:40:22 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.152 2026/11/22 07:46:48 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1009,7 +1009,7 @@ pfr_create_kentry_unlocked(struct pfr_addr *ad, int flags)
 		panic("unknown pfra_type %d", ad->pfra_type);
 
 	if (flags & PFR_FLAG_USERIOCTL)
-		mflags |= PR_WAITOK;
+		mflags |= PR_WAITOK | PR_LIMITFAIL;
 	else
 		mflags |= PR_NOWAIT;
 
