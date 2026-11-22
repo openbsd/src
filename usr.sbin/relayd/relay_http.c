@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.109 2026/11/12 12:16:05 kirill Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.110 2026/11/22 19:10:11 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -83,6 +83,8 @@ char		*server_root_strip(char *, int);
 int		 relay_http_parse_startline(struct ctl_relay_event *, char *,
     enum httpmethod *);
 static int	 relay_url_log_match(const struct kv *, const char *);
+static void	 relay_log_rule(struct relay_rule *, struct http_descriptor *,
+    struct rsession *, struct ctl_relay_event *, u_int);
 
 static struct relayd	*env = NULL;
 
@@ -2047,6 +2049,8 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 		action = RES_DROP;
 	}
 
+	relay_log_rule(rule, desc, con, cre, action);
+
 	log_debug("%s: session %d: action %d", __func__,
 	    con->se_id, action);
 
@@ -2252,4 +2256,31 @@ relay_url_log_match(const struct kv *kv, const char *str)
 		return (kv_match_key(kv, str));
 	/* without a keyword, url log keys are case-insensitive glob(7) */
 	return (fnmatch(kv->kv_key, str, FNM_CASEFOLD) != FNM_NOMATCH);
+}
+
+static void
+relay_log_rule(struct relay_rule *rule, struct http_descriptor *desc,
+    struct rsession *con, struct ctl_relay_event *cre, u_int action)
+{
+	struct kv		*host, key;
+	const char		*meth;
+	char			 hbuf[128];
+
+	if (rule == NULL || !(rule->rule_flags & RULE_FLAG_LOG))
+		return;
+
+	memset(&key, 0, sizeof(key));
+	key.kv_key = "Host";
+	host = kv_find(&desc->http_headers, &key);
+	meth = relay_httpmethod_byid(desc->http_method);
+
+	(void)print_host(&con->se_in.ss, hbuf, sizeof(hbuf));
+
+	log_info("relay %s, session %d, rule %d: %s %s from %s: %s %s%s",
+	    con->se_relay->rl_conf.name, con->se_id, rule->rule_id,
+	    action == RES_PASS ? "pass" : "block",
+	    cre->dir == RELAY_DIR_REQUEST ? "request" : "response",
+	    hbuf, meth == NULL ? "-" : meth,
+	    host == NULL || host->kv_value == NULL ? "" : host->kv_value,
+	    desc->http_path == NULL ? "" : desc->http_path);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.227 2026/11/22 19:06:01 rsadowski Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.228 2026/11/22 19:10:11 rsadowski Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1165,6 +1165,15 @@ The connection is passed;
 .Xr relayd 8
 will continue to process the relay session normally.
 .El
+.Pp
+If the action is directly followed by the
+.Ic log
+keyword, the decision of a
+.Ic pass
+or
+.Ic block
+rule is logged for every request or response
+for which it is the deciding rule.
 .Pp
 These filter parameters can be used in the rules:
 .Bl -tag -width Ds

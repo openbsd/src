@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.273 2026/11/22 19:06:01 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.274 2026/11/22 19:10:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -154,6 +154,9 @@ relay_ruledebug(struct relay_rule *rule)
 
 	if (rule->rule_flags & RULE_FLAG_QUICK)
 		fprintf(stderr, "quick ");
+
+	if (rule->rule_flags & RULE_FLAG_LOG)
+		fprintf(stderr, "log ");
 
 	switch (rule->rule_af) {
 	case AF_INET:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.301 2026/11/22 19:06:01 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.302 2026/11/22 19:10:11 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -653,6 +653,7 @@ struct relay_rule {
 	objid_t			 rule_protoid;
 
 	u_int			 rule_action;
+	u_int			 action_log;
 #define RULE_SKIP_PROTO		 0
 #define RULE_SKIP_DIR		 1
 #define RULE_SKIP_AF		 2
@@ -663,6 +664,7 @@ struct relay_rule {
 	struct relay_rule	*rule_skip[RULE_SKIP_COUNT];
 
 #define RULE_FLAG_QUICK		0x01
+#define RULE_FLAG_LOG		0x02
 	u_int8_t		 rule_flags;
 
 	int			 rule_label;
