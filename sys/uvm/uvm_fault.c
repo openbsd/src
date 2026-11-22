@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.173 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.174 2026/11/22 01:40:01 gnezdo Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1583,7 +1583,7 @@ uvm_fault_lower_io(
 	struct uvm_object *uobj = *ruobj;
 	struct vm_page *pg;
 	boolean_t locked;
-	int gotpages, advice;
+	int gotpages, advice, nofault;
 	int error, result;
 	voff_t uoff;
 	vm_prot_t access_type;
@@ -1592,6 +1592,7 @@ uvm_fault_lower_io(
 	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 	access_type = flt->access_type & MASK(ufi->entry);
 	advice = ufi->entry->advice;
+	nofault = UVM_ET_ISNOFAULT(ufi->entry);
 
 	/* Upgrade to a write lock if needed. */
 	error = uvm_fault_lower_upgrade(flt, uobj);
@@ -1623,7 +1624,7 @@ uvm_fault_lower_io(
 			return ERESTART;
 		}
 
-		if (!UVM_ET_ISNOFAULT(ufi->entry))
+		if (!nofault)
 			return (EIO);
 
 		pg = PGO_DONTCARE;
