@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.54 2026/11/10 18:50:21 op Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.55 2026/11/22 16:36:50 op Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -340,7 +340,7 @@ m_flush(struct mproc *p)
 
 static struct imsg * current;
 
-static void
+static void __dead
 m_error(const char *error)
 {
 	fatalx("%s: %s: %s", proc_name(smtpd_process),
