@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.110 2026/11/22 19:10:11 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.111 2026/11/22 19:13:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -85,6 +85,7 @@ int		 relay_http_parse_startline(struct ctl_relay_event *, char *,
 static int	 relay_url_log_match(const struct kv *, const char *);
 static void	 relay_log_rule(struct relay_rule *, struct http_descriptor *,
     struct rsession *, struct ctl_relay_event *, u_int);
+static int	 relay_session_done(struct rsession *, const char *);
 
 static struct relayd	*env = NULL;
 
@@ -619,10 +620,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			}
 		}
 	}
-	if (con->se_done) {
-		relay_close(con, "last http read (done)", 0);
+	if (relay_session_done(con, "last http read (done)"))
 		return;
-	}
 	switch (relay_splice(cre)) {
 	case -1:
 		relay_close(con, strerror(errno), 1);
@@ -684,8 +683,8 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 		cre->toread = TOREAD_HTTP_HEADER;
 		bev->readcb = relay_read_http;
 	}
-	if (con->se_done)
-		goto done;
+	if (relay_session_done(con,"last http content read"))
+		return;
 	bufferevent_enable(bev, EV_READ);
 
 	if (cre->dst->bev && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(cre->dst->bev)) >
@@ -695,9 +694,6 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	if (bev->readcb != relay_read_httpcontent)
 		bev->readcb(bev, arg);
 	/* The callback readcb() might have freed the session. */
-	return;
- done:
-	relay_close(con, "last http content read", 0);
 	return;
  fail:
 	relay_close(con, strerror(errno), 1);
@@ -837,8 +833,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	}
 
  next:
-	if (con->se_done)
-		goto done;
+	if (relay_session_done(con, "last http chunk read (done)"))
+		return;
 	bufferevent_enable(bev, EV_READ);
 
 	if (cre->dst->bev && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(cre->dst->bev)) >
@@ -850,9 +846,6 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	/* The callback readcb() might have freed the session. */
 	return;
 
- done:
-	relay_close(con, "last http chunk read (done)", 0);
-	return;
  fail:
 	relay_close(con, strerror(errno), 1);
 }
@@ -2256,6 +2249,16 @@ relay_url_log_match(const struct kv *kv, const char *str)
 		return (kv_match_key(kv, str));
 	/* without a keyword, url log keys are case-insensitive glob(7) */
 	return (fnmatch(kv->kv_key, str, FNM_CASEFOLD) != FNM_NOMATCH);
+}
+
+static int
+relay_session_done(struct rsession *con, const char *msg)
+{
+	if (con->se_done) {
+		relay_close(con, msg, 0);
+		return (1);
+	}
+	return (0);
 }
 
 static void

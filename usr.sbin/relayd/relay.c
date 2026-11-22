@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.274 2026/11/22 19:10:10 rsadowski Exp $	*/
+/*	$OpenBSD: relay.c,v 1.275 2026/11/22 19:13:10 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -869,19 +869,15 @@ relay_write(struct bufferevent *bev, void *arg)
 
 	getmonotime(&con->se_tv_last);
 
-	if (con->se_done && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(bev)) == 0)
-		goto done;
+	if (con->se_done && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(bev)) == 0) {
+		relay_close(con, "last write (done)", 0);
+		return;
+	}
 	if (cre->dst->bev)
 		bufferevent_enable(cre->dst->bev, EV_READ);
-	if (relay_splice(cre->dst) == -1)
-		goto fail;
-
-	return;
- done:
-	relay_close(con, "last write (done)", 0);
-	return;
- fail:
-	relay_close(con, strerror(errno), 1);
+	if (relay_splice(cre->dst) == -1) {
+		relay_close(con, strerror(errno), 1);
+	}
 }
 
 void
@@ -915,22 +911,19 @@ relay_read(struct bufferevent *bev, void *arg)
 
 	if (!EVBUFFER_LENGTH(src))
 		return;
-	if (relay_bufferevent_write_buffer(cre->dst, src) == -1)
-		goto fail;
-	if (con->se_done)
-		goto done;
+	if (relay_bufferevent_write_buffer(cre->dst, src) == -1) {
+		relay_close(con, strerror(errno), 1);
+		return;
+	}
+	if (con->se_done) {
+		relay_close(con, "last read (done)", 0);
+		return;
+	}
 	if (cre->dst->bev)
 		bufferevent_enable(cre->dst->bev, EV_READ);
 	if (cre->dst->bev && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(cre->dst->bev)) >
 	    (size_t)RELAY_MAX_PREFETCH * proto->tcpbufsiz)
 		bufferevent_disable(bev, EV_READ);
-
-	return;
- done:
-	relay_close(con, "last read (done)", 0);
-	return;
- fail:
-	relay_close(con, strerror(errno), 1);
 }
 
 /*
