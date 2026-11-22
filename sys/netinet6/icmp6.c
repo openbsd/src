@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.282 2026/11/12 13:59:44 henning Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.283 2026/11/22 17:30:41 gnezdo Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1205,7 +1205,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
-		return;
+		goto freeit;
 
 	/* if we are router, we don't update route by icmp6 redirect */
 	if (i_am_router)
