@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.94 2026/11/21 07:08:26 bket Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.95 2026/11/22 07:08:13 gnezdo Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -542,9 +542,13 @@ pppoe_dispatch_disc_pkt(struct mbuf *m)
 			break;
 		case PPPOE_TAG_MAX_PAYLOAD:
 			if (!max_payloadtag) {
+				if (len != sizeof(max_payload)) {
+					err_msg = "TAG MAX_PAYLOAD ERROR";
+					break;
+				}
 				n = m_pulldown(m, off, len,
 				    &noff);
-				if (n == NULL || len != sizeof(max_payload)) {
+				if (n == NULL) {
 					err_msg = "TAG MAX_PAYLOAD ERROR";
 					m = NULL;
 					break;
