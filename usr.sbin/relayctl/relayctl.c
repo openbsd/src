@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.68 2026/09/07 09:29:27 rsadowski Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.69 2026/11/22 19:06:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,6 +39,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 #include "parser.h"
 
 __dead void	 usage(void);
@@ -51,6 +52,7 @@ char		*print_table_status(int, int);
 char		*print_relay_status(int);
 void		 print_statistics(struct ctl_stats [PROC_MAX_INSTANCES+1]);
 void		 print_imsg(struct imsg *, const char *);
+u_int8_t	 get_loglevel(enum actions);
 
 struct imsgname {
 	int type;
@@ -101,9 +103,11 @@ main(int argc, char *argv[])
 	struct sockaddr_un	 sun;
 	struct parse_result	*res;
 	struct imsg		 imsg;
+	struct ctl_logopt	 lo;
 	int			 ctl_sock;
 	int			 done = 0;
-	int			 n, relayd_log_level = 0;
+	int			 n;
+	u_int8_t		 loglevel;
 	int			 ch;
 	const char		*sockname;
 
@@ -216,13 +220,29 @@ main(int argc, char *argv[])
 	case MONITOR:
 		imsg_compose(ibuf, IMSG_CTL_NOTIFY, 0, 0, -1, NULL, 0);
 		break;
-	case LOG_VERBOSE:
-		relayd_log_level = 2;
+	case LOG_LV_VERBOSE:
+	case LOG_LV_BRIEF:
+		warnx("\"log %s\" is deprecated, use \"log level %s\"",
+		    res->action == LOG_LV_VERBOSE ? "verbose" : "brief",
+		    res->action == LOG_LV_VERBOSE ? "debug" : "info");
 		/* FALLTHROUGH */
-	case LOG_BRIEF:
-		imsg_compose(ibuf, IMSG_CTL_VERBOSE, 0, 0, -1,
-		    &relayd_log_level, sizeof(relayd_log_level));
+	case LOG_LV_WARN:
+	case LOG_LV_INFO:
+	case LOG_LV_DEBUG:
+		loglevel = get_loglevel(res->action);
+		imsg_compose(ibuf, IMSG_CTL_LOGLEVEL, 0, 0, -1,
+		    &loglevel, sizeof(loglevel));
 		printf("logging request sent.\n");
+		done = 1;
+		break;
+	case LOG_OPT_ENABLE:
+		/* FALLTHROUGH */
+	case LOG_OPT_DISABLE:
+		lo.opt = res->log_opt;
+		lo.enable = (res->action == LOG_OPT_ENABLE);
+		imsg_compose(ibuf, IMSG_CTL_LOGOPTION, 0, 0, -1,
+		    &lo, sizeof(lo));
+		printf("logoption request sent.\n");
 		done = 1;
 		break;
 	}
@@ -263,8 +283,13 @@ main(int argc, char *argv[])
 				done = show_command_output(&imsg);
 				break;
 			case NONE:
-			case LOG_VERBOSE:
-			case LOG_BRIEF:
+			case LOG_LV_WARN:
+			case LOG_LV_INFO:
+			case LOG_LV_DEBUG:
+			case LOG_LV_VERBOSE:
+			case LOG_LV_BRIEF:
+			case LOG_OPT_ENABLE:
+			case LOG_OPT_DISABLE:
 			case RELOAD:
 			case LOAD:
 				break;
@@ -279,6 +304,23 @@ main(int argc, char *argv[])
 	free(ibuf);
 
 	return (error ? 1 : 0);
+}
+
+u_int8_t
+get_loglevel(enum actions action)
+{
+	switch (action) {
+	case LOG_LV_WARN:
+		return (LOGLVL_WARN);
+	case LOG_LV_INFO:
+	case LOG_LV_BRIEF:
+		return (LOGLVL_INFO);
+	case LOG_LV_DEBUG:
+	case LOG_LV_VERBOSE:
+		return (LOGLVL_DEBUG);
+	default:
+		return (LOGLVL_DEFAULT);
+	}
 }
 
 struct imsgname *

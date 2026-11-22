@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.35 2026/08/29 09:36:49 rsadowski Exp $
+.\" $OpenBSD: relayctl.8,v 1.36 2026/11/22 19:06:57 rsadowski Exp $
 .\"
 .\" Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 29 2026 $
+.Dd $Mdocdate: November 22 2026 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -57,10 +57,25 @@ Enable the host.
 Start checking its health again.
 .It Cm load Ar filename
 Reload the configuration from the specified file.
-.It Cm log brief
-Disable verbose debug logging.
-.It Cm log verbose
-Enable verbose debug logging.
+.It Cm log level Cm warn | info | debug
+Set the log level.
+Changes made via
+.Cm log
+are not persisted and are lost on the next configuration reload.
+.It Cm log enable | disable Ar type
+Enable or disable a logging option, where
+.Ar type
+is one of
+.Cm state-changes ,
+.Cm host-checks ,
+.Cm connection ,
+or
+.Cm connection-errors .
+.It Cm log Cm verbose | brief
+Deprecated, equivalent to
+.Cm log level debug
+and
+.Cm log level info .
 .It Cm monitor
 Continuously report any changes in the host checking engine and the
 .Xr pf 4

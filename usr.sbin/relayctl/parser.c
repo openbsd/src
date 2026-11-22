@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.29 2026/06/19 12:50:39 rsadowski Exp $	*/
+/*	$OpenBSD: parser.c,v 1.30 2026/11/22 19:06:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,6 +35,7 @@ enum token_type {
 	TABLEID,
 	RDRID,
 	KEYWORD,
+	LOGOPT,
 	PATH
 };
 
@@ -54,6 +55,8 @@ static const struct token t_rdr_id[];
 static const struct token t_table_id[];
 static const struct token t_host_id[];
 static const struct token t_log[];
+static const struct token t_loglevel[];
+static const struct token t_logopt_name[];
 static const struct token t_load[];
 
 static const struct token t_main[] = {
@@ -114,9 +117,27 @@ static const struct token t_host_id[] = {
 };
 
 static const struct token t_log[] = {
-	{KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
-	{KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{KEYWORD,	"level",	NONE,			t_loglevel},
+	{KEYWORD,	"enable",	LOG_OPT_ENABLE,		t_logopt_name},
+	{KEYWORD,	"disable",	LOG_OPT_DISABLE,	t_logopt_name},
+	{KEYWORD,	"verbose",	LOG_LV_VERBOSE,		NULL},
+	{KEYWORD,	"brief",	LOG_LV_BRIEF,		NULL},
+	{ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_loglevel[] = {
+	{KEYWORD,	"warn",		LOG_LV_WARN,	NULL},
+	{KEYWORD,	"info",		LOG_LV_INFO,	NULL},
+	{KEYWORD,	"debug",	LOG_LV_DEBUG,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_logopt_name[] = {
+	{LOGOPT,	"state-changes",	RELAYD_OPT_LOG_STATE_CHANGE,	NULL},
+	{LOGOPT,	"host-checks",		RELAYD_OPT_LOG_HOST_CHECKS,	NULL},
+	{LOGOPT,	"connection",		RELAYD_OPT_LOG_CONN,		NULL},
+	{LOGOPT,	"connection-errors",	RELAYD_OPT_LOG_CONN_ERR,	NULL},
+	{ENDTOKEN,	"",			NONE,				NULL}
 };
 
 static const struct token t_load[] = {
@@ -224,6 +245,21 @@ match_token(const char *word, const struct token *table,
 			t = &table[i];
 			match++;
 			break;
+		case LOGOPT:
+			if (word != NULL && strncmp(word, table[i].keyword,
+			    strlen(word)) == 0) {
+				/* Exact match wins over prefix matches. */
+				if (strcmp(word, table[i].keyword) == 0) {
+					match = 1;
+					t = &table[i];
+					res->log_opt = t->value;
+					goto done;
+				}
+				match++;
+				t = &table[i];
+				res->log_opt = t->value;
+			}
+			break;
 		case PATH:
 			if (!match && word != NULL && strlen(word) > 0) {
 				res->path = strdup(word);
@@ -235,6 +271,7 @@ match_token(const char *word, const struct token *table,
 			break;
 		}
 	}
+done:
 
 	if (match != 1) {
 		if (word == NULL)
@@ -270,6 +307,9 @@ show_valid_args(const struct token *table)
 			break;
 		case HOSTID:
 			fprintf(stderr, "  <hostid>\n");
+			break;
+		case LOGOPT:
+			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
 		case PATH:
 			fprintf(stderr, "  <path>\n");
