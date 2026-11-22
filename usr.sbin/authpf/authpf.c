@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.132 2026/09/06 18:49:03 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.133 2026/11/22 07:07:31 sashan Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -20,12 +20,14 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
+#include <net/route.h>
 
 #include <err.h>
 #include <errno.h>
@@ -51,6 +53,7 @@ static int	remove_stale_rulesets(void);
 static int	recursive_ruleset_purge(char *, char *);
 static int	change_filter(int, const char *, const char *);
 static int	change_table(int, const char *);
+static u_int	authpf_rdomain(void);
 static void	authpf_kill_states(void);
 
 int	dev;			/* pf device */
@@ -890,6 +893,32 @@ change_table(int add, const char *ipsrc)
 }
 
 /*
+ * Map the process routing table to its routing domain; a policy-routing
+ * rtable lives in rdomain 0.
+ */
+static u_int
+authpf_rdomain(void)
+{
+	struct rt_tableinfo	info;
+	int			mib[6];
+	size_t			len = sizeof(info);
+	int			rtable = getrtable();
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_TABLE;
+	mib[5] = rtable;
+
+	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1) {
+		syslog(LOG_ERR, "sysctl NET_RT_TABLE: %m");
+		exit(1);
+	}
+	return (info.rti_domainid);
+}
+
+/*
  * This is to kill off states that would otherwise be left behind stateful
  * rules. This means we don't need to allow in more traffic than we really
  * want to, since we don't have to worry about any luser sessions lasting
@@ -904,6 +933,12 @@ authpf_kill_states(void)
 
 	memset(&psk, 0, sizeof(psk));
 	memset(&target, 0, sizeof(target));
+
+	/*
+	 * DIOCKILLSTATES matches psk_rdomain exactly, so kill in the
+	 * routing domain the session runs in, not just rdomain 0.
+	 */
+	psk.psk_rdomain = authpf_rdomain();
 
 	if (inet_pton(AF_INET, ipsrc, &target.v4) == 1)
 		psk.psk_af = AF_INET;
