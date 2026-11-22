@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.292 2026/11/11 14:54:35 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.293 2026/11/22 22:39:41 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ sbfulllabel(dev_t dev, void (*strat)(struct buf *), const struct disklabel *lp)
 	uint64_t poffset, sector;
 	daddr_t fsblk;
 	size_t sz;
-	unsigned int i, is_ufs2, offset;
+	unsigned int i, is_ufs2 = 0, offset;
 	int error;
 
 	if (pp->p_fstype != FS_BSDFFS)
