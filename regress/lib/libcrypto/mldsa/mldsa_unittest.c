@@ -1,4 +1,4 @@
-/*	$OpenBSD: mldsa_unittest.c,v 1.2 2026/11/08 17:52:06 beck Exp $ */
+/*	$OpenBSD: mldsa_unittest.c,v 1.3 2026/11/22 22:42:41 kenjiro Exp $ */
 /*
  * Copyright (c) 2026 Bob Beck <beck@obtuse.com>
  *
@@ -197,6 +197,11 @@ MldsaUnitTest(int rank)
 	if (signature_len == signature2_len &&
 	    memcmp(signature, signature2, signature_len) == 0) {
 		warnx("signatures are not randomized");
+		failed |= 1;
+	}
+	if (!MLDSA_verify(pub, signature, signature_len, message,
+	    sizeof(message), NULL, 0)) {
+		warnx("MLDSA_verify first signature");
 		failed |= 1;
 	}
 	if (!MLDSA_verify(pub, signature2, signature2_len, message,
