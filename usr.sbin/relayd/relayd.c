@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.213 2026/11/01 07:41:35 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.214 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 {
 	int			 c;
 	int			 debug = 0;
-	u_int32_t		 opts = 0;
+	u_int16_t		 opts = 0;
 	struct relayd		*env;
 	struct privsep		*ps;
 	const char		*conffile = CONF_FILE;
@@ -154,7 +154,6 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			cli_verbose = 1;
-			opts |= RELAYD_OPT_VERBOSE;
 			break;
 		case 'P':
 			title = optarg;
@@ -195,15 +194,17 @@ main(int argc, char *argv[])
 	/* initialize the TLS session id to a random key for all relay procs */
 	arc4random_buf(env->sc_conf.tls_sid, sizeof(env->sc_conf.tls_sid));
 
+	env->sc_conf.loglevel = LOGLVL_DEFAULT;
+
 	if (parse_config(env->sc_conffile, env) == -1)
 		exit(1);
 
-	if (debug)
-		env->sc_conf.opts |= RELAYD_OPT_LOGUPDATE;
-
 	/* CLI always wins over log level form config. */
 	if (cli_verbose)
-		env->sc_conf.opts |= RELAYD_OPT_VERBOSE;
+		env->sc_conf.loglevel = LOGLVL_DEBUG;
+
+	if (debug)
+		env->sc_conf.opts |= RELAYD_OPT_LOG_STATE_CHANGE;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -212,7 +213,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", RELAYD_USER);
 
 	log_init(debug, LOG_DAEMON);
-	log_setverbose(env->sc_conf.opts & RELAYD_OPT_VERBOSE ? 2 : 0);
+	log_setlevel(env->sc_conf.loglevel);
 
 	if (env->sc_conf.opts & RELAYD_OPT_NOACTION)
 		ps->ps_noaction = 1;
@@ -325,7 +326,9 @@ parent_configure(struct relayd *env)
 
 	/* CLI always wins over log level form config. */
 	if (cli_verbose)
-		env->sc_conf.opts |= RELAYD_OPT_VERBOSE;
+		env->sc_conf.loglevel = LOGLVL_DEBUG;
+
+	log_setlevel(env->sc_conf.loglevel);
 
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
@@ -422,11 +425,29 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct relayd		*env = ps->ps_env;
 	struct ctl_demote	 demote;
 	struct ctl_netroute	 crt;
+	struct ctl_logopt	 logopt;
 	u_int			 v;
+	u_int8_t		 loglv;
 	char			*str = NULL;
 	size_t			 s;
 
 	switch (imsg_get_type(imsg)) {
+	case IMSG_CTL_LOGLEVEL:
+		if (imsg_get_data(imsg, &loglv, sizeof(loglv)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
+		env->sc_conf.loglevel = loglv;
+		log_setlevel(loglv);
+		proc_forward_imsg(ps, imsg, PROC_CA);
+		break;
+	case IMSG_CTL_LOGOPTION:
+		if (imsg_get_data(imsg, &logopt, sizeof(logopt)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
+		config_setlogoption(&logopt, &env->sc_conf);
+		break;
 	case IMSG_DEMOTE:
 		if (imsg_get_data(imsg, &demote, sizeof(demote)) == -1) {
 			log_warn("%s: imsg_get_data", __func__);

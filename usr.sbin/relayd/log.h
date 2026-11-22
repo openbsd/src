@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2026/06/15 11:02:13 rsadowski Exp $ */
+/*	$OpenBSD: log.h,v 1.3 2026/11/22 19:06:01 rsadowski Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,16 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+
+#define LOGLVL_WARN	0
+#define LOGLVL_INFO	1
+#define LOGLVL_DEBUG	2
+#define LOGLVL_DEFAULT	LOGLVL_INFO
+
+void		 log_setlevel(u_int8_t);
+u_int8_t	 log_getlevel(void);
+const char	*log_getlevel_str(u_int8_t);
+int		 log_is_debug(void);
 
 void		log_init(int, int);
 void		log_procinit(const char *);

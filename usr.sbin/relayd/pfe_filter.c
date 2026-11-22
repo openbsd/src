@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.70 2026/09/16 12:47:12 rsadowski Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.71 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -213,7 +213,7 @@ sync_table(struct relayd *env, struct rdr *rdr, struct table *table)
 		cnt = kill_srcnodes(env, table);
 	free(addlist);
 
-	if (env->sc_conf.opts & RELAYD_OPT_LOGUPDATE)
+	if (env->sc_conf.opts & RELAYD_OPT_LOG_STATE_CHANGE)
 		log_info("table %s: %d added, %d deleted, "
 		    "%d changed, %d killed", io.pfrio_table.pfrt_name,
 		    io.pfrio_nadd, io.pfrio_ndel, io.pfrio_nchange, cnt);

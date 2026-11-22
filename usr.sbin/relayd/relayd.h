@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.300 2026/11/01 07:28:43 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.301 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -947,11 +947,17 @@ struct ctl_conn {
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 
+struct ctl_logopt {
+	int	opt;
+	int	enable;
+};
+
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_OK,		/* answer to relayctl requests */
 	IMSG_CTL_FAIL,
-	IMSG_CTL_VERBOSE,
+	IMSG_CTL_LOGLEVEL,
+	IMSG_CTL_LOGOPTION,
 	IMSG_CTL_PROCFD,
 	IMSG_CTL_END,
 	IMSG_CTL_RDR,
@@ -1086,6 +1092,7 @@ struct relayd_config {
 	struct timeval		 statinterval;
 	u_int16_t		 prefork_relay;
 	u_int16_t		 opts;
+	u_int8_t		 loglevel;
 	u_int32_t		 flags;
 };
 
@@ -1142,12 +1149,15 @@ struct relayd {
 	int			 sc_reload;
 };
 
-#define RELAYD_OPT_VERBOSE		0x01
 #define RELAYD_OPT_NOACTION		0x04
-#define RELAYD_OPT_LOGUPDATE		0x08
-#define RELAYD_OPT_LOGHOSTCHECK		0x10
-#define RELAYD_OPT_LOGCON		0x20
-#define RELAYD_OPT_LOGCONERR		0x40
+#define RELAYD_OPT_LOG_STATE_CHANGE	0x08
+#define RELAYD_OPT_LOG_HOST_CHECKS	0x10
+#define RELAYD_OPT_LOG_CONN		0x20
+#define RELAYD_OPT_LOG_CONN_ERR		0x40
+
+#define RELAYD_OPT_LOG_ALL	(RELAYD_OPT_LOG_STATE_CHANGE | \
+    RELAYD_OPT_LOG_HOST_CHECKS | RELAYD_OPT_LOG_CONN | \
+    RELAYD_OPT_LOG_CONN_ERR)
 
 /* control.c */
 int		 control_init(struct privsep *, struct control_sock *);
@@ -1174,8 +1184,14 @@ const char	*print_time(struct timeval *, struct timeval *, char *, size_t);
 const char	*printb_flags(const u_int32_t, const char *);
 void		 getmonotime(struct timeval *);
 struct ibuf	*string2binary(const char *);
+#ifdef DEBUG
+void		 print_debug(const char *, ...)
+		__attribute__((__format__ (printf, 1, 2)));
 void		 print_hex(uint8_t *, off_t, size_t);
-void		 print_debug(const char *, ...);
+#else
+#define print_debug(...)	do { } while (0)
+#define print_hex(b, o, l)	do { } while (0)
+#endif
 
 /* pfe.c */
 void	 pfe(struct privsep *, struct privsep_proc *);
@@ -1440,6 +1456,8 @@ int			 imsg_composev_event(struct imsgev *, uint16_t,
 /* config.c */
 int	 config_init(struct relayd *);
 void	 config_purge(struct relayd *, u_int);
+void	 config_setlogoption(struct ctl_logopt *, struct relayd_config *);
+const char *config_getlogopt_str(int);
 int	 config_setreset(struct relayd *, u_int);
 int	 config_getreset(struct relayd *, struct imsg *);
 int	 config_getcfg(struct relayd *, struct imsg *);

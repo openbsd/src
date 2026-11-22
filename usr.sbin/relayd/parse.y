@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.273 2026/11/01 07:28:43 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.274 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -213,7 +213,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	context hostname interface table path
-%type	<v.number>	http_type loglevel quick
+%type	<v.number>	http_type logopt loglevel quick
 %type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	opttls opttlsclient optproxyproto
 %type	<v.number>	redirect_proto relay_proto match pflog
@@ -436,14 +436,11 @@ main		: INTERVAL NUMBER	{
 				YYERROR;
 			}
 		}
-		| LOG loglevel		{
+		| LOG logopt		{
 			conf->sc_conf.opts |= $2;
 		}
-		| LOG LEVEL VERBOSE	{
-			conf->sc_conf.opts |= RELAYD_OPT_VERBOSE;
-		}
-		| LOG LEVEL BRIEF	{
-			conf->sc_conf.opts &= ~RELAYD_OPT_VERBOSE;
+		| LOG loglevel		{
+			conf->sc_conf.loglevel = $2;
 		}
 		| TIMEOUT timeout	{
 			bcopy(&$2, &conf->sc_conf.timeout,
@@ -496,11 +493,41 @@ path		: /* nothing */		{ $$ = NULL; }
 context		: /* nothing */		{ $$ = NULL; }
 		| CONTEXT STRING	{ $$ = $2; }
 
-loglevel	: STATE CHANGES		{ $$ = RELAYD_OPT_LOGUPDATE; }
-		| HOST CHECKS		{ $$ = RELAYD_OPT_LOGHOSTCHECK; }
-		| CONNECTION		{ $$ = (RELAYD_OPT_LOGCON |
-						RELAYD_OPT_LOGCONERR); }
-		| CONNECTION ERRORS	{ $$ = RELAYD_OPT_LOGCONERR; }
+logopt		: STATE CHANGES		{ $$ = RELAYD_OPT_LOG_STATE_CHANGE; }
+		| HOST CHECKS		{ $$ = RELAYD_OPT_LOG_HOST_CHECKS; }
+		| CONNECTION		{ $$ = (RELAYD_OPT_LOG_CONN |
+						RELAYD_OPT_LOG_CONN_ERR); }
+		| CONNECTION ERRORS	{ $$ = RELAYD_OPT_LOG_CONN_ERR; }
+		;
+
+loglevel	: LEVEL STRING		{
+			if (strcmp($2, "warn") == 0)
+				$$ = LOGLVL_WARN;
+			else if (strcmp($2, "info") == 0)
+				$$ = LOGLVL_INFO;
+			else if (strcmp($2, "debug") == 0)
+				$$ = LOGLVL_DEBUG;
+			else {
+				yyerror("unknown log level: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| LEVEL VERBOSE		{
+			if (loadcfg)
+				log_warnx("%s:%d: \"log level verbose\" is "
+				    "deprecated, using \"log level debug\"",
+				    file->name, file->lineno);
+			$$ = LOGLVL_DEBUG;
+		}
+		| LEVEL BRIEF		{
+			if (loadcfg)
+				log_warnx("%s:%d: \"log level brief\" is "
+				    "deprecated, using \"log level info\"",
+				    file->name, file->lineno);
+			$$ = LOGLVL_INFO;
+		}
 		;
 
 rdr		: REDIRECT STRING	{
@@ -3227,6 +3254,7 @@ load_config(const char *filename, struct relayd *x_conf)
 
 	conf = x_conf;
 	conf->sc_conf.flags = 0;
+	conf->sc_conf.loglevel = LOGLVL_DEFAULT;
 
 	loadcfg = 1;
 	errors = 0;
@@ -3256,9 +3284,8 @@ load_config(const char *filename, struct relayd *x_conf)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((conf->sc_conf.opts & RELAYD_OPT_VERBOSE) && !sym->used)
-			fprintf(stderr, "warning: macro '%s' not "
-			    "used\n", sym->nam);
+		if (!sym->used)
+			log_debug("warning: macro '%s' not used", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);
 			free(sym->val);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.89 2026/09/16 00:25:02 rsadowski Exp $	*/
+/*	$OpenBSD: hce.c,v 1.90 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -197,7 +197,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	struct ctl_status	 st;
 	struct timeval		 tv_now, tv_dur;
 	u_long			 duration;
-	u_int			 logopt = RELAYD_OPT_LOGHOSTCHECK;
+	u_int			 logopt = RELAYD_OPT_LOG_HOST_CHECKS;
 	struct host		*h, *hostnst;
 	int			 hostup;
 	const char		*msg;
@@ -210,7 +210,7 @@ hce_notify_done(struct host *host, enum host_error he)
 		fatalx("%s: invalid table id", __func__);
 
 	if (hostnst->flags & F_DISABLE) {
-		if (env->sc_conf.opts & RELAYD_OPT_LOGUPDATE) {
+		if (env->sc_conf.opts & RELAYD_OPT_LOG_STATE_CHANGE) {
 			log_info("host %s, check %s%s (ignoring result, "
 			    "host disabled)",
 			    host->conf.name, table_check(table->conf.check),
@@ -249,7 +249,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	    sizeof(st)) == -1)
 		log_warn("%s: proc_compose", __func__);
 	if (host->up != host->last_up)
-		logopt = RELAYD_OPT_LOGUPDATE;
+		logopt = RELAYD_OPT_LOG_STATE_CHANGE;
 
 	getmonotime(&tv_now);
 	timersub(&tv_now, &host->cte.tv_start, &tv_dur);
@@ -289,8 +289,14 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	objid_t			 id;
 	struct host		*host;
 	struct table		*table;
+	struct ctl_logopt	 logopt;
 
 	switch (imsg_get_type(imsg)) {
+	case IMSG_CTL_LOGOPTION:
+		if (imsg_get_data(imsg, &logopt, sizeof(logopt)) == -1)
+			fatalx("%s: imsg_get_data", __func__);
+		config_setlogoption(&logopt, &env->sc_conf);
+		break;
 	case IMSG_HOST_DISABLE:
 		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
 			fatalx("%s: imsg_get_data", __func__);

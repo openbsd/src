@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.272 2026/09/20 17:47:16 beck Exp $	*/
+/*	$OpenBSD: relay.c,v 1.273 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -308,7 +308,7 @@ relay_privinit(struct relay *rlay)
 {
 	log_debug("%s: adding relay %s", __func__, rlay->rl_conf.name);
 
-	if (log_getverbose() > 1)
+	if (log_is_debug())
 		relay_protodebug(rlay);
 
 	switch (rlay->rl_proto->type) {
@@ -732,7 +732,8 @@ relay_connected(int fd, short sig, void *arg)
 
 	/* Log destination if it was changed in a keep-alive connection */
 	if ((con->se_table != con->se_table0) &&
-	    (env->sc_conf.opts & (RELAYD_OPT_LOGCON|RELAYD_OPT_LOGCONERR))) {
+	    (env->sc_conf.opts &
+	     (RELAYD_OPT_LOG_CONN|RELAYD_OPT_LOG_CONN_ERR))) {
 		con->se_table0 = con->se_table;
 		memset(&obuf, 0, sizeof(obuf));
 		(void)print_host(&con->se_out.ss, obuf, sizeof(obuf));
@@ -1758,8 +1759,8 @@ relay_close(struct rsession *con, const char *msg, int err)
 
 	event_del(&con->se_ev);
 
-	if ((env->sc_conf.opts & (RELAYD_OPT_LOGCON|RELAYD_OPT_LOGCONERR)) &&
-	    msg != NULL) {
+	if ((env->sc_conf.opts &
+	    (RELAYD_OPT_LOG_CONN|RELAYD_OPT_LOG_CONN_ERR)) && msg != NULL) {
 		bzero(&ibuf, sizeof(ibuf));
 		bzero(&obuf, sizeof(obuf));
 		(void)print_host(&con->se_in.ss, ibuf, sizeof(ibuf));
@@ -1769,7 +1770,7 @@ relay_close(struct rsession *con, const char *msg, int err)
 			ptr = evbuffer_readln(con->se_log, NULL,
 			    EVBUFFER_EOL_CRLF);
 		}
-		if (err == 0 && (env->sc_conf.opts & RELAYD_OPT_LOGCON))
+		if (err == 0 && (env->sc_conf.opts & RELAYD_OPT_LOG_CONN))
 			log_info("relay %s, "
 			    "session %d (%d active), %s, %s -> %s:%d, "
 			    "%s%s%s", rlay->rl_conf.name, con->se_id,
@@ -1777,7 +1778,7 @@ relay_close(struct rsession *con, const char *msg, int err)
 			    tag_id2name(con->se_tag) : "0", ibuf, obuf,
 			    ntohs(con->se_out.port), msg, ptr == NULL ?
 			    "" : ",", ptr == NULL ? "" : ptr);
-		if (err == 1 && (env->sc_conf.opts & RELAYD_OPT_LOGCONERR))
+		if (err == 1 && (env->sc_conf.opts & RELAYD_OPT_LOG_CONN_ERR))
 			log_warn("relay %s, "
 			    "session %d (%d active), %s, %s -> %s:%d, "
 			    "%s%s%s", rlay->rl_conf.name, con->se_id,
@@ -1875,10 +1876,18 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct host		*host;
 	struct table		*table;
 	struct ctl_status	 st;
+	struct ctl_logopt	 logopt;
 	objid_t			 id;
 	int			 cid;
 
 	switch (imsg_get_type(imsg)) {
+	case IMSG_CTL_LOGOPTION:
+		if (imsg_get_data(imsg, &logopt, sizeof(logopt)) == -1) {
+			log_warn("%s: imsg_get_data", __func__);
+			return (-1);
+		}
+		config_setlogoption(&logopt, &env->sc_conf);
+		break;
 	case IMSG_HOST_DISABLE:
 		if (imsg_get_data(imsg, &id, sizeof(id)) == -1)
 			fatalx("%s: imsg_get_data", __func__);

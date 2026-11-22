@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.74 2026/08/12 19:24:02 rsadowski Exp $	*/
+/*	$OpenBSD: control.c,v 1.75 2026/11/22 19:06:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,8 +228,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
 	struct ctl_id		 id;
+	struct ctl_logopt	 logopt;
 	int			 n;
-	int			 verb;
+	u_int8_t		 loglv;
 	struct relayd		*env = cs->cs_env;
 	struct privsep		*ps = env->sc_ps;
 
@@ -407,16 +408,47 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			c->flags |= CTL_CONN_NOTIFY;
 			break;
-		case IMSG_CTL_VERBOSE:
-			if (imsg_get_data(&imsg, &verb, sizeof(verb)) == -1)
+		case IMSG_CTL_LOGLEVEL:
+			if (imsg_get_data(&imsg, &loglv, sizeof(loglv)) == -1)
 				fatalx("%s: imsg_get_data", __func__);
+
+			if (loglv > LOGLVL_DEBUG) {
+				log_warnx("%s: invalid log level", __func__);
+				break;
+			}
+
+			log_warnx("log level change from %s to %s",
+			    log_getlevel_str(log_getlevel()),
+			    log_getlevel_str(loglv));
 
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT);
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE);
 			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY);
-
 			control_imsg_forward(&imsg);
-			log_setverbose(verb);
+
+			env->sc_conf.loglevel = loglv;
+			log_setlevel(loglv);
+			break;
+		case IMSG_CTL_LOGOPTION:
+			if (imsg_get_data(&imsg, &logopt, sizeof(logopt)) == -1)
+				fatalx("%s: imsg_get_data", __func__);
+
+			if (logopt.opt == 0 ||
+			    (logopt.opt & ~RELAYD_OPT_LOG_ALL)) {
+				log_warnx("%s: invalid log option", __func__);
+				break;
+			}
+
+			log_warnx("log option %s %s",
+			    config_getlogopt_str(logopt.opt),
+			    logopt.enable ? "enabled" : "disabled");
+
+			config_setlogoption(&logopt, &env->sc_conf);
+
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_PARENT);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_HCE);
+			proc_forward_imsg(env->sc_ps, &imsg, PROC_RELAY);
+			control_imsg_forward(&imsg);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",
