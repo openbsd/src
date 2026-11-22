@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.11 2026/01/01 12:47:52 tb Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.12 2026/11/22 22:39:30 kenjiro Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -506,7 +506,7 @@ MlkemKeygenFileTest(struct keygen_ctx *keygen)
 		goto err;
 
 	if ((priv_key = MLKEM_private_key_new(keygen->rank)) == NULL)
-		parse_errx(p, "MLKEM_public_key_free");
+		parse_errx(p, "MLKEM_private_key_new");
 
 	if (!MLKEM_generate_key_external_entropy(priv_key,
 	    &encoded_public_key, &encoded_public_key_len, CBS_data(&seed))) {
