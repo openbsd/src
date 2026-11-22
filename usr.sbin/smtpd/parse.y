@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.302 2026/04/04 19:18:37 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.303 2026/11/22 18:04:25 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -322,7 +322,7 @@ ADMD STRING {
 
 ca:
 CA STRING {
-	char buf[HOST_NAME_MAX+1];
+	char buf[_POSIX_HOST_NAME_MAX+1];
 
 	/* if not catchall, check that it is a valid domain */
 	if (strcmp($2, "*") != 0) {
@@ -391,7 +391,7 @@ MTA MAX_DEFERRED NUMBER  {
 
 pki:
 PKI STRING {
-	char buf[HOST_NAME_MAX+1];
+	char buf[_POSIX_HOST_NAME_MAX+1];
 
 	/* if not catchall, check that it is a valid domain */
 	if (strcmp($2, "*") != 0) {
