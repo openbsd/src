@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.146 2026/11/19 05:44:03 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.147 2026/11/22 19:17:44 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1558,6 +1558,28 @@ int
 server_client_cmp(struct client *a, struct client *b)
 {
 	return ((int)a->clt_id - b->clt_id);
+}
+
+int
+server_current_time(char *timestamp, size_t len)
+{
+	struct tm	 tm;
+	struct timeval	 now;
+	size_t		 l;
+	int		 n;
+
+	if (gettimeofday(&now, NULL) == -1)
+		return (-1);
+	if (gmtime_r(&now.tv_sec, &tm) == NULL)
+		return (-1);
+	if ((l = strftime(timestamp, len, "%FT%T", &tm)) == 0)
+		return (-1);
+	n = snprintf(timestamp + l, len - l, ".%03ldZ",
+	    (long)now.tv_usec / 1000);
+	if (n < 0 || (size_t)n >= len - l)
+		return (-1);
+
+	return (0);
 }
 
 SPLAY_GENERATE(client_tree, client, clt_nodes, server_client_cmp);

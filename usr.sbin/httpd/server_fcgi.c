@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.104 2026/11/21 06:50:14 rsadowski Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.105 2026/11/22 19:17:44 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -85,6 +85,7 @@ int	server_fcgi_writechunk(struct client *);
 int	server_fcgi_getheaders(struct client *);
 int	fcgi_add_param(struct server_fcgi_param *, const char *, const char *,
     struct client *);
+void	server_fcgi_err_log(struct client *);
 
 int
 server_fcgi(struct httpd *env, struct client *clt)
@@ -521,13 +522,38 @@ server_fcgi_error(struct bufferevent *bev, short error, void *arg)
 }
 
 void
+server_fcgi_err_log(struct client *clt)
+{
+	char				 tstamp[33];
+	struct server_config		*srv_conf;
+	size_t				 len;
+	char				*msg;
+
+	if ((srv_conf = clt->clt_srv_conf) == NULL)
+		return;
+
+	if ((len = EVBUFFER_LENGTH(clt->clt_srvevb)) == 0)
+		return;
+
+	if ((msg = get_string(EVBUFFER_DATA(clt->clt_srvevb), len)) == NULL)
+		return;
+
+	if ((srv_conf->flags & SRVFLAG_SYSLOG) == 0 &&
+	    server_current_time(tstamp, sizeof(tstamp)) == 0) {
+		server_sendlog(srv_conf, IMSG_LOG_ERROR, "%s: %s", tstamp, msg);
+	} else {
+		server_sendlog(srv_conf, IMSG_LOG_ERROR, "%s", msg);
+	}
+	free(msg);
+}
+
+void
 server_fcgi_read(struct bufferevent *bev, void *arg)
 {
 	uint8_t				 buf[FCGI_RECORD_SIZE];
 	struct client			*clt = (struct client *)arg;
 	struct fcgi_record_header	*h;
 	size_t				 len;
-	char				*ptr;
 
 	do {
 		len = bufferevent_read(bev, buf, clt->clt_fcgi.toread);
@@ -569,15 +595,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 		case FCGI_READ_CONTENT:
 			switch (clt->clt_fcgi.type) {
 			case FCGI_STDERR:
-				if (EVBUFFER_LENGTH(clt->clt_srvevb) > 0 &&
-				    (ptr = get_string(
-				     EVBUFFER_DATA(clt->clt_srvevb),
-				     EVBUFFER_LENGTH(clt->clt_srvevb))) !=
-				    NULL) {
-					server_sendlog(clt->clt_srv_conf,
-					    IMSG_LOG_ERROR, "%s", ptr);
-					free(ptr);
-				}
+				server_fcgi_err_log(clt);
 				break;
 			case FCGI_STDOUT:
 				++clt->clt_chunk;
