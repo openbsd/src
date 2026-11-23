@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.112 2026/11/20 09:18:05 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.113 2026/11/23 09:55:57 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1488,6 +1488,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 			free(redirurl);
 			return -1;
 		}
+		free(conn->redir_uri);
 		conn->redir_uri = redirurl;
 	} else if (strncasecmp(cp, TRANSFER_ENCODING,
 	    sizeof(TRANSFER_ENCODING) - 1) == 0) {
