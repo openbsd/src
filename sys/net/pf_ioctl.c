@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.439 2026/11/23 16:04:14 gnezdo Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.440 2026/11/23 16:04:46 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1465,8 +1465,9 @@ pf_sourcelim_add(const struct pfioc_sourcelim *ioc)
 		pfsrlim->pfsrlim_rate_bucket = bucket;
 	}
 
-	pfsrlim->pfsrlim_ipv4_mask.v4.s_addr =
-	    htonl(0xffffffff << (32 - pfsrlim->pfsrlim_ipv4_prefix));
+	if (pfsrlim->pfsrlim_ipv4_prefix > 0)
+		pfsrlim->pfsrlim_ipv4_mask.v4.s_addr =
+		    htonl(0xffffffff << (32 - pfsrlim->pfsrlim_ipv4_prefix));
 
 	prefix = pfsrlim->pfsrlim_ipv6_prefix;
 	for (i = 0; i < nitems(pfsrlim->pfsrlim_ipv6_mask.addr32); i++) {
