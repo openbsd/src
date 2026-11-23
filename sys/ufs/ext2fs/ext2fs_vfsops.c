@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.123 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.124 2026/11/23 22:38:52 jsg Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	struct m_ext2fs *fs;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
-	int error, flags;
+	int error = 0, flags;
 
 	/*
 	 * If updating, check whether changing from read-only to
