@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.96 2026/11/23 09:37:53 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.97 2026/11/23 14:09:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -302,6 +302,9 @@ valid_uri(const char *uri, size_t usz, const char *proto)
 		p = uri;
 		len = usz;
 	}
+
+	if (len == 0 || *p == '.')
+		return 0;
 
 	/* do not allow "//" */
 	if (memmem(p, len, "//", strlen("//")) != NULL)
