@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.78 2026/06/24 06:02:48 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.79 2026/11/23 19:15:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -818,9 +818,9 @@ show_attr(struct ibuf *buf, int reqflags, int addpath)
 		/* prefer 4-byte AS here */
 		e4 = aspath_verify(buf, 1, 0);
 		e2 = aspath_verify(buf, 0, 0);
-		if (e4 == 0 || e4 == AS_ERR_SOFT) {
+		if (e4 == 0 || !AS_IS_HARD_ERROR(e4)) {
 			ibuf_from_ibuf(&asbuf, buf);
-		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
+		} else if (e2 == 0 || !AS_IS_HARD_ERROR(e2)) {
 			if ((path = aspath_inflate(buf)) == NULL) {
 				printf("aspath_inflate failed");
 				break;

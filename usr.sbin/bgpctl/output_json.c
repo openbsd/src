@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.66 2026/08/30 23:43:23 jsg Exp $ */
+/*	$OpenBSD: output_json.c,v 1.67 2026/11/23 19:15:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -639,9 +639,9 @@ json_attr(struct ibuf *buf, int reqflags, int addpath)
 		/* prefer 4-byte AS here */
 		e4 = aspath_verify(buf, 1, 0);
 		e2 = aspath_verify(buf, 0, 0);
-		if (e4 == 0 || e4 == AS_ERR_SOFT) {
+		if (e4 == 0 || !AS_IS_HARD_ERROR(e4)) {
 			ibuf_from_ibuf(&asbuf, buf);
-		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
+		} else if (e2 == 0 || !AS_IS_HARD_ERROR(e2)) {
 			if ((path = aspath_inflate(buf)) == NULL) {
 				json_do_string("error",
 				    "aspath_inflate failed");
