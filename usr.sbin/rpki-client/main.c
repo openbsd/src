@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.344 2026/11/19 06:26:15 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.345 2026/11/23 10:01:53 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -729,7 +729,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		spl = spl_read(b);
 		if (spl->valid) {
 			ca_set_confirmed(&vd->cas, spl->issuerid);
-			spl_insert_vsps(&vd->vsps, spl, rp);
+			spl_insert_vsps(file, &vd->vsps, spl, rp);
 		} else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		spl_free(spl);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.25 2026/11/23 09:51:32 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.26 2026/11/23 10:01:53 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -354,26 +354,18 @@ spl_pfx_cmp(const struct spl_pfx *a, const struct spl_pfx *b)
 	return prefix_cmp(a->afi, &a->prefix, &b->prefix);
 }
 
-static void
-insert_vsp(struct vsp *vsp, size_t idx, struct spl_pfx *pfx)
-{
-	if (idx < vsp->num_prefixes)
-		memmove(vsp->prefixes + idx + 1, vsp->prefixes + idx,
-		    (vsp->num_prefixes - idx) * sizeof(vsp->prefixes[0]));
-	vsp->prefixes[idx] = *pfx;
-	vsp->num_prefixes++;
-}
-
 /*
  * Add each prefix in the SPL into the VSP tree.
  * Updates "vsps" to be the number of VSPs and "uniqs" to be the unique
  * number of prefixes.
  */
 void
-spl_insert_vsps(struct vsp_tree *tree, struct spl *spl, struct repo *rp)
+spl_insert_vsps(const char *fn, struct vsp_tree *tree, struct spl *spl,
+    struct repo *rp)
 {
 	struct vsp	*vsp, *found;
-	size_t		 i, j;
+	struct spl_pfx	*prefixes;
+	size_t		 i, j, max, num;
 	int		 cmp;
 
 	if ((vsp = calloc(1, sizeof(*vsp))) == NULL)
@@ -385,6 +377,10 @@ spl_insert_vsps(struct vsp_tree *tree, struct spl *spl, struct repo *rp)
 	vsp->repoid = repo_id(rp);
 
 	if ((found = RB_INSERT(vsp_tree, tree, vsp)) != NULL) {
+		if (found->overflowed) {
+			free(vsp);
+			return;
+		}
 		/* already exists */
 		if (found->expires > vsp->expires) {
 			/* adjust unique count */
@@ -400,31 +396,67 @@ spl_insert_vsps(struct vsp_tree *tree, struct spl *spl, struct repo *rp)
 		vsp = found;
 	} else
 		repo_stat_inc(rp, vsp->talid, RTYPE_SPL, STYPE_UNIQUE);
+
 	repo_stat_inc(rp, spl->talid, RTYPE_SPL, STYPE_TOTAL);
 
-	/* merge content of multiple SPLs */
-	vsp->prefixes = reallocarray(vsp->prefixes,
-	    vsp->num_prefixes + spl->num_prefixes, sizeof(vsp->prefixes[0]));
-	if (vsp->prefixes == NULL)
+	if (spl->num_prefixes == 0)
+		return;
+
+	max = spl->num_prefixes + vsp->num_prefixes;
+	if ((prefixes = calloc(max, sizeof(prefixes[0]))) == NULL)
 		err(1, NULL);
 
 	/*
-	 * Merge all data from the new SPL at hand into 'vsp': loop over
-	 * all SPL->pfxs, and insert them in the right place in
-	 * vsp->prefixes while keeping the order of the array.
+	 * Merge all data from spl into vsp: loop over all SPL prefixes,
+	 * insert them in the right place in vsp->prefixes while keeping the
+	 * order of the prefixes array and eliminating duplicates.
 	 */
-	for (i = 0, j = 0; i < spl->num_prefixes; ) {
-		cmp = -1;
-		if (j == vsp->num_prefixes ||
-		    (cmp = spl_pfx_cmp(&spl->prefixes[i],
-		     &vsp->prefixes[j])) < 0) {
-			insert_vsp(vsp, j, &spl->prefixes[i]);
-			i++;
-		} else if (cmp == 0)
-			i++;
 
-		if (j < vsp->num_prefixes)
+	num = 0;
+	for (i = 0, j = 0; i < spl->num_prefixes && j < vsp->num_prefixes;) {
+		struct spl_pfx *add, *new, *old;
+
+		new = &spl->prefixes[i];
+		old = &vsp->prefixes[j];
+
+		/* Advance the array with the smaller prefix, or both. */
+		cmp = spl_pfx_cmp(new, old);
+		if (cmp <= 0) {
+			i++;
+			add = new;
+		}
+		if (cmp >= 0) {
 			j++;
+			add = old;
+		}
+
+		assert(num < max);
+		prefixes[num++] = *add;
+	}
+
+	/* Add the remainder of prefixes from either spl or vsp, if any. */
+	for (; i < spl->num_prefixes; i++) {
+		assert(num < max);
+		prefixes[num++] = spl->prefixes[i];
+	}
+	for (; j < vsp->num_prefixes; j++) {
+		assert(num < max);
+		prefixes[num++] = vsp->prefixes[j];
+	}
+
+	free(vsp->prefixes);
+	vsp->prefixes = prefixes;
+	vsp->num_prefixes = num;
+
+	/* XXX - do we want an SPL-specific limit? */
+	if (vsp->num_prefixes >= MAX_IP_SIZE) {
+		vsp->overflowed = 1;
+		free(vsp->prefixes);
+		vsp->prefixes = NULL;
+		vsp->num_prefixes = 0;
+		/* XXX - repo stats */
+		warn("%s: too many prefixes for SPL for ASID %u "
+		    "(more than %d)", fn, vsp->asid, MAX_IP_SIZE);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.330 2026/11/23 09:37:53 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.331 2026/11/23 10:01:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -459,6 +459,7 @@ struct vsp {
 	time_t		 expires;
 	int		 talid;
 	unsigned int	 repoid;
+	int		 overflowed;
 };
 /*
  * Tree of VSP sorted by asid
@@ -827,7 +828,7 @@ void		 spl_buffer(struct ibuf *, const struct spl *);
 void		 spl_free(struct spl *);
 const struct signed_obj *spl_obj(void);
 struct spl	*spl_read(struct ibuf *);
-void		 spl_insert_vsps(struct vsp_tree *, struct spl *,
+void		 spl_insert_vsps(const char *, struct vsp_tree *, struct spl *,
 		    struct repo *);
 
 void		 rsc_free(struct rsc *);
