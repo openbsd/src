@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.714 2026/10/19 12:19:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.715 2026/11/23 12:31:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2140,8 +2140,8 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			goto bad_list;
 		error = aspath_verify(&attrbuf, peer_has_as4byte(peer),
 		    peer_permit_as_set(peer));
-		if (error != 0 && error != AS_ERR_SOFT) {
-			log_peer_warnx(&peer->conf, "bad ASPATH, %s",
+		if (AS_IS_HARD_ERROR(error)) {
+			log_peer_warnx(&peer->conf, "bad ASPATH: %s",
 			    log_aspath_error(error));
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 			    NULL);
@@ -2154,9 +2154,7 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 				fatal("aspath_inflate");
 			ibuf_from_ibuf(&tmpbuf, npath);
 		}
-		if (error == AS_ERR_SOFT) {
-			char *str;
-
+		if (error != 0) {
 			/*
 			 * soft errors like unexpected segment types are
 			 * not considered fatal and the path is just
@@ -2164,11 +2162,21 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			 */
 			a->flags |= F_ATTR_PARSE_ERR;
 
-			aspath_asprint(&str, &tmpbuf);
-			log_peer_warnx(&peer->conf, "bad ASPATH %s, "
-			    "path invalidated and prefix withdrawn",
-			    str ? str : "(bad aspath)");
-			free(str);
+			if (error == AS_ERR_MAX) {
+				/* do not print overly long paths */
+				log_peer_warnx(&peer->conf, "bad ASPATH: %s, "
+				    "path invalidated and prefix withdrawn",
+				    log_aspath_error(error));
+			} else {
+				char *str;
+
+				aspath_asprint(&str, &tmpbuf);
+				log_peer_warnx(&peer->conf, "bad ASPATH: %s, "
+				    "%s, path invalidated and prefix withdrawn",
+				    log_aspath_error(error),
+				    str ? str : "(formatting failed)");
+				free(str);
+			}
 		}
 		a->flags |= F_ATTR_ASPATH;
 		a->aspath = aspath_get(ibuf_data(&tmpbuf), ibuf_size(&tmpbuf));
@@ -2398,8 +2406,8 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		if ((error = aspath_verify(&attrbuf, 1,
 		    peer_permit_as_set(peer))) != 0) {
 			/* As per RFC6793 use "attribute discard" here. */
-			log_peer_warnx(&peer->conf, "bad AS4_PATH, "
-			    "attribute discarded");
+			log_peer_warnx(&peer->conf, "bad AS4_PATH: %s, "
+			    "attribute discarded", log_aspath_error(error));
 			break;
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;

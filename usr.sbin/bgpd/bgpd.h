@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.550 2026/09/25 20:45:41 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.551 2026/11/23 12:31:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1770,11 +1770,15 @@ const char	*log_capability(uint8_t);
 int		 aspath_asprint(char **, struct ibuf *);
 uint32_t	 aspath_extract(const void *, int);
 int		 aspath_verify(struct ibuf *, int, int);
+/* negative values are hard errors, positive values are soft errors */
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
-#define		 AS_ERR_SOFT	-4
-#define		 AS_ERR_MAX	-5
+#define		 AS_ERR_ASZERO	1
+#define		 AS_ERR_ASSET	2
+#define		 AS_ERR_CONFED	3
+#define		 AS_ERR_MAX	4
+#define		 AS_IS_HARD_ERROR(x)	((x) < 0)
 struct ibuf	*aspath_inflate(struct ibuf *);
 int		 extract_prefix(const u_char *, int, void *, uint8_t, uint8_t);
 int		 nlri_get_prefix(struct ibuf *, struct bgpd_addr *, uint8_t *);

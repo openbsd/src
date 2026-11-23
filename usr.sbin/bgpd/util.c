@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.105 2026/09/21 19:06:16 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.106 2026/11/23 12:31:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -318,8 +318,12 @@ log_aspath_error(int error)
 		return "unknown segment type";
 	case AS_ERR_BAD:
 		return "invalid encoding";
-	case AS_ERR_SOFT:
-		return "soft failure";
+	case AS_ERR_ASZERO:
+		return "embedded AS 0";
+	case AS_ERR_ASSET:
+		return "embedded AS_SET";
+	case AS_ERR_CONFED:
+		return "embedded confederations";
 	case AS_ERR_MAX:
 		return "too large";
 	default:
@@ -613,13 +617,13 @@ aspath_verify(struct ibuf *in, int as4byte, int permit_set)
 		 * bgp session running.
 		 */
 		if (seg_type == AS_CONFED_SEQUENCE || seg_type == AS_CONFED_SET)
-			error = AS_ERR_SOFT;
+			error = AS_ERR_CONFED;
 		/*
 		 * If AS_SET filtering (RFC6472) is on, error out on AS_SET
 		 * as well.
 		 */
 		if (!permit_set && seg_type == AS_SET)
-			error = AS_ERR_SOFT;
+			error = AS_ERR_ASSET;
 		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
 		    seg_type != AS_CONFED_SEQUENCE &&
 		    seg_type != AS_CONFED_SET) {
@@ -645,7 +649,7 @@ aspath_verify(struct ibuf *in, int as4byte, int permit_set)
 				as = tmp;
 			}
 			if (as == 0)
-				error = AS_ERR_SOFT;
+				error = AS_ERR_ASZERO;
 
 			count++;
 		}
