@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.27 2026/10/29 08:20:11 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.28 2026/11/23 10:24:45 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -238,7 +238,8 @@ start_snapshot_elem(struct notification_xml *nxml, const char **attr)
 				continue;
 			}
 		}
-		if (strcmp("hash", attr[i]) == 0 && hasHash++ == 0) {
+		if (strcmp("hash", attr[i]) == 0 && hasHash++ == 0 &&
+		    strlen(attr[i + 1]) == 2 * SHA256_DIGEST_LENGTH) {
 			if (hex_decode(attr[i + 1], nxml->snapshot_hash,
 			    sizeof(nxml->snapshot_hash)) == 0)
 				continue;
@@ -284,7 +285,8 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 				continue;
 			}
 		}
-		if (strcmp("hash", attr[i]) == 0 && hasHash++ == 0) {
+		if (strcmp("hash", attr[i]) == 0 && hasHash++ == 0 &&
+		    strlen(attr[i + 1]) == 2 * SHA256_DIGEST_LENGTH) {
 			if (hex_decode(attr[i + 1], delta_hash,
 			    sizeof(delta_hash)) == 0)
 				continue;
