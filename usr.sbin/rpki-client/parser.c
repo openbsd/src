@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.212 2026/11/20 19:37:12 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.213 2026/11/23 11:04:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -815,7 +815,11 @@ proc_parser_root_cert(struct entity *ent, struct cert **out_cert)
 
 		cert1->talid = ent->talid;
 		cert1->issuerid = ent->talid;
-		auth_insert(file1, &auths, cert1, NULL, NULL);
+		if (auth_insert(file1, &auths, cert1, NULL, NULL) == NULL) {
+			warnx("%s: insertion into auth tree failed", ent->file);
+			cert_free(cert1);
+			cert1 = NULL;
+		}
 
 		*out_cert = cert1;
 		return file1;
@@ -830,7 +834,13 @@ proc_parser_root_cert(struct entity *ent, struct cert **out_cert)
 			cert2->issuerid = ent->talid;
 			if ((cert2->path = strdup(file2)) == NULL)
 				err(1, NULL);
-			auth_insert(file2, &auths, cert2, NULL, NULL);
+			if (auth_insert(file1, &auths, cert2, NULL,
+			    NULL) == NULL) {
+				warnx("%s: insertion into auth tree failed",
+				    ent->file);
+				cert_free(cert2);
+				cert2 = NULL;
+			}
 		}
 
 		*out_cert = cert2;
