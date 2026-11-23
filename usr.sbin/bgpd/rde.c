@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.715 2026/11/23 12:31:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.716 2026/11/23 19:58:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2331,8 +2331,22 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 	case ATTR_ORIGINATOR_ID:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
-		if (ibuf_size(&attrbuf) != 4)
-			goto bad_len;
+		if (peer->conf.ebgp) {
+			/* As per RFC7606 use "attribute discard" here. */
+			log_peer_warnx(&peer->conf, "bad ORIGINATOR_ID, "
+			    "received from external peer, attribute discarded");
+			break;
+		}
+		if (ibuf_size(&attrbuf) != 4) {
+			/*
+			 * mark update as bad and withdraw all routes as per
+			 * RFC 7606
+			 */
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "bad ORIGINATOR_ID, "
+			    "path invalidated and prefix withdrawn");
+			break;
+		}
 		goto optattr;
 	case ATTR_CLUSTER_LIST:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
