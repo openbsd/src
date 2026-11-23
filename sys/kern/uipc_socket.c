@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.389 2026/06/11 19:21:51 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.390 2026/11/23 13:51:12 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2198,7 +2198,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 #endif /* SOCKET_SPLICE */
 
 		case SO_PEERCRED:
-			if (so->so_proto->pr_protocol == AF_UNIX) {
+			if (so->so_proto->pr_domain->dom_family == AF_UNIX) {
 				struct unpcb *unp = sotounpcb(so);
 
 				solock(so);
