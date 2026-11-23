@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.15 2026/01/16 11:25:27 job Exp $ */
+/*	$OpenBSD: encoding.c,v 1.16 2026/11/23 10:31:01 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -247,7 +247,7 @@ hex_encode(const unsigned char *in, size_t insz)
 
 /*
  * Hex decode hexstring into the supplied buffer.
- * Return 0 on success else -1, if buffer too small or bad encoding.
+ * Return 0 on success else -1, if buffer too small, too big, or bad encoding.
  */
 int
 hex_decode(const char *hexstr, char *buf, size_t len)
@@ -279,5 +279,7 @@ hex_decode(const char *hexstr, char *buf, size_t len)
 
 		hexstr += 2;
 	}
+	if (pos != len)
+		return -1;
 	return 0;
 }
