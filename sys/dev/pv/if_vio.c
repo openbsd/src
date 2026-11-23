@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.84 2026/11/18 00:03:36 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.85 2026/11/23 18:12:07 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -758,13 +758,14 @@ negotiate:
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	ifp->if_capabilities |= IFCAP_VLAN_HWOFFLOAD;
 #endif
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM)) {
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|
 		    IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6;
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4))
-		ifp->if_capabilities |= IFCAP_TSOv4;
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
-		ifp->if_capabilities |= IFCAP_TSOv6;
+		if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4))
+			ifp->if_capabilities |= IFCAP_TSOv4;
+		if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
+			ifp->if_capabilities |= IFCAP_TSOv6;
+	}
 
 	sc->sc_rx_mbuf_size = MCLBYTES;
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS) &&
