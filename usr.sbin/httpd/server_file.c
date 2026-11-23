@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.85 2026/11/21 06:50:14 rsadowski Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.86 2026/11/23 13:42:21 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -40,21 +40,27 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-int		 server_file_access(struct httpd *, struct client *,
+int			 server_file_access(struct httpd *, struct client *,
     char *, size_t);
-int		 server_file_request(struct httpd *, struct client *,
+int			 server_file_request(struct httpd *, struct client *,
     struct media_type *, int, const struct stat *);
-int		 server_partial_file_request(struct httpd *, struct client *,
+int			 server_partial_file_request(struct httpd *,
+    struct client *,
     struct media_type *, int, const struct stat *,
     char *);
-int		 server_file_index(struct httpd *, struct client *, int,
+int			 server_file_index(struct httpd *, struct client *, int,
     struct stat *);
-int		 server_file_modified_since(struct http_descriptor *,
+int			 server_file_modified_since(struct http_descriptor *,
     const struct timespec *);
-int		 server_file_method(struct client *);
-int		 parse_range_spec(char *, off_t, struct range *);
-int		 parse_ranges(struct client *, char *, off_t);
-static int	 select_visible(const struct dirent *);
+int			 server_file_method(struct client *);
+int			 parse_range_spec(char *, off_t, struct range *);
+int			 parse_ranges(struct client *, char *, off_t);
+static int		 select_visible(const struct dirent *);
+int			 server_file_dir_access(struct httpd *, struct client *,
+    char *, size_t);
+static int		 server_file_gzip_access(struct client *, const char *,
+    struct stat *, int *);
+static struct kv	*server_file_getrange(struct http_descriptor *);
 
 int
 server_file_access(struct httpd *env, struct client *clt,
@@ -63,10 +69,9 @@ server_file_access(struct httpd *env, struct client *clt,
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct stat		 st;
-	struct kv		*r, key;
+	struct kv		*r;
 	struct media_type	*media;
-	char			*newpath, *encodedpath;
-	int			 ret, fd;
+	int			 fd, ret;
 
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		switch (errno) {
@@ -85,70 +90,10 @@ server_file_access(struct httpd *env, struct client *clt,
 	}
 
 	if (S_ISDIR(st.st_mode)) {
-		/* Deny access if directory indexing is disabled */
-		if (srv_conf->flags & SRVFLAG_NO_INDEX) {
-			close(fd);
-			return (403);
-		}
-
-		if (desc->http_path_alias != NULL) {
-			/* Recursion - the index "file" is a directory? */
-			close(fd);
-			return (500);
-		}
-
-		/* Redirect to path with trailing "/" */
-		if (path[strlen(path) - 1] != '/') {
-			close(fd);
-			if ((encodedpath = url_encode(desc->http_path)) == NULL)
-				return (500);
-			if (asprintf(&newpath, "%s/", encodedpath) == -1) {
-				free(encodedpath);
-				return (500);
-			}
-			free(encodedpath);
-
-			/* Path alias will be used for the redirection */
-			desc->http_path_alias = newpath;
-
-			/* Indicate that the file has been moved */
-			return (301);
-		}
-
-		/* Append the default index file to the location */
-		if (asprintf(&newpath, "%s%s", desc->http_path,
-		    srv_conf->index) == -1) {
-			close(fd);
-			return (500);
-		}
-		desc->http_path_alias = newpath;
-		if (server_getlocation(clt, newpath) != srv_conf) {
-			/* The location has changed */
-			close(fd);
-			return (server_file(env, clt));
-		}
-
-		/* Otherwise append the default index file to the path */
-		if (strlcat(path, srv_conf->index, len) >= len) {
-			close(fd);
-			return (403);
-		}
-
-		ret = server_file_access(env, clt, path, len);
-		if (ret == 404) {
-			/*
-			 * Index file not found; fail if auto-indexing is
-			 * not enabled, otherwise return success but
-			 * indicate directory with S_ISDIR of the previous
-			 * stat.
-			 */
-			if ((srv_conf->flags & SRVFLAG_AUTO_INDEX) == 0) {
-				close(fd);
-				return (403);
-			}
-
+		ret = server_file_dir_access(env, clt, path, len);
+		/* no index file, auto-index enabled */
+		if (ret == 404)
 			return (server_file_index(env, clt, fd, &st));
-		}
 		close(fd);
 		return (ret);
 	} else if (!S_ISREG(st.st_mode)) {
@@ -160,55 +105,145 @@ server_file_access(struct httpd *env, struct client *clt,
 	media = media_find_config(env, srv_conf, path);
 
 	/* Only consider range requests for GET */
-	if (desc->http_method == HTTP_METHOD_GET) {
-		key.kv_key = "Range";
-		r = kv_find(&desc->http_headers, &key);
-		if (r != NULL)
-			return (server_partial_file_request(env, clt, media,
-			    fd, &st, r->kv_value));
-	}
+	if ((r = server_file_getrange(desc)) != NULL)
+		return (server_partial_file_request(env, clt, media, fd, &st,
+		    r->kv_value));
 
 	/* change path to path.gz if necessary. */
-	if (srv_conf->flags & SRVFLAG_GZIP_STATIC) {
-		struct http_descriptor	*req = clt->clt_descreq;
-		struct http_descriptor	*resp = clt->clt_descresp;
-		struct stat		 gzst;
-		int			 gzfd;
-		char			 gzpath[PATH_MAX];
-
-		/* check Accept-Encoding header */
-		key.kv_key = "Accept-Encoding";
-		r = kv_find(&req->http_headers, &key);
-
-		if (r != NULL && strstr(r->kv_value, "gzip") != NULL) {
-			/* append ".gz" to path and check existence */
-			ret = snprintf(gzpath, sizeof(gzpath), "%s.gz", path);
-			if (ret < 0 || (size_t)ret >= sizeof(gzpath)) {
-				close(fd);
-				return (500);
-			}
-
-			if ((gzfd = open(gzpath, O_RDONLY)) != -1) {
-				/* .gz must be a file, and not older */
-				if (fstat(gzfd, &gzst) != -1 &&
-				    S_ISREG(gzst.st_mode) &&
-				    timespeccmp(&gzst.st_mtim, &st.st_mtim,
-				    >=)) {
-					kv_add(&resp->http_headers,
-					    "Content-Encoding", "gzip");
-					/* Use original file timestamp */
-					gzst.st_mtim = st.st_mtim;
-					st = gzst;
-					close(fd);
-					fd = gzfd;
-				} else {
-					close(gzfd);
-				}
-			}
-		}
+	if ((server_file_gzip_access(clt, path, &st, &fd) == -1)) {
+		close(fd);
+		return (500);
 	}
 
 	return (server_file_request(env, clt, media, fd, &st));
+}
+
+/*
+ * Return the Range header of a GET request, or NULL if the request
+ * is not a GET request or carries no Range header.
+ */
+static struct kv *
+server_file_getrange(struct http_descriptor *desc)
+{
+	struct kv		 key;
+	if (desc->http_method != HTTP_METHOD_GET)
+		return (NULL);
+
+	key.kv_key = "Range";
+	return (kv_find(&desc->http_headers, &key));
+}
+
+/*
+ * Serve a pre-compressed "path.gz" instead of path if "gzip-static"
+ * is enabled, the client accepts gzip and the .gz file is a regular
+ * file not older than the original.
+ * Returns -1 if the .gz path is too long, else 0.
+ */
+static int
+server_file_gzip_access(struct client *clt,
+    const char *path, struct stat *st, int *fd)
+{
+	struct server_config	*srv_conf = clt->clt_srv_conf;
+	struct http_descriptor	*desc = clt->clt_descreq;
+	struct http_descriptor	*resp = clt->clt_descresp;
+	struct stat		 gzst;
+	int			 gzfd;
+	char			 gzpath[PATH_MAX];
+	int			 ret;
+	struct kv		*r, key;
+
+	if ((srv_conf->flags & SRVFLAG_GZIP_STATIC) == 0)
+		return (0);
+	/* check Accept-Encoding header */
+	key.kv_key = "Accept-Encoding";
+	r = kv_find(&desc->http_headers, &key);
+
+	if (r == NULL || strstr(r->kv_value, "gzip") == NULL)
+		return (0);
+
+	/* append ".gz" to path and check existence */
+	ret = snprintf(gzpath, sizeof(gzpath), "%s.gz", path);
+	if (ret < 0 || (size_t)ret >= sizeof(gzpath))
+		return (-1);
+
+	if ((gzfd = open(gzpath, O_RDONLY)) == -1)
+		return (0);
+	/* .gz must be a file, and not older */
+	if (fstat(gzfd, &gzst) != -1 && S_ISREG(gzst.st_mode) &&
+	    timespeccmp(&gzst.st_mtim, &st->st_mtim, >=)) {
+		kv_add(&resp->http_headers, "Content-Encoding", "gzip");
+		/* Use original file timestamp */
+		gzst.st_mtim = st->st_mtim;
+		*st = gzst;
+		close(*fd);
+		*fd = gzfd;
+	} else {
+		close(gzfd);
+	}
+	return (0);
+}
+
+/*
+ * Handle a request for a directory: redirect to the path with a
+ * trailing slash, or try the configured index file.
+ *
+ * Returns
+ *   0     response has been handled,
+ *   404   no index file but auto-indexing is enabled
+ *   other HTTP status code (301 redirect, 403, 500) or -1.
+ */
+int
+server_file_dir_access(struct httpd *env, struct client *clt,
+    char *path, size_t len)
+{
+	struct http_descriptor	*desc = clt->clt_descreq;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
+	char			*newpath, *encodedpath;
+	int			 ret;
+
+	/* Deny access if directory indexing is disabled */
+	if (srv_conf->flags & SRVFLAG_NO_INDEX)
+		return (403);
+
+	/* Recursion - the index "file" is a directory? */
+	if (desc->http_path_alias != NULL)
+		return (500);
+
+	/* Redirect to path with trailing "/" */
+	if (path[strlen(path) - 1] != '/') {
+		if ((encodedpath = url_encode(desc->http_path)) == NULL)
+			return (500);
+		if (asprintf(&newpath, "%s/", encodedpath) == -1) {
+			free(encodedpath);
+			return (500);
+		}
+		free(encodedpath);
+
+		/* Path alias will be used for the redirection */
+		desc->http_path_alias = newpath;
+
+		/* Indicate that the file has been moved */
+		return (301);
+	}
+
+	/* Append the default index file to the location */
+	if (asprintf(&newpath, "%s%s", desc->http_path, srv_conf->index) == -1)
+		return (500);
+	desc->http_path_alias = newpath;
+	if (server_getlocation(clt, newpath) != srv_conf) {
+		/* The location has changed */
+		return (server_file(env, clt));
+	}
+
+	/* Otherwise append the default index file to the path */
+	if (strlcat(path, srv_conf->index, len) >= len)
+		return (403);
+
+	ret = server_file_access(env, clt, path, len);
+	/* Index file not found; fail if auto-indexing is not enabled */
+	if (ret == 404 && (srv_conf->flags & SRVFLAG_AUTO_INDEX) == 0)
+		return (403);
+	return (ret);
 }
 
 int
