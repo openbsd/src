@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.66 2026/09/08 19:48:28 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.67 2026/11/23 22:24:01 chris Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -183,7 +183,7 @@ struct agintc_softc {
 	int			 sc_num_redist;
 	int			 sc_num_redist_regions;
 	struct agintc_dmamem	*sc_prop;
-	struct agintc_dmamem	*sc_pend;
+	struct agintc_dmamem	**sc_pend;
 	struct interrupt_controller sc_ic;
 	int			 sc_ipi_num; /* id for ipi */
 	int			 sc_ipi_reason[MAXCPUS]; /* cause of ipi */
@@ -352,6 +352,37 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	typer = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_TYPER);
 
+	/* find the redistributors. */
+	idx = 0;
+	offset = 0;
+	redist_stride = OF_getpropint64(faa->fa_node, "redistributor-stride", 0);
+	for (nredist = 0; idx < sc->sc_num_redist_regions; nredist++) {
+		uint64_t rtyper;
+		int32_t sz;
+
+		rtyper = bus_space_read_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
+		    offset + GICR_TYPER);
+
+		if (redist_stride == 0) {
+			sz = (64 * 1024 * 2);
+			if (rtyper & GICR_TYPER_VLPIS)
+				sz += (64 * 1024 * 2);
+		} else
+			sz = redist_stride;
+
+#ifdef DEBUG_AGINTC
+		printf("probing redistributor %d %x\n", nredist, offset);
+#endif
+
+		offset += sz;
+		if (offset >= faa->fa_reg[1 + idx].size ||
+		    rtyper & GICR_TYPER_LAST) {
+			offset = 0;
+			idx++;
+		}
+	}
+	sc->sc_num_redist = nredist;
+
 	if (typer & GICD_TYPER_LPIS) {
 		/* Allocate redistributor tables */
 		sc->sc_prop = agintc_dmamem_alloc(sc->sc_dmat,
@@ -360,11 +391,16 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 			printf(": can't alloc LPI config table\n");
 			goto unmap;
 		}
-		sc->sc_pend = agintc_dmamem_alloc(sc->sc_dmat,
-		    GICR_PEND_SIZE, GICR_PEND_SIZE);
-		if (sc->sc_pend == NULL) {
-			printf(": can't alloc LPI pending table\n");
-			goto unmap;
+		/* Each redistributor needs its own LPI pending table. */
+		sc->sc_pend = mallocarray(sc->sc_num_redist,
+		    sizeof(*sc->sc_pend), M_DEVBUF, M_WAITOK | M_ZERO);
+		for (nredist = 0; nredist < sc->sc_num_redist; nredist++) {
+			sc->sc_pend[nredist] = agintc_dmamem_alloc(sc->sc_dmat,
+			    GICR_PEND_SIZE, GICR_PEND_SIZE);
+			if (sc->sc_pend[nredist] == NULL) {
+				printf(": can't alloc LPI pending table\n");
+				goto unmap;
+			}
 		}
 
 		/* Minimum number of LPIs supported by any implementation. */
@@ -448,37 +484,6 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	agintc_sc = sc; /* save this for global access */
 
-	/* find the redistributors. */
-	idx = 0;
-	offset = 0;
-	redist_stride = OF_getpropint64(faa->fa_node, "redistributor-stride", 0);
-	for (nredist = 0; idx < sc->sc_num_redist_regions; nredist++) {
-		uint64_t typer;
-		int32_t sz;
-
-		typer = bus_space_read_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
-		    offset + GICR_TYPER);
-
-		if (redist_stride == 0) {
-			sz = (64 * 1024 * 2);
-			if (typer & GICR_TYPER_VLPIS)
-				sz += (64 * 1024 * 2);
-		} else
-			sz = redist_stride;
-
-#ifdef DEBUG_AGINTC
-		printf("probing redistributor %d %x\n", nredist, offset);
-#endif
-
-		offset += sz;
-		if (offset >= faa->fa_reg[1 + idx].size ||
-		    typer & GICR_TYPER_LAST) {
-			offset = 0;
-			idx++;
-		}
-	}
-
-	sc->sc_num_redist = nredist;
 	printf(" nirq %d nredist %d", nintr, sc->sc_num_redist);
 	
 	sc->sc_r_ioh = mallocarray(sc->sc_num_redist,
@@ -490,15 +495,15 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	idx = 0;
 	offset = 0;
 	for (nredist = 0; nredist < sc->sc_num_redist; nredist++) {
-		uint64_t typer;
+		uint64_t rtyper;
 		int32_t sz;
 
-		typer = bus_space_read_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
+		rtyper = bus_space_read_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
 		    offset + GICR_TYPER);
 
 		if (redist_stride == 0) {
 			sz = (64 * 1024 * 2);
-			if (typer & GICR_TYPER_VLPIS)
+			if (rtyper & GICR_TYPER_VLPIS)
 				sz += (64 * 1024 * 2);
 		} else
 			sz = redist_stride;
@@ -527,7 +532,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 			    fls(LPI_BASE + sc->sc_nlpi - 1) - 1);
 			bus_space_write_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
 			    offset + GICR_PENDBASER,
-			    AGINTC_DMA_DVA(sc->sc_pend) |
+			    AGINTC_DMA_DVA(sc->sc_pend[nredist]) |
 			    GICR_PENDBASER_ISH | GICR_PENDBASER_IC_NORM_NC |
 			    GICR_PENDBASER_PTZ);
 			bus_space_write_4(sc->sc_iot, sc->sc_rbase_ioh[idx],
@@ -536,7 +541,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 		offset += sz;
 		if (offset >= faa->fa_reg[1 + idx].size ||
-		    typer & GICR_TYPER_LAST) {
+		    rtyper & GICR_TYPER_LAST) {
 			offset = 0;
 			idx++;
 		}
@@ -671,8 +676,15 @@ unmap:
 		     sc->sc_num_redist * sizeof(*sc->sc_processor));
 	}
 
-	if (sc->sc_pend)
-		agintc_dmamem_free(sc->sc_dmat, sc->sc_pend);
+	if (sc->sc_pend) {
+		for (nredist = 0; nredist < sc->sc_num_redist; nredist++) {
+			if (sc->sc_pend[nredist])
+				agintc_dmamem_free(sc->sc_dmat,
+				    sc->sc_pend[nredist]);
+		}
+		free(sc->sc_pend, M_DEVBUF,
+		    sc->sc_num_redist * sizeof(*sc->sc_pend));
+	}
 	if (sc->sc_prop)
 		agintc_dmamem_free(sc->sc_dmat, sc->sc_prop);
 
