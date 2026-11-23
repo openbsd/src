@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.472 2026/11/23 14:51:29 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.473 2026/11/23 21:14:53 jan Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2913,7 +2913,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 	if (offer > 0)
 		tp->t_peermss = offer;
 	if (tp->t_peermss)
-		mss = imin(mss, max(tp->t_peermss, 216));
+		mss = imin(mss, max(tp->t_peermss, TCP_MINMSS));
 
 	/* sanity - at least max opt. space */
 	mss = imax(mss, 64);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.25 2026/11/23 14:51:29 bluhm Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.26 2026/11/23 21:14:53 jan Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ struct tcphdr {
  * This should be defined as min(512, IP_MSS - sizeof (struct tcpiphdr)).
  */
 #define	TCP_MSS		512
+#define	TCP_MINMSS	216
 
 #define	TCP_MAXWIN	65535	/* largest value for (unscaled) window */
 
