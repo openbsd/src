@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.25 2026/11/20 13:12:18 kevlo Exp $ */
+/*	$OpenBSD: sff.c,v 1.26 2026/11/23 13:08:09 kevlo Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -338,7 +338,7 @@ static const struct sff_media_map upper_media_map = {
 	.dist_smf_km		= UPPER_DIST_SMF,
 	.dist_om1		= UPPER_DIST_OM1,
 	.scale_om1		= 1,
-	.dist_om2		= UPPER_DIST_OM1,
+	.dist_om2		= UPPER_DIST_OM2,
 	.scale_om2		= 1,
 	.dist_om3		= UPPER_DIST_OM3,
 	.scale_om3		= 2,
