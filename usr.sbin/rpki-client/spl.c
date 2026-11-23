@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.24 2026/11/13 06:35:47 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.25 2026/11/23 09:51:32 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -386,7 +386,7 @@ spl_insert_vsps(struct vsp_tree *tree, struct spl *spl, struct repo *rp)
 
 	if ((found = RB_INSERT(vsp_tree, tree, vsp)) != NULL) {
 		/* already exists */
-		if (found->expires < vsp->expires) {
+		if (found->expires > vsp->expires) {
 			/* adjust unique count */
 			repo_stat_inc(repo_byid(found->repoid),
 			    found->talid, RTYPE_SPL, STYPE_DEC_UNIQUE);
