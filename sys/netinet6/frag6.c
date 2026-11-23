@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.98 2026/11/08 08:42:55 miod Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.99 2026/11/23 23:37:31 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -209,13 +209,13 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 			mtx_leave(&frag6_mutex);
 			goto dropfrag;
 		}
-		frag6_nfragpackets++;
 		q6 = pool_get(&ip6q_pool, PR_NOWAIT | PR_ZERO);
 		if (q6 == NULL) {
 			mtx_leave(&frag6_mutex);
 			goto dropfrag;
 		}
 
+		frag6_nfragpackets++;
 		TAILQ_INSERT_HEAD(&frag6_queue, q6, ip6q_queue);
 
 		/* ip6q_nxt will be filled afterwards, from 1st fragment */
