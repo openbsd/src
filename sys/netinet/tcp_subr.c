@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.216 2025/07/18 08:39:14 mvs Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.217 2026/11/23 14:51:29 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -543,6 +543,7 @@ tcp_freeq(struct tcpcb *tp)
 		pool_put(&tcpqe_pool, qe);
 		rv = 1;
 	}
+	tp->t_segqlen = 0;
 	return (rv);
 }
 

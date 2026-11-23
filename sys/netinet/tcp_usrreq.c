@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.253 2025/10/24 15:09:56 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.254 2026/11/23 14:51:29 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1310,6 +1310,7 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 	ASSIGN(tcps_rcvbadsum);
 	ASSIGN(tcps_rcvbadoff);
 	ASSIGN(tcps_rcvmemdrop);
+	ASSIGN(tcps_rcvreassfull);
 	ASSIGN(tcps_rcvnosec);
 	ASSIGN(tcps_rcvshort);
 	ASSIGN(tcps_rcvduppack);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.187 2026/02/05 03:26:00 dlg Exp $	*/
+/*	$OpenBSD: inet.c,v 1.188 2026/11/23 14:51:29 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -439,6 +439,7 @@ tcp_stats(char *name)
 	p1(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
 	p1(tcps_rcvnosec, "\t\t%u discarded for missing IPsec protection\n");
 	p1(tcps_rcvmemdrop, "\t\t%u discarded due to memory shortage\n");
+	p1(tcps_rcvreassfull, "\t\t%u discarded with full reassembly queue\n");
 	p(tcps_inswcsum, "\t\t%u packet%s software-checksummed\n");
 	p(tcps_rcvbadsig, "\t\t%u bad/missing md5 checksum%s\n");
 	p(tcps_rcvgoodsig, "\t\t%llu good md5 checksum%s\n");

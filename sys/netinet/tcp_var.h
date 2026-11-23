@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.196 2025/09/16 17:29:35 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.197 2026/11/23 14:51:29 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ struct tcpcb {
 	tcp_seq	irs;			/* initial receive sequence number */
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
 	int	rcv_numsacks;		/* # distinct sack blks present */
+	u_int	t_segqlen;		/* segment count in sequencing queue */
 	struct sackblk sackblks[MAX_SACK_BLKS]; /* seq nos. of sack blocks */
 
 /*
@@ -367,6 +368,7 @@ struct	tcpstat {
 	u_int32_t tcps_rcvbadsum;	/* packets received with ccksum errs */
 	u_int32_t tcps_rcvbadoff;	/* packets received with bad offset */
 	u_int32_t tcps_rcvmemdrop;	/* packets dropped for lack of memory */
+	u_int32_t tcps_rcvreassfull;	/* packets dropped for no reass space */
 	u_int32_t tcps_rcvnosec;	/* packets dropped for lack of ipsec */
 	u_int32_t tcps_rcvshort;	/* packets received too short */
 	u_int32_t tcps_rcvduppack;	/* duplicate-only packets received */
@@ -559,6 +561,7 @@ enum tcpstat_counters {
 	tcps_rcvbadsum,
 	tcps_rcvbadoff,
 	tcps_rcvmemdrop,
+	tcps_rcvreassfull,
 	tcps_rcvnosec,
 	tcps_rcvshort,
 	tcps_rcvduppack,

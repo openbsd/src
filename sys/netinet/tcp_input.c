@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.471 2026/11/12 13:59:44 henning Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.472 2026/11/23 14:51:29 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -195,7 +195,19 @@ struct syn_cache *syn_cache_lookup(const struct sockaddr *,
 int
 tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 {
+	struct socket *so = tp->t_inpcb->inp_socket;
 	struct tcpqent *p, *q, *nq, *tiqe;
+	u_int qlimit;
+
+	/* Room for a full window of segments of at least 1 KB. */
+	qlimit = max(TCP_REASS_MAXQLEN, READ_ONCE(so->so_rcv.sb_hiwat) / 1024);
+
+	/* Bound the linear search through a per-connection queue. */
+	if (tp->t_segqlen >= qlimit && th->th_seq != tp->rcv_nxt) {
+		tcpstat_inc(tcps_rcvreassfull);
+		m_freem(m);
+		return (-1);
+	}
 
 	/*
 	 * Allocate a new queue entry, before we throw away any data.
@@ -211,6 +223,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 			/* Reuse last entry since new segment fills a hole */
 			m_freem(tiqe->tcpqe_m);
 			TAILQ_REMOVE(&tp->t_segq, tiqe, tcpqe_q);
+			tp->t_segqlen--;
 		}
 		if (tiqe == NULL || th->th_seq != tp->rcv_nxt) {
 			/* Flush segment queue for this connection */
@@ -275,6 +288,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		nq = TAILQ_NEXT(q, tcpqe_q);
 		m_freem(q->tcpqe_m);
 		TAILQ_REMOVE(&tp->t_segq, q, tcpqe_q);
+		tp->t_segqlen--;
 		pool_put(&tcpqe_pool, q);
 	}
 
@@ -287,6 +301,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	} else {
 		TAILQ_INSERT_AFTER(&tp->t_segq, p, tiqe, tcpqe_q);
 	}
+	tp->t_segqlen++;
 
 	if (th->th_seq != tp->rcv_nxt)
 		return (0);
@@ -318,6 +333,7 @@ tcp_flush_queue(struct tcpcb *tp)
 
 		nq = TAILQ_NEXT(q, tcpqe_q);
 		TAILQ_REMOVE(&tp->t_segq, q, tcpqe_q);
+		tp->t_segqlen--;
 		if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 			m_freem(q->tcpqe_m);
 		else {
