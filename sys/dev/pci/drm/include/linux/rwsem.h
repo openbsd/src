@@ -19,4 +19,19 @@
 /* no interface to check if another caller wants the lock */
 #define rwsem_is_contended(rwl)		0
 
+static inline struct rwlock *
+class_rwsem_read_constructor(struct rwlock *rwl)
+{
+	down_read(rwl);
+	return rwl;
+}
+
+static inline void
+class_rwsem_read_destructor(struct rwlock **p)
+{
+	up_read(*p);
+}
+
+typedef struct rwlock * class_rwsem_read_t;
+
 #endif
