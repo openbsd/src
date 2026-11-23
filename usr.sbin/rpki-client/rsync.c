@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.65 2026/07/28 11:25:50 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.66 2026/11/23 09:37:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,9 +19,11 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <poll.h>
 #include <resolv.h>
 #include <signal.h>
@@ -62,45 +64,62 @@ static TAILQ_HEAD(, rsync)	states = TAILQ_HEAD_INITIALIZER(states);
  * the URI to a common base. Returns 1 on success, 0 on failure.
  */
 int
-rsync_base_uri(const char *uri, char **out_base_uri)
+rsync_base_uri(const char *uri, size_t uri_len, char **out_base_uri)
 {
 	const char *host, *module, *rest;
+	size_t host_len, module_len;
 
 	assert(out_base_uri == NULL || *out_base_uri == NULL);
 
+	CTASSERT(INT_MAX >= MAX_URI_LENGTH);
+
+	if (uri_len > MAX_URI_LENGTH) {
+		warnx("preposterous uri length %zu", uri_len);
+		return 0;
+	}
+
+	if (uri_len <= RSYNC_PROTO_LEN) {
+		warnx("%.*s: uri too short", (int)uri_len, uri);
+		return 0;
+	}
+
 	/* Case-insensitive rsync URI. */
 	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
-		warnx("%s: not using rsync schema", uri);
+		warnx("%.*s: not using rsync schema", (int)uri_len, uri);
 		return 0;
 	}
 
 	/* Parse the non-zero-length hostname. */
 	host = uri + RSYNC_PROTO_LEN;
+	host_len = uri_len - RSYNC_PROTO_LEN;
 
-	if ((module = strchr(host, '/')) == NULL) {
-		warnx("%s: missing rsync module", uri);
+	if ((module = memchr(host, '/', host_len)) == NULL) {
+		warnx("%.*s: missing rsync module", (int)uri_len, uri);
 		return 0;
 	} else if (module == host) {
-		warnx("%s: zero-length rsync host", uri);
+		warnx("%.*s: zero-length rsync host", (int)uri_len, uri);
 		return 0;
 	}
+
+	module_len = host_len - (module - host);
 
 	/* The non-zero-length module follows the hostname. */
-	module++;
-	if (*module == '\0' || *module == '/') {
-		warnx("%s: zero-length rsync module", uri);
+	if (module_len == 0 || module[1] == '\0' || module[1] == '/') {
+		warnx("%.*s: zero-length rsync module", (int)uri_len, uri);
 		return 0;
 	}
+	module++;
+	module_len--;
 
 	/* The path component is optional. */
-	if ((rest = strchr(module, '/')) == NULL) {
+	if ((rest = memchr(module, '/', module_len)) == NULL) {
 		if (out_base_uri != NULL) {
-			if ((*out_base_uri = strdup(uri)) == NULL)
+			if ((*out_base_uri = strndup(uri, uri_len)) == NULL)
 				err(1, NULL);
 		}
 		return 1;
 	} else if (rest == module) {
-		warnx("%s: zero-length module", uri);
+		warnx("%.*s: zero-length module", (int)uri_len, uri);
 		return 0;
 	}
 

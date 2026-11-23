@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.329 2026/11/16 12:23:59 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.330 2026/11/23 09:37:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -932,7 +932,7 @@ void		 proc_filemode(int) __attribute__((noreturn));
 
 /* Rsync-specific. */
 
-int		 rsync_base_uri(const char *, char **);
+int		 rsync_base_uri(const char *, size_t, char **);
 void		 proc_rsync(char *, char *, int) __attribute__((noreturn));
 
 /* HTTP and RRDP processes. */

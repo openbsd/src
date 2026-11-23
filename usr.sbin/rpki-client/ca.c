@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.19 2026/11/21 12:01:07 tb Exp $ */
+/*	$OpenBSD: ca.c,v 1.20 2026/11/23 09:37:53 tb Exp $ */
 /*
  * Copyright (c) 2026 Job Snijders <job@bsd.nl>
  *
@@ -523,9 +523,9 @@ nca_history_load(void)
 			goto err;
 		if (strcmp(mfturi + mfturi_len - 4, ".mft") != 0)
 			goto err;
-		if (!valid_uri(mfturi, strlen(mfturi), RSYNC_PROTO))
+		if (!valid_uri(mfturi, mfturi_len, RSYNC_PROTO))
 			goto err;
-		if (!rsync_base_uri(mfturi, &nca->baseuri))
+		if (!rsync_base_uri(mfturi, mfturi_len, &nca->baseuri))
 			goto err;
 		if ((nca->mfturi = strdup(mfturi)) == NULL)
 			err(1, NULL);
@@ -812,9 +812,9 @@ ca_state_load(void)
 			goto err;
 		if (strcmp(mfturi + mfturi_len - 4, ".mft") != 0)
 			goto err;
-		if (!valid_uri(mfturi, strlen(mfturi), RSYNC_PROTO))
+		if (!valid_uri(mfturi, mfturi_len, RSYNC_PROTO))
 			goto err;
-		if (!rsync_base_uri(mfturi, NULL))
+		if (!rsync_base_uri(mfturi, mfturi_len, NULL))
 			goto err;
 		if ((ca->mfturi = strdup(mfturi)) == NULL)
 			err(1, NULL);
