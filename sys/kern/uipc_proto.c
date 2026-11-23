@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.25 2022/11/13 16:01:32 mvs Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.26 2026/11/23 13:56:25 claudio Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -46,21 +46,21 @@ const struct protosw unixsw[] = {
 {
   .pr_type	= SOCK_STREAM,
   .pr_domain	= &unixdomain,
-  .pr_protocol	= PF_UNIX,
+  .pr_protocol	= 0,
   .pr_flags	= PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
   .pr_usrreqs	= &uipc_usrreqs,
 },
 {
   .pr_type	= SOCK_SEQPACKET,
   .pr_domain	= &unixdomain,
-  .pr_protocol	= PF_UNIX,
+  .pr_protocol	= 0,
   .pr_flags	= PR_ATOMIC|PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
   .pr_usrreqs	= &uipc_usrreqs,
 },
 {
   .pr_type	= SOCK_DGRAM,
   .pr_domain	= &unixdomain,
-  .pr_protocol	= PF_UNIX,
+  .pr_protocol	= 0,
   .pr_flags	= PR_ATOMIC|PR_ADDR|PR_RIGHTS,
   .pr_usrreqs	= &uipc_dgram_usrreqs,
 }
