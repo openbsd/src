@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.76 2026/05/26 03:51:11 mglocker Exp $
+# $OpenBSD: files.i2c,v 1.77 2026/11/23 20:02:25 mglocker Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -293,3 +293,8 @@ file	dev/i2c/icc.c				icc
 device	iasuskbd: wskbddev
 attach	iasuskbd at ihidbus
 file	dev/i2c/iasuskbd.c			iasuskbd
+
+# HP laptop embedded controller
+device	hpec
+attach	hpec at i2c
+file	dev/i2c/hpec.c				hpec

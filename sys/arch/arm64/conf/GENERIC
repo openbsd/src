@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.318 2026/09/06 18:29:44 mglocker Exp $
+# $OpenBSD: GENERIC,v 1.319 2026/11/23 20:02:24 mglocker Exp $
 #
 # GENERIC machine description file
 #
@@ -630,6 +630,7 @@ tipd*		at iic?			# TPS6598x Type-C controller
 pijuice*	at iic?			# PiJuice HAT
 sambat*		at iic?			# Samsung SAM060B battery monitor
 samsabi*	at iic?			# Samsung Advance BIOS Interface
+hpec*		at iic?			# HP Embedded Controller
 
 # GPIO "pin bus" drivers
 gpioiic*	at gpio?		# I2C bus bit-banging
