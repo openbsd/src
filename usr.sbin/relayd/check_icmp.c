@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.51 2026/09/16 00:25:02 rsadowski Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.52 2026/11/23 06:51:58 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -287,6 +287,7 @@ recv_icmp(int s, short event, void *arg)
 {
 	struct ctl_icmp_event	*cie = arg;
 	u_char			 packet[ICMP_BUF_SIZE];
+	char			 hbuf[HOST_NAME_MAX + 1];
 	socklen_t		 slen;
 	struct sockaddr_storage	 ss;
 	struct icmp		*icp;
@@ -315,22 +316,22 @@ recv_icmp(int s, short event, void *arg)
 
 	if (cie->af == AF_INET) {
 		icp = (struct icmp *)(packet + sizeof(struct ip));
+		if (icp->icmp_type != ICMP_ECHOREPLY)
+			goto retry;
 		icpid = icp->icmp_id;
 		id = icp->icmp_mask;
 	} else {
 		icp6 = (struct icmp6_hdr *)packet;
+		if (icp6->icmp6_type != ICMP6_ECHO_REPLY)
+			goto retry;
 		icpid = icp6->icmp6_id;
 		memcpy(&id, packet + sizeof(*icp6), sizeof(id));
 	}
 	id = ntohl(id);
 	host = host_find(cie->env, id);
-	if (host == NULL) {
-		log_warn("%s: ping for unknown host received", __func__);
-		goto retry;
-	}
-	if (icpid != host->icmp_ident) {
-		log_warn("%s: bad icmp ident from %s", __func__,
-		    host->conf.name);
+	if (host == NULL || icpid != host->icmp_ident) {
+		log_debug("%s: ignoring icmp packet from %s", __func__,
+		    print_host(&ss, hbuf, sizeof(hbuf)));
 		goto retry;
 	}
 
