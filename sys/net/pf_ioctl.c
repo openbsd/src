@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.438 2026/11/08 08:42:55 miod Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.439 2026/11/23 16:04:14 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -344,6 +344,9 @@ pf_rule_free(struct pf_rule *rule)
 {
 	if (rule == NULL)
 		return;
+
+	pf_tag_unref(rule->tag);
+	pf_tag_unref(rule->match_tag);
 
 	pfi_kif_free(rule->kif);
 	pfi_kif_free(rule->rcv_kif);
