@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.66 2026/11/23 09:37:53 tb Exp $ */
+/*	$OpenBSD: rsync.c,v 1.67 2026/11/23 14:10:49 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,6 +98,11 @@ rsync_base_uri(const char *uri, size_t uri_len, char **out_base_uri)
 		return 0;
 	} else if (module == host) {
 		warnx("%.*s: zero-length rsync host", (int)uri_len, uri);
+		return 0;
+	}
+
+	if (*host == '.') {
+		warnx("%.*s: rsync host starting with '.'", (int)uri_len, uri);
 		return 0;
 	}
 
