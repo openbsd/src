@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2026/11/07 08:59:53 robert Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2026/11/24 05:48:13 robert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -230,10 +230,8 @@ main(int argc, char *argv[])
 
 		snprintf(ttyn, sizeof ttyn, "%s%s", _PATH_DEV, argv[2]);
 		if (strcmp(argv[0], "+") != 0) {
-			if (!login_wscons(argv[2])) {
-				chown(ttyn, 0, 0);
-				chmod(ttyn, 0600);
-			}
+			chown(ttyn, 0, 0);
+			chmod(ttyn, 0600);
 			revoke(ttyn);
 			/*
 			 * Delay the open so DTR stays down long enough to be detected.

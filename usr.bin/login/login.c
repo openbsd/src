@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.76 2026/11/07 08:59:53 robert Exp $	*/
+/*	$OpenBSD: login.c,v 1.77 2026/11/24 05:48:13 robert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -669,10 +669,8 @@ failed:
 
 	wscons = login_wscons(tty);
 
-	if (!wscons) {
-		(void)chown(ttyn, pwd->pw_uid,
-		    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
-	}
+	(void)chown(ttyn, pwd->pw_uid,
+	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0) {
