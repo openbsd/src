@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.95 2026/02/11 22:34:40 deraadt Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.96 2026/11/24 13:35:53 mvs Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -378,12 +378,20 @@ int
 fill_vmmap(struct process *pr, struct kinfo_vmentry *kve,
     size_t *lenp)
 {
+	struct vmspace *vm = NULL;
 	struct vm_map *map;
+	int error;
 
-	if (pr != NULL)
-		map = &pr->ps_vmspace->vm_map;
-	else
+	if (pr != NULL) {
+		KERNEL_ASSERT_LOCKED();
+		vm = pr->ps_vmspace;
+		uvmspace_addref(vm);
+		map = &vm->vm_map;
+	} else
 		map = kernel_map;
-	return uvm_map_fill_vmmap(map, kve, lenp);
+	error = uvm_map_fill_vmmap(map, kve, lenp);
+	uvmspace_free(vm);
+
+	return (error);
 }
 #endif
