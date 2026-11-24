@@ -4,8 +4,8 @@
 # generated from:
 #
 #	OpenBSD: etc.hppa/MAKEDEV.md,v 1.73 2026/10/24 21:01:41 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.125 2026/11/07 13:01:09 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.92 2026/11/07 13:01:09 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.127 2026/11/24 05:48:13 robert Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.93 2026/11/24 05:48:13 robert Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -232,7 +232,7 @@ ramdisk)
 	;;
 
 std)
-	M console	c 0 0 660 wscons root
+	M console	c 0 0 600
 	M tty		c 1 0
 	M mem		c 2 0 640 kmem
 	M kmem		c 2 1 640 kmem
@@ -428,8 +428,8 @@ tty[C-J]*)
 	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c 27 $((16#$U+$m)) 660 wscons root;;
-	cfg) M tty${n}cfg c 27 $((255+$m)) 660 wscons root;;
+	[0-9a-f]) M tty$n$U c 27 $((16#$U+$m)) 600;;
+	cfg) M tty${n}cfg c 27 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
 	;;
