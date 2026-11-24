@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.19 2026/11/23 10:24:45 tb Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.20 2026/11/24 22:01:19 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -127,8 +127,9 @@ start_publish_withdraw_elem(struct delta_xml *dxml, const char **attr,
 				continue;
 			}
 		}
-		if (strcmp("hash", attr[i]) == 0 && hasHash++ == 0 &&
-		    strlen(attr[i + 1]) == 2 * SHA256_DIGEST_LENGTH) {
+		if (strcmp("hash", attr[i]) == 0 &&
+		    strlen(attr[i + 1]) == 2 * SHA256_DIGEST_LENGTH &&
+		    hasHash++ == 0) {
 			if (hex_decode(attr[i + 1], hash, sizeof(hash)) == 0)
 				continue;
 		}
