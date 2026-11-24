@@ -964,8 +964,6 @@ legitimize_operand (rtx op, enum machine_mode mode)
 {
   rtx temp;
   REAL_VALUE_TYPE d;
-  long l[2];
-  int exponent;
 
   if (REG_P (op) || mode != DFmode)
     return op;
@@ -973,15 +971,13 @@ legitimize_operand (rtx op, enum machine_mode mode)
   if (GET_CODE (op) == CONST_DOUBLE)
     {
       REAL_VALUE_FROM_CONST_DOUBLE (d, op);
-      REAL_VALUE_TO_TARGET_DOUBLE (d, l);
-      exponent = (l[0] >> 20) & 0x7ff; /* not sign-extended */
-      if (exponent != 0x7ff /* NaN */
-	  && l[1] == 0 /* Mantissa fits */
-	  && ((exponent >> 7) == 0x8
-	      || (exponent >> 7) == 0x7) /* Exponent fits */
-	  && (temp = simplify_unary_operation (FLOAT_TRUNCATE, SFmode,
-					       op, mode)) != 0)
-	return gen_rtx_FLOAT_EXTEND (mode, force_reg (SFmode, temp));
+
+      if (exact_real_truncate (SFmode, &d))
+	{
+	  d = real_value_truncate (SFmode, d);
+	  temp = CONST_DOUBLE_FROM_REAL_VALUE (d, SFmode);
+	  return gen_rtx_FLOAT_EXTEND (mode, force_reg (SFmode, temp));
+	}
     }
   else if (register_operand (op, mode))
     return op;
