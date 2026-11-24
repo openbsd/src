@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.336 2026/11/12 13:59:44 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.337 2026/11/24 04:31:07 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2770,6 +2770,12 @@ pfsync_in_clr(struct pfsync_softc *sc,
 		if (clr->ifname[0] == '\0')
 			kif = NULL;
 		else {
+			/* the peer's name need not be terminated */
+			if (strnlen(clr->ifname, sizeof(clr->ifname)) ==
+			    sizeof(clr->ifname)) {
+				pfsyncstat_inc(pfsyncs_badval);
+				continue;
+			}
 			kif = pfi_kif_find(clr->ifname);
 			if (kif == NULL)
 				continue;
@@ -3266,10 +3272,21 @@ pfsync_update_net_tdb(const struct pfsync_tdb *pt)
 	NET_ASSERT_LOCKED();
 
 	/* check for invalid values */
-	if (ntohl(pt->spi) <= SPI_RESERVED_MAX ||
-	    (pt->dst.sa.sa_family != AF_INET &&
-	     pt->dst.sa.sa_family != AF_INET6))
+	if (ntohl(pt->spi) <= SPI_RESERVED_MAX)
 		goto bad;
+	/* gettdb() hashes and compares dst over its sa_len */
+	switch (pt->dst.sa.sa_family) {
+	case AF_INET:
+		if (pt->dst.sa.sa_len != sizeof(struct sockaddr_in))
+			goto bad;
+		break;
+	case AF_INET6:
+		if (pt->dst.sa.sa_len != sizeof(struct sockaddr_in6))
+			goto bad;
+		break;
+	default:
+		goto bad;
+	}
 
 	tdb = gettdb(ntohs(pt->rdomain), pt->spi,
 	    (union sockaddr_union *)&pt->dst, pt->sproto);

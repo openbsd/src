@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1254 2026/11/12 13:59:44 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1255 2026/11/24 04:31:07 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1718,6 +1718,10 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 
 	if ((ntohs(sp->state_flags) & PFSTATE_SETPRIO) &&
 	    (sp->set_prio[0] > IFQ_MAXPRIO || sp->set_prio[1] > IFQ_MAXPRIO))
+		return (EINVAL);
+
+	/* the name comes from userland or a pfsync peer */
+	if (strnlen(sp->ifname, sizeof(sp->ifname)) == sizeof(sp->ifname))
 		return (EINVAL);
 
 	if ((kif = pfi_kif_get(sp->ifname, NULL)) == NULL) {
