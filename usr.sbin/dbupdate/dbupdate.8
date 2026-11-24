@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbupdate.8,v 1.6 2026/11/24 05:05:50 jsg Exp $
+.\" $OpenBSD: dbupdate.8,v 1.7 2026/11/24 05:12:58 jsg Exp $
 .\"
 .\" Copyright (c) 2026 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -37,7 +37,7 @@ mechanisms.
 .Pp
 This is a different distribution and polling mechanism which is
 kept simple as possible so that it can be run regularly as root
-in 
+in
 .Xr cron 8 .
 .Pp
 The two databases currently updated are
@@ -61,6 +61,7 @@ normally only updates new files.
 This option forces download and installation.
 .It Fl n
 Dry run (prints out what it would have done).
+.El
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa /var/dbupdate
