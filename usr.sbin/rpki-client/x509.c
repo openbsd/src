@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.141 2026/11/13 06:35:47 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.142 2026/11/24 20:48:10 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -315,14 +315,15 @@ valid_printable_octet(const uint8_t u8)
 }
 
 static int
-valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
+valid_printable_string(const char *fn, const char *descr, const char *attr,
+    const ASN1_STRING *as)
 {
 	const unsigned char *data;
 	int i, length;
 
 	if (ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
-		warnx("%s: RFC 6487 section 4.5: %s commonName is"
-		    " not PrintableString", fn, descr);
+		warnx("%s: RFC 6487 section 4.4: %s %s is"
+		    " not PrintableString", fn, descr, attr);
 		return 0;
 	}
 
@@ -330,14 +331,21 @@ valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
 	length = ASN1_STRING_length(as);
 	for (i = 0; i < length; i++) {
 		if (!valid_printable_octet(data[i])) {
-			warnx("%s: invalid %s: PrintableString contains 0x%02x",
-			    fn, descr, data[i]);
+			warnx("%s: invalid %s %s: PrintableString contains "
+			    "0x%02x", fn, descr, attr, data[i]);
 			return 0;
 		}
 	}
 
 	return 1;
 }
+
+/*
+ * An RSA SPKI is a 2048 bit pubkey with a padding octet and the 10001 exponent:
+ *   SEQUENCE { INTEGER { 257 octets } INTEGER { 3 octets } }
+ * 270 bytes: 3 tag octets, 7 (= 2 * 3 + 1) length octets and 260 data octets.
+ */
+#define RSA_SPKI_HEX_LEN	540
 
 /*
  * Check that subject or issuer only contain commonName and serialNumber.
@@ -350,7 +358,7 @@ x509_valid_name_internal(const char *fn, const char *descr, const X509_NAME *xn)
 	const ASN1_OBJECT *ao;
 	const ASN1_STRING *as;
 	int cn = 0, sn = 0;
-	int i, nid;
+	int i, length, nid;
 
 	for (i = 0; i < X509_NAME_entry_count(xn); i++) {
 		if ((ne = X509_NAME_get_entry(xn, i)) == NULL) {
@@ -375,13 +383,45 @@ x509_valid_name_internal(const char *fn, const char *descr, const X509_NAME *xn)
 				    fn);
 				return 0;
 			}
-			if (!valid_printable_string(fn, descr, as))
+			if (!valid_printable_string(fn, descr, "commonName",
+			    as))
 				return 0;
+			length = ASN1_STRING_length(as);
+			/* RFC 5280, Appendix A: SIZE (1..ub-common-name) */
+			if (length < 1 || length > 64) {
+				/*
+				 * XXX - registro.br special: as of Nov 2026,
+				 * ~900 products have CN=`hex(subject pubkey)`:
+				 * https://github.com/NLnetLabs/rpki-rs/pull/165
+				 * https://github.com/NLnetLabs/krill/pull/704
+				 */
+				if (verbose > 1 || length != RSA_SPKI_HEX_LEN)
+					warnx("%s: %s commonName length %d not "
+					    "in [1,64]", fn, descr, length);
+				if (length == RSA_SPKI_HEX_LEN)
+					break;
+				return 0;
+			}
 			break;
 		case NID_serialNumber:
 			if (sn++ > 0) {
 				warnx("%s: duplicate serialNumber in %s",
 				    fn, descr);
+				return 0;
+			}
+			if ((as = X509_NAME_ENTRY_get_data(ne)) == NULL) {
+				warnx("%s: X509_NAME_ENTRY_get_data failed",
+				    fn);
+				return 0;
+			}
+			if (!valid_printable_string(fn, descr, "serialNumber",
+			    as))
+				return 0;
+			length = ASN1_STRING_length(as);
+			/* RFC 5280, Appendix A: SIZE (1..ub-serial-number) */
+			if (length < 1 || length > 64) {
+				warnx("%s: %s serialNumber length %d not "
+				    "in [1,64]", fn, descr, length);
 				return 0;
 			}
 			break;
