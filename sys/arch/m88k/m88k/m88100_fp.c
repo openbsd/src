@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.10 2026/07/15 18:42:37 miod Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.11 2026/11/24 15:31:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -278,7 +278,8 @@ m88100_fpu_emulate(struct trapframe *frame)
 		tmax = fpu_precision(t1, t2, IGNORE_PRECISION);
 		m88100_fpu_fetch(frame, 1, t1, tmax, &arg1);
 		m88100_fpu_fetch(frame, 2, t2, tmax, &arg2);
-		fpu_compare(frame, &arg1, &arg2, tmax, rd, 0);
+		/* 88100 fcmp behaves as 88110 fcmpu wrt quiet NaNs */
+		fpu_compare(frame, &arg1, &arg2, tmax, rd, 1);
 		break;
 
 	case 0x09:	/* int */
