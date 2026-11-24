@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.74 2026/11/19 20:24:47 mglocker Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.75 2026/11/24 19:20:03 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -162,9 +162,6 @@ efi_cons_getc(dev_t dev)
 {
 	EFI_INPUT_KEY	 key;
 	EFI_STATUS	 status;
-#if 0
-	UINTN		 dummy;
-#endif
 	static int	 lastchar = 0;
 
 	if (lastchar) {
@@ -174,17 +171,18 @@ efi_cons_getc(dev_t dev)
 		return (r);
 	}
 
+	/*
+	 * Some firmware (HP OmniBook X) only polls the keyboard from the
+	 * notify function of the WaitForKey event, so poll it with
+	 * CheckEvent().  On old versions of U-Boot, WaitForEvent() never
+	 * returns, so don't use it here.
+	 */
+	(void)BS->CheckEvent(conin->WaitForKey);
 	status = conin->ReadKeyStroke(conin, &key);
 	while (status == EFI_NOT_READY || key.UnicodeChar == 0) {
 		if (dev & 0x80)
 			return (0);
-		/*
-		 * XXX The implementation of WaitForEvent() in U-boot
-		 * is broken and neverreturns.
-		 */
-#if 0
-		BS->WaitForEvent(1, &conin->WaitForKey, &dummy);
-#endif
+		(void)BS->CheckEvent(conin->WaitForKey);
 		status = conin->ReadKeyStroke(conin, &key);
 	}
 
