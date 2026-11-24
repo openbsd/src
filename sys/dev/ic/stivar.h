@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.31 2026/11/19 19:23:17 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.32 2026/11/24 15:29:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -39,7 +39,7 @@ struct sti_rom {
 	struct sti_softc	*rom_softc;	/* backpointer to device */
 	int			 rom_devtype;
 
-	bus_space_tag_t		 iot, memt;	/* XXX iot unused */
+	bus_space_tag_t		 memt;
 	bus_space_handle_t	 regh[STI_REGION_MAX];
 	bus_addr_t		*bases;
 
@@ -133,7 +133,7 @@ struct sti_softc {
 				    uint32_t, uint32_t);
 };
 
-int	sti_attach_common(struct sti_softc *, bus_space_tag_t, bus_space_tag_t,
+int	sti_attach_common(struct sti_softc *, bus_space_tag_t,
 	    bus_space_handle_t, const uint8_t *, u_int);
 void	sti_describe(struct sti_softc *);
 void	sti_end_attach(void *);

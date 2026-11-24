@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.42 2026/05/01 20:03:58 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.43 2026/11/24 15:29:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -217,7 +217,6 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
 		sc->sc_flags |= STI_CONSOLE;
-	if (sti_attach_common(sc, ca->ca_iot, ca->ca_iot, romh, NULL,
-	    STI_CODEBASE_PA) == 0)
+	if (sti_attach_common(sc, ca->ca_iot, romh, NULL, STI_CODEBASE_PA) == 0)
 		startuphook_establish(sti_end_attach, sc);
 }

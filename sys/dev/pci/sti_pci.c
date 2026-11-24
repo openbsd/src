@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.17 2026/11/19 19:23:17 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.18 2026/11/24 15:29:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -105,8 +105,8 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
 		spc->sc_base.sc_flags |= STI_CONSOLE;
-	if (sti_attach_common(&spc->sc_base, paa->pa_iot, paa->pa_memt,
-	    spc->sc_romh, spc->sc_romcopy + spc->sc_dssize,
+	if (sti_attach_common(&spc->sc_base, paa->pa_memt, spc->sc_romh,
+	    spc->sc_romcopy + spc->sc_dssize,
 	    STI_CODEBASE_MAIN) == 0)
 		startuphook_establish(sti_end_attach, spc);
 

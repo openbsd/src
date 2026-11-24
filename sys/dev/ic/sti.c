@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.88 2026/11/19 19:23:17 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.89 2026/11/24 15:29:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -112,8 +112,8 @@ int	sti_fetchfonts(struct sti_screen *, bus_space_handle_t,
 	    struct sti_inqconfout *, u_int32_t, u_int);
 int32_t	sti_gvid(void *, uint32_t, uint32_t *);
 void	sti_region_setup(struct sti_screen *, bus_space_handle_t);
-int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
-	    bus_space_handle_t, bus_addr_t *, u_int);
+int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t *, u_int);
 int	sti_screen_setup(struct sti_screen *, bus_space_handle_t, int);
 
 int	ngle_default_putcmap(struct sti_screen *, u_int, u_int);
@@ -155,9 +155,8 @@ do { \
 
 /* invoked with the device name already printed */
 int
-sti_attach_common(struct sti_softc *sc, bus_space_tag_t iot,
-    bus_space_tag_t memt, bus_space_handle_t romh, const uint8_t *rom_copy,
-    u_int codebase)
+sti_attach_common(struct sti_softc *sc, bus_space_tag_t memt,
+    bus_space_handle_t romh, const uint8_t *rom_copy, u_int codebase)
 {
 	struct sti_rom *rom;
 	int rc;
@@ -171,7 +170,7 @@ sti_attach_common(struct sti_softc *sc, bus_space_tag_t iot,
 
 	rom->rom_softc = sc;
 	rom->rom_copy = rom_copy;	/* may be NULL */
-	rc = sti_rom_setup(rom, iot, memt, romh, sc->bases, codebase);
+	rc = sti_rom_setup(rom, memt, romh, sc->bases, codebase);
 	if (rc != 0) {
 		free(rom, M_DEVBUF, sizeof *rom);
 		return (rc);
@@ -204,6 +203,7 @@ sti_attach_screen(struct sti_softc *sc, bus_space_handle_t romh, int flags)
 	}
 
 	scr->scr_rom = sc->sc_rom;
+
 	rc = sti_screen_setup(scr, romh, flags);
 	if (rc != 0) {
 		free(scr, M_DEVBUF, sizeof *scr);
@@ -217,7 +217,7 @@ sti_attach_screen(struct sti_softc *sc, bus_space_handle_t romh, int flags)
 
 /* invoked with the device name already printed */
 int
-sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
+sti_rom_setup(struct sti_rom *rom, bus_space_tag_t memt,
     bus_space_handle_t romh, bus_addr_t *bases, u_int codebase)
 {
 	struct sti_dd *dd;
@@ -225,7 +225,6 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	vaddr_t va;
 	paddr_t pa;
 
-	rom->iot = iot;
 	rom->memt = memt;
 	rom->bases = bases;
 
