@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.29 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.30 2026/11/24 12:26:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -463,6 +463,7 @@ calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link,
 	struct iface		*iface;
 	struct vertex		*link;
 	struct rde_nbr		*nbr;
+	uint32_t		 rtr_id, iface_id;
 
 	/* Find outgoing interface, we need its LSA tree */
 	LIST_FOREACH(iface, &dst->area->iface_list, entry) {
@@ -471,15 +472,27 @@ calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link,
 	}
 	if (!iface) {
 		log_warnx("calc_nexthop_lladdr: no interface found for "
-		    "ifindex %d", ntohl(rtr_link->iface_id));
+		    "ifindex %u", ifindex);
 		return (NULL);
+	}
+
+	/*
+	 * p2p and virtual links use the data from the rtr_link,
+	 * transit networks use the adv router and interface id since
+	 * the rtr_link data points to the DR and its interface.
+	 */
+	if (rtr_link->type == LINK_TYPE_TRANSIT_NET) {
+		iface_id = rtr_link->iface_id;
+		rtr_id = htonl(dst->adv_rtr);
+	} else {
+		iface_id = rtr_link->nbr_iface_id;
+		rtr_id = rtr_link->nbr_rtr_id;
 	}
 
 	/* Determine neighbor's link-local address.
 	 * Try to get it from link LSA first. */
 	link = lsa_find_tree(&iface->lsa_tree,
-		htons(LSA_TYPE_LINK), rtr_link->iface_id,
-		htonl(dst->adv_rtr));
+		htons(LSA_TYPE_LINK), iface_id, rtr_id);
 	if (link)
 		return &link->lsa->data.link.lladdr;
 
@@ -873,7 +886,8 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh, u_int16_t type,
 
 	TAILQ_FOREACH(vn, vnh, entry) {
 		TAILQ_FOREACH(rn, &r->nexthop, entry) {
-			if (!IN6_ARE_ADDR_EQUAL(&rn->nexthop, &vn->nexthop))
+			if (rn->ifindex != vn->ifindex ||
+			    !IN6_ARE_ADDR_EQUAL(&rn->nexthop, &vn->nexthop))
 				continue;
 
 			rn->adv_rtr.s_addr = adv_rtr.s_addr;
