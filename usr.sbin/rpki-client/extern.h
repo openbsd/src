@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.331 2026/11/23 10:01:53 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.332 2026/11/24 07:26:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1044,7 +1044,6 @@ time_t		 x509_find_expires(time_t, struct auth *, struct crl *);
 char		*nid2str(int);
 const char	*purpose2str(enum cert_purpose);
 char		*time2str(time_t);
-void		 x509_print(const X509 *);
 void		 tal_print(const struct tal *);
 void		 cert_print(const struct cert *);
 void		 crl_print(const struct crl *);
