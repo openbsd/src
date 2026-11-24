@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.204 2026/08/30 23:43:23 jsg Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.205 2026/11/24 07:57:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -756,17 +756,11 @@ up_generate_attr(struct ibuf *buf, struct rde_peer *peer,
 		case ATTR_AGGREGATOR:
 			if (oa == NULL || oa->type != type)
 				break;
-			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
-			    peer->conf.ebgp)
-				break;
+			flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
 			if (!peer_has_as4byte(peer)) {
 				/* need to deflate the aggregator */
 				uint8_t		t[6];
 				uint16_t	tas;
-
-				if ((!(oa->flags & ATTR_TRANSITIVE)) &&
-				    peer->conf.ebgp)
-					break;
 
 				memcpy(&tmp32, oa->data, sizeof(tmp32));
 				if (ntohl(tmp32) > USHRT_MAX) {
@@ -779,38 +773,46 @@ up_generate_attr(struct ibuf *buf, struct rde_peer *peer,
 				memcpy(t + sizeof(tas),
 				    oa->data + sizeof(tmp32),
 				    oa->len - sizeof(tmp32));
-				if (attr_writebuf(buf, oa->flags,
+				if (attr_writebuf(buf, flags,
 				    oa->type, &t, sizeof(t)) == -1)
 					return -1;
 			} else {
-				if (attr_writebuf(buf, oa->flags, oa->type,
+				if (attr_writebuf(buf, flags, oa->type,
 				    oa->data, oa->len) == -1)
 					return -1;
 			}
 			break;
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
+			if (oa == NULL || oa->type != type)
+				break;
+			/* only sent to internal peers */
+			if (peer->conf.ebgp)
+				break;
+			flags = ATTR_OPTIONAL;
+			if (attr_writebuf(buf, flags, oa->type,
+			    oa->data, oa->len) == -1)
+				return -1;
+			break;
 		case ATTR_OTC:
 			if (oa == NULL || oa->type != type)
 				break;
-			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
-			    peer->conf.ebgp)
-				break;
-			if (attr_writebuf(buf, oa->flags, oa->type,
+			flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+			if (attr_writebuf(buf, flags, oa->type,
 			    oa->data, oa->len) == -1)
 				return -1;
 			break;
 		default:
 			if (oa == NULL && type >= ATTR_FIRST_UNKNOWN)
 				/* there is no attribute left to dump */
-				return (0);
+				return 0;
 
 			if (oa == NULL || oa->type != type)
 				break;
 			/* unknown attribute */
 			if (!(oa->flags & ATTR_TRANSITIVE)) {
 				/*
-				 * RFC 1771:
+				 * RFC 4271:
 				 * Unrecognized non-transitive optional
 				 * attributes must be quietly ignored and
 				 * not passed along to other BGP peers.
