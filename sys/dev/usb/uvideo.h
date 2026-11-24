@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.71 2025/09/06 13:45:41 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.72 2026/11/24 20:57:25 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -688,6 +688,19 @@ struct uvideo_res {
 	int fidx;
 };
 
+struct uvideo_ctrl_query {
+	uint8_t		request;
+	int32_t		value;
+};
+
+#define UVIDEO_CTRL_RANGE \
+	{ { GET_MIN, 0 }, { GET_MAX, 0 }, \
+	  { GET_RES, 0 }, { GET_DEF, 0 } }
+#define UVIDEO_CTRL_AUTO \
+	{ { 0, 0 }, { 0, 1 }, { 0, 1 }, { GET_DEF, 0 } }
+#define UVIDEO_CTRL_POWER_LINE \
+	{ { 0, 0 }, { 0, 2 }, { 0, 1 }, { GET_DEF, 0 } }
+
 struct uvideo_controls {
 	int		cid;
 	int		type;
@@ -696,6 +709,7 @@ struct uvideo_controls {
 	uint16_t	ctrl_selector;
 	uint16_t	ctrl_len;
 	int		sig;
+	struct uvideo_ctrl_query query[4]; /* min, max, step, default */
 } uvideo_ctrls[] = {
         /*
          * Processing Unit Controls
@@ -707,7 +721,8 @@ struct uvideo_controls {
 	    0,
 	    PU_BRIGHTNESS_CONTROL,
 	    2,
-	    1
+	    1,
+	    UVIDEO_CTRL_RANGE
 	},
 	{
 	    V4L2_CID_CONTRAST,
@@ -716,7 +731,8 @@ struct uvideo_controls {
 	    1,
 	    PU_CONTRAST_CONTROL,
 	    2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
 	},
 	{
 	    V4L2_CID_HUE,
@@ -725,7 +741,8 @@ struct uvideo_controls {
 	    2,
 	    PU_HUE_CONTROL,
 	    2,
-	    1
+	    1,
+	    UVIDEO_CTRL_RANGE
 	},
 	{
 	    V4L2_CID_SATURATION,
@@ -734,7 +751,8 @@ struct uvideo_controls {
 	    3,
 	    PU_SATURATION_CONTROL,
 	    2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
 	},
 	{
 	    V4L2_CID_SHARPNESS,
@@ -743,7 +761,8 @@ struct uvideo_controls {
 	    4,
 	    PU_SHARPNESS_CONTROL,
 	    2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
 	},
 	{
 	    V4L2_CID_GAMMA,
@@ -752,7 +771,8 @@ struct uvideo_controls {
 	    5,
 	    PU_GAMMA_CONTROL,
 	    2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
 	},
 	{
 	    V4L2_CID_WHITE_BALANCE_TEMPERATURE,
@@ -761,7 +781,8 @@ struct uvideo_controls {
 	    6,
 	    PU_WHITE_BALANCE_TEMPERATURE_CONTROL,
 	    2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
 	},
 #if 0
         /* XXX Two V4L2 ids mapping one UVC control */
@@ -782,7 +803,8 @@ struct uvideo_controls {
             8,
             PU_BACKLIGHT_COMPENSATION_CONTROL,
             2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
         },
 	{
 	    V4L2_CID_GAIN,
@@ -791,7 +813,8 @@ struct uvideo_controls {
 	    9,
 	    PU_GAIN_CONTROL,
 	    2,
-	    0
+	    0,
+	    UVIDEO_CTRL_RANGE
 	},
         {
             V4L2_CID_POWER_LINE_FREQUENCY,
@@ -799,8 +822,9 @@ struct uvideo_controls {
             "Power Line Frequency",
             10,
             PU_POWER_LINE_FREQUENCY_CONTROL,
-            2,
-	    0
+            1,
+	    0,
+	    UVIDEO_CTRL_POWER_LINE
         },
         {
             V4L2_CID_HUE_AUTO,
@@ -809,7 +833,8 @@ struct uvideo_controls {
             11,
             PU_HUE_AUTO_CONTROL,
             1,
-	    0
+	    0,
+	    UVIDEO_CTRL_AUTO
         },
         {
             V4L2_CID_AUTO_WHITE_BALANCE,
@@ -818,7 +843,8 @@ struct uvideo_controls {
             12,
             PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL,
             1,
-	    0
+	    0,
+	    UVIDEO_CTRL_AUTO
         },
         {
             V4L2_CID_AUTO_WHITE_BALANCE,
@@ -827,7 +853,8 @@ struct uvideo_controls {
             13,
             PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL,
             1,
-	    0
+	    0,
+	    UVIDEO_CTRL_AUTO
         },
 #if 0
         /* XXX No V4L2 CID for these controls? */
@@ -868,5 +895,5 @@ struct uvideo_controls {
 	    0
         },
 #endif
-	{ 0, 0, "", 0, 0, 0, 0 }
+	{ 0, 0, "", 0, 0, 0, 0, { { 0, 0 } } }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.267 2026/10/19 18:33:50 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.268 2026/11/24 20:57:25 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -4167,7 +4167,13 @@ int
 uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 {
 	struct uvideo_softc *sc = v;
-	int i, ret = 0;
+	int32_t *values[] = {
+		&qctrl->minimum,
+		&qctrl->maximum,
+		&qctrl->step,
+		&qctrl->default_value
+	};
+	int i, j, ret = 0;
 	usbd_status error;
 	uint8_t *ctrl_data;
 	uint16_t ctrl_len;
@@ -4194,89 +4200,37 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	/* set description name */
 	strlcpy(qctrl->name, uvideo_ctrls[i].name, sizeof(qctrl->name));
 
-	/* set minimum */
-	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_MIN,
-	    sc->sc_desc_vc_pu_cur->bUnitID,
-	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION) {
-		ret = EINVAL;
-		goto out;
-	}
-	switch (ctrl_len) {
-	case 1:
-		qctrl->minimum = uvideo_ctrls[i].sig ?
-		    *(int8_t *)ctrl_data :
-		    *ctrl_data;
-		break;
-	case 2:
-		qctrl->minimum = uvideo_ctrls[i].sig ?
-		    (int16_t)UGETW(ctrl_data) :
-		    UGETW(ctrl_data);
-		break;
+	for (j = 0; j < nitems(uvideo_ctrls[i].query); j++) {
+		if (uvideo_ctrls[i].query[j].request == 0) {
+			*values[j] = uvideo_ctrls[i].query[j].value;
+			continue;
+		}
+
+		error = uvideo_vc_get_ctrl(sc, ctrl_data,
+		    uvideo_ctrls[i].query[j].request,
+		    sc->sc_desc_vc_pu_cur->bUnitID,
+		    uvideo_ctrls[i].ctrl_selector, ctrl_len);
+		if (error != USBD_NORMAL_COMPLETION) {
+			ret = EINVAL;
+			goto out;
+		}
+		switch (ctrl_len) {
+		case 1:
+			*values[j] = uvideo_ctrls[i].sig ?
+			    *(int8_t *)ctrl_data :
+			    *ctrl_data;
+			break;
+		case 2:
+			*values[j] = uvideo_ctrls[i].sig ?
+			    (int16_t)UGETW(ctrl_data) :
+			    UGETW(ctrl_data);
+			break;
+		}
 	}
 
-	/* set maximum */
-	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_MAX,
-	    sc->sc_desc_vc_pu_cur->bUnitID,
-	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION) {
-		ret = EINVAL;
-		goto out;
-	}
-	switch(ctrl_len) {
-	case 1:
-		qctrl->maximum = uvideo_ctrls[i].sig ?
-		    *(int8_t *)ctrl_data :
-		    *ctrl_data;
-		break;
-	case 2:
-		qctrl->maximum = uvideo_ctrls[i].sig ?
-		    (int16_t)UGETW(ctrl_data) :
-		    UGETW(ctrl_data);
-		break;
-	}
-
-	/* set resolution */
-	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_RES,
-	    sc->sc_desc_vc_pu_cur->bUnitID,
-	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION) {
-		ret = EINVAL;
-		goto out;
-	}
-	switch(ctrl_len) {
-	case 1:
-		qctrl->step = uvideo_ctrls[i].sig ?
-		    *(int8_t *)ctrl_data:
-		    *ctrl_data;
-		break;
-	case 2:
-		qctrl->step = uvideo_ctrls[i].sig ?
-		    (int16_t)UGETW(ctrl_data) :
-		    UGETW(ctrl_data);
-		break;
-	}
-
-	/* set default */
-	error = uvideo_vc_get_ctrl(sc, ctrl_data, GET_DEF,
-	    sc->sc_desc_vc_pu_cur->bUnitID,
-	    uvideo_ctrls[i].ctrl_selector, uvideo_ctrls[i].ctrl_len);
-	if (error != USBD_NORMAL_COMPLETION) {
-		ret = EINVAL;
-		goto out;
-	}
-	switch(ctrl_len) {
-	case 1:
-		qctrl->default_value = uvideo_ctrls[i].sig ?
-		    *(int8_t *)ctrl_data :
-		    *ctrl_data;
-		break;
-	case 2:
-		qctrl->default_value = uvideo_ctrls[i].sig ?
-		    (int16_t)UGETW(ctrl_data) :
-		    UGETW(ctrl_data);
-		break;
-	}
+	if (uvideo_ctrls[i].ctrl_selector == PU_POWER_LINE_FREQUENCY_CONTROL &&
+	    UGETW(sc->sc_desc_vc_header.fix->bcdUVC) >= 0x0150)
+		qctrl->maximum = 3;
 
 	/* set flags */
 	qctrl->flags = 0;
@@ -4335,7 +4289,7 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 out:
 	free(ctrl_data, M_USBDEV, ctrl_len);
 
-	return (0);
+	return (ret);
 }
 
 int
