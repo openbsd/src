@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.716 2026/11/23 19:58:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.717 2026/11/24 09:13:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2886,8 +2886,14 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 	if (asp->flags & F_ATTR_PARSE_ERR)
 		return;
 
+	a = attr_optget(asp, ATTR_ORIGINATOR_ID);
+	/* drop ORIGINATOR_ID sent from ebgp peers */
+	if (a != NULL && peer->conf.ebgp) {
+		attr_free(asp, a);
+		a = NULL;
+	}
 	/* check for originator id if eq router_id drop */
-	if ((a = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {
+	if (a != NULL) {
 		id = htonl(conf->bgpid);
 		if (memcmp(&id, a->data, sizeof(id)) == 0) {
 			/* this is coming from myself */
@@ -2907,7 +2913,13 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 	/* check for own id in the cluster list */
 	if (conf->flags & BGPD_FLAG_REFLECTOR) {
 		id = htonl(conf->clusterid);
-		if ((a = attr_optget(asp, ATTR_CLUSTER_LIST)) != NULL) {
+		a = attr_optget(asp, ATTR_CLUSTER_LIST);
+		/* drop CLUSTER_LIST sent from ebgp peers */
+		if (a != NULL && peer->conf.ebgp) {
+			attr_free(asp, a);
+			a = NULL;
+		}
+		if (a != NULL) {
 			for (len = 0; len < a->len; len += sizeof(id))
 				/* check if coming from my cluster */
 				if (memcmp(&id, a->data + len,
