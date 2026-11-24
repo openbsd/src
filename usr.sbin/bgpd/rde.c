@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.717 2026/11/24 09:13:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.718 2026/11/24 12:12:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3665,12 +3665,21 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 			break;
 
 		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
-			if (!rde_l3vpn_import(prefix_communities(p), vpn))
-				continue;
+			enum imsg_type vpn_type = type;
+
+			if (!rde_l3vpn_import(prefix_communities(p), vpn)) {
+				/* check if old prefix is in the FIB */ 
+				if (type == IMSG_KROUTE_CHANGE && old != NULL &&
+				    rde_l3vpn_import(prefix_communities(old),
+				    vpn))
+					vpn_type = IMSG_KROUTE_DELETE;
+				else
+					continue;
+			}
 			/* XXX not ideal but this will change */
 			kf.ifindex = if_nametoindex(vpn->ifmpe);
-			if (imsg_compose(ibuf_main, type, vpn->rtableid, 0, -1,
-			    &kf, sizeof(kf)) == -1)
+			if (imsg_compose(ibuf_main, vpn_type, vpn->rtableid,
+			    0, -1, &kf, sizeof(kf)) == -1)
 				fatal("%s %d imsg_compose error", __func__,
 				    __LINE__);
 		}
