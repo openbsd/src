@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.67 2026/11/23 22:24:01 chris Exp $ */
+/* $OpenBSD: agintc.c,v 1.68 2026/11/25 11:31:25 tobhe Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -73,6 +73,7 @@
 #define  GICD_CTLR_ARE_NS		(1 << 4)
 #define  GICD_CTLR_DS			(1 << 6)
 #define GICD_TYPER		0x0004
+#define  GICD_TYPER_ESPI		(1 << 8)
 #define  GICD_TYPER_MBIS		(1 << 16)
 #define  GICD_TYPER_LPIS		(1 << 17)
 #define  GICD_TYPER_ITLINE_M		0x1f
@@ -134,6 +135,8 @@
 
 #define PPI_BASE		16
 #define SPI_BASE		32
+#define ESPI_BASE		4096
+#define ESPI_MAX		5119
 #define LPI_BASE		8192
 
 #define IRQ_TO_REG32(i)		(((i) >> 5) & 0x1f)
@@ -188,6 +191,7 @@ struct agintc_softc {
 	int			 sc_ipi_num; /* id for ipi */
 	int			 sc_ipi_reason[MAXCPUS]; /* cause of ipi */
 	void			*sc_ipi_irq; /* ipi irqhandle */
+	int			 sc_has_espi;
 };
 struct agintc_softc *agintc_sc;
 
@@ -406,6 +410,9 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		/* Minimum number of LPIs supported by any implementation. */
 		sc->sc_nlpi = 8192;
 	}
+
+	if (typer & GICD_TYPER_ESPI)
+		sc->sc_has_espi = 1;
 
 	if (typer & GICD_TYPER_MBIS)
 		agintc_mbiinit(sc, faa->fa_node, faa->fa_reg[0].addr);
@@ -1233,6 +1240,15 @@ agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 	struct agintc_softc	*sc = agintc_sc;
 	struct intrhand		*ih;
 	u_long			 psw;
+
+	/* 
+	 * Silently ignore ESPI interrupts if the IC supports them.
+	 * This makes Qualcomm X2 SoCs boot until we have proper ESPI
+	 * support.
+	 */
+	if (sc->sc_has_espi &&
+	    irqno >= ESPI_BASE && irqno <= ESPI_MAX)
+		return NULL;
 
 	if (irqno < 0 || (irqno >= sc->sc_nintr && irqno < LPI_BASE) ||
 	    irqno >= LPI_BASE + sc->sc_nlpi)
