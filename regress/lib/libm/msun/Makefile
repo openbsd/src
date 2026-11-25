@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2026/08/29 05:01:30 anton Exp $
+#	$OpenBSD: Makefile,v 1.18 2026/11/25 21:15:18 miod Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -110,13 +110,12 @@ FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 . elif ${MACHINE_ARCH} == m88k
-FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-ctrig_test-{4,5}
 FAILING+=	run-exponential_test-1
-FAILING+=	run-fma_test-{1,3,6}
+FAILING+=	run-fma_test-1
 FAILING+=	run-fmaxmin_test-{1,12}
 FAILING+=	run-invtrig_test-7
-FAILING+=	run-logarithm_test-{1,3}
+FAILING+=	run-logarithm_test-3
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-4
