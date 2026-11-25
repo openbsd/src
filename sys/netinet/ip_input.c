@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.435 2026/11/12 13:59:44 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.436 2026/11/25 21:01:18 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -708,13 +708,13 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 			ipstat_inc(ips_fragments);
 			if (ip_frags + 1 > ip_maxqueue_local) {
 				ip_flush(ip_maxqueue_local);
-				ipstat_inc(ips_rcvmemdrop);
+				ipstat_inc(ips_fragoverflow);
 				goto bad;
 			}
 
 			ipqe = pool_get(&ipqent_pool, PR_NOWAIT);
 			if (ipqe == NULL) {
-				ipstat_inc(ips_rcvmemdrop);
+				ipstat_inc(ips_fragnomem);
 				goto bad;
 			}
 			ip_frags++;
@@ -729,8 +729,10 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 			hlen = ip->ip_hl << 2;
 			ip->ip_len = htons(ntohs(ip->ip_len) + hlen);
 		} else {
-			if (fp != NULL)
+			if (fp != NULL) {
+				ipstat_inc(ips_fragfail);
 				ip_freef(fp);
+			}
 		}
 
 		mtx_leave(&ipq_mutex);
@@ -982,8 +984,10 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, u_int rdomain)
 	 */
 	if (fp == NULL) {
 		fp = pool_get(&ipq_pool, PR_NOWAIT);
-		if (fp == NULL)
-			goto dropfrag;
+		if (fp == NULL) {
+			ipstat_inc(ips_fragnomem);
+			goto freefrag;
+		}
 		LIST_INSERT_HEAD(&ipq, fp, ipq_q);
 		fp->ipq_rdomain = rdomain;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
@@ -1058,6 +1062,7 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, u_int rdomain)
 			break;
 		}
 		nq = LIST_NEXT(q, ipqe_q);
+		ipstat_inc(ips_fragdropped);
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
@@ -1129,6 +1134,7 @@ insert:
 
 dropfrag:
 	ipstat_inc(ips_fragdropped);
+freefrag:
 	m_freem(m);
 	pool_put(&ipqent_pool, ipqe);
 	ip_frags--;
@@ -1186,7 +1192,7 @@ ip_flush(int maxqueue)
 	MUTEX_ASSERT_LOCKED(&ipq_mutex);
 
 	while (!LIST_EMPTY(&ipq) && ip_frags > maxqueue * 3 / 4 && --max) {
-		ipstat_inc(ips_fragdropped);
+		ipstat_inc(ips_fragfail);
 		ip_freef(LIST_FIRST(&ipq));
 	}
 }

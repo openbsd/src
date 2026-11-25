@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.10 2025/12/14 02:32:17 jsg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.11 2026/11/25 21:01:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -2727,7 +2727,7 @@ mib_ipreasmfails(struct agentx_varbind *vb)
 		return;
 	}
 
-	counter = ipstat.ips_fragdropped + ipstat.ips_fragtimeout;
+	counter = ipstat.ips_fragfail + ipstat.ips_fragtimeout;
 
 	agentx_varbind_counter32(vb, counter);
 }

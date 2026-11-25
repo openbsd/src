@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.59 2025/06/21 22:08:44 bluhm Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.60 2026/11/25 21:01:18 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -351,10 +351,15 @@ ip6_stats(char *name)
 	p1(ip6s_badoptions, "\t%llu with bad options\n");
 	p1(ip6s_badvers, "\t%llu with incorrect version number\n");
 	p(ip6s_fragments, "\t%llu fragment%s received\n");
-	p(ip6s_fragdropped,
-	    "\t%llu fragment%s dropped (duplicates or out of space)\n");
-	p(ip6s_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
-	p(ip6s_fragoverflow, "\t%llu fragment%s that exceeded limit\n");
+	p(ip6s_atomicfrags, "\t%llu atomic fragment%s received\n");
+	p(ip6s_fragdropped, "\t%llu fragment%s dropped (ECN)\n");
+	p(ip6s_fragoverflow, "\t%llu fragment%s dropped due to queue limit\n");
+	p(ip6s_fragnomem,
+	    "\t%llu fragment%s dropped due to memory shortage\n");
+	p(ip6s_fragtimeout,
+	    "\t%llu fragmented packet%s dropped after timeout\n");
+	p(ip6s_fragfail,
+	    "\t%llu fragmented packet%s dropped before reassembly\n");
 	p(ip6s_reassembled, "\t%llu packet%s reassembled ok\n");
 	p(ip6s_delivered, "\t%llu packet%s for this host\n");
 	p(ip6s_forward, "\t%llu packet%s forwarded\n");

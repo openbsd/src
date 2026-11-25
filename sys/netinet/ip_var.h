@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.127 2026/08/11 14:28:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.128 2026/11/25 21:01:18 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -62,8 +62,8 @@ struct	ipstat {
 	u_long	ips_badhlen;		/* ip header length < data size */
 	u_long	ips_badlen;		/* ip length < ip header length */
 	u_long	ips_fragments;		/* fragments received */
-	u_long	ips_fragdropped;	/* frags dropped (dups, out of space) */
-	u_long	ips_fragtimeout;	/* fragments timed out */
+	u_long	ips_fragdropped;	/* frags dropped (dups, ECN) */
+	u_long	ips_fragtimeout;	/* reassembly of fragments timed out */
 	u_long	ips_forward;		/* packets forwarded */
 	u_long	ips_cantforward;	/* packets rcvd for unreachable dest */
 	u_long	ips_redirectsent;	/* packets forwarded on same net */
@@ -80,7 +80,7 @@ struct	ipstat {
 	u_long	ips_badvers;		/* ip version != 4 */
 	u_long	ips_rawout;		/* total raw ip packets generated */
 	u_long	ips_badfrags;		/* malformed fragments (bad length) */
-	u_long	ips_rcvmemdrop;		/* frags dropped for lack of memory */
+	u_long	ips_fragnomem;		/* frags dropped for lack of memory */
 	u_long	ips_toolong;		/* ip length > max ip packet size */
 	u_long	ips_nogif;		/* no match gif found */
 	u_long	ips_badaddr;		/* invalid address on header */
@@ -91,6 +91,8 @@ struct	ipstat {
 	u_long	ips_rtcachemiss;	/* route cache with new destination */
 	u_long	ips_wrongif;		/* packet received on wrong interface */
 	u_long	ips_idropped;		/* lost input due to nobufs, etc. */
+	u_long	ips_fragoverflow;	/* frags dropped by queue limit */
+	u_long	ips_fragfail;		/* fragmented packets dropped */
 };
 
 struct ipoption {
@@ -110,8 +112,8 @@ enum ipstat_counters {
 	ips_badhlen,		/* ip header length < data size */
 	ips_badlen,		/* ip length < ip header length */
 	ips_fragments,		/* fragments received */
-	ips_fragdropped,	/* frags dropped (dups, out of space) */
-	ips_fragtimeout,	/* fragments timed out */
+	ips_fragdropped,	/* frags dropped (dups, ECN) */
+	ips_fragtimeout,	/* reassembly of fragments timed out */
 	ips_forward,		/* packets forwarded */
 	ips_cantforward,	/* packets rcvd for unreachable dest */
 	ips_redirectsent,	/* packets forwarded on same net */
@@ -128,7 +130,7 @@ enum ipstat_counters {
 	ips_badvers,		/* ip version != 4 */
 	ips_rawout,		/* total raw ip packets generated */
 	ips_badfrags,		/* malformed fragments (bad length) */
-	ips_rcvmemdrop,		/* frags dropped for lack of memory */
+	ips_fragnomem,		/* frags dropped for lack of memory */
 	ips_toolong,		/* ip length > max ip packet size */
 	ips_nogif,		/* no match gif found */
 	ips_badaddr,		/* invalid address on header */
@@ -139,6 +141,8 @@ enum ipstat_counters {
 	ips_rtcachemiss,	/* route cache filled with new destination */
 	ips_wrongif,		/* packet received on wrong interface */
 	ips_idropped,		/* lost input packets due to nobufs, etc. */
+	ips_fragoverflow,	/* frags dropped by queue limit */
+	ips_fragfail,		/* fragmented packets dropped */
 
 	ips_ncounters
 };

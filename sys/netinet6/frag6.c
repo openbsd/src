@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.99 2026/11/23 23:37:31 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.100 2026/11/25 21:01:18 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
-		ip6stat_inc(ip6s_reassembled);
+		ip6stat_inc(ip6s_atomicfrags);
 		*offp = offset;
 		return ip6f->ip6f_nxt;
 	}
@@ -181,7 +181,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 	 */
 	if (frag6_nfrags >= atomic_load_int(&ip6_maxfrags)) {
 		mtx_leave(&frag6_mutex);
-		goto dropfrag;
+		ip6stat_inc(ip6s_fragoverflow);
+		goto freefrag;
 	}
 
 	rdomain = rtable_l2((*mp)->m_pkthdr.ph_rtableid);
@@ -207,12 +208,14 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 		if (frag6_nfragpackets >=
 		    atomic_load_int(&ip6_maxfragpackets)) {
 			mtx_leave(&frag6_mutex);
-			goto dropfrag;
+			ip6stat_inc(ip6s_fragoverflow);
+			goto freefrag;
 		}
 		q6 = pool_get(&ip6q_pool, PR_NOWAIT | PR_ZERO);
 		if (q6 == NULL) {
 			mtx_leave(&frag6_mutex);
-			goto dropfrag;
+			ip6stat_inc(ip6s_fragnomem);
+			goto freefrag;
 		}
 
 		frag6_nfragpackets++;
@@ -302,7 +305,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 	ip6af = pool_get(&ip6af_pool, PR_NOWAIT | PR_ZERO);
 	if (ip6af == NULL) {
 		mtx_leave(&frag6_mutex);
-		goto dropfrag;
+		ip6stat_inc(ip6s_fragnomem);
+		goto freefrag;
 	}
 	ip6af->ip6af_mff = ip6f->ip6f_offlg & IP6F_MORE_FRAG;
 	ip6af->ip6af_off = fragoff;
@@ -417,7 +421,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 		frag6_nfragpackets--;
 		mtx_leave(&frag6_mutex);
 		pool_put(&ip6q_pool, q6);
-		goto dropfrag;
+		goto failfrag;
 	}
 	ip6 = mtod(*mp, struct ip6_hdr *);
 	ip6->ip6_plen = htons(next);
@@ -434,7 +438,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 		frag6_nfragpackets--;
 		mtx_leave(&frag6_mutex);
 		pool_put(&ip6q_pool, q6);
-		goto dropfrag;
+		goto failfrag;
 	}
 
 	TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
@@ -456,7 +460,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 
 		prvnxtp = ip6_exthdr_get(mp, prvnxt, sizeof(*prvnxtp));
 		if (prvnxtp == NULL)
-			goto dropfrag;
+			goto failfrag;
 		*prvnxtp = nxt;
 	}
 
@@ -482,13 +486,19 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 		m_freem(af6->ip6af_m);
 		pool_put(&ip6af_pool, af6);
 	}
-	ip6stat_add(ip6s_fragdropped, q6->ip6q_nfrag + 1);
+	ip6stat_inc(ip6s_fragfail);
 	pool_put(&ip6q_pool, q6);
+	m_freemp(mp);
+	return IPPROTO_DONE;
+
+ failfrag:
+	ip6stat_inc(ip6s_fragfail);
 	m_freemp(mp);
 	return IPPROTO_DONE;
 
  dropfrag:
 	ip6stat_inc(ip6s_fragdropped);
+ freefrag:
 	m_freemp(mp);
 	return IPPROTO_DONE;
 }
@@ -602,7 +612,7 @@ frag6_slowtimo(void)
 	 */
 	while (frag6_nfragpackets > ip6_maxfragpackets_local &&
 	    !TAILQ_EMPTY(&frag6_queue)) {
-		ip6stat_inc(ip6s_fragoverflow);
+		ip6stat_inc(ip6s_fragfail);
 		frag6_unlink(TAILQ_LAST(&frag6_queue, ip6q_head), &rmq6);
 	}
 

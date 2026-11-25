@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.188 2026/11/23 14:51:29 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.189 2026/11/25 21:01:18 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -604,9 +604,13 @@ ip_stats(char *name)
 	p1(ips_badoptions, "\t%lu with bad options\n");
 	p1(ips_badvers, "\t%lu with incorrect version number\n");
 	p(ips_fragments, "\t%lu fragment%s received\n");
-	p(ips_fragdropped, "\t%lu fragment%s dropped (duplicates or out of space)\n");
+	p(ips_fragdropped, "\t%lu fragment%s dropped (duplicates or ECN)\n");
 	p(ips_badfrags, "\t%lu malformed fragment%s dropped\n");
-	p(ips_fragtimeout, "\t%lu fragment%s dropped after timeout\n");
+	p(ips_fragoverflow, "\t%lu fragment%s dropped due to queue limit\n");
+	p(ips_fragnomem, "\t%lu fragment%s dropped due to memory shortage\n");
+	p(ips_fragtimeout, "\t%lu fragmented packet%s dropped after timeout\n");
+	p(ips_fragfail,
+	    "\t%lu fragmented packet%s dropped before reassembly\n");
 	p(ips_reassembled, "\t%lu packet%s reassembled ok\n");
 	p(ips_delivered, "\t%lu packet%s for this host\n");
 	p(ips_noproto, "\t%lu packet%s for unknown/unsupported protocol\n");
@@ -620,7 +624,6 @@ ip_stats(char *name)
 	p(ips_fragmented, "\t%lu output datagram%s fragmented\n");
 	p(ips_ofragments, "\t%lu fragment%s created\n");
 	p(ips_cantfrag, "\t%lu datagram%s that can't be fragmented\n");
-	p1(ips_rcvmemdrop, "\t%lu fragment floods\n");
 	p(ips_toolong, "\t%lu packet%s with ip length > max ip packet size\n");
 	p(ips_nogif, "\t%lu tunneling packet%s that can't find gif\n");
 	p(ips_badaddr, "\t%lu datagram%s with bad address in header\n");

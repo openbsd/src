@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.132 2026/09/17 15:56:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.133 2026/11/25 21:01:18 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -69,9 +69,9 @@ struct	ip6stat {
 	u_int64_t ip6s_tooshort;	/* packet too short */
 	u_int64_t ip6s_toosmall;	/* not enough data */
 	u_int64_t ip6s_fragments;	/* fragments received */
-	u_int64_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
-	u_int64_t ip6s_fragtimeout;	/* fragments timed out */
-	u_int64_t ip6s_fragoverflow;	/* fragments that exceeded limit */
+	u_int64_t ip6s_fragdropped;	/* frags dropped (ECN) */
+	u_int64_t ip6s_fragtimeout;	/* reassembly of fragments timed out */
+	u_int64_t ip6s_fragoverflow;	/* frags dropped by queue limit */
 	u_int64_t ip6s_forward;		/* packets forwarded */
 	u_int64_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
 	u_int64_t ip6s_redirectsent;	/* packets forwarded on same net */
@@ -124,6 +124,9 @@ struct	ip6stat {
 	u_int64_t ip6s_rtcachemiss;	/* route cache with new destination */
 	u_int64_t ip6s_wrongif;		/* packet received on wrong interface */
 	u_int64_t ip6s_idropped;	/* lost input due to nobufs, etc. */
+	u_int64_t ip6s_fragnomem;	/* frags dropped for lack of memory */
+	u_int64_t ip6s_fragfail;	/* fragmented packets dropped */
+	u_int64_t ip6s_atomicfrags;	/* atomic fragments received */
 };
 
 #ifdef _KERNEL
@@ -237,6 +240,9 @@ enum ip6stat_counters {
 	ip6s_rtcachemiss,
 	ip6s_wrongif,
 	ip6s_idropped,
+	ip6s_fragnomem,
+	ip6s_fragfail,
+	ip6s_atomicfrags,
 
 	ip6s_ncounters,
 };
