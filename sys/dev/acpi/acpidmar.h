@@ -50,7 +50,9 @@
 #define DMAR_PHMBASE_REG	0x70    /* 64:pmrr high base addr */
 #define DMAR_PHMLIMIT_REG	0x78    /* 64:pmrr high limit */
 #define DMAR_ICS_REG		0x9C    /* 32:Invalidation complete status register */
+#define   ICS_IWC		(1U << 0)
 #define DMAR_IECTL_REG		0xa0    /* 32:Invalidation event control register */
+#define   IECTL_IM		(1U << 31)
 #define DMAR_IEDATA_REG		0xa4    /* 32:Invalidation event data register */
 #define DMAR_IEADDR_REG		0xa8    /* 32:Invalidation event address register */
 #define DMAR_IEUADDR_REG	0xac    /* 32:Invalidation event upper address register */
@@ -139,7 +141,7 @@
 #define   GSTS_CFIS		(1LL << 23)
 
 #define DMAR_CCMD_REG		0x28		/* 64:Context command reg */
-#define   CCMD_ICC		(1LL << 63)
+#define   CCMD_ICC		(1ULL << 63)
 #define   CCMD_CIRG_MASK	0x3
 #define   CCMD_CIRG_SHIFT	61
 #define   CCMD_CIRG(x)		((uint64_t)(x) << CCMD_CIRG_SHIFT)
@@ -149,8 +151,8 @@
 #define   CCMD_FM_SHIFT		32
 #define   CCMD_FM(x)		(((uint64_t)(x) << CCMD_FM_SHIFT))
 #define   CCMD_SID_MASK		0xFFFF
-#define   CCMD_SID_SHIFT	8
-#define   CCMD_SID(x)		(((x) << CCMD_SID_SHIFT))
+#define   CCMD_SID_SHIFT	16
+#define   CCMD_SID(x)		((uint64_t)(x) << CCMD_SID_SHIFT)
 #define   CCMD_DID_MASK		0xFFFF
 #define   CCMD_DID_SHIFT	0
 #define   CCMD_DID(x)		(((x) << CCMD_DID_SHIFT))
@@ -201,7 +203,7 @@
 #define DMAR_FRIH_REG(x,i)	(cap_fro((x)->cap) + 16*(i) + 8)
 #define DMAR_FRIL_REG(x,i)	(cap_fro((x)->cap) + 16*(i) + 0)
 
-#define IOTLB_IVT		(1LL << 63)
+#define IOTLB_IVT		(1ULL << 63)
 #define IOTLB_IIRG_MASK		0x3
 #define IOTLB_IIRG_SHIFT	60
 #define IOTLB_IIRG(x)		((uint64_t)(x) << IOTLB_IIRG_SHIFT)
@@ -425,7 +427,7 @@ struct fault_entry {
 #define PTE_PAT (1L << 7)
 #define PTE_G   (1L << 8)
 #define PTE_EA  (1L << 10)
-#define PTE_XD  (1LL << 63)
+#define PTE_XD  (1ULL << 63)
 
 /* PDE Level entry */
 #define PTE_PS  (1L << 7)
@@ -480,8 +482,8 @@ struct pte_entry {
 #define QI_IOTLB_DID_SHIFT	16
 #define QI_IOTLB_IG_MASK	0x3
 #define QI_IOTLB_IG_SHIFT	4
-#define QI_IOTLB_DR		(1LL << 6)
-#define QI_IOTLB_DW		(1LL << 5)
+#define QI_IOTLB_DR		(1LL << 7)
+#define QI_IOTLB_DW		(1LL << 6)
 #define QI_IOTLB_DID(x)		(((uint64_t)(x) << QI_IOTLB_DID_SHIFT))
 
 #define QI_IOTLB_IG_GLOBAL	(1 << QI_IOTLB_IG_SHIFT)
@@ -494,6 +496,8 @@ struct pte_entry {
 #define QI_DEVTLB	0x3
 #define QI_INTR		0x4
 #define QI_WAIT		0x5
+#define QI_WAIT_IF	(1LL << 4)
+#define QI_WAIT_FN	(1LL << 6)
 #define QI_EXTTLB	0x6
 #define QI_PAS		0x7
 #define QI_EXTDEV	0x8

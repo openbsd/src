@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidmar.c,v 1.20 2026/08/10 15:14:57 hshoexer Exp $ */
+/* $OpenBSD: acpidmar.c,v 1.21 2026/11/25 02:45:30 chris Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -228,6 +228,8 @@ struct iommu_softc {
 	uint64_t		cap;
 	uint64_t		ecap;
 	uint32_t		gcmd;
+	uint32_t		saved_gcmd;
+	uint32_t		saved_fectl;
 
 	int			mgaw;
 	int			agaw;
@@ -1169,7 +1171,7 @@ iommu_alloc_hwdte(struct acpidmar_softc *sc, size_t size, paddr_t *paddr)
 		printf("hwdte_create fails\n");
 		return NULL;
 	}
-	rc = _bus_dmamem_alloc(dmat, size, 4, 0, &seg, 1,
+	rc = _bus_dmamem_alloc(dmat, size, VTD_PAGE_SIZE, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (rc != 0) {
 		printf("hwdte alloc fails\n");
@@ -1222,7 +1224,8 @@ void
 iommu_issue_qi(struct iommu_softc *iommu, struct qi_entry *qi)
 {
 	uint64_t h, t;
-	int tail, next;
+	int tail, next, last;
+	uint32_t sts;
 	int n;
 
 	if (iommu->qi == NULL)
@@ -1234,42 +1237,54 @@ iommu_issue_qi(struct iommu_softc *iommu, struct qi_entry *qi)
 
 	tail = iommu->qi_tail;
 	next = (tail + 1) % IOMMU_QI_ENTRIES;
+	last = (next + (qi != NULL)) % IOMMU_QI_ENTRIES;
 
-	/* Avoid filling the queue: wait if next == head */
+	/* Reserve space for the command, if any, and a WAIT descriptor */
 	h = iommu_read_8(iommu, DMAR_IQH_REG) & IOMMU_QI_MASK;
-	if (((uint64_t)next * sizeof(struct qi_entry)) == h) {
+	if (next * sizeof(struct qi_entry) == h ||
+	    last * sizeof(struct qi_entry) == h) {
 		for (n = 0; n < 1000; n++) {
 			delay(10);
 			h = iommu_read_8(iommu, DMAR_IQH_REG) & IOMMU_QI_MASK;
-			if (((uint64_t)next * sizeof(struct qi_entry)) != h)
+			if (next * sizeof(struct qi_entry) != h &&
+			    last * sizeof(struct qi_entry) != h)
 				break;
 		}
 	}
 
-	if (((uint64_t)next * sizeof(struct qi_entry)) == h) {
+	if (next * sizeof(struct qi_entry) == h ||
+	    last * sizeof(struct qi_entry) == h) {
 		printf("iommu%d: QI queue full\n", iommu->id);
 		mtx_leave(&iommu->reg_lock);
 		return;
 	}
 
-	iommu->qi[tail] = *qi;
+	/* Poll IWC with interrupt delivery masked */
+	iommu_write_4(iommu, DMAR_IECTL_REG, IECTL_IM);
+	iommu_write_4(iommu, DMAR_ICS_REG, ICS_IWC);
+	if (qi != NULL) {
+		iommu->qi[tail] = *qi;
+		iommu_flush_cache(iommu, &iommu->qi[tail], sizeof(*qi));
+		tail = next;
+	}
+	iommu->qi[tail].lo = QI_WAIT | QI_WAIT_IF | QI_WAIT_FN;
+	iommu->qi[tail].hi = 0;
 	iommu_flush_cache(iommu, &iommu->qi[tail], sizeof(*qi));
 
-	iommu->qi_tail = next;
-	t = (uint64_t)next * sizeof(struct qi_entry);
+	iommu->qi_tail = last;
+	t = (uint64_t)last * sizeof(struct qi_entry);
 	iommu_write_8(iommu, DMAR_IQT_REG, t);
 
-	/* Wait for the descriptor to be processed */
-	for (n = 0; n < 1000; n++) {
-		h = iommu_read_8(iommu, DMAR_IQH_REG) & IOMMU_QI_MASK;
-		if (h == t)
+	for (n = 0; n < 10000; n++) {
+		sts = iommu_read_4(iommu, DMAR_ICS_REG);
+		if (sts & ICS_IWC)
 			break;
 		delay(10);
 	}
-	if (h != t)
-		printf("iommu%d: QI timeout (h=%llx t=%llx)\n",
-		    iommu->id, (unsigned long long)h,
-		    (unsigned long long)t);
+	if (!(sts & ICS_IWC))
+		printf("iommu%d: QI completion timeout (FSTS=%x)\n",
+		    iommu->id, iommu_read_4(iommu, DMAR_FSTS_REG));
+	iommu_write_4(iommu, DMAR_ICS_REG, ICS_IWC);
 
 	mtx_leave(&iommu->reg_lock);
 }
@@ -1347,7 +1362,7 @@ iommu_flush_write_buffer(struct iommu_softc *iommu)
 	iommu_write_4(iommu, DMAR_GCMD_REG, iommu->gcmd | GCMD_WBF);
 	for (i = 0; i < 5; i++) {
 		sts = iommu_read_4(iommu, DMAR_GSTS_REG);
-		if (sts & GSTS_WBFS)
+		if ((sts & GSTS_WBFS) == 0)
 			break;
 		delay(10000);
 	}
@@ -1355,7 +1370,8 @@ iommu_flush_write_buffer(struct iommu_softc *iommu)
 	mtx_leave(&iommu->reg_lock);
 
 	if (i == 5) {
-		printf("write buffer flush fails\n");
+		printf("iommu%d: write buffer flush timeout (GSTS=%x)\n",
+		    iommu->id, sts);
 	}
 }
 
@@ -1621,8 +1637,7 @@ iommu_flush_tlb_segs(struct iommu_softc *iommu, int did,
 			if (n >= 1000) {
 				printf("iommu%d: QI queue full (range flush)\n",
 				    iommu->id);
-				/* Bypass QI to avoid recursion on a saturated ring */
-				iommu_flush_tlb_reg(iommu, IOTLB_DOMAIN, did);
+				/* Register invalidation requires QI off */
 				return;
 			}
 			delay(10);
@@ -1656,20 +1671,8 @@ iommu_flush_tlb_segs(struct iommu_softc *iommu, int did,
 		t = (uint64_t)tail * sizeof(struct qi_entry);
 		iommu_write_8(iommu, DMAR_IQT_REG, t);
 
-		/* Wait for all queued invalidations to be processed */
-		for (n = 0; n < 1000; n++) {
-			h = iommu_read_8(iommu, DMAR_IQH_REG) & IOMMU_QI_MASK;
-			if (h == t)
-				break;
-			delay(10);
-		}
-		if (h != t) {
-			printf("iommu%d: QI timeout (range h=%llx t=%llx)\n",
-			    iommu->id, (unsigned long long)h,
-			    (unsigned long long)t);
-		}
-
 		mtx_leave(&iommu->reg_lock);
+		iommu_issue_qi(iommu, NULL);
 		return;
 	}
 
@@ -1799,6 +1802,8 @@ iommu_enable_qi(struct iommu_softc *iommu, int enable)
 			mtx_leave(&iommu->reg_lock);
 		}
 	} else {
+		if (iommu->gcmd & GCMD_QIE)
+			iommu_issue_qi(iommu, NULL);
 		iommu->gcmd &= ~GCMD_QIE;
 
 		mtx_enter(&iommu->reg_lock);
@@ -1846,7 +1851,7 @@ iommu_enable_translation(struct iommu_softc *iommu, int enable)
 		mtx_leave(&iommu->reg_lock);
 		DPRINTF(2, "iommu%d: translation enable loops=%d\n", iommu->id, n);
 
-		if (n >= 5) {
+		if ((sts & GSTS_TES) == 0) {
 			printf("error.. unable to initialize iommu %d\n",
 			    iommu->id);
 			iommu->flags |= IOMMU_FLAGS_BAD;
@@ -1874,6 +1879,9 @@ iommu_enable_translation(struct iommu_softc *iommu, int enable)
 		} while (n++ < 5 && (sts & GSTS_TES));
 		mtx_leave(&iommu->reg_lock);
 		DPRINTF(2, "iommu%d: translation disable loops=%d\n", iommu->id, n);
+		if (sts & GSTS_TES)
+			printf("iommu%d: disable translation timeout "
+			    "(GSTS=%x)\n", iommu->id, sts);
 	}
 
 	return (0);
@@ -3638,8 +3646,9 @@ acpidmar_activate(struct device *self, int act)
 {
 	struct acpidmar_softc *sc = (struct acpidmar_softc *)self;
 	struct iommu_softc *iommu;
+	uint32_t sts;
 
-	printf("called acpidmar_activate %d %p\n", act, sc);
+	DPRINTF(1, "acpidmar_activate %d\n", act);
 
 	if (sc == NULL) {
 		return (0);
@@ -3653,18 +3662,57 @@ acpidmar_activate(struct device *self, int act)
 				acpiivhd_activate(iommu, act);
 				continue;
 			}
+			if (iommu_bad(iommu) ||
+			    !(iommu->flags & IOMMU_FLAGS_SUSPEND))
+				continue;
+			iommu_write_4(iommu, DMAR_FECTL_REG, FECTL_IM);
+			/* Firmware may have retained the engine state */
+			sts = iommu_read_4(iommu, DMAR_GSTS_REG);
+			iommu->gcmd = sts & (GCMD_TE | GCMD_QIE | GCMD_IRE);
+			if (sts & GSTS_QIES) {
+				if ((iommu_read_8(iommu, DMAR_IQA_REG) &
+				    ~0xfffULL) != iommu->qip) {
+					printf("iommu%d: resume: "
+					    "unexpected live QI queue\n",
+					    iommu->id);
+					continue;
+				}
+				iommu_enable_qi(iommu, 0);
+			}
+			iommu_enable_translation(iommu, 0);
+			sts = iommu_read_4(iommu, DMAR_GSTS_REG);
+			if (sts & (GSTS_TES | GSTS_QIES)) {
+				printf("iommu%d: resume: engines still enabled "
+				    "(GSTS=%x)\n", iommu->id, sts);
+				continue;
+			}
 			iommu_flush_write_buffer(iommu);
 			iommu_set_rtaddr(iommu, iommu->rtaddr);
+			if (iommu->saved_gcmd & GCMD_QIE) {
+				iommu->qi_head = iommu->qi_tail = 0;
+				iommu_write_8(iommu, DMAR_IQT_REG, 0);
+				iommu_write_8(iommu, DMAR_IQA_REG,
+				    (iommu->qip & ~0xfffULL) | IQA_QS_256);
+				iommu_enable_qi(iommu, 1);
+				sts = iommu_read_4(iommu, DMAR_GSTS_REG);
+				if (!(sts & GSTS_QIES)) {
+					printf("iommu%d: QI restart failed\n",
+					    iommu->id);
+					continue;
+				}
+			}
 			iommu_write_4(iommu, DMAR_FEDATA_REG, iommu->fedata);
 			iommu_write_4(iommu, DMAR_FEADDR_REG, iommu->feaddr);
 			iommu_write_4(iommu, DMAR_FEUADDR_REG,
 			    iommu->feaddr >> 32);
-			if ((iommu->flags & (IOMMU_FLAGS_BAD|IOMMU_FLAGS_SUSPEND)) ==
-			    IOMMU_FLAGS_SUSPEND) {
-				printf("enable wakeup translation\n");
-				iommu_enable_translation(iommu, 1);
-			}
-			iommu_showcfg(iommu, -1);
+			iommu_flush_ctx(iommu, CTX_GLOBAL, 0, 0, 0);
+			iommu_flush_tlb(iommu, IOTLB_GLOBAL, 0);
+			if ((iommu->saved_gcmd & GCMD_TE) &&
+			    iommu_enable_translation(iommu, 1) != 0)
+				continue;
+			iommu_write_4(iommu, DMAR_FECTL_REG,
+			    iommu->saved_fectl);
+			iommu->flags &= ~IOMMU_FLAGS_SUSPEND;
 		}
 		break;
 	case DVACT_SUSPEND:
@@ -3676,9 +3724,34 @@ acpidmar_activate(struct device *self, int act)
 				acpiivhd_activate(iommu, act);
 				continue;
 			}
+			/* Keep translation running until the POWERDOWN pass */
+		}
+		break;
+	case DVACT_POWERDOWN:
+		if (acpi_softc->sc_state != ACPI_STATE_S3)
+			break;
+		TAILQ_FOREACH(iommu, &sc->sc_drhds, link) {
+			if (iommu_bad(iommu))
+				continue;
+			if (iommu->dte) {
+				acpiivhd_activate(iommu, act);
+				continue;
+			}
+			sts = iommu_read_4(iommu, DMAR_GSTS_REG);
+			iommu->saved_gcmd = sts & (GCMD_TE | GCMD_QIE);
+			iommu->saved_fectl =
+			    iommu_read_4(iommu, DMAR_FECTL_REG) & FECTL_IM;
 			iommu->flags |= IOMMU_FLAGS_SUSPEND;
+			iommu_write_4(iommu, DMAR_FECTL_REG, FECTL_IM);
+			iommu_flush_ctx(iommu, CTX_GLOBAL, 0, 0, 0);
+			iommu_flush_tlb(iommu, IOTLB_GLOBAL, 0);
+			iommu_enable_qi(iommu, 0);
+			if (iommu_read_4(iommu, DMAR_GSTS_REG) & GSTS_QIES) {
+				printf("iommu%d: suspend: QI still enabled\n",
+				    iommu->id);
+				continue;
+			}
 			iommu_enable_translation(iommu, 0);
-			iommu_showcfg(iommu, -1);
 		}
 		break;
 	}
