@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2024/04/19 22:20:36 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2026/11/25 20:05:00 bluhm Exp $
 
 # Copyright (c) 2024 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,7 +20,7 @@
 # Each route has a different gateway and the UDP packets have different
 # source addresses.  The destination address is identical for all
 # routes and packets.  Analyze the use counter in netstat -r output
-# to check that multiple routes have been used.  Currently this works
+# to check that all routes have been used evenly.  Currently this works
 # only for IPv4.  sysctl net.inet.ip.multipath and net.inet6.ip6.multipath
 # are enabled before testing and reset afterwards.  All routes and
 # interface addresses are created on loopback in a separate routing
@@ -29,13 +29,14 @@
 # Set up loopback interface in a different routing domain.
 # Create multipath routes on this loopback.
 # Send a bunch of packets with multiple source IP to same destination.
-# Count in netstart -r that most routes have been used.
+# Count in netstat -r that all routes have been used.
 
 # This test uses routing domain and interface number 11.
 # Adjust it here, if you want to use something else.
 N1 =		11
 NUMS =		${N1}
-IPS !=		jot 100 100
+SRC !=		jot 250 1
+DST !=		jot 7 1
 
 # Traffic distribution has not been implemented for IPv6.
 REGRESS_EXPECTED_FAILURES +=	run-netstat6
@@ -69,14 +70,18 @@ ifconfig: unconfig
 	${SUDO} /sbin/ifconfig lo$n rdomain $n
 	${SUDO} /sbin/ifconfig lo$n inet 10.0.0.1/8
 	${SUDO} /sbin/ifconfig lo$n inet 10.0.0.$n alias
-.for i in ${IPS}
+.for i in ${SRC}
 	${SUDO} /sbin/ifconfig lo$n inet 10.0.$n.$i alias
+.endfor
+.for i in ${DST}
 	${SUDO} /sbin/route -n -T $n add -inet -blackhole -mpath -host \
 	    10.$n.0.0 10.0.$n.$i
 .endfor
 	${SUDO} /sbin/ifconfig lo$n inet6 fc00::$n alias
-.for i in ${IPS}
+.for i in ${SRC}
 	${SUDO} /sbin/ifconfig lo$n inet6 fc00::$n:$i alias
+.endfor
+.for i in ${DST}
 	${SUDO} /sbin/route -n -T $n add -inet6 -blackhole -mpath -host \
 	    fc00::$n:0:0 fc00::$n:$i
 .endfor
@@ -95,7 +100,7 @@ unconfig:
 	# Destroy interfaces.
 .for n in ${NUMS}
 	-${SUDO} /sbin/ifconfig lo$n rdomain $n
-.for i in ${IPS}
+.for i in ${DST}
 	-${SUDO} /sbin/route -n -T $n delete -inet6 -host \
 	    fc00::$n:0:0 fc00::$n:$i
 	-${SUDO} /sbin/route -n -T $n delete -inet -host \
@@ -108,9 +113,9 @@ unconfig:
 
 REGRESS_TARGETS +=	run-netcat
 run-netcat netstat.log:
-	# count UDP IPv6 packets used with multipath routes
+	# count UDP IPv4 packets used with multipath routes
 	rm -f netstat.log
-.for i in ${IPS}
+.for i in ${SRC}
 	/usr/bin/nc -4 -V${N1} -u -z -s10.0.${N1}.$i 10.${N1}.0.0 discard
 .endfor
 	/usr/bin/netstat -T${N1} -f inet -rn >netstat.log
@@ -118,19 +123,22 @@ run-netcat netstat.log:
 REGRESS_TARGETS +=	run-netstat
 run-netstat: netstat.log
 	# check route distribution of IPv4 packets
-	awk 'BEGIN{ mpath = uses = used = maxuse = 0; }\
+	awk 'BEGIN{ mpath = uses = used = max = 0; min = 100000; }\
 	    /^10.${N1}.0.0 /{\
 		if ($$3 == "UGHSBP") mpath++;\
 		if ($$5 > 0) used++;\
+		if ($$5 < min) min = $$5;\
 		if ($$5 > max) max = $$5;\
 		uses += $$5;\
 	    }\
 	    END{\
-		print "mpath "mpath", uses "uses", max "max", used "used;\
-		if (mpath != 100) { print "not 100 mpath: " mpath; exit 1; }\
-		if (uses != 100) { print "not 100 uses: " uses; exit 1; }\
-		if (max > 30) { print "max more than 30: " max; exit 1; }\
-		if (used < 50) { print "used less than 50: " used; exit 1; }\
+		print "mpath "mpath", uses "uses", used "used\
+		   ", min "min", max "max;\
+		if (mpath != 7) { print "not 7 mpath: " mpath; exit 1; }\
+		if (used < 7) { print "used less than 7: " used; exit 1; }\
+		if (min < 14) { print "min less than 14: " min; exit 1; }\
+		if (max > 62) { print "max more than 62: " max; exit 1; }\
+		if (uses != 250) { print "not 250 uses: " uses; exit 1; }\
 	    }' \
 	    netstat.log
 
@@ -138,7 +146,7 @@ REGRESS_TARGETS +=	run-netcat6
 run-netcat6 netstat6.log:
 	# count UDP IPv6 packets used with multipath routes
 	rm -f netstat6.log
-.for i in ${IPS}
+.for i in ${SRC}
 	/usr/bin/nc -6 -V${N1} -u -z -sfc00::${N1}:$i fc00::${N1}:0:0 discard
 .endfor
 	/usr/bin/netstat -T${N1} -f inet6 -rn >netstat6.log
@@ -146,19 +154,22 @@ run-netcat6 netstat6.log:
 REGRESS_TARGETS +=	run-netstat6
 run-netstat6: netstat6.log
 	# check route distribution of IPv6 packets
-	awk 'BEGIN{ mpath = used = uses = max = 0; }\
+	awk 'BEGIN{ mpath = uses = used = max = 0; min = 100000; }\
 	    /^fc00::${N1}:0:0 /{\
 		if ($$3 == "UGHSBP") mpath++;\
 		if ($$5 > 0) used++;\
+		if ($$5 < min) min = $$5;\
 		if ($$5 > max) max = $$5;\
 		uses += $$5;\
 	    }\
 	    END{\
-		print "mpath "mpath", uses "uses", max "max", used "used;\
-		if (mpath != 100) { print "not 100 mpath: " mpath; exit 1; }\
-		if (uses != 100) { print "not 100 uses: " uses; exit 1; }\
-		if (max > 30) { print "max more than 30: " max; exit 1; }\
-		if (used < 50) { print "used less than 50: " used; exit 1; }\
+		print "mpath "mpath", uses "uses", used "used\
+		   ", min "min", max "max;\
+		if (mpath != 7) { print "not 7 mpath: " mpath; exit 1; }\
+		if (used < 7) { print "used less than 7: " used; exit 1; }\
+		if (min < 14) { print "min less than 14: " min; exit 1; }\
+		if (max > 62) { print "max more than 62: " max; exit 1; }\
+		if (uses != 250) { print "not 250 uses: " uses; exit 1; }\
 	    }' \
 	    netstat6.log
 
