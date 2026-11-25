@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcdpc.c,v 1.4 2026/10/27 21:25:29 kettenis Exp $	*/
+/*	$OpenBSD: qcdpc.c,v 1.5 2026/11/25 19:04:02 mglocker Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -382,8 +382,6 @@ qcdpc_read_link_config(struct qcdpc_softc *sc)
 	sc->sc_link_edp_config =
 	    config[DP_EDP_CONFIGURATION_SET - DP_LINK_BW_SET];
 	if (lane_count != 1 && lane_count != 2 && lane_count != 4)
-		return;
-	if (sc->sc_link_coding != DP_SET_ANSI_8B10B)
 		return;
 
 	switch (sc->sc_link_bandwidth) {
