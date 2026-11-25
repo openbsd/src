@@ -1646,6 +1646,7 @@
 ./usr/share/man/man4/hitemp.4
 ./usr/share/man/man4/hme.4
 ./usr/share/man/man4/hotplug.4
+./usr/share/man/man4/hpec.4
 ./usr/share/man/man4/hppa/asp.4
 ./usr/share/man/man4/hppa/astro.4
 ./usr/share/man/man4/hppa/cpu.4
