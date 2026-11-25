@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.13 2024/08/21 09:18:47 florian Exp $ */
+/*	$OpenBSD: report.c,v 1.14 2026/11/25 13:36:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -71,6 +71,45 @@ fail:
 	return (-1);
 }
 
+static int
+check_report(char *buf, u_int16_t len)
+{
+	u_int32_t	netmask;
+	u_int8_t	metric, netid_len, prefixlen;
+
+	do {
+		if (len < 3)
+			return (-1);
+
+		/* read 3 bytes of netmask */
+		memcpy(&netmask, buf, 3);
+		/* set the highest byte to 255 and shift the rest down */
+		netmask = ntohl(netmask) >> 8 | 0xff000000;
+		netmask = htonl(netmask);
+
+		buf += 3;
+		len -= 3;
+
+		prefixlen = mask2prefixlen(netmask);
+		netid_len = PREFIX_SIZE(prefixlen);
+
+		do {
+			if (len < netid_len + sizeof(metric))
+				return -1;
+
+			buf += netid_len;
+			len -= netid_len;
+
+			/* get metric */
+			memcpy(&metric, buf, sizeof(metric));
+			buf += sizeof(metric);
+			len -= sizeof(metric);
+		} while (!(metric & LAST_MASK) && (len > 0));
+	} while (len > 0);
+
+	return (0);
+}
+
 void
 recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 {
@@ -86,6 +125,13 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 		return;
 	}
 
+	/* check route report */
+	if (check_report(buf, len) == -1) {
+		log_debug("recv_prune: packet malformed from %s",
+		    inet_ntoa(nbr->id));
+		return;
+	}
+
 	/* parse route report */
 	do {
 		/*
@@ -96,14 +142,12 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 		 * The most significant part of the mask is always 255.
 		 */
 
-		/* read four bytes */
-		memcpy(&netmask, buf, sizeof(netmask));
-		/* ditch one byte, since we only need three */
-		netmask = ntohl(netmask) >> 8;
+		/* read 3 bytes of netmask */
+		memcpy(&netmask, buf, 3);
+		/* set the highest byte to 255 and shift the rest down */
+		netmask = ntohl(netmask) >> 8 | 0xff000000;
 		netmask = htonl(netmask);
 
-		/* set the highest byte to 255 */
-		netmask |= htonl(0xff000000);
 		buf += 3;
 		len -= 3;
 
@@ -116,10 +160,10 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 			 *
 			 * The length of the netid is depending on the above
 			 * netmask.
-			 * Read 4 bytes and use the netmask from above to
+			 * Read netid_len and use the netmask from above to
 			 * determine the netid.
 			 */
-			memcpy(&netid, buf, sizeof(netid));
+			memcpy(&netid, buf, netid_len);
 			netid &= netmask;
 
 			buf += netid_len;
