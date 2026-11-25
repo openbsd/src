@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.6 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: hello.c,v 1.7 2026/11/25 13:56:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -99,6 +99,11 @@ void
 recv_hello(struct eigrp_iface *ei, union eigrpd_addr *src, struct nbr *nbr,
     struct tlv_parameter *tp)
 {
+	if (tp == NULL) {
+		/* silently ignore bad hello packets */
+		return;
+	}
+
 	/*
 	 * Some old Cisco routers seems to use the "parameters tlv" with all
 	 * K-values set to 255 (except k6) to inform that the neighbor has been
