@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.7 2024/08/21 09:18:47 florian Exp $ */
+/*	$OpenBSD: probe.c,v 1.8 2026/11/25 13:32:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -82,6 +82,12 @@ recv_probe(struct iface *iface, struct in_addr src, u_int32_t src_ip,
 	struct nbr	*nbr = NULL;
 	u_int32_t	 gen_id;
 	u_int32_t	 nbr_id;
+
+        if (len < sizeof(gen_id) || len % sizeof(u_int32_t) != 0) {
+		log_debug("recv_probe: packet malformed from %s",
+		    inet_ntoa(nbr->id));
+		return;
+	}
 
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->id.s_addr == src_ip)
