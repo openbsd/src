@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.357 2026/11/06 01:46:28 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.358 2026/11/25 00:50:46 chris Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4928,6 +4928,7 @@ uvm_map_fix_space(struct vm_map *map, struct vm_map_entry *entry,
 				entry->guard = PAGE_SIZE;
 				min += PAGE_SIZE;
 			}
+			entfree = uvm_map_uaddr_e(map, entry);
 			continue;
 		}
 
@@ -4939,6 +4940,7 @@ uvm_map_fix_space(struct vm_map *map, struct vm_map_entry *entry,
 		    entry->guard > PAGE_SIZE) {
 			entry->guard = PAGE_SIZE;
 			min = VMMAP_FREE_START(entry);
+			entfree = uvm_map_uaddr_e(map, entry);
 		}
 
 		lmax = uvm_map_boundary(map, min, max);
