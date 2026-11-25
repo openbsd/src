@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.11 2025/12/29 23:25:32 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.12 2026/11/25 11:17:29 tobhe Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -84,6 +84,7 @@ struct smmu_softc {
 			int			  sc_is_mmu500;
 			int			  sc_is_ap806;
 			int			  sc_is_qcom;
+			int			  sc_is_qcom_x2;
 			int			  sc_bypass_quirk;
 			size_t			  sc_pagesize;
 			int			  sc_numpage;

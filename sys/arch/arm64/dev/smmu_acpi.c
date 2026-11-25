@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.15 2026/11/25 11:12:55 tobhe Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.16 2026/11/25 11:17:29 tobhe Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -143,7 +143,7 @@ smmu_v2_acpi_attach(struct smmu_acpi_softc *asc, struct acpi_iort_node *node)
 	aml_find_node(acpi_softc->sc_root, "_HID", smmu_acpi_foundqcom, sc);
 
 	/* FIXME: Don't configure on QCOM until its runtime use is fixed. */
-	if (sc->sc_is_qcom) {
+	if (sc->sc_is_qcom || sc->sc_is_qcom_x2) {
 		printf(": disabled\n");
 		return ENXIO;
 	}
@@ -191,6 +191,9 @@ smmu_acpi_foundqcom(struct aml_node *node, void *arg)
 	    strcmp(dev, "QCOM0C09") == 0 || /* X1E80100 */
 	    strcmp(dev, "QCOM0E09") == 0) /* QSC6490 */
 		sc->sc_is_qcom = 1;
+
+	if (strcmp(dev, "QCOM0FF9") == 0) /* X2 */
+		sc->sc_is_qcom_x2 = 1;
 
 	return 0;
 }
