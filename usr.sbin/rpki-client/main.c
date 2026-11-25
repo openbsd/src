@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.345 2026/11/23 10:01:53 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.346 2026/11/25 14:48:02 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1582,7 +1582,7 @@ main(int argc, char *argv[])
 	}
 
 	/* processing did not finish because of error */
-	if (entity_queue != 0) {
+	if (entity_queue != 0 || entity_lowprio_queue != 0) {
 		repo_printinfo(entity_queue, entity_lowprio_queue);
 		errx(1, "not all files processed, giving up");
 	}
