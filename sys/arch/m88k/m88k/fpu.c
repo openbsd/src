@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.4 2021/09/24 14:37:56 aoyama Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.5 2026/11/25 21:14:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -147,7 +147,7 @@ void
 fpu_compare(struct trapframe *frame, fparg *s1, fparg *s2, u_int width,
     u_int rd, u_int fcmpu)
 {
-	u_int32_t cc;
+	u_int32_t cc = 0;
 	int zero, s1positive, s2positive;
 
 	/*
@@ -159,13 +159,11 @@ fpu_compare(struct trapframe *frame, fparg *s1, fparg *s2, u_int width,
 			if (!fcmpu || float32_is_signaling_nan(s1->sng))
 				float_set_invalid();
 			cc = CC_UN;
-			goto done;
 		}
 		if (float32_is_nan(s2->sng)) {
 			if (!fcmpu || float32_is_signaling_nan(s2->sng))
 				float_set_invalid();
 			cc = CC_UN;
-			goto done;
 		}
 		break;
 	case FTYPE_DBL:
@@ -173,40 +171,38 @@ fpu_compare(struct trapframe *frame, fparg *s1, fparg *s2, u_int width,
 			if (!fcmpu || float64_is_signaling_nan(s1->dbl))
 				float_set_invalid();
 			cc = CC_UN;
-			goto done;
 		}
 		if (float64_is_nan(s2->dbl)) {
 			if (!fcmpu || float64_is_signaling_nan(s2->dbl))
 				float_set_invalid();
 			cc = CC_UN;
-			goto done;
 		}
 		break;
 	}
 
-	/*
-	 * Now order the two numbers.
-	 */
-	switch (width) {
-	case FTYPE_SNG:
-		if (float32_eq(s1->sng, s2->sng))
-			cc = CC_EQ;
-		else if (float32_lt(s1->sng, s2->sng))
-			cc = CC_LT | CC_NE;
-		else
-			cc = CC_GT | CC_NE;
-		break;
-	case FTYPE_DBL:
-		if (float64_eq(s1->dbl, s2->dbl))
-			cc = CC_EQ;
-		else if (float64_lt(s1->dbl, s2->dbl))
-			cc = CC_LT | CC_NE;
-		else
-			cc = CC_GT | CC_NE;
-		break;
+	if (!(cc & CC_UN)) {
+		/*
+		 * Now order the two numbers.
+		 */
+		switch (width) {
+		case FTYPE_SNG:
+			if (float32_eq(s1->sng, s2->sng))
+				cc = CC_EQ;
+			else if (float32_lt(s1->sng, s2->sng))
+				cc = CC_LT | CC_NE;
+			else
+				cc = CC_GT | CC_NE;
+			break;
+		case FTYPE_DBL:
+			if (float64_eq(s1->dbl, s2->dbl))
+				cc = CC_EQ;
+			else if (float64_lt(s1->dbl, s2->dbl))
+				cc = CC_LT | CC_NE;
+			else
+				cc = CC_GT | CC_NE;
+			break;
+		}
 	}
-
-done:
 
 	/*
 	 * Complete condition code mask.
