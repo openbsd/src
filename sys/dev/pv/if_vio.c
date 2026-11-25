@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.85 2026/11/23 18:12:07 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.86 2026/11/25 12:34:19 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -672,6 +672,7 @@ negotiate:
 	if ((virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4) ||
 	     virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6)) &&
 	    (!virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS) ||
+	     !virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM) ||
 	     !virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))) {
 		/*
 		 * We only support VIRTIO_NET_F_GUEST_TSO4/6 if we also have
@@ -1047,7 +1048,8 @@ vio_set_offloads(struct ifnet *ifp)
 		if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
 			SET(features, VIRTIO_NET_F_GUEST_CSUM);
 
-		if (ISSET(ifp->if_xflags, IFXF_LRO)) {
+		if (ISSET(ifp->if_xflags, IFXF_LRO) &&
+		    virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM)) {
 			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4))
 				SET(features, VIRTIO_NET_F_GUEST_TSO4);
 			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))
