@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.502 2026/11/21 20:06:50 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.503 2026/11/25 12:43:34 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -417,6 +417,8 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 #ifndef SMALL_KERNEL
 	case KERN_FILE:
 		return (sysctl_file(name, namelen, oldp, oldlenp, p));
+	case KERN_PROC_VMMAP:
+		return (sysctl_proc_vmmap(name, namelen, oldp, oldlenp, p));
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name, namelen, oldp, oldlenp,
 		    newp, newlen, p));
@@ -482,8 +484,6 @@ kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
 	case KERN_PROC_NOBROADCASTKILL:
 		return (sysctl_proc_nobroadcastkill(name, namelen,
 		     newp, newlen, oldp, oldlenp, p));
-	case KERN_PROC_VMMAP:
-		return (sysctl_proc_vmmap(name, namelen, oldp, oldlenp, p));
 	case KERN_INTRCNT:
 		return (sysctl_intrcnt(name, namelen, oldp, oldlenp));
 	case KERN_WATCHDOG:
@@ -2570,6 +2570,7 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	kve[0].kve_start = start;
 
 	pid = name[0];
+	KERNEL_LOCK();
 	if (pid == cp->p_p->ps_pid) {
 		/* Self process mapping. */
 		findpr = cp->p_p;
@@ -2622,6 +2623,7 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 done:
 	*oldlenp = len;
 free:
+	KERNEL_UNLOCK();
 	free(kve, M_TEMP, oldlen);
 
 	return (error);
