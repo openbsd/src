@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.96 2026/11/04 08:51:52 claudio Exp $ */
+/*	$OpenBSD: rtable.c,v 1.97 2026/11/25 13:26:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -372,7 +372,6 @@ rtable_l2set(unsigned int rtableid, unsigned int rdomain, unsigned int loifidx)
 	rt->rt_rdomain = rdomain;
 	rt->rt_loifidx = loifidx;
 }
-
 
 static inline const uint8_t *satoaddr(struct rtidx *,
     const struct sockaddr *);
