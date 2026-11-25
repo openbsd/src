@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.14 2026/01/24 16:07:09 kettenis Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.15 2026/11/25 11:12:55 tobhe Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -66,7 +66,7 @@ smmu_acpi_match(struct device *parent, void *match, void *aux)
 	struct acpiiort_attach_args *aia = aux;
 	struct acpi_iort_node *node = aia->aia_node;
 
-	if (node->type != ACPI_IORT_SMMU)
+	if (node->type != ACPI_IORT_SMMU && node->type != ACPI_IORT_SMMU_V3)
 		return 0;
 
 	return 1;
