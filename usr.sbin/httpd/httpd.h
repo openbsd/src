@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.195 2026/11/22 19:17:44 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.196 2026/11/26 08:18:22 armani Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -325,10 +325,8 @@ struct client {
 	struct evbuffer		*clt_srvevb;
 
 	struct evbuffer		*clt_log;
-	struct timeval		 clt_timeout;
 	struct timeval		 clt_tv_start;
 	struct timeval		 clt_tv_last;
-	struct event		 clt_inflightevt;
 
 	SPLAY_ENTRY(client)	 clt_nodes;
 };
