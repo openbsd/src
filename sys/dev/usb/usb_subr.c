@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.169 2026/10/02 13:18:07 kirill Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.170 2026/11/26 18:13:08 chris Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -817,6 +817,7 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	if (err) {
 		DPRINTF(("%s: endpoint=0x%x failed, error=%s\n", __func__,
 			 ep->edesc->bEndpointAddress, usbd_errstr(err)));
+		ep->refcnt--;
 		free(p, M_USB, dev->bus->pipe_size);
 		return (err);
 	}
