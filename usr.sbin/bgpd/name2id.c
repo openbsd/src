@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.13 2025/02/12 16:49:56 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.14 2026/11/26 14:19:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -38,10 +38,10 @@ struct n2id_label {
 
 TAILQ_HEAD(n2id_labels, n2id_label);
 
-uint16_t	 _name2id(struct n2id_labels *, const char *);
-const char	*_id2name(struct n2id_labels *, uint16_t);
-void		 _unref(struct n2id_labels *, uint16_t);
-uint16_t	 _ref(struct n2id_labels *, uint16_t);
+static uint16_t		 _name2id(struct n2id_labels *, const char *);
+static const char	*_id2name(struct n2id_labels *, uint16_t);
+static void		 _unref(struct n2id_labels *, uint16_t);
+static uint16_t		 _ref(struct n2id_labels *, uint16_t);
 
 struct n2id_labels	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 struct n2id_labels	pftable_labels = TAILQ_HEAD_INITIALIZER(pftable_labels);
@@ -94,24 +94,54 @@ pftable_ref(uint16_t id)
 	return (_ref(&pftable_labels, id));
 }
 
+static struct n2id_label *
+_namelookup(struct n2id_labels *head, const char *name)
+{
+	struct n2id_label	*label;
+
+	if (!name[0])
+		return (NULL);
+
+	TAILQ_FOREACH(label, head, entry)
+		if (strcmp(name, label->name) == 0)
+			return (label);
+
+	return (NULL);
+}
+
+static struct n2id_label *
+_idlookup(struct n2id_labels *head, uint16_t id)
+{
+	struct n2id_label	*label;
+
+	if (id == 0)
+		return (NULL);
+
+	TAILQ_FOREACH(label, head, entry)
+		if (label->id == id)
+			return (label);
+
+	return (NULL);
+}
+
 /*
  * Try to convert a name into id. If something fails 0 is returned which
  * is the ID of the empty label.
  */
-uint16_t
+static uint16_t
 _name2id(struct n2id_labels *head, const char *name)
 {
-	struct n2id_label	*label, *p = NULL;
+	struct n2id_label	*label, *p;
 	uint16_t		 new_id = 1;
 
+	if ((label = _namelookup(head, name)) != NULL) {
+		label->ref++;
+		return (label->id);
+	}
+
+	/* no name, no id */
 	if (!name[0])
 		return (0);
-
-	TAILQ_FOREACH(label, head, entry)
-		if (strcmp(name, label->name) == 0) {
-			label->ref++;
-			return (label->id);
-		}
 
 	/*
 	 * to avoid fragmentation, we do a linear search from the beginning
@@ -145,54 +175,40 @@ _name2id(struct n2id_labels *head, const char *name)
 	return (label->id);
 }
 
-const char *
+static const char *
 _id2name(struct n2id_labels *head, uint16_t id)
 {
 	struct n2id_label	*label;
 
-	if (id == 0)
-		return ("");
-
-	TAILQ_FOREACH(label, head, entry)
-		if (label->id == id)
-			return (label->name);
+	if ((label = _idlookup(head, id)) != NULL) 
+		return (label->name);
 
 	return ("");
 }
 
-void
+static void
 _unref(struct n2id_labels *head, uint16_t id)
 {
-	struct n2id_label	*p, *next;
+	struct n2id_label	*label;
 
-	if (id == 0)
-		return;
-
-	TAILQ_FOREACH_SAFE(p, head, entry, next) {
-		if (id == p->id) {
-			if (--p->ref == 0) {
-				TAILQ_REMOVE(head, p, entry);
-				free(p->name);
-				free(p);
-			}
-			break;
+	if ((label = _idlookup(head, id)) != NULL) {
+		if (--label->ref == 0) {
+			TAILQ_REMOVE(head, label, entry);
+			free(label->name);
+			free(label);
 		}
 	}
 }
 
-uint16_t
+static uint16_t
 _ref(struct n2id_labels *head, uint16_t id)
 {
 	struct n2id_label	*label;
 
-	if (id == 0)
-		return (0);
-
-	TAILQ_FOREACH(label, head, entry)
-		if (label->id == id) {
-			++label->ref;
-			return (id);
-		}
+	if ((label = _idlookup(head, id)) != NULL) {
+		++label->ref;
+		return (id);
+	}
 
 	/* id not found, treat like no id  */
 	return (0);
