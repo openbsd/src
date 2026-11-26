@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.286 2026/11/03 16:56:06 miod Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.287 2026/11/26 18:40:22 chris Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1384,11 +1384,12 @@ scsi_mode_select_big(struct scsi_link *link, int byte2,
 
 int
 scsi_report_luns(struct scsi_link *link, int selectreport,
-    struct scsi_report_luns_data *data, u_int32_t datalen, int flags,
+    struct scsi_report_luns_data *data, u_int32_t *len, int flags,
     int timeout)
 {
 	struct scsi_report_luns		*cmd;
 	struct scsi_xfer		*xs;
+	u_int32_t			 datalen = *len;
 	int				 error;
 
 	xs = scsi_xs_get(link, flags | SCSI_DATA_IN);
@@ -1407,6 +1408,12 @@ scsi_report_luns(struct scsi_link *link, int selectreport,
 	_lto4b(datalen, cmd->length);
 
 	error = scsi_xs_sync(xs);
+	if (error == 0) {
+		if (xs->resid > datalen)
+			error = EIO;
+		else
+			*len = datalen - xs->resid;
+	}
 	scsi_xs_put(xs);
 
 	SC_DEBUG(link, SDEV_DB2, ("scsi_report_luns: error = %d\n", error));

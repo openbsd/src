@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.255 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.256 2026/11/26 18:40:22 chris Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -61,6 +61,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
+
+#define SCSI_REPORT_LUNS_TIMEOUT_MS	10000
 
 int	scsibusmatch(struct device *, void *, void *);
 void	scsibusattach(struct device *, struct device *, void *);
@@ -864,6 +866,7 @@ scsi_get_target_luns(struct scsibus_softc *sb, int target,
 {
 	struct scsi_report_luns_data	*report;
 	struct scsi_link		*link0;
+	u_int32_t			 len;
 	int				 i, nluns, rv = 0;
 
 	/* LUN 0 *must* be present. */
@@ -893,11 +896,12 @@ scsi_get_target_luns(struct scsibus_softc *sb, int target,
 	if (report == NULL)
 		goto dumbscan;
 
-	rv = scsi_report_luns(link0, REPORT_NORMAL, report,
-	    sizeof(*report), scsi_autoconf | SCSI_SILENT |
+	len = sizeof(*report);
+	rv = scsi_report_luns(link0, REPORT_NORMAL, report, &len,
+	    scsi_autoconf | SCSI_SILENT |
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
-	    SCSI_IGNORE_MEDIA_CHANGE, 10000);
-	if (rv != 0)
+	    SCSI_IGNORE_MEDIA_CHANGE, SCSI_REPORT_LUNS_TIMEOUT_MS);
+	if (rv != 0 || len < offsetof(struct scsi_report_luns_data, luns))
 		goto dumbscan;
 
 	/*
@@ -910,7 +914,9 @@ scsi_get_target_luns(struct scsibus_softc *sb, int target,
 	/* Return the reported Type-0 LUNs. Type-0 only! */
 	lunarray->count = 0;
 	lunarray->dumbscan = 0;
-	nluns = _4btol(report->length) / RPL_LUNDATA_SIZE;
+	len -= offsetof(struct scsi_report_luns_data, luns);
+	nluns = MIN(_4btol(report->length), len) / RPL_LUNDATA_SIZE;
+	nluns = MIN(nluns, nitems(lunarray->luns));
 	for (i = 0; i < nluns; i++) {
 		if (report->luns[i].lundata[0] != 0)
 			continue;

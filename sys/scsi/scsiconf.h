@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.203 2026/11/03 16:56:06 miod Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.204 2026/11/26 18:40:22 chris Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ void	scsi_done(struct scsi_xfer *);
 int	scsi_do_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	sc_print_addr(struct scsi_link *);
 int	scsi_report_luns(struct scsi_link *, int,
-	    struct scsi_report_luns_data *, u_int32_t, int, int);
+	    struct scsi_report_luns_data *, u_int32_t *, int, int);
 int	scsi_interpret_sense(struct scsi_xfer *);
 
 void	scsi_print_sense(struct scsi_xfer *);
