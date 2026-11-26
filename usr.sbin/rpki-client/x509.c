@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.142 2026/11/24 20:48:10 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.143 2026/11/26 07:27:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -343,7 +343,7 @@ valid_printable_string(const char *fn, const char *descr, const char *attr,
 /*
  * An RSA SPKI is a 2048 bit pubkey with a padding octet and the 10001 exponent:
  *   SEQUENCE { INTEGER { 257 octets } INTEGER { 3 octets } }
- * 270 bytes: 3 tag octets, 7 (= 2 * 3 + 1) length octets and 260 data octets.
+ * 270 bytes: 3 tag octets, 7 (= 2 * 3 + 1) length octets and 260 value octets.
  */
 #define RSA_SPKI_HEX_LEN	540
 
