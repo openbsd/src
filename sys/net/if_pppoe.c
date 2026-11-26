@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.95 2026/11/22 07:08:13 gnezdo Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.96 2026/11/26 21:34:18 bket Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -172,7 +172,8 @@ static int pppoe_send_padt(unsigned int, u_int, const u_int8_t *, u_int8_t);
 static int pppoe_output(struct pppoe_softc *, struct mbuf *);
 
 /* internal helper functions */
-static struct pppoe_softc *pppoe_find_softc_by_session(u_int, u_int);
+static struct pppoe_softc *pppoe_find_softc_by_session(u_int, u_int,
+    const u_int8_t *);
 static struct pppoe_softc *pppoe_find_softc_by_hunique(u_int8_t *, size_t, u_int);
 static struct mbuf	  *pppoe_get_mbuf(size_t len);
 
@@ -323,7 +324,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
  * be 1.
  */
 static struct pppoe_softc *
-pppoe_find_softc_by_session(u_int session, u_int ifidx)
+pppoe_find_softc_by_session(u_int session, u_int ifidx, const u_int8_t *source)
 {
 	struct pppoe_softc *sc;
 
@@ -333,7 +334,8 @@ pppoe_find_softc_by_session(u_int session, u_int ifidx)
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
 		if (sc->sc_state == PPPOE_STATE_SESSION
 		    && sc->sc_session == session
-		    && sc->sc_eth_ifidx == ifidx) {
+		    && sc->sc_eth_ifidx == ifidx
+		    && ETHER_IS_EQ(&sc->sc_dest, source)) {
 			return (sc);
 		}
 	}
@@ -341,7 +343,7 @@ pppoe_find_softc_by_session(u_int session, u_int ifidx)
 }
 
 static struct pppoe_softc *
-pppoe_smr_find_by_session(u_int session, u_int ifidx)
+pppoe_smr_find_by_session(u_int session, u_int ifidx, const u_int8_t *source)
 {
 	struct pppoe_softc *sc;
 
@@ -351,7 +353,8 @@ pppoe_smr_find_by_session(u_int session, u_int ifidx)
 	smr_read_enter();
 	SMR_LIST_FOREACH(sc, &pppoe_sessions, sc_session_entry) {
 		if (sc->sc_session == session &&
-		    sc->sc_eth_ifidx == ifidx) {
+		    sc->sc_eth_ifidx == ifidx &&
+		    ETHER_IS_EQ(&sc->sc_dest, source)) {
 			/* XXX if_ref() */
 			refcnt_take(&sc->sc_sppp.pp_if.if_refcnt);
 			break;
@@ -767,7 +770,8 @@ pppoe_vinput(struct ifnet *ifp0, struct mbuf *m, struct netstack *ns)
 	if (ph->code != 0)
 		return (m);
 
-	sc = pppoe_smr_find_by_session(ntohs(ph->session), ifp0->if_index);
+	sc = pppoe_smr_find_by_session(ntohs(ph->session), ifp0->if_index,
+	    eh->ether_shost);
 	if (sc == NULL) {
 		/* no session, don't waste any more time */
 		m_freem(m);
@@ -869,7 +873,7 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 
 	session = ntohs(ph->session);
-	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.ph_ifidx);
+	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.ph_ifidx, shost);
 	if (sc == NULL) {
 		/*
 		 * The peer may still hold a session from before a crash and
