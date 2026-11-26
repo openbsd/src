@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.51 2026/11/18 21:22:38 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.52 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -197,13 +197,13 @@ hex_encode_asn1_string(const ASN1_STRING *str)
 	return hex_encode(ASN1_STRING_get0_data(str), ASN1_STRING_length(str));
 }
 
-static int
+static void
 base64_encode_asn1_string(const ASN1_OCTET_STRING *astr, char **out)
 {
 	const unsigned char *data = ASN1_STRING_get0_data(astr);
 	int length = ASN1_STRING_length(astr);
 
-	return base64_encode(data, length, out) == 0;
+	base64_encode(data, length, out);
 }
 
 int
@@ -249,8 +249,7 @@ validate_asn1_hash(const char *fn, const char *descr,
 		goto out;
 	}
 
-	if (!base64_encode_asn1_string(astr, &b64))
-		errx(1, "base64_encode_asn1_string");
+	base64_encode_asn1_string(astr, &b64);
 
  out:
 	ASN1_OCTET_STRING_free(astr);
@@ -371,9 +370,7 @@ generate_manifeststate(struct validation_data *vd)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
 
 	hash_asn1_item(ms->hash, ASN1_ITEM_rptr(ManifestInstances), ms->mis);
-
-	if (!base64_encode_asn1_string(ms->hash, &ccr->mfts_hash))
-		errx(1, "base64_encode_asn1_string");
+	base64_encode_asn1_string(ms->hash, &ccr->mfts_hash);
 
 	return ms;
 }
@@ -461,9 +458,7 @@ generate_roapayloadstate(struct validation_data *vd)
 	}
 
 	hash_asn1_item(vrps->hash, ASN1_ITEM_rptr(ROAPayloadSets), vrps->rps);
-
-	if (!base64_encode_asn1_string(vrps->hash, &ccr->vrps_hash))
-		errx(1, "base64_encode_asn1_string");
+	base64_encode_asn1_string(vrps->hash, &ccr->vrps_hash);
 
 	return vrps;
 }
@@ -514,9 +509,7 @@ generate_aspapayloadstate(struct validation_data *vd)
 	}
 
 	hash_asn1_item(vaps->hash, ASN1_ITEM_rptr(ASPAPayloadSets), vaps->aps);
-
-	if (!base64_encode_asn1_string(vaps->hash, &ccr->vaps_hash))
-		errx(1, "base64_encode_asn1_string");
+	base64_encode_asn1_string(vaps->hash, &ccr->vaps_hash);
 
 	return vaps;
 }
@@ -551,9 +544,7 @@ generate_trustanchorstate(struct validation_data *vd)
 
 	hash_asn1_item(tas->hash, ASN1_ITEM_rptr(SubjectKeyIdentifiers),
 	    tas->skis);
-
-	if (!base64_encode_asn1_string(tas->hash, &vd->ccr.tas_hash))
-		errx(1, "base64_encode_asn1_string");
+	base64_encode_asn1_string(tas->hash, &vd->ccr.tas_hash);
 
 	return tas;
 }
@@ -616,9 +607,7 @@ generate_routerkeystate(struct validation_data *vd)
 	}
 
 	hash_asn1_item(rks->hash, ASN1_ITEM_rptr(RouterKeySets), rks->rksets);
-
-	if (!base64_encode_asn1_string(rks->hash, &vd->ccr.brks_hash))
-		errx(1, "base64_encode_asn1_string");
+	base64_encode_asn1_string(rks->hash, &vd->ccr.brks_hash);
 
 	return rks;
 }
@@ -1512,8 +1501,7 @@ parse_routerkeys(const char *fn, struct ccr *ccr, uint32_t asid,
 			goto out;
 		}
 
-		if (base64_encode(der, der_len, &brk->pubkey) == -1)
-			errx(1, "base64_encode");
+		base64_encode(der, der_len, &brk->pubkey);
 
 		free(der);
 

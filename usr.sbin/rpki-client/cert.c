@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.256 2026/11/13 06:35:47 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.257 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -403,8 +403,7 @@ cert_compliant_ec_key(const char *fn, struct cert *cert)
 			warnx("%s: i2d_PUBKEY failed", fn);
 			return 0;
 		}
-		if (base64_encode(der, der_len, &cert->pubkey) == -1)
-			errx(1, "base64_encode");
+		base64_encode(der, der_len, &cert->pubkey);
 		free(der);
 	}
 

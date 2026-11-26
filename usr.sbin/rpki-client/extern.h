@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.332 2026/11/24 07:26:03 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.333 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -999,7 +999,7 @@ int		 base64_decode_len(size_t, size_t *);
 int		 base64_decode(const unsigned char *, size_t,
 		    unsigned char **, size_t *);
 int		 base64_encode_len(size_t, size_t *);
-int		 base64_encode(const unsigned char *, size_t, char **);
+void		 base64_encode(const unsigned char *, size_t, char **);
 char		*hex_encode(const unsigned char *, size_t);
 int		 hex_decode(const char *, char *, size_t);
 

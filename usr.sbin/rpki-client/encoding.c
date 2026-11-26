@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.16 2026/11/23 10:31:01 tb Exp $ */
+/*	$OpenBSD: encoding.c,v 1.17 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -202,9 +202,9 @@ base64_encode_len(size_t inlen, size_t *outlen)
 
 /*
  * Encode a binary buffer into a base64 encoded string returned in out.
- * Returns 0 on success or -1 for any errors.
+ * This function can't fail.
  */
-int
+void
 base64_encode(const unsigned char *in, size_t inlen, char **out)
 {
 	unsigned char *to;
@@ -213,13 +213,12 @@ base64_encode(const unsigned char *in, size_t inlen, char **out)
 	*out = NULL;
 
 	if (base64_encode_len(inlen, &tolen) == -1)
-		return -1;
+		errx(1, "base64_encode_len");
 	if ((to = malloc(tolen)) == NULL)
-		return -1;
+		err(1, NULL);
 
 	EVP_EncodeBlock(to, in, inlen);
 	*out = to;
-	return 0;
 }
 
 /*

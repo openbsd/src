@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.83 2026/11/24 07:26:03 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.84 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -491,9 +491,8 @@ mft_print(const struct cert *c, const struct mft *p)
 	if (outformats & FORMAT_JSON)
 		json_do_array("filesandhashes");
 	for (i = 0; i < p->filesz; i++) {
-		if (base64_encode(p->files[i].hash, sizeof(p->files[i].hash),
-		    &hash) == -1)
-			errx(1, "base64_encode failure");
+		base64_encode(p->files[i].hash, sizeof(p->files[i].hash),
+		    &hash);
 
 		if (outformats & FORMAT_JSON) {
 			json_do_object("filehash", 1);
@@ -665,9 +664,8 @@ rsc_print(const struct cert *c, const struct rsc *p)
 		printf("Filenames and hashes:     ");
 
 	for (i = 0; i < p->num_files; i++) {
-		if (base64_encode(p->files[i].hash, sizeof(p->files[i].hash),
-		    &hash) == -1)
-			errx(1, "base64_encode failure");
+		base64_encode(p->files[i].hash, sizeof(p->files[i].hash),
+		    &hash);
 
 		if (outformats & FORMAT_JSON) {
 			json_do_object("filehash", 1);
@@ -744,8 +742,7 @@ takey_print(char *name, const struct takey *t)
 	char	*spki = NULL;
 	size_t	 i, j = 0;
 
-	if (base64_encode(t->pubkey, t->pubkeysz, &spki) != 0)
-		errx(1, "base64_encode failed in %s", __func__);
+	base64_encode(t->pubkey, t->pubkeysz, &spki);
 
 	if (outformats & FORMAT_JSON) {
 		json_do_object("takey", 0);
@@ -863,9 +860,7 @@ print_ccr_mftstate(struct ccr *ccr)
 	for (idx = 0; idx < ccr_mfts_num; idx++) {
 		ccr_mft = ccr_mfts[idx];
 
-		if (base64_encode(ccr_mft->hash, SHA256_DIGEST_LENGTH, &hash)
-		    == -1)
-			errx(1, "base64_encode");
+		base64_encode(ccr_mft->hash, SHA256_DIGEST_LENGTH, &hash);
 		aki = hex_encode(ccr_mft->aki, SHA_DIGEST_LENGTH);
 
 		if (outformats & FORMAT_JSON) {

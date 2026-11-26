@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.113 2026/11/23 09:55:57 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.114 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -397,8 +397,7 @@ recode_credentials(const char *userinfo)
 	ui = url_decode(userinfo);
 
 	ulen = strlen(ui);
-	if (base64_encode(ui, ulen, &creds) == -1)
-		errx(1, "error in base64 encoding");
+	base64_encode(ui, ulen, &creds);
 	free(ui);
 	return creds;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.97 2026/10/30 10:21:19 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.98 2026/11/26 09:01:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -448,8 +448,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 	if (!EVP_Digest(buf, len, filehash, NULL, EVP_sha256(), NULL))
 		errx(1, "EVP_Digest failed in %s", __func__);
 
-	if (base64_encode(filehash, sizeof(filehash), &hash) == -1)
-		errx(1, "base64_encode failed in %s", __func__);
+	base64_encode(filehash, sizeof(filehash), &hash);
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("file", file);
