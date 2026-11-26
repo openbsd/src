@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.97 2026/11/25 13:26:49 claudio Exp $ */
+/*	$OpenBSD: rtable.c,v 1.98 2026/11/26 09:20:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -501,15 +501,17 @@ rtable_match(unsigned int rtableid, const struct sockaddr *dst, uint32_t *src)
 	/* Gateway selection by Hash-Threshold (RFC 2992) */
 	if ((hash = rt_hash(rt, dst, src)) != -1) {
 		struct rtentry		*mrt;
-		int			 threshold, npaths = 1;
+		int			 threshold, npaths;
 
 		KASSERT(hash <= 0xffff);
 
-		/* Only count nexthops with the same priority. */
-		mrt = rt;
-		while ((mrt = SMR_PTR_GET(&mrt->rt_next)) != NULL) {
-			if (mrt->rt_priority == prio)
-				npaths++;
+		/* count additional nexthops with the same priority. */
+		npaths = 1;
+		for (mrt = SMR_PTR_GET(&rt->rt_next); mrt != NULL;
+		    mrt = SMR_PTR_GET(&mrt->rt_next)) {
+			if (mrt->rt_priority != prio)
+				break;
+			npaths++;
 		}
 
 		threshold = (0xffff / npaths) + 1;
@@ -521,15 +523,14 @@ rtable_match(unsigned int rtableid, const struct sockaddr *dst, uint32_t *src)
 		 * we'll pick a route that we wouldn't have if we only saw the
 		 * list before or after the change.
 		 */
-		mrt = rt;
-		while (hash > threshold) {
-			if (mrt->rt_priority == prio) {
-				rt = mrt;
-				hash -= threshold;
-			}
-			mrt = SMR_PTR_GET(&mrt->rt_next);
-			if (mrt == NULL)
+		for (mrt = rt; mrt != NULL; mrt = SMR_PTR_GET(&mrt->rt_next)) {
+			if (mrt->rt_priority != prio)
 				break;
+			if (hash <= threshold) {
+				rt = mrt;
+				break;
+			}
+			hash -= threshold;
 		}
 	}
 	rtref(rt);
