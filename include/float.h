@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.1 2012/06/26 16:16:16 deraadt Exp $	*/
+/*	$OpenBSD: float.h,v 1.2 2026/11/26 05:37:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -61,6 +61,9 @@ __END_DECLS
 #define FLT_MAX		__FLT_MAX		/* (1-b**(-p))*b**emax */
 #endif
 #define FLT_MAX_10_EXP	__FLT_MAX_10_EXP	/* floor(log10((1-b**(-p))*b**emax)) */
+#if __ISO_C_VISIBLE >= 2011
+#define FLT_DECIMAL_DIG	__FLT_DECIMAL_DIG	/* ceil(1+p*log10(b)) */
+#endif
 
 #define DBL_MANT_DIG	__DBL_MANT_DIG
 #define DBL_EPSILON	__DBL_EPSILON
@@ -77,6 +80,9 @@ __END_DECLS
 #define DBL_MAX		__DBL_MAX
 #endif
 #define DBL_MAX_10_EXP	__DBL_MAX_10_EXP
+#if __ISO_C_VISIBLE >= 2011
+#define DBL_DECIMAL_DIG	__DBL_DECIMAL_DIG
+#endif
 
 #define LDBL_MANT_DIG	__LDBL_MANT_DIG
 #define LDBL_EPSILON	__LDBL_EPSILON
@@ -87,6 +93,9 @@ __END_DECLS
 #define LDBL_MAX_EXP	__LDBL_MAX_EXP
 #define LDBL_MAX	__LDBL_MAX
 #define LDBL_MAX_10_EXP	__LDBL_MAX_10_EXP
+#if __ISO_C_VISIBLE >= 2011
+#define LDBL_DECIMAL_DIG	__LDBL_DECIMAL_DIG
+#endif
 
 #if __ISO_C_VISIBLE >= 1999
 #define DECIMAL_DIG	__DECIMAL_DIG

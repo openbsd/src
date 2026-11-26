@@ -1,4 +1,4 @@
-/*	$OpenBSD: _float.h,v 1.1 2012/06/26 16:12:45 deraadt Exp $	*/
+/*	$OpenBSD: _float.h,v 1.2 2026/11/26 05:37:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 2001
@@ -54,6 +54,7 @@
 #define __FLT_MAX_EXP		128		/* emax */
 #define __FLT_MAX		3.40282347E+38F	/* (1-b**(-p))*b**emax */
 #define __FLT_MAX_10_EXP	38		/* floor(log10((1-b**(-p))*b**emax)) */
+#define __FLT_DECIMAL_DIG	9		/* ceil(1+p*log10(b)) */
 
 #define __DBL_MANT_DIG		53
 #define __DBL_EPSILON		2.2204460492503131E-16
@@ -64,6 +65,7 @@
 #define __DBL_MAX_EXP		1024
 #define __DBL_MAX		1.7976931348623157E+308
 #define __DBL_MAX_10_EXP	308
+#define __DBL_DECIMAL_DIG	17
 
 #define __LDBL_MANT_DIG		113
 #define __LDBL_EPSILON		1.925929944387235853055977942584927319E-34L
@@ -74,6 +76,7 @@
 #define __LDBL_MAX_EXP		(+16384)
 #define __LDBL_MAX		1.189731495357231765085759326628007016E+4932L
 #define __LDBL_MAX_10_EXP	(+4932)
+#define __LDBL_DECIMAL_DIG	36
 
 #define __DECIMAL_DIG		36
 
