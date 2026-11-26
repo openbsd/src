@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.222 2024/10/11 09:55:24 kettenis Exp $ */
+/*	$OpenBSD: ehci.c,v 1.223 2026/11/26 18:28:26 chris Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -614,8 +614,7 @@ ehci_setaddr(struct usbd_device *dev, int addr)
 		return (0);
 
 	/* Re-establish the default pipe with the new max packet size. */
-	ehci_close_pipe(dev->default_pipe);
-	if (ehci_open(dev->default_pipe))
+	if (usbd_reopen_default_pipe(dev))
 		return (EINVAL);
 
 	if (usbd_set_address(dev, addr))
@@ -624,8 +623,7 @@ ehci_setaddr(struct usbd_device *dev, int addr)
 	dev->address = addr;
 
 	/* Re-establish the default pipe with the new address. */
-	ehci_close_pipe(dev->default_pipe);
-	if (ehci_open(dev->default_pipe))
+	if (usbd_reopen_default_pipe(dev))
 		return (EINVAL);
 
 	return (0);

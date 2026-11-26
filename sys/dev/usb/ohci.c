@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.165 2022/04/12 19:41:11 naddy Exp $ */
+/*	$OpenBSD: ohci.c,v 1.166 2026/11/26 18:28:26 chris Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2011,8 +2011,7 @@ ohci_setaddr(struct usbd_device *dev, int addr)
 		return (0);
 
 	/* Re-establish the default pipe with the new max packet size. */
-	ohci_device_ctrl_close(dev->default_pipe);
-	if (ohci_open(dev->default_pipe))
+	if (usbd_reopen_default_pipe(dev))
 		return (EINVAL);
 
 	if (usbd_set_address(dev, addr))
@@ -2021,8 +2020,7 @@ ohci_setaddr(struct usbd_device *dev, int addr)
 	dev->address = addr;
 
 	/* Re-establish the default pipe with the new address. */
-	ohci_device_ctrl_close(dev->default_pipe);
-	if (ohci_open(dev->default_pipe))
+	if (usbd_reopen_default_pipe(dev))
 		return (EINVAL);
 
 	return (0);

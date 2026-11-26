@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.85 2025/03/01 14:43:03 kirill Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.86 2026/11/26 18:28:26 chris Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -256,6 +256,7 @@ int		usbd_reset_port(struct usbd_device *, int);
 usbd_status	usbd_setup_pipe(struct usbd_device *,
 		    struct usbd_interface *, struct usbd_endpoint *, int,
 		    struct usbd_pipe **);
+usbd_status	usbd_reopen_default_pipe(struct usbd_device *);
 int		usbd_set_address(struct usbd_device *, int);
 usbd_status	usbd_new_device(struct device *, struct usbd_bus *,
 		    int, int, int, struct usbd_port *);

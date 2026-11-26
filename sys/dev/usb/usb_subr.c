@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.170 2026/11/26 18:13:08 chris Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.171 2026/11/26 18:28:26 chris Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -823,6 +823,21 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	}
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+usbd_reopen_default_pipe(struct usbd_device *dev)
+{
+	usbd_status err;
+
+	err = usbd_close_pipe(dev->default_pipe);
+	if (err)
+		return (err);
+	dev->default_pipe = NULL;
+	if (usbd_is_dying(dev))
+		return (USBD_IOERROR);
+	return (usbd_setup_pipe(dev, NULL, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe));
 }
 
 int

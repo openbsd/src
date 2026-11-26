@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.68 2022/09/18 21:12:19 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.69 2026/11/26 18:28:26 chris Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -214,8 +214,7 @@ dwc2_setaddr(struct usbd_device *dev, int addr)
 	 * Re-establish the default pipe with the new address and the
 	 * new max packet size.
 	 */
-	dwc2_close_pipe(dev->default_pipe);
-	if (dwc2_open(dev->default_pipe))
+	if (usbd_reopen_default_pipe(dev))
 		return (EINVAL);
 
 	return (0);
