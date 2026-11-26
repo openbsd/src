@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.58 2026/11/19 21:21:15 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.59 2026/11/26 19:03:21 miod Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ const int tlistlen = sizeof(tlist) / sizeof(tlist[0]);
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, dopower, dodump, mbuflen, nosync;
+static int dofast, dohalt, doreboot, dopower, dodump, mbuflen, nosync, canwall;
 static volatile sig_atomic_t killflg, timed_out;
 static char *whom, mbuf[BUFSIZ];
 
@@ -169,7 +169,9 @@ main(int argc, char *argv[])
 	if (unveil(_PATH_RC, "r") == -1)
 		err(1, "unveil %s", _PATH_RC);
 	if (unveil(_PATH_WALL, "x") == -1)
-		err(1, "unveil %s", _PATH_WALL);
+		warn("unveil %s", _PATH_WALL);
+	else
+		canwall = 1;
 	if (unveil(_PATH_FASTBOOT, "wc") == -1)
 		err(1, "unveil %s", _PATH_FASTBOOT);
 	if (unveil(_PATH_NOLOGIN, "wc") == -1)
@@ -338,8 +340,11 @@ timewarn(time_t timeleft)
 			close(fd[0]);
 		close(fd[1]);
 		/* wall(1)'s undocumented '-n' flag suppresses its banner. */
-		execle(_PATH_WALL, _PATH_WALL, "-n", (char *)NULL,
-		    wall_environ);
+		if (canwall) {
+			execle(_PATH_WALL, _PATH_WALL, "-n", (char *)NULL,
+			    wall_environ);
+		} else
+			errno = ENOENT;
 		syslog(LOG_ERR, "%s: %m", _PATH_WALL);
 		_exit(1);
 	default:
