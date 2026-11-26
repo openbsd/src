@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.196 2026/11/26 08:18:22 armani Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.197 2026/11/26 08:32:40 armani Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -327,10 +327,15 @@ struct client {
 	struct evbuffer		*clt_log;
 	struct timeval		 clt_tv_start;
 	struct timeval		 clt_tv_last;
+	int			 clt_resp_flags;
 
 	SPLAY_ENTRY(client)	 clt_nodes;
 };
 SPLAY_HEAD(client_tree, client);
+
+/* response writer state */
+#define SERVER_RESP_S_STARTED		0x10	/* status line and headers sent */
+#define SERVER_RESP_S_NO_BODY		0x20	/* the body is dropped */
 
 #define SRVFLAG_INDEX			0x0000000000000001ULL
 #define SRVFLAG_NO_INDEX		0x0000000000000002ULL
@@ -731,6 +736,12 @@ const char		*server_http_host(struct sockaddr_storage *, char *,
 char			*server_http_parsehost(char *, char *, size_t, int *);
 ssize_t			 server_http_time(time_t, char *, size_t);
 int			 server_log_http(struct client *, unsigned int, size_t);
+int			 server_resp_start(struct client *, unsigned int,
+    struct kvtree *, off_t, int);
+int			 server_resp_body(struct client *, const void *, size_t);
+int			 server_resp_body_buffer(struct client *, struct evbuffer *);
+int			 server_resp_end(struct client *);
+int			 server_resp_writable(struct client *);
 
 /* server_file.c */
 int	 server_file(struct httpd *, struct client *);

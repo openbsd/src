@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.86 2026/11/23 13:42:21 rsadowski Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.87 2026/11/26 08:32:40 armani Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -61,6 +61,7 @@ int			 server_file_dir_access(struct httpd *, struct client *,
 static int		 server_file_gzip_access(struct client *, const char *,
     struct stat *, int *);
 static struct kv	*server_file_getrange(struct http_descriptor *);
+static void		 server_file_read(struct bufferevent *, void *);
 
 int
 server_file_access(struct httpd *env, struct client *clt,
@@ -351,7 +352,7 @@ server_file_request(struct httpd *env, struct client *clt,
 		bufferevent_free(clt->clt_srvbev);
 
 	clt->clt_srvbev_throttled = 0;
-	clt->clt_srvbev = bufferevent_new(clt->clt_fd, server_read,
+	clt->clt_srvbev = bufferevent_new(clt->clt_fd, server_file_read,
 	    server_write, server_file_error, clt);
 	if (clt->clt_srvbev == NULL) {
 		errstr = "failed to allocate file buffer event";
@@ -676,7 +677,8 @@ server_file_index(struct httpd *env, struct client *clt, int fd,
 		break;
 	}
 
-	if (server_bufferevent_write_buffer(clt, evb) == -1)
+	if (server_resp_body_buffer(clt, evb) == -1 ||
+	    server_resp_end(clt) == -1)
 		goto fail;
 	evbuffer_free(evb);
 	evb = NULL;
@@ -704,6 +706,31 @@ server_file_index(struct httpd *env, struct client *clt, int fd,
 	return (-1);
 }
 
+static void
+server_file_read(struct bufferevent *bev, void *arg)
+{
+	struct client		*clt = arg;
+	struct evbuffer		*src = EVBUFFER_INPUT(bev);
+
+	getmonotime(&clt->clt_tv_last);
+
+	if (!EVBUFFER_LENGTH(src))
+		return;
+	if (server_resp_body_buffer(clt, src) == -1) {
+		server_close(clt, strerror(errno));
+		return;
+	}
+	if (clt->clt_done) {
+		(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
+		return;
+	}
+
+	if (!server_resp_writable(clt)) {
+		bufferevent_disable(clt->clt_srvbev, EV_READ);
+		clt->clt_srvbev_throttled = 1;
+	}
+}
+
 void
 server_file_error(struct bufferevent *bev, short error, void *arg)
 {
@@ -724,6 +751,7 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 	}
 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
+		(void)server_resp_end(clt);
 
 		clt->clt_done = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.176 2026/11/21 07:45:22 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.177 2026/11/26 08:32:40 armani Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -741,6 +741,8 @@ server_read_httprange(struct bufferevent *bev, void *arg)
 	struct media_type	*media;
 	struct range_data	*r = &clt->clt_ranges;
 	struct range		*range;
+	char			*part;
+	int			 ret;
 
 	getmonotime(&clt->clt_tv_last);
 
@@ -752,12 +754,13 @@ server_read_httprange(struct bufferevent *bev, void *arg)
 		/* Read chunk data */
 		if ((off_t)size > r->range_toread) {
 			size = r->range_toread;
-			if (server_bufferevent_write_chunk(clt, src, size) ==
-			    -1)
+			if (server_resp_body(clt, EVBUFFER_DATA(src),
+			    size) == -1)
 				goto fail;
+			evbuffer_drain(src, size);
 			r->range_toread = 0;
 		} else {
-			if (server_bufferevent_write_buffer(clt, src) == -1)
+			if (server_resp_body_buffer(clt, src) == -1)
 				goto fail;
 			r->range_toread -= size;
 		}
@@ -772,9 +775,12 @@ server_read_httprange(struct bufferevent *bev, void *arg)
 		if (r->range_index >= r->range_count) {
 			if (r->range_count > 1) {
 				/* Add end marker */
-				if (server_bufferevent_printf(clt,
-				    "\r\n--%llu--\r\n",
-				    clt->clt_boundary) == -1)
+				if ((ret = asprintf(&part, "\r\n--%llu--\r\n",
+				    clt->clt_boundary)) == -1)
+					goto fail;
+				ret = server_resp_body(clt, part, ret);
+				free(part);
+				if (ret == -1)
 					goto fail;
 			}
 			r->range_toread = TOREAD_HTTP_NONE;
@@ -785,13 +791,17 @@ server_read_httprange(struct bufferevent *bev, void *arg)
 
 		if (r->range_count > 1) {
 			media = r->range_media;
-			if (server_bufferevent_printf(clt,
+			if ((ret = asprintf(&part,
 			    "\r\n--%llu\r\n"
 			    "Content-Type: %s/%s\r\n"
 			    "Content-Range: bytes %lld-%lld/%lld\r\n\r\n",
 			    clt->clt_boundary,
 			    media->media_type, media->media_subtype,
-			    range->start, range->end, r->range_total) == -1)
+			    range->start, range->end, r->range_total)) == -1)
+				goto fail;
+			ret = server_resp_body(clt, part, ret);
+			free(part);
+			if (ret == -1)
 				goto fail;
 		}
 		r->range_toread = range->end - range->start + 1;
@@ -814,8 +824,7 @@ server_read_httprange(struct bufferevent *bev, void *arg)
 	if (clt->clt_done)
 		goto done;
 
-	if (EVBUFFER_LENGTH(EVBUFFER_OUTPUT(clt->clt_bev)) > (size_t)
-	    SERVER_MAX_PREFETCH * clt->clt_sndbufsiz) {
+	if (!server_resp_writable(clt)) {
 		bufferevent_disable(clt->clt_srvbev, EV_READ);
 		clt->clt_srvbev_throttled = 1;
 	}
@@ -1844,6 +1853,110 @@ get_custom_headers(struct kvtree *headers)
 	return (NULL);
 }
 
+/*
+ * Response writer. A response starts with a status code, the headers
+ * and the body length, -1 if it is unknown. The writer adds the status
+ * line, the Connection header and the framing: Content-Length or a
+ * close-delimited body. No body is sent for HEAD and for the status
+ * codes that do not allow one.
+ */
+int
+server_resp_start(struct client *clt, unsigned int code,
+    struct kvtree *headers, off_t len, int flags)
+{
+	struct http_descriptor	*desc = clt->clt_descreq;
+	struct http_descriptor	*resp = clt->clt_descresp;
+	const char		*error, *version;
+	struct kv		*hdr, *kv;
+	char			 buf[32];
+
+	if (clt->clt_bev == NULL || clt->clt_close_after_write)
+		return (-1);
+
+	if ((error = server_httperror_byid(code)) == NULL)
+		error = "Unknown Error";
+	if (resp == NULL || resp->http_version == NULL)
+		version = "HTTP/1.0";
+	else
+		version = resp->http_version;
+
+	if (kv_add(headers, "Connection",
+	    clt->clt_persist ? "keep-alive" : "close") == NULL)
+		return (-1);
+
+	/* No body for 1xx and 204, else the length, none for 304 */
+	if ((code >= 100 && code < 200) || code == 204)
+		flags |= SERVER_RESP_S_NO_BODY;
+	else if (len >= 0) {
+		(void)snprintf(buf, sizeof(buf), "%lld", (long long)len);
+		if (kv_add(headers, "Content-Length", buf) == NULL)
+			return (-1);
+	} else if (code == 304)
+		flags |= SERVER_RESP_S_NO_BODY;
+	if (desc != NULL && desc->http_method == HTTP_METHOD_HEAD)
+		flags |= SERVER_RESP_S_NO_BODY;
+
+	if (server_bufferevent_printf(clt, "%s %03u %s\r\n",
+	    version, code, error) == -1)
+		return (-1);
+	RB_FOREACH(hdr, kvtree, headers) {
+		if (server_writeheader_http(clt, hdr, NULL) == -1)
+			return (-1);
+		TAILQ_FOREACH(kv, &hdr->kv_children, kv_entry) {
+			if (server_writeheader_http(clt, kv, NULL) == -1)
+				return (-1);
+		}
+	}
+	if (server_bufferevent_print(clt, "\r\n") == -1)
+		return (-1);
+
+	clt->clt_resp_flags = flags | SERVER_RESP_S_STARTED;
+
+	return (0);
+}
+
+/* Send body data */
+int
+server_resp_body(struct client *clt, const void *data, size_t len)
+{
+	if ((clt->clt_resp_flags & SERVER_RESP_S_STARTED) == 0)
+		return (-1);
+	if ((clt->clt_resp_flags & SERVER_RESP_S_NO_BODY) || len == 0)
+		return (0);
+	return (bufferevent_write(clt->clt_bev, data, len));
+}
+
+/* Send a buffer as body data and drain it */
+int
+server_resp_body_buffer(struct client *clt, struct evbuffer *buf)
+{
+	size_t	 len = EVBUFFER_LENGTH(buf);
+
+	if ((clt->clt_resp_flags & SERVER_RESP_S_STARTED) == 0)
+		return (-1);
+	if ((clt->clt_resp_flags & SERVER_RESP_S_NO_BODY) || len == 0) {
+		evbuffer_drain(buf, len);
+		return (0);
+	}
+	return (bufferevent_write_buffer(clt->clt_bev, buf));
+}
+
+/* Finish the response, if one was started */
+int
+server_resp_end(struct client *clt)
+{
+	clt->clt_resp_flags = 0;
+	return (0);
+}
+
+/* Returns 0 while the client is too slow to take more data */
+int
+server_resp_writable(struct client *clt)
+{
+	return (EVBUFFER_LENGTH(EVBUFFER_OUTPUT(clt->clt_bev)) <=
+	    (size_t)SERVER_MAX_PREFETCH * clt->clt_sndbufsiz);
+}
+
 int
 server_response_http(struct client *clt, unsigned int code,
     struct media_type *media, off_t size, time_t mtime)
@@ -1862,34 +1975,16 @@ server_response_http(struct client *clt, unsigned int code,
 	if (server_log_http(clt, code, size >= 0 ? size : 0) == -1)
 		return (-1);
 
-	/* Add error codes */
-	if (kv_setkey(&resp->http_pathquery, "%u", code) == -1 ||
-	    kv_set(&resp->http_pathquery, "%s", error) == -1)
-		return (-1);
-
 	/* Add server banner header to response unless suppressed */
 	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0) {
 		if (kv_add(&resp->http_headers, "Server",
 		    HTTPD_SERVERNAME) == NULL)
 			return (-1);
 	}
-	/* Is it a persistent connection? */
-	if (clt->clt_persist) {
-		if (kv_add(&resp->http_headers,
-		    "Connection", "keep-alive") == NULL)
-			return (-1);
-	} else if (kv_add(&resp->http_headers, "Connection", "close") == NULL)
-		return (-1);
 
 	/* Set media type */
 	if ((ct = kv_add(&resp->http_headers, "Content-Type", NULL)) == NULL ||
 	    kv_set(ct, "%s/%s", media->media_type, media->media_subtype) == -1)
-		return (-1);
-
-	/* Set content length, if specified */
-	if (size >= 0 && ((cl =
-	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
-	    kv_set(cl, "%lld", (long long)size) == -1))
 		return (-1);
 
 	if (srv_conf->flags & SRVFLAG_STATIC_CACHE_CONTROL) {
@@ -1930,13 +2025,12 @@ server_response_http(struct client *clt, unsigned int code,
 		return (-1);
 
 	/* Write completed header */
-	if (server_writeresponse_http(clt) == -1 ||
-	    server_bufferevent_print(clt, "\r\n") == -1 ||
-	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
-	    server_bufferevent_print(clt, "\r\n") == -1)
+	if (server_resp_start(clt, code, &resp->http_headers, size, 0) == -1)
 		return (-1);
 
 	if (size <= 0 || resp->http_method == HTTP_METHOD_HEAD) {
+		if (server_resp_end(clt) == -1)
+			return (-1);
 		bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 		if (clt->clt_persist)
 			clt->clt_toread = TOREAD_HTTP_HEADER;
