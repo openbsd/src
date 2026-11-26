@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.187 2026/11/11 18:29:25 hshoexer Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.188 2026/11/26 19:10:19 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -106,6 +106,9 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
+	{
+		int	 from_config;
+
 		vmop_create_params_read(imsg, &vmc);
 		kernfd = imsg_get_fd(imsg);
 		vmc.vmc_kernel = kernfd;
@@ -154,10 +157,11 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			kernfd = -1;
 
 		/* Try to start the launch of the VM. */
+		from_config = vm->vm_from_config;
 		res = config_setvm(ps, vm, peer_id,
 		    vm->vm_params.vmc_owner.uid);
 		if (res) {
-			if (vm->vm_from_config)
+			if (from_config)
 				vm->vm_params.vmc_ncpus = vm->vm_ncpus_config;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
@@ -166,6 +170,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		close_fd(kernfd);
 		kernfd = -1;
 		break;
+	}
 	case IMSG_VMDOP_WAIT_VM_REQUEST:
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 		vmop_id_read(imsg, &vid);
