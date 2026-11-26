@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.482 2026/07/13 01:08:59 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.483 2026/11/26 11:06:49 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2285,10 +2285,12 @@ setifwpakey(const char *val, int d)
 	(void)strlcpy(psk.i_name, ifname, sizeof(psk.i_name));
 
 	if (actions & A_JOIN) {
-		memcpy(&join.i_wpapsk, &psk, sizeof(join.i_wpapsk));
-		join.i_flags |= IEEE80211_JOIN_WPAPSK;
-		if (!join.i_wpaparams.i_enabled)
-			setifwpa(NULL, join.i_wpapsk.i_enabled);
+		join.i_wpaparams.i_enabled = psk.i_enabled;
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		if (join.i_wpaparams.i_enabled) {
+			memcpy(&join.i_wpapsk, &psk, sizeof(join.i_wpapsk));
+			join.i_flags |= IEEE80211_JOIN_WPAPSK;
+		}
 		return;
 	}
 
