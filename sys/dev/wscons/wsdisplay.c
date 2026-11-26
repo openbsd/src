@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.161 2026/11/26 18:59:34 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.162 2026/11/26 19:00:36 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -3408,6 +3408,7 @@ void
 mouse_copy_selection(struct wsscreen *scr)
 {
 	struct wsscreen_internal *dconf = scr->scr_dconf;
+	char *copybuffer = scr->sc->sc_copybuffer;
 	struct wsdisplay_charcell cell;
 	u_int current = 0;
 	u_int blank = current;
@@ -3421,7 +3422,8 @@ mouse_copy_selection(struct wsscreen *scr)
 	while (sel_cur <= sel_end && current < buf_end - 1) {
 		if (GETCHAR(scr, sel_cur, &cell) != 0)
 			break;
-		scr->sc->sc_copybuffer[current] = cell.uc;
+		if (copybuffer != NULL)
+			copybuffer[current] = cell.uc;
 		if (!IS_SPACE(cell.uc))
 			blank = current + 1; /* first blank after non-blank */
 		current++;
@@ -3430,13 +3432,15 @@ mouse_copy_selection(struct wsscreen *scr)
 			 * If we are on the last column of the screen,
 			 * insert a carriage return.
 			 */
-			scr->sc->sc_copybuffer[blank] = '\r';
+			if (copybuffer != NULL)
+				copybuffer[blank] = '\r';
 			current = ++blank;
 		}
 		sel_cur++;
 	}
 
-	scr->sc->sc_copybuffer[current] = '\0';
+	if (copybuffer != NULL)
+		copybuffer[current] = '\0';
 }
 
 /*
@@ -3445,17 +3449,20 @@ mouse_copy_selection(struct wsscreen *scr)
 void
 mouse_paste(struct wsscreen *scr)
 {
-	char *current = scr->sc->sc_copybuffer;
+	char *copybuffer = scr->sc->sc_copybuffer;
 	struct tty *tp;
 	u_int len;
+
+	if (copybuffer == NULL)
+		return;
 
 	if (ISSET(scr->sc->sc_flags, SC_PASTE_AVAIL)) {
 		if (!WSSCREEN_HAS_TTY(scr))
 			return;
 
 		tp = scr->scr_tty;
-		for (len = strlen(scr->sc->sc_copybuffer); len != 0; len--)
-			(*linesw[tp->t_line].l_rint)(*current++, tp);
+		for (len = strlen(copybuffer); len != 0; len--)
+			(*linesw[tp->t_line].l_rint)(*copybuffer++, tp);
 	}
 }
 
@@ -3496,15 +3503,19 @@ allocate_copybuffer(struct wsdisplay_softc *sc)
 			size = (current->ncols + 1) * current->nrows;
 		screens_list++;
 	}
-	if (size != sc->sc_copybuffer_size && sc->sc_copybuffer_size != 0) {
-		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
-		free(sc->sc_copybuffer, M_DEVBUF, sc->sc_copybuffer_size);
-	}
-	if ((sc->sc_copybuffer = (char *)malloc(size, M_DEVBUF, M_NOWAIT)) ==
-	    NULL) {
-		printf("%s: couldn't allocate copy buffer\n",
-		    sc->sc_dv.dv_xname);
-		size = 0;
+	if (size != sc->sc_copybuffer_size) {
+		if (sc->sc_copybuffer_size != 0) {
+			explicit_bzero(sc->sc_copybuffer,
+			    sc->sc_copybuffer_size);
+			free(sc->sc_copybuffer, M_DEVBUF,
+			    sc->sc_copybuffer_size);
+		}
+		sc->sc_copybuffer = (char *)malloc(size, M_DEVBUF, M_NOWAIT);
+		if (sc->sc_copybuffer == NULL) {
+			printf("%s: couldn't allocate copy buffer\n",
+			    sc->sc_dv.dv_xname);
+			size = 0;
+		}
 	}
 	sc->sc_copybuffer_size = size;
 	splx(s);
