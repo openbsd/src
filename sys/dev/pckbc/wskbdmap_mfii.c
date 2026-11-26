@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.49 2025/11/09 16:21:56 matthieu Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.50 2026/11/26 18:58:54 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -152,9 +152,6 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(181),			KS_KP_Divide,
     KC(183),			KS_Print_Screen,
     KC(184), KS_Cmd2,		KS_Alt_R,	KS_Multi_key,
-#if 0
-    KC(198),  KS_Cmd_ResetClose, /* CTL-Break */
-#endif
     KC(199),			KS_Home,
     KC(200),			KS_Up,
     KC(201), KS_Cmd_ScrollBack,	KS_Prior,
