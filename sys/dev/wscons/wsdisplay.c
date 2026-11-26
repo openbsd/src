@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.160 2026/11/19 16:58:09 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.161 2026/11/26 18:59:34 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1939,7 +1939,7 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 }
 
 void
-wsdisplay_reset(struct device *dev, enum wsdisplay_resetops op)
+wsdisplay_reset(struct device *dev)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
@@ -1949,15 +1949,8 @@ wsdisplay_reset(struct device *dev, enum wsdisplay_resetops op)
 	if (!scr)
 		return;
 
-	switch (op) {
-	case WSDISPLAY_RESETEMUL:
-		(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
-		    WSEMUL_RESET);
-		break;
-	case WSDISPLAY_RESETCLOSE:
-		wsdisplay_closescreen(sc, scr);
-		break;
-	}
+	(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
+	    WSEMUL_RESET);
 }
 
 #ifdef WSDISPLAY_COMPAT_USL

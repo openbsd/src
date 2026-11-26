@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_callbacks.h,v 1.9 2013/10/18 22:06:40 miod Exp $ */
+/* $OpenBSD: wscons_callbacks.h,v 1.10 2026/11/26 18:59:34 miod Exp $ */
 /* $NetBSD: wscons_callbacks.h,v 1.16 2001/11/10 17:14:51 augustss Exp $ */
 
 /*
@@ -44,11 +44,7 @@ void	wsdisplay_set_console_kbd(struct wsevsrc *);
 void	wsdisplay_kbdinput(struct device *v, kbd_t, keysym_t *, int);
 void	wsdisplay_rawkbdinput(struct device *v, u_char *, int);
 int	wsdisplay_switch(struct device *, int, int);
-enum wsdisplay_resetops {
-	WSDISPLAY_RESETEMUL,
-	WSDISPLAY_RESETCLOSE
-};
-void	wsdisplay_reset(struct device *, enum wsdisplay_resetops);
+void	wsdisplay_reset(struct device *);
 void	wsdisplay_kbdholdscreen(struct device *v, int);
 
 void	wsdisplay_set_cons_kbd(int (*get)(dev_t),

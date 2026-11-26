@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.124 2025/07/18 17:34:29 mvs Exp $ */
+/* $OpenBSD: wskbd.c,v 1.125 2026/11/26 18:59:34 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1626,10 +1626,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0, 0);
 		return (1);
 	case KS_Cmd_ResetEmul:
-		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETEMUL);
-		return (1);
-	case KS_Cmd_ResetClose:
-		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
+		wsdisplay_reset(sc->sc_displaydv);
 		return (1);
 #if defined(__i386__) || defined(__amd64__)
 	case KS_Cmd_KbdReset:
