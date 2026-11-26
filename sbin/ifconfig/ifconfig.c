@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.483 2026/11/26 11:06:49 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.484 2026/11/26 13:09:12 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2087,6 +2087,7 @@ setifwpaprotos(const char *val, int d)
 
 	if (actions & A_JOIN) {
 		join.i_wpaparams.i_protos = rval;
+		join.i_wpaparams.i_enabled = 1;
 		join.i_flags |= IEEE80211_JOIN_WPA;
 		return;
 	}
@@ -2129,8 +2130,7 @@ setifwpaakms(const char *val, int d)
 
 	if (actions & A_JOIN) {
 		join.i_wpaparams.i_akms = rval;
-		join.i_wpaparams.i_enabled =
-		    ((rval & IEEE80211_WPA_AKM_8021X) != 0);
+		join.i_wpaparams.i_enabled = 1;
 		join.i_flags |= IEEE80211_JOIN_WPA;
 		return;
 	}
@@ -2191,6 +2191,7 @@ setifwpaciphers(const char *val, int d)
 
 	if (actions & A_JOIN) {
 		join.i_wpaparams.i_ciphers = rval;
+		join.i_wpaparams.i_enabled = 1;
 		join.i_flags |= IEEE80211_JOIN_WPA;
 		return;
 	}
@@ -2222,8 +2223,7 @@ setifwpagroupcipher(const char *val, int d)
 	wpa.i_groupcipher = cipher;
 
 	if (actions & A_JOIN) {
-		join.i_wpaparams.i_groupcipher = cipher;
-		join.i_flags |= IEEE80211_JOIN_WPA;
+		/* wpagroupcipher is only valid in hostap mode */
 		return;
 	}
 
