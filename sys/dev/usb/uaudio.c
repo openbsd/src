@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.189 2026/09/24 13:57:25 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.190 2026/11/26 08:05:17 armani Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1494,13 +1494,13 @@ uaudio_process_unit(struct uaudio_softc *sc,
 			ctl >>= 2;
 		}
 
-		/*
-		 * certain devices provide no per-channel control descriptors
-		 */
-		if (p.wptr - p.rptr == 1)
-			break;
-
 		for (j = 0; j < u->nch; j++) {
+			/*
+			 * certain devices provide fewer per-channel
+			 * control descriptors than channels (or none)
+			 */
+			if (p.wptr - p.rptr < size)
+				break;
 			if (!uaudio_getnum(&p, size, &ctl))
 				return 0;
 			ctl = uaudio_feature_fixup(sc, ctl);
