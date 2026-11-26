@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.414 2026/05/28 10:52:39 kirill Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.415 2026/11/26 15:55:17 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 28 2026 $
+.Dd $Mdocdate: November 26 2026 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1258,15 +1258,18 @@ to trigger a background scan while associated, which will update the scan
 result list and also trigger a search for a better access point to roam to.
 .It Cm wpa
 Enable Wi-Fi Protected Access.
+Any previous WPA-related commands will be ignored.
+.Pp
 WPA is a Wi-Fi Alliance protocol based on the IEEE 802.11i standard.
 It was designed to enhance the security of wireless networks.
 Notice that not all drivers support WPA.
 Check the driver's manual page to know if this option is supported.
 .It Cm -wpa
 Disable Wi-Fi Protected Access.
+Any previous WPA-related commands will be ignored.
 .It Cm wpaakms Ar akm,akm,...
 Set the comma-separated list of allowed authentication and key management
-protocols.
+protocols, and enable WPA.
 .Pp
 The supported values are
 .Dq psk ,
@@ -1291,7 +1294,7 @@ can only be used if a pre-shared key is configured using the
 .Cm wpakey
 option.
 .It Cm wpaciphers Ar cipher,cipher,...
-Set the comma-separated list of allowed pairwise ciphers.
+Set the comma-separated list of allowed pairwise ciphers and enable WPA.
 .Pp
 The supported values are
 .Dq tkip ,
@@ -1316,7 +1319,8 @@ encryption will be used.
 Check the driver's manual page to know which ciphers are supported in
 hardware.
 .It Cm wpagroupcipher Ar cipher
-Set the group cipher used to encrypt broadcast and multicast traffic.
+Set the group cipher used to encrypt broadcast and multicast traffic
+and enable WPA.
 .Pp
 The supported values are
 .Dq wep40 ,
@@ -1351,7 +1355,8 @@ will hash the nwid along with the passphrase to create the key.
 .It Cm -wpakey
 Delete the pre-shared WPA key and disable WPA.
 .It Cm wpaprotos Ar proto,proto,...
-Set the comma-separated list of allowed WPA protocol versions.
+Set the comma-separated list of allowed WPA protocol versions and
+enable WPA.
 .Pp
 The supported values are
 .Dq wpa1
