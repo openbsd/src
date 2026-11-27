@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.504 2026/11/25 12:44:38 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.505 2026/11/27 22:30:40 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -749,6 +749,26 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 		return (error);
 	}
+	case KERN_NCHSTATS: {
+		struct nchstats buf;
+
+		KERNEL_LOCK();
+		memcpy(&buf, &nchstats, sizeof(buf));
+		KERNEL_UNLOCK();
+
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    &buf, sizeof(buf)));
+	}
+	case KERN_FORKSTAT: {
+		struct forkstat buf;
+
+		KERNEL_LOCK();
+		memcpy(&buf, &forkstat, sizeof(buf));
+		KERNEL_UNLOCK();
+
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    &buf, sizeof(buf)));
+	}
 	case KERN_TIMEOUT_STATS:
 		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
 #if NPF > 0
@@ -806,12 +826,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch (name[0]) {
 #ifndef SMALL_KERNEL
-	case KERN_NCHSTATS:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &nchstats,
-		    sizeof(struct nchstats)));
-	case KERN_FORKSTAT:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &forkstat,
-		    sizeof(struct forkstat)));
 	case KERN_STACKGAPRANDOM: {
 		int error, stackgap = stackgap_random;
 
