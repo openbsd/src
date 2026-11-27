@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.415 2026/11/26 15:55:17 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.416 2026/11/27 09:57:35 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 26 2026 $
+.Dd $Mdocdate: November 27 2026 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1357,6 +1357,15 @@ Delete the pre-shared WPA key and disable WPA.
 .It Cm wpaprotos Ar proto,proto,...
 Set the comma-separated list of allowed WPA protocol versions and
 enable WPA.
+Reset the parameters
+.Cm wpaciphers ,
+.Cm wpagroupcipher ,
+and
+.Cm wpaakms
+to defaults as appropriate for the selected WPA protocol versions.
+These defaults can be overridden with further commands following the
+.Cm wpaprotos
+command on the command line.
 .Pp
 The supported values are
 .Dq wpa1
