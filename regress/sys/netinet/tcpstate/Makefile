@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2026/04/02 11:54:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2026/11/27 14:07:19 bluhm Exp $
 
 # Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -30,16 +30,16 @@ regress:
 
 .endif
 
-# This test needs a manual setup of two machines
+# This test needs a manual setup of two machines.
 # Set up machines: LOCAL REMOTE
 # LOCAL is the machine where this makefile is running.
-# REMOTE is running OpenBSD with echo server to test PMTU
-# FAKE_NET is a non existing existing network.
+# REMOTE is running OpenBSD with inetd services to test its TCP stack.
+# FAKE_NET is a non existing network.
 # FAKE_NET_ADDR is a non existing machine in a non existing network.
 # REMOTE_SSH is the hostname to log in on the REMOTE machine.
 
 # Configure Addresses on the machines.
-# Adapt interface and addresse variables to your local setup.
+# Adapt interface and address variables to your local setup.
 #
 LOCAL_IF ?=
 REMOTE_SSH ?=
@@ -57,7 +57,7 @@ FAKE_NET_ADDR ?=
 .BEGIN:
 	@true
 regress:
-	@echo This tests needs a remote machine to operate on
+	@echo This test needs a remote machine to operate on
 	@echo LOCAL_IF REMOTE_SSH LOCAL_ADDR REMOTE_ADDR FAKE_NET FAKE_NET_ADDR
 	@echo are empty.  Fill out these variables for additional tests.
 	@echo SKIPPED
@@ -86,7 +86,7 @@ addr.py: Makefile
 	echo 'CURDIR = "${.CURDIR}"' >>$@.tmp
 	mv $@.tmp $@
 
-# load the pf rules into the kernel of the REMOTE and LOCAL machine
+# Load the pf rules into the kernel of the REMOTE and LOCAL machine.
 REGRESS_SETUP +=	stamp-pfctl
 stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
@@ -106,13 +106,16 @@ PYTHON =	env PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 REGRESS_TARGETS =
 TCP_SCRIPTS !!=	cd ${.CURDIR} && ls -1 tcp*.py
 
-# keepalive is special, it needs sysctl to see effect within a few seconds
-run-tcp_keepalive: tcp_keepalive.py addr.py
+# Keepalive and idle timeout are special, they need sysctl to see effect
+# within a few seconds.
+.for t in tcp_keepalive tcp_finwaitidle tcp_shutidle
+run-$t: $t.py addr.py
 	ssh ${REMOTE_SSH} ${SUDO} sysctl \
 	    net.inet.tcp.keepidle=3 net.inet.tcp.keepintvl=1
-	${SUDO} ${PYTHON}tcp_keepalive.py
+	${SUDO} ${PYTHON}$t.py
 	ssh ${REMOTE_SSH} ${SUDO} sysctl \
 	    net.inet.tcp.keepidle=7200 net.inet.tcp.keepintvl=75
+.endfor
 
 .for t in ${TCP_SCRIPTS:R}
 REGRESS_TARGETS +=	run-$t
@@ -145,7 +148,7 @@ CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
 .PHONY: check-setup check-setup-local check-setup-remote
 
-# Check wether the address, route and remote setup is correct
+# Check whether the address, route and remote setup is correct.
 check-setup: check-setup-local check-setup-remote
 
 check-setup-local:

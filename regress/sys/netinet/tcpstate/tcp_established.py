@@ -39,7 +39,7 @@ ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
 send(ip/ack)
 
-print("Start sniffer to get data retransmit from peer.");
+print("Start sniffer to get data retransmit from peer.")
 sniffer = Sniff1(count=3, timeout=10)
 sniffer.filter = \
     "ip and src %s and tcp port %u and dst %s and tcp port %u " \
@@ -63,10 +63,10 @@ if data_ack.seq != synack.seq+1 or data_ack.ack != 2+paylen:
 	    (synack.seq+1, 2+paylen, data_ack.seq, data_ack.ack))
 	exit(1)
 
-print("Send ACK for echo packet, but with one sequence less.");
+print("Send ACK for echo packet, but with one sequence less.")
 echo_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2+paylen, ack=data_ack.seq+paylen-1, window=(2**16)-1)
-echo=sr1(ip/echo_ack, timeout=5);
+echo=sr1(ip/echo_ack, timeout=5)
 if echo is None:
 	print("ERROR: No truncated echo received from echo server.")
 	exit(1)
@@ -94,11 +94,11 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				log.write(line)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
+rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=data_ack.ack, ack=data_ack.seq)
-send(ip/new_rst)
+send(ip/rst)
 
-print("Check retransmit of echo.");
+print("Check retransmit of echo.")
 rxmit_echo = sniffer.captured[2]
 if rxmit_echo is None:
 	print("ERROR: No echo retransmitted from echo server.")

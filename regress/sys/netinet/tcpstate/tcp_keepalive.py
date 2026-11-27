@@ -27,7 +27,7 @@ class Sniff1(threading.Thread):
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
-print("Start sniffer for SYN packet from peer.");
+print("Start sniffer for SYN packet from peer.")
 sniffer = Sniff1(timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -58,7 +58,7 @@ if ack.seq != syn.seq+1 or ack.ack != 2:
 	    (syn.seq+1, 2, ack.seq, ack.ack))
 	exit(1)
 
-print("Start sniffer for keepalive ACK or RST packet from peer.");
+print("Start sniffer for keepalive ACK or RST packet from peer.")
 sniffer = Sniff1(count=9, timeout=15)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u and " \
@@ -75,11 +75,11 @@ if keep_ack is None:
 	exit(1)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=ack.dport, dport=ack.sport, flags='RA',
+rst=TCP(sport=ack.dport, dport=ack.sport, flags='RA',
     seq=ack.ack, ack=ack.seq)
-send(ip/new_rst)
+send(ip/rst)
 
-print("Check keepalive ACK.");
+print("Check keepalive ACK.")
 if str(keep_ack[TCP].flags) != 'A':
 	print("ERROR: First keepalive is not ACK.")
 	exit(1)
@@ -89,7 +89,7 @@ if keep_ack.seq != ack.seq-1 or keep_ack.ack != 2:
 	    (ack.seq-1, 2, keep_ack.seq, keep_ack.ack))
 	exit(1)
 
-print("Check keepalive RST.");
+print("Check keepalive RST.")
 keep_rst=sniffer.captured[8]
 if keep_rst is None:
 	print("ERROR: No keepalive RST received from remote client.")

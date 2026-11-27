@@ -75,7 +75,7 @@ print("Send selective ACK for echo packet, data is in the middle.")
 echo_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2+paylen, ack=data_ack.seq+1, window=(2**16)-1,
     options=[('SAck', (data_ack.seq+2,data_ack.seq+3))])
-# tcprexmtthresh is 3 so we need some retransmits
+# tcprexmtthresh is 3, so we need some retransmits.
 send(ip/echo_ack)
 send(ip/echo_ack)
 send(ip/echo_ack)
@@ -101,9 +101,9 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				log.write(line)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
+rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=data_ack.ack, ack=data_ack.seq)
-send(ip/new_rst)
+send(ip/rst)
 
 print("Check sack retransmit of echo.")
 sack_echo = sniffer.captured[1]
@@ -112,7 +112,7 @@ if sack_echo is None:
 	exit(1)
 if sack_echo.getlayer(TCP).flags != 'A':
 	print("ERROR: echo to sack expecting no PSH, got flag '%s' in echo." % \
-	    (echo.getlayer(TCP).flags))
+	    (sack_echo.getlayer(TCP).flags))
 	exit(1)
 tcplen = sack_echo.len - sack_echo.ihl*4 - sack_echo.dataofs*4
 if sack_echo.seq != synack.seq+1+1 or sack_echo.ack != 2+paylen or \

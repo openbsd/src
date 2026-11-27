@@ -29,7 +29,7 @@ class Sniff1(threading.Thread):
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
-print("Start sniffer for SYN packet from peer.");
+print("Start sniffer for SYN packet from peer.")
 sniffer = Sniff1(timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -71,7 +71,7 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				print(line)
 				log.write(line)
 
-print("Start sniffer for FIN packet from peer.");
+print("Start sniffer for FIN packet from peer.")
 sniffer = Sniff1(count=2, timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -103,11 +103,11 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				log.write(line)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
+rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=fin.ack, ack=fin.seq)
-send(ip/new_rst)
+send(ip/rst)
 
-print("Check retransmit of FIN.");
+print("Check retransmit of FIN.")
 rxmit_fin = sniffer.captured[1]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from remote client.")
@@ -117,4 +117,4 @@ if rxmit_fin.seq != syn.seq or rxmit_fin.ack != 2:
 	    (syn.seq, 2, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 
-exit(0);
+exit(0)

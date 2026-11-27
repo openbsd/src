@@ -27,7 +27,7 @@ class Sniff1(threading.Thread):
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
-print("Start sniffer for SYN+ACK packet from peer.");
+print("Start sniffer for SYN+ACK packet from peer.")
 sniffer = Sniff1(count=2, timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -65,11 +65,11 @@ ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
 send(ip/ack)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
+rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=ack.seq, ack=ack.ack)
-send(ip/new_rst)
+send(ip/rst)
 
-print("Check retransmit of SYN+ACK.");
+print("Check retransmit of SYN+ACK.")
 rxmit_synack = sniffer.captured[1]
 if rxmit_synack is None:
 	print("ERROR: No SYN+ACK retransmitted from discard server.")
@@ -79,4 +79,4 @@ if rxmit_synack.ack != 2:
 	    (2, rxmit_synack.ack))
 	exit(1)
 
-exit(0);
+exit(0)

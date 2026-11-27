@@ -27,7 +27,7 @@ class Sniff1(threading.Thread):
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
-print("Start sniffer for SYN packet from peer.");
+print("Start sniffer for SYN packet from peer.")
 sniffer = Sniff1(count=2, timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -67,11 +67,11 @@ if ack.seq != syn.seq+1 or ack.ack != 2:
 	exit(1)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=ack.dport, dport=ack.sport, flags='RA',
+rst=TCP(sport=ack.dport, dport=ack.sport, flags='RA',
     seq=ack.ack, ack=ack.seq)
-send(ip/new_rst)
+send(ip/rst)
 
-print("Check retransmit of SYN.");
+print("Check retransmit of SYN.")
 rxmit_syn = sniffer.captured[1]
 if rxmit_syn is None:
 	print("ERROR: No SYN retransmitted from netstat client.")

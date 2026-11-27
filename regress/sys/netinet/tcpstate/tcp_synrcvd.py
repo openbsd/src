@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 # transfer peer from SYN_SENT to SYN_RCVD state and check retransmit of SYN+ACK
-# from LISTEN state SYN_RCVD is cannot be reached as SYN cache handles it
+# From LISTEN state SYN_RCVD cannot be reached, SYN cache handles it.
 
 import os
 import threading
@@ -28,7 +28,7 @@ class Sniff1(threading.Thread):
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
-print("Start sniffer for SYN packet from peer.");
+print("Start sniffer for SYN packet from peer.")
 sniffer = Sniff1(timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -48,7 +48,7 @@ if syn is None:
 	print("ERROR: No SYN received from remote client.")
 	exit(1)
 
-print("Start sniffer for SYN+ACK packet from peer.");
+print("Start sniffer for SYN+ACK packet from peer.")
 sniffer = Sniff1(count=2, timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -96,11 +96,11 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				log.write(line)
 
 print("Send reset to cleanup the connection.")
-new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
+rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=ack.seq, ack=ack.ack)
-send(ip/new_rst)
+send(ip/rst)
 
-print("Check retransmit of SYN+ACK.");
+print("Check retransmit of SYN+ACK.")
 rxmit_synack = sniffer.captured[1]
 if rxmit_synack is None:
 	print("ERROR: No SYN+ACK retransmitted from remote client.")
@@ -115,4 +115,4 @@ if rxmit_synack.seq != syn.seq or rxmit_synack.ack != 2:
 	    (syn.seq, 2, rxmit_synack.seq, rxmit_synack.ack))
 	exit(1)
 
-exit(0);
+exit(0)
