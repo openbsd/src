@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.107 2026/07/27 12:28:52 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.108 2026/11/27 18:15:18 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,7 @@ WARNINGS=yes
 
 OPENSSL?=	yes
 ZLIB?=		yes
+ASR?=		yes
 
 .if (${OPENSSL:L} == "yes")
 CFLAGS+=	-DWITH_OPENSSL
@@ -41,6 +42,10 @@ CFLAGS+=	-DWITH_OPENSSL
 
 .if (${ZLIB:L} == "yes")
 CFLAGS+=	-DWITH_ZLIB
+.endif
+
+.if (${ASR:L} == "yes")
+CFLAGS+=	-DWITH_ASR
 .endif
 
 CFLAGS+=	-DENABLE_PKCS11
