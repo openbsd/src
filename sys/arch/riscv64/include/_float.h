@@ -1,4 +1,4 @@
-/*	$OpenBSD: _float.h,v 1.3 2026/11/27 00:54:44 jsg Exp $	*/
+/*	$OpenBSD: _float.h,v 1.4 2026/11/27 01:10:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,6 +82,6 @@
 #define __LDBL_MAX_10_EXP	4932
 #define __LDBL_DECIMAL_DIG	36
 
-#define __DECIMAL_DIG		17
+#define __DECIMAL_DIG		36
 
 #endif /* _MACHINE__FLOAT_H_ */
