@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.34 2025/06/28 13:24:21 miod Exp $	*/
+/*	$OpenBSD: dino.c,v 1.35 2026/11/27 20:09:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -283,7 +283,6 @@ int	dino_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *,
 void	dino_dmamem_unmap(void *, caddr_t, size_t);
 paddr_t	dino_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 int	dinoprint(void *, const char *);
-void	dino_clear_pdc_mappings(void *);
 
 void
 dino_attach_hook(struct device *parent, struct device *self,
@@ -1690,7 +1689,8 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Do not reset enabled io mappings mask if we are still running
-	 * with PDC console - we'll do it after autoconf.
+	 * with PDC console - we'll do it after all child devices have
+	 * attached.
 	 */
 	if (cn_tab->cn_putc != pdccnputc)
 		r->io_addr_en = 0;
@@ -1810,25 +1810,13 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = 0;
 	config_found(self, &pba, dinoprint);
 
-	/* postpone cleanup if necessary */
+	/*
+	 * Now that all our children have attached, we don't need to
+	 * keep any PDC settings anymore.
+	 */
 	if (r->io_addr_en != sc->io_shadow)
-		startuphook_establish(dino_clear_pdc_mappings, sc);
+		r->io_addr_en = sc->io_shadow;
 
 	/* enable interrupts now that all the devices are there */
 	r->imr = sc->sc_imr;
-}
-
-void
-dino_clear_pdc_mappings(void *v)
-{
-	struct dino_softc *sc = (struct dino_softc *)v;
-	volatile struct dino_regs *r;
-
-	if (cn_tab->cn_putc == pdccnputc) {
-		/* damn! */
-		return;
-	}
-
-	r = sc->sc_regs;
-	r->io_addr_en = sc->io_shadow;
 }

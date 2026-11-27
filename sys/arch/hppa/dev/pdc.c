@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.43 2025/06/28 13:24:21 miod Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.44 2026/11/27 20:09:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -27,6 +27,7 @@
  */
 
 #include "com.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +41,11 @@
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wscons_callbacks.h>
+#endif
 
 typedef
 struct pdc_softc {
@@ -122,6 +128,14 @@ pdc_init(void)
 
 	/* Start out with pdc as the console. */
 	cn_tab = &pdccons;
+#if NWSDISPLAY > 0
+	/*
+	 * Plug pdc as the input to wsdisplay until a keyboard driver takes
+	 * over. This allows wsdisplay to attach as the console without
+	 * having to postpone this attachment to the end of autoconf.
+	 */
+	wsdisplay_set_cons_kbd(pdccngetc, nullcnpollc, NULL);
+#endif
 
 	/* Figure out console settings. */
 #if NCOM > 0

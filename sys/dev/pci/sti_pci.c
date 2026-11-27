@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.18 2026/11/24 15:29:20 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.19 2026/11/27 20:09:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -88,6 +88,7 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sti_pci_softc *spc = (void *)self;
 	struct pci_attach_args *paa = aux;
+	int rc;
 
 	spc->sc_pc = paa->pa_pc;
 	spc->sc_tag = paa->pa_tag;
@@ -105,15 +106,17 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
 		spc->sc_base.sc_flags |= STI_CONSOLE;
-	if (sti_attach_common(&spc->sc_base, paa->pa_memt, spc->sc_romh,
+	rc = sti_attach_common(&spc->sc_base, paa->pa_memt, spc->sc_romh,
 	    spc->sc_romcopy + spc->sc_dssize,
-	    STI_CODEBASE_MAIN) == 0)
-		startuphook_establish(sti_end_attach, spc);
+	    STI_CODEBASE_MAIN);
 
 	/* unmap ROM image if still mapped */
 	if (spc->sc_romcopy == NULL) {
 		bus_space_unmap(paa->pa_memt, spc->sc_romh, spc->sc_romsize);
 	}
+
+	if (rc == 0)
+		sti_end_attach(spc);
 }
 
 /*
