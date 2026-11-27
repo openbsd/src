@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.255 2026/11/23 21:14:53 jan Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.256 2026/11/27 10:21:30 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1116,7 +1116,7 @@ tcp_usrclosed(struct tcpcb *tp)
 			int maxidle;
 
 			maxidle = TCPTV_KEEPCNT *
-			    atomic_load_int(&tcp_keepidle);
+			    atomic_load_int(&tcp_keepintvl);
 			TCP_TIMER_ARM(tp, TCPT_2MSL, maxidle);
 		}
 	}

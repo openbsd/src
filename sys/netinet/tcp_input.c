@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.473 2026/11/23 21:14:53 jan Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.474 2026/11/27 10:21:30 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1817,7 +1817,7 @@ trimthenstep6:
 
 					soisdisconnected(so);
 					maxidle = TCPTV_KEEPCNT *
-					    atomic_load_int(&tcp_keepidle);
+					    atomic_load_int(&tcp_keepintvl);
 					TCP_TIMER_ARM(tp, TCPT_2MSL, maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
