@@ -1,4 +1,4 @@
-/*	$OpenBSD: _float.h,v 1.2 2026/11/26 05:37:48 jsg Exp $	*/
+/*	$OpenBSD: _float.h,v 1.3 2026/11/27 00:54:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,29 +71,16 @@
 #define __DBL_MAX_10_EXP	308
 #define __DBL_DECIMAL_DIG	17
 
-#ifdef __LDBL_MANT_DIG__
-#define __LDBL_MANT_DIG		__LDBL_MANT_DIG__
-#define __LDBL_EPSILON		__LDBL_EPSILON__
-#define __LDBL_DIG		__LDBL_DIG__
-#define __LDBL_MIN_EXP		__LDBL_MIN_EXP__
-#define __LDBL_MIN		__LDBL_MIN__
-#define __LDBL_MIN_10_EXP	__LDBL_MIN_10_EXP__
-#define __LDBL_MAX_EXP		__LDBL_MAX_EXP__
-#define __LDBL_MAX		__LDBL_MAX__
-#define __LDBL_MAX_10_EXP	__LDBL_MAX_10_EXP__
-#define __LDBL_DECIMAL_DIG	__LDBL_DECIMAL_DIG__
-#else
-#define __LDBL_MANT_DIG		DBL_MANT_DIG
-#define __LDBL_EPSILON		DBL_EPSILON
-#define __LDBL_DIG		DBL_DIG
-#define __LDBL_MIN_EXP		DBL_MIN_EXP
-#define __LDBL_MIN		DBL_MIN
-#define __LDBL_MIN_10_EXP	DBL_MIN_10_EXP
-#define __LDBL_MAX_EXP		DBL_MAX_EXP
-#define __LDBL_MAX		DBL_MAX
-#define __LDBL_MAX_10_EXP	DBL_MAX_10_EXP
-#define __LDBL_DECIMAL_DIG	DBL_DECIMAL_DIG
-#endif
+#define __LDBL_MANT_DIG		113
+#define __LDBL_EPSILON		1.92592994438723585305597794258492732e-34L
+#define __LDBL_DIG		33
+#define __LDBL_MIN_EXP		(-16381)
+#define __LDBL_MIN		3.36210314311209350626267781732175260e-4932L
+#define __LDBL_MIN_10_EXP	(-4931)
+#define __LDBL_MAX_EXP		16384
+#define __LDBL_MAX		1.18973149535723176508575932662800702e+4932L
+#define __LDBL_MAX_10_EXP	4932
+#define __LDBL_DECIMAL_DIG	36
 
 #define __DECIMAL_DIG		17
 
