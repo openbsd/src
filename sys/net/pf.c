@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1255 2026/11/24 04:31:07 gnezdo Exp $ */
+/*	$OpenBSD: pf.c,v 1.1256 2026/11/27 18:39:22 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1724,6 +1724,9 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	if (strnlen(sp->ifname, sizeof(sp->ifname)) == sizeof(sp->ifname))
 		return (EINVAL);
 
+	if (sp->af == 0)
+		return (0);	/* skip this state */
+
 	if ((kif = pfi_kif_get(sp->ifname, NULL)) == NULL) {
 		DPFPRINTF(LOG_NOTICE, "%s: unknown interface: %s", __func__,
 		    sp->ifname);
@@ -1731,9 +1734,6 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 			return (EINVAL);
 		return (0);	/* skip this state */
 	}
-
-	if (sp->af == 0)
-		return (0);	/* skip this state */
 
 	/*
 	 * If the ruleset checksums match or the state is coming from the ioctl,
@@ -1894,6 +1894,8 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 		pf_state_key_unref(sks);
 
  cleanup_state: /* pf_state_insert frees the state keys */
+	/* drop the kif pfi_kif_get() made if nothing references it */
+	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	if (st) {
 		if (st->dst.scrub)
 			pool_put(&pf_state_scrub_pl, st->dst.scrub);
