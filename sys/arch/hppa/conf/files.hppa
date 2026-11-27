@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.100 2026/10/26 18:13:00 miod Exp $
+#	$OpenBSD: files.hppa,v 1.101 2026/11/27 18:09:52 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -11,7 +11,6 @@ maxusers 2 8 128
 # "workstation console" routines
 #
 include "dev/wscons/files.wscons"
-file	arch/hppa/hppa/wscons_machdep.c	wsdisplay
 
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
