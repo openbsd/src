@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.334 2026/11/26 10:08:00 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.335 2026/11/28 07:10:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -440,6 +440,7 @@ struct vrp {
 	int		talid; /* covered by which TAL */
 	unsigned int	repoid;
 };
+
 /*
  * Tree of VRP sorted by afi, addr, maxlength and asid
  */
@@ -461,6 +462,7 @@ struct vsp {
 	unsigned int	 repoid;
 	int		 overflowed;
 };
+
 /*
  * Tree of VSP sorted by asid
  */
@@ -478,6 +480,7 @@ struct brk {
 	char		*pubkey; /* Subject Public Key Info */
 	time_t		 expires; /* transitive expiry moment */
 };
+
 /*
  * Tree of BRK sorted by asid
  */
@@ -555,6 +558,7 @@ struct crl {
 	time_t		 thisupdate;	/* do not use before */
 	time_t		 nextupdate;	/* do not use after */
 };
+
 /*
  * Tree of CRLs sorted by uri
  */
@@ -572,6 +576,7 @@ struct auth {
 	int		 any_inherits;
 	int		 depth;
 };
+
 /*
  * Tree of auth sorted by ski
  */
@@ -667,7 +672,6 @@ enum stype {
 struct repo;
 struct filepath;
 RB_HEAD(filepath_tree, filepath);
-
 
 /*
  * Statistics collected during run-time.
@@ -989,7 +993,6 @@ void		 rrdp_fetch(unsigned int, const char *, const char *,
 void		 rrdp_abort(unsigned int);
 void		 rrdp_http_done(unsigned int, enum http_result, const char *);
 
-
 /* File loading and decompression functions. */
 unsigned char	*load_file(const char *, size_t *);
 unsigned char	*inflate_buffer(uint8_t *, size_t, size_t *);
@@ -1001,7 +1004,6 @@ int		 base64_decode(const unsigned char *, size_t,
 void		 base64_encode(const unsigned char *, size_t, char **);
 char		*hex_encode(const unsigned char *, size_t);
 int		 hex_decode(const char *, char *, size_t);
-
 
 /* Functions for moving data between processes. */
 
