@@ -1,4 +1,4 @@
-#	$OpenBSD: krl.sh,v 1.14 2026/11/26 20:10:36 djm Exp $
+#	$OpenBSD: krl.sh,v 1.15 2026/11/28 02:27:44 djm Exp $
 #	Placed in the Public Domain.
 
 tid="key revocation lists"
@@ -237,3 +237,19 @@ $SSHKEYGEN -kf $OBJ/krl-keyid-comment -s $OBJ/revoked-ca.pub \
 check_krl $OBJ/revoked-id1-cert.pub $OBJ/krl-keyid-comment y "ID with #"
 check_krl $OBJ/revoked-id2-cert.pub $OBJ/krl-keyid-comment n "ID prefix"
 check_krl $OBJ/revoked-id3-cert.pub $OBJ/krl-keyid-comment y "ID with comment"
+
+verbose "$tid: multi-key and .pub fallback checking"
+$SSHKEYGEN -kf $OBJ/krl-multi $OBJ/revoked-id2.pub >/dev/null \
+	|| fatal "$SSHKEYGEN KRL failed"
+cp $OBJ/revoked-id1.pub $OBJ/krl-midbegin
+echo "-----BEGIN OPENSSH PRIVATE KEY-----" >> $OBJ/krl-midbegin
+cat $OBJ/revoked-id2.pub >> $OBJ/krl-midbegin
+$SSHKEYGEN -Qf $OBJ/krl-multi $OBJ/krl-midbegin >/dev/null 2>&1
+if test $? -eq 0 ; then
+	fatal "mid-file -----BEGIN unexpectedly accepted by KRL check"
+fi
+cp $OBJ/revoked-id1 $OBJ/krl-multipub
+cat $OBJ/revoked-id1.pub $OBJ/revoked-id2.pub > $OBJ/krl-multipub.pub
+check_krl $OBJ/krl-multipub $OBJ/krl-multi y "multi-key .pub fallback"
+cat $OBJ/revoked-id1.pub $OBJ/revoked-id3.pub > $OBJ/krl-multipub.pub
+check_krl $OBJ/krl-multipub $OBJ/krl-multi n "multi-key .pub unrevoked"
